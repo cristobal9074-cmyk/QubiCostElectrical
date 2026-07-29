@@ -1,0 +1,581 @@
+<UserControl x:Class="QubiCostElectrical.Wpf.Features.Preferences.PreferencesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+    <StackPanel MaxWidth="780" Margin="0,0,24,24">
+
+      <!-- ─── Identidad y membrete ─────────────────────────────────────────── -->
+      <Border Style="{StaticResource Card.FormSection}">
+        <StackPanel>
+          <TextBlock Text="IDENTIDAD Y MEMBRETE" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink5}" Margin="0,0,0,2"/>
+          <TextBlock Text="Datos globales aplicados a PDF, DOCX y Excel de cualquier proyecto." FontSize="9" Foreground="{DynamicResource Brush.Ink4}" Margin="0,0,0,16"/>
+
+          <!-- ── Empresa ── -->
+          <TextBlock Text="EMPRESA" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Slate2}" Margin="0,0,0,10"/>
+
+          <Grid Margin="0,0,0,8">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="160"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Razón social" FontSize="9" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center"/>
+            <TextBox Grid.Column="1" Text="{Binding CompanyName, UpdateSourceTrigger=PropertyChanged}"
+                     Style="{StaticResource Form.TextBox}" Height="34" MaxLength="140"/>
+          </Grid>
+          <Grid Margin="0,0,0,8">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="160"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="RUT" FontSize="9" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center"/>
+            <TextBox Grid.Column="1" Text="{Binding Rut, UpdateSourceTrigger=PropertyChanged}"
+                     Style="{StaticResource Form.TextBox}" Height="34" MaxLength="30"/>
+          </Grid>
+          <Grid Margin="0,0,0,8">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="160"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Dirección" FontSize="9" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center"/>
+            <TextBox Grid.Column="1" Text="{Binding Address, UpdateSourceTrigger=PropertyChanged}"
+                     Style="{StaticResource Form.TextBox}" Height="34" MaxLength="180"/>
+          </Grid>
+          <Grid Margin="0,0,0,8">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="160"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Teléfono" FontSize="9" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center"/>
+            <TextBox Grid.Column="1" Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}"
+                     Style="{StaticResource Form.TextBox}" Height="34" MaxLength="80"/>
+          </Grid>
+          <Grid Margin="0,0,0,8">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="160"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Correo" FontSize="9" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center"/>
+            <TextBox Grid.Column="1" Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}"
+                     Style="{StaticResource Form.TextBox}" Height="34" MaxLength="110"/>
+          </Grid>
+          <Grid Margin="0,0,0,8">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="160"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Sitio web" FontSize="9" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center"/>
+            <TextBox Grid.Column="1" Text="{Binding Website, UpdateSourceTrigger=PropertyChanged}"
+                     Style="{StaticResource Form.TextBox}" Height="34" MaxLength="110"/>
+          </Grid>
+
+          <!-- Logo -->
+          <Grid Margin="0,0,0,4">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="160"/>
+              <ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="4"/>
+              <ColumnDefinition Width="Auto"/>
+              <ColumnDefinition Width="4"/>
+              <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Logo PNG/JPG" FontSize="9" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center"/>
+            <TextBox Grid.Column="1" Text="{Binding LogoPath, UpdateSourceTrigger=PropertyChanged}"
+                     Style="{StaticResource Form.TextBox}" Height="34" MaxLength="500"
+                     ToolTip="Ruta del archivo de logo. Formatos: PNG, JPG. Máximo 5 MB."/>
+            <Button Grid.Column="3" Content="Examinar…" Height="34" Padding="10,0"
+                    Click="OnBrowseLogoClick"/>
+            <Button Grid.Column="5" Content="Quitar" Height="34" Padding="8,0"
+                    Click="OnClearLogoClick"/>
+          </Grid>
+          <TextBlock Text="PNG o JPG, fondo blanco o transparente, máximo 5 MB. Recomendado: horizontal."
+                     FontSize="10" Foreground="{DynamicResource Brush.Slate2}" Margin="160,0,0,12"/>
+
+          <!-- ── Profesional firmante ── -->
+          <Separator Margin="0,4,0,12" Background="{DynamicResource Brush.Line}"/>
+          <TextBlock Text="PROFESIONAL FIRMANTE" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Slate2}" Margin="0,0,0,10"/>
+
+          <Grid Margin="0,0,0,8">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="160"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Nombre" FontSize="9" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center"/>
+            <TextBox Grid.Column="1" Text="{Binding ProfessionalName, UpdateSourceTrigger=PropertyChanged}"
+                     Style="{StaticResource Form.TextBox}" Height="34" MaxLength="140"/>
+          </Grid>
+          <Grid Margin="0,0,0,8">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="160"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="RUT" FontSize="9" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center"/>
+            <TextBox Grid.Column="1" Text="{Binding ProfessionalRut, UpdateSourceTrigger=PropertyChanged}"
+                     Style="{StaticResource Form.TextBox}" Height="34" MaxLength="30"/>
+          </Grid>
+          <Grid Margin="0,0,0,8">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="160"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Cargo" FontSize="9" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center"/>
+            <TextBox Grid.Column="1" Text="{Binding ProfessionalRole, UpdateSourceTrigger=PropertyChanged}"
+                     Style="{StaticResource Form.TextBox}" Height="34" MaxLength="100"/>
+          </Grid>
+          <Grid Margin="0,0,0,8">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="160"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="N° Registro SEC" FontSize="9" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center"/>
+            <TextBox Grid.Column="1" Text="{Binding ProfessionalRegistroSec, UpdateSourceTrigger=PropertyChanged}"
+                     Style="{StaticResource Form.TextBox}" Height="34" MaxLength="60"/>
+          </Grid>
+
+          <!-- Firma -->
+          <Grid Margin="0,0,0,4">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="160"/>
+              <ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="4"/>
+              <ColumnDefinition Width="Auto"/>
+              <ColumnDefinition Width="4"/>
+              <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Imagen firma PNG/JPG" FontSize="9" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center"/>
+            <TextBox Grid.Column="1" Text="{Binding ProfessionalSignatureImagePath, UpdateSourceTrigger=PropertyChanged}"
+                     Style="{StaticResource Form.TextBox}" Height="34" MaxLength="500"
+                     ToolTip="Ruta de la imagen de firma escaneada. Formatos: PNG, JPG."/>
+            <Button Grid.Column="3" Content="Examinar…" Height="34" Padding="10,0"
+                    Click="OnBrowseSignatureClick"/>
+            <Button Grid.Column="5" Content="Quitar" Height="34" Padding="8,0"
+                    Click="OnClearSignatureClick"/>
+          </Grid>
+          <TextBlock Text="Firma escaneada PNG o JPG. Solo se aplica en PDF cuando el proyecto no tiene una propia."
+                     FontSize="10" Foreground="{DynamicResource Brush.Slate2}" Margin="160,0,0,0"/>
+
+        </StackPanel>
+      </Border>
+
+      <!-- ─── Vista previa del membrete ──────────────────────────────────────── -->
+      <Border Style="{StaticResource Card.FormSection}">
+        <StackPanel>
+          <TextBlock Text="VISTA PREVIA DEL MEMBRETE" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink5}" Margin="0,0,0,2"/>
+          <TextBlock Text="Composición representativa. No replica el diseño PDF exacto." FontSize="10" Foreground="{DynamicResource Brush.Slate2}" Margin="0,0,0,14"/>
+
+          <Border Background="{DynamicResource Brush.BlueFaint}" BorderBrush="{DynamicResource Brush.Slate3}" BorderThickness="1" CornerRadius="6" Padding="16,12">
+            <StackPanel>
+              <!-- Logo + empresa -->
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto"/>
+                  <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <!-- Logo real cuando existe imagen válida -->
+                <Border Grid.Column="0" Width="80" Height="40" Margin="0,0,12,0"
+                        Background="White" BorderBrush="{DynamicResource Brush.Slate3}" BorderThickness="1" CornerRadius="3"
+                        Visibility="{Binding LogoImageSource, Converter={StaticResource NullToVisibility}, ConverterParameter=Inverse}">
+                  <Image Source="{Binding LogoImageSource}" Stretch="Uniform"
+                         AutomationProperties.Name="Logo de la empresa" Margin="4"/>
+                </Border>
+                <Border Grid.Column="0" Width="80" Height="40" Margin="0,0,12,0"
+                        Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Slate3}" BorderThickness="1" CornerRadius="3"
+                        Visibility="{Binding LogoImageSource, Converter={StaticResource NullToVisibility}}">
+                  <TextBlock Text="SIN LOGO" FontSize="10" Foreground="{DynamicResource Brush.Slate2}"
+                             HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                  <TextBlock Text="{Binding CompanyName}" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}"
+                             TextTrimming="CharacterEllipsis"/>
+                  <TextBlock FontSize="9" Foreground="{DynamicResource Brush.Ink6}" TextTrimming="CharacterEllipsis">
+                    <TextBlock.Text>
+                      <MultiBinding StringFormat="{}{0} · {1} · {2}">
+                        <Binding Path="Phone"/>
+                        <Binding Path="Email"/>
+                        <Binding Path="Website"/>
+                      </MultiBinding>
+                    </TextBlock.Text>
+                  </TextBlock>
+                </StackPanel>
+              </Grid>
+              <!-- Separador -->
+              <Rectangle Height="1" Fill="{DynamicResource Brush.Slate3}" Margin="0,10,0,10"/>
+              <!-- Profesional -->
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Firmante: " FontSize="9" Foreground="{DynamicResource Brush.Ink4}"/>
+                <TextBlock Text="{Binding ProfessionalName}" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}"/>
+                <TextBlock Text=" · " FontSize="9" Foreground="{DynamicResource Brush.Ink4}"/>
+                <TextBlock Text="{Binding ProfessionalRole}" FontSize="9" Foreground="{DynamicResource Brush.Ink6}"/>
+                <TextBlock Text=" · SEC: " FontSize="9" Foreground="{DynamicResource Brush.Ink4}"
+                           Visibility="{Binding ProfessionalRegistroSec, Converter={StaticResource NullToVisibility}, ConverterParameter=NonEmpty}"/>
+                <TextBlock Text="{Binding ProfessionalRegistroSec}" FontSize="9" Foreground="{DynamicResource Brush.Ink6}"
+                           Visibility="{Binding ProfessionalRegistroSec, Converter={StaticResource NullToVisibility}, ConverterParameter=NonEmpty}"/>
+              </StackPanel>
+            </StackPanel>
+          </Border>
+
+          <TextBlock Text="Aplica a: PDF (portada, encabezado, firma) · DOCX (carta de presentación) · XLSX (hoja de empresa)"
+                     FontSize="10" Foreground="{DynamicResource Brush.Slate}" Margin="0,8,0,0"/>
+        </StackPanel>
+      </Border>
+
+      <!-- ─── General ──────────────────────────────────────────────────────── -->
+      <Border Style="{StaticResource Card.FormSection}">
+        <StackPanel>
+          <TextBlock Text="GENERAL" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink5}" Margin="0,0,0,16"/>
+
+          <StackPanel Margin="0,0,0,0">
+            <TextBlock Text="Carpeta predeterminada de proyectos" FontSize="9" Foreground="{DynamicResource Brush.Ink4}" Margin="0,0,0,4"/>
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="4"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="4"/>
+                <ColumnDefinition Width="Auto"/>
+              </Grid.ColumnDefinitions>
+              <TextBox Grid.Column="0" Text="{Binding DefaultProjectFolder, UpdateSourceTrigger=PropertyChanged}"
+                       Style="{StaticResource Form.TextBox}" Height="36"
+                       ToolTip="Carpeta inicial al abrir o guardar proyectos. Vacío = Documentos del usuario."/>
+              <Button Grid.Column="2" Content="Examinar…" Height="36" Padding="12,0"
+                      Click="OnBrowseProjectFolderClick"/>
+              <Button Grid.Column="4" Content="Limpiar" Height="36" Padding="10,0"
+                      Click="OnClearProjectFolderClick"/>
+            </Grid>
+          </StackPanel>
+
+          <StackPanel Margin="0,16,0,0">
+            <TextBlock Text="Archivo del banco de precios" FontSize="9" Foreground="{DynamicResource Brush.Ink4}" Margin="0,0,0,4"/>
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="4"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="4"/>
+                <ColumnDefinition Width="Auto"/>
+              </Grid.ColumnDefinitions>
+              <TextBox Grid.Column="0" Text="{Binding PriceBankDatabasePath, UpdateSourceTrigger=PropertyChanged}"
+                       Style="{StaticResource Form.TextBox}" Height="36"
+                       ToolTip="Ruta absoluta del SQLite corporativo. Ej.: \\servidor\Presupuestos\banco_precios.db. Vacío = carpeta local del usuario."/>
+              <Button Grid.Column="2" Content="Examinar…" Height="36" Padding="12,0"
+                      Click="OnBrowsePriceBankDatabaseClick"/>
+              <Button Grid.Column="4" Content="Limpiar" Height="36" Padding="10,0"
+                      Click="OnClearPriceBankDatabaseClick"/>
+            </Grid>
+            <TextBlock Text="Requiere reiniciar la aplicación. Use una ruta UNC para compartir el catálogo en red (un editor de escritura a la vez)."
+                       FontSize="10" Foreground="{DynamicResource Brush.Slate2}" Margin="0,6,0,0" TextWrapping="Wrap" />
+            <TextBlock Text="{Binding PriceBankPathWarning}"
+                       Visibility="{Binding PriceBankPathWarning, Converter={StaticResource NullToVisibility}, ConverterParameter=NonEmpty}"
+                       FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Amber}" Margin="0,6,0,0" TextWrapping="Wrap" />
+          </StackPanel>
+
+        </StackPanel>
+      </Border>
+
+      <!-- ─── Tema ─────────────────────────────────────────────────────────── -->
+      <Border Style="{StaticResource Card.FormSection}">
+        <StackPanel>
+          <TextBlock Text="TEMA" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink5}" Margin="0,0,0,2"/>
+          <TextBlock Text="Alterna entre modo claro y oscuro." FontSize="9" Foreground="{DynamicResource Brush.Ink4}" Margin="0,0,0,16"/>
+
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="Modo oscuro" FontSize="9" Foreground="{DynamicResource Brush.Ink}" FontWeight="SemiBold"/>
+              <TextBlock Text="Aplica fondo oscuro a toda la interfaz. Se guarda automáticamente." FontSize="10" Foreground="{DynamicResource Brush.Slate2}" Margin="0,2,0,0"/>
+            </StackPanel>
+            <ToggleButton Grid.Column="1" IsChecked="{Binding IsDarkMode}" Height="26" Width="48"
+                          AutomationProperties.Name="Alternar modo oscuro">
+              <ToggleButton.Style>
+                <Style TargetType="ToggleButton">
+                  <Setter Property="Template">
+                    <Setter.Value>
+                      <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="Bg" Width="48" Height="26" CornerRadius="13" Background="{DynamicResource Brush.Slate3}">
+                          <Ellipse x:Name="Knob" Width="22" Height="22" Fill="White" HorizontalAlignment="Left" Margin="2" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                          <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Bg" Property="Background" Value="{DynamicResource Brush.Blue2}" />
+                            <Setter TargetName="Knob" Property="HorizontalAlignment" Value="Right" />
+                          </Trigger>
+                        </ControlTemplate.Triggers>
+                      </ControlTemplate>
+                    </Setter.Value>
+                  </Setter>
+                </Style>
+              </ToggleButton.Style>
+            </ToggleButton>
+          </Grid>
+        </StackPanel>
+      </Border>
+
+      <!-- ─── Actualizaciones ─────────────────────────────────────────────── -->
+      <Border Style="{StaticResource Card.FormSection}"
+              DataContext="{Binding Updates}">
+        <StackPanel>
+          <TextBlock Text="ACTUALIZACIONES" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink5}" Margin="0,0,0,2"/>
+          <TextBlock Text="Comprueba si hay una versión nueva de Qubi Cost Electrical disponible." FontSize="9" Foreground="{DynamicResource Brush.Ink4}" Margin="0,0,0,16"/>
+
+          <!-- Versión instalada y canal -->
+          <Grid Margin="0,0,0,8">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="200"/>
+              <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Versión instalada" FontSize="9" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center"/>
+            <TextBlock Grid.Column="1" Text="{Binding CurrentVersion}" FontSize="10" FontWeight="Bold"
+                       Foreground="{DynamicResource Brush.BlueDark}" VerticalAlignment="Center"/>
+          </Grid>
+          <Grid Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="200"/>
+              <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Canal" FontSize="9" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center"/>
+            <TextBlock Grid.Column="1" Text="{Binding Channel}" FontSize="9" Foreground="{DynamicResource Brush.Slate}" VerticalAlignment="Center"/>
+          </Grid>
+
+          <!-- Mensaje de estado -->
+          <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}"
+                  BorderThickness="1" CornerRadius="6" Padding="12,8" Margin="0,0,0,10"
+                  Visibility="{Binding StatusMessage, Converter={StaticResource NullToVisibility}, ConverterParameter=NonEmpty}">
+            <TextBlock Text="{Binding StatusMessage}" FontSize="9" Foreground="{DynamicResource Brush.Ink7}"
+                       TextWrapping="Wrap"/>
+          </Border>
+
+          <!-- Versión disponible -->
+          <Border Background="{DynamicResource Brush.BlueFaint}" BorderBrush="{DynamicResource Brush.BrandStroke3}" BorderThickness="1" CornerRadius="6"
+                  Padding="12,8" Margin="0,0,0,10"
+                  Visibility="{Binding IsUpdateAvailable, Converter={StaticResource BoolToVisibility}}">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Text="Nueva versión: " FontSize="9" Foreground="{DynamicResource Brush.BlueDark}"/>
+              <TextBlock Text="{Binding AvailableVersion}" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.BlueDark}"/>
+            </StackPanel>
+          </Border>
+
+          <!-- Progreso de descarga -->
+          <Grid Margin="0,0,0,10"
+                Visibility="{Binding IsDownloading, Converter={StaticResource BoolToVisibility}}">
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="4"/>
+              <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <TextBlock Grid.Row="0" Text="{Binding StatusMessage}" FontSize="9" Foreground="{DynamicResource Brush.Ink7}"/>
+            <ProgressBar Grid.Row="2" Value="{Binding DownloadProgress, Mode=OneWay}" Minimum="0" Maximum="100"
+                         Height="6" AutomationProperties.Name="Progreso de descarga"/>
+          </Grid>
+
+          <!-- Error -->
+          <Border Background="{DynamicResource Brush.DangerBg}" BorderBrush="{DynamicResource Brush.DangerBorder}" BorderThickness="1" CornerRadius="6"
+                  Padding="12,8" Margin="0,0,0,10"
+                  Visibility="{Binding HasError, Converter={StaticResource BoolToVisibility}}">
+            <TextBlock Text="{Binding ErrorMessage}" FontSize="9" Foreground="{DynamicResource Brush.Danger}" TextWrapping="Wrap"/>
+          </Border>
+
+          <!-- Última comprobación -->
+          <Grid Margin="0,0,0,12"
+                Visibility="{Binding LastCheckedAt, Converter={StaticResource NullToVisibility}, ConverterParameter=Inverse}">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="200"/>
+              <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Última comprobación" FontSize="9" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center"/>
+            <TextBlock Grid.Column="1" Text="{Binding LastCheckedAt, StringFormat=dd/MM/yyyy HH:mm}"
+                       FontSize="9" Foreground="{DynamicResource Brush.Slate}" VerticalAlignment="Center"/>
+          </Grid>
+
+          <!-- Botones -->
+          <StackPanel Orientation="Horizontal">
+            <Button Command="{Binding CheckForUpdatesCommand}" Height="34" Padding="14,0"
+                    AutomationProperties.Name="Buscar actualizaciones">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Buscar actualizaciones"
+                           Visibility="{Binding IsChecking, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}"/>
+                <TextBlock Text="Verificando…"
+                           Visibility="{Binding IsChecking, Converter={StaticResource BoolToVisibility}}"/>
+              </StackPanel>
+            </Button>
+            <Button Margin="8,0,0,0" Height="34" Padding="14,0"
+                    Command="{Binding DownloadUpdateCommand}"
+                    Visibility="{Binding IsUpdateAvailable, Converter={StaticResource BoolToVisibility}}"
+                    AutomationProperties.Name="Descargar actualización">
+              Descargar
+            </Button>
+            <Button Style="{StaticResource Button.Primary}" Margin="8,0,0,0" Height="34" Padding="14,0"
+                    Command="{Binding InstallAndRestartCommand}"
+                    Visibility="{Binding CanInstallVisible, Converter={StaticResource BoolToVisibility}}"
+                    AutomationProperties.Name="Instalar y reiniciar">
+              Instalar y reiniciar
+            </Button>
+          </StackPanel>
+
+        </StackPanel>
+      </Border>
+
+      <!-- ─── Diagnóstico ──────────────────────────────────────────────────── -->
+      <Border Style="{StaticResource Card.FormSection}">
+        <StackPanel>
+          <TextBlock Text="DIAGNÓSTICO" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink5}" Margin="0,0,0,16"/>
+
+          <Grid Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="200"/>
+              <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Versión de la aplicación" FontSize="9" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center"/>
+            <TextBlock Grid.Column="1" Text="{Binding AppVersion}" FontSize="10" FontWeight="Bold"
+                       Foreground="{DynamicResource Brush.BlueDark}" VerticalAlignment="Center"/>
+          </Grid>
+
+          <Grid Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="200"/>
+              <ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Carpeta de logs" FontSize="9" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center"/>
+            <TextBlock Grid.Column="1" Text="{Binding LogsFolderPath}" FontSize="9" Foreground="{DynamicResource Brush.Ink4}"
+                       TextTrimming="CharacterEllipsis" VerticalAlignment="Center" ToolTip="{Binding LogsFolderPath}"/>
+            <Button Grid.Column="2" Content="Abrir carpeta" Height="30" Padding="10,0" Margin="8,0,0,0"
+                    Click="OnOpenLogsFolderClick"/>
+          </Grid>
+
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="200"/>
+              <ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Carpeta de recuperación" FontSize="9" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center"/>
+            <TextBlock Grid.Column="1" Text="{Binding RecoveryFolderPath}" FontSize="9" Foreground="{DynamicResource Brush.Ink4}"
+                       TextTrimming="CharacterEllipsis" VerticalAlignment="Center" ToolTip="{Binding RecoveryFolderPath}"/>
+            <Button Grid.Column="2" Content="Abrir carpeta" Height="30" Padding="10,0" Margin="8,0,0,0"
+                    Click="OnOpenRecoveryFolderClick"/>
+          </Grid>
+
+        </StackPanel>
+      </Border>
+
+      <!-- ─── Usuarios y permisos ─────────────────────────────────────────── -->
+      <Border Style="{StaticResource Card.FormSection}">
+        <StackPanel>
+          <TextBlock Text="USUARIOS Y PERMISOS" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink5}" Margin="0,0,0,2"/>
+          <TextBlock Text="Gestión de cuentas locales (Admin, Estimador, Visor)." FontSize="9" Foreground="{DynamicResource Brush.Ink4}" Margin="0,0,0,16"/>
+
+          <Grid Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="2*"/>
+              <ColumnDefinition Width="8"/>
+              <ColumnDefinition Width="2*"/>
+              <ColumnDefinition Width="8"/>
+              <ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="8"/>
+              <ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="8"/>
+              <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBox Grid.Column="0" Text="{Binding NewUserDisplayName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" Height="34" ToolTip="Nombre"/>
+            <TextBox Grid.Column="2" Text="{Binding NewUserEmail, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" Height="34" ToolTip="Correo"/>
+            <TextBox Grid.Column="4" Text="{Binding NewUserPin, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" Height="34" MaxLength="6" ToolTip="PIN 4-6 dígitos"/>
+            <ComboBox Grid.Column="6" ItemsSource="{Binding AvailableRoles}" SelectedItem="{Binding NewUserRole}" Height="34"/>
+            <Button Grid.Column="8" Content="Crear usuario" Height="34" Padding="12,0" Click="OnCreateUserClick"/>
+          </Grid>
+
+          <Grid Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="2*"/>
+              <ColumnDefinition Width="8"/>
+              <ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="8"/>
+              <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBox Grid.Column="0" Text="{Binding UserSearchText, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" Height="34" ToolTip="Buscar por nombre o correo (Ctrl+F)"/>
+            <ComboBox Grid.Column="2" ItemsSource="{Binding UserRoleFilters}" SelectedItem="{Binding SelectedUserRoleFilter}" Height="34"/>
+            <ComboBox Grid.Column="4" ItemsSource="{Binding UserActiveFilters}" SelectedItem="{Binding SelectedUserActiveFilter}" Height="34"/>
+          </Grid>
+
+          <Grid Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="8"/>
+              <ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="8"/>
+              <ColumnDefinition Width="Auto"/>
+              <ColumnDefinition Width="8"/>
+              <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0">
+              <TextBlock Text="PIN mínimo" FontSize="9" Foreground="{DynamicResource Brush.Ink4}" Margin="0,0,0,4"/>
+              <TextBox Text="{Binding PinMinLength, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" Height="34"/>
+            </StackPanel>
+            <StackPanel Grid.Column="2">
+              <TextBlock Text="PIN máximo" FontSize="9" Foreground="{DynamicResource Brush.Ink4}" Margin="0,0,0,4"/>
+              <TextBox Text="{Binding PinMaxLength, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" Height="34"/>
+            </StackPanel>
+            <CheckBox Grid.Column="4" Content="Bloquear secuencias" IsChecked="{Binding PinBlockSequences}" VerticalAlignment="Bottom" Margin="0,0,0,6"/>
+            <CheckBox Grid.Column="6" Content="Bloquear repeticiones" IsChecked="{Binding PinBlockRepeats}" VerticalAlignment="Bottom" Margin="0,0,0,6"/>
+          </Grid>
+
+          <DataGrid x:Name="UsersGrid" ItemsSource="{Binding Users}" SelectedItem="{Binding SelectedUser}"
+                    AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
+                    HeadersVisibility="Column" MinHeight="180" PreviewKeyDown="OnUsersGridPreviewKeyDown">
+            <DataGrid.ContextMenu>
+              <ContextMenu>
+                <MenuItem Header="Activar/Desactivar" Click="OnContextToggleUserClick"/>
+                <MenuItem Header="Cambiar rol" Click="OnContextRotateRoleClick"/>
+                <MenuItem Header="Reset PIN" Click="OnContextResetPinClick"/>
+                <Separator/>
+                <MenuItem Header="Desbloquear cuenta" Click="OnContextUnlockUserClick"/>
+              </ContextMenu>
+            </DataGrid.ContextMenu>
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="Nombre" Binding="{Binding DisplayName}" Width="2*"/>
+              <DataGridTextColumn Header="Correo" Binding="{Binding Email}" Width="2*"/>
+              <DataGridTextColumn Header="Rol" Binding="{Binding Role}" Width="*"/>
+              <DataGridTextColumn Header="Activo" Binding="{Binding IsActive}" Width="*"/>
+              <DataGridTextColumn Header="Último acceso" Binding="{Binding LastLoginAt, StringFormat=dd/MM/yyyy HH:mm}" Width="*"/>
+              <DataGridTemplateColumn Header="Acciones" Width="2*">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                      <Button Content="Activar/Desactivar" Margin="0,0,6,0"
+                              Click="OnToggleUserActiveClick"
+                              CommandParameter="{Binding}"/>
+                      <Button Content="Cambiar rol" Margin="0,0,6,0"
+                              Click="OnRotateUserRoleClick"
+                              CommandParameter="{Binding}"/>
+                      <Button Content="Reset PIN" Margin="0,0,6,0"
+                              Click="OnResetUserPinClick"
+                              CommandParameter="{Binding}"/>
+                      <Button Content="Desbloquear"
+                              Click="OnUnlockUserClick"
+                              CommandParameter="{Binding}"/>
+                    </StackPanel>
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
+            </DataGrid.Columns>
+          </DataGrid>
+
+          <TextBlock Text="Atajos: F2 cambiar rol · Ctrl+U desbloquear · clic derecho para más acciones"
+                     FontSize="9" Foreground="{DynamicResource Brush.Ink4}" Margin="0,6,0,0"/>
+          <TextBlock Text="{Binding UserAdminStatus}" FontSize="10" Foreground="{DynamicResource Brush.Ink6}" Margin="0,8,0,0"/>
+
+          <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,10,0,0">
+            <StackPanel>
+              <TextBlock Text="Auditoría persistente (SQLite)" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink5}" Margin="0,0,0,6"/>
+              <ItemsControl ItemsSource="{Binding UserAuditEntries}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <TextBlock Text="{Binding}" FontSize="10" Foreground="{DynamicResource Brush.Ink6}" Margin="0,0,0,2" TextWrapping="Wrap"/>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </Border>
+
+      <!-- ─── Error de validación ──────────────────────────────────────────── -->
+      <Border Background="{DynamicResource Brush.DangerBg}" BorderBrush="{DynamicResource Brush.DangerBorder}" BorderThickness="1" CornerRadius="8"
+              Padding="12,8" Margin="0,0,0,12"
+              Visibility="{Binding ValidationError, Converter={StaticResource NullToVisibility}, ConverterParameter=NonEmpty}">
+        <TextBlock Text="{Binding ValidationError}" FontSize="10" Foreground="{DynamicResource Brush.Danger}"/>
+      </Border>
+
+      <!-- ─── Mensaje de éxito ─────────────────────────────────────────────── -->
+      <Border Background="{DynamicResource Brush.SuccessBg}" BorderBrush="{DynamicResource Brush.SuccessBorder}" BorderThickness="1" CornerRadius="8"
+              Padding="12,8" Margin="0,0,0,12"
+              Visibility="{Binding SaveStatus, Converter={StaticResource NullToVisibility}, ConverterParameter=NonEmpty}">
+        <TextBlock Text="{Binding SaveStatus}" FontSize="10" Foreground="{DynamicResource Brush.SuccessDark}"/>
+      </Border>
+
+      <!-- ─── Acciones ─────────────────────────────────────────────────────── -->
+      <StackPanel Orientation="Horizontal">
+        <Button Style="{StaticResource Button.Primary}" Content="Guardar"
+                IsEnabled="{Binding HasPendingChanges}" Click="OnSaveClick"/>
+        <Button Style="{StaticResource Button.Secondary}" Content="Aplicar" Margin="8,0,0,0"
+                IsEnabled="{Binding HasPendingChanges}" Click="OnApplyClick"/>
+        <Button Style="{StaticResource Button.Secondary}" Content="Cancelar" Margin="8,0,0,0"
+                IsEnabled="{Binding HasPendingChanges}" Click="OnCancelClick"/>
+        <Button Style="{StaticResource Button.Secondary}" Content="Restaurar predeterminados" Margin="24,0,0,0"
+                Click="OnRestoreDefaultsClick"/>
+      </StackPanel>
+
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

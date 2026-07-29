@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Resumen SC · Tomar Material</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f6fa;
+    --surface: #ffffff;
+    --surface2: #f0f2f8;
+    --surface3: #e8ebf3;
+    --line: #e2e5ed;
+    --ink: #1a1d2e;
+    --muted: #7a7f93;
+    --blue: #3b6eff;
+    --blueSoft: #eef2ff;
+    --blueDark: #1e40af;
+    --amber: #f59e0b;
+    --amberSoft: #fef7e6;
+    --green: #10b981;
+    --greenSoft: #e6faf3;
+    --greenDark: #065f46;
+    --red: #ef4444;
+    --redSoft: #fef2f2;
+    --slate: #64748b;
+    --slateSoft: #f1f5f9;
+    --cyan: #06b6d4;
+    --cyanSoft: #ecfeff;
+    --violet: #8b5cf6;
+    --violetSoft: #f0ecfd;
+    --radius: 10px;
+    --radiusSm: 6px;
+    --shadow: 0 1px 4px rgba(0,0,0,0.06);
+    --shadowLg: 0 8px 32px rgba(0,0,0,0.12);
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    padding: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+  }
+
+  /* ── Dialog frame ── */
+  .dialog {
+    width: 1260px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: var(--shadowLg);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    max-height: 98vh;
+  }
+
+  /* ── Header ── */
+  .dialog-header {
+    padding: 18px 24px;
+    background: linear-gradient(135deg, var(--ink) 0%, #2d3154 100%);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .dialog-header-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .dialog-header-left .icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: var(--blue);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: white;
+  }
+
+  .dialog-header-left h1 {
+    font-size: 18px;
+    font-weight: 700;
+    color: white;
+  }
+
+  .dialog-header-left .sub {
+    font-size: 12px;
+    color: rgba(255,255,255,0.55);
+    font-weight: 400;
+    margin-top: 2px;
+  }
+
+  .dialog-header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .context-badge {
+    background: rgba(255,255,255,0.1);
+    border-radius: var(--radiusSm);
+    padding: 6px 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.8);
+  }
+
+  .context-badge strong { color: white; font-weight: 700; }
+
+  .context-badge .code-pill {
+    background: var(--blue);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 11px;
+  }
+
+  .context-badge .sistema-chip {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 11px;
+  }
+
+  .sistema-A  { background: #2A1E14; color: #FFAE42; }
+  .sistema-E  { background: #172237; color: #3B82F6; }
+  .sistema-CL { background: #231B3D; color: #8B5CF6; }
+  .sistema-C  { background: #112F35; color: #06B6D4; }
+  .sistema-F  { background: #2F2412; color: #F59E0B; }
+
+  .btn-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: none;
+    background: rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.6);
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+  .btn-close:hover { background: rgba(255,255,255,0.2); color: white; }
+
+  /* ── Info banner ── */
+  .info-banner {
+    padding: 10px 24px;
+    background: var(--amberSoft);
+    border-bottom: 1px solid var(--amber);
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #92400e;
+    flex-shrink: 0;
+  }
+  .info-banner strong { font-weight: 700; }
+
+  /* ── System type filter bar ── */
+  .sistema-filter-bar {
+    padding: 10px 18px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+
+  .sistema-filter-bar .filter-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .sistema-filter-bar .filter-chips {
+    display: flex;
+    gap: 6px;
+  }
+
+  .sistema-filter-chip {
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.15s;
+    user-select: none;
+    opacity: 0.5;
+  }
+
+  .sistema-filter-chip:hover { opacity: 0.85; }
+  .sistema-filter-chip.active { opacity: 1; }
+
+  .sistema-filter-chip.chip-A {
+    background: #2A1E14; color: #FFAE42; border-color: #FFAE42;
+  }
+  .sistema-filter-chip.chip-E {
+    background: #172237; color: #3B82F6; border-color: #3B82F6;
+  }
+  .sistema-filter-chip.chip-CL {
+    background: #231B3D; color: #8B5CF6; border-color: #8B5CF6;
+  }
+  .sistema-filter-chip.chip-C {
+    background: #112F35; color: #06B6D4; border-color: #06B6D4;
+  }
+  .sistema-filter-chip.chip-F {
+    background: #2F2412; color: #F59E0B; border-color: #F59E0B;
+  }
+
+  .sistema-filter-chip.chip-todos {
+    background: var(--surface2); color: var(--ink); border-color: var(--line);
+  }
+  .sistema-filter-chip.chip-todos.active {
+    background: var(--ink); color: white; border-color: var(--ink);
+  }
+
+  /* ── Body: sidebar + main ── */
+  .dialog-body {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    border-right: 1px solid var(--line);
+    background: var(--surface2);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .sidebar-search {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--line);
+    position: relative;
+  }
+
+  .sidebar-search input {
+    width: 100%;
+    padding: 8px 8px 8px 30px;
+    border: 1px solid var(--line);
+    border-radius: var(--radiusSm);
+    font-size: 12px;
+    background: var(--surface);
+    outline: none;
+  }
+  .sidebar-search input:focus { border-color: var(--blue); box-shadow: 0 0 0 2px var(--blueSoft); }
+
+  .sidebar-search .icon {
+    position: absolute;
+    left: 22px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .sidebar-list {
+    list-style: none;
+    overflow-y: auto;
+    flex: 1;
+    padding: 6px 0;
+  }
+
+  .sidebar-list li {
+    padding: 10px 14px 10px 16px;
+    cursor: pointer;
+    transition: background 0.1s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-left: 3px solid transparent;
+  }
+
+  .sidebar-list li:hover { background: var(--surface); }
+  .sidebar-list li.active { background: var(--surface); border-left-color: var(--blue); }
+
+  .sidebar-list li .cat-dot {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+  }
+
+  .sidebar-list li .cat-name {
+    font-size: 13px; font-weight: 600; color: var(--ink); flex: 1;
+  }
+
+  .sidebar-list li .cat-count {
+    font-size: 11px; font-weight: 600; color: var(--muted);
+    background: var(--surface3); padding: 1px 7px; border-radius: 10px;
+  }
+
+  .sidebar-list li .cat-subtotal {
+    font-size: 11px; font-weight: 700; color: var(--greenDark);
+  }
+
+  .sidebar-list li.tuberia .cat-dot { background: var(--green); }
+  .sidebar-list li.conductor .cat-dot { background: var(--blue); }
+  .sidebar-list li.cajas .cat-dot { background: var(--slate); }
+  .sidebar-list li.artefactos .cat-dot { background: var(--amber); }
+  .sidebar-list li.bandejas .cat-dot { background: var(--cyan); }
+  .sidebar-list li.flexibles .cat-dot { background: var(--red); }
+
+  .sidebar-list li.tuberia:hover,
+  .sidebar-list li.tuberia.active { background: var(--greenSoft); }
+  .sidebar-list li.conductor:hover,
+  .sidebar-list li.conductor.active { background: var(--blueSoft); }
+  .sidebar-list li.cajas:hover,
+  .sidebar-list li.cajas.active { background: var(--slateSoft); }
+  .sidebar-list li.artefactos:hover,
+  .sidebar-list li.artefactos.active { background: var(--amberSoft); }
+  .sidebar-list li.bandejas:hover,
+  .sidebar-list li.bandejas.active { background: var(--cyanSoft); }
+  .sidebar-list li.flexibles:hover,
+  .sidebar-list li.flexibles.active { background: var(--redSoft); }
+
+  .sidebar-footer {
+    padding: 10px 14px;
+    border-top: 1px solid var(--line);
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+    background: var(--surface2);
+  }
+  .sidebar-footer .total-items { font-weight: 700; color: var(--ink); }
+
+  /* ── Main panel ── */
+  .main-panel {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .main-toolbar {
+    padding: 10px 18px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+
+  .main-toolbar .section-title {
+    font-size: 13px; font-weight: 700; color: var(--ink);
+  }
+  .main-toolbar .section-title span { color: var(--muted); font-weight: 400; }
+
+  .main-toolbar .toolbar-actions { display: flex; gap: 8px; align-items: center; }
+
+  .btn {
+    padding: 6px 14px; border-radius: var(--radiusSm);
+    border: 1px solid var(--line); font-size: 12px; font-weight: 600;
+    cursor: pointer; background: var(--surface); color: var(--ink);
+    transition: all 0.12s; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn:hover { background: var(--surface2); }
+
+  .btn-primary { background: var(--blue); color: white; border-color: var(--blue); }
+  .btn-primary:hover { background: var(--blueDark); }
+
+  .btn-green { background: var(--green); color: white; border-color: var(--green); }
+  .btn-green:hover { background: var(--greenDark); }
+
+  .btn-sm { padding: 4px 10px; font-size: 11px; }
+  .btn-ghost { border-color: transparent; background: transparent; }
+  .btn-ghost:hover { background: var(--surface2); }
+
+  /* ── Table ── */
+  .table-wrapper { flex: 1; overflow: auto; }
+
+  .table-wrapper table {
+    width: 100%; border-collapse: collapse; font-size: 12px; min-width: 960px;
+  }
+
+  .table-wrapper thead { position: sticky; top: 0; z-index: 2; }
+
+  .table-wrapper thead th {
+    background: var(--surface2);
+    padding: 8px 10px;
+    border-bottom: 2px solid var(--line);
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  .table-wrapper thead th.zone-col {
+    text-align: center;
+    min-width: 70px;
+    width: 70px;
+    background: var(--amberSoft);
+    border-bottom-color: var(--amber);
+  }
+
+  .table-wrapper thead th.zone-col .zone-sub {
+    font-weight: 400;
+    font-size: 9px;
+    color: #92400e;
+    display: block;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  .table-wrapper thead th.total-col {
+    text-align: right;
+    min-width: 70px;
+    background: var(--greenSoft);
+    border-bottom-color: var(--green);
+    color: var(--greenDark);
+  }
+
+  .table-wrapper thead th.action-col { text-align: center; min-width: 60px; width: 60px; }
+  .table-wrapper thead th.price-col { text-align: right; min-width: 65px; width: 65px; }
+
+  .table-wrapper thead th .totals-help {
+    font-size: 8px; color: var(--muted); display: block; font-weight: 400;
+  }
+
+  /* ── Group header rows ── */
+  .group-header {
+    background: var(--surface3) !important;
+    border-bottom: 1px solid var(--line);
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+  .group-header:hover { filter: brightness(0.97); }
+
+  .group-header td {
+    padding: 10px 10px; font-weight: 700; font-size: 12px; color: var(--ink);
+  }
+
+  .group-header .group-toggle {
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+
+  .group-header .group-toggle .arrow {
+    transition: transform 0.2s; font-size: 10px; color: var(--muted);
+  }
+  .group-header .group-toggle .arrow.open { transform: rotate(90deg); }
+
+  .group-header .group-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 2px 10px; border-radius: 12px;
+    font-size: 11px; font-weight: 700; margin-left: 8px;
+  }
+
+  .group-header .group-chip.green  { background: var(--greenSoft);  color: var(--greenDark); }
+  .group-header .group-chip.blue   { background: var(--blueSoft);   color: var(--blueDark); }
+  .group-header .group-chip.slate  { background: var(--slateSoft);  color: var(--slate); }
+  .group-header .group-chip.amber  { background: var(--amberSoft);  color: #92400e; }
+  .group-header .group-chip.cyan   { background: var(--cyanSoft);   color: #0e7490; }
+  .group-header .group-chip.red    { background: var(--redSoft);    color: #991b1b; }
+
+  .group-header .group-subtotal {
+    font-weight: 600; font-size: 12px; color: var(--ink); text-align: right; padding-right: 16px;
+  }
+
+  /* ── Data rows ── */
+  .data-row td {
+    padding: 6px 10px; border-bottom: 1px solid var(--line);
+    vertical-align: middle; font-size: 12px;
+  }
+  .data-row:hover { background: var(--blueSoft); }
+  .data-row.selected { background: var(--blueSoft); outline: 2px solid var(--blue); outline-offset: -2px; }
+
+  .data-row .cell-code { font-weight: 700; color: var(--blue); font-size: 11px; }
+  .data-row .cell-desc {
+    color: var(--ink); max-width: 180px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .data-row .cell-unit { color: var(--muted); font-size: 11px; }
+  .data-row .cell-price { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink); }
+
+  .data-row .cell-total {
+    text-align: right; font-weight: 700;
+    color: var(--greenDark); font-variant-numeric: tabular-nums;
+  }
+
+  .data-row .cell-center { text-align: center; }
+
+  .data-row input[type="text"] {
+    width: 100%; padding: 4px 6px; border: 1px solid var(--line);
+    border-radius: 4px; font-size: 12px; text-align: right;
+    font-variant-numeric: tabular-nums; background: var(--surface);
+    outline: none; transition: border-color 0.15s;
+  }
+  .data-row input[type="text"]:focus { border-color: var(--blue); box-shadow: 0 0 0 2px var(--blueSoft); }
+  .data-row input[type="text"]:hover { border-color: var(--muted); }
+
+  .data-row .btn-take {
+    padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 700;
+    cursor: pointer; border: none; background: var(--green); color: white;
+    transition: background 0.15s;
+  }
+  .data-row .btn-take:hover { background: var(--greenDark); }
+  .data-row .btn-take.taken { background: var(--slate); cursor: default; }
+
+  /* ── KPI bar ── */
+  .kpi-bar {
+    padding: 14px 18px; border-top: 1px solid var(--line);
+    display: flex; gap: 16px; background: var(--surface);
+    flex-shrink: 0; flex-wrap: wrap;
+  }
+
+  .kpi-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 16px; border-radius: var(--radiusSm);
+    border: 1px solid var(--line); background: var(--surface2);
+  }
+
+  .kpi-item .kpi-label {
+    font-size: 10px; font-weight: 600; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.4px;
+  }
+
+  .kpi-item .kpi-value { font-size: 16px; font-weight: 800; color: var(--ink); }
+  .kpi-item .kpi-unit { font-size: 11px; color: var(--muted); font-weight: 500; }
+
+  .kpi-item.kpi-tuberia   { border-left: 3px solid var(--green); }
+  .kpi-item.kpi-conductor { border-left: 3px solid var(--blue); }
+  .kpi-item.kpi-cajas     { border-left: 3px solid var(--slate); }
+  .kpi-item.kpi-artefactos { border-left: 3px solid var(--amber); }
+  .kpi-item.kpi-bandejas  { border-left: 3px solid var(--cyan); }
+
+  /* ── Footer ── */
+  .dialog-footer {
+    padding: 14px 24px; border-top: 1px solid var(--line);
+    background: var(--surface2);
+    display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
+  }
+
+  .dialog-footer .footer-info { font-size: 12px; color: var(--muted); }
+  .dialog-footer .footer-info strong { color: var(--ink); }
+
+  .dialog-footer .footer-actions { display: flex; gap: 8px; }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+</style>
+</head>
+<body>
+
+<div class="dialog">
+
+  <!-- ═══ HEADER ═══ -->
+  <div class="dialog-header">
+    <div class="dialog-header-left">
+      <div class="icon">📊</div>
+      <div>
+        <h1>Resumen de Servicios Comunes</h1>
+        <div class="sub">Selecciona un material y toma sus cantidades por piso</div>
+      </div>
+    </div>
+    <div class="dialog-header-right">
+      <div class="context-badge">
+        <span>Tablero:</span>
+        <strong>TDA SC</strong>
+      </div>
+      <div class="context-badge">
+        <span>Circuito:</span>
+        <span class="sistema-chip sistema-A">A</span>
+        <strong>5 · Circ. Alumbrado Pasillo</strong>
+      </div>
+      <button class="btn-close" title="Cerrar">✕</button>
+    </div>
+  </div>
+
+  <!-- ═══ INFO BANNER ═══ -->
+  <div class="info-banner">
+    <span>💡</span>
+    <span>
+      Los materiales se muestran filtrados por el sistema <strong>Alumbrado (A)</strong>
+      del circuito activo. Cambia el filtro para ver materiales de otros sistemas.
+      Haz clic en <strong>Tomar</strong> para aplicar el material a la fila actual.
+    </span>
+  </div>
+
+  <!-- ═══ SYSTEM TYPE FILTER BAR ═══ -->
+  <div class="sistema-filter-bar">
+    <span class="filter-label">Sistema</span>
+    <div class="filter-chips">
+      <div class="sistema-filter-chip chip-todos active">Todos</div>
+      <div class="sistema-filter-chip chip-A active">A · Alumbrado</div>
+      <div class="sistema-filter-chip chip-E">E · Enchufe</div>
+      <div class="sistema-filter-chip chip-CL">CL · Clima</div>
+      <div class="sistema-filter-chip chip-C">C · Computación</div>
+      <div class="sistema-filter-chip chip-F">F · Fuerza</div>
+    </div>
+    <span style="flex:1"></span>
+    <span style="font-size:11px;color:var(--muted);font-weight:500">
+      12 materiales en Alumbrado
+    </span>
+  </div>
+
+  <!-- ═══ BODY ═══ -->
+  <div class="dialog-body">
+
+    <!-- ── Sidebar ── -->
+    <div class="sidebar">
+      <div class="sidebar-search">
+        <span class="icon">🔍</span>
+        <input type="text" placeholder="Filtrar materiales…" value="PVC">
+      </div>
+      <ul class="sidebar-list">
+        <li class="tuberia active">
+          <span class="cat-dot"></span>
+          <span class="cat-name">Tubería</span>
+          <span class="cat-count">4</span>
+          <span class="cat-subtotal">1.340 ML</span>
+        </li>
+        <li class="conductor">
+          <span class="cat-dot"></span>
+          <span class="cat-name">Conductor</span>
+          <span class="cat-count">3</span>
+          <span class="cat-subtotal">2.420 ML</span>
+        </li>
+        <li class="cajas">
+          <span class="cat-dot"></span>
+          <span class="cat-name">Cajas</span>
+          <span class="cat-count">2</span>
+          <span class="cat-subtotal">86 UN</span>
+        </li>
+        <li class="artefactos">
+          <span class="cat-dot"></span>
+          <span class="cat-name">Artefactos</span>
+          <span class="cat-count">2</span>
+          <span class="cat-subtotal">24 UN</span>
+        </li>
+        <li class="flexibles">
+          <span class="cat-dot"></span>
+          <span class="cat-name">Flexibles</span>
+          <span class="cat-count">1</span>
+          <span class="cat-subtotal">45 UN</span>
+        </li>
+      </ul>
+      <div class="sidebar-footer">
+        <span class="total-items">12</span> materiales en sistema <strong>A</strong>
+      </div>
+    </div>
+
+    <!-- ── Main panel ── -->
+    <div class="main-panel">
+
+      <!-- Toolbar -->
+      <div class="main-toolbar">
+        <div class="section-title">
+          Tubería <span>· 4 materiales</span>
+        </div>
+        <div class="toolbar-actions">
+          <button class="btn btn-sm">📋 Copiar todo</button>
+          <button class="btn btn-sm btn-primary">📌 Fijar selección</button>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:40px">#</th>
+              <th style="width:80px">Código</th>
+              <th style="min-width:155px">Descripción</th>
+              <th style="width:35px">UD</th>
+              <!-- Dynamic zones from ZonasProyecto -->
+              <th class="zone-col">
+                P1
+                <span class="zone-sub">Piso 1</span>
+              </th>
+              <th class="zone-col">
+                P2
+                <span class="zone-sub">Piso 2</span>
+              </th>
+              <th class="zone-col">
+                P3
+                <span class="zone-sub">Piso 3</span>
+              </th>
+              <th class="zone-col">
+                P4
+                <span class="zone-sub">Piso 4</span>
+              </th>
+              <th class="zone-col">
+                AZ
+                <span class="zone-sub">Azotea</span>
+              </th>
+              <th class="zone-col">
+                S1
+                <span class="zone-sub">Sótano 1</span>
+              </th>
+              <th class="total-col">
+                Total
+                <span class="totals-help">suma pisos</span>
+              </th>
+              <th class="price-col">MAT $</th>
+              <th class="action-col" style="min-width:64px">Acción</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <!-- ── Tubería PVC group ── -->
+            <tr class="group-header">
+              <td colspan="13">
+                <div class="group-toggle">
+                  <span class="arrow open">▶</span>
+                  <span>Tubería PVC — Sección Eléctrica</span>
+                  <span class="group-chip green">1.340 ML</span>
+                  <span class="group-chip slate">$ 2.845.200</span>
+                </div>
+              </td>
+            </tr>
+
+            <tr class="data-row selected">
+              <td>1</td>
+              <td><span class="cell-code">PVC-20</span></td>
+              <td><span class="cell-desc">Tubería PVC Ø20 mm · Sección Eléctrica</span></td>
+              <td><span class="cell-unit">ML</span></td>
+              <td><input type="text" value="200"></td>
+              <td><input type="text" value="600"></td>
+              <td><input type="text" value="540"></td>
+              <td><input type="text" value="0"></td>
+              <td><input type="text" value="0"></td>
+              <td><input type="text" value="0"></td>
+              <td class="cell-total">1.340</td>
+              <td class="cell-price">$ 1.250</td>
+              <td class="cell-center"><button class="btn-take">Tomar</button></td>
+            </tr>
+
+            <tr class="data-row">
+              <td>2</td>
+              <td><span class="cell-code">PVC-25</span></td>
+              <td><span class="cell-desc">Tubería PVC Ø25 mm · Sección Eléctrica</span></td>
+              <td><span class="cell-unit">ML</span></td>
+              <td><input type="text" value="150"></td>
+              <td><input type="text" value="420"></td>
+              <td><input type="text" value="380"></td>
+              <td><input type="text" value="0"></td>
+              <td><input type="text" value="0"></td>
+              <td><input type="text" value="0"></td>
+              <td class="cell-total">950</td>
+              <td class="cell-price">$ 1.580</td>
+              <td class="cell-center"><button class="btn-take">Tomar</button></td>
+            </tr>
+
+            <tr class="data-row">
+              <td>3</td>
+              <td><span class="cell-code">PVC-32</span></td>
+              <td><span class="cell-desc">Tubería PVC Ø32 mm · Sección Eléctrica</span></td>
+              <td><span class="cell-unit">ML</span></td>
+              <td><input type="text" value="80"></td>
+              <td><input type="text" value="240"></td>
+              <td><input type="text" value="210"></td>
+              <td><input type="text" value="45"></td>
+              <td><input type="text" value="0"></td>
+              <td><input type="text" value="0"></td>
+              <td class="cell-total">575</td>
+              <td class="cell-price">$ 2.100</td>
+              <td class="cell-center"><button class="btn-take">Tomar</button></td>
+            </tr>
+
+            <!-- ── Tubería Metálica group ── -->
+            <tr class="group-header">
+              <td colspan="13">
+                <div class="group-toggle">
+                  <span class="arrow open">▶</span>
+                  <span>Tubería Metálica (EMT/IMC)</span>
+                  <span class="group-chip cyan">890 ML</span>
+                  <span class="group-chip slate">$ 3.120.400</span>
+                </div>
+              </td>
+            </tr>
+
+            <tr class="data-row">
+              <td>4</td>
+              <td><span class="cell-code">EMT-20</span></td>
+              <td><span class="cell-desc">Tubería EMT Ø20 mm · Liviana</span></td>
+              <td><span class="cell-unit">ML</span></td>
+              <td><input type="text" value="320"></td>
+              <td><input type="text" value="180"></td>
+              <td><input type="text" value="210"></td>
+              <td><input type="text" value="0"></td>
+              <td><input type="text" value="0"></td>
+              <td><input type="text" value="0"></td>
+              <td class="cell-total">710</td>
+              <td class="cell-price">$ 3.450</td>
+              <td class="cell-center"><button class="btn-take">Tomar</button></td>
+            </tr>
+
+            <tr class="data-row">
+              <td>5</td>
+              <td><span class="cell-code">IMC-25</span></td>
+              <td><span class="cell-desc">Tubería IMC Ø25 mm · Pesada</span></td>
+              <td><span class="cell-unit">ML</span></td>
+              <td><input type="text" value="60"></td>
+              <td><input type="text" value="80"></td>
+              <td><input type="text" value="40"></td>
+              <td><input type="text" value="0"></td>
+              <td><input type="text" value="0"></td>
+              <td><input type="text" value="0"></td>
+              <td class="cell-total">180</td>
+              <td class="cell-price">$ 5.200</td>
+              <td class="cell-center"><button class="btn-take">Tomar</button></td>
+            </tr>
+
+            <!-- ── Tubería Corrugada group ── -->
+            <tr class="group-header">
+              <td colspan="13">
+                <div class="group-toggle">
+                  <span class="arrow open">▶</span>
+                  <span>Tubería Corrugada — Subterránea</span>
+                  <span class="group-chip amber">2.100 ML</span>
+                  <span class="group-chip slate">$ 1.890.000</span>
+                </div>
+              </td>
+            </tr>
+
+            <tr class="data-row">
+              <td>6</td>
+              <td><span class="cell-code">CORR-25</span></td>
+              <td><span class="cell-desc">Tubería Corrugada Ø25 mm · Subterránea</span></td>
+              <td><span class="cell-unit">ML</span></td>
+              <td><input type="text" value="500"></td>
+              <td><input type="text" value="700"></td>
+              <td><input type="text" value="600"></td>
+              <td><input type="text" value="300"></td>
+              <td><input type="text" value="0"></td>
+              <td><input type="text" value="0"></td>
+              <td class="cell-total">2.100</td>
+              <td class="cell-price">$ 900</td>
+              <td class="cell-center"><button class="btn-take">Tomar</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- KPI Bar -->
+      <div class="kpi-bar">
+        <div class="kpi-item kpi-tuberia">
+          <div>
+            <div class="kpi-label">Tubería</div>
+            <span class="kpi-value">4.965</span>
+            <span class="kpi-unit">ML</span>
+          </div>
+        </div>
+        <div class="kpi-item kpi-conductor">
+          <div>
+            <div class="kpi-label">Conductor</div>
+            <span class="kpi-value">8.420</span>
+            <span class="kpi-unit">ML</span>
+          </div>
+        </div>
+        <div class="kpi-item kpi-cajas">
+          <div>
+            <div class="kpi-label">Cajas</div>
+            <span class="kpi-value">124</span>
+            <span class="kpi-unit">UN</span>
+          </div>
+        </div>
+        <div class="kpi-item kpi-artefactos">
+          <div>
+            <div class="kpi-label">Artefactos</div>
+            <span class="kpi-value">86</span>
+            <span class="kpi-unit">UN</span>
+          </div>
+        </div>
+        <div class="kpi-item kpi-bandejas">
+          <div>
+            <div class="kpi-label">Bandejas</div>
+            <span class="kpi-value">320</span>
+            <span class="kpi-unit">ML</span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /main-panel -->
+  </div><!-- /dialog-body -->
+
+  <!-- ═══ FOOTER ═══ -->
+  <div class="dialog-footer">
+    <div class="footer-info">
+      <strong>PVC-20</strong> seleccionado ·
+      <strong>1.340</strong> ML total ·
+      <span style="color:var(--greenDark)">$ 1.675.000</span> costo material ·
+      Sistema <span class="sistema-chip sistema-A" style="display:inline-block;padding:1px 6px;font-size:10px">A</span>
+    </div>
+    <div class="footer-actions">
+      <button class="btn">Cancelar</button>
+      <button class="btn btn-primary">Tomar material seleccionado</button>
+    </div>
+  </div>
+
+</div><!-- /dialog -->
+
+</body>
+</html>

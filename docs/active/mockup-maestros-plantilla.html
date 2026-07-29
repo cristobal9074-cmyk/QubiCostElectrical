@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup - Maestros en Plantillas</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f6fa;
+    --surface: #ffffff;
+    --surface2: #f0f2f8;
+    --line: #e2e5ed;
+    --ink: #1a1d2e;
+    --muted: #7a7f93;
+    --blue: #3b6eff;
+    --blueSoft: #eef2ff;
+    --amber: #f59e0b;
+    --amberSoft: #fef7e6;
+    --green: #10b981;
+    --greenSoft: #e6faf3;
+    --red: #ef4444;
+    --radius: 10px;
+    --shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    padding: 40px;
+  }
+
+  .container {
+    max-width: 1300px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    font-size: 28px;
+    font-weight: 800;
+    margin-bottom: 4px;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 14px;
+    margin-bottom: 32px;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 280px 12px 1fr;
+    gap: 0;
+    margin-top: 16px;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+
+  .sidebar-header {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--line);
+    background: var(--surface2);
+  }
+
+  .sidebar-header h3 {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .search-box {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--line);
+    position: relative;
+  }
+
+  .search-box input {
+    width: 100%;
+    padding: 8px 8px 8px 32px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    font-size: 12px;
+    background: var(--surface2);
+    outline: none;
+  }
+
+  .search-box input:focus {
+    border-color: var(--blue);
+  }
+
+  .search-box .icon {
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .template-list {
+    list-style: none;
+    max-height: 500px;
+    overflow-y: auto;
+  }
+
+  .template-list li {
+    padding: 12px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--line);
+    transition: background 0.15s;
+  }
+
+  .template-list li:hover {
+    background: var(--blueSoft);
+  }
+
+  .template-list li.active {
+    background: var(--blueSoft);
+    border-left: 3px solid var(--blue);
+  }
+
+  .template-list li .code {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--blue);
+    background: var(--blueSoft);
+    padding: 2px 6px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-bottom: 4px;
+  }
+
+  .template-list li .name {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  .template-list li .meta {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .template-list li .meta .badge {
+    display: inline-block;
+    background: var(--amberSoft);
+    color: var(--amber);
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 9px;
+    margin-left: 6px;
+  }
+
+  /* Detail panel */
+  .detail {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+
+  .detail-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--line);
+    background: var(--surface2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .detail-header .title-area {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .detail-header .code-input {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--blue);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 4px 8px;
+    width: 80px;
+  }
+
+  .detail-header .name-input {
+    font-size: 16px;
+    font-weight: 800;
+    border: none;
+    background: transparent;
+    outline: none;
+    min-width: 200px;
+  }
+
+  .detail-header .actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .btn {
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    background: var(--surface);
+    color: var(--ink);
+    transition: all 0.15s;
+  }
+
+  .btn:hover {
+    background: var(--surface2);
+  }
+
+  .btn-primary {
+    background: var(--blue);
+    color: white;
+    border-color: var(--blue);
+  }
+
+  .btn-primary:hover {
+    background: #2a56d0;
+  }
+
+  .btn-green {
+    background: var(--green);
+    color: white;
+    border-color: var(--green);
+  }
+
+  .btn-green:hover {
+    background: #059669;
+  }
+
+  .btn-amber {
+    background: var(--amber);
+    color: white;
+    border-color: var(--amber);
+  }
+
+  /* Info banner */
+  .banner {
+    padding: 10px 14px;
+    background: var(--blueSoft);
+    border-bottom: 1px solid var(--blue);
+    font-size: 11px;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .banner strong {
+    font-weight: 700;
+  }
+
+  .banner .sep {
+    color: var(--line);
+    margin: 0 4px;
+  }
+
+  /* Maestro selector section - NEW */
+  .maestro-section {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--line);
+    background: var(--amberSoft);
+  }
+
+  .maestro-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--amber);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .maestro-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .maestro-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: white;
+    border: 2px solid var(--amber);
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .maestro-chip:hover {
+    background: var(--amberSoft);
+  }
+
+  .maestro-chip .remove {
+    color: var(--muted);
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  .maestro-chip .remove:hover {
+    color: var(--red);
+  }
+
+  .maestro-chip.add {
+    border: 2px dashed var(--line);
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  .maestro-chip.add:hover {
+    border-color: var(--amber);
+    color: var(--amber);
+  }
+
+  /* Table */
+  .table-wrapper {
+    overflow-x: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+
+  thead th {
+    padding: 10px 12px;
+    text-align: left;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    border-bottom: 2px solid var(--line);
+    background: var(--surface2);
+    white-space: nowrap;
+  }
+
+  tbody td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: middle;
+  }
+
+  tbody tr:hover {
+    background: #f8f9fc;
+  }
+
+  tbody tr.is-master {
+    background: var(--amberSoft);
+  }
+
+  tbody tr.is-master:hover {
+    background: #fdf0ca;
+  }
+
+  tbody tr.is-slave {
+    background: var(--blueSoft);
+  }
+
+  tbody tr.is-slave:hover {
+    background: #dde6ff;
+  }
+
+  .master-badge {
+    display: inline-block;
+    background: var(--amber);
+    color: white;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 1px 8px;
+    border-radius: 10px;
+  }
+
+  .slave-badge {
+    display: inline-block;
+    background: var(--blue);
+    color: white;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 1px 8px;
+    border-radius: 10px;
+  }
+
+  .maestro-select {
+    padding: 4px 6px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    font-size: 11px;
+    background: white;
+    outline: none;
+  }
+
+  .maestro-select:focus {
+    border-color: var(--blue);
+  }
+
+  .calc-type {
+    padding: 4px 6px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    font-size: 11px;
+    background: white;
+    outline: none;
+  }
+
+  .formula-input {
+    padding: 4px 6px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    font-size: 11px;
+    font-family: 'Consolas', monospace;
+    background: white;
+    outline: none;
+    width: 130px;
+  }
+
+  .formula-input:focus {
+    border-color: var(--blue);
+  }
+
+  td input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: var(--amber);
+    display: block;
+    margin: 0 auto;
+  }
+
+  .text-right {
+    text-align: right;
+  }
+  .text-center {
+    text-align: center;
+  }
+
+  /* Footer */
+  .table-footer {
+    padding: 10px 14px;
+    border-top: 1px solid var(--line);
+    background: var(--surface2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .table-footer .metrics {
+    display: flex;
+    gap: 16px;
+    font-size: 12px;
+  }
+
+  .table-footer .metrics strong {
+    font-weight: 700;
+  }
+
+  /* Visual explanation */
+  .explanation {
+    margin-top: 40px;
+    padding: 24px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+
+  .explanation h2 {
+    font-size: 18px;
+    font-weight: 800;
+    margin-bottom: 16px;
+  }
+
+  .example-flow {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    margin-top: 16px;
+  }
+
+  .flow-card {
+    padding: 16px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+  }
+
+  .flow-card.master {
+    background: var(--amberSoft);
+    border-color: var(--amber);
+  }
+
+  .flow-card.slave-eq {
+    background: var(--blueSoft);
+    border-color: var(--blue);
+  }
+
+  .flow-card.slave-every {
+    background: var(--greenSoft);
+    border-color: var(--green);
+  }
+
+  .flow-card h4 {
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+
+  .flow-card .formula {
+    font-family: 'Consolas', monospace;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink);
+    padding: 8px 12px;
+    background: white;
+    border-radius: 6px;
+    margin: 8px 0;
+    border: 1px solid var(--line);
+  }
+
+  .flow-card p {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .arrow-flow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    color: var(--muted);
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <h1>⚡ Plantillas con Maestros</h1>
+  <p class="subtitle">Diseñador visual de conjuntos eléctricos con recursos Maestro/Esclavo y cálculo paramétrico</p>
+
+  <div class="layout">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h3>Mis Plantillas</h3>
+      </div>
+      <div class="search-box">
+        <span class="icon">🔍</span>
+        <input type="text" placeholder="Buscar plantilla..." value="Bandeja">
+      </div>
+      <ul class="template-list">
+        <li class="active">
+          <div class="code">BT-01</div>
+          <div class="name">Bandeja Metálica 60x100</div>
+          <div class="meta">
+            6 materiales
+            <span class="badge">⭐ 1 Maestro</span>
+          </div>
+        </li>
+        <li>
+          <div class="code">AL-02</div>
+          <div class="name">Alimentador Trifásico 3x16mm²</div>
+          <div class="meta">4 materiales · Unidad: m</div>
+        </li>
+        <li>
+          <div class="code">TE-01</div>
+          <div class="name">Tablero General 24 circuitos</div>
+          <div class="meta">8 materiales · Unidad: un</div>
+        </li>
+        <li>
+          <div class="code">CA-01</div>
+          <div class="name">Canalización PVC 25mm</div>
+          <div class="meta">3 materiales · Unidad: m</div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Spacer -->
+    <div></div>
+
+    <!-- Detail panel -->
+    <div class="detail">
+      <!-- Header -->
+      <div class="detail-header">
+        <div class="title-area">
+          <input class="code-input" type="text" value="BT-01">
+          <input class="name-input" type="text" value="Bandeja Metálica 60x100">
+        </div>
+        <div class="actions">
+          <button class="btn">Duplicar</button>
+          <button class="btn">Eliminar</button>
+        </div>
+      </div>
+
+      <!-- Banner informativo -->
+      <div class="banner">
+        <strong>⚡ Factor</strong> = Base x Factor
+        <span class="sep">│</span>
+        <strong>Cada N m</strong> = Ceil(Base / Paso)
+        <span class="sep">│</span>
+        <strong>Fórmula</strong> = expresión con MAESTRO (ej. MAESTRO / 1.5)
+        <span class="sep">│</span>
+        <strong>⭐ Maestro</strong> = recurso base; los esclavos lo siguen
+      </div>
+
+      <!-- ⭐ MAESTRO SECTION - The key new UI -->
+      <div class="maestro-section">
+        <div class="maestro-section-title">
+          ⭐ MAESTROS DE ESTA PLANTILLA
+          <span style="font-weight:400;color:var(--muted);font-size:10px;text-transform:none;letter-spacing:0;">
+            — Los maestros definen el orden. Los esclavos calculan su cantidad en base al maestro.
+          </span>
+        </div>
+        <div class="maestro-chips">
+          <div class="maestro-chip">
+            <span>📦 BT-01 · Bandeja Metálica 60x100</span>
+            <span class="remove">✕</span>
+          </div>
+          <div class="maestro-chip add">
+            ＋ Agregar otro Maestro
+          </div>
+        </div>
+        <div style="margin-top:10px;font-size:11px;color:var(--muted);">
+          💡 Puedes tener <strong>varios maestros</strong> en una misma plantilla. Cada esclavo elige a qué maestro sigue.
+        </div>
+      </div>
+
+      <!-- Tabla de materiales -->
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:40px">Tipo</th>
+              <th style="width:80px">Código</th>
+              <th style="width:auto">Descripción del Material</th>
+              <th style="width:40px">Ud.</th>
+              <th style="width:70px;text-align:center">⭐ Maestro</th>
+              <th style="width:130px">Sigue a Maestro</th>
+              <th style="width:110px">Tipo Cálculo</th>
+              <th style="width:90px">Paso (m)</th>
+              <th style="width:130px">Fórmula</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- MAESTRO row (amber) -->
+            <tr class="is-master">
+              <td>
+                <select class="calc-type" style="width:50px">
+                  <option selected>MAT</option>
+                  <option>MO</option>
+                  <option>EQ</option>
+                </select>
+              </td>
+              <td><strong>BT-001</strong></td>
+              <td><strong>Bandeja metálica 60x100mm galvanizada</strong></td>
+              <td>m</td>
+              <td class="text-center">
+                <input type="checkbox" checked>
+                <div><span class="master-badge">MAESTRO</span></div>
+              </td>
+              <td>
+                <span style="color:var(--muted);font-size:11px;">— (es el maestro)</span>
+              </td>
+              <td>
+                <select class="calc-type">
+                  <option selected>Factor</option>
+                  <option>Espaciamiento</option>
+                  <option>Fórmula</option>
+                </select>
+              </td>
+              <td class="text-right">1.00</td>
+              <td>
+                <input class="formula-input" type="text" value="" placeholder="MAESTRO / ..." disabled style="opacity:0.4;">
+              </td>
+            </tr>
+
+            <!-- SLAVE 1: Tapa de bandeja (same as master) - blue -->
+            <tr class="is-slave">
+              <td>
+                <select class="calc-type" style="width:50px">
+                  <option selected>MAT</option>
+                  <option>MO</option>
+                  <option>EQ</option>
+                </select>
+              </td>
+              <td>BT-002</td>
+              <td><strong>Tapa de bandeja metálica 60x100mm</strong></td>
+              <td>m</td>
+              <td class="text-center">
+                <input type="checkbox">
+              </td>
+              <td>
+                <select class="maestro-select">
+                  <option selected>📦 BT-001 · Bandeja</option>
+                  <option>➕ Ninguno</option>
+                </select>
+                <div><span class="slave-badge">ESCLAVO</span></div>
+              </td>
+              <td>
+                <select class="calc-type">
+                  <option>Factor</option>
+                  <option>Espaciamiento</option>
+                  <option selected>Fórmula</option>
+                </select>
+              </td>
+              <td class="text-right">—</td>
+              <td>
+                <input class="formula-input" type="text" value="MAESTRO" placeholder="MAESTRO / ...">
+                <div style="font-size:9px;color:var(--muted);margin-top:2px;">= misma cantidad que la bandeja</div>
+              </td>
+            </tr>
+
+            <!-- SLAVE 2: Soporte cada 1.5m - blue -->
+            <tr class="is-slave">
+              <td>
+                <select class="calc-type" style="width:50px">
+                  <option selected>MAT</option>
+                  <option>MO</option>
+                  <option>EQ</option>
+                </select>
+              </td>
+              <td>BT-003</td>
+              <td><strong>Soporte para bandeja metálica 60x100mm</strong></td>
+              <td>un</td>
+              <td class="text-center">
+                <input type="checkbox">
+              </td>
+              <td>
+                <select class="maestro-select">
+                  <option selected>📦 BT-001 · Bandeja</option>
+                  <option>➕ Ninguno</option>
+                </select>
+                <div><span class="slave-badge">ESCLAVO</span></div>
+              </td>
+              <td>
+                <select class="calc-type">
+                  <option>Factor</option>
+                  <option selected>Espaciamiento</option>
+                  <option>Fórmula</option>
+                </select>
+              </td>
+              <td class="text-right"><strong style="color:var(--amber)">1.50</strong></td>
+              <td>
+                <span style="font-size:11px;color:var(--muted);">Ceil(Base / 1.50)</span>
+                <div style="font-size:9px;color:var(--muted);margin-top:2px;">1 soporte cada 1.5m de bandeja</div>
+              </td>
+            </tr>
+
+            <!-- SLAVE 3: Pieza (Paz) cada 1.5m - blue -->
+            <tr class="is-slave">
+              <td>
+                <select class="calc-type" style="width:50px">
+                  <option selected>MAT</option>
+                  <option>MO</option>
+                  <option>EQ</option>
+                </select>
+              </td>
+              <td>BT-004</td>
+              <td><strong>Pieza de unión para bandeja 60x100mm</strong></td>
+              <td>un</td>
+              <td class="text-center">
+                <input type="checkbox">
+              </td>
+              <td>
+                <select class="maestro-select">
+                  <option selected>📦 BT-001 · Bandeja</option>
+                  <option>➕ Ninguno</option>
+                </select>
+                <div><span class="slave-badge">ESCLAVO</span></div>
+              </td>
+              <td>
+                <select class="calc-type">
+                  <option>Factor</option>
+                  <option selected>Espaciamiento</option>
+                  <option>Fórmula</option>
+                </select>
+              </td>
+              <td class="text-right"><strong style="color:var(--amber)">1.50</strong></td>
+              <td>
+                <span style="font-size:11px;color:var(--muted);">Ceil(Base / 1.50)</span>
+                <div style="font-size:9px;color:var(--muted);margin-top:2px;">1 pieza cada 1.5m de bandeja</div>
+              </td>
+            </tr>
+
+            <!-- Normal row (no maestro, no slave) -->
+            <tr>
+              <td>
+                <select class="calc-type" style="width:50px">
+                  <option selected>MAT</option>
+                  <option>MO</option>
+                  <option>EQ</option>
+                </select>
+              </td>
+              <td>BT-005</td>
+              <td><strong>Perno hexagonal 3/8" x 1" galvanizado</strong></td>
+              <td>un</td>
+              <td class="text-center">
+                <input type="checkbox">
+              </td>
+              <td>
+                <select class="maestro-select">
+                  <option selected>➕ Ninguno (Factor directo)</option>
+                  <option>📦 BT-001 · Bandeja</option>
+                </select>
+              </td>
+              <td>
+                <select class="calc-type">
+                  <option selected>Factor</option>
+                  <option>Espaciamiento</option>
+                  <option>Fórmula</option>
+                </select>
+              </td>
+              <td class="text-right">4.00</td>
+              <td>
+                <input class="formula-input" type="text" value="" placeholder="MAESTRO / ..." disabled style="opacity:0.4;">
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Footer -->
+      <div class="table-footer">
+        <div class="metrics">
+          <span><strong>Total:</strong> 6 materiales</span>
+          <span><strong>⭐ Maestros:</strong> 1</span>
+          <span><strong>Esclavos:</strong> 3</span>
+          <span><strong>Unidad de salida:</strong> m</span>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-primary">＋ Agregar Material</button>
+          <button class="btn">✕ Eliminar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Visual explanation -->
+  <div class="explanation">
+    <h2>📐 Cómo funciona: Maestro → Esclavos</h2>
+    <p style="color:var(--muted);margin-bottom:16px;">
+      Tú defines la cantidad base del <strong>Maestro</strong> (Bandeja = 10m).
+      Los esclavos calculan automáticamente su cantidad siguiendo al maestro.
+    </p>
+
+    <div class="example-flow">
+      <div class="flow-card master">
+        <h4>⭐ MAESTRO: Bandeja Metálica</h4>
+        <div class="formula">Cantidad = 10.00 m</div>
+        <p>El maestro se calcula con <strong>Factor</strong> o lo pones manualmente.<br>
+        Todos los esclavos dependen de esta cantidad base.</p>
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:center;">
+        <div style="text-align:center;">
+          <div style="font-size:32px;color:var(--amber);">⬇</div>
+          <div style="font-size:11px;color:var(--muted);">siguen al maestro</div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="flow-card slave-eq">
+          <h4>📋 Tapa de Bandeja</h4>
+          <div class="formula">MAESTRO</div>
+          <p><strong>= 10.00 m</strong> — misma cantidad que la bandeja</p>
+        </div>
+        <div class="flow-card slave-every">
+          <h4>🔩 Soporte</h4>
+          <div class="formula">CEIL(MAESTRO / 1.5)</div>
+          <p><strong>= 7 un</strong> — 1 soporte cada 1.5m → Ceil(10/1.5) = 7</p>
+        </div>
+        <div class="flow-card slave-every">
+          <h4>🔗 Pieza de Unión</h4>
+          <div class="formula">CEIL(MAESTRO / 1.5)</div>
+          <p><strong>= 7 un</strong> — 1 pieza cada 1.5m → Ceil(10/1.5) = 7</p>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:20px;padding:14px;background:var(--surface2);border-radius:8px;font-size:12px;color:var(--muted);">
+      <strong style="color:var(--ink);">💡 Múltiples Maestros:</strong>
+      Puedes tener <strong>varios maestros</strong> en una misma plantilla. Por ejemplo:
+      "Bandeja" (maestro 1) + "Tapa" (maestro 2). Cada esclavo elige a qué maestro sigue
+      mediante el selector <strong>"Sigue a Maestro"</strong>. La fórmula usa el nombre
+      del maestro como variable (ej. <code>BANDEJA / 1.5</code> o <code>TAPA * 2</code>).
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

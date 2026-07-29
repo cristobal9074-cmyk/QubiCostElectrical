@@ -1,0 +1,336 @@
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.IO;
+using System.Linq;
+using System.Windows.Data;
+using System.Windows.Input;
+using Microsoft.Win32;
+using QubiCostElectrical;
+using QubiCostElectrical.Wpf.Auth;
+using QubiCostElectrical.Wpf.Features.Dashboard;
+using QubiCostElectrical.Wpf.Infrastructure;
+using QubiCostElectrical.Wpf.Navigation;
+using QubiCostElectrical.Wpf.Shell;
+
+namespace QubiCostElectrical.Wpf.Features.Purchases;
+
+public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefreshablePage
+{
+    private readonly WpfAppHost host;
+    private readonly IShellNavigationHost shell;
+    private readonly IPurchaseListService purchaseList;
+    private readonly IPurchaseListExcelExporter purchaseListExcel;
+    private readonly ObservableCollection<CompraMaterialViewModel> rows = new();
+    private readonly ObservableCollection<string> categoryOptions = new();
+    private readonly ICollectionView rowsView;
+    private readonly RelayCommand refreshCommand;
+    private readonly RelayCommand exportExcelCommand;
+    private readonly RelayCommand clearFiltersCommand;
+    private readonly RelayCommand goToOriginCommand;
+    private readonly RelayCommand groupByProviderCommand;
+
+    private string searchText = "";
+    private string selectedCategory = "Todas";
+    private decimal toleranciaPct = 5m;
+    private string statusMessage = "Lista de compra no calculada.";
+    private string summaryText = "0 materiales";
+    private string projectSummary = "Sin proyecto abierto.";
+    private bool showEmptyState = true;
+    private bool isGroupedByProvider;
+    private CompraMaterialViewModel? selectedRow;
+
+    public PurchaseListViewModel(IShellNavigationHost shell, WpfAppHost host) : base(host)
+    {
+        this.host = host;
+        this.shell = shell;
+        purchaseList = host.Services.PurchaseList;
+        purchaseListExcel = host.Services.PurchaseListExcel;
+
+        refreshCommand = new RelayCommand(Refresh);
+        exportExcelCommand = new RelayCommand(ExportExcel, CanExportExcel);
+        clearFiltersCommand = new RelayCommand(ClearFilters);
+        goToOriginCommand = new RelayCommand(GoToOrigin, () => selectedRow != null);
+        groupByProviderCommand = new RelayCommand(ToggleGroupByProvider);
+
+        rowsView = CollectionViewSource.GetDefaultView(rows);
+        rowsView.Filter = FilterRow;
+        rowsView.SortDescriptions.Add(new SortDescription(nameof(CompraMaterialViewModel.TotalCompraUf), ListSortDirection.Descending));
+        rowsView.SortDescriptions.Add(new SortDescription(nameof(CompraMaterialViewModel.Codigo), ListSortDirection.Ascending));
+
+        Refresh();
+    }
+
+    protected override void OnSessionChanged(object? sender, ProjectSessionChangedEventArgs e) =>
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(Refresh);
+
+    public ObservableCollection<CompraMaterialViewModel> Rows => rows;
+    public ICollectionView FilteredRows => rowsView;
+    public ObservableCollection<string> CategoryOptions => categoryOptions;
+    public bool HasProject => host.ProjectWorkspace.HasOpenProject;
+
+    public string SearchText
+    {
+        get => searchText;
+        set
+        {
+            if (!SetProperty(ref searchText, value))
+                return;
+            rowsView.Refresh();
+            UpdateSummary();
+        }
+    }
+
+    public string SelectedCategory
+    {
+        get => selectedCategory;
+        set
+        {
+            if (!SetProperty(ref selectedCategory, value))
+                return;
+            rowsView.Refresh();
+            UpdateSummary();
+        }
+    }
+
+    public decimal ToleranciaPct
+    {
+        get => toleranciaPct;
+        set
+        {
+            if (!SetProperty(ref toleranciaPct, Math.Clamp(value, 0m, 50m)))
+                return;
+            UpdateRows();
+        }
+    }
+
+    public string StatusMessage
+    {
+        get => statusMessage;
+        private set => SetProperty(ref statusMessage, value);
+    }
+
+    public string SummaryText
+    {
+        get => summaryText;
+        private set => SetProperty(ref summaryText, value);
+    }
+
+    public string ProjectSummary
+    {
+        get => projectSummary;
+        private set => SetProperty(ref projectSummary, value);
+    }
+
+    public bool ShowEmptyState { get => showEmptyState; private set => SetProperty(ref showEmptyState, value); }
+
+    public bool IsGroupedByProvider
+    {
+        get => isGroupedByProvider;
+        private set => SetProperty(ref isGroupedByProvider, value);
+    }
+
+    public CompraMaterialViewModel? SelectedRow
+    {
+        get => selectedRow;
+        set
+        {
+            if (!SetProperty(ref selectedRow, value))
+                return;
+            goToOriginCommand.RaiseCanExecuteChanged();
+        }
+    }
+
+    public ICommand RefreshCommand => refreshCommand;
+    public ICommand ExportExcelCommand => exportExcelCommand;
+    public ICommand ClearFiltersCommand => clearFiltersCommand;
+    public ICommand GoToOriginCommand => goToOriginCommand;
+    public ICommand GroupByProviderCommand => groupByProviderCommand;
+
+    public void Refresh()
+    {
+        UpdateProjectSummary();
+        UpdateRows();
+    }
+
+    private void UpdateRows()
+    {
+        rows.Clear();
+        if (HasProject)
+        {
+            foreach (var row in purchaseList.Build(host.Session.Cubicacion, host.Session.Materiales, ToleranciaPct))
+                rows.Add(row);
+        }
+
+        BuildCategoryOptions();
+        rowsView.Refresh();
+        UpdateSummary();
+        UpdateProjectSummary();
+        ShowEmptyState = !HasProject || rows.Count == 0;
+        StatusMessage = !HasProject
+            ? "Abre o crea un proyecto para consolidar la lista de compra."
+            : rows.Count == 0
+                ? "No hay recursos comprables en la cubicación actual."
+                : $"Lista consolidada con {rows.Count:N0} materiales.";
+        exportExcelCommand.RaiseCanExecuteChanged();
+    }
+
+    private void BuildCategoryOptions()
+    {
+        var values = rows
+            .Select(x => string.IsNullOrWhiteSpace(x.Categoria) ? "Sin categoría" : x.Categoria.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        categoryOptions.Clear();
+        categoryOptions.Add("Todas");
+        foreach (var value in values)
+            categoryOptions.Add(value);
+
+        if (!categoryOptions.Contains(SelectedCategory, StringComparer.OrdinalIgnoreCase))
+            SelectedCategory = "Todas";
+    }
+
+    private bool FilterRow(object obj)
+    {
+        if (obj is not CompraMaterialViewModel row)
+            return false;
+
+        string query = host.Services.MaterialSearch.Normalize(SearchText);
+        if (!string.IsNullOrWhiteSpace(query))
+        {
+            string searchable = host.Services.MaterialSearch.Normalize(string.Join(' ', new[]
+            {
+                row.Codigo,
+                row.Descripcion,
+                row.Categoria,
+                row.Unidad
+            }));
+
+            if (!searchable.Contains(query, StringComparison.OrdinalIgnoreCase))
+                return false;
+        }
+
+        if (!string.Equals(SelectedCategory, "Todas", StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(row.Categoria, SelectedCategory, StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        return true;
+    }
+
+    private void UpdateSummary()
+    {
+        if (!HasProject)
+        {
+            SummaryText = "Sin proyecto abierto";
+            StatusMessage = "Abre o crea un proyecto para consolidar la lista de compra.";
+            exportExcelCommand.RaiseCanExecuteChanged();
+            return;
+        }
+
+        int visible = rowsView.Cast<object>().Count();
+        decimal totalNeto = rowsView.Cast<CompraMaterialViewModel>().Sum(x => x.TotalNetoUf);
+        decimal totalCompra = rowsView.Cast<CompraMaterialViewModel>().Sum(x => x.TotalCompraUf);
+        int missingPrices = rowsView.Cast<CompraMaterialViewModel>().Count(x => x.MatUfUnitario <= 0m);
+        SummaryText = $"{visible:N0} visibles · {rows.Count:N0} total · {missingPrices:N0} sin precio";
+        StatusMessage = rows.Count == 0
+            ? "No hay recursos comprables en la cubicación actual."
+            : $"Lista consolidada: $ {totalNeto:N0} neto · $ {totalCompra:N0} compra.";
+        exportExcelCommand.RaiseCanExecuteChanged();
+    }
+
+    private void UpdateProjectSummary()
+    {
+        ProjectSummary = !HasProject
+            ? "Sin proyecto abierto."
+            : $"{host.Session.ProjectInfo.Nombre} · {host.Session.Cubicacion.Count:N0} recursos";
+    }
+
+    private bool CanExportExcel() => HasProject && rows.Count > 0 && host.Permissions.CanExportDocuments;
+
+    private void ExportExcel()
+    {
+        if (!CanExportExcel())
+            return;
+
+        try
+        {
+            string? file = PromptSaveFile();
+            if (file == null)
+                return;
+
+            var snapshot = rows.ToList();
+            purchaseListExcel.Export(file, new PurchaseListExcelRequest(
+                host.Session.ProjectInfo.Nombre,
+                ToleranciaPct,
+                snapshot));
+
+            StatusMessage = $"Lista de compra exportada: {Path.GetFileName(file)}";
+            WpfDialogService.Info("Lista de compra", "La exportación se completó correctamente.");
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error("Purchases", "Falló exportar lista de compra", ex);
+            var userMessage = OperationFailureMessages.ToUserMessage(ex);
+            StatusMessage = userMessage;
+            WpfDialogService.Error("Exportar lista de compra", userMessage);
+        }
+    }
+
+    private void ClearFilters()
+    {
+        SearchText = "";
+        SelectedCategory = "Todas";
+        rowsView.Refresh();
+        UpdateSummary();
+    }
+
+    private void ToggleGroupByProvider()
+    {
+        IsGroupedByProvider = !IsGroupedByProvider;
+        rowsView.GroupDescriptions.Clear();
+        if (IsGroupedByProvider)
+        {
+            rowsView.GroupDescriptions.Add(
+                new PropertyGroupDescription(nameof(CompraMaterialViewModel.GrupoProveedor)));
+        }
+
+        rowsView.Refresh();
+    }
+
+    private void GoToOrigin()
+    {
+        if (selectedRow == null)
+            return;
+
+        var itemId = host.Session.Cubicacion
+            .Where(c => string.Equals(c.Codigo, selectedRow.Codigo, StringComparison.OrdinalIgnoreCase))
+            .Select(c => c.ItemId)
+            .FirstOrDefault();
+
+        if (itemId == null)
+        {
+            shell.RequestNavigate(ShellRoute.Takeoff);
+            return;
+        }
+
+        shell.RequestNavigate(
+            ShellRoute.Takeoff,
+            new TakeoffNavigationContext(itemId, selectedRow.Codigo, selectedRow.Descripcion));
+    }
+
+    private static string? PromptSaveFile()
+    {
+        var dialog = new SaveFileDialog
+        {
+            Title = "Exportar lista de compra",
+            Filter = "Excel (*.xlsx)|*.xlsx",
+            FileName = "ListaCompra.xlsx",
+            OverwritePrompt = true
+        };
+
+        return dialog.ShowDialog() == true ? dialog.FileName : null;
+    }
+}

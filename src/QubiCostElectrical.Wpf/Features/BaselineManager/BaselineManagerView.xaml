@@ -1,0 +1,168 @@
+<UserControl x:Class="QubiCostElectrical.Wpf.Features.BaselineManager.BaselineManagerView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="700" d:DesignWidth="900"
+             Background="#F3F4F6">
+    <UserControl.Resources>
+        <!-- Converter for diff color styling -->
+        <Style x:Key="DiffRowStyle" TargetType="DataGridRow">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding DiffType}" Value="Added">
+                    <Setter Property="Background" Value="#E6F4EA"/>
+                    <Setter Property="Foreground" Value="#137333"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding DiffType}" Value="Deleted">
+                    <Setter Property="Background" Value="#FCE8E6"/>
+                    <Setter Property="Foreground" Value="#C5221F"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding DiffType}" Value="Modified">
+                    <Setter Property="Background" Value="#FEF7E0"/>
+                    <Setter Property="Foreground" Value="#B06000"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+    
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="2*"/>
+            <RowDefinition Height="5"/>
+            <RowDefinition Height="3*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header Panel -->
+        <Border Grid.Row="0" Background="#FFFFFF" CornerRadius="8" Padding="16" Margin="0,0,0,16" BorderBrush="#E5E7EB" BorderThickness="1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="Gestión de Líneas Base (Baselines) y Snapshots" FontSize="20" FontWeight="Bold" Foreground="#111827"/>
+                    <TextBlock Text="Crea, compara y restaura versiones inmutables del cronograma para seguimiento de CPM y desviaciones." FontSize="12" Foreground="#6B7280" Margin="0,4,0,0"/>
+                </StackPanel>
+                <Button Grid.Column="1" Content="Actualizar" Command="{Binding RefreshCommand}" Background="#FFFFFF" BorderBrush="#D1D5DB" BorderThickness="1" Foreground="#374151" Padding="12,6" Cursor="Hand" VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+
+        <!-- Top Section: Baselines List & Creation -->
+        <Grid Grid.Row="1" Margin="0,0,0,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*"/>
+                <ColumnDefinition Width="5"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Baselines List -->
+            <Border Grid.Column="0" Background="#FFFFFF" CornerRadius="8" BorderBrush="#E5E7EB" BorderThickness="1" Padding="12">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" Text="Historial de Líneas Base" FontWeight="SemiBold" FontSize="14" Foreground="#374151" Margin="0,0,0,8"/>
+                    
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding Baselines}" SelectedItem="{Binding SelectedBaselineA}" AutoGenerateColumns="False" IsReadOnly="True" Background="Transparent" BorderThickness="0" GridLinesVisibility="Horizontal" HeadersVisibility="Column" SelectionMode="Single">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Versión" Binding="{Binding Version}" Width="Auto" ElementStyle="{StaticResource {x:Type TextBlock}}"/>
+                            <DataGridTextColumn Header="Nombre" Binding="{Binding Name}" Width="2*" ElementStyle="{StaticResource {x:Type TextBlock}}"/>
+                            <DataGridTextColumn Header="Estado" Binding="{Binding Status}" Width="Auto" ElementStyle="{StaticResource {x:Type TextBlock}}"/>
+                            <DataGridTextColumn Header="Fecha" Binding="{Binding SnapshotDate, StringFormat=\{0:dd/MM/yyyy HH:mm\}}" Width="Auto" ElementStyle="{StaticResource {x:Type TextBlock}}"/>
+                            <DataGridTextColumn Header="Creado Por" Binding="{Binding CreatedBy}" Width="Auto" ElementStyle="{StaticResource {x:Type TextBlock}}"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Baseline Actions -->
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
+                        <Button Content="Marcar Oficial" Command="{Binding MarkOfficialCommand}" Margin="0,0,8,0" Background="#FFFFFF" BorderBrush="#D1D5DB" BorderThickness="1" Padding="10,4"/>
+                        <Button Content="Verificar Integridad" Command="{Binding VerifyIntegrityCommand}" Margin="0,0,8,0" Background="#FFFFFF" BorderBrush="#D1D5DB" BorderThickness="1" Padding="10,4"/>
+                        <Button Content="Eliminar Borrador" Command="{Binding DeleteBaselineCommand}" Margin="0,0,8,0" Background="#FEE2E2" BorderBrush="#FCA5A5" Foreground="#991B1B" BorderThickness="1" Padding="10,4"/>
+                        <Button Content="Restaurar" Command="{Binding RestoreBaselineCommand}" Background="#2563EB" Foreground="#FFFFFF" Padding="12,4"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" Background="Transparent"/>
+
+            <!-- Create Baseline Form -->
+            <Border Grid.Column="2" Background="#FFFFFF" CornerRadius="8" BorderBrush="#E5E7EB" BorderThickness="1" Padding="12">
+                <StackPanel>
+                    <TextBlock Text="Crear Nueva Línea Base" FontWeight="SemiBold" FontSize="14" Foreground="#374151" Margin="0,0,0,12"/>
+                    
+                    <TextBlock Text="Nombre" FontSize="11" Foreground="#4B5563" Margin="0,0,0,4"/>
+                    <TextBox Text="{Binding NewBaselineName, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12" Padding="6"/>
+
+                    <TextBlock Text="Descripción" FontSize="11" Foreground="#4B5563" Margin="0,0,0,4"/>
+                    <TextBox Text="{Binding NewBaselineDescription, UpdateSourceTrigger=PropertyChanged}" Height="80" TextWrapping="Wrap" AcceptsReturn="True" Margin="0,0,0,16" Padding="6"/>
+
+                    <Button Content="Crear Snapshot" Command="{Binding CreateBaselineCommand}" Background="#059669" Foreground="#FFFFFF" Padding="16,8" FontWeight="SemiBold" HorizontalAlignment="Stretch" Cursor="Hand"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <GridSplitter Grid.Row="2" Height="5" HorizontalAlignment="Stretch" Background="Transparent"/>
+
+        <!-- Bottom Section: Comparisons -->
+        <Border Grid.Row="3" Background="#FFFFFF" CornerRadius="8" BorderBrush="#E5E7EB" BorderThickness="1" Padding="12" Margin="0,8,0,0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Comparison Settings -->
+                <Grid Grid.Row="0" Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="Comparar con:" FontWeight="SemiBold" FontSize="14" Foreground="#374151" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                        <ComboBox ItemsSource="{Binding Baselines}" SelectedItem="{Binding SelectedBaselineB}" DisplayMemberPath="Name" Width="200"/>
+                    </StackPanel>
+                    
+                    <Button Grid.Column="2" Content="Iniciar Comparación" Command="{Binding CompareCommand}" Background="#4F46E5" Foreground="#FFFFFF" Padding="16,6" FontWeight="SemiBold" Cursor="Hand"/>
+                </Grid>
+
+                <!-- Comparison Grid -->
+                <Grid Grid.Row="1">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    
+                    <DataGrid ItemsSource="{Binding ActivityDifferences}" RowStyle="{StaticResource DiffRowStyle}" AutoGenerateColumns="False" IsReadOnly="True" Background="Transparent" BorderThickness="0" GridLinesVisibility="Horizontal" HeadersVisibility="Column">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Código" Binding="{Binding Code}" Width="100"/>
+                            <DataGridTextColumn Header="Nombre Actividad" Binding="{Binding Name}" Width="2*"/>
+                            <DataGridTextColumn Header="Tipo de Cambio" Binding="{Binding DiffType}" Width="120"/>
+                            <DataGridTextColumn Header="Dif. Duración (Días)" Binding="{Binding DurationDiff}" Width="130"/>
+                            <DataGridTextColumn Header="Dif. Inicio (Días)" Binding="{Binding StartOffsetDaysDiff}" Width="130"/>
+                            <DataGridTextColumn Header="Dif. Término (Días)" Binding="{Binding FinishOffsetDaysDiff}" Width="130"/>
+                            <DataGridTextColumn Header="Crítico" Binding="{Binding CriticalDiff}" Width="Auto"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Empty State Placeholder -->
+                    <Border Visibility="{Binding HasComparison, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}" Background="#F9FAFB" CornerRadius="4">
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <TextBlock Text="No hay comparación activa" FontSize="14" FontWeight="SemiBold" Foreground="#6B7280" HorizontalAlignment="Center"/>
+                            <TextBlock Text="Seleccione una línea base arriba y otra (o el cronograma actual) para ver las diferencias." FontSize="12" Foreground="#9CA3AF" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Grid>
+        </Border>
+
+        <!-- Status Bar -->
+        <Border Grid.Row="4" Background="#F3F4F6" Padding="8,4" Margin="0,8,0,0" CornerRadius="4">
+            <TextBlock Text="{Binding StatusMessage}" FontSize="11" Foreground="#4B5563"/>
+        </Border>
+    </Grid>
+</UserControl>

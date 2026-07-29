@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lista de Precios · Qubi Cost Electrical</title>
+<style>
+  :root {
+    --navy: #0a1628;
+    --ink: #1e293b;
+    --ink2: #475569;
+    --muted: #94a3b8;
+    --blue: #2563eb;
+    --blue2: #1d4ed8;
+    --blueSoft: #dbeafe;
+    --blueFaint: #eff6ff;
+    --surface: #ffffff;
+    --surface2: #f8fafc;
+    --canvas: #f1f5f9;
+    --line: #e2e8f0;
+    --line2: #cbd5e1;
+    --success: #16a34a;
+    --successBg: #dcfce7;
+    --danger: #dc2626;
+    --dangerBg: #fee2e2;
+    --amber: #d97706;
+    --amberSoft: #fef3c7;
+    --radius: 8px;
+    --radiusLg: 12px;
+    --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.06);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--canvas);
+    color: var(--ink);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  /* Header */
+  .app-header {
+    background: var(--navy);
+    color: #fff;
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,.2);
+  }
+  .app-header h1 { font-size: 16px; font-weight: 600; letter-spacing: .3px; }
+  .app-header h1 span { color: var(--muted); font-weight: 400; }
+  .app-header .stats { display: flex; gap: 24px; font-size: 12px; }
+  .app-header .stats span { color: var(--muted); }
+  .app-header .stats strong { color: #fff; font-weight: 600; }
+  /* Layout */
+  .container { max-width: 1400px; margin: 0 auto; padding: 20px 24px; }
+  /* Summary cards */
+  .summary-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .summary-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radiusLg);
+    padding: 16px 18px;
+    box-shadow: var(--shadow);
+  }
+  .summary-card .label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); margin-bottom: 4px; }
+  .summary-card .value { font-size: 20px; font-weight: 700; color: var(--navy); font-family: 'Consolas', monospace; }
+  .summary-card .sub { font-size: 11px; color: var(--ink2); margin-top: 2px; }
+  /* Toolbar */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .toolbar .search-box {
+    flex: 1;
+    min-width: 200px;
+    padding: 8px 12px;
+    border: 1px solid var(--line2);
+    border-radius: var(--radius);
+    font-size: 13px;
+    background: var(--surface);
+    outline: none;
+    transition: border .15s;
+  }
+  .toolbar .search-box:focus { border-color: var(--blue); box-shadow: 0 0 0 3px var(--blueSoft); }
+  .btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .btn-primary { background: var(--blue); color: #fff; }
+  .btn-primary:hover { background: var(--blue2); }
+  .btn-secondary { background: var(--surface); color: var(--ink); border: 1px solid var(--line2); }
+  .btn-secondary:hover { background: var(--surface2); border-color: var(--muted); }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-danger:hover { background: #b91c1c; }
+  .btn-success { background: var(--success); color: #fff; }
+  .btn-success:hover { background: #15803d; }
+  .btn-sm { padding: 5px 10px; font-size: 11px; }
+  /* Table */
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radiusLg);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+  }
+  thead { background: var(--surface2); }
+  th {
+    padding: 10px 12px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    color: var(--ink2);
+    border-bottom: 2px solid var(--line);
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+  }
+  th:hover { color: var(--ink); }
+  th .sort { margin-left: 4px; opacity: .4; }
+  th.sorted .sort { opacity: 1; color: var(--blue); }
+  td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: middle;
+  }
+  tr:hover td { background: var(--blueFaint); }
+  tr.selected td { background: var(--blueSoft); }
+  /* Inline edit */
+  td[contenteditable="true"] {
+    cursor: text;
+    border-radius: 4px;
+    padding: 6px 10px;
+    transition: background .15s;
+  }
+  td[contenteditable="true"]:hover { background: #fff; }
+  td[contenteditable="true"]:focus {
+    background: #fff;
+    outline: 2px solid var(--blue);
+    outline-offset: -2px;
+  }
+  .codigo { font-family: 'Consolas', monospace; font-weight: 600; color: var(--blue2); }
+  .mono { font-family: 'Consolas', monospace; }
+  .text-right { text-align: right; }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 600;
+  }
+  .badge-ok { background: var(--successBg); color: var(--success); }
+  .badge-warn { background: var(--amberSoft); color: var(--amber); }
+  .badge-danger { background: var(--dangerBg); color: var(--danger); }
+  .actions-cell { white-space: nowrap; }
+  .actions-cell .btn { margin-right: 4px; }
+  /* Modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.4);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border-radius: var(--radiusLg);
+    padding: 28px;
+    width: 560px;
+    max-width: 94vw;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,.3);
+  }
+  .modal h2 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+  .modal .desc { color: var(--ink2); font-size: 12px; margin-bottom: 20px; }
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 16px;
+  }
+  .form-grid .full { grid-column: 1 / -1; }
+  .form-group { display: flex; flex-direction: column; gap: 4px; }
+  .form-group label { font-size: 11px; font-weight: 600; color: var(--ink2); }
+  .form-group input, .form-group select {
+    padding: 8px 10px;
+    border: 1px solid var(--line2);
+    border-radius: var(--radius);
+    font-size: 13px;
+    outline: none;
+    transition: border .15s;
+  }
+  .form-group input:focus, .form-group select:focus { border-color: var(--blue); box-shadow: 0 0 0 3px var(--blueSoft); }
+  .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+  }
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    padding: 12px 20px;
+    border-radius: var(--radius);
+    color: #fff;
+    font-weight: 600;
+    font-size: 13px;
+    z-index: 300;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all .25s;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast-success { background: var(--success); }
+  .toast-error { background: var(--danger); }
+  /* Responsive */
+  @media (max-width: 768px) {
+    .app-header { flex-direction: column; gap: 8px; align-items: flex-start; }
+    .app-header .stats { flex-wrap: wrap; gap: 12px; }
+    .summary-row { grid-template-columns: 1fr 1fr; }
+    .form-grid { grid-template-columns: 1fr; }
+  }
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+  .empty-state h3 { font-size: 16px; margin-bottom: 8px; color: var(--ink2); }
+  .empty-state p { font-size: 13px; max-width: 400px; margin: 0 auto 20px; }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <h1>Lista de Precios <span>· Qubi Cost Electrical</span></h1>
+  <div class="stats">
+    <span>Materiales: <strong id="totalCount">0</strong></span>
+    <span>Precio prom. CLP: <strong id="avgPrice">$0</strong></span>
+    <span>Última actualización: <strong id="lastUpdate">—</strong></span>
+  </div>
+</div>
+
+<div class="container">
+  <!-- Summary Cards -->
+  <div class="summary-row" id="summaryCards">
+    <div class="summary-card"><div class="label">Total Materiales</div><div class="value" id="statTotal">0</div><div class="sub">en catálogo</div></div>
+    <div class="summary-card"><div class="label">Precio Promedio</div><div class="value" id="statAvg">$0</div><div class="sub">CLP</div></div>
+    <div class="summary-card"><div class="label">Precio Mínimo</div><div class="value" id="statMin">$0</div><div class="sub">CLP</div></div>
+    <div class="summary-card"><div class="label">Precio Máximo</div><div class="value" id="statMax">$0</div><div class="sub">CLP</div></div>
+    <div class="summary-card"><div class="label">Vigencia OK</div><div class="value" id="statVigentes">0</div><div class="sub">precios vigentes</div></div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <input type="text" class="search-box" id="searchBox" placeholder="Buscar por código, descripción, proveedor…" oninput="renderTable()">
+    <select id="filterVigencia" onchange="renderTable()" style="padding:8px 10px;border:1px solid var(--line2);border-radius:var(--radius);font-size:13px;background:var(--surface);outline:none;">
+      <option value="todas">Todas las vigencias</option>
+      <option value="vigente">Solo vigentes</option>
+      <option value="vencido">Solo vencidos</option>
+    </select>
+    <button class="btn btn-primary" onclick="openAddModal()">+ Agregar Material</button>
+    <button class="btn btn-secondary" onclick="exportCSV()">Exportar CSV</button>
+    <button class="btn btn-secondary" onclick="importCSV()" id="importBtn">Importar CSV</button>
+    <input type="file" id="csvFileInput" accept=".csv" style="display:none" onchange="handleCSVImport(event)">
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrap">
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th onclick="sortBy('codigo')" class="sorted">Código <span class="sort">▲</span></th>
+            <th onclick="sortBy('descripcion')">Descripción <span class="sort">▲</span></th>
+            <th onclick="sortBy('unidad')">Ud. <span class="sort">▲</span></th>
+            <th onclick="sortBy('categoria')">Categoría <span class="sort">▲</span></th>
+            <th onclick="sortBy('precioClp')" class="text-right">Precio CLP <span class="sort">▲</span></th>
+            <th onclick="sortBy('moClp')" class="text-right">MO CLP <span class="sort">▲</span></th>
+            <th onclick="sortBy('proveedor')">Proveedor <span class="sort">▲</span></th>
+            <th onclick="sortBy('fechaPrecio')">Fecha <span class="sort">▲</span></th>
+            <th>Vigencia</th>
+            <th style="width:90px">Acción</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <div class="empty-state" id="emptyState" style="display:none">
+      <h3>Sin materiales</h3>
+      <p>No hay materiales en la lista. Agregue el primero usando el botón "Agregar Material" o importe un archivo CSV.</p>
+      <button class="btn btn-primary" onclick="openAddModal()">+ Agregar Material</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h2 id="modalTitle">Agregar Material</h2>
+    <p class="desc" id="modalDesc">Complete los campos del nuevo material. Los precios son en CLP.</p>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Código</label>
+        <input id="fCodigo" placeholder="Ej: CABLE-01">
+      </div>
+      <div class="form-group">
+        <label>Unidad</label>
+        <select id="fUnidad"><option value="m">m</option><option value="un">un</option><option value="kg">kg</option><option value="m2">m²</option><option value="m3">m³</option><option value="lt">lt</option><option value="gl">gl</option><option value="pqt">pqt</option><option value="rollo">rollo</option></select>
+      </div>
+      <div class="form-group full">
+        <label>Descripción</label>
+        <input id="fDescripcion" placeholder="Nombre del material">
+      </div>
+      <div class="form-group">
+        <label>Precio CLP</label>
+        <input id="fPrecioClp" type="number" step="1" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>MO CLP</label>
+        <input id="fMoClp" type="number" step="1" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>Categoría</label>
+        <input id="fCategoria" placeholder="Ej: Conductor">
+      </div>
+      <div class="form-group">
+        <label>Proveedor</label>
+        <input id="fProveedor" placeholder="Nombre del proveedor">
+      </div>
+      <div class="form-group">
+        <label>Fecha precio</label>
+        <input id="fFecha" type="date">
+      </div>
+      <div class="form-group full">
+        <label>Observaciones</label>
+        <input id="fObservaciones" placeholder="Opcional">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" id="modalSaveBtn" onclick="saveMaterial()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── DATA ────────────────────────────────────────────────────────────────
+const STORAGE_KEY = 'qce_lista_precios';
+let materials = [];
+let sortField = 'codigo';
+let sortAsc = true;
+let editingId = null;
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) materials = JSON.parse(raw);
+  } catch {}
+  if (!materials.length) {
+    // Seed data
+    const hoy = new Date();
+    const f = (d) => { const dt = new Date(); dt.setDate(dt.getDate() - d); return dt.toISOString().split('T')[0]; };
+    materials = [
+      { id: '1', codigo: 'CABLE-CU-2.5', descripcion: 'Cable de cobre THHN 2.5 mm²', unidad: 'm', categoria: 'Conductor', precioClp: 890, moClp: 120, proveedor: 'Cablex', fechaPrecio: f(30), observaciones: '' },
+      { id: '2', codigo: 'CABLE-CU-4', descripcion: 'Cable de cobre THHN 4 mm²', unidad: 'm', categoria: 'Conductor', precioClp: 1450, moClp: 140, proveedor: 'Cablex', fechaPrecio: f(45), observaciones: '' },
+      { id: '3', codigo: 'CABLE-CU-6', descripcion: 'Cable de cobre THHN 6 mm²', unidad: 'm', categoria: 'Conductor', precioClp: 2100, moClp: 160, proveedor: 'Cablex', fechaPrecio: f(60), observaciones: '' },
+      { id: '4', codigo: 'TUBO-PVC-20', descripcion: 'Tubería PVC conduit 20 mm', unidad: 'm', categoria: 'Tubería', precioClp: 450, moClp: 80, proveedor: 'PVC Chile', fechaPrecio: f(90), observaciones: '' },
+      { id: '5', codigo: 'TUBO-PVC-25', descripcion: 'Tubería PVC conduit 25 mm', unidad: 'm', categoria: 'Tubería', precioClp: 580, moClp: 90, proveedor: 'PVC Chile', fechaPrecio: f(90), observaciones: '' },
+      { id: '6', codigo: 'CAJA-DER-4x4', descripcion: 'Caja de derivación 4"×4"', unidad: 'un', categoria: 'Cajas', precioClp: 3200, moClp: 0, proveedor: 'ElecMart', fechaPrecio: f(120), observaciones: '' },
+      { id: '7', codigo: 'CAJA-DER-6x6', descripcion: 'Caja de derivación 6"×6"', unidad: 'un', categoria: 'Cajas', precioClp: 5400, moClp: 0, proveedor: 'ElecMart', fechaPrecio: f(120), observaciones: '' },
+      { id: '8', codigo: 'INT-TERM-20A', descripcion: 'Interruptor termomagnético 20A 1P', unidad: 'un', categoria: 'Protección', precioClp: 8500, moClp: 0, proveedor: 'ABB Chile', fechaPrecio: f(15), observaciones: '' },
+      { id: '9', codigo: 'INT-TERM-32A', descripcion: 'Interruptor termomagnético 32A 1P', unidad: 'un', categoria: 'Protección', precioClp: 9200, moClp: 0, proveedor: 'ABB Chile', fechaPrecio: f(15), observaciones: '' },
+      { id: '10', codigo: 'INT-DIF-30mA', descripcion: 'Interruptor diferencial 30mA 2P 40A', unidad: 'un', categoria: 'Protección', precioClp: 18500, moClp: 0, proveedor: 'ABB Chile', fechaPrecio: f(200), observaciones: 'Precio desactualizado, solicitar cotización' },
+      { id: '11', codigo: 'BANDEJA-100x50', descripcion: 'Bandeja porta cables 100×50 mm', unidad: 'm', categoria: 'Bandejas', precioClp: 12500, moClp: 2500, proveedor: 'MetalTech', fechaPrecio: f(60), observaciones: '' },
+      { id: '12', codigo: 'BANDEJA-200x50', descripcion: 'Bandeja porta cables 200×50 mm', unidad: 'm', categoria: 'Bandejas', precioClp: 18200, moClp: 3200, proveedor: 'MetalTech', fechaPrecio: f(60), observaciones: '' },
+      { id: '13', codigo: 'CONDUFLEX-20', descripcion: 'Conduit flexible metálico 20 mm', unidad: 'm', categoria: 'Tubería', precioClp: 1200, moClp: 200, proveedor: 'FlexCon', fechaPrecio: f(45), observaciones: '' },
+      { id: '14', codigo: 'LUMINARIO-LED-60W', descripcion: 'Luminario LED 60W 6500K', unidad: 'un', categoria: 'Iluminación', precioClp: 23400, moClp: 3500, proveedor: 'Philips', fechaPrecio: f(20), observaciones: '' },
+      { id: '15', codigo: 'LUMINARIO-LED-30W', descripcion: 'Luminario LED 30W 6500K', unidad: 'un', categoria: 'Iluminación', precioClp: 14200, moClp: 2500, proveedor: 'Philips', fechaPrecio: f(20), observaciones: '' },
+    ];
+    saveData();
+  }
+  renderTable();
+  updateSummary();
+}
+
+function saveData() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(materials));
+  updateSummary();
+}
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────
+function daysSince(dateStr) {
+  if (!dateStr) return 999;
+  const d = new Date(dateStr);
+  const now = new Date();
+  return Math.floor((now - d) / (1000 * 60 * 60 * 24));
+}
+
+function vigencia(days) {
+  if (days <= 90) return { label: 'Vigente', cls: 'badge-ok' };
+  if (days <= 180) return { label: 'Revisar', cls: 'badge-warn' };
+  return { label: 'Vencido', cls: 'badge-danger' };
+}
+
+function formatCLP(n) { return '$' + Number(n || 0).toLocaleString('es-CL'); }
+
+function getNextId() {
+  let max = 0;
+  for (const m of materials) { if (Number(m.id) > max) max = Number(m.id); }
+  return String(max + 1);
+}
+
+// ─── RENDER ──────────────────────────────────────────────────────────────
+function renderTable() {
+  const q = document.getElementById('searchBox').value.toLowerCase().trim();
+  const vigFilter = document.getElementById('filterVigencia').value;
+  let filtered = materials.filter(m => {
+    if (q && !m.codigo.toLowerCase().includes(q) && !m.descripcion.toLowerCase().includes(q) && !(m.proveedor || '').toLowerCase().includes(q)) return false;
+    if (vigFilter !== 'todas') {
+      const d = daysSince(m.fechaPrecio);
+      if (vigFilter === 'vigente' && d > 90) return false;
+      if (vigFilter === 'vencido' && d <= 90) return false;
+    }
+    return true;
+  });
+
+  // Sort
+  filtered.sort((a, b) => {
+    let va = a[sortField] ?? '', vb = b[sortField] ?? '';
+    if (sortField === 'precioClp' || sortField === 'moClp') { va = Number(va); vb = Number(vb); }
+    else { va = String(va).toLowerCase(); vb = String(vb).toLowerCase(); }
+    if (va < vb) return sortAsc ? -1 : 1;
+    if (va > vb) return sortAsc ? 1 : -1;
+    return 0;
+  });
+
+  const tbody = document.getElementById('tableBody');
+  const empty = document.getElementById('emptyState');
+
+  document.getElementById('totalCount').textContent = filtered.length;
+
+  if (!filtered.length) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = filtered.map(m => {
+    const d = daysSince(m.fechaPrecio);
+    const v = vigencia(d);
+    return `<tr>
+      <td class="codigo">${escHtml(m.codigo)}</td>
+      <td>${escHtml(m.descripcion)}</td>
+      <td>${escHtml(m.unidad)}</td>
+      <td>${escHtml(m.categoria)}</td>
+      <td class="text-right mono">${formatCLP(m.precioClp)}</td>
+      <td class="text-right mono">${formatCLP(m.moClp)}</td>
+      <td>${escHtml(m.proveedor || '—')}</td>
+      <td>${m.fechaPrecio ? new Date(m.fechaPrecio).toLocaleDateString('es-CL') : '—'}</td>
+      <td><span class="badge ${v.cls}">${v.label}</span></td>
+      <td class="actions-cell">
+        <button class="btn btn-sm btn-secondary" onclick="openEditModal('${m.id}')">Editar</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteMaterial('${m.id}')">×</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  // Update sort indicators
+  document.querySelectorAll('th').forEach(th => th.classList.remove('sorted'));
+  const headers = { codigo: 0, descripcion: 1, unidad: 2, categoria: 3, precioClp: 4, moClp: 5, proveedor: 6, fechaPrecio: 7 };
+  const idx = headers[sortField];
+  if (idx !== undefined) {
+    const ths = document.querySelectorAll('thead th');
+    if (ths[idx]) { ths[idx].classList.add('sorted'); ths[idx].querySelector('.sort').textContent = sortAsc ? '▲' : '▼'; }
+  }
+}
+
+function escHtml(s) { return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ─── SUMMARY ─────────────────────────────────────────────────────────────
+function updateSummary() {
+  const n = materials.length;
+  document.getElementById('statTotal').textContent = n;
+  if (n === 0) {
+    document.getElementById('statAvg').textContent = '$0';
+    document.getElementById('statMin').textContent = '$0';
+    document.getElementById('statMax').textContent = '$0';
+    document.getElementById('statVigentes').textContent = '0';
+    document.getElementById('avgPrice').textContent = '$0';
+    document.getElementById('lastUpdate').textContent = '—';
+    return;
+  }
+  const prices = materials.map(m => Number(m.precioClp) || 0);
+  const sum = prices.reduce((a, b) => a + b, 0);
+  const avg = Math.round(sum / n);
+  const min = Math.min(...prices);
+  const max = Math.max(...prices);
+  const vigentes = materials.filter(m => daysSince(m.fechaPrecio) <= 90).length;
+
+  document.getElementById('statAvg').textContent = formatCLP(avg);
+  document.getElementById('statMin').textContent = formatCLP(min);
+  document.getElementById('statMax').textContent = formatCLP(max);
+  document.getElementById('statVigentes').textContent = vigentes;
+  document.getElementById('avgPrice').textContent = formatCLP(avg);
+  document.getElementById('lastUpdate').textContent = new Date().toLocaleString('es-CL');
+}
+
+// ─── SORT ────────────────────────────────────────────────────────────────
+function sortBy(field) {
+  if (sortField === field) sortAsc = !sortAsc;
+  else { sortField = field; sortAsc = true; }
+  renderTable();
+}
+
+// ─── MODAL ───────────────────────────────────────────────────────────────
+function openAddModal() {
+  editingId = null;
+  document.getElementById('modalTitle').textContent = 'Agregar Material';
+  document.getElementById('modalDesc').textContent = 'Complete los campos del nuevo material. Los precios son en CLP.';
+  document.getElementById('modalSaveBtn').textContent = 'Guardar';
+  clearForm();
+  const hoy = new Date().toISOString().split('T')[0];
+  document.getElementById('fFecha').value = hoy;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function openEditModal(id) {
+  const m = materials.find(x => x.id === id);
+  if (!m) return;
+  editingId = id;
+  document.getElementById('modalTitle').textContent = 'Editar Material';
+  document.getElementById('modalDesc').textContent = `Editando: ${m.codigo} · ${m.descripcion}`;
+  document.getElementById('modalSaveBtn').textContent = 'Actualizar';
+  document.getElementById('fCodigo').value = m.codigo;
+  document.getElementById('fDescripcion').value = m.descripcion;
+  document.getElementById('fUnidad').value = m.unidad;
+  document.getElementById('fPrecioClp').value = m.precioClp;
+  document.getElementById('fMoClp').value = m.moClp;
+  document.getElementById('fCategoria').value = m.categoria || '';
+  document.getElementById('fProveedor').value = m.proveedor || '';
+  document.getElementById('fFecha').value = m.fechaPrecio || '';
+  document.getElementById('fObservaciones').value = m.observaciones || '';
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  editingId = null;
+}
+
+function clearForm() {
+  ['fCodigo','fDescripcion','fPrecioClp','fMoClp','fCategoria','fProveedor','fObservaciones'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('fUnidad').value = 'm';
+}
+
+function saveMaterial() {
+  const codigo = document.getElementById('fCodigo').value.trim();
+  const descripcion = document.getElementById('fDescripcion').value.trim();
+  const unidad = document.getElementById('fUnidad').value;
+  const precioClp = Number(document.getElementById('fPrecioClp').value) || 0;
+  const moClp = Number(document.getElementById('fMoClp').value) || 0;
+  const categoria = document.getElementById('fCategoria').value.trim();
+  const proveedor = document.getElementById('fProveedor').value.trim();
+  const fechaPrecio = document.getElementById('fFecha').value;
+  const observaciones = document.getElementById('fObservaciones').value.trim();
+
+  if (!codigo) { showToast('El código es obligatorio', 'error'); return; }
+  if (!descripcion) { showToast('La descripción es obligatoria', 'error'); return; }
+
+  if (editingId) {
+    const m = materials.find(x => x.id === editingId);
+    if (m) {
+      Object.assign(m, { codigo, descripcion, unidad, precioClp, moClp, categoria, proveedor, fechaPrecio, observaciones });
+      showToast('Material actualizado correctamente', 'success');
+    }
+  } else {
+    const exists = materials.some(m => m.codigo.toLowerCase() === codigo.toLowerCase());
+    if (exists) { showToast('Ya existe un material con ese código', 'error'); return; }
+    materials.push({ id: getNextId(), codigo, descripcion, unidad, precioClp, moClp, categoria, proveedor, fechaPrecio, observaciones });
+    showToast('Material agregado correctamente', 'success');
+  }
+  saveData();
+  renderTable();
+  closeModal();
+}
+
+// ─── DELETE ──────────────────────────────────────────────────────────────
+function deleteMaterial(id) {
+  if (!confirm('¿Eliminar este material de la lista?')) return;
+  materials = materials.filter(m => m.id !== id);
+  saveData();
+  renderTable();
+  showToast('Material eliminado', 'success');
+}
+
+// ─── EXPORT / IMPORT CSV ──────────────────────────────────────────────────
+function exportCSV() {
+  const headers = ['Código','Descripción','Unidad','Categoría','Precio CLP','MO CLP','Proveedor','Fecha Precio','Observaciones'];
+  const rows = materials.map(m => [
+    m.codigo, m.descripcion, m.unidad, m.categoria || '', m.precioClp || 0, m.moClp || 0, m.proveedor || '', m.fechaPrecio || '', m.observaciones || ''
+  ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(','));
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'lista_precios_' + new Date().toISOString().split('T')[0] + '.csv';
+  a.click();
+  showToast('CSV exportado', 'success');
+}
+
+function importCSV() {
+  document.getElementById('csvFileInput').click();
+}
+
+function handleCSVImport(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const text = e.target.result;
+      const lines = text.split(/\r?\n/).filter(l => l.trim());
+      if (lines.length < 2) { showToast('CSV vacío o inválido', 'error'); return; }
+      const header = lines[0].split(',').map(h => h.replace(/"/g,'').trim().toLowerCase());
+      const idx = { codigo: header.indexOf('código'), descripcion: header.indexOf('descripción'), unidad: header.indexOf('unidad'), categoria: header.indexOf('categoría'), precioClp: header.indexOf('precio clp'), moClp: header.indexOf('mo clp'), proveedor: header.indexOf('proveedor'), fechaPrecio: header.indexOf('fecha precio'), observaciones: header.indexOf('observaciones') };
+      let count = 0;
+      for (let i = 1; i < lines.length; i++) {
+        const vals = lines[i].split(',').map(v => v.replace(/"/g,'').trim());
+        const codigo = vals[idx.codigo] || '';
+        if (!codigo) continue;
+        const exists = materials.some(m => m.codigo.toLowerCase() === codigo.toLowerCase());
+        if (exists) continue;
+        materials.push({
+          id: getNextId(),
+          codigo,
+          descripcion: vals[idx.descripcion] || '',
+          unidad: vals[idx.unidad] || 'un',
+          categoria: vals[idx.categoria] || '',
+          precioClp: Number(vals[idx.precioClp]) || 0,
+          moClp: Number(vals[idx.moClp]) || 0,
+          proveedor: vals[idx.proveedor] || '',
+          fechaPrecio: vals[idx.fechaPrecio] || '',
+          observaciones: vals[idx.observaciones] || ''
+        });
+        count++;
+      }
+      saveData();
+      renderTable();
+      showToast(`Importados ${count} materiales`, 'success');
+    } catch (err) {
+      showToast('Error al importar CSV: ' + err.message, 'error');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ─── TOAST ───────────────────────────────────────────────────────────────
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast toast-' + type + ' show';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ─── KEYBOARD SHORTCUTS ─────────────────────────────────────────────────
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeModal();
+  if ((e.ctrlKey || e.metaKey) && e.key === 'f') { e.preventDefault(); document.getElementById('searchBox').focus(); }
+});
+
+// ─── INIT ────────────────────────────────────────────────────────────────
+loadData();
+</script>
+</body>
+</html>

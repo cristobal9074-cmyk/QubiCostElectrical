@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Qubi Cost Electrical — Plantillas</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#0b0d12;
+  --ink2:#454a58;
+  --muted:#8a90a0;
+  --surface:#ffffff;
+  --surface2:#f5f6f8;
+  --surface3:#eef0f3;
+  --line:#e4e6eb;
+  --line2:#d0d3dc;
+  --blue:#2563eb;
+  --blueSoft:#eef4ff;
+  --blueLight:#dbeafe;
+  --amber:#d97706;
+  --amberSoft:#fffbeb;
+  --amberLight:#fef3c7;
+  --green:#16a34a;
+  --greenSoft:#f0fdf4;
+  --red:#dc2626;
+  --redSoft:#fef2f2;
+  --radius:12px;
+  --radiusSm:8px;
+  --radiusXs:6px;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --shadowMd:0 4px 16px rgba(0,0,0,.08);
+  --shadowLg:0 8px 32px rgba(0,0,0,.1);
+  --transition:.2s cubic-bezier(.4,0,.2,1);
+}
+html{font-size:14px}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:#f0f1f4;color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased}
+::selection{background:var(--blue);color:#fff}
+
+/* ═══ LAYOUT ═══ */
+.app{display:grid;grid-template-rows:auto auto 1fr;min-height:100vh;padding:16px;gap:12px;max-width:1440px;margin:0 auto}
+.header-card{background:rgba(255,255,255,.75);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);border:1px solid rgba(255,255,255,.8);border-radius:var(--radius);padding:20px 24px;box-shadow:var(--shadow)}
+.header-card .row{display:flex;align-items:center;justify-content:space-between}
+.header-left h1{font-size:20px;font-weight:800;letter-spacing:-.02em;background:linear-gradient(135deg,var(--ink) 0%,var(--ink2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.header-left p{font-size:12px;color:var(--muted);margin-top:2px}
+.header-right{display:flex;align-items:center;gap:12px}
+.status-msg{font-size:11px;color:var(--ink2);opacity:0;transition:opacity .3s}
+.status-msg.show{opacity:1}
+.btn-primary{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 20px;border:none;border-radius:var(--radiusSm);background:linear-gradient(135deg,var(--blue),#1d4ed8);color:#fff;font-size:13px;font-weight:700;cursor:pointer;transition:var(--transition);box-shadow:0 1px 3px rgba(37,99,235,.3)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(37,99,235,.4)}
+.btn-primary:active{transform:translateY(0)}
+
+/* ═══ STATS ═══ */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;transition:var(--transition);cursor:default}
+.stat-card:hover{border-color:var(--line2);box-shadow:var(--shadowMd);transform:translateY(-2px)}
+.stat-card .label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px}
+.stat-card .value{font-size:28px;font-weight:800;letter-spacing:-.03em;color:var(--ink);line-height:1}
+.stat-card .meta{font-size:10px;color:var(--muted);margin-top:4px}
+.status-row{display:flex;align-items:center;gap:8px;margin-top:4px}
+.status-dot{width:10px;height:10px;border-radius:50%;background:var(--green)}
+.status-dot.ro{background:var(--amber)}
+.status-text{font-size:14px;font-weight:600}
+
+/* ═══ MAIN PANEL ═══ */
+.main-panel{display:grid;grid-template-columns:280px 8px 1fr;gap:0;flex:1;min-height:0}
+.sidebar{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--shadow)}
+.sidebar-header{padding:12px 14px;border-bottom:1px solid var(--line);background:var(--surface2)}
+.sidebar-header h3{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.search-wrap{position:relative;padding:10px 14px;border-bottom:1px solid var(--line)}
+.search-wrap input{width:100%;padding:8px 12px 8px 34px;border:1px solid var(--line);border-radius:var(--radiusXs);font-size:12px;background:var(--surface2);outline:none;transition:var(--transition);font-family:inherit}
+.search-wrap input:focus{border-color:var(--blue);background:var(--surface);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+.search-icon{position:absolute;left:26px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--muted);pointer-events:none}
+.clear-btn{position:absolute;right:22px;top:50%;transform:translateY(-50%);width:18px;height:18px;border-radius:50%;border:none;background:var(--surface3);color:var(--muted);font-size:10px;cursor:pointer;display:none;align-items:center;justify-content:center}
+.clear-btn.show{display:flex}
+.clear-btn:hover{background:var(--line2)}
+.conjunto-list{flex:1;overflow-y:auto;padding:4px 0}
+.conjunto-item{padding:10px 14px;cursor:pointer;transition:var(--transition);border-left:3px solid transparent}
+.conjunto-item:hover{background:var(--surface2)}
+.conjunto-item.active{background:var(--blueSoft);border-left-color:var(--blue)}
+.conjunto-item .code{display:inline-block;padding:2px 6px;border-radius:4px;background:var(--blueSoft);font-size:9px;font-weight:700;color:var(--blue);margin-right:8px}
+.conjunto-item .name{font-size:12px;font-weight:700;color:var(--ink)}
+.conjunto-item .meta{font-size:10px;color:var(--muted);margin-top:4px;display:flex;gap:4px}
+
+/* ═══ DETAIL PANEL ═══ */
+.detail-panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--shadow)}
+.detail-header{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+.detail-header .left{display:flex;align-items:center;gap:12px}
+.code-badge{padding:4px 8px;border-radius:4px;background:var(--blueSoft);border:1px solid var(--blueLight);font-size:11px;font-weight:700;color:var(--blue)}
+.name-input{font-size:16px;font-weight:800;border:none;background:transparent;outline:none;color:var(--ink);font-family:inherit;min-width:200px;padding:2px 4px;border-radius:4px;transition:var(--transition)}
+.name-input:focus{background:var(--surface2)}
+.detail-actions{display:flex;gap:6px}
+.btn-ghost{display:inline-flex;align-items:center;height:28px;padding:0 10px;border:1px solid transparent;border-radius:var(--radiusXs);background:transparent;color:var(--ink2);font-size:11px;font-weight:500;cursor:pointer;transition:var(--transition);font-family:inherit}
+.btn-ghost:hover{background:var(--surface2);border-color:var(--line)}
+.btn-ghost.danger:hover{color:var(--red);background:var(--redSoft);border-color:var(--red)}
+
+/* legend bar */
+.legend-bar{padding:10px 14px;background:var(--blueSoft);display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--blueLight)}
+.legend-bar .icon{font-size:12px}
+.legend-bar .text{font-size:11px;color:var(--ink2)}
+.legend-bar .text strong{font-weight:700}
+.legend-bar .sep{color:var(--line2);margin:0 6px}
+
+/* maestro bar */
+.maestro-bar{padding:12px 14px;background:var(--amberSoft);border-bottom:1px solid var(--amberLight);display:flex;flex-direction:column;gap:8px}
+.maestro-bar .top{display:flex;align-items:center;gap:8px}
+.maestro-bar .top h4{font-size:10px;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:.04em}
+.maestro-bar .top p{font-size:10px;color:var(--muted)}
+.maestro-chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border:2px solid var(--amber);border-radius:20px;background:var(--surface);font-size:10px;font-weight:600}
+.chip .star{color:var(--amber);font-size:11px}
+.chip .code{color:var(--amber)}
+.chip .sep{color:var(--muted)}
+.chip .desc{color:var(--ink2)}
+.btn-add-maestro{display:inline-flex;align-items:center;height:26px;padding:0 10px;border:1.5px solid var(--amber);border-radius:20px;background:transparent;color:var(--amber);font-size:10px;font-weight:600;cursor:pointer;transition:var(--transition);font-family:inherit}
+.btn-add-maestro:hover{background:var(--amberSoft)}
+
+/* orphaned warning */
+.orphan-bar{padding:8px 14px;background:var(--redSoft);border-bottom:1px solid var(--red);font-size:11px;font-weight:600;color:var(--red);display:none}
+.orphan-bar.show{display:block}
+
+/* ═══ DATA GRID ═══ */
+.grid-wrap{flex:1;overflow:auto}
+table.grid{width:100%;border-collapse:collapse;font-size:12px}
+table.grid th{text-align:left;padding:10px 12px;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;border-bottom:2px solid var(--line);background:var(--surface2);position:sticky;top:0;z-index:2}
+table.grid td{padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:middle;transition:background var(--transition)}
+table.grid tr.maestro{background:var(--amberSoft)}
+table.grid tr.maestro td:first-child{border-left:3px solid var(--amber)}
+table.grid tr.slave{background:var(--blueSoft)}
+table.grid tr.slave td:first-child{border-left:3px solid var(--blue)}
+table.grid tr:hover td{background:rgba(0,0,0,.02)}
+table.grid tr.maestro:hover td{background:var(--amberLight)}
+table.grid tr.slave:hover td{background:var(--blueLight)}
+table.grid td .type-select{padding:2px 4px;border:1px solid transparent;border-radius:4px;font-size:11px;background:transparent;outline:none;font-family:inherit;cursor:pointer;transition:var(--transition)}
+table.grid td .type-select:hover{border-color:var(--line)}
+table.grid td .type-select:focus{border-color:var(--blue);background:var(--surface)}
+table.grid td input[type=text]{border:1px solid transparent;border-radius:4px;padding:2px 4px;font-size:12px;background:transparent;outline:none;font-family:inherit;width:100%;transition:var(--transition)}
+table.grid td input[type=text]:hover{border-color:var(--line)}
+table.grid td input[type=text]:focus{border-color:var(--blue);background:var(--surface);box-shadow:0 0 0 2px rgba(37,99,235,.1)}
+table.grid td input[type=checkbox]{accent-color:var(--amber);width:16px;height:16px;cursor:pointer}
+table.grid td .formula-wrap{display:flex;align-items:center;gap:4px}
+table.grid td .formula-wrap .maestro-label{font-family:'Consolas','Courier New',monospace;font-size:11px;font-weight:600;color:var(--blue);white-space:nowrap}
+table.grid td .formula-wrap select{padding:2px 4px;border:1px solid transparent;border-radius:4px;font-size:11px;font-family:'Consolas','Courier New',monospace;background:transparent;outline:none;cursor:pointer;width:36px;text-align:center;transition:var(--transition)}
+table.grid td .formula-wrap select:hover{border-color:var(--line)}
+table.grid td .formula-wrap select:focus{border-color:var(--blue)}
+table.grid td .formula-wrap .factor-input{width:50px;padding:2px 4px;border:1px solid transparent;border-radius:4px;font-size:11px;font-family:'Consolas','Courier New',monospace;outline:none;text-align:right;transition:var(--transition)}
+table.grid td .formula-wrap .factor-input:hover{border-color:var(--line)}
+table.grid td .formula-wrap .factor-input:focus{border-color:var(--blue);background:var(--surface)}
+table.grid td .maestro-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;color:var(--amber)}
+table.grid td .slave-combo{padding:2px 4px;border:1px solid transparent;border-radius:4px;font-size:11px;background:transparent;outline:none;font-family:inherit;cursor:pointer;transition:var(--transition);width:100%}
+table.grid td .slave-combo:hover{border-color:var(--line)}
+
+/* ═══ FOOTER ═══ */
+.grid-footer{padding:10px 14px;background:var(--surface2);border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.grid-footer .left{display:flex;align-items:center;gap:12px;font-size:12px}
+.grid-footer .left .total-label{font-weight:700;color:var(--muted)}
+.grid-footer .left .total-value{font-weight:700;color:var(--ink)}
+.grid-footer .badge{display:inline-flex;align-items:center;gap:4px;padding:2px 10px;border-radius:12px;font-size:11px;font-weight:700}
+.grid-footer .badge.amber{background:var(--amberSoft);color:var(--amber)}
+.grid-footer .badge.blue{background:var(--blueSoft);color:var(--blue)}
+.grid-footer .right{display:flex;align-items:center;gap:6px}
+.grid-footer .right .unit-input{width:36px;padding:2px 4px;border:none;background:transparent;font-size:12px;font-weight:700;outline:none;border-radius:4px;font-family:inherit}
+.grid-footer .right .unit-input:focus{background:var(--surface)}
+.grid-footer .btn-icon{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border:1px solid transparent;border-radius:4px;background:transparent;cursor:pointer;transition:var(--transition);font-size:11px;color:var(--ink2);font-family:inherit}
+.grid-footer .btn-icon:hover{background:var(--surface);border-color:var(--line)}
+.grid-footer .btn-primary-sm{display:inline-flex;align-items:center;height:26px;padding:0 10px;border:none;border-radius:4px;background:transparent;color:var(--blue);font-size:11px;font-weight:700;cursor:pointer;transition:var(--transition);font-family:inherit}
+.grid-footer .btn-primary-sm:hover{background:var(--blueSoft)}
+.grid-footer .btn-danger-sm{display:inline-flex;align-items:center;height:26px;padding:0 10px;border:none;border-radius:4px;background:transparent;color:var(--muted);font-size:11px;cursor:pointer;transition:var(--transition);font-family:inherit}
+.grid-footer .btn-danger-sm:hover{background:var(--redSoft);color:var(--red)}
+
+/* ═══ UTILITIES ═══ */
+.splitter{width:8px;cursor:col-resize;background:transparent;position:relative}
+.splitter::after{content:'';position:absolute;left:50%;top:0;bottom:0;width:2px;background:var(--line);border-radius:2px;transform:translateX(-50%);transition:var(--transition)}
+.splitter:hover::after{background:var(--blue);width:3px}
+
+/* ═══ ANIMATIONS ═══ */
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideIn{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+.fade-in{animation:fadeIn .35s ease-out both}
+.slide-in{animation:slideIn .3s ease-out both}
+.stagger-1{animation-delay:.05s}
+.stagger-2{animation-delay:.1s}
+.stagger-3{animation-delay:.15s}
+
+/* ═══ EMPTY STATE ═══ */
+.empty-state{display:none;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:60px;text-align:center;color:var(--muted)}
+.empty-state .icon{font-size:48px;margin-bottom:16px}
+.empty-state h3{font-size:16px;font-weight:700;color:var(--ink2);margin-bottom:8px}
+.empty-state p{font-size:12px;max-width:300px;line-height:1.5}
+
+/* ═══ SCROLLBAR ═══ */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--line2);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+
+/* ═══ RESPONSIVE ═══ */
+@media(max-width:900px){.main-panel{grid-template-columns:1fr}.sidebar{display:none}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <!-- ═══ HEADER ═══ -->
+  <div class="header-card fade-in">
+    <div class="row">
+      <div class="header-left">
+        <h1>PLANTILLAS DE MATERIALES</h1>
+        <p>Diseña y organiza conjuntos de materiales listos para cargar en tu hoja de cubicación.</p>
+      </div>
+      <div class="header-right">
+        <span class="status-msg" id="statusMsg">Plantilla creada</span>
+        <button class="btn-primary" onclick="setStatus('Nueva plantilla creada')">＋ Nueva Plantilla</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ STATS ═══ -->
+  <div class="stats fade-in stagger-1">
+    <div class="stat-card">
+      <div class="label">Total Plantillas</div>
+      <div class="value" id="totalConjuntos">8</div>
+      <div class="meta">conjuntos eléctricos</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Total Recursos</div>
+      <div class="value" id="totalRecursos">47</div>
+      <div class="meta">materiales en todas las listas</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Estado</div>
+      <div class="status-row">
+        <div class="status-dot" id="statusDot"></div>
+        <div class="status-text" id="statusText">Editable</div>
+      </div>
+      <div class="meta" id="selectedName">Tablero general</div>
+    </div>
+  </div>
+
+  <!-- ═══ MAIN ═══ -->
+  <div class="main-panel fade-in stagger-3" style="min-height:0">
+    <!-- SIDEBAR -->
+    <div class="sidebar slide-in">
+      <div class="sidebar-header"><h3>Lista de Plantillas</h3></div>
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="Buscar plantilla..." oninput="filterConjuntos(this.value)">
+        <button class="clear-btn" id="clearBtn" onclick="clearFilter()">✕</button>
+      </div>
+      <div class="conjunto-list" id="conjuntoList"></div>
+    </div>
+
+    <!-- SPLITTER -->
+    <div class="splitter"></div>
+
+    <!-- DETAIL -->
+    <div class="detail-panel" id="detailPanel">
+      <!-- empty state -->
+      <div class="empty-state" id="emptyState">
+        <div class="icon">📋</div>
+        <h3>Selecciona una plantilla de la lista</h3>
+        <p>O haz clic en '+ Nueva Plantilla' para crear una lista de materiales en blanco y personalizarla.</p>
+      </div>
+
+      <!-- detail content -->
+      <div id="detailContent" style="display:flex;flex-direction:column;height:100%">
+        <!-- header -->
+        <div class="detail-header">
+          <div class="left">
+            <span class="code-badge" id="detailCode">CONJ_01</span>
+            <input class="name-input" id="detailName" value="Tablero general" onchange="onDetailChange()">
+          </div>
+          <div class="detail-actions">
+            <button class="btn-ghost" onclick="setStatus('Plantilla duplicada')">Duplicar</button>
+            <button class="btn-ghost danger" onclick="setStatus('Plantilla eliminada')">Eliminar</button>
+          </div>
+        </div>
+
+        <!-- legend -->
+        <div class="legend-bar">
+          <span class="icon">⚡</span>
+          <span class="text">
+            <strong>Factor</strong> = Base x Factor <span class="sep">│</span>
+            <strong>Cada N m</strong> = Ceil(Base / Paso) <span class="sep">│</span>
+            <strong>Fórmula</strong> = expresión con MAESTRO <span class="sep">│</span>
+            <strong>⭐ Maestro</strong> = recurso base; los esclavos lo siguen
+          </span>
+        </div>
+
+        <!-- maestro bar -->
+        <div class="maestro-bar">
+          <div class="top">
+            <h4>⭐ MAESTROS</h4>
+            <p>— Los maestros definen el orden. Los esclavos calculan su cantidad en base al maestro.</p>
+          </div>
+          <div class="maestro-chips" id="maestroChips"></div>
+        </div>
+
+        <!-- orphan warning -->
+        <div class="orphan-bar" id="orphanBar">⚠ 1 esclavo(s) hacen referencia a un recurso que ya no es maestro.</div>
+
+        <!-- grid -->
+        <div class="grid-wrap" id="gridWrap">
+          <table class="grid">
+            <thead>
+              <tr>
+                <th style="width:60px">Tipo</th>
+                <th style="width:85px">Código</th>
+                <th>Descripción del Material</th>
+                <th style="width:40px">Ud.</th>
+                <th style="width:70px;text-align:center">⭐ Maestro</th>
+                <th style="width:140px">Sigue a Maestro</th>
+                <th style="width:180px">Fórmula</th>
+              </tr>
+            </thead>
+            <tbody id="gridBody"></tbody>
+          </table>
+        </div>
+
+        <!-- footer -->
+        <div class="grid-footer">
+          <div class="left">
+            <span class="total-label">Total:</span>
+            <span class="total-value" id="totalMaterials">12 materiales</span>
+            <span class="badge amber" id="maestroBadge">⭐ Maestros: 2</span>
+            <span class="badge blue" id="slaveBadge">Esclavos: 3</span>
+            <span class="total-label">Unidad:</span>
+            <input class="unit-input" value="UN" onchange="onDetailChange()">
+          </div>
+          <div class="right">
+            <button class="btn-icon" title="Mover arriba">⬆</button>
+            <button class="btn-icon" title="Mover abajo">⬇</button>
+            <button class="btn-primary-sm" onclick="setStatus('Material agregado')">＋ Agregar Material</button>
+            <button class="btn-danger-sm">✕ Eliminar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══ DATA ═══
+const DATA = [
+  {
+    id:'c1', code:'CONJ_01', name:'Tablero general', unidad:'UN',
+    recursos:[
+      {id:'r1',tipo:'MAT',codigo:'C401000010',desc:'Tablero general 24 polos',ud:'UN',master:true,maestroId:'',op:'=',factor:1},
+      {id:'r2',tipo:'MAT',codigo:'C402000015',desc:'Interruptor termomagnético 3x50A',ud:'UN',master:false,maestroId:'r1',op:'=',factor:1},
+      {id:'r3',tipo:'MAT',codigo:'C402000020',desc:'Interruptor diferencial 2x40A',ud:'UN',master:false,maestroId:'r1',op:'=',factor:1},
+      {id:'r4',tipo:'MAT',codigo:'C403000005',desc:'Cable NYY 3x10mm2',ud:'m',master:true,maestroId:'',op:'=',factor:1},
+      {id:'r11',tipo:'MO',codigo:'MO-INST-01',desc:'Mano de obra instalación tablero',ud:'hr',master:false,maestroId:'r4',op:'/',factor:1.5},
+      {id:'r12',tipo:'MAT',codigo:'C405000010',desc:'Cinta aislante eléctrica',ud:'UN',master:false,maestroId:'r1',op:'*',factor:2},
+    ]
+  },
+  {
+    id:'c2', code:'CONJ_02', name:'Canalización exterior', unidad:'m',
+    recursos:[
+      {id:'r5',tipo:'MAT',codigo:'C401000020',desc:'Tubo conduit PVC 32mm',ud:'m',master:true,maestroId:'',op:'=',factor:1},
+      {id:'r6',tipo:'MAT',codigo:'C402000030',desc:'Curva conduit 32mm',ud:'UN',master:false,maestroId:'r5',op:'/',factor:3},
+      {id:'r7',tipo:'MAT',codigo:'C403000010',desc:'Abrazadera conduit 32mm',ud:'UN',master:false,maestroId:'r5',op:'*',factor:2},
+    ]
+  },
+  {
+    id:'c3', code:'CONJ_03', name:'Circuito alumbrado oficina', unidad:'UN',
+    recursos:[
+      {id:'r8',tipo:'MAT',codigo:'C404000010',desc:'Luminaria LED panel 60x60',ud:'UN',master:true,maestroId:'',op:'=',factor:1},
+      {id:'r9',tipo:'MAT',codigo:'C402000025',desc:'Interruptor simple 10A',ud:'UN',master:false,maestroId:'r8',op:'=',factor:1},
+      {id:'r10',tipo:'MAT',codigo:'C404000015',desc:'Sensor presencia',ud:'UN',master:false,maestroId:'r8',op:'/',factor:2},
+    ]
+  },
+  {id:'c4', code:'CONJ_04', name:'Puesta a tierra', unidad:'GL'},
+  {id:'c5', code:'CONJ_05', name:'Alimentador principal', unidad:'m'},
+  {id:'c6', code:'CONJ_06', name:'Bandeja bandeja 300x100', unidad:'m'},
+  {id:'c7', code:'CONJ_07', name:'Circuito enchufes', unidad:'UN'},
+  {id:'c8', code:'CONJ_08', name:'Tablero distribución secundario', unidad:'UN'},
+];
+
+let selectedId = 'c1';
+const ops = ['=','+','-','*','/'];
+
+// ═══ RENDER ═══
+function render() {
+  renderConjuntoList();
+  renderDetail();
+  updateStats();
+}
+
+function renderConjuntoList() {
+  const list = document.getElementById('conjuntoList');
+  const filter = document.getElementById('searchInput').value.toLowerCase();
+  const filtered = DATA.filter(c => c.name.toLowerCase().includes(filter) || c.code.toLowerCase().includes(filter));
+  list.innerHTML = filtered.map(c => `
+    <div class="conjunto-item ${c.id===selectedId?'active':''}" onclick="selectConjunto('${c.id}')">
+      <div><span class="code">${c.code}</span><span class="name">${c.name}</span></div>
+      <div class="meta">
+        <span>${c.recursos?.length||0} materiales</span>
+        <span>·</span>
+        <span>Unidad: ${c.unidad||'UN'}</span>
+      </div>
+    </div>
+  `).join('');
+  document.getElementById('clearBtn').classList.toggle('show', filter.length > 0);
+  document.getElementById('totalConjuntos').textContent = DATA.length;
+}
+
+function renderDetail() {
+  const c = DATA.find(x => x.id === selectedId);
+  const detail = document.getElementById('detailContent');
+  const empty = document.getElementById('emptyState');
+
+  if (!c) {
+    detail.style.display = 'none';
+    empty.style.display = 'flex';
+    document.getElementById('selectedName').textContent = 'Sin plantilla seleccionada';
+    return;
+  }
+
+  detail.style.display = 'flex';
+  empty.style.display = 'none';
+
+  document.getElementById('detailCode').textContent = c.code;
+  document.getElementById('detailName').value = c.name;
+  document.getElementById('selectedName').textContent = c.name;
+
+  const recursos = c.recursos || [];
+  document.getElementById('totalMaterials').textContent = `${recursos.length} materiales`;
+
+  const masters = recursos.filter(r => r.master);
+  const slaves = recursos.filter(r => !r.master && r.maestroId);
+  document.getElementById('maestroBadge').innerHTML = `⭐ Maestros: ${masters.length}`;
+  document.getElementById('slaveBadge').innerHTML = `Esclavos: ${slaves.length}`;
+
+  // maestro chips
+  const chips = document.getElementById('maestroChips');
+  chips.innerHTML = masters.map(m => `
+    <div class="chip">
+      <span class="star">⭐</span>
+      <span class="code">${m.codigo}</span>
+      <span class="sep">·</span>
+      <span class="desc">${m.desc}</span>
+    </div>
+  `).join('') + `<button class="btn-add-maestro" onclick="setStatus('Maestro agregado')">＋ Agregar Maestro</button>`;
+
+  // orphan check
+  const orphanBar = document.getElementById('orphanBar');
+  const masterIds = new Set(masters.map(m => m.id));
+  const orphans = recursos.filter(r => !r.master && r.maestroId && !masterIds.has(r.maestroId));
+  orphanBar.classList.toggle('show', orphans.length > 0);
+  orphanBar.textContent = `⚠ ${orphans.length} esclavo(s) hacen referencia a un recurso que ya no es maestro.`;
+
+  // grid
+  renderGrid(recursos, masterIds);
+}
+
+function renderGrid(recursos, masterIds) {
+  const tbody = document.getElementById('gridBody');
+  tbody.innerHTML = recursos.map((r, i) => {
+    const isMaster = r.master;
+    const isSlave = !isMaster && r.maestroId;
+    const rowClass = isMaster ? 'maestro' : isSlave ? 'slave' : '';
+
+    const slaveOptions = recursos.filter(m => m.master).map(m => ({
+      value: m.id, label: `${m.codigo} · ${m.desc}`
+    }));
+
+    return `
+      <tr class="${rowClass}" data-id="${r.id}">
+        <td>
+          <select class="type-select" onchange="onGridChange()">
+            <option ${r.tipo==='MAT'?'selected':''}>MAT</option>
+            <option ${r.tipo==='MO'?'selected':''}>MO</option>
+            <option ${r.tipo==='EQ'?'selected':''}>EQ</option>
+          </select>
+        </td>
+        <td><input type="text" value="${r.codigo}" onchange="onGridChange()"></td>
+        <td><input type="text" value="${r.desc}" onchange="onGridChange()" style="font-weight:${isMaster?700:400}"></td>
+        <td><input type="text" value="${r.ud}" onchange="onGridChange()" style="text-align:center;width:32px"></td>
+        <td style="text-align:center">
+          ${isMaster ? '<span class="maestro-badge">⭐ Maestro</span>' :
+            `<input type="checkbox" ${r.master?'checked':''} onchange="toggleMaster('${r.id}',this.checked)">`}
+        </td>
+        <td>
+          ${isMaster ? '<span class="maestro-badge">⭐ Recurso Maestro</span>' :
+            `<select class="slave-combo" onchange="onGridChange()">
+              <option value="">— Sin maestro —</option>
+              ${slaveOptions.map(o => `<option value="${o.value}" ${r.maestroId===o.value?'selected':''}>${o.label}</option>`).join('')}
+            </select>`}
+        </td>
+        <td>
+          <div class="formula-wrap">
+            <span class="maestro-label">MAESTRO</span>
+            <select onchange="onFormulaOpChange('${r.id}',this.value)">
+              ${ops.map(o => `<option value="${o}" ${r.op===o?'selected':''}>${o}</option>`).join('')}
+            </select>
+            <input type="text" class="factor-input" value="${r.op==='='?'':r.factor.toFixed(1)}"
+                   onchange="onFormulaFactorChange('${r.id}',this.value)"
+                   style="display:${r.op==='='?'none':'block'}">
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function updateStats() {
+  const total = DATA.reduce((s,c) => s + (c.recursos?.length||0), 0);
+  document.getElementById('totalRecursos').textContent = total;
+}
+
+// ═══ INTERACTIONS ═══
+function selectConjunto(id) {
+  selectedId = id;
+  render();
+}
+
+function filterConjuntos(val) {
+  renderConjuntoList();
+  document.getElementById('clearBtn').classList.toggle('show', val.length > 0);
+}
+
+function clearFilter() {
+  document.getElementById('searchInput').value = '';
+  renderConjuntoList();
+  document.getElementById('clearBtn').classList.remove('show');
+}
+
+function toggleMaster(id, checked) {
+  const c = DATA.find(x => x.id === selectedId);
+  if (!c) return;
+  const r = c.recursos.find(x => x.id === id);
+  if (!r) return;
+  if (checked) {
+    // promote to master
+    r.master = true;
+    r.maestroId = '';
+  } else {
+    r.master = false;
+  }
+  renderDetail();
+  setStatus(checked ? 'Recurso promovido a Maestro' : 'Maestro removido');
+}
+
+function onFormulaOpChange(id, val) {
+  const c = DATA.find(x => x.id === selectedId);
+  if (!c) return;
+  const r = c.recursos.find(x => x.id === id);
+  if (!r) return;
+  r.op = val;
+  renderGrid(c.recursos||[], new Set(c.recursos.filter(x=>x.master).map(x=>x.id)));
+}
+
+function onFormulaFactorChange(id, val) {
+  const c = DATA.find(x => x.id === selectedId);
+  if (!c) return;
+  const r = c.recursos.find(x => x.id === id);
+  if (!r) return;
+  const v = parseFloat(val);
+  if (!isNaN(v)) r.factor = v;
+}
+
+function onGridChange() {
+  // placeholder — real app would persist
+}
+
+function onDetailChange() {
+  // placeholder
+}
+
+let statusTimeout;
+function setStatus(msg) {
+  const el = document.getElementById('statusMsg');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(statusTimeout);
+  statusTimeout = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ═══ INIT ═══
+render();
+</script>
+</body>
+</html>

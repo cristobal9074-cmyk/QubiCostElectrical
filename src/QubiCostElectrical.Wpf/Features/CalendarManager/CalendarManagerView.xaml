@@ -1,0 +1,112 @@
+<UserControl x:Class="QubiCostElectrical.Wpf.Features.CalendarManager.CalendarManagerView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:QubiCostElectrical.Wpf.Features.CalendarManager">
+  <Grid Background="{DynamicResource Brush.Canvas}">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+
+    <Border Grid.Row="0" Background="{DynamicResource Brush.Surface}"
+            BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+            CornerRadius="{StaticResource Radius.Lg}" Padding="14" Margin="12">
+      <StackPanel Orientation="Horizontal">
+        <TextBlock Text="Gestor de Calendarios" Style="{DynamicResource Text.SectionTitle}" VerticalAlignment="Center" />
+        <Button Command="{Binding RefreshCommand}" Content="⟳" Style="{StaticResource Button.Secondary}" Margin="12,0,0,0" />
+        <Button Command="{Binding AddCalendarCommand}" Content="Nuevo Calendario" Style="{StaticResource Button.Primary}" Margin="8,0,0,0" />
+        <Button Command="{Binding DeleteCalendarCommand}" Content="Eliminar" Style="{StaticResource Button.Secondary}" Margin="8,0,0,0" />
+        <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource Text.Caption}" VerticalAlignment="Center" Margin="12,0,0,0" />
+      </StackPanel>
+    </Border>
+
+    <Grid Grid.Row="1" Margin="12,0,12,12">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="280" />
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="*" />
+      </Grid.ColumnDefinitions>
+
+      <Border Grid.Column="0" Background="{DynamicResource Brush.Surface}"
+              BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+              CornerRadius="{StaticResource Radius.Lg}" Padding="8">
+        <StackPanel>
+          <TextBlock Text="Calendarios" Style="{StaticResource Text.SectionLabel}" Margin="4,0,0,8" />
+          <ListBox ItemsSource="{Binding Calendars}" SelectedItem="{Binding SelectedCalendar}" DisplayMemberPath="Name"
+                   Background="Transparent" BorderThickness="0" />
+        </StackPanel>
+      </Border>
+
+      <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Center" VerticalAlignment="Stretch"
+                    Background="{DynamicResource Brush.Line}" Margin="4,0" />
+
+      <ScrollViewer Grid.Column="2" IsEnabled="{Binding IsEditing}">
+        <Border Background="{DynamicResource Brush.Surface}"
+                BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+                CornerRadius="{StaticResource Radius.Lg}" Padding="14">
+          <StackPanel>
+            <TextBlock Text="Editor de Calendario" Style="{StaticResource Text.SectionLabel}" Margin="0,0,0,12" />
+
+            <TextBlock Text="Código" Style="{StaticResource Text.Body}" />
+            <TextBox Text="{Binding CalendarCode, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,8" />
+
+            <TextBlock Text="Nombre" Style="{StaticResource Text.Body}" />
+            <TextBox Text="{Binding CalendarName, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,8" />
+
+            <TextBlock Text="Tipo" Style="{StaticResource Text.Body}" />
+            <ComboBox SelectedItem="{Binding CalendarType}" ItemsSource="{x:Static local:CalendarManagerViewModel.CalendarTypeValues}" Margin="0,2,0,12" />
+
+            <TextBlock Text="Patrón Semanal" Style="{StaticResource Text.SectionLabel}" Margin="0,8,0,4" />
+            <ItemsControl ItemsSource="{Binding WeeklyPattern}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Border BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1" Padding="4,4,0,4">
+                    <StackPanel Orientation="Horizontal">
+                      <CheckBox IsChecked="{Binding IsWorkingDay}" IsEnabled="False" VerticalAlignment="Center" />
+                      <TextBlock Text="{Binding DayOfWeek}" Width="100" Margin="4,0" VerticalAlignment="Center" />
+                      <TextBlock Text="{Binding Shifts.Count, StringFormat={}{0} turnos}" VerticalAlignment="Center" Margin="4,0" />
+                    </StackPanel>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <TextBlock Text="Excepciones" Style="{StaticResource Text.SectionLabel}" Margin="0,12,0,4" />
+            <DataGrid ItemsSource="{Binding Exceptions}" AutoGenerateColumns="False" Height="120"
+                      Background="{DynamicResource Brush.Canvas}" Margin="0,0,0,8">
+              <DataGrid.Columns>
+                <DataGridTextColumn Header="Fecha" Binding="{Binding Date, StringFormat=\{0:dd/MM/yyyy\}}" Width="100" />
+                <DataGridTextColumn Header="Tipo" Binding="{Binding ExceptionType}" Width="100" />
+                <DataGridTextColumn Header="Motivo" Binding="{Binding Reason}" Width="*" />
+                <DataGridTemplateColumn Header="Acción" Width="60">
+                  <DataGridTemplateColumn.CellTemplate>
+                    <DataTemplate>
+                      <Button Content="X" Command="{Binding DataContext.DeleteExceptionCommand, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}"
+                              CommandParameter="{Binding}" Style="{StaticResource Button.Secondary}" />
+                    </DataTemplate>
+                  </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+              </DataGrid.Columns>
+            </DataGrid>
+
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+              </Grid.ColumnDefinitions>
+              <DatePicker Grid.Column="0" Text="{Binding ExceptionDate}" Margin="0,0,4,0" />
+              <ComboBox Grid.Column="1" SelectedItem="{Binding ExceptionType}" ItemsSource="{x:Static local:CalendarManagerViewModel.ExceptionTypeValues}" Margin="4,0" />
+              <TextBox Grid.Column="2" Text="{Binding ExceptionReason, UpdateSourceTrigger=PropertyChanged}" Margin="4,0" />
+              <Button Grid.Column="3" Command="{Binding AddExceptionCommand}" Content="Agregar" Style="{StaticResource Button.Primary}" Margin="4,0,0,0" />
+            </Grid>
+
+            <Button Command="{Binding SaveCalendarCommand}" Content="Guardar Calendario" Style="{StaticResource Button.Primary}"
+                    HorizontalAlignment="Stretch" Margin="0,12,0,0" />
+          </StackPanel>
+        </Border>
+      </ScrollViewer>
+    </Grid>
+  </Grid>
+</UserControl>

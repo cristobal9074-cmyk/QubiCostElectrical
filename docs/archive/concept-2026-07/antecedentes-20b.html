@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Qubi Cost — Antecedentes · propuesta 20B</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=IBM+Plex+Mono:wght@450;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --navy: #0B1F33;
+      --navy2: #122A42;
+      --blue: #1B6EF3;
+      --blue-soft: #E8F0FE;
+      --blue-faint: #F3F7FE;
+      --ink: #0F172A;
+      --ink2: #334155;
+      --ink3: #64748B;
+      --ink4: #94A3B8;
+      --line: #E2E8F0;
+      --line2: #F1F5F9;
+      --surface: #FFFFFF;
+      --canvas: #EEF2F7;
+      --success: #16A34A;
+      --success-soft: #ECFDF5;
+      --amber: #D97706;
+      --amber-soft: #FFF7ED;
+      --purple: #7C3AED;
+      --purple-soft: #F3E8FF;
+      --font: "DM Sans", "Segoe UI", system-ui, sans-serif;
+      --mono: "IBM Plex Mono", Consolas, monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font);
+      color: var(--ink);
+      background: linear-gradient(165deg, #071421 0%, var(--navy) 40%, #0E2438 100%);
+      min-height: 100vh;
+      padding: 28px 20px 48px;
+    }
+    .wrap { width: min(1220px, 100%); margin: 0 auto; }
+    .eyebrow {
+      color: rgba(255,255,255,.5); font-size: 11px; font-weight: 600;
+      letter-spacing: .08em; text-transform: uppercase; margin-bottom: 10px;
+      display: flex; gap: 10px; align-items: center;
+    }
+    .eyebrow b { color: #fff; text-transform: none; letter-spacing: 0; font-size: 13px; font-weight: 600; }
+
+    .app {
+      background: var(--canvas);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 28px 70px rgba(0,0,0,.35);
+      border: 1px solid rgba(255,255,255,.08);
+      min-height: 740px;
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      animation: rise .45s cubic-bezier(.22,1,.36,1) both;
+    }
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(14px) scale(.988); }
+      to { opacity: 1; transform: none; }
+    }
+
+    .shell {
+      background: linear-gradient(90deg, var(--navy), var(--navy2));
+      color: #fff; padding: 10px 16px;
+      display: flex; align-items: center; gap: 18px;
+    }
+    .shell .logo { font-weight: 700; font-size: 13px; }
+    .shell nav { display: flex; gap: 4px; flex: 1; }
+    .shell nav span {
+      padding: 6px 10px; border-radius: 8px; font-size: 12px; font-weight: 500;
+      color: rgba(255,255,255,.65);
+    }
+    .shell nav span.on { background: rgba(255,255,255,.12); color: #fff; }
+
+    /* Header — misma esencia que Proyecto */
+    .page-head {
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+      padding: 18px 22px 14px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: start;
+    }
+    .page-head .label {
+      font-size: 13px; font-weight: 600; color: var(--ink3);
+      letter-spacing: .04em; text-transform: uppercase; margin-bottom: 6px;
+    }
+    .page-head h1 {
+      font-size: 26px; font-weight: 700; letter-spacing: -.03em; line-height: 1.15;
+    }
+    .page-head .sub {
+      margin-top: 4px; font-size: 13px; color: var(--ink3); max-width: 52ch;
+    }
+    .meta-row {
+      display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; align-items: center;
+    }
+    .pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 600;
+      background: var(--line2); color: var(--ink3);
+    }
+    .pill.blue { background: var(--blue-soft); color: var(--blue); }
+    .pill.ok { background: var(--success-soft); color: var(--success); }
+    .pill.amber { background: var(--amber-soft); color: var(--amber); }
+    .pill .mono { font-family: var(--mono); font-weight: 600; }
+    .pill .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+    .btn {
+      appearance: none; border: 1px solid transparent; border-radius: 9px;
+      padding: 9px 13px; font: inherit; font-size: 12.5px; font-weight: 600;
+      cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+      transition: .15s background, .15s border-color, .1s transform;
+    }
+    .btn:active { transform: scale(.98); }
+    .btn-primary {
+      background: var(--blue); color: #fff;
+      box-shadow: 0 4px 12px rgba(27,110,243,.28);
+    }
+    .btn-primary:hover { background: #1559d1; }
+    .btn-secondary {
+      background: var(--surface); color: var(--ink2); border-color: var(--line);
+    }
+    .btn-secondary:hover { background: var(--line2); }
+    .btn-ghost { background: transparent; color: var(--ink3); }
+    .btn-ghost:hover { background: var(--line2); color: var(--ink2); }
+    .head-actions { display: flex; gap: 8px; align-items: center; }
+
+    /* Body: rail tipos | lista | detalle */
+    .body {
+      display: grid;
+      grid-template-columns: 188px minmax(0, 1.15fr) minmax(300px, .95fr);
+      min-height: 0;
+      background: var(--canvas);
+    }
+
+    .rail {
+      background: var(--surface);
+      border-right: 1px solid var(--line);
+      padding: 14px 10px;
+      display: flex; flex-direction: column; gap: 3px;
+    }
+    .rail-label {
+      font-size: 10px; font-weight: 700; letter-spacing: .08em;
+      text-transform: uppercase; color: var(--ink4);
+      padding: 4px 10px 10px;
+    }
+    .rail-item {
+      display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center;
+      padding: 9px 10px; border-radius: 10px; border: 1px solid transparent;
+      background: transparent; cursor: pointer; text-align: left;
+      font: inherit; color: var(--ink2); transition: .15s;
+    }
+    .rail-item:hover { background: var(--line2); }
+    .rail-item.active {
+      background: var(--blue-soft);
+      border-color: rgba(27,110,243,.18);
+      box-shadow: inset 3px 0 0 var(--blue);
+      color: var(--ink);
+    }
+    .rail-name { font-size: 12.5px; font-weight: 600; }
+    .rail-count {
+      font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--ink4);
+    }
+    .rail-item.active .rail-count { color: var(--blue); }
+    .rail-cut {
+      margin-top: auto; padding: 12px 10px;
+      border-top: 1px solid var(--line);
+    }
+    .rail-cut label {
+      display: block; font-size: 10px; font-weight: 700; letter-spacing: .06em;
+      text-transform: uppercase; color: var(--ink4); margin-bottom: 8px;
+    }
+    .rail-cut input[type="date"] {
+      width: 100%; border: 1px solid var(--line); border-radius: 8px;
+      padding: 8px 10px; font: inherit; font-size: 12.5px; margin-bottom: 8px;
+    }
+    .rail-cut .check {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 12px; color: var(--ink3); font-weight: 500;
+    }
+
+    .list-pane {
+      padding: 14px 16px;
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      gap: 10px;
+      min-height: 0;
+      border-right: 1px solid var(--line);
+      background: var(--canvas);
+    }
+    .toolbar {
+      display: flex; gap: 8px; align-items: center;
+    }
+    .search {
+      flex: 1; display: flex; align-items: center; gap: 8px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 0 12px; height: 38px;
+    }
+    .search:focus-within {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(27,110,243,.15);
+    }
+    .search input {
+      border: 0; outline: 0; background: transparent; width: 100%;
+      font: inherit; font-size: 13px;
+    }
+    .search kbd {
+      font-family: var(--mono); font-size: 10px;
+      background: var(--line2); color: var(--ink3);
+      padding: 3px 6px; border-radius: 5px; border: 1px solid var(--line);
+    }
+    .list-hint {
+      font-size: 12px; color: var(--ink3);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+
+    .doc-list {
+      overflow: auto;
+      display: flex; flex-direction: column; gap: 8px;
+      padding-right: 2px;
+    }
+    .doc-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px 14px;
+      cursor: pointer;
+      transition: .15s border-color, .15s box-shadow, .15s background;
+      text-align: left;
+      font: inherit; color: inherit;
+    }
+    .doc-card:hover {
+      border-color: #CBD5E1;
+      box-shadow: 0 2px 8px rgba(15,23,42,.04);
+    }
+    .doc-card.active {
+      background: var(--blue-faint);
+      border-color: rgba(27,110,243,.35);
+      box-shadow: 0 0 0 3px rgba(27,110,243,.1);
+    }
+    .doc-top {
+      display: flex; justify-content: space-between; gap: 10px; align-items: start;
+    }
+    .doc-title { font-size: 13.5px; font-weight: 700; letter-spacing: -.01em; }
+    .doc-meta {
+      margin-top: 4px; font-size: 12px; color: var(--ink3);
+      display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center;
+    }
+    .doc-meta .code {
+      font-family: var(--mono); font-size: 11px; font-weight: 600;
+      background: var(--navy); color: #E2E8F0;
+      padding: 2px 7px; border-radius: 5px;
+    }
+    .tipo {
+      font-size: 10.5px; font-weight: 700; padding: 3px 8px; border-radius: 999px;
+    }
+    .tipo.plano { background: var(--blue-soft); color: var(--blue); }
+    .tipo.spec { background: var(--success-soft); color: var(--success); }
+    .tipo.addenda { background: var(--amber-soft); color: var(--amber); }
+    .tipo.consulta { background: var(--purple-soft); color: var(--purple); }
+    .estado {
+      font-size: 11px; font-weight: 600;
+      display: inline-flex; align-items: center; gap: 5px;
+    }
+    .estado .dot { width: 6px; height: 6px; border-radius: 50%; }
+    .estado.vigente { color: var(--success); }
+    .estado.vigente .dot { background: var(--success); }
+    .estado.pendiente { color: var(--amber); }
+    .estado.pendiente .dot { background: var(--amber); }
+    .estado.hist { color: var(--ink4); }
+    .estado.hist .dot { background: var(--ink4); }
+    .doc-foot {
+      margin-top: 8px; display: flex; justify-content: space-between; align-items: center;
+      font-size: 11.5px; color: var(--ink4);
+    }
+    .doc-foot .file { color: var(--blue); font-weight: 600; }
+
+    /* Detail panel */
+    .detail {
+      background: var(--surface);
+      padding: 16px 18px;
+      overflow: auto;
+      display: flex; flex-direction: column; gap: 14px;
+    }
+    .detail.empty {
+      align-items: center; justify-content: center;
+      color: var(--ink4); font-size: 13px; text-align: center;
+    }
+    .detail-head h2 {
+      font-size: 16px; font-weight: 700; letter-spacing: -.02em;
+      margin-bottom: 4px;
+    }
+    .detail-head .meta { font-size: 12px; color: var(--ink3); }
+
+    .preview {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background:
+        linear-gradient(180deg, var(--blue-faint), var(--line2));
+      min-height: 160px;
+      display: grid; place-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .preview::before {
+      content: "";
+      position: absolute; inset: 16px;
+      border: 1px dashed #CBD5E1;
+      border-radius: 8px;
+    }
+    .preview-inner {
+      position: relative; z-index: 1; text-align: center;
+      color: var(--ink3); font-size: 12.5px;
+    }
+    .preview-inner strong {
+      display: block; font-size: 13px; color: var(--ink2); margin-bottom: 4px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px;
+      background: var(--surface);
+    }
+    .card h3 {
+      font-size: 10.5px; font-weight: 700; letter-spacing: .06em;
+      text-transform: uppercase; color: var(--ink3); margin-bottom: 12px;
+    }
+    .field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
+    .field:last-child { margin-bottom: 0; }
+    .field > span {
+      font-size: 10.5px; font-weight: 700; letter-spacing: .05em;
+      text-transform: uppercase; color: var(--ink4);
+    }
+    .field input, .field textarea, .field select {
+      border: 1px solid var(--line); border-radius: 9px;
+      padding: 9px 11px; font: inherit; font-size: 13px; font-weight: 500;
+      outline: 0; background: #fff;
+    }
+    .field input:focus, .field textarea:focus, .field select:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(27,110,243,.15);
+    }
+    .field textarea { min-height: 72px; resize: vertical; }
+    .roles { display: flex; flex-direction: column; gap: 10px; }
+    .role {
+      display: grid; grid-template-columns: 18px 1fr; gap: 10px; align-items: start;
+      font-size: 12.5px;
+    }
+    .role strong { display: block; font-size: 12.5px; font-weight: 600; color: var(--ink); }
+    .role span { color: var(--ink3); font-size: 11.5px; line-height: 1.35; }
+    .detail-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .footer {
+      background: var(--surface);
+      border-top: 1px solid var(--line);
+      padding: 12px 18px;
+      display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    }
+    .footer .msg { font-size: 12.5px; color: var(--ink3); }
+    .footer .msg.warn { color: var(--amber); font-weight: 600; }
+    .footer-actions { display: flex; gap: 8px; }
+
+    .compare {
+      margin-top: 22px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    }
+    .compare article {
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 12px; padding: 14px 16px;
+      color: rgba(255,255,255,.72); font-size: 12.5px; line-height: 1.45;
+    }
+    .compare h3 {
+      font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
+      color: rgba(255,255,255,.45); margin-bottom: 8px; font-weight: 700;
+    }
+    .compare strong { color: #fff; }
+    .compare ul { margin: 6px 0 0 16px; }
+    .compare li { margin: 3px 0; }
+
+    @media (max-width: 960px) {
+      .body { grid-template-columns: 1fr; }
+      .rail { flex-direction: row; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+      .rail-cut, .rail-label { display: none; }
+      .rail-item { min-width: 110px; }
+      .list-pane { border-right: 0; }
+      .compare { grid-template-columns: 1fr; }
+      .page-head { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="eyebrow">
+      <span>Propuesta UI</span>
+      <b>Antecedentes · Qubi Cost Electrical</b>
+    </div>
+
+    <div class="app">
+      <div class="shell">
+        <div class="logo">QUBI</div>
+        <nav>
+          <span>Resumen</span>
+          <span>Proyecto ▾</span>
+          <span class="on">Antecedentes</span>
+          <span>Itemizado</span>
+          <span>Cubicación ▾</span>
+          <span>…</span>
+        </nav>
+      </div>
+
+      <div class="page-head">
+        <div>
+          <div class="label">Antecedentes</div>
+          <h1>Biblioteca técnica del proyecto</h1>
+          <p class="sub">Planos, especificaciones, addendas y consultas que respaldan la oferta. Corte limpio = menos riesgo en licitación.</p>
+          <div class="meta-row">
+            <span class="pill blue"><span class="mono" id="kpiTotal">12</span>&nbsp;documentos</span>
+            <span class="pill ok"><span class="dot"></span> 8 vigentes</span>
+            <span class="pill amber"><span class="dot"></span> 2 pendientes mandante</span>
+            <span class="pill">Corte · <span class="mono">15 jun 2026</span></span>
+          </div>
+        </div>
+        <div class="head-actions">
+          <button class="btn btn-secondary" type="button">Exportar PDF</button>
+          <button class="btn btn-primary" type="button">+ Agregar documento</button>
+        </div>
+      </div>
+
+      <div class="body">
+        <aside class="rail">
+          <div class="rail-label">Tipo</div>
+          <button class="rail-item active" data-tipo="Todos" data-count="12">
+            <span class="rail-name">Todos</span>
+            <span class="rail-count">12</span>
+          </button>
+          <button class="rail-item" data-tipo="Plano" data-count="5">
+            <span class="rail-name">Planos</span>
+            <span class="rail-count">5</span>
+          </button>
+          <button class="rail-item" data-tipo="Especificación" data-count="3">
+            <span class="rail-name">Especificaciones</span>
+            <span class="rail-count">3</span>
+          </button>
+          <button class="rail-item" data-tipo="Addenda" data-count="2">
+            <span class="rail-name">Addendas</span>
+            <span class="rail-count">2</span>
+          </button>
+          <button class="rail-item" data-tipo="Consulta" data-count="2">
+            <span class="rail-name">Consultas</span>
+            <span class="rail-count">2</span>
+          </button>
+
+          <div class="rail-cut">
+            <label>Fecha de corte</label>
+            <input type="date" value="2026-06-15" id="fechaCorte" />
+            <label class="check"><input type="checkbox" id="sinCorte" /> Sin fecha de corte</label>
+          </div>
+        </aside>
+
+        <section class="list-pane">
+          <div class="toolbar">
+            <label class="search">
+              <span aria-hidden="true">⌕</span>
+              <input id="search" type="search" placeholder="Buscar documento, código, disciplina…" />
+              <kbd>/</kbd>
+            </label>
+            <button class="btn btn-secondary" type="button">Adjuntar</button>
+            <button class="btn btn-ghost" type="button">⋯</button>
+          </div>
+          <div class="list-hint">
+            <span id="listCount">12 documentos</span>
+            <span>Click → detalle y preview</span>
+          </div>
+          <div class="doc-list" id="docList"></div>
+        </section>
+
+        <aside class="detail" id="detail">
+          <div class="empty">Seleccione un documento<br/>para ver preview y detalle</div>
+        </aside>
+      </div>
+
+      <div class="footer">
+        <div class="msg" id="statusMsg">Listo · sin cambios pendientes</div>
+        <div class="footer-actions">
+          <button class="btn btn-secondary" type="button">Cancelar</button>
+          <button class="btn btn-primary" type="button">Guardar antecedentes</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="compare">
+      <article>
+        <h3>Hoy (deuda)</h3>
+        <strong>Grilla densa + toolbar abarrotada</strong>
+        <ul>
+          <li>4 KPI cards + barra de filtros + DataGrid + panel</li>
+          <li>Todo compite: búsqueda, fecha corte, 5 botones</li>
+          <li>Sin preview visual del adjunto</li>
+          <li>Tipos solo como chips en tabla</li>
+        </ul>
+      </article>
+      <article>
+        <h3>20B (esta propuesta)</h3>
+        <strong>Misma lógica, producto premium</strong>
+        <ul>
+          <li>Hero limpio + pills de salud (como Proyecto)</li>
+          <li>Rail por tipo + conteos (como Catálogo SC)</li>
+          <li>Cards de documento en vez de grilla Excel</li>
+          <li>Preview + roles + adjunto en panel derecho</li>
+        </ul>
+      </article>
+    </div>
+  </div>
+
+  <script>
+    const DOCS = [
+      { id: 1, titulo: "Planta 1 — Niveles 1 al 5", tipo: "Plano", codigo: "EL-01", rev: "C", fecha: "12/05/2026", estado: "vigente", file: "EL-01_RevC.pdf", disciplina: "Eléctrica", responsable: "C. Riquelme", notas: "Incluye tableros SC y fuerza departamentos.", roles: { alcance: true } },
+      { id: 2, titulo: "Diagrama unilineal general", tipo: "Plano", codigo: "EL-02", rev: "B", fecha: "03/05/2026", estado: "vigente", file: "EL-02_RevB.pdf", disciplina: "Eléctrica", responsable: "C. Riquelme", notas: "", roles: { alcance: true } },
+      { id: 3, titulo: "EE.TT. Instalaciones eléctricas", tipo: "Especificación", codigo: "ETT-EL", rev: "A", fecha: "20/04/2026", estado: "vigente", file: "ETT_Electrico.docx", disciplina: "Eléctrica", responsable: "Mandante", notas: "Base de licitación.", roles: { alcance: true, supuesto: true } },
+      { id: 4, titulo: "Addenda N°2 — cambio de luminarias", tipo: "Addenda", codigo: "ADD-02", rev: "0", fecha: "01/06/2026", estado: "vigente", file: "Addenda2.pdf", disciplina: "Eléctrica", responsable: "Mandante", notas: "Reemplaza artefacto tipo A por LED.", roles: { alcance: true } },
+      { id: 5, titulo: "Consulta — acometida compañía", tipo: "Consulta", codigo: "CQ-04", rev: "0", fecha: "08/06/2026", estado: "pendiente", file: "", disciplina: "Eléctrica", responsable: "Mandante", notas: "Espera respuesta de CGE.", roles: { pendiente: true, exclusion: true } },
+      { id: 6, titulo: "Planta subterráneo — salas técnicas", tipo: "Plano", codigo: "EL-07", rev: "A", fecha: "18/03/2026", estado: "hist", file: "EL-07_RevA.pdf", disciplina: "Eléctrica", responsable: "C. Riquelme", notas: "Superseded por Rev B en paquete mayo.", roles: {} },
+      { id: 7, titulo: "Memoria de cálculo de iluminancia", tipo: "Especificación", codigo: "MEM-IL", rev: "A", fecha: "22/04/2026", estado: "vigente", file: "Memoria_Lux.pdf", disciplina: "Iluminación", responsable: "Especialista", notas: "", roles: { supuesto: true } },
+      { id: 8, titulo: "Addenda N°1 — plazo entrega planos", tipo: "Addenda", codigo: "ADD-01", rev: "0", fecha: "10/05/2026", estado: "vigente", file: "Addenda1.pdf", disciplina: "General", responsable: "Mandante", notas: "", roles: {} },
+      { id: 9, titulo: "Consulta — UPS salas TI", tipo: "Consulta", codigo: "CQ-02", rev: "1", fecha: "28/05/2026", estado: "pendiente", file: "CQ-02.pdf", disciplina: "Eléctrica", responsable: "Mandante", notas: "Confirmar si va en alcance o exclusión.", roles: { pendiente: true, exclusion: true } },
+      { id: 10, titulo: "Esquema de bandejas SC", tipo: "Plano", codigo: "EL-12", rev: "A", fecha: "02/06/2026", estado: "vigente", file: "EL-12.pdf", disciplina: "Canalizaciones", responsable: "C. Riquelme", notas: "", roles: { alcance: true } },
+      { id: 11, titulo: "Especificación de tableros", tipo: "Especificación", codigo: "ETT-TB", rev: "B", fecha: "15/05/2026", estado: "vigente", file: "ETT_Tableros.docx", disciplina: "Tableros", responsable: "Proveedor", notas: "", roles: { alcance: true } },
+      { id: 12, titulo: "Planta roof — fotovoltaico (informativo)", tipo: "Plano", codigo: "EL-20", rev: "0", fecha: "05/04/2026", estado: "hist", file: "", disciplina: "FV", responsable: "Tercero", notas: "Fuera de alcance eléctrico edificio.", roles: { exclusion: true } },
+    ];
+
+    const tipoClass = {
+      "Plano": "plano",
+      "Especificación": "spec",
+      "Addenda": "addenda",
+      "Consulta": "consulta",
+      "Aclaración": "addenda",
+    };
+
+    let filterTipo = "Todos";
+    let selectedId = null;
+    let dirty = false;
+
+    const listEl = document.getElementById("docList");
+    const detailEl = document.getElementById("detail");
+    const searchEl = document.getElementById("search");
+    const statusMsg = document.getElementById("statusMsg");
+
+    function markDirty() {
+      dirty = true;
+      statusMsg.textContent = "Cambios pendientes de guardar";
+      statusMsg.className = "msg warn";
+    }
+
+    function filtered() {
+      const q = (searchEl.value || "").trim().toLowerCase();
+      return DOCS.filter(d => {
+        if (filterTipo !== "Todos" && d.tipo !== filterTipo) return false;
+        if (!q) return true;
+        return [d.titulo, d.codigo, d.disciplina, d.file].join(" ").toLowerCase().includes(q);
+      });
+    }
+
+    function renderList() {
+      const rows = filtered();
+      document.getElementById("listCount").textContent = `${rows.length} documento${rows.length === 1 ? "" : "s"}`;
+      listEl.innerHTML = rows.map(d => `
+        <button class="doc-card ${selectedId === d.id ? "active" : ""}" data-id="${d.id}" type="button">
+          <div class="doc-top">
+            <div>
+              <div class="doc-title">${escapeHtml(d.titulo)}</div>
+              <div class="doc-meta">
+                <span class="code">${escapeHtml(d.codigo)}</span>
+                <span>Rev. ${escapeHtml(d.rev)}</span>
+                <span>${escapeHtml(d.fecha)}</span>
+              </div>
+            </div>
+            <span class="tipo ${tipoClass[d.tipo] || ""}">${escapeHtml(d.tipo)}</span>
+          </div>
+          <div class="doc-foot">
+            <span class="estado ${d.estado}">
+              <span class="dot"></span>
+              ${d.estado === "vigente" ? "Vigente" : d.estado === "pendiente" ? "Pendiente mandante" : "Histórico"}
+            </span>
+            <span class="file">${d.file ? escapeHtml(d.file) : "Sin archivo"}</span>
+          </div>
+        </button>
+      `).join("");
+
+      listEl.querySelectorAll(".doc-card").forEach(btn => {
+        btn.addEventListener("click", () => {
+          selectedId = Number(btn.dataset.id);
+          renderList();
+          renderDetail();
+        });
+      });
+    }
+
+    function renderDetail() {
+      const d = DOCS.find(x => x.id === selectedId);
+      if (!d) {
+        detailEl.className = "detail empty";
+        detailEl.innerHTML = `<div class="empty">Seleccione un documento<br/>para ver preview y detalle</div>`;
+        return;
+      }
+      detailEl.className = "detail";
+      detailEl.innerHTML = `
+        <div class="detail-head">
+          <h2>${escapeHtml(d.titulo)}</h2>
+          <div class="meta">${escapeHtml(d.tipo)} · Rev. ${escapeHtml(d.rev)} · ${escapeHtml(d.fecha)}</div>
+        </div>
+
+        <div class="preview">
+          <div class="preview-inner">
+            <strong>${d.file ? escapeHtml(d.file) : "Sin archivo adjunto"}</strong>
+            ${d.file ? "Vista previa del adjunto · Abrir en app externa" : "Adjuntar PDF / DWG / DOCX para previsualizar"}
+          </div>
+        </div>
+
+        <div class="detail-actions">
+          <button class="btn btn-secondary" type="button" data-act="adjuntar">Adjuntar…</button>
+          <button class="btn btn-ghost" type="button" data-act="abrir" ${d.file ? "" : "disabled"}>Abrir</button>
+          <button class="btn btn-ghost" type="button" data-act="vincular">Vincular a partidas…</button>
+        </div>
+
+        <div class="card">
+          <h3>Clasificación</h3>
+          <div class="field"><span>Disciplina</span><input value="${escapeAttr(d.disciplina)}" data-field="disciplina" /></div>
+          <div class="field"><span>Responsable de revisión</span><input value="${escapeAttr(d.responsable)}" data-field="responsable" /></div>
+        </div>
+
+        <div class="card">
+          <h3>Rol del documento</h3>
+          <div class="roles">
+            <label class="role">
+              <input type="checkbox" data-role="pendiente" ${d.roles.pendiente ? "checked" : ""} />
+              <div><strong>Pendiente del mandante</strong><span>Falta respuesta o confirmación externa.</span></div>
+            </label>
+            <label class="role">
+              <input type="checkbox" data-role="exclusion" ${d.roles.exclusion ? "checked" : ""} />
+              <div><strong>Exclusión de la oferta</strong><span>Se incorpora al texto de exclusiones al sincronizar.</span></div>
+            </label>
+            <label class="role">
+              <input type="checkbox" data-role="supuesto" ${d.roles.supuesto ? "checked" : ""} />
+              <div><strong>Supuesto de la oferta</strong><span>Condición asumida que respalda el presupuesto.</span></div>
+            </label>
+            <label class="role">
+              <input type="checkbox" data-role="alcance" ${d.roles.alcance ? "checked" : ""} />
+              <div><strong>Incluido en el alcance</strong><span>Forma parte del alcance técnico comprometido.</span></div>
+            </label>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Notas</h3>
+          <div class="field"><span>Notas internas</span><textarea data-field="notas">${escapeHtml(d.notas)}</textarea></div>
+        </div>
+      `;
+
+      detailEl.querySelectorAll("input[data-field], textarea[data-field]").forEach(el => {
+        el.addEventListener("input", markDirty);
+      });
+      detailEl.querySelectorAll("input[data-role]").forEach(el => {
+        el.addEventListener("change", markDirty);
+      });
+      detailEl.querySelectorAll("[data-act]").forEach(btn => {
+        btn.addEventListener("click", markDirty);
+      });
+    }
+
+    function escapeHtml(s) {
+      return String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c]));
+    }
+    function escapeAttr(s) { return escapeHtml(s); }
+
+    document.querySelectorAll(".rail-item").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".rail-item").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        filterTipo = btn.dataset.tipo;
+        renderList();
+      });
+    });
+
+    searchEl.addEventListener("input", renderList);
+    document.addEventListener("keydown", e => {
+      if (e.key === "/" && document.activeElement !== searchEl) {
+        e.preventDefault();
+        searchEl.focus();
+      }
+    });
+
+    document.getElementById("sinCorte").addEventListener("change", e => {
+      document.getElementById("fechaCorte").disabled = e.target.checked;
+      markDirty();
+    });
+    document.getElementById("fechaCorte").addEventListener("change", markDirty);
+
+    renderList();
+    selectedId = 1;
+    renderList();
+    renderDetail();
+  </script>
+</body>
+</html>

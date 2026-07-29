@@ -1,0 +1,152 @@
+<Window x:Class="QubiCostElectrical.Wpf.Features.Cubicacion.HojaCubicacionDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Style="{StaticResource Dialog.Window}"
+        Title="Hoja de Cubicación"
+        Width="1180" Height="760" MinWidth="820" MinHeight="480"
+        WindowStartupLocation="CenterOwner"
+        Closed="OnDialogClosed">
+  <Grid Margin="20">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+      <RowDefinition Height="Auto" />
+    </Grid.RowDefinitions>
+
+    <StackPanel Grid.Row="0" Margin="0,0,0,10">
+      <TextBlock Text="Hoja de Cubicación" Style="{StaticResource Text.ViewTitle}" />
+      <TextBlock Style="{StaticResource Text.Body}" Foreground="{DynamicResource Brush.Muted}"
+                 Margin="0,4,0,0" TextWrapping="Wrap"
+                 Text="Herramienta compartida de apoyo para cubicar: agregue un ítem por cada partida, y dentro de cada uno registre los datos medidos. La columna Suma se calcula sola." />
+      <Border x:Name="PickModeBanner" Visibility="Collapsed" Background="{DynamicResource Brush.GreenSoft}"
+              BorderBrush="{DynamicResource Brush.Green}" BorderThickness="1" CornerRadius="6"
+              Padding="10,6" Margin="0,10,0,0">
+        <TextBlock Style="{StaticResource Text.Body}" Foreground="{DynamicResource Brush.Green}" FontWeight="Bold"
+                   Text="Modo selección: haga clic en la casilla Suma (columna B) del ítem que quiera usar como cantidad." />
+      </Border>
+    </StackPanel>
+
+    <DockPanel Grid.Row="1" Margin="0,0,0,10" LastChildFill="False">
+      <Button DockPanel.Dock="Left" Style="{StaticResource Button.Primary}" Content="+ Agregar ítem"
+              MinWidth="120" Click="OnAddItemClick" />
+    </DockPanel>
+
+    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+      <ItemsControl x:Name="ItemsHost">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}"
+                    BorderThickness="1" CornerRadius="8" Margin="0,0,0,12">
+              <StackPanel>
+                <!-- Encabezado del ítem -->
+                <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}"
+                        BorderThickness="0,0,0,1" Padding="12,8" CornerRadius="8,8,0,0">
+                  <DockPanel LastChildFill="True">
+                    <Button DockPanel.Dock="Left" Content="{Binding CollapseIcon}"
+                            Width="24" Height="24" Margin="0,0,8,0" VerticalAlignment="Center"
+                            Style="{StaticResource Button.Secondary}" Padding="0"
+                            Click="OnToggleCollapseClick" Tag="{Binding}"
+                            ToolTip="Colapsar / expandir ítem" />
+                    <TextBox DockPanel.Dock="Left" Text="{Binding Codigo, UpdateSourceTrigger=PropertyChanged}"
+                             Width="90" Margin="0,0,8,0" VerticalAlignment="Center"
+                             ToolTip="Código de partida (opcional)" />
+                    <ComboBox DockPanel.Dock="Right" Width="70" Margin="8,0,0,0" VerticalAlignment="Center"
+                              IsEditable="True" Text="{Binding Unidad, UpdateSourceTrigger=PropertyChanged}">
+                      <ComboBoxItem Content="ml" />
+                      <ComboBoxItem Content="un" />
+                      <ComboBoxItem Content="m²" />
+                      <ComboBoxItem Content="GL" />
+                      <ComboBoxItem Content="kg" />
+                    </ComboBox>
+                    <Border DockPanel.Dock="Right" Background="{DynamicResource Brush.GreenSoft}"
+                            BorderBrush="{DynamicResource Brush.Green}" BorderThickness="1"
+                            CornerRadius="12" Padding="10,3" Margin="8,0,0,0" VerticalAlignment="Center">
+                      <TextBlock Text="{Binding Subtotal, StringFormat={}{0:N2}}" FontWeight="Bold"
+                                 Foreground="{DynamicResource Brush.Green}" FontFamily="Consolas" FontSize="12" />
+                    </Border>
+                    <Button DockPanel.Dock="Right" Content="🗑" Width="28" Height="28" Margin="8,0,0,0"
+                            Style="{StaticResource Button.Secondary}" Padding="0" ToolTip="Quitar ítem"
+                            Click="OnRemoveItemClick" Tag="{Binding}" />
+                    <TextBox Text="{Binding Titulo, UpdateSourceTrigger=PropertyChanged}"
+                             VerticalAlignment="Center" FontWeight="Bold" />
+                  </DockPanel>
+                </Border>
+
+                <!-- Cuerpo del ítem: toolbar + mini hoja -->
+                <StackPanel Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVisibility}}">
+                  <DockPanel Margin="12,8,12,6" LastChildFill="False">
+                    <Button DockPanel.Dock="Left" Content="+ Agregar fila" Style="{StaticResource Button.Secondary}"
+                            MinWidth="100" Height="26" Click="OnAddRowClick" Tag="{Binding}" />
+                    <Button DockPanel.Dock="Left" Content="+ Agregar columna" Style="{StaticResource Button.Secondary}"
+                            MinWidth="120" Height="26" Margin="6,0,0,0" Click="OnAddColumnClick" Tag="{Binding}" />
+                    <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center"
+                               Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Muted}"
+                               Text="300 columnas · fila superior para nombrarlas (ej. Depto 1) · fórmulas ej. =C+D*2 · clic + Shift+clic selecciona un rango, Ctrl+C/V lo copia a OTRO ítem · Ctrl+D/R rellena correlativos · Ctrl+(+)/Ctrl+(-) agrega/quita fila" />
+                  </DockPanel>
+
+                  <!-- Barra de fórmulas estilo Excel: referencia de la celda activa + su
+                       contenido crudo, editable desde aquí — también sirve como fila de
+                       entrada de datos siempre visible, sin depender de ubicar la celda
+                       exacta entre las 300 columnas. -->
+                  <DockPanel Margin="12,0,12,8" LastChildFill="True">
+                    <Border DockPanel.Dock="Left" Background="{DynamicResource Brush.Surface2}"
+                            BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4"
+                            Padding="8,3" MinWidth="46" Margin="0,0,6,0">
+                      <TextBlock x:Name="FormulaBarRef" FontFamily="Consolas" FontWeight="Bold" FontSize="11"
+                                 Foreground="{DynamicResource Brush.Blue}" HorizontalAlignment="Center" />
+                    </Border>
+                    <TextBlock DockPanel.Dock="Left" Text="fx" FontStyle="Italic" FontWeight="Bold"
+                               VerticalAlignment="Center" Foreground="{DynamicResource Brush.Muted}"
+                               Margin="0,0,6,0" />
+                    <TextBox x:Name="FormulaBarInput" VerticalAlignment="Center" Height="26"
+                             FontFamily="Consolas" IsEnabled="False"
+                             KeyDown="OnFormulaBarKeyDown" LostFocus="OnFormulaBarLostFocus"
+                             ToolTip="Contenido de la celda activa: número o fórmula (ej. =C+D*2)" />
+                  </DockPanel>
+
+                  <DataGrid ItemsSource="{Binding Filas}"
+                            Style="{StaticResource DataGrid.Workspace.Excel}"
+                            AutoGenerateColumns="False"
+                            CanUserAddRows="False"
+                            CanUserDeleteRows="False"
+                            CanUserSortColumns="False"
+                            CanUserReorderColumns="False"
+                            FrozenColumnCount="2"
+                            RowHeight="28" MaxHeight="280"
+                            Margin="12,0,12,12"
+                            Loaded="OnItemGridLoaded">
+                    <DataGrid.RowStyle>
+                      <Style TargetType="DataGridRow" BasedOn="{StaticResource DataGridRow.Excel}">
+                        <Style.Triggers>
+                          <!-- Fila de nombres de columna (ej. "Depto 1", "Piso 1"): siempre
+                               primera. Fondo azul suave bien notorio (no el gris casi
+                               imperceptible de antes) para que quede claro de un vistazo que es
+                               para NOMBRAR columnas, no para cubicar — sigue siendo una fila
+                               normal, con todas sus funciones. -->
+                          <DataTrigger Binding="{Binding IsLabelRow}" Value="True">
+                            <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+                            <Setter Property="FontWeight" Value="Bold" />
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </DataGrid.RowStyle>
+                  </DataGrid>
+                </StackPanel>
+              </StackPanel>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </ScrollViewer>
+
+    <DockPanel Grid.Row="3" Style="{StaticResource Dialog.Footer}" LastChildFill="False">
+      <Button DockPanel.Dock="Right" Style="{StaticResource Button.Primary}" Content="Cerrar"
+              MinWidth="100" IsDefault="True" IsCancel="True" Click="OnCloseClick" />
+      <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center" Style="{StaticResource Text.Body}">
+        <Run Text="Total de todos los ítems: " Foreground="{DynamicResource Brush.Muted}" />
+        <Run x:Name="GrandTotalRun" Text="0.00" FontWeight="Bold" FontFamily="Consolas" />
+      </TextBlock>
+    </DockPanel>
+  </Grid>
+</Window>

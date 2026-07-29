@@ -1,0 +1,159 @@
+<UserControl x:Class="QubiCostElectrical.Wpf.Features.ExecutiveDashboard.ExecutiveDashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="#F3F4F6">
+  <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <Grid Margin="16">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="220"/>
+        <RowDefinition Height="220"/>
+        <RowDefinition Height="200"/>
+        <RowDefinition Height="Auto"/>
+      </Grid.RowDefinitions>
+
+      <Border Grid.Row="0" Background="#0B2442" CornerRadius="8" Padding="16" Margin="0,0,0,12">
+        <StackPanel>
+          <TextBlock Text="Dashboard ejecutivo" FontSize="20" FontWeight="Bold" Foreground="White"/>
+          <TextBlock Text="{Binding Header}" Foreground="#CBD5E1" Margin="0,4,0,0" TextWrapping="Wrap"/>
+          <TextBlock Text="{Binding Summary}" Foreground="#94A3B8" Margin="0,6,0,0" TextWrapping="Wrap"/>
+          <TextBlock Margin="0,6,0,0" Foreground="#FCD34D">
+            <Run Text="Calidad de datos: "/><Run Text="{Binding Quality, Mode=OneWay}"/>
+          </TextBlock>
+        </StackPanel>
+      </Border>
+
+      <Border Grid.Row="1" Background="White" CornerRadius="8" Padding="10" Margin="0,0,0,12" BorderBrush="#E5E7EB" BorderThickness="1">
+        <StackPanel Orientation="Horizontal">
+          <TextBlock Text="Granularidad Curva S:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+          <ComboBox Width="120" SelectedValue="{Binding Granularity}" SelectedValuePath="Content" Margin="0,0,12,0">
+            <ComboBoxItem Content="Daily"/>
+            <ComboBoxItem Content="Weekly" IsSelected="True"/>
+            <ComboBoxItem Content="Monthly"/>
+          </ComboBox>
+          <Button Content="Actualizar" Command="{Binding RefreshCommand}" Margin="0,0,8,0" Padding="12,6"/>
+          <Button Content="Snapshot" Command="{Binding SnapshotCommand}" Margin="0,0,8,0" Padding="12,6"/>
+          <Button Content="Comparar" Command="{Binding CompareCommand}" Margin="0,0,8,0" Padding="12,6"/>
+          <Button Content="Exportar" Command="{Binding ExportCommand}" Margin="0,0,8,0" Padding="12,6" Background="#1D4ED8" Foreground="White"/>
+          <Button Content="Operativo" Command="{Binding GoOperationalCommand}" Padding="12,6"/>
+        </StackPanel>
+      </Border>
+
+      <Border Grid.Row="2" Background="White" CornerRadius="8" Padding="8" Margin="0,0,0,12" BorderBrush="#E5E7EB" BorderThickness="1">
+        <DataGrid ItemsSource="{Binding Kpis}" AutoGenerateColumns="False" IsReadOnly="True" MaxHeight="200"
+                  HeadersVisibility="Column" GridLinesVisibility="Horizontal" Background="Transparent" BorderThickness="0">
+          <DataGrid.Columns>
+            <DataGridTextColumn Header="" Binding="{Binding Icon}" Width="30"/>
+            <DataGridTextColumn Header="KPI" Binding="{Binding Title}" Width="140"/>
+            <DataGridTextColumn Header="Valor" Binding="{Binding DisplayValue}" Width="120"/>
+            <DataGridTextColumn Header="Estado" Binding="{Binding Status}" Width="90"/>
+            <DataGridTextColumn Header="Tendencia" Binding="{Binding Trend}" Width="80"/>
+            <DataGridTextColumn Header="Interpretación" Binding="{Binding Interpretation}" Width="*"/>
+          </DataGrid.Columns>
+        </DataGrid>
+      </Border>
+
+      <Border Grid.Row="3" Background="White" CornerRadius="8" Padding="12" Margin="0,0,0,12" BorderBrush="#E5E7EB" BorderThickness="1">
+        <DockPanel>
+          <TextBlock DockPanel.Dock="Top" Text="Curva S (PV / EV / AC) — barras desde historial EVM; sin interpolación artificial" FontWeight="SemiBold" Margin="0,0,0,8"/>
+          <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+            <ItemsControl ItemsSource="{Binding SCurve}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <StackPanel Orientation="Horizontal"/>
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <StackPanel Width="36" Margin="2,0" ToolTip="{Binding Tooltip}" VerticalAlignment="Bottom">
+                    <Grid Height="130" VerticalAlignment="Bottom">
+                      <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center">
+                        <Border Width="8" Height="{Binding PvHeight}" Background="#3B82F6" Margin="1,0" VerticalAlignment="Bottom"
+                                AutomationProperties.Name="PV"/>
+                        <Border Width="8" Height="{Binding EvHeight}" Background="#10B981" Margin="1,0" VerticalAlignment="Bottom"
+                                AutomationProperties.Name="EV"/>
+                        <Border Width="8" Height="{Binding AcHeight}" Background="#F59E0B" Margin="1,0" VerticalAlignment="Bottom"
+                                AutomationProperties.Name="AC"/>
+                      </StackPanel>
+                    </Grid>
+                    <TextBlock Text="{Binding Label}" FontSize="9" HorizontalAlignment="Center" Foreground="#64748B"/>
+                  </StackPanel>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+        </DockPanel>
+      </Border>
+
+      <Grid Grid.Row="4" Margin="0,0,0,12">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="12"/>
+          <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Border Grid.Column="0" Background="White" CornerRadius="8" Padding="8" BorderBrush="#E5E7EB" BorderThickness="1">
+          <DockPanel>
+            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,6">
+              <TextBlock Text="Alertas" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,12,0"/>
+              <Button Content="Reconocer" Command="{Binding AcknowledgeCommand}" Margin="0,0,6,0" Padding="8,4"/>
+              <Button Content="Resolver" Command="{Binding ResolveCommand}" Margin="0,0,6,0" Padding="8,4"/>
+              <Button Content="Ir" Command="{Binding DrillDownCommand}" Padding="8,4"/>
+            </StackPanel>
+            <DataGrid ItemsSource="{Binding Alerts}" SelectedItem="{Binding SelectedAlert}" AutoGenerateColumns="False" IsReadOnly="True"
+                      HeadersVisibility="Column" GridLinesVisibility="Horizontal" Background="Transparent" BorderThickness="0">
+              <DataGrid.Columns>
+                <DataGridTextColumn Header="Sev" Binding="{Binding Severity}" Width="70"/>
+                <DataGridTextColumn Header="Código" Binding="{Binding Code}" Width="90"/>
+                <DataGridTextColumn Header="Título" Binding="{Binding Title}" Width="140"/>
+                <DataGridTextColumn Header="Mensaje" Binding="{Binding Message}" Width="*"/>
+              </DataGrid.Columns>
+            </DataGrid>
+          </DockPanel>
+        </Border>
+        <Border Grid.Column="2" Background="White" CornerRadius="8" Padding="8" BorderBrush="#E5E7EB" BorderThickness="1">
+          <DockPanel>
+            <TextBlock DockPanel.Dock="Top" Text="Principales desviaciones" FontWeight="SemiBold" Margin="0,0,0,6"/>
+            <DataGrid ItemsSource="{Binding Deviations}" AutoGenerateColumns="False" IsReadOnly="True"
+                      HeadersVisibility="Column" GridLinesVisibility="Horizontal" Background="Transparent" BorderThickness="0">
+              <DataGrid.Columns>
+                <DataGridTextColumn Header="Ítem" Binding="{Binding Title}" Width="*"/>
+                <DataGridTextColumn Header="Impacto" Binding="{Binding AbsoluteImpact}" Width="80"/>
+                <DataGridTextColumn Header="Métrica" Binding="{Binding Metric}" Width="100"/>
+              </DataGrid.Columns>
+            </DataGrid>
+          </DockPanel>
+        </Border>
+      </Grid>
+
+      <Border Grid.Row="5" Background="White" CornerRadius="8" Padding="8" Margin="0,0,0,12" BorderBrush="#E5E7EB" BorderThickness="1">
+        <DockPanel>
+          <StackPanel DockPanel.Dock="Top" Margin="0,0,0,6">
+            <TextBlock Text="WBS consolidado" FontWeight="SemiBold"/>
+            <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+              <ComboBox ItemsSource="{Binding Snapshots}" SelectedItem="{Binding SnapshotA}" DisplayMemberPath="Version" Width="100" Margin="0,0,8,0"/>
+              <ComboBox ItemsSource="{Binding Snapshots}" SelectedItem="{Binding SnapshotB}" DisplayMemberPath="Version" Width="100" Margin="0,0,8,0"/>
+              <TextBlock Text="{Binding ComparisonText}" VerticalAlignment="Center" Foreground="#312E81"/>
+            </StackPanel>
+          </StackPanel>
+          <DataGrid ItemsSource="{Binding Wbs}" AutoGenerateColumns="False" IsReadOnly="True"
+                    HeadersVisibility="Column" GridLinesVisibility="Horizontal" Background="Transparent" BorderThickness="0">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="Código" Binding="{Binding Code}" Width="80"/>
+              <DataGridTextColumn Header="Nombre" Binding="{Binding Name}" Width="*"/>
+              <DataGridTextColumn Header="% Físico" Binding="{Binding PhysicalProgressPct}" Width="70"/>
+              <DataGridTextColumn Header="% Plan" Binding="{Binding PlannedProgressPct}" Width="70"/>
+              <DataGridTextColumn Header="AC" Binding="{Binding Ac}" Width="80"/>
+              <DataGridTextColumn Header="SPI" Binding="{Binding Spi}" Width="60"/>
+              <DataGridTextColumn Header="Crít." Binding="{Binding CriticalCount}" Width="50"/>
+              <DataGridTextColumn Header="Alertas" Binding="{Binding AlertCount}" Width="60"/>
+            </DataGrid.Columns>
+          </DataGrid>
+        </DockPanel>
+      </Border>
+
+      <TextBlock Grid.Row="6" Text="{Binding StatusMessage}" Foreground="#374151"/>
+    </Grid>
+  </ScrollViewer>
+</UserControl>

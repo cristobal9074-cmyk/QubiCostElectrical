@@ -1,0 +1,147 @@
+<UserControl x:Class="QubiCostElectrical.Wpf.Features.ProgressWorkspace.ProgressWorkspaceView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="#F3F4F6">
+  <Grid Margin="16">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="*"/>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+
+    <Border Grid.Row="0" Background="#FFFFFF" CornerRadius="8" Padding="16" Margin="0,0,0,12" BorderBrush="#E5E7EB" BorderThickness="1">
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <StackPanel>
+          <TextBlock Text="Seguimiento real y avance del proyecto" FontSize="20" FontWeight="Bold" Foreground="#111827"/>
+          <TextBlock Text="Fecha de estado explícita · Baseline / Plan / Actual / Forecast · sin alterar baselines"
+                     FontSize="12" Foreground="#6B7280" Margin="0,4,0,0"/>
+        </StackPanel>
+        <StackPanel Grid.Column="1" Orientation="Horizontal">
+          <Button Content="Actualizar" Command="{Binding RefreshCommand}" Margin="0,0,8,0" Padding="12,6"/>
+          <Button Content="Exportar" Command="{Binding ExportCommand}" Padding="12,6"/>
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <Border Grid.Row="1" Background="#FFFFFF" CornerRadius="8" Padding="12" Margin="0,0,0,12" BorderBrush="#E5E7EB" BorderThickness="1">
+      <StackPanel Orientation="Horizontal">
+        <TextBlock Text="Fecha de estado:" VerticalAlignment="Center" Margin="0,0,8,0" FontWeight="SemiBold"/>
+        <DatePicker SelectedDate="{Binding StatusDate}" Width="140" Margin="0,0,12,0"/>
+        <TextBox Text="{Binding StatusComment, UpdateSourceTrigger=PropertyChanged}" Width="220" Margin="0,0,12,0"
+                 ToolTip="Comentario"/>
+        <Button Content="Establecer fecha" Command="{Binding SetStatusDateCommand}" Margin="0,0,8,0" Padding="10,4"
+                Background="#1D4ED8" Foreground="White"/>
+        <Button Content="Reprogramar restante" Command="{Binding RescheduleCommand}" Margin="0,0,8,0" Padding="10,4"/>
+        <Button Content="Snapshot" Command="{Binding SnapshotCommand}" Margin="0,0,8,0" Padding="10,4"/>
+        <Button Content="Comparar" Command="{Binding CompareSnapshotsCommand}" Padding="10,4"/>
+      </StackPanel>
+    </Border>
+
+    <Border Grid.Row="2" Background="#EEF2FF" CornerRadius="8" Padding="12" Margin="0,0,0,12" BorderBrush="#C7D2FE" BorderThickness="1">
+      <TextBlock Text="{Binding SummaryText}" TextWrapping="Wrap" Foreground="#312E81"/>
+    </Border>
+
+    <Grid Grid.Row="3">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="2*"/>
+        <ColumnDefinition Width="12"/>
+        <ColumnDefinition Width="*"/>
+      </Grid.ColumnDefinitions>
+
+      <Border Grid.Column="0" Background="#FFFFFF" CornerRadius="8" BorderBrush="#E5E7EB" BorderThickness="1" Padding="8">
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+          </Grid.RowDefinitions>
+          <WrapPanel Grid.Row="0" Margin="0,0,0,8">
+            <CheckBox Content="No iniciadas" IsChecked="{Binding FilterNotStarted}" Margin="0,0,8,4"/>
+            <CheckBox Content="En progreso" IsChecked="{Binding FilterInProgress}" Margin="0,0,8,4"/>
+            <CheckBox Content="Completadas" IsChecked="{Binding FilterCompleted}" Margin="0,0,8,4"/>
+            <CheckBox Content="Atrasadas" IsChecked="{Binding FilterDelayed}" Margin="0,0,8,4"/>
+            <CheckBox Content="Adelantadas" IsChecked="{Binding FilterAhead}" Margin="0,0,8,4"/>
+            <CheckBox Content="Críticas" IsChecked="{Binding FilterCritical}" Margin="0,0,8,4"/>
+            <CheckBox Content="Bloqueadas" IsChecked="{Binding FilterBlocked}" Margin="0,0,8,4"/>
+            <CheckBox Content="Suspendidas" IsChecked="{Binding FilterSuspended}" Margin="0,0,8,4"/>
+            <CheckBox Content="Fuera de secuencia" IsChecked="{Binding FilterOos}" Margin="0,0,8,4"/>
+            <CheckBox Content="Con costo" IsChecked="{Binding FilterWithCost}" Margin="0,0,8,4"/>
+            <CheckBox Content="Sin actualización" IsChecked="{Binding FilterWithoutUpdate}" Margin="0,0,8,4"/>
+          </WrapPanel>
+          <DataGrid Grid.Row="1" ItemsSource="{Binding Rows}" SelectedItem="{Binding SelectedRow}"
+                    AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column"
+                    GridLinesVisibility="Horizontal" SelectionMode="Single" Background="Transparent" BorderThickness="0">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="Código" Binding="{Binding Code}" Width="70"/>
+              <DataGridTextColumn Header="Actividad" Binding="{Binding Name}" Width="2*"/>
+              <DataGridTextColumn Header="Estado" Binding="{Binding Status}" Width="90"/>
+              <DataGridTextColumn Header="%" Binding="{Binding PercentComplete}" Width="50"/>
+              <DataGridTextColumn Header="Físico" Binding="{Binding PhysicalProgress}" Width="55"/>
+              <DataGridTextColumn Header="Econ." Binding="{Binding FinancialProgress}" Width="55"/>
+              <DataGridTextColumn Header="Plan" Binding="{Binding PlannedStart, StringFormat=\{0:dd/MM\}}" Width="70"/>
+              <DataGridTextColumn Header="Actual" Binding="{Binding ActualStart, StringFormat=\{0:dd/MM\}}" Width="70"/>
+              <DataGridTextColumn Header="Forecast" Binding="{Binding ForecastFinish, StringFormat=\{0:dd/MM\}}" Width="70"/>
+              <DataGridTextColumn Header="Capas" Binding="{Binding LayerLabel}" Width="120"/>
+              <DataGridTextColumn Header="Crit." Binding="{Binding CriticalLabel}" Width="60"/>
+            </DataGrid.Columns>
+          </DataGrid>
+        </Grid>
+      </Border>
+
+      <Border Grid.Column="2" Background="#FFFFFF" CornerRadius="8" BorderBrush="#E5E7EB" BorderThickness="1" Padding="12">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+          <StackPanel>
+            <TextBlock Text="Editor de avance" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,8"/>
+            <TextBlock Text="Inicio real" FontSize="11" Foreground="#6B7280"/>
+            <DatePicker SelectedDate="{Binding EditActualStart}" Margin="0,0,0,8"/>
+            <TextBlock Text="Término real" FontSize="11" Foreground="#6B7280"/>
+            <DatePicker SelectedDate="{Binding EditActualFinish}" Margin="0,0,0,8"/>
+            <TextBlock Text="% completado" FontSize="11" Foreground="#6B7280"/>
+            <TextBox Text="{Binding EditPercent, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+            <TextBlock Text="Cantidad ejecutada" FontSize="11" Foreground="#6B7280"/>
+            <TextBox Text="{Binding EditExecutedQuantity, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+            <TextBlock Text="Horas reales" FontSize="11" Foreground="#6B7280"/>
+            <TextBox Text="{Binding EditActualHours, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+            <TextBlock Text="Costo real" FontSize="11" Foreground="#6B7280"/>
+            <TextBox Text="{Binding EditActualCost, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+            <TextBlock Text="Costo comprometido" FontSize="11" Foreground="#6B7280"/>
+            <TextBox Text="{Binding EditCommittedCost, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+            <TextBlock Text="Duración restante (días)" FontSize="11" Foreground="#6B7280"/>
+            <TextBox Text="{Binding EditRemainingDays, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+            <TextBlock Text="Causa de atraso" FontSize="11" Foreground="#6B7280"/>
+            <TextBox Text="{Binding EditDelayReason, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+            <TextBlock Text="Comentario" FontSize="11" Foreground="#6B7280"/>
+            <TextBox Text="{Binding EditComment, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="48" Margin="0,0,0,8"/>
+            <TextBlock Text="Evidencia (referencia)" FontSize="11" Foreground="#6B7280"/>
+            <TextBox Text="{Binding EditEvidence, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12"/>
+            <Button Content="Guardar avance" Command="{Binding SaveProgressCommand}" Margin="0,0,0,6" Padding="10,6"
+                    Background="#1D4ED8" Foreground="White"/>
+            <Button Content="Completar" Command="{Binding CompleteCommand}" Margin="0,0,0,6" Padding="10,6"/>
+            <Button Content="Suspender" Command="{Binding SuspendCommand}" Margin="0,0,0,6" Padding="10,6"/>
+            <Button Content="Reanudar" Command="{Binding ResumeCommand}" Margin="0,0,0,6" Padding="10,6"/>
+            <Button Content="Recalcular restante" Command="{Binding RecalculateCommand}" Padding="10,6"/>
+          </StackPanel>
+        </ScrollViewer>
+      </Border>
+    </Grid>
+
+    <Border Grid.Row="4" Background="#111827" CornerRadius="8" Padding="12" Margin="0,12,0,0">
+      <TextBlock Foreground="#E5E7EB" FontSize="12">
+        <Run Text="Gantt de seguimiento — capas: "/>
+        <Run Text="Baseline" Foreground="#93C5FD"/>
+        <Run Text=" · Plan vigente"/>
+        <Run Text=" Actual" Foreground="#86EFAC"/>
+        <Run Text=" · Forecast"/>
+        <Run Text=" · Línea de fecha de estado. Críticas y suspendidas se indican por etiqueta, no solo por color."/>
+      </TextBlock>
+    </Border>
+
+    <TextBlock Grid.Row="5" Text="{Binding StatusMessage}" Margin="0,8,0,0" Foreground="#374151"/>
+  </Grid>
+</UserControl>

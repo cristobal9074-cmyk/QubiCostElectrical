@@ -1,0 +1,71 @@
+<Window x:Class="QubiCostElectrical.Wpf.Features.Cubicacion.QuickAddMaterialDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Style="{StaticResource Dialog.Window}"
+        Title="Agregar material al catálogo"
+        Width="520" Height="420" MinWidth="480" MinHeight="380"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        KeyDown="OnWindowKeyDown">
+  <Grid Margin="20">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+      <RowDefinition Height="Auto" />
+    </Grid.RowDefinitions>
+
+    <StackPanel Grid.Row="0" Margin="0,0,0,12">
+      <TextBlock Text="Nuevo material del proyecto" Style="{StaticResource Text.ViewTitle}" />
+      <TextBlock x:Name="ContextoText"
+                 Style="{StaticResource Text.Body}" Foreground="{DynamicResource Brush.Muted}"
+                 Margin="0,4,0,0" TextWrapping="Wrap" />
+    </StackPanel>
+
+    <StackPanel Grid.Row="1">
+      <TextBlock Text="Código" Style="{StaticResource Text.Caption}" Margin="0,0,0,4" />
+      <TextBox x:Name="CodigoBox" Style="{StaticResource Form.TextBox}" Margin="0,0,0,10" />
+
+      <TextBlock Text="Descripción" Style="{StaticResource Text.Caption}" Margin="0,0,0,4" />
+      <TextBox x:Name="DescripcionBox" Style="{StaticResource Form.TextBox}" Margin="0,0,0,10" />
+
+      <Grid Margin="0,0,0,10">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="12" />
+          <ColumnDefinition Width="120" />
+        </Grid.ColumnDefinitions>
+        <StackPanel Grid.Column="0">
+          <TextBlock Text="Unidad" Style="{StaticResource Text.Caption}" Margin="0,0,0,4" />
+          <TextBox x:Name="UnidadBox" Style="{StaticResource Form.TextBox}" />
+        </StackPanel>
+        <StackPanel Grid.Column="2">
+          <TextBlock Text="Categoría" Style="{StaticResource Text.Caption}" Margin="0,0,0,4" />
+          <TextBox x:Name="CategoriaBox" Style="{StaticResource Form.TextBox}" Text="Material" />
+        </StackPanel>
+      </Grid>
+
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="12" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <StackPanel Grid.Column="0">
+          <TextBlock Text="Precio material (UF)" Style="{StaticResource Text.Caption}" Margin="0,0,0,4" />
+          <TextBox x:Name="MatUfBox" Style="{StaticResource Form.TextBox}" />
+        </StackPanel>
+        <StackPanel Grid.Column="2">
+          <TextBlock Text="Mano de obra (UF)" Style="{StaticResource Text.Caption}" Margin="0,0,0,4" />
+          <TextBox x:Name="MoUfBox" Style="{StaticResource Form.TextBox}" Text="0" />
+        </StackPanel>
+      </Grid>
+    </StackPanel>
+
+    <DockPanel Grid.Row="2" Style="{StaticResource Dialog.Footer}" LastChildFill="False">
+      <Button DockPanel.Dock="Right" Style="{StaticResource Button.Primary}" Content="Agregar y aplicar"
+              MinWidth="140" IsDefault="True" Click="OnAcceptClick" />
+      <Button DockPanel.Dock="Right" Style="{StaticResource Button.Secondary}" Content="Cancelar"
+              MinWidth="100" Margin="0,0,8,0" IsCancel="True" />
+    </DockPanel>
+  </Grid>
+</Window>

@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Estado de Pagos — Mockup</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: radial-gradient(ellipse at 50% 0%, #141820 0%, #0a0c12 100%);
+    display: flex; justify-content: center; align-items: flex-start;
+    min-height: 100vh; padding: 32px;
+  }
+
+  /* ═══ APP CONTAINER ═══ */
+  .app {
+    width: 1340px;
+    background: #111318;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.05),
+      0 32px 80px rgba(0,0,0,0.6),
+      0 8px 32px rgba(0,0,0,0.4);
+    display: flex; flex-direction: column;
+    position: relative;
+  }
+  .app::before {
+    content: ''; position: absolute; inset: 0;
+    opacity: 0.015;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 10;
+  }
+
+  /* ═══ HEADER ═══ */
+  .header {
+    background: linear-gradient(180deg, #1a1d28 0%, #0f1117 100%);
+    padding: 18px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    position: relative; z-index: 1;
+  }
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .header-icon {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 8px 24px rgba(16,185,129,0.25);
+    position: relative;
+  }
+  .header-icon::after {
+    content: ''; position: absolute; inset: 0; border-radius: 10px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%);
+  }
+  .header-icon svg { width: 20px; height: 20px; fill: none; stroke: white; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; position: relative; z-index: 1; }
+  .header-titles { }
+  .header-title { color: #f1f5f9; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; display: flex; align-items: center; gap: 10px; }
+  .header-title-badge {
+    font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+    padding: 2px 8px; border-radius: 4px;
+    background: rgba(16,185,129,0.15); color: #34d399;
+    border: 1px solid rgba(16,185,129,0.2);
+  }
+  .header-subtitle { color: #475569; font-size: 12px; margin-top: 2px; }
+
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  .context-chip {
+    display: flex; align-items: center; gap: 6px;
+    padding: 5px 12px; border-radius: 6px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    font-size: 11px; color: #94a3b8;
+  }
+  .context-chip strong { color: #e2e8f0; font-weight: 600; }
+  .context-chip .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #10b981;
+  }
+  .btn-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    color: #475569; font-size: 14px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s; font-family: inherit;
+  }
+  .btn-icon:hover { background: rgba(255,255,255,0.1); color: #f1f5f9; }
+
+  /* ═══ MONTH TIMELINE ═══ */
+  .timeline {
+    padding: 14px 24px;
+    background: #0f1117;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    display: flex; align-items: center; gap: 6px;
+    position: relative; z-index: 1;
+    overflow-x: auto;
+  }
+  .timeline-label {
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.05em; color: #475569;
+    margin-right: 10px; flex-shrink: 0;
+  }
+  .month-pill {
+    padding: 7px 16px; border-radius: 8px;
+    font-size: 12px; font-weight: 500;
+    cursor: pointer; transition: all 0.15s;
+    border: 1px solid transparent;
+    color: #475569; background: transparent;
+    flex-shrink: 0;
+    display: flex; align-items: center; gap: 6px;
+    font-family: inherit;
+  }
+  .month-pill:hover { color: #94a3b8; background: rgba(255,255,255,0.04); }
+  .month-pill.active {
+    color: #f1f5f9;
+    background: rgba(16,185,129,0.12);
+    border-color: rgba(16,185,129,0.25);
+    font-weight: 600;
+  }
+  .month-pill .status-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+  }
+  .month-pill .status-dot.approved { background: #10b981; }
+  .month-pill .status-dot.draft { background: #f59e0b; }
+  .month-pill .status-dot.pending { background: #3b82f6; }
+  .month-pill .status-dot.locked { background: #64748b; }
+  .month-pill .amt {
+    font-size: 10px; color: #64748b; font-weight: 600;
+    font-family: 'SF Mono', 'JetBrains Mono', 'Cascadia Code', monospace;
+  }
+  .timeline-arrow {
+    width: 24px; height: 24px; border-radius: 6px;
+    background: rgba(255,255,255,0.04);
+    border: none; color: #475569; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .timeline-arrow:hover { color: #f1f5f9; background: rgba(255,255,255,0.08); }
+
+  /* ═══ CERTIFICATE INFO BAR ═══ */
+  .cert-info {
+    padding: 12px 24px;
+    background: #111318;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .cert-info-left { display: flex; align-items: center; gap: 20px; }
+  .cert-field {
+    display: flex; align-items: center; gap: 6px;
+  }
+  .cert-field .label {
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.04em; color: #475569;
+  }
+  .cert-field .value {
+    font-size: 12px; font-weight: 600; color: #e2e8f0;
+  }
+  .cert-field .value.mono {
+    font-family: 'SF Mono', 'JetBrains Mono', 'Cascadia Code', monospace;
+    font-size: 13px;
+  }
+  .cert-field .value.green { color: #34d399; }
+  .cert-field .value.amber { color: #fbbf24; }
+  .cert-field .value.gold { color: #f59e0b; }
+
+  .cert-status {
+    padding: 3px 12px; border-radius: 12px;
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .cert-status.draft {
+    background: rgba(245,158,11,0.12); color: #fbbf24;
+    border: 1px solid rgba(245,158,11,0.2);
+  }
+  .cert-status.approved {
+    background: rgba(16,185,129,0.12); color: #34d399;
+    border: 1px solid rgba(16,185,129,0.2);
+  }
+
+  .cert-info-right { display: flex; align-items: center; gap: 8px; }
+
+  /* ═══ TOOLBAR ═══ */
+  .toolbar {
+    padding: 10px 24px;
+    background: #0f1117;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .toolbar-left { display: flex; align-items: center; gap: 8px; }
+  .toolbar-right { display: flex; align-items: center; gap: 8px; }
+
+  .btn {
+    padding: 7px 14px; border-radius: 8px;
+    font-size: 12px; font-weight: 500;
+    cursor: pointer; transition: all 0.15s;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.04);
+    color: #94a3b8;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: inherit;
+  }
+  .btn:hover { background: rgba(255,255,255,0.08); color: #e2e8f0; }
+  .btn-primary {
+    background: rgba(16,185,129,0.15);
+    border-color: rgba(16,185,129,0.25);
+    color: #34d399;
+    font-weight: 600;
+  }
+  .btn-primary:hover { background: rgba(16,185,129,0.25); color: #6ee7b7; }
+  .btn-success {
+    background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+    border-color: transparent;
+    color: white;
+    font-weight: 600;
+    box-shadow: 0 4px 16px rgba(16,185,129,0.2);
+  }
+  .btn-success:hover { box-shadow: 0 6px 24px rgba(16,185,129,0.3); }
+  .btn-ghost { border-color: transparent; background: transparent; }
+  .btn-ghost:hover { background: rgba(255,255,255,0.04); }
+  .btn-danger {
+    background: rgba(239,68,68,0.1);
+    border-color: rgba(239,68,68,0.2);
+    color: #f87171;
+  }
+  .btn-danger:hover { background: rgba(239,68,68,0.2); }
+  .btn-amber {
+    background: rgba(245,158,11,0.1);
+    border-color: rgba(245,158,11,0.2);
+    color: #fbbf24;
+  }
+  .btn-amber:hover { background: rgba(245,158,11,0.2); }
+
+  .toolbar-divider {
+    width: 1px; height: 22px;
+    background: rgba(255,255,255,0.06);
+    margin: 0 4px;
+  }
+
+  .search-box {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 8px; padding: 5px 10px 5px 10px;
+    width: 200px;
+    transition: all 0.15s;
+  }
+  .search-box:focus-within {
+    border-color: rgba(16,185,129,0.3);
+    box-shadow: 0 0 0 3px rgba(16,185,129,0.08);
+  }
+  .search-box svg { width: 14px; height: 14px; fill: none; stroke: #475569; stroke-width: 2; stroke-linecap: round; flex-shrink: 0; }
+  .search-box input {
+    background: none; border: none; outline: none;
+    color: #e2e8f0; font-size: 12px; width: 100%;
+  }
+  .search-box input::placeholder { color: #475569; }
+
+  /* ═══ TABLE ═══ */
+  .table-container { flex: 1; overflow: auto; }
+  .table-container::-webkit-scrollbar { width: 6px; height: 6px; }
+  .table-container::-webkit-scrollbar-track { background: transparent; }
+  .table-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 3px; }
+  .table-container::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.1); }
+
+  table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 12px; min-width: 1200px; }
+  thead { position: sticky; top: 0; z-index: 2; }
+  thead th {
+    background: #0f1117;
+    color: #475569; font-weight: 600; font-size: 9px;
+    text-transform: uppercase; letter-spacing: 0.05em;
+    padding: 10px 8px; text-align: left;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    white-space: nowrap;
+    user-select: none;
+  }
+  thead th.amt { text-align: right; }
+  thead th.center { text-align: center; }
+  thead th.num { text-align: center; width: 44px; }
+  thead th.col-item { width: 56px; }
+  thead th.col-desc { min-width: 160px; }
+  thead th.col-ud { width: 36px; text-align: center; }
+  thead th.col-qty { width: 72px; text-align: right; }
+  thead th.col-price { width: 80px; text-align: right; }
+  thead th.col-pct { width: 52px; text-align: center; }
+  thead th.col-input { width: 68px; text-align: center; }
+  thead th.col-edit { width: 72px; text-align: center; }
+
+  thead th.section-sep {
+    background: rgba(16,185,129,0.04);
+  }
+  thead th.section-sep .sub {
+    display: block; font-size: 8px; font-weight: 400;
+    color: #64748b; letter-spacing: 0;
+    text-transform: none;
+  }
+
+  thead th.accent-green { color: #34d399; }
+  thead th.accent-green .sub { color: #6ee7b7; }
+
+  tbody tr {
+    transition: background 0.08s;
+    cursor: pointer;
+  }
+  tbody tr:hover { background: rgba(16,185,129,0.04); }
+  tbody tr.selected { background: rgba(16,185,129,0.06); }
+
+  tbody tr.section td {
+    padding: 8px 8px;
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.04em; color: #475569;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    background: rgba(255,255,255,0.02);
+    cursor: default;
+  }
+
+  tbody tr.partida td {
+    padding: 6px 8px;
+    color: #94a3b8;
+    border-bottom: 1px solid rgba(255,255,255,0.02);
+    vertical-align: middle;
+  }
+  tbody tr.partida .item-code {
+    font-family: 'SF Mono', 'JetBrains Mono', 'Cascadia Code', monospace;
+    font-size: 11px; color: #64748b; font-weight: 500;
+  }
+  tbody tr.partida .item-desc {
+    color: #e2e8f0; font-size: 12px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px;
+  }
+  tbody tr.partida .cell-mono {
+    font-family: 'SF Mono', 'JetBrains Mono', 'Cascadia Code', monospace;
+    font-size: 11px; font-variant-numeric: tabular-nums;
+  }
+  tbody tr.partida .cell-amt {
+    font-family: 'SF Mono', 'JetBrains Mono', 'Cascadia Code', monospace;
+    font-size: 11px; text-align: right; color: #cbd5e1;
+    font-variant-numeric: tabular-nums;
+  }
+  tbody tr.partida .cell-amt.strong { color: #f1f5f9; font-weight: 600; }
+  tbody tr.partida .cell-amt.green { color: #34d399; font-weight: 600; }
+  tbody tr.partida .cell-amt.gold { color: #fbbf24; }
+  tbody tr.partida .cell-pct {
+    font-family: 'SF Mono', 'JetBrains Mono', 'Cascadia Code', monospace;
+    font-size: 11px; text-align: center; font-weight: 600;
+  }
+  tbody tr.partida .cell-pct.high { color: #34d399; }
+  tbody tr.partida .cell-pct.mid { color: #fbbf24; }
+  tbody tr.partida .cell-pct.low { color: #f87171; }
+  tbody tr.partida .cell-center { text-align: center; }
+
+  tbody tr.partida input[type="text"] {
+    width: 100%; padding: 4px 6px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 5px;
+    font-size: 11px; text-align: right;
+    font-family: 'SF Mono', 'JetBrains Mono', 'Cascadia Code', monospace;
+    font-variant-numeric: tabular-nums;
+    color: #e2e8f0;
+    outline: none; transition: all 0.15s;
+  }
+  tbody tr.partida input[type="text"]:focus {
+    border-color: rgba(16,185,129,0.4);
+    box-shadow: 0 0 0 3px rgba(16,185,129,0.08);
+    background: rgba(16,185,129,0.04);
+  }
+  tbody tr.partida input[type="text"]:hover {
+    border-color: rgba(255,255,255,0.15);
+  }
+
+  tbody tr.partida .progress-bar {
+    width: 100%; height: 4px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 3px;
+  }
+  tbody tr.partida .progress-bar .fill {
+    height: 100%; border-radius: 2px;
+    transition: width 0.3s;
+  }
+  tbody tr.partida .progress-bar .fill.high { background: #10b981; }
+  tbody tr.partida .progress-bar .fill.mid { background: #f59e0b; }
+  tbody tr.partida .progress-bar .fill.low { background: #ef4444; }
+
+  /* Totals row */
+  tbody tr.totals-row td {
+    padding: 10px 8px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.02);
+    font-weight: 700;
+    font-size: 12px;
+    color: #f1f5f9;
+    cursor: default;
+  }
+  tbody tr.totals-row .cell-amt { font-size: 12px; color: #f1f5f9; font-weight: 700; }
+  tbody tr.totals-row .cell-amt.green { color: #34d399; }
+  tbody tr.totals-row .cell-amt.gold { color: #fbbf24; }
+
+  /* ═══ FOOTER KPI BAR ═══ */
+  .kpi-bar {
+    padding: 14px 24px;
+    background: #0f1117;
+    border-top: 1px solid rgba(255,255,255,0.04);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .kpi-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 16px; border-radius: 10px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.04);
+    flex: 1;
+  }
+  .kpi-item .kpi-icon {
+    width: 28px; height: 28px; border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; flex-shrink: 0;
+  }
+  .kpi-item .kpi-icon.green { background: rgba(16,185,129,0.12); color: #34d399; }
+  .kpi-item .kpi-icon.blue { background: rgba(59,130,246,0.12); color: #60a5fa; }
+  .kpi-item .kpi-icon.amber { background: rgba(245,158,11,0.12); color: #fbbf24; }
+  .kpi-item .kpi-icon.purple { background: rgba(139,92,246,0.12); color: #a78bfa; }
+  .kpi-item .kpi-icon.teal { background: rgba(20,184,166,0.12); color: #5eead4; }
+
+  .kpi-item .kpi-body { }
+  .kpi-item .kpi-label { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: #475569; }
+  .kpi-item .kpi-value {
+    font-size: 18px; font-weight: 800; color: #f1f5f9;
+    font-family: 'SF Mono', 'JetBrains Mono', 'Cascadia Code', monospace;
+    font-variant-numeric: tabular-nums;
+  }
+  .kpi-item .kpi-value .unit { font-size: 11px; font-weight: 500; color: #64748b; margin-left: 4px; }
+  .kpi-item .kpi-sub {
+    font-size: 10px; color: #64748b; margin-top: 1px;
+  }
+
+  /* ═══ FOOTER ═══ */
+  .footer {
+    padding: 14px 24px;
+    background: #0f1117;
+    border-top: 1px solid rgba(255,255,255,0.04);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .footer-left { display: flex; align-items: center; gap: 16px; }
+  .footer-stat { display: flex; align-items: center; gap: 6px; }
+  .footer-stat-label { font-size: 10px; color: #475569; }
+  .footer-stat-value {
+    font-size: 11px; color: #e2e8f0; font-weight: 600;
+    font-family: 'SF Mono', 'JetBrains Mono', 'Cascadia Code', monospace;
+  }
+  .footer-stat-divider { width: 1px; height: 16px; background: rgba(255,255,255,0.06); }
+  .footer-right { display: flex; align-items: center; gap: 12px; }
+  .footer-hint {
+    font-size: 10px; color: #334155;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .footer-hint kbd {
+    font-size: 9px; font-weight: 600; color: #475569;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 3px; padding: 1px 5px;
+    font-family: inherit;
+  }
+
+  /* ═══ TOAST ═══ */
+  .toast {
+    position: absolute; bottom: 80px; right: 24px;
+    padding: 12px 20px; border-radius: 10px;
+    background: rgba(16,185,129,0.12);
+    border: 1px solid rgba(16,185,129,0.2);
+    backdrop-filter: blur(12px);
+    display: flex; align-items: center; gap: 10px;
+    font-size: 12px; color: #6ee7b7;
+    z-index: 20;
+    animation: slideUp 0.3s ease;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ═══ NEW CERTIFICATE FLYOUT ═══ */
+  .flyout-overlay {
+    position: absolute; inset: 0; z-index: 15;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(4px);
+    display: none;
+    align-items: center; justify-content: center;
+  }
+  .flyout-overlay.open { display: flex; }
+  .flyout {
+    width: 460px; background: #1a1d28;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px; box-shadow: 0 32px 80px rgba(0,0,0,0.6);
+    overflow: hidden;
+  }
+  .flyout-header {
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .flyout-header h2 { font-size: 15px; font-weight: 600; color: #f1f5f9; }
+  .flyout-body { padding: 20px; }
+  .flyout-field { margin-bottom: 16px; }
+  .flyout-field label {
+    display: block; font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.04em; color: #475569; margin-bottom: 4px;
+  }
+  .flyout-field select, .flyout-field input {
+    width: 100%; padding: 8px 10px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px; color: #e2e8f0; font-size: 13px;
+    outline: none; font-family: inherit;
+  }
+  .flyout-field select:focus, .flyout-field input:focus {
+    border-color: rgba(16,185,129,0.3);
+    box-shadow: 0 0 0 3px rgba(16,185,129,0.08);
+  }
+  .flyout-field select option { background: #1a1d28; color: #e2e8f0; }
+  .flyout-footer {
+    padding: 14px 20px;
+    border-top: 1px solid rgba(255,255,255,0.04);
+    display: flex; justify-content: flex-end; gap: 8px;
+  }
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+
+  <!-- ═══ NOISE OVERLAY ═══ -->
+
+  <!-- ═══ HEADER ═══ -->
+  <div class="header">
+    <div class="header-left">
+      <div class="header-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 1v6m0 0l-3-3m3 3l3-3"/><path d="M4 10h16v10a2 2 0 01-2 2H6a2 2 0 01-2-2V10z"/><path d="M8 14v4M12 14v4M16 14v4"/><path d="M8 7v3M16 7v3"/></svg>
+      </div>
+      <div class="header-titles">
+        <div class="header-title">
+          Estado de Pagos
+          <span class="header-title-badge">Valorización</span>
+        </div>
+        <div class="header-subtitle">Certificados mensuales de avance de obra · Conectado al Itemizado contractual</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="context-chip">
+        <span class="dot"></span>
+        <strong>Proyecto:</strong> Edificio Corporativo Los Leones
+      </div>
+      <button class="btn-icon" title="Actualizar" onclick="showToast('Datos sincronizados con el Itemizado')">⟳</button>
+      <button class="btn-icon" title="Configuración">⚙</button>
+    </div>
+  </div>
+
+  <!-- ═══ MONTH TIMELINE ═══ -->
+  <div class="timeline">
+    <span class="timeline-label">Períodos</span>
+    <button class="timeline-arrow">‹</button>
+    <button class="month-pill active" data-month="0" onclick="selectMonth(this)">
+      <span class="status-dot approved"></span>
+      Ene 2026
+      <span class="amt">$ 2.4M</span>
+    </button>
+    <button class="month-pill" data-month="1" onclick="selectMonth(this)">
+      <span class="status-dot approved"></span>
+      Feb 2026
+      <span class="amt">$ 3.1M</span>
+    </button>
+    <button class="month-pill" data-month="2" onclick="selectMonth(this)">
+      <span class="status-dot approved"></span>
+      Mar 2026
+      <span class="amt">$ 2.8M</span>
+    </button>
+    <button class="month-pill" data-month="3" onclick="selectMonth(this)">
+      <span class="status-dot approved"></span>
+      Abr 2026
+      <span class="amt">$ 3.5M</span>
+    </button>
+    <button class="month-pill" data-month="4" onclick="selectMonth(this)">
+      <span class="status-dot draft"></span>
+      May 2026
+      <span class="amt">$ 2.1M</span>
+    </button>
+    <button class="month-pill" data-month="5" onclick="selectMonth(this)">
+      <span class="status-dot pending"></span>
+      Jun 2026
+      <span class="amt">—</span>
+    </button>
+    <button class="month-pill" data-month="6">
+      <span class="status-dot locked"></span>
+      Jul 2026
+      <span class="amt">—</span>
+    </button>
+    <button class="month-pill" data-month="7">
+      <span class="status-dot locked"></span>
+      Ago 2026
+      <span class="amt">—</span>
+    </button>
+    <button class="timeline-arrow">›</button>
+    <span style="flex:1"></span>
+    <button class="btn btn-primary" onclick="openNewFlyout()">
+      <span style="font-size:16px;font-weight:300;line-height:1">+</span>
+      Nuevo certificado
+    </button>
+  </div>
+
+  <!-- ═══ CERTIFICATE INFO BAR ═══ -->
+  <div class="cert-info">
+    <div class="cert-info-left">
+      <div class="cert-field">
+        <span class="label">Certificado N°</span>
+        <span class="value mono">05</span>
+      </div>
+      <div class="cert-field">
+        <span class="label">Período</span>
+        <span class="value">01 May 2026 — 31 May 2026</span>
+      </div>
+      <div class="cert-field">
+        <span class="label">Moneda</span>
+        <span class="value mono">UF</span>
+      </div>
+      <div class="cert-field">
+        <span class="label">Contrato</span>
+        <span class="value mono gold">$ 86.450.000</span>
+      </div>
+      <div class="cert-field">
+        <span class="label">Previo acumulado</span>
+        <span class="value mono green">$ 41.200.000</span>
+      </div>
+      <span class="cert-status draft">Borrador</span>
+    </div>
+    <div class="cert-info-right">
+      <span style="font-size:10px;color:#475569;font-weight:500;">N° revisión: 01</span>
+    </div>
+  </div>
+
+  <!-- ═══ TOOLBAR ═══ -->
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <button class="btn btn-success" onclick="showToast('✅ Estado de pago N°05 guardado correctamente')">
+        <span>💾</span> Guardar certificado
+      </button>
+      <div class="toolbar-divider"></div>
+      <button class="btn" onclick="showToast('📄 Generando PDF del certificado…')">
+        <span>📄</span> Exportar PDF
+      </button>
+      <button class="btn">
+        <span>📋</span> Vista previa
+      </button>
+      <div class="toolbar-divider"></div>
+      <button class="btn btn-amber">
+        <span>📨</span> Enviar a revisión
+      </button>
+      <button class="btn btn-danger">
+        <span>✕</span> Anular
+      </button>
+    </div>
+    <div class="toolbar-right">
+      <div class="search-box">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" placeholder="Buscar partida…">
+      </div>
+      <div class="toolbar-divider"></div>
+      <button class="btn" onclick="showToast('Vista expandida activada')">⊞ Expandir todo</button>
+      <button class="btn" onclick="showToast('Columnas personalizadas')">⋮ Columnas</button>
+    </div>
+  </div>
+
+  <!-- ═══ TABLE ═══ -->
+  <div class="table-container">
+    <table id="mainTable">
+      <thead>
+        <tr>
+          <th class="col-item">ÍTEM</th>
+          <th class="col-desc">DESCRIPCIÓN</th>
+          <th class="col-ud">UD</th>
+          <th class="col-qty">CANT. CONTRATO</th>
+          <th class="col-price">P.U. CONTRATO</th>
+          <th class="col-price">TOTAL CONTRATO</th>
+          <th class="col-qty">CANT. ANTERIOR</th>
+          <th class="col-edit" style="background:rgba(16,185,129,0.06);color:#34d399;">CANT. PERÍODO</th>
+          <th class="col-qty">CANT. ACUM.</th>
+          <th class="col-price">MONTO PERÍODO</th>
+          <th class="col-price">MONTO ACUM.</th>
+          <th class="col-pct">% AVANCE</th>
+          <th style="width:60px;text-align:center;">SALDO</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- SECCIÓN 1: Canelones y accesos -->
+        <tr class="section"><td colspan="13">1.0 Canelones y accesos</td></tr>
+
+        <tr class="partida selected" onclick="selectRow(this)">
+          <td><span class="item-code">1.1</span></td>
+          <td><div class="item-desc">Canalización subterránea MT</div></td>
+          <td class="cell-center">ML</td>
+          <td class="cell-amt cell-mono">125.00</td>
+          <td class="cell-amt cell-mono">46.34</td>
+          <td class="cell-amt cell-mono strong">$ 5.792,50</td>
+          <td class="cell-amt cell-mono" style="color:#fbbf24;">87.50</td>
+          <td><input type="text" value="12.00" oninput="recalcRow(this)"></td>
+          <td class="cell-amt cell-mono" style="color:#34d399;font-weight:600;">99.50</td>
+          <td class="cell-amt cell-mono green">$ 556,08</td>
+          <td class="cell-amt cell-mono strong">$ 4.610,83</td>
+          <td>
+            <div class="cell-pct high">79.6%</div>
+            <div class="progress-bar"><div class="fill high" style="width:79.6%"></div></div>
+          </td>
+          <td class="cell-amt cell-mono" style="color:#fbbf24;">$ 1.181,67</td>
+        </tr>
+
+        <tr class="partida" onclick="selectRow(this)">
+          <td><span class="item-code">1.2</span></td>
+          <td><div class="item-desc">Cámara de paso</div></td>
+          <td class="cell-center">UN</td>
+          <td class="cell-amt cell-mono">8</td>
+          <td class="cell-amt cell-mono">230.00</td>
+          <td class="cell-amt cell-mono strong">$ 1.840,00</td>
+          <td class="cell-amt cell-mono" style="color:#fbbf24;">5</td>
+          <td><input type="text" value="2" oninput="recalcRow(this)"></td>
+          <td class="cell-amt cell-mono" style="color:#34d399;font-weight:600;">7</td>
+          <td class="cell-amt cell-mono green">$ 460,00</td>
+          <td class="cell-amt cell-mono strong">$ 1.610,00</td>
+          <td>
+            <div class="cell-pct high">87.5%</div>
+            <div class="progress-bar"><div class="fill high" style="width:87.5%"></div></div>
+          </td>
+          <td class="cell-amt cell-mono" style="color:#fbbf24;">$ 230,00</td>
+        </tr>
+
+        <tr class="partida" onclick="selectRow(this)">
+          <td><span class="item-code">1.3</span></td>
+          <td><div class="item-desc">Excavación y relleno</div></td>
+          <td class="cell-center">M3</td>
+          <td class="cell-amt cell-mono">45.00</td>
+          <td class="cell-amt cell-mono">27.33</td>
+          <td class="cell-amt cell-mono strong">$ 1.229,85</td>
+          <td class="cell-amt cell-mono" style="color:#fbbf24;">35.00</td>
+          <td><input type="text" value="8.00" oninput="recalcRow(this)"></td>
+          <td class="cell-amt cell-mono" style="color:#34d399;font-weight:600;">43.00</td>
+          <td class="cell-amt cell-mono green">$ 218,64</td>
+          <td class="cell-amt cell-mono strong">$ 1.175,19</td>
+          <td>
+            <div class="cell-pct high">95.6%</div>
+            <div class="progress-bar"><div class="fill high" style="width:95.6%"></div></div>
+          </td>
+          <td class="cell-amt cell-mono" style="color:#10b981;">$ 54,66</td>
+        </tr>
+
+        <!-- SECCIÓN 2 -->
+        <tr class="section"><td colspan="13">2.0 Tableros y fuerza</td></tr>
+
+        <tr class="partida" onclick="selectRow(this)">
+          <td><span class="item-code">2.1</span></td>
+          <td><div class="item-desc">Tablero general TG-01</div></td>
+          <td class="cell-center">UN</td>
+          <td class="cell-amt cell-mono">1</td>
+          <td class="cell-amt cell-mono">4.060,00</td>
+          <td class="cell-amt cell-mono strong">$ 4.060,00</td>
+          <td class="cell-amt cell-mono" style="color:#fbbf24;">0</td>
+          <td><input type="text" value="1" oninput="recalcRow(this)"></td>
+          <td class="cell-amt cell-mono" style="color:#34d399;font-weight:600;">1</td>
+          <td class="cell-amt cell-mono green">$ 4.060,00</td>
+          <td class="cell-amt cell-mono strong">$ 4.060,00</td>
+          <td>
+            <div class="cell-pct high">100%</div>
+            <div class="progress-bar"><div class="fill high" style="width:100%"></div></div>
+          </td>
+          <td class="cell-amt cell-mono" style="color:#10b981;">$ 0,00</td>
+        </tr>
+
+        <tr class="partida" onclick="selectRow(this)">
+          <td><span class="item-code">2.2</span></td>
+          <td><div class="item-desc">Alimentador TG-01 a TDS-01</div></td>
+          <td class="cell-center">GL</td>
+          <td class="cell-amt cell-mono">1</td>
+          <td class="cell-amt cell-mono">890.00</td>
+          <td class="cell-amt cell-mono strong">$ 890,00</td>
+          <td class="cell-amt cell-mono" style="color:#fbbf24;">0</td>
+          <td><input type="text" value="0" oninput="recalcRow(this)"></td>
+          <td class="cell-amt cell-mono" style="color:#34d399;font-weight:600;">0</td>
+          <td class="cell-amt cell-mono green">$ 0,00</td>
+          <td class="cell-amt cell-mono strong">$ 0,00</td>
+          <td>
+            <div class="cell-pct low">0%</div>
+            <div class="progress-bar"><div class="fill low" style="width:0%"></div></div>
+          </td>
+          <td class="cell-amt cell-mono" style="color:#fbbf24;">$ 890,00</td>
+        </tr>
+
+        <tr class="partida" onclick="selectRow(this)">
+          <td><span class="item-code">2.3</span></td>
+          <td><div class="item-desc">Tablero de distribución TDS-01</div></td>
+          <td class="cell-center">UN</td>
+          <td class="cell-amt cell-mono">1</td>
+          <td class="cell-amt cell-mono">1.870,00</td>
+          <td class="cell-amt cell-mono strong">$ 1.870,00</td>
+          <td class="cell-amt cell-mono" style="color:#fbbf24;">0</td>
+          <td><input type="text" value="1" oninput="recalcRow(this)"></td>
+          <td class="cell-amt cell-mono" style="color:#34d399;font-weight:600;">1</td>
+          <td class="cell-amt cell-mono green">$ 1.870,00</td>
+          <td class="cell-amt cell-mono strong">$ 1.870,00</td>
+          <td>
+            <div class="cell-pct high">100%</div>
+            <div class="progress-bar"><div class="fill high" style="width:100%"></div></div>
+          </td>
+          <td class="cell-amt cell-mono" style="color:#10b981;">$ 0,00</td>
+        </tr>
+
+        <tr class="partida" onclick="selectRow(this)">
+          <td><span class="item-code">2.4</span></td>
+          <td><div class="item-desc">Tablero de distribución TDS-02</div></td>
+          <td class="cell-center">UN</td>
+          <td class="cell-amt cell-mono">1</td>
+          <td class="cell-amt cell-mono">1.870,00</td>
+          <td class="cell-amt cell-mono strong">$ 1.870,00</td>
+          <td class="cell-amt cell-mono" style="color:#fbbf24;">0</td>
+          <td><input type="text" value="0" oninput="recalcRow(this)"></td>
+          <td class="cell-amt cell-mono" style="color:#34d399;font-weight:600;">0</td>
+          <td class="cell-amt cell-mono green">$ 0,00</td>
+          <td class="cell-amt cell-mono strong">$ 0,00</td>
+          <td>
+            <div class="cell-pct low">0%</div>
+            <div class="progress-bar"><div class="fill low" style="width:0%"></div></div>
+          </td>
+          <td class="cell-amt cell-mono" style="color:#fbbf24;">$ 1.870,00</td>
+        </tr>
+
+        <!-- SECCIÓN 3 -->
+        <tr class="section"><td colspan="13">3.0 Alumbrado</td></tr>
+
+        <tr class="partida" onclick="selectRow(this)">
+          <td><span class="item-code">3.1</span></td>
+          <td><div class="item-desc">Luminaria LED empotrar 60×60</div></td>
+          <td class="cell-center">UN</td>
+          <td class="cell-amt cell-mono">42</td>
+          <td class="cell-amt cell-mono">65.00</td>
+          <td class="cell-amt cell-mono strong">$ 2.730,00</td>
+          <td class="cell-amt cell-mono" style="color:#fbbf24;">20</td>
+          <td><input type="text" value="12" oninput="recalcRow(this)"></td>
+          <td class="cell-amt cell-mono" style="color:#34d399;font-weight:600;">32</td>
+          <td class="cell-amt cell-mono green">$ 780,00</td>
+          <td class="cell-amt cell-mono strong">$ 2.080,00</td>
+          <td>
+            <div class="cell-pct mid">76.2%</div>
+            <div class="progress-bar"><div class="fill mid" style="width:76.2%"></div></div>
+          </td>
+          <td class="cell-amt cell-mono" style="color:#fbbf24;">$ 650,00</td>
+        </tr>
+
+        <tr class="partida" onclick="selectRow(this)">
+          <td><span class="item-code">3.2</span></td>
+          <td><div class="item-desc">Luminaria LED suspender</div></td>
+          <td class="cell-center">UN</td>
+          <td class="cell-amt cell-mono">18</td>
+          <td class="cell-amt cell-mono">80.00</td>
+          <td class="cell-amt cell-mono strong">$ 1.440,00</td>
+          <td class="cell-amt cell-mono" style="color:#fbbf24;">6</td>
+          <td><input type="text" value="6" oninput="recalcRow(this)"></td>
+          <td class="cell-amt cell-mono" style="color:#34d399;font-weight:600;">12</td>
+          <td class="cell-amt cell-mono green">$ 480,00</td>
+          <td class="cell-amt cell-mono strong">$ 960,00</td>
+          <td>
+            <div class="cell-pct mid">66.7%</div>
+            <div class="progress-bar"><div class="fill mid" style="width:66.7%"></div></div>
+          </td>
+          <td class="cell-amt cell-mono" style="color:#fbbf24;">$ 480,00</td>
+        </tr>
+
+        <tr class="partida" onclick="selectRow(this)">
+          <td><span class="item-code">3.3</span></td>
+          <td><div class="item-desc">Interruptor simple</div></td>
+          <td class="cell-center">UN</td>
+          <td class="cell-amt cell-mono">24</td>
+          <td class="cell-amt cell-mono">25.00</td>
+          <td class="cell-amt cell-mono strong">$ 600,00</td>
+          <td class="cell-amt cell-mono" style="color:#fbbf24;">16</td>
+          <td><input type="text" value="4" oninput="recalcRow(this)"></td>
+          <td class="cell-amt cell-mono" style="color:#34d399;font-weight:600;">20</td>
+          <td class="cell-amt cell-mono green">$ 100,00</td>
+          <td class="cell-amt cell-mono strong">$ 500,00</td>
+          <td>
+            <div class="cell-pct mid">83.3%</div>
+            <div class="progress-bar"><div class="fill high" style="width:83.3%"></div></div>
+          </td>
+          <td class="cell-amt cell-mono" style="color:#fbbf24;">$ 100,00</td>
+        </tr>
+
+        <!-- SECCIÓN 4 -->
+        <tr class="section"><td colspan="13">4.0 Enchufes</td></tr>
+
+        <tr class="partida" onclick="selectRow(this)">
+          <td><span class="item-code">4.1</span></td>
+          <td><div class="item-desc">Enchufe doble 10A</div></td>
+          <td class="cell-center">UN</td>
+          <td class="cell-amt cell-mono">36</td>
+          <td class="cell-amt cell-mono">25.00</td>
+          <td class="cell-amt cell-mono strong">$ 900,00</td>
+          <td class="cell-amt cell-mono" style="color:#fbbf24;">24</td>
+          <td><input type="text" value="8" oninput="recalcRow(this)"></td>
+          <td class="cell-amt cell-mono" style="color:#34d399;font-weight:600;">32</td>
+          <td class="cell-amt cell-mono green">$ 200,00</td>
+          <td class="cell-amt cell-mono strong">$ 800,00</td>
+          <td>
+            <div class="cell-pct high">88.9%</div>
+            <div class="progress-bar"><div class="fill high" style="width:88.9%"></div></div>
+          </td>
+          <td class="cell-amt cell-mono" style="color:#fbbf24;">$ 100,00</td>
+        </tr>
+
+        <tr class="partida" onclick="selectRow(this)">
+          <td><span class="item-code">4.2</span></td>
+          <td><div class="item-desc">Enchufe doble 15A</div></td>
+          <td class="cell-center">UN</td>
+          <td class="cell-amt cell-mono">12</td>
+          <td class="cell-amt cell-mono">35.00</td>
+          <td class="cell-amt cell-mono strong">$ 420,00</td>
+          <td class="cell-amt cell-mono" style="color:#fbbf24;">8</td>
+          <td><input type="text" value="2" oninput="recalcRow(this)"></td>
+          <td class="cell-amt cell-mono" style="color:#34d399;font-weight:600;">10</td>
+          <td class="cell-amt cell-mono green">$ 70,00</td>
+          <td class="cell-amt cell-mono strong">$ 350,00</td>
+          <td>
+            <div class="cell-pct mid">83.3%</div>
+            <div class="progress-bar"><div class="fill high" style="width:83.3%"></div></div>
+          </td>
+          <td class="cell-amt cell-mono" style="color:#fbbf24;">$ 70,00</td>
+        </tr>
+
+        <!-- SECCIÓN 5 -->
+        <tr class="section"><td colspan="13">5.0 Servicios comunes</td></tr>
+
+        <tr class="partida" onclick="selectRow(this)">
+          <td><span class="item-code">5.1</span></td>
+          <td><div class="item-desc">Circuito alumbrado SC-01</div></td>
+          <td class="cell-center">ML</td>
+          <td class="cell-amt cell-mono">64.00</td>
+          <td class="cell-amt cell-mono">7.00</td>
+          <td class="cell-amt cell-mono strong">$ 448,00</td>
+          <td class="cell-amt cell-mono" style="color:#fbbf24;">40.00</td>
+          <td><input type="text" value="14.00" oninput="recalcRow(this)"></td>
+          <td class="cell-amt cell-mono" style="color:#34d399;font-weight:600;">54.00</td>
+          <td class="cell-amt cell-mono green">$ 98,00</td>
+          <td class="cell-amt cell-mono strong">$ 378,00</td>
+          <td>
+            <div class="cell-pct mid">84.4%</div>
+            <div class="progress-bar"><div class="fill high" style="width:84.4%"></div></div>
+          </td>
+          <td class="cell-amt cell-mono" style="color:#fbbf24;">$ 70,00</td>
+        </tr>
+
+        <tr class="partida" onclick="selectRow(this)">
+          <td><span class="item-code">5.2</span></td>
+          <td><div class="item-desc">Circuito enchufe SC-02</div></td>
+          <td class="cell-center">ML</td>
+          <td class="cell-amt cell-mono">48.00</td>
+          <td class="cell-amt cell-mono">9.00</td>
+          <td class="cell-amt cell-mono strong">$ 432,00</td>
+          <td class="cell-amt cell-mono" style="color:#fbbf24;">30.00</td>
+          <td><input type="text" value="10.00" oninput="recalcRow(this)"></td>
+          <td class="cell-amt cell-mono" style="color:#34d399;font-weight:600;">40.00</td>
+          <td class="cell-amt cell-mono green">$ 90,00</td>
+          <td class="cell-amt cell-mono strong">$ 360,00</td>
+          <td>
+            <div class="cell-pct mid">83.3%</div>
+            <div class="progress-bar"><div class="fill high" style="width:83.3%"></div></div>
+          </td>
+          <td class="cell-amt cell-mono" style="color:#fbbf24;">$ 72,00</td>
+        </tr>
+
+        <!-- ═══ TOTALS ROW ═══ -->
+        <tr class="totals-row">
+          <td></td>
+          <td style="font-size:11px;text-transform:uppercase;letter-spacing:0.04em;color:#94a3b8;">TOTALES DEL CERTIFICADO</td>
+          <td></td>
+          <td class="cell-amt cell-mono">426.00</td>
+          <td></td>
+          <td class="cell-amt cell-mono">$ 24.252,35</td>
+          <td class="cell-amt cell-mono gold" style="color:#fbbf24;">272.50</td>
+          <td class="cell-amt cell-mono green" style="font-size:13px;">78.00</td>
+          <td class="cell-amt cell-mono" style="color:#34d399;">350.50</td>
+          <td class="cell-amt cell-mono green" style="font-size:13px;">$ 6.912,72</td>
+          <td class="cell-amt cell-mono">$ 18.783,02</td>
+          <td class="cell-pct high" style="font-size:12px;">77.5%</td>
+          <td class="cell-amt cell-mono" style="color:#fbbf24;">$ 5.469,33</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ═══ KPI BAR ═══ -->
+  <div class="kpi-bar">
+    <div class="kpi-item">
+      <div class="kpi-icon green">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      </div>
+      <div class="kpi-body">
+        <div class="kpi-label">Avance del período</div>
+        <div class="kpi-value">$ 6.912,72 <span class="unit">UF</span></div>
+        <div class="kpi-sub">Mayo 2026 · 12 partidas ejecutadas</div>
+      </div>
+    </div>
+    <div class="kpi-item">
+      <div class="kpi-icon blue">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
+      </div>
+      <div class="kpi-body">
+        <div class="kpi-label">Avance acumulado</div>
+        <div class="kpi-value">$ 48.112,72 <span class="unit">UF</span></div>
+        <div class="kpi-sub">55.7% del contrato ejecutado</div>
+      </div>
+    </div>
+    <div class="kpi-item">
+      <div class="kpi-icon amber">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      </div>
+      <div class="kpi-body">
+        <div class="kpi-label">Saldo por ejecutar</div>
+        <div class="kpi-value">$ 38.337,28 <span class="unit">UF</span></div>
+        <div class="kpi-sub">44.3% del contrato pendiente</div>
+      </div>
+    </div>
+    <div class="kpi-item">
+      <div class="kpi-icon purple">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      </div>
+      <div class="kpi-body">
+        <div class="kpi-label">Partidas</div>
+        <div class="kpi-value">12 <span class="unit">activas</span></div>
+        <div class="kpi-sub">2 partidas con avance 0% este período</div>
+      </div>
+    </div>
+    <div class="kpi-item">
+      <div class="kpi-icon teal">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      </div>
+      <div class="kpi-body">
+        <div class="kpi-label">Valorización promedio</div>
+        <div class="kpi-value">$ 2.8M <span class="unit">UF/mes</span></div>
+        <div class="kpi-sub">6 certificados emitidos</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ FOOTER ═══ -->
+  <div class="footer">
+    <div class="footer-left">
+      <div class="footer-stat">
+        <span class="footer-stat-label">Contrato</span>
+        <span class="footer-stat-value">$ 86.450,00 UF</span>
+      </div>
+      <div class="footer-stat-divider"></div>
+      <div class="footer-stat">
+        <span class="footer-stat-label">Acumulado</span>
+        <span class="footer-stat-value" style="color:#34d399;">$ 48.112,72 UF</span>
+      </div>
+      <div class="footer-stat-divider"></div>
+      <div class="footer-stat">
+        <span class="footer-stat-label">% Ejecutado</span>
+        <span class="footer-stat-value">55.7%</span>
+      </div>
+      <div class="footer-stat-divider"></div>
+      <div class="footer-stat">
+        <span class="footer-stat-label">Saldo</span>
+        <span class="footer-stat-value" style="color:#fbbf24;">$ 38.337,28 UF</span>
+      </div>
+    </div>
+    <div class="footer-right">
+      <div class="footer-hint">
+        <kbd>Tab</kbd> navegar celdas ·
+        <kbd>Enter</kbd> editar cantidad ·
+        <kbd>Esc</kbd> descartar cambios
+      </div>
+      <button class="btn btn-primary" onclick="showToast('🧮 Recalculando todas las partidas…')">Recalcular todo</button>
+      <button class="btn btn-success" onclick="showToast('✅ Certificado N°05 guardado. Puede volver a verlo desde la línea de tiempo.')">
+        💾 Guardar y cerrar
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══ TOAST ═══ -->
+  <div class="toast" id="toast" style="display:none;">
+    <span id="toastMsg"></span>
+  </div>
+
+  <!-- ═══ NEW CERTIFICATE FLYOUT ═══ -->
+  <div class="flyout-overlay" id="newFlyout" onclick="if(event.target===this)closeNewFlyout()">
+    <div class="flyout">
+      <div class="flyout-header">
+        <h2>Nuevo certificado de pago</h2>
+        <button class="btn-icon" onclick="closeNewFlyout()">✕</button>
+      </div>
+      <div class="flyout-body">
+        <div class="flyout-field">
+          <label>Período</label>
+          <select>
+            <option>Enero 2026</option>
+            <option>Febrero 2026</option>
+            <option>Marzo 2026</option>
+            <option>Abril 2026</option>
+            <option selected>Mayo 2026</option>
+            <option>Junio 2026</option>
+            <option>Julio 2026</option>
+            <option>Agosto 2026</option>
+            <option>Septiembre 2026</option>
+            <option>Octubre 2026</option>
+            <option>Noviembre 2026</option>
+            <option>Diciembre 2026</option>
+          </select>
+        </div>
+        <div class="flyout-field">
+          <label>Fecha de corte</label>
+          <input type="date" value="2026-05-31">
+        </div>
+        <div class="flyout-field">
+          <label>Moneda</label>
+          <select>
+            <option>UF</option>
+            <option>CLP</option>
+            <option>USD</option>
+          </select>
+        </div>
+        <div class="flyout-field">
+          <label>Origen de datos</label>
+          <select>
+            <option selected>Itemizado contractual completo</option>
+            <option>Solo partidas con cubicación</option>
+            <option>Selección personalizada</option>
+          </select>
+        </div>
+        <div style="padding:10px 14px;border-radius:8px;background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.1);font-size:11px;color:#6ee7b7;">
+          ✅ Se cargarán automáticamente las cantidades anteriores del último certificado y los precios contractuales del Itemizado.
+        </div>
+      </div>
+      <div class="flyout-footer">
+        <button class="btn" onclick="closeNewFlyout()">Cancelar</button>
+        <button class="btn-success" style="padding:7px 24px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:inherit;" onclick="closeNewFlyout();showToast('✅ Certificado de Mayo 2026 creado. Ingrese las cantidades del período.')">
+          Crear certificado
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ── Select month ──
+  function selectMonth(el) {
+    document.querySelectorAll('.month-pill').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    showToast(`📅 Cambiando a certificado: ${el.textContent.trim().split(/\s+/).slice(0,2).join(' ')}`);
+  }
+
+  // ── Select row ──
+  function selectRow(el) {
+    document.querySelectorAll('.partida.selected').forEach(r => r.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
+  // ── Recalc row ──
+  function recalcRow(input) {
+    const row = input.closest('tr');
+    const val = parseFloat(input.value) || 0;
+
+    // Get contractual qty and price from the row
+    const cells = row.querySelectorAll('.cell-amt');
+    // Index: 0=cant.contrato, 1=pu.contrato, 2=total.contrato, 3=cant.anterior, 4=cant.acum, 5=monto.periodo, 6=monto.acum, 7=saldo
+    const qtyContrato = parseFloat(cells[0].textContent.replace(/[$,.\s]/g, '').replace(',','.')) || 0;
+    const puContrato = parseFloat(cells[1].textContent.replace(/[$,.\s]/g, '').replace(',','.')) || 0;
+    const cantAnterior = parseFloat(cells[3].textContent.replace(/[$,.\s]/g, '').replace(',','.')) || 0;
+
+    const cantAcumulada = cantAnterior + val;
+    const montoPeriodo = val * puContrato;
+    const montoAcumulado = cantAcumulada * puContrato;
+    const pctAvance = qtyContrato > 0 ? (cantAcumulada / qtyContrato) * 100 : 0;
+    const saldo = (qtyContrato - cantAcumulada) * puContrato;
+
+    // Update cells
+    cells[4].textContent = cantAcumulada.toFixed(2);
+    // Format amounts
+    cells[5].textContent = '$ ' + montoPeriodo.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    cells[6].textContent = '$ ' + montoAcumulado.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+    // Update % cell
+    const pctCell = row.querySelector('.cell-pct');
+    const bar = row.querySelector('.progress-bar .fill');
+    if (pctCell) {
+      pctCell.textContent = pctAvance.toFixed(1) + '%';
+      pctCell.className = 'cell-pct ' + (pctAvance >= 80 ? 'high' : pctAvance >= 30 ? 'mid' : 'low');
+    }
+    if (bar) {
+      bar.style.width = Math.min(pctAvance, 100) + '%';
+      bar.className = 'fill ' + (pctAvance >= 80 ? 'high' : pctAvance >= 30 ? 'mid' : 'low');
+    }
+
+    // Update saldo
+    const saldoCell = cells[7];
+    if (saldoCell) {
+      saldoCell.textContent = '$ ' + saldo.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      saldoCell.style.color = saldo <= 0 ? '#10b981' : '#fbbf24';
+    }
+
+    // Update totals
+    recalcTotals();
+  }
+
+  // ── Recalc totals ──
+  function recalcTotals() {
+    const rows = document.querySelectorAll('.partida');
+    let totalContrato = 0, totalAnterior = 0, totalPeriodo = 0, totalAcum = 0, totalSaldo = 0;
+
+    rows.forEach(row => {
+      const cells = row.querySelectorAll('.cell-amt');
+      if (cells.length < 8) return;
+      const pu = parseFloat(cells[1].textContent.replace(/[$,.\s]/g, '').replace(',','.')) || 0;
+
+      // qty contrato
+      const qc = parseFloat(cells[0].textContent.replace(/[$,.\s]/g, '').replace(',','.')) || 0;
+      totalContrato += qc * pu;
+
+      // cant anterior
+      const ca = parseFloat(cells[3].textContent.replace(/[$,.\s]/g, '').replace(',','.')) || 0;
+      totalAnterior += ca * pu;
+
+      // periodo
+      const input = row.querySelector('input[type="text"]');
+      const val = parseFloat(input ? input.value : 0) || 0;
+      totalPeriodo += val * pu;
+
+      // acum
+      const cacum = (ca + val);
+      totalAcum += cacum * pu;
+
+      // saldo
+      totalSaldo += ((qc - cacum) * pu);
+    });
+
+    const totalsRow = document.querySelector('.totals-row');
+    if (!totalsRow) return;
+    const tcells = totalsRow.querySelectorAll('.cell-amt');
+    if (tcells.length < 8) return;
+
+    // tot contrato
+    tcells[1].textContent = '$ ' + totalContrato.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    // tot anterior
+    tcells[2].textContent = totalAnterior.toFixed(2);
+    // tot periodo qty
+    tcells[3].textContent = Array.from(rows).reduce((acc, row) => {
+      const inp = row.querySelector('input[type="text"]');
+      return acc + (parseFloat(inp ? inp.value : 0) || 0);
+    }, 0).toFixed(2);
+    // tot periodo amount
+    tcells[4].textContent = '$ ' + totalPeriodo.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    // tot acum
+    tcells[5].textContent = '$ ' + totalAcum.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    // pct
+    const pctSpan = totalsRow.querySelector('.cell-pct');
+    if (pctSpan) {
+      const pct = totalContrato > 0 ? (totalAcum / totalContrato) * 100 : 0;
+      pctSpan.textContent = pct.toFixed(1) + '%';
+    }
+    // saldo
+    tcells[7].textContent = '$ ' + totalSaldo.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+
+  // ── Toast ──
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    const m = document.getElementById('toastMsg');
+    m.textContent = msg;
+    t.style.display = 'flex';
+    t.style.animation = 'none';
+    void t.offsetWidth;
+    t.style.animation = 'slideUp 0.3s ease';
+    clearTimeout(t._hide);
+    t._hide = setTimeout(() => { t.style.display = 'none'; }, 3500);
+  }
+
+  // ── Flyout ──
+  function openNewFlyout() {
+    document.getElementById('newFlyout').classList.add('open');
+  }
+  function closeNewFlyout() {
+    document.getElementById('newFlyout').classList.remove('open');
+  }
+</script>
+</body>
+</html>

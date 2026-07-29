@@ -1,0 +1,41 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- ═══ Shared duration tokens ═══ -->
+  <Duration x:Key="Anim.Fast">0:0:0.1</Duration>
+  <Duration x:Key="Anim.Normal">0:0:0.2</Duration>
+  <Duration x:Key="Anim.Slow">0:0:0.35</Duration>
+
+  <!-- ═══ Fade in (opacity 0→1) for any element ═══ -->
+  <Storyboard x:Key="Anim.FadeIn">
+    <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1"
+                     Duration="{StaticResource Anim.Normal}" />
+  </Storyboard>
+
+  <!-- ═══ Slide down + fade in (for dropdowns/popups) ═══ -->
+  <Storyboard x:Key="Anim.SlideDownIn">
+    <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1"
+                     Duration="{StaticResource Anim.Normal}" />
+    <ThicknessAnimation Storyboard.TargetProperty="Margin"
+                        From="0,-12,0,12" To="0,0,0,0"
+                        Duration="{StaticResource Anim.Normal}"
+                        DecelerationRatio="0.3" />
+  </Storyboard>
+
+  <!-- ═══ Scale in (for popups/modals) ═══ -->
+  <Storyboard x:Key="Anim.ScaleIn">
+    <DoubleAnimation Storyboard.TargetProperty="RenderTransform.ScaleX" From="0.95" To="1"
+                     Duration="{StaticResource Anim.Fast}" />
+    <DoubleAnimation Storyboard.TargetProperty="RenderTransform.ScaleY" From="0.95" To="1"
+                     Duration="{StaticResource Anim.Fast}" />
+    <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1"
+                     Duration="{StaticResource Anim.Fast}" />
+  </Storyboard>
+
+  <!-- ═══ Shimmer (for loading skeleton) ═══ -->
+  <Storyboard x:Key="Anim.Shimmer" RepeatBehavior="Forever">
+    <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0.06" To="0.15"
+                     Duration="0:0:1.2" AutoReverse="True" />
+  </Storyboard>
+
+</ResourceDictionary>

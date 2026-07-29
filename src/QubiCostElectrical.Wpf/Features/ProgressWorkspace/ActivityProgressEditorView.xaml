@@ -1,0 +1,29 @@
+<UserControl x:Class="QubiCostElectrical.Wpf.Features.ProgressWorkspace.ActivityProgressEditorView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <StackPanel>
+    <TextBlock Text="{Binding ValidationMessage}" Foreground="#B45309" TextWrapping="Wrap" Margin="0,0,0,8"/>
+    <TextBlock Text="Inicio real"/>
+    <DatePicker SelectedDate="{Binding ActualStart}" Margin="0,0,0,6"/>
+    <TextBlock Text="Término real"/>
+    <DatePicker SelectedDate="{Binding ActualFinish}" Margin="0,0,0,6"/>
+    <TextBlock Text="Porcentaje"/>
+    <TextBox Text="{Binding PercentComplete, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6"/>
+    <TextBlock Text="Cantidad ejecutada"/>
+    <TextBox Text="{Binding ExecutedQuantity, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6"/>
+    <TextBlock Text="Horas"/>
+    <TextBox Text="{Binding ActualHours, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6"/>
+    <TextBlock Text="Costo real"/>
+    <TextBox Text="{Binding ActualCost, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6"/>
+    <TextBlock Text="Costo comprometido"/>
+    <TextBox Text="{Binding CommittedCost, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6"/>
+    <TextBlock Text="Duración restante (días)"/>
+    <TextBox Text="{Binding RemainingDays, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6"/>
+    <TextBlock Text="Causa"/>
+    <TextBox Text="{Binding DelayReason, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6"/>
+    <TextBlock Text="Comentario"/>
+    <TextBox Text="{Binding Comment, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6"/>
+    <TextBlock Text="Evidencia"/>
+    <TextBox Text="{Binding Evidence, UpdateSourceTrigger=PropertyChanged}"/>
+  </StackPanel>
+</UserControl>

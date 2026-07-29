@@ -1,0 +1,57 @@
+<UserControl x:Class="QubiCostElectrical.Wpf.Features.GoodsReceipts.GoodsReceiptWorkspaceView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="#F3F4F6">
+  <Grid Margin="16">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="*"/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+    <StackPanel>
+      <TextBlock Text="Recepciones e inventario" FontSize="20" FontWeight="Bold"/>
+      <TextBlock Text="Recepción parcial/total, inspección/aceptación, reservas y saldos por proyecto." FontSize="12" Foreground="#6B7280" Margin="0,4,0,8"/>
+    </StackPanel>
+    <WrapPanel Grid.Row="1" Margin="0,0,0,8">
+      <Button Content="Actualizar" Command="{Binding RefreshCommand}" Margin="0,0,6,6" Padding="10,6"/>
+      <CheckBox Content="Recepción parcial" IsChecked="{Binding PartialReceipt}" VerticalAlignment="Center" Margin="0,0,12,6"/>
+      <Button Content="Recibir" Command="{Binding ReceiveCommand}" Margin="0,0,6,6" Padding="10,6" Background="#2563EB" Foreground="White"/>
+      <Button Content="Aceptar inspección" Command="{Binding AcceptCommand}" Margin="0,0,6,6" Padding="10,6"/>
+      <Button Content="Reservar 1" Command="{Binding ReserveCommand}" Margin="0,0,6,6" Padding="10,6"/>
+    </WrapPanel>
+    <Grid Grid.Row="2">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*"/>
+        <ColumnDefinition Width="*"/>
+        <ColumnDefinition Width="*"/>
+      </Grid.ColumnDefinitions>
+      <DataGrid ItemsSource="{Binding Orders}" SelectedItem="{Binding SelectedOrder}" AutoGenerateColumns="False" IsReadOnly="True" Margin="0,0,6,0">
+        <DataGrid.Columns>
+          <DataGridTextColumn Header="OC" Binding="{Binding Number}" Width="*"/>
+          <DataGridTextColumn Header="Estado" Binding="{Binding Status}" Width="*"/>
+        </DataGrid.Columns>
+      </DataGrid>
+      <DataGrid Grid.Column="1" ItemsSource="{Binding Receipts}" SelectedItem="{Binding SelectedReceipt}" AutoGenerateColumns="False" IsReadOnly="True" Margin="0,0,6,0">
+        <DataGrid.Columns>
+          <DataGridTextColumn Header="Recepción" Binding="{Binding Number}" Width="*"/>
+          <DataGridTextColumn Header="Estado" Binding="{Binding Status}" Width="*"/>
+          <DataGridTextColumn Header="Líneas" Binding="{Binding Lines.Count}" Width="Auto"/>
+        </DataGrid.Columns>
+      </DataGrid>
+      <DataGrid Grid.Column="2" ItemsSource="{Binding Inventory}" AutoGenerateColumns="False" IsReadOnly="True">
+        <DataGrid.Columns>
+          <DataGridTextColumn Header="Código" Binding="{Binding Code}" Width="*"/>
+          <DataGridTextColumn Header="Disponible" Binding="{Binding QtyAvailable}" Width="*"/>
+          <DataGridTextColumn Header="Reservado" Binding="{Binding QtyReserved}" Width="*"/>
+          <DataGridTextColumn Header="Tránsito" Binding="{Binding QtyInTransit}" Width="*"/>
+          <DataGridTextColumn Header="Ubicación" Binding="{Binding Location}" Width="*"/>
+        </DataGrid.Columns>
+      </DataGrid>
+    </Grid>
+    <StackPanel Grid.Row="3" Margin="0,8,0,0">
+      <TextBlock Text="{Binding StatusMessage}"/>
+      <TextBlock Text="{Binding ErrorMessage}" Foreground="#B91C1C"/>
+    </StackPanel>
+  </Grid>
+</UserControl>

@@ -1,0 +1,32 @@
+<UserControl x:Class="QubiCostElectrical.Wpf.Shell.NavDropdownGroup"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Grid>
+    <ToggleButton x:Name="Trigger"
+                  Style="{StaticResource Menu.NavGroupTrigger}"
+                  Content="{Binding GroupTitle, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                  Click="OnTriggerClick" />
+    <Popup x:Name="Popup"
+           PlacementTarget="{Binding ElementName=Trigger}"
+           Placement="Bottom"
+           StaysOpen="False"
+           AllowsTransparency="True">
+      <Border Style="{StaticResource Menu.DropdownPanel}">
+        <StackPanel>
+          <TextBlock Style="{StaticResource Menu.DropdownLabel}" Text="{Binding SectionLabel, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+          <ItemsControl x:Name="ItemsHost">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Button Style="{StaticResource Menu.DropdownItem}"
+                        Tag="{Binding Route}"
+                        Click="OnItemClick">
+                  <TextBlock Text="{Binding Label, Mode=OneWay}" Foreground="{DynamicResource Brush.Ink7}" />
+                </Button>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+    </Popup>
+  </Grid>
+</UserControl>

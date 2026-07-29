@@ -1,0 +1,17 @@
+# Normalizar finales de línea al hacer checkout en Windows
+* text=auto eol=crlf
+
+# Forzar LF en scripts de CI/CD y shell scripts
+*.sh  text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Binarios — sin conversión
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.ico  binary
+*.dll  binary
+*.exe  binary
+*.pdb  binary
+*.zip  binary

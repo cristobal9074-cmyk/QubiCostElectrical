@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resumen Itemizado — Mockup</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: radial-gradient(ellipse at 50% 0%, #141820 0%, #0a0c12 100%);
+    display: flex; justify-content: center; align-items: center;
+    min-height: 100vh; padding: 48px;
+  }
+  .dialog {
+    width: 1080px; height: 720px;
+    background: #111318;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.05),
+      0 32px 80px rgba(0,0,0,0.6),
+      0 8px 32px rgba(0,0,0,0.4);
+    display: flex; flex-direction: column;
+    position: relative;
+  }
+  .dialog::before {
+    content: ''; position: absolute; inset: 0;
+    opacity: 0.015;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 10;
+  }
+
+  /* ═══ HEADER ═══ */
+  .header {
+    background: linear-gradient(180deg, #1a1d28 0%, #0f1117 100%);
+    padding: 18px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    position: relative; z-index: 1;
+  }
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .header-icon {
+    width: 38px; height: 38px;
+    background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 8px 24px rgba(139,92,246,0.25);
+    position: relative;
+  }
+  .header-icon::after {
+    content: ''; position: absolute; inset: 0; border-radius: 10px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%);
+  }
+  .header-icon svg { width: 20px; height: 20px; fill: none; stroke: white; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; position: relative; z-index: 1; }
+  .header-titles { }
+  .header-title { color: #f1f5f9; font-size: 16px; font-weight: 600; letter-spacing: -0.01em; display: flex; align-items: center; gap: 10px; }
+  .header-title-badge {
+    font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+    padding: 2px 8px; border-radius: 4px;
+    background: rgba(139,92,246,0.15); color: #a78bfa;
+    border: 1px solid rgba(139,92,246,0.2);
+  }
+  .header-subtitle { color: #475569; font-size: 12px; margin-top: 2px; }
+  .header-kbd {
+    font-size: 9px; font-weight: 700; color: #475569;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 4px; padding: 2px 6px;
+    font-family: inherit;
+    margin-left: 8px;
+  }
+  .header-close {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    color: #475569; font-size: 14px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .header-close:hover { background: rgba(255,255,255,0.1); color: #f1f5f9; }
+
+  /* ═══ TOOLBAR ═══ */
+  .toolbar {
+    padding: 0 24px;
+    background: #0f1117;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    display: flex; align-items: center;
+    height: 48px;
+  }
+  .toolbar-left { display: flex; align-items: center; gap: 8px; flex: 1; }
+  .toolbar-right { display: flex; align-items: center; gap: 12px; }
+  .filter-chips { display: flex; gap: 4px; }
+  .chip {
+    padding: 5px 12px; border-radius: 6px;
+    font-size: 11px; font-weight: 500;
+    cursor: pointer; transition: all 0.15s;
+    border: 1px solid transparent;
+    color: #475569;
+  }
+  .chip:hover { color: #94a3b8; background: rgba(255,255,255,0.04); }
+  .chip.active {
+    color: #f1f5f9;
+    background: rgba(255,255,255,0.08);
+    border-color: rgba(255,255,255,0.1);
+  }
+  .toolbar-divider {
+    width: 1px; height: 22px;
+    background: rgba(255,255,255,0.06);
+    margin: 0 8px;
+  }
+  .search-box {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 8px; padding: 5px 10px 5px 12px;
+    width: 220px;
+    transition: all 0.15s;
+  }
+  .search-box:focus-within {
+    border-color: rgba(139,92,246,0.3);
+    box-shadow: 0 0 0 3px rgba(139,92,246,0.08);
+  }
+  .search-box svg { width: 14px; height: 14px; fill: none; stroke: #475569; stroke-width: 2; stroke-linecap: round; flex-shrink: 0; }
+  .search-box input {
+    background: none; border: none; outline: none;
+    color: #e2e8f0; font-size: 12px; width: 100%;
+  }
+  .search-box input::placeholder { color: #475569; }
+  .badge-count {
+    font-size: 11px; color: #475569; font-weight: 500;
+  }
+
+  /* ═══ TABLE ═══ */
+  .table-container { flex: 1; overflow: auto; }
+  .table-container::-webkit-scrollbar { width: 5px; }
+  .table-container::-webkit-scrollbar-track { background: transparent; }
+  .table-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 3px; }
+  .table-container::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.1); }
+
+  table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 12px; }
+  thead { position: sticky; top: 0; z-index: 2; }
+  thead th {
+    background: #0f1117;
+    color: #475569; font-weight: 600; font-size: 9px;
+    text-transform: uppercase; letter-spacing: 0.05em;
+    padding: 10px 12px; text-align: left;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    white-space: nowrap;
+    user-select: none;
+  }
+  thead th:first-child { width: 52px; padding-left: 16px; }
+  thead th:nth-child(2) { }
+  thead th.amt { text-align: right; width: 80px; }
+  thead th.num { text-align: center; width: 44px; }
+
+  tbody tr {
+    transition: background 0.08s;
+    cursor: pointer;
+  }
+  tbody tr:hover { background: rgba(139,92,246,0.06); }
+
+  tbody tr.section td {
+    padding: 9px 12px;
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.04em; color: #475569;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    background: rgba(255,255,255,0.02);
+    cursor: default;
+  }
+  tbody tr.section td:first-child { padding-left: 16px; }
+
+  tbody tr.partida td {
+    padding: 8px 12px;
+    color: #94a3b8;
+    border-bottom: 1px solid rgba(255,255,255,0.02);
+  }
+  tbody tr.partida td:first-child {
+    padding-left: 16px;
+    font-family: 'SF Mono', 'JetBrains Mono', 'Cascadia Code', monospace;
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+  tbody tr.partida .item-code {
+    font-family: 'SF Mono', 'JetBrains Mono', 'Cascadia Code', monospace;
+    font-size: 11px; color: #64748b; font-weight: 500;
+  }
+  tbody tr.partida .item-desc {
+    color: #e2e8f0; font-size: 12px;
+  }
+  tbody tr.partida .item-desc-sub {
+    font-size: 10px; color: #475569; margin-top: 1px;
+  }
+  tbody tr.partida .cell-num {
+    font-family: 'SF Mono', 'JetBrains Mono', 'Cascadia Code', monospace;
+    font-size: 11px; text-align: center; color: #94a3b8;
+  }
+  tbody tr.partida .cell-amt {
+    font-family: 'SF Mono', 'JetBrains Mono', 'Cascadia Code', monospace;
+    font-size: 11px; text-align: right; color: #cbd5e1;
+    font-variant-numeric: tabular-nums;
+  }
+  tbody tr.partida .cell-total {
+    font-weight: 600;
+    color: #f1f5f9;
+  }
+  tbody tr.partida .nav-icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 6px;
+    background: rgba(139,92,246,0.1);
+    color: #a78bfa;
+    font-size: 11px; font-weight: 700;
+    border: 1px solid rgba(139,92,246,0.15);
+    transition: all 0.15s;
+    cursor: pointer;
+  }
+  tbody tr.partida:hover .nav-icon {
+    background: rgba(139,92,246,0.2);
+    border-color: rgba(139,92,246,0.3);
+  }
+
+  /* ═══ FOOTER ═══ */
+  .footer {
+    padding: 14px 24px;
+    background: #0f1117;
+    border-top: 1px solid rgba(255,255,255,0.04);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .footer-left { display: flex; align-items: center; gap: 16px; }
+  .footer-stat {
+    display: flex; align-items: center; gap: 6px;
+  }
+  .footer-stat-label { font-size: 10px; color: #475569; }
+  .footer-stat-value {
+    font-size: 11px; color: #e2e8f0; font-weight: 600;
+    font-family: 'SF Mono', 'JetBrains Mono', 'Cascadia Code', monospace;
+  }
+  .footer-stat-divider {
+    width: 1px; height: 16px; background: rgba(255,255,255,0.06);
+  }
+  .footer-right { display: flex; align-items: center; gap: 12px; }
+  .footer-hint {
+    font-size: 10px; color: #334155;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .footer-hint kbd {
+    font-size: 9px; font-weight: 600; color: #475569;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 3px; padding: 1px 5px;
+    font-family: inherit;
+  }
+  .btn-close {
+    padding: 8px 20px; border-radius: 8px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: #64748b; font-size: 12px; font-weight: 500;
+    cursor: pointer; transition: all 0.15s;
+    font-family: inherit;
+  }
+  .btn-close:hover { background: rgba(255,255,255,0.08); color: #cbd5e1; }
+
+  /* ═══ TOAST / ROW ACTIVE ═══ */
+  .row-active {
+    background: rgba(139,92,246,0.08) !important;
+    border-left: 2px solid #8b5cf6;
+  }
+</style>
+</head>
+<body>
+<div class="dialog">
+  <!-- ═══ HEADER ═══ -->
+  <div class="header">
+    <div class="header-left">
+      <div class="header-icon">
+        <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      </div>
+      <div class="header-titles">
+        <div class="header-title">
+          Resumen Itemizado
+          <span class="header-title-badge">Ir a partida</span>
+          <span class="header-kbd">Alt+I</span>
+        </div>
+        <div class="header-subtitle">Navega por todas las partidas del proyecto. Haz clic en una fila para ir directamente a la cubicación.</div>
+      </div>
+    </div>
+    <button class="header-close">✕</button>
+  </div>
+
+  <!-- ═══ TOOLBAR ═══ -->
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <div class="filter-chips">
+        <span class="chip active">Todas</span>
+        <span class="chip">Con cubicación</span>
+        <span class="chip">Sin cubicar</span>
+        <span class="chip">Títulos</span>
+      </div>
+      <div class="toolbar-divider"></div>
+      <span class="badge-count">24 partidas</span>
+    </div>
+    <div class="toolbar-right">
+      <div class="search-box">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" placeholder="Buscar partida por código o descripción…">
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TABLE ═══ -->
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Partida</th>
+          <th>Descripción</th>
+          <th class="num">UD</th>
+          <th class="amt">Cantidad</th>
+          <th class="amt">Materiales</th>
+          <th class="amt">Mano de Obra</th>
+          <th class="amt">Costo Directo</th>
+          <th style="width:36px"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- SECCIÓN 1 -->
+        <tr class="section"><td colspan="8">1.0 Canelones y accesos</td></tr>
+
+        <tr class="partida" onclick="navigateTo('1.1')">
+          <td><span class="item-code">1.1</span></td>
+          <td>
+            <div class="item-desc">Canalización subterránea MT</div>
+            <div class="item-desc-sub">Tubería PVC 160mm · 2 conductores · incluye excavación</div>
+          </td>
+          <td><span class="cell-num">ML</span></td>
+          <td><span class="cell-amt">125.00</span></td>
+          <td><span class="cell-amt">$ 4.562.300</span></td>
+          <td><span class="cell-amt">$ 1.230.000</span></td>
+          <td><span class="cell-amt cell-total">$ 5.792.300</span></td>
+          <td><span class="nav-icon">→</span></td>
+        </tr>
+
+        <tr class="partida" onclick="navigateTo('1.2')">
+          <td><span class="item-code">1.2</span></td>
+          <td>
+            <div class="item-desc">Cámara de paso</div>
+            <div class="item-desc-sub">Hormigón armado · tapa de hierro fundido · 60×60×80</div>
+          </td>
+          <td><span class="cell-num">UN</span></td>
+          <td><span class="cell-amt">8</span></td>
+          <td><span class="cell-amt">$ 1.200.000</span></td>
+          <td><span class="cell-amt">$ 640.000</span></td>
+          <td><span class="cell-amt cell-total">$ 1.840.000</span></td>
+          <td><span class="nav-icon">→</span></td>
+        </tr>
+
+        <tr class="partida" onclick="navigateTo('1.3')">
+          <td><span class="item-code">1.3</span></td>
+          <td>
+            <div class="item-desc">Excavación y relleno</div>
+            <div class="item-desc-sub">Excavación mecánica · relleno compactado</div>
+          </td>
+          <td><span class="cell-num">M3</span></td>
+          <td><span class="cell-amt">45.00</span></td>
+          <td><span class="cell-amt">$ 890.000</span></td>
+          <td><span class="cell-amt">$ 340.000</span></td>
+          <td><span class="cell-amt cell-total">$ 1.230.000</span></td>
+          <td><span class="nav-icon">→</span></td>
+        </tr>
+
+        <!-- SECCIÓN 2 -->
+        <tr class="section"><td colspan="8">2.0 Tableros y fuerza</td></tr>
+
+        <tr class="partida" onclick="navigateTo('2.1')">
+          <td><span class="item-code">2.1</span></td>
+          <td>
+            <div class="item-desc">Tablero general TG-01</div>
+            <div class="item-desc-sub">800A · 42 circuitos · IP54 · incluye interruptores</div>
+          </td>
+          <td><span class="cell-num">UN</span></td>
+          <td><span class="cell-amt">1</span></td>
+          <td><span class="cell-amt">$ 3.200.000</span></td>
+          <td><span class="cell-amt">$ 860.000</span></td>
+          <td><span class="cell-amt cell-total">$ 4.060.000</span></td>
+          <td><span class="nav-icon">→</span></td>
+        </tr>
+
+        <tr class="partida" onclick="navigateTo('2.2')">
+          <td><span class="item-code">2.2</span></td>
+          <td>
+            <div class="item-desc">Alimentador TG-01 a TDS-01</div>
+            <div class="item-desc-sub">4×70mm2 THHN · 35m · tubería EMT 50mm</div>
+          </td>
+          <td><span class="cell-num">GL</span></td>
+          <td><span class="cell-amt">1</span></td>
+          <td><span class="cell-amt">$ 680.000</span></td>
+          <td><span class="cell-amt">$ 210.000</span></td>
+          <td><span class="cell-amt cell-total">$ 890.000</span></td>
+          <td><span class="nav-icon">→</span></td>
+        </tr>
+
+        <tr class="partida" onclick="navigateTo('2.3')">
+          <td><span class="item-code">2.3</span></td>
+          <td>
+            <div class="item-desc">Tablero de distribución TDS-01</div>
+            <div class="item-desc-sub">250A · 24 circuitos · para piso 1</div>
+          </td>
+          <td><span class="cell-num">UN</span></td>
+          <td><span class="cell-amt">1</span></td>
+          <td><span class="cell-amt">$ 1.450.000</span></td>
+          <td><span class="cell-amt">$ 420.000</span></td>
+          <td><span class="cell-amt cell-total">$ 1.870.000</span></td>
+          <td><span class="nav-icon">→</span></td>
+        </tr>
+
+        <tr class="partida" onclick="navigateTo('2.4')">
+          <td><span class="item-code">2.4</span></td>
+          <td>
+            <div class="item-desc">Tablero de distribución TDS-02</div>
+            <div class="item-desc-sub">250A · 24 circuitos · para piso 2</div>
+          </td>
+          <td><span class="cell-num">UN</span></td>
+          <td><span class="cell-amt">1</span></td>
+          <td><span class="cell-amt">$ 1.450.000</span></td>
+          <td><span class="cell-amt">$ 420.000</span></td>
+          <td><span class="cell-amt cell-total">$ 1.870.000</span></td>
+          <td><span class="nav-icon">→</span></td>
+        </tr>
+
+        <!-- SECCIÓN 3 -->
+        <tr class="section"><td colspan="8">3.0 Alumbrado</td></tr>
+
+        <tr class="partida" onclick="navigateTo('3.1')">
+          <td><span class="item-code">3.1</span></td>
+          <td>
+            <div class="item-desc">Luminaria LED empotrar 60×60</div>
+            <div class="item-desc-sub">36W · 4000K · incluye driver y montaje</div>
+          </td>
+          <td><span class="cell-num">UN</span></td>
+          <td><span class="cell-amt">42</span></td>
+          <td><span class="cell-amt">$ 2.100.000</span></td>
+          <td><span class="cell-amt">$ 630.000</span></td>
+          <td><span class="cell-amt cell-total">$ 2.730.000</span></td>
+          <td><span class="nav-icon">→</span></td>
+        </tr>
+
+        <tr class="partida" onclick="navigateTo('3.2')">
+          <td><span class="item-code">3.2</span></td>
+          <td>
+            <div class="item-desc">Luminaria LED suspender</div>
+            <div class="item-desc-sub">24W · 4000K · para altura 4m</div>
+          </td>
+          <td><span class="cell-num">UN</span></td>
+          <td><span class="cell-amt">18</span></td>
+          <td><span class="cell-amt">$ 1.080.000</span></td>
+          <td><span class="cell-amt">$ 360.000</span></td>
+          <td><span class="cell-amt cell-total">$ 1.440.000</span></td>
+          <td><span class="nav-icon">→</span></td>
+        </tr>
+
+        <tr class="partida" onclick="navigateTo('3.3')">
+          <td><span class="item-code">3.3</span></td>
+          <td>
+            <div class="item-desc">Interruptor simple</div>
+            <div class="item-desc-sub">10A · 250V · incluye placa y mecanismo</div>
+          </td>
+          <td><span class="cell-num">UN</span></td>
+          <td><span class="cell-amt">24</span></td>
+          <td><span class="cell-amt">$ 360.000</span></td>
+          <td><span class="cell-amt">$ 240.000</span></td>
+          <td><span class="cell-amt cell-total">$ 600.000</span></td>
+          <td><span class="nav-icon">→</span></td>
+        </tr>
+
+        <!-- SECCIÓN 4 -->
+        <tr class="section"><td colspan="8">4.0 Enchufes</td></tr>
+
+        <tr class="partida" onclick="navigateTo('4.1')">
+          <td><span class="item-code">4.1</span></td>
+          <td>
+            <div class="item-desc">Enchufe doble 10A</div>
+            <div class="item-desc-sub">Incluye placa, mecanismo y líneas</div>
+          </td>
+          <td><span class="cell-num">UN</span></td>
+          <td><span class="cell-amt">36</span></td>
+          <td><span class="cell-amt">$ 540.000</span></td>
+          <td><span class="cell-amt">$ 360.000</span></td>
+          <td><span class="cell-amt cell-total">$ 900.000</span></td>
+          <td><span class="nav-icon">→</span></td>
+        </tr>
+
+        <tr class="partida" onclick="navigateTo('4.2')">
+          <td><span class="item-code">4.2</span></td>
+          <td>
+            <div class="item-desc">Enchufe doble 15A</div>
+            <div class="item-desc-sub">Incluye placa, mecanismo y líneas</div>
+          </td>
+          <td><span class="cell-num">UN</span></td>
+          <td><span class="cell-amt">12</span></td>
+          <td><span class="cell-amt">$ 240.000</span></td>
+          <td><span class="cell-amt">$ 180.000</span></td>
+          <td><span class="cell-amt cell-total">$ 420.000</span></td>
+          <td><span class="nav-icon">→</span></td>
+        </tr>
+
+        <!-- SECCIÓN 5 -->
+        <tr class="section"><td colspan="8">5.0 Servicios comunes</td></tr>
+
+        <tr class="partida" onclick="navigateTo('5.1')">
+          <td><span class="item-code">5.1</span></td>
+          <td>
+            <div class="item-desc">Circuito alumbrado SC-01</div>
+            <div class="item-desc-sub">THHN 1.5mm2 · 64m · tubería PVC 16mm</div>
+          </td>
+          <td><span class="cell-num">ML</span></td>
+          <td><span class="cell-amt">64.00</span></td>
+          <td><span class="cell-amt">$ 320.000</span></td>
+          <td><span class="cell-amt">$ 128.000</span></td>
+          <td><span class="cell-amt cell-total">$ 448.000</span></td>
+          <td><span class="nav-icon">→</span></td>
+        </tr>
+
+        <tr class="partida" onclick="navigateTo('5.2')">
+          <td><span class="item-code">5.2</span></td>
+          <td>
+            <div class="item-desc">Circuito enchufe SC-02</div>
+            <div class="item-desc-sub">THHN 2.5mm2 · 48m · tubería PVC 20mm</div>
+          </td>
+          <td><span class="cell-num">ML</span></td>
+          <td><span class="cell-amt">48.00</span></td>
+          <td><span class="cell-amt">$ 336.000</span></td>
+          <td><span class="cell-amt">$ 96.000</span></td>
+          <td><span class="cell-amt cell-total">$ 432.000</span></td>
+          <td><span class="nav-icon">→</span></td>
+        </tr>
+
+        <!-- FILA RESUMEN -->
+        <tr style="background:rgba(255,255,255,0.02);border-top:1px solid rgba(255,255,255,0.06);cursor:default;">
+          <td style="padding:10px 12px;padding-left:16px;font-weight:700;color:#94a3b8;font-size:11px;">TOTALES</td>
+          <td style="padding:10px 12px;color:#475569;font-size:11px;"></td>
+          <td style="padding:10px 12px;"></td>
+          <td style="padding:10px 12px;font-family:'SF Mono',monospace;font-size:12px;text-align:right;color:#e2e8f0;font-weight:600;">426.00</td>
+          <td style="padding:10px 12px;font-family:'SF Mono',monospace;font-size:12px;text-align:right;color:#e2e8f0;font-weight:600;">$ 18.408.300</td>
+          <td style="padding:10px 12px;font-family:'SF Mono',monospace;font-size:12px;text-align:right;color:#e2e8f0;font-weight:600;">$ 6.514.000</td>
+          <td style="padding:10px 12px;font-family:'SF Mono',monospace;font-size:12px;text-align:right;color:#f1f5f9;font-weight:700;">$ 24.922.300</td>
+          <td style="padding:10px 12px;"></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ═══ FOOTER ═══ -->
+  <div class="footer">
+    <div class="footer-left">
+      <div class="footer-stat">
+        <span class="footer-stat-label">Partidas</span>
+        <span class="footer-stat-value">24</span>
+      </div>
+      <div class="footer-stat-divider"></div>
+      <div class="footer-stat">
+        <span class="footer-stat-label">Con cubicación</span>
+        <span class="footer-stat-value">18</span>
+      </div>
+      <div class="footer-stat-divider"></div>
+      <div class="footer-stat">
+        <span class="footer-stat-label">Sin cubicar</span>
+        <span class="footer-stat-value">6</span>
+      </div>
+      <div class="footer-stat-divider"></div>
+      <div class="footer-stat">
+        <span class="footer-stat-label">Costo directo total</span>
+        <span class="footer-stat-value">$ 24.922.300</span>
+      </div>
+    </div>
+    <div class="footer-right">
+      <div class="footer-hint">
+        <kbd>↑</kbd> <kbd>↓</kbd> navegar ·
+        <kbd>Enter</kbd> ir a partida ·
+        <kbd>Esc</kbd> cerrar
+      </div>
+      <button class="btn-close">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function navigateTo(partida) {
+    // En la app real: cierra el diálogo y navega a la partida en CubicacionView
+    // Por ahora: simulamos un highlight visual
+    document.querySelectorAll('.partida.row-active').forEach(el => el.classList.remove('row-active'));
+    // Encontrar la fila y resaltarla virtualmente
+    alert(`Navegar a partida ${partida}\n\n(En la app: cierra el diálogo y selecciona la partida ${partida} en la cubicación)`);
+  }
+
+  // Navegación con teclado
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      alert('Cerrar diálogo');
+    }
+  });
+
+  // Simular que Alt+I abre el diálogo (solo informativo)
+  console.log('✅ Resumen Itemizado listo — Alt+I para abrir');
+</script>
+</body>
+</html>

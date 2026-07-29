@@ -1,0 +1,97 @@
+<Window x:Class="QubiCostElectrical.Wpf.Features.Templates.MaterialPickerDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Style="{StaticResource Dialog.Window}"
+        Title="Seleccionar Material del Banco de Precios"
+        Width="750" Height="480" MinWidth="600" MinHeight="350"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False">
+
+  <Window.Resources>
+    <!-- Estilo de alineación derecha para el precio en el DataGrid -->
+    <Style x:Key="RightAlignText" TargetType="TextBlock">
+      <Setter Property="HorizontalAlignment" Value="Right"/>
+      <Setter Property="Margin" Value="0,0,12,0"/>
+    </Style>
+  </Window.Resources>
+
+  <Grid Margin="20">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="*"/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+
+    <!-- Header del Diálogo -->
+    <StackPanel Grid.Row="0" Margin="0,0,0,14">
+      <TextBlock Text="Seleccionar Material del Banco de Precios" Style="{StaticResource Text.ViewTitle}"/>
+      <TextBlock Text="Busca y selecciona uno o más materiales para agregarlos." Style="{StaticResource Text.Body}" Foreground="{DynamicResource Brush.Muted}" Margin="0,4,0,0"/>
+    </StackPanel>
+
+    <!-- Área de Trabajo -->
+    <Grid Grid.Row="1">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="*"/>
+      </Grid.RowDefinitions>
+
+      <!-- Cuadro de Búsqueda -->
+      <Grid Grid.Row="0" Margin="0,0,0,12">
+        <TextBox x:Name="SearchBox"
+                 Style="{StaticResource Form.TextBox}"
+                 Padding="32,8,12,8" FontSize="12"
+                 TextChanged="SearchBox_TextChanged"/>
+        <TextBlock Text="🔍" VerticalAlignment="Center" Margin="10,0,0,0" FontSize="12" Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Left" IsHitTestVisible="False"/>
+        
+        <!-- Hint visible cuando está vacío -->
+        <TextBlock Text="Buscar por código o descripción en el catálogo..." 
+                   VerticalAlignment="Center" Margin="32,0,0,0" FontSize="12" 
+                   Foreground="{DynamicResource Brush.Muted}" Opacity="0.5" 
+                   HorizontalAlignment="Left" IsHitTestVisible="False">
+          <TextBlock.Style>
+            <Style TargetType="TextBlock">
+              <Setter Property="Visibility" Value="Collapsed"/>
+              <Style.Triggers>
+                <DataTrigger Binding="{Binding Text, ElementName=SearchBox}" Value="">
+                  <Setter Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+              </Style.Triggers>
+            </Style>
+          </TextBlock.Style>
+        </TextBlock>
+      </Grid>
+
+      <!-- DataGrid de Materiales con Estilo del Sistema de Diseño -->
+      <Border Grid.Row="1" Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="8">
+        <DataGrid x:Name="MaterialsGrid"
+                  Style="{StaticResource DataGrid.Workspace}"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="True"
+                  GridLinesVisibility="Horizontal"
+                  SelectionMode="Extended"
+                  SelectionUnit="FullRow"
+                  CanUserResizeRows="False"
+                  MouseDoubleClick="MaterialsGrid_MouseDoubleClick">
+          <DataGrid.Columns>
+            <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" Width="130"/>
+            <DataGridTextColumn Header="Descripción del Material" Binding="{Binding Descripcion}" Width="*"/>
+            <DataGridTextColumn Header="Ud." Binding="{Binding Unidad}" Width="60"/>
+            <DataGridTextColumn Header="Precio UF" Binding="{Binding MatUf, StringFormat=N4}" Width="100" ElementStyle="{StaticResource RightAlignText}"/>
+          </DataGrid.Columns>
+        </DataGrid>
+      </Border>
+    </Grid>
+
+    <!-- Footer con Botones Estilizados -->
+    <DockPanel Grid.Row="2" Style="{StaticResource Dialog.Footer}" LastChildFill="False">
+      <Button x:Name="BtnSeleccionar" Content="Agregar Seleccionados"
+              Style="{StaticResource Button.Primary}"
+              MinWidth="160" Height="34" DockPanel.Dock="Right"
+              Click="BtnSeleccionar_Click"/>
+      <Button Content="Cancelar"
+              Style="{StaticResource Button.Secondary}"
+              MinWidth="100" Height="34" DockPanel.Dock="Right" Margin="0,0,8,0"
+              IsCancel="True"/>
+    </DockPanel>
+  </Grid>
+</Window>

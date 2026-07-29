@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Preparación de Cierre — Qubi Cost Electrical</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', -apple-system, sans-serif; background: #14161C; color: #E1E4E8; height: 100vh; overflow: hidden; }
+  
+  /* Layout */
+  .app { display: flex; flex-direction: column; height: 100vh; }
+  .header { background: #1C1F26; border-bottom: 1px solid #2D3038; padding: 14px 20px; flex-shrink: 0; }
+  .header-inner { display: flex; align-items: center; justify-content: space-between; }
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .header-icon { width: 36px; height: 36px; border-radius: 10px; background: #1E2D4A; border: 1px solid #3B82F6; display: flex; align-items: center; justify-content: center; font-size: 17px; color: #3B82F6; }
+  .header-title-area { display: flex; flex-direction: column; }
+  .header-title-row { display: flex; align-items: center; gap: 10px; }
+  .header-title { font-size: 14px; font-weight: 600; color: #E1E4E8; }
+  .header-badge { padding: 2px 8px; border-radius: 4px; background: #1E2D4A; border: 1px solid #3B82F6; font-size: 10px; font-weight: 600; color: #3B82F6; }
+  .header-subtitle { font-size: 10px; color: #8B8F96; margin-top: 2px; }
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  .header-project { padding: 6px 12px; border-radius: 8px; background: #252830; border: 1px solid #2D3038; display: flex; align-items: center; gap: 6px; font-size: 11px; color: #8B8F96; }
+  .header-dot { width: 7px; height: 7px; border-radius: 50%; background: #40C77D; }
+  .refresh-btn { width: 34px; height: 34px; border-radius: 9px; background: #1C1F26; border: 1px solid #2D3038; color: #8B8F96; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+  .refresh-btn:hover { opacity: 0.85; }
+
+  /* Body */
+  .body { display: flex; flex: 1; overflow: hidden; }
+  .sidebar { width: 180px; background: #1C1F26; border-right: 1px solid #2D3038; padding: 12px 8px; flex-shrink: 0; }
+  .sidebar-label { font-size: 9px; font-weight: 700; color: #6B7078; letter-spacing: 0.5px; padding: 0 12px; margin-bottom: 10px; text-transform: uppercase; }
+  .tab-item { display: flex; align-items: center; height: 38px; padding: 0 12px; border-radius: 8px; cursor: pointer; font-size: 12px; color: #8B8F96; margin: 1px 2px; gap: 8px; border: none; background: none; width: 100%; text-align: left; font-family: inherit; }
+  .tab-item:hover { background: #22262E; color: #E1E4E8; }
+  .tab-item.active { background: #1E2D4A; color: #3B82F6; font-weight: 600; }
+  .tab-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .tab-indicator { width: 3px; height: 18px; border-radius: 2px; background: #3B82F6; margin-left: auto; }
+
+  /* Content */
+  .content { flex: 1; overflow-y: auto; padding: 20px; }
+  .content::-webkit-scrollbar { width: 6px; }
+  .content::-webkit-scrollbar-track { background: transparent; }
+  .content::-webkit-scrollbar-thumb { background: #2D3038; border-radius: 3px; }
+
+  /* Cards */
+  .card { background: #1C1F26; border: 1px solid #2D3038; border-radius: 8px; padding: 14px; }
+  .card + .card { margin-top: 16px; }
+
+  /* KPI Grid */
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 20px; }
+  .kpi-card { background: #1C1F26; border: 1px solid #2D3038; border-radius: 8px; padding: 14px; }
+  .kpi-label { font-size: 11px; font-weight: 600; color: #6B7078; margin-bottom: 4px; }
+  .kpi-value { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 600; color: #E1E4E8; }
+  .kpi-status { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+  .kpi-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  /* Workflow stepper */
+  .stepper { display: flex; justify-content: space-between; margin: 16px 0 8px; }
+  .step { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .step-circle { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
+  .step-circle.active { background: #3B82F6; color: white; }
+  .step-circle.inactive { background: #252830; border: 1.5px solid #2D3038; color: #8B8F96; }
+  .step-label { font-size: 10px; color: #8B8F96; }
+  .step-sublabel { font-size: 9px; color: #5A5E66; }
+
+  /* Section header */
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .section-title { font-size: 14px; font-weight: 600; color: #E1E4E8; }
+
+  /* Buttons */
+  .btn { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border-radius: 9px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; border: 1px solid; }
+  .btn-primary { background: linear-gradient(180deg, #60A5FA 0%, #4B8DF7 100%); border-color: #3B82F6; color: white; }
+  .btn-primary:hover { opacity: 0.92; }
+  .btn-secondary { background: #1C1F26; border-color: #2D3038; color: #BCC0C6; }
+  .btn-secondary:hover { opacity: 0.85; }
+  .btn-group { display: flex; gap: 8px; }
+
+  /* DataGrid mock */
+  .table { width: 100%; border-collapse: collapse; }
+  .table th { background: #252830; padding: 9px 11px; font-size: 9px; font-weight: 700; color: #8B8F96; text-transform: uppercase; text-align: left; border-bottom: 1px solid #2D3038; }
+  .table td { padding: 10px 11px; font-size: 11px; color: #BCC0C6; border-bottom: 1px solid #252830; }
+  .table tr:hover td { background: #22262E; }
+
+  /* Badge styles */
+  .badge-circle { width: 22px; height: 22px; border-radius: 50%; background: #252830; border: 1.5px solid #2D3038; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #8B8F96; }
+  .priority-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .priority-dot.high { background: #EF4444; }
+
+  /* Conciliation success */
+  .success-banner { display: flex; align-items: center; gap: 12px; background: #0F1F14; border: 1px solid #1A3D24; border-radius: 8px; padding: 12px 16px; }
+  .success-icon { width: 32px; height: 32px; border-radius: 50%; background: #22C55E; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 15px; flex-shrink: 0; }
+  .success-title { font-size: 12px; font-weight: 600; color: #4ADE80; }
+  .success-meta { font-size: 10px; color: #6B7078; margin-top: 2px; }
+
+  /* Readiness gauge */
+  .gauge-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 16px; }
+  .gauge-card { background: #1C1F26; border: 1px solid #2D3038; border-radius: 8px; padding: 14px; text-align: center; }
+  .gauge-label { font-size: 11px; font-weight: 600; color: #6B7078; margin-bottom: 4px; }
+  .gauge-value { font-family: 'JetBrains Mono', monospace; font-size: 28px; font-weight: 600; }
+  .gauge-value.green { color: #22C55E; }
+  .gauge-value.blue { color: #3B82F6; }
+  .gauge-value.amber { color: #F59E0B; }
+  .gauge-value.purple { color: #9B82D6; }
+
+  /* Status bar */
+  .status-bar { padding: 6px 14px; background: #1C1F26; border-top: 1px solid #2D3038; display: flex; align-items: center; gap: 6px; font-size: 10px; color: #8B8F96; flex-shrink: 0; }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: #40C77D; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ═══ HEADER ═══ -->
+  <div class="header">
+    <div class="header-inner">
+      <div class="header-left">
+        <div class="header-icon">⏻</div>
+        <div class="header-title-area">
+          <div class="header-title-row">
+            <span class="header-title">Preparación de cierre</span>
+            <span class="header-badge">Draft</span>
+          </div>
+          <span class="header-subtitle">Cierre cargado.</span>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="header-project">
+          <span class="header-dot"></span>
+          <span>CIERRE-QUBI-001</span>
+        </div>
+        <button class="refresh-btn">⟳</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ BODY ═══ -->
+  <div class="body">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-label">SECCIONES</div>
+      <button class="tab-item active">
+        <div class="tab-dot" style="background:#3B82F6"></div>
+        General
+        <div class="tab-indicator"></div>
+      </button>
+      <button class="tab-item">
+        <div class="tab-dot" style="background:#F59E0B"></div>
+        Check-list
+      </button>
+      <button class="tab-item">
+        <div class="tab-dot" style="background:#EF4444"></div>
+        Punch list
+      </button>
+      <button class="tab-item">
+        <div class="tab-dot" style="background:#9B82D6"></div>
+        Conciliación
+      </button>
+      <button class="tab-item">
+        <div class="tab-dot" style="background:#3B82F6"></div>
+        Readiness
+      </button>
+    </div>
+
+    <!-- Content: Tab General activo -->
+    <div class="content">
+      <!-- KPI Row -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label">Código</div>
+          <div class="kpi-value">CIERRE-001</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Estado</div>
+          <div class="kpi-status">
+            <div class="kpi-dot" style="background:#F59E0B"></div>
+            <div class="kpi-value">Draft</div>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Proyecto</div>
+          <div class="kpi-value">QUBI-001</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Nombre</div>
+          <div class="kpi-value">Cierre QUBI-001</div>
+        </div>
+      </div>
+
+      <!-- Workflow stepper -->
+      <div class="card">
+        <div class="section-title">Workflow de cierre</div>
+        <div class="stepper">
+          <div class="step">
+            <div class="step-circle active">1</div>
+            <span class="step-label">Draft</span>
+            <span class="step-sublabel">Iniciar cierre</span>
+          </div>
+          <div class="step">
+            <div class="step-circle inactive">2</div>
+            <span class="step-label">Revisión</span>
+            <span class="step-sublabel">Enviar a revisión</span>
+          </div>
+          <div class="step">
+            <div class="step-circle inactive">3</div>
+            <span class="step-label">Readiness</span>
+            <span class="step-sublabel">Aprobar readiness</span>
+          </div>
+          <div class="step">
+            <div class="step-circle inactive">4</div>
+            <span class="step-label">Recepción</span>
+            <span class="step-sublabel">Provisional</span>
+          </div>
+          <div class="step">
+            <div class="step-circle inactive">5</div>
+            <span class="step-label">Final</span>
+            <span class="step-sublabel">Cierre definitivo</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Acciones -->
+      <div class="card">
+        <div class="section-header" style="margin-bottom:12px">
+          <div class="section-title">Acciones</div>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-primary">📄 Iniciar cierre</button>
+          <button class="btn btn-secondary">📤 Enviar a revisión</button>
+          <button class="btn btn-secondary">✓ Aprobar readiness</button>
+        </div>
+      </div>
+
+      <!-- Vista previa: Check-list table -->
+      <div class="card" style="margin-top:20px">
+        <div class="section-header">
+          <div class="section-title">Check-list de cierre</div>
+          <div class="btn-group">
+            <button class="btn btn-primary">📋 Aplicar plantilla</button>
+            <button class="btn btn-secondary">✓ Verificar ítem</button>
+          </div>
+        </div>
+        <table class="table">
+          <thead>
+            <tr><th style="width:60px"></th><th>Ítem</th><th style="width:110px">Estado</th><th style="width:130px">Responsable</th><th style="width:160px">Comentario</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><div class="badge-circle">○</div></td><td>Verificar planos as-built</td><td>Pendiente</td><td>J. Pérez</td><td>—</td></tr>
+            <tr><td><div class="badge-circle">○</div></td><td>Certificación de obra</td><td>En progreso</td><td>M. González</td><td>Revisión 3</td></tr>
+            <tr><td><div class="badge-circle">○</div></td><td>Acta de entrega</td><td>Pendiente</td><td>—</td><td>—</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Vista previa: Punch list -->
+      <div class="card" style="margin-top:16px">
+        <div class="section-header">
+          <div class="section-title">Punch list</div>
+          <div class="btn-group">
+            <button class="btn btn-primary">+ Nuevo ítem</button>
+            <button class="btn btn-secondary">✓ Cerrar</button>
+            <button class="btn btn-secondary">↩ Reabrir</button>
+          </div>
+        </div>
+        <table class="table">
+          <thead>
+            <tr><th style="width:70px">Prioridad</th><th>Título</th><th style="width:110px">Estado</th><th style="width:130px">Responsable</th><th style="width:90px">Creado</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="priority-dot high"></span></td><td>Falta certificación eléctrica</td><td>Abierto</td><td>J. Pérez</td><td>15/07/26</td></tr>
+            <tr><td><span class="priority-dot high"></span></td><td>Corregir diagrama unilineal</td><td>Abierto</td><td>M. González</td><td>12/07/26</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Vista previa: Conciliación -->
+      <div class="card" style="margin-top:16px">
+        <div class="section-header">
+          <div class="section-title">Conciliación económica</div>
+          <button class="btn btn-primary">⚡ Ejecutar conciliación</button>
+        </div>
+        <div class="success-banner">
+          <div class="success-icon">✓</div>
+          <div>
+            <div class="success-title">Materiales: 92%, Mano de obra: 88%, Equipos: 95%</div>
+            <div class="success-meta">Última ejecución: hoy</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vista previa: Readiness -->
+      <div class="card" style="margin-top:16px">
+        <div class="section-header">
+          <div class="section-title">Readiness &amp; Snapshots</div>
+          <div class="btn-group">
+            <button class="btn btn-primary">📊 Calcular readiness</button>
+            <button class="btn btn-secondary">📸 Crear snapshot</button>
+          </div>
+        </div>
+      </div>
+      <div class="gauge-grid">
+        <div class="gauge-card"><div class="gauge-label">Global</div><div class="gauge-value green">86%</div></div>
+        <div class="gauge-card"><div class="gauge-label">Documental</div><div class="gauge-value blue">92%</div></div>
+        <div class="gauge-card"><div class="gauge-label">Técnico</div><div class="gauge-value amber">78%</div></div>
+        <div class="gauge-card"><div class="gauge-label">Económico</div><div class="gauge-value purple">95%</div></div>
+      </div>
+      <div class="card">
+        <table class="table">
+          <thead><tr><th>Snapshot</th><th style="width:110px">Fecha</th><th style="width:180px">Comentario</th></tr></thead>
+          <tbody>
+            <tr><td>SNP-001</td><td>20/07/26</td><td>Snapshot manual</td></tr>
+            <tr><td>SNP-002</td><td>25/07/26</td><td>Post conciliación</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ STATUS BAR ═══ -->
+  <div class="status-bar">
+    <span class="status-dot"></span>
+    <span>Listo</span>
+  </div>
+
+</div>
+</body>
+</html>

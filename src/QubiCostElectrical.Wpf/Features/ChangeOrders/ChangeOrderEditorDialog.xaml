@@ -1,0 +1,77 @@
+<Window x:Class="QubiCostElectrical.Wpf.Features.ChangeOrders.ChangeOrderEditorDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Orden de cambio"
+        Width="520" Height="480"
+        MinWidth="480" MinHeight="440"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResizeWithGrip"
+        ShowInTaskbar="False"
+        Background="{DynamicResource Brush.Canvas}"
+        FontFamily="Segoe UI">
+  <Grid Margin="20,16,20,12">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="*"/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+
+    <TextBlock x:Name="TitleBlock" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink2}" Margin="0,0,0,14"/>
+
+    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+      <StackPanel>
+        <TextBlock Text="N° de orden" Style="{StaticResource Form.Label}"/>
+        <TextBox x:Name="NumeroBox" Style="{StaticResource Form.TextBox}" MaxLength="20" Margin="0,0,0,10"
+                 Text="{Binding Numero, UpdateSourceTrigger=PropertyChanged}"/>
+
+        <TextBlock Text="Título *" Style="{StaticResource Form.Label}"/>
+        <TextBox x:Name="TituloBox" Style="{StaticResource Form.TextBox}" MaxLength="140" Margin="0,0,0,10"
+                 Text="{Binding Titulo, UpdateSourceTrigger=PropertyChanged}"/>
+
+        <TextBlock Text="Creada por" Style="{StaticResource Form.Label}"/>
+        <TextBox x:Name="CreadoPorBox" Style="{StaticResource Form.TextBox}" MaxLength="80" Margin="0,0,0,10"
+                 Text="{Binding CreadoPor, UpdateSourceTrigger=PropertyChanged}"/>
+
+        <Grid Margin="0,0,0,10">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="8"/>
+            <ColumnDefinition Width="*"/>
+          </Grid.ColumnDefinitions>
+          <StackPanel Grid.Column="0">
+            <TextBlock Text="Costo base (UF)" Style="{StaticResource Form.Label}"/>
+            <TextBox x:Name="CostoBaseBox" Style="{StaticResource Form.TextBox}" Margin="0"
+                     Text="{Binding CostoBaseText, UpdateSourceTrigger=PropertyChanged}"/>
+          </StackPanel>
+          <StackPanel Grid.Column="2">
+            <TextBlock Text="Delta costo (UF)" Style="{StaticResource Form.Label}"/>
+            <TextBox x:Name="DeltaCostoBox" Style="{StaticResource Form.TextBox}" Margin="0"
+                     Text="{Binding DeltaCostoText, UpdateSourceTrigger=PropertyChanged}"/>
+          </StackPanel>
+        </Grid>
+
+        <TextBlock Text="Delta venta (UF)" Style="{StaticResource Form.Label}"/>
+        <TextBox x:Name="DeltaVentaBox" Style="{StaticResource Form.TextBox}" MaxLength="20" Margin="0,0,0,10"
+                 Text="{Binding DeltaVentaText, UpdateSourceTrigger=PropertyChanged}"/>
+
+        <TextBlock Text="Nota" Style="{StaticResource Form.Label}"/>
+        <TextBox x:Name="NotaBox" Style="{StaticResource Form.TextBox}" MaxLength="500" Margin="0,0,0,10"
+                 AcceptsReturn="True" TextWrapping="Wrap" Height="64"
+                 VerticalScrollBarVisibility="Auto"
+                 Text="{Binding Nota, UpdateSourceTrigger=PropertyChanged}"/>
+
+        <!-- Error de validación — mostrado por binding desde ViewModel -->
+        <TextBlock Text="{Binding ValidationErrorMessage}" FontSize="11" Foreground="{DynamicResource Brush.Danger}"
+                   Margin="0,0,0,6" TextWrapping="Wrap"
+                   Visibility="{Binding ValidationErrorMessage, Converter={StaticResource NullToVisibility}, ConverterParameter=Inverse}"/>
+      </StackPanel>
+    </ScrollViewer>
+
+    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+      <Button x:Name="CancelBtn" Content="Cancelar" IsCancel="True"
+              Style="{StaticResource Button.Secondary}" Margin="0,0,8,0" MinWidth="90" />
+      <Button x:Name="SaveBtn" Content="Guardar" IsDefault="True"
+              Style="{StaticResource Button.Primary}" MinWidth="100" Click="OnSave"/>
+    </StackPanel>
+  </Grid>
+</Window>

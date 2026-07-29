@@ -1,0 +1,52 @@
+<UserControl x:Class="QubiCostElectrical.Wpf.Features.OperationalDashboard.OperationalDashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="#F3F4F6">
+  <Grid Margin="16">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="*"/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+
+    <Border Grid.Row="0" Background="White" CornerRadius="8" Padding="16" Margin="0,0,0,12" BorderBrush="#E5E7EB" BorderThickness="1">
+      <StackPanel>
+        <TextBlock Text="Dashboard operativo" FontSize="20" FontWeight="Bold"/>
+        <TextBlock Text="Actividades, criticidad, avance y alertas. Datos consumidos del servicio de dashboard (sin fórmulas en UI)."
+                   Foreground="#6B7280" TextWrapping="Wrap" Margin="0,4,0,0"/>
+      </StackPanel>
+    </Border>
+
+    <Border Grid.Row="1" Background="White" CornerRadius="8" Padding="10" Margin="0,0,0,12" BorderBrush="#E5E7EB" BorderThickness="1">
+      <StackPanel Orientation="Horizontal">
+        <CheckBox Content="Críticas" IsChecked="{Binding CriticalOnly}" Margin="0,0,12,0" VerticalAlignment="Center"/>
+        <CheckBox Content="Atrasadas" IsChecked="{Binding DelayedOnly}" Margin="0,0,12,0" VerticalAlignment="Center"/>
+        <CheckBox Content="Sin actualización" IsChecked="{Binding WithoutUpdateOnly}" Margin="0,0,12,0" VerticalAlignment="Center"/>
+        <CheckBox Content="Fuera de secuencia" IsChecked="{Binding OosOnly}" Margin="0,0,12,0" VerticalAlignment="Center"/>
+        <Button Content="Actualizar" Command="{Binding RefreshCommand}" Margin="0,0,8,0" Padding="12,6"/>
+        <Button Content="Ejecutivo" Command="{Binding GoExecutiveCommand}" Margin="0,0,8,0" Padding="12,6"/>
+        <Button Content="Seguimiento" Command="{Binding GoProgressCommand}" Padding="12,6"/>
+      </StackPanel>
+    </Border>
+
+    <Border Grid.Row="2" Background="White" CornerRadius="8" Padding="8" BorderBrush="#E5E7EB" BorderThickness="1">
+      <DataGrid ItemsSource="{Binding Rows}" AutoGenerateColumns="False" IsReadOnly="True"
+                HeadersVisibility="Column" GridLinesVisibility="Horizontal" Background="Transparent" BorderThickness="0">
+        <DataGrid.Columns>
+          <DataGridTextColumn Header="Código" Binding="{Binding Code}" Width="80"/>
+          <DataGridTextColumn Header="Nombre" Binding="{Binding Name}" Width="*"/>
+          <DataGridCheckBoxColumn Header="Crít." Binding="{Binding IsCritical}" Width="50"/>
+          <DataGridTextColumn Header="% Avance" Binding="{Binding PercentComplete}" Width="70"/>
+          <DataGridTextColumn Header="Var. días" Binding="{Binding ScheduleVarianceDays}" Width="70"/>
+          <DataGridTextColumn Header="AC" Binding="{Binding ActualCost}" Width="80"/>
+          <DataGridTextColumn Header="Responsable" Binding="{Binding Responsible}" Width="120"/>
+          <DataGridTextColumn Header="Alertas" Binding="{Binding AlertCount}" Width="60"/>
+          <DataGridCheckBoxColumn Header="Sin act." Binding="{Binding WithoutUpdate}" Width="60"/>
+        </DataGrid.Columns>
+      </DataGrid>
+    </Border>
+
+    <TextBlock Grid.Row="3" Text="{Binding StatusMessage}" Margin="0,8,0,0"/>
+  </Grid>
+</UserControl>

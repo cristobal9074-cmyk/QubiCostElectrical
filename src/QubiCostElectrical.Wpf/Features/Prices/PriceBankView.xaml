@@ -1,0 +1,426 @@
+<UserControl x:Class="QubiCostElectrical.Wpf.Features.Prices.PriceBankView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:QubiCostElectrical.Wpf.Features.Prices">
+  <UserControl.Resources>
+    <!-- Chip "Vigente": verde si el precio tiene menos de 6 meses; ámbar "REVISAR" si no
+         (ver MaterialRow.RequiereRevisionPrecio / PriceBankEntryVm.VigenciaKind). -->
+    <Style x:Key="VigenciaChipBorder" TargetType="Border">
+      <Setter Property="CornerRadius" Value="{StaticResource Radius.Chip}" />
+      <Setter Property="Padding" Value="9,3" />
+      <Setter Property="HorizontalAlignment" Value="Right" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="Background" Value="{DynamicResource Brush.SuccessBg}" />
+      <Style.Triggers>
+        <DataTrigger Binding="{Binding VigenciaKind}" Value="Revisar">
+          <Setter Property="Background" Value="{DynamicResource Brush.AmberSoft}" />
+        </DataTrigger>
+      </Style.Triggers>
+    </Style>
+    <Style x:Key="VigenciaChipText" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="10" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Success}" />
+      <Style.Triggers>
+        <DataTrigger Binding="{Binding VigenciaKind}" Value="Revisar">
+          <Setter Property="Foreground" Value="{DynamicResource Brush.Amber}" />
+        </DataTrigger>
+      </Style.Triggers>
+    </Style>
+  </UserControl.Resources>
+  <Grid Background="{DynamicResource Brush.Canvas}">
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="3*" MinWidth="720" />
+      <ColumnDefinition Width="16" />
+      <ColumnDefinition Width="360" MinWidth="320" />
+    </Grid.ColumnDefinitions>
+
+    <Border Grid.Column="0" Background="{DynamicResource Brush.Surface}"
+            BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+            CornerRadius="{StaticResource Radius.Lg}" Padding="18">
+      <Grid>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="*" />
+          <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <DockPanel Grid.Row="0" LastChildFill="True" Margin="0,0,0,10">
+          <StackPanel DockPanel.Dock="Left">
+            <TextBlock Text="Catálogo central editable con búsqueda, filtros, importación y aplicación controlada."
+                       Style="{StaticResource Text.Body}" Foreground="{DynamicResource Brush.Muted}"
+                       TextWrapping="Wrap" />
+          </StackPanel>
+
+          <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top">
+            <Button Style="{StaticResource Button.Secondary}" Content="Importar Excel" Command="{Binding ImportFileCommand}" Margin="0,0,6,0" />
+            <Button Style="{StaticResource Button.Secondary}" Content="Importar proyecto" Command="{Binding ImportProjectCommand}" Margin="0,0,6,0" />
+            <Button Style="{StaticResource Button.Primary}" Content="Aplicar al proyecto" Command="{Binding ApplyProjectPricesCommand}" Margin="0,0,6,0" />
+            <Button Style="{StaticResource Button.Secondary}" Content="Nuevo" Command="{Binding NewEntryCommand}" Margin="0,0,6,0" />
+            <Button Style="{StaticResource Button.Secondary}" Content="Guardar" Command="{Binding SaveSelectedCommand}" Margin="0,0,6,0" />
+            <Button Style="{StaticResource Button.Secondary}" Content="Eliminar" Command="{Binding DeleteSelectedCommand}" Margin="0,0,6,0" />
+            <Button Style="{StaticResource Button.Secondary}" Content="Eliminar todo" Command="{Binding DeleteAllCommand}"
+                    Foreground="{DynamicResource Brush.Danger}" BorderBrush="{DynamicResource Brush.Danger}"
+                    ToolTip="Vacía por completo el banco de precios (irreversible)" />
+          </StackPanel>
+        </DockPanel>
+
+        <!-- Único filtro además del buscador: Familia (Proveedor/Marca ya no se muestran en la
+             grilla y Moneda quedó fija en CLP, así que se sacaron de acá). -->
+        <Border Grid.Row="1" Style="{StaticResource Card.Section}" Padding="10" Margin="0,0,0,10">
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="2*" />
+              <ColumnDefinition Width="200" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Border Grid.Column="0" Height="34" Margin="0,0,8,0" Background="{DynamicResource Brush.Surface2}"
+                    BorderBrush="{DynamicResource Brush.InputBorder}" BorderThickness="1" CornerRadius="9">
+                <Grid>
+                    <DockPanel Margin="0">
+                        <TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets"
+                                   Foreground="{DynamicResource Brush.Ink5}" VerticalAlignment="Center"
+                                   Margin="10,0,6,0" FontSize="13" DockPanel.Dock="Left" />
+                        <Button DockPanel.Dock="Right" Width="22" Height="22" Padding="0" Margin="2,0"
+                                Background="Transparent" BorderThickness="0"
+                                Command="{Binding ClearFiltersCommand}"
+                                Visibility="{Binding SearchText, Converter={StaticResource StringNotEmptyToVisibility}}"
+                                ToolTip="Limpiar búsqueda">
+                            <TextBlock Text="&#xE894;" FontFamily="Segoe MDL2 Assets" FontSize="10"
+                                       Foreground="{DynamicResource Brush.Ink4}" />
+                        </Button>
+                        <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                 Background="Transparent" BorderThickness="0"
+                                 FontSize="13" Foreground="{DynamicResource Brush.Ink2}"
+                                 VerticalAlignment="Center" VerticalContentAlignment="Center"
+                                 Padding="0,0,4,0" />
+                    </DockPanel>
+                    <TextBlock Text="Buscar material por código o descripción…" IsHitTestVisible="False"
+                               Foreground="{DynamicResource Brush.Ink5}" FontSize="13"
+                               VerticalAlignment="Center" Margin="32,0,28,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SearchText, Converter={StaticResource StringNotEmptyToBool}}" Value="True">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </Grid>
+            </Border>
+            <ComboBox Grid.Column="1" Style="{StaticResource Form.ComboBox}" ItemsSource="{Binding CategoryOptions}" SelectedItem="{Binding SelectedCategory}" Margin="0,0,8,0"
+                      Height="34"
+                      ToolTip="Filtrar por familia" />
+            <Button Grid.Column="2" Style="{StaticResource Button.Ghost}" Content="Limpiar filtros" Command="{Binding ClearFiltersCommand}" Height="34" Padding="10,0" />
+          </Grid>
+        </Border>
+
+        <Border Grid.Row="2" Background="{DynamicResource Brush.BlueSoft}" CornerRadius="{StaticResource Radius.Sm}" Padding="10" Margin="0,0,0,10">
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Border Style="{StaticResource Card.StatPill}" Margin="0,0,10,0">
+              <StackPanel>
+                <TextBlock Text="Registros" Style="{StaticResource Text.Caption}" />
+                <TextBlock Text="{Binding SummaryText}" FontWeight="SemiBold" />
+              </StackPanel>
+            </Border>
+            <Border Grid.Column="1" Style="{StaticResource Card.StatPill}" Margin="0,0,10,0">
+              <StackPanel>
+                <TextBlock Text="Proyecto" Style="{StaticResource Text.Caption}" />
+                <TextBlock Text="{Binding ProjectSummary}" FontWeight="SemiBold" />
+              </StackPanel>
+            </Border>
+            <Border Grid.Column="2" Style="{StaticResource Card.StatPill}" Margin="0,0,10,0">
+              <StackPanel>
+                <TextBlock Text="Importación" Style="{StaticResource Text.Caption}" />
+                <TextBlock Text="{Binding ImportSummary}" FontWeight="SemiBold" TextWrapping="Wrap" />
+              </StackPanel>
+            </Border>
+            <TextBlock Grid.Column="3" Text="{Binding StatusMessage}" VerticalAlignment="Center"
+                       FontWeight="SemiBold" Foreground="{DynamicResource Brush.Navy}" TextWrapping="Wrap" />
+          </Grid>
+        </Border>
+
+        <Grid Grid.Row="3">
+          <Border Style="{StaticResource Card.Section}" Padding="0" Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}}">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="24">
+              <TextBlock Text="Banco vacío" Style="{StaticResource Text.ViewTitle}" HorizontalAlignment="Center" Margin="0,0,0,8" />
+              <TextBlock Text="Importe una lista de precios para empezar a editar, comparar y aplicar precios al proyecto activo."
+                         Style="{StaticResource Text.Body}" TextAlignment="Center" TextWrapping="Wrap" MaxWidth="500" Margin="0,0,0,18" />
+              <WrapPanel HorizontalAlignment="Center">
+                <Button Style="{StaticResource Button.Primary}" Content="Importar Excel" Command="{Binding ImportFileCommand}" Margin="4" />
+                <Button Style="{StaticResource Button.Secondary}" Content="Importar proyecto" Command="{Binding ImportProjectCommand}" Margin="4" />
+                <Button Style="{StaticResource Button.Secondary}" Content="Nuevo precio" Command="{Binding NewEntryCommand}" Margin="4" />
+              </WrapPanel>
+            </StackPanel>
+          </Border>
+
+          <DataGrid ItemsSource="{Binding FilteredEntries}"
+                    SelectedItem="{Binding SelectedEntry}"
+                    Style="{StaticResource DataGrid.Workspace}"
+                    AutoGenerateColumns="False"
+                    CanUserAddRows="False"
+                    CanUserDeleteRows="False"
+                    SelectionMode="Single"
+                    SelectionUnit="FullRow"
+                    HeadersVisibility="Column"
+                    CanUserSortColumns="True"
+                    EnableRowVirtualization="True"
+                    VirtualizingStackPanel.IsVirtualizing="True"
+                    VirtualizingStackPanel.VirtualizationMode="Recycling"
+                    Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
+            <DataGrid.Columns>
+              <!-- Orden fijo del modelo de costos: Código/Descripción/UN/Precio CLP/Familia/MO/Fecha/Vigente.
+                   El precio se ingresa SIEMPRE en pesos chilenos (Precio CLP / MO); la UF se
+                   deriva automáticamente con el valor de UF del proyecto (ver PriceBankEntryVm). -->
+              <DataGridTextColumn Header="Código" Binding="{Binding Codigo, UpdateSourceTrigger=PropertyChanged}" Width="130">
+                <DataGridTextColumn.ElementStyle>
+                  <Style TargetType="TextBlock">
+                    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                    <Setter Property="ToolTip" Value="{Binding Codigo}" />
+                  </Style>
+                </DataGridTextColumn.ElementStyle>
+              </DataGridTextColumn>
+              <DataGridTextColumn Header="Descripción" Binding="{Binding Descripcion, UpdateSourceTrigger=PropertyChanged}" Width="*" MinWidth="220">
+                <DataGridTextColumn.ElementStyle>
+                  <Style TargetType="TextBlock">
+                    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                    <Setter Property="ToolTip" Value="{Binding Descripcion}" />
+                  </Style>
+                </DataGridTextColumn.ElementStyle>
+              </DataGridTextColumn>
+              <DataGridTextColumn Header="UN" Binding="{Binding Unidad, UpdateSourceTrigger=PropertyChanged}" Width="60">
+                <DataGridTextColumn.ElementStyle>
+                  <Style TargetType="TextBlock">
+                    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                  </Style>
+                </DataGridTextColumn.ElementStyle>
+              </DataGridTextColumn>
+              <DataGridTextColumn Header="Precio CLP" Binding="{Binding PrecioClp, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:N0}}" Width="100">
+                <DataGridTextColumn.ElementStyle>
+                  <Style TargetType="TextBlock">
+                    <Setter Property="HorizontalAlignment" Value="Right" />
+                    <Setter Property="Margin" Value="0,0,8,0" />
+                    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                  </Style>
+                </DataGridTextColumn.ElementStyle>
+              </DataGridTextColumn>
+              <DataGridTextColumn Header="Familia" Binding="{Binding Categoria, UpdateSourceTrigger=PropertyChanged}" Width="120">
+                <DataGridTextColumn.ElementStyle>
+                  <Style TargetType="TextBlock">
+                    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                    <Setter Property="ToolTip" Value="{Binding Categoria}" />
+                  </Style>
+                </DataGridTextColumn.ElementStyle>
+              </DataGridTextColumn>
+              <DataGridTextColumn Header="MO" Binding="{Binding MoClp, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:N0}}" Width="94">
+                <DataGridTextColumn.ElementStyle>
+                  <Style TargetType="TextBlock">
+                    <Setter Property="HorizontalAlignment" Value="Right" />
+                    <Setter Property="Margin" Value="0,0,8,0" />
+                    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                  </Style>
+                </DataGridTextColumn.ElementStyle>
+              </DataGridTextColumn>
+              <DataGridTextColumn Header="Fecha" Binding="{Binding FechaPrecio, StringFormat={}{0:dd/MM/yyyy}}" Width="92" IsReadOnly="True">
+                <DataGridTextColumn.ElementStyle>
+                  <Style TargetType="TextBlock">
+                    <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
+                    <Setter Property="FontSize" Value="{StaticResource Font.Size.sm}" />
+                    <Setter Property="TextAlignment" Value="Right" />
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
+                    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                  </Style>
+                </DataGridTextColumn.ElementStyle>
+              </DataGridTextColumn>
+              <DataGridTemplateColumn Header="Vigente" Width="100" IsReadOnly="True" SortMemberPath="FechaPrecio">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <Border Style="{StaticResource VigenciaChipBorder}" Margin="4,2" ToolTip="{Binding VigenciaLabel}">
+                      <TextBlock Text="{Binding VigenciaLabel}" Style="{StaticResource VigenciaChipText}" TextTrimming="CharacterEllipsis" />
+                    </Border>
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
+            </DataGrid.Columns>
+          </DataGrid>
+        </Grid>
+
+        <TextBlock Grid.Row="4" Text="Edite directamente la grilla, guarde la fila seleccionada y aplique precios confirmados solo cuando el proyecto activo lo permita."
+                   Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Muted}" Margin="0,10,0,0" />
+      </Grid>
+    </Border>
+
+    <Border Grid.Column="2" Background="{DynamicResource Brush.Surface}"
+            BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+            CornerRadius="{StaticResource Radius.Lg}" Padding="14">
+      <TabControl Style="{StaticResource Form.TabControl}">
+        <TabItem Header="Detalle">
+          <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="0,8,0,0">
+              <TextBlock Text="Precio seleccionado" Style="{StaticResource Text.SectionLabel}" />
+              <Border Margin="0,10,0,12" Padding="12" Background="{DynamicResource Brush.BlueSoft}" CornerRadius="{StaticResource Radius.Sm}">
+                <StackPanel>
+                  <TextBlock Text="{Binding SelectedEntry.Codigo, TargetNullValue='Sin selección'}" FontWeight="Bold" FontSize="15" />
+                  <TextBlock Text="{Binding SelectedEntry.Descripcion}" TextWrapping="Wrap" Foreground="{DynamicResource Brush.Muted}" Margin="0,4,0,0" />
+                  <TextBlock Text="{Binding SelectedEntry.EstadoLabel}" Foreground="{DynamicResource Brush.Navy}" FontWeight="SemiBold" Margin="0,6,0,0" />
+                </StackPanel>
+              </Border>
+
+              <TextBlock Text="Código" Style="{StaticResource Text.Caption}" />
+              <TextBox Text="{Binding SelectedEntry.Codigo, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" Margin="0,4,0,8" />
+
+              <TextBlock Text="Descripción" Style="{StaticResource Text.Caption}" />
+              <TextBox Text="{Binding SelectedEntry.Descripcion, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" Margin="0,4,0,8" />
+
+              <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Margin="0,0,6,0">
+                  <TextBlock Text="Unidad" Style="{StaticResource Text.Caption}" />
+                  <TextBox Text="{Binding SelectedEntry.Unidad, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" Margin="0,4,0,0" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Margin="6,0,0,0">
+                  <TextBlock Text="Categoría" Style="{StaticResource Text.Caption}" />
+                  <TextBox Text="{Binding SelectedEntry.Categoria, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" Margin="0,4,0,0" />
+                </StackPanel>
+              </Grid>
+
+              <!-- El precio se ingresa SIEMPRE en pesos (CLP) -->
+              <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Margin="0,0,6,0">
+                  <TextBlock Text="Precio CLP" Style="{StaticResource Text.Caption}" />
+                  <TextBox Text="{Binding SelectedEntry.PrecioClp, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" Margin="0,4,0,0" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Margin="6,0,0,0">
+                  <TextBlock Text="MO" Style="{StaticResource Text.Caption}" />
+                  <TextBox Text="{Binding SelectedEntry.MoClp, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" Margin="0,4,0,0" />
+                </StackPanel>
+              </Grid>
+
+              <TextBlock Text="Fecha precio" Style="{StaticResource Text.Caption}" />
+              <DatePicker SelectedDate="{Binding SelectedEntry.FechaPrecio, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,8" />
+
+              <TextBlock Text="Proveedor" Style="{StaticResource Text.Caption}" />
+              <TextBox Text="{Binding SelectedEntry.Proveedor, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" Margin="0,4,0,8" />
+
+              <TextBlock Text="Marca" Style="{StaticResource Text.Caption}" />
+              <TextBox Text="{Binding SelectedEntry.Marca, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" Margin="0,4,0,8" />
+
+              <TextBlock Text="Origen" Style="{StaticResource Text.Caption}" />
+              <TextBox Text="{Binding SelectedEntry.OrigenPrecio, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" Margin="0,4,0,8" />
+
+              <TextBlock Text="Proyecto origen" Style="{StaticResource Text.Caption}" />
+              <TextBox Text="{Binding SelectedEntry.ProyectoOrigen, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" Margin="0,4,0,12" />
+
+              <StackPanel Orientation="Horizontal">
+                <Button Style="{StaticResource Button.Primary}" Content="Guardar fila" Command="{Binding SaveSelectedCommand}" Margin="0,0,6,0" />
+                <Button Style="{StaticResource Button.Secondary}" Content="Eliminar" Command="{Binding DeleteSelectedCommand}" Margin="0,0,6,0" />
+                <Button Style="{StaticResource Button.Secondary}" Content="Nueva" Command="{Binding NewEntryCommand}" />
+              </StackPanel>
+            </StackPanel>
+          </ScrollViewer>
+        </TabItem>
+
+        <TabItem Header="Proyecto">
+          <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="0,8,0,0">
+              <TextBlock Text="Aplicación controlada" Style="{StaticResource Text.SectionLabel}" />
+              <TextBlock Text="{Binding ProjectSummary}" Style="{StaticResource Text.Body}" TextWrapping="Wrap" Margin="0,4,0,10" />
+              <Button Style="{StaticResource Button.Primary}" Content="Aplicar precios al proyecto" Command="{Binding ApplyProjectPricesCommand}" HorizontalAlignment="Left" />
+
+              <TextBlock Text="Cambios detectados" Style="{StaticResource Text.Caption}" Margin="0,14,0,6" />
+              <DataGrid ItemsSource="{Binding PreviewUpdates}"
+                        AutoGenerateColumns="False"
+                        CanUserAddRows="False"
+                        IsReadOnly="True"
+                        HeadersVisibility="Column"
+                        Style="{StaticResource DataGrid.Workspace}"
+                        MinHeight="260">
+                <DataGrid.Columns>
+                  <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" Width="90">
+                    <DataGridTextColumn.ElementStyle>
+                      <Style TargetType="TextBlock">
+                        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                        <Setter Property="ToolTip" Value="{Binding Codigo}" />
+                      </Style>
+                    </DataGridTextColumn.ElementStyle>
+                  </DataGridTextColumn>
+                  <DataGridTextColumn Header="Descripción" Binding="{Binding Descripcion}" Width="*">
+                    <DataGridTextColumn.ElementStyle>
+                      <Style TargetType="TextBlock">
+                        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                        <Setter Property="ToolTip" Value="{Binding Descripcion}" />
+                      </Style>
+                    </DataGridTextColumn.ElementStyle>
+                  </DataGridTextColumn>
+                  <DataGridTextColumn Header="Mat CLP" Binding="{Binding MatClpAnterior, StringFormat=N0}" Width="80">
+                    <DataGridTextColumn.ElementStyle>
+                      <Style TargetType="TextBlock">
+                        <Setter Property="HorizontalAlignment" Value="Right" />
+                        <Setter Property="Margin" Value="0,0,8,0" />
+                        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                      </Style>
+                    </DataGridTextColumn.ElementStyle>
+                  </DataGridTextColumn>
+                  <DataGridTextColumn Header="Nuevo" Binding="{Binding MatClpNuevo, StringFormat=N0}" Width="80">
+                    <DataGridTextColumn.ElementStyle>
+                      <Style TargetType="TextBlock">
+                        <Setter Property="HorizontalAlignment" Value="Right" />
+                        <Setter Property="Margin" Value="0,0,8,0" />
+                        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                      </Style>
+                    </DataGridTextColumn.ElementStyle>
+                  </DataGridTextColumn>
+                  <DataGridTextColumn Header="Δ" Binding="{Binding MatClpDelta, StringFormat=N0}" Width="70">
+                    <DataGridTextColumn.ElementStyle>
+                      <Style TargetType="TextBlock">
+                        <Setter Property="HorizontalAlignment" Value="Right" />
+                        <Setter Property="Margin" Value="0,0,8,0" />
+                        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                      </Style>
+                    </DataGridTextColumn.ElementStyle>
+                  </DataGridTextColumn>
+                </DataGrid.Columns>
+              </DataGrid>
+            </StackPanel>
+          </ScrollViewer>
+        </TabItem>
+
+        <TabItem Header="Importación">
+          <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="0,8,0,0">
+              <TextBlock Text="Últimas importaciones" Style="{StaticResource Text.SectionLabel}" />
+              <TextBlock Text="{Binding ImportSummary}" Style="{StaticResource Text.Body}" TextWrapping="Wrap" Margin="0,4,0,10" />
+              <ItemsControl ItemsSource="{Binding ImportLog}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+                            CornerRadius="{StaticResource Radius.Sm}" Padding="8" Margin="0,0,0,6">
+                      <TextBlock Text="{Binding}" FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource Brush.Ink2}" />
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </ScrollViewer>
+        </TabItem>
+      </TabControl>
+    </Border>
+  </Grid>
+</UserControl>

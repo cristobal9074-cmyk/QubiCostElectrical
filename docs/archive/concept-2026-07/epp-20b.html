@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Qubi Cost — EPP · propuesta 20B</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=IBM+Plex+Mono:wght@450;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --navy: #0B1F33;
+      --navy2: #122A42;
+      --blue: #1B6EF3;
+      --blue-soft: #E8F0FE;
+      --blue-faint: #F3F7FE;
+      --ink: #0F172A;
+      --ink2: #334155;
+      --ink3: #64748B;
+      --ink4: #94A3B8;
+      --line: #E2E8F0;
+      --line2: #F1F5F9;
+      --surface: #FFFFFF;
+      --canvas: #EEF2F7;
+      --success: #16A34A;
+      --success-soft: #ECFDF5;
+      --amber: #D97706;
+      --amber-soft: #FFF7ED;
+      --amber-tint: #FFF8E1;
+      --purple: #7C3AED;
+      --purple-soft: #F5F3FF;
+      --purple-mid: #EDE9FE;
+      --purple-ink: #5B21B6;
+      --danger: #DC2626;
+      --font: "DM Sans", "Segoe UI", system-ui, sans-serif;
+      --mono: "IBM Plex Mono", Consolas, monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font);
+      color: var(--ink);
+      background: linear-gradient(165deg, #071421 0%, var(--navy) 40%, #0E2438 100%);
+      min-height: 100vh;
+      padding: 28px 20px 48px;
+    }
+    .wrap { width: min(1220px, 100%); margin: 0 auto; }
+    .eyebrow {
+      color: rgba(255,255,255,.5); font-size: 11px; font-weight: 600;
+      letter-spacing: .08em; text-transform: uppercase; margin-bottom: 10px;
+      display: flex; gap: 10px; align-items: center;
+    }
+    .eyebrow b { color: #fff; text-transform: none; letter-spacing: 0; font-size: 13px; font-weight: 600; }
+
+    .app {
+      background: var(--canvas);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 28px 70px rgba(0,0,0,.35);
+      border: 1px solid rgba(255,255,255,.08);
+      min-height: 820px;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      animation: rise .45s cubic-bezier(.22,1,.36,1) both;
+    }
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(14px) scale(.988); }
+      to { opacity: 1; transform: none; }
+    }
+
+    .shell {
+      background: linear-gradient(90deg, var(--navy), var(--navy2));
+      color: #fff; padding: 10px 16px;
+      display: flex; align-items: center; gap: 18px;
+    }
+    .shell .logo { font-weight: 700; font-size: 13px; }
+    .shell nav { display: flex; gap: 4px; flex: 1; }
+    .shell nav span {
+      padding: 6px 10px; border-radius: 8px; font-size: 12px; font-weight: 500;
+      color: rgba(255,255,255,.65);
+    }
+    .shell nav span.on { background: rgba(255,255,255,.12); color: #fff; }
+
+    .scroll { overflow: auto; background: var(--canvas); }
+
+    /* Header */
+    .page-head {
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+      padding: 18px 22px 16px;
+    }
+    .page-head-top {
+      display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: start;
+    }
+    .page-head .label {
+      font-size: 13px; font-weight: 600; color: var(--ink3);
+      letter-spacing: .04em; text-transform: uppercase; margin-bottom: 6px;
+    }
+    .page-head h1 {
+      font-size: 26px; font-weight: 700; letter-spacing: -.03em; line-height: 1.15;
+    }
+    .page-head .sub {
+      margin-top: 4px; font-size: 13px; color: var(--ink3); max-width: 62ch;
+    }
+    .meta-row {
+      display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; align-items: center;
+    }
+    .pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 600;
+      background: var(--line2); color: var(--ink3);
+    }
+    .pill.blue { background: var(--blue-soft); color: var(--blue); }
+    .pill.ok { background: var(--success-soft); color: var(--success); }
+    .pill.amber { background: var(--amber-soft); color: var(--amber); }
+    .pill.purple { background: var(--purple-soft); color: var(--purple); }
+    .pill .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .pill .mono { font-family: var(--mono); font-weight: 600; }
+
+    .head-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+    .btn {
+      appearance: none; border: 1px solid transparent; border-radius: 9px;
+      padding: 9px 13px; font: inherit; font-size: 12.5px; font-weight: 600;
+      cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+      transition: .15s background, .15s border-color, .1s transform;
+    }
+    .btn:active { transform: scale(.98); }
+    .btn-primary {
+      background: var(--blue); color: #fff;
+      box-shadow: 0 4px 12px rgba(27,110,243,.28);
+    }
+    .btn-primary:hover { background: #1559d1; }
+    .btn-secondary {
+      background: var(--surface); color: var(--ink2); border-color: var(--line);
+    }
+    .btn-secondary:hover { background: var(--line2); }
+    .btn-ghost { background: transparent; color: var(--ink3); border-color: transparent; }
+    .btn-ghost:hover { background: var(--line2); color: var(--ink2); }
+    .btn-sm { padding: 5px 9px; font-size: 11.5px; border-radius: 7px; }
+
+    /* KPIs */
+    .kpis {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+      padding: 14px 20px 0;
+    }
+    .kpi {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px 14px;
+      min-height: 84px;
+      display: flex; flex-direction: column; justify-content: center;
+    }
+    .kpi .k { font-size: 9px; font-weight: 700; color: var(--ink4); letter-spacing: .05em; }
+    .kpi .v { font-size: 20px; font-weight: 700; margin-top: 3px; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+    .kpi .v.blue { color: var(--blue); }
+    .kpi .v.amber { color: var(--amber); }
+    .kpi .s { font-size: 10.5px; color: var(--ink3); margin-top: 2px; }
+
+    .stack { padding: 14px 20px 24px; display: flex; flex-direction: column; gap: 14px; }
+
+    .note {
+      padding: 11px 14px;
+      background: var(--blue-soft);
+      border: 1px solid rgba(27,110,243,.18);
+      border-radius: 10px;
+      font-size: 12.5px; color: #1e40af; line-height: 1.45;
+    }
+    .note strong { font-weight: 700; }
+
+    /* Cards */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .card-head {
+      display: flex; justify-content: space-between; align-items: center; gap: 12px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+    .card-head h2 { font-size: 13px; font-weight: 700; }
+    .card-head .hint { font-size: 10.5px; color: var(--ink3); }
+    .card-head-actions { display: flex; gap: 6px; align-items: center; }
+
+    /* Params strip */
+    .params {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+      padding: 12px 16px;
+      background: var(--blue-faint);
+      border-bottom: 1px solid var(--line);
+    }
+    .param label {
+      display: block; font-size: 10px; font-weight: 700; letter-spacing: .05em;
+      text-transform: uppercase; color: var(--ink4); margin-bottom: 5px;
+    }
+    .param-row { display: grid; grid-template-columns: 1fr auto; gap: 6px; align-items: center; }
+    .param input, .cell-input {
+      width: 100%; border: 1px solid var(--line); border-radius: 8px;
+      padding: 7px 9px; font: inherit; font-size: 13px; font-weight: 600;
+      font-family: var(--mono); color: var(--ink); background: #fff; outline: 0;
+    }
+    .param input:focus, .cell-input:focus {
+      border-color: var(--blue); box-shadow: 0 0 0 3px rgba(27,110,243,.14);
+    }
+    .param .unit { font-size: 12px; font-weight: 700; color: var(--ink3); }
+
+    /* Dual panel */
+    .dual {
+      display: grid;
+      grid-template-columns: 1fr 1px 1fr;
+      min-height: 0;
+    }
+    .dual-div { background: var(--line); }
+
+    .pane-head {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--line);
+    }
+    .pane-head.dir { background: var(--blue-soft); }
+    .pane-head.ind { background: var(--amber-tint); }
+    .pane-head .t { font-size: 10px; font-weight: 700; }
+    .pane-head.dir .t, .pane-head.dir .v { color: var(--blue); }
+    .pane-head.ind .t, .pane-head.ind .v { color: var(--amber); }
+    .pane-head .v { font-family: var(--mono); font-size: 12px; font-weight: 700; }
+
+    .sec-label {
+      padding: 6px 12px;
+      border-bottom: 1px solid var(--line2);
+      font-size: 9px; font-weight: 700;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .sec-label.dir { color: var(--blue); }
+    .sec-label.ind { color: var(--amber); }
+    .sec-label.opc { color: var(--purple); background: var(--purple-soft); }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 72px 88px 92px 28px;
+      gap: 4px;
+      align-items: center;
+      padding: 4px 10px;
+      border-bottom: 1px solid var(--line2);
+      min-height: 34px;
+    }
+    .row:hover { background: #FAFBFC; }
+    .row .concepto {
+      border: 1px solid transparent; border-radius: 6px;
+      padding: 4px 6px; font: inherit; font-size: 11px; color: var(--ink);
+      background: transparent; width: 100%; outline: 0;
+    }
+    .row .concepto:hover, .row .concepto:focus {
+      border-color: var(--line); background: #fff;
+    }
+    .row .concepto:focus { border-color: var(--blue); }
+    .row .cell-input {
+      padding: 4px 6px; font-size: 11px; text-align: right; border-radius: 6px;
+    }
+    .row .tot {
+      font-family: var(--mono); font-size: 11px; font-weight: 600;
+      text-align: right; padding-right: 2px;
+    }
+    .row .tot.dir { color: var(--blue); }
+    .row .tot.ind { color: var(--amber); }
+    .row .tot.opc { color: var(--purple); }
+    .row .del {
+      appearance: none; border: 0; background: transparent; cursor: pointer;
+      color: var(--ink4); font-size: 14px; border-radius: 5px; width: 24px; height: 24px;
+      display: grid; place-items: center;
+    }
+    .row .del:hover { background: #FEE2E2; color: var(--danger); }
+
+    .col-head {
+      display: grid;
+      grid-template-columns: 1fr 72px 88px 92px 28px;
+      gap: 4px;
+      padding: 4px 10px;
+      font-size: 9px; font-weight: 700; color: var(--ink4);
+      text-transform: uppercase; letter-spacing: .04em;
+      background: var(--line2);
+      border-bottom: 1px solid var(--line);
+    }
+    .col-head span:not(:first-child) { text-align: right; }
+
+    .sub-row {
+      display: grid; grid-template-columns: 1fr 92px 28px;
+      padding: 6px 10px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--line2);
+      border-top: 1px solid var(--line2);
+    }
+    .sub-row .l { font-size: 10px; font-weight: 600; }
+    .sub-row .r { font-family: var(--mono); font-size: 11px; font-weight: 700; text-align: right; }
+    .sub-row .r.dir { color: var(--blue); }
+    .sub-row .r.ind { color: var(--amber); }
+    .sub-row.opc { background: var(--purple-mid); }
+    .sub-row.opc .l { color: var(--purple-ink); }
+    .sub-row.opc .r { color: var(--purple); }
+
+    .add-row {
+      padding: 6px 10px;
+      border-bottom: 1px solid var(--line2);
+    }
+    .add-row button {
+      appearance: none; border: 1px dashed var(--line); background: transparent;
+      border-radius: 8px; padding: 6px 10px; width: 100%;
+      font: inherit; font-size: 11.5px; font-weight: 600; color: var(--ink3);
+      cursor: pointer; text-align: left;
+    }
+    .add-row button:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-faint); }
+
+    .navy-bar {
+      display: flex; justify-content: space-between; align-items: center;
+      background: var(--navy); color: #fff;
+      padding: 8px 14px;
+    }
+    .navy-bar .l { font-size: 10px; font-weight: 600; color: var(--ink4); }
+    .navy-bar .vals { display: flex; gap: 16px; }
+    .navy-bar .m { font-family: var(--mono); font-size: 12px; font-weight: 700; }
+
+    .gran {
+      background: var(--navy);
+      border-radius: 8px;
+      padding: 12px 18px;
+      display: flex; justify-content: space-between; align-items: center;
+      color: #fff;
+    }
+    .gran .l { font-size: 11px; font-weight: 700; }
+    .gran .r { font-family: var(--mono); font-size: 18px; font-weight: 700; }
+
+    .foot {
+      background: var(--navy);
+      border-radius: 8px;
+      padding: 12px 20px;
+      display: flex; justify-content: space-between; align-items: center;
+      color: #fff; gap: 16px;
+    }
+    .foot .k { font-size: 10px; font-weight: 600; color: var(--ink4); }
+    .foot .s { font-size: 9px; color: var(--ink4); margin-top: 2px; }
+    .foot .v { font-size: 18px; font-weight: 700; }
+    .foot .actions { display: flex; gap: 8px; }
+
+    .dirty {
+      display: none; align-items: center; gap: 6px;
+      font-size: 11.5px; font-weight: 600; color: var(--amber);
+    }
+    .dirty.on { display: inline-flex; }
+    .dirty .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--amber); }
+
+    /* Catalog modal */
+    .modal-bg {
+      display: none; position: fixed; inset: 0;
+      background: rgba(7,20,33,.55); z-index: 40;
+      align-items: center; justify-content: center; padding: 24px;
+    }
+    .modal-bg.on { display: flex; }
+    .modal {
+      background: var(--surface); border-radius: 14px; width: min(520px, 100%);
+      box-shadow: 0 24px 60px rgba(0,0,0,.35); overflow: hidden;
+      animation: rise .3s ease both;
+    }
+    .modal-h {
+      padding: 14px 16px; border-bottom: 1px solid var(--line);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .modal-h h3 { font-size: 15px; font-weight: 700; }
+    .modal-b { padding: 12px 16px 16px; max-height: 360px; overflow: auto; }
+    .cat-item {
+      display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center;
+      padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px;
+      margin-bottom: 8px; cursor: pointer; transition: .12s;
+    }
+    .cat-item:hover { border-color: var(--blue); background: var(--blue-faint); }
+    .cat-item .n { font-size: 13px; font-weight: 600; }
+    .cat-item .p { font-family: var(--mono); font-size: 12px; color: var(--ink3); }
+    .cat-item .c { font-size: 11px; color: var(--ink4); margin-top: 2px; }
+
+    @media (max-width: 960px) {
+      .kpis, .params { grid-template-columns: 1fr 1fr; }
+      .dual { grid-template-columns: 1fr; }
+      .dual-div { display: none; }
+      .page-head-top { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="eyebrow">Qubi Cost Electrical · propuesta UI <b>EPP totalmente funcional · 20B</b></div>
+
+    <div class="app">
+      <div class="shell">
+        <div class="logo">QUBI COST ELECTRICAL</div>
+        <nav>
+          <span>Resumen</span>
+          <span>Proyecto</span>
+          <span>Itemizado</span>
+          <span>Cubicación</span>
+          <span>APU</span>
+          <span>Precios</span>
+          <span class="on">Costos ▾</span>
+          <span>Cierre</span>
+        </nav>
+      </div>
+
+      <div class="scroll">
+        <!-- Header -->
+        <header class="page-head">
+          <div class="page-head-top">
+            <div>
+              <div class="label">Costos</div>
+              <h1>EPP</h1>
+              <p class="sub">Indumentaria y elementos de seguridad — editable por ítem, sincronizable con la dotación de mano de obra y persistente en el proyecto.</p>
+              <div class="meta-row">
+                <span class="pill blue"><span class="mono" id="pillItems">27</span> ítems</span>
+                <span class="pill ok"><span class="dot"></span> Vinculado a MO</span>
+                <span class="pill amber"><span class="dot"></span> Directa <span class="mono" id="pillMesDir">3</span> m · Indirecta <span class="mono" id="pillMesInd">6</span> m</span>
+                <span class="pill purple">Opcionales · costo fijo</span>
+                <span class="dirty" id="dirtyFlag"><span class="dot"></span> Cambios sin guardar</span>
+              </div>
+            </div>
+            <div class="head-actions">
+              <button class="btn btn-secondary" type="button" id="btnSyncMo">↻ Sync desde MO</button>
+              <button class="btn btn-secondary" type="button" id="btnCatalog">+ Catálogo</button>
+              <button class="btn btn-primary" type="button" id="btnSave">Guardar EPP</button>
+            </div>
+          </div>
+        </header>
+
+        <div class="kpis">
+          <div class="kpi">
+            <div class="k">TOTAL EPP</div>
+            <div class="v blue" id="kpiTotal">$ 0</div>
+            <div class="s">Indumentaria + Accesorios</div>
+          </div>
+          <div class="kpi">
+            <div class="k">M.O. DIRECTA (<span id="kpiMesDir">3</span> MESES)</div>
+            <div class="v" id="kpiDir">$ 0</div>
+            <div class="s" id="kpiDirSub">0 ítems</div>
+          </div>
+          <div class="kpi">
+            <div class="k">M.O. INDIRECTA (<span id="kpiMesInd">6</span> MESES)</div>
+            <div class="v" id="kpiInd">$ 0</div>
+            <div class="s" id="kpiIndSub">0 ítems</div>
+          </div>
+          <div class="kpi">
+            <div class="k">ACCESORIOS OPCIONALES</div>
+            <div class="v amber" id="kpiOpc">$ 0</div>
+            <div class="s" id="kpiOpcSub">0 ítems · Costo fijo</div>
+          </div>
+        </div>
+
+        <div class="stack">
+          <div class="note">
+            <strong>De solo lectura → funcional:</strong> edita concepto, cantidad y precio inline; ajusta meses y factor de dotación; agrega/quita ítems; sincroniza cantidades desde Mano de obra; guarda en el proyecto. Se mantiene la estructura actual (Directa | Indirecta + Opcionales).
+          </div>
+
+          <!-- Indumentaria dual -->
+          <section class="card">
+            <div class="card-head">
+              <div>
+                <h2>M.O. Directa e Indirecta — Indumentaria</h2>
+                <div class="hint" id="indumentariaHint">Valor indumentaria: $ 0</div>
+              </div>
+              <div class="card-head-actions">
+                <button class="btn btn-ghost btn-sm" type="button" id="btnResetSeed">Restablecer plantilla</button>
+              </div>
+            </div>
+
+            <div class="params">
+              <div class="param">
+                <label>Meses M.O. Directa</label>
+                <div class="param-row">
+                  <input type="number" id="mesDir" value="3" min="1" max="24" step="1" />
+                  <span class="unit">mes</span>
+                </div>
+              </div>
+              <div class="param">
+                <label>Meses M.O. Indirecta</label>
+                <div class="param-row">
+                  <input type="number" id="mesInd" value="6" min="1" max="24" step="1" />
+                  <span class="unit">mes</span>
+                </div>
+              </div>
+              <div class="param">
+                <label>Dotación directa (ref.)</label>
+                <div class="param-row">
+                  <input type="number" id="dotDir" value="154" min="0" step="1" />
+                  <span class="unit">pers</span>
+                </div>
+              </div>
+              <div class="param">
+                <label>Dotación indirecta (ref.)</label>
+                <div class="param-row">
+                  <input type="number" id="dotInd" value="6" min="0" step="1" />
+                  <span class="unit">pers</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="dual">
+              <!-- Directa -->
+              <div>
+                <div class="pane-head dir">
+                  <span class="t">M.O. Directa</span>
+                  <span class="v" id="paneDirTotal">$ 0</span>
+                </div>
+                <div class="col-head">
+                  <span>Concepto</span><span>Cant.</span><span>P. unit.</span><span>Total</span><span></span>
+                </div>
+                <div id="dirRoot"></div>
+              </div>
+
+              <div class="dual-div"></div>
+
+              <!-- Indirecta -->
+              <div>
+                <div class="pane-head ind">
+                  <span class="t">M.O. Indirecta</span>
+                  <span class="v" id="paneIndTotal">$ 0</span>
+                </div>
+                <div class="col-head">
+                  <span>Concepto</span><span>Cant.</span><span>P. unit.</span><span>Total</span><span></span>
+                </div>
+                <div id="indRoot"></div>
+              </div>
+            </div>
+
+            <div class="navy-bar">
+              <span class="l">Valor Indumentaria</span>
+              <div class="vals">
+                <span class="m" id="barDir">$ 0</span>
+                <span class="m" id="barInd">$ 0</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- Opcionales -->
+          <section class="card">
+            <div class="card-head">
+              <div>
+                <h2>Accesorios Opcionales</h2>
+                <div class="hint">Costo fijo — Proyecto</div>
+              </div>
+              <div class="card-head-actions">
+                <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--ink3);cursor:pointer">
+                  <input type="checkbox" id="opcEnabled" checked /> Incluir en total
+                </label>
+                <button class="btn btn-secondary btn-sm" type="button" data-add="opc|0">+ Ítem</button>
+              </div>
+            </div>
+            <div class="col-head">
+              <span>Concepto</span><span>Cant.</span><span>P. unit.</span><span>Total</span><span></span>
+            </div>
+            <div id="opcRoot"></div>
+          </section>
+
+          <div class="gran">
+            <span class="l">GRAN TOTAL EPP (Indumentaria + Accesorios Opcionales)</span>
+            <span class="r" id="granTotal">$ 0</span>
+          </div>
+
+          <div class="foot">
+            <div>
+              <div class="k">RESUMEN EPP</div>
+              <div class="s" id="footText">—</div>
+            </div>
+            <div class="actions">
+              <button class="btn btn-ghost" type="button" style="color:#94A3B8" id="btnCancel">Cancelar</button>
+              <button class="btn btn-primary" type="button" id="btnSave2">Guardar EPP</button>
+            </div>
+            <div class="v" id="footTotal">$ 0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Catalog modal -->
+  <div class="modal-bg" id="catalogModal">
+    <div class="modal">
+      <div class="modal-h">
+        <h3>Catálogo EPP</h3>
+        <button class="btn btn-ghost btn-sm" type="button" id="closeCatalog">Cerrar</button>
+      </div>
+      <div class="modal-b" id="catalogList"></div>
+    </div>
+  </div>
+
+  <script>
+    const fmt = n => "$ " + Math.round(n || 0).toLocaleString("es-CL");
+    const fmtN = n => Number(n || 0).toLocaleString("es-CL", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    const catalog = [
+      { concepto: "Zapatos de seguridad", precio: 6900, codigo: "EPP-ZAPAT-S" },
+      { concepto: "Pantalones Jeans", precio: 5050, codigo: "EPP-PANT-J" },
+      { concepto: "Polera", precio: 2800, codigo: "EPP-POL-B" },
+      { concepto: "Chaquetilla o Geólogo", precio: 4490, codigo: "EPP-CHAL-G" },
+      { concepto: "Casco Proseg Azul", precio: 1180, codigo: "EPP-CASCO-A" },
+      { concepto: "Casco Blanco", precio: 9200, codigo: "EPP-CASCO-B" },
+      { concepto: "Barbiquejo", precio: 180, codigo: "EPP-BARB" },
+      { concepto: "Antiparras Claras", precio: 1980, codigo: "EPP-LENTE-C" },
+      { concepto: "Protectores Auditivo (Tapón)", precio: 170, codigo: "EPP-TAPA-O" },
+      { concepto: "Protectores Auditivo (Fono)", precio: 3690, codigo: "EPP-FONO" },
+      { concepto: "Guantes Cabritilla", precio: 990, codigo: "EPP-GUANTE-C" },
+      { concepto: "Mascarilla Desechable", precio: 720, codigo: "EPP-MASC-D" },
+      { concepto: "Mascarilla \"Masprot P100\"", precio: 4200, codigo: "EPP-MASC-95" },
+      { concepto: "Filtros P100", precio: 1790, codigo: "EPP-FILT-P" },
+      { concepto: "Arnés", precio: 7400, codigo: "EPP-ARNES-4" },
+      { concepto: "Cabos de Vida", precio: 3500, codigo: "EPP-CABO" },
+      { concepto: "Cubrenuca", precio: 590, codigo: "EPP-NUCA" },
+      { concepto: "Bloqueador Solar", precio: 7590, codigo: "EPP-SOLAR" }
+    ];
+
+    // Data model — misma estructura que la app actual
+    let state = {
+      dirty: false,
+      mesDir: 3,
+      mesInd: 6,
+      dotDir: 154,
+      dotInd: 6,
+      opcEnabled: true,
+      dir: [
+        {
+          titulo: "I — Vestimenta",
+          items: [
+            { concepto: "Zapatos de seguridad", cant: 51.33, precio: 6900 },
+            { concepto: "Pantalones Jeans", cant: 51.33, precio: 5050 },
+            { concepto: "Polera", cant: 51.33, precio: 2800 },
+            { concepto: "Chaquetilla o Geólogo", cant: 51.33, precio: 4490 },
+            { concepto: "Casco Proseg Azul", cant: 51.33, precio: 1180 },
+            { concepto: "Barbiquejo", cant: 51.33, precio: 180 }
+          ]
+        },
+        {
+          titulo: "II — Accesorios",
+          items: [
+            { concepto: "Antiparras Claras", cant: 51.33, precio: 1980 },
+            { concepto: "Protectores Auditivo (Tapón)", cant: 51.33, precio: 170 },
+            { concepto: "Guantes Cabritilla", cant: 51.33, precio: 990 },
+            { concepto: "Mascarilla Desechable", cant: 51.33, precio: 720 }
+          ]
+        }
+      ],
+      ind: [
+        {
+          titulo: "I — Vestimenta",
+          items: [
+            { concepto: "Zapatos de seguridad", cant: 9.17, precio: 30000 },
+            { concepto: "Pantalones Jeans", cant: 9.17, precio: 5050 },
+            { concepto: "Polera", cant: 9.17, precio: 2800 },
+            { concepto: "Chaquetilla o Geólogo", cant: 9.17, precio: 4490 },
+            { concepto: "Casco Blanco", cant: 9.17, precio: 9200 },
+            { concepto: "Barbiquejo", cant: 9.17, precio: 180 }
+          ]
+        },
+        {
+          titulo: "II — Accesorios",
+          items: [
+            { concepto: "Antiparras Claras", cant: 9.17, precio: 1980 },
+            { concepto: "Protectores Auditivo (Tapón)", cant: 9.17, precio: 170 },
+            { concepto: "Guantes Cabritilla", cant: 9.17, precio: 990 },
+            { concepto: "Mascarilla Desechable", cant: 9.17, precio: 720 }
+          ]
+        }
+      ],
+      opc: [
+        {
+          titulo: "III — Elementos Basicos",
+          items: [
+            { concepto: "Protectores Auditivo (Fono)", cant: 25.67, precio: 3690 },
+            { concepto: "Cubrenuca", cant: 51.33, precio: 590 },
+            { concepto: "Mascarilla \"Masprot P100\"", cant: 26.00, precio: 4200 },
+            { concepto: "Filtros P100", cant: 25.67, precio: 1790 },
+            { concepto: "Arnés", cant: 28.00, precio: 7400 },
+            { concepto: "Cabos de Vida", cant: 28.00, precio: 3500 },
+            { concepto: "Bloqueador Solar", cant: 5.50, precio: 7590 }
+          ]
+        }
+      ]
+    };
+
+    let catalogTarget = { side: "dir", sec: 0 };
+
+    function markDirty() {
+      state.dirty = true;
+      document.getElementById("dirtyFlag").classList.add("on");
+    }
+    function clearDirty() {
+      state.dirty = false;
+      document.getElementById("dirtyFlag").classList.remove("on");
+    }
+
+    function sumSide(side) {
+      return side.reduce((a, s) => a + s.items.reduce((b, i) => b + i.cant * i.precio, 0), 0);
+    }
+    function countSide(side) {
+      return side.reduce((a, s) => a + s.items.length, 0);
+    }
+
+    function renderSide(rootId, sideKey, tone) {
+      const root = document.getElementById(rootId);
+      const sections = state[sideKey];
+      root.innerHTML = sections.map((sec, si) => {
+        const sub = sec.items.reduce((a, i) => a + i.cant * i.precio, 0);
+        const rows = sec.items.map((it, ii) => `
+          <div class="row" data-side="${sideKey}" data-sec="${si}" data-idx="${ii}">
+            <input class="concepto" data-f="concepto" value="${escapeHtml(it.concepto)}" />
+            <input class="cell-input" type="number" data-f="cant" value="${it.cant}" step="0.01" min="0" />
+            <input class="cell-input" type="number" data-f="precio" value="${it.precio}" step="10" min="0" />
+            <div class="tot ${tone}">${fmt(it.cant * it.precio)}</div>
+            <button class="del" type="button" title="Quitar" data-del="${sideKey}|${si}|${ii}">×</button>
+          </div>
+        `).join("");
+        return `
+          <div class="sec-label ${tone}">
+            <span>${escapeHtml(sec.titulo)}</span>
+            <button class="btn btn-ghost btn-sm" type="button" data-add="${sideKey}|${si}" style="padding:2px 6px">+ Ítem</button>
+          </div>
+          ${rows}
+          <div class="add-row">
+            <button type="button" data-add="${sideKey}|${si}">+ Agregar ítem a ${escapeHtml(sec.titulo)}</button>
+          </div>
+          <div class="sub-row ${tone === "opc" ? "opc" : ""}">
+            <span class="l">${tone === "opc" ? "Costo Fijo — Proyecto" : "Total"}</span>
+            <span class="r ${tone}">${fmt(sub)}</span>
+            <span></span>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c]));
+    }
+
+    function refresh() {
+      state.mesDir = +document.getElementById("mesDir").value || 3;
+      state.mesInd = +document.getElementById("mesInd").value || 6;
+      state.dotDir = +document.getElementById("dotDir").value || 0;
+      state.dotInd = +document.getElementById("dotInd").value || 0;
+      state.opcEnabled = document.getElementById("opcEnabled").checked;
+
+      renderSide("dirRoot", "dir", "dir");
+      renderSide("indRoot", "ind", "ind");
+      renderSide("opcRoot", "opc", "opc");
+
+      const tDir = sumSide(state.dir);
+      const tInd = sumSide(state.ind);
+      const tOpc = state.opcEnabled ? sumSide(state.opc) : 0;
+      const total = tDir + tInd + tOpc;
+      const nDir = countSide(state.dir);
+      const nInd = countSide(state.ind);
+      const nOpc = countSide(state.opc);
+
+      document.getElementById("kpiTotal").textContent = fmt(total);
+      document.getElementById("kpiDir").textContent = fmt(tDir);
+      document.getElementById("kpiInd").textContent = fmt(tInd);
+      document.getElementById("kpiOpc").textContent = fmt(tOpc);
+      document.getElementById("kpiMesDir").textContent = state.mesDir;
+      document.getElementById("kpiMesInd").textContent = state.mesInd;
+      document.getElementById("kpiDirSub").textContent = nDir + " ítems";
+      document.getElementById("kpiIndSub").textContent = nInd + " ítems";
+      document.getElementById("kpiOpcSub").textContent = nOpc + " ítems · " + (state.opcEnabled ? "Costo fijo" : "Excluido");
+
+      document.getElementById("paneDirTotal").textContent = fmt(tDir);
+      document.getElementById("paneIndTotal").textContent = fmt(tInd);
+      document.getElementById("barDir").textContent = fmt(tDir);
+      document.getElementById("barInd").textContent = fmt(tInd);
+      document.getElementById("indumentariaHint").textContent = "Valor indumentaria: " + fmt(tDir + tInd);
+
+      document.getElementById("granTotal").textContent = fmt(total);
+      document.getElementById("footTotal").textContent = fmt(total);
+      document.getElementById("footText").textContent =
+        `M.O. Directa (${state.mesDir}m): ${fmt(tDir)} · M.O. Indirecta (${state.mesInd}m): ${fmt(tInd)} · Acc. Opcionales: ${fmt(tOpc)}`;
+
+      document.getElementById("pillItems").textContent = nDir + nInd + nOpc;
+      document.getElementById("pillMesDir").textContent = state.mesDir;
+      document.getElementById("pillMesInd").textContent = state.mesInd;
+
+      bindEditors();
+    }
+
+    function bindEditors() {
+      document.querySelectorAll(".row").forEach(row => {
+        const side = row.dataset.side;
+        const sec = +row.dataset.sec;
+        const idx = +row.dataset.idx;
+        row.querySelectorAll("[data-f]").forEach(inp => {
+          inp.addEventListener("change", () => {
+            const f = inp.dataset.f;
+            let v = inp.value;
+            if (f === "cant" || f === "precio") v = +v || 0;
+            state[side][sec].items[idx][f] = v;
+            markDirty();
+            refresh();
+          });
+        });
+      });
+      document.querySelectorAll("[data-del]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const [side, sec, idx] = btn.dataset.del.split("|");
+          state[side][+sec].items.splice(+idx, 1);
+          markDirty();
+          refresh();
+        });
+      });
+      document.querySelectorAll("[data-add]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const [side, sec] = btn.dataset.add.split("|");
+          catalogTarget = { side, sec: +sec };
+          openCatalog();
+        });
+      });
+    }
+
+    function openCatalog() {
+      const list = document.getElementById("catalogList");
+      list.innerHTML = catalog.map((c, i) => `
+        <div class="cat-item" data-cat="${i}">
+          <div>
+            <div class="n">${escapeHtml(c.concepto)}</div>
+            <div class="c">${escapeHtml(c.codigo)}</div>
+          </div>
+          <div class="p">${fmt(c.precio)}</div>
+        </div>
+      `).join("");
+      list.querySelectorAll(".cat-item").forEach(el => {
+        el.addEventListener("click", () => {
+          const c = catalog[+el.dataset.cat];
+          const { side, sec } = catalogTarget;
+          const baseCant = side === "dir"
+            ? +(state.dotDir / 3).toFixed(2)
+            : side === "ind"
+              ? +(state.dotInd * state.mesInd / 12).toFixed(2) || 1
+              : 1;
+          state[side][sec].items.push({
+            concepto: c.concepto,
+            cant: side === "opc" ? 1 : baseCant,
+            precio: c.precio
+          });
+          markDirty();
+          document.getElementById("catalogModal").classList.remove("on");
+          refresh();
+        });
+      });
+      document.getElementById("catalogModal").classList.add("on");
+    }
+
+    function syncFromMo() {
+      // Simula sync: recalcula cantidades típicas desde dotación × meses
+      const cantDir = +(state.dotDir / 3).toFixed(2); // misma heurística del seed (~51.33 con 154)
+      const cantInd = +((state.dotInd * state.mesInd) / 12 * 1.5).toFixed(2) || 1;
+      state.dir.forEach(s => s.items.forEach(i => { i.cant = cantDir; }));
+      state.ind.forEach(s => s.items.forEach(i => {
+        // zapatos indirecta mantiene precio premium; cantidad sync
+        i.cant = cantInd;
+      }));
+      markDirty();
+      refresh();
+      flash("Cantidades sincronizadas desde dotación MO");
+    }
+
+    function flash(msg) {
+      const n = document.querySelector(".note");
+      const prev = n.innerHTML;
+      n.innerHTML = `<strong>OK.</strong> ${msg}`;
+      n.style.background = "var(--success-soft)";
+      n.style.color = "#166534";
+      n.style.borderColor = "rgba(22,163,74,.25)";
+      setTimeout(() => {
+        n.innerHTML = prev;
+        n.style.background = "";
+        n.style.color = "";
+        n.style.borderColor = "";
+      }, 2200);
+    }
+
+    function save() {
+      clearDirty();
+      flash("EPP guardado en el proyecto (prototipo). En la app: persiste en SQLite y alimenta Desglose / Solicitudes.");
+    }
+
+    ["mesDir", "mesInd", "dotDir", "dotInd"].forEach(id => {
+      document.getElementById(id).addEventListener("change", () => { markDirty(); refresh(); });
+    });
+    document.getElementById("opcEnabled").addEventListener("change", () => { markDirty(); refresh(); });
+    document.getElementById("btnSyncMo").addEventListener("click", syncFromMo);
+    document.getElementById("btnCatalog").addEventListener("click", () => {
+      catalogTarget = { side: "opc", sec: 0 };
+      openCatalog();
+    });
+    document.getElementById("btnSave").addEventListener("click", save);
+    document.getElementById("btnSave2").addEventListener("click", save);
+    document.getElementById("btnCancel").addEventListener("click", () => {
+      if (state.dirty && !confirm("¿Descartar cambios sin guardar?")) return;
+      location.reload();
+    });
+    document.getElementById("closeCatalog").addEventListener("click", () => {
+      document.getElementById("catalogModal").classList.remove("on");
+    });
+    document.getElementById("catalogModal").addEventListener("click", e => {
+      if (e.target.id === "catalogModal") e.target.classList.remove("on");
+    });
+    document.getElementById("btnResetSeed").addEventListener("click", () => {
+      if (!confirm("¿Restablecer la plantilla EPP original?")) return;
+      location.reload();
+    });
+
+    refresh();
+  </script>
+</body>
+</html>

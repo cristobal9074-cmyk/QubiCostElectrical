@@ -1,0 +1,244 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+
+    <!-- ── Core navy / brand background (kept similar — header is already dark) ── -->
+    <Color x:Key="Color.Navy">#0A1420</Color>
+    <Color x:Key="Color.NavyEnd">#080E18</Color>
+    <Color x:Key="Color.Navy2">#0F1C2E</Color>
+    <Color x:Key="Color.Navy3">#14263C</Color>
+
+    <Color x:Key="Color.NavyDeep">#080E18</Color>
+    <Color x:Key="Color.NavyDeep2">#0C1825</Color>
+    <Color x:Key="Color.NavyBorder">#1A3752</Color>
+    <Color x:Key="Color.NavyBorder2">#1C4060</Color>
+
+    <!-- ── Blue spectrum ─────────────────────────────────────────────────── -->
+    <Color x:Key="Color.BlueDark">#3B82F6</Color>
+    <Color x:Key="Color.Blue">#4B8DF7</Color>
+    <Color x:Key="Color.Blue2">#60A5FA</Color>
+    <Color x:Key="Color.Blue3">#77A5F7</Color>
+    <Color x:Key="Color.BlueFocus">#93BFFD</Color>
+    <Color x:Key="Color.BlueSoft">#1E2D4A</Color>
+    <Color x:Key="Color.BlueFaint">#1C2838</Color>
+    <Color x:Key="Color.BlueHover">#1C2D45</Color>
+    <Color x:Key="Color.BlueSelected">#1E3050</Color>
+    <Color x:Key="Color.BlueIconBg2">#1E2D4A</Color>
+
+    <!-- ── Brand icon colors ─────────────────────────────────────────────── -->
+    <Color x:Key="Color.BrandDark">#2D5FAF</Color>
+    <Color x:Key="Color.BrandMid">#4B8DF7</Color>
+    <Color x:Key="Color.BrandStroke">#60A5FA</Color>
+    <Color x:Key="Color.BrandStroke2">#91B7FF</Color>
+    <Color x:Key="Color.BrandStroke3">#BFDBFE</Color>
+
+    <!-- ── Semantic colors ───────────────────────────────────────────────── -->
+    <Color x:Key="Color.Cyan">#22D3EE</Color>
+    <Color x:Key="Color.Green">#22C55E</Color>
+    <Color x:Key="Color.GreenSoft">#14281A</Color>
+    <Color x:Key="Color.Success">#22C55E</Color>
+    <Color x:Key="Color.SuccessBright">#4ADE80</Color>
+    <Color x:Key="Color.SuccessDark">#166534</Color>
+    <Color x:Key="Color.SuccessBg">#0F1F14</Color>
+    <Color x:Key="Color.SuccessBorder">#1A3D24</Color>
+    <Color x:Key="Color.Amber">#F59E0B</Color>
+    <Color x:Key="Color.AmberSoft">#2D2410</Color>
+    <Color x:Key="Color.Amber2">#B8860B</Color>
+    <Color x:Key="Color.AmberRisk">#F59E0B</Color>
+    <Color x:Key="Color.Red">#EF4444</Color>
+    <Color x:Key="Color.RedSoft">#2D1414</Color>
+    <Color x:Key="Color.Danger">#EF4444</Color>
+    <Color x:Key="Color.Danger2">#F87171</Color>
+    <Color x:Key="Color.DangerDark">#B91C1C</Color>
+    <Color x:Key="Color.DangerBg">#1F0F0F</Color>
+    <Color x:Key="Color.DangerBorder">#3D1A1A</Color>
+
+    <!-- ── Info / Purple (recurso MO) ──────────────────────────────────────── -->
+    <Color x:Key="Color.Info">#5B91FF</Color>
+    <Color x:Key="Color.InfoBg">#182A47</Color>
+    <Color x:Key="Color.Purple">#9B82D6</Color>
+    <Color x:Key="Color.PurpleSoft">#241C38</Color>
+
+    <!-- ── Ink (text) spectrum ───────────────────────────────────────────── -->
+    <Color x:Key="Color.Ink">#E1E4E8</Color>
+    <Color x:Key="Color.Ink2">#BCC0C6</Color>
+    <Color x:Key="Color.Ink3">#8B8F96</Color>
+    <Color x:Key="Color.Ink4">#6B7078</Color>
+    <Color x:Key="Color.Ink5">#5A5E66</Color>
+    <Color x:Key="Color.Ink6">#7A7E86</Color>
+    <Color x:Key="Color.Ink7">#8B8F96</Color>
+    <!-- Color.Muted eliminado: era idéntico a Color.Ink3 (#8B8F96) en claro y oscuro.
+         Brush.Muted ahora referencia Color.Ink3 directamente. -->
+
+    <!-- ── Slate ─────────────────────────────────────────────────────────── -->
+    <Color x:Key="Color.Slate">#64748B</Color>
+    <Color x:Key="Color.Slate2">#475569</Color>
+    <Color x:Key="Color.Slate3">#334155</Color>
+    <Color x:Key="Color.SlateLight">#1E293B</Color>
+
+    <!-- ── Surface / canvas ──────────────────────────────────────────────── -->
+    <Color x:Key="Color.Surface">#1C1F26</Color>
+    <Color x:Key="Color.Surface2">#252830</Color>
+    <Color x:Key="Color.Canvas">#14161C</Color>
+    <Color x:Key="Color.WorkspaceBar">#1A1D24</Color>
+    <Color x:Key="Color.PanelHeader">#252830</Color>
+    <Color x:Key="Color.PanelSidebar">#1E2128</Color>
+    <Color x:Key="Color.InputBorder">#3A3F4A</Color>
+    <Color x:Key="Color.DropdownHover">#2A2E38</Color>
+    <Color x:Key="Color.RowHover">#22262E</Color>
+    <Color x:Key="Color.ChipBg">#20242C</Color>
+    <Color x:Key="Color.ChapterRowBg">#22262E</Color>
+    <Color x:Key="Color.ActiveRowBg">#1E2D4A</Color>
+    <Color x:Key="Color.White">#FFFFFF</Color>
+
+    <!-- ── Borders / lines ───────────────────────────────────────────────── -->
+    <Color x:Key="Color.Line">#2D3038</Color>
+    <Color x:Key="Color.Line2">#252830</Color>
+
+    <!-- ── Header text / icons (keep legible on dark navy) ───────────────── -->
+    <Color x:Key="Color.HeaderInk">#EEF4FB</Color>
+    <Color x:Key="Color.HeaderMuted">#9EB1C8</Color>
+    <Color x:Key="Color.HeaderNav">#AEBED0</Color>
+    <Color x:Key="Color.HeaderNavActive">#5B91FF</Color>
+    <Color x:Key="Color.HeaderLabel">#91A6BD</Color>
+    <Color x:Key="Color.HeaderControl">#BFD0E2</Color>
+    <Color x:Key="Color.HeaderStatus">#A7B8CB</Color>
+    <Color x:Key="Color.HeaderDim">#72859A</Color>
+    <Color x:Key="Color.HeaderDate">#A0B0C0</Color>
+
+    <!-- ── Misc ──────────────────────────────────────────────────────────── -->
+    <Color x:Key="Color.SaveDot">#40C77D</Color>
+    <Color x:Key="Color.AvatarBg">#2E4468</Color>
+    <Color x:Key="Color.Shadow">#80000000</Color>
+    <Color x:Key="Color.ShadowDropdown">#60000000</Color>
+
+    <!-- ════════════════════════════════════════════════════════════════════
+         BRUSHES — solid colors
+         ════════════════════════════════════════════════════════════════════ -->
+
+    <SolidColorBrush x:Key="Brush.Navy"          Color="{StaticResource Color.Navy}" />
+    <SolidColorBrush x:Key="Brush.Navy2"         Color="{StaticResource Color.Navy2}" />
+    <SolidColorBrush x:Key="Brush.Navy3"         Color="{StaticResource Color.Navy3}" />
+    <SolidColorBrush x:Key="Brush.NavyDeep"      Color="{StaticResource Color.NavyDeep}" />
+    <SolidColorBrush x:Key="Brush.NavyDeep2"     Color="{StaticResource Color.NavyDeep2}" />
+    <SolidColorBrush x:Key="Brush.NavyBorder"    Color="{StaticResource Color.NavyBorder}" />
+    <SolidColorBrush x:Key="Brush.NavyBorder2"   Color="{StaticResource Color.NavyBorder2}" />
+
+    <SolidColorBrush x:Key="Brush.BlueDark"      Color="{StaticResource Color.BlueDark}" />
+    <SolidColorBrush x:Key="Brush.Blue"          Color="{StaticResource Color.Blue}" />
+    <SolidColorBrush x:Key="Brush.Blue2"         Color="{StaticResource Color.Blue2}" />
+    <SolidColorBrush x:Key="Brush.Blue3"         Color="{StaticResource Color.Blue3}" />
+    <SolidColorBrush x:Key="Brush.BlueFocus"     Color="{StaticResource Color.BlueFocus}" />
+    <SolidColorBrush x:Key="Brush.BlueSoft"      Color="{StaticResource Color.BlueSoft}" />
+    <SolidColorBrush x:Key="Brush.BlueFaint"     Color="{StaticResource Color.BlueFaint}" />
+    <SolidColorBrush x:Key="Brush.BlueHover"     Color="{StaticResource Color.BlueHover}" />
+    <SolidColorBrush x:Key="Brush.BlueSelected"  Color="{StaticResource Color.BlueSelected}" />
+    <SolidColorBrush x:Key="Brush.BlueIconBg2"   Color="{StaticResource Color.BlueIconBg2}" />
+
+    <SolidColorBrush x:Key="Brush.BrandDark"     Color="{StaticResource Color.BrandDark}" />
+    <SolidColorBrush x:Key="Brush.BrandMid"      Color="{StaticResource Color.BrandMid}" />
+    <SolidColorBrush x:Key="Brush.BrandStroke"   Color="{StaticResource Color.BrandStroke}" />
+    <SolidColorBrush x:Key="Brush.BrandStroke2"  Color="{StaticResource Color.BrandStroke2}" />
+    <SolidColorBrush x:Key="Brush.BrandStroke3"  Color="{StaticResource Color.BrandStroke3}" />
+
+    <SolidColorBrush x:Key="Brush.Green"         Color="{StaticResource Color.Green}" />
+    <SolidColorBrush x:Key="Brush.GreenSoft"     Color="{StaticResource Color.GreenSoft}" />
+    <SolidColorBrush x:Key="Brush.Success"       Color="{StaticResource Color.Success}" />
+    <SolidColorBrush x:Key="Brush.SuccessBright" Color="{StaticResource Color.SuccessBright}" />
+    <SolidColorBrush x:Key="Brush.SuccessDark"   Color="{StaticResource Color.SuccessDark}" />
+    <SolidColorBrush x:Key="Brush.SuccessBg"     Color="{StaticResource Color.SuccessBg}" />
+    <SolidColorBrush x:Key="Brush.SuccessBorder" Color="{StaticResource Color.SuccessBorder}" />
+    <SolidColorBrush x:Key="Brush.Amber"         Color="{StaticResource Color.Amber}" />
+    <SolidColorBrush x:Key="Brush.AmberSoft"     Color="{StaticResource Color.AmberSoft}" />
+    <SolidColorBrush x:Key="Brush.Amber2"        Color="{StaticResource Color.Amber2}" />
+    <SolidColorBrush x:Key="Brush.AmberRisk"     Color="{StaticResource Color.AmberRisk}" />
+    <SolidColorBrush x:Key="Brush.Red"           Color="{StaticResource Color.Red}" />
+    <SolidColorBrush x:Key="Brush.RedSoft"       Color="{StaticResource Color.RedSoft}" />
+    <SolidColorBrush x:Key="Brush.Danger"        Color="{StaticResource Color.Danger}" />
+    <SolidColorBrush x:Key="Brush.Danger2"       Color="{StaticResource Color.Danger2}" />
+    <SolidColorBrush x:Key="Brush.DangerDark"    Color="{StaticResource Color.DangerDark}" />
+    <SolidColorBrush x:Key="Brush.DangerBg"      Color="{StaticResource Color.DangerBg}" />
+    <SolidColorBrush x:Key="Brush.DangerBorder"  Color="{StaticResource Color.DangerBorder}" />
+
+    <SolidColorBrush x:Key="Brush.Ink"          Color="{StaticResource Color.Ink}" />
+    <SolidColorBrush x:Key="Brush.Ink2"         Color="{StaticResource Color.Ink2}" />
+    <SolidColorBrush x:Key="Brush.Ink3"         Color="{StaticResource Color.Ink3}" />
+    <SolidColorBrush x:Key="Brush.Ink4"         Color="{StaticResource Color.Ink4}" />
+    <SolidColorBrush x:Key="Brush.Ink5"         Color="{StaticResource Color.Ink5}" />
+    <SolidColorBrush x:Key="Brush.Ink6"         Color="{StaticResource Color.Ink6}" />
+    <SolidColorBrush x:Key="Brush.Ink7"         Color="{StaticResource Color.Ink7}" />
+    <SolidColorBrush x:Key="Brush.Muted"        Color="{StaticResource Color.Ink3}" />
+    <SolidColorBrush x:Key="Brush.Disabled"     Color="{StaticResource Color.Ink5}" />
+
+    <SolidColorBrush x:Key="Brush.Slate"        Color="{StaticResource Color.Slate}" />
+    <SolidColorBrush x:Key="Brush.Slate2"       Color="{StaticResource Color.Slate2}" />
+    <SolidColorBrush x:Key="Brush.Slate3"       Color="{StaticResource Color.Slate3}" />
+    <SolidColorBrush x:Key="Brush.SlateLight"   Color="{StaticResource Color.SlateLight}" />
+
+    <SolidColorBrush x:Key="Brush.Surface"      Color="{StaticResource Color.Surface}" />
+    <SolidColorBrush x:Key="Brush.Surface2"     Color="{StaticResource Color.Surface2}" />
+    <SolidColorBrush x:Key="Brush.Canvas"       Color="{StaticResource Color.Canvas}" />
+    <SolidColorBrush x:Key="Brush.WorkspaceBar" Color="{StaticResource Color.WorkspaceBar}" />
+    <SolidColorBrush x:Key="Brush.PanelHeader"  Color="{StaticResource Color.PanelHeader}" />
+    <SolidColorBrush x:Key="Brush.PanelSidebar" Color="{StaticResource Color.PanelSidebar}" />
+    <SolidColorBrush x:Key="Brush.InputBorder"  Color="{StaticResource Color.InputBorder}" />
+    <SolidColorBrush x:Key="Brush.DropdownHover" Color="{StaticResource Color.DropdownHover}" />
+    <SolidColorBrush x:Key="Brush.White"        Color="{StaticResource Color.White}" />
+    <SolidColorBrush x:Key="Brush.Line"         Color="{StaticResource Color.Line}" />
+    <SolidColorBrush x:Key="Brush.Line2"        Color="{StaticResource Color.Line2}" />
+    <SolidColorBrush x:Key="Brush.RowHover"     Color="{StaticResource Color.RowHover}" />
+    <SolidColorBrush x:Key="Brush.ChipBg"       Color="{StaticResource Color.ChipBg}" />
+    <SolidColorBrush x:Key="Brush.ChapterRowBg" Color="{StaticResource Color.ChapterRowBg}" />
+    <SolidColorBrush x:Key="Brush.ActiveRowBg"  Color="{StaticResource Color.ActiveRowBg}" />
+
+    <SolidColorBrush x:Key="Brush.Info"         Color="{StaticResource Color.Info}" />
+    <SolidColorBrush x:Key="Brush.InfoBg"       Color="{StaticResource Color.InfoBg}" />
+    <SolidColorBrush x:Key="Brush.Purple"       Color="{StaticResource Color.Purple}" />
+    <SolidColorBrush x:Key="Brush.PurpleSoft"   Color="{StaticResource Color.PurpleSoft}" />
+
+    <SolidColorBrush x:Key="Brush.HeaderInk"        Color="{StaticResource Color.HeaderInk}" />
+    <SolidColorBrush x:Key="Brush.HeaderMuted"       Color="{StaticResource Color.HeaderMuted}" />
+    <SolidColorBrush x:Key="Brush.HeaderNav"         Color="{StaticResource Color.HeaderNav}" />
+    <SolidColorBrush x:Key="Brush.HeaderNavActive"   Color="{StaticResource Color.HeaderNavActive}" />
+    <SolidColorBrush x:Key="Brush.HeaderLabel"       Color="{StaticResource Color.HeaderLabel}" />
+    <SolidColorBrush x:Key="Brush.HeaderControl"     Color="{StaticResource Color.HeaderControl}" />
+    <SolidColorBrush x:Key="Brush.HeaderStatus"      Color="{StaticResource Color.HeaderStatus}" />
+    <SolidColorBrush x:Key="Brush.HeaderDim"         Color="{StaticResource Color.HeaderDim}" />
+    <SolidColorBrush x:Key="Brush.HeaderDate"        Color="{StaticResource Color.HeaderDate}" />
+
+    <SolidColorBrush x:Key="Brush.SaveDot"      Color="{StaticResource Color.SaveDot}" />
+    <SolidColorBrush x:Key="Brush.AvatarBg"     Color="{StaticResource Color.AvatarBg}" />
+
+    <SolidColorBrush x:Key="Brush.WarningSoft"  Color="#2D2410" />
+    <SolidColorBrush x:Key="Brush.OnPrimary"    Color="#FFFFFF" />
+
+    <!-- ── Header overlay brushes (adjusted for dark bg) ── -->
+    <SolidColorBrush x:Key="Brush.White8"        Color="#0DFFFFFF" />
+    <SolidColorBrush x:Key="Brush.White9"        Color="#17FFFFFF" />
+    <SolidColorBrush x:Key="Brush.White12"       Color="#14FFFFFF" />
+    <SolidColorBrush x:Key="Brush.White14"       Color="#24FFFFFF" />
+    <SolidColorBrush x:Key="Brush.White16"       Color="#1AFFFFFF" />
+    <SolidColorBrush x:Key="Brush.White18"       Color="#1CFFFFFF" />
+    <SolidColorBrush x:Key="Brush.White25"       Color="#20FFFFFF" />
+    <SolidColorBrush x:Key="Brush.HeaderIconBlue" Color="#2B5992FF" />
+
+    <!-- ════════════════════════════════════════════════════════════════════
+         BRUSHES — gradients
+         ════════════════════════════════════════════════════════════════════ -->
+
+    <LinearGradientBrush x:Key="Brush.HeaderBackground" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="{StaticResource Color.Navy}" Offset="0" />
+        <GradientStop Color="{StaticResource Color.NavyEnd}" Offset="1" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="Brush.PrimaryButton" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="{StaticResource Color.Blue2}" Offset="0" />
+        <GradientStop Color="{StaticResource Color.Blue}" Offset="1" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="Brush.BrandMark" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="{StaticResource Color.Blue3}" Offset="0" />
+        <GradientStop Color="{StaticResource Color.Blue}" Offset="1" />
+    </LinearGradientBrush>
+
+</ResourceDictionary>

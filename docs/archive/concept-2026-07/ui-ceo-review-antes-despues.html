@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Qubi Cost Electrical — UI Antes / Después (CEO Review)</title>
+  <style>
+    :root {
+      --navy: #0B1F33;
+      --navy2: #122A42;
+      --blue: #1B6EF3;
+      --blue-soft: #E8F0FE;
+      --ink: #0F172A;
+      --ink3: #64748B;
+      --line: #E2E8F0;
+      --surface: #FFFFFF;
+      --canvas: #F1F5F9;
+      --success: #16A34A;
+      --amber: #D97706;
+      --danger: #DC2626;
+      --font: "Segoe UI", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      color: var(--ink);
+      background: #0a1628;
+      line-height: 1.45;
+    }
+    .hero {
+      padding: 40px 32px 28px;
+      background: linear-gradient(160deg, #0B1F33 0%, #163556 55%, #1B6EF3 140%);
+      color: #fff;
+    }
+    .hero h1 { margin: 0 0 8px; font-size: 28px; letter-spacing: -0.02em; }
+    .hero p { margin: 0; max-width: 720px; color: rgba(255,255,255,.78); font-size: 15px; }
+    .badge {
+      display: inline-block;
+      margin-bottom: 14px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.12);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+    .wrap { padding: 28px 24px 64px; max-width: 1280px; margin: 0 auto; }
+    .section-title {
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin: 28px 0 12px;
+      opacity: .7;
+    }
+    .grid2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+    @media (max-width: 980px) {
+      .grid2 { grid-template-columns: 1fr; }
+    }
+    .panel {
+      background: var(--canvas);
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.08);
+      box-shadow: 0 18px 40px rgba(0,0,0,.35);
+    }
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: #fff;
+      border-bottom: 1px solid var(--line);
+    }
+    .panel-head strong { font-size: 14px; }
+    .tag {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+    .tag.bad { background: #FEE2E2; color: #B91C1C; }
+    .tag.good { background: #DCFCE7; color: #166534; }
+    .mock {
+      background: var(--canvas);
+      min-height: 420px;
+      font-size: 11px;
+    }
+    /* App chrome */
+    .app-header {
+      background: var(--navy);
+      color: #fff;
+      padding: 8px 12px 0;
+    }
+    .top-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .brand { font-weight: 800; font-size: 11px; letter-spacing: .04em; }
+    .brand span { opacity: .55; font-weight: 600; }
+    .pill {
+      background: rgba(255,255,255,.1);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 8px;
+      padding: 4px 8px;
+      color: rgba(255,255,255,.85);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 140px;
+    }
+    .spacer { flex: 1; }
+    .btn-mini {
+      background: rgba(255,255,255,.1);
+      border: 0;
+      color: #fff;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 10px;
+    }
+    .btn-prim {
+      background: var(--blue);
+      border: 0;
+      color: #fff;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+    .nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2px;
+      padding-bottom: 6px;
+      align-items: center;
+    }
+    .nav button {
+      border: 0;
+      background: transparent;
+      color: rgba(255,255,255,.72);
+      padding: 5px 7px;
+      border-radius: 6px;
+      font-size: 10px;
+      white-space: nowrap;
+    }
+    .nav button.active {
+      background: rgba(27,110,243,.35);
+      color: #fff;
+      font-weight: 700;
+    }
+    .nav button.muted { color: rgba(255,255,255,.45); }
+    .ctx {
+      background: #EEF2F7;
+      border-bottom: 1px solid var(--line);
+      padding: 8px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .ctx .crumb { color: var(--ink3); font-size: 10px; }
+    .ctx h2 { margin: 2px 0 0; font-size: 13px; }
+    .chips { display: flex; gap: 6px; }
+    .chip {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 3px 7px;
+      font-size: 10px;
+      color: var(--ink3);
+    }
+    .chip b { color: var(--ink); }
+    .page { padding: 12px; background: var(--canvas); }
+    .page-title { font-size: 16px; font-weight: 700; margin: 0 0 2px; }
+    .page-sub { margin: 0 0 12px; color: var(--ink3); font-size: 11px; }
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .kpi {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+    }
+    .kpi label { display: block; color: var(--ink3); font-size: 9px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: .04em; }
+    .kpi strong { font-size: 14px; font-family: Consolas, monospace; }
+    .split { display: grid; grid-template-columns: 1.6fr 1.2fr; gap: 8px; }
+    .card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+    }
+    .card h3 { margin: 0 0 8px; font-size: 11px; }
+    .bar {
+      height: 10px;
+      border-radius: 6px;
+      overflow: hidden;
+      display: flex;
+      margin-bottom: 8px;
+    }
+    .bar i { display: block; height: 100%; }
+    .bar .m { background: var(--blue); width: 58%; }
+    .bar .l { background: var(--success); width: 28%; }
+    .bar .o { background: var(--amber); width: 14%; }
+    .legend { display: flex; gap: 8px; flex-wrap: wrap; }
+    .legend span { font-size: 10px; color: var(--ink3); }
+    .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+    .status {
+      background: #fff;
+      border-top: 1px solid var(--line);
+      padding: 6px 12px;
+      color: var(--ink3);
+      font-size: 10px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .callouts {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 22px;
+    }
+    @media (max-width: 900px) { .callouts { grid-template-columns: 1fr; } }
+    .callout {
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 14px;
+      padding: 16px;
+      color: #fff;
+    }
+    .callout h3 { margin: 0 0 8px; font-size: 14px; }
+    .callout ul { margin: 0; padding-left: 18px; color: rgba(255,255,255,.75); font-size: 13px; }
+    .callout li { margin-bottom: 6px; }
+    .strike { text-decoration: line-through; opacity: .55; }
+    .note {
+      margin-top: 18px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: rgba(27,110,243,.15);
+      border: 1px solid rgba(27,110,243,.35);
+      color: rgba(255,255,255,.9);
+      font-size: 13px;
+    }
+    .landing {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      min-height: 360px;
+    }
+    .side {
+      background: var(--navy);
+      color: #fff;
+      padding: 14px 12px;
+    }
+    .side .logo {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: var(--blue); margin-bottom: 10px;
+    }
+    .side button {
+      width: 100%;
+      text-align: left;
+      border: 1px solid rgba(255,255,255,.15);
+      background: rgba(255,255,255,.08);
+      color: #fff;
+      border-radius: 8px;
+      padding: 8px;
+      margin-bottom: 6px;
+      font-size: 10px;
+    }
+    .side button.primary { background: var(--blue); border-color: transparent; font-weight: 700; }
+    .main-land { padding: 16px; background: var(--canvas); }
+    .recent {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+    }
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      margin-bottom: 6px;
+      background: #fff;
+    }
+    .row.sel { background: var(--blue-soft); border-color: #93C5FD; }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="badge">CEO Review · Implementado · Jul 2026</div>
+    <h1>Qubi Cost Electrical — Antes vs Después</h1>
+    <p>
+      La propuesta de la derecha ya está aplicada en la app WPF (navegación compacta,
+      menos textos y context bar más delgada). Abre el acceso directo del escritorio para verla en vivo.
+    </p>
+  </header>
+
+  <div class="wrap">
+    <div class="section-title">1 · Pantalla Inicio (sin proyecto)</div>
+    <div class="grid2">
+      <div class="panel">
+        <div class="panel-head">
+          <strong>Ahora</strong>
+          <span class="tag bad">OK funcional</span>
+        </div>
+        <div class="mock">
+          <div class="landing">
+            <div class="side">
+              <div class="logo"></div>
+              <div style="font-weight:800;font-size:11px;margin-bottom:12px">QUBI COST<br/><span style="opacity:.6;font-weight:600;font-size:9px">ELECTRICAL</span></div>
+              <div style="opacity:.5;font-size:9px;margin-bottom:6px">ACCIONES</div>
+              <button class="primary">+ Nuevo proyecto</button>
+              <button>Abrir proyecto…</button>
+              <div style="opacity:.5;font-size:9px;margin:10px 0 6px">RECURSOS</div>
+              <button>Banco de precios</button>
+              <button>Plantillas APU</button>
+              <button>Preferencias</button>
+            </div>
+            <div class="main-land">
+              <div class="page-title">¡Bienvenido!</div>
+              <p class="page-sub">Continúa donde lo dejaste o crea un nuevo presupuesto.</p>
+              <div class="recent">
+                <strong style="font-size:12px">Proyectos recientes</strong>
+                <div class="row" style="margin-top:10px"><span>PRUEBA 2</span><span style="color:var(--ink3)">Borrador</span></div>
+                <div class="row sel"><span>Proyecto nuevo</span><span style="color:var(--ink3)">Borrador</span></div>
+                <div class="row"><span>prueba 1</span><span style="color:var(--ink3)">Borrador</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <strong>Propuesta</strong>
+          <span class="tag good">Misma idea, más aire</span>
+        </div>
+        <div class="mock">
+          <div class="landing">
+            <div class="side">
+              <div class="logo"></div>
+              <div style="font-weight:800;font-size:11px;margin-bottom:12px">QUBI COST<br/><span style="opacity:.6;font-weight:600;font-size:9px">ELECTRICAL</span></div>
+              <button class="primary">+ Nuevo proyecto</button>
+              <button>Abrir…</button>
+              <div style="height:1px;background:rgba(255,255,255,.15);margin:12px 0"></div>
+              <button>Banco de precios</button>
+              <button>Preferencias</button>
+            </div>
+            <div class="main-land">
+              <div class="page-title">Proyectos</div>
+              <p class="page-sub" style="margin-bottom:14px">Abre uno reciente o crea uno nuevo.</p>
+              <div class="recent">
+                <div class="row sel"><span><b>Proyecto nuevo</b><br/><span style="color:var(--ink3);font-size:9px">Hoy · Borrador</span></span></div>
+                <div class="row"><span><b>PRUEBA 2</b><br/><span style="color:var(--ink3);font-size:9px">Hoy · Borrador</span></span></div>
+                <div class="row"><span><b>prueba 1</b><br/><span style="color:var(--ink3);font-size:9px">Ayer · Borrador</span></span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">2 · Resumen del presupuesto (con proyecto) — aquí duele más</div>
+    <div class="grid2">
+      <div class="panel">
+        <div class="panel-head">
+          <strong>Ahora</strong>
+          <span class="tag bad">Nav saturada + títulos ×3</span>
+        </div>
+        <div class="mock">
+          <div class="app-header">
+            <div class="top-row">
+              <div class="brand">QUBI COST <span>ELECTRICAL</span></div>
+              <div class="pill">PRUEBA 2</div>
+              <div class="spacer"></div>
+              <button class="btn-mini">Ctrl+K</button>
+              <button class="btn-mini">Guardar</button>
+              <button class="btn-prim">Revisar 318</button>
+            </div>
+            <div class="nav">
+              <button class="active">Resumen</button>
+              <button>Proyecto ▾</button>
+              <button>Itemizado</button>
+              <button>Cubicación</button>
+              <button>Cubic. SC</button>
+              <button>APU</button>
+              <button>Plantillas</button>
+              <button>Resumen x Piso</button>
+              <button>Solicitudes</button>
+              <button>Costo</button>
+              <button>EPP</button>
+              <button>M. de Obra</button>
+              <button>Precios ▾</button>
+              <button>Cierre ▾</button>
+            </div>
+          </div>
+          <div class="ctx">
+            <div>
+              <div class="crumb">Presupuesto / PRUEBA 2</div>
+              <h2>Resumen ejecutivo</h2>
+            </div>
+            <div class="chips">
+              <div class="chip">Estado <b>Borrador</b></div>
+              <div class="chip">Versión <b>Rev 0</b></div>
+              <div class="chip">Moneda <b>UF</b></div>
+            </div>
+          </div>
+          <div class="page">
+            <div class="page-title">Resumen del presupuesto</div>
+            <p class="page-sub">Vista ejecutiva comercial y análisis de margen operativo en tiempo real.</p>
+            <div style="display:flex;gap:6px;margin-bottom:10px">
+              <button class="btn-mini" style="background:#fff;border:1px solid var(--line);color:var(--ink)">☀️</button>
+              <button class="btn-mini" style="background:#fff;border:1px solid var(--line);color:var(--ink)">Revisar alertas</button>
+              <button class="btn-prim">Continuar cubicación</button>
+            </div>
+            <div class="kpis">
+              <div class="kpi"><label>Total venta</label><strong>534.643 UF</strong></div>
+              <div class="kpi"><label>Partidas listas</label><strong>0/157</strong></div>
+              <div class="kpi"><label>Confianza</label><strong>0%</strong></div>
+              <div class="kpi"><label>Alertas</label><strong>318</strong></div>
+            </div>
+            <div class="split">
+              <div class="card">
+                <h3>Distribución del Costo Directo</h3>
+                <div class="bar"><i class="m"></i><i class="l"></i><i class="o"></i></div>
+                <div class="legend">
+                  <span><i class="dot" style="background:var(--blue)"></i>Materiales</span>
+                  <span><i class="dot" style="background:var(--success)"></i>Mano de obra</span>
+                  <span><i class="dot" style="background:var(--amber)"></i>Otros</span>
+                </div>
+                <div style="margin-top:10px;padding:8px;background:var(--canvas);border-radius:8px;font-size:10px;color:var(--ink3)">
+                  Simulador Comercial en Tiempo Real · GG · Utilidad
+                </div>
+              </div>
+              <div class="card">
+                <h3>Avance / Salud / Auditoría</h3>
+                <div style="height:8px;background:var(--line);border-radius:4px;margin-bottom:6px"></div>
+                <div style="height:8px;background:var(--line);border-radius:4px;margin-bottom:6px;width:80%"></div>
+                <div style="height:8px;background:var(--line);border-radius:4px;width:65%"></div>
+                <p style="margin:10px 0 0;font-size:10px;color:var(--ink3)">3 paneles laterales compitiendo</p>
+              </div>
+            </div>
+          </div>
+          <div class="status">
+            <span>Ctrl+K buscar · Ctrl+S guardar · F1 atajos…</span>
+            <span>I · Administrador</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <strong>Propuesta (recomendado)</strong>
+          <span class="tag good">Flujo PRODUCT.md</span>
+        </div>
+        <div class="mock">
+          <div class="app-header">
+            <div class="top-row">
+              <div class="brand">QUBI COST <span>ELECTRICAL</span></div>
+              <div class="pill">PRUEBA 2</div>
+              <div class="spacer"></div>
+              <button class="btn-mini">Buscar</button>
+              <button class="btn-mini">Guardar</button>
+              <button class="btn-prim">Revisar 318</button>
+            </div>
+            <div class="nav">
+              <button class="active">Resumen</button>
+              <button>Proyecto ▾</button>
+              <button>Itemizado</button>
+              <button>Cubicación ▾</button>
+              <button>APU</button>
+              <button>Precios ▾</button>
+              <button>Costos ▾</button>
+              <button>Cierre ▾</button>
+              <button class="muted">Más ▾</button>
+            </div>
+          </div>
+          <div class="ctx">
+            <div>
+              <div class="crumb">PRUEBA 2</div>
+              <h2>Resumen</h2>
+            </div>
+            <div class="chips">
+              <div class="chip"><b>Borrador</b> · Rev 0 · UF</div>
+            </div>
+          </div>
+          <div class="page">
+            <!-- Un solo título: el de la context bar. Sin subtítulo marketing. -->
+            <div style="display:flex;justify-content:flex-end;gap:6px;margin-bottom:10px">
+              <button class="btn-mini" style="background:#fff;border:1px solid var(--line);color:var(--ink)">Alertas</button>
+              <button class="btn-prim">Continuar cubicación</button>
+            </div>
+            <div class="kpis">
+              <div class="kpi"><label>Total venta</label><strong>534.643 UF</strong></div>
+              <div class="kpi"><label>Partidas listas</label><strong>0/157</strong></div>
+              <div class="kpi"><label>Confianza</label><strong>0%</strong></div>
+              <div class="kpi"><label>Alertas</label><strong>318</strong></div>
+            </div>
+            <div class="split">
+              <div class="card">
+                <h3>Costo directo</h3>
+                <div class="bar"><i class="m"></i><i class="l"></i><i class="o"></i></div>
+                <div class="legend">
+                  <span><i class="dot" style="background:var(--blue)"></i>Materiales</span>
+                  <span><i class="dot" style="background:var(--success)"></i>Mano de obra</span>
+                  <span><i class="dot" style="background:var(--amber)"></i>Otros</span>
+                </div>
+                <div style="margin-top:10px;padding:8px;background:var(--canvas);border-radius:8px;font-size:10px">
+                  GG <b>12%</b> · Utilidad <b>8%</b> · (sliders)
+                </div>
+              </div>
+              <div class="card">
+                <h3>Siguiente paso</h3>
+                <p style="margin:0;font-size:11px;color:var(--ink3)">0 de 157 partidas listas. Prioridad: cubicación.</p>
+                <button class="btn-prim" style="margin-top:10px">Ir a cubicación</button>
+                <div style="margin-top:12px;font-size:10px;color:var(--ink3)">Alertas críticas: 12 · Ver revisión →</div>
+              </div>
+            </div>
+          </div>
+          <div class="status">
+            <span>Edición exclusiva</span>
+            <span>Administrador</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">3 · Qué se corta / se mueve</div>
+    <div class="callouts">
+      <div class="callout">
+        <h3>Fuera de la barra principal</h3>
+        <ul>
+          <li><span class="strike">Plantillas</span> → dentro de APU o Más</li>
+          <li><span class="strike">Resumen x Piso</span> → Más / reportes</li>
+          <li><span class="strike">Solicitudes</span> → Precios y compras</li>
+          <li><span class="strike">Costo · EPP · M. de Obra</span> → dropdown <b>Costos</b></li>
+          <li><span class="strike">Cubic. SC</span> → bajo Cubicación ▾</li>
+        </ul>
+      </div>
+      <div class="callout">
+        <h3>Textos innecesarios</h3>
+        <ul>
+          <li>«Vista ejecutiva comercial…»</li>
+          <li>«Resumen ejecutivo» + «Resumen del presupuesto» (dejar uno)</li>
+          <li>Subtítulos marketing en Cotizaciones / Solicitudes / Proyecto</li>
+          <li>«como en el prototipo HTML» (F1)</li>
+          <li>Emojis ☀️📋📥 en UI de producción</li>
+        </ul>
+      </div>
+      <div class="callout">
+        <h3>Problemas a arreglar</h3>
+        <ul>
+          <li>EPP con números hardcodeados (parece maqueta)</li>
+          <li>Costo solapa Resumen + Mano de Obra</li>
+          <li>Tab Costo no marca activo en nav</li>
+          <li>Stepper de workflow siempre oculto (código muerto)</li>
+          <li>Hints de teclado triplicados (status + F1 + tooltips)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="note">
+      <b>Flujo canónico del producto</b> (docs/PRODUCT.md):
+      Proyecto → Itemizado → Cubicación → APU → Precios → Revisión → Oferta.
+      La barra actual muestra ~14 entradas; la propuesta deja ~8 visibles y el resto en menús.
+      Abre este archivo en el navegador: <code>docs/ui-ceo-review-antes-despues.html</code>
+    </div>
+  </div>
+</body>
+</html>

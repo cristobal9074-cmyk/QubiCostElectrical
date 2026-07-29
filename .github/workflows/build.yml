@@ -1,0 +1,221 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+    tags:     [ 'v*' ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  # ── Build y tests ──────────────────────────────────────────────────────────
+  build:
+    name: Build & Test
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/Directory.Build.props') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore
+        run: dotnet restore QubiCostElectrical.Wpf.sln
+
+      - name: Build
+        run: dotnet build QubiCostElectrical.Wpf.sln --configuration Release --no-restore
+
+      - name: Cleanup stale testhost
+        shell: pwsh
+        run: |
+          Get-Process | Where-Object { $_.Name -like "testhost*" -or $_.Name -like "vstest*" } | ForEach-Object {
+            try { Stop-Process -Id $_.Id -Force -ErrorAction Stop } catch {}
+          }
+
+      - name: Test
+        run: dotnet test QubiCostElectrical.Wpf.sln --configuration Release --no-build --logger "trx;LogFileName=results.trx"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: "**/TestResults/*.trx"
+          retention-days: 7
+
+  # ── Publicar EXE autocontenido (solo en push a main o en tags) ────────────
+  publish:
+    name: Publish
+    runs-on: windows-latest
+    needs: build
+    if: github.event_name == 'push'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore QubiCostElectrical.Wpf.sln
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/Directory.Build.props') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Leer versión
+        id: version
+        shell: pwsh
+        run: |
+          $props = Get-Content -LiteralPath Directory.Build.props -Raw
+          $prefix = [regex]::Match($props, '<VersionPrefix>([^<]+)</VersionPrefix>').Groups[1].Value
+          $suffix = [regex]::Match($props, '<VersionSuffix>([^<]*)</VersionSuffix>').Groups[1].Value
+          if (-not $prefix) { throw "VersionPrefix no encontrado" }
+          $ver = if ($suffix) { "$prefix-$suffix" } else { $prefix }
+          echo "value=$ver" >> $env:GITHUB_OUTPUT
+          Write-Host "Versión: $ver"
+
+      - name: Publish (win-x64 self-contained)
+        run: >
+          dotnet publish
+          src/QubiCostElectrical.Wpf/QubiCostElectrical.Wpf.csproj
+          --configuration Release
+          --runtime win-x64
+          --self-contained true
+          -p:PublishSingleFile=true
+          -p:EnableCompressionInSingleFile=true
+          -p:DebugType=none
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          --output publish/win-x64
+
+      - name: Firmar ejecutable (Authenticode)
+        shell: pwsh
+        env:
+          CODE_SIGNING_CERT_BASE64: ${{ secrets.CODE_SIGNING_CERT_BASE64 }}
+          CODE_SIGNING_CERT_PASSWORD: ${{ secrets.CODE_SIGNING_CERT_PASSWORD }}
+        run: |
+          if (-not $env:CODE_SIGNING_CERT_BASE64) {
+            Write-Host "Firma omitida: configure secretos CODE_SIGNING_CERT_BASE64 y CODE_SIGNING_CERT_PASSWORD"
+            exit 0
+          }
+          $pfx = Join-Path $env:RUNNER_TEMP "codesign.pfx"
+          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:CODE_SIGNING_CERT_BASE64))
+          $env:CODE_SIGNING_CERT_PFX = $pfx
+          .\deploy\Sign-Authenticode.ps1 -Paths "publish\win-x64\QubiCostElectrical.exe"
+          if ($LASTEXITCODE -eq 1) { throw "Firma del ejecutable falló" }
+
+      - name: Crear directorio artifacts
+        shell: pwsh
+        run: New-Item -ItemType Directory -Path artifacts -Force | Out-Null
+
+      - name: ZIP ejecutable
+        shell: pwsh
+        run: |
+          $ver = "${{ steps.version.outputs.value }}"
+          Compress-Archive -Path publish/win-x64/* `
+            -DestinationPath "artifacts/QubiCostElectrical-$ver-win-x64.zip" -Force
+
+      - name: Instalar Inno Setup
+        run: choco install innosetup --no-progress -y
+
+      - name: Compilar instalador .exe
+        shell: pwsh
+        run: |
+          $ver = "${{ steps.version.outputs.value }}"
+          # Crear company.iss temporal en CI (sin datos privados)
+          @"
+          #define AppPublisher "Qubi Cost Electrical"
+          #define AppURL       "https://github.com/${{ github.repository }}"
+          #define AppSupportURL "https://github.com/${{ github.repository }}/issues"
+          "@ | Out-File -FilePath installer\company.iss -Encoding utf8
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" `
+            /DAppVersion=$ver `
+            installer\QubiCostElectrical.iss
+          if ($LASTEXITCODE -ne 0) { throw "ISCC falló con código $LASTEXITCODE" }
+
+      - name: Firmar instalador (Authenticode)
+        shell: pwsh
+        env:
+          CODE_SIGNING_CERT_BASE64: ${{ secrets.CODE_SIGNING_CERT_BASE64 }}
+          CODE_SIGNING_CERT_PASSWORD: ${{ secrets.CODE_SIGNING_CERT_PASSWORD }}
+        run: |
+          if (-not $env:CODE_SIGNING_CERT_BASE64) {
+            Write-Host "Firma omitida: configure secretos CODE_SIGNING_CERT_BASE64 y CODE_SIGNING_CERT_PASSWORD"
+            exit 0
+          }
+          $ver = "${{ steps.version.outputs.value }}"
+          $pfx = Join-Path $env:RUNNER_TEMP "codesign.pfx"
+          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:CODE_SIGNING_CERT_BASE64))
+          $env:CODE_SIGNING_CERT_PFX = $pfx
+          $setup = Get-ChildItem artifacts -Filter "QubiCostElectrical-Setup-$ver.exe" -ErrorAction SilentlyContinue
+          if (-not $setup) { $setup = Get-ChildItem artifacts -Filter "QubiCostElectrical-Setup-*.exe" | Select-Object -First 1 }
+          if ($setup) {
+            .\deploy\Sign-Authenticode.ps1 -Paths $setup.FullName
+            if ($LASTEXITCODE -eq 1) { throw "Firma del instalador falló" }
+          } else {
+            Write-Warning "Instalador no encontrado para firmar"
+          }
+
+      - name: ZIP fuente limpio
+        shell: pwsh
+        run: pwsh tools/Create-SourcePackage.ps1
+
+      - name: Generar SHA-256 de artefactos
+        shell: pwsh
+        run: |
+          $hashes = Get-ChildItem artifacts/ | ForEach-Object {
+            $hash = (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower()
+            "$hash  $($_.Name)"
+          }
+          $hashes | Out-File -FilePath artifacts/SHA256SUMS.txt -Encoding utf8
+          $hashes | ForEach-Object { Write-Host $_ }
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: QubiCostElectrical-Windows-x64
+          path: artifacts/
+          retention-days: 30
+
+  # ── Release en GitHub (solo cuando se empuja un tag v*) ───────────────────
+  release:
+    name: GitHub Release
+    runs-on: windows-latest
+    needs: publish
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Descargar artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: QubiCostElectrical-Windows-x64
+          merge-multiple: true
+          path: artifacts/
+
+      - name: Crear Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*
+          generate_release_notes: true

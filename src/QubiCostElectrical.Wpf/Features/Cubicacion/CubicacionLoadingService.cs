@@ -1,0 +1,187 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using QubiCostElectrical;
+
+namespace QubiCostElectrical.Wpf.Features.Cubicacion;
+
+/// <summary>
+/// Carga de partidas/filas desde la sesión y filtro del panel izquierdo — extraído de
+/// CubicacionViewModel.Loading.cs (ver plan en ~/.claude/plans/glittery-stargazing-hippo.md).
+/// Comportamiento preservado tal cual, incluyendo el bombeo síncrono de Dispatcher.Invoke con
+/// DispatcherPriority.Render para forzar el pintado del overlay "Cargando partida…" antes del
+/// recálculo (estructuralmente distinto al patrón async-delay de CubicacionTotalsCalculator).
+/// </summary>
+internal sealed class CubicacionLoadingService
+{
+    private readonly CubicacionViewModel parent;
+    private readonly BudgetProjectSession session;
+    private readonly ICubicacionTakeoffQueryService querySvc;
+    private readonly ICubicacionService cubSvc;
+
+    public CubicacionLoadingService(
+        CubicacionViewModel parent,
+        BudgetProjectSession session,
+        ICubicacionTakeoffQueryService querySvc,
+        ICubicacionService cubSvc)
+    {
+        this.parent = parent;
+        this.session = session;
+        this.querySvc = querySvc;
+        this.cubSvc = cubSvc;
+    }
+
+    public void LoadPartidas()
+    {
+        parent.Partidas.Clear();
+        parent.FilteredPartidas.Clear();
+
+        // Precalcular conteos e issues O(n+m) en vez de O(n*m) para evitar congelamiento en
+        // proyectos grandes (mismo patrón: un solo recorrido de session.Cubicacion, con un
+        // diccionario de materiales por código para no reescanear el catálogo por fila).
+        var materialesPorCodigo = new Dictionary<string, MaterialRow>(StringComparer.OrdinalIgnoreCase);
+        foreach (var m in session.Materiales)
+            if (!string.IsNullOrWhiteSpace(m.Codigo))
+                materialesPorCodigo[m.Codigo] = m;
+
+        var countByItemId = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        var issuesByItemId = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var r in session.Cubicacion)
+        {
+            if (string.IsNullOrWhiteSpace(r.ItemId)) continue;
+            bool hasContent = !string.IsNullOrWhiteSpace(r.Codigo) || r.Cantidad != 0m;
+            if (!hasContent) continue;
+
+            countByItemId.TryGetValue(r.ItemId, out int current);
+            countByItemId[r.ItemId] = current + 1;
+
+            if (issuesByItemId.Contains(r.ItemId)) continue;
+            MaterialRow? material = string.IsNullOrWhiteSpace(r.Codigo)
+                ? null
+                : materialesPorCodigo.GetValueOrDefault(r.Codigo);
+            bool codigoInvalido = !string.IsNullOrWhiteSpace(r.Codigo) && material == null;
+            bool precioCero = material != null
+                && r.MatClpConFallback == 0m
+                && r.MoClpConFallback == 0m;
+            if (codigoInvalido || precioCero)
+                issuesByItemId.Add(r.ItemId);
+        }
+
+        foreach (var item in session.Itemizado)
+        {
+            if (item.EsTitulo)
+            {
+                parent.Partidas.Add(new PartidaListItemVm(item, 0));
+                continue;
+            }
+
+            int count = countByItemId.GetValueOrDefault(item.Id ?? "", 0);
+            bool hasIssues = issuesByItemId.Contains(item.Id ?? "");
+            parent.Partidas.Add(new PartidaListItemVm(item, count, hasIssues));
+        }
+        ApplyFilter();
+    }
+
+    public void ApplyFilter()
+    {
+        parent.FilteredPartidas.Clear();
+        string f = (parent.PartidaFilter ?? "").Trim().ToLowerInvariant();
+        foreach (var p in parent.Partidas)
+        {
+            bool match = string.IsNullOrEmpty(f)
+                || p.Descripcion.Contains(f, StringComparison.OrdinalIgnoreCase)
+                || p.Codigo.Contains(f, StringComparison.OrdinalIgnoreCase);
+            if (match) parent.FilteredPartidas.Add(p);
+        }
+    }
+
+    public void SelectFirstPartida()
+    {
+        var first = parent.Partidas.FirstOrDefault(p => p.EsPartida && !p.ExcluidoCubicacion)
+            ?? parent.Partidas.FirstOrDefault(p => p.EsPartida);
+        if (first != null) parent.SelectPartida(first);
+    }
+
+    public void SelectPartida(PartidaListItemVm partida)
+    {
+        parent.SelectedPartida = partida;
+        if (session.PendingTakeoffNavigation != null
+            && string.Equals(session.PendingTakeoffNavigation.ItemId, partida.Id, StringComparison.OrdinalIgnoreCase))
+        {
+            session.PendingTakeoffNavigation = null;
+        }
+    }
+
+    public void LoadCubicacionRows()
+    {
+        parent.Rows.Clear();
+        parent.SelectedRow = null;
+        parent.NotifyCubicacionSummaryChanged();
+
+        var selectedPartida = parent.SelectedPartida;
+        if (selectedPartida == null || !selectedPartida.EsPartida)
+        {
+            parent.NotifyIsEmptyChanged();
+            parent.ScheduleRefreshTotals();
+            return;
+        }
+
+        parent.HasPendingUndoForEdit = false;
+        int sourceCount = session.Cubicacion.Count(x => string.Equals(x.ItemId, selectedPartida.Id, StringComparison.OrdinalIgnoreCase));
+        bool showLoading = sourceCount > 100;
+
+        if (showLoading)
+        {
+            parent.IsLoading = true;
+            // Forzar un pase de render antes del recálculo síncrono (puede tomar segundos con
+            // miles de filas): sin esto, WPF nunca pinta el overlay "Cargando partida…" porque
+            // el hilo de UI queda bloqueado en el mismo tick en que se puso IsLoading=true.
+            System.Windows.Application.Current?.Dispatcher.Invoke(
+                () => { }, System.Windows.Threading.DispatcherPriority.Render);
+        }
+
+        // Recalcular fórmulas solo de esta partida antes de mostrar (RecalculateAll recorría
+        // todo el proyecto y podía congelar la UI en proyectos grandes).
+        querySvc.RecalculateForItem(session, selectedPartida.Id);
+
+        var sourceRows = cubSvc.GetRowsForItem(session.Cubicacion, selectedPartida.Id);
+        foreach (var r in sourceRows)
+        {
+            var vm = new CubicacionRowVm(r);
+            parent.InitializeSectorRow(vm);
+            parent.Rows.Add(vm);
+        }
+
+        // Casillas visuales estilo Excel — no persistir en sesión hasta que el usuario edite.
+        while (parent.Rows.Count < CubicacionViewModel.MinVisibleRows)
+        {
+            var row = new CubicacionRow
+            {
+                Id = Guid.NewGuid().ToString("N"),
+                ItemId = selectedPartida.Id,
+                Tipo = "MAT",
+                Area = "General"
+            };
+
+            var vm = new CubicacionRowVm(row, isSessionBacked: false);
+            parent.InitializeSectorRow(vm);
+            parent.Rows.Add(vm);
+        }
+
+        parent.ValidateRows();
+        parent.IsLoading = false;
+        parent.NotifyIsEmptyChanged();
+        parent.NotifyCubicacionSummaryChanged();
+        parent.ScheduleRefreshTotals();
+        parent.UpdatePartidaCount(selectedPartida);
+        System.Windows.Input.CommandManager.InvalidateRequerySuggested();
+        parent.RefreshSectorWindow();
+        parent.RefreshRowNumbers();
+
+        // Sin esto, el panel Detalle queda en blanco ("Seleccione un recurso…") cada vez que
+        // se cambia de partida, aunque la partida tenga recursos reales — obliga a un clic
+        // extra innecesario. Se preselecciona el primer recurso con datos (no una casilla
+        // visual vacía) para que el panel muestre contenido útil de entrada.
+        parent.SelectedRow = parent.Rows.FirstOrDefault(r => r.IsSessionBacked);
+    }
+}

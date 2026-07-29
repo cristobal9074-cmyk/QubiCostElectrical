@@ -1,0 +1,8 @@
+R2: B==+DETALLE!D17 | C==+DETALLE!E17 | D==+DETALLE!F17
+R4: B=ELECTRICIDAD
+R6: A=1 | B=1 | C=TRAMITES
+R7: A=2 | B=1.1 | C=Tramites S.E.C. | D=gl
+R8: A=3 | B=1.2 | C=Tramites Cia Eléctrica Local | D=gl
+R9: A=4 | B=2 | C=CENTROS DE ALUMBRADO 
+count=0
+lista_count=0

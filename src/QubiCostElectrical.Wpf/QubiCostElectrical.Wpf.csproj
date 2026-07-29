@@ -1,0 +1,69 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <!-- Sin esto, dotnet build copiaba las variantes nativas de TODOS los RIDs (win, linux,
+         mac) de paquetes como SkiaSharp/PDFtoImage al bin/ — ~240 MB de .so/.dylib que jamás
+         se usan en un escritorio Windows. Fijar el RID a win-x64 (sin self-contained, sigue
+         dependiendo del runtime de .NET instalado) hace que solo se copien los binarios nativos
+         de Windows. -->
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>false</SelfContained>
+    <RootNamespace>QubiCostElectrical.Wpf</RootNamespace>
+    <AssemblyName>QubiCostElectrical</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\QubiCostElectrical.ico</ApplicationIcon>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <Title>Qubi Cost Electrical</Title>
+    <StartupObject>QubiCostElectrical.Wpf.Program</StartupObject>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <Optimize>true</Optimize>
+    <DebugType>embedded</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>QubiCostElectrical.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\QubiCostElectrical.ico" />
+    <Resource Include="Assets\isolate_the_isometric_cube_logo_mark_from_data_image_image_6._remove_the_white.png" />
+    <Resource Include="Assets\qubi_cost_electrical_refined_logo.png" />
+    <Resource Include="Fonts\Inter.ttc" />
+    <Resource Include="Fonts\JetBrainsMono-Regular.ttf" />
+    <Resource Include="Fonts\JetBrainsMono-SemiBold.ttf" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.*" />
+    <PackageReference Include="PDFtoImage" Version="5.1.1" />
+    <PackageReference Include="Velopack" Version="0.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\QubiCostElectrical.Composition\QubiCostElectrical.Composition.csproj" />
+    <ProjectReference Include="..\QubiCostElectrical.Application\QubiCostElectrical.Application.csproj" />
+    <ProjectReference Include="..\QubiCostElectrical.Domain\QubiCostElectrical.Domain.csproj" />
+    <ProjectReference Include="..\QubiCostElectrical.Infrastructure\QubiCostElectrical.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Legacy retirado: placeholders Fase 1 y DeliveryView duplicado de Export -->
+    <Compile Remove="Views\Placeholder\**\*.cs" />
+    <Page Remove="Views\Placeholder\**\*.xaml" />
+    <Compile Remove="Features\Delivery\DeliveryView.xaml.cs" />
+    <Compile Remove="Features\Delivery\DeliveryViewModel.cs" />
+    <Page Remove="Features\Delivery\DeliveryView.xaml" />
+  </ItemGroup>
+
+</Project>

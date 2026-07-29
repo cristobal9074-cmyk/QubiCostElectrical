@@ -1,0 +1,54 @@
+<Window x:Class="QubiCostElectrical.Wpf.Shell.KeyboardShortcutsDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Atajos de teclado"
+        Width="560" Height="520"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Style="{StaticResource Dialog.Window}">
+  <Border Padding="20" Background="{DynamicResource Brush.Surface}"
+          BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+          CornerRadius="{StaticResource Radius.Lg}">
+    <Grid>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="*" />
+        <RowDefinition Height="Auto" />
+      </Grid.RowDefinitions>
+
+      <StackPanel Margin="0,0,0,12">
+        <TextBlock Text="Atajos de teclado" Style="{StaticResource Text.ViewTitle}" FontSize="18" />
+        <TextBlock Text="Referencia rápida para trabajar sin mouse."
+                   Style="{StaticResource Text.Body}" Foreground="{DynamicResource Brush.Muted}" Margin="0,4,0,0" />
+      </StackPanel>
+
+      <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+        <StackPanel>
+          <TextBlock Text="GLOBAL" Style="{StaticResource Text.SectionLabel}" Margin="0,0,0,6" />
+          <TextBlock Style="{StaticResource Text.Body}" Margin="0,0,0,10" TextWrapping="Wrap"
+                     Text="Ctrl+K — Búsqueda rápida · Ctrl+S — Guardar · Ctrl+Z/Y — Deshacer/Rehacer · Ctrl+N/O/W — Proyecto · F1 — Esta ayuda · F8 — Revisión" />
+
+          <TextBlock Text="NAVEGACIÓN" Style="{StaticResource Text.SectionLabel}" Margin="0,8,0,6" />
+          <TextBlock Style="{StaticResource Text.Body}" Margin="0,0,0,10" TextWrapping="Wrap"
+                     Text="Alt+1 Resumen · Alt+2 Itemizado · Alt+3 Cubicación · Alt+Shift+3 C.SC · Alt+4 APU · Alt+6 Precios · Alt+9 Revisión · Alt+O Exportar" />
+
+          <TextBlock Text="ITEMIZADO" Style="{StaticResource Text.SectionLabel}" Margin="0,8,0,6" />
+          <TextBlock Style="{StaticResource Text.Body}" Margin="0,0,0,10" TextWrapping="Wrap"
+                     Text="Ins — Agregar partida · Alt+↑/↓ — Mover fila · Supr — Eliminar · Ctrl+V — Pegar desde Excel" />
+
+          <TextBlock Text="CUBICACIÓN" Style="{StaticResource Text.SectionLabel}" Margin="0,8,0,6" />
+          <TextBlock Style="{StaticResource Text.Body}" Margin="0,0,0,10" TextWrapping="Wrap"
+                     Text="Alt+↑/↓ — Mover recurso · Ctrl+V — Pegar en grilla · Tab/Enter — Navegar celdas · Ctrl+←/→ — Ventana de sectores · Casillas/Detalle — Cambiar vista" />
+
+          <TextBlock Text="APU" Style="{StaticResource Text.SectionLabel}" Margin="0,8,0,6" />
+          <TextBlock Style="{StaticResource Text.Body}" TextWrapping="Wrap"
+                     Text="Enter — Editar celda · Supr — Quitar recurso · Menú ⋯ — Plantillas y generar desde cubicación" />
+        </StackPanel>
+      </ScrollViewer>
+
+      <Button Grid.Row="2" Content="Cerrar" Style="{StaticResource Button.Primary}"
+              HorizontalAlignment="Right" Margin="0,14,0,0" Padding="20,8"
+              Click="OnCloseClick" IsDefault="True" />
+    </Grid>
+  </Border>
+</Window>

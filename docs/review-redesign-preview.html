@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Revisión Final — Qubi Cost Electrical</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', -apple-system, sans-serif; background: #14161C; color: #E1E4E8; height: 100vh; overflow: hidden; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #2D3038; border-radius: 3px; }
+
+  .app { display: flex; flex-direction: column; height: 100vh; }
+
+  /* ── HEADER ── */
+  .header { background: #1C1F26; border-bottom: 1px solid #2D3038; padding: 14px 20px; flex-shrink: 0; }
+  .header-inner { display: flex; align-items: center; justify-content: space-between; }
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .header-icon { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, #1E2D4A, #14263C); border: 1px solid #3B82F6; display: flex; align-items: center; justify-content: center; font-size: 17px; color: #60A5FA; }
+  .header-title { font-size: 14px; font-weight: 600; color: #E1E4E8; }
+  .header-badge { padding: 2px 8px; border-radius: 4px; background: #1E2D4A; border: 1px solid #3B82F6; font-size: 10px; font-weight: 600; color: #60A5FA; }
+  .header-subtitle { font-size: 10px; color: #8B8F96; margin-top: 2px; }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+  .header-meta { display: flex; align-items: center; gap: 8px; font-size: 11px; color: #8B8F96; }
+  .header-meta-dot { width: 6px; height: 6px; border-radius: 50%; background: #40C77D; }
+  .btn-icon { width: 32px; height: 32px; border-radius: 8px; background: #1C1F26; border: 1px solid #2D3038; color: #8B8F96; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+  .btn-icon:hover { background: #22262E; color: #E1E4E8; }
+
+  /* ── BODY ── */
+  .body { display: flex; flex: 1; overflow: hidden; gap: 16px; padding: 16px; background: #14161C; }
+
+  /* ── LEFT PANEL ── */
+  .panel-left { width: 340px; min-width: 300px; display: flex; flex-direction: column; gap: 12px; }
+  .card { background: #1C1F26; border: 1px solid #2D3038; border-radius: 10px; display: flex; flex-direction: column; }
+  .card-header { padding: 14px 14px 0; }
+  .card-body { padding: 14px; flex: 1; }
+  .card-body-scroll { padding: 12px; flex: 1; overflow-y: auto; }
+
+  .info-banner { background: #1E2D4A; border-radius: 8px; padding: 12px; display: flex; gap: 10px; align-items: flex-start; }
+  .info-banner-icon { width: 20px; height: 20px; border-radius: 6px; background: #3B82F6; display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+  .info-banner-text { font-size: 11px; color: #8B8F96; line-height: 1.5; }
+  .info-banner-title { font-size: 9px; font-weight: 700; color: #60A5FA; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+
+  .search-box { display: flex; align-items: center; gap: 8px; background: #252830; border: 1px solid #3A3F4A; border-radius: 8px; padding: 0 10px; height: 32px; }
+  .search-box input { background: none; border: none; color: #E1E4E8; font-size: 12px; font-family: inherit; outline: none; flex: 1; }
+  .search-box input::placeholder { color: #5A5E66; }
+  .search-box .icon { color: #5A5E66; font-size: 13px; }
+
+  .filter-select { width: 100%; height: 32px; background: #252830; border: 1px solid #3A3F4A; border-radius: 8px; color: #E1E4E8; padding: 0 10px; font-size: 12px; font-family: inherit; outline: none; appearance: none; cursor: pointer; }
+
+  /* Checklist items */
+  .checklist { display: flex; flex-direction: column; gap: 6px; }
+  .check-item { display: flex; align-items: center; padding: 8px 10px; border-radius: 8px; border: 1px solid; gap: 8px; cursor: pointer; transition: all 0.1s; }
+  .check-item:hover { filter: brightness(1.1); }
+  .check-item.pass { background: #0F1F14; border-color: #1A3D24; }
+  .check-item.warn { background: #2D2410; border-color: #B8860B; }
+  .check-item.fail { background: #1F0F0F; border-color: #3D1A1A; }
+  .check-icon { width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+  .check-icon.pass { background: #166534; color: #4ADE80; }
+  .check-icon.warn { background: #78350F; color: #F59E0B; }
+  .check-icon.fail { background: #991B1B; color: #F87171; }
+  .check-text { flex: 1; font-size: 11px; color: #E1E4E8; line-height: 1.4; }
+  .check-count { padding: 1px 7px; border-radius: 4px; font-size: 10px; font-weight: 700; flex-shrink: 0; }
+  .check-count.pass { background: #166534; color: #4ADE80; }
+  .check-count.warn { background: #78350F; color: #F59E0B; }
+  .check-count.fail { background: #991B1B; color: #F87171; }
+  .check-nav { font-size: 10px; color: #3B82F6; font-weight: 600; cursor: pointer; }
+  .check-nav:hover { text-decoration: underline; }
+
+  /* ── CENTER PANEL ── */
+  .panel-center { flex: 1; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .panel-center .card-header { display: flex; align-items: center; justify-content: space-between; }
+  .panel-center .card-body { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+
+  .project-title { font-size: 16px; font-weight: 700; color: #E1E4E8; }
+  .project-subtitle { font-size: 12px; color: #8B8F96; margin-top: 4px; }
+
+  .action-btns { display: flex; gap: 8px; }
+
+  .btn { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border-radius: 8px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; border: 1px solid; white-space: nowrap; }
+  .btn-primary { background: linear-gradient(180deg, #60A5FA 0%, #3B82F6 100%); border-color: #3B82F6; color: white; }
+  .btn-primary:hover { opacity: 0.92; }
+  .btn-secondary { background: #1C1F26; border-color: #2D3038; color: #BCC0C6; }
+  .btn-secondary:hover { background: #22262E; }
+  .btn-success { background: linear-gradient(180deg, #4ADE80 0%, #22C55E 100%); border-color: #22C55E; color: white; }
+  .btn-success:hover { opacity: 0.92; }
+
+  /* War room */
+  .war-room { background: #2D2410; border: 1px solid #B8860B; border-radius: 8px; padding: 12px; }
+  .war-room-inner { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .war-room-left { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+  .war-room-label { font-size: 9px; font-weight: 700; color: #F59E0B; text-transform: uppercase; letter-spacing: 0.5px; }
+  .war-room-text { font-size: 12px; color: #E1E4E8; line-height: 1.5; }
+  .war-room-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .war-room-progress { font-size: 11px; font-weight: 700; color: #F59E0B; white-space: nowrap; }
+
+  /* Completeness bar */
+  .completeness { background: #252830; border-radius: 8px; padding: 10px 12px; }
+  .completeness-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .completeness-label { font-size: 10px; color: #8B8F96; }
+  .completeness-pct { font-size: 12px; font-weight: 700; color: #22C55E; }
+  .progress-bar { height: 6px; background: #2D3038; border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, #3B82F6, #22C55E); transition: width 0.4s ease; }
+
+  /* Stats row */
+  .stats { display: flex; gap: 8px; flex-wrap: wrap; }
+  .stat { background: #252830; border: 1px solid #2D3038; border-radius: 8px; padding: 10px 14px; display: flex; flex-direction: column; align-items: center; min-width: 88px; }
+  .stat-label { font-size: 9px; font-weight: 600; color: #6B7078; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 4px; }
+  .stat-value { font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 600; }
+  .stat-value.green { color: #22C55E; }
+  .stat-value.red { color: #EF4444; }
+  .stat-value.amber { color: #F59E0B; }
+  .stat-value.blue { color: #3B82F6; }
+
+  /* Gauge circle */
+  .gauge { width: 80px; height: 80px; display: flex; flex-direction: column; align-items: center; }
+  .gauge-svg { width: 56px; height: 56px; }
+  .gauge-pct { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700; color: #E1E4E8; margin-top: 4px; }
+  .gauge-label { font-size: 9px; font-weight: 600; color: #6B7078; text-transform: uppercase; letter-spacing: 0.3px; }
+
+  /* Table */
+  .table-wrap { flex: 1; overflow: auto; margin: 0 -4px; }
+  table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  thead th { background: #252830; padding: 8px 10px; font-size: 9px; font-weight: 700; color: #6B7078; text-transform: uppercase; letter-spacing: 0.3px; text-align: left; border-bottom: 1px solid #2D3038; position: sticky; top: 0; z-index: 1; }
+  tbody td { padding: 9px 10px; border-bottom: 1px solid #252830; color: #BCC0C6; }
+  tbody tr:hover td { background: #22262E; }
+  tbody tr.active td { background: #1E2D4A; }
+
+  /* Severity badges */
+  .sev { display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px; border-radius: 4px; font-size: 9px; font-weight: 700; text-transform: uppercase; }
+  .sev-blocker { background: #1F0F0F; color: #F87171; border: 1px solid #3D1A1A; }
+  .sev-critical { background: #2D2410; color: #F59E0B; border: 1px solid #78350F; }
+  .sev-warning { background: #0F1F14; color: #4ADE80; border: 1px solid #1A3D24; }
+  .sev-info { background: #1E2D4A; color: #60A5FA; border: 1px solid #1A3752; }
+
+  /* Footer CTA */
+  .footer-cta { display: flex; justify-content: flex-end; gap: 10px; padding: 12px 0 0; border-top: 1px solid #2D3038; margin-top: auto; }
+
+  /* ── RIGHT PANEL ── */
+  .panel-right { width: 330px; min-width: 280px; display: flex; flex-direction: column; gap: 10px; }
+  .exec-summary { font-size: 12px; color: #8B8F96; line-height: 1.6; margin-bottom: 8px; }
+
+  .category-box { border-radius: 8px; padding: 12px; border: 1px solid; }
+  .category-box.blocker { background: #1F0F0F; border-color: #3D1A1A; }
+  .category-box.critical { background: #2D2410; border-color: #78350F; }
+  .category-box.warning { background: #0F1F14; border-color: #1A3D24; }
+  .category-box.info { background: #1C2838; border-color: #1A3752; }
+
+  .cat-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .cat-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .cat-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
+  .cat-count { margin-left: auto; font-size: 9px; font-weight: 700; opacity: 0.7; }
+  .cat-items { display: flex; flex-direction: column; gap: 4px; }
+  .cat-item { font-size: 10px; line-height: 1.5; color: #BCC0C6; }
+
+  /* Status bar */
+  .status-bar { padding: 6px 14px; background: #1C1F26; border-top: 1px solid #2D3038; display: flex; align-items: center; gap: 6px; font-size: 10px; color: #8B8F96; flex-shrink: 0; }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .status-dot.green { background: #40C77D; }
+  .status-dot.red { background: #EF4444; }
+  .status-sep { width: 1px; height: 12px; background: #2D3038; margin: 0 6px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ═══ HEADER ═══ -->
+  <div class="header">
+    <div class="header-inner">
+      <div class="header-left">
+        <div class="header-icon">◈</div>
+        <div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span class="header-title">Revisión final</span>
+            <span class="header-badge" style="border-color:#F59E0B;color:#F59E0B;background:#2D2410">3 bloqueantes</span>
+          </div>
+          <span class="header-subtitle">Edificio Corporativo QUBI · 1.247 partidas</span>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="header-meta"><span class="header-meta-dot"></span> 92% confianza</div>
+        <div class="header-meta">v.2.4.1</div>
+        <button class="btn-icon">⟳</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ BODY ═══ -->
+  <div class="body">
+
+    <!-- ─── LEFT PANEL ─── -->
+    <div class="panel-left">
+      <div class="card">
+        <div class="card-body">
+          <div class="info-banner">
+            <div class="info-banner-icon">i</div>
+            <div>
+              <div class="info-banner-title">Cierre de calidad</div>
+              <div class="info-banner-text">Detecta bloqueos, faltantes e inconsistencias antes de exportar la oferta.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-body" style="padding:12px">
+          <div class="search-box">
+            <span class="icon">🔍</span>
+            <input type="text" placeholder="Buscar en issues…">
+          </div>
+          <select class="filter-select" style="margin-top:8px">
+            <option>Todas las severidades</option>
+            <option>Bloqueante</option>
+            <option>Crítico</option>
+            <option>Advertencia</option>
+            <option>Info</option>
+          </select>
+        </div>
+      </div>
+      <div class="card" style="flex:1;overflow:hidden">
+        <div class="card-body-scroll">
+          <div style="font-size:9px;font-weight:700;color:#6B7078;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Alertas priorizadas</div>
+          <div class="checklist">
+
+            <div class="check-item fail">
+              <div class="check-icon fail">✗</div>
+              <span class="check-text"><strong>3 bloqueantes</strong> — impiden exportar</span>
+              <span class="check-count fail">3</span>
+            </div>
+
+            <div class="check-item fail">
+              <div class="check-icon fail">✗</div>
+              <span class="check-text"><strong>12 partidas vacías</strong> sin recursos asignados</span>
+              <span class="check-count fail">12</span>
+              <span class="check-nav">Revisar →</span>
+            </div>
+
+            <div class="check-item fail">
+              <div class="check-icon fail">✗</div>
+              <span class="check-text"><strong>8 materiales sin precio</strong> en Price Bank</span>
+              <span class="check-count fail">8</span>
+              <span class="check-nav">Revisar →</span>
+            </div>
+
+            <div class="check-item fail">
+              <div class="check-icon fail">✗</div>
+              <span class="check-text"><strong>5 APU incompletos</strong> o faltantes</span>
+              <span class="check-count fail">5</span>
+              <span class="check-nav">Revisar →</span>
+            </div>
+
+            <div class="check-item warn">
+              <div class="check-icon warn">▲</div>
+              <span class="check-text"><strong>24 líneas sin área</strong> asignada</span>
+              <span class="check-count warn">24</span>
+              <span class="check-nav">Revisar →</span>
+            </div>
+
+            <div class="check-item pass">
+              <div class="check-icon pass">✓</div>
+              <span class="check-text"><strong>Precios completos</strong> — sin observaciones</span>
+              <span class="check-count pass">0</span>
+            </div>
+
+            <div class="check-item fail">
+              <div class="check-icon fail">✗</div>
+              <span class="check-text"><strong>Bloqueado para exportar</strong> —resolver issues primero</span>
+              <span class="check-count fail">!</span>
+            </div>
+
+          </div>
+          <div style="text-align:center;margin-top:8px">
+            <span style="font-size:10px;color:#3B82F6;cursor:pointer;font-weight:600">Mostrar todo →</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── CENTER PANEL ─── -->
+    <div class="panel-center">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="project-title">Edificio Corporativo QUBI — 1.247 partidas</div>
+            <div class="project-subtitle">Hay bloqueos que deben corregirse antes de exportar.</div>
+          </div>
+          <div class="action-btns">
+            <button class="btn btn-secondary">Ir a corregir</button>
+            <button class="btn btn-secondary">Actualizar</button>
+          </div>
+        </div>
+
+        <!-- War room -->
+        <div style="padding:0 14px 12px">
+          <div class="war-room">
+            <div class="war-room-inner">
+              <div class="war-room-left">
+                <span class="war-room-label">⚡ War Room</span>
+                <span class="war-room-text">Bloqueante · Partida vacía — La partida "E-301-TG" no tiene recursos asignados.</span>
+              </div>
+              <div class="war-room-right">
+                <span class="war-room-progress">1/8</span>
+                <button class="btn btn-secondary" style="height:26px;padding:0 8px;font-size:10px">Ir</button>
+                <button class="btn btn-secondary" style="height:26px;padding:0 8px;font-size:10px">‹</button>
+                <button class="btn btn-secondary" style="height:26px;padding:0 8px;font-size:10px">›</button>
+                <button class="btn btn-success" style="height:26px;padding:0 8px;font-size:10px">✓ Resolver</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Completeness -->
+        <div style="padding:0 14px 12px">
+          <div class="completeness">
+            <div class="completeness-header">
+              <span class="completeness-label">Completitud del presupuesto</span>
+              <span class="completeness-pct">86%</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" style="width:86%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stats + Gauge -->
+        <div style="display:flex;gap:10px;padding:0 14px 12px;align-items:center">
+          <div class="gauge">
+            <svg class="gauge-svg" viewBox="0 0 36 36">
+              <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#2D3038" stroke-width="3"/>
+              <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22C55E" stroke-width="3" stroke-dasharray="86, 100" stroke-linecap="round"/>
+            </svg>
+            <span class="gauge-pct" style="color:#22C55E">86%</span>
+            <span class="gauge-label">Confianza</span>
+          </div>
+
+          <div class="stats" style="flex:1">
+            <div class="stat"><span class="stat-label">Bloqueantes</span><span class="stat-value red">3</span></div>
+            <div class="stat"><span class="stat-label">Críticos</span><span class="stat-value amber">8</span></div>
+            <div class="stat"><span class="stat-label">Advertencias</span><span class="stat-value amber">16</span></div>
+            <div class="stat"><span class="stat-label">Exportar</span><span class="stat-value red">Bloqueado</span></div>
+          </div>
+          <span style="font-size:10px;color:#6B7078;max-width:200px;line-height:1.5">La lista prioriza problemas que afectan precio, trazabilidad y entrega al cliente.</span>
+        </div>
+      </div>
+
+      <!-- DataGrid de issues -->
+      <div class="card" style="flex:1;overflow:hidden">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:90px">Severidad</th>
+                <th style="width:130px">Categoría</th>
+                <th style="width:70px">Ítem</th>
+                <th style="min-width:180px">Partida</th>
+                <th style="width:90px">Código</th>
+                <th style="min-width:180px">Problema</th>
+                <th style="min-width:200px">Recomendación</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="active">
+                <td><span class="sev sev-blocker">⬤ Bloqueante</span></td>
+                <td>Partida vacía</td>
+                <td>E-301</td>
+                <td>E-301-TG · Tablero general</td>
+                <td>MAT-0452</td>
+                <td>La partida no tiene recursos asignados</td>
+                <td>Asignar recursos desde cubicación</td>
+              </tr>
+              <tr>
+                <td><span class="sev sev-blocker">⬤ Bloqueante</span></td>
+                <td>Material sin precio</td>
+                <td>MAT-089</td>
+                <td>Conductor THHN 8 AWG</td>
+                <td>PRC-0012</td>
+                <td>Material sin precio unitario en Price Bank</td>
+                <td>Ingresar precio o verificar convenio</td>
+              </tr>
+              <tr>
+                <td><span class="sev sev-critical">⬤ Crítico</span></td>
+                <td>APU incompleto</td>
+                <td>APU-022</td>
+                <td>Instalación de bandeja 300mm</td>
+                <td>MO-0088</td>
+                <td>Rendimiento de mano de obra no definido</td>
+                <td>Completar APU con rendimiento real</td>
+              </tr>
+              <tr>
+                <td><span class="sev sev-critical">⬤ Crítico</span></td>
+                <td>Área no asignada</td>
+                <td>L-1567</td>
+                <td>Canalización PVC 25mm</td>
+                <td>MAT-102</td>
+                <td>Línea sin área de costo asignada</td>
+                <td>Asignar área en propiedades</td>
+              </tr>
+              <tr>
+                <td><span class="sev sev-warning">⬤ Advertencia</span></td>
+                <td>Cantidad cero</td>
+                <td>L-0891</td>
+                <td>Bandeja perforada 600mm</td>
+                <td>MAT-211</td>
+                <td>Cantidad en cero, posible error</td>
+                <td>Verificar medición en plano</td>
+              </tr>
+              <tr>
+                <td><span class="sev sev-warning">⬤ Advertencia</span></td>
+                <td>Margen negativo</td>
+                <td>APU-045</td>
+                <td>Montaje de transformador 150kVA</td>
+                <td>APU-045</td>
+                <td>Margen de contribución negativo</td>
+                <td>Revisar costos indirectos</td>
+              </tr>
+              <tr>
+                <td><span class="sev sev-info">⬤ Info</span></td>
+                <td>IVA inconsistente</td>
+                <td>G-002</td>
+                <td>Gastos generales</td>
+                <td>GG-01</td>
+                <td>Tasa de IVA difiere de configuración</td>
+                <td>Verificar tasa en preferencias</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- CTA footer -->
+      <div style="display:flex;justify-content:flex-end;gap:10px">
+        <button class="btn btn-secondary">Volver al presupuesto</button>
+        <button class="btn btn-primary">Generar oferta y exportar →</button>
+      </div>
+    </div>
+
+    <!-- ─── RIGHT PANEL ─── -->
+    <div class="panel-right">
+      <div class="card">
+        <div class="card-body">
+          <div style="font-size:9px;font-weight:700;color:#6B7078;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Resumen ejecutivo</div>
+          <div class="exec-summary">32 visibles — 47 total — 3 bloqueantes. Se recomienda resolver los bloqueantes antes de exportar.</div>
+
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div class="category-box blocker">
+              <div class="cat-header">
+                <div class="cat-dot" style="background:#EF4444"></div>
+                <span class="cat-label" style="color:#F87171">Bloqueantes</span>
+                <span class="cat-count" style="color:#F87171">3</span>
+              </div>
+              <div class="cat-items">
+                <div class="cat-item">• Partida vacía — La partida E-301-TG no tiene recursos</div>
+                <div class="cat-item">• Material sin precio — Conductor THHN 8 AWG</div>
+                <div class="cat-item">• APU incompleto — Rendimiento MO no definido</div>
+              </div>
+            </div>
+
+            <div class="category-box critical">
+              <div class="cat-header">
+                <div class="cat-dot" style="background:#F59E0B"></div>
+                <span class="cat-label" style="color:#F59E0B">Críticos</span>
+                <span class="cat-count" style="color:#F59E0B">8</span>
+              </div>
+              <div class="cat-items">
+                <div class="cat-item">• Área no asignada — Canalización PVC 25mm</div>
+                <div class="cat-item">• Margen negativo — Montaje transformador 150kVA</div>
+                <div class="cat-item">• Y 6 más…</div>
+              </div>
+            </div>
+
+            <div class="category-box warning">
+              <div class="cat-header">
+                <div class="cat-dot" style="background:#22C55E"></div>
+                <span class="cat-label" style="color:#4ADE80">Advertencias</span>
+                <span class="cat-count" style="color:#4ADE80">16</span>
+              </div>
+              <div class="cat-items">
+                <div class="cat-item">• Cantidad cero — Bandeja perforada 600mm</div>
+                <div class="cat-item">• IVA inconsistente — Tasa difiere de configuración</div>
+                <div class="cat-item">• Y 14 más…</div>
+              </div>
+            </div>
+
+            <div class="category-box info">
+              <div class="cat-header">
+                <div class="cat-dot" style="background:#3B82F6"></div>
+                <span class="cat-label" style="color:#60A5FA">Info</span>
+                <span class="cat-count" style="color:#60A5FA">20</span>
+              </div>
+              <div class="cat-items">
+                <div class="cat-item">• Mediciones sin registro de plano</div>
+                <div class="cat-item">• Fecha de corte no definida</div>
+                <div class="cat-item">• Y 18 más…</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══ STATUS BAR ═══ -->
+  <div class="status-bar">
+    <span class="status-dot red"></span>
+    <span>3 bloqueantes — resolver antes de exportar</span>
+    <span class="status-sep"></span>
+    <span>32 visibles · 47 total</span>
+    <span class="status-sep"></span>
+    <span>Última revisión: hoy 15:32</span>
+  </div>
+
+</div>
+</body>
+</html>

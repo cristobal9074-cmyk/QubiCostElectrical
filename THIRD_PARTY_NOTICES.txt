@@ -1,0 +1,24 @@
+Qubi Cost Electrical — Third-Party Notices
+===========================================
+
+QuestPDF (https://www.questpdf.com/)
+  Uso: generación de PDF (oferta comercial, memoria de cubicación)
+  Licencia: Community (empresas < USD 1M ingresos anuales) o Professional/Enterprise
+  Configuración: src/QubiCostElectrical.Infrastructure/Pdf/QuestPdfBootstrap.cs
+  Variable opcional: QUESTPDF_LICENSE=Professional|Enterprise
+
+ClosedXML (https://github.com/ClosedXML/ClosedXML)
+  Uso: exportación Excel
+  Licencia: MIT
+
+DocumentFormat.OpenXml (Microsoft)
+  Uso: exportación Word/DOCX
+  Licencia: MIT
+
+Velopack (https://velopack.io/)
+  Uso: empaquetado e instalador de actualizaciones (build/deploy)
+  Licencia: ver repositorio Velopack
+
+SQLite / Microsoft.Data.Sqlite
+  Uso: persistencia de proyectos .qce
+  Licencia: ver proveedor respectivo

@@ -1,0 +1,9 @@
+<UserControl x:Class="QubiCostElectrical.Wpf.Features.TechnicalEvaluation.TechnicalEvaluationWorkspaceView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:q="clr-namespace:QubiCostElectrical.Wpf.Features.Quotations">
+  <DockPanel>
+    <TextBlock DockPanel.Dock="Top" Text="Evaluación técnica de ofertas" FontSize="18" FontWeight="Bold" Margin="16,16,16,8"/>
+    <q:QuotationWorkspaceView DataContext="{Binding Workspace}"/>
+  </DockPanel>
+</UserControl>

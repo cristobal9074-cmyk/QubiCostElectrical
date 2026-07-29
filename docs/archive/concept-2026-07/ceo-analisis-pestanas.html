@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Qubi Cost Electrical — Análisis CEO pestaña por pestaña</title>
+  <style>
+    :root {
+      --navy: #0B1F33;
+      --navy2: #122A42;
+      --blue: #2563B0;
+      --blue2: #3B82F6;
+      --ink: #0F172A;
+      --ink3: #64748B;
+      --line: #E2E8F0;
+      --surface: #FFFFFF;
+      --canvas: #F1F5F9;
+      --green: #15803D;
+      --amber: #D97706;
+      --red: #B91C1C;
+      --font: "Segoe UI", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      color: var(--ink);
+      background: #08111f;
+      line-height: 1.45;
+    }
+    .hero {
+      padding: 48px 28px 36px;
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 0%, rgba(37,99,176,.35), transparent 55%),
+        linear-gradient(165deg, #0B1F33 0%, #101C30 50%, #0C1626 100%);
+      color: #fff;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .hero-inner { max-width: 1100px; margin: 0 auto; }
+    .badge {
+      display: inline-block;
+      padding: 5px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.1);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(26px, 4vw, 38px);
+      letter-spacing: -0.03em;
+      font-weight: 800;
+    }
+    .hero p {
+      margin: 0;
+      max-width: 720px;
+      color: rgba(255,255,255,.75);
+      font-size: 15px;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 28px;
+    }
+    @media (max-width: 800px) { .stats { grid-template-columns: 1fr 1fr; } }
+    .stat {
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 14px;
+      padding: 14px 16px;
+    }
+    .stat b { display: block; font-size: 22px; font-weight: 800; }
+    .stat span { font-size: 11px; color: rgba(255,255,255,.55); text-transform: uppercase; letter-spacing: .04em; }
+
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 28px 20px 80px; }
+
+    .toc {
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 16px;
+      padding: 18px 20px;
+      margin-bottom: 28px;
+      color: #fff;
+    }
+    .toc h2 { margin: 0 0 12px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; opacity: .6; }
+    .toc-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .toc a {
+      color: rgba(255,255,255,.85);
+      text-decoration: none;
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+    .toc a:hover { background: rgba(59,130,246,.25); border-color: rgba(59,130,246,.4); }
+
+    .section-label {
+      color: rgba(255,255,255,.45);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      margin: 36px 0 14px;
+    }
+
+    .card {
+      background: var(--surface);
+      border-radius: 18px;
+      overflow: hidden;
+      margin-bottom: 16px;
+      box-shadow: 0 16px 40px rgba(0,0,0,.35);
+      border: 1px solid rgba(255,255,255,.06);
+    }
+    .card-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 20px 14px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, #FAFBFC, #fff);
+    }
+    .card-head h3 {
+      margin: 0 0 4px;
+      font-size: 18px;
+      letter-spacing: -0.02em;
+    }
+    .card-head .meta {
+      font-size: 12px;
+      color: var(--ink3);
+    }
+    .score-wrap { text-align: right; flex-shrink: 0; }
+    .score {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 2px;
+      font-size: 28px;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+    }
+    .score small { font-size: 13px; font-weight: 600; color: var(--ink3); }
+    .pill {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .pill.ok { background: #DCFCE7; color: #166534; }
+    .pill.good { background: #DBEAFE; color: #1E40AF; }
+    .pill.mid { background: #FEF3C7; color: #92400E; }
+    .pill.bad { background: #FEE2E2; color: #991B1B; }
+
+    .card-body { padding: 16px 20px 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 720px) { .card-body { grid-template-columns: 1fr; } }
+    .card-body .full { grid-column: 1 / -1; }
+
+    .block h4 {
+      margin: 0 0 8px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--ink3);
+    }
+    .block ul { margin: 0; padding-left: 18px; font-size: 13.5px; }
+    .block li { margin-bottom: 6px; }
+    .purpose {
+      font-size: 14px;
+      color: var(--ink);
+      margin: 0;
+      padding: 10px 12px;
+      background: var(--canvas);
+      border-radius: 10px;
+      border-left: 3px solid var(--blue2);
+    }
+    .b20 {
+      background: linear-gradient(135deg, #0B1F33, #1C324C);
+      color: #fff;
+      border-radius: 12px;
+      padding: 14px 16px;
+    }
+    .b20 h4 { color: rgba(255,255,255,.55); margin: 0 0 6px; }
+    .b20 p { margin: 0; font-size: 14px; line-height: 1.5; }
+
+    .bar {
+      height: 6px;
+      background: #E2E8F0;
+      border-radius: 99px;
+      overflow: hidden;
+      margin-top: 8px;
+      width: 88px;
+      margin-left: auto;
+    }
+    .bar i {
+      display: block;
+      height: 100%;
+      border-radius: 99px;
+      background: linear-gradient(90deg, var(--blue), var(--blue2));
+    }
+
+    .verdict {
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 18px;
+      padding: 24px;
+      color: #fff;
+      margin-top: 12px;
+    }
+    .verdict h2 { margin: 0 0 10px; font-size: 22px; }
+    .verdict p { margin: 0 0 12px; color: rgba(255,255,255,.75); }
+    .verdict ol { margin: 0; padding-left: 20px; color: rgba(255,255,255,.85); }
+    .verdict li { margin-bottom: 8px; }
+
+    .nav-map {
+      background: #fff;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 8px;
+      font-size: 12px;
+      color: var(--ink);
+    }
+    .nav-map code {
+      background: var(--canvas);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-inner">
+      <div class="badge">CEO Review · Jul 2026 · Qubi Cost Electrical</div>
+      <h1>Análisis pestaña por pestaña</h1>
+      <p>
+        Qué vale hoy cada módulo, qué está perfecto, qué hay que mejorar,
+        y la jugada concreta para que esta app se sienta como un producto de
+        <b>categoría mundial</b> (el estándar “20B”: precisión, confianza y velocidad de decisión).
+      </p>
+      <div class="stats">
+        <div class="stat"><b>22</b><span>Pantallas auditadas</span></div>
+        <div class="stat"><b>9.0</b><span>Mejor score (Cubicación)</span></div>
+        <div class="stat"><b>6.0</b><span>Peor score (Solicitudes)</span></div>
+        <div class="stat"><b>7.7</b><span>Promedio producto</span></div>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <nav class="toc">
+      <h2>Índice</h2>
+      <div class="toc-grid">
+        <a href="#nav">Navegación</a>
+        <a href="#resumen">Resumen</a>
+        <a href="#proyecto">Proyecto</a>
+        <a href="#antecedentes">Antecedentes</a>
+        <a href="#itemizado">Itemizado</a>
+        <a href="#cubicacion">Cubicación</a>
+        <a href="#cubsc">Cub. SC</a>
+        <a href="#apu">APU</a>
+        <a href="#plantillas">Plantillas</a>
+        <a href="#piso">Resumen piso</a>
+        <a href="#solicitudes">Solicitudes</a>
+        <a href="#costo">Costo</a>
+        <a href="#epp">EPP</a>
+        <a href="#mo">Mano de obra</a>
+        <a href="#banco">Banco precios</a>
+        <a href="#cotizaciones">Cotizaciones</a>
+        <a href="#compra">Lista compra</a>
+        <a href="#revision">Revisión</a>
+        <a href="#versiones">Versiones</a>
+        <a href="#oc">Órdenes cambio</a>
+        <a href="#oferta">Oferta</a>
+        <a href="#monedas">Monedas</a>
+        <a href="#prefs">Preferencias</a>
+        <a href="#veredicto">Veredicto 20B</a>
+      </div>
+    </nav>
+
+    <div class="section-label" id="nav">Navegación actual</div>
+    <div class="nav-map">
+      <code>Resumen</code> ·
+      <code>Proyecto ▾</code> ·
+      <code>Itemizado</code> ·
+      <code>Cubicación ▾</code> ·
+      <code>APU</code> ·
+      <code>Precios ▾</code> ·
+      <code>Costos ▾</code> ·
+      <code>Cierre ▾</code> ·
+      <code>Más ▾</code>
+      <p style="margin:10px 0 0;color:var(--ink3);font-size:12px">
+        Fuera de nav visible: <b>Monedas</b> y <b>Preferencias</b> (atajos / búsqueda). Buen corte post-rediseño; el riesgo es que “Más” esconda herramientas útiles.
+      </p>
+    </div>
+
+    <!-- ========== TABS ========== -->
+
+    <div class="section-label">Núcleo del presupuesto</div>
+
+    <article class="card" id="resumen">
+      <div class="card-head">
+        <div>
+          <h3>1. Resumen / Inicio</h3>
+          <div class="meta">Dashboard · InicioView + ResumenProyectoView</div>
+        </div>
+        <div class="score-wrap">
+          <div class="score">8<small>/10</small></div>
+          <div class="bar"><i style="width:80%"></i></div>
+          <span class="pill good">Sólido</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="block full"><p class="purpose">Landing de bienvenida + cockpit ejecutivo del proyecto abierto.</p></div>
+        <div class="block">
+          <h4>Fortalezas</h4>
+          <ul>
+            <li>Inicio brand-first, proyectos recientes claros.</li>
+            <li>Resumen con KPIs + flujo + alertas accionables.</li>
+            <li>Separación Inicio/Resumen ya organizada en Features/Inicio.</li>
+          </ul>
+        </div>
+        <div class="block">
+          <h4>Mejoras</h4>
+          <ul>
+            <li>Demasiada densidad: KPIs + filtros + top + timeline a la vez.</li>
+            <li>Toggle de tema no debería vivir en Resumen.</li>
+            <li>Falta un único “siguiente paso” dominante.</li>
+          </ul>
+        </div>
+        <div class="block full b20">
+          <h4>Jugada 20B</h4>
+          <p>Una sola CTA gigante (“Continuar cubicación — 0/157 listas”) + 1 alerta bloqueante. El resto en panel “Detalle” colapsable. El CEO abre el archivo y en 3 segundos sabe qué hacer.</p>
+        </div>
+      </div>
+    </article>
+
+    <article class="card" id="proyecto">
+      <div class="card-head">
+        <div>
+          <h3>2. Datos del proyecto</h3>
+          <div class="meta">Proyecto ▾ · ProjectView</div>
+        </div>
+        <div class="score-wrap">
+          <div class="score">8<small>/10</small></div>
+          <div class="bar"><i style="width:80%"></i></div>
+          <span class="pill good">Completo</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="block full"><p class="purpose">Identidad, parámetros comerciales, responsables, alcance y auditoría del .qce.</p></div>
+        <div class="block">
+          <h4>Fortalezas</h4>
+          <ul>
+            <li>Jerarquía clara: identificación → comercial → alcance.</li>
+            <li>Empty state con CTA Abrir.</li>
+            <li>Auditoría colapsada, no invade.</li>
+          </ul>
+        </div>
+        <div class="block">
+          <h4>Mejoras</h4>
+          <ul>
+            <li>Todavía hay algo de título duplicado vs shell.</li>
+            <li>Demasiados campos de golpe para un proyecto nuevo.</li>
+          </ul>
+        </div>
+        <div class="block full b20">
+          <h4>Jugada 20B</h4>
+          <p>Wizard de “primeros 5 minutos”: Nombre → Cliente → Moneda/UF → Guardar. El resto queda en “Avanzado”. Baja fricción = más proyectos empezados.</p>
+        </div>
+      </div>
+    </article>
+
+    <article class="card" id="antecedentes">
+      <div class="card-head">
+        <div>
+          <h3>3. Antecedentes y planos</h3>
+          <div class="meta">Proyecto ▾ · DocumentsView</div>
+        </div>
+        <div class="score-wrap">
+          <div class="score">7.5<small>/10</small></div>
+          <div class="bar"><i style="width:75%"></i></div>
+          <span class="pill good">Sólido</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="block full"><p class="purpose">Registro de planos, especificaciones, addendas y consultas técnicas.</p></div>
+        <div class="block">
+          <h4>Fortalezas</h4>
+          <ul>
+            <li>Chips por tipo de documento.</li>
+            <li>Tabla ancha, usable como registro de obra.</li>
+          </ul>
+        </div>
+        <div class="block">
+          <h4>Mejoras</h4>
+          <ul>
+            <li>Sin preview PDF embebido.</li>
+            <li>No se ve vínculo plano ↔ partida/cubicación.</li>
+          </ul>
+        </div>
+        <div class="block full b20">
+          <h4>Jugada 20B</h4>
+          <p>Panel lateral con preview del plano + “Vincular a partida(s)”. El estimador deja de saltar a Acrobat y Excel.</p>
+        </div>
+      </div>
+    </article>
+
+    <article class="card" id="itemizado">
+      <div class="card-head">
+        <div>
+          <h3>4. Itemizado</h3>
+          <div class="meta">Tab fijo · ItemizadoView</div>
+        </div>
+        <div class="score-wrap">
+          <div class="score">8.5<small>/10</small></div>
+          <div class="bar"><i style="width:85%"></i></div>
+          <span class="pill ok">Casi perfecto</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="block full"><p class="purpose">Editar e importar el listado valorado de partidas del presupuesto.</p></div>
+        <div class="block">
+          <h4>Fortalezas</h4>
+          <ul>
+            <li>Badges de estado + errores de celda.</li>
+            <li>Context menu y atajos de potencia.</li>
+            <li>HUD + empty state profesionales.</li>
+          </ul>
+        </div>
+        <div class="block">
+          <h4>Mejoras</h4>
+          <ul>
+            <li>Badge “PRESUPUESTO ACTIVO” puede sobrar.</li>
+            <li>Importación todavía exige tocar la grilla antes de validar.</li>
+          </ul>
+        </div>
+        <div class="block full b20">
+          <h4>Jugada 20B</h4>
+          <p>Modo “licitación limpia”: Importar → mapear columnas → validar → commit. La grilla solo aparece cuando el archivo ya pasó el filtro de calidad.</p>
+        </div>
+      </div>
+    </article>
+
+    <article class="card" id="cubicacion">
+      <div class="card-head">
+        <div>
+          <h3>5. Cubicación</h3>
+          <div class="meta">Cubicación ▾ · CubicacionView — JOYA DEL PRODUCTO</div>
+        </div>
+        <div class="score-wrap">
+          <div class="score">9<small>/10</small></div>
+          <div class="bar"><i style="width:90%"></i></div>
+          <span class="pill ok">Referencia</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="block full"><p class="purpose">Desarrollar cantidades y materiales por partida. Aquí se gana o se pierde el presupuesto.</p></div>
+        <div class="block">
+          <h4>Fortalezas</h4>
+          <ul>
+            <li>Layout 3 zonas + lista virtualizada.</li>
+            <li>Sectores, pegado Excel, plantillas, atajos.</li>
+            <li>Mejor UX del producto hoy.</li>
+          </ul>
+        </div>
+        <div class="block">
+          <h4>Mejoras</h4>
+          <ul>
+            <li>Curva de aprendizaje alta para nuevos.</li>
+            <li>Muchos paneles visibles a la vez.</li>
+          </ul>
+        </div>
+        <div class="block full b20">
+          <h4>Jugada 20B</h4>
+          <p>“Focus mode”: solo partida + grilla activa; resto en drawer. Onboarding de 60 segundos la primera vez. Cubicación es el motor: debe sentirse como un IDE de obra.</p>
+        </div>
+      </div>
+    </article>
+
+    <article class="card" id="cubsc">
+      <div class="card-head">
+        <div>
+          <h3>6. Cubicación SC</h3>
+          <div class="meta">Cubicación ▾ · CubicacionScView</div>
+        </div>
+        <div class="score-wrap">
+          <div class="score">8<small>/10</small></div>
+          <div class="bar"><i style="width:80%"></i></div>
+          <span class="pill good">Sólido</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="block full"><p class="purpose">Tableros y circuitos de servicios comunes (pisos, sistemas, fases).</p></div>
+        <div class="block">
+          <h4>Fortalezas</h4>
+          <ul>
+            <li>Chips de estado/sistema/fase muy legibles.</li>
+            <li>Filtro por piso maduro.</li>
+          </ul>
+        </div>
+        <div class="block">
+          <h4>Mejoras</h4>
+          <ul>
+            <li>Colores hardcodeados frágiles en tema claro.</li>
+            <li>No se siente gemelo de Cubicación (chrome distinto).</li>
+          </ul>
+        </div>
+        <div class="block full b20">
+          <h4>Jugada 20B</h4>
+          <p>Unificar chrome y atajos con Cubicación normal. Mismo músculo mental = mitad de errores en SC.</p>
+        </div>
+      </div>
+    </article>
+
+    <article class="card" id="apu">
+      <div class="card-head">
+        <div>
+          <h3>7. APU</h3>
+          <div class="meta">Tab fijo · ApuView</div>
+        </div>
+        <div class="score-wrap">
+          <div class="score">8.5<small>/10</small></div>
+          <div class="bar"><i style="width:85%"></i></div>
+          <span class="pill ok">Casi perfecto</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="block full"><p class="purpose">Análisis de precios unitarios: recursos, coeficientes, impacto en partida.</p></div>
+        <div class="block">
+          <h4>Fortalezas</h4>
+          <ul>
+            <li>Master-detail partidas/recursos limpio.</li>
+            <li>Tipos de recurso tipados + generar APU.</li>
+          </ul>
+        </div>
+        <div class="block">
+          <h4>Mejoras</h4>
+          <ul>
+            <li>Botón coeficientes con emoji (fuera de DS).</li>
+            <li>Poco feedback de “cómo cambia la venta” al editar.</li>
+          </ul>
+        </div>
+        <div class="block full b20">
+          <h4>Jugada 20B</h4>
+          <p>Inspector lateral: Δ UF / Δ % de venta en vivo al tocar un recurso. El estimador ve el margen mientras escribe.</p>
+        </div>
+      </div>
+    </article>
+
+    <div class="section-label">Precios, costos e insumos</div>
+
+    <article class="card" id="plantillas">
+      <div class="card-head">
+        <div>
+          <h3>8. Plantillas</h3>
+          <div class="meta">Más ▾ · PlantillasView</div>
+        </div>
+        <div class="score-wrap">
+          <div class="score">7<small>/10</small></div>
+          <div class="bar"><i style="width:70%"></i></div>
+          <span class="pill mid">Sólido / escondido</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="block full"><p class="purpose">Biblioteca de conjuntos eléctricos reutilizables en cubicación.</p></div>
+        <div class="block">
+          <h4>Fortalezas</h4>
+          <ul>
+            <li>Layout biblioteca + detalle.</li>
+            <li>Selección visual cuidada.</li>
+          </ul>
+        </div>
+        <div class="block">
+          <h4>Mejoras</h4>
+          <ul>
+            <li>Estilos “premium” locales se desvían del design system.</li>
+            <li>Vive en “Más” → baja descubribilidad.</li>
+          </ul>
+        </div>
+        <div class="block full b20">
+          <h4>Jugada 20B</h4>
+          <p>“Cargar plantilla” siempre como acción primaria dentro de Cubicación (picker inline). La biblioteca en Más es secundaria.</p>
+        </div>
+      </div>
+    </article>
+
+    <article class="card" id="piso">
+      <div class="card-head">
+        <div>
+          <h3>9. Resumen por piso</h3>
+          <div class="meta">Más ▾ · FloorSummaryView</div>
+        </div>
+        <div class="score-wrap">
+          <div class="score">7<small>/10</small></div>
+          <div class="bar"><i style="width:70%"></i></div>
+          <span class="pill mid">Sólido</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="block full"><p class="purpose">Consolidar materiales por zona/piso (Cub + SC).</p></div>
+        <div class="block">
+          <h4>Fortalezas</h4>
+          <ul>
+            <li>KPIs + acordeón por piso.</li>
+            <li>Filtros de origen y consolidación SC.</li>
+          </ul>
+        </div>
+        <div class="block">
+          <h4>Mejoras</h4>
+          <ul>
+            <li>Escondido en Más.</li>
+            <li>Toolbar densa en una sola fila.</li>
+          </ul>
+        </div>
+        <div class="block full b20">
+          <h4>Jugada 20B</h4>
+          <p>Vista “mapa de edificio”: pisos en filas, familias en columnas. Un pantallazo para mandante o jefe de obra.</p>
+        </div>
+      </div>
+    </article>
+
+    <article class="card" id="solicitudes">
+      <div class="card-head">
+        <div>
+          <h3>10. Solicitudes</h3>
+          <div class="meta">Precios ▾ · SolicitudesView — PRIORIDAD DE MEJORA</div>
+        </div>
+        <div class="score-wrap">
+          <div class="score">6<small>/10</small></div>
+          <div class="bar"><i style="width:60%"></i></div>
+          <span class="pill bad">Ruidoso</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="block full"><p class="purpose">Pedido interno de materiales/EPP exportable a paquete/PDF/Excel.</p></div>
+        <div class="block">
+          <h4>Fortalezas</h4>
+          <ul>
+            <li>Split datos + tabs materiales/EPP.</li>
+            <li>Exportación múltiple funciona.</li>
+          </ul>
+        </div>
+        <div class="block">
+          <h4>Mejoras</h4>
+          <ul>
+            <li>Parece un formulario, no un inbox de solicitudes.</li>
+            <li>Estados de aprobación poco creíbles.</li>
+            <li>Histórico/diff vs compra ausente.</li>
+          </ul>
+        </div>
+        <div class="block full b20">
+          <h4>Jugada 20B</h4>
+          <p>Inbox: lista → detalle, estados Borrador / Enviado / Aprobado, y diff contra Lista de compra. Así se vende a jefes de adquisición, no solo a estimadores.</p>
+        </div>
+      </div>
+    </article>
+
+    <article class="card" id="costo">
+      <div class="card-head">
+        <div>
+          <h3>11. Desglose de costos</h3>
+          <div class="meta">Costos ▾ · CostoView</div>
+        </div>
+        <div class="score-wrap">
+          <div class="score">7<small>/10</small></div>
+          <div class="bar"><i style="width:70%"></i></div>
+          <span class="pill mid">Informe</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="block full"><p class="purpose">Vista agregada: costo directo, venta, margen, familias, MO, EPP.</p></div>
+        <div class="block">
+          <h4>Fortalezas</h4>
+          <ul>
+            <li>KPI strip claro.</li>
+            <li>Familias + secciones MO legibles.</li>
+          </ul>
+        </div>
+        <div class="block">
+          <h4>Mejoras</h4>
+          <ul>
+            <li>Mucha lectura, poca acción.</li>
+            <li>Solapa con Resumen + Mano de obra + EPP.</li>
+          </ul>
+        </div>
+        <div class="block full b20">
+          <h4>Jugada 20B</h4>
+          <p>Click en familia/KPI → navega filtrado a Itemizado/Cub/APU. El costo deja de ser un PDF y se vuelve un mapa accionable.</p>
+        </div>
+      </div>
+    </article>
+
+    <article class="card" id="epp">
+      <div class="card-head">
+        <div>
+          <h3>12. EPP</h3>
+          <div class="meta">Costos ▾ · EppView</div>
+        </div>
+        <div class="score-wrap">
+          <div class="score">7<small>/10</small></div>
+          <div class="bar"><i style="width:70%"></i></div>
+          <span class="pill mid">Sólido</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="block full"><p class="purpose">Indumentaria y seguridad ligada a mano de obra directa/indirecta.</p></div>
+        <div class="block">
+          <h4>Fortalezas</h4>
+          <ul>
+            <li>KPIs + dual panel clara.</li>
+            <li>Totales derivados (ya sin números inventados en UI).</li>
+          </ul>
+        </div>
+        <div class="block">
+          <h4>Mejoras</h4>
+          <ul>
+            <li>Edición se siente secundaria.</li>
+            <li>Poco puente a Solicitudes EPP.</li>
+          </ul>
+        </div>
+        <div class="block full b20">
+          <h4>Jugada 20B</h4>
+          <p>Matriz cargo × EPP editable + botón “Generar líneas a Solicitud”. Cierra el circuito seguridad → compra.</p>
+        </div>
+      </div>
+    </article>
+
+    <article class="card" id="mo">
+      <div class="card-head">
+        <div>
+          <h3>13. Mano de obra</h3>
+          <div class="meta">Costos ▾ · ManoDeObraView</div>
+        </div>
+        <div class="score-wrap">
+          <div class="score">8<small>/10</small></div>
+          <div class="bar"><i style="width:80%"></i></div>
+          <span class="pill good">Completo</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="block full"><p class="purpose">Dotación, sueldos, duración y proyección mensual MO.</p></div>
+        <div class="block">
+          <h4>Fortalezas</h4>
+          <ul>
+            <li>Chips duración/UF + toggle CLP/UF.</li>
+            <li>Inputs salariales tipados y serios.</li>
+          </ul>
+        </div>
+        <div class="block">
+          <h4>Mejoras</h4>
+          <ul>
+            <li>Complejidad meses × cargos sin resumen sticky.</li>
+            <li>Sin atajo desde HH de APU.</li>
+          </ul>
+        </div>
+        <div class="block full b20">
+          <h4>Jugada 20B</h4>
+          <p>Timeline tipo Gantt ligera de dotación + gesto “repetir patrón N meses”. El jefe de terreno entiende el costo en una mirada.</p>
+        </div>
+      </div>
+    </article>
+
+    <article class="card" id="banco">
+      <div class="card-head">
+        <div>
+          <h3>14. Banco de precios</h3>
+          <div class="meta">Precios ▾ · PriceBankView</div>
+        </div>
+        <div class="score-wrap">
+          <div class="score">8<small>/10</small></div>
+          <div class="bar"><i style="width:80%"></i></div>
+          <span class="pill good">Completo</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="block full"><p class="purpose">Catálogo central, vigencia, importar y aplicar precios al proyecto.</p></div>
+        <div class="block">
+          <h4>Fortalezas</h4>
+          <ul>
+            <li>Chip Vigente / Revisar.</li>
+            <li>Importar y aplicar son acciones claras.</li>
+          </ul>
+        </div>
+        <div class="block">
+          <h4>Mejoras</h4>
+          <ul>
+            <li>Toolbar con demasiados botones juntos.</li>
+            <li>“Eliminar todo” cerca de acciones rutinarias = peligro.</li>
+          </ul>
+        </div>
+        <div class="block full b20">
+          <h4>Jugada 20B</h4>
+          <p>Modo “cola de revisión”: solo precios a revisar, apply selectivo y confirmación staged. Confianza = no romper el presupuesto por accidente.</p>
+        </div>
+      </div>
+    </article>
+
+    <article class="card" id="cotizaciones">
+      <div class="card-head">
+        <div>
+          <h3>15. Cotizaciones</h3>
+          <div class="meta">Precios ▾ · QuotesView</div>
+        </div>
+        <div class="score-wrap">
+          <div class="score">7<small>/10</small></div>
+          <div class="bar"><i style="width:70%"></i></div>
+          <span class="pill mid">Sólido</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="block full"><p class="purpose">Comparar ofertas de proveedores e importar cotizaciones.</p></div>
+        <div class="block">
+          <h4>Fortalezas</h4>
+          <ul>
+            <li>Cards de proveedor + layout 3 paneles.</li>
+            <li>Import primario visible.</li>
+          </ul>
+        </div>
+        <div class="block">
+          <h4>Mejoras</h4>
+          <ul>
+            <li>Falta CTA fuerte “adjudicar / aplicar al banco”.</li>
+            <li>Cards y grid pueden duplicar información.</li>
+          </ul>
+        </div>
+        <div class="block full b20">
+          <h4>Jugada 20B</h4>
+          <p>Matriz código × proveedor con “mejor precio” highlight y un clic “Aplicar selección al banco”. Ahí se siente el dinero.</p>
+        </div>
+      </div>
+    </article>
+
+    <article class="card" id="compra">
+      <div class="card-head">
+        <div>
+          <h3>16. Lista de compra</h3>
+          <div class="meta">Precios ▾ · PurchaseListView — PRIORIDAD DE MEJORA</div>
+        </div>
+        <div class="score-wrap">
+          <div class="score">6.5<small>/10</small></div>
+          <div class="bar"><i style="width:65%"></i></div>
+          <span class="pill bad">Incompleto UX</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="block full"><p class="purpose">Consolidar materiales a comprar desde cubicación.</p></div>
+        <div class="block">
+          <h4>Fortalezas</h4>
+          <ul>
+            <li>Tolerancia con slider clara.</li>
+            <li>Stats pills útiles.</li>
+          </ul>
+        </div>
+        <div class="block">
+          <h4>Mejoras</h4>
+          <ul>
+            <li>“Agrupar por proveedor” está deshabilitado (promesa rota).</li>
+            <li>Columnas Width=0 = panel derecho abandonado.</li>
+          </ul>
+        </div>
+        <div class="block full b20">
+          <h4>Jugada 20B</h4>
+          <p>Pack de compra por proveedor (PDF/Excel) + check “pedido” sincronizado con Solicitudes. Cierra el loop obra → compra.</p>
+        </div>
+      </div>
+    </article>
+
+    <div class="section-label">Cierre y oferta</div>
+
+    <article class="card" id="revision">
+      <div class="card-head">
+        <div>
+          <h3>17. Revisión final</h3>
+          <div class="meta">Cierre ▾ · ReviewView</div>
+        </div>
+        <div class="score-wrap">
+          <div class="score">8.5<small>/10</small></div>
+          <div class="bar"><i style="width:85%"></i></div>
+          <span class="pill ok">Casi perfecto</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="block full"><p class="purpose">Checklist de calidad antes de exportar / ofertar.</p></div>
+        <div class="block">
+          <h4>Fortalezas</h4>
+          <ul>
+            <li>Alertas con severidad y navegación al módulo.</li>
+            <li>Layout checklist / detalle / confianza.</li>
+          </ul>
+        </div>
+        <div class="block">
+          <h4>Mejoras</h4>
+          <ul>
+            <li>Sin cola guiada “arreglar una por una”.</li>
+            <li>Si no hay fallos, se siente otra pantalla de KPIs.</li>
+          </ul>
+        </div>
+        <div class="block full b20">
+          <h4>Jugada 20B</h4>
+          <p>Modo “war room”: una alerta a la vez → Ir → Corregir → Marcar resuelto, con progreso %. Antes de ofertar, cero ansiedad.</p>
+        </div>
+      </div>
+    </article>
+
+    <article class="card" id="versiones">
+      <div class="card-head">
+        <div>
+          <h3>18. Versiones</h3>
+          <div class="meta">Cierre ▾ · VersionsView</div>
+        </div>
+        <div class="score-wrap">
+          <div class="score">8<small>/10</small></div>
+          <div class="bar"><i style="width:80%"></i></div>
+          <span class="pill good">Completo</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="block full"><p class="purpose">Congelar, activar y comparar hitos del presupuesto.</p></div>
+        <div class="block">
+          <h4>Fortalezas</h4>
+          <ul>
+            <li>Acciones Nueva / Activar / Renombrar / Eliminar.</li>
+            <li>KPIs de delta vs versión anterior.</li>
+          </ul>
+        </div>
+        <div class="block">
+          <h4>Mejoras</h4>
+          <ul>
+            <li>Diff puede ser denso para no-técnicos.</li>
+            <li>Falta “baseline de oferta” explícito.</li>
+          </ul>
+        </div>
+        <div class="block full b20">
+          <h4>Jugada 20B</h4>
+          <p>Timeline vertical con “baseline oferta” y export del delta al cliente. Versiones pasan de interno a argumento comercial.</p>
+        </div>
+      </div>
+    </article>
+
+    <article class="card" id="oc">
+      <div class="card-head">
+        <div>
+          <h3>19. Órdenes de cambio</h3>
+          <div class="meta">Cierre ▾ · ChangeOrdersView</div>
+        </div>
+        <div class="score-wrap">
+          <div class="score">7<small>/10</small></div>
+          <div class="bar"><i style="width:70%"></i></div>
+          <span class="pill mid">Liviano</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="block full"><p class="purpose">Gestionar OC post-oferta (estados y montos).</p></div>
+        <div class="block">
+          <h4>Fortalezas</h4>
+          <ul>
+            <li>Chips de conteo por estado.</li>
+            <li>Empty sin proyecto presente.</li>
+          </ul>
+        </div>
+        <div class="block">
+          <h4>Mejoras</h4>
+          <ul>
+            <li>Empty state más pobre que el resto.</li>
+            <li>No nace fácil desde un diff de versiones.</li>
+          </ul>
+        </div>
+        <div class="block full b20">
+          <h4>Jugada 20B</h4>
+          <p>“Crear OC desde diff de versiones” con líneas auto-propuestas + PDF de OC. Eso se vende solo a contratistas grandes.</p>
+        </div>
+      </div>
+    </article>
+
+    <article class="card" id="oferta">
+      <div class="card-head">
+        <div>
+          <h3>20. Oferta y exportación</h3>
+          <div class="meta">Cierre ▾ · ExportView</div>
+        </div>
+        <div class="score-wrap">
+          <div class="score">8.5<small>/10</small></div>
+          <div class="bar"><i style="width:85%"></i></div>
+          <span class="pill ok">Casi perfecto</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="block full"><p class="purpose">Wizard Validar → Configurar → Vista previa → Exportar.</p></div>
+        <div class="block">
+          <h4>Fortalezas</h4>
+          <ul>
+            <li>Stepper visual claro.</li>
+            <li>Preview en vivo.</li>
+          </ul>
+        </div>
+        <div class="block">
+          <h4>Mejoras</h4>
+          <ul>
+            <li>Paso 1 solapa mentalmente con Revisión.</li>
+            <li>Muchas opciones de paquete → riesgo de exportar mal.</li>
+          </ul>
+        </div>
+        <div class="block full b20">
+          <h4>Jugada 20B</h4>
+          <p>Presets de 1 clic: Mandante / Interno / Banco, con checklist de documentos incluidos. Exportar deja de ser un examen.</p>
+        </div>
+      </div>
+    </article>
+
+    <div class="section-label">Sistema</div>
+
+    <article class="card" id="monedas">
+      <div class="card-head">
+        <div>
+          <h3>21. Monedas e indicadores</h3>
+          <div class="meta">Fuera de nav · CurrencyView</div>
+        </div>
+        <div class="score-wrap">
+          <div class="score">7<small>/10</small></div>
+          <div class="bar"><i style="width:70%"></i></div>
+          <span class="pill mid">Mal descubierto</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="block full"><p class="purpose">UF / USD / moneda base del proyecto.</p></div>
+        <div class="block">
+          <h4>Fortalezas</h4>
+          <ul>
+            <li>KPIs + edición + stale cache.</li>
+            <li>Validación visible.</li>
+          </ul>
+        </div>
+        <div class="block">
+          <h4>Mejoras</h4>
+          <ul>
+            <li>No está en dropdown Proyecto.</li>
+            <li>Chip de moneda del shell no es clickeable.</li>
+            <li>Descubrimiento: ~5/10.</li>
+          </ul>
+        </div>
+        <div class="block full b20">
+          <h4>Jugada 20B</h4>
+          <p>Chip de context bar abre Monedas; y item dentro de Proyecto ▾. Lo que afecta el total debe estar a un clic.</p>
+        </div>
+      </div>
+    </article>
+
+    <article class="card" id="prefs">
+      <div class="card-head">
+        <div>
+          <h3>22. Preferencias globales</h3>
+          <div class="meta">Fuera de nav · PreferencesView</div>
+        </div>
+        <div class="score-wrap">
+          <div class="score">7.5<small>/10</small></div>
+          <div class="bar"><i style="width:75%"></i></div>
+          <span class="pill good">Completo</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="block full"><p class="purpose">Identidad, membrete, usuarios, paths, updates.</p></div>
+        <div class="block">
+          <h4>Fortalezas</h4>
+          <ul>
+            <li>Secciones claras (empresa / firmante / equipo).</li>
+            <li>Acceso desde landing.</li>
+          </ul>
+        </div>
+        <div class="block">
+          <h4>Mejoras</h4>
+          <ul>
+            <li>Formulario largo, tipografía densa.</li>
+            <li>Sensación “admin legacy”.</li>
+          </ul>
+        </div>
+        <div class="block full b20">
+          <h4>Jugada 20B</h4>
+          <p>3 tabs: Empresa · Equipo · Sistema + preview de membrete PDF en vivo. Preferencias dejan de dar miedo.</p>
+        </div>
+      </div>
+    </article>
+
+    <!-- VERDICT -->
+    <div class="section-label" id="veredicto">Veredicto</div>
+    <div class="verdict">
+      <h2>¿Vale 20 mil millones? Aún no. ¿Puede parecerlo? Sí.</h2>
+      <p>
+        Hoy el producto ya tiene un núcleo de categoría alta: <b>Cubicación 9/10</b>, Itemizado/APU/Revisión/Oferta en 8.5.
+        Eso es raro. La mayoría de software de presupuesto se queda en grillas feas.
+      </p>
+      <p>
+        Lo que frena el “precio 20B” no es falta de pantallas: es que algunas prometen un flujo de obra/compra
+        y todavía se sienten a medias (Solicitudes, Lista de compra), y que el cockpit (Resumen) no decide por ti.
+      </p>
+      <p><b>Orden de ataque si quieres el salto de percepción:</b></p>
+      <ol>
+        <li><b>Lista de compra + Solicitudes</b> — cerrar el loop compra (promesas rotas visibles).</li>
+        <li><b>Resumen “siguiente paso”</b> — un CTA dominante, menos paneles.</li>
+        <li><b>Cotizaciones → Banco</b> — adjudicación en 1 clic.</li>
+        <li><b>Monedas en Proyecto + chip clickeable</b> — descubrimiento trivial.</li>
+        <li><b>Focus mode en Cubicación</b> — proteger la joya del producto.</li>
+        <li><b>War room en Revisión + presets de Oferta</b> — confianza al exportar.</li>
+      </ol>
+      <p style="margin-top:16px;opacity:.7;font-size:13px">
+        Ninguna pestaña está “perfecta” al estándar 20B. Las más cercanas: Cubicación, Itemizado, APU, Revisión, Oferta.
+        Ninguna está rota de raíz. El gap es de producto, no de reescritura.
+      </p>
+    </div>
+  </div>
+</body>
+</html>

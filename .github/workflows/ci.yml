@@ -1,0 +1,268 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  DOTNET_VERSION: 10.0.x
+  MAX_FILE_LINES: 500
+
+jobs:
+  build:
+    name: Build & Test
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET ${{ env.DOTNET_VERSION }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/Directory.Build.props') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore
+        run: dotnet restore QubiCostElectrical.Wpf.sln
+
+      - name: Vulnerability scan
+        run: >
+          dotnet list QubiCostElectrical.Wpf.sln package --vulnerable --include-transitive 2>&1
+          | Select-String -Pattern "vulnerable|Severity|CVE|HIGH|CRITICAL"
+          | ForEach-Object { if ($_ -match "HIGH|CRITICAL") { Write-Host "::warning::$_" } else { Write-Host $_ } }
+
+      - name: Lint
+        run: dotnet format --verify-no-changes QubiCostElectrical.Wpf.sln
+
+      - name: Build
+        run: dotnet build QubiCostElectrical.Wpf.sln -c Release --no-restore
+
+      - name: Cleanup stale testhost
+        shell: pwsh
+        run: |
+          Get-Process | Where-Object { $_.Name -like "testhost*" -or $_.Name -like "vstest*" } | ForEach-Object {
+            try { Stop-Process -Id $_.Id -Force -ErrorAction Stop } catch {}
+          }
+
+      - name: Test
+        run: dotnet test QubiCostElectrical.Wpf.sln -c Release --no-build --logger "trx;LogFileName=results.trx"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: "**/TestResults/*.trx"
+          retention-days: 7
+
+      - name: File size gate
+        shell: pwsh
+        run: |
+          $max = $env:MAX_FILE_LINES
+          $violations = @()
+          $files = Get-ChildItem -Recurse -Filter "*.cs" -File |
+            Where-Object { $_.FullName -notmatch '\\obj\\' -and $_.FullName -notmatch '\\bin\\' -and $_.FullName -notmatch '\\node_modules\\' }
+          foreach ($f in $files) {
+            $lines = (Get-Content $f.FullName | Measure-Object -Line).Lines
+            if ($lines -gt $max) {
+              $violations += "$($f.FullName): $lines lines (max $max)"
+            }
+          }
+          if ($violations.Count -gt 0) {
+            Write-Host "::error::File size gate FAILED - $($violations.Count) file(s) exceed $max lines:"
+            $violations | ForEach-Object { Write-Host "::error::$_" }
+            exit 1
+          }
+          Write-Host "File size gate passed - all files under $max lines."
+
+      - name: Dark mode coverage gate
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          .\scripts\Verify-DarkModeCoverage.ps1
+          if ($LASTEXITCODE -eq 1) {
+            Write-Host "::warning::Modo oscuro: hay vistas con colores hardcodeados. Revisar reporte."
+          }
+
+  publish:
+    name: Publish & Package
+    runs-on: windows-latest
+    needs: build
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET ${{ env.DOTNET_VERSION }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Install Velopack CLI
+        shell: pwsh
+        run: dotnet tool install -g vpk --version "1.*" 2>$null; if ($LASTEXITCODE -ne 0) { dotnet tool update -g vpk }
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/Directory.Build.props') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore
+        run: dotnet restore QubiCostElectrical.Wpf.sln
+
+      - name: Leer versión
+        id: version
+        shell: pwsh
+        run: |
+          $props = Get-Content -LiteralPath Directory.Build.props -Raw
+          $prefix = [regex]::Match($props, '<VersionPrefix>([^<]+)</VersionPrefix>').Groups[1].Value
+          $suffix = [regex]::Match($props, '<VersionSuffix>([^<]*)</VersionSuffix>').Groups[1].Value
+          if (-not $prefix) { throw "VersionPrefix no encontrado" }
+          $ver = if ($suffix) { "$prefix-$suffix" } else { $prefix }
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "value=$ver"
+          Write-Host "Versión: $ver"
+
+      - name: Build
+        run: dotnet build QubiCostElectrical.Wpf.sln -c Release --no-restore
+
+      - name: Publish (win-x64 self-contained)
+        run: >
+          dotnet publish
+          src/QubiCostElectrical.Wpf/QubiCostElectrical.Wpf.csproj
+          --configuration Release
+          --runtime win-x64
+          --self-contained true
+          -p:PublishSingleFile=false
+          -p:PublishTrimmed=false
+          --output publish/win-x64
+
+      - name: Firmar ejecutable (Authenticode)
+        shell: pwsh
+        env:
+          CODE_SIGNING_CERT_BASE64: ${{ secrets.CODE_SIGNING_CERT_BASE64 }}
+          CODE_SIGNING_CERT_PASSWORD: ${{ secrets.CODE_SIGNING_CERT_PASSWORD }}
+        run: |
+          if (-not $env:CODE_SIGNING_CERT_BASE64) {
+            Write-Host "Firma omitida: configure CODE_SIGNING_CERT_BASE64 y CODE_SIGNING_CERT_PASSWORD"
+            exit 0
+          }
+          $pfx = Join-Path $env:RUNNER_TEMP "codesign.pfx"
+          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:CODE_SIGNING_CERT_BASE64))
+          $env:CODE_SIGNING_CERT_PFX = $pfx
+          .\deploy\Sign-Authenticode.ps1 -Paths "publish\win-x64\QubiCostElectrical.exe"
+          if ($LASTEXITCODE -eq 1) { throw "Firma del ejecutable falló" }
+
+      - name: Empaquetar con Velopack
+        shell: pwsh
+        run: |
+          $ver = "${{ steps.version.outputs.value }}"
+          $releasesDir = "deploy\releases"
+          New-Item -ItemType Directory -Path $releasesDir -Force | Out-Null
+
+          $vpkExit = 0
+          vpk pack `
+            --packId      "QubiCostElectrical" `
+            --packVersion $ver `
+            --packDir     publish/win-x64 `
+            --packTitle   "Qubi Cost Electrical" `
+            --mainExe     "QubiCostElectrical.exe" `
+            --outputDir   $releasesDir `
+            --channel     win 2>&1
+          $vpkExit = $LASTEXITCODE
+
+          if ($vpkExit -ne 0) {
+            Write-Host "::warning::vpk pack falló (exit $vpkExit) — intentando con release local"
+            exit 1
+          }
+
+          Write-Host "Release empaquetado en $releasesDir"
+          Get-ChildItem $releasesDir | Select-Object Name, @{N='MB';E={[math]::Round($_.Length/1MB,1)}}
+
+      - name: Firmar artefactos Velopack (Authenticode)
+        shell: pwsh
+        env:
+          CODE_SIGNING_CERT_BASE64: ${{ secrets.CODE_SIGNING_CERT_BASE64 }}
+          CODE_SIGNING_CERT_PASSWORD: ${{ secrets.CODE_SIGNING_CERT_PASSWORD }}
+        run: |
+          if (-not $env:CODE_SIGNING_CERT_BASE64) {
+            Write-Host "Firma de artefactos omitida"
+            exit 0
+          }
+          $pfx = Join-Path $env:RUNNER_TEMP "codesign.pfx"
+          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:CODE_SIGNING_CERT_BASE64))
+          $env:CODE_SIGNING_CERT_PFX = $pfx
+          $artifacts = Get-ChildItem deploy/releases -File -Include *.exe,*.nupkg | ForEach-Object { $_.FullName }
+          if ($artifacts.Count -gt 0) {
+            .\deploy\Sign-Authenticode.ps1 -Paths $artifacts
+            if ($LASTEXITCODE -eq 1) { throw "Firma de artefactos falló" }
+          }
+
+      - name: Crear directorio artifacts
+        shell: pwsh
+        run: New-Item -ItemType Directory -Path artifacts -Force | Out-Null
+
+      - name: Copiar artefactos Velopack
+        shell: pwsh
+        run: Copy-Item deploy/releases/* artifacts/ -Force
+
+      - name: Generar SHA-256
+        shell: pwsh
+        run: |
+          $hashes = Get-ChildItem artifacts/ | ForEach-Object {
+            $hash = (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower()
+            "$hash  $($_.Name)"
+          }
+          $hashes | Out-File -FilePath artifacts/SHA256SUMS.txt -Encoding utf8
+          $hashes | ForEach-Object { Write-Host $_ }
+
+      - name: Smoke test automatizado
+        shell: pwsh
+        env:
+          CI: "true"
+        run: |
+          .\scripts\Run-SmokeAutomated.ps1 -Configuration Release -CI
+          if ($LASTEXITCODE -ne 0) { Write-Host "::warning::Smoke test reportó fallos"; exit 1 }
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: QubiCostElectrical-Release-${{ steps.version.outputs.value }}
+          path: artifacts/
+          retention-days: 30
+
+  release:
+    name: GitHub Release
+    runs-on: windows-latest
+    needs: publish
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Descargar artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: QubiCostElectrical-Release-*
+          merge-multiple: true
+          path: artifacts/
+
+      - name: Crear Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*
+          generate_release_notes: true

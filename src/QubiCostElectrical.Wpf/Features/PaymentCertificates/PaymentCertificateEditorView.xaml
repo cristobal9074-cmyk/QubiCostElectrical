@@ -1,0 +1,98 @@
+<UserControl x:Class="QubiCostElectrical.Wpf.Features.PaymentCertificates.PaymentCertificateEditorView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignHeight="600" d:DesignWidth="800">
+  <Grid Background="{DynamicResource Brush.Canvas}">
+    <Border Background="{DynamicResource Brush.Surface}"
+            BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+            CornerRadius="{StaticResource Radius.Lg}" Padding="20" Margin="20">
+      <ScrollViewer>
+        <StackPanel>
+          <TextBlock Text="Editor de Estado de Pago" Style="{DynamicResource Text.SectionTitle}" Margin="0,0,0,20" />
+
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" Margin="0,0,10,0">
+              <TextBlock Text="Número Visible" Style="{StaticResource Text.Caption}" />
+              <TextBox Text="{Binding Certificate.VisibleNumber, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,12" />
+
+              <TextBlock Text="Moneda" Style="{StaticResource Text.Caption}" />
+              <TextBox Text="{Binding Certificate.Currency, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,12" />
+
+              <TextBlock Text="Tipo de Cambio" Style="{StaticResource Text.Caption}" />
+              <TextBox Text="{Binding Certificate.ExchangeRate, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,12" />
+
+              <TextBlock Text="Presentador" Style="{StaticResource Text.Caption}" />
+              <TextBox Text="{Binding Certificate.Presenter, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,12" />
+
+              <TextBlock Text="Revisor" Style="{StaticResource Text.Caption}" />
+              <TextBox Text="{Binding Certificate.Revisor, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,12" />
+            </StackPanel>
+
+            <StackPanel Grid.Column="1" Margin="5,0">
+              <TextBlock Text="Período Inicio" Style="{StaticResource Text.Caption}" />
+              <DatePicker SelectedDate="{Binding Certificate.PeriodStart}" Margin="0,2,0,12" />
+
+              <TextBlock Text="Período Fin" Style="{StaticResource Text.Caption}" />
+              <DatePicker SelectedDate="{Binding Certificate.PeriodEnd}" Margin="0,2,0,12" />
+
+              <TextBlock Text="Fecha de Corte" Style="{StaticResource Text.Caption}" />
+              <DatePicker SelectedDate="{Binding Certificate.CutOffDate}" Margin="0,2,0,12" />
+
+              <TextBlock Text="Fecha de Presentación" Style="{StaticResource Text.Caption}" />
+              <DatePicker SelectedDate="{Binding Certificate.PresentationDate}" Margin="0,2,0,12" />
+            </StackPanel>
+
+            <StackPanel Grid.Column="2" Margin="10,0,0,0">
+              <TextBlock Text="Comentario" Style="{StaticResource Text.Caption}" />
+              <TextBox Text="{Binding Certificate.Comment, UpdateSourceTrigger=PropertyChanged}"
+                       Height="60" TextWrapping="Wrap" AcceptsReturn="True" Margin="0,2,0,12" />
+
+              <TextBlock Text="Estado" Style="{StaticResource Text.Caption}" />
+              <TextBox Text="{Binding Certificate.Status}" IsReadOnly="True" Margin="0,2,0,12" Background="{DynamicResource Brush.ReadOnly}" />
+
+              <TextBlock Text="Versión (RowVersion)" Style="{StaticResource Text.Caption}" />
+              <TextBox Text="{Binding Certificate.RowVersion}" IsReadOnly="True" Margin="0,2,0,12" Background="{DynamicResource Brush.ReadOnly}" />
+            </StackPanel>
+          </Grid>
+
+          <TextBlock Text="Líneas de Valorización" Style="{DynamicResource Text.SectionTitle}" Margin="0,16,0,8" />
+
+          <DataGrid ItemsSource="{Binding Certificate.Lines}"
+                    AutoGenerateColumns="False" Background="{DynamicResource Brush.Surface}"
+                    AlternatingRowBackground="{DynamicResource Brush.AltRow}"
+                    Height="200" Margin="0,0,0,12">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="Partida" Binding="{Binding PartidaContractual}" Width="80" />
+              <DataGridTextColumn Header="Descripción" Binding="{Binding Description}" Width="*" />
+              <DataGridTextColumn Header="Unidad" Binding="{Binding Unit}" Width="50" />
+              <DataGridTextColumn Header="Cant. Contractual" Binding="{Binding CantidadContractual, StringFormat=\{0:N2\}}" Width="90" />
+              <DataGridTextColumn Header="P.U. Contractual" Binding="{Binding PrecioUnitarioContractual, StringFormat=\{0:N0\}}" Width="90" />
+              <DataGridTextColumn Header="Cant. Anterior" Binding="{Binding CantidadAnterior, StringFormat=\{0:N2\}}" Width="80" />
+              <DataGridTextColumn Header="Cant. Período" Binding="{Binding CantidadPeriodo, StringFormat=\{0:N2\}}" Width="80" />
+              <DataGridTextColumn Header="Cant. Acumulada" Binding="{Binding CantidadAcumulada, StringFormat=\{0:N2\}}" Width="90" />
+              <DataGridTextColumn Header="Monto Período" Binding="{Binding MontoPeriodo, StringFormat=\{0:N0\}}" Width="90" />
+              <DataGridTextColumn Header="Observación" Binding="{Binding Observacion}" Width="*" />
+            </DataGrid.Columns>
+          </DataGrid>
+
+          <TextBlock Text="{Binding ErrorMessage}" Foreground="{DynamicResource Brush.Danger}" Margin="0,4,0,4" />
+
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+            <Button Command="{Binding RecalculateCommand}" Content="Recalcular" Style="{StaticResource Button.Secondary}" Width="100" />
+            <Button Command="{Binding CancelCommand}" Content="Cancelar" Style="{StaticResource Button.Secondary}" Width="100" Margin="10,0,0,0" />
+            <Button Command="{Binding SaveCommand}" Content="Guardar" Style="{StaticResource Button.Primary}" Width="100" Margin="10,0,0,0" />
+          </StackPanel>
+        </StackPanel>
+      </ScrollViewer>
+    </Border>
+  </Grid>
+</UserControl>

@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Qubi Cost Electrical — Plantillas v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#0b0d12;--ink2:#454a58;--muted:#8a90a0;
+  --surface:#fff;--surface2:#f5f6f8;--surface3:#eef0f3;
+  --line:#e4e6eb;--line2:#d0d3dc;
+  --blue:#2563eb;--blueSoft:#eef4ff;--blueLight:#dbeafe;
+  --amber:#d97706;--amberSoft:#fffbeb;--amberLight:#fef3c7;
+  --green:#16a34a;--greenSoft:#f0fdf4;--red:#dc2626;--redSoft:#fef2f2;
+  --radius:12px;--radiusSm:8px;--radiusXs:6px;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --shadowMd:0 4px 16px rgba(0,0,0,.08);
+  --transition:.2s cubic-bezier(.4,0,.2,1);
+}
+html{font-size:14px}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:#f0f1f4;color:var(--ink);padding:24px;-webkit-font-smoothing:antialiased}
+
+/* demo card */
+.demo-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:24px;margin-bottom:24px;box-shadow:var(--shadow)}
+.demo-card h2{font-size:14px;font-weight:700;margin-bottom:4px;color:var(--ink)}
+.demo-card p{font-size:12px;color:var(--muted);margin-bottom:16px}
+
+/* grid */
+.grid-wrap{overflow:auto;border:1px solid var(--line);border-radius:var(--radiusSm);overflow:hidden}
+table.grid{width:100%;border-collapse:collapse;font-size:12px}
+table.grid th{text-align:left;padding:10px 10px;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;border-bottom:2px solid var(--line);background:var(--surface2);position:sticky;top:0;z-index:2;white-space:nowrap}
+table.grid td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:middle;transition:background var(--transition)}
+table.grid tr.maestro{background:var(--amberSoft)}
+table.grid tr.maestro td:first-child{border-left:3px solid var(--amber)}
+table.grid tr.slave{background:var(--blueSoft)}
+table.grid tr.slave td:first-child{border-left:3px solid var(--blue)}
+table.grid tr:hover td{background:rgba(0,0,0,.02)}
+table.grid tr.maestro:hover td{background:var(--amberLight)}
+table.grid tr.slave:hover td{background:var(--blueLight)}
+
+/* controls */
+select, input{font-family:inherit}
+.type-select{padding:2px 4px;border:1px solid transparent;border-radius:4px;font-size:11px;background:transparent;outline:none;cursor:pointer;transition:var(--transition);width:100%}
+.type-select:hover{border-color:var(--line)}
+.type-select:focus{border-color:var(--blue);background:var(--surface)}
+
+.cell-input{border:1px solid transparent;border-radius:4px;padding:2px 4px;font-size:12px;background:transparent;outline:none;width:100%;transition:var(--transition)}
+.cell-input:hover{border-color:var(--line)}
+.cell-input:focus{border-color:var(--blue);background:var(--surface);box-shadow:0 0 0 2px rgba(37,99,235,.1)}
+
+.cell-input.center{text-align:center}
+.cell-input.code{font-family:'Consolas','Courier New',monospace;font-size:11px;font-weight:600;text-transform:uppercase}
+.cell-input.short{width:40px}
+
+/* checkbox */
+input[type=checkbox]{accent-color:var(--amber);width:16px;height:16px;cursor:pointer}
+
+/* maestro badge */
+.maestro-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;color:var(--amber);white-space:nowrap}
+.slave-combo{padding:2px 4px;border:1px solid transparent;border-radius:4px;font-size:11px;background:transparent;outline:none;cursor:pointer;width:100%;transition:var(--transition)}
+.slave-combo:hover{border-color:var(--line)}
+
+/* ═══ NUEVAS COLUMNAS ═══ */
+
+/* LÓGICA — combo editable */
+.logica-combo{padding:2px 4px;border:1px solid var(--line);border-radius:4px;font-size:11px;background:transparent;outline:none;cursor:pointer;width:100%;font-family:'Consolas','Courier New',monospace;font-weight:600;text-align:center;transition:var(--transition)}
+.logica-combo:hover{border-color:var(--line2)}
+.logica-combo:focus{border-color:var(--blue);background:var(--surface);box-shadow:0 0 0 2px rgba(37,99,235,.1)}
+
+/* FACTOR — numérico */
+.factor-input{border:1px solid transparent;border-radius:4px;padding:2px 4px;font-size:12px;background:transparent;outline:none;width:60px;text-align:right;font-family:'Consolas','Courier New',monospace;transition:var(--transition)}
+.factor-input:hover{border-color:var(--line)}
+.factor-input:focus{border-color:var(--blue);background:var(--surface);box-shadow:0 0 0 2px rgba(37,99,235,.1)}
+
+/* FÓRMULA — auto-generada, read-only */
+.formula-auto{font-family:'Consolas','Courier New',monospace;font-size:11px;font-weight:600;padding:2px 6px;border-radius:4px;white-space:nowrap;display:inline-block}
+.formula-auto.with-op{background:var(--blueSoft);color:var(--blue)}
+.formula-auto.equals{background:var(--surface3);color:var(--muted)}
+
+/* col widths */
+.col-tipo{width:55px}
+.col-codigo{width:90px}
+.col-desc{min-width:160px}
+.col-ud{width:38px}
+.col-maestro{width:65px;text-align:center}
+.col-sigue{width:140px}
+.col-logica{width:70px}
+.col-factor{width:65px}
+.col-formula{width:160px}
+
+/* header highlight */
+th.col-logica, th.col-factor, th.col-formula{color:var(--blue);background:var(--blueSoft)}
+
+/* formula preview bar */
+.formula-preview-bar{margin-top:12px;padding:10px 14px;background:var(--blueSoft);border-radius:var(--radiusXs);border:1px solid var(--blueLight);display:flex;align-items:center;gap:12px}
+.formula-preview-bar .label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.formula-preview-bar .preview{font-family:'Consolas','Courier New',monospace;font-size:13px;font-weight:700;color:var(--blue);padding:4px 10px;background:var(--surface);border-radius:4px;border:1px solid var(--blueLight)}
+
+@media(max-width:1000px){.grid-wrap{overflow-x:auto}}
+</style>
+</head>
+<body>
+
+<div class="demo-card">
+  <h2>📐 Nuevas columnas: Lógica · Factor · Fórmula</h2>
+  <p>
+    <strong>Lógica</strong> = operación matemática (combo editable: = + − × ÷ o escribes lo que quieras) · 
+    <strong>Factor</strong> = número · 
+    <strong>Fórmula</strong> = se genera sola: "MAESTRO × 1,5" — no se edita, solo se lee
+  </p>
+</div>
+
+<div class="grid-wrap">
+<table class="grid">
+  <thead>
+    <tr>
+      <th class="col-tipo">Tipo</th>
+      <th class="col-codigo">Código</th>
+      <th class="col-desc">Descripción del Material</th>
+      <th class="col-ud">Ud.</th>
+      <th class="col-maestro">⭐ Maestro</th>
+      <th class="col-sigue">Sigue a Maestro</th>
+      <th class="col-logica">Lógica</th>
+      <th class="col-factor">Factor</th>
+      <th class="col-formula">Fórmula</th>
+    </tr>
+  </thead>
+  <tbody>
+    <!-- ═══ FILA 1: MAESTRO ═══ -->
+    <tr class="maestro">
+      <td>
+        <select class="type-select">
+          <option selected>MAT</option><option>MO</option><option>EQ</option>
+        </select>
+      </td>
+      <td><input class="cell-input code" value="C401000010"></td>
+      <td><input class="cell-input" value="Tablero general 24 polos" style="font-weight:700"></td>
+      <td><input class="cell-input center short" value="UN"></td>
+      <td style="text-align:center"><span class="maestro-badge">⭐ Maestro</span></td>
+      <td><span class="maestro-badge">⭐ Recurso Maestro</span></td>
+      <td>
+        <select class="logica-combo">
+          <option selected>=</option><option>+</option><option>−</option><option>×</option><option>÷</option>
+        </select>
+      </td>
+      <td><input class="factor-input" value="1" disabled style="opacity:0.4"></td>
+      <td><span class="formula-auto equals">MAESTRO</span></td>
+    </tr>
+
+    <!-- ═══ FILA 2: ESCLAVO (división) ═══ -->
+    <tr class="slave">
+      <td>
+        <select class="type-select">
+          <option>MAT</option><option selected>MO</option><option>EQ</option>
+        </select>
+      </td>
+      <td><input class="cell-input code" value="MO-INST-01"></td>
+      <td><input class="cell-input" value="Mano de obra instalación tablero"></td>
+      <td><input class="cell-input center short" value="hr"></td>
+      <td style="text-align:center"><input type="checkbox"></td>
+      <td>
+        <select class="slave-combo">
+          <option value="">— Sin maestro —</option>
+          <option value="r1" selected>C401000010 · Tablero general 24 polos</option>
+        </select>
+      </td>
+      <td>
+        <select class="logica-combo">
+          <option>=</option><option>+</option><option>−</option><option selected>÷</option>
+        </select>
+      </td>
+      <td><input class="factor-input" value="1,5"></td>
+      <td><span class="formula-auto with-op">MAESTRO ÷ 1,5</span></td>
+    </tr>
+
+    <!-- ═══ FILA 3: ESCLAVO (multiplicación) ═══ -->
+    <tr class="slave">
+      <td>
+        <select class="type-select">
+          <option selected>MAT</option><option>MO</option><option>EQ</option>
+        </select>
+      </td>
+      <td><input class="cell-input code" value="C405000010"></td>
+      <td><input class="cell-input" value="Cinta aislante eléctrica"></td>
+      <td><input class="cell-input center short" value="UN"></td>
+      <td style="text-align:center"><input type="checkbox"></td>
+      <td>
+        <select class="slave-combo">
+          <option value="">— Sin maestro —</option>
+          <option value="r1" selected>C401000010 · Tablero general 24 polos</option>
+        </select>
+      </td>
+      <td>
+        <select class="logica-combo">
+          <option>=</option><option>+</option><option selected>×</option>
+        </select>
+      </td>
+      <td><input class="factor-input" value="2"></td>
+      <td><span class="formula-auto with-op">MAESTRO × 2</span></td>
+    </tr>
+
+    <!-- ═══ FILA 4: ESCLAVO (suma) ═══ -->
+    <tr class="slave">
+      <td>
+        <select class="type-select">
+          <option selected>MAT</option><option>MO</option><option>EQ</option>
+        </select>
+      </td>
+      <td><input class="cell-input code" value="C402000015"></td>
+      <td><input class="cell-input" value="Interruptor termomagnético 3x50A"></td>
+      <td><input class="cell-input center short" value="UN"></td>
+      <td style="text-align:center"><input type="checkbox"></td>
+      <td>
+        <select class="slave-combo">
+          <option value="">— Sin maestro —</option>
+          <option value="r1" selected>C401000010 · Tablero general 24 polos</option>
+        </select>
+      </td>
+      <td>
+        <select class="logica-combo">
+          <option selected>=</option><option>+</option><option>−</option><option>×</option><option>÷</option>
+        </select>
+      </td>
+      <td><input class="factor-input" value="1" disabled style="opacity:0.4"></td>
+      <td><span class="formula-auto equals">MAESTRO</span></td>
+    </tr>
+
+    <!-- ═══ FILA 5: LÓGICA ESCRITA A MANO ═══ -->
+    <tr class="slave">
+      <td>
+        <select class="type-select">
+          <option>MAT</option><option>MO</option><option selected>EQ</option>
+        </select>
+      </td>
+      <td><input class="cell-input code" value="EQ-BOMBA-01"></td>
+      <td><input class="cell-input" value="Bomba hidráulica 1.5 HP"></td>
+      <td><input class="cell-input center short" value="UN"></td>
+      <td style="text-align:center"><input type="checkbox"></td>
+      <td>
+        <select class="slave-combo">
+          <option value="">— Sin maestro —</option>
+          <option value="r1">C401000010 · Tablero general 24 polos</option>
+          <option value="r4" selected>C403000005 · Cable NYY 3x10mm2</option>
+        </select>
+      </td>
+      <td>
+        <input class="cell-input code center" value="^ 0,5" title="Escrito a mano — cualquier expresión" style="border-color:var(--amberLight);background:var(--amberSoft);font-size:11px">
+      </td>
+      <td><input class="factor-input" value="—" disabled style="opacity:0.4"></td>
+      <td><span class="formula-auto with-op" style="background:var(--amberSoft);color:var(--amber)">MAESTRO ^ 0,5</span></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ═══ BARRA DE PREVIEW ═══ -->
+<div class="formula-preview-bar">
+  <span class="label">📐 Vista previa de fórmula</span>
+  <span class="preview" id="formulaPreview">CANTIDAD del Esclavo = <span style="color:var(--amber)">MAESTRO</span> <span style="color:var(--blue)">÷</span> <span style="color:var(--ink)">1,5</span></span>
+</div>
+
+<div class="demo-card" style="margin-top:20px">
+  <h2>📝 Notas de implementación</h2>
+  <p style="margin-bottom:8px">
+    ✅ <strong>Lógica</strong> = combo editable (dropdown con = + − × ÷, pero puedes escribir cualquier expresión como ^, %, etc.)
+  </p>
+  <p style="margin-bottom:8px">
+    ✅ <strong>Factor</strong> = input numérico independiente. Se deshabilita (opacity 0.4) cuando la lógica es "="
+  </p>
+  <p style="margin-bottom:8px">
+    ✅ <strong>Fórmula</strong> = read-only auto-generada: <code style="background:var(--surface3);padding:2px 6px;border-radius:4px;font-size:11px">"MAESTRO " + lógica + " " + factor</code>
+  </p>
+  <p>
+    ✅ Cuando <strong>Lógica =</strong> "=", la fórmula muestra solo <strong>MAESTRO</strong> (sin factor). Las columnas Lógica, Factor y Fórmula reemplazan a la columna Fórmula anterior.
+  </p>
+</div>
+
+<script>
+// ═══ DEMO: preview en vivo ═══
+document.querySelectorAll('.logica-combo, .factor-input, .cell-input.code.center').forEach(el => {
+  el.addEventListener('change', updatePreviews);
+  el.addEventListener('input', updatePreviews);
+});
+
+function updatePreviews() {
+  const rows = document.querySelectorAll('tbody tr');
+  let previewText = 'CANTIDAD del Esclavo = ';
+  let found = false;
+
+  rows.forEach(row => {
+    const logicaEl = row.querySelector('.logica-combo') || row.querySelector('.cell-input.code.center');
+    const factorEl = row.querySelector('.factor-input');
+    const formulaEl = row.querySelector('.formula-auto');
+    if (!logicaEl || !formulaEl) return;
+
+    let logica, factor;
+    if (logicaEl.tagName === 'SELECT') {
+      logica = logicaEl.value;
+      factor = factorEl.value;
+    } else {
+      logica = logicaEl.value;
+      factor = '—';
+    }
+
+    const isMaster = row.classList.contains('maestro');
+    if (isMaster) {
+      formulaEl.textContent = 'MAESTRO';
+      formulaEl.className = 'formula-auto equals';
+    } else if (logica === '=' || logica === '') {
+      formulaEl.textContent = 'MAESTRO';
+      formulaEl.className = 'formula-auto equals';
+    } else {
+      formulaEl.textContent = `MAESTRO ${logica} ${factor}`;
+      formulaEl.className = 'formula-auto with-op';
+    }
+  });
+
+  // pick last non-master row for preview bar
+  const slaveRows = document.querySelectorAll('tbody tr:not(.maestro)');
+  if (slaveRows.length > 0) {
+    const last = slaveRows[slaveRows.length - 1];
+    const formulaEl = last.querySelector('.formula-auto');
+    if (formulaEl) {
+      document.getElementById('formulaPreview').innerHTML = `CANTIDAD del Esclavo = ${formulaEl.textContent}`;
+    }
+  }
+}
+</script>
+</body>
+</html>
