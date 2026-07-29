@@ -255,7 +255,7 @@ jobs:
 
     steps:
       - name: Descargar artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: QubiCostElectrical-Release-*
           merge-multiple: true
