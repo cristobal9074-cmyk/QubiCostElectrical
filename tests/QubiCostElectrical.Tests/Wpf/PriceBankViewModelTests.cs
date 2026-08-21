@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using QubiCostElectrical;
@@ -23,9 +24,11 @@ public sealed class PriceBankViewModelTests
 
     private static (int categorias, int proveedores) ParseCounts(string summaryText)
     {
-        var match = Regex.Match(summaryText, @"(\d+) categorías · (\d+) proveedores");
+        var match = Regex.Match(summaryText, @"([\d.]+) categorías · ([\d.]+) proveedores");
         Assert.True(match.Success, $"No se pudo parsear SummaryText: '{summaryText}'");
-        return (int.Parse(match.Groups[1].Value), int.Parse(match.Groups[2].Value));
+        return (
+            int.Parse(match.Groups[1].Value.Replace(".", ""), CultureInfo.InvariantCulture),
+            int.Parse(match.Groups[2].Value.Replace(".", ""), CultureInfo.InvariantCulture));
     }
 
     [Fact]
