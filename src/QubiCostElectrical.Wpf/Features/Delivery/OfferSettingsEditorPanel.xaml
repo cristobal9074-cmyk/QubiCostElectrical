@@ -1,0 +1,139 @@
+<UserControl x:Class="QubiCostElectrical.Wpf.Features.Delivery.OfferSettingsEditorPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" MaxHeight="520">
+    <StackPanel>
+      <TextBlock Text="Contenido de la oferta" Style="{StaticResource Text.SectionLabel}" Margin="0,0,0,8" />
+      <TextBlock Text="Los cambios se reflejan en la vista previa en vivo del panel derecho."
+                 Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Muted}"
+                 TextWrapping="Wrap" Margin="0,0,0,10" />
+
+      <Grid Margin="0,0,0,10">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,8,8">
+          <TextBlock Text="Título de la oferta" Style="{StaticResource Text.Caption}" />
+          <TextBox Text="{Binding OfferTitle, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" />
+        </StackPanel>
+        <StackPanel Grid.Row="0" Grid.Column="1" Margin="8,0,0,8">
+          <TextBlock Text="Número de oferta" Style="{StaticResource Text.Caption}" />
+          <TextBox Text="{Binding OfferNumber, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" />
+        </StackPanel>
+        <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,8,8">
+          <TextBlock Text="Revisión" Style="{StaticResource Text.Caption}" />
+          <TextBox Text="{Binding RevisionTag, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" />
+        </StackPanel>
+        <StackPanel Grid.Row="1" Grid.Column="1" Margin="8,0,0,8">
+          <TextBlock Text="Fecha de oferta" Style="{StaticResource Text.Caption}" />
+          <DatePicker SelectedDate="{Binding OfferDate, Mode=TwoWay}" Margin="0,2,0,0" />
+        </StackPanel>
+        <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,8,0">
+          <TextBlock Text="Validez (días)" Style="{StaticResource Text.Caption}" />
+          <TextBox Text="{Binding ValidityDays, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" />
+        </StackPanel>
+        <StackPanel Grid.Row="2" Grid.Column="1" Margin="8,0,0,0">
+          <TextBlock Text="Duración del proyecto" Style="{StaticResource Text.Caption}" />
+          <TextBox Text="{Binding ProjectDuration, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" />
+        </StackPanel>
+      </Grid>
+
+      <Grid Margin="0,0,0,10">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <StackPanel Grid.Column="0" Margin="0,0,8,0">
+          <TextBlock Text="Destinatario" Style="{StaticResource Text.Caption}" />
+          <TextBox Text="{Binding RecipientName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" />
+        </StackPanel>
+        <StackPanel Grid.Column="1" Margin="8,0,0,0">
+          <TextBlock Text="Empresa destinatario" Style="{StaticResource Text.Caption}" />
+          <TextBox Text="{Binding RecipientCompany, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" />
+        </StackPanel>
+      </Grid>
+
+      <StackPanel Margin="0,0,0,10">
+        <TextBlock Text="Referencia" Style="{StaticResource Text.Caption}" />
+        <TextBox Text="{Binding Reference, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" />
+      </StackPanel>
+
+      <CheckBox Content="Incluir nota de IVA" IsChecked="{Binding IncludeIvaNote}" Margin="0,0,0,10" />
+
+      <StackPanel Margin="0,0,0,8">
+        <TextBlock Text="Alcance" Style="{StaticResource Text.Caption}" />
+        <TextBox Text="{Binding ScopeText, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}"
+                 AcceptsReturn="True" TextWrapping="Wrap" MinHeight="72" VerticalScrollBarVisibility="Auto" />
+      </StackPanel>
+      <StackPanel Margin="0,0,0,8">
+        <TextBlock Text="Exclusiones" Style="{StaticResource Text.Caption}" />
+        <TextBox Text="{Binding ExclusionsText, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}"
+                 AcceptsReturn="True" TextWrapping="Wrap" MinHeight="72" VerticalScrollBarVisibility="Auto" />
+      </StackPanel>
+      <StackPanel Margin="0,0,0,8">
+        <TextBlock Text="Condiciones comerciales" Style="{StaticResource Text.Caption}" />
+        <TextBox Text="{Binding CommercialConditionsText, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}"
+                 AcceptsReturn="True" TextWrapping="Wrap" MinHeight="88" VerticalScrollBarVisibility="Auto" />
+      </StackPanel>
+      <StackPanel Margin="0,0,0,8">
+        <TextBlock Text="Observaciones" Style="{StaticResource Text.Caption}" />
+        <TextBox Text="{Binding ObservationsText, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}"
+                 AcceptsReturn="True" TextWrapping="Wrap" MinHeight="72" VerticalScrollBarVisibility="Auto" />
+      </StackPanel>
+
+      <Expander Header="Carta de presentación" IsExpanded="False" Margin="0,4,0,8">
+        <StackPanel Margin="0,8,0,0">
+          <CheckBox Content="Incluir carta de presentación" IsChecked="{Binding IncludePresentationLetter}" Margin="0,0,0,8" />
+          <TextBlock Text="Título de la carta" Style="{StaticResource Text.Caption}" />
+          <TextBox Text="{Binding PresentationLetterTitle, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" Margin="0,0,0,8" />
+          <TextBlock Text="Texto de la carta" Style="{StaticResource Text.Caption}" />
+          <TextBox Text="{Binding PresentationLetterText, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}"
+                   AcceptsReturn="True" TextWrapping="Wrap" MinHeight="100" VerticalScrollBarVisibility="Auto" />
+        </StackPanel>
+      </Expander>
+
+      <Expander Header="Empresa y firma" IsExpanded="False">
+        <StackPanel Margin="0,8,0,0">
+          <Grid Margin="0,0,0,8">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" Margin="0,0,8,0">
+              <TextBlock Text="Empresa" Style="{StaticResource Text.Caption}" />
+              <TextBox Text="{Binding CompanyName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Margin="8,0,0,0">
+              <TextBlock Text="RUT empresa" Style="{StaticResource Text.Caption}" />
+              <TextBox Text="{Binding CompanyRut, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" />
+            </StackPanel>
+          </Grid>
+          <StackPanel Margin="0,0,0,8">
+            <TextBlock Text="Dirección" Style="{StaticResource Text.Caption}" />
+            <TextBox Text="{Binding CompanyAddress, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" />
+          </StackPanel>
+          <Grid Margin="0,0,0,8">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" Margin="0,0,8,0">
+              <TextBlock Text="Firma — nombre" Style="{StaticResource Text.Caption}" />
+              <TextBox Text="{Binding SignatureName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Margin="8,0,0,0">
+              <TextBlock Text="Cargo" Style="{StaticResource Text.Caption}" />
+              <TextBox Text="{Binding SignatureRole, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" />
+            </StackPanel>
+          </Grid>
+        </StackPanel>
+      </Expander>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

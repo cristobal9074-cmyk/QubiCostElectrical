@@ -1,0 +1,60 @@
+<Window x:Class="QubiCostElectrical.Wpf.Features.Itemizado.ItemizadoImportPreviewDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Style="{StaticResource Dialog.Window}"
+        Title="Importar itemizado"
+        Width="920" Height="640" MinWidth="720" MinHeight="420"
+        WindowStartupLocation="CenterScreen">
+  <Grid Margin="20">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+    </Grid.RowDefinitions>
+
+    <StackPanel Grid.Row="0" Margin="0,0,0,12">
+      <TextBlock x:Name="SummaryText" Style="{StaticResource Text.ViewTitle}" />
+      <TextBlock x:Name="NoteText" Style="{StaticResource Text.Body}" Margin="0,4,0,0"
+                 Foreground="{DynamicResource Brush.Ink4}" TextWrapping="Wrap" />
+      <TextBlock x:Name="WarningText" Margin="0,6,0,0" Foreground="{DynamicResource Brush.Amber}"
+                 TextWrapping="Wrap" Visibility="Collapsed" />
+    </StackPanel>
+
+    <Border Grid.Row="1" Style="{StaticResource Card.Section}" Padding="0">
+      <DataGrid x:Name="PreviewGrid"
+                Style="{StaticResource DataGrid.Workspace}"
+                AutoGenerateColumns="False"
+                CanUserAddRows="False"
+                CanUserDeleteRows="False"
+                EnableRowVirtualization="True"
+                IsReadOnly="False">
+        <DataGrid.Columns>
+          <DataGridTextColumn Header=" " Binding="{Binding StatusIcon}" Width="32" IsReadOnly="True" />
+          <DataGridTextColumn Header="Código" Binding="{Binding Item, UpdateSourceTrigger=PropertyChanged}" Width="100" />
+          <DataGridTextColumn Header="Descripción" Binding="{Binding Descripcion, UpdateSourceTrigger=PropertyChanged}" Width="*" />
+          <DataGridTextColumn Header="Ud." Binding="{Binding Unidad, UpdateSourceTrigger=PropertyChanged}" Width="60" />
+          <DataGridTextColumn Header="Cant." Binding="{Binding Cantidad, UpdateSourceTrigger=PropertyChanged}" Width="80" />
+          <DataGridTextColumn Header="Validación" Binding="{Binding RejectionReason}" Width="180" IsReadOnly="True" />
+        </DataGrid.Columns>
+      </DataGrid>
+    </Border>
+
+    <Border x:Name="RejectedBanner" Grid.Row="2" Style="{StaticResource Dialog.Banner.Error}" Visibility="Collapsed">
+      <TextBlock x:Name="RejectedText" Style="{StaticResource Dialog.Banner.Text}"
+                 Foreground="{DynamicResource Brush.Red}" />
+    </Border>
+
+    <DockPanel Grid.Row="3" Style="{StaticResource Dialog.Footer}" LastChildFill="False">
+      <Button x:Name="FixButton" DockPanel.Dock="Right" Style="{StaticResource Button.Secondary}"
+              Content="Aplicar corrección sugerida" MinWidth="200" Margin="0,0,8,0" Visibility="Collapsed"
+              Click="OnFixClick" />
+      <Button x:Name="AcceptButton" DockPanel.Dock="Right" Style="{StaticResource Button.Primary}"
+              Content="Aceptar" MinWidth="120" Margin="0,0,8,0" IsDefault="True"
+              Click="OnAcceptClick" />
+      <Button DockPanel.Dock="Right" Style="{StaticResource Button.Secondary}"
+              Content="Cancelar" MinWidth="100" IsCancel="True"
+              Click="OnCancelClick" />
+    </DockPanel>
+  </Grid>
+</Window>

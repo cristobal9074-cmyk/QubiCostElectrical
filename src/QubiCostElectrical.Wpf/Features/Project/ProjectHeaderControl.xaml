@@ -1,0 +1,9 @@
+<UserControl x:Class="QubiCostElectrical.Wpf.Features.Project.ProjectHeaderControl" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1" Padding="22,14,22,12">
+    <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+      <StackPanel Margin="0,0,16,0"><TextBox Text="{Binding Nombre, UpdateSourceTrigger=PropertyChanged}" Height="28" FontSize="22" FontWeight="Bold" BorderThickness="0,0,0,1.5" Background="Transparent" Padding="0" MaxLength="120" ToolTip="Nombre del proyecto"/>
+        <WrapPanel Margin="0,6,0,0"><Border Background="{DynamicResource Brush.Line2}" CornerRadius="999" Padding="8,3" Margin="0,0,6,0"><TextBlock Text="{Binding EstadoPresupuesto}" FontSize="11" FontWeight="SemiBold"/></Border><Border Background="{DynamicResource Brush.BlueSoft}" CornerRadius="999" Padding="8,3" Margin="0,0,6,0"><TextBlock Text="{Binding MonedaChip}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Blue}"/></Border><Border Background="{DynamicResource Brush.Line2}" CornerRadius="999" Padding="8,3" Margin="0,0,6,0"><TextBlock Text="{Binding ClienteChip}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink3}"/></Border><TextBlock Style="{StaticResource Text.Caption}" VerticalAlignment="Center"><Run Text="{Binding ArchivoProyectoShortLabel, Mode=OneWay}"/><Run Text=" · "/><Run Text="{Binding FechaModificacionLabel, Mode=OneWay}"/></TextBlock></WrapPanel>
+      </StackPanel><Button Grid.Column="1" AutomationProperties.Name="Generar ficha PDF" Style="{StaticResource Button.Secondary}" Content="Generar ficha PDF" Command="{Binding GenerateFichaPdfCommand}" Height="32" Padding="12,0"/>
+    </Grid>
+  </Border>
+</UserControl>

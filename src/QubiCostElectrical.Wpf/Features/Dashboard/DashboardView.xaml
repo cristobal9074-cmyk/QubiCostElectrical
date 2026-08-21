@@ -1,0 +1,119 @@
+<UserControl x:Class="QubiCostElectrical.Wpf.Features.Dashboard.DashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignWidth="1920"
+             d:DesignHeight="900"
+             FontFamily="{StaticResource Font.Ui}">
+  <UserControl.Resources>
+    <Style x:Key="Dashboard.PremiumCard" TargetType="Border" BasedOn="{StaticResource Card.Section}">
+      <Setter Property="Padding" Value="18" />
+      <Setter Property="CornerRadius" Value="12" />
+    </Style>
+    <Style x:Key="Dashboard.PremiumMetric" TargetType="Border" BasedOn="{StaticResource Card.Kpi}">
+      <Setter Property="Padding" Value="16" />
+      <Setter Property="MinHeight" Value="118" />
+      <Setter Property="CornerRadius" Value="11" />
+    </Style>
+  </UserControl.Resources>
+  <Grid>
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+      <StackPanel Margin="22,20,22,20">
+        <Grid Margin="0,0,0,14">
+          <StackPanel>
+            <TextBlock Text="Proyecto / Parque Norte / Resumen ejecutivo" Style="{StaticResource Text.Caption}" />
+            <TextBlock Text="Buenos días, Cristóbal" Style="{StaticResource Text.PageTitle}" Margin="0,3,0,2" />
+            <TextBlock Text="El proyecto está cerca de estar listo; hay decisiones que afectan la oferta." Style="{StaticResource Text.Body}" />
+          </StackPanel>
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+            <Button Content="Ver actividad" Command="{Binding GoToProjectCommand}" Style="{StaticResource Button.Secondary}" Margin="0,0,7,0" />
+            <Button Content="{Binding PrimaryCtaLabel}" Command="{Binding PrimaryCtaCommand}" Style="{StaticResource Button.Primary}" />
+          </StackPanel>
+        </Grid>
+
+        <Grid Margin="0,0,0,14">
+          <Grid.ColumnDefinitions><ColumnDefinition Width="1.45*"/><ColumnDefinition Width="0.85*"/></Grid.ColumnDefinitions>
+          <Border Grid.Column="0" Background="{DynamicResource Brush.Navy3}" CornerRadius="13" Padding="24" MinHeight="214" Margin="0,0,7,0">
+            <Grid>
+              <Grid.RowDefinitions><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+              <StackPanel>
+                <TextBlock Text="PRÓXIMA ACCIÓN CON MAYOR IMPACTO" Style="{StaticResource Text.SectionLabel}" Foreground="{DynamicResource Brush.HeaderDate}" />
+                <TextBlock Text="{Binding NextStepTitle}" Foreground="{DynamicResource Brush.White}" FontSize="24" FontWeight="SemiBold" Margin="0,8,0,5" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding NextStepDetail}" Foreground="{DynamicResource Brush.HeaderMuted}" FontSize="12" TextWrapping="Wrap" MaxWidth="620" />
+              </StackPanel>
+              <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,20,0,0">
+                <Button Content="Abrir partidas bloqueadas →" Command="{Binding PrimaryCtaCommand}" Style="{StaticResource Button.Primary}" Background="{DynamicResource Brush.White}" Foreground="{DynamicResource Brush.Navy3}" BorderBrush="{DynamicResource Brush.White}" />
+                <TextBlock Text="{Binding PartidasReadyLabel}" Foreground="{DynamicResource Brush.HeaderMuted}" VerticalAlignment="Center" Margin="14,0,0,0" />
+              </StackPanel>
+            </Grid>
+          </Border>
+          <Border Grid.Column="1" Style="{StaticResource Dashboard.PremiumCard}" MinHeight="214" Margin="7,0,0,0">
+            <StackPanel>
+              <TextBlock Text="PREPARACIÓN DE OFERTA" Style="{StaticResource Text.SectionLabel}" />
+              <TextBlock Text="Control operativo antes de entregar al cliente." Style="{StaticResource Text.Caption}" Margin="0,3,0,12" />
+              <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="82"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                <Grid Width="76" Height="76">
+                  <Ellipse Stroke="#E8EEF4" StrokeThickness="9"/>
+                  <Ellipse Stroke="{DynamicResource Brush.Success}" StrokeThickness="9" StrokeDashArray="21 4" StrokeStartLineCap="Round" RenderTransformOrigin="0.5,0.5"><Ellipse.RenderTransform><RotateTransform Angle="-90"/></Ellipse.RenderTransform></Ellipse>
+                  <TextBlock Text="{Binding PartidasReadyPercent, StringFormat={}{0:N0}%}" FontSize="16" FontWeight="Bold" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                </Grid>
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                  <TextBlock Text="●  Datos del proyecto" Foreground="{DynamicResource Brush.SuccessDark}" FontSize="11" Margin="0,2"/>
+                  <TextBlock Text="●  Itemizado importado" Foreground="{DynamicResource Brush.SuccessDark}" FontSize="11" Margin="0,2"/>
+                  <TextBlock Text="●  Cubicación completada" Foreground="{DynamicResource Brush.SuccessDark}" FontSize="11" Margin="0,2"/>
+                  <TextBlock Text="●  Precios por confirmar" Foreground="{DynamicResource Brush.AmberRisk}" FontSize="11" Margin="0,2"/>
+                </StackPanel>
+              </Grid>
+            </StackPanel>
+          </Border>
+        </Grid>
+
+        <UniformGrid Columns="4" Margin="0,0,0,14">
+          <Border Style="{StaticResource Dashboard.PremiumMetric}" Margin="0,0,7,0"><StackPanel><TextBlock Text="MONTO OFERTADO" Style="{StaticResource Text.SectionLabel}"/><TextBlock Text="{Binding CostTotal}" Style="{StaticResource Text.KpiValue}" Foreground="{DynamicResource Brush.Blue}" Margin="0,7,0,3"/><TextBlock Text="↑ valor comercial vigente" Foreground="{DynamicResource Brush.SuccessDark}" FontSize="11"/></StackPanel></Border>
+          <Border Style="{StaticResource Dashboard.PremiumMetric}" Margin="0,0,7,0"><StackPanel><TextBlock Text="MARGEN ESTIMADO" Style="{StaticResource Text.SectionLabel}"/><TextBlock Text="{Binding UtilidadSimulatedPct, StringFormat={}{0:N1}%}" Style="{StaticResource Text.KpiValue}" Foreground="{DynamicResource Brush.Ink}" Margin="0,7,0,3"/><TextBlock Text="Dentro del rango objetivo" Foreground="{DynamicResource Brush.SuccessDark}" FontSize="11"/></StackPanel></Border>
+          <Border Style="{StaticResource Dashboard.PremiumMetric}" Margin="0,0,7,0"><StackPanel><TextBlock Text="PARTIDAS COMPLETAS" Style="{StaticResource Text.SectionLabel}"/><TextBlock Text="{Binding PartidasReadyLabel}" FontSize="20" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink}" Margin="0,9,0,4"/><TextBlock Text="Requieren atención antes de ofertar" Foreground="{DynamicResource Brush.AmberRisk}" FontSize="11"/></StackPanel></Border>
+          <Border Style="{StaticResource Dashboard.PremiumMetric}"><StackPanel><TextBlock Text="VIGENCIA DE PRECIOS" Style="{StaticResource Text.SectionLabel}"/><TextBlock Text="{Binding PartidasReadyPercent, StringFormat={}{0:N0}%}" Style="{StaticResource Text.KpiValue}" Foreground="{DynamicResource Brush.Ink}" Margin="0,7,0,3"/><TextBlock Text="Revisar precios pendientes" Foreground="{DynamicResource Brush.Red}" FontSize="11"/></StackPanel></Border>
+        </UniformGrid>
+
+        <Grid Margin="0,0,0,14">
+          <Grid.ColumnDefinitions><ColumnDefinition Width="1.18*"/><ColumnDefinition Width="0.82*"/></Grid.ColumnDefinitions>
+          <Border Grid.Column="0" Style="{StaticResource Dashboard.PremiumCard}" MinHeight="270" Margin="0,0,7,0">
+            <StackPanel>
+              <DockPanel Margin="0,0,0,9"><TextBlock Text="Cola de decisiones" FontSize="13" FontWeight="SemiBold"/><TextBlock DockPanel.Dock="Right" Text="Ordenada por impacto comercial" Style="{StaticResource Text.Caption}"/></DockPanel>
+              <ItemsControl ItemsSource="{Binding Alerts}">
+                <ItemsControl.ItemTemplate><DataTemplate>
+                  <Grid Margin="0,0,0,0" MinHeight="45">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="10"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <Ellipse Width="8" Height="8" Fill="{DynamicResource Brush.AmberRisk}" Margin="0,4,0,0" />
+                    <StackPanel Grid.Column="1" Margin="7,0,8,0"><TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="11"/><TextBlock Text="{Binding Detail}" Style="{StaticResource Text.Caption}" TextWrapping="Wrap"/></StackPanel>
+                    <Border Grid.Column="2" Style="{StaticResource Badge.Warn}"><TextBlock Text="{Binding SeverityLabel}" Style="{StaticResource Text.Badge}"/></Border>
+                  </Grid>
+                </DataTemplate></ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </Border>
+          <Border Grid.Column="1" Style="{StaticResource Dashboard.PremiumCard}" MinHeight="270" Margin="7,0,0,0">
+            <StackPanel>
+              <DockPanel Margin="0,0,0,16"><TextBlock Text="Flujo de producción" FontSize="13" FontWeight="SemiBold"/><TextBlock DockPanel.Dock="Right" Text="La app guía, no solo navega" Style="{StaticResource Text.Caption}"/></DockPanel>
+              <ItemsControl ItemsSource="{Binding WorkflowSteps}">
+                <ItemsControl.ItemTemplate><DataTemplate>
+                  <Grid Margin="0,0,0,9"><Grid.ColumnDefinitions><ColumnDefinition Width="10"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><Ellipse Width="8" Height="8" Fill="{DynamicResource Brush.Success}" Margin="0,4,0,0"/><StackPanel Grid.Column="1"><TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="11"/><TextBlock Text="{Binding Detail}" Style="{StaticResource Text.Caption}"/></StackPanel></Grid>
+                </DataTemplate></ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </Border>
+        </Grid>
+
+        <Grid Margin="0,0,0,14">
+          <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
+          <Border Grid.Column="0" Style="{StaticResource Dashboard.PremiumCard}" MinHeight="205" Margin="0,0,7,0"><StackPanel><DockPanel Margin="0,0,0,12"><TextBlock Text="Cobertura por especialidad" FontSize="13" FontWeight="SemiBold"/><TextBlock DockPanel.Dock="Right" Text="Ver detalle" Foreground="{DynamicResource Brush.Blue}" FontWeight="SemiBold" FontSize="11"/></DockPanel><ItemsControl ItemsSource="{Binding CostShares}"><ItemsControl.ItemTemplate><DataTemplate><Grid Margin="0,7"><Grid.ColumnDefinitions><ColumnDefinition Width="125"/><ColumnDefinition Width="*"/><ColumnDefinition Width="45"/></Grid.ColumnDefinitions><TextBlock Text="{Binding Label}" FontSize="11"/><ProgressBar Grid.Column="1" Height="8" Value="{Binding PercentageValue}" Maximum="100" Margin="9,0"/><TextBlock Grid.Column="2" Text="{Binding PercentageLabel}" FontSize="11" FontWeight="SemiBold" TextAlignment="Right"/></Grid></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></StackPanel></Border>
+          <Border Grid.Column="1" Style="{StaticResource Dashboard.PremiumCard}" MinHeight="205" Margin="7,0,0,0"><StackPanel><DockPanel><TextBlock Text="Variación entre versiones" FontSize="13" FontWeight="SemiBold"/><TextBlock DockPanel.Dock="Right" Text="Comparar" Foreground="{DynamicResource Brush.Blue}" FontWeight="SemiBold" FontSize="11"/></DockPanel><TextBlock Text="v11 → v12" Style="{StaticResource Text.Caption}" Margin="0,3,0,12"/><Border Background="#F5F9FE" BorderBrush="#D7E7F8" BorderThickness="1" CornerRadius="8" Padding="11"><StackPanel><TextBlock Text="{Binding TopAlertTitle}" FontSize="12" FontWeight="SemiBold"/><TextBlock Text="{Binding TopAlertDetail}" Style="{StaticResource Text.Caption}" TextWrapping="Wrap" Margin="0,3,0,0"/></StackPanel></Border><Grid Margin="0,13,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="90"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="Costo directo" FontSize="11"/><ProgressBar Grid.Column="1" Height="8" Value="67" Maximum="100"/></Grid></StackPanel></Border>
+        </Grid>
+        <Border Style="{StaticResource Card.Surface}" Padding="9"><TextBlock Text="Sincronización correcta · auditoría activa · atajos: Ctrl+K buscar · F8 revisión · Alt+O oferta" Style="{StaticResource Text.Caption}"/></Border>
+      </StackPanel>
+    </ScrollViewer>
+  </Grid>
+</UserControl>

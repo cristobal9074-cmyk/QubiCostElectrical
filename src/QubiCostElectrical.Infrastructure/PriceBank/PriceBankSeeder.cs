@@ -1,0 +1,205 @@
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Text;
+using ClosedXML.Excel;
+
+namespace QubiCostElectrical;
+
+/// <summary>
+/// Importa materiales desde Excel (.xlsx) o CSV al banco de precios.
+/// Detecta columnas por nombre de cabecera — el orden no importa.
+/// </summary>
+public static class PriceBankSeeder
+{
+    private static readonly string[] SeedFileNames = ["banco_inicial.xlsx", "banco_inicial.csv"];
+
+    private const string EmbeddedResourceName = "QubiCostElectrical.PriceBank.banco_inicial.csv";
+
+    /// <summary>
+    /// Retorna los materiales del banco de precios embebido en el ensamblado.
+    /// Siempre disponible sin depender de archivos externos.
+    /// </summary>
+    public static IReadOnlyList<PriceBankEntry> GetEmbeddedEntries()
+    {
+        var asm = Assembly.GetExecutingAssembly();
+        using var stream = asm.GetManifestResourceStream(EmbeddedResourceName);
+        if (stream == null) return [];
+        using var reader = new StreamReader(stream, Encoding.UTF8);
+        var content = reader.ReadToEnd();
+        var lines = content.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
+        if (lines.Length < 2) return [];
+        char separator = DetectSeparator(lines[0]);
+        var headers = lines[0].Split(separator).Select(NormalizeHeader).ToArray();
+        var result = new List<PriceBankEntry>(lines.Length - 1);
+        for (int i = 1; i < lines.Length; i++)
+        {
+            var cols = SplitCsvLine(lines[i].Trim(), separator);
+            var entry = MapRow(headers, cols);
+            if (entry != null) result.Add(entry);
+        }
+        return result;
+    }
+
+    /// <summary>Busca un archivo de seed junto al ejecutable. Devuelve null si no existe.</summary>
+    public static string? FindSeedFile(string baseDirectory)
+    {
+        foreach (string name in SeedFileNames)
+        {
+            string path = Path.Combine(baseDirectory, name);
+            if (File.Exists(path)) return path;
+        }
+        return null;
+    }
+
+    /// <summary>Parsea CSV o Excel según extensión.</summary>
+    public static IReadOnlyList<PriceBankEntry> ParseFile(string path)
+    {
+        string ext = Path.GetExtension(path).ToLowerInvariant();
+        return ext is ".xlsx" or ".xls"
+            ? ParseExcel(path)
+            : ParseCsv(path);
+    }
+
+    /// <summary>
+    /// Importa desde CSV con separador automático (coma o punto y coma).
+    /// Cabeceras reconocidas (sin importar mayúsculas ni tildes):
+    /// Codigo, Descripcion, Unidad, Categoria, MatUF, MoUF, Proveedor, Marca, FechaPrecio.
+    /// </summary>
+    public static IReadOnlyList<PriceBankEntry> ParseCsv(string path)
+    {
+        var lines = File.ReadAllLines(path, Encoding.UTF8);
+        if (lines.Length < 2) return [];
+
+        char separator = DetectSeparator(lines[0]);
+        var headers = lines[0].Split(separator).Select(NormalizeHeader).ToArray();
+        var result = new List<PriceBankEntry>(lines.Length - 1);
+
+        for (int i = 1; i < lines.Length; i++)
+        {
+            string line = lines[i].Trim();
+            if (string.IsNullOrEmpty(line)) continue;
+            var cols = SplitCsvLine(line, separator);
+            var entry = MapRow(headers, cols);
+            if (entry != null) result.Add(entry);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Importa desde la primera hoja del Excel.
+    /// La primera fila debe contener cabeceras.
+    /// </summary>
+    public static IReadOnlyList<PriceBankEntry> ParseExcel(string path)
+    {
+        using var wb = new XLWorkbook(path);
+        var ws = wb.Worksheets.First();
+        var rows = ws.RangeUsed()?.RowsUsed().ToList();
+        if (rows == null || rows.Count < 2) return [];
+
+        var headers = rows[0].Cells().Select(c => NormalizeHeader(c.GetString())).ToArray();
+        var result = new List<PriceBankEntry>(rows.Count - 1);
+
+        for (int i = 1; i < rows.Count; i++)
+        {
+            var cols = rows[i].Cells(1, headers.Length).Select(c => c.GetString()).ToArray();
+            var entry = MapRow(headers, cols);
+            if (entry != null) result.Add(entry);
+        }
+
+        return result;
+    }
+
+    private static PriceBankEntry? MapRow(string[] headers, string[] cols)
+    {
+        string? Get(params string[] candidates)
+        {
+            foreach (string c in candidates)
+            {
+                int idx = Array.IndexOf(headers, c);
+                if (idx >= 0 && idx < cols.Length) return cols[idx].Trim();
+            }
+            return null;
+        }
+
+        string? codigo = Get("codigo", "code", "cod");
+        if (string.IsNullOrWhiteSpace(codigo)) return null;
+
+        // El precio se ingresa SIEMPRE en pesos chilenos: PRECIO CLP (material) y MO (mano de
+        // obra). Se acepta también el header legado "matuf"/"mouf" como pesos (no como UF) para
+        // no romper archivos ya preparados con esos nombres de columna — el valor numérico se
+        // interpreta igual, solo cambia el significado (antes UF, ahora CLP). MatUf/MoUf quedan
+        // en 0 aquí; se derivan más adelante con el valor de UF vigente (ver
+        // MaterialRow/PriceBankEntry.RecalcularUf, PriceBankEntryVm).
+        var entry = new PriceBankEntry
+        {
+            Codigo = codigo.ToUpperInvariant(),
+            Descripcion = Get("descripcion", "description", "nombre", "material", "item") ?? "",
+            Unidad = Get("unidad", "unit", "um", "ud", "un") ?? "",
+            Categoria = Get("familia", "categoria", "category", "rubro", "tipo") ?? "",
+            MatClp = ParseDecimal(Get("precioclp", "precio_clp", "precio clp", "preciomaterial", "precio mat", "precio", "matuf", "mat_uf", "mat uf", "costo mat")),
+            MoClp = ParseDecimal(Get("mo", "moclp", "mo_clp", "mo clp", "manoobra", "mano obra", "mano de obra", "mouf", "mo_uf", "mo uf", "costo mo")),
+            MonedaPrecio = "CLP",
+            Proveedor = Get("proveedor", "supplier", "vendor") ?? "",
+            Marca = Get("marca", "brand") ?? "",
+            FechaPrecio = ParseDate(Get("fecha", "fechaprecio", "fecha_precio", "fecha precio")) ?? DateTime.Today,
+            OrigenPrecio = "Banco inicial",
+            ProyectoOrigen = "",
+            ActualizadoEn = DateTime.Now
+        };
+        return entry;
+    }
+
+    private static char DetectSeparator(string header)
+    {
+        int semicolons = header.Count(c => c == ';');
+        int commas = header.Count(c => c == ',');
+        return semicolons >= commas ? ';' : ',';
+    }
+
+    private static string[] SplitCsvLine(string line, char sep)
+    {
+        // Respeta campos entre comillas dobles.
+        var result = new List<string>();
+        bool inQuotes = false;
+        var current = new StringBuilder();
+        foreach (char c in line)
+        {
+            if (c == '"') { inQuotes = !inQuotes; continue; }
+            if (c == sep && !inQuotes) { result.Add(current.ToString()); current.Clear(); continue; }
+            current.Append(c);
+        }
+        result.Add(current.ToString());
+        return [.. result];
+    }
+
+    private static string NormalizeHeader(string raw)
+        => raw.Trim().ToLowerInvariant()
+              .Replace(" ", "")
+              .Replace("á", "a").Replace("é", "e").Replace("í", "i")
+              .Replace("ó", "o").Replace("ú", "u").Replace("ñ", "n")
+              .Replace("_", "");
+
+    private static decimal ParseDecimal(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return 0m;
+        string clean = value.Replace("$", "").Replace(" ", "").Trim();
+        // Detecta formato europeo (coma decimal) si tiene coma y no punto
+        if (clean.Contains(',') && !clean.Contains('.'))
+            clean = clean.Replace(',', '.');
+        else
+            clean = clean.Replace(",", "");
+        return decimal.TryParse(clean, NumberStyles.Any, CultureInfo.InvariantCulture, out var d) ? d : 0m;
+    }
+
+    private static DateTime? ParseDate(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return null;
+        if (DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out var d)) return d;
+        return null;
+    }
+}

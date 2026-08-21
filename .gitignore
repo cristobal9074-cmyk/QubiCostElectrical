@@ -1,0 +1,139 @@
+# ── Build outputs ─────────────────────────────────────────────────────────────
+.vs/
+**/bin/
+**/obj/
+**/TestResults/
+**/publish/
+artifacts/
+deploy/publish/
+deploy/releases/
+
+# ── IDE / editor ──────────────────────────────────────────────────────────────
+*.user
+*.suo
+*.rsuser
+*.userosscache
+*.sln.docstates
+*.DotSettings.user
+*.dotCover
+
+.idea/
+.vscode/
+.claude/
+.cursor/
+.gstack/
+
+*.swp
+*~
+
+# ── Compiled outputs ──────────────────────────────────────────────────────────
+*.dll
+*.exe
+*.pdb
+*.ilk
+*.exp
+*.lib
+*.deps.json
+*.runtimeconfig.json
+*.runtimeconfig.dev.json
+
+# ── NuGet packages ─────────────────────────────────────────────────────────────
+*.nupkg
+*.snupkg
+
+# ── WPF / MSBuild generated files accidentally copied outside obj ─────────────
+/*.g.cs
+/*.g.i.cs
+/*.AssemblyInfo.cs
+/*.GlobalUsings.g.cs
+/GeneratedInternalTypeHelper.g.i.cs
+/QubiCostElectrical_Content.g.i.cs
+*_wpftmp.csproj
+
+# ── Operating-system files ─────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Temporary / local files ───────────────────────────────────────────────────
+*.cache
+*.log
+*.tmp
+*.temp
+*.bak
+*.orig
+
+# ── Generated documents / exports ─────────────────────────────────────────────
+exports/
+*.xlsx
+*.pdf
+*.docx
+
+# ── Generated archives and source packages ────────────────────────────────────
+*.zip
+
+# ── Installer private configuration and output ────────────────────────────────
+installer/company.iss
+installer/Output/
+*.msi
+*.msix
+*.appx
+
+# ── Local databases ────────────────────────────────────────────────────────────
+*.db
+*.db-shm
+*.db-wal
+
+# ── Local logs ─────────────────────────────────────────────────────────────────
+logs/
+
+# ── Test results and coverage ──────────────────────────────────────────────────
+*.trx
+*.coverage
+*.coveragexml
+coverage/
+coverage.*
+coverage-report/
+
+# ── Local configuration ────────────────────────────────────────────────────────
+appsettings.*.local.json
+
+# ── Screenshots and locally captured images ────────────────────────────────────
+*.png
+*.jpg
+*.jpeg
+
+# Keep intentional documentation images
+!docs/**/*.png
+!docs/**/*.jpg
+!docs/**/*.jpeg
+
+# Keep application assets
+!src/**/Assets/**/*.png
+!src/**/Assets/**/*.jpg
+!src/**/Assets/**/*.jpeg
+!src/**/Assets/**/*.ico
+
+# Keep installer icon
+!installer/icon.ico
+
+# ── Local repository-audit evidence ────────────────────────────────────────────
+estado-git-real.txt
+diff-stat-real.txt
+cambios-rastreados.patch
+archivos-no-rastreados-real.txt
+entorno-real.txt
+evidencia-repositorio.zip
+architecture-tests-real.txt
+build-release-real.txt
+
+# ── Temporary analysis outputs ─────────────────────────────────────────────────
+*_inspect.txt
+lista_pr_*.txt
+unique_families.txt
+
+# ── Local command marker ───────────────────────────────────────────────────────
+/_no
+
+# ── Quarantined stray files pending review ─────────────────────────────────────
+/_cleanup_2026-08-21/

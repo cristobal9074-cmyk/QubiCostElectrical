@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Qubi Cost — Viáticos profesionales · desglose completo · 20B</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=IBM+Plex+Mono:wght@450;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --navy: #101C30; --navy2: #14263C; --navy3: #1C324C;
+      --blue: #2563B0; --blue2: #3B82F6; --blue-soft: #EAF1FF; --blue-faint: #EDF3FA;
+      --ink: #101A26; --ink2: #3C4A5C; --ink3: #5C6A7C; --muted: #7B8798;
+      --line: #E2E8F0; --line2: #F1F5F9; --surface: #FFFFFF; --canvas: #EEF2F7;
+      --green: #15803D; --green-soft: #EAF8EF;
+      --amber: #9A6A10; --amber-soft: #FBF1DD;
+      --red: #B91C1C; --red-soft: #FEF2F2;
+      --font: "DM Sans", "Segoe UI", system-ui, sans-serif;
+      --mono: "IBM Plex Mono", Consolas, monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font); color: var(--ink); min-height: 100vh;
+      background:
+        radial-gradient(900px 420px at 8% -5%, rgba(59,130,246,.16), transparent 55%),
+        radial-gradient(700px 360px at 95% 10%, rgba(21,128,61,.08), transparent 50%),
+        linear-gradient(165deg, #071018 0%, var(--navy) 42%, #0A1524 100%);
+      padding: 24px 14px 40px;
+    }
+    .wrap { width: min(1180px, 100%); margin: 0 auto; }
+    .eyebrow {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      color: rgba(255,255,255,.48); font-size: 11px; font-weight: 600;
+      letter-spacing: .08em; text-transform: uppercase; margin-bottom: 12px;
+    }
+    .eyebrow b { color: #fff; text-transform: none; letter-spacing: -.01em; font-size: 14px; font-weight: 700; }
+    .eyebrow .dot { width: 4px; height: 4px; border-radius: 50%; background: var(--blue2); }
+
+    .app {
+      background: var(--canvas); border-radius: 18px; overflow: hidden;
+      border: 1px solid rgba(255,255,255,.08);
+      box-shadow: 0 28px 70px rgba(0,0,0,.38);
+      display: grid; grid-template-rows: auto 1fr auto;
+      min-height: 880px;
+      animation: rise .45s cubic-bezier(.22,1,.36,1) both;
+    }
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(12px) scale(.988); }
+      to { opacity: 1; transform: none; }
+    }
+
+    /* Header */
+    .head {
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy2) 55%, #1A3A58 100%);
+      color: #fff; padding: 18px 22px 16px;
+    }
+    .head-top { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+    .kicker { font-size: 10px; font-weight: 700; color: rgba(255,255,255,.5); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 6px; }
+    .head h1 { font-size: 22px; font-weight: 700; letter-spacing: -.025em; }
+    .head .sub { margin-top: 5px; font-size: 13px; color: rgba(255,255,255,.62); max-width: 560px; line-height: 1.4; }
+    .head-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn {
+      appearance: none; border: 1px solid rgba(255,255,255,.18); border-radius: 9px;
+      padding: 8px 13px; font: inherit; font-size: 12px; font-weight: 600;
+      cursor: pointer; background: rgba(255,255,255,.08); color: #fff;
+      transition: background .12s;
+    }
+    .btn:hover { background: rgba(255,255,255,.16); }
+    .btn-light { background: #fff; color: var(--ink); border-color: #fff; }
+    .btn-light:hover { background: #F1F5F9; }
+    .btn-solid {
+      background: var(--blue); border-color: var(--blue);
+      box-shadow: 0 4px 14px rgba(37,99,176,.35);
+    }
+    .btn-solid:hover { background: #1d4f96; }
+    .btn-quiet {
+      border: 1px solid var(--line); background: var(--surface); color: var(--ink2);
+    }
+    .btn-quiet:hover { background: var(--line2); }
+
+    .kpis {
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 14px;
+    }
+    @media (max-width: 900px) { .kpis { grid-template-columns: 1fr 1fr; } }
+    .kpi {
+      background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.1);
+      border-radius: 11px; padding: 10px 12px;
+    }
+    .kpi .k { font-size: 9px; font-weight: 700; color: rgba(255,255,255,.48); text-transform: uppercase; letter-spacing: .05em; }
+    .kpi .v { font-family: var(--mono); font-size: 15px; font-weight: 600; margin-top: 3px; }
+    .kpi .v.pas { color: #93C5FD; }
+    .kpi .v.ali { color: #86EFAC; }
+    .kpi .v.arr { color: #FCD34D; }
+    .kpi .v.tot { color: #fff; font-size: 17px; }
+
+    /* Body layout */
+    .body {
+      display: grid; grid-template-columns: 280px 1fr; gap: 0;
+      background: var(--canvas); min-height: 0;
+    }
+    @media (max-width: 920px) { .body { grid-template-columns: 1fr; } }
+
+    .side {
+      background: var(--surface); border-right: 1px solid var(--line);
+      padding: 16px; overflow: auto;
+    }
+    .side h2 { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; }
+    .side-block { margin-bottom: 18px; }
+    .chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+    .chip {
+      font-size: 11px; font-weight: 600; padding: 5px 9px; border-radius: 8px;
+      background: var(--line2); color: var(--ink2); border: 1px solid var(--line);
+    }
+    .chip.on { background: var(--blue-soft); color: var(--blue); border-color: #BFDBFE; }
+    .chip.amber.on { background: var(--amber-soft); color: var(--amber); border-color: #FDE68A; }
+
+    .field { margin-bottom: 10px; }
+    .field label {
+      display: block; font-size: 10px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: .04em; margin-bottom: 4px;
+    }
+    .field .hint { font-weight: 500; text-transform: none; letter-spacing: 0; color: var(--ink3); font-size: 10px; }
+    .input, .select {
+      width: 100%; border: 1px solid var(--line); border-radius: 9px;
+      padding: 8px 10px; font: inherit; font-size: 13px; font-weight: 600;
+      font-family: var(--mono); color: var(--ink); background: #fff;
+    }
+    .select { font-family: var(--font); font-weight: 600; }
+    .input:focus, .select:focus {
+      outline: none; border-color: var(--blue2);
+      box-shadow: 0 0 0 3px rgba(59,130,246,.15);
+    }
+    .input:disabled { background: var(--line2); color: var(--ink3); border-style: dashed; }
+
+    .main { padding: 16px 18px 20px; overflow: auto; }
+    .tabs {
+      display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--line);
+      border-radius: 12px; padding: 4px; margin-bottom: 14px;
+    }
+    .tab {
+      flex: 1; text-align: center; padding: 9px 8px; border-radius: 9px;
+      font-size: 12px; font-weight: 650; color: var(--ink3); cursor: pointer;
+      border: none; background: transparent; font-family: inherit;
+      transition: background .12s, color .12s;
+    }
+    .tab:hover { background: var(--line2); color: var(--ink); }
+    .tab.on { background: var(--navy); color: #fff; }
+
+    .panel { display: none; }
+    .panel.on { display: block; animation: fade .2s ease; }
+    @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+    .card {
+      background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+      padding: 16px; margin-bottom: 12px;
+    }
+    .card-title {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      margin-bottom: 12px;
+    }
+    .card-title h3 { font-size: 14px; font-weight: 700; }
+    .badge {
+      font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 999px;
+      background: var(--blue-soft); color: var(--blue);
+    }
+    .badge.green { background: var(--green-soft); color: var(--green); }
+    .badge.amber { background: var(--amber-soft); color: var(--amber); }
+    .badge.off { background: var(--red-soft); color: var(--red); }
+
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    @media (max-width: 700px) { .grid2, .grid3 { grid-template-columns: 1fr; } }
+
+    /* Toggles */
+    .toggle-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding: 10px 12px; border-radius: 10px; background: var(--line2);
+      border: 1px solid var(--line); margin-bottom: 10px;
+    }
+    .toggle-row .txt { font-size: 13px; font-weight: 600; }
+    .toggle-row .txt small { display: block; font-size: 11px; font-weight: 500; color: var(--ink3); margin-top: 2px; }
+    .switch {
+      position: relative; width: 44px; height: 24px; flex-shrink: 0;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; inset: 0; background: #CBD5E1; border-radius: 999px;
+      cursor: pointer; transition: .15s;
+    }
+    .slider::before {
+      content: ""; position: absolute; width: 18px; height: 18px; left: 3px; top: 3px;
+      background: #fff; border-radius: 50%; transition: .15s;
+      box-shadow: 0 1px 3px rgba(0,0,0,.2);
+    }
+    .switch input:checked + .slider { background: var(--blue); }
+    .switch input:checked + .slider::before { transform: translateX(20px); }
+
+    .meal-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px;
+    }
+    .meal {
+      border: 1px solid var(--line); border-radius: 10px; padding: 10px;
+      text-align: center; cursor: pointer; background: #fff;
+      transition: border-color .12s, background .12s;
+      user-select: none;
+    }
+    .meal:hover { border-color: #BFDBFE; }
+    .meal.on { background: var(--blue-faint); border-color: var(--blue2); }
+    .meal.on.provided { background: var(--green-soft); border-color: #86EFAC; }
+    .meal .n { font-size: 12px; font-weight: 700; }
+    .meal .p { font-family: var(--mono); font-size: 11px; color: var(--ink3); margin-top: 4px; }
+    .meal.on.provided .p { color: var(--green); text-decoration: line-through; }
+
+    .formula {
+      margin-top: 12px; background: var(--navy); color: #fff; border-radius: 11px; padding: 12px 14px;
+    }
+    .formula .t { font-size: 10px; font-weight: 700; color: rgba(255,255,255,.5); text-transform: uppercase; letter-spacing: .06em; }
+    .formula .eq { font-family: var(--mono); font-size: 11px; color: #93C5FD; margin-top: 6px; line-height: 1.45; }
+    .formula .row {
+      display: flex; justify-content: space-between; align-items: baseline;
+      margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.12);
+    }
+    .formula .row span { font-size: 10px; color: rgba(255,255,255,.5); font-weight: 700; text-transform: uppercase; }
+    .formula .row b { font-family: var(--mono); font-size: 18px; font-weight: 600; }
+
+    /* Breakdown table */
+    .table-wrap { overflow: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+    table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    th {
+      text-align: left; font-size: 9px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: .05em;
+      padding: 10px 12px; background: var(--line2); border-bottom: 1px solid var(--line);
+    }
+    td { padding: 10px 12px; border-bottom: 1px solid var(--line2); vertical-align: middle; }
+    tr:last-child td { border-bottom: 0; }
+    td.mono { font-family: var(--mono); font-weight: 550; text-align: right; }
+    td.concepto { font-weight: 600; }
+    .pill-s {
+      display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 7px;
+      border-radius: 6px; background: var(--line2); color: var(--ink3);
+    }
+    .pill-s.dir { background: var(--blue-soft); color: var(--blue); }
+    .pill-s.ind { background: var(--amber-soft); color: var(--amber); }
+    .pill-s.off { background: var(--red-soft); color: var(--red); }
+    .pill-s.on { background: var(--green-soft); color: var(--green); }
+    tfoot td {
+      background: var(--navy); color: #fff; font-weight: 700; border: 0;
+    }
+    tfoot .mono { color: #fff; font-size: 14px; }
+
+    .note {
+      margin-top: 12px; padding: 11px 13px; border-radius: 11px;
+      background: var(--blue-soft); border: 1px solid rgba(37,99,176,.14);
+      font-size: 12px; color: #1e40af; line-height: 1.45;
+    }
+    .note strong { font-weight: 700; }
+
+    .foot {
+      border-top: 1px solid var(--line); background: rgba(247,249,252,.95);
+      padding: 12px 20px; display: flex; justify-content: space-between; align-items: center;
+      gap: 12px; flex-wrap: wrap;
+    }
+    .foot .sum { font-size: 12px; color: var(--ink3); }
+    .foot .sum b { display: block; font-family: var(--mono); font-size: 20px; color: var(--ink); margin-top: 2px; }
+    .foot-actions { display: flex; gap: 8px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="eyebrow">
+      Qubi Cost Electrical
+      <span class="dot"></span>
+      <b>Calculadora profesional de viáticos</b>
+      <span class="dot"></span>
+      pasajes · alimentación · arriendo · GO 3.3
+    </div>
+
+    <div class="app">
+      <header class="head">
+        <div class="head-top">
+          <div>
+            <div class="kicker">Gasto operacional 3.3 · metodología tipo per diem</div>
+            <h1>Movilización, alimentación y estadía</h1>
+            <p class="sub">Desglose profesional: pasajes, colación/alimentación (con o sin provisión de la empresa) y arriendo/alojamiento. Al aplicar, genera las líneas del GO.</p>
+          </div>
+          <div class="head-actions">
+            <button class="btn" type="button" id="btnSync">Sincronizar MO</button>
+            <button class="btn btn-light" type="button" id="btnDemo">Cargar ejemplo obra</button>
+          </div>
+        </div>
+        <div class="kpis">
+          <div class="kpi"><div class="k">Pasajes</div><div class="v pas" id="kPasajes">$ 0</div></div>
+          <div class="kpi"><div class="k">Alimentación</div><div class="v ali" id="kAlim">$ 0</div></div>
+          <div class="kpi"><div class="k">Arriendo / estadía</div><div class="v arr" id="kArriendo">$ 0</div></div>
+          <div class="kpi"><div class="k">Otros / incidentales</div><div class="v pas" id="kOtros">$ 0</div></div>
+          <div class="kpi"><div class="k">Total a GO 3.3</div><div class="v tot" id="kTotal">$ 0</div></div>
+        </div>
+      </header>
+
+      <div class="body">
+        <!-- SIDEBAR contexto -->
+        <aside class="side">
+          <div class="side-block">
+            <h2>Alcance del cálculo</h2>
+            <div class="chip-row">
+              <button type="button" class="chip on" data-grupo="dir" id="chipDir">MO Directa</button>
+              <button type="button" class="chip amber on" data-grupo="ind" id="chipInd">MO Indirecta</button>
+            </div>
+          </div>
+
+          <div class="side-block">
+            <h2>Parámetros de obra</h2>
+            <div class="field">
+              <label>Zona / tipo de faena</label>
+              <select class="select" id="zona">
+                <option value="local">Local (misma ciudad / residencial)</option>
+                <option value="regional" selected>Regional (fuera de residencia, sin pernocta fija)</option>
+                <option value="remoto">Remoto / campamento (pernocta)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Dotación directa (pico) <span class="hint">desde M. de obra</span></label>
+              <input class="input" id="dotDir" value="0" />
+            </div>
+            <div class="field">
+              <label>Roles indirectos</label>
+              <input class="input" id="dotInd" value="0" />
+            </div>
+            <div class="field">
+              <label>Meses de obra</label>
+              <input class="input" id="meses" value="12" />
+            </div>
+            <div class="field">
+              <label>Días hábiles / mes</label>
+              <input class="input" id="diasMes" value="20" />
+            </div>
+            <div class="field">
+              <label>Factor presencia directa <span class="hint">% del pico en faena</span></label>
+              <input class="input" id="factor" value="70" />
+            </div>
+            <div class="field">
+              <label>Valor UF (CLP)</label>
+              <input class="input" id="uf" value="40563" />
+            </div>
+          </div>
+
+          <div class="side-block">
+            <h2>Regla de días (tipo viático)</h2>
+            <div class="field">
+              <label>Día completo</label>
+              <select class="select" id="reglaDia">
+                <option value="100" selected>100% del día</option>
+                <option value="75">75% primer/último día (estilo GSA)</option>
+              </select>
+            </div>
+            <p style="font-size:11px;color:var(--ink3);line-height:1.4;margin-top:6px">
+              En Chile el viático cubre alimentación, alojamiento y traslado cuando el trabajador se ausenta de su residencia (DT). Si la empresa provee comida o casa, ese ítem se descuenta o se deja en $0.
+            </p>
+          </div>
+        </aside>
+
+        <!-- MAIN -->
+        <main class="main">
+          <div class="tabs" role="tablist">
+            <button class="tab on" data-tab="pasajes" type="button">1 · Pasajes</button>
+            <button class="tab" data-tab="alim" type="button">2 · Alimentación</button>
+            <button class="tab" data-tab="arriendo" type="button">3 · Arriendo</button>
+            <button class="tab" data-tab="resumen" type="button">4 · Resumen GO</button>
+          </div>
+
+          <!-- PASAJES -->
+          <section class="panel on" id="tab-pasajes">
+            <div class="card">
+              <div class="card-title">
+                <h3>Pasajes y movilización</h3>
+                <span class="badge">Traslado diario / semanal</span>
+              </div>
+              <div class="toggle-row">
+                <div class="txt">Incluir pasajes MO directa<small>Transporte ida-vuelta o abono a faena</small></div>
+                <label class="switch"><input type="checkbox" id="incPasDir" checked /><span class="slider"></span></label>
+              </div>
+              <div class="toggle-row">
+                <div class="txt">Incluir movilización MO indirecta<small>Visitas a terreno / supervisión</small></div>
+                <label class="switch"><input type="checkbox" id="incPasInd" checked /><span class="slider"></span></label>
+              </div>
+              <div class="grid2" style="margin-top:8px">
+                <div class="field">
+                  <label>Tarifa pasaje directa <span class="hint">CLP / día-persona</span></label>
+                  <input class="input" id="tarifaPasDir" value="20000" />
+                </div>
+                <div class="field">
+                  <label>Tarifa movilización indirecta <span class="hint">CLP / mes-rol</span></label>
+                  <input class="input" id="tarifaPasInd" value="80000" />
+                </div>
+              </div>
+              <div class="formula">
+                <div class="t">Fórmula pasajes</div>
+                <div class="eq" id="eqPasajes">—</div>
+                <div class="row"><span>Subtotal pasajes</span><b id="subPasajes">$ 0</b></div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ALIMENTACIÓN -->
+          <section class="panel" id="tab-alim">
+            <div class="card">
+              <div class="card-title">
+                <h3>Alimentación / colación</h3>
+                <span class="badge green" id="badgeAlim">Activa</span>
+              </div>
+
+              <div class="toggle-row">
+                <div class="txt">¿La empresa provee alimentación en obra?<small>Si está activo, se descuenta el valor de las comidas marcadas (como en calculadoras per diem)</small></div>
+                <label class="switch"><input type="checkbox" id="empresaProveAlim" /><span class="slider"></span></label>
+              </div>
+
+              <div class="grid3">
+                <div class="field">
+                  <label>Desayuno (CLP/día)</label>
+                  <input class="input" id="vDesayuno" value="3500" />
+                </div>
+                <div class="field">
+                  <label>Almuerzo (CLP/día)</label>
+                  <input class="input" id="vAlmuerzo" value="7500" />
+                </div>
+                <div class="field">
+                  <label>Cena (CLP/día)</label>
+                  <input class="input" id="vCena" value="6500" />
+                </div>
+              </div>
+
+              <label style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;display:block;margin:10px 0 6px">Comidas incluidas en el viático (clic para marcar)</label>
+              <div class="meal-grid">
+                <div class="meal on" data-meal="des"><div class="n">Desayuno</div><div class="p" id="pDes">$ 3.500</div></div>
+                <div class="meal on" data-meal="alm"><div class="n">Almuerzo</div><div class="p" id="pAlm">$ 7.500</div></div>
+                <div class="meal on" data-meal="cen"><div class="n">Cena</div><div class="p" id="pCen">$ 6.500</div></div>
+              </div>
+
+              <div class="grid2" style="margin-top:14px">
+                <div class="toggle-row" style="margin:0">
+                  <div class="txt">Aplicar a MO directa<small>Días efectivos en faena</small></div>
+                  <label class="switch"><input type="checkbox" id="alimDir" checked /><span class="slider"></span></label>
+                </div>
+                <div class="toggle-row" style="margin:0">
+                  <div class="txt">Aplicar a MO indirecta<small>Días de visita estimados</small></div>
+                  <label class="switch"><input type="checkbox" id="alimInd" checked /><span class="slider"></span></label>
+                </div>
+              </div>
+              <div class="field" style="margin-top:10px;max-width:280px">
+                <label>Días visita indirecta / mes <span class="hint">solo si aplica</span></label>
+                <input class="input" id="diasVisitaInd" value="8" />
+              </div>
+
+              <div class="formula">
+                <div class="t">Fórmula alimentación</div>
+                <div class="eq" id="eqAlim">—</div>
+                <div class="row"><span>Subtotal alimentación neta</span><b id="subAlim">$ 0</b></div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ARRIENDO -->
+          <section class="panel" id="tab-arriendo">
+            <div class="card">
+              <div class="card-title">
+                <h3>Arriendo / alojamiento / estadía</h3>
+                <span class="badge amber" id="badgeArr">Según zona</span>
+              </div>
+
+              <div class="toggle-row">
+                <div class="txt">Incluir arriendo o campamento<small>Solo tiene sentido en zona regional/remota o personal fuera de casa</small></div>
+                <label class="switch"><input type="checkbox" id="incArriendo" /><span class="slider"></span></label>
+              </div>
+
+              <div class="grid2">
+                <div class="field">
+                  <label>Modalidad</label>
+                  <select class="select" id="modArriendo">
+                    <option value="noche">Arriendo por noche-persona</option>
+                    <option value="mes" selected>Arriendo mensual (casa / módulo)</option>
+                    <option value="campamento">Aporte campamento (CLP/mes global)</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Tarifa <span class="hint" id="hintArr">CLP / mes</span></label>
+                  <input class="input" id="tarifaArr" value="450000" />
+                </div>
+              </div>
+              <div class="grid2">
+                <div class="field">
+                  <label>Personas / cupos con estadía</label>
+                  <input class="input" id="cuposArr" value="0" />
+                </div>
+                <div class="field">
+                  <label>Meses con arriendo</label>
+                  <input class="input" id="mesesArr" value="12" />
+                </div>
+              </div>
+
+              <div class="toggle-row">
+                <div class="txt">Incidentales / otros<small>Lavandería, propinas, imprevistos menores (% sobre alim.+arriendo)</small></div>
+                <label class="switch"><input type="checkbox" id="incOtros" checked /><span class="slider"></span></label>
+              </div>
+              <div class="field" style="max-width:200px">
+                <label>% incidentales</label>
+                <input class="input" id="pctOtros" value="5" />
+              </div>
+
+              <div class="formula">
+                <div class="t">Fórmula arriendo + incidentales</div>
+                <div class="eq" id="eqArr">—</div>
+                <div class="row"><span>Subtotal arriendo + otros</span><b id="subArr">$ 0</b></div>
+              </div>
+            </div>
+          </section>
+
+          <!-- RESUMEN -->
+          <section class="panel" id="tab-resumen">
+            <div class="card" style="padding:0;overflow:hidden">
+              <div style="padding:14px 16px 0">
+                <div class="card-title" style="margin-bottom:8px">
+                  <h3>Líneas que se cargarán en GO 3.3</h3>
+                  <span class="badge">Listo para aplicar</span>
+                </div>
+              </div>
+              <div class="table-wrap" style="border:0;border-radius:0">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Concepto</th>
+                      <th>Grupo</th>
+                      <th style="text-align:right">Un.</th>
+                      <th style="text-align:right">Cantidad</th>
+                      <th style="text-align:right">P. unit.</th>
+                      <th style="text-align:right">Total</th>
+                      <th>Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tbody"></tbody>
+                  <tfoot>
+                    <tr>
+                      <td colspan="5">Total categoría 3.3</td>
+                      <td class="mono" id="footTotal">$ 0</td>
+                      <td id="footUf">0 UF</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+            <div class="note">
+              <strong>Práctica profesional:</strong> las apps y estándares de viático separan
+              <em>traslado</em>, <em>alimentación (M&amp;IE)</em> y <em>alojamiento</em>. Si la empresa da comida o casa,
+              ese componente se descuenta (no se paga dos veces). En Chile, movilización/colación/viático son
+              compensatorios (no remuneración) cuando cubren gasto real (DT). Este panel genera el desglose
+              contable para el presupuesto eléctrico.
+            </div>
+          </section>
+        </main>
+      </div>
+
+      <footer class="foot">
+        <div class="sum">
+          Total a aplicar en Gastos Operacionales · 3.3
+          <b id="footBig">$ 0</b>
+        </div>
+        <div class="foot-actions">
+          <button class="btn btn-quiet" type="button">Cancelar</button>
+          <button class="btn btn-solid" type="button" id="btnApply" style="color:#fff;border:none;padding:10px 16px;border-radius:9px;font:inherit;font-size:13px;font-weight:600;cursor:pointer">Aplicar a GO 3.3</button>
+        </div>
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    const fmt = (n) => "$ " + Math.round(Math.max(0, n)).toLocaleString("es-CL");
+    const num = (id) => {
+      const t = String(document.getElementById(id).value).replace(/\./g, "").replace(",", ".").replace(/[^\d.-]/g, "");
+      const v = parseFloat(t);
+      return Number.isFinite(v) ? Math.max(0, v) : 0;
+    };
+    const chk = (id) => document.getElementById(id).checked;
+
+    const meals = { des: true, alm: true, cen: true };
+    let useDir = true, useInd = true;
+
+    // Tabs
+    document.querySelectorAll(".tab").forEach(t => {
+      t.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach(x => x.classList.remove("on"));
+        document.querySelectorAll(".panel").forEach(x => x.classList.remove("on"));
+        t.classList.add("on");
+        document.getElementById("tab-" + t.dataset.tab).classList.add("on");
+      });
+    });
+
+    // Meal toggles
+    document.querySelectorAll(".meal").forEach(m => {
+      m.addEventListener("click", () => {
+        const k = m.dataset.meal;
+        meals[k] = !meals[k];
+        m.classList.toggle("on", meals[k]);
+        calc();
+      });
+    });
+
+    document.getElementById("chipDir").addEventListener("click", function () {
+      useDir = !useDir; this.classList.toggle("on", useDir); calc();
+    });
+    document.getElementById("chipInd").addEventListener("click", function () {
+      useInd = !useInd; this.classList.toggle("on", useInd); calc();
+    });
+
+    document.getElementById("zona").addEventListener("change", () => {
+      const z = document.getElementById("zona").value;
+      const inc = document.getElementById("incArriendo");
+      if (z === "remoto") { inc.checked = true; }
+      if (z === "local") { inc.checked = false; }
+      calc();
+    });
+
+    document.getElementById("modArriendo").addEventListener("change", () => {
+      const m = document.getElementById("modArriendo").value;
+      document.getElementById("hintArr").textContent =
+        m === "noche" ? "CLP / noche-persona" : m === "campamento" ? "CLP / mes global" : "CLP / mes-cupo";
+      calc();
+    });
+
+    function syncMealPrices() {
+      document.getElementById("pDes").textContent = fmt(num("vDesayuno"));
+      document.getElementById("pAlm").textContent = fmt(num("vAlmuerzo"));
+      document.getElementById("pCen").textContent = fmt(num("vCena"));
+      const prove = chk("empresaProveAlim");
+      document.querySelectorAll(".meal").forEach(m => {
+        m.classList.toggle("provided", prove && m.classList.contains("on"));
+      });
+      document.getElementById("badgeAlim").textContent = prove ? "Empresa provee (descuento)" : "Viático de comida";
+      document.getElementById("badgeAlim").className = "badge " + (prove ? "off" : "green");
+    }
+
+    function calc() {
+      syncMealPrices();
+      const dotDir = num("dotDir");
+      const dotInd = num("dotInd");
+      const meses = num("meses");
+      const diasMes = num("diasMes");
+      const factor = num("factor") / 100;
+      const uf = Math.max(1, num("uf"));
+      const diasObra = meses * diasMes;
+      const persEf = dotDir * factor;
+      const regla = num("reglaDia") / 100;
+
+      const lines = [];
+
+      // —— PASAJES ——
+      let totPas = 0;
+      if (chk("incPasDir") && useDir && persEf > 0) {
+        const cant = persEf * diasObra * regla;
+        const pu = num("tarifaPasDir");
+        const tot = cant * pu;
+        totPas += tot;
+        lines.push({ c: "Pasajes / movilización diaria MO directa", g: "dir", un: "día", cant, pu, tot, ok: true });
+      }
+      if (chk("incPasInd") && useInd && dotInd > 0) {
+        const cant = dotInd * meses;
+        const pu = num("tarifaPasInd");
+        const tot = cant * pu;
+        totPas += tot;
+        lines.push({ c: "Movilización terreno MO indirecta", g: "ind", un: "mes", cant, pu, tot, ok: true });
+      }
+
+      // —— ALIMENTACIÓN ——
+      let totAlim = 0;
+      const vDes = meals.des ? num("vDesayuno") : 0;
+      const vAlm = meals.alm ? num("vAlmuerzo") : 0;
+      const vCen = meals.cen ? num("vCena") : 0;
+      let diariaAlim = vDes + vAlm + vCen;
+      if (chk("empresaProveAlim")) {
+        // descuenta comidas marcadas (empresa las da)
+        diariaAlim = 0;
+        // still show line as $0 skipped or residual incidentals only
+      }
+      if (diariaAlim > 0 && chk("alimDir") && useDir && persEf > 0) {
+        const cant = persEf * diasObra * regla;
+        const tot = cant * diariaAlim;
+        totAlim += tot;
+        lines.push({ c: "Alimentación / colación MO directa", g: "dir", un: "día", cant, pu: diariaAlim, tot, ok: true });
+      } else if (chk("empresaProveAlim") && chk("alimDir") && useDir) {
+        lines.push({ c: "Alimentación MO directa (empresa provee)", g: "dir", un: "día", cant: 0, pu: 0, tot: 0, ok: false });
+      }
+      if (diariaAlim > 0 && chk("alimInd") && useInd && dotInd > 0) {
+        const diasV = num("diasVisitaInd") * meses;
+        const cant = dotInd * diasV; // rol-días visita
+        // simpler: roles * dias visita mes * meses
+        const cant2 = dotInd * num("diasVisitaInd") * meses;
+        const tot = cant2 * diariaAlim;
+        totAlim += tot;
+        lines.push({ c: "Alimentación visitas MO indirecta", g: "ind", un: "día", cant: cant2, pu: diariaAlim, tot, ok: true });
+      }
+
+      // —— ARRIENDO ——
+      let totArr = 0;
+      if (chk("incArriendo")) {
+        const mod = document.getElementById("modArriendo").value;
+        const tarifa = num("tarifaArr");
+        const cupos = num("cuposArr") || (useDir ? Math.ceil(persEf * 0.15) : 0);
+        const mArr = num("mesesArr") || meses;
+        let cant = 0, pu = tarifa, un = "mes", concepto = "Arriendo / estadía";
+        if (mod === "noche") {
+          cant = cupos * mArr * diasMes;
+          un = "noche";
+          concepto = "Arriendo noche-persona";
+        } else if (mod === "campamento") {
+          cant = mArr;
+          un = "mes";
+          concepto = "Aporte campamento / módulo";
+        } else {
+          cant = cupos * mArr;
+          un = "mes";
+          concepto = "Arriendo mensual (cupos)";
+        }
+        const tot = cant * pu;
+        totArr += tot;
+        if (document.getElementById("cuposArr").value === "0" || document.getElementById("cuposArr").value === "") {
+          document.getElementById("cuposArr").placeholder = String(cupos);
+        }
+        lines.push({ c: concepto, g: "dir", un, cant, pu, tot, ok: tot > 0 });
+      }
+
+      // —— INCIDENTALES ——
+      let totOtros = 0;
+      const baseInc = totAlim + totArr;
+      if (chk("incOtros") && baseInc > 0) {
+        const pct = num("pctOtros") / 100;
+        totOtros = baseInc * pct;
+        lines.push({ c: "Incidentales / imprevistos menores", g: "ind", un: "GL", cant: 1, pu: totOtros, tot: totOtros, ok: true });
+      }
+
+      const total = totPas + totAlim + totArr + totOtros;
+
+      document.getElementById("eqPasajes").textContent =
+        `Directa: ${persEf.toFixed(1)} pers × ${diasObra} días × $${num("tarifaPasDir").toLocaleString("es-CL")} · Indirecta: ${dotInd} roles × ${meses} m × $${num("tarifaPasInd").toLocaleString("es-CL")}`;
+      document.getElementById("subPasajes").textContent = fmt(totPas);
+
+      const mealParts = [];
+      if (meals.des) mealParts.push("des");
+      if (meals.alm) mealParts.push("alm");
+      if (meals.cen) mealParts.push("cen");
+      document.getElementById("eqAlim").textContent = chk("empresaProveAlim")
+        ? "Empresa provee alimentación → viático comida = $ 0 (evita doble pago)"
+        : `Diaria ${fmt(diariaAlim)} (${mealParts.join("+") || "ninguna"}) × días-persona efectivos`;
+      document.getElementById("subAlim").textContent = fmt(totAlim);
+
+      document.getElementById("eqArr").textContent = chk("incArriendo")
+        ? `${document.getElementById("modArriendo").selectedOptions[0].text} · tarifa ${fmt(num("tarifaArr"))}`
+        : "Arriendo desactivado (típico en faena local)";
+      document.getElementById("subArr").textContent = fmt(totArr + totOtros);
+
+      document.getElementById("badgeArr").textContent = chk("incArriendo") ? "Incluido" : "No aplica";
+      document.getElementById("badgeArr").className = "badge " + (chk("incArriendo") ? "amber" : "");
+
+      document.getElementById("kPasajes").textContent = fmt(totPas);
+      document.getElementById("kAlim").textContent = fmt(totAlim);
+      document.getElementById("kArriendo").textContent = fmt(totArr);
+      document.getElementById("kOtros").textContent = fmt(totOtros);
+      document.getElementById("kTotal").textContent = fmt(total);
+      document.getElementById("footBig").textContent = fmt(total);
+      document.getElementById("footTotal").textContent = fmt(total);
+      document.getElementById("footUf").textContent = (total / uf).toLocaleString("es-CL", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " UF";
+
+      const tb = document.getElementById("tbody");
+      tb.innerHTML = lines.length ? lines.map(l => `
+        <tr>
+          <td class="concepto">${l.c}</td>
+          <td><span class="pill-s ${l.g}">${l.g === "dir" ? "Directa" : "Indirecta"}</span></td>
+          <td class="mono">${l.un}</td>
+          <td class="mono">${l.cant ? Math.round(l.cant).toLocaleString("es-CL") : "—"}</td>
+          <td class="mono">${fmt(l.pu)}</td>
+          <td class="mono">${fmt(l.tot)}</td>
+          <td><span class="pill-s ${l.ok ? "on" : "off"}">${l.ok ? "Activo" : "Omitido"}</span></td>
+        </tr>`).join("") : `<tr><td colspan="7" style="color:var(--muted);padding:20px;text-align:center">Sin líneas — activa componentes o sincroniza MO</td></tr>`;
+
+      return { lines, total };
+    }
+
+    document.querySelectorAll("input, select").forEach(el => {
+      el.addEventListener("input", calc);
+      el.addEventListener("change", calc);
+    });
+
+    document.getElementById("btnSync").addEventListener("click", () => {
+      // Proyecto limpio por defecto; el usuario carga MO real en la app
+      alert("En la app: lee dotación pico y roles desde Mano de obra.\nEn este mockup usa «Cargar ejemplo obra».");
+    });
+
+    document.getElementById("btnDemo").addEventListener("click", () => {
+      document.getElementById("dotDir").value = "77";
+      document.getElementById("dotInd").value = "6";
+      document.getElementById("meses").value = "12";
+      document.getElementById("diasMes").value = "20";
+      document.getElementById("factor").value = "70";
+      document.getElementById("zona").value = "regional";
+      document.getElementById("incArriendo").checked = false;
+      document.getElementById("empresaProveAlim").checked = false;
+      document.getElementById("cuposArr").value = "8";
+      useDir = true; useInd = true;
+      document.getElementById("chipDir").classList.add("on");
+      document.getElementById("chipInd").classList.add("on");
+      calc();
+    });
+
+    document.getElementById("btnApply").addEventListener("click", () => {
+      const r = calc();
+      const activos = r.lines.filter(l => l.ok && l.tot > 0);
+      alert("Se cargarían " + activos.length + " líneas en GO 3.3 por un total de " + fmt(r.total) +
+        "\n\n" + activos.map(l => "• " + l.c + ": " + fmt(l.tot)).join("\n"));
+    });
+
+    calc();
+  </script>
+</body>
+</html>

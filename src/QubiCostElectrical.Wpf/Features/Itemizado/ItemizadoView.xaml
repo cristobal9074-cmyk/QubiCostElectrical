@@ -1,0 +1,356 @@
+<UserControl x:Class="QubiCostElectrical.Wpf.Features.Itemizado.ItemizadoView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:pe="clr-namespace:QubiCostElectrical;assembly=QubiCostElectrical.Application"
+             xmlns:ctrl="clr-namespace:QubiCostElectrical.Wpf.Controls">
+  <UserControl.Resources>
+    <DataTemplate x:Key="StatusBadgeTemplate">
+      <Border CornerRadius="{StaticResource Radius.Chip}" Padding="7,2" HorizontalAlignment="Center">
+        <Border.Style>
+          <Style TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource Brush.Line2}" />
+            <Style.Triggers>
+              <DataTrigger Binding="{Binding StatusKind}" Value="ok">
+                <Setter Property="Background" Value="{DynamicResource Brush.GreenSoft}" />
+              </DataTrigger>
+              <DataTrigger Binding="{Binding StatusKind}" Value="warn">
+                <Setter Property="Background" Value="{DynamicResource Brush.AmberSoft}" />
+              </DataTrigger>
+              <DataTrigger Binding="{Binding StatusKind}" Value="info">
+                <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+              </DataTrigger>
+              <DataTrigger Binding="{Binding StatusKind}" Value="bad">
+                <Setter Property="Background" Value="{DynamicResource Brush.RedSoft}" />
+              </DataTrigger>
+            </Style.Triggers>
+          </Style>
+        </Border.Style>
+        <TextBlock Text="{Binding StatusLabel}" FontSize="11" FontWeight="SemiBold" />
+      </Border>
+    </DataTemplate>
+
+    <Style x:Key="ItemCellTextBlock" TargetType="TextBlock">
+      <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
+      <Setter Property="FontSize" Value="{StaticResource Font.Size.sm}" />
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
+      <Setter Property="TextAlignment" Value="Center" />
+      <Style.Triggers>
+        <DataTrigger Binding="{Binding ItemCellError, Converter={StaticResource StringNotEmptyToBool}}" Value="True">
+          <Setter Property="Background" Value="{DynamicResource Brush.RedSoft}" />
+          <Setter Property="ToolTip" Value="{Binding ItemCellError}" />
+        </DataTrigger>
+      </Style.Triggers>
+    </Style>
+    <Style x:Key="ItemCellTextBox" TargetType="TextBox" BasedOn="{StaticResource DataGrid.CellErrorTextBox}">
+      <Setter Property="TextAlignment" Value="Center" />
+      <Style.Triggers>
+        <DataTrigger Binding="{Binding ItemCellError, Converter={StaticResource StringNotEmptyToBool}}" Value="True">
+          <Setter Property="Tag" Value="error" />
+          <Setter Property="ToolTip" Value="{Binding ItemCellError}" />
+        </DataTrigger>
+      </Style.Triggers>
+    </Style>
+    <Style x:Key="DescripcionCellTextBlock" TargetType="TextBlock">
+      <Style.Triggers>
+        <DataTrigger Binding="{Binding DescripcionCellError, Converter={StaticResource StringNotEmptyToBool}}" Value="True">
+          <Setter Property="Background" Value="{DynamicResource Brush.RedSoft}" />
+          <Setter Property="ToolTip" Value="{Binding DescripcionCellError}" />
+        </DataTrigger>
+      </Style.Triggers>
+    </Style>
+    <Style x:Key="DescripcionCellTextBox" TargetType="TextBox" BasedOn="{StaticResource DataGrid.CellErrorTextBox}">
+      <Style.Triggers>
+        <DataTrigger Binding="{Binding DescripcionCellError, Converter={StaticResource StringNotEmptyToBool}}" Value="True">
+          <Setter Property="Tag" Value="error" />
+          <Setter Property="ToolTip" Value="{Binding DescripcionCellError}" />
+        </DataTrigger>
+      </Style.Triggers>
+    </Style>
+    <Style x:Key="UnidadCellTextBlock" TargetType="TextBlock">
+      <Setter Property="TextAlignment" Value="Center" />
+      <Setter Property="FontSize" Value="{StaticResource Font.Size.sm}" />
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
+      <Style.Triggers>
+        <DataTrigger Binding="{Binding UnidadCellError, Converter={StaticResource StringNotEmptyToBool}}" Value="True">
+          <Setter Property="Background" Value="{DynamicResource Brush.RedSoft}" />
+          <Setter Property="ToolTip" Value="{Binding UnidadCellError}" />
+        </DataTrigger>
+      </Style.Triggers>
+    </Style>
+    <Style x:Key="UnidadCellTextBox" TargetType="TextBox" BasedOn="{StaticResource DataGrid.CellErrorTextBox}">
+      <Setter Property="TextAlignment" Value="Center" />
+      <Style.Triggers>
+        <DataTrigger Binding="{Binding UnidadCellError, Converter={StaticResource StringNotEmptyToBool}}" Value="True">
+          <Setter Property="Tag" Value="error" />
+          <Setter Property="ToolTip" Value="{Binding UnidadCellError}" />
+        </DataTrigger>
+      </Style.Triggers>
+    </Style>
+    <Style x:Key="NumericColumnHeader" TargetType="DataGridColumnHeader" BasedOn="{StaticResource DataGridColumnHeader.Prototype}">
+      <Setter Property="HorizontalContentAlignment" Value="Right" />
+    </Style>
+    <Style x:Key="CenteredColumnHeader" TargetType="DataGridColumnHeader" BasedOn="{StaticResource DataGridColumnHeader.Prototype}">
+      <Setter Property="HorizontalContentAlignment" Value="Center" />
+    </Style>
+    <!-- Menú contextual de fila (clic derecho): se define como recurso con clave, no
+         inline en un Setter.Value de Style, porque los manejadores de evento (Click,
+         Opened) dentro de un Setter.Value confunden la generación de código del
+         compilador XAML de WPF (corrompe la numeración de "connection id" y produce
+         errores de compilación sin relación aparente en otros elementos del archivo).
+         Como recurso compartido con clave, se instancia normalmente y los eventos
+         funcionan sin problema. -->
+    <ContextMenu x:Key="RowContextMenu" Opened="OnRowContextMenuOpened">
+      <MenuItem Header="Agregar partida" Click="OnRowMenuAddPartidaClick"
+                ToolTip="Insertar partida bajo la fila (Ins)" />
+      <MenuItem Header="Agregar título" Click="OnRowMenuAddTitleClick"
+                ToolTip="Insertar un nuevo capítulo bajo la fila" />
+      <MenuItem Header="Cubicar" Click="OnRowMenuCubicarClick"
+                ToolTip="Abrir cubicación de la partida" />
+      <MenuItem Header="Modelo comercial de la partida" Click="OnRowMenuCommercialModelClick"
+                ToolTip="Definir una excepción comercial para esta partida" />
+      <MenuItem Header="Duplicar" Click="OnRowMenuDuplicateClick"
+                ToolTip="Duplicar partida seleccionada" />
+      <Separator />
+      <MenuItem Header="Es título" Click="OnRowMenuToggleEsTituloClick" IsCheckable="True"
+                ToolTip="Alternar si la fila es un título (Ctrl+T)" />
+      <MenuItem Header="No cubicar" Click="OnRowMenuToggleNoCubicarClick" IsCheckable="True"
+                ToolTip="Alternar exclusión de la cubicación (Ctrl+E)" />
+      <Separator />
+      <MenuItem Header="Subir" Click="OnRowMenuMoveUpClick"
+                ToolTip="Mover fila hacia arriba (Alt+↑)" />
+      <MenuItem Header="Bajar" Click="OnRowMenuMoveDownClick"
+                ToolTip="Mover fila hacia abajo (Alt+↓)" />
+      <Separator />
+      <MenuItem Header="Eliminar" Click="OnRowMenuDeleteClick"
+                ToolTip="Eliminar fila o capítulo (Supr)" />
+    </ContextMenu>
+  </UserControl.Resources>
+
+  <Grid>
+    <ctrl:EmptyStateControl Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}}"
+                            Title="Sin proyecto abierto"
+                            Description="Abra un proyecto para gestionar el itemizado, importar desde Excel o pegar partidas.">
+      <ctrl:EmptyStateControl.Actions>
+        <Button Style="{StaticResource Button.Primary}" Content="Abrir proyecto…" Command="{Binding OpenProjectCommand}" MinWidth="180" />
+      </ctrl:EmptyStateControl.Actions>
+    </ctrl:EmptyStateControl>
+
+    <Grid Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}" Margin="16,12,16,0">
+      <Grid.RowDefinitions>
+        <!-- Header -->
+        <RowDefinition Height="Auto" />
+        <!-- HUD Row -->
+        <RowDefinition Height="Auto" />
+        <!-- Control Panel -->
+        <RowDefinition Height="Auto" />
+        <!-- Empty state or DataGrid -->
+        <RowDefinition Height="*" />
+        <!-- Status message -->
+        <RowDefinition Height="Auto" />
+      </Grid.RowDefinitions>
+
+      <!-- Header -->
+      <Grid Grid.Row="0" Margin="0,0,0,14">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <StackPanel Grid.Column="0">
+          <WrapPanel VerticalAlignment="Center">
+            <TextBlock Text="Itemizado Valorado" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" />
+            <Border Background="{DynamicResource Brush.SuccessSoft}" BorderBrush="{DynamicResource Brush.Success}" BorderThickness="1" CornerRadius="12" Padding="8,2" Margin="10,0,0,0" VerticalAlignment="Center">
+              <TextBlock Text="PRESUPUESTO ACTIVO" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Success}" />
+            </Border>
+          </WrapPanel>
+          <TextBlock Text="Gestión y desglose ordenado de partidas de licitación eléctrica con control de costos unitarios y cálculo automático."
+                     Style="{StaticResource Text.Caption}" Margin="0,4,0,0" />
+        </StackPanel>
+        
+        <Button Grid.Column="1" Style="{StaticResource Button.Secondary}" Command="{Binding ExportPdfCommand}" VerticalAlignment="Center" Padding="12,6">
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Text="📄 " />
+            <TextBlock Text="Exportar PDF" />
+          </StackPanel>
+        </Button>
+      </Grid>
+
+      <!-- HUD Cards Row -->
+      <UniformGrid Grid.Row="1" Columns="4" Margin="0,0,0,16" Height="68">
+        <!-- 1. Partidas Totales -->
+        <Border Style="{StaticResource Card.Section}" Margin="0,0,6,0" Padding="12,10">
+          <StackPanel VerticalAlignment="Center">
+            <TextBlock Text="PARTIDAS TOTALES" Style="{StaticResource Text.TotalsLabel}" FontSize="9" />
+            <TextBlock Text="{Binding SummaryPartidas}" Style="{StaticResource Text.TotalsValue}" FontSize="18" Foreground="{DynamicResource Brush.Blue}" FontWeight="Bold" Margin="0,2,0,0" />
+            <TextBlock Text="Partidas de obra ingresadas" Style="{StaticResource Text.Caption}" FontSize="11" Margin="0,1,0,0" />
+          </StackPanel>
+        </Border>
+
+        <!-- 2. Capítulos Estructurados -->
+        <Border Style="{StaticResource Card.Section}" Margin="3,0,3,0" Padding="12,10">
+          <StackPanel VerticalAlignment="Center">
+            <TextBlock Text="CAPÍTULOS / TÍTULOS" Style="{StaticResource Text.TotalsLabel}" FontSize="9" />
+            <TextBlock Text="{Binding SummaryCapitulos}" Style="{StaticResource Text.TotalsValue}" FontSize="18" FontWeight="Bold" Margin="0,2,0,0" />
+            <TextBlock Text="Secciones y agrupadores" Style="{StaticResource Text.Caption}" FontSize="11" Margin="0,1,0,0" />
+          </StackPanel>
+        </Border>
+
+        <!-- 3. Progreso de Estructuración -->
+        <Border Style="{StaticResource Card.Section}" Margin="3,0,3,0" Padding="12,10">
+          <StackPanel VerticalAlignment="Center">
+            <DockPanel LastChildFill="True">
+              <TextBlock DockPanel.Dock="Right" Text="{Binding SummaryCompletas}" FontSize="11.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Success}" />
+              <TextBlock Text="PROGRESO DE CARGA" Style="{StaticResource Text.TotalsLabel}" FontSize="9" />
+            </DockPanel>
+            <ProgressBar Value="{Binding AvancePercent, Mode=OneWay}" Height="5" Maximum="100" Margin="0,6,0,4" Background="{DynamicResource Brush.Line}" Foreground="{DynamicResource Brush.Success}" BorderThickness="0" />
+            <TextBlock Text="{Binding SummaryStripText}" Style="{StaticResource Text.Caption}" FontSize="10.5" TextTrimming="CharacterEllipsis" />
+          </StackPanel>
+        </Border>
+
+        <!-- 4. Partidas Incompletas -->
+        <Border Style="{StaticResource Card.Section}" Margin="6,0,0,0" Padding="12,10">
+          <StackPanel VerticalAlignment="Center">
+            <TextBlock Text="FILAS INCOMPLETAS" Style="{StaticResource Text.TotalsLabel}" FontSize="9" />
+            <TextBlock Text="{Binding SummaryIncompletas}" Style="{StaticResource Text.TotalsValue}" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource Brush.Amber}" Margin="0,2,0,0" />
+            <TextBlock Text="Falta ítem, descripción o unidad" Style="{StaticResource Text.Caption}" FontSize="11" Margin="0,1,0,0" />
+          </StackPanel>
+        </Border>
+      </UniformGrid>
+
+      <!-- Control Panel / Actions Toolbar -->
+      <Border Grid.Row="2" Style="{StaticResource Card.Surface}" Padding="12,8" Margin="0,0,0,10">
+        <DockPanel LastChildFill="True">
+          <!-- Right side: Actions -->
+          <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+            <Button Style="{StaticResource Button.Primary}" Content="+ Partida" Command="{Binding AddPartidaCommand}" Margin="0,0,6,0" Padding="10,4"
+                    ToolTip="Insertar una nueva partida bajo la fila seleccionada (Ins)" />
+            <Button Style="{StaticResource Button.Secondary}" Content="+ Capítulo" Command="{Binding AddTitleCommand}" Margin="0,0,6,0" Padding="10,4"
+                    ToolTip="Agregar un capítulo bajo la fila seleccionada (o al final si no hay selección)" />
+            <Button Style="{StaticResource Button.Secondary}" Content="Importar Excel" Command="{Binding ImportExcelCommand}" Margin="0,0,6,0" Padding="10,4"
+                    ToolTip="Importar itemizado desde archivo Excel (.xlsx)" />
+            <Button Style="{StaticResource Button.Secondary}" Content="Pegar celdas" Command="{Binding PasteExcelCommand}" Margin="0,0,6,0" Padding="10,4"
+                    ToolTip="Pegar filas copiadas desde Excel (Ctrl+V en la grilla)" />
+
+            <!-- More dropdown button -->
+            <Button Style="{StaticResource Button.Ghost}" Content="⋯" Padding="12,4" VerticalAlignment="Center"
+                    ToolTip="Duplicar, mover, eliminar o vaciar itemizado">
+              <Button.ContextMenu>
+                <ContextMenu>
+                  <MenuItem Header="Cubicar seleccionado" Command="{Binding CubicarCommand}" />
+                  <Separator />
+                  <MenuItem Header="Duplicar fila" Command="{Binding DuplicateCommand}" />
+                  <MenuItem Header="Subir fila (Alt+↑)" Command="{Binding MoveUpCommand}" />
+                  <MenuItem Header="Bajar fila (Alt+↓)" Command="{Binding MoveDownCommand}" />
+                  <Separator />
+                  <MenuItem Header="Eliminar fila" Command="{Binding DeleteCommand}" />
+                  <MenuItem Header="Vaciar itemizado" Command="{Binding ClearAllCommand}" />
+                </ContextMenu>
+              </Button.ContextMenu>
+            </Button>
+          </StackPanel>
+
+          <!-- Left side: Search & Filter Label -->
+          <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <TextBox Width="240" Style="{StaticResource Form.SearchBox}" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"
+                     Tag="Buscar por ítem, descripción o unidad..." />
+            <Button Style="{StaticResource Button.Ghost}" Content="Limpiar" Command="{Binding ClearSearchCommand}" Margin="0,0,12,0" Padding="8,4" />
+            <TextBlock Text="{Binding FilteredCountLabel}" Style="{StaticResource Text.Caption}" VerticalAlignment="Center" />
+          </StackPanel>
+        </DockPanel>
+      </Border>
+
+      <!-- Empty Itemizado state -->
+      <ctrl:EmptyStateControl Grid.Row="3" Margin="0,0,0,10"
+                              Visibility="{Binding ShowEmptyItemizado, Converter={StaticResource BoolToVisibility}}"
+                              Title="Itemizado vacío"
+                              Description="Importe desde Excel, pegue partidas copiadas o agregue la primera partida o título.">
+        <ctrl:EmptyStateControl.Actions>
+          <WrapPanel HorizontalAlignment="Center">
+            <Button Style="{StaticResource Button.Secondary}" Content="Importar Excel" Command="{Binding ImportExcelCommand}" Margin="4" />
+            <Button Style="{StaticResource Button.Secondary}" Content="Pegar desde Excel" Command="{Binding PasteExcelCommand}" Margin="4" />
+            <Button Style="{StaticResource Button.Secondary}" Content="Agregar primera partida" Command="{Binding AddPartidaCommand}" Margin="4" />
+            <Button Style="{StaticResource Button.Ghost}" Content="Agregar título" Command="{Binding AddTitleCommand}" Margin="4" />
+          </WrapPanel>
+        </ctrl:EmptyStateControl.Actions>
+      </ctrl:EmptyStateControl>
+
+      <!-- DataGrid Border -->
+      <Border Grid.Row="3" Style="{StaticResource Card.Section}" Padding="1" Margin="0,0,0,10"
+              Visibility="{Binding ShowEmptyItemizado, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
+        <DataGrid x:Name="ItemGrid"
+                  ItemsSource="{Binding FilteredRows}"
+                  SelectedItem="{Binding SelectedRow}"
+                  Style="{StaticResource DataGrid.Workspace}"
+                  MinHeight="320"
+                  SelectionMode="Extended"
+                  SelectionUnit="FullRow"
+                  IsReadOnly="{Binding IsReadOnly}"
+                  CanUserSortColumns="False"
+                  EnableRowVirtualization="True"
+                  VirtualizingStackPanel.IsVirtualizing="True"
+                  VirtualizingStackPanel.VirtualizationMode="Recycling"
+                  AutomationProperties.Name="Grilla de itemizado"
+                  BeginningEdit="OnGridBeginningEdit"
+                  CellEditEnding="OnCellEditEnding"
+                  PreviewKeyDown="OnGridPreviewKeyDown">
+          <DataGrid.RowStyle>
+            <Style TargetType="DataGridRow" BasedOn="{StaticResource DataGridRow.Prototype}">
+              <EventSetter Event="ContextMenuOpening" Handler="OnRowContextMenuOpening" />
+              <Setter Property="ContextMenu" Value="{StaticResource RowContextMenu}" />
+              <Style.Triggers>
+                <DataTrigger Binding="{Binding IsTitleRow}" Value="True">
+                  <Setter Property="FontWeight" Value="SemiBold" />
+                  <Setter Property="Background" Value="{DynamicResource Brush.ChapterRowBg}" />
+                  <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
+                  <Setter Property="BorderThickness" Value="3,0,0,0" />
+                </DataTrigger>
+              </Style.Triggers>
+            </Style>
+          </DataGrid.RowStyle>
+          <DataGrid.Columns>
+            <DataGridTextColumn Header="ÍTEM" Binding="{Binding Item, UpdateSourceTrigger=PropertyChanged}" Width="90" HeaderStyle="{StaticResource CenteredColumnHeader}">
+              <DataGridTextColumn.ElementStyle>
+                <Style TargetType="TextBlock" BasedOn="{StaticResource ItemCellTextBlock}" />
+              </DataGridTextColumn.ElementStyle>
+              <DataGridTextColumn.EditingElementStyle>
+                <Style TargetType="TextBox" BasedOn="{StaticResource ItemCellTextBox}" />
+              </DataGridTextColumn.EditingElementStyle>
+            </DataGridTextColumn>
+            <DataGridTextColumn Header="DESCRIPCIÓN" Binding="{Binding Descripcion, UpdateSourceTrigger=PropertyChanged}" Width="*" MinWidth="220">
+              <DataGridTextColumn.ElementStyle>
+                <Style TargetType="TextBlock" BasedOn="{StaticResource DescripcionCellTextBlock}" />
+              </DataGridTextColumn.ElementStyle>
+              <DataGridTextColumn.EditingElementStyle>
+                <Style TargetType="TextBox" BasedOn="{StaticResource DescripcionCellTextBox}" />
+              </DataGridTextColumn.EditingElementStyle>
+            </DataGridTextColumn>
+            <DataGridTextColumn Header="UD" Binding="{Binding Unidad, UpdateSourceTrigger=PropertyChanged}" Width="70" HeaderStyle="{StaticResource CenteredColumnHeader}">
+              <DataGridTextColumn.ElementStyle>
+                <Style TargetType="TextBlock" BasedOn="{StaticResource UnidadCellTextBlock}" />
+              </DataGridTextColumn.ElementStyle>
+              <DataGridTextColumn.EditingElementStyle>
+                <Style TargetType="TextBox" BasedOn="{StaticResource UnidadCellTextBox}" />
+              </DataGridTextColumn.EditingElementStyle>
+            </DataGridTextColumn>
+
+            <DataGridTemplateColumn IsReadOnly="True" HeaderStyle="{StaticResource CenteredColumnHeader}" Width="110">
+              <DataGridTemplateColumn.Header>
+                <TextBlock Text="ESTADO"
+                           ToolTip="✅ Completo: ítem, descripción, unidad y precio OK&#x0a;⚠ Incompleto: falta ítem, descripción o unidad&#x0a;🔵 Sin precio: APU pendiente&#x0a;❌ Error: valor inválido"
+                           ToolTipService.ShowDuration="8000" />
+              </DataGridTemplateColumn.Header>
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <ContentControl Content="{Binding}" ContentTemplate="{StaticResource StatusBadgeTemplate}" />
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+          </DataGrid.Columns>
+        </DataGrid>
+      </Border>
+
+      <!-- Status message -->
+      <TextBlock Grid.Row="4" Text="{Binding StatusMessage}" Style="{StaticResource Text.Body}" Foreground="{DynamicResource Brush.Amber}"
+                 Visibility="{Binding HasStatusMessage, Converter={StaticResource BoolToVisibility}}" Margin="0,4,0,0" />
+    </Grid>
+  </Grid>
+</UserControl>

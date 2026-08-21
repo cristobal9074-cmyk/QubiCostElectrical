@@ -1,0 +1,74 @@
+E194 value=1.57
+E195 value=1.3
+E196 value=1.3
+E197 value=1.3
+E198 value=1.57
+E199 value=1.3
+E200 value=1.3
+E201 value=1.3
+E202 value=1.3
+F169 value=0.05
+F170 value=0.08
+F171 value=0.03
+H169 value='=H161*F169'
+H170 value='=H161*F170'
+H171 value='=H162*F171'
+H173 value='=SUM(H169:H171)'
+H161 value='=H153+H96+H38'
+H162 value='=H68'
+H164 value='=SUM(H161:H162)'
+H181 value='=SUM(H178:H179)'
+H188 value='=C188-H181'
+D188 value='=IFERROR(1-(I164/C187),0)'
+C187 value='=DETALLE!LJ8160'
+C188 value='=C187*E206'
+H187 value='=H188/E206'
+H188 value='=C188-H181'
+--- RESUMEN 215-245 formulas ---
+C215='RESUMEN DE PROYECTO:'
+E215='$'
+G215='UF'
+I215='%'
+C219='MATERIALES'
+E219='=H38'
+G219='=E219/E$206'
+I219='=IFERROR(E219/E243,0)'
+C221='EQUIPOS'
+E221='=H68'
+G221='=E221/E$206'
+I221='=IFERROR(E221/E243,0)'
+C223='MANO DE OBRA DIRECTA'
+E223='=G192'
+G223='=E223/E$206'
+I223='=IFERROR(E223/E243,0)'
+C225='MANO DE OBRA INDIRECTA'
+E225='=H93'
+G225='=E225/E$206'
+I225='=IFERROR(E225/E243,0)'
+C227='GASTOS OPERACIONALES'
+E227='=H153'
+G227='=E227/E$206'
+I227='=IFERROR(E227/E243,0)'
+C229='GASTOS GENERALES Y UTILIDADES'
+E229='=H173'
+G229='=E229/E$206'
+I229='=IFERROR(E229/E243,0)'
+C234='COSTO DEL PROYECTO'
+E234='=SUM(E219:F229)'
+G234='=E234/E$206'
+I234='=IFERROR(E234/E243,0)'
+C239='DIFERENCIA POR FACTORES'
+E239='=C188-H181'
+G239='=E239/E$206'
+I239='=IFERROR(E239/E243,0)'
+C243='TOTAL VENTA DEL PROYECTO'
+E243='=C188'
+G243='=E243/E$206'
+I243='=IFERROR(E243/E243,0)'
+--- DETALLE header row1-3 ---
+R1: A=desde  | B=hasta | G=LARGO | H==+$D$4+6+15+15+15*7 | I==+$D$4+6+15+10+15*7 | J==+$D$4+6+15+15+15*7 | K==+$D$4+6+15+10+15*7 | L==+D4+36+6+20+15*7 | M==+D4+30+6+20+15*7 | N==+D4+6+55+30+15*7 | O==+D4+6+55+30+15*7 | P==60+D4+6+20+15*7 | R==20+30+6+6+6*9 | S==35+D4+6+15+15*7 | T==+D4+6+15+10+15*7 | U==50+D4+6+20+15*7 | V==30+D4+6+6+6+6+6*4+15 | W==+D2+15+12+6+10+6+6*7+15 | X==+D2+10+12+45+6+6*7+15
+R2: G=FASES
+R3: G=PISO
+R4: H=iluminacion | I=iluminacion | J=iluminacion | K=iluminacion | L=iluminacion | M=iluminacion | N=iluminacion | O=iluminacion | P=iluminacion | S=iluminacion | T=iluminacion | U=iluminacion | V=iluminacion | W=iluminacion | X=iluminacion
+--- DETALLE sample formulas with COSTOS!E ---
+A9==+'-=COSTOS=-'!E206

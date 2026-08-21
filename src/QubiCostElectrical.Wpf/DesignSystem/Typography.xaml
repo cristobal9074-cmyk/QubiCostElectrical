@@ -1,0 +1,100 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+
+  <ResourceDictionary.MergedDictionaries>
+    <ResourceDictionary Source="Colors.xaml" />
+  </ResourceDictionary.MergedDictionaries>
+
+  <FontFamily x:Key="Font.Ui">pack://application:,,,/Fonts/Inter.ttc#Inter, Segoe UI, Arial, sans-serif</FontFamily>
+  <FontFamily x:Key="Font.Mono">pack://application:,,,/Fonts/JetBrainsMono-Regular.ttf#JetBrains Mono, Cascadia Mono, Consolas, monospace</FontFamily>
+
+  <sys:Double x:Key="Font.Size.2xs">9</sys:Double>
+  <sys:Double x:Key="Font.Size.xs">10</sys:Double>
+  <sys:Double x:Key="Font.Size.sm">11</sys:Double>
+  <sys:Double x:Key="Font.Size.md">12</sys:Double>
+  <sys:Double x:Key="Font.Size.lg">14</sys:Double>
+  <sys:Double x:Key="Font.Size.xl">16</sys:Double>
+  <sys:Double x:Key="Font.Size.2xl">24</sys:Double>
+
+  <Style x:Key="Text.Caption" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource Font.Ui}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.xs}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
+  </Style>
+
+  <Style x:Key="Text.Body" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource Font.Ui}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.md}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}" />
+  </Style>
+
+  <Style x:Key="Text.PageTitle" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource Font.Ui}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.xl}" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+  </Style>
+
+  <Style x:Key="Text.ViewTitle" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource Font.Ui}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.xl}" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+  </Style>
+
+  <Style x:Key="Text.KpiValue" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.2xl}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+  </Style>
+
+  <Style x:Key="Text.HeaderBrand" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource Font.Ui}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.lg}" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
+  </Style>
+
+  <Style x:Key="Text.SectionLabel" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource Font.Ui}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.xs}" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
+  </Style>
+
+  <Style x:Key="Text.PartidaPanelTitle" TargetType="TextBlock" BasedOn="{StaticResource Text.SectionLabel}">
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.xs}" />
+  </Style>
+
+  <Style x:Key="Text.TotalsLabel" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource Font.Ui}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.sm}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
+    <Setter Property="Margin" Value="0,0,0,2" />
+  </Style>
+
+  <Style x:Key="Text.Numeric" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.sm}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}" />
+  </Style>
+
+  <Style x:Key="Text.Kbd" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.2xs}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+    <Setter Property="Padding" Value="4,2" />
+  </Style>
+
+  <Style x:Key="Text.TotalsValue" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.lg}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+  </Style>
+
+</ResourceDictionary>

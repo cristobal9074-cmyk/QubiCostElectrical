@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>QubiCostElectrical</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\QubiCostElectrical.Application\QubiCostElectrical.Application.csproj" />
+    <ProjectReference Include="..\QubiCostElectrical.Infrastructure\QubiCostElectrical.Infrastructure.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="QubiCostElectrical.AppClock" Static="True" />
+  </ItemGroup>
+</Project>

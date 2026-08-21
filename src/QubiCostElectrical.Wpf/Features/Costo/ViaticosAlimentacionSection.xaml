@@ -1,0 +1,23 @@
+<UserControl x:Class="QubiCostElectrical.Wpf.Features.Costo.ViaticosAlimentacionSection"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <UserControl.Resources><ResourceDictionary Source="ViaticosProfesionalDialog.Resources.xaml" /></UserControl.Resources>
+  <Border Background="{DynamicResource Brush.PanelHeader}" Padding="20" BorderBrush="{DynamicResource Brush.SlateLight}" BorderThickness="1" CornerRadius="{StaticResource Radius.Md}">
+    <StackPanel>
+      <TextBlock Text="Alimentación / colación" FontSize="{StaticResource Font.Size.lg}" FontWeight="Bold" />
+      <TextBlock Text="{Binding BadgeAlim}" Foreground="{DynamicResource Brush.Green}" Margin="0,4,0,14" />
+      <CheckBox AutomationProperties.Name="La empresa provee alimentación" Content="La empresa provee alimentación en obra" IsChecked="{Binding EmpresaProveAlim}" Style="{StaticResource VToggle}" />
+      <UniformGrid Columns="3" Margin="0,10,0,12">
+        <Button AutomationProperties.Name="Alternar desayuno" Command="{Binding ToggleMealDesCommand}" Content="{Binding MealDesLabel}" Style="{StaticResource VMealBtn}" />
+        <Button AutomationProperties.Name="Alternar almuerzo" Command="{Binding ToggleMealAlmCommand}" Content="{Binding MealAlmLabel}" Style="{StaticResource VMealBtn}" />
+        <Button AutomationProperties.Name="Alternar cena" Command="{Binding ToggleMealCenCommand}" Content="{Binding MealCenLabel}" Style="{StaticResource VMealBtn}" />
+      </UniformGrid>
+      <CheckBox AutomationProperties.Name="Aplicar alimentación a MO directa" Content="Aplicar a MO directa" IsChecked="{Binding AlimDir}" Style="{StaticResource VToggle}" />
+      <CheckBox AutomationProperties.Name="Aplicar alimentación a MO indirecta" Content="Aplicar a MO indirecta" IsChecked="{Binding AlimInd}" Style="{StaticResource VToggle}" />
+      <TextBlock Text="DÍAS VISITA INDIRECTA / MES" Style="{StaticResource VFieldLabel}" />
+      <TextBox AutomationProperties.Name="Días visita indirecta por mes" Text="{Binding DiasVisitaInd, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource VInput}" />
+      <TextBlock Text="{Binding EqAlim}" TextWrapping="Wrap" Foreground="{DynamicResource Brush.Ink3}" Margin="0,14,0,0" />
+      <DockPanel Margin="0,12,0,0"><TextBlock Text="SUBTOTAL ALIMENTACIÓN" Style="{StaticResource Text.Caption}" /><TextBlock Text="{Binding SubAlimLabel}" FontWeight="Bold" HorizontalAlignment="Right" /></DockPanel>
+    </StackPanel>
+  </Border>
+</UserControl>

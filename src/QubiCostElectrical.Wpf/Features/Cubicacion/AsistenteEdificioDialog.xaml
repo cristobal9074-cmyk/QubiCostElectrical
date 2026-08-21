@@ -1,0 +1,162 @@
+<Window x:Class="QubiCostElectrical.Wpf.Features.Cubicacion.AsistenteEdificioDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Style="{StaticResource Dialog.Window}"
+        Title="Asistente de Estructura de Edificio"
+        Width="420" Height="530"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Cabecera -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,12">
+            <TextBlock Text="Asistente de Edificio" Style="{StaticResource Text.ViewTitle}" FontSize="18" />
+            <TextBlock Style="{StaticResource Text.Body}" Foreground="{DynamicResource Brush.Muted}"
+                       Margin="0,4,0,0" TextWrapping="Wrap"
+                       Text="Defina la estructura de torres y niveles para generar automáticamente los nombres de las zonas." />
+        </StackPanel>
+
+        <!-- Campos de entrada -->
+        <Grid Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Cantidad de Torres -->
+            <Grid Grid.Row="0" Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="140" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock Text="Cantidad de Torres" Style="{StaticResource Text.Body}" FontWeight="SemiBold" />
+                    <TextBlock Text="Cuerpos independientes" Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Muted}" />
+                </StackPanel>
+                <ComboBox Grid.Column="1" x:Name="ComboTorres" Height="28" SelectedIndex="0" SelectionChanged="OnComboTorresSelectionChanged">
+                    <ComboBoxItem Content="1 Torre" Tag="1" />
+                    <ComboBoxItem Content="2 Torres" Tag="2" />
+                    <ComboBoxItem Content="3 Torres" Tag="3" />
+                    <ComboBoxItem Content="4 Torres" Tag="4" />
+                </ComboBox>
+            </Grid>
+
+            <!-- Tipo de Prefijo -->
+            <Grid Grid.Row="1" x:Name="GridPrefijo" Margin="0,0,0,8" Visibility="Collapsed">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="140" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock Text="Prefijo de Torres" Style="{StaticResource Text.Body}" FontWeight="SemiBold" />
+                    <TextBlock Text="Nomenclatura visual" Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Muted}" />
+                </StackPanel>
+                <ComboBox Grid.Column="1" x:Name="ComboPrefijo" Height="28" SelectedIndex="0" SelectionChanged="OnComboPrefijoSelectionChanged">
+                    <ComboBoxItem Content="Letras (TA, TB, TC)" Tag="LETRAS" />
+                    <ComboBoxItem Content="Números (T1, T2, T3)" Tag="NUMEROS" />
+                </ComboBox>
+            </Grid>
+
+            <!-- Subterráneo Común Checkbox -->
+            <Grid Grid.Row="2" x:Name="GridSubComun" Margin="0,0,0,8" Visibility="Collapsed">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="140" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock Text="Subterráneo Común" Style="{StaticResource Text.Body}" FontWeight="SemiBold" />
+                    <TextBlock Text="Compartido entre torres" Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Muted}" />
+                </StackPanel>
+                <CheckBox Grid.Column="1" x:Name="ChkSubComun" Content="Activado" IsChecked="True" VerticalAlignment="Center" />
+            </Grid>
+
+            <!-- Subterráneos -->
+            <Grid Grid.Row="3" Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="140" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock Text="Subterráneos" Style="{StaticResource Text.Body}" FontWeight="SemiBold" />
+                    <TextBlock Text="Comunes o por torre" Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Muted}" />
+                </StackPanel>
+                <TextBox Grid.Column="1" x:Name="TxtSubterraneos" Text="2" Height="28" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" FontSize="13" />
+            </Grid>
+
+            <!-- Pisos Comunes (Piso 1, 2 compartido) -->
+            <Grid Grid.Row="4" x:Name="GridPisosComunes" Margin="0,0,0,8" Visibility="Collapsed">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="140" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock Text="Pisos Comunes" Style="{StaticResource Text.Body}" FontWeight="SemiBold" />
+                    <TextBlock Text="Pisos compartidos (ej. Piso 1)" Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Muted}" />
+                </StackPanel>
+                <TextBox Grid.Column="1" x:Name="TxtPisosComunes" Text="1" Height="28" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" FontSize="13" />
+            </Grid>
+
+            <Separator Grid.Row="5" Margin="0,4,0,8" Background="{DynamicResource Brush.Line2}" />
+
+            <!-- Lista Dinámica de Configuraciones por Torre -->
+            <Grid Grid.Row="6">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                
+                <Grid Grid.Row="0" Margin="0,0,0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="80" />
+                        <ColumnDefinition Width="80" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Nivel / Torre" Style="{StaticResource Text.Caption}" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" />
+                    <TextBlock Grid.Column="1" Text="Pisos Totales" HorizontalAlignment="Center" Style="{StaticResource Text.Caption}" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" />
+                    <TextBlock Grid.Column="2" Text="Cubiertas" HorizontalAlignment="Center" Style="{StaticResource Text.Caption}" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" />
+                </Grid>
+
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <ItemsControl x:Name="ItemsTorres">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,2">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="80" />
+                                        <ColumnDefinition Width="80" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="🏢" Margin="0,0,6,0" />
+                                        <TextBlock Text="{Binding Nombre}" Style="{StaticResource Text.Body}" FontWeight="SemiBold" />
+                                    </StackPanel>
+                                    <TextBox Grid.Column="1" Text="{Binding Pisos, UpdateSourceTrigger=PropertyChanged}" Width="60" Height="28" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" />
+                                    <TextBox Grid.Column="2" Text="{Binding Cubiertas, UpdateSourceTrigger=PropertyChanged}" Width="60" Height="28" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+        </Grid>
+
+        <!-- Footer / Acciones -->
+        <DockPanel Grid.Row="2" Style="{StaticResource Dialog.Footer}" LastChildFill="False" Margin="0,12,0,0">
+            <Button DockPanel.Dock="Right" Style="{StaticResource Button.Primary}" Content="Generar"
+                    MinWidth="100" IsDefault="True" Click="OnGenerarClick" />
+            <Button DockPanel.Dock="Right" Style="{StaticResource Button.Secondary}" Content="Cancelar"
+                    MinWidth="80" Margin="0,0,8,0" IsCancel="True" />
+        </DockPanel>
+    </Grid>
+</Window>

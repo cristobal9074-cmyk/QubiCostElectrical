@@ -1,0 +1,40 @@
+<UserControl x:Class="QubiCostElectrical.Wpf.Features.Costo.ViaticosPasajesSection"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <UserControl.Resources>
+    <ResourceDictionary Source="ViaticosProfesionalDialog.Resources.xaml" />
+  </UserControl.Resources>
+  <Border Background="{DynamicResource Brush.PanelHeader}"
+          Padding="20"
+          BorderBrush="{DynamicResource Brush.SlateLight}"
+          BorderThickness="1"
+          CornerRadius="{StaticResource Radius.Md}">
+    <StackPanel>
+      <TextBlock Text="Pasajes y movilización" FontSize="{StaticResource Font.Size.lg}" FontWeight="Bold" />
+      <TextBlock Text="Define los costos de traslado para cada grupo de mano de obra."
+                 Style="{StaticResource Text.Caption}" Margin="0,4,0,16" />
+      <CheckBox AutomationProperties.Name="Incluir pasajes MO directa"
+                Content="Incluir pasajes MO directa"
+                IsChecked="{Binding InclPasDir}" Style="{StaticResource VToggle}" />
+      <CheckBox AutomationProperties.Name="Incluir movilización MO indirecta"
+                Content="Incluir movilización MO indirecta"
+                IsChecked="{Binding InclPasInd}" Style="{StaticResource VToggle}" />
+      <TextBlock Text="TARIFA PASAJE DIRECTA (CLP / DÍA-PERSONA)" Style="{StaticResource VFieldLabel}" />
+      <TextBox AutomationProperties.Name="Tarifa pasaje directa"
+               Text="{Binding TarifaPasDir, UpdateSourceTrigger=PropertyChanged}"
+               Style="{StaticResource VInput}" />
+      <TextBlock Text="TARIFA MOVILIZACIÓN INDIRECTA (CLP / MES-ROL)" Style="{StaticResource VFieldLabel}" />
+      <TextBox AutomationProperties.Name="Tarifa movilización indirecta"
+               Text="{Binding TarifaPasInd, UpdateSourceTrigger=PropertyChanged}"
+               Style="{StaticResource VInput}" />
+      <TextBlock Text="{Binding EqPasajes}" TextWrapping="Wrap"
+                 Foreground="{DynamicResource Brush.Ink3}" Margin="0,16,0,0" />
+      <Border Background="{DynamicResource Brush.BlueSoft}" CornerRadius="{StaticResource Radius.Sm}" Padding="12" Margin="0,12,0,0">
+        <DockPanel>
+          <TextBlock Text="SUBTOTAL PASAJES" Style="{StaticResource Text.Caption}" />
+          <TextBlock Text="{Binding SubPasajesLabel}" FontWeight="Bold" HorizontalAlignment="Right" />
+        </DockPanel>
+      </Border>
+    </StackPanel>
+  </Border>
+</UserControl>

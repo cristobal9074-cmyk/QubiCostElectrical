@@ -1,0 +1,164 @@
+Codigo;Descripcion;Unidad;Familia;PrecioCLP;MO;Proveedor;Marca;Fecha
+THHN1.5;Conductor cobre THHN 1.5 mm²;ML;Conductores;148;59;;;2026-06-01
+THHN2.5;Conductor cobre THHN 2.5 mm²;ML;Conductores;215;70;;;2026-06-01
+THHN4;Conductor cobre THHN 4 mm²;ML;Conductores;320;78;;;2026-06-01
+THHN6;Conductor cobre THHN 6 mm²;ML;Conductores;460;86;;;2026-06-01
+THHN10;Conductor cobre THHN 10 mm²;ML;Conductores;741;98;;;2026-06-01
+THHN16;Conductor cobre THHN 16 mm²;ML;Conductores;1170;117;;;2026-06-01
+THHN25;Conductor cobre THHN 25 mm²;ML;Conductores;1794;137;;;2026-06-01
+THHN35;Conductor cobre THHN 35 mm²;ML;Conductores;2457;156;;;2026-06-01
+THHN50;Conductor cobre THHN 50 mm²;ML;Conductores;3432;195;;;2026-06-01
+THHN70;Conductor cobre THHN 70 mm²;ML;Conductores;4680;234;;;2026-06-01
+THHN95;Conductor cobre THHN 95 mm²;ML;Conductores;6318;273;;;2026-06-01
+THHN120;Conductor cobre THHN 120 mm²;ML;Conductores;7995;312;;;2026-06-01
+THHN150;Conductor cobre THHN 150 mm²;ML;Conductores;9945;351;;;2026-06-01
+THHN185;Conductor cobre THHN 185 mm²;ML;Conductores;12285;390;;;2026-06-01
+THHN240;Conductor cobre THHN 240 mm²;ML;Conductores;15795;468;;;2026-06-01
+NYY4X2.5;Cable NYY 4x2.5 mm²;ML;Conductores;1638;98;;;2026-06-01
+NYY4X4;Cable NYY 4x4 mm²;ML;Conductores;2418;117;;;2026-06-01
+NYY4X6;Cable NYY 4x6 mm²;ML;Conductores;3432;137;;;2026-06-01
+NYY4X10;Cable NYY 4x10 mm²;ML;Conductores;5265;156;;;2026-06-01
+NYY4X16;Cable NYY 4x16 mm²;ML;Conductores;8190;195;;;2026-06-01
+NYY4X25;Cable NYY 4x25 mm²;ML;Conductores;12480;234;;;2026-06-01
+NYY4X35;Cable NYY 4x35 mm²;ML;Conductores;16965;273;;;2026-06-01
+NYY4X50;Cable NYY 4x50 mm²;ML;Conductores;23400;351;;;2026-06-01
+NYY4X70;Cable NYY 4x70 mm²;ML;Conductores;31980;429;;;2026-06-01
+TTPLY2X1.5;Cable TTPLY 2x1.5 mm²;ML;Conductores;351;59;;;2026-06-01
+TTPLY3X2.5;Cable TTPLY 3x2.5 mm²;ML;Conductores;624;70;;;2026-06-01
+TTPLY3X4;Cable TTPLY 3x4 mm²;ML;Conductores;897;78;;;2026-06-01
+COND-TIERRA4;Conductor tierra desnudo 4 mm²;ML;Conductores;242;47;;;2026-06-01
+COND-TIERRA6;Conductor tierra desnudo 6 mm²;ML;Conductores;351;59;;;2026-06-01
+COND-TIERRA10;Conductor tierra desnudo 10 mm²;ML;Conductores;566;70;;;2026-06-01
+PVC20;Tubería conduit PVC 20 mm;ML;Canalización;109;78;;;2026-06-01
+PVC25;Tubería conduit PVC 25 mm;ML;Canalización;148;86;;;2026-06-01
+PVC32;Tubería conduit PVC 32 mm;ML;Canalización;215;98;;;2026-06-01
+PVC40;Tubería conduit PVC 40 mm;ML;Canalización;293;109;;;2026-06-01
+PVC50;Tubería conduit PVC 50 mm;ML;Canalización;410;117;;;2026-06-01
+PVC63;Tubería conduit PVC 63 mm;ML;Canalización;585;137;;;2026-06-01
+PVC75;Tubería conduit PVC 75 mm;ML;Canalización;780;156;;;2026-06-01
+PVC90;Tubería conduit PVC 90 mm;ML;Canalización;1092;176;;;2026-06-01
+PVC110;Tubería conduit PVC 110 mm;ML;Canalización;1560;215;;;2026-06-01
+EMT20;Tubería conduit EMT 20 mm;ML;Canalización;164;86;;;2026-06-01
+EMT25;Tubería conduit EMT 25 mm;ML;Canalización;226;98;;;2026-06-01
+EMT32;Tubería conduit EMT 32 mm;ML;Canalización;312;109;;;2026-06-01
+EMT40;Tubería conduit EMT 40 mm;ML;Canalización;429;125;;;2026-06-01
+EMT50;Tubería conduit EMT 50 mm;ML;Canalización;605;148;;;2026-06-01
+EMT63;Tubería conduit EMT 63 mm;ML;Canalización;858;176;;;2026-06-01
+BAN-PERF-100;Bandeja perforada acero 100 mm;ML;Canalización;1248;312;;;2026-06-01
+BAN-PERF-150;Bandeja perforada acero 150 mm;ML;Canalización;1638;351;;;2026-06-01
+BAN-PERF-200;Bandeja perforada acero 200 mm;ML;Canalización;2028;390;;;2026-06-01
+BAN-PERF-300;Bandeja perforada acero 300 mm;ML;Canalización;2808;449;;;2026-06-01
+BAN-PERF-400;Bandeja perforada acero 400 mm;ML;Canalización;3705;507;;;2026-06-01
+BAN-PLEG-100;Bandeja plegada acero 100 mm;ML;Canalización;1092;293;;;2026-06-01
+BAN-PLEG-200;Bandeja plegada acero 200 mm;ML;Canalización;1794;371;;;2026-06-01
+BAN-PLEG-300;Bandeja plegada acero 300 mm;ML;Canalización;2496;429;;;2026-06-01
+CAJA-DERIVACION;Caja de derivación PVC 100x100mm;UN;Canalización;176;234;;;2026-06-01
+CAJA-CHUQUI;Caja chuqui metálica 75x75mm;UN;Canalización;137;215;;;2026-06-01
+CAJA-PASO-200;Caja paso metálica 200x200mm;UN;Canalización;702;468;;;2026-06-01
+CAJA-PASO-300;Caja paso metálica 300x300mm;UN;Canalización;1482;624;;;2026-06-01
+CAJA-MEDIDA;Caja medidores monofásica 1 medidor;UN;Canalización;3315;4680;;;2026-06-01
+DIS-10A-1P;Disyuntor termomagnético 10A 1P;UN;Protecciones;1638;468;;;2026-06-01
+DIS-16A-1P;Disyuntor termomagnético 16A 1P;UN;Protecciones;1716;468;;;2026-06-01
+DIS-20A-1P;Disyuntor termomagnético 20A 1P;UN;Protecciones;1794;468;;;2026-06-01
+DIS-25A-1P;Disyuntor termomagnético 25A 1P;UN;Protecciones;1872;468;;;2026-06-01
+DIS-32A-1P;Disyuntor termomagnético 32A 1P;UN;Protecciones;2145;507;;;2026-06-01
+DIS-40A-1P;Disyuntor termomagnético 40A 1P;UN;Protecciones;2535;507;;;2026-06-01
+DIS-16A-2P;Disyuntor termomagnético 16A 2P;UN;Protecciones;2925;546;;;2026-06-01
+DIS-20A-2P;Disyuntor termomagnético 20A 2P;UN;Protecciones;3042;546;;;2026-06-01
+DIS-25A-2P;Disyuntor termomagnético 25A 2P;UN;Protecciones;3198;546;;;2026-06-01
+DIS-32A-2P;Disyuntor termomagnético 32A 2P;UN;Protecciones;3510;585;;;2026-06-01
+DIS-40A-2P;Disyuntor termomagnético 40A 2P;UN;Protecciones;3900;585;;;2026-06-01
+DIS-50A-2P;Disyuntor termomagnético 50A 2P;UN;Protecciones;4485;624;;;2026-06-01
+DIS-63A-2P;Disyuntor termomagnético 63A 2P;UN;Protecciones;5382;663;;;2026-06-01
+DIS-16A-3P;Disyuntor termomagnético 16A 3P;UN;Protecciones;4095;624;;;2026-06-01
+DIS-20A-3P;Disyuntor termomagnético 20A 3P;UN;Protecciones;4290;624;;;2026-06-01
+DIS-25A-3P;Disyuntor termomagnético 25A 3P;UN;Protecciones;4602;663;;;2026-06-01
+DIS-32A-3P;Disyuntor termomagnético 32A 3P;UN;Protecciones;5070;663;;;2026-06-01
+DIS-40A-3P;Disyuntor termomagnético 40A 3P;UN;Protecciones;5850;702;;;2026-06-01
+DIS-50A-3P;Disyuntor termomagnético 50A 3P;UN;Protecciones;6825;741;;;2026-06-01
+DIS-63A-3P;Disyuntor termomagnético 63A 3P;UN;Protecciones;8190;780;;;2026-06-01
+DIS-80A-3P;Disyuntor termomagnético 80A 3P;UN;Protecciones;10140;858;;;2026-06-01
+DIS-100A-3P;Disyuntor termomagnético 100A 3P;UN;Protecciones;12480;936;;;2026-06-01
+DIS-125A-3P;Disyuntor termomagnético 125A 3P;UN;Protecciones;15600;1014;;;2026-06-01
+DIS-160A-3P;Disyuntor termomagnético 160A 3P;UN;Protecciones;21450;1170;;;2026-06-01
+DIS-200A-3P;Disyuntor termomagnético 200A 3P;UN;Protecciones;28080;1365;;;2026-06-01
+DIS-250A-3P;Disyuntor termomagnético 250A 3P;UN;Protecciones;37050;1560;;;2026-06-01
+DIS-400A-3P;Disyuntor termomagnético 400A 3P;UN;Protecciones;62400;1950;;;2026-06-01
+DIF-25A-2P;Diferencial 25A 2P 30mA;UN;Protecciones;7020;585;;;2026-06-01
+DIF-40A-2P;Diferencial 40A 2P 30mA;UN;Protecciones;8190;624;;;2026-06-01
+DIF-63A-2P;Diferencial 63A 2P 30mA;UN;Protecciones;10920;702;;;2026-06-01
+DIF-25A-4P;Diferencial 25A 4P 30mA;UN;Protecciones;10920;702;;;2026-06-01
+DIF-40A-4P;Diferencial 40A 4P 30mA;UN;Protecciones;13260;780;;;2026-06-01
+DIF-63A-4P;Diferencial 63A 4P 30mA;UN;Protecciones;17550;858;;;2026-06-01
+SECCIONADOR-160A;Seccionador en carga 160A 3P;UN;Protecciones;25350;1365;;;2026-06-01
+SECCIONADOR-250A;Seccionador en carga 250A 3P;UN;Protecciones;42900;1755;;;2026-06-01
+SECCIONADOR-400A;Seccionador en carga 400A 3P;UN;Protecciones;70200;2340;;;2026-06-01
+TAB-6C;Tablero distribución metálico 6 circuitos;UN;Tableros;3705;9750;;;2026-06-01
+TAB-12C;Tablero distribución metálico 12 circuitos;UN;Tableros;6240;12480;;;2026-06-01
+TAB-18C;Tablero distribución metálico 18 circuitos;UN;Tableros;8580;15600;;;2026-06-01
+TAB-24C;Tablero distribución metálico 24 circuitos;UN;Tableros;11700;19500;;;2026-06-01
+TAB-36C;Tablero distribución metálico 36 circuitos;UN;Tableros;17550;25350;;;2026-06-01
+TAB-48C;Tablero distribución metálico 48 circuitos;UN;Tableros;23400;31200;;;2026-06-01
+TAB-GRAL-160A;Tablero general IP55 con seccionador 160A;UN;Tableros;97500;46800;;;2026-06-01
+TAB-GRAL-250A;Tablero general IP55 con seccionador 250A;UN;Tableros;148200;58500;;;2026-06-01
+TAB-GRAL-400A;Tablero general IP55 con seccionador 400A;UN;Tableros;214500;78000;;;2026-06-01
+TCE-5A;Tomacorriente embutir 10A/250V simple;UN;Enchufes y tomacorrientes;702;1365;;;2026-06-01
+TCE-10A;Tomacorriente embutir 10A/250V doble;UN;Enchufes y tomacorrientes;1092;1482;;;2026-06-01
+TCE-16A;Tomacorriente embutir 16A/250V (industrial);UN;Enchufes y tomacorrientes;2535;1638;;;2026-06-01
+TC-3F-32A;Tomacorriente trifásico encastre 32A;UN;Enchufes y tomacorrientes;7020;2340;;;2026-06-01
+INTERRUPTOR-SIMPLE;Interruptor simple luz embutir;UN;Enchufes y tomacorrientes;585;1170;;;2026-06-01
+INTERRUPTOR-DOBLE;Interruptor doble luz embutir;UN;Enchufes y tomacorrientes;780;1365;;;2026-06-01
+INTERRUPTOR-TRIPLE;Interruptor triple luz embutir;UN;Enchufes y tomacorrientes;1014;1482;;;2026-06-01
+CONMUTADOR;Conmutador 2 vías (pasillo) embutir;UN;Enchufes y tomacorrientes;683;1248;;;2026-06-01
+PULSADOR;Pulsador de timbre embutir;UN;Enchufes y tomacorrientes;468;1092;;;2026-06-01
+PLACA-1;Placa decorativa 1 módulo;UN;Enchufes y tomacorrientes;312;195;;;2026-06-01
+PLACA-2;Placa decorativa 2 módulos;UN;Enchufes y tomacorrientes;390;215;;;2026-06-01
+PLACA-3;Placa decorativa 3 módulos;UN;Enchufes y tomacorrientes;468;234;;;2026-06-01
+LUMINARIA-PANEL-60;Panel LED 60x60 cm 40W;UN;Iluminación;3315;1755;;;2026-06-01
+LUMINARIA-PANEL-60-2;Panel LED 60x60 cm 40W empotrado;UN;Iluminación;3705;1950;;;2026-06-01
+LUMINARIA-DOWNLIGHT-7;Downlight LED 7W empotrado;UN;Iluminación;1092;1365;;;2026-06-01
+LUMINARIA-DOWNLIGHT-12;Downlight LED 12W empotrado;UN;Iluminación;1482;1482;;;2026-06-01
+LUMINARIA-DOWNLIGHT-18;Downlight LED 18W empotrado;UN;Iluminación;2028;1560;;;2026-06-01
+LUMINARIA-INDUSTRIAL-100;Campana industrial LED 100W;UN;Iluminación;10920;4680;;;2026-06-01
+LUMINARIA-INDUSTRIAL-150;Campana industrial LED 150W;UN;Iluminación;14820;5460;;;2026-06-01
+LUMINARIA-INDUSTRIAL-200;Campana industrial LED 200W;UN;Iluminación;18720;6240;;;2026-06-01
+LUMINARIA-EMERGENCIA;Luminaria emergencia 3W 1h autónoma;UN;Iluminación;2535;1950;;;2026-06-01
+LUMINARIA-EMERGENCIA-3H;Luminaria emergencia 8W 3h autónoma;UN;Iluminación;4680;2145;;;2026-06-01
+LUMINARIA-EXTERIOR-30;Luminaria exterior LED 30W IP65;UN;Iluminación;3315;2340;;;2026-06-01
+LUMINARIA-EXTERIOR-50;Luminaria exterior LED 50W IP65;UN;Iluminación;4680;2730;;;2026-06-01
+LUMINARIA-EXTERIOR-100;Proyector exterior LED 100W IP65;UN;Iluminación;8580;3900;;;2026-06-01
+LUMINARIA-FLUORESCENTE-2X36;Luminaria fluorescente 2x36W (reemplazar);UN;Iluminación;1872;3120;;;2026-06-01
+SENSOR-MOVIMIENTO;Sensor de movimiento 180° empotrar;UN;Iluminación;1365;1560;;;2026-06-01
+TIMBRE-220V;Timbre electrónico 220V;UN;Accesorios;702;1755;;;2026-06-01
+TRANSF-10KVA;Transformador aislador 10 kVA 380/220V;UN;Equipos;109200;97500;;;2026-06-01
+TRANSF-25KVA;Transformador aislador 25 kVA 380/220V;UN;Equipos;214500;136500;;;2026-06-01
+TRANSF-50KVA;Transformador seco 50 kVA 10kV/380V;UN;Equipos;702000;312000;;;2026-06-01
+TRANSF-100KVA;Transformador seco 100 kVA 10kV/380V;UN;Equipos;1092000;468000;;;2026-06-01
+TRANSF-160KVA;Transformador seco 160 kVA 10kV/380V;UN;Equipos;1482000;585000;;;2026-06-01
+TRANSF-250KVA;Transformador seco 250 kVA 10kV/380V;UN;Equipos;2145000;702000;;;2026-06-01
+GEN-15KVA;Generador diesel 15 kVA;UN;Equipos;4680000;975000;;;2026-06-01
+GEN-30KVA;Generador diesel 30 kVA;UN;Equipos;8190000;1365000;;;2026-06-01
+GEN-60KVA;Generador diesel 60 kVA;UN;Equipos;14820000;1950000;;;2026-06-01
+UPS-3KVA;UPS online 3 kVA;UN;Equipos;109200;31200;;;2026-06-01
+UPS-6KVA;UPS online 6 kVA;UN;Equipos;202800;46800;;;2026-06-01
+UPS-10KVA;UPS online 10 kVA;UN;Equipos;331500;70200;;;2026-06-01
+TIERRA-BARRA;Barra de puesta a tierra cobre 600 mm;UN;Puesta a tierra;1872;3120;;;2026-06-01
+TIERRA-PLACA;Placa de tierra cobre 500x500mm 3mm;UN;Puesta a tierra;17550;23400;;;2026-06-01
+TIERRA-ELECTRODO;Electrodo de tierra varilla copperweld 5/8"x1.8m;UN;Puesta a tierra;2535;9750;;;2026-06-01
+TIERRA-ABRAZADERA;Abrazadera de tierra p/electrodo 5/8";UN;Puesta a tierra;312;585;;;2026-06-01
+TIERRA-BENTONITA;Bentonita sódica 20 kg;UN;Puesta a tierra;1755;1950;;;2026-06-01
+CONECTORES-ACORN;Conector tipo acorn p/conductor 4-16mm²;UN;Accesorios;86;156;;;2026-06-01
+TERMINALES-CU-16;Terminal cobre aislado 16mm²;UN;Accesorios;47;78;;;2026-06-01
+TERMINALES-CU-25;Terminal cobre aislado 25mm²;UN;Accesorios;70;98;;;2026-06-01
+TERMINALES-CU-35;Terminal cobre aislado 35mm²;UN;Accesorios;98;117;;;2026-06-01
+TERMINALES-CU-50;Terminal cobre aislado 50mm²;UN;Accesorios;148;137;;;2026-06-01
+TERMINALES-CU-70;Terminal cobre aislado 70mm²;UN;Accesorios;215;156;;;2026-06-01
+TERMINALES-CU-95;Terminal cobre aislado 95mm²;UN;Accesorios;312;176;;;2026-06-01
+PRENSACABLE-PG16;Prensacable PG16 plástico;UN;Accesorios;47;117;;;2026-06-01
+PRENSACABLE-PG21;Prensacable PG21 plástico;UN;Accesorios;59;117;;;2026-06-01
+PRENSACABLE-M20;Prensacable metálico M20;UN;Accesorios;137;137;;;2026-06-01
+RIEL-DIN-35;Riel DIN 35mm acero 1 metro;ML;Accesorios;312;390;;;2026-06-01
+CANAL-CABLEADO-40;Canal cableado PVC 40x25mm;ML;Canalización;254;468;;;2026-06-01
+CANAL-CABLEADO-60;Canal cableado PVC 60x40mm;ML;Canalización;371;546;;;2026-06-01
+CANAL-CABLEADO-80;Canal cableado PVC 80x50mm;ML;Canalización;507;624;;;2026-06-01
+CANAL-CABLEADO-100;Canal cableado PVC 100x60mm;ML;Canalización;683;702;;;2026-06-01

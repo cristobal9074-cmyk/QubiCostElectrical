@@ -1,0 +1,75 @@
+<Window x:Class="QubiCostElectrical.Wpf.SplashWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="QUBI COST Electrical"
+        Width="520"
+        Height="380"
+        WindowStyle="None"
+        WindowStartupLocation="CenterScreen"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ShowInTaskbar="True"
+        ResizeMode="NoResize">
+  <Border Background="{DynamicResource Brush.Navy}"
+          CornerRadius="16"
+          BorderBrush="{DynamicResource Brush.Navy2}"
+          BorderThickness="1">
+    <Border.Effect>
+      <DropShadowEffect BlurRadius="24"
+                        ShadowDepth="4"
+                        Direction="270"
+                        Color="{DynamicResource Color.Shadow}"
+                        Opacity="0.5" />
+    </Border.Effect>
+    <Grid Margin="0">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="*" />
+        <RowDefinition Height="Auto" />
+      </Grid.RowDefinitions>
+
+      <StackPanel Grid.Row="0"
+                  VerticalAlignment="Center"
+                  HorizontalAlignment="Center">
+        <Image Width="140" Height="100"
+               Source="pack://application:,,,/Assets/qubi_cost_electrical_refined_logo.png"
+               Margin="0,0,0,16"
+               HorizontalAlignment="Center" />
+
+        <TextBlock Text="QUBI COST"
+                  FontSize="22"
+                  FontWeight="Bold"
+                  Foreground="White"
+                  HorizontalAlignment="Center" />
+        <TextBlock Text="ELECTRICAL"
+                  FontSize="10"
+                  Foreground="{DynamicResource Brush.HeaderMuted}"
+                  HorizontalAlignment="Center"
+                  Margin="0,4,0,0" />
+        <TextBlock Text="Software de presupuestos eléctricos"
+                  FontSize="11"
+                  Foreground="{DynamicResource Brush.HeaderLabel}"
+                  HorizontalAlignment="Center"
+                  Margin="0,8,0,0" />
+      </StackPanel>
+
+      <StackPanel Grid.Row="1" Margin="40,0,40,32">
+        <Border Height="3"
+                Background="{DynamicResource Brush.Navy2}"
+                CornerRadius="2"
+                Margin="0,0,0,8">
+          <Border x:Name="ProgressBar"
+                  Width="0"
+                  Height="3"
+                  Background="{DynamicResource Brush.Blue3}"
+                  CornerRadius="2"
+                  HorizontalAlignment="Left" />
+        </Border>
+        <TextBlock x:Name="StatusText"
+                   Text="Cargando espacio de trabajo..."
+                   FontSize="10"
+                   Foreground="{DynamicResource Brush.HeaderMuted}"
+                   HorizontalAlignment="Center" />
+      </StackPanel>
+    </Grid>
+  </Border>
+</Window>

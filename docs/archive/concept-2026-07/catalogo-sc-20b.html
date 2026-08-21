@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Qubi Cost — Catálogo C.SC · propuesta 20B</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=IBM+Plex+Mono:wght@450;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --navy: #0B1F33;
+      --navy2: #122A42;
+      --navy3: #1A3752;
+      --blue: #1B6EF3;
+      --blue2: #3B82F6;
+      --blue-soft: #E8F0FE;
+      --blue-faint: #F3F7FE;
+      --ink: #0F172A;
+      --ink2: #334155;
+      --ink3: #64748B;
+      --ink4: #94A3B8;
+      --line: #E2E8F0;
+      --line2: #F1F5F9;
+      --surface: #FFFFFF;
+      --canvas: #EEF2F7;
+      --success: #16A34A;
+      --success-soft: #ECFDF5;
+      --amber: #D97706;
+      --amber-soft: #FFF7ED;
+      --danger: #DC2626;
+      --danger-soft: #FEF2F2;
+      --radius: 14px;
+      --radius-sm: 10px;
+      --shadow: 0 24px 64px rgba(11, 31, 51, .28), 0 2px 8px rgba(11, 31, 51, .08);
+      --font: "DM Sans", "Segoe UI", system-ui, sans-serif;
+      --mono: "IBM Plex Mono", Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: var(--font);
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 600px at 18% -10%, rgba(27, 110, 243, .22), transparent 55%),
+        radial-gradient(900px 500px at 90% 110%, rgba(27, 110, 243, .12), transparent 50%),
+        linear-gradient(165deg, #071421 0%, var(--navy) 42%, #0E2438 100%);
+      display: grid;
+      place-items: center;
+      padding: 28px 20px;
+      min-height: 100%;
+    }
+
+    /* App chrome detrás del modal */
+    .stage {
+      width: min(1120px, 100%);
+      position: relative;
+    }
+    .stage-label {
+      position: absolute;
+      left: 0; top: -34px;
+      display: flex; gap: 10px; align-items: center;
+      color: rgba(255,255,255,.55);
+      font-size: 12px; font-weight: 500; letter-spacing: .04em; text-transform: uppercase;
+    }
+    .stage-label b { color: #fff; font-weight: 600; text-transform: none; letter-spacing: 0; font-size: 13px; }
+
+    /* Modal */
+    .dialog {
+      background: var(--canvas);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(255,255,255,.08);
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      height: min(680px, 88vh);
+      animation: rise .45s cubic-bezier(.22,1,.36,1) both;
+    }
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(18px) scale(.985); }
+      to { opacity: 1; transform: none; }
+    }
+
+    /* Title bar (Windows-like but Qubi) */
+    .titlebar {
+      background: linear-gradient(90deg, var(--navy) 0%, var(--navy2) 100%);
+      color: #fff;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 14px 10px 16px;
+      user-select: none;
+    }
+    .titlebar .brand {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 13px; font-weight: 600;
+    }
+    .titlebar .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--blue2);
+      box-shadow: 0 0 0 3px rgba(59,130,246,.25);
+    }
+    .winbtns { display: flex; gap: 2px; }
+    .winbtns span {
+      width: 36px; height: 24px; display: grid; place-items: center;
+      border-radius: 6px; opacity: .7; font-size: 11px;
+    }
+
+    /* Header */
+    .header {
+      padding: 20px 22px 14px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: end;
+    }
+    .header h1 {
+      font-size: 22px; font-weight: 700; letter-spacing: -.03em;
+      color: var(--ink); line-height: 1.15;
+    }
+    .header p {
+      margin-top: 4px; font-size: 13px; color: var(--ink3); max-width: 54ch; line-height: 1.4;
+    }
+    .header-meta {
+      display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end;
+    }
+    .chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 10px; border-radius: 999px;
+      font-size: 11.5px; font-weight: 600;
+      background: var(--blue-soft); color: var(--blue);
+      border: 1px solid transparent;
+    }
+    .chip.muted { background: var(--line2); color: var(--ink3); }
+    .chip .mono { font-family: var(--mono); font-weight: 600; }
+
+    /* Body */
+    .body {
+      display: grid;
+      grid-template-columns: 232px 1fr;
+      gap: 0;
+      min-height: 0;
+      background: var(--canvas);
+    }
+
+    /* Sidebar */
+    .rail {
+      background: var(--surface);
+      border-right: 1px solid var(--line);
+      padding: 14px 12px;
+      display: flex; flex-direction: column; gap: 4px;
+      overflow: auto;
+    }
+    .rail-label {
+      font-size: 10px; font-weight: 700; letter-spacing: .08em;
+      text-transform: uppercase; color: var(--ink4);
+      padding: 4px 10px 10px;
+    }
+    .nav-item {
+      display: grid;
+      grid-template-columns: 28px 1fr auto;
+      align-items: center; gap: 8px;
+      padding: 9px 10px;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      background: transparent;
+      cursor: pointer;
+      text-align: left;
+      font: inherit;
+      color: var(--ink2);
+      transition: background .15s, border-color .15s, transform .15s;
+    }
+    .nav-item:hover { background: var(--line2); }
+    .nav-item:active { transform: scale(.985); }
+    .nav-item.active {
+      background: var(--blue-soft);
+      border-color: rgba(27,110,243,.18);
+      color: var(--ink);
+      box-shadow: inset 3px 0 0 var(--blue);
+    }
+    .nav-ico {
+      width: 28px; height: 28px; border-radius: 8px;
+      display: grid; place-items: center;
+      background: var(--line2); color: var(--ink3);
+      font-size: 13px;
+    }
+    .nav-item.active .nav-ico {
+      background: #fff;
+      color: var(--blue);
+      box-shadow: 0 1px 2px rgba(15,23,42,.06);
+    }
+    .nav-name { font-size: 13px; font-weight: 600; line-height: 1.2; }
+    .nav-count {
+      font-family: var(--mono); font-size: 11px; font-weight: 600;
+      color: var(--ink4); min-width: 22px; text-align: right;
+    }
+    .nav-item.active .nav-count { color: var(--blue); }
+
+    /* Panel */
+    .panel {
+      padding: 16px 18px 14px;
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      gap: 12px;
+      min-height: 0;
+    }
+    .panel-top {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    }
+    .panel-top h2 {
+      font-size: 15px; font-weight: 700; letter-spacing: -.01em;
+    }
+    .panel-top .sub {
+      font-size: 12px; color: var(--ink3); margin-top: 2px;
+    }
+    .actions { display: flex; gap: 8px; align-items: center; }
+
+    .btn {
+      appearance: none; border: 1px solid transparent;
+      border-radius: 9px; padding: 8px 12px;
+      font: inherit; font-size: 12.5px; font-weight: 600;
+      cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+      transition: background .15s, border-color .15s, box-shadow .15s, transform .1s;
+    }
+    .btn:active { transform: scale(.98); }
+    .btn-primary {
+      background: var(--blue); color: #fff;
+      box-shadow: 0 1px 0 rgba(255,255,255,.2) inset, 0 4px 12px rgba(27,110,243,.28);
+    }
+    .btn-primary:hover { background: #1559d1; }
+    .btn-secondary {
+      background: var(--surface); color: var(--ink2);
+      border-color: var(--line);
+    }
+    .btn-secondary:hover { background: var(--line2); border-color: #CBD5E1; }
+    .btn-ghost {
+      background: transparent; color: var(--ink3); border-color: transparent;
+    }
+    .btn-ghost:hover { background: var(--line2); color: var(--ink2); }
+    .btn-danger-soft {
+      background: var(--danger-soft); color: var(--danger); border-color: #FECACA;
+    }
+
+    .toolbar {
+      display: flex; gap: 8px; align-items: center;
+    }
+    .search {
+      flex: 1; display: flex; align-items: center; gap: 8px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 0 12px;
+      height: 38px;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .search:focus-within {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(27,110,243,.15);
+    }
+    .search input {
+      border: 0; outline: 0; background: transparent;
+      width: 100%; font: inherit; font-size: 13px; color: var(--ink);
+    }
+    .search input::placeholder { color: var(--ink4); }
+    .search kbd {
+      font-family: var(--mono); font-size: 10px;
+      background: var(--line2); color: var(--ink3);
+      padding: 3px 6px; border-radius: 5px; border: 1px solid var(--line);
+    }
+
+    /* Table card */
+    .table-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      min-height: 0;
+      display: flex; flex-direction: column;
+      box-shadow: 0 1px 2px rgba(15,23,42,.03);
+    }
+    .table-scroll { overflow: auto; flex: 1; }
+    table {
+      width: 100%; border-collapse: collapse;
+      font-size: 13px;
+    }
+    thead th {
+      position: sticky; top: 0; z-index: 1;
+      background: linear-gradient(#F8FAFC, #F1F5F9);
+      color: var(--ink3);
+      font-size: 10.5px; font-weight: 700;
+      letter-spacing: .06em; text-transform: uppercase;
+      text-align: left;
+      padding: 11px 14px;
+      border-bottom: 1px solid var(--line);
+    }
+    tbody td {
+      padding: 0;
+      border-bottom: 1px solid var(--line2);
+      vertical-align: middle;
+    }
+    tbody tr { transition: background .12s; }
+    tbody tr:hover { background: var(--blue-faint); }
+    tbody tr.selected { background: var(--blue-soft); }
+    tbody tr:last-child td { border-bottom: 0; }
+
+    .cell {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px; min-height: 44px;
+    }
+    .cell input {
+      width: 100%; border: 0; outline: 0; background: transparent;
+      font: inherit; font-size: 13px; font-weight: 500; color: var(--ink);
+      padding: 6px 8px; margin: -6px -8px; border-radius: 7px;
+    }
+    .cell input:focus {
+      background: #fff;
+      box-shadow: 0 0 0 2px rgba(27,110,243,.35);
+    }
+    .grip {
+      width: 14px; color: var(--ink4); opacity: 0; cursor: grab;
+      font-size: 11px; letter-spacing: -1px;
+    }
+    tr:hover .grip { opacity: 1; }
+    .badge-code {
+      font-family: var(--mono); font-size: 12px; font-weight: 600;
+      background: var(--navy); color: #E2E8F0;
+      padding: 4px 8px; border-radius: 6px;
+    }
+    .row-actions {
+      opacity: 0; display: flex; gap: 4px; margin-left: auto;
+    }
+    tr:hover .row-actions { opacity: 1; }
+    .icon-btn {
+      width: 28px; height: 28px; border-radius: 7px;
+      border: 0; background: transparent; cursor: pointer;
+      color: var(--ink3); display: grid; place-items: center;
+      font-size: 13px;
+    }
+    .icon-btn:hover { background: #fff; color: var(--danger); box-shadow: 0 1px 3px rgba(15,23,42,.08); }
+
+    .empty-hint {
+      padding: 18px 14px; color: var(--ink4); font-size: 12.5px;
+      border-top: 1px dashed var(--line);
+      display: flex; align-items: center; justify-content: space-between;
+      background: linear-gradient(180deg, #FAFBFC, #F8FAFC);
+    }
+
+    /* Footer */
+    .footer {
+      background: var(--surface);
+      border-top: 1px solid var(--line);
+      padding: 12px 18px;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    }
+    .footer-hint {
+      font-size: 12px; color: var(--ink3);
+      display: flex; gap: 14px; flex-wrap: wrap;
+    }
+    .footer-hint span {
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .footer-hint kbd {
+      font-family: var(--mono); font-size: 10px;
+      background: var(--line2); border: 1px solid var(--line);
+      padding: 2px 5px; border-radius: 4px; color: var(--ink2);
+    }
+    .footer-actions { display: flex; gap: 8px; }
+
+    /* Antes / después strip */
+    .compare {
+      margin-top: 22px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    }
+    .compare article {
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 12px; padding: 14px 16px; color: rgba(255,255,255,.72);
+      font-size: 12.5px; line-height: 1.45;
+    }
+    .compare h3 {
+      font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
+      color: rgba(255,255,255,.45); margin-bottom: 8px; font-weight: 700;
+    }
+    .compare strong { color: #fff; font-weight: 600; }
+    .compare ul { margin: 6px 0 0 16px; }
+    .compare li { margin: 3px 0; }
+
+    @media (max-width: 820px) {
+      .body { grid-template-columns: 1fr; }
+      .rail { flex-direction: row; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+      .rail-label { display: none; }
+      .nav-item { min-width: 150px; }
+      .compare { grid-template-columns: 1fr; }
+      .header { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <div class="stage-label">
+      <span>Propuesta UI</span>
+      <b>Catálogo C.SC · Qubi Cost Electrical</b>
+    </div>
+
+    <div class="dialog" role="dialog" aria-labelledby="dlg-title">
+      <div class="titlebar">
+        <div class="brand"><span class="dot"></span> Catálogo C.SC</div>
+        <div class="winbtns"><span>—</span><span>□</span><span>×</span></div>
+      </div>
+
+      <div class="header">
+        <div>
+          <h1 id="dlg-title">Biblioteca del proyecto</h1>
+          <p>Define conductores, ductos, bandejas y artefactos que alimentan Cubicación SC. Un catálogo limpio = menos errores en la planilla.</p>
+        </div>
+        <div class="header-meta">
+          <span class="chip muted">Proyecto · <span class="mono">Torre Norte</span></span>
+          <span class="chip"><span class="mono" id="totalCount">47</span> ítems</span>
+        </div>
+      </div>
+
+      <div class="body">
+        <nav class="rail" aria-label="Categorías">
+          <div class="rail-label">Categorías</div>
+          <button class="nav-item active" data-cat="conductores" data-count="9">
+            <span class="nav-ico">⚡</span>
+            <span class="nav-name">Conductores</span>
+            <span class="nav-count">9</span>
+          </button>
+          <button class="nav-item" data-cat="secciones" data-count="12">
+            <span class="nav-ico">⌀</span>
+            <span class="nav-name">Secciones</span>
+            <span class="nav-count">12</span>
+          </button>
+          <button class="nav-item" data-cat="tuberias" data-count="4">
+            <span class="nav-ico">▭</span>
+            <span class="nav-name">Tipos de tubería</span>
+            <span class="nav-count">4</span>
+          </button>
+          <button class="nav-item" data-cat="diametros" data-count="8">
+            <span class="nav-ico">◎</span>
+            <span class="nav-name">Diámetros</span>
+            <span class="nav-count">8</span>
+          </button>
+          <button class="nav-item" data-cat="bandejas" data-count="5">
+            <span class="nav-ico">⊞</span>
+            <span class="nav-name">Bandejas</span>
+            <span class="nav-count">5</span>
+          </button>
+          <button class="nav-item" data-cat="cajas" data-count="3">
+            <span class="nav-ico">▣</span>
+            <span class="nav-name">Cajas</span>
+            <span class="nav-count">3</span>
+          </button>
+          <button class="nav-item" data-cat="sistemas" data-count="3">
+            <span class="nav-ico">M</span>
+            <span class="nav-name">Sistemas / Fases</span>
+            <span class="nav-count">3</span>
+          </button>
+          <button class="nav-item" data-cat="flex" data-count="4">
+            <span class="nav-ico">∿</span>
+            <span class="nav-name">Terminales flex.</span>
+            <span class="nav-count">4</span>
+          </button>
+          <button class="nav-item" data-cat="artefactos" data-count="6">
+            <span class="nav-ico">◇</span>
+            <span class="nav-name">Artefactos</span>
+            <span class="nav-count">6</span>
+          </button>
+        </nav>
+
+        <section class="panel">
+          <div class="panel-top">
+            <div>
+              <h2 id="catTitle">Conductores</h2>
+              <div class="sub" id="catSub">Tipos de cable disponibles en la planilla de circuitos</div>
+            </div>
+            <div class="actions">
+              <button class="btn btn-ghost" type="button" title="Duplicar selección">Duplicar</button>
+              <button class="btn btn-danger-soft" type="button">Quitar</button>
+              <button class="btn btn-primary" type="button" id="addRow">+ Agregar fila</button>
+            </div>
+          </div>
+
+          <div class="toolbar">
+            <label class="search">
+              <span aria-hidden="true">⌕</span>
+              <input id="search" type="search" placeholder="Buscar en esta categoría…" />
+              <kbd>/</kbd>
+            </label>
+            <button class="btn btn-secondary" type="button">Importar…</button>
+          </div>
+
+          <div class="table-card">
+            <div class="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width:52%">Nombre</th>
+                    <th style="width:28%">Uso en SC</th>
+                    <th style="width:20%"></th>
+                  </tr>
+                </thead>
+                <tbody id="rows">
+                  <!-- filled by JS -->
+                </tbody>
+              </table>
+            </div>
+            <div class="empty-hint">
+              <span>Vacío al final · Enter agrega · Delete quita la fila seleccionada</span>
+              <button class="btn btn-ghost" type="button" id="addRow2">Agregar al final →</button>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="footer">
+        <div class="footer-hint">
+          <span><kbd>Del</kbd> quitar fila</span>
+          <span><kbd>Ctrl</kbd>+<kbd>S</kbd> guardar</span>
+          <span><kbd>Esc</kbd> cancelar</span>
+        </div>
+        <div class="footer-actions">
+          <button class="btn btn-secondary" type="button">Cancelar</button>
+          <button class="btn btn-primary" type="button">Guardar catálogo</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="compare">
+      <article>
+        <h3>Hoy (deuda)</h3>
+        <strong>Se siente Excel 2003 embebido</strong>
+        <ul>
+          <li>Grilla negra con GridLines=All</li>
+          <li>Sidebar texto plano sin jerarquía</li>
+          <li>Sin búsqueda ni conteos</li>
+          <li>Title bar magenta del sistema</li>
+        </ul>
+      </article>
+      <article>
+        <h3>20B (esta propuesta)</h3>
+        <strong>Misma lógica, producto premium</strong>
+        <ul>
+          <li>Filas suaves + edición inline con focus ring</li>
+          <li>Rail con ícono, estado activo y contadores</li>
+          <li>Search + chips de proyecto / total</li>
+          <li>Chrome Qubi navy + CTA azul corporativo</li>
+        </ul>
+      </article>
+    </div>
+  </div>
+
+  <script>
+    const DATA = {
+      conductores: {
+        title: "Conductores",
+        sub: "Tipos de cable disponibles en la planilla de circuitos",
+        cols: ["Nombre", "Uso en SC"],
+        rows: [
+          ["NYA", "Iluminación / fuerza"],
+          ["H07V-U", "Fijo en ducto"],
+          ["SUPERFLEX", "Flexible"],
+          ["THHN", "Tableros"],
+          ["RVK", "Fuerza"],
+          ["XTU", "Especial"],
+          ["EVA", "Baja emisión"],
+          ["EVANOTOX", "No tóxico"],
+          ["RZ1-K", "LSZH"],
+        ],
+      },
+      secciones: {
+        title: "Secciones de conductor",
+        sub: "Secciones normalizadas (mm²) para tramos bandeja / PVC",
+        cols: ["Sección", "Notas"],
+        rows: [["1,5", "Alumbrado"], ["2,5", "Tomas"], ["4", ""], ["6", ""], ["10", ""], ["16", ""], ["25", ""], ["35", ""], ["50", ""], ["70", ""], ["95", ""], ["120", ""]],
+      },
+      tuberias: {
+        title: "Tipos de tubería",
+        sub: "Materiales de ducto usados en tramos PVC / conduit",
+        cols: ["Tipo", "Notas"],
+        rows: [["PVC", "Liviano"], ["Conduit", "Metálico"], ["EMT", ""], ["Rígido", ""]],
+      },
+      diametros: {
+        title: "Diámetros de tubería",
+        sub: "Diámetros disponibles para ductos",
+        cols: ["Diámetro", "Notas"],
+        rows: [['½"', ""], ['¾"', ""], ['1"', ""], ['1¼"', ""], ['1½"', ""], ['2"', ""], ['2½"', ""], ['3"', ""]],
+      },
+      bandejas: {
+        title: "Tipos de bandeja",
+        sub: "Bandejas portaconductores en medidas de entrada",
+        cols: ["Tipo", "Notas"],
+        rows: [["Escalerilla", ""], ["Canal", ""], ["Malla", ""], ["Perforada", ""], ["Cerrada", ""]],
+      },
+      cajas: {
+        title: "Cajas",
+        sub: "Tipos de caja de derivación / registro",
+        cols: ["Tipo", "Notas"],
+        rows: [['5/8"', ""], ["100×100", ""], ["100×65", ""]],
+      },
+      sistemas: {
+        title: "Sistemas / Fases",
+        sub: "Códigos de alimentación y merma por sistema",
+        cols: ["Código", "N° cond. · Merma"],
+        rows: [["M", "1 · 5%"], ["T", "3 · 5%"], ["EM", "1 · 8%"]],
+      },
+      flex: {
+        title: "Terminales flexibles",
+        sub: "Relación diámetro ducto → flexible y metros/caja",
+        cols: ["Diámetro", "Flexible · m/caja"],
+        rows: [['½"', "TF-½ · 25 m"], ['¾"', "TF-¾ · 25 m"], ['1"', "TF-1 · 20 m"], ['1¼"', "TF-1¼ · 15 m"]],
+      },
+      artefactos: {
+        title: "Artefactos",
+        sub: "Artefactos por zona en la planilla SC",
+        cols: ["Nombre", "Categoría"],
+        rows: [["Luminaria LED", "Iluminación"], ["Downlight", "Iluminación"], ["Toma 16A", "Fuerza"], ["Interruptor", "Mando"], ["Sensor presencia", "Mando"], ["Caja derivación", "Accesorios"]],
+      },
+    };
+
+    const rowsEl = document.getElementById("rows");
+    const catTitle = document.getElementById("catTitle");
+    const catSub = document.getElementById("catSub");
+    const search = document.getElementById("search");
+    let current = "conductores";
+
+    function render() {
+      const cat = DATA[current];
+      catTitle.textContent = cat.title;
+      catSub.textContent = cat.sub;
+      const q = (search.value || "").trim().toLowerCase();
+      const filtered = cat.rows.filter(r => !q || r.join(" ").toLowerCase().includes(q));
+      rowsEl.innerHTML = filtered.map((r, i) => `
+        <tr data-i="${i}">
+          <td>
+            <div class="cell">
+              <span class="grip" aria-hidden="true">⠿</span>
+              <span class="badge-code">${escapeHtml(r[0])}</span>
+              <input value="${escapeAttr(r[0])}" aria-label="Nombre" />
+            </div>
+          </td>
+          <td>
+            <div class="cell">
+              <input value="${escapeAttr(r[1] || "")}" placeholder="—" aria-label="Detalle" />
+            </div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="row-actions">
+                <button class="icon-btn" type="button" title="Quitar" aria-label="Quitar">✕</button>
+              </div>
+            </div>
+          </td>
+        </tr>
+      `).join("");
+
+      rowsEl.querySelectorAll("tr").forEach(tr => {
+        tr.addEventListener("click", () => {
+          rowsEl.querySelectorAll("tr").forEach(x => x.classList.remove("selected"));
+          tr.classList.add("selected");
+        });
+      });
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c]));
+    }
+    function escapeAttr(s) { return escapeHtml(s); }
+
+    document.querySelectorAll(".nav-item").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".nav-item").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        current = btn.dataset.cat;
+        search.value = "";
+        render();
+      });
+    });
+
+    search.addEventListener("input", render);
+    document.addEventListener("keydown", e => {
+      if (e.key === "/" && document.activeElement !== search) {
+        e.preventDefault();
+        search.focus();
+      }
+    });
+
+    function addRow() {
+      DATA[current].rows.push(["NUEVO", ""]);
+      const btn = document.querySelector(`.nav-item[data-cat="${current}"]`);
+      if (btn) {
+        const n = DATA[current].rows.length;
+        btn.dataset.count = n;
+        btn.querySelector(".nav-count").textContent = n;
+      }
+      render();
+      const last = rowsEl.querySelector("tr:last-child input");
+      if (last) { last.focus(); last.select(); }
+    }
+    document.getElementById("addRow").addEventListener("click", addRow);
+    document.getElementById("addRow2").addEventListener("click", addRow);
+
+    render();
+  </script>
+</body>
+</html>
