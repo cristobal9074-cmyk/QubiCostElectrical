@@ -37,6 +37,10 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         SaveCostosPresetCommand = new RelayCommand(SaveCostosPreset, () => CanEdit);
         RestoreCostosPresetCommand = new RelayCommand(RestoreCostosPreset, () => CanEdit && HasCostosPreset);
         ApplyCoeficientesCommand = new RelayCommand(ApplyCoeficientes, () => CanEdit);
+        AddNegotiatedDiscountCommand = new RelayCommand(AddNegotiatedDiscount, () => CanEdit);
+        RemoveNegotiatedDiscountCommand = new RelayCommand<NegotiatedDiscountVm>(RemoveNegotiatedDiscount, _ => CanEdit);
+        AddStaffingRoleCommand = new RelayCommand(AddStaffingRole, () => CanEdit);
+        RemoveStaffingRoleCommand = new RelayCommand<StaffingRoleVm>(RemoveStaffingRole, _ => CanEdit);
         ClosingPolicySection = new ClosingPolicySectionVm(CommitClosingPolicyType, CommitClosingPolicyParam);
         EnsureCoefFactors();
         Refresh();
@@ -248,6 +252,8 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
     public ObservableCollection<GoComposeSegmentVm> GoComposeSegments { get; } = new();
     public ObservableCollection<GoComposeLegendVm> GoComposeLegend { get; } = new();
     public ObservableCollection<CoefFactorVm> CoefFactors { get; } = new();
+    public ObservableCollection<NegotiatedDiscountVm> NegotiatedDiscounts { get; } = new();
+    public ObservableCollection<StaffingRoleVm> StaffingPlan { get; } = new();
 
     public ICommand OpenProjectCommand { get; }
     public ICommand GoToTakeoffCommand => goToTakeoffCommand;
@@ -268,6 +274,16 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
     public RelayCommand SaveCostosPresetCommand { get; }
     public RelayCommand RestoreCostosPresetCommand { get; }
     public RelayCommand ApplyCoeficientesCommand { get; }
+    public RelayCommand AddNegotiatedDiscountCommand { get; }
+    public RelayCommand<NegotiatedDiscountVm> RemoveNegotiatedDiscountCommand { get; }
+    public RelayCommand AddStaffingRoleCommand { get; }
+    public RelayCommand<StaffingRoleVm> RemoveStaffingRoleCommand { get; }
+
+    public string TotalStaffingPlanLabel
+    {
+        get => totalStaffingPlanLabel;
+        private set => SetProperty(ref totalStaffingPlanLabel, value);
+    }
 
     public string CostosPresetHint
     {
@@ -288,12 +304,15 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
 
     protected override void OnSessionChanged(object? sender, ProjectSessionChangedEventArgs e)
     {
-        if (suppressGoRefresh || suppressCoefRefresh)
+        if (suppressGoRefresh || suppressCoefRefresh || suppressNegotiatedDiscountsRefresh || suppressStaffingPlanRefresh)
             return;
-        // Edición local de GO / política de cierre: no reconstruir toda la pantalla (perdería el
-        // foco de edición); RefreshCostOnly() ya se llamó de forma síncrona en el propio commit.
+        // Edición local de GO / política de cierre / descuentos negociados / dotación: no
+        // reconstruir toda la pantalla (perdería el foco de edición); RefreshCostOnly() ya se
+        // llamó de forma síncrona en el propio commit.
         if (string.Equals(e.Scope, "gastos_operacionales", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(e.Scope, "closing_policy", StringComparison.OrdinalIgnoreCase))
+            || string.Equals(e.Scope, "closing_policy", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(e.Scope, "negotiated_discounts", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(e.Scope, "staffing_plan", StringComparison.OrdinalIgnoreCase))
             return;
         System.Windows.Application.Current?.Dispatcher.InvokeAsync(Refresh);
     }
@@ -307,6 +326,10 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         goToManoDeObraCommand.RaiseCanExecuteChanged();
         goToEppCommand.RaiseCanExecuteChanged();
         goToReviewCommand.RaiseCanExecuteChanged();
+        AddNegotiatedDiscountCommand.RaiseCanExecuteChanged();
+        RemoveNegotiatedDiscountCommand.RaiseCanExecuteChanged();
+        AddStaffingRoleCommand.RaiseCanExecuteChanged();
+        RemoveStaffingRoleCommand.RaiseCanExecuteChanged();
         if (ShowEmptyState) return;
 
         var session = host.Session;
@@ -363,6 +386,10 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
 
         // ─── Coeficientes de sobreventa ─────────────────────────────────────
         RefreshCoeficientesSection(project);
+
+        // ─── Descuentos negociados y dotación indirecta ─────────────────────
+        RefreshNegotiatedDiscountsSection(data);
+        RefreshStaffingPlanSection(data);
 
         CostoDirectoLabel = $"{cost.CostoDirectoUf:N2} UF";
         CostoDirectoSubLabel = svc.FormatMoneyFromUf(cost.CostoDirectoUf, moneda, valorUf, tipoCambio);
@@ -925,6 +952,113 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         {
             suppressCoefRefresh = false;
         }
+    }
+
+    // ─── Descuentos negociados por equipo/material específico ──────────────────
+
+    private void RefreshNegotiatedDiscountsSection(ProjectFileData data)
+    {
+        NegotiatedDiscounts.Clear();
+        foreach (var row in data.NegotiatedDiscounts ?? new List<NegotiatedDiscountRow>())
+            NegotiatedDiscounts.Add(new NegotiatedDiscountVm(row, OnNegotiatedDiscountsChanged));
+    }
+
+    private void OnNegotiatedDiscountsChanged() => PersistNegotiatedDiscounts(markDirty: true);
+
+    private void PersistNegotiatedDiscounts(bool markDirty)
+    {
+        if (!CanEdit || ShowEmptyState)
+            return;
+
+        host.Session.Data.NegotiatedDiscounts = NegotiatedDiscounts.Select(x => x.ToRow()).ToList();
+        if (!markDirty)
+            return;
+
+        suppressNegotiatedDiscountsRefresh = true;
+        try
+        {
+            host.Session.MarkDirty("negotiated_discounts");
+            RefreshCostOnly();
+        }
+        finally
+        {
+            suppressNegotiatedDiscountsRefresh = false;
+        }
+    }
+
+    private void AddNegotiatedDiscount()
+    {
+        if (!CanEdit)
+            return;
+        NegotiatedDiscounts.Add(new NegotiatedDiscountVm(new NegotiatedDiscountRow(), OnNegotiatedDiscountsChanged));
+        PersistNegotiatedDiscounts(markDirty: true);
+    }
+
+    private void RemoveNegotiatedDiscount(NegotiatedDiscountVm? item)
+    {
+        if (!CanEdit || item == null)
+            return;
+        NegotiatedDiscounts.Remove(item);
+        PersistNegotiatedDiscounts(markDirty: true);
+    }
+
+    // ─── Dotación indirecta por rol (se suma a Gastos Operacionales) ───────────
+
+    private void RefreshStaffingPlanSection(ProjectFileData data)
+    {
+        StaffingPlan.Clear();
+        foreach (var row in data.StaffingPlan ?? new List<StaffingRoleRow>())
+            StaffingPlan.Add(new StaffingRoleVm(row, OnStaffingPlanChanged));
+        UpdateStaffingPlanTotal();
+    }
+
+    private void UpdateStaffingPlanTotal()
+    {
+        TotalStaffingPlanLabel = $"$ {StaffingPlan.Sum(x => x.TotalClp):N0}";
+    }
+
+    private void OnStaffingPlanChanged()
+    {
+        UpdateStaffingPlanTotal();
+        PersistStaffingPlan(markDirty: true);
+    }
+
+    private void PersistStaffingPlan(bool markDirty)
+    {
+        if (!CanEdit || ShowEmptyState)
+            return;
+
+        host.Session.Data.StaffingPlan = StaffingPlan.Select(x => x.ToRow()).ToList();
+        if (!markDirty)
+            return;
+
+        suppressStaffingPlanRefresh = true;
+        try
+        {
+            host.Session.MarkDirty("staffing_plan");
+            RefreshCostOnly();
+        }
+        finally
+        {
+            suppressStaffingPlanRefresh = false;
+        }
+    }
+
+    private void AddStaffingRole()
+    {
+        if (!CanEdit)
+            return;
+        StaffingPlan.Add(new StaffingRoleVm(new StaffingRoleRow { DedicacionPct = 100m, Meses = 1 }, OnStaffingPlanChanged));
+        PersistStaffingPlan(markDirty: true);
+    }
+
+    private void RemoveStaffingRole(StaffingRoleVm? item)
+    {
+        if (!CanEdit || item == null)
+            return;
+        StaffingPlan.Remove(item);
+        UpdateStaffingPlanTotal();
+        PersistStaffingPlan(markDirty: true);
     }
 
     private void SaveCostosPreset()

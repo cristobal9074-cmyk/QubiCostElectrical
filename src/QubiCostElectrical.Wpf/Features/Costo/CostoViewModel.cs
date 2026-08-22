@@ -50,6 +50,9 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
     private bool canEdit;
     private bool suppressGoRefresh;
     private bool suppressCoefRefresh;
+    private bool suppressNegotiatedDiscountsRefresh;
+    private bool suppressStaffingPlanRefresh;
+    private string totalStaffingPlanLabel = "";
     private decimal currentValorUf = 37998m;
     private string gastosGeneralesText = "";
     private string utilidadText = "";

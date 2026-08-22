@@ -1031,6 +1031,138 @@
             </DataGrid>
           </Border>
 
+          <!-- Descuentos negociados por equipo/material específico -->
+          <Border Style="{StaticResource Card.Section}" Padding="16" Margin="0,0,0,14">
+            <StackPanel>
+              <TextBlock Text="Descuentos negociados" FontSize="13" FontWeight="Bold"
+                         Foreground="{DynamicResource Brush.Ink}" Margin="0,0,0,4" />
+              <TextBlock Text="Descuento puntual por código de equipo/material (celdas, transformador, generador...), independiente del factor de presentación por categoría."
+                         FontSize="10" Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" Margin="0,0,0,10" />
+
+              <Grid Margin="8,0,46,4">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="140" />
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="110" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="CÓDIGO" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" />
+                <TextBlock Grid.Column="1" Text="DESCRIPCIÓN" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="8,0,0,0" />
+                <TextBlock Grid.Column="2" Text="DESCUENTO %" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" TextAlignment="Right" />
+              </Grid>
+
+              <ItemsControl ItemsSource="{Binding NegotiatedDiscounts}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <Border BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,0,1" Padding="8,4">
+                      <Grid>
+                        <Grid.ColumnDefinitions>
+                          <ColumnDefinition Width="140" />
+                          <ColumnDefinition Width="*" />
+                          <ColumnDefinition Width="110" />
+                          <ColumnDefinition Width="36" />
+                        </Grid.ColumnDefinitions>
+                        <TextBox Grid.Column="0" Text="{Binding Codigo, UpdateSourceTrigger=LostFocus}"
+                                 Style="{StaticResource Form.TextBox}" FontSize="11" Margin="0,0,8,0"
+                                 IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                        <TextBox Grid.Column="1" Text="{Binding Descripcion, UpdateSourceTrigger=LostFocus}"
+                                 Style="{StaticResource Form.TextBox}" FontSize="11" Margin="0,0,8,0"
+                                 IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                        <TextBox Grid.Column="2" Text="{Binding DescuentoPct, UpdateSourceTrigger=LostFocus, StringFormat={}{0:0.#}}"
+                                 Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" FontSize="11" TextAlignment="Right" Margin="0,0,8,0"
+                                 IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                        <Button Grid.Column="3" Style="{StaticResource GoIconBtn}" Content="×" ToolTip="Quitar descuento"
+                                Command="{Binding DataContext.RemoveNegotiatedDiscountCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                CommandParameter="{Binding}" />
+                      </Grid>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <Button Content="+ Agregar descuento" HorizontalAlignment="Left"
+                      Margin="8,10,0,0" Padding="11,6" FontSize="12" FontWeight="SemiBold"
+                      Foreground="{DynamicResource Brush.Blue}" Background="Transparent"
+                      BorderBrush="#C9D4E3" BorderThickness="1" Cursor="Hand"
+                      Command="{Binding AddNegotiatedDiscountCommand}" />
+            </StackPanel>
+          </Border>
+
+          <!-- Dotación indirecta por rol -->
+          <Border Style="{StaticResource Card.Section}" Padding="16" Margin="0,0,0,14">
+            <StackPanel>
+              <Grid Margin="0,0,0,4">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="Dotación indirecta" FontSize="13" FontWeight="Bold"
+                           Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="1" Text="{Binding TotalStaffingPlanLabel}"
+                           FontFamily="{StaticResource Font.Mono}" FontSize="13" FontWeight="Bold"
+                           Foreground="{DynamicResource Brush.Green}"
+                           HorizontalAlignment="Right" VerticalAlignment="Center" />
+              </Grid>
+              <TextBlock Text="Administrador, Supervisor, Capataz... por cargo, tarifa mensual, % de dedicación y meses. Se suma automáticamente a Gastos Operacionales."
+                         FontSize="10" Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" Margin="0,0,0,10" />
+
+              <Grid Margin="8,0,46,4">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="130" />
+                  <ColumnDefinition Width="90" />
+                  <ColumnDefinition Width="60" />
+                  <ColumnDefinition Width="120" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="CARGO" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" />
+                <TextBlock Grid.Column="1" Text="TARIFA MENSUAL" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" TextAlignment="Right" Margin="0,0,8,0" />
+                <TextBlock Grid.Column="2" Text="DEDIC. %" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" TextAlignment="Right" Margin="0,0,8,0" />
+                <TextBlock Grid.Column="3" Text="MESES" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" TextAlignment="Right" Margin="0,0,8,0" />
+                <TextBlock Grid.Column="4" Text="TOTAL" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" TextAlignment="Right" />
+              </Grid>
+
+              <ItemsControl ItemsSource="{Binding StaffingPlan}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <Border BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,0,1" Padding="8,4">
+                      <Grid>
+                        <Grid.ColumnDefinitions>
+                          <ColumnDefinition Width="*" />
+                          <ColumnDefinition Width="130" />
+                          <ColumnDefinition Width="90" />
+                          <ColumnDefinition Width="60" />
+                          <ColumnDefinition Width="120" />
+                          <ColumnDefinition Width="36" />
+                        </Grid.ColumnDefinitions>
+                        <TextBox Grid.Column="0" Text="{Binding Cargo, UpdateSourceTrigger=LostFocus}"
+                                 Style="{StaticResource Form.TextBox}" FontSize="11" Margin="0,0,8,0"
+                                 IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                        <TextBox Grid.Column="1" Text="{Binding TarifaMensualClp, UpdateSourceTrigger=LostFocus, StringFormat={}{0:0}}"
+                                 Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" FontSize="11" TextAlignment="Right" Margin="0,0,8,0"
+                                 IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                        <TextBox Grid.Column="2" Text="{Binding DedicacionPct, UpdateSourceTrigger=LostFocus, StringFormat={}{0:0.#}}"
+                                 Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" FontSize="11" TextAlignment="Right" Margin="0,0,8,0"
+                                 IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                        <TextBox Grid.Column="3" Text="{Binding Meses, UpdateSourceTrigger=LostFocus}"
+                                 Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" FontSize="11" TextAlignment="Right" Margin="0,0,8,0"
+                                 IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                        <TextBlock Grid.Column="4" Text="{Binding TotalLabel}" FontSize="11"
+                                   FontFamily="{StaticResource Font.Mono}" FontWeight="SemiBold"
+                                   TextAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <Button Grid.Column="5" Style="{StaticResource GoIconBtn}" Content="×" ToolTip="Quitar cargo"
+                                Command="{Binding DataContext.RemoveStaffingRoleCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                CommandParameter="{Binding}" />
+                      </Grid>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <Button Content="+ Agregar cargo" HorizontalAlignment="Left"
+                      Margin="8,10,0,0" Padding="11,6" FontSize="12" FontWeight="SemiBold"
+                      Foreground="{DynamicResource Brush.Blue}" Background="Transparent"
+                      BorderBrush="#C9D4E3" BorderThickness="1" Cursor="Hand"
+                      Command="{Binding AddStaffingRoleCommand}" />
+            </StackPanel>
+          </Border>
+
           <!-- Política de cierre comercial -->
           <Border Style="{StaticResource Card.Section}" Padding="16" Margin="0,0,0,14">
             <StackPanel DataContext="{Binding ClosingPolicySection}">
