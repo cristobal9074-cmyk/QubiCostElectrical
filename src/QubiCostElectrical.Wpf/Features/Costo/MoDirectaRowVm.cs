@@ -22,7 +22,7 @@ public sealed class MoDirectaRowVm
     public decimal Pct { get; init; }
 
     public string DotacionLabel => Dotacion + " contratos";
-    public string SueldoLabel => $"$ {SueldoMensualClp:N0}";
-    public string TotalLabel => $"$ {TotalAnualClp:N0}";
+    public string SueldoLabel => CurrencyFormat.Clp(SueldoMensualClp);
+    public string TotalLabel => CurrencyFormat.Clp(TotalAnualClp);
     public string PctLabel => $"{Pct:N1}";
 }

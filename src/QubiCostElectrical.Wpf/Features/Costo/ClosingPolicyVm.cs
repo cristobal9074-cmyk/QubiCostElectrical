@@ -132,6 +132,13 @@ public sealed class ClosingPolicySectionVm : ViewModelBase
         set => CommitParamText(ref gainshareCapClpText, value, nameof(ClosingPolicySelection.GainshareCapClp));
     }
 
+    private static readonly HashSet<string> PctParams = new(StringComparer.Ordinal)
+    {
+        nameof(ClosingPolicySelection.LumpSumMinRiskPct),
+        nameof(ClosingPolicySelection.FeePct),
+        nameof(ClosingPolicySelection.GainsharePct)
+    };
+
     private void CommitParamText(ref string field, string? value, string paramName)
     {
         var normalized = value ?? "";
@@ -141,6 +148,9 @@ public sealed class ClosingPolicySectionVm : ViewModelBase
         OnPropertyChanged(paramName + "Text");
         if (!TryParseDecimal(value, out var v))
             return;
+        // Los % se clampean a [0,100] igual que en CoefFactorVm/NegotiatedDiscountVm/StaffingRoleVm;
+        // los montos CLP nunca deberían ser negativos (fee, precio objetivo, tope de reparto, etc.).
+        v = PctParams.Contains(paramName) ? ClampPct(v) : Math.Max(0m, v);
         onParamCommit(paramName, v);
     }
 

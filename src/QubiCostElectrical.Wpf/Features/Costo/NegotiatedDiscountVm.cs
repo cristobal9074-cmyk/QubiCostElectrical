@@ -50,14 +50,13 @@ public sealed class NegotiatedDiscountVm : ViewModelBase
 
     public decimal DescuentoPct
     {
+        // ClampPct ya garantiza [0,100]; no hace falta revalidar (mismo criterio que
+        // StaffingRoleVm.TarifaMensualClp/DedicacionPct/Meses — ver su comentario).
         get => descuentoPct;
         set
         {
-            if (SetProperty(ref descuentoPct, Math.Clamp(value, 0m, 100m)))
-            {
-                RaiseValidation();
+            if (SetProperty(ref descuentoPct, ClampPct(value)))
                 onChanged?.Invoke();
-            }
         }
     }
 

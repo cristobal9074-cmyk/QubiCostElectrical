@@ -18,8 +18,8 @@ public sealed class ViaticosLineaVm
     public decimal TotalClp { get; init; }
     public bool Activo { get; init; }
     public string CantidadLabel => Cantidad > 0 ? $"{Math.Round(Cantidad):N0}" : "—";
-    public string PrecioLabel => $"$ {Math.Round(PrecioUnitarioClp):N0}";
-    public string TotalLabel => $"$ {Math.Round(TotalClp):N0}";
+    public string PrecioLabel => CurrencyFormat.Clp(Math.Round(PrecioUnitarioClp));
+    public string TotalLabel => CurrencyFormat.Clp(Math.Round(TotalClp));
     public string EstadoLabel => Activo ? "Activo" : "Omitido";
 }
 

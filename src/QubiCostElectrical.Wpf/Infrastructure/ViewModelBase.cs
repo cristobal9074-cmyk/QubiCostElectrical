@@ -13,4 +13,9 @@ public abstract class ViewModelBase : ObservableObject
         var normalized = (text ?? "").Replace(",", ".");
         return decimal.TryParse(normalized, NumberStyles.Any, CultureInfo.InvariantCulture, out value);
     }
+
+    /// <summary>Clampea un porcentaje al rango [0, 100] — uso en campos editables de VM (Wpf).
+    /// Equivalente de capa UI a MarkupPolicy.ClampPct (Domain); se mantiene separado a propósito
+    /// para no crear una dependencia de un ViewModel hacia el motor de cálculo.</summary>
+    protected static decimal ClampPct(decimal value) => System.Math.Clamp(value, 0m, 100m);
 }

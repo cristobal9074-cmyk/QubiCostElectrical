@@ -383,5 +383,5 @@ public sealed partial class ViaticosProfesionalViewModel : ViewModelBase
             Activo = ok,
         };
 
-    private static string Fmt(decimal n) => $"$ {Math.Round(Math.Max(0, n)):N0}";
+    private static string Fmt(decimal n) => CurrencyFormat.Clp(Math.Round(Math.Max(0, n)));
 }

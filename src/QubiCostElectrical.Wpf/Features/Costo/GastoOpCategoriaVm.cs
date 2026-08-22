@@ -118,7 +118,7 @@ public sealed class GastoOpCategoriaVm : ViewModelBase
         }
     }
 
-    public string MontoLabel => $"$ {MontoClp:N0}";
+    public string MontoLabel => CurrencyFormat.Clp(MontoClp);
     public string UfLabel => $"{Uf:N2} UF";
     public string PctLabel => $"{Pct:N1}%";
 

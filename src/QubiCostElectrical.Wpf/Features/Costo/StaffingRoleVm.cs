@@ -58,7 +58,7 @@ public sealed class StaffingRoleVm : ViewModelBase
         get => dedicacionPct;
         set
         {
-            if (SetProperty(ref dedicacionPct, Math.Clamp(value, 0m, 100m)))
+            if (SetProperty(ref dedicacionPct, ClampPct(value)))
             {
                 RaiseTotal();
                 onChanged?.Invoke();
@@ -80,7 +80,7 @@ public sealed class StaffingRoleVm : ViewModelBase
     }
 
     public decimal TotalClp => TarifaMensualClp * (DedicacionPct / 100m) * Meses;
-    public string TotalLabel => $"$ {TotalClp:N0}";
+    public string TotalLabel => CurrencyFormat.Clp(TotalClp);
 
     /// <summary>Vacío cuando la fila es válida (ver StaffingRoleRow.Validate()). En la práctica solo
     /// Cargo puede quedar inválido desde la UI: Tarifa/Dedicación/Meses ya se clampan al tipear.</summary>

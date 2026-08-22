@@ -1,14 +1,6 @@
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Globalization;
-using System.Linq;
-using System.Windows.Input;
 using QubiCostElectrical;
-using QubiCostElectrical.Wpf.Features.Dashboard;
 using QubiCostElectrical.Wpf.Infrastructure;
-using QubiCostElectrical.Wpf.Navigation;
-using QubiCostElectrical.Wpf.Shell;
 
 namespace QubiCostElectrical.Wpf.Features.Costo;
 
@@ -83,7 +75,7 @@ public sealed class GastoOpItemVm : ViewModelBase
     }
 
     public decimal Total => Math.Round(Cantidad * PrecioUnitarioClp);
-    public string TotalLabel => $"$ {Total:N0}";
+    public string TotalLabel => CurrencyFormat.Clp(Total);
     public bool IsZeroTotal => Total <= 0;
 
     public GastoOperacionalItemRow ToRow() => new()

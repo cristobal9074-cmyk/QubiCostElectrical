@@ -375,7 +375,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
                 MaterialesCount = codesInFamily.Count,
                 TotalClp = totalClp,
                 TotalUf = totalUf,
-                TotalLabel = $"$ {totalClp:N0}",
+                TotalLabel = CurrencyFormat.Clp(totalClp),
                 TotalMonedaLabel = $"{totalUf:N2} UF",
                 CountLabel = $"{cantTotal:N2} {grupo.First().Unidad ?? ""}"
             });
@@ -505,9 +505,9 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         var totalInd = MoIndirectaRows.Sum(r => r.TotalAnualClp);
         var totalMo = totalDir + totalInd;
 
-        TotalMoDirectaLabel = $"$ {totalDir:N0}";
-        TotalMoIndirectaLabel = $"$ {totalInd:N0}";
-        TotalMoLabel = $"$ {totalMo:N0}";
+        TotalMoDirectaLabel = CurrencyFormat.Clp(totalDir);
+        TotalMoIndirectaLabel = CurrencyFormat.Clp(totalInd);
+        TotalMoLabel = CurrencyFormat.Clp(totalMo);
         TotalMoSubLabel = valorUf > 0 ? $"{totalMo / valorUf:N2} UF" : "";
         MoDirectaPct = totalMo > 0 ? totalDir / totalMo * 100m : 0;
         MoIndirectaPct = totalMo > 0 ? totalInd / totalMo * 100m : 0;
@@ -617,7 +617,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         foreach (var cat in GastosOperacionales)
             cat.Pct = totalGoClp > 0 ? cat.MontoClp / totalGoClp * 100m : 0m;
 
-        TotalGoLabel = $"$ {totalGoClp:N0}";
+        TotalGoLabel = CurrencyFormat.Clp(totalGoClp);
         TotalGoUfLabel = $"{totalGoUf:N2} UF";
         TotalGoUfSubLabel = $"{totalGoUf:N2} UF · UF $ {currentValorUf:N0}";
         GoCategoriaCountLabel = $"{GastosOperacionales.Count} categorías";
@@ -1018,7 +1018,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
 
     private void UpdateStaffingPlanTotal()
     {
-        TotalStaffingPlanLabel = $"$ {StaffingPlan.Sum(x => x.TotalClp):N0}";
+        TotalStaffingPlanLabel = CurrencyFormat.Clp(StaffingPlan.Sum(x => x.TotalClp));
     }
 
     private void OnStaffingPlanChanged()
@@ -1369,7 +1369,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         var normalized = (text ?? "").Replace(",", ".");
         if (!decimal.TryParse(normalized, NumberStyles.Any, CultureInfo.InvariantCulture, out var v))
             return false;
-        pct = Math.Clamp(v, 0m, 100m);
+        pct = ClampPct(v);
         return true;
     }
 }
