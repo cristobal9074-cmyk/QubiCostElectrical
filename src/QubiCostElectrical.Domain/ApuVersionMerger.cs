@@ -1,5 +1,3 @@
-// TODO(null-safety): archivo proveniente de decompilación; nulabilidad pendiente de revisión manual.
-#pragma warning disable CS8600, CS8601, CS8602, CS8603, CS8604, CS8618, CS8619, CS8625
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -57,27 +55,28 @@ public sealed class ApuVersionMerger
 		List<ApuVersionComponent> list = new List<ApuVersionComponent>();
 		foreach (string item in source.OrderBy((string k) => k))
 		{
-			bool flag = dictionary2.TryGetValue(item, out var value);
-			bool flag2 = dictionary3.TryGetValue(item, out var value2);
-			bool flag3 = dictionary.TryGetValue(item, out var value3);
-			if (flag & flag2)
+			if (dictionary2.TryGetValue(item, out var value) && dictionary3.TryGetValue(item, out var value2))
 			{
 				if (value == value2)
 				{
 					list.Add(value);
 					continue;
 				}
-				if (flag3 && value3 == value)
+				ApuVersionComponent? value3;
+				if (dictionary.TryGetValue(item, out value3))
 				{
-					list.Add(value2);
-					appliedChanges.Add("Component '" + item + "': using right version (base == left)");
-					continue;
-				}
-				if (flag3 && value3 == value2)
-				{
-					list.Add(value);
-					appliedChanges.Add("Component '" + item + "': using left version (base == right)");
-					continue;
+					if (value3 == value)
+					{
+						list.Add(value2);
+						appliedChanges.Add("Component '" + item + "': using right version (base == left)");
+						continue;
+					}
+					if (value3 == value2)
+					{
+						list.Add(value);
+						appliedChanges.Add("Component '" + item + "': using left version (base == right)");
+						continue;
+					}
 				}
 				string key = "Component:" + item;
 				if (resolutions.TryGetValue(key, out var value4))
@@ -102,24 +101,25 @@ public sealed class ApuVersionMerger
 					conflicts.Add(CreateConflict(item, "Yield", $"{value.Yield}", $"{value2.Yield}", $"{value3?.Yield}"));
 				}
 			}
-			else if (flag && !flag2)
+			else if (dictionary2.TryGetValue(item, out value))
 			{
-				if (flag3 && value3 != null)
+				if (dictionary.TryGetValue(item, out var value3) && value3 != null)
 				{
 					conflicts.Add(CreateConflict(item, "Existence", "Present", "Removed", "Present"));
 				}
 				list.Add(value);
 			}
-			else if (!flag & flag2)
+			else
 			{
-				if (flag3)
+				ApuVersionComponent rightOnly = dictionary3[item];
+				if (dictionary.ContainsKey(item))
 				{
 					conflicts.Add(CreateConflict(item, "Existence", "Removed", "Present", "Present"));
-					list.Add(value2);
+					list.Add(rightOnly);
 				}
 				else
 				{
-					list.Add(value2);
+					list.Add(rightOnly);
 					appliedChanges.Add("Component '" + item + "': added from right branch");
 				}
 			}
@@ -136,10 +136,9 @@ public sealed class ApuVersionMerger
 		List<ApuVersionResourceRef> list = new List<ApuVersionResourceRef>();
 		foreach (string item2 in source.OrderBy((string k) => k))
 		{
-			ApuVersionResourceRef value5;
 			if (dictionary2.TryGetValue(item2, out var value) && dictionary3.TryGetValue(item2, out var value2))
 			{
-				ApuVersionResourceRef value3;
+				ApuVersionResourceRef? value3;
 				if (value == value2)
 				{
 					list.Add(value);
@@ -184,9 +183,9 @@ public sealed class ApuVersionMerger
 					appliedChanges.Add("Resource '" + item2 + "': new, using right branch value");
 				}
 			}
-			else if (dictionary2.TryGetValue(item2, out value5))
+			else if (dictionary2.TryGetValue(item2, out value))
 			{
-				list.Add(value5);
+				list.Add(value);
 			}
 			else
 			{
@@ -209,7 +208,7 @@ public sealed class ApuVersionMerger
 		{
 			if (dictionary2.TryGetValue(item, out var value) && dictionary3.TryGetValue(item, out var value2))
 			{
-				ApuVersionEconomicConcept value3;
+				ApuVersionEconomicConcept? value3;
 				if (value == value2)
 				{
 					list.Add(value);
