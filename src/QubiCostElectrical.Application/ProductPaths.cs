@@ -1,3 +1,4 @@
+#nullable enable
 using System.IO;
 
 namespace QubiCostElectrical;
@@ -41,6 +42,9 @@ public static class ProductPaths
 
     public static string AuthDatabaseFile()
         => Path.Combine(GetLocalAppDataRoot(), "auth.db");
+
+    public static string LicenseFile()
+        => Path.Combine(GetLocalAppDataRoot(), "license.qclic");
 
     public static string PriceBankDatabaseFile()
         => Path.Combine(GetLocalAppDataRoot(), "banco_precios.db");

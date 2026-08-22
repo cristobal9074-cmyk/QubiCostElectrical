@@ -145,6 +145,13 @@ public sealed class MoCostRow
     public string TotalFinalStr { get; init; } = "";
 }
 
+public sealed class MoProjectionTaskVm
+{
+    public string Id { get; init; } = "";
+    public string Nombre { get; set; } = "";
+    public int[] Cantidades { get; set; } = Array.Empty<int>();
+}
+
 public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePage
 {
 }

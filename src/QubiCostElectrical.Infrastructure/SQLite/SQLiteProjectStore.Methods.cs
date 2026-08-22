@@ -120,6 +120,10 @@ public static partial class SQLiteProjectStore
             SqliteGastoOperacionalStore.Save(connection, transaction, gastosOp, now);
             SqliteStoreHelpers.DeleteMissingKeys(connection, transaction, "gastos_operacionales", "id", gastosOp.Select(x => x.Id));
 
+            var moProjectionTasks = data.MoProjectionTasks ?? new List<MoProjectionTaskRow>();
+            SqliteMoProjectionTaskStore.Save(connection, transaction, moProjectionTasks, now);
+            SqliteStoreHelpers.DeleteMissingKeys(connection, transaction, "mo_projection_tasks", "id", moProjectionTasks.Select(x => x.Id));
+
             SqliteEppStore.Save(connection, transaction, data.Epp ?? EppBudgetData.Default(), now);
 
             transaction.Commit();
@@ -310,6 +314,13 @@ public static partial class SQLiteProjectStore
                 SqliteStoreHelpers.DeleteMissingKeys(connection, transaction, "gastos_operacionales", "id", rows.Select(x => x.Id));
             }
 
+            if (scopes.Contains("mo_projection_tasks"))
+            {
+                var rows = data.MoProjectionTasks ?? new List<MoProjectionTaskRow>();
+                SqliteMoProjectionTaskStore.Save(connection, transaction, rows, now);
+                SqliteStoreHelpers.DeleteMissingKeys(connection, transaction, "mo_projection_tasks", "id", rows.Select(x => x.Id));
+            }
+
             if (scopes.Contains("epp"))
             {
                 SqliteEppStore.Save(connection, transaction, data.Epp ?? EppBudgetData.Default(), now);
@@ -370,6 +381,7 @@ public static partial class SQLiteProjectStore
             MoDirecta              = SqliteStoreHelpers.ReadJsonRows<MoDirectaRow>(connection, "SELECT json FROM mo_directa ORDER BY sort_order, id;"),
             MoIndirecta            = SqliteStoreHelpers.ReadJsonRows<MoIndirectaRow>(connection, "SELECT json FROM mo_indirecta ORDER BY sort_order, id;"),
             GastosOperacionales    = SqliteStoreHelpers.ReadJsonRows<GastoOperacionalRow>(connection, "SELECT json FROM gastos_operacionales ORDER BY sort_order, id;"),
+            MoProjectionTasks      = SqliteStoreHelpers.ReadJsonRows<MoProjectionTaskRow>(connection, "SELECT json FROM mo_projection_tasks ORDER BY sort_order, id;"),
             Epp                    = SqliteEppStore.Load(connection),
             ActiveVersionId        = SqliteStoreHelpers.ReadMeta(connection, "active_version_id") ?? ""
         };

@@ -127,6 +127,7 @@ public sealed class ProjectFileData
     public List<MoDirectaRow> MoDirecta { get; set; } = new();
     public List<MoIndirectaRow> MoIndirecta { get; set; } = new();
     public List<GastoOperacionalRow> GastosOperacionales { get; set; } = new();
+    public List<MoProjectionTaskRow> MoProjectionTasks { get; set; } = new();
     public EppBudgetData Epp { get; set; } = EppBudgetData.Default();
     public string ActiveVersionId { get; set; } = "";
 }

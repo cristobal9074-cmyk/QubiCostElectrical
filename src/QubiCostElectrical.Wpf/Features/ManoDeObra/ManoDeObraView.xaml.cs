@@ -39,4 +39,72 @@ public partial class ManoDeObraView : UserControl
     private const int ColFinal = 92;
     private const int RowH = 30;
     private const int CellSz = 10;
+
+    private void OnOpenProjection(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is ManoDeObraViewModel vm)
+        {
+            BuildProjectionTable(vm, ProjectionTableGrid);
+            ProjectionPopup.IsOpen = true;
+        }
+    }
+
+    private void OnCloseProjection(object sender, RoutedEventArgs e)
+    {
+        ProjectionPopup.IsOpen = false;
+    }
+
+    private void OnAddProjectionTask(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is ManoDeObraViewModel vm)
+        {
+            vm.AddProjectionTask();
+            BuildProjectionTable(vm, ProjectionTableGrid);
+        }
+    }
+
+    public void BuildProjectionTable(ManoDeObraViewModel vm, Grid grid)
+    {
+        grid.Children.Clear();
+        grid.RowDefinitions.Clear();
+        grid.ColumnDefinitions.Clear();
+
+        var projectionTasks = vm.ProjectionTasks;
+        AddCol(grid, 76);
+        AddCol(grid, 84);
+        foreach (var _ in projectionTasks)
+            AddCol(grid, 120);
+        AddCol(grid, 90);
+
+        AddRowDef(grid, 34);
+        AddCell(grid, 0, 0, "Mes", bold: true, TextAlignment.Left, mono: false, Muted, Surface2);
+        AddCell(grid, 0, 1, "Unidad", bold: true, TextAlignment.Left, mono: false, Muted, Surface2);
+        for (var j = 0; j < projectionTasks.Length; j++)
+            AddCell(grid, 0, 2 + j, projectionTasks[j].Nombre, bold: true, TextAlignment.Center, mono: false, Blue, BlueFaint);
+        AddCell(grid, 0, 2 + projectionTasks.Length, "Total mes", bold: true, TextAlignment.Right, mono: false, Muted, Surface2);
+
+        for (var k = 0; k < vm.TotalMonths; k++)
+        {
+            var row = k + 1;
+            AddRowDef(grid, 34);
+            AddCell(grid, row, 0, $"M{k + 1}", bold: true, TextAlignment.Left, mono: false, Blue, Surface2);
+            AddCell(grid, row, 1, "Personas", bold: false, TextAlignment.Left, mono: false, Muted, Surface2);
+            var total = 0;
+            for (var l = 0; l < projectionTasks.Length; l++)
+            {
+                var cantidad = projectionTasks[l].Cantidades.ElementAtOrDefault(k);
+                total += cantidad;
+                AddCell(grid, row, 2 + l, cantidad.ToString(), bold: true, TextAlignment.Center, mono: true);
+            }
+            AddCell(grid, row, 2 + projectionTasks.Length, total.ToString(), bold: true, TextAlignment.Right, mono: true, Blue, BlueFaint);
+        }
+
+        AddRowDef(grid, 36);
+        var totalRow = vm.TotalMonths + 1;
+        AddCell(grid, totalRow, 0, "Total", bold: true, TextAlignment.Left, mono: false, Colors.White, Navy2);
+        AddCell(grid, totalRow, 1, "", bold: false, TextAlignment.Left, mono: false, null, Navy2);
+        for (var m = 0; m < projectionTasks.Length; m++)
+            AddCell(grid, totalRow, 2 + m, projectionTasks[m].Cantidades.Sum().ToString(), bold: true, TextAlignment.Center, mono: true, Colors.White, Navy2);
+        AddCell(grid, totalRow, 2 + projectionTasks.Length, projectionTasks.Sum(t => t.Cantidades.Sum()).ToString(), bold: true, TextAlignment.Right, mono: true, Colors.White, Navy2);
+    }
 }

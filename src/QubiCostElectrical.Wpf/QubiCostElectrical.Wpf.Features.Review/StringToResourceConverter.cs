@@ -1,0 +1,24 @@
+#nullable enable
+using System;
+using System.Globalization;
+using System.Windows;
+using System.Windows.Data;
+
+namespace QubiCostElectrical.Wpf.Features.Review;
+
+public sealed class StringToResourceConverter : IValueConverter
+{
+	public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+	{
+		if (value is string resourceKey)
+		{
+			return Application.Current.TryFindResource(resourceKey) ?? DependencyProperty.UnsetValue;
+		}
+		return DependencyProperty.UnsetValue;
+	}
+
+	public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+	{
+		throw new NotImplementedException();
+	}
+}

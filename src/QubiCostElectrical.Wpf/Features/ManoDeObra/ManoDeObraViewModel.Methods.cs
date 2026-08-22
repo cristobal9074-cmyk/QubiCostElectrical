@@ -88,6 +88,10 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
     private string FmtUf(decimal n, decimal vUf)
         => (n / vUf).ToString("N2", CultureInfo.GetCultureInfo("es-CL")) + " UF";
 
+    private readonly List<MoProjectionTaskVm> projectionTasks = new();
+
+    public MoProjectionTaskVm[] ProjectionTasks => projectionTasks.ToArray();
+
     public MoCargoDef[] CargosDef { get; private set; } = Array.Empty<MoCargoDef>();
     public MoMesInfo[] Meses { get; private set; } = Array.Empty<MoMesInfo>();
     public MoTableRow[] DotacionRows { get; private set; } = Array.Empty<MoTableRow>();
@@ -250,9 +254,71 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
             OnPropertyChanged(nameof(TotalMonths));
             OnPropertyChanged(nameof(LeyesSocialesPct));
             SeedCargos();
+            LoadProjectionTasks();
         }
 
         Recalcular();
+    }
+
+    private void LoadProjectionTasks()
+    {
+        projectionTasks.Clear();
+        var saved = host.Session.Data.MoProjectionTasks;
+        if (saved != null)
+        {
+            foreach (var row in saved)
+            {
+                var cantidades = row.CantidadesMensuales
+                    .Take(totalMeses)
+                    .Concat(Enumerable.Repeat(0, totalMeses))
+                    .Take(totalMeses)
+                    .Select(v => Math.Max(0, v))
+                    .ToArray();
+                projectionTasks.Add(new MoProjectionTaskVm
+                {
+                    Id = string.IsNullOrWhiteSpace(row.Id) ? Guid.NewGuid().ToString("N") : row.Id,
+                    Nombre = string.IsNullOrWhiteSpace(row.Nombre) ? "Nueva tarea" : row.Nombre.Trim(),
+                    Cantidades = cantidades
+                });
+            }
+        }
+
+        if (projectionTasks.Count == 0)
+            AddProjectionTaskCore("Losero");
+
+        OnPropertyChanged(nameof(ProjectionTasks));
+    }
+
+    public void AddProjectionTask()
+    {
+        AddProjectionTaskCore($"Tarea {projectionTasks.Count + 1}");
+        PersistProjectionTasks();
+    }
+
+    private void AddProjectionTaskCore(string name)
+    {
+        projectionTasks.Add(new MoProjectionTaskVm
+        {
+            Id = Guid.NewGuid().ToString("N"),
+            Nombre = name,
+            Cantidades = new int[totalMeses]
+        });
+        OnPropertyChanged(nameof(ProjectionTasks));
+    }
+
+    private void PersistProjectionTasks()
+    {
+        if (!host.ProjectWorkspace.HasOpenProject || host.Session.IsReadOnly)
+            return;
+
+        var data = host.Session.Data;
+        data.MoProjectionTasks = projectionTasks.Select(t => new MoProjectionTaskRow
+        {
+            Id = t.Id,
+            Nombre = t.Nombre,
+            CantidadesMensuales = t.Cantidades
+        }).ToList();
+        host.Session.MarkDirty("mo_projection_tasks");
     }
 
     private void ExecuteApply()

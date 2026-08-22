@@ -619,4 +619,16 @@ internal static partial class SqliteMigrationSteps
             );
             """);
     }
+
+    internal static void Migration028_MoProjectionTasks(SqliteConnection connection, SqliteTransaction transaction)
+    {
+        SqliteMigratorHelpers.Execute(connection, transaction, """
+            CREATE TABLE IF NOT EXISTS mo_projection_tasks (
+                id          TEXT NOT NULL PRIMARY KEY,
+                sort_order  INTEGER NOT NULL DEFAULT 0,
+                json        TEXT NOT NULL,
+                updated_at  TEXT NOT NULL
+            );
+            """);
+    }
 }

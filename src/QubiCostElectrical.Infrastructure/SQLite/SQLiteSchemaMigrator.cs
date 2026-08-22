@@ -41,6 +41,7 @@ public static class SQLiteSchemaMigrator
         new(25, "Columnas mat_clp/mo_clp en materiales y cubicación (fuente CLP del precio)",           SqliteMigrationSteps.Migration025_MatClpMoClpColumns),
         new(26, "MO dotación (directa e indirecta) y gastos operacionales",                              SqliteMigrationSteps.Migration026_MoDotacionGastosOperacionales),
         new(27, "Presupuesto EPP editable del proyecto",                                                 SqliteMigrationSteps.Migration027_EppBudget),
+        new(28, "Proyección de mano de obra por tarea",                                                  SqliteMigrationSteps.Migration028_MoProjectionTasks),
     };
 
     public static void MigrateToLatest(SqliteConnection connection)
