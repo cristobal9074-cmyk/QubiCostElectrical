@@ -54,10 +54,18 @@ public static class SQLiteSchemaMigrator
         int userVersion = SqliteMigratorHelpers.GetUserVersion(connection);
         int currentVersion = userVersion == 0 ? SqliteMigrationLedger.DetectLegacySchemaVersion(connection) : userVersion;
 
-        // Una base más nueva ya contiene el esquema requerido por esta versión.
-        // No se migra ni se rebaja su versión; sus tablas y columnas adicionales se conservan.
+        // Una base con un número de esquema más alto puede venir de una rama distinta de la app
+        // (dos builds que incrementaron su propio contador de forma independiente para features
+        // distintas) — el número no es comparable entre ramas y NO implica que las tablas que
+        // esta build necesita ya existan. No tocamos su versión ni su historial de migraciones
+        // (podría ser una base genuinamente más nueva de la MISMA rama), pero sí garantizamos
+        // que nuestras propias tablas existan: todos nuestros pasos son CREATE/DROP TABLE
+        // IF [NOT] EXISTS, así que aplicarlos es seguro e idempotente sin importar el origen.
         if (currentVersion > LatestSchemaVersion)
+        {
+            EnsureOwnTablesExist(connection);
             return;
+        }
 
         bool legacyWithoutPragma = userVersion == 0 && currentVersion > 0;
         bool needsMigration = legacyWithoutPragma || currentVersion < LatestSchemaVersion;
@@ -96,6 +104,34 @@ public static class SQLiteSchemaMigrator
                     $"No se pudo actualizar la base de datos del proyecto a la versión {step.Version} ({step.Name}). "
                     + "Se intentó crear un respaldo previo en la carpeta .schema_backups junto al archivo .db. "
                     + "Si el problema persiste, restaura ese respaldo o contacta soporte con el log de la aplicación.",
+                    ex);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Aplica cada paso de esta build sin importar el número de esquema ya registrado en la base
+    /// (ver comentario en MigrateToLatest). No toca PRAGMA user_version ni app_meta.schema_version
+    /// — solo asegura la existencia de las tablas propias. Cada paso corre en su propia
+    /// transacción para que un choque puntual (p. ej. otra rama ya usó ese nombre de tabla con
+    /// columnas distintas) no bloquee al resto.
+    /// </summary>
+    private static void EnsureOwnTablesExist(SqliteConnection connection)
+    {
+        foreach (var step in Steps.OrderBy(x => x.Version))
+        {
+            using var transaction = connection.BeginTransaction();
+            try
+            {
+                step.Up(connection, transaction);
+                transaction.Commit();
+            }
+            catch (Exception ex)
+            {
+                transaction.Rollback();
+                AppLog.Warning(
+                    "SQLiteMigración",
+                    $"No se pudo verificar/crear la tabla del paso v{step.Version} ('{step.Name}') sobre una base con esquema de otra rama; se continúa con el resto.",
                     ex);
             }
         }

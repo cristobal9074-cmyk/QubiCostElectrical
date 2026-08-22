@@ -182,10 +182,52 @@ public sealed class FlexibleMapSC
 // Catálogo interno de artefactos: el usuario elige de esta lista al agregar un artefacto a
 // un circuito, y puede crear uno nuevo al vuelo si no está (mismo patrón que el catálogo de
 // materiales en Cubicación). Solo nombre + categoría, sin precio: C.SC cuantifica, no costea.
+[System.Text.Json.Serialization.JsonConverter(typeof(ArtefactoCatalogoItemJsonConverter))]
 public sealed class ArtefactoCatalogoItem
 {
     public string Nombre { get; set; } = "";
     public string Categoria { get; set; } = "Otro";
+}
+
+/// <summary>
+/// Antes de introducir ArtefactoCatalogoItem, este catálogo era una lista plana de strings
+/// (igual que Tipos/TiposCaja/etc.). Proyectos guardados con esa versión anterior siguen
+/// teniendo "Artefactos" como array de strings en su JSON — este converter acepta ambos
+/// formatos para no romper la apertura de proyectos guardados antes del cambio de modelo.
+/// </summary>
+public sealed class ArtefactoCatalogoItemJsonConverter : System.Text.Json.Serialization.JsonConverter<ArtefactoCatalogoItem>
+{
+    public override ArtefactoCatalogoItem Read(ref System.Text.Json.Utf8JsonReader reader, Type typeToConvert, System.Text.Json.JsonSerializerOptions options)
+    {
+        if (reader.TokenType == System.Text.Json.JsonTokenType.String)
+            return new ArtefactoCatalogoItem { Nombre = reader.GetString() ?? "" };
+
+        var item = new ArtefactoCatalogoItem();
+        if (reader.TokenType != System.Text.Json.JsonTokenType.StartObject)
+            return item;
+
+        while (reader.Read() && reader.TokenType != System.Text.Json.JsonTokenType.EndObject)
+        {
+            if (reader.TokenType != System.Text.Json.JsonTokenType.PropertyName) continue;
+            var propertyName = reader.GetString();
+            reader.Read();
+            switch (propertyName)
+            {
+                case "Nombre" or "nombre": item.Nombre = reader.GetString() ?? ""; break;
+                case "Categoria" or "categoria": item.Categoria = reader.GetString() ?? "Otro"; break;
+                default: reader.Skip(); break;
+            }
+        }
+        return item;
+    }
+
+    public override void Write(System.Text.Json.Utf8JsonWriter writer, ArtefactoCatalogoItem value, System.Text.Json.JsonSerializerOptions options)
+    {
+        writer.WriteStartObject();
+        writer.WriteString("Nombre", value.Nombre);
+        writer.WriteString("Categoria", value.Categoria);
+        writer.WriteEndObject();
+    }
 }
 
 public sealed class CubicacionScConfig

@@ -79,6 +79,34 @@ public sealed class SQLiteMigrationTests : IDisposable
     }
 
     [Fact]
+    public void LoadSnapshot_FromForeignHigherSchemaVersion_StillCreatesOwnTables()
+    {
+        // Simula un proyecto guardado por OTRA rama de la app que subió su propio contador de
+        // esquema por encima del de esta build (p.ej. v59) para features que esta build no tiene.
+        // Antes del fix, MigrateToLatest se saltaba TODAS las migraciones propias al ver un
+        // número más alto, dejando tablas nuevas (mo_projection_tasks, etc.) sin crear.
+        var original = BuildTestData();
+        SQLiteProjectStore.SaveSnapshot(_dbPath, original);
+        SetUserVersionDirect(59);
+
+        var loaded = SQLiteProjectStore.LoadSnapshot(_dbPath);
+
+        Assert.Equal(original.Proyecto?.Nombre, loaded.Proyecto?.Nombre);
+        Assert.Equal(original.Itemizado.Count, loaded.Itemizado.Count);
+        Assert.True(TableExists("mo_projection_tasks"));
+        Assert.True(TableExists("negotiated_discounts"));
+        Assert.True(TableExists("closing_policy"));
+        Assert.True(TableExists("staffing_plan"));
+
+        // El marcador de versión ajeno no se toca: sigue en 59, no se rebaja a 31.
+        using var conn = new SqliteConnection($"Data Source={_dbPath}");
+        conn.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "PRAGMA user_version;";
+        Assert.Equal(59L, Convert.ToInt64(cmd.ExecuteScalar()));
+    }
+
+    [Fact]
     public void Schema_LatestVersion_MatchesProductVersionInfo()
     {
         Assert.Equal(ProductVersionInfo.DatabaseSchemaVersion, SQLiteSchemaMigrator.LatestSchemaVersion);
@@ -164,6 +192,15 @@ public sealed class SQLiteMigrationTests : IDisposable
         conn.Open();
         using var cmd = conn.CreateCommand();
         // PRAGMA user_version no acepta parámetros — usar interpolación literal (valor entero, seguro)
+        cmd.CommandText = $"PRAGMA user_version = {version};";
+        cmd.ExecuteNonQuery();
+    }
+
+    private void SetUserVersionDirect(int version)
+    {
+        using var conn = new SqliteConnection($"Data Source={_dbPath}");
+        conn.Open();
+        using var cmd = conn.CreateCommand();
         cmd.CommandText = $"PRAGMA user_version = {version};";
         cmd.ExecuteNonQuery();
     }
