@@ -9,7 +9,7 @@ public static class ShellRouteNavigation
         route is ShellRoute.Takeoff or ShellRoute.CubicacionSc;
 
     public static bool IsCostosRoute(ShellRoute route) =>
-        route is ShellRoute.Costo or ShellRoute.Epp or ShellRoute.ManoDeObra;
+        route is ShellRoute.Costo or ShellRoute.Epp or ShellRoute.ManoDeObra or ShellRoute.EconomicEditor;
 
     public static bool IsMoreRoute(ShellRoute route) =>
         route is ShellRoute.Templates or ShellRoute.FloorSummary;

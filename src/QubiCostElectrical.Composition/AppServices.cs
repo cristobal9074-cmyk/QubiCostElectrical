@@ -56,6 +56,8 @@ public sealed class AppServices
     public IProjectBenchmarkRepository BenchmarkRepository { get; set; } = null!;
     public IBenchmarkService Benchmark { get; set; } = null!;
 
+    public IEconomicCalculationService EconomicCalculation { get; set; } = null!;
+
     public AppServices(
         IBudgetCalculationService budgetCalculation,
         IMaterialSearchService materialSearch,

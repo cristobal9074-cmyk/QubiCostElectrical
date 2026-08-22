@@ -66,7 +66,8 @@ public partial class ShellWindow : Window
         [
             new NavDropdownItem { Label = "Desglose de costos", Route = ShellRoute.Costo },
             new NavDropdownItem { Label = "Mano de obra", Route = ShellRoute.ManoDeObra },
-            new NavDropdownItem { Label = "EPP", Route = ShellRoute.Epp }
+            new NavDropdownItem { Label = "EPP", Route = ShellRoute.Epp },
+            new NavDropdownItem { Label = "Editor económico", Route = ShellRoute.EconomicEditor }
         ];
         NavCloseGroup.Items =
         [

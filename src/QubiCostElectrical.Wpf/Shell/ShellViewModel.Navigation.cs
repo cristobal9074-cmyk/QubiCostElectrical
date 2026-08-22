@@ -21,6 +21,7 @@ using QubiCostElectrical.Wpf.Features.Epp;
 using QubiCostElectrical.Wpf.Features.ManoDeObra;
 using ApuCatalogFeature = QubiCostElectrical.Wpf.Features.ApuCatalog;
 using ApuMergeFeature = QubiCostElectrical.Wpf.Features.ApuMerge;
+using EconomicEditorFeature = QubiCostElectrical.Wpf.Features.EconomicEditor;
 using QubiCostElectrical.Wpf.Features.Prices;
 using QubiCostElectrical.Wpf.Features.Project;
 using QubiCostElectrical.Wpf.Infrastructure;
@@ -246,6 +247,11 @@ partial class ShellViewModel
             {
                 var vm = new ApuMergeFeature.ApuMergeViewModel(shell, appHost);
                 return (new ApuMergeFeature.ApuMergeView { DataContext = vm }, vm);
+            }
+            case ShellRoute.EconomicEditor:
+            {
+                var vm = new EconomicEditorFeature.EconomicEditorViewModel(shell, appHost);
+                return (new EconomicEditorFeature.EconomicEditorView { DataContext = vm }, vm);
             }
             default:
                 throw new InvalidOperationException($"La ruta {route} no tiene vista registrada.");

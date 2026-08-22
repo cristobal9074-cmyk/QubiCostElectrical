@@ -1,0 +1,176 @@
+<UserControl x:Class="QubiCostElectrical.Wpf.Features.EconomicEditor.EconomicEditorView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{DynamicResource Brush.Canvas}">
+
+  <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <StackPanel Margin="24" MaxWidth="1100" HorizontalAlignment="Left">
+
+      <TextBlock Text="Editor económico" FontSize="20" FontWeight="Bold"
+                 Foreground="{DynamicResource Brush.Ink}" Margin="0,0,0,4" />
+      <TextBlock Text="Cadena configurable de conceptos económicos (indirectos, gastos generales, utilidad, impuestos...) aplicados en cascada sobre el costo directo."
+                 FontSize="12" Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" Margin="0,0,0,16" />
+
+      <!-- Costo directo -->
+      <Border Style="{StaticResource Card.Section}" Padding="16" Margin="0,0,0,14">
+        <StackPanel Orientation="Horizontal">
+          <StackPanel Margin="0,0,24,0">
+            <TextBlock Text="COSTO DIRECTO UNITARIO" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,5" />
+            <TextBox Text="{Binding DirectCost, UpdateSourceTrigger=LostFocus}"
+                      Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" FontSize="14" FontWeight="SemiBold"
+                      Width="220" />
+          </StackPanel>
+          <StackPanel VerticalAlignment="Bottom">
+            <Button Content="Calcular" Command="{Binding CalculateCommand}"
+                    Padding="16,8" FontWeight="SemiBold" Cursor="Hand"
+                    Background="{DynamicResource Brush.Navy}" Foreground="White" BorderThickness="0" />
+          </StackPanel>
+        </StackPanel>
+      </Border>
+
+      <!-- Conceptos -->
+      <Border Style="{StaticResource Card.Section}" Padding="16" Margin="0,0,0,14">
+        <StackPanel>
+          <Grid Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Conceptos" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" />
+            <Button Grid.Column="1" Content="+ Agregar concepto" HorizontalAlignment="Right"
+                    Padding="11,6" FontSize="12" FontWeight="SemiBold"
+                    Foreground="{DynamicResource Brush.Blue}" Background="Transparent"
+                    BorderBrush="#C9D4E3" BorderThickness="1" Cursor="Hand"
+                    Command="{Binding AddConceptCommand}" />
+          </Grid>
+
+          <DataGrid ItemsSource="{Binding Concepts}" AutoGenerateColumns="False" CanUserAddRows="False"
+                    HeadersVisibility="Column" GridLinesVisibility="Horizontal" RowHeight="34"
+                    BorderThickness="1" BorderBrush="{DynamicResource Brush.Line}">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="Código" Binding="{Binding ConceptCode, UpdateSourceTrigger=LostFocus}" Width="90" />
+              <DataGridTextColumn Header="Nombre" Binding="{Binding ConceptName, UpdateSourceTrigger=LostFocus}" Width="*" />
+              <DataGridComboBoxColumn Header="Categoría" SelectedItemBinding="{Binding Category, UpdateSourceTrigger=LostFocus}" Width="130">
+                <DataGridComboBoxColumn.ItemsSource>
+                  <x:Array Type="sys:String" xmlns:sys="clr-namespace:System;assembly=mscorlib">
+                    <sys:String>Indirecto</sys:String>
+                    <sys:String>GastosGenerales</sys:String>
+                    <sys:String>Administracion</sys:String>
+                    <sys:String>Supervision</sys:String>
+                    <sys:String>Contingencia</sys:String>
+                    <sys:String>Riesgo</sys:String>
+                    <sys:String>Utilidad</sys:String>
+                    <sys:String>Impuesto</sys:String>
+                    <sys:String>Recargo</sys:String>
+                    <sys:String>Descuento</sys:String>
+                    <sys:String>RetencionInformativa</sys:String>
+                    <sys:String>Otro</sys:String>
+                  </x:Array>
+                </DataGridComboBoxColumn.ItemsSource>
+              </DataGridComboBoxColumn>
+              <DataGridComboBoxColumn Header="Tipo" SelectedItemBinding="{Binding ConceptType, UpdateSourceTrigger=LostFocus}" Width="130">
+                <DataGridComboBoxColumn.ItemsSource>
+                  <x:Array Type="sys:String" xmlns:sys="clr-namespace:System;assembly=mscorlib">
+                    <sys:String>Porcentaje</sys:String>
+                    <sys:String>Fijo</sys:String>
+                    <sys:String>PorUnidad</sys:String>
+                    <sys:String>PorCantidad</sys:String>
+                    <sys:String>PorcentajeAcumulado</sys:String>
+                    <sys:String>PorcentajeSobreBaseSeleccionada</sys:String>
+                  </x:Array>
+                </DataGridComboBoxColumn.ItemsSource>
+              </DataGridComboBoxColumn>
+              <DataGridComboBoxColumn Header="Base" SelectedItemBinding="{Binding BaseType, UpdateSourceTrigger=LostFocus}" Width="150">
+                <DataGridComboBoxColumn.ItemsSource>
+                  <x:Array Type="sys:String" xmlns:sys="clr-namespace:System;assembly=mscorlib">
+                    <sys:String>CostoDirecto</sys:String>
+                    <sys:String>Materiales</sys:String>
+                    <sys:String>ManoDeObra</sys:String>
+                    <sys:String>Equipos</sys:String>
+                    <sys:String>Herramientas</sys:String>
+                    <sys:String>Subcontrato</sys:String>
+                    <sys:String>Transporte</sys:String>
+                    <sys:String>Auxiliares</sys:String>
+                    <sys:String>OtrosRecursos</sys:String>
+                    <sys:String>CostoDirectoMasIndirecto</sys:String>
+                    <sys:String>SubtotalAnterior</sys:String>
+                    <sys:String>SubtotalAntesUtilidad</sys:String>
+                    <sys:String>SubtotalAntesImpuesto</sys:String>
+                    <sys:String>PrecioAntesDescuentos</sys:String>
+                    <sys:String>PrecioFinalAnterior</sys:String>
+                    <sys:String>Personalizado</sys:String>
+                  </x:Array>
+                </DataGridComboBoxColumn.ItemsSource>
+              </DataGridComboBoxColumn>
+              <DataGridTextColumn Header="Valor / %" Binding="{Binding RateOrAmount, UpdateSourceTrigger=LostFocus}" Width="90">
+                <DataGridTextColumn.ElementStyle>
+                  <Style TargetType="TextBlock">
+                    <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
+                    <Setter Property="TextAlignment" Value="Right" />
+                  </Style>
+                </DataGridTextColumn.ElementStyle>
+              </DataGridTextColumn>
+              <DataGridCheckBoxColumn Header="Incl. total" Binding="{Binding IncludedInTotal, UpdateSourceTrigger=PropertyChanged}" Width="70" />
+              <DataGridCheckBoxColumn Header="Activo" Binding="{Binding IsActive, UpdateSourceTrigger=PropertyChanged}" Width="60" />
+              <DataGridTextColumn Header="Subtotal antes" Binding="{Binding SubtotalBefore, StringFormat='{}{0:N0}'}" IsReadOnly="True" Width="110">
+                <DataGridTextColumn.ElementStyle>
+                  <Style TargetType="TextBlock">
+                    <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
+                    <Setter Property="TextAlignment" Value="Right" />
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
+                  </Style>
+                </DataGridTextColumn.ElementStyle>
+              </DataGridTextColumn>
+              <DataGridTextColumn Header="Calculado" Binding="{Binding CalculatedValue, StringFormat='{}{0:N0}'}" IsReadOnly="True" Width="100">
+                <DataGridTextColumn.ElementStyle>
+                  <Style TargetType="TextBlock">
+                    <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
+                    <Setter Property="FontWeight" Value="SemiBold" />
+                    <Setter Property="TextAlignment" Value="Right" />
+                  </Style>
+                </DataGridTextColumn.ElementStyle>
+              </DataGridTextColumn>
+              <DataGridTextColumn Header="Subtotal después" Binding="{Binding SubtotalAfter, StringFormat='{}{0:N0}'}" IsReadOnly="True" Width="120">
+                <DataGridTextColumn.ElementStyle>
+                  <Style TargetType="TextBlock">
+                    <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
+                    <Setter Property="TextAlignment" Value="Right" />
+                  </Style>
+                </DataGridTextColumn.ElementStyle>
+              </DataGridTextColumn>
+              <DataGridTemplateColumn Header="" Width="40">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <Button Content="×" Width="26" Height="26" Padding="0" FontSize="14" FontWeight="SemiBold" Cursor="Hand"
+                            Background="Transparent" BorderThickness="0" Foreground="{DynamicResource Brush.Muted}"
+                            Command="{Binding DataContext.RemoveConceptCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                            CommandParameter="{Binding}" />
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
+            </DataGrid.Columns>
+          </DataGrid>
+        </StackPanel>
+      </Border>
+
+      <!-- Resultado -->
+      <Border Padding="16" CornerRadius="10" Background="{DynamicResource Brush.Navy}">
+        <StackPanel>
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0">
+              <TextBlock Text="PRECIO UNITARIO FINAL" FontSize="9" FontWeight="Bold" Foreground="#94A3B8" />
+              <TextBlock Text="{Binding TotalCost, StringFormat='$ {0:N0}'}" FontSize="20" FontWeight="Bold" Foreground="White" />
+            </StackPanel>
+            <TextBlock Grid.Column="1" Text="{Binding StatusMessage}" FontSize="11" Foreground="#CBD5E1"
+                       VerticalAlignment="Bottom" TextWrapping="Wrap" MaxWidth="360" />
+          </Grid>
+        </StackPanel>
+      </Border>
+
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

@@ -81,6 +81,7 @@ public sealed class WpfAppHost
     services.ApuCatalog = new ApuCatalogService(services.ApuVersionRepository, new SqliteApuSnapshotRepository(priceBankPath), services.ApuCatalogRepository);
     services.BenchmarkRepository = new SqliteProjectBenchmarkRepository(priceBankPath);
     services.Benchmark = new BenchmarkService(services.BenchmarkRepository);
+    services.EconomicCalculation = new EconomicCalculationService();
     var session = new BudgetProjectSession();
     var projectWorkspace = new ProjectWorkspaceService(session, services.ProjectRepository, services.Validation);
     var documents = new DocumentsWorkspaceService(session);
