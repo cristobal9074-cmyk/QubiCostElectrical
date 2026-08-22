@@ -49,6 +49,10 @@ public sealed class AppServices
     public PriceBankApplicationService PriceBank { get; }
     public IPriceBankStore PriceBankStore { get; }
 
+    public IApuCatalogRepository ApuCatalogRepository { get; set; } = null!;
+    public IApuCatalogService ApuCatalog { get; set; } = null!;
+    public IApuVersionRepository ApuVersionRepository { get; set; } = null!;
+
     public AppServices(
         IBudgetCalculationService budgetCalculation,
         IMaterialSearchService materialSearch,

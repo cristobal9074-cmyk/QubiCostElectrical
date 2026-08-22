@@ -24,7 +24,8 @@ public enum ShellRoute
     Costo,
     Epp,
     ManoDeObra,
-    ApuCatalog
+    ApuCatalog,
+    ApuMerge
 }
 
 public sealed record ShellRouteInfo(
@@ -60,7 +61,8 @@ public static class ShellRouteCatalog
           [ShellRoute.Costo] = new(ShellRoute.Costo, "Costos", "Desglose de costos"),
           [ShellRoute.Epp] = new(ShellRoute.Epp, "Costos", "EPP"),
           [ShellRoute.ManoDeObra] = new(ShellRoute.ManoDeObra, "Costos", "Mano de obra"),
-          [ShellRoute.ApuCatalog] = new(ShellRoute.ApuCatalog, "Presupuesto", "Catálogo APU")
+          [ShellRoute.ApuCatalog] = new(ShellRoute.ApuCatalog, "Presupuesto", "Catálogo APU"),
+          [ShellRoute.ApuMerge] = new(ShellRoute.ApuMerge, "Presupuesto", "Fusión de versiones APU")
 };
 
   public static ShellRouteInfo Get(ShellRoute route) => Routes[route];

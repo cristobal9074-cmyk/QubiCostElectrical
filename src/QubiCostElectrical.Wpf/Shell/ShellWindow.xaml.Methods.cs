@@ -78,7 +78,9 @@ public partial class ShellWindow : Window
         NavMoreGroup.Items =
         [
             new NavDropdownItem { Label = "Plantillas", Route = ShellRoute.Templates },
-            new NavDropdownItem { Label = "Resumen por piso", Route = ShellRoute.FloorSummary }
+            new NavDropdownItem { Label = "Resumen por piso", Route = ShellRoute.FloorSummary },
+            new NavDropdownItem { Label = "Catálogo APU", Route = ShellRoute.ApuCatalog },
+            new NavDropdownItem { Label = "Fusión de versiones APU", Route = ShellRoute.ApuMerge }
         ];
         _viewModel.Navigate(ShellRoute.Dashboard);
         UpdateNavVisuals();

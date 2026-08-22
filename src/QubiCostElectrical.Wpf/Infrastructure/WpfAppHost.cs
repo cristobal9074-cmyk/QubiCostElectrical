@@ -1,3 +1,5 @@
+using QubiCostElectrical;
+using QubiCostElectrical.Infrastructure;
 using QubiCostElectrical.Wpf.Auth;
 using QubiCostElectrical.Wpf.Infrastructure.Diagnostics;
 
@@ -74,6 +76,9 @@ public sealed class WpfAppHost
     var services = new AppServicesBuilder()
         .WithPriceBankStore(new PriceBankStore(priceBankPath))
         .Build();
+    services.ApuCatalogRepository = new SqliteApuCatalogRepository(priceBankPath);
+    services.ApuVersionRepository = new SqliteApuVersionRepository(priceBankPath);
+    services.ApuCatalog = new ApuCatalogService(services.ApuVersionRepository, new SqliteApuSnapshotRepository(priceBankPath), services.ApuCatalogRepository);
     var session = new BudgetProjectSession();
     var projectWorkspace = new ProjectWorkspaceService(session, services.ProjectRepository, services.Validation);
     var documents = new DocumentsWorkspaceService(session);

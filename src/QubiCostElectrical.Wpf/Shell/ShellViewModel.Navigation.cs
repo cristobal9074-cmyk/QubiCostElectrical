@@ -19,6 +19,8 @@ using QubiCostElectrical.Wpf.Features.Solicitudes;
 using QubiCostElectrical.Wpf.Features.Costo;
 using QubiCostElectrical.Wpf.Features.Epp;
 using QubiCostElectrical.Wpf.Features.ManoDeObra;
+using ApuCatalogFeature = QubiCostElectrical.Wpf.Features.ApuCatalog;
+using ApuMergeFeature = QubiCostElectrical.Wpf.Features.ApuMerge;
 using QubiCostElectrical.Wpf.Features.Prices;
 using QubiCostElectrical.Wpf.Features.Project;
 using QubiCostElectrical.Wpf.Infrastructure;
@@ -234,6 +236,16 @@ partial class ShellViewModel
             {
                 var vm = new ManoDeObraViewModel(shell, appHost);
                 return (new ManoDeObraView { DataContext = vm }, vm);
+            }
+            case ShellRoute.ApuCatalog:
+            {
+                var vm = new ApuCatalogFeature.ApuCatalogViewModel(shell, appHost);
+                return (new ApuCatalogFeature.ApuCatalogView { DataContext = vm }, vm);
+            }
+            case ShellRoute.ApuMerge:
+            {
+                var vm = new ApuMergeFeature.ApuMergeViewModel(shell, appHost);
+                return (new ApuMergeFeature.ApuMergeView { DataContext = vm }, vm);
             }
             default:
                 throw new InvalidOperationException($"La ruta {route} no tiene vista registrada.");
