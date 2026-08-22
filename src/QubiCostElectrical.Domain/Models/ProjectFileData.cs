@@ -128,6 +128,9 @@ public sealed class ProjectFileData
     public List<MoIndirectaRow> MoIndirecta { get; set; } = new();
     public List<GastoOperacionalRow> GastosOperacionales { get; set; } = new();
     public List<MoProjectionTaskRow> MoProjectionTasks { get; set; } = new();
+    public List<NegotiatedDiscountRow> NegotiatedDiscounts { get; set; } = new();
+    public List<StaffingRoleRow> StaffingPlan { get; set; } = new();
     public EppBudgetData Epp { get; set; } = EppBudgetData.Default();
+    public ClosingPolicySelection ClosingPolicy { get; set; } = ClosingPolicySelection.Default();
     public string ActiveVersionId { get; set; } = "";
 }

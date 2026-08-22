@@ -53,6 +53,9 @@ public sealed class AppServices
     public IApuCatalogService ApuCatalog { get; set; } = null!;
     public IApuVersionRepository ApuVersionRepository { get; set; } = null!;
 
+    public IProjectBenchmarkRepository BenchmarkRepository { get; set; } = null!;
+    public IBenchmarkService Benchmark { get; set; } = null!;
+
     public AppServices(
         IBudgetCalculationService budgetCalculation,
         IMaterialSearchService materialSearch,

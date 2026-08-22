@@ -42,6 +42,9 @@ public static class SQLiteSchemaMigrator
         new(26, "MO dotación (directa e indirecta) y gastos operacionales",                              SqliteMigrationSteps.Migration026_MoDotacionGastosOperacionales),
         new(27, "Presupuesto EPP editable del proyecto",                                                 SqliteMigrationSteps.Migration027_EppBudget),
         new(28, "Proyección de mano de obra por tarea",                                                  SqliteMigrationSteps.Migration028_MoProjectionTasks),
+        new(29, "Descuentos negociados por equipo/material específico",                                  SqliteMigrationSteps.Migration029_NegotiatedDiscounts),
+        new(30, "Política de cierre comercial del proyecto",                                             SqliteMigrationSteps.Migration030_ClosingPolicy),
+        new(31, "Dotación indirecta por rol, dedicación y meses",                                        SqliteMigrationSteps.Migration031_StaffingPlan),
     };
 
     public static void MigrateToLatest(SqliteConnection connection)

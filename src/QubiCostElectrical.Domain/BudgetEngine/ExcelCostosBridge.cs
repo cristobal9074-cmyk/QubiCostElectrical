@@ -35,6 +35,10 @@ public static class ExcelCostosBridge
         return total;
     }
 
+    /// <summary>Dotación indirecta por rol (Administrador, Supervisor, etc.) × dedicación% × meses.</summary>
+    public static decimal SumStaffingPlanClp(IEnumerable<StaffingRoleRow>? roles)
+        => roles?.Sum(r => r.TotalClp) ?? 0m;
+
     /// <summary>
     /// Suma MO directa + indirecta (sueldos base × dotación × meses) × (1 + leyes%).
     /// </summary>
@@ -107,7 +111,8 @@ public static class ExcelCostosBridge
         data ??= new ProjectFileData();
         var project = data.Proyecto ?? new ProjectInfoRow();
         int months = project.MoDuracionMeses > 0 ? project.MoDuracionMeses : 12;
-        settings.GastosOperacionalesClp = SumGastosOperacionalesClp(data.GastosOperacionales);
+        settings.GastosOperacionalesClp = SumGastosOperacionalesClp(data.GastosOperacionales) + SumStaffingPlanClp(data.StaffingPlan);
+        settings.NegotiatedDiscounts = data.NegotiatedDiscounts ?? new List<NegotiatedDiscountRow>();
         // Preferir total del módulo MO (leyes + curva); si no hay, recomputar desde filas.
         settings.ManoObraDotacionClp = project.MoTotalClp > 0m
             ? project.MoTotalClp

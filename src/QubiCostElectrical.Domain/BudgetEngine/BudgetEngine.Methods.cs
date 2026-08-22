@@ -373,6 +373,9 @@ public sealed partial class BudgetEngine
         // pero almacenan pesos; preferir alias *Clp en código nuevo.
         decimal material = row.Cantidad * row.MatClpConFallback;
         decimal manoObra = row.Cantidad * row.MoClpConFallback;
+        decimal negotiatedDiscountPct = LookupNegotiatedDiscountPct(settings.NegotiatedDiscounts, row.Codigo);
+        if (negotiatedDiscountPct > 0m)
+            material *= 1m - negotiatedDiscountPct / 100m;
         decimal total = material + manoObra;
         string tipo = (row.Tipo ?? "MAT").Trim().ToUpperInvariant();
         decimal valorUf = settings.Currency.ValorUfClp > 0m ? settings.Currency.ValorUfClp : 39000m;
@@ -469,6 +472,13 @@ public sealed partial class BudgetEngine
             "MO" or "HH" => 0m,
             _ => row.Cantidad * row.MatClpConFallback
         };
+    }
+
+    private static decimal LookupNegotiatedDiscountPct(List<NegotiatedDiscountRow>? discounts, string? codigo)
+    {
+        if (discounts == null || discounts.Count == 0 || string.IsNullOrWhiteSpace(codigo)) return 0m;
+        var match = discounts.FirstOrDefault(d => string.Equals((d.Codigo ?? "").Trim(), codigo.Trim(), StringComparison.OrdinalIgnoreCase));
+        return match != null ? MarkupPolicy.ClampPct(match.DescuentoPct) : 0m;
     }
 
     private static bool IsLikelyTemplate(CubicacionRow row)

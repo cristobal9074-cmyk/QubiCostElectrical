@@ -237,4 +237,38 @@ public sealed class BudgetEngineCostTests
         // Con IVA del 19%: 15200 * 1.19 = 18088 CLP
         Assert.Equal(18088m, r.TotalVentaUf);
     }
+
+    [Fact]
+    public void Calculate_NegotiatedDiscount_ReducesMaterialCostForMatchingCodigo()
+    {
+        var engine = new BudgetEngine();
+        var row = Mat(10m, 1000m); // material 10*1000 = 10000 CLP, sin MO
+        var settings = BudgetSettings.FromValues(gastosGeneralesPct: 0m, utilidadPct: 0m, metrosCuadrados: 0m);
+        settings.NegotiatedDiscounts = new List<NegotiatedDiscountRow>
+        {
+            new() { Codigo = "C1", DescuentoPct = 10m }
+        };
+
+        var r = engine.Calculate(new[] { row }, settings);
+
+        // 10000 * (1 - 10%) = 9000
+        Assert.Equal(9000m, r.MaterialesUf);
+        Assert.Equal(9000m, r.CostoDirectoUf);
+    }
+
+    [Fact]
+    public void Calculate_NegotiatedDiscount_DoesNotAffectNonMatchingCodigo()
+    {
+        var engine = new BudgetEngine();
+        var row = Mat(10m, 1000m);
+        var settings = BudgetSettings.FromValues(gastosGeneralesPct: 0m, utilidadPct: 0m, metrosCuadrados: 0m);
+        settings.NegotiatedDiscounts = new List<NegotiatedDiscountRow>
+        {
+            new() { Codigo = "OTRO", DescuentoPct = 50m }
+        };
+
+        var r = engine.Calculate(new[] { row }, settings);
+
+        Assert.Equal(10000m, r.MaterialesUf);
+    }
 }

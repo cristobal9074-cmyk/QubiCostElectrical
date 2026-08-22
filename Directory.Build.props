@@ -9,7 +9,7 @@
     <Product>Qubi Cost Electrical</Product>
     <Copyright>© Qubi Cost 2026. Todos los derechos reservados.</Copyright>
     <Description>Software profesional de presupuestos eléctricos con cubicación, APU, cotizaciones y ofertas comerciales.</Description>
-    <DatabaseSchemaVersion>28</DatabaseSchemaVersion>
+    <DatabaseSchemaVersion>31</DatabaseSchemaVersion>
     <ProjectFormatVersion>6</ProjectFormatVersion>
     <CalculationEngineVersion>2</CalculationEngineVersion>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>

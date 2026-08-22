@@ -631,4 +631,39 @@ internal static partial class SqliteMigrationSteps
             );
             """);
     }
+
+    internal static void Migration029_NegotiatedDiscounts(SqliteConnection connection, SqliteTransaction transaction)
+    {
+        SqliteMigratorHelpers.Execute(connection, transaction, """
+            CREATE TABLE IF NOT EXISTS negotiated_discounts (
+                id          TEXT NOT NULL PRIMARY KEY,
+                sort_order  INTEGER NOT NULL DEFAULT 0,
+                json        TEXT NOT NULL,
+                updated_at  TEXT NOT NULL
+            );
+            """);
+    }
+
+    internal static void Migration030_ClosingPolicy(SqliteConnection connection, SqliteTransaction transaction)
+    {
+        SqliteMigratorHelpers.Execute(connection, transaction, """
+            CREATE TABLE IF NOT EXISTS closing_policy (
+                id          INTEGER NOT NULL PRIMARY KEY CHECK (id = 1),
+                json        TEXT NOT NULL,
+                updated_at  TEXT NOT NULL
+            );
+            """);
+    }
+
+    internal static void Migration031_StaffingPlan(SqliteConnection connection, SqliteTransaction transaction)
+    {
+        SqliteMigratorHelpers.Execute(connection, transaction, """
+            CREATE TABLE IF NOT EXISTS staffing_plan (
+                id          TEXT NOT NULL PRIMARY KEY,
+                sort_order  INTEGER NOT NULL DEFAULT 0,
+                json        TEXT NOT NULL,
+                updated_at  TEXT NOT NULL
+            );
+            """);
+    }
 }

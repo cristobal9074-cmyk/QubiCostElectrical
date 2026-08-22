@@ -27,6 +27,12 @@ public sealed class BudgetSettings
     public bool AllowPartidaCommercialOverrides { get; set; } = true;
     public List<CommercialPartidaRule> CommercialPartidaRules { get; set; } = new();
 
+    /// <summary>
+    /// Descuentos negociados por código de material/equipo específico (independiente del factor
+    /// de presentación por categoría). Se aplican sobre el costo de material antes de GG/Utilidad.
+    /// </summary>
+    public List<NegotiatedDiscountRow> NegotiatedDiscounts { get; set; } = new();
+
     /// <summary>GO del módulo Gastos Operacionales (CLP). 0 = no hay GO en el puente.</summary>
     public decimal GastosOperacionalesClp { get; set; }
 

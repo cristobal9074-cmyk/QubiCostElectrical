@@ -1,0 +1,32 @@
+using System;
+using System.Collections.Generic;
+using Microsoft.Data.Sqlite;
+
+namespace QubiCostElectrical;
+
+internal static class SqliteNegotiatedDiscountStore
+{
+    internal static void Save(SqliteConnection connection, SqliteTransaction transaction, List<NegotiatedDiscountRow> rows, string now)
+    {
+        using var cmd = connection.CreateCommand();
+        cmd.Transaction = transaction;
+        cmd.CommandText = """
+            INSERT INTO negotiated_discounts (id, sort_order, json, updated_at)
+            VALUES ($id, $sort_order, $json, $updated_at)
+            ON CONFLICT(id) DO UPDATE SET
+                sort_order = excluded.sort_order,
+                json = excluded.json,
+                updated_at = excluded.updated_at;
+            """;
+        SqliteStoreHelpers.AddCommonParameters(cmd, "$id", "$sort_order", "$json", "$updated_at");
+        cmd.Prepare();
+
+        for (int i = 0; i < rows.Count; i++)
+        {
+            var row = rows[i];
+            if (string.IsNullOrWhiteSpace(row.Id)) row.Id = Guid.NewGuid().ToString("N");
+            SqliteStoreHelpers.SetCommonParameters(cmd, row.Id, i, row, now);
+            cmd.ExecuteNonQuery();
+        }
+    }
+}

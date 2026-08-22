@@ -49,6 +49,41 @@ public class ExcelCostosBridgeTests
     }
 
     [Fact]
+    public void SumStaffingPlanClp_MultipliesTarifaByDedicacionAndMeses()
+    {
+        var roles = new List<StaffingRoleRow>
+        {
+            new() { Cargo = "Administrador", TarifaMensualClp = 1_000_000m, DedicacionPct = 30m, Meses = 10 }, // 3_000_000
+            new() { Cargo = "Supervisor", TarifaMensualClp = 2_000_000m, DedicacionPct = 100m, Meses = 10 }    // 20_000_000
+        };
+
+        Assert.Equal(23_000_000m, ExcelCostosBridge.SumStaffingPlanClp(roles));
+    }
+
+    [Fact]
+    public void EnrichFromProjectData_IncludesStaffingPlanAndNegotiatedDiscounts()
+    {
+        var data = new ProjectFileData
+        {
+            GastosOperacionales = new List<GastoOperacionalRow> { new() { MontoClp = 1_000m } },
+            StaffingPlan = new List<StaffingRoleRow>
+            {
+                new() { TarifaMensualClp = 500_000m, DedicacionPct = 100m, Meses = 1 }
+            },
+            NegotiatedDiscounts = new List<NegotiatedDiscountRow>
+            {
+                new() { Codigo = "TRAFO", DescuentoPct = 5m }
+            }
+        };
+
+        var settings = ExcelCostosBridge.EnrichFromProjectData(BudgetSettings.FromProject(null), data);
+
+        Assert.Equal(501_000m, settings.GastosOperacionalesClp);
+        Assert.Single(settings.NegotiatedDiscounts);
+        Assert.Equal("TRAFO", settings.NegotiatedDiscounts[0].Codigo);
+    }
+
+    [Fact]
     public void PresetPel029_HasMatAndPvcAt157()
     {
         Assert.Equal(1.57m, ExcelCostosBridge.PresetFactoresPel029["Conductores"]);

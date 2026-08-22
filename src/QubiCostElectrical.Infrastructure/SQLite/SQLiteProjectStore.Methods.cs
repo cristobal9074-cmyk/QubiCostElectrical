@@ -126,6 +126,16 @@ public static partial class SQLiteProjectStore
 
             SqliteEppStore.Save(connection, transaction, data.Epp ?? EppBudgetData.Default(), now);
 
+            var negotiatedDiscounts = data.NegotiatedDiscounts ?? new List<NegotiatedDiscountRow>();
+            SqliteNegotiatedDiscountStore.Save(connection, transaction, negotiatedDiscounts, now);
+            SqliteStoreHelpers.DeleteMissingKeys(connection, transaction, "negotiated_discounts", "id", negotiatedDiscounts.Select(x => x.Id));
+
+            var staffingPlan = data.StaffingPlan ?? new List<StaffingRoleRow>();
+            SqliteStaffingPlanStore.Save(connection, transaction, staffingPlan, now);
+            SqliteStoreHelpers.DeleteMissingKeys(connection, transaction, "staffing_plan", "id", staffingPlan.Select(x => x.Id));
+
+            SqliteClosingPolicyStore.Save(connection, transaction, data.ClosingPolicy ?? ClosingPolicySelection.Default(), now);
+
             transaction.Commit();
         }
         catch (Exception ex)
@@ -326,6 +336,25 @@ public static partial class SQLiteProjectStore
                 SqliteEppStore.Save(connection, transaction, data.Epp ?? EppBudgetData.Default(), now);
             }
 
+            if (scopes.Contains("negotiated_discounts"))
+            {
+                var rows = data.NegotiatedDiscounts ?? new List<NegotiatedDiscountRow>();
+                SqliteNegotiatedDiscountStore.Save(connection, transaction, rows, now);
+                SqliteStoreHelpers.DeleteMissingKeys(connection, transaction, "negotiated_discounts", "id", rows.Select(x => x.Id));
+            }
+
+            if (scopes.Contains("staffing_plan"))
+            {
+                var rows = data.StaffingPlan ?? new List<StaffingRoleRow>();
+                SqliteStaffingPlanStore.Save(connection, transaction, rows, now);
+                SqliteStoreHelpers.DeleteMissingKeys(connection, transaction, "staffing_plan", "id", rows.Select(x => x.Id));
+            }
+
+            if (scopes.Contains("closing_policy"))
+            {
+                SqliteClosingPolicyStore.Save(connection, transaction, data.ClosingPolicy ?? ClosingPolicySelection.Default(), now);
+            }
+
             if (scopes.Contains("cubicacion_sc"))
             {
                 var rows = data.CubicacionSC ?? new List<CuadroCargaSCRow>();
@@ -383,6 +412,9 @@ public static partial class SQLiteProjectStore
             GastosOperacionales    = SqliteStoreHelpers.ReadJsonRows<GastoOperacionalRow>(connection, "SELECT json FROM gastos_operacionales ORDER BY sort_order, id;"),
             MoProjectionTasks      = SqliteStoreHelpers.ReadJsonRows<MoProjectionTaskRow>(connection, "SELECT json FROM mo_projection_tasks ORDER BY sort_order, id;"),
             Epp                    = SqliteEppStore.Load(connection),
+            NegotiatedDiscounts    = SqliteStoreHelpers.ReadJsonRows<NegotiatedDiscountRow>(connection, "SELECT json FROM negotiated_discounts ORDER BY sort_order, id;"),
+            StaffingPlan           = SqliteStoreHelpers.ReadJsonRows<StaffingRoleRow>(connection, "SELECT json FROM staffing_plan ORDER BY sort_order, id;"),
+            ClosingPolicy          = SqliteClosingPolicyStore.Load(connection),
             ActiveVersionId        = SqliteStoreHelpers.ReadMeta(connection, "active_version_id") ?? ""
         };
 #pragma warning restore CS0618
