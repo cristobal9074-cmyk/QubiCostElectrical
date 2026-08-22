@@ -23,7 +23,11 @@ public sealed class BudgetVersionData
     public List<MoDirectaRow> MoDirecta { get; set; } = new();
     public List<MoIndirectaRow> MoIndirecta { get; set; } = new();
     public List<GastoOperacionalRow> GastosOperacionales { get; set; } = new();
+    public List<MoProjectionTaskRow> MoProjectionTasks { get; set; } = new();
+    public List<NegotiatedDiscountRow> NegotiatedDiscounts { get; set; } = new();
+    public List<StaffingRoleRow> StaffingPlan { get; set; } = new();
     public EppBudgetData Epp { get; set; } = EppBudgetData.Default();
+    public ClosingPolicySelection ClosingPolicy { get; set; } = ClosingPolicySelection.Default();
 
     public static BudgetVersionData FromProjectFileData(ProjectFileData source)
     {
@@ -52,7 +56,11 @@ public sealed class BudgetVersionData
             MoDirecta = source.MoDirecta,
             MoIndirecta = source.MoIndirecta,
             GastosOperacionales = source.GastosOperacionales,
-            Epp = source.Epp
+            MoProjectionTasks = source.MoProjectionTasks,
+            NegotiatedDiscounts = source.NegotiatedDiscounts,
+            StaffingPlan = source.StaffingPlan,
+            Epp = source.Epp,
+            ClosingPolicy = source.ClosingPolicy
         };
     }
 }

@@ -60,6 +60,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
     private bool coefAppliedFlash;
     private bool politicaCostosExcel;
     private string costosPresetHint = "Sin preset guardado en este proyecto";
+    public ClosingPolicySectionVm ClosingPolicySection { get; }
 
     private static readonly string[] GoPalette =
     [

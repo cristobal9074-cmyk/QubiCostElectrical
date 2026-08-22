@@ -155,10 +155,32 @@ public static class ClosingPolicyEngine
 
     private static ClosingPolicyResult ApplyUnitPricePure(CostBreakdown breakdown)
     {
-        decimal venta = (breakdown.Origenes ?? new List<CostOriginBreakdown>()).Sum(o => o.VentaClp);
+        // Algunos orígenes no traen precio unitario propio (cargos globales de herramientas/mermas,
+        // órdenes de cambio aprobadas guardan solo el delta de costo): sin este fallback quedarían
+        // en 0 y la venta se subcontaría silenciosamente. Se suman a costo (sin margen) y se avisa.
+        decimal venta = 0m;
+        bool hadCostOnlyOrigins = false;
+        foreach (var o in breakdown.Origenes ?? new List<CostOriginBreakdown>())
+        {
+            if (o.VentaClp > 0m)
+            {
+                venta += o.VentaClp;
+            }
+            else if (o.TotalUf > 0m)
+            {
+                venta += o.TotalUf;
+                hadCostOnlyOrigins = true;
+            }
+        }
+
+        var warnings = new List<string>();
+        if (hadCostOnlyOrigins)
+            warnings.Add("Algunas líneas (cargos globales de herramientas/mermas, órdenes de cambio aprobadas) no tienen precio unitario propio; se sumaron a costo, sin margen adicional.");
+
         return new ClosingPolicyResult
         {
             VentaFinalClp = venta > 0m ? venta : breakdown.TotalVentaUf,
+            Advertencias = warnings,
             Explicacion = "Venta = suma de precios unitarios contractuales por partida (el margen ya está embebido en cada precio unitario)."
         };
     }
@@ -179,7 +201,7 @@ public static class ClosingPolicyEngine
         }
 
         decimal variance = selection.TargetCostClp - breakdown.CostoDirectoUf; // positivo = ahorro
-        decimal shared = variance * Math.Clamp(selection.GainsharePct, 0m, 100m) / 100m;
+        decimal shared = variance * MarkupPolicy.ClampPct(selection.GainsharePct) / 100m;
         if (selection.GainshareCapClp > 0m)
             shared = Math.Clamp(shared, -selection.GainshareCapClp, selection.GainshareCapClp);
 

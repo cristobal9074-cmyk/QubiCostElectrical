@@ -257,6 +257,25 @@ public sealed class BudgetEngineCostTests
     }
 
     [Fact]
+    public void Calculate_NegotiatedDiscount_AlsoAppliesToMaterialesCriticosSummary()
+    {
+        // El descuento debe verse igual en el desglose de costos y en "Materiales críticos";
+        // antes del fix, el resumen recalculaba el costo sin descuento y quedaba inconsistente.
+        var engine = new BudgetEngine();
+        var row = Mat(10m, 1000m);
+        var settings = BudgetSettings.FromValues(gastosGeneralesPct: 0m, utilidadPct: 0m, metrosCuadrados: 0m);
+        settings.NegotiatedDiscounts = new List<NegotiatedDiscountRow>
+        {
+            new() { Codigo = "C1", DescuentoPct = 10m }
+        };
+
+        var r = engine.Calculate(new[] { row }, settings);
+
+        var critico = Assert.Single(r.MaterialesCriticos);
+        Assert.Equal(9000m, critico.TotalUf);
+    }
+
+    [Fact]
     public void Calculate_NegotiatedDiscount_DoesNotAffectNonMatchingCodigo()
     {
         var engine = new BudgetEngine();

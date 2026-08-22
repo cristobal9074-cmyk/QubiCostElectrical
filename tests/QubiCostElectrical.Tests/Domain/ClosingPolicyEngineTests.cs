@@ -111,6 +111,28 @@ public sealed class ClosingPolicyEngineTests
     }
 
     [Fact]
+    public void UnitPricePure_FallsBackToCostForOriginsWithoutOwnUnitPrice()
+    {
+        // Cargos globales (herramientas/mermas) y órdenes de cambio aprobadas guardan VentaClp=0
+        // pero sí tienen costo (MermasUf/OrdenesCambioUf) — sin el fallback quedaban fuera de la venta.
+        var breakdown = new CostBreakdown
+        {
+            TotalVentaUf = 999_999m, // no debe usarse: hay orígenes reales
+            Origenes = new List<CostOriginBreakdown>
+            {
+                new() { VentaClp = 700_000m },
+                new() { VentaClp = 0m, MermasUf = 30_000m, IsGlobalAutoCharge = true },
+                new() { VentaClp = 0m, OrdenesCambioUf = 200_000m }
+            }
+        };
+
+        var result = ClosingPolicyEngine.Apply(breakdown, new ClosingPolicySelection { Policy = ClosingPolicyType.UnitPricePure });
+
+        Assert.Equal(930_000m, result.VentaFinalClp); // 700_000 + 30_000 + 200_000
+        Assert.NotEmpty(result.Advertencias);
+    }
+
+    [Fact]
     public void Gainshare_SharesSavingsWhenUnderTargetCost()
     {
         // Costo real 1_000_000 vs objetivo 1_100_000 -> ahorro 100_000; 50% compartido = 50_000

@@ -97,9 +97,4 @@ public sealed class CoefFactorVm : ViewModelBase
         OnPropertyChanged(nameof(ValueText));
     }
 
-    private static bool TryParseDecimal(string? text, out decimal value)
-    {
-        var normalized = (text ?? "").Replace(",", ".");
-        return decimal.TryParse(normalized, NumberStyles.Any, CultureInfo.InvariantCulture, out value);
-    }
 }

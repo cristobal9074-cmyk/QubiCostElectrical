@@ -96,7 +96,7 @@ public sealed partial class BudgetEngine
 
         foreach (var row in rows.Where(x => string.IsNullOrWhiteSpace(x.ItemId) || !dirty.Contains(x.ItemId)))
         {
-            AddMaterialTotalFromCubicacionRow(result, row);
+            AddMaterialTotalFromCubicacionRow(result, row, settings);
         }
 
         var dirtyItemIdsToProcess = rows
@@ -435,7 +435,7 @@ public sealed partial class BudgetEngine
         if (row.MermaPctOverride >= 0m && origin.MaterialesClp != 0m)
             origin.MermasClp += origin.MaterialesClp * MarkupPolicy.ClampPct(row.MermaPctOverride) / 100m;
 
-        AddMaterialTotalFromCubicacionRow(result, row);
+        AddMaterialTotalFromCubicacionRow(result, row, settings);
 
         AddOrigin(result, origin);
     }
@@ -449,10 +449,13 @@ public sealed partial class BudgetEngine
         return row.MatClpConFallback != 0m || row.MoClpConFallback != 0m;
     }
 
-    private static void AddMaterialTotalFromCubicacionRow(DirectCostResult result, CubicacionRow row)
+    private static void AddMaterialTotalFromCubicacionRow(DirectCostResult result, CubicacionRow row, BudgetSettings settings)
     {
         if (row == null || string.IsNullOrWhiteSpace(row.Codigo)) return;
         decimal material = MaterialTotalForMaterialSummary(row);
+        decimal negotiatedDiscountPct = LookupNegotiatedDiscountPct(settings.NegotiatedDiscounts, row.Codigo);
+        if (negotiatedDiscountPct > 0m)
+            material *= 1m - negotiatedDiscountPct / 100m;
         if (material != 0m)
             AddMaterialTotal(result, row.Codigo, row.Descripcion, row.Unidad, row.Cantidad, material);
     }

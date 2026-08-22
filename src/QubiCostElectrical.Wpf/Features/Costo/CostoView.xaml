@@ -1031,6 +1031,128 @@
             </DataGrid>
           </Border>
 
+          <!-- Política de cierre comercial -->
+          <Border Style="{StaticResource Card.Section}" Padding="16" Margin="0,0,0,14">
+            <StackPanel DataContext="{Binding ClosingPolicySection}">
+              <TextBlock Text="POLÍTICA DE CIERRE COMERCIAL" FontSize="10" FontWeight="Bold"
+                         Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,8" />
+
+              <ComboBox ItemsSource="{Binding Options}"
+                        SelectedItem="{Binding SelectedOption}"
+                        DisplayMemberPath="DisplayName"
+                        Style="{StaticResource Form.ComboBox}"
+                        IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                        HorizontalAlignment="Left" MinWidth="220"
+                        Margin="0,0,0,12" />
+
+              <!-- Precio Objetivo -->
+              <Border Margin="0,0,0,10" Padding="11,10" CornerRadius="10" BorderBrush="{DynamicResource Brush.Line}"
+                      BorderThickness="1" Background="{DynamicResource Brush.BlueFaint}"
+                      Visibility="{Binding ShowTargetPrice, Converter={StaticResource BoolToVisibility}}">
+                <StackPanel>
+                  <TextBlock Text="PRECIO OBJETIVO (CLP)" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,5" />
+                  <TextBox Text="{Binding TargetPriceClpText, UpdateSourceTrigger=LostFocus}"
+                           Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" FontSize="14" FontWeight="SemiBold"
+                           IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                </StackPanel>
+              </Border>
+
+              <!-- Suma Alzada / EPC -->
+              <Border Margin="0,0,0,10" Padding="11,10" CornerRadius="10" BorderBrush="{DynamicResource Brush.Line}"
+                      BorderThickness="1" Background="{DynamicResource Brush.BlueFaint}"
+                      Visibility="{Binding ShowLumpSum, Converter={StaticResource BoolToVisibility}}">
+                <StackPanel>
+                  <TextBlock Text="CONTINGENCIA MÍNIMA (%)" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,5" />
+                  <TextBox Text="{Binding LumpSumMinRiskPctText, UpdateSourceTrigger=LostFocus}"
+                           Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" FontSize="14" FontWeight="SemiBold"
+                           IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                </StackPanel>
+              </Border>
+
+              <!-- Costo + Fee -->
+              <UniformGrid Columns="2" Margin="0,0,0,10"
+                           Visibility="{Binding ShowCostPlusFee, Converter={StaticResource BoolToVisibility}}">
+                <Border Margin="0,0,8,0" Padding="11,10" CornerRadius="10" BorderBrush="{DynamicResource Brush.Line}"
+                        BorderThickness="1" Background="{DynamicResource Brush.BlueFaint}">
+                  <StackPanel>
+                    <TextBlock Text="FEE FIJO (CLP)" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,5" />
+                    <TextBox Text="{Binding FeeClpText, UpdateSourceTrigger=LostFocus}"
+                             Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" FontSize="14" FontWeight="SemiBold"
+                             IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                  </StackPanel>
+                </Border>
+                <Border Padding="11,10" CornerRadius="10" BorderBrush="{DynamicResource Brush.Line}"
+                        BorderThickness="1" Background="{DynamicResource Brush.BlueFaint}">
+                  <StackPanel>
+                    <TextBlock Text="FEE % (si no hay fee fijo)" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,5" />
+                    <TextBox Text="{Binding FeePctText, UpdateSourceTrigger=LostFocus}"
+                             Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" FontSize="14" FontWeight="SemiBold"
+                             IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                  </StackPanel>
+                </Border>
+              </UniformGrid>
+
+              <!-- Gainshare / Painshare -->
+              <UniformGrid Columns="3" Margin="0,0,0,10"
+                           Visibility="{Binding ShowGainshare, Converter={StaticResource BoolToVisibility}}">
+                <Border Margin="0,0,8,0" Padding="11,10" CornerRadius="10" BorderBrush="{DynamicResource Brush.Line}"
+                        BorderThickness="1" Background="{DynamicResource Brush.BlueFaint}">
+                  <StackPanel>
+                    <TextBlock Text="COSTO OBJETIVO (CLP)" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,5" />
+                    <TextBox Text="{Binding TargetCostClpText, UpdateSourceTrigger=LostFocus}"
+                             Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" FontSize="14" FontWeight="SemiBold"
+                             IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                  </StackPanel>
+                </Border>
+                <Border Margin="0,0,8,0" Padding="11,10" CornerRadius="10" BorderBrush="{DynamicResource Brush.Line}"
+                        BorderThickness="1" Background="{DynamicResource Brush.BlueFaint}">
+                  <StackPanel>
+                    <TextBlock Text="% COMPARTIDO" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,5" />
+                    <TextBox Text="{Binding GainsharePctText, UpdateSourceTrigger=LostFocus}"
+                             Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" FontSize="14" FontWeight="SemiBold"
+                             IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                  </StackPanel>
+                </Border>
+                <Border Padding="11,10" CornerRadius="10" BorderBrush="{DynamicResource Brush.Line}"
+                        BorderThickness="1" Background="{DynamicResource Brush.BlueFaint}">
+                  <StackPanel>
+                    <TextBlock Text="TOPE (CLP, 0 = sin tope)" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,5" />
+                    <TextBox Text="{Binding GainshareCapClpText, UpdateSourceTrigger=LostFocus}"
+                             Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" FontSize="14" FontWeight="SemiBold"
+                             IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                  </StackPanel>
+                </Border>
+              </UniformGrid>
+
+              <!-- Resultado -->
+              <Border Margin="0,2,0,0" Padding="12,10" CornerRadius="10" Background="{DynamicResource Brush.Navy}">
+                <StackPanel>
+                  <UniformGrid Columns="2">
+                    <StackPanel>
+                      <TextBlock Text="VENTA FINAL" FontSize="9" FontWeight="Bold" Foreground="#94A3B8" />
+                      <TextBlock Text="{Binding VentaFinalLabel}" FontSize="16" FontWeight="Bold" Foreground="White" />
+                      <TextBlock Text="{Binding VentaFinalSubLabel}" FontSize="10" Foreground="#94A3B8" />
+                    </StackPanel>
+                    <StackPanel>
+                      <TextBlock Text="MARGEN" FontSize="9" FontWeight="Bold" Foreground="#94A3B8" />
+                      <TextBlock Text="{Binding MargenLabel}" FontSize="16" FontWeight="Bold" Foreground="White" />
+                    </StackPanel>
+                  </UniformGrid>
+                  <TextBlock Text="{Binding Explicacion}" FontSize="11" Foreground="#CBD5E1" TextWrapping="Wrap" Margin="0,8,0,0" />
+                </StackPanel>
+              </Border>
+
+              <ItemsControl ItemsSource="{Binding Advertencias}" Margin="0,8,0,0"
+                            Visibility="{Binding HasAdvertencias, Converter={StaticResource BoolToVisibility}}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <TextBlock Text="{Binding StringFormat='⚠ {0}'}" FontSize="10" Foreground="#B45309" TextWrapping="Wrap" Margin="0,2,0,0" />
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </Border>
+
           <!-- Orígenes -->
           <Border Style="{StaticResource Card.Section}" Padding="16" Margin="0,0,0,14"
                   Visibility="{Binding ShowOrigenes, Converter={StaticResource BoolToVisibility}}">

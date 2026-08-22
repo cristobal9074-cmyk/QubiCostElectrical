@@ -37,6 +37,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         SaveCostosPresetCommand = new RelayCommand(SaveCostosPreset, () => CanEdit);
         RestoreCostosPresetCommand = new RelayCommand(RestoreCostosPreset, () => CanEdit && HasCostosPreset);
         ApplyCoeficientesCommand = new RelayCommand(ApplyCoeficientes, () => CanEdit);
+        ClosingPolicySection = new ClosingPolicySectionVm(CommitClosingPolicyType, CommitClosingPolicyParam);
         EnsureCoefFactors();
         Refresh();
     }
@@ -289,8 +290,10 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
     {
         if (suppressGoRefresh || suppressCoefRefresh)
             return;
-        // Edición local de GO: no reconstruir la grilla (perdería el foco).
-        if (string.Equals(e.Scope, "gastos_operacionales", StringComparison.OrdinalIgnoreCase))
+        // Edición local de GO / política de cierre: no reconstruir toda la pantalla (perdería el
+        // foco de edición); RefreshCostOnly() ya se llamó de forma síncrona en el propio commit.
+        if (string.Equals(e.Scope, "gastos_operacionales", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(e.Scope, "closing_policy", StringComparison.OrdinalIgnoreCase))
             return;
         System.Windows.Application.Current?.Dispatcher.InvokeAsync(Refresh);
     }
@@ -372,6 +375,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
             : "Sin m² configurados";
 
         FillCostRows(CostRows, cost, project, moneda, valorUf, tipoCambio);
+        RefreshClosingPolicySection(cost, moneda, valorUf, tipoCambio);
 
         // Orígenes
         var origenes = Origenes;
@@ -1025,7 +1029,44 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
             : "Sin m² configurados";
 
         FillCostRows(CostRows, cost, project, moneda, valorUf, tipoCambio);
+        RefreshClosingPolicySection(cost, moneda, valorUf, tipoCambio);
         ResumenFooterText = $"Costo ejecución {cost.CostoDirectoUf:N2} UF · Total venta {cost.TotalVentaUf:N2} UF · Margen {cost.MargenRealPct:N1}%";
+    }
+
+    private void RefreshClosingPolicySection(CostBreakdown cost, string moneda, decimal valorUf, decimal tipoCambio)
+    {
+        var selection = host.Session.Data.ClosingPolicy ?? ClosingPolicySelection.Default();
+        ClosingPolicySection.SetSilent(selection);
+        var result = ClosingPolicyEngine.Apply(cost, selection);
+        var svc = host.Services.CurrencyConversion;
+        ClosingPolicySection.SetResult(result, svc.FormatMoneyFromUf(result.VentaFinalClp, moneda, valorUf, tipoCambio));
+    }
+
+    private void CommitClosingPolicyType(ClosingPolicyType policy)
+    {
+        if (!CanEdit) return;
+        var selection = host.Session.Data.ClosingPolicy ??= ClosingPolicySelection.Default();
+        selection.Policy = policy;
+        host.Session.MarkDirty("closing_policy");
+        RefreshCostOnly();
+    }
+
+    private void CommitClosingPolicyParam(string paramName, decimal value)
+    {
+        if (!CanEdit) return;
+        var selection = host.Session.Data.ClosingPolicy ??= ClosingPolicySelection.Default();
+        switch (paramName)
+        {
+            case nameof(ClosingPolicySelection.TargetPriceClp): selection.TargetPriceClp = value; break;
+            case nameof(ClosingPolicySelection.LumpSumMinRiskPct): selection.LumpSumMinRiskPct = value; break;
+            case nameof(ClosingPolicySelection.FeeClp): selection.FeeClp = value; break;
+            case nameof(ClosingPolicySelection.FeePct): selection.FeePct = value; break;
+            case nameof(ClosingPolicySelection.TargetCostClp): selection.TargetCostClp = value; break;
+            case nameof(ClosingPolicySelection.GainsharePct): selection.GainsharePct = value; break;
+            case nameof(ClosingPolicySelection.GainshareCapClp): selection.GainshareCapClp = value; break;
+        }
+        host.Session.MarkDirty("closing_policy");
+        RefreshCostOnly();
     }
 
     private void FillCostRows(
