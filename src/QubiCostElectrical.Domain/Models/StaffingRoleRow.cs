@@ -18,4 +18,16 @@ public sealed class StaffingRoleRow
     /// <summary>Costo total = tarifa mensual × dedicación% × meses.</summary>
     public decimal TotalClp =>
         Math.Max(0m, TarifaMensualClp) * (Math.Clamp(DedicacionPct, 0m, 100m) / 100m) * Math.Max(0, Meses);
+
+    public IReadOnlyList<string> Validate()
+    {
+        var errors = new List<string>();
+        if (string.IsNullOrWhiteSpace(Cargo))
+            errors.Add("La dotación indirecta necesita un cargo (Administrador, Supervisor, etc.).");
+        if (DedicacionPct < 0m || DedicacionPct > 100m)
+            errors.Add($"Dedicación {DedicacionPct:0.##}% fuera de rango [0-100].");
+        if (Meses < 0)
+            errors.Add("Los meses no pueden ser negativos.");
+        return errors;
+    }
 }

@@ -22,6 +22,7 @@ public sealed class StaffingRoleVm : ViewModelBase
         dedicacionPct = row.DedicacionPct;
         meses = row.Meses;
         this.onChanged = onChanged;
+        RaiseValidation();
     }
 
     public string Id { get; }
@@ -32,7 +33,10 @@ public sealed class StaffingRoleVm : ViewModelBase
         set
         {
             if (SetProperty(ref cargo, value ?? ""))
+            {
+                RaiseValidation();
                 onChanged?.Invoke();
+            }
         }
     }
 
@@ -77,6 +81,25 @@ public sealed class StaffingRoleVm : ViewModelBase
 
     public decimal TotalClp => TarifaMensualClp * (DedicacionPct / 100m) * Meses;
     public string TotalLabel => $"$ {TotalClp:N0}";
+
+    /// <summary>Vacío cuando la fila es válida (ver StaffingRoleRow.Validate()). En la práctica solo
+    /// Cargo puede quedar inválido desde la UI: Tarifa/Dedicación/Meses ya se clampan al tipear.</summary>
+    public string ValidationHint
+    {
+        get => validationHint;
+        private set => SetProperty(ref validationHint, value);
+    }
+
+    private string validationHint = "";
+
+    public bool HasValidationError => ValidationHint.Length > 0;
+
+    private void RaiseValidation()
+    {
+        var errors = ToRow().Validate();
+        ValidationHint = errors.Count > 0 ? errors[0] : "";
+        OnPropertyChanged(nameof(HasValidationError));
+    }
 
     private void RaiseTotal()
     {

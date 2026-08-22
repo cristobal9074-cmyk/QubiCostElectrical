@@ -1059,6 +1059,7 @@
                           <ColumnDefinition Width="140" />
                           <ColumnDefinition Width="*" />
                           <ColumnDefinition Width="110" />
+                          <ColumnDefinition Width="20" />
                           <ColumnDefinition Width="36" />
                         </Grid.ColumnDefinitions>
                         <TextBox Grid.Column="0" Text="{Binding Codigo, UpdateSourceTrigger=LostFocus}"
@@ -1070,7 +1071,10 @@
                         <TextBox Grid.Column="2" Text="{Binding DescuentoPct, UpdateSourceTrigger=LostFocus, StringFormat={}{0:0.#}}"
                                  Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" FontSize="11" TextAlignment="Right" Margin="0,0,8,0"
                                  IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" />
-                        <Button Grid.Column="3" Style="{StaticResource GoIconBtn}" Content="×" ToolTip="Quitar descuento"
+                        <TextBlock Grid.Column="3" Text="⚠" FontSize="12" Foreground="#B45309" VerticalAlignment="Center"
+                                   ToolTip="{Binding ValidationHint}"
+                                   Visibility="{Binding HasValidationError, Converter={StaticResource BoolToVisibility}}" />
+                        <Button Grid.Column="4" Style="{StaticResource GoIconBtn}" Content="×" ToolTip="Quitar descuento"
                                 Command="{Binding DataContext.RemoveNegotiatedDiscountCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                 CommandParameter="{Binding}" />
                       </Grid>
@@ -1101,8 +1105,12 @@
                            Foreground="{DynamicResource Brush.Green}"
                            HorizontalAlignment="Right" VerticalAlignment="Center" />
               </Grid>
-              <TextBlock Text="Administrador, Supervisor, Capataz... por cargo, tarifa mensual, % de dedicación y meses. Se suma automáticamente a Gastos Operacionales."
-                         FontSize="10" Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" Margin="0,0,0,10" />
+              <TextBlock FontSize="10" TextWrapping="Wrap" Margin="0,0,0,10">
+                <Run Foreground="{DynamicResource Brush.Muted}"
+                     Text="Administrador, Supervisor, Capataz... por cargo, tarifa mensual, % de dedicación y meses. Se suma automáticamente a Gastos Operacionales." />
+                <Run Foreground="#B45309" FontWeight="SemiBold"
+                     Text=" No cargues el mismo rol también como ítem manual en Gastos Operacionales — se contaría dos veces." />
+              </TextBlock>
 
               <Grid Margin="8,0,46,4">
                 <Grid.ColumnDefinitions>
@@ -1133,8 +1141,18 @@
                           <ColumnDefinition Width="36" />
                         </Grid.ColumnDefinitions>
                         <TextBox Grid.Column="0" Text="{Binding Cargo, UpdateSourceTrigger=LostFocus}"
-                                 Style="{StaticResource Form.TextBox}" FontSize="11" Margin="0,0,8,0"
-                                 IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                                 FontSize="11" Margin="0,0,8,0" ToolTip="{Binding ValidationHint}"
+                                 IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                          <TextBox.Style>
+                            <Style TargetType="TextBox" BasedOn="{StaticResource Form.TextBox}">
+                              <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasValidationError}" Value="True">
+                                  <Setter Property="BorderBrush" Value="#B45309" />
+                                </DataTrigger>
+                              </Style.Triggers>
+                            </Style>
+                          </TextBox.Style>
+                        </TextBox>
                         <TextBox Grid.Column="1" Text="{Binding TarifaMensualClp, UpdateSourceTrigger=LostFocus, StringFormat={}{0:0}}"
                                  Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" FontSize="11" TextAlignment="Right" Margin="0,0,8,0"
                                  IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" />

@@ -124,6 +124,10 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
                 SaveCostosPresetCommand.RaiseCanExecuteChanged();
                 RestoreCostosPresetCommand.RaiseCanExecuteChanged();
                 ApplyCoeficientesCommand.RaiseCanExecuteChanged();
+                AddNegotiatedDiscountCommand.RaiseCanExecuteChanged();
+                RemoveNegotiatedDiscountCommand.RaiseCanExecuteChanged();
+                AddStaffingRoleCommand.RaiseCanExecuteChanged();
+                RemoveStaffingRoleCommand.RaiseCanExecuteChanged();
             }
         }
     }

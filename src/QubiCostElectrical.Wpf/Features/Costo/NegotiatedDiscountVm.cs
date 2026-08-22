@@ -20,6 +20,7 @@ public sealed class NegotiatedDiscountVm : ViewModelBase
         descripcion = row.Descripcion ?? "";
         descuentoPct = row.DescuentoPct;
         this.onChanged = onChanged;
+        RaiseValidation();
     }
 
     public string Id { get; }
@@ -30,7 +31,10 @@ public sealed class NegotiatedDiscountVm : ViewModelBase
         set
         {
             if (SetProperty(ref codigo, value ?? ""))
+            {
+                RaiseValidation();
                 onChanged?.Invoke();
+            }
         }
     }
 
@@ -50,8 +54,31 @@ public sealed class NegotiatedDiscountVm : ViewModelBase
         set
         {
             if (SetProperty(ref descuentoPct, Math.Clamp(value, 0m, 100m)))
+            {
+                RaiseValidation();
                 onChanged?.Invoke();
+            }
         }
+    }
+
+    /// <summary>Vacío cuando la fila es válida; mensaje del primer error de NegotiatedDiscountRow.Validate()
+    /// en caso contrario. Sin código, la fila queda inerte (nunca hace match en el motor) pero se
+    /// avisa igual para que no quede olvidada a medio llenar.</summary>
+    public string ValidationHint
+    {
+        get => validationHint;
+        private set => SetProperty(ref validationHint, value);
+    }
+
+    private string validationHint = "";
+
+    public bool HasValidationError => ValidationHint.Length > 0;
+
+    private void RaiseValidation()
+    {
+        var errors = ToRow().Validate();
+        ValidationHint = errors.Count > 0 ? errors[0] : "";
+        OnPropertyChanged(nameof(HasValidationError));
     }
 
     public NegotiatedDiscountRow ToRow() => new()
