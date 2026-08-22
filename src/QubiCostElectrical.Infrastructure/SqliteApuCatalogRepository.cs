@@ -1,5 +1,3 @@
-// TODO(null-safety): archivo proveniente de decompilación; nulabilidad pendiente de revisión manual.
-#pragma warning disable CS8600, CS8601, CS8602, CS8603, CS8604, CS8618, CS8619, CS8625
 using System;
 using System.Collections.Generic;
 using System.Text.Json;
@@ -65,32 +63,25 @@ public sealed class SqliteApuCatalogRepository : IApuCatalogRepository
 		string commandText = "SELECT COUNT(*) FROM professional_apu_catalog " + where + ";";
 		using SqliteCommand countCmd = connection.CreateCommand();
 		countCmd.CommandText = commandText;
-		string key;
-		object value;
 		foreach (KeyValuePair<string, object> item in parameters)
 		{
-			item.Deconstruct(out key, out value);
-			string parameterName = key;
-			object value2 = value;
+			item.Deconstruct(out string parameterName, out object value2);
 			countCmd.Parameters.AddWithValue(parameterName, value2);
 		}
-		value = await countCmd.ExecuteScalarAsync();
-		int total = Convert.ToInt32(value);
+		int total = Convert.ToInt32(await countCmd.ExecuteScalarAsync());
 		string commandText2 = $"SELECT json FROM professional_apu_catalog {where} ORDER BY code LIMIT {request.MaxResults} OFFSET {request.Offset};";
 		using SqliteCommand cmd = connection.CreateCommand();
 		cmd.CommandText = commandText2;
 		foreach (KeyValuePair<string, object> item2 in parameters)
 		{
-			item2.Deconstruct(out key, out value);
-			string parameterName2 = key;
-			object value3 = value;
+			item2.Deconstruct(out string parameterName2, out object value3);
 			cmd.Parameters.AddWithValue(parameterName2, value3);
 		}
 		List<ApuCatalogEntry> entries = new List<ApuCatalogEntry>();
 		using SqliteDataReader reader = await cmd.ExecuteReaderAsync();
 		while (await reader.ReadAsync())
 		{
-			ApuCatalogEntry apuCatalogEntry = JsonSerializer.Deserialize<ApuCatalogEntry>(reader.GetString(0), ProfessionalDbHelpers.JsonOptions);
+			ApuCatalogEntry? apuCatalogEntry = JsonSerializer.Deserialize<ApuCatalogEntry>(reader.GetString(0), ProfessionalDbHelpers.JsonOptions);
 			if (apuCatalogEntry != null)
 			{
 				entries.Add(apuCatalogEntry);

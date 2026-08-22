@@ -1,6 +1,4 @@
-﻿// TODO(null-safety): archivo proveniente de decompilación; nulabilidad pendiente de revisión manual.
-#pragma warning disable CS8600, CS8601, CS8602, CS8603, CS8604, CS8618, CS8619, CS8625, CS8622, CS4014
-#nullable enable
+﻿#nullable enable
 using System;
 using System.CodeDom.Compiler;
 using System.ComponentModel;
@@ -48,12 +46,12 @@ public class CubicacionScGridColumns : ResourceDictionary, IComponentConnector, 
 		PisosBtnClick?.Invoke(s, e);
 	}
 
-	private void OnPisosPopup_Opened(object s, EventArgs e)
+	private void OnPisosPopup_Opened(object? s, EventArgs e)
 	{
 		PisosPopupOpened?.Invoke(s, e);
 	}
 
-	private void OnPisosPopup_Closed(object s, EventArgs e)
+	private void OnPisosPopup_Closed(object? s, EventArgs e)
 	{
 		PisosPopupClosed?.Invoke(s, e);
 	}

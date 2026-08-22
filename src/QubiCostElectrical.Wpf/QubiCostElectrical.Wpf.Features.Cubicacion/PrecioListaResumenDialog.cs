@@ -1,6 +1,4 @@
-﻿// TODO(null-safety): archivo proveniente de decompilación; nulabilidad pendiente de revisión manual.
-#pragma warning disable CS8600, CS8601, CS8602, CS8603, CS8604, CS8618, CS8619, CS8625, CS8622, CS4014
-#nullable enable
+﻿#nullable enable
 using System;
 using System.CodeDom.Compiler;
 using System.ComponentModel;
@@ -23,11 +21,11 @@ public class PrecioListaResumenDialog : Window, IComponentConnector, IStyleConne
 
 	private bool _isEditingCodigo;
 
-	internal DataGrid MainGrid;
+	internal DataGrid MainGrid = null!;
 
-	internal Popup AutocompletePopup;
+	internal Popup AutocompletePopup = null!;
 
-	internal ListBox AutocompleteList;
+	internal ListBox AutocompleteList = null!;
 
 	private bool _contentLoaded;
 
@@ -70,7 +68,7 @@ public class PrecioListaResumenDialog : Window, IComponentConnector, IStyleConne
 		}
 	}
 
-	private void OnGridPreparingCellForEdit(object sender, DataGridPreparingCellForEditEventArgs e)
+	private void OnGridPreparingCellForEdit(object? sender, DataGridPreparingCellForEditEventArgs e)
 	{
 		if (_activeEditor != null)
 		{
@@ -80,7 +78,7 @@ public class PrecioListaResumenDialog : Window, IComponentConnector, IStyleConne
 		}
 		if (e.EditingElement is TextBox textBox)
 		{
-			string text = e.Column.Header as string;
+			string? text = e.Column.Header as string;
 			if (!(text != "CÃ“DIGO") || !(text != "DESCRIPCIÃ“N"))
 			{
 				_activeEditor = textBox;
@@ -200,13 +198,13 @@ public class PrecioListaResumenDialog : Window, IComponentConnector, IStyleConne
 		}
 	}
 
-	private void OnCellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
+	private void OnCellEditEnding(object? sender, DataGridCellEditEndingEventArgs e)
 	{
 		if (e.EditAction == DataGridEditAction.Cancel || !(e.Row.Item is PrecioListaMaterialVm precioListaMaterialVm) || !(e.Column is DataGridTextColumn dataGridTextColumn) || !(e.EditingElement is TextBox textBox))
 		{
 			return;
 		}
-		string text = dataGridTextColumn.Header as string;
+		string? text = dataGridTextColumn.Header as string;
 		if (text == "CÃ“DIGO" || text == "DESCRIPCIÃ“N")
 		{
 			string text2 = textBox.Text.Trim();
@@ -217,7 +215,7 @@ public class PrecioListaResumenDialog : Window, IComponentConnector, IStyleConne
 			if (text == "CÃ“DIGO")
 			{
 				precioListaMaterialVm.Codigo = text2;
-				PriceBankEntry priceBankEntry = vm.LookupByCodigo(text2);
+				PriceBankEntry? priceBankEntry = vm.LookupByCodigo(text2);
 				if (priceBankEntry != null)
 				{
 					precioListaMaterialVm.Descripcion = priceBankEntry.Descripcion ?? "";

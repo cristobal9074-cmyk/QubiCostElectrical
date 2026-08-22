@@ -1,6 +1,4 @@
-﻿// TODO(null-safety): archivo proveniente de decompilación; nulabilidad pendiente de revisión manual.
-#pragma warning disable CS8600, CS8601, CS8602, CS8603, CS8604, CS8618, CS8619, CS8625, CS8622, CS4014
-#nullable enable
+﻿#nullable enable
 using System;
 using System.CodeDom.Compiler;
 using System.ComponentModel;
@@ -14,13 +12,13 @@ namespace QubiCostElectrical.Wpf.Features.About;
 
 public class AboutDialog : Window, IComponentConnector
 {
-	internal TextBlock VersionText;
+	internal TextBlock VersionText = null!;
 
-	internal TextBlock LicenseText;
+	internal TextBlock LicenseText = null!;
 
-	internal TextBlock TechnicalText;
+	internal TextBlock TechnicalText = null!;
 
-	internal TextBlock DataFolderText;
+	internal TextBlock DataFolderText = null!;
 
 	private bool _contentLoaded;
 
@@ -43,8 +41,8 @@ public class AboutDialog : Window, IComponentConnector
 		{
 		case LicenseStatus.Valid:
 		{
-			LicenseInfo currentLicense = license.CurrentLicense;
-			if ((object)currentLicense != null)
+			LicenseInfo? currentLicense = license.CurrentLicense;
+			if ((object?)currentLicense != null)
 			{
 				return $"VÃ¡lida Â· {currentLicense.Company} Â· vence el {currentLicense.ExpiresAt:d}.";
 			}

@@ -1,5 +1,3 @@
-﻿// TODO(null-safety): archivo proveniente de decompilación; nulabilidad pendiente de revisión manual.
-#pragma warning disable CS8600, CS8601, CS8602, CS8603, CS8604, CS8618, CS8619, CS8625, CS8622, CS4014
 #nullable enable
 using System;
 using System.CodeDom.Compiler;
@@ -18,7 +16,7 @@ public class ShellQuickSearchPalette : UserControl, IComponentConnector, IStyleC
 
 	public static readonly DependencyProperty IsOpenProperty = DependencyProperty.Register("IsOpen", typeof(bool), typeof(ShellQuickSearchPalette));
 
-	internal ListBox QuickSearchList;
+	internal ListBox QuickSearchList = null!;
 
 	private bool _contentLoaded;
 
@@ -30,7 +28,7 @@ public class ShellQuickSearchPalette : UserControl, IComponentConnector, IStyleC
 		}
 		set
 		{
-			((DependencyObject)this).SetValue(AnchorProperty, (object)value);
+			((DependencyObject)this).SetValue(AnchorProperty, (object)value!);
 		}
 	}
 
@@ -57,11 +55,11 @@ public class ShellQuickSearchPalette : UserControl, IComponentConnector, IStyleC
 	{
 		if (sender is FrameworkElement { DataContext: ShellViewModel.QuickSearchItemVm dataContext })
 		{
-			ShellViewModel viewModel = ViewModel;
+			ShellViewModel? viewModel = ViewModel;
 			if (viewModel != null)
 			{
 				viewModel.SelectedQuickSearchItem = dataContext;
-				viewModel.ExecuteQuickSearchAsync();
+				_ = viewModel.ExecuteQuickSearchAsync();
 			}
 		}
 	}
@@ -70,7 +68,7 @@ public class ShellQuickSearchPalette : UserControl, IComponentConnector, IStyleC
 	{
 		if (sender is ListBox listBox)
 		{
-			ShellViewModel viewModel = ViewModel;
+			ShellViewModel? viewModel = ViewModel;
 			if (viewModel != null)
 			{
 				viewModel.SelectedQuickSearchItem = listBox.SelectedItem as ShellViewModel.QuickSearchItemVm;
@@ -80,7 +78,7 @@ public class ShellQuickSearchPalette : UserControl, IComponentConnector, IStyleC
 
 	private void OnQuickSearchPopupClosed(object? sender, EventArgs e)
 	{
-		ShellViewModel viewModel = ViewModel;
+		ShellViewModel? viewModel = ViewModel;
 		if (viewModel != null && viewModel.IsSearchPaletteOpen)
 		{
 			viewModel.CloseQuickSearch();

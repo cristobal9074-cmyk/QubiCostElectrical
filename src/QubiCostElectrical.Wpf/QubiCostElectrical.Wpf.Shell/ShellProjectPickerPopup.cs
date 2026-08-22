@@ -1,5 +1,3 @@
-﻿// TODO(null-safety): archivo proveniente de decompilación; nulabilidad pendiente de revisión manual.
-#pragma warning disable CS8600, CS8601, CS8602, CS8603, CS8604, CS8618, CS8619, CS8625, CS8622, CS4014
 #nullable enable
 using System;
 using System.CodeDom.Compiler;
@@ -20,13 +18,13 @@ public class ShellProjectPickerPopup : UserControl, IComponentConnector, IStyleC
 
 	public static readonly DependencyProperty IsOpenProperty = DependencyProperty.Register("IsOpen", typeof(bool), typeof(ShellProjectPickerPopup));
 
-	internal Border ProjectPickerRoot;
+	internal Border ProjectPickerRoot = null!;
 
-	internal Button NewProjectBtn;
+	internal Button NewProjectBtn = null!;
 
-	internal Button OpenProjectBtn;
+	internal Button OpenProjectBtn = null!;
 
-	internal Button CloseProjectBtn;
+	internal Button CloseProjectBtn = null!;
 
 	private bool _contentLoaded;
 
@@ -38,7 +36,7 @@ public class ShellProjectPickerPopup : UserControl, IComponentConnector, IStyleC
 		}
 		set
 		{
-			((DependencyObject)this).SetValue(AnchorProperty, (object)value);
+			((DependencyObject)this).SetValue(AnchorProperty, (object)value!);
 		}
 	}
 
@@ -95,7 +93,7 @@ public class ShellProjectPickerPopup : UserControl, IComponentConnector, IStyleC
 		//IL_0008: Invalid comparison between Unknown and I4
 		if ((int)e.Key == 13)
 		{
-			ShellViewModel viewModel = ViewModel;
+			ShellViewModel? viewModel = ViewModel;
 			if (viewModel != null)
 			{
 				viewModel.IsProjectPickerOpen = false;

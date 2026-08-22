@@ -1,6 +1,4 @@
-﻿// TODO(null-safety): archivo proveniente de decompilación; nulabilidad pendiente de revisión manual.
-#pragma warning disable CS8600, CS8601, CS8602, CS8603, CS8604, CS8618, CS8619, CS8625, CS8622, CS4014
-#nullable enable
+﻿#nullable enable
 using System;
 using System.CodeDom.Compiler;
 using System.ComponentModel;
@@ -14,33 +12,33 @@ namespace QubiCostElectrical.Wpf.Features.Cubicacion;
 
 public class CubicacionPartidaHeader : UserControl, IComponentConnector
 {
-	internal Border ItemRowCodigoCell;
+	internal Border ItemRowCodigoCell = null!;
 
-	internal Border ItemRowDescCell;
+	internal Border ItemRowDescCell = null!;
 
-	internal Border ItemRowUiCell;
+	internal Border ItemRowUiCell = null!;
 
-	internal TextBox UnidadHeaderBox;
+	internal TextBox UnidadHeaderBox = null!;
 
-	internal Border ItemRowCantCell;
+	internal Border ItemRowCantCell = null!;
 
-	internal TextBox CantHeaderBox;
+	internal TextBox CantHeaderBox = null!;
 
-	internal Border ItemRowMatCell;
+	internal Border ItemRowMatCell = null!;
 
-	internal Border ItemRowMoCell;
+	internal Border ItemRowMoCell = null!;
 
-	internal Border ItemRowTotalCell;
+	internal Border ItemRowTotalCell = null!;
 
-	internal Border ItemRowSubtotalCell;
+	internal Border ItemRowSubtotalCell = null!;
 
-	internal Border ItemRowGgUtCell;
+	internal Border ItemRowGgUtCell = null!;
 
-	internal Border ItemRowUfUnitCell;
+	internal Border ItemRowUfUnitCell = null!;
 
-	internal Border ItemRowSubtotalUfCell;
+	internal Border ItemRowSubtotalUfCell = null!;
 
-	internal TextBox ObservacionHeaderBox;
+	internal TextBox ObservacionHeaderBox = null!;
 
 	private bool _contentLoaded;
 

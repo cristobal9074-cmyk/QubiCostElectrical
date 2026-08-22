@@ -1,6 +1,4 @@
-﻿// TODO(null-safety): archivo proveniente de decompilación; nulabilidad pendiente de revisión manual.
-#pragma warning disable CS8600, CS8601, CS8602, CS8603, CS8604, CS8618, CS8619, CS8625, CS8622, CS4014
-#nullable enable
+﻿#nullable enable
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
@@ -65,7 +63,7 @@ internal static class CoefFactorKeyboardBehavior
 		//IL_0086: Invalid comparison between Unknown and I4
 		//IL_0088: Unknown result type (might be due to invalid IL or missing references)
 		//IL_008e: Invalid comparison between Unknown and I4
-		TextBox textBox = sender as TextBox;
+		TextBox? textBox = sender as TextBox;
 		bool flag = textBox == null;
 		if (!flag)
 		{
@@ -77,8 +75,8 @@ internal static class CoefFactorKeyboardBehavior
 		{
 			return;
 		}
-		ItemsControl itemsControl = FindAncestor<ItemsControl>((DependencyObject?)(object)textBox);
-		if (itemsControl == null || textBox.DataContext == null)
+		ItemsControl? itemsControl = FindAncestor<ItemsControl>((DependencyObject?)(object)textBox!);
+		if (itemsControl == null || textBox!.DataContext == null)
 		{
 			return;
 		}
@@ -100,7 +98,7 @@ internal static class CoefFactorKeyboardBehavior
 		DependencyObject val = itemsControl.ItemContainerGenerator.ContainerFromIndex(num3);
 		if (val != null)
 		{
-			TextBox textBox2 = FindTextBox(val, textBox);
+			TextBox? textBox2 = FindTextBox(val, textBox);
 			if (textBox2 != null)
 			{
 				args.Handled = true;
@@ -113,7 +111,7 @@ internal static class CoefFactorKeyboardBehavior
 	private static TextBox? FindTextBox(DependencyObject root, TextBox source)
 	{
 		List<TextBox> source2 = FindDescendants<TextBox>(root);
-		Grid grid = FindAncestor<Grid>((DependencyObject?)(object)source);
+		Grid? grid = FindAncestor<Grid>((DependencyObject?)(object)source);
 		int index = ((grid != null) ? FindDescendants<TextBox>((DependencyObject)(object)grid).IndexOf(source) : 0);
 		return source2.ElementAtOrDefault(index);
 	}
@@ -122,7 +120,7 @@ internal static class CoefFactorKeyboardBehavior
 	{
 		while (element != null)
 		{
-			T val = (T)(object)((element is T) ? element : null);
+			T? val = (element is T typed) ? typed : null;
 			if (val != null)
 			{
 				return val;
@@ -138,7 +136,7 @@ internal static class CoefFactorKeyboardBehavior
 		for (int i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++)
 		{
 			DependencyObject child = VisualTreeHelper.GetChild(root, i);
-			T val = (T)(object)((child is T) ? child : null);
+			T? val = (child is T typed) ? typed : null;
 			if (val != null)
 			{
 				list.Add(val);

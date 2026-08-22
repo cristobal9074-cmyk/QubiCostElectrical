@@ -1,5 +1,3 @@
-// TODO(null-safety): archivo proveniente de decompilación; nulabilidad pendiente de revisión manual.
-#pragma warning disable CS8600, CS8601, CS8602, CS8603, CS8604, CS8618, CS8619, CS8625
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -46,8 +44,8 @@ public sealed class ApuCatalogService : IApuCatalogService
 	public async Task<ApuVersion?> CreateDraftAsync(string apuId, string author, string changeReason, string? baseVersionId = null)
 	{
 		int nextNumber = await _versionRepo.GetNextVersionNumberAsync(apuId);
-		ApuCatalogEntry entry = await _catalogRepo.GetByApuIdAsync(apuId);
-		ApuVersion apuVersion = ((baseVersionId != null) ? ((await _versionRepo.GetByIdAsync(baseVersionId)) ?? throw new InvalidOperationException("Base version '" + baseVersionId + "' not found.")) : ((!(entry != null) || string.IsNullOrEmpty(entry.ActiveVersionId)) ? new ApuVersion
+		ApuCatalogEntry? entry = await _catalogRepo.GetByApuIdAsync(apuId);
+		ApuVersion apuVersion = ((baseVersionId != null) ? ((await _versionRepo.GetByIdAsync(baseVersionId)) ?? throw new InvalidOperationException("Base version '" + baseVersionId + "' not found.")) : ((entry == null || string.IsNullOrEmpty(entry.ActiveVersionId)) ? new ApuVersion
 		{
 			ApuId = apuId
 		} : ((await _versionRepo.GetByIdAsync(entry.ActiveVersionId)) ?? new ApuVersion
@@ -70,7 +68,7 @@ public sealed class ApuCatalogService : IApuCatalogService
 			IntegrityHash = ""
 		};
 		await _versionRepo.SaveAsync(draft);
-		entry = ((!(entry == null)) ? entry with
+		entry = ((entry != null) ? entry with
 		{
 			VersionCount = entry.VersionCount + 1,
 			ActiveVersionNumber = draft.VersionNumber,
@@ -130,7 +128,7 @@ public sealed class ApuCatalogService : IApuCatalogService
 		{
 			throw new InvalidOperationException("Snapshot '" + snapshotId + "' integrity check failed. Data may be tampered.");
 		}
-		ApuVersion originalVersion = await _versionRepo.GetByIdAsync(snapshot.SourceVersionId);
+		ApuVersion? originalVersion = await _versionRepo.GetByIdAsync(snapshot.SourceVersionId);
 		if (originalVersion == null)
 		{
 			throw new InvalidOperationException("Original version '" + snapshot.SourceVersionId + "' not found.");
@@ -180,7 +178,7 @@ public sealed class ApuCatalogService : IApuCatalogService
 			}.ComputeHash()
 		};
 		await _versionRepo.SaveAsync(approved);
-		ApuCatalogEntry apuCatalogEntry = await _catalogRepo.GetByApuIdAsync(version.ApuId);
+		ApuCatalogEntry? apuCatalogEntry = await _catalogRepo.GetByApuIdAsync(version.ApuId);
 		if (apuCatalogEntry != null && (string.IsNullOrEmpty(apuCatalogEntry.ApprovedVersionId) || version.VersionNumber > apuCatalogEntry.ApprovedVersionNumber))
 		{
 			ApuCatalogEntry entry = apuCatalogEntry with
@@ -199,7 +197,7 @@ public sealed class ApuCatalogService : IApuCatalogService
 
 	public async Task<bool> VerifyIntegrityAsync(string versionId)
 	{
-		ApuVersion apuVersion = await _versionRepo.GetByIdAsync(versionId);
+		ApuVersion? apuVersion = await _versionRepo.GetByIdAsync(versionId);
 		if (apuVersion == null)
 		{
 			return false;
@@ -237,7 +235,7 @@ public sealed class ApuCatalogService : IApuCatalogService
 	public async Task PromoteToActiveAsync(string apuId, string versionId)
 	{
 		ApuVersion version = (await _versionRepo.GetByIdAsync(versionId)) ?? throw new InvalidOperationException("Version '" + versionId + "' not found.");
-		ApuCatalogEntry apuCatalogEntry = await _catalogRepo.GetByApuIdAsync(apuId);
+		ApuCatalogEntry? apuCatalogEntry = await _catalogRepo.GetByApuIdAsync(apuId);
 		if (apuCatalogEntry != null)
 		{
 			ApuCatalogEntry entry = apuCatalogEntry with

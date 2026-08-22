@@ -1,6 +1,4 @@
-﻿// TODO(null-safety): archivo proveniente de decompilación; nulabilidad pendiente de revisión manual.
-#pragma warning disable CS8600, CS8601, CS8602, CS8603, CS8604, CS8618, CS8619, CS8625, CS8622, CS4014
-#nullable enable
+﻿#nullable enable
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -21,7 +19,7 @@ public sealed class PrecioListaResumenVm : ViewModelBase
 
 	private readonly ObservableCollection<PrecioListaMaterialVm> allItems = new ObservableCollection<PrecioListaMaterialVm>();
 
-	private readonly ICollectionView? filteredView;
+	private readonly ICollectionView filteredView;
 
 	private readonly List<PriceBankEntry> allBankEntries;
 
@@ -147,7 +145,7 @@ public sealed class PrecioListaResumenVm : ViewModelBase
 
 	public (decimal MatClp, decimal MoClp)? LookupPricesByDescripcion(string descripcion)
 	{
-		PriceBankEntry priceBankEntry = priceBankStore.GetAll().FirstOrDefault((PriceBankEntry e) => string.Equals(e.Descripcion, descripcion.Trim(), StringComparison.OrdinalIgnoreCase));
+		PriceBankEntry? priceBankEntry = priceBankStore.GetAll().FirstOrDefault((PriceBankEntry e) => string.Equals(e.Descripcion, descripcion.Trim(), StringComparison.OrdinalIgnoreCase));
 		if (priceBankEntry == null)
 		{
 			return null;
@@ -178,7 +176,7 @@ public sealed class PrecioListaResumenVm : ViewModelBase
 		};
 		priceBankEntry.RecalcularUf(valorUfClp);
 		priceBankStore.Upsert(priceBankEntry);
-		MaterialRow materialRow = session.Materiales.FirstOrDefault((MaterialRow x) => string.Equals(x.Codigo, codigo, StringComparison.OrdinalIgnoreCase));
+		MaterialRow? materialRow = session.Materiales.FirstOrDefault((MaterialRow x) => string.Equals(x.Codigo, codigo, StringComparison.OrdinalIgnoreCase));
 		if (materialRow == null)
 		{
 			materialRow = new MaterialRow
@@ -210,7 +208,7 @@ public sealed class PrecioListaResumenVm : ViewModelBase
 	public void EliminarMaterial(PrecioListaMaterialVm vm)
 	{
 		priceBankStore.Delete(vm.Codigo);
-		MaterialRow materialRow = session.Materiales.FirstOrDefault((MaterialRow x) => string.Equals(x.Codigo, vm.Codigo, StringComparison.OrdinalIgnoreCase));
+		MaterialRow? materialRow = session.Materiales.FirstOrDefault((MaterialRow x) => string.Equals(x.Codigo, vm.Codigo, StringComparison.OrdinalIgnoreCase));
 		if (materialRow != null)
 		{
 			session.Materiales.Remove(materialRow);

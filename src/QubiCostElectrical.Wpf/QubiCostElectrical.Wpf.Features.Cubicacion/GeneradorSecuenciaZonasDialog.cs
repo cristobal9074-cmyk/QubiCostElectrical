@@ -1,6 +1,4 @@
-﻿// TODO(null-safety): archivo proveniente de decompilación; nulabilidad pendiente de revisión manual.
-#pragma warning disable CS8600, CS8601, CS8602, CS8603, CS8604, CS8618, CS8619, CS8625, CS8622, CS4014
-#nullable enable
+﻿#nullable enable
 using System;
 using System.CodeDom.Compiler;
 using System.Collections.Generic;
@@ -17,33 +15,33 @@ public class GeneradorSecuenciaZonasDialog : Window, IComponentConnector
 {
 	private bool _initialized;
 
-	internal ComboBox PresetCombo;
+	internal ComboBox PresetCombo = null!;
 
-	internal TextBox PrefixBox;
+	internal TextBox PrefixBox = null!;
 
-	internal ComboBox SeparatorCombo;
+	internal ComboBox SeparatorCombo = null!;
 
-	internal TextBox StartBox;
+	internal TextBox StartBox = null!;
 
-	internal TextBox EndBox;
+	internal TextBox EndBox = null!;
 
-	internal TextBox StepBox;
+	internal TextBox StepBox = null!;
 
-	internal TextBox SuffixBox;
+	internal TextBox SuffixBox = null!;
 
-	internal CheckBox TwoLevelCheck;
+	internal CheckBox TwoLevelCheck = null!;
 
-	internal Border TwoLevelPanel;
+	internal Border TwoLevelPanel = null!;
 
-	internal TextBox Level1Prefix;
+	internal TextBox Level1Prefix = null!;
 
-	internal TextBox Level1End;
+	internal TextBox Level1End = null!;
 
-	internal TextBox Level2Prefix;
+	internal TextBox Level2Prefix = null!;
 
-	internal TextBox Level2End;
+	internal TextBox Level2End = null!;
 
-	internal ListBox PreviewList;
+	internal ListBox PreviewList = null!;
 
 	private bool _contentLoaded;
 
@@ -62,7 +60,7 @@ public class GeneradorSecuenciaZonasDialog : Window, IComponentConnector
 		{
 			return;
 		}
-		string text = comboBoxItem.Tag as string;
+		string? text = comboBoxItem.Tag as string;
 		bool flag = text == "torre-piso";
 		if (TwoLevelCheck != null)
 		{

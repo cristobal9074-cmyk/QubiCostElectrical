@@ -1,5 +1,3 @@
-// TODO(null-safety): archivo proveniente de decompilación; nulabilidad pendiente de revisión manual.
-#pragma warning disable CS8600, CS8601, CS8602, CS8603, CS8604, CS8618, CS8619, CS8625
 using System;
 using System.Collections.Generic;
 using System.Text.Json;
@@ -39,7 +37,7 @@ public sealed class SqliteApuVersionRepository : IApuVersionRepository
 		using SqliteDataReader reader = await cmd.ExecuteReaderAsync();
 		while (await reader.ReadAsync())
 		{
-			ApuVersion apuVersion = JsonSerializer.Deserialize<ApuVersion>(reader.GetString(0), ProfessionalDbHelpers.JsonOptions);
+			ApuVersion? apuVersion = JsonSerializer.Deserialize<ApuVersion>(reader.GetString(0), ProfessionalDbHelpers.JsonOptions);
 			if (apuVersion != null)
 			{
 				rows.Add(apuVersion);
@@ -58,7 +56,7 @@ public sealed class SqliteApuVersionRepository : IApuVersionRepository
 		using SqliteDataReader reader = await cmd.ExecuteReaderAsync();
 		while (await reader.ReadAsync())
 		{
-			ApuVersion apuVersion = JsonSerializer.Deserialize<ApuVersion>(reader.GetString(0), ProfessionalDbHelpers.JsonOptions);
+			ApuVersion? apuVersion = JsonSerializer.Deserialize<ApuVersion>(reader.GetString(0), ProfessionalDbHelpers.JsonOptions);
 			if (apuVersion != null)
 			{
 				rows.Add(apuVersion);

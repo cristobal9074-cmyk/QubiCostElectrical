@@ -1,6 +1,4 @@
-﻿// TODO(null-safety): archivo proveniente de decompilación; nulabilidad pendiente de revisión manual.
-#pragma warning disable CS8600, CS8601, CS8602, CS8603, CS8604, CS8618, CS8619, CS8625, CS8622, CS4014
-#nullable enable
+﻿#nullable enable
 using System;
 using System.CodeDom.Compiler;
 using System.ComponentModel;
@@ -23,33 +21,33 @@ public class CubicacionResourceGrid : UserControl, IComponentConnector
 
 	public delegate void CellEditEndingForwardedHandler(object sender, DataGridCellEditEndingEventArgs e);
 
-	internal DataGrid ResourceGrid;
+	internal DataGrid ResourceGrid = null!;
 
-	internal DataGridTemplateColumn IndexColumn;
+	internal DataGridTemplateColumn IndexColumn = null!;
 
-	internal DataGridTextColumn CodigoColumn;
+	internal DataGridTextColumn CodigoColumn = null!;
 
-	internal DataGridTextColumn DescripcionColumn;
+	internal DataGridTextColumn DescripcionColumn = null!;
 
-	internal DataGridTextColumn UnidadColumn;
+	internal DataGridTextColumn UnidadColumn = null!;
 
-	internal DataGridTextColumn CantidadColumn;
+	internal DataGridTextColumn CantidadColumn = null!;
 
-	internal DataGridTextColumn MaterialPriceColumn;
+	internal DataGridTextColumn MaterialPriceColumn = null!;
 
-	internal DataGridTextColumn LaborPriceColumn;
+	internal DataGridTextColumn LaborPriceColumn = null!;
 
-	internal DataGridTextColumn TotalPriceColumn;
+	internal DataGridTextColumn TotalPriceColumn = null!;
 
-	internal DataGridTextColumn SubtotalColumn;
+	internal DataGridTextColumn SubtotalColumn = null!;
 
-	internal DataGridTextColumn GgUtColumn;
+	internal DataGridTextColumn GgUtColumn = null!;
 
-	internal DataGridTextColumn UfUnitColumn;
+	internal DataGridTextColumn UfUnitColumn = null!;
 
-	internal DataGridTextColumn SubtotalUfColumn;
+	internal DataGridTextColumn SubtotalUfColumn = null!;
 
-	internal DisplayBindingTextColumn ObservacionesColumn;
+	internal DisplayBindingTextColumn ObservacionesColumn = null!;
 
 	private bool _contentLoaded;
 
@@ -102,19 +100,19 @@ public class CubicacionResourceGrid : UserControl, IComponentConnector
 		InitializeComponent();
 	}
 
-	private void OnBeginningEdit(object sender, DataGridBeginningEditEventArgs e)
+	private void OnBeginningEdit(object? sender, DataGridBeginningEditEventArgs e)
 	{
-		BeginningEditForwarded?.Invoke(sender, e);
+		BeginningEditForwarded?.Invoke(sender!, e);
 	}
 
-	private void OnPreparingCellForEdit(object sender, DataGridPreparingCellForEditEventArgs e)
+	private void OnPreparingCellForEdit(object? sender, DataGridPreparingCellForEditEventArgs e)
 	{
-		PreparingCellForEditForwarded?.Invoke(sender, e);
+		PreparingCellForEditForwarded?.Invoke(sender!, e);
 	}
 
-	private void OnCellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
+	private void OnCellEditEnding(object? sender, DataGridCellEditEndingEventArgs e)
 	{
-		CellEditEndingForwarded?.Invoke(sender, e);
+		CellEditEndingForwarded?.Invoke(sender!, e);
 	}
 
 	private void OnPreviewKeyDown(object sender, KeyEventArgs e)
@@ -137,9 +135,9 @@ public class CubicacionResourceGrid : UserControl, IComponentConnector
 		SelectionChangedForwarded?.Invoke(sender, e);
 	}
 
-	private void OnCurrentCellChanged(object sender, EventArgs e)
+	private void OnCurrentCellChanged(object? sender, EventArgs e)
 	{
-		CurrentCellChangedForwarded?.Invoke(sender, e);
+		CurrentCellChangedForwarded?.Invoke(sender!, e);
 	}
 
 	[DebuggerNonUserCode]

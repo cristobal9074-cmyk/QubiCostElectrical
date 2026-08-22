@@ -1,6 +1,4 @@
-﻿// TODO(null-safety): archivo proveniente de decompilación; nulabilidad pendiente de revisión manual.
-#pragma warning disable CS8600, CS8601, CS8602, CS8603, CS8604, CS8618, CS8619, CS8625, CS8622, CS4014
-#nullable enable
+﻿#nullable enable
 using System;
 using System.ComponentModel;
 using System.Linq;
@@ -181,7 +179,7 @@ public sealed class PrecioListaMaterialVm : INotifyPropertyChanged
 		bankEntry.Proveedor = Proveedor;
 		bankEntry.RecalcularUf(valorUfClp);
 		store.Upsert(bankEntry);
-		MaterialRow materialRow = session.Materiales.FirstOrDefault((MaterialRow x) => string.Equals(x.Codigo, Codigo, StringComparison.OrdinalIgnoreCase));
+		MaterialRow? materialRow = session.Materiales.FirstOrDefault((MaterialRow x) => string.Equals(x.Codigo, Codigo, StringComparison.OrdinalIgnoreCase));
 		if (materialRow != null)
 		{
 			materialRow.Codigo = Codigo;

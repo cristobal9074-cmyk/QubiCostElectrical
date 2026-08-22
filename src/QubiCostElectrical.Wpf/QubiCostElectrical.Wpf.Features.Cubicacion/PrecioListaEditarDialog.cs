@@ -1,6 +1,4 @@
-﻿// TODO(null-safety): archivo proveniente de decompilación; nulabilidad pendiente de revisión manual.
-#pragma warning disable CS8600, CS8601, CS8602, CS8603, CS8604, CS8618, CS8619, CS8625, CS8622, CS4014
-#nullable enable
+﻿#nullable enable
 using System;
 using System.CodeDom.Compiler;
 using System.ComponentModel;
@@ -16,23 +14,23 @@ public class PrecioListaEditarDialog : Window, IComponentConnector
 {
 	private readonly PrecioListaResumenVm vm;
 
-	internal TextBlock TitleBlock;
+	internal TextBlock TitleBlock = null!;
 
-	internal TextBox CodigoBox;
+	internal TextBox CodigoBox = null!;
 
-	internal TextBox DescripcionBox;
+	internal TextBox DescripcionBox = null!;
 
-	internal ComboBox UnidadCombo;
+	internal ComboBox UnidadCombo = null!;
 
-	internal TextBox CategoriaBox;
+	internal TextBox CategoriaBox = null!;
 
-	internal TextBox MatClpBox;
+	internal TextBox MatClpBox = null!;
 
-	internal TextBox MoClpBox;
+	internal TextBox MoClpBox = null!;
 
-	internal TextBox ProveedorBox;
+	internal TextBox ProveedorBox = null!;
 
-	internal DatePicker FechaPicker;
+	internal DatePicker FechaPicker = null!;
 
 	private bool _contentLoaded;
 
