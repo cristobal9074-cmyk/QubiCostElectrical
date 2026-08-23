@@ -45,6 +45,7 @@ public static class SQLiteSchemaMigrator
         new(29, "Descuentos negociados por equipo/material específico",                                  SqliteMigrationSteps.Migration029_NegotiatedDiscounts),
         new(30, "Política de cierre comercial del proyecto",                                             SqliteMigrationSteps.Migration030_ClosingPolicy),
         new(31, "Dotación indirecta por rol, dedicación y meses",                                        SqliteMigrationSteps.Migration031_StaffingPlan),
+        new(32, "Contratos: tabla raíz y 6 tablas hijas (partes, hitos, alcance, documentos, versiones, auditoría)", SqliteMigrationSteps.Migration032_Contracts),
     };
 
     public static void MigrateToLatest(SqliteConnection connection)

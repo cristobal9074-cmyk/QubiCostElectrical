@@ -22,6 +22,7 @@ using QubiCostElectrical.Wpf.Features.ManoDeObra;
 using ApuCatalogFeature = QubiCostElectrical.Wpf.Features.ApuCatalog;
 using ApuMergeFeature = QubiCostElectrical.Wpf.Features.ApuMerge;
 using EconomicEditorFeature = QubiCostElectrical.Wpf.Features.EconomicEditor;
+using ContractsFeature = QubiCostElectrical.Wpf.Features.Contracts;
 using QubiCostElectrical.Wpf.Features.Prices;
 using QubiCostElectrical.Wpf.Features.Project;
 using QubiCostElectrical.Wpf.Infrastructure;
@@ -115,6 +116,12 @@ partial class ShellViewModel
                     if (target != null)
                         vm.SelectPartida(target);
                 }
+                break;
+            case ContractsFeature.ContractEditorNavContext contractEditorCtx when view is ContractsFeature.ContractEditorView contractEditorView:
+                contractEditorView.ApplyNavContext(contractEditorCtx);
+                break;
+            case ContractsFeature.ContractVersionsNavContext contractVersionsCtx when view is ContractsFeature.ContractVersionsView contractVersionsView:
+                contractVersionsView.ApplyNavContext(contractVersionsCtx);
                 break;
         }
     }
@@ -252,6 +259,22 @@ partial class ShellViewModel
             {
                 var vm = new EconomicEditorFeature.EconomicEditorViewModel(shell, appHost);
                 return (new EconomicEditorFeature.EconomicEditorView { DataContext = vm }, vm);
+            }
+            case ShellRoute.ContractWorkspace:
+            {
+                var vm = new ContractsFeature.ContractWorkspaceViewModel(shell, appHost);
+                return (new ContractsFeature.ContractWorkspaceView { DataContext = vm }, vm);
+            }
+            case ShellRoute.ContractEditor:
+            {
+                var placeholder = new Contract { Id = ContractId.New(), Status = ContractStatus.Borrador };
+                var vm = new ContractsFeature.ContractEditorViewModel(shell, appHost, placeholder);
+                return (new ContractsFeature.ContractEditorView { DataContext = vm }, vm);
+            }
+            case ShellRoute.ContractVersions:
+            {
+                var vm = new ContractsFeature.ContractVersionsViewModel(shell, appHost, ContractId.New());
+                return (new ContractsFeature.ContractVersionsView { DataContext = vm }, vm);
             }
             default:
                 throw new InvalidOperationException($"La ruta {route} no tiene vista registrada.");

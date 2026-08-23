@@ -100,6 +100,40 @@ public sealed class WpfAppHost
     var fileOpener = new WpfFileOpenService();
     var auth = authOverride ?? new AuthService();
     var permissions = new UserRolePermissionService();
+
+    // Contratos vive en la MISMA base .qce del proyecto abierto (Migration032_Contracts se
+    // registró en el migrador de esquema por proyecto, no en el del banco de precios), así que
+    // sus repositorios deben re-apuntar cada vez que cambia el proyecto activo — no se pueden
+    // construir una sola vez con una ruta fija como ApuCatalog/Benchmark (esos sí son catálogos
+    // compartidos entre proyectos, viven en el banco de precios).
+    string? wiredContractsPath = null;
+    void RewireContractsIfProjectChanged()
+    {
+        var path = session.CurrentProjectPath;
+        if (string.IsNullOrWhiteSpace(path) || string.Equals(path, wiredContractsPath, System.StringComparison.OrdinalIgnoreCase))
+            return;
+
+        wiredContractsPath = path;
+        services.ContractRepository = new SqliteContractRepository(path);
+        services.ContractVersionRepository = new SqliteContractVersionRepository(path);
+        services.ContractPartyRepository = new SqliteContractPartyRepository(path);
+        services.ContractMilestoneRepository = new SqliteContractMilestoneRepository(path);
+        services.ContractScopeLinkRepository = new SqliteContractScopeLinkRepository(path);
+        services.ContractDocumentRepository = new SqliteContractDocumentRepository(path);
+        services.ContractAuditRepository = new SqliteContractAuditRepository(path);
+        services.ContractService = new ContractService(
+            services.ContractRepository,
+            services.ContractVersionRepository,
+            services.ContractPartyRepository,
+            services.ContractMilestoneRepository,
+            services.ContractScopeLinkRepository,
+            services.ContractDocumentRepository,
+            services.ContractAuditRepository,
+            permissions);
+    }
+    session.Changed += (_, _) => RewireContractsIfProjectChanged();
+    RewireContractsIfProjectChanged();
+
     var projectLock = new ProjectCollaborationLockService();
     var audit = new ProjectAuditRecorder(session);
     SessionManager.BindPermissions(permissions);

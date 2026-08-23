@@ -1,0 +1,44 @@
+<UserControl x:Class="QubiCostElectrical.Wpf.Features.Contracts.ContractVersionsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{DynamicResource Brush.Canvas}">
+
+  <DockPanel Margin="24">
+
+    <StackPanel DockPanel.Dock="Top" Margin="0,0,0,16">
+      <TextBlock Text="Versiones del contrato" FontSize="20" FontWeight="Bold"
+                 Foreground="{DynamicResource Brush.Ink}" Margin="0,0,0,4" />
+      <TextBlock Text="Historial de versiones y verificación de integridad." FontSize="12"
+                 Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,12" />
+
+      <StackPanel Orientation="Horizontal">
+        <Button Content="Volver" Command="{Binding BackCommand}"
+                Padding="12,7" FontSize="12" FontWeight="SemiBold" Margin="0,0,8,0" Cursor="Hand"
+                Background="Transparent" BorderBrush="#C9D4E3" BorderThickness="1" />
+        <Button Content="Verificar integridad" Command="{Binding VerifyIntegrityCommand}"
+                Padding="12,7" FontSize="12" FontWeight="SemiBold" Cursor="Hand"
+                Background="{DynamicResource Brush.Navy}" Foreground="White" BorderThickness="0" />
+      </StackPanel>
+    </StackPanel>
+
+    <StackPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
+      <TextBlock Text="{Binding IntegrityMessage}" FontSize="12" Foreground="{DynamicResource Brush.Ink}" TextWrapping="Wrap" />
+      <TextBlock Text="{Binding ErrorMessage}" FontSize="11" Foreground="#C0392B" TextWrapping="Wrap" />
+    </StackPanel>
+
+    <Border Style="{StaticResource Card.Section}" Padding="0">
+      <DataGrid ItemsSource="{Binding Versions}" SelectedItem="{Binding Selected}"
+                AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
+                HeadersVisibility="Column" GridLinesVisibility="Horizontal" RowHeight="34"
+                BorderThickness="0">
+        <DataGrid.Columns>
+          <DataGridTextColumn Header="Versión" Binding="{Binding VersionNumber}" Width="80" />
+          <DataGridTextColumn Header="Creado" Binding="{Binding CreatedUtc, StringFormat='{}{0:dd-MM-yyyy HH:mm}'}" Width="150" />
+          <DataGridTextColumn Header="Por" Binding="{Binding CreatedBy}" Width="150" />
+          <DataGridTextColumn Header="Hash" Binding="{Binding Hash}" Width="*" />
+        </DataGrid.Columns>
+      </DataGrid>
+    </Border>
+
+  </DockPanel>
+</UserControl>

@@ -74,7 +74,8 @@ public partial class ShellWindow : Window
             new NavDropdownItem { Label = "Revisión final", Route = ShellRoute.Review },
             new NavDropdownItem { Label = "Versiones", Route = ShellRoute.Versions },
             new NavDropdownItem { Label = "Órdenes de cambio", Route = ShellRoute.ChangeOrders },
-            new NavDropdownItem { Label = "Oferta y exportación", Route = ShellRoute.OfferDocuments }
+            new NavDropdownItem { Label = "Oferta y exportación", Route = ShellRoute.OfferDocuments },
+            new NavDropdownItem { Label = "Contratos", Route = ShellRoute.ContractWorkspace }
         ];
         NavMoreGroup.Items =
         [

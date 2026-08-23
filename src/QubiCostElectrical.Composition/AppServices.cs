@@ -58,6 +58,15 @@ public sealed class AppServices
 
     public IEconomicCalculationService EconomicCalculation { get; set; } = null!;
 
+    public IContractRepository ContractRepository { get; set; } = null!;
+    public IContractVersionRepository ContractVersionRepository { get; set; } = null!;
+    public IContractPartyRepository ContractPartyRepository { get; set; } = null!;
+    public IContractMilestoneRepository ContractMilestoneRepository { get; set; } = null!;
+    public IContractScopeLinkRepository ContractScopeLinkRepository { get; set; } = null!;
+    public IContractDocumentRepository ContractDocumentRepository { get; set; } = null!;
+    public IContractAuditRepository ContractAuditRepository { get; set; } = null!;
+    public IContractService ContractService { get; set; } = null!;
+
     public AppServices(
         IBudgetCalculationService budgetCalculation,
         IMaterialSearchService materialSearch,

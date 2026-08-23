@@ -666,4 +666,79 @@ internal static partial class SqliteMigrationSteps
             );
             """);
     }
+
+    // Contratos: tabla raíz "contracts" + 6 tablas hijas. El esquema no existía en la fuente
+    // decompilada (sus repositorios SqliteContract*Repository asumían tablas que ninguna
+    // migración de origen creaba); fue diseñado aquí a partir de las columnas que esos
+    // repositorios realmente leen/escriben, siguiendo el patrón "id/json/updated_at" ya
+    // usado en Migration029_NegotiatedDiscounts / Migration031_StaffingPlan. Todo con
+    // CREATE TABLE IF NOT EXISTS para permanecer idempotente y compatible entre forks.
+    internal static void Migration032_Contracts(SqliteConnection connection, SqliteTransaction transaction)
+    {
+        SqliteMigratorHelpers.Execute(connection, transaction, """
+            CREATE TABLE IF NOT EXISTS contracts (
+                id              TEXT NOT NULL PRIMARY KEY,
+                project_path    TEXT NOT NULL,
+                visible_number  TEXT NOT NULL,
+                status          INTEGER NOT NULL DEFAULT 0,
+                updated_utc     TEXT NOT NULL,
+                json_data       TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS ix_contracts_project_path ON contracts(project_path);
+            CREATE INDEX IF NOT EXISTS ix_contracts_visible_number ON contracts(visible_number);
+
+            CREATE TABLE IF NOT EXISTS contract_parties (
+                id              TEXT NOT NULL PRIMARY KEY,
+                contract_id     TEXT NOT NULL,
+                role            INTEGER NOT NULL DEFAULT 0,
+                json_data       TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS ix_contract_parties_contract_id ON contract_parties(contract_id);
+
+            CREATE TABLE IF NOT EXISTS contract_milestones (
+                id              TEXT NOT NULL PRIMARY KEY,
+                contract_id     TEXT NOT NULL,
+                code            TEXT NOT NULL,
+                json_data       TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS ix_contract_milestones_contract_id ON contract_milestones(contract_id);
+
+            CREATE TABLE IF NOT EXISTS contract_scope_links (
+                id              TEXT NOT NULL PRIMARY KEY,
+                contract_id     TEXT NOT NULL,
+                scope_type      TEXT NOT NULL,
+                ref_id          TEXT NOT NULL,
+                json_data       TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS ix_contract_scope_links_contract_id ON contract_scope_links(contract_id);
+
+            CREATE TABLE IF NOT EXISTS contract_documents (
+                id              TEXT NOT NULL PRIMARY KEY,
+                contract_id     TEXT NOT NULL,
+                doc_type        TEXT NOT NULL,
+                json_data       TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS ix_contract_documents_contract_id ON contract_documents(contract_id);
+
+            CREATE TABLE IF NOT EXISTS contract_versions (
+                id              TEXT NOT NULL PRIMARY KEY,
+                contract_id     TEXT NOT NULL,
+                version_number  INTEGER NOT NULL DEFAULT 0,
+                is_approved     INTEGER NOT NULL DEFAULT 0,
+                hash            TEXT NOT NULL DEFAULT '',
+                json_data       TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS ix_contract_versions_contract_id ON contract_versions(contract_id);
+
+            CREATE TABLE IF NOT EXISTS contract_audit (
+                id              TEXT NOT NULL PRIMARY KEY,
+                contract_id     TEXT NOT NULL,
+                action          TEXT NOT NULL,
+                actor           TEXT NOT NULL,
+                utc_ts          TEXT NOT NULL,
+                json_data       TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS ix_contract_audit_contract_id ON contract_audit(contract_id);
+            """);
+    }
 }

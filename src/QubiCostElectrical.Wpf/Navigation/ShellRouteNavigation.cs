@@ -25,5 +25,6 @@ public static class ShellRouteNavigation
 
     public static bool IsCloseRoute(ShellRoute route) =>
         route is ShellRoute.Review or ShellRoute.Versions or ShellRoute.ChangeOrders
-            or ShellRoute.OfferDocuments;
+            or ShellRoute.OfferDocuments or ShellRoute.ContractWorkspace
+            or ShellRoute.ContractEditor or ShellRoute.ContractVersions;
 }
