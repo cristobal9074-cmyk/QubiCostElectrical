@@ -36,12 +36,8 @@
     <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
   </Style>
 
-  <Style x:Key="Text.ViewTitle" TargetType="TextBlock">
-    <Setter Property="FontFamily" Value="{StaticResource Font.Ui}" />
-    <Setter Property="FontSize" Value="{StaticResource Font.Size.xl}" />
-    <Setter Property="FontWeight" Value="Bold" />
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
-  </Style>
+  <!-- Alias histórico: mismo estilo que Text.PageTitle, evita duplicar los 4 Setters. -->
+  <Style x:Key="Text.ViewTitle" TargetType="TextBlock" BasedOn="{StaticResource Text.PageTitle}" />
 
   <Style x:Key="Text.KpiValue" TargetType="TextBlock">
     <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />

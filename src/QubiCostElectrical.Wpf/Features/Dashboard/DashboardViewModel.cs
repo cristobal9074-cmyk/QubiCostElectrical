@@ -173,6 +173,16 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
     private bool isRefreshing;
     private string? selectedCategoryFilter;
     private string nextStepTitle = "Siguiente paso";
+
+    public string GreetingText
+    {
+        get
+        {
+            var user = QubiCostElectrical.Wpf.Auth.CollaborationSessionBridge.CurrentUserContext();
+            var name = string.IsNullOrWhiteSpace(user.DisplayName) ? user.Email : user.DisplayName;
+            return string.IsNullOrWhiteSpace(name) ? "Buenos días" : $"Buenos días, {name}";
+        }
+    }
     private string nextStepDetail = "";
     private string primaryCtaLabel = "Continuar";
     private ShellRoute primaryCtaRoute = ShellRoute.Takeoff;

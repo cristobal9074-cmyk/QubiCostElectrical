@@ -184,7 +184,7 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
         {
             if (!host.ProjectWorkspace.HasOpenProject)
                 return "Sin proyecto abierto";
-            var name = host.Session.ProjectInfo.Nombre;
+            var name = MojibakeFixer.Fix(host.Session.ProjectInfo.Nombre);
             return string.IsNullOrWhiteSpace(name) ? "Proyecto sin nombre" : name;
         }
     }

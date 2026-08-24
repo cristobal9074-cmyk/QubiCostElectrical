@@ -12,7 +12,8 @@ public static class ShellRouteNavigation
         route is ShellRoute.Costo or ShellRoute.Epp or ShellRoute.ManoDeObra or ShellRoute.EconomicEditor;
 
     public static bool IsMoreRoute(ShellRoute route) =>
-        route is ShellRoute.Templates or ShellRoute.FloorSummary;
+        route is ShellRoute.Templates or ShellRoute.FloorSummary or ShellRoute.ApuCatalog
+            or ShellRoute.ApuMerge or ShellRoute.Preferences;
 
     public static bool IsBudgetRoute(ShellRoute route) =>
         route is ShellRoute.Itemized or ShellRoute.Takeoff or ShellRoute.CubicacionSc

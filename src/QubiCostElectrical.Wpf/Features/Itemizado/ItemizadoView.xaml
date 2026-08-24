@@ -177,25 +177,25 @@
       <!-- HUD Cards Row -->
       <UniformGrid Grid.Row="1" Columns="4" Margin="0,0,0,16" Height="68">
         <!-- 1. Partidas Totales -->
-        <Border Style="{StaticResource Card.Section}" Margin="0,0,6,0" Padding="12,10">
+        <Border Style="{StaticResource Card.Kpi}" Margin="0,0,6,0" Padding="14,12">
           <StackPanel VerticalAlignment="Center">
             <TextBlock Text="PARTIDAS TOTALES" Style="{StaticResource Text.TotalsLabel}" FontSize="9" />
-            <TextBlock Text="{Binding SummaryPartidas}" Style="{StaticResource Text.TotalsValue}" FontSize="18" Foreground="{DynamicResource Brush.Blue}" FontWeight="Bold" Margin="0,2,0,0" />
+            <TextBlock Text="{Binding SummaryPartidas}" Style="{StaticResource Text.TotalsValue}" FontSize="20" Foreground="{DynamicResource Brush.Blue}" FontWeight="Bold" Margin="0,2,0,0" />
             <TextBlock Text="Partidas de obra ingresadas" Style="{StaticResource Text.Caption}" FontSize="11" Margin="0,1,0,0" />
           </StackPanel>
         </Border>
 
         <!-- 2. Capítulos Estructurados -->
-        <Border Style="{StaticResource Card.Section}" Margin="3,0,3,0" Padding="12,10">
+        <Border Style="{StaticResource Card.Kpi}" Margin="3,0,3,0" Padding="14,12">
           <StackPanel VerticalAlignment="Center">
             <TextBlock Text="CAPÍTULOS / TÍTULOS" Style="{StaticResource Text.TotalsLabel}" FontSize="9" />
-            <TextBlock Text="{Binding SummaryCapitulos}" Style="{StaticResource Text.TotalsValue}" FontSize="18" FontWeight="Bold" Margin="0,2,0,0" />
+            <TextBlock Text="{Binding SummaryCapitulos}" Style="{StaticResource Text.TotalsValue}" FontSize="20" FontWeight="Bold" Margin="0,2,0,0" />
             <TextBlock Text="Secciones y agrupadores" Style="{StaticResource Text.Caption}" FontSize="11" Margin="0,1,0,0" />
           </StackPanel>
         </Border>
 
         <!-- 3. Progreso de Estructuración -->
-        <Border Style="{StaticResource Card.Section}" Margin="3,0,3,0" Padding="12,10">
+        <Border Style="{StaticResource Card.Kpi}" Margin="3,0,3,0" Padding="14,12">
           <StackPanel VerticalAlignment="Center">
             <DockPanel LastChildFill="True">
               <TextBlock DockPanel.Dock="Right" Text="{Binding SummaryCompletas}" FontSize="11.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Success}" />
@@ -207,10 +207,10 @@
         </Border>
 
         <!-- 4. Partidas Incompletas -->
-        <Border Style="{StaticResource Card.Section}" Margin="6,0,0,0" Padding="12,10">
+        <Border Style="{StaticResource Card.Kpi}" Margin="6,0,0,0" Padding="14,12">
           <StackPanel VerticalAlignment="Center">
             <TextBlock Text="FILAS INCOMPLETAS" Style="{StaticResource Text.TotalsLabel}" FontSize="9" />
-            <TextBlock Text="{Binding SummaryIncompletas}" Style="{StaticResource Text.TotalsValue}" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource Brush.Amber}" Margin="0,2,0,0" />
+            <TextBlock Text="{Binding SummaryIncompletas}" Style="{StaticResource Text.TotalsValue}" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource Brush.Amber}" Margin="0,2,0,0" />
             <TextBlock Text="Falta ítem, descripción o unidad" Style="{StaticResource Text.Caption}" FontSize="11" Margin="0,1,0,0" />
           </StackPanel>
         </Border>

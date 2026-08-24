@@ -23,7 +23,7 @@
       <StackPanel Margin="22,20,22,20">
         <Grid Margin="0,0,0,14">
           <StackPanel>
-            <TextBlock Text="Buenos días, Cristóbal" Style="{StaticResource Text.PageTitle}" Margin="0,3,0,2" />
+            <TextBlock Text="{Binding GreetingText}" Style="{StaticResource Text.PageTitle}" Margin="0,3,0,2" />
             <TextBlock Text="El proyecto está cerca de estar listo; hay decisiones que afectan la oferta." Style="{StaticResource Text.Body}" />
           </StackPanel>
           <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
