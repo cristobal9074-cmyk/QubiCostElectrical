@@ -3,7 +3,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:QubiCostElectrical.Wpf.Features.Apu"
              xmlns:domain="clr-namespace:QubiCostElectrical;assembly=QubiCostElectrical.Domain"
-             xmlns:sys="clr-namespace:System;assembly=mscorlib">
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             xmlns:ctrl="clr-namespace:QubiCostElectrical.Wpf.Controls">
 
   <UserControl.Resources>
     <x:Array x:Key="TipoRecursoValues" Type="{x:Type domain:ApuTipoRecurso}">
@@ -124,14 +125,14 @@
     <Grid Grid.Column="2">
 
       <!-- Estado vacío: sin proyecto -->
-      <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
-                  Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}}">
-        <TextBlock Text="Sin proyecto abierto" FontSize="17" FontWeight="SemiBold"
-                   Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Center"/>
-        <Button Content="Ir a cubicación" Margin="0,16,0,0" HorizontalAlignment="Center"
-                Style="{StaticResource Button.Primary}" Padding="16,8"
-                Command="{Binding GoToCubicacionCommand}"/>
-      </StackPanel>
+      <ctrl:EmptyStateControl Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}}"
+                              Title="Sin proyecto abierto"
+                              Description="Cubique al menos una partida para poder generar su APU.">
+        <ctrl:EmptyStateControl.Actions>
+          <Button Content="Ir a cubicación" Style="{StaticResource Button.Primary}" MinWidth="180"
+                  Command="{Binding GoToCubicacionCommand}"/>
+        </ctrl:EmptyStateControl.Actions>
+      </ctrl:EmptyStateControl>
 
       <!-- Contenido del APU -->
       <Grid Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">

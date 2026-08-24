@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ctrl="clr-namespace:QubiCostElectrical.Wpf.Controls"
              mc:Ignorable="d"
              d:DesignWidth="1920"
              d:DesignHeight="900"
@@ -461,15 +462,12 @@
       </StackPanel>
     </ScrollViewer>
 
-    <Border Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}}"
-            Background="{DynamicResource Brush.Surface}" HorizontalAlignment="Center" VerticalAlignment="Center"
-            Padding="40" CornerRadius="16" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1">
-      <StackPanel HorizontalAlignment="Center">
-        <TextBlock Text="Sin proyecto abierto" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink}" HorizontalAlignment="Center" />
-        <TextBlock Text="Abra un proyecto para gestionar los elementos de protección personal" FontSize="11"
-                   Foreground="{DynamicResource Brush.Muted}" Margin="0,4,0,16" HorizontalAlignment="Center" />
-        <Button Style="{StaticResource Button.Primary}" Content="Abrir proyecto…" Command="{Binding OpenProjectCommand}" MinWidth="180" HorizontalAlignment="Center" />
-      </StackPanel>
-    </Border>
+    <ctrl:EmptyStateControl Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}}"
+                            Title="Sin proyecto abierto"
+                            Description="Abra un proyecto para gestionar los elementos de protección personal.">
+      <ctrl:EmptyStateControl.Actions>
+        <Button Style="{StaticResource Button.Primary}" Content="Abrir proyecto…" Command="{Binding OpenProjectCommand}" MinWidth="180" />
+      </ctrl:EmptyStateControl.Actions>
+    </ctrl:EmptyStateControl>
   </Grid>
 </UserControl>

@@ -453,7 +453,7 @@
             <TextBox Grid.Column="0" Text="{Binding NewUserDisplayName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" Height="34" ToolTip="Nombre"/>
             <TextBox Grid.Column="2" Text="{Binding NewUserEmail, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" Height="34" ToolTip="Correo"/>
             <TextBox Grid.Column="4" Text="{Binding NewUserPin, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" Height="34" MaxLength="6" ToolTip="PIN 4-6 dígitos"/>
-            <ComboBox Grid.Column="6" ItemsSource="{Binding AvailableRoles}" SelectedItem="{Binding NewUserRole}" Height="34"/>
+            <ComboBox Grid.Column="6" ItemsSource="{Binding AvailableRoles}" SelectedItem="{Binding NewUserRole}" Style="{StaticResource Form.ComboBox}" Height="34"/>
             <Button Grid.Column="8" Content="Crear usuario" Height="34" Padding="12,0" Click="OnCreateUserClick"/>
           </Grid>
 
@@ -466,8 +466,8 @@
               <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             <TextBox Grid.Column="0" Text="{Binding UserSearchText, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" Height="34" ToolTip="Buscar por nombre o correo (Ctrl+F)"/>
-            <ComboBox Grid.Column="2" ItemsSource="{Binding UserRoleFilters}" SelectedItem="{Binding SelectedUserRoleFilter}" Height="34"/>
-            <ComboBox Grid.Column="4" ItemsSource="{Binding UserActiveFilters}" SelectedItem="{Binding SelectedUserActiveFilter}" Height="34"/>
+            <ComboBox Grid.Column="2" ItemsSource="{Binding UserRoleFilters}" SelectedItem="{Binding SelectedUserRoleFilter}" Style="{StaticResource Form.ComboBox}" Height="34"/>
+            <ComboBox Grid.Column="4" ItemsSource="{Binding UserActiveFilters}" SelectedItem="{Binding SelectedUserActiveFilter}" Style="{StaticResource Form.ComboBox}" Height="34"/>
           </Grid>
 
           <Grid Margin="0,0,0,12">
