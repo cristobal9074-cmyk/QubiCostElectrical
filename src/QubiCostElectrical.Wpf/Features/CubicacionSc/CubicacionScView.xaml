@@ -150,7 +150,8 @@
 
         <!-- Contenido principal cuando hay proyecto -->
         <DockPanel Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}"
-                   d:Visibility="Visible">
+                   d:Visibility="Visible"
+                   Margin="20,14,20,14">
 
             <!-- Header -->
             <Grid DockPanel.Dock="Top" Margin="0,0,0,10">
