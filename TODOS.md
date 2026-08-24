@@ -4,7 +4,7 @@ Plan operativo CEO (90 días → **1.0.0 GA**). Objetivo: producto vendible sin 
 
 **Posicionamiento:** presupuesto y oferta eléctrica. No obra/estados de pago (post-GA).
 
-**Versión actual:** `1.0.0`  
+**Versión actual:** `1.1.0`  
 **Siguiente hito:** Semana 12 — GA comercial (tag, instalador firmado)
 
 ---
@@ -55,15 +55,10 @@ que ya conocían `CubicacionView.xaml.cs`, `CubicacionRightPanelVm` y `Cubicacio
 Cero cambio de comportamiento observable — build limpio + 1696/1696 tests verdes verificado
 después de cada uno de los 7 colaboradores, un commit por colaborador.
 
-- [ ] **`CubicacionViewModel.FormulaBar.cs` sigue siendo código huérfano** (hallazgo
-  separado, fuera de alcance de este refactor). `FormulaBarText`,
-  `CommitFormulaBarToSelectedRow`, `CommitFormulaBar()`, `AbortFormulaBar()` no tienen
-  ningún binding en `CubicacionView.xaml` (verificado, 0 referencias). El único caller
-  (`BeginFormulaBarEdit`) es un guard clause vacío. Tiene 2 tests unitarios que pasan
-  (`CubicacionViewModelTests.cs:94,534`) pero verifican algo que ningún usuario puede
-  alcanzar desde la UI actual. Decidir: ¿se abandonó a medio construir (falta el binding)
-  o es una feature reemplazada por otra cosa? Si es lo segundo, borrar el código y sus
-  tests junto con esta línea.
+- [x] **`CubicacionViewModel.FormulaBar.cs` código huérfano — RESUELTO.** El archivo y
+  sus 2 tests (`CubicacionViewModelTests.cs:94,534`) ya no existen en el repo (verificado
+  2026-08-24: `find`/`grep` no encuentran ni el archivo ni las referencias). Se eliminó en
+  algún punto posterior a esta nota; queda solo como registro histórico.
 - [ ] **Smoke test manual pendiente** (no automatizable: `Application.Current` es `null`
   en el entorno headless de xunit). Antes de dar el refactor por completamente cerrado,
   probar en vivo cada flujo de la tabla de verificación del plan: autocompletado de
@@ -110,18 +105,12 @@ de recalcularlos en cada refiltrado.
 - [ ] **`ApuWorkspaceVm.ApplyFilter`** (`Clear()` + `foreach Add()` completo por tecla) —
   volumen bajo hoy (cientos de partidas, no miles), quedó fuera de esta ronda a propósito.
   Vigilar si crece.
-- [ ] **Fase 4 — descomposición de archivos grandes (pendiente, requiere su propio
-  `/plan-eng-review`):** `CubicacionView.xaml.cs` (1682 líneas) y
-  `DataGridExcelNavigation.cs` (1094 líneas) son los más urgentes. Otros 17 archivos >500
-  líneas quedaron identificados pero no investigados a fondo (`QuestPdfProjectExporter.cs`
-  882, `ShellViewModel.cs` 789, `ExportViewModel.cs` 778, `BudgetProjectSession.cs` 675,
-  `ExcelExportInfrastructure.cs` 663, `ApuWorkspaceVm.cs` 641, `ShellWindow.xaml.cs` 631,
-  `PriceBankViewModel.cs` 622, `BudgetEngine.cs` 612, `DashboardViewModel.cs` 603,
-  `VersionsViewModel.cs` 555, `PreferencesViewModel.cs` 551, `SqliteMigrationSteps.cs` 548,
-  `CubicacionScViewModel.cs` 542, `HojaCubicacionDialog.xaml.cs` 536,
-  `CubicacionCompositionService.cs` 533, `DocumentsViewModel.cs` 507). No proponer su
-  descomposición sin releer el código real de cada uno primero — mismo error que ya se
-  cometió una vez con un mapeo heredado sin verificar.
+- [x] **Fase 4 — descomposición de archivos grandes — RESUELTA.** Verificado 2026-08-24: los
+  19 archivos listados aquí (incluidos los dos "más urgentes") ya no superan 260 líneas —
+  p. ej. `CubicacionView.xaml.cs` 1682→45, `DataGridExcelNavigation.cs` 1094→41,
+  `ShellViewModel.cs` 789→37, `QuestPdfProjectExporter.cs` 882→38, `SqliteMigrationSteps.cs`
+  548→9 — evidencia de que ya fueron divididos en archivos parciales/colaboradores en algún
+  punto posterior a esta nota.
 
 ## Bugs preexistentes — búsqueda y fix ✅ RESUELTO
 
@@ -185,4 +174,8 @@ raíz confirmada antes de escribir cualquier fix).
 
 ## Completados (histórico)
 
-Fases 1–2 ✅ · S9 + S11 ✅ (2026-06) · FTS5 PriceBankStore ✅ · QuestPDF licencia ✅
+Fases 1–2 ✅ · S9 + S11 ✅ (2026-06) · FTS5 PriceBankStore ✅ · QuestPDF licencia ✅ ·
+Contratos — ciclo de vida completo ✅ (`1.1.0`, 2026-08-24, ver `CHANGELOG.md`) ·
+Limpieza de repo — bin/obj, `_cleanup_2026-08-21/`, PDF suelto en raíz, script de scratch y
+plantilla `QubiSpatialElectricalTwin` sin relación al proyecto activo, eliminados ✅
+(2026-08-24)
