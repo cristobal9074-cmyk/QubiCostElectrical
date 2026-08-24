@@ -157,7 +157,7 @@
         </Grid.ColumnDefinitions>
         <StackPanel Grid.Column="0">
           <WrapPanel VerticalAlignment="Center">
-            <TextBlock Text="Itemizado Valorado" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" />
+            <TextBlock Text="Itemizado Valorado" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" />
             <Border Background="{DynamicResource Brush.SuccessSoft}" BorderBrush="{DynamicResource Brush.Success}" BorderThickness="1" CornerRadius="12" Padding="8,2" Margin="10,0,0,0" VerticalAlignment="Center">
               <TextBlock Text="PRESUPUESTO ACTIVO" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Success}" />
             </Border>

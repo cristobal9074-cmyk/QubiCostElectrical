@@ -48,7 +48,7 @@
         <Border BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1" Padding="20,12" Background="{DynamicResource Brush.Surface}">
           <DockPanel LastChildFill="False">
             <StackPanel>
-              <TextBlock Text="Mano de obra" Style="{StaticResource Text.PageTitle}" FontSize="18" />
+              <TextBlock Text="Mano de obra" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" />
             </StackPanel>
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
               <Border Padding="10,4" CornerRadius="12" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" Margin="0,0,8,0">

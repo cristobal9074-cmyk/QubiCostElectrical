@@ -34,7 +34,7 @@
       <StackPanel Margin="26,24,26,20">
         <!-- Cabecera: replica el bloque de control documental del HTML. -->
         <Grid Margin="0,0,0,18"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-          <StackPanel><TextBlock Text="PROYECTO / CONTROL DOCUMENTAL" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}"/><TextBlock Text="Antecedentes t&#233;cnicos" FontSize="27" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" Margin="0,5,0,0"/><TextBlock Text="Fuente trazable para el alcance, la cubicaci&#243;n y la oferta." FontSize="13.5" Foreground="{DynamicResource Brush.Ink3}" Margin="0,3,0,0"/></StackPanel>
+          <StackPanel><TextBlock Text="PROYECTO / CONTROL DOCUMENTAL" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}"/><TextBlock Text="Antecedentes t&#233;cnicos" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" Margin="0,5,0,0"/><TextBlock Text="Fuente trazable para el alcance, la cubicaci&#243;n y la oferta." FontSize="13.5" Foreground="{DynamicResource Brush.Ink3}" Margin="0,3,0,0"/></StackPanel>
           <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top"><Button Style="{StaticResource Button.Secondary}" Content="Exportar matriz" Command="{Binding ExportPdfCommand}" Margin="0,0,8,0" Padding="13,9"/><Button Style="{StaticResource Button.Primary}" Content="+ Incorporar antecedente" Command="{Binding AddAntecedenteCommand}" Padding="13,9"/></StackPanel>
         </Grid>
 

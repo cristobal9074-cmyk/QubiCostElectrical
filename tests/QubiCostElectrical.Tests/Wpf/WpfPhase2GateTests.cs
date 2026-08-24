@@ -42,7 +42,6 @@ public sealed class WpfPhase2GateTests
         var xaml = ReadSource("Shell/ShellWindow.xaml");
         Assert.Contains("ShellWorkflowStepper", xaml, StringComparison.Ordinal);
         Assert.Contains("ShowWorkflowStepper", xaml, StringComparison.Ordinal);
-        Assert.Contains("ShowContextBar", xaml, StringComparison.Ordinal);
         Assert.Contains("BudgetNavTabs", xaml, StringComparison.Ordinal);
     }
 

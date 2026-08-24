@@ -32,7 +32,7 @@
 
     <!-- ─── Título ────────────────────────────────────────────────────────── -->
     <TextBlock Grid.Row="0" Text="Órdenes de cambio"
-               FontSize="20" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink2}"
+               FontSize="20" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}"
                Margin="0,0,0,12"/>
 
     <!-- ─── Estado vacío — sin proyecto ────────────────────────────────────── -->

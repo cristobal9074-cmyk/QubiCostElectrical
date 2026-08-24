@@ -662,45 +662,6 @@
       </StackPanel>
     </Border>
 
-    <Border Grid.Row="1"
-            Background="{DynamicResource Brush.Surface2}"
-            BorderBrush="{DynamicResource Brush.Line}"
-            BorderThickness="0,0,0,1"
-            Padding="16,4"
-            Visibility="{Binding ShowContextBar, Converter={StaticResource BoolToVisibility}}">
-      <DockPanel LastChildFill="True">
-        <Button DockPanel.Dock="Right"
-                Click="OnCurrencyChipClick"
-                Cursor="Hand"
-                ToolTip="Monedas e indicadores (Alt+M)"
-                VerticalAlignment="Center"
-                Padding="0"
-                Background="Transparent"
-                BorderThickness="0"
-                Focusable="True">
-          <Border Style="{StaticResource Context.Chip}">
-            <TextBlock FontSize="10" VerticalAlignment="Center">
-              <Run Text="{Binding StatusChip, Mode=OneWay}" FontWeight="Bold" Foreground="{DynamicResource Brush.Navy3}" />
-              <Run Text=" · " Foreground="{DynamicResource Brush.Ink6}" />
-              <Run Text="{Binding VersionChip, Mode=OneWay}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Navy3}" />
-              <Run Text=" · " Foreground="{DynamicResource Brush.Ink6}" />
-              <Run Text="{Binding CurrencyChip, Mode=OneWay}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Navy3}" />
-            </TextBlock>
-          </Border>
-        </Button>
-        <StackPanel VerticalAlignment="Center"
-                    Visibility="{Binding ShowContextIdentity, Converter={StaticResource BoolToVisibility}}">
-          <TextBlock FontSize="10" Foreground="{DynamicResource Brush.Ink3}">
-            <Run Text="{Binding BreadcrumbProject, Mode=OneWay}" />
-          </TextBlock>
-          <TextBlock Text="{Binding PageTitle, Mode=OneWay}"
-                     Style="{StaticResource Text.PageTitle}"
-                     Margin="0,1,0,0"
-                     Visibility="{Binding ShowContextPageTitle, Converter={StaticResource BoolToVisibility}}" />
-        </StackPanel>
-      </DockPanel>
-    </Border>
-
     <Border Grid.Row="2"
             Background="{DynamicResource Brush.Surface}"
             BorderBrush="{DynamicResource Brush.Line}"

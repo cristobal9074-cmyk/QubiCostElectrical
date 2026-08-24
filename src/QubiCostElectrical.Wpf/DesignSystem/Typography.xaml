@@ -14,7 +14,7 @@
   <sys:Double x:Key="Font.Size.sm">11</sys:Double>
   <sys:Double x:Key="Font.Size.md">12</sys:Double>
   <sys:Double x:Key="Font.Size.lg">14</sys:Double>
-  <sys:Double x:Key="Font.Size.xl">16</sys:Double>
+  <sys:Double x:Key="Font.Size.xl">20</sys:Double>
   <sys:Double x:Key="Font.Size.2xl">24</sys:Double>
 
   <Style x:Key="Text.Caption" TargetType="TextBlock">

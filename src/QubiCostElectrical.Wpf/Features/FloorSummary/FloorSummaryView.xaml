@@ -80,7 +80,7 @@
       <Border Grid.Row="0" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1" Padding="20,14" Background="{DynamicResource Brush.Surface}">
         <DockPanel LastChildFill="False">
           <StackPanel DockPanel.Dock="Left">
-            <TextBlock Text="Resumen por piso" Style="{StaticResource Text.PageTitle}" FontSize="18" />
+            <TextBlock Text="Resumen por piso" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" />
           </StackPanel>
         </DockPanel>
       </Border>
