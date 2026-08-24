@@ -70,23 +70,23 @@
 
         <!-- KPI delta cards between versions list and comparison area -->
         <UniformGrid Grid.Row="2" Columns="3" Margin="0,0,0,12">
-          <Border Style="{StaticResource Card.Kpi}" Margin="0,0,8,0">
+          <Border Style="{StaticResource Card.Kpi}" Padding="14,12" Margin="0,0,8,0">
             <StackPanel>
-              <TextBlock Text="VARIACIÓN VS ANTERIOR" Style="{StaticResource Text.Caption}" Margin="0,0,0,8" />
+              <TextBlock Text="VARIACIÓN VS ANTERIOR" Style="{StaticResource Text.SectionLabel}" Margin="0,0,0,8" />
               <TextBlock Text="{Binding ComparisonDeltaText}" Style="{StaticResource Text.KpiValue}" />
               <TextBlock Text="{Binding ComparisonDeltaPctText}" Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Muted}" Margin="0,6,0,0" />
             </StackPanel>
           </Border>
-          <Border Style="{StaticResource Card.Kpi}" Margin="0,0,8,0">
+          <Border Style="{StaticResource Card.Kpi}" Padding="14,12" Margin="0,0,8,0">
             <StackPanel>
-              <TextBlock Text="PARTIDAS COMPARADAS" Style="{StaticResource Text.Caption}" Margin="0,0,0,8" />
+              <TextBlock Text="PARTIDAS COMPARADAS" Style="{StaticResource Text.SectionLabel}" Margin="0,0,0,8" />
               <TextBlock Text="{Binding ComparisonSummaryText}" Style="{StaticResource Text.KpiValue}" />
               <TextBlock Text="{Binding ComparisonChangedText}" Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Muted}" Margin="0,6,0,0" />
             </StackPanel>
           </Border>
-          <Border Style="{StaticResource Card.Kpi}">
+          <Border Style="{StaticResource Card.Kpi}" Padding="14,12">
             <StackPanel>
-              <TextBlock Text="VERSIÓN ACTIVA" Style="{StaticResource Text.Caption}" Margin="0,0,0,8" />
+              <TextBlock Text="VERSIÓN ACTIVA" Style="{StaticResource Text.SectionLabel}" Margin="0,0,0,8" />
               <TextBlock Text="{Binding ActiveVersionText}" Style="{StaticResource Text.KpiValue}" FontSize="11" />
               <TextBlock Text="{Binding SummaryText}" Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Muted}" Margin="0,6,0,0" />
             </StackPanel>

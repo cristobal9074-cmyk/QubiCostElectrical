@@ -162,9 +162,9 @@
 
         <!-- KPIs -->
         <UniformGrid Columns="5" Margin="20,14,20,0">
-          <Border Style="{StaticResource Card.Kpi}" Margin="0,0,8,0" Background="{DynamicResource Brush.Navy}" Padding="16">
+          <Border Style="{StaticResource Card.Kpi}" Margin="0,0,8,0" Background="{DynamicResource Brush.Navy}" Padding="14,12">
             <StackPanel VerticalAlignment="Center">
-              <TextBlock Text="COSTO TOTAL MO" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource Brush.HeaderMuted}" />
+              <TextBlock Text="COSTO TOTAL MO" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderMuted}" />
               <TextBlock Text="{Binding KpiTotalMo}" FontSize="20" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="#FFFFFF" Margin="0,4,0,0" />
               <TextBlock Text="{Binding KpiTotalMoSub}" FontSize="9" Foreground="{DynamicResource Brush.HeaderLabel}" Margin="0,2,0,6" />
               <Border CornerRadius="12" Padding="8,3" Background="#3347B882" HorizontalAlignment="Left">
@@ -172,9 +172,9 @@
               </Border>
             </StackPanel>
           </Border>
-          <Border Style="{StaticResource Card.Kpi}" Margin="0,0,8,0" Padding="16">
+          <Border Style="{StaticResource Card.Kpi}" Margin="0,0,8,0" Padding="14,12">
             <StackPanel VerticalAlignment="Center">
-              <TextBlock Text="SUELDOS BASE" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" />
+              <TextBlock Text="SUELDOS BASE" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" />
               <TextBlock Text="{Binding KpiBase}" FontSize="20" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink}" Margin="0,4,0,0" />
               <TextBlock Text="{Binding KpiBasePct}" FontSize="9" Foreground="{DynamicResource Brush.Muted}" Margin="0,2,0,6" />
               <Border CornerRadius="12" Padding="8,3" Background="{DynamicResource Brush.BlueSoft}" HorizontalAlignment="Left">
@@ -182,9 +182,9 @@
               </Border>
             </StackPanel>
           </Border>
-          <Border Style="{StaticResource Card.Kpi}" Margin="0,0,8,0" Padding="16">
+          <Border Style="{StaticResource Card.Kpi}" Margin="0,0,8,0" Padding="14,12">
             <StackPanel VerticalAlignment="Center">
-              <TextBlock Text="LEYES SOCIALES" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" />
+              <TextBlock Text="LEYES SOCIALES" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" />
               <TextBlock Text="{Binding KpiLeyes}" FontSize="20" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="#6B4FA8" Margin="0,4,0,0" />
               <TextBlock Text="{Binding KpiLeyesPct}" FontSize="9" Foreground="{DynamicResource Brush.Muted}" Margin="0,2,0,6" />
               <Border CornerRadius="12" Padding="8,3" Background="#EFEAFA" HorizontalAlignment="Left">
@@ -192,9 +192,9 @@
               </Border>
             </StackPanel>
           </Border>
-          <Border Style="{StaticResource Card.Kpi}" Margin="0,0,8,0" Padding="16">
+          <Border Style="{StaticResource Card.Kpi}" Margin="0,0,8,0" Padding="14,12">
             <StackPanel VerticalAlignment="Center">
-              <TextBlock Text="MO DIRECTA" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" />
+              <TextBlock Text="MO DIRECTA" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" />
               <TextBlock Text="{Binding KpiDirecta}" FontSize="20" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Green}" Margin="0,4,0,0" />
               <TextBlock Text="{Binding KpiDirectaSub}" FontSize="9" Foreground="{DynamicResource Brush.Muted}" Margin="0,2,0,6" />
               <Border CornerRadius="12" Padding="8,3" Background="{DynamicResource Brush.GreenSoft}" HorizontalAlignment="Left">
@@ -202,9 +202,9 @@
               </Border>
             </StackPanel>
           </Border>
-          <Border Style="{StaticResource Card.Kpi}" Padding="16">
+          <Border Style="{StaticResource Card.Kpi}" Padding="14,12">
             <StackPanel VerticalAlignment="Center">
-              <TextBlock Text="MO INDIRECTA" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" />
+              <TextBlock Text="MO INDIRECTA" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" />
               <TextBlock Text="{Binding KpiIndirecta}" FontSize="20" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Amber}" Margin="0,4,0,0" />
               <TextBlock Text="{Binding KpiIndirectaSub}" FontSize="9" Foreground="{DynamicResource Brush.Muted}" Margin="0,2,0,6" />
               <Border CornerRadius="12" Padding="8,3" Background="{DynamicResource Brush.AmberSoft}" HorizontalAlignment="Left">
@@ -507,27 +507,27 @@
           <DockPanel LastChildFill="False">
             <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
               <StackPanel Margin="0,0,20,0">
-                <TextBlock Text="Sueldos Base" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource Brush.HeaderMuted}" />
+                <TextBlock Text="Sueldos Base" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderMuted}" />
                 <TextBlock Text="{Binding SumBase}" FontSize="13" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="#FFFFFF" Margin="0,2,0,0" />
               </StackPanel>
               <Border Width="1" Height="28" Background="#33FFFFFF" Margin="0,0,20,0" VerticalAlignment="Center" />
               <StackPanel Margin="0,0,20,0">
-                <TextBlock Text="Leyes Sociales" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource Brush.HeaderMuted}" />
+                <TextBlock Text="Leyes Sociales" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderMuted}" />
                 <TextBlock Text="{Binding SumLeyes}" FontSize="13" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="#93C5FD" Margin="0,2,0,0" />
               </StackPanel>
               <Border Width="1" Height="28" Background="#33FFFFFF" Margin="0,0,20,0" VerticalAlignment="Center" />
               <StackPanel Margin="0,0,20,0">
-                <TextBlock Text="MO Directa" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource Brush.HeaderMuted}" />
+                <TextBlock Text="MO Directa" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderMuted}" />
                 <TextBlock Text="{Binding SumDirecta}" FontSize="13" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="#86EFAC" Margin="0,2,0,0" />
               </StackPanel>
               <Border Width="1" Height="28" Background="#33FFFFFF" Margin="0,0,20,0" VerticalAlignment="Center" />
               <StackPanel Margin="0,0,20,0">
-                <TextBlock Text="MO Indirecta" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource Brush.HeaderMuted}" />
+                <TextBlock Text="MO Indirecta" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderMuted}" />
                 <TextBlock Text="{Binding SumIndirecta}" FontSize="13" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="#FCD34D" Margin="0,2,0,0" />
               </StackPanel>
               <Border Width="1" Height="28" Background="#33FFFFFF" Margin="0,0,20,0" VerticalAlignment="Center" />
               <StackPanel>
-                <TextBlock Text="Costo / mes prom." FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource Brush.HeaderMuted}" />
+                <TextBlock Text="Costo / mes prom." FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderMuted}" />
                 <TextBlock Text="{Binding SumPromMes}" FontSize="13" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="#FFFFFF" Margin="0,2,0,0" />
               </StackPanel>
             </StackPanel>
