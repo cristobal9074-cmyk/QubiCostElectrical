@@ -61,12 +61,12 @@
 
     <DataGrid Grid.Row="1" Grid.Column="2"
               x:Name="PreviewGrid"
+              Style="{StaticResource DataGrid.Workspace}"
               AutoGenerateColumns="False"
               IsReadOnly="True"
               GridLinesVisibility="Horizontal"
               HeadersVisibility="Column"
               BorderThickness="1"
-              FontSize="11"
               CanUserResizeRows="False">
       <DataGrid.Columns>
         <DataGridTextColumn Header="Tipo" Binding="{Binding Tipo}" Width="45"/>

@@ -221,13 +221,13 @@
         <DockPanel LastChildFill="True">
           <!-- Right side: Actions -->
           <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-            <Button Style="{StaticResource Button.Primary}" Content="+ Partida" Command="{Binding AddPartidaCommand}" Margin="0,0,6,0" Padding="10,4"
+            <Button Style="{StaticResource Button.ToolbarPrimary}" Content="+ Partida" Command="{Binding AddPartidaCommand}"
                     ToolTip="Insertar una nueva partida bajo la fila seleccionada (Ins)" />
-            <Button Style="{StaticResource Button.Secondary}" Content="+ Capítulo" Command="{Binding AddTitleCommand}" Margin="0,0,6,0" Padding="10,4"
+            <Button Style="{StaticResource Button.Toolbar}" Content="+ Capítulo" Command="{Binding AddTitleCommand}"
                     ToolTip="Agregar un capítulo bajo la fila seleccionada (o al final si no hay selección)" />
-            <Button Style="{StaticResource Button.Secondary}" Content="Importar Excel" Command="{Binding ImportExcelCommand}" Margin="0,0,6,0" Padding="10,4"
+            <Button Style="{StaticResource Button.Toolbar}" Content="Importar Excel" Command="{Binding ImportExcelCommand}"
                     ToolTip="Importar itemizado desde archivo Excel (.xlsx)" />
-            <Button Style="{StaticResource Button.Secondary}" Content="Pegar celdas" Command="{Binding PasteExcelCommand}" Margin="0,0,6,0" Padding="10,4"
+            <Button Style="{StaticResource Button.Toolbar}" Content="Pegar celdas" Command="{Binding PasteExcelCommand}"
                     ToolTip="Pegar filas copiadas desde Excel (Ctrl+V en la grilla)" />
 
             <!-- More dropdown button -->

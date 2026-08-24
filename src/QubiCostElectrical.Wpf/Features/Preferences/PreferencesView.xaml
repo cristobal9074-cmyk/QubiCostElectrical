@@ -492,7 +492,7 @@
             <CheckBox Grid.Column="6" Content="Bloquear repeticiones" IsChecked="{Binding PinBlockRepeats}" VerticalAlignment="Bottom" Margin="0,0,0,6"/>
           </Grid>
 
-          <DataGrid x:Name="UsersGrid" ItemsSource="{Binding Users}" SelectedItem="{Binding SelectedUser}"
+          <DataGrid x:Name="UsersGrid" Style="{StaticResource DataGrid.Workspace}" ItemsSource="{Binding Users}" SelectedItem="{Binding SelectedUser}"
                     AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
                     HeadersVisibility="Column" MinHeight="180" PreviewKeyDown="OnUsersGridPreviewKeyDown">
             <DataGrid.ContextMenu>

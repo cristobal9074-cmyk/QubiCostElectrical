@@ -182,12 +182,12 @@
                 <DockPanel LastChildFill="True">
                     <!-- Right side: Actions -->
                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                        <Button Style="{StaticResource Button.Secondary}" Content="📚 Catálogo" Command="{Binding OpenCatalogoCommand}" Margin="0,0,6,0" Padding="10,4" />
-                        <Button Style="{StaticResource Button.Secondary}" Content="📊 Resumen" Command="{Binding OpenResumenCommand}" Margin="0,0,6,0" Padding="10,4" />
-                        <Button Style="{StaticResource Button.Primary}" Content="+ Agregar tablero" Command="{Binding AddCuadroCommand}" Margin="0,0,6,0" Padding="10,4" />
-                        <Button Style="{StaticResource Button.Secondary}" Content="+ Agregar circuito" Command="{Binding AddCircuitoCommand}" Margin="0,0,6,0" Padding="10,4" />
-                        <Button Style="{StaticResource Button.Secondary}" Content="Duplicar" Command="{Binding DuplicateCircuitoCommand}" Margin="0,0,6,0" Padding="10,4" />
-                        <Button Style="{StaticResource Button.Secondary}" Content="Quitar" Command="{Binding RemoveCircuitoCommand}" Margin="0,0,6,0" Padding="10,4" Foreground="{DynamicResource Brush.Danger}" />
+                        <Button Style="{StaticResource Button.Toolbar}" Content="📚 Catálogo" Command="{Binding OpenCatalogoCommand}" />
+                        <Button Style="{StaticResource Button.Toolbar}" Content="📊 Resumen" Command="{Binding OpenResumenCommand}" />
+                        <Button Style="{StaticResource Button.ToolbarPrimary}" Content="+ Agregar tablero" Command="{Binding AddCuadroCommand}" />
+                        <Button Style="{StaticResource Button.Toolbar}" Content="+ Agregar circuito" Command="{Binding AddCircuitoCommand}" />
+                        <Button Style="{StaticResource Button.Toolbar}" Content="Duplicar" Command="{Binding DuplicateCircuitoCommand}" />
+                        <Button Style="{StaticResource Button.Toolbar}" Content="Quitar" Command="{Binding RemoveCircuitoCommand}" Foreground="{DynamicResource Brush.Danger}" />
 
                         <!-- More dropdown button -->
                         <Button x:Name="MoreActionsButton" Style="{StaticResource Button.Ghost}" Content="⋯" Padding="12,4" VerticalAlignment="Center" Click="OnMoreActionsClick">

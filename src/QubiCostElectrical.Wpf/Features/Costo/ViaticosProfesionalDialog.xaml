@@ -700,12 +700,12 @@
                       <TextBlock Text="Listo para aplicar" FontSize="10" FontWeight="Bold" Foreground="#2563B0" />
                     </Border>
                   </DockPanel>
-                  <DataGrid ItemsSource="{Binding Lineas}" AutoGenerateColumns="False"
+                  <DataGrid Style="{StaticResource DataGrid.Workspace}" ItemsSource="{Binding Lineas}" AutoGenerateColumns="False"
                             CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="True"
                             HeadersVisibility="Column" GridLinesVisibility="Horizontal"
                             BorderThickness="0" RowHeaderWidth="0" MinHeight="160"
-                            AlternatingRowBackground="#F8FAFC" Background="White"
-                            HorizontalGridLinesBrush="#F1F5F9">
+                            AlternatingRowBackground="{DynamicResource Brush.Surface2}" Background="{DynamicResource Brush.Surface}"
+                            HorizontalGridLinesBrush="{DynamicResource Brush.Line2}">
                     <DataGrid.Columns>
                       <DataGridTextColumn Header="CONCEPTO" Binding="{Binding Concepto}" Width="*" MinWidth="180" />
                       <DataGridTextColumn Header="GRUPO" Binding="{Binding GrupoLabel}" Width="90" />

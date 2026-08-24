@@ -192,13 +192,13 @@
         <!-- Preview Grid -->
         <Border Grid.Row="1" Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="10">
           <DataGrid x:Name="PreviewGrid"
+                    Style="{StaticResource DataGrid.Workspace}"
                     AutoGenerateColumns="False"
                     IsReadOnly="True"
                     GridLinesVisibility="Horizontal"
                     HeadersVisibility="Column"
                     BorderThickness="0"
                     Background="Transparent"
-                    FontSize="11"
                     CanUserResizeRows="False"
                     EnableRowVirtualization="True"
                     EnableColumnVirtualization="True">
