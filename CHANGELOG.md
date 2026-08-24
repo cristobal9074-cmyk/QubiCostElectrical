@@ -2,6 +2,16 @@
 
 Las versiones siguen el formato `MAJOR.MINOR.PATCH` y corresponden a `Directory.Build.props` + `VersionSuffix`.
 
+## 1.1.0
+
+### Contratos — ciclo de vida completo
+- Nuevo módulo Contratos: creación, envío a revisión, aprobación/rechazo, suspensión/reactivación, cierre, término y rescisión
+- Segregación de funciones (SoD): quien crea/edita un contrato no puede aprobarlo ni cerrarlo
+- Esquema SQLite por proyecto (`Migration032`): `contracts`, `contract_parties`, `contract_milestones`, `contract_scope_links`, `contract_documents`, `contract_versions`, `contract_audit`
+- Versionado de contratos con hash de integridad (`ContractVersion.ComputeHash`) y verificación de manipulación
+- UI: espacio de trabajo de contratos, editor y comparador de versiones, integrados en la navegación (grupo «Cierre»)
+- 7 tests de integración contra SQLite real cubriendo ciclo de vida, SoD, integridad y concurrencia optimista
+
 ## 1.0.0
 
 ### General Availability — presupuesto y oferta eléctrica
