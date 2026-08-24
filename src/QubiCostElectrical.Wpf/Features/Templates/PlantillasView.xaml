@@ -121,7 +121,7 @@
                 <RowDefinition/>
             </Grid.RowDefinitions>
 
-            <!-- View header (App style of 20 Billion USD) -->
+            <!-- View header -->
 
             <!-- Stats Cards (Glassmorphism look) -->
             <UniformGrid Grid.Row="1" Columns="3" Margin="16,0,16,16">
@@ -451,10 +451,10 @@
             </TabControl>
             <Border Grid.Row="0" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1" Margin="0,0,0,118" Height="60">
                 <DockPanel LastChildFill="False">
-                    <StackPanel DockPanel.Dock="Left">
-                        <TextBlock Text="PLANTILLAS DE MATERIALES" FontSize="12" FontWeight="ExtraBold" Foreground="{DynamicResource Brush.Ink}" RenderTransformOrigin="0.497,-0.213" Height="13" Margin="0,10,0,10"/>
+                    <StackPanel DockPanel.Dock="Left" Margin="20,10,0,10" VerticalAlignment="Center">
+                        <TextBlock Text="Plantillas" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}"/>
                         <TextBlock Text="Diseña y organiza conjuntos de materiales listos para cargar en tu hoja de cubicación."
-                       FontSize="12" Foreground="{DynamicResource Brush.Muted}" RenderTransformOrigin="0.888,0.025" Height="35" Padding="2,6,0,0" Width="488" Margin="0,-5,0,0" />
+                       FontSize="12" Foreground="{DynamicResource Brush.Muted}" Margin="0,4,0,0" TextWrapping="Wrap" Width="488" />
                     </StackPanel>
                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
                         <Button Style="{DynamicResource Button.Primary}" Content="＋ Nueva Plantilla" Command="{Binding CreateConjuntoCommand}" Padding="16,8" Height="36" FontWeight="Bold" Background="{DynamicResource Brush.Blue}" RenderTransformOrigin="-0.401,0.542" Margin="10,10,20,10"/>

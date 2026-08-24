@@ -24,7 +24,8 @@
 
         <DockPanel Grid.Row="0" Margin="0,0,0,12">
           <StackPanel DockPanel.Dock="Left">
-            <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource Text.Body}" Foreground="{DynamicResource Brush.Muted}" />
+            <TextBlock Text="Versiones" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" />
+            <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource Text.Body}" Foreground="{DynamicResource Brush.Muted}" Margin="0,4,0,0" />
           </StackPanel>
           <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top">
             <Button Style="{StaticResource Button.Primary}" Content="Nueva" Command="{Binding NewCommand}" Margin="0,0,8,0" />
