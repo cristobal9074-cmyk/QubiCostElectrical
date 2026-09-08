@@ -5,7 +5,6 @@
 - .NET 10 SDK (o la versión indicada en `global.json` si existe)
 - Git
 - Inno Setup 6 (instalador `.exe` en CI)
-- Velopack CLI (`dotnet tool install -g vpk`) para empaquetado local
 - **Firma Authenticode** (obligatoria antes de GA comercial):
   - Certificado de firma de código (EV recomendado para SmartScreen)
   - Variables: `CODE_SIGNING_CERT_PFX`, `CODE_SIGNING_CERT_PASSWORD`
@@ -35,11 +34,11 @@ git status --porcelain
 Fuente única de verdad:
 
 ```xml
-<VersionPrefix>1.0.0</VersionPrefix>
-<VersionSuffix>rc.2</VersionSuffix>
+<VersionPrefix>1.1.1</VersionPrefix>
+<InformationalVersion>1.1.1</InformationalVersion>
 ```
 
-La versión completa es `1.0.0-rc.2` cuando hay sufijo.
+Usar `Directory.Build.props` como fuente única de verdad; para este repositorio, la versión informacional vigente es `1.1.1`.
 
 ### 3. Validación pre-release
 
@@ -57,16 +56,16 @@ Editar `Directory.Build.props` y actualizar `CLAUDE.md` + `CHANGELOG.md`.
 
 ```powershell
 git add Directory.Build.props CHANGELOG.md CLAUDE.md
-git commit -m "release: bump to 1.0.0-rc.3"
+git commit -m "release: bump to 1.1.1"
 ```
 
 ### 6. Tag semántico
 
 ```powershell
-git tag v1.0.0-rc.3
+git tag v1.1.1
 ```
 
-Convención: `v` + versión completa (incluye `-rc.N` si aplica).
+Convención: `v` + versión publicada. Evitar ejemplos `-rc.*` si no corresponden al release real del repositorio.
 
 ### 7. Push + tags
 
@@ -85,11 +84,11 @@ El workflow `.github/workflows/build.yml` en push/tag `v*`:
 5. ZIP fuente + SHA-256
 6. GitHub Release
 
-### 9. Build local alternativo (Velopack)
+### 9. Build local wrapper
 
 ```powershell
 .\deploy\build-release.ps1 -Sign
-# Con certificado en variables de entorno
+# Llama a scripts/Publish-Release.ps1 -Configuration Release -Runtime win-x64
 ```
 
 ### 10. Smoke test humano obligatorio
@@ -125,6 +124,12 @@ O integrado en el pipeline:
 ```powershell
 .\deploy\build-release.ps1 -Sign
 ```
+
+Comportamiento del script:
+
+- `0`: firma completada correctamente.
+- `0`: firma omitida si faltan variables de entorno y no se usa `-Strict` (apto para RC internas).
+- `1`: faltan credenciales con `-Strict`, no se encuentra `signtool.exe`, falta un archivo requerido o falla la firma.
 
 ### CI (GitHub Actions)
 

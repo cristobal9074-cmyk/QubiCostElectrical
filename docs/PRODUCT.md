@@ -68,5 +68,5 @@ Informes de fases WPF, paridad WinForms y auditorías antiguas están en `docs/a
 ## Operación de identidad y seguridad
 
 - Política PIN y criterios de seguridad: `docs/SECURITY_PIN_POLICY.md`
-- Onboarding primer arranque de equipos 3–8 usuarios: `docs/FIRST_RUN_TEAM_ONBOARDING.md`
+- Onboarding primer arranque de equipos 3–8 usuarios (1 editor + N consultores por .qce en SMB/UNC): `docs/FIRST_RUN_TEAM_ONBOARDING.md`
 - Evaluación comercial del modelo de identidad: `docs/AUTH_MODEL_REVIEW.md`

@@ -1,9 +1,9 @@
 <Project>
   <PropertyGroup>
-    <VersionPrefix>1.1.0</VersionPrefix>
-    <AssemblyVersion>1.1.0.0</AssemblyVersion>
-    <FileVersion>1.1.0.0</FileVersion>
-    <InformationalVersion>1.1.0</InformationalVersion>
+    <VersionPrefix>1.1.1</VersionPrefix>
+    <AssemblyVersion>1.1.1.0</AssemblyVersion>
+    <FileVersion>1.1.1.0</FileVersion>
+    <InformationalVersion>1.1.1</InformationalVersion>
     <Company>Qubi Cost</Company>
     <Authors>Qubi Cost</Authors>
     <Product>Qubi Cost Electrical</Product>
@@ -11,7 +11,7 @@
     <Description>Software profesional de presupuestos eléctricos con cubicación, APU, cotizaciones y ofertas comerciales.</Description>
     <DatabaseSchemaVersion>32</DatabaseSchemaVersion>
     <ProjectFormatVersion>6</ProjectFormatVersion>
-    <CalculationEngineVersion>2</CalculationEngineVersion>
+    <CalculationEngineVersion>5</CalculationEngineVersion>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <NoWarn>$(NoWarn);xUnit2013;xUnit2012</NoWarn>
   </PropertyGroup>

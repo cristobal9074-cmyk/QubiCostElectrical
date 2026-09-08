@@ -5,6 +5,7 @@ param(
 $ErrorActionPreference = "Stop"
 $root = Resolve-Path (Join-Path $PSScriptRoot "..")
 $sln = Join-Path $root "QubiCostElectrical.Wpf.sln"
+$architectureTests = Join-Path $root "tests/ArchitectureTests/ArchitectureTests.csproj"
 
 function Stop-StaleTestHosts {
     Write-Host "  Limpieza previa de testhost/vstest..." -ForegroundColor DarkGray
@@ -73,6 +74,8 @@ if (-not $SkipBuild) {
     Stop-StaleTestHosts
     dotnet test $sln --configuration Release --no-build
     if ($LASTEXITCODE -ne 0) { throw "Tests fallaron" }
+    dotnet test $architectureTests --configuration Release
+    if ($LASTEXITCODE -ne 0) { throw "ArchitectureTests fallaron" }
     Write-Host "  OK Todos los tests pasaron" -ForegroundColor Green
 } else {
     Write-Host "`n[5-7/7] Saltando build/test (SkipBuild)" -ForegroundColor Yellow

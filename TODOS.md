@@ -4,8 +4,131 @@ Plan operativo CEO (90 días → **1.0.0 GA**). Objetivo: producto vendible sin 
 
 **Posicionamiento:** presupuesto y oferta eléctrica. No obra/estados de pago (post-GA).
 
-**Versión actual:** `1.1.0`  
+**Versión actual:** `1.1.1`  
 **Siguiente hito:** Semana 12 — GA comercial (tag, instalador firmado)
+
+### Auditoría comercial 2026-08-26
+- Informe: `docs/AUDIT_COMMERCIAL_2026-08-26.md` (+ canvas Cursor)
+- Nota compuesta ~**6.0**/10 · listo cobrar **4.0** · confianza datos **7.5**
+- P0 dinero: smoke Semana A firmado → restaurar `deploy/` + Authenticode → SKU/licencia
+
+### Auditoría app perfecta 2026-08-26 (prioridad dueño: app antes que cobro)
+- Informe v2: `docs/AUDIT_APP_PERFECTA_2026-08-26.md` · canvas v2
+- Nota producto **honesta ~6.9**/10 (confianza uso **6.4** · UX/eng **7.1**) · meta 6 días **≥8.0**
+- [x] Oleada 7.5: Visor cabecera Cub · chrome alerts · Prefs · SC emoji · MaxLine/.sln
+- [x] **P0 SC Visor:** CellTemplate RO + BeginningEdit + Circuito/Cuadro/Artefacto CanEdit+MarkDirty + tests
+- [ ] Semana A firmada (`Record-SmokeSemanaA.ps1`) — único P0 humano
+- [x] Visor 6 módulos demo-proof (AllowEdit filas + markups APU + Costo/Oferta + VisorSixModulesReadOnlyTests)
+- [x] Golden Costo/Viáticos (`CostoViaticosGoldenTests`) + purge ResumenProyecto + copy SMB 1-writer
+- [ ] Luego: tokens hotpath Project/Inicio · Semana A humana
+- **Excluido:** instalador / Authenticode / SKU
+- **Regla:** no polish tokens sin Semana A PASS
+
+---
+
+## Arquitectura — plan de endurecimiento (2026-08-25)
+
+Fuente: `docs/ARCHITECTURE_HARDENING_PLAN.md`
+
+### Ola 1 (cerrada)
+- [x] Plan documentado
+- [x] `ProjectDirtyScope` + overload tipado (+ migracion hot-path)
+- [x] LockLost → RO + cancel autosave + lease en Save
+- [x] `CostoBreakdownLineBuilder` + tests
+- [x] Gate líneas por tipo parcial
+- [x] Dual-path unificado: LIVE → `Features/`; DEAD purged; 0 carpetas legacy
+- [x] `ShellPageFactory` extract
+
+### Ola 2 (cerrada)
+- [x] `ShellPageCache` + `ShellNavigationCoordinator` + `ShellProjectLifecycle`
+- [x] `ProjectDirtyTracker` / `ProjectAccessGate`
+- [x] `WpfAppHostBuilder`
+- [x] Coalesce `Session.Changed` + `ISessionChangeAware` (cache inactiva)
+
+### Ola 3 (cerrada)
+- [x] `CostoMoLaborProjectionBuilder` + `CostoGoComposeProjectionBuilder`
+- [x] `PartidaCantidadVariablesBuilder` + `CubicacionSectorExpressionCompactor`
+- [x] Pulido: `CubicacionSectorNavigation`, `OfferPackagePresetCatalog`, `ExportEligibilityEvaluator`, `GastoOperacionalCategoryMaintenance`
+- [x] Tests Application builders
+
+### Ola 4 (cerrada)
+- [x] Lease mid-write (`TryBeginWriteLease`) + `RequiresExclusiveLease` tras LockLost
+- [x] Sidecar `.autosave` en LockLostPending; no escribe `.qce`
+- [x] `PrepareForAppExit` skip `.qce` si RO / `ProjectLockLostException`
+- [x] Tests carrera + exit (`ProjectLockMidWriteTests`, `LockLostPendingExitTests`)
+
+### UI/UX — contrato de sistema (en curso)
+- [x] Plan `docs/UI_SCREEN_CONTRACT.md` + gate `WorkspacePageContractTests`
+- [x] Infra: `WorkspacePageViewModelBase`, `WorkspacePageChrome`, `ModuleFeedback`, Excel-nav attached
+- [x] Tokens tipografía densos + `Brush.HeroPanel`; chrome shell compacto 720p
+- [x] Pilotos: EconomicEditor (contrato + tokens + Excel), Solicitudes (Excel), MO (tokens header)
+- [x] **Costo tokens Fase A:** 0 `FontSize="N"` en `Features/Costo/*.xaml` (~170 → tokens `Font.Size.*`)
+- [x] **Costo Fase B:** `Text.SectionTitle` / `Text.Helper` / `Text.KpiInline` (~55 usos)
+- [x] **Tokens APU/EPP/MO:** 0 literales `FontSize` (incl. estilos locales + decimales)
+- [x] **Excel-nav editables + previews RO:** ~30 grillas `DataGridExcelNavigation.Enable`
+- [x] **Contrato** ApuCatalog / ApuMerge / Contracts (3) / ScenarioWorkspace (chrome; sin ShellRoute aún)
+- [x] Preferences: empty+skeleton / StatusMessage alineado a contrato
+- [ ] ScenarioWorkspace: cablear `ShellRoute` + factory si producto lo activa
+
+---
+
+## Auditoría calidad · 2026-08-24 — “siguiente nivel” (sin instalador/monetización)
+
+Tras cerrar P0–P2 de integridad/UI (SC commit+discard, EPP pending, RefreshChrome sin
+snapshot, dark tokens parciales, empty/skeleton, toasts guardar/export, Visor export),
+esto es lo que **aún falta** para sensación de producto de lujo. Notas de 3 agentes
+(UX / datos / perf).
+
+### Ya cerrado (no reabrir)
+- Empty states core + skeletons Dashboard/Itemizado/Cub/APU/Review/Export
+- Leave→Guardar aplica `IPageWithCommitChanges` (SC, EPP, Preferencias…)
+- SC discard con baseline; Visor bloqueado en export; toast al guardar
+- `RefreshChrome` sin `CreateSnapshot` por `Session.Changed`
+- Atajos Cub Alt+A/D; tokens Soft dark; Dialog.Chrome ~9 diálogos
+
+### P0 — confianza / datos (hacer ya)
+- [x] **APU no marca `session.IsDirty` al editar filas** → Leave/Close/autosave pueden
+  ignorar cambios o perderlos. Fix: `session.MarkDirty("apu")` en `OnRowEdited` +
+  `IPageWithCommitChanges` si aplica.
+- [x] **Descartar engañoso en Cubicación/APU** (`TryDiscardChanges` = solo `MarkClean`).
+  O baseline real, o copy del diálogo: “Salir sin escribir a disco (cambios en memoria
+  siguen hasta Guardar/Cerrar)”.
+- [x] **Visor edita celdas APU y Banco** — grillas sin `IsReadOnly` ligado a rol/sesión
+  (comandos sí; celdas no). Cubicación/Itemizado/SC ya OK.
+- [x] **Autosave sin prompt de recuperación** — escribe `.autosave` pero `IsAutoSaveNewer`
+  no se usa al abrir. Crash = datos invisibles.
+- [ ] **Smoke humano Cubicación** (checklist abajo) — único gate real de persistencia. Script listo en `docs/SMOKE_TEST.md` + `docs/DEMO_SCRIPT_15MIN.md`. Incluye firma Semana A + flush al cerrar X.
+- [x] **Flush al cerrar app (X)** — `PrepareForAppExitAsync` + `FlushPersistAsync`.
+- [x] **Export Generar oferta IsBusy** — Primary → `DeliverPackageCommand` + converter `InverseBool`.
+- [x] **Cubicar multi + Tomar SC confirm** — cola + toast; confirm overwrite.
+
+### P1 — feel / dark / teclado
+- [x] **Tokenizar resto hex** Costo + Viáticos + ManoObra/Epp/SC accents
+- [x] **Dialog.Chrome** ChangeOrder, Catálogo SC, Resumen SC, QuickAdd, Zonas,
+  Asistente, Import preview, pickers APU/Material
+- [x] **Undo (Ctrl+Z) en APU y Cubicación SC** — PushUndoPoint en mutaciones
+- [x] **Skeleton + IsLoading en Cubicación SC**
+- [x] **Toasts con acción** (Deshacer / Abrir carpeta) + política: éxito→toast,
+  destructivo→modal; APU/Plantillas/Precios al mismo patrón
+- [x] **PromptText/PromptChoice** con `Dialog.Chrome`
+- [x] **Encoding** `EnsureWritable`: “está en modo solo lectura”
+- [ ] **Atajos configurables** más allá de Cubicación (SC/APU/shell)
+
+### P2 — snappiness / lujo
+- [x] Offload UI: load partida Cubicación; Export Refresh (hasta 3× snapshot);
+  Dashboard/Review `Build` en background
+- [x] Índice `ItemId` en cubicación (`RecalculateForItem` / `GetRowsForItem`)
+- [x] Debounce `ApuWorkspaceVm.ApplyFilter`
+- [x] Toast Undo post-pegar + focus post-diálogo vuelve a celda
+- [x] EmptyStateControl en Versions (aún ad-hoc); unificar landing Dashboard vs Inicio
+- [x] Lock mid-sesión: avisar si otro toma el `.qce.lock` antes del fallo al guardar
+- [ ] Smoke: logout→login, DPI 125/150%, abrir `.qce` esquema viejo
+
+### Orden sugerido próximo sprint
+1. APU `MarkDirty` + Visor IsReadOnly APU/Banco + autosave restore prompt  
+2. Discard honesto Cub/APU (copy o baseline) + smoke humano Cub  
+3. Hex Costo/Viáticos + Chrome diálogos core + Undo APU/SC  
+4. Perf offload Cub/Export/Dashboard  
 
 ---
 
@@ -14,7 +137,7 @@ Plan operativo CEO (90 días → **1.0.0 GA**). Objetivo: producto vendible sin 
 Ver `docs/PRE_WEEK5_GATE.md`, `docs/PHASE2_WEEKS_5_8_REPORT.md`.
 
 - [x] Smoke automatizado (`docs/SMOKE_TEST.md` + `scripts/Run-SmokeAutomated.ps1`)
-- [ ] Smoke humano GUI (instalador, flujo visual, DPI)
+- [ ] Smoke humano GUI (instalador, flujo visual, DPI) — script listo en `docs/SMOKE_TEST.md` + `docs/DEMO_SCRIPT_15MIN.md`
 
 ---
 
@@ -26,7 +149,7 @@ Ver `docs/PRE_WEEK5_GATE.md`, `docs/PHASE2_WEEKS_5_8_REPORT.md`.
 
 ### S10 — Cubicación SC ⏸️ OMITIDA
 - [x] Match por código (adelantado)
-- [ ] Smoke manual flujo SC — **pospuesto**
+- [ ] Smoke manual flujo SC — script listo en `docs/SMOKE_TEST.md` + `docs/DEMO_SCRIPT_15MIN.md`
 
 ### S11 — Banco corporativo ✅
 - [x] Ruta UNC Preferencias + `ProductPaths` helpers
@@ -36,6 +159,58 @@ Ver `docs/PRE_WEEK5_GATE.md`, `docs/PHASE2_WEEKS_5_8_REPORT.md`.
 ### S12 — GA comercial
 - [x] Versión `1.0.0`, BC3 documentado
 - [ ] Tag `v1.0.0`, instalador firmado, smoke completo
+
+---
+
+## Roadmap cobrar sin disculpas (2026-08-25)
+
+### Semana A — confianza
+
+- [x] Toasts con acción
+- [x] Toast Undo post-pegar + focus post-diálogo
+- [x] Tokens hex MO/EPP/SC
+- [x] EmptyStateControl en Versions
+- [ ] Smoke humano Cubicación — script listo en `docs/SMOKE_TEST.md` + `docs/DEMO_SCRIPT_15MIN.md`
+- [ ] Smoke humano Cubicación SC — script listo en `docs/SMOKE_TEST.md` + `docs/DEMO_SCRIPT_15MIN.md`
+- [ ] Smoke humano GUI / roles — script listo en `docs/SMOKE_TEST.md` + `docs/FIRST_RUN_TEAM_ONBOARDING.md`
+
+- [x] Demo script 15 min — `docs/DEMO_SCRIPT_15MIN.md`
+- [x] Onboarding Admin+Estimador+Visor — `docs/FIRST_RUN_TEAM_ONBOARDING.md` (sesión 20 min)
+- [ ] Smoke humano ejecutado y firmado
+- [ ] Instalador y validación de instalación — fuera de alcance en este ciclo
+- [ ] Monetización — pendiente, fuera de alcance en este ciclo
+
+### Fluidez de guardado (2026-08-25)
+
+- [x] Cambiar de pestaña sin diálogo Guardar/Descartar (apply + autoguardado)
+- [x] Autoguardado .qce debounce 2,5 s + sidecar 15 s
+- [x] Cerrar proyecto guarda en silencio
+- [x] Tests SilentLeave + ProjectLifecycle actualizados
+
+### Auditoría UI/UX 2026-08-25 — oleada perfecta (P0–P2)
+
+**P0 Confianza**
+- [x] Visor RO en Versions + Mano de obra
+- [x] Cubicar Primary en Itemizado; empty Importar Primary
+- [x] Tomar SC visible en Cubicación (Hoja/Plantilla/Zonas en ⋯)
+- [x] Export: IsBusy overlay + DocumentErrors + un Primary sticky
+- [x] Hex residual Project/FloorSummary/Solicitudes/Viáticos → tokens
+
+**P1 Producto único**
+- [x] Home: Inicio sin proyecto / Dashboard con proyecto; copy estimador
+- [x] Chrome Visor: Ctrl+K sin Nuevo/Guardar/Undo mutación
+- [x] KPI strips compactos; badge PRESUPUESTO ACTIVO quitado
+- [x] APU Generar visible + DataGridExcelNavigation
+- [x] F1 lee atajos efectivos de Preferencias
+- [x] Skeletons Versions/Costo/EPP/MO; Dialog.Chrome Viáticos/Conjunto/Solicitudes
+- [x] War room → Cola de corrección; Banco Eliminar todo en ⋯
+
+**P2 Lujo (parcial)**
+- [x] Copy SaaS → lenguaje de estimador
+- [x] Radius.Chip / CTA viáticos Primary; Padding.Page; Anim.FadeIn ruta
+- [ ] SC modo entrada/avanzado (columnas)
+- [ ] Migración masiva FontSize literales Costo/SC/MO
+- [ ] Smoke humano post-polish (Dashboard → Cubicar → Tomar SC → Export)
 
 ---
 
@@ -52,7 +227,7 @@ clases colaboradoras reales e inyectadas (`CubicacionTotalsCalculator`,
 CubicacionViewModel` en todas. `CubicacionViewModel.cs` y los 8 archivos `.X.cs` restantes
 son ahora fachadas delgadas (wrappers de una línea) que preservan cada firma pública/internal
 que ya conocían `CubicacionView.xaml.cs`, `CubicacionRightPanelVm` y `CubicacionMedicionesVm`.
-Cero cambio de comportamiento observable — build limpio + 1696/1696 tests verdes verificado
+Cero cambio de comportamiento observable — build limpio + 1796/1796 tests verdes verificado
 después de cada uno de los 7 colaboradores, un commit por colaborador.
 
 - [x] **`CubicacionViewModel.FormulaBar.cs` código huérfano — RESUELTO.** El archivo y
@@ -65,6 +240,15 @@ después de cada uno de los 7 colaboradores, un commit por colaborador.
   código, cerrar/reabrir proyecto, guardar (Ctrl+S), cambiar de partida, Hoja de
   Cubicación/Zonas, agregar/duplicar/mover/eliminar filas, pegar desde Excel y "Agregar
   material rápido".
+
+### P0 — Smoke Cubicación (checklist corto)
+
+- [ ] Persistencia: guardar/reabrir mantiene cantidades y fórmulas
+- [ ] Fórmulas: barra de fórmulas calcula y persiste
+- [ ] Pegar desde Excel en CANT
+- [ ] Undo restaura edición
+- [ ] Logout / rol Visor deja la grilla en solo lectura
+
 - [ ] **Nota para quien retome trabajo futuro en esta zona:** dos lecciones de este
   refactor. (1) La premisa de "3 secuencias post-edición idénticas para consolidar" en
   `RowMutations.cs`/`Clipboard.cs`/`Sectors.cs` resultó **falsa** al verificar con grep

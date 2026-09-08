@@ -28,7 +28,7 @@
 
 ; AppVersion puede ser inyectada por CI con /DAppVersion=X.Y.Z
 #ifndef AppVersion
-  #define AppVersion "1.0.0"
+  #define AppVersion "1.1.1"
 #endif
 
 [Setup]

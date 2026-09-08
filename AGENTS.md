@@ -2,7 +2,7 @@
 
 ## Raíz del proyecto
 
-`C:\Users\cristobal1\Desktop\pruebas nuevo excel pega\1`
+`C:\Users\cristobal1\Desktop\QubiCost Electrical`
 
 ## Producto
 
@@ -10,12 +10,12 @@
 - **Ejecutable:** `QubiCostElectrical.exe`
 - **Formato de proyecto:** `.qce` (SQLite)
 - **UI:** WPF (`src/QubiCostElectrical.Wpf`) — WinForms retirado
-- **Versión vigente:** ver `Directory.Build.props` y `docs/PRODUCT.md` (`1.0.0`)
+- **Versión vigente:** ver `Directory.Build.props` y `docs/PRODUCT.md` (`1.1.1`)
 
 ## Comandos
 
 ```powershell
-Set-Location "C:\Users\cristobal1\Desktop\pruebas nuevo excel pega\1"
+Set-Location "C:\Users\cristobal1\Desktop\QubiCost Electrical"
 dotnet build QubiCostElectrical.Wpf.sln -c Release
 dotnet test QubiCostElectrical.Wpf.sln -c Release
 dotnet run --project src/QubiCostElectrical.Wpf/QubiCostElectrical.Wpf.csproj
