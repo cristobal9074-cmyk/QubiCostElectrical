@@ -2,8 +2,8 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <StackPanel>
-    <TextBlock Text="Identidad" FontSize="18" FontWeight="Bold" />
-    <TextBlock Text="Lo que aparece en portadas, cartas y ficha PDF." FontSize="13" Foreground="{DynamicResource Brush.Ink3}" Margin="0,0,0,16" />
+    <TextBlock Text="Identidad" FontSize="{StaticResource Font.Size.h2}" FontWeight="Bold" />
+    <TextBlock Text="Lo que aparece en portadas, cartas y ficha PDF." FontSize="{StaticResource Font.Size.base}" Foreground="{DynamicResource Brush.Ink3}" Margin="0,0,0,16" />
     <Border Style="{StaticResource ProjectCard}">
       <StackPanel>
         <TextBlock Text="OBRA Y MANDANTE" Style="{StaticResource ProjectCardTitle}" />

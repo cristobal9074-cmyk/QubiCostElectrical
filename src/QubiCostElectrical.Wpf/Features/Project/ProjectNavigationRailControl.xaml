@@ -9,7 +9,7 @@
           BorderThickness="0,0,1,0"
           Padding="10,14">
     <StackPanel>
-      <TextBlock Text="SECCIONES" FontSize="10" FontWeight="Bold"
+      <TextBlock Text="SECCIONES" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold"
                  Foreground="{DynamicResource Brush.Ink4}" Margin="10,4,10,10" />
       <Button AutomationProperties.Name="Sección Identidad" Content="1  Identidad"
               Command="{Binding SelectSectionCommand}" CommandParameter="identidad"

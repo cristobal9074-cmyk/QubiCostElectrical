@@ -34,7 +34,7 @@
         <Grid Margin="0,0,0,10">
           <TextBox x:Name="ClientBox" Style="{StaticResource Form.TextBox}" />
           <TextBlock Text="Nombre del cliente (opcional)" IsHitTestVisible="False" Foreground="{DynamicResource Brush.Muted}"
-                     VerticalAlignment="Center" Margin="8,0,0,0" FontSize="12">
+                     VerticalAlignment="Center" Margin="8,0,0,0" FontSize="{StaticResource Font.Size.md}">
             <TextBlock.Style>
               <Style TargetType="TextBlock">
                 <Setter Property="Visibility" Value="Collapsed" />
@@ -52,7 +52,7 @@
         <Grid Margin="0,0,0,10">
           <TextBox x:Name="LocationBox" Style="{StaticResource Form.TextBox}" />
           <TextBlock Text="Ciudad o dirección de la obra (opcional)" IsHitTestVisible="False" Foreground="{DynamicResource Brush.Muted}"
-                     VerticalAlignment="Center" Margin="8,0,0,0" FontSize="12">
+                     VerticalAlignment="Center" Margin="8,0,0,0" FontSize="{StaticResource Font.Size.md}">
             <TextBlock.Style>
               <Style TargetType="TextBlock">
                 <Setter Property="Visibility" Value="Collapsed" />
@@ -79,7 +79,7 @@
           <ComboBox.ItemTemplate>
             <DataTemplate>
               <StackPanel Orientation="Horizontal">
-                <TextBlock Text="{Binding Icono}" Margin="0,0,8,0" FontSize="13" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding Icono}" Margin="0,0,8,0" FontSize="{StaticResource Font.Size.base}" VerticalAlignment="Center" />
                 <TextBlock Text="{Binding Nombre}" FontWeight="Medium" VerticalAlignment="Center" />
               </StackPanel>
             </DataTemplate>
@@ -89,12 +89,12 @@
                 Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1">
           <StackPanel>
             <DockPanel LastChildFill="True">
-              <TextBlock x:Name="TemplateNormaBadge" DockPanel.Dock="Right" FontSize="11" FontWeight="SemiBold"
+              <TextBlock x:Name="TemplateNormaBadge" DockPanel.Dock="Right" FontSize="{StaticResource Font.Size.sm}" FontWeight="SemiBold"
                          Foreground="{DynamicResource Brush.Blue}" VerticalAlignment="Center" />
-              <TextBlock x:Name="TemplateSubtitleBlock" FontWeight="SemiBold" FontSize="12"
+              <TextBlock x:Name="TemplateSubtitleBlock" FontWeight="SemiBold" FontSize="{StaticResource Font.Size.md}"
                          Foreground="{DynamicResource Brush.Ink}" />
             </DockPanel>
-            <TextBlock x:Name="TemplateDescriptionBlock" FontSize="11" Foreground="{DynamicResource Brush.Muted}"
+            <TextBlock x:Name="TemplateDescriptionBlock" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}"
                        TextWrapping="Wrap" Margin="0,4,0,0" />
           </StackPanel>
         </Border>
@@ -111,49 +111,49 @@
 
         <TextBlock Text="Modelo comercial" Style="{StaticResource Form.Label}" Margin="0,6,0,2" />
         <TextBlock Text="Cómo se convierte el costo del presupuesto en el precio de venta final. Se puede cambiar después en Costo."
-                   Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" FontSize="12" Margin="0,0,0,8" />
+                   Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" FontSize="{StaticResource Font.Size.md}" Margin="0,0,0,8" />
 
         <StackPanel x:Name="PolicyCards">
           <RadioButton x:Name="PolicyCostPlusMarkup" GroupName="ClosingPolicy" IsChecked="True" Margin="0,0,0,6" Checked="OnPolicyChanged">
             <StackPanel Margin="4,0,0,0">
               <TextBlock Text="Costo + Markup (motor)" FontWeight="SemiBold" />
               <TextBlock Text="Úsala cuando: el precio sale del costo con GG y utilidad configurados. Es el modelo por defecto."
-                         Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" FontSize="11" />
+                         Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" FontSize="{StaticResource Font.Size.sm}" />
             </StackPanel>
           </RadioButton>
           <RadioButton x:Name="PolicyTargetPrice" GroupName="ClosingPolicy" Margin="0,0,0,6" Checked="OnPolicyChanged">
             <StackPanel Margin="4,0,0,0">
               <TextBlock Text="Precio Objetivo" FontWeight="SemiBold" />
               <TextBlock Text="Úsala cuando: el mandante fija un precio tope o hay un benchmark de mercado; GG y utilidad quedan como residual."
-                         Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" FontSize="11" />
+                         Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" FontSize="{StaticResource Font.Size.sm}" />
             </StackPanel>
           </RadioButton>
           <RadioButton x:Name="PolicyLumpSumEpc" GroupName="ClosingPolicy" Margin="0,0,0,6" Checked="OnPolicyChanged">
             <StackPanel Margin="4,0,0,0">
               <TextBlock Text="Suma Alzada / EPC" FontWeight="SemiBold" />
               <TextBlock Text="Úsala cuando: precio cerrado e inamovible con todo el riesgo del contratista; se fuerza una contingencia mínima."
-                         Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" FontSize="11" />
+                         Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" FontSize="{StaticResource Font.Size.sm}" />
             </StackPanel>
           </RadioButton>
           <RadioButton x:Name="PolicyCostPlusFee" GroupName="ClosingPolicy" Margin="0,0,0,6" Checked="OnPolicyChanged">
             <StackPanel Margin="4,0,0,0">
               <TextBlock Text="Costo + Fee" FontWeight="SemiBold" />
               <TextBlock Text="Úsala cuando: se traspasa el costo real 1:1 más un fee pactado, sin GG cargados sobre el costo."
-                         Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" FontSize="11" />
+                         Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" FontSize="{StaticResource Font.Size.sm}" />
             </StackPanel>
           </RadioButton>
           <RadioButton x:Name="PolicyUnitPricePure" GroupName="ClosingPolicy" Margin="0,0,0,6" Checked="OnPolicyChanged">
             <StackPanel Margin="4,0,0,0">
               <TextBlock Text="Precio Unitario Puro" FontWeight="SemiBold" />
               <TextBlock Text="Úsala cuando: la venta es la suma de precios unitarios contractuales por partida, con el margen embebido."
-                         Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" FontSize="11" />
+                         Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" FontSize="{StaticResource Font.Size.sm}" />
             </StackPanel>
           </RadioButton>
           <RadioButton x:Name="PolicyGainsharePainshare" GroupName="ClosingPolicy" Margin="0,0,0,6" Checked="OnPolicyChanged">
             <StackPanel Margin="4,0,0,0">
               <TextBlock Text="Gainshare / Painshare" FontWeight="SemiBold" />
               <TextBlock Text="Úsala cuando: hay un costo objetivo pactado y el ahorro o sobrecosto se reparte con el mandante."
-                         Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" FontSize="11" />
+                         Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" FontSize="{StaticResource Font.Size.sm}" />
             </StackPanel>
           </RadioButton>
         </StackPanel>

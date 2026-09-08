@@ -129,13 +129,13 @@
                             </Canvas>
                         </Viewbox>
                     </Border>
-                    <TextBlock Text="QUBI" Style="{StaticResource Text.HeaderBrand}" FontSize="22" />
-                    <TextBlock Text="COST ELECTRICAL" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.BlueFaint}" Margin="0,2,0,0" />
-                    <TextBlock Text="Presupuestos eléctricos" FontSize="10" Foreground="{DynamicResource Brush.HeaderLabel}" Margin="0,8,0,0" TextWrapping="Wrap" MaxWidth="220" />
+                    <TextBlock Text="QUBI" Style="{StaticResource Text.HeaderBrand}" FontSize="{StaticResource Font.Size.hero}" />
+                    <TextBlock Text="COST ELECTRICAL" FontSize="{StaticResource Font.Size.sm}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.BlueFaint}" Margin="0,2,0,0" />
+                    <TextBlock Text="Presupuestos eléctricos" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.HeaderLabel}" Margin="0,8,0,0" TextWrapping="Wrap" MaxWidth="220" />
                 </StackPanel>
 
                 <StackPanel Grid.Row="1" Margin="0,28,0,0">
-                    <TextBlock Text="ACCIONES" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderLabel}" Margin="2,0,0,10" />
+                    <TextBlock Text="ACCIONES" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderLabel}" Margin="2,0,0,10" />
 
                     <Button Style="{StaticResource LandingPrimaryActionButton}"
                   Command="{Binding NewProjectCommand}"
@@ -152,8 +152,8 @@
                                 </Grid>
                             </Border>
                             <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
-                                <TextBlock Text="Nuevo proyecto" FontSize="15" FontWeight="SemiBold" />
-                                <TextBlock Text="Crear un presupuesto desde cero" FontSize="10" Foreground="{DynamicResource Brush.BlueFaint}" Margin="0,2,0,0" />
+                                <TextBlock Text="Nuevo proyecto" FontSize="{StaticResource Font.Size.kpi}" FontWeight="SemiBold" />
+                                <TextBlock Text="Crear un presupuesto desde cero" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.BlueFaint}" Margin="0,2,0,0" />
                             </StackPanel>
                         </Grid>
                     </Button>
@@ -173,13 +173,13 @@
                                 </Grid>
                             </Border>
                             <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
-                                <TextBlock Text="Abrir proyecto…" FontSize="15" FontWeight="SemiBold" />
-                                <TextBlock Text="Continuar un archivo existente" FontSize="10" Foreground="{DynamicResource Brush.HeaderMuted}" Margin="0,2,0,0" />
+                                <TextBlock Text="Abrir proyecto…" FontSize="{StaticResource Font.Size.kpi}" FontWeight="SemiBold" />
+                                <TextBlock Text="Continuar un archivo existente" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.HeaderMuted}" Margin="0,2,0,0" />
                             </StackPanel>
                         </Grid>
                     </Button>
 
-                    <TextBlock Text="RECURSOS" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderLabel}" Margin="2,18,0,10" />
+                    <TextBlock Text="RECURSOS" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderLabel}" Margin="2,18,0,10" />
 
                     <Button Style="{StaticResource LandingResourceButton}"
                   Command="{Binding GoToPriceBankCommand}"
@@ -196,8 +196,8 @@
                                 </Grid>
                             </Border>
                             <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
-                                <TextBlock Text="Banco de precios" FontSize="14" FontWeight="SemiBold" />
-                                <TextBlock Text="Buscar y mantener materiales" FontSize="10" Foreground="{DynamicResource Brush.HeaderMuted}" Margin="0,1,0,0" />
+                                <TextBlock Text="Banco de precios" FontSize="{StaticResource Font.Size.lg}" FontWeight="SemiBold" />
+                                <TextBlock Text="Buscar y mantener materiales" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.HeaderMuted}" Margin="0,1,0,0" />
                             </StackPanel>
                         </Grid>
                     </Button>
@@ -218,8 +218,8 @@
                                 </Grid>
                             </Border>
                             <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
-                                <TextBlock Text="Plantillas APU" FontSize="14" FontWeight="SemiBold" />
-                                <TextBlock Text="Cargar bases y modelos" FontSize="10" Foreground="{DynamicResource Brush.HeaderMuted}" Margin="0,1,0,0" />
+                                <TextBlock Text="Plantillas APU" FontSize="{StaticResource Font.Size.lg}" FontWeight="SemiBold" />
+                                <TextBlock Text="Cargar bases y modelos" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.HeaderMuted}" Margin="0,1,0,0" />
                             </StackPanel>
                         </Grid>
                     </Button>
@@ -239,8 +239,8 @@
                                 </Grid>
                             </Border>
                             <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
-                                <TextBlock Text="Preferencias" FontSize="14" FontWeight="SemiBold" />
-                                <TextBlock Text="Personalizar la aplicación" FontSize="10" Foreground="{DynamicResource Brush.HeaderMuted}" Margin="0,1,0,0" />
+                                <TextBlock Text="Preferencias" FontSize="{StaticResource Font.Size.lg}" FontWeight="SemiBold" />
+                                <TextBlock Text="Personalizar la aplicación" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.HeaderMuted}" Margin="0,1,0,0" />
                             </StackPanel>
                         </Grid>
                     </Button>
@@ -262,13 +262,13 @@
                                 </Grid>
                             </Border>
                             <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
-                                <TextBlock Text="Salir" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource Brush.HeaderMuted}" />
-                                <TextBlock Text="Cerrar la aplicación" FontSize="10" Foreground="{DynamicResource Brush.HeaderDim}" Margin="0,1,0,0" />
+                                <TextBlock Text="Salir" FontSize="{StaticResource Font.Size.lg}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.HeaderMuted}" />
+                                <TextBlock Text="Cerrar la aplicación" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.HeaderDim}" Margin="0,1,0,0" />
                             </StackPanel>
                         </Grid>
                     </Button>
                     <Border Height="1" Background="{DynamicResource Brush.White18}" Margin="0,14,0,14" />
-                    <TextBlock Text="{Binding VersionLabel}" FontSize="11" Foreground="{DynamicResource Brush.Ink5}" />
+                    <TextBlock Text="{Binding VersionLabel}" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink5}" />
                 </StackPanel>
             </Grid>
         </Border>
@@ -283,10 +283,10 @@
                 </Grid.RowDefinitions>
 
                 <StackPanel>
-                    <TextBlock Text="Proyectos" Style="{StaticResource Text.ViewTitle}" FontSize="28" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" />
+                    <TextBlock Text="Proyectos" Style="{StaticResource Text.ViewTitle}" FontSize="{StaticResource Font.Size.3xl}" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" />
                     <TextBlock Text="Abre uno reciente o crea un presupuesto nuevo."
                      Style="{StaticResource Text.Body}"
-                     FontSize="14"
+                     FontSize="{StaticResource Font.Size.lg}"
                      Foreground="{DynamicResource Brush.Ink3}"
                      Margin="0,6,0,0" />
                     <Border Margin="0,18,0,0"
@@ -298,9 +298,9 @@
                   Padding="14,10"
                   Visibility="{Binding HasOpenProject, Converter={StaticResource BoolToVisibility}}">
                         <StackPanel>
-                            <TextBlock Text="Proyecto activo" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink3}" />
+                            <TextBlock Text="Proyecto activo" FontSize="{StaticResource Font.Size.xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink3}" />
                             <TextBlock Text="{Binding ActiveProjectLabel, Mode=OneWay}"
-                         FontSize="16"
+                         FontSize="{StaticResource Font.Size.h3}"
                          FontWeight="SemiBold"
                          Foreground="{DynamicResource Brush.Ink}"
                          TextTrimming="CharacterEllipsis"
@@ -341,7 +341,7 @@
                         </Grid.RowDefinitions>
 
                         <DockPanel Margin="0,0,0,16">
-                            <TextBlock Text="Proyectos recientes" Style="{StaticResource Text.PageTitle}" FontSize="20" />
+                            <TextBlock Text="Proyectos recientes" Style="{StaticResource Text.PageTitle}" FontSize="{StaticResource Font.Size.xl}" />
                         </DockPanel>
 
                         <Grid Grid.Row="1">
@@ -355,13 +355,13 @@
                                             </Grid>
                                         </Border>
                                         <TextBlock Text="Todavía no tienes proyectos recientes"
-                               FontSize="18"
+                               FontSize="{StaticResource Font.Size.h2}"
                                FontWeight="SemiBold"
                                Foreground="{DynamicResource Brush.Ink}"
                                TextAlignment="Center"
                                Margin="0,18,0,6" />
                                         <TextBlock Text="Crea un proyecto nuevo o abre uno existente para comenzar."
-                               FontSize="12"
+                               FontSize="{StaticResource Font.Size.md}"
                                Foreground="{DynamicResource Brush.Ink3}"
                                TextAlignment="Center"
                                TextWrapping="Wrap"
@@ -403,16 +403,16 @@
                                             </Border>
 
                                             <StackPanel Grid.Column="1" Margin="0,2,16,0">
-                                                <TextBlock Text="{Binding Name}" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink}" TextTrimming="CharacterEllipsis" />
-                                                <TextBlock Text="{Binding DisplayPath}" FontSize="11" Foreground="{DynamicResource Brush.Ink3}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Path}" Margin="0,4,0,0" />
-                                                <TextBlock Text="{Binding StatusCaption}" FontSize="10" Foreground="{DynamicResource Brush.Muted}" Margin="0,4,0,0" />
+                                                <TextBlock Text="{Binding Name}" FontSize="{StaticResource Font.Size.h3}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink}" TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Text="{Binding DisplayPath}" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink3}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Path}" Margin="0,4,0,0" />
+                                                <TextBlock Text="{Binding StatusCaption}" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.Muted}" Margin="0,4,0,0" />
                                             </StackPanel>
 
                                             <StackPanel Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Center">
                                                 <Border Background="{Binding AccentSoftBrush}" CornerRadius="10" Padding="10,4" HorizontalAlignment="Right">
-                                                    <TextBlock Text="{Binding StatusText}" FontSize="10" FontWeight="SemiBold" Foreground="{Binding StatusForeground}" />
+                                                    <TextBlock Text="{Binding StatusText}" FontSize="{StaticResource Font.Size.xs}" FontWeight="SemiBold" Foreground="{Binding StatusForeground}" />
                                                 </Border>
-                                                <TextBlock Text="{Binding DisplayDate}" FontSize="10" Foreground="{DynamicResource Brush.Ink3}" HorizontalAlignment="Right" Margin="0,10,0,0" />
+                                                <TextBlock Text="{Binding DisplayDate}" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.Ink3}" HorizontalAlignment="Right" Margin="0,10,0,0" />
                                             </StackPanel>
                                         </Grid>
                                     </DataTemplate>
