@@ -8,7 +8,7 @@
     <Style x:Key="Mo.SegBtn" TargetType="Button">
       <Setter Property="Height" Value="26" />
       <Setter Property="Padding" Value="10,0" />
-      <Setter Property="FontSize" Value="11" />
+      <Setter Property="FontSize" Value="{StaticResource Font.Size.sm}" />
       <Setter Property="FontWeight" Value="SemiBold" />
       <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
       <Setter Property="Background" Value="Transparent" />
@@ -29,7 +29,7 @@
       <Setter Property="Width" Value="110" />
       <Setter Property="Height" Value="30" />
       <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
-      <Setter Property="FontSize" Value="13" />
+      <Setter Property="FontSize" Value="{StaticResource Font.Size.base}" />
       <Setter Property="FontWeight" Value="SemiBold" />
       <Setter Property="TextAlignment" Value="Right" />
       <Setter Property="VerticalContentAlignment" Value="Center" />
@@ -49,19 +49,19 @@
         <Border BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1" Padding="20,12" Background="{DynamicResource Brush.Surface}">
           <DockPanel LastChildFill="False">
             <StackPanel>
-              <TextBlock Text="Mano de obra" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" />
+              <TextBlock Text="Mano de obra" Style="{StaticResource Text.PageTitle}" />
             </StackPanel>
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
               <Border Padding="10,4" CornerRadius="12" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" Margin="0,0,8,0">
                 <StackPanel Orientation="Horizontal">
-                  <TextBlock Text="Duración " FontSize="11" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
-                  <TextBlock Text="{Binding ChipMeses}" FontSize="11" FontWeight="SemiBold" FontFamily="{StaticResource Font.Mono}" VerticalAlignment="Center" />
+                  <TextBlock Text="Duración " Style="{StaticResource Text.Helper}" VerticalAlignment="Center" />
+                  <TextBlock Text="{Binding ChipMeses}" Style="{StaticResource Text.KpiInline}" VerticalAlignment="Center" />
                 </StackPanel>
               </Border>
               <Border Padding="10,4" CornerRadius="12" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" Margin="0,0,8,0">
                 <StackPanel Orientation="Horizontal">
-                  <TextBlock Text="UF " FontSize="11" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
-                  <TextBlock Text="{Binding ChipUf}" FontSize="11" FontWeight="SemiBold" FontFamily="{StaticResource Font.Mono}" VerticalAlignment="Center" />
+                  <TextBlock Text="UF " FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
+                  <TextBlock Text="{Binding ChipUf}" FontSize="{StaticResource Font.Size.sm}" FontWeight="SemiBold" FontFamily="{StaticResource Font.Mono}" VerticalAlignment="Center" />
                 </StackPanel>
               </Border>
               <Border Padding="2" CornerRadius="7" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1">
@@ -100,120 +100,94 @@
         <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
                 CornerRadius="10" Padding="8,8" Margin="20,14,20,0">
           <DockPanel LastChildFill="False">
-            <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center"
+                        IsEnabled="{Binding CanEdit}">
               <StackPanel Orientation="Horizontal" Margin="6,0,10,0" VerticalAlignment="Center">
-                <TextBlock Text="DURACIÓN" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
+                <TextBlock Text="DURACIÓN" FontSize="{StaticResource Font.Size.2xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
                 <TextBox Text="{Binding TotalMeses, UpdateSourceTrigger=LostFocus}" Width="56" Height="30" Margin="8,0,4,0"
-                         TextAlignment="Center" FontFamily="{StaticResource Font.Mono}" FontSize="15" FontWeight="Bold"
+                         TextAlignment="Center" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.kpi}" FontWeight="Bold"
                          Foreground="{DynamicResource Brush.Blue}" VerticalContentAlignment="Center"
                          ToolTip="Pulsa Enter o sal del campo para aplicar (ej. 12, 15, 20)"
                          KeyDown="OnParamKeyDown" />
-                <TextBlock Text="meses" FontSize="11" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
+                <TextBlock Text="meses" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
               </StackPanel>
               <Border Width="1" Height="28" Background="{DynamicResource Brush.Line}" Margin="4,0" />
               <StackPanel Orientation="Horizontal" Margin="10,0" VerticalAlignment="Center">
-                <TextBlock Text="VALOR UF" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
-                <TextBlock Text="{Binding ChipUf}" FontFamily="{StaticResource Font.Mono}" FontSize="15" FontWeight="Bold"
+                <TextBlock Text="VALOR UF" FontSize="{StaticResource Font.Size.2xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding ChipUf}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.kpi}" FontWeight="Bold"
                            Foreground="{DynamicResource Brush.Blue}" Margin="8,0,0,0" VerticalAlignment="Center" />
               </StackPanel>
               <Border Width="1" Height="28" Background="{DynamicResource Brush.Line}" Margin="4,0" />
               <StackPanel Orientation="Horizontal" Margin="10,0" VerticalAlignment="Center">
-                <TextBlock Text="LEYES SOCIALES" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
+                <TextBlock Text="LEYES SOCIALES" FontSize="{StaticResource Font.Size.2xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
                 <TextBox Text="{Binding LeyesSocialesPct, UpdateSourceTrigger=LostFocus}" Width="48" Height="30" Margin="8,0,4,0"
-                         TextAlignment="Center" FontFamily="{StaticResource Font.Mono}" FontSize="15" FontWeight="Bold"
+                         TextAlignment="Center" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.kpi}" FontWeight="Bold"
                          Foreground="{DynamicResource Brush.Blue}" VerticalContentAlignment="Center"
                          KeyDown="OnParamKeyDown" />
-                <TextBlock Text="%" FontSize="11" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
+                <TextBlock Text="%" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
               </StackPanel>
               <Border Width="1" Height="28" Background="{DynamicResource Brush.Line}" Margin="4,0" />
               <StackPanel Orientation="Horizontal" Margin="10,0" VerticalAlignment="Center">
-                <TextBlock Text="CURVA" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                <TextBlock Text="CURVA" FontSize="{StaticResource Font.Size.2xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" Margin="0,0,8,0" />
                 <ComboBox Width="200" Height="30" SelectedValue="{Binding CurvePreset}" SelectedValuePath="Tag">
-                  <ComboBoxItem Tag="bell" Content="Campana (ramp → peak → close)" IsSelected="True" />
+                  <ComboBoxItem Tag="bell" Content="Campana (subida → pico → cierre)" IsSelected="True" />
                   <ComboBoxItem Tag="flat" Content="Plana (dotación fija)" />
                 </ComboBox>
               </StackPanel>
               <Border Width="1" Height="28" Background="{DynamicResource Brush.Line}" Margin="4,0" />
               <StackPanel Orientation="Horizontal" Margin="10,0" VerticalAlignment="Center">
-                <TextBlock Text="PICO DIRECTA" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
+                <TextBlock Text="PICO DIRECTA" FontSize="{StaticResource Font.Size.2xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
                 <TextBox Text="{Binding PeakHeadcount, UpdateSourceTrigger=LostFocus}" Width="52" Height="30" Margin="8,0,4,0"
-                         TextAlignment="Center" FontFamily="{StaticResource Font.Mono}" FontSize="15" FontWeight="Bold"
+                         TextAlignment="Center" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.kpi}" FontWeight="Bold"
                          Foreground="{DynamicResource Brush.Blue}" VerticalContentAlignment="Center"
                          ToolTip="Pulsa Enter o sal del campo para aplicar. 0 = sin dotación (proyecto limpio)"
                          KeyDown="OnParamKeyDown" />
-                <TextBlock Text="pers." FontSize="11" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
+                <TextBlock Text="pers." FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
               </StackPanel>
               <Border Width="1" Height="28" Background="{DynamicResource Brush.Line}" Margin="4,0" />
               <Border Padding="10,4" CornerRadius="12" Background="{DynamicResource Brush.GreenSoft}" Margin="10,0,0,0" VerticalAlignment="Center">
                 <StackPanel Orientation="Horizontal">
                   <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.Green}" Margin="0,0,6,0" VerticalAlignment="Center" />
-                  <TextBlock Text="{Binding PeakLabel}" FontFamily="{StaticResource Font.Mono}" FontSize="12" FontWeight="SemiBold"
+                  <TextBlock Text="{Binding PeakLabel}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.md}" FontWeight="SemiBold"
                              Foreground="{DynamicResource Brush.Green}" VerticalAlignment="Center" />
                 </StackPanel>
               </Border>
             </StackPanel>
 
             <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center" Margin="12,0,4,0">
-              <Button Name="ProjectionButton" Content="Proyección" Style="{StaticResource Button.Secondary}" Click="OnOpenProjection" Margin="0,0,8,0" MinWidth="100" />
+              <Button Name="ProjectionButton" Content="Proyección" Style="{StaticResource Button.Secondary}" Click="OnOpenProjection" Margin="0,0,8,0" MinWidth="100"
+                      IsEnabled="{Binding CanEdit}" />
               <Button Content="Restablecer" Style="{StaticResource Button.Secondary}" Command="{Binding ResetParamsCommand}" Margin="0,0,8,0" MinWidth="100" />
               <Button Content="Aplicar" Style="{StaticResource Button.Primary}" Command="{Binding ApplyCommand}" MinWidth="90" />
             </StackPanel>
           </DockPanel>
         </Border>
 
-        <!-- KPIs -->
-        <UniformGrid Columns="5" Margin="20,14,20,0">
-          <Border Style="{StaticResource Card.Kpi}" Margin="0,0,8,0" Background="{DynamicResource Brush.Navy}" Padding="14,12">
-            <StackPanel VerticalAlignment="Center">
-              <TextBlock Text="COSTO TOTAL MO" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderMuted}" />
-              <TextBlock Text="{Binding KpiTotalMo}" FontSize="20" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="#FFFFFF" Margin="0,4,0,0" />
-              <TextBlock Text="{Binding KpiTotalMoSub}" FontSize="9" Foreground="{DynamicResource Brush.HeaderLabel}" Margin="0,2,0,6" />
-              <Border CornerRadius="12" Padding="8,3" Background="#3347B882" HorizontalAlignment="Left">
-                <TextBlock Text="{Binding TotalBarUf}" FontSize="8" FontWeight="SemiBold" Foreground="#93C5FD" />
-              </Border>
+        <!-- Resumen compacto -->
+        <Border Style="{StaticResource Card.Summary}" Margin="20,10,20,0" Padding="12,6">
+          <DockPanel LastChildFill="False">
+            <StackPanel Orientation="Horizontal" Margin="0,0,16,0" VerticalAlignment="Center">
+              <TextBlock Text="Total MO" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,6,0" VerticalAlignment="Center" />
+              <TextBlock Text="{Binding KpiTotalMo}" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" />
             </StackPanel>
-          </Border>
-          <Border Style="{StaticResource Card.Kpi}" Margin="0,0,8,0" Padding="14,12">
-            <StackPanel VerticalAlignment="Center">
-              <TextBlock Text="SUELDOS BASE" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" />
-              <TextBlock Text="{Binding KpiBase}" FontSize="20" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink}" Margin="0,4,0,0" />
-              <TextBlock Text="{Binding KpiBasePct}" FontSize="9" Foreground="{DynamicResource Brush.Muted}" Margin="0,2,0,6" />
-              <Border CornerRadius="12" Padding="8,3" Background="{DynamicResource Brush.BlueSoft}" HorizontalAlignment="Left">
-                <TextBlock Text="{Binding KpiBaseTrend}" FontSize="8" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Blue}" />
-              </Border>
+            <StackPanel Orientation="Horizontal" Margin="0,0,16,0" VerticalAlignment="Center">
+              <TextBlock Text="Sueldos" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,6,0" VerticalAlignment="Center" />
+              <TextBlock Text="{Binding KpiBase}" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" />
             </StackPanel>
-          </Border>
-          <Border Style="{StaticResource Card.Kpi}" Margin="0,0,8,0" Padding="14,12">
-            <StackPanel VerticalAlignment="Center">
-              <TextBlock Text="LEYES SOCIALES" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" />
-              <TextBlock Text="{Binding KpiLeyes}" FontSize="20" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="#6B4FA8" Margin="0,4,0,0" />
-              <TextBlock Text="{Binding KpiLeyesPct}" FontSize="9" Foreground="{DynamicResource Brush.Muted}" Margin="0,2,0,6" />
-              <Border CornerRadius="12" Padding="8,3" Background="#EFEAFA" HorizontalAlignment="Left">
-                <TextBlock Text="{Binding KpiLeyesTrend}" FontSize="8" FontWeight="SemiBold" Foreground="#6B4FA8" />
-              </Border>
+            <StackPanel Orientation="Horizontal" Margin="0,0,16,0" VerticalAlignment="Center">
+              <TextBlock Text="Leyes" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,6,0" VerticalAlignment="Center" />
+              <TextBlock Text="{Binding KpiLeyes}" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Purple}" VerticalAlignment="Center" />
             </StackPanel>
-          </Border>
-          <Border Style="{StaticResource Card.Kpi}" Margin="0,0,8,0" Padding="14,12">
-            <StackPanel VerticalAlignment="Center">
-              <TextBlock Text="MO DIRECTA" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" />
-              <TextBlock Text="{Binding KpiDirecta}" FontSize="20" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Green}" Margin="0,4,0,0" />
-              <TextBlock Text="{Binding KpiDirectaSub}" FontSize="9" Foreground="{DynamicResource Brush.Muted}" Margin="0,2,0,6" />
-              <Border CornerRadius="12" Padding="8,3" Background="{DynamicResource Brush.GreenSoft}" HorizontalAlignment="Left">
-                <TextBlock Text="{Binding KpiDirectaPct}" FontSize="8" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Green}" />
-              </Border>
+            <StackPanel Orientation="Horizontal" Margin="0,0,16,0" VerticalAlignment="Center">
+              <TextBlock Text="MO dir." FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,6,0" VerticalAlignment="Center" />
+              <TextBlock Text="{Binding KpiDirecta}" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Green}" VerticalAlignment="Center" />
             </StackPanel>
-          </Border>
-          <Border Style="{StaticResource Card.Kpi}" Padding="14,12">
-            <StackPanel VerticalAlignment="Center">
-              <TextBlock Text="MO INDIRECTA" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" />
-              <TextBlock Text="{Binding KpiIndirecta}" FontSize="20" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Amber}" Margin="0,4,0,0" />
-              <TextBlock Text="{Binding KpiIndirectaSub}" FontSize="9" Foreground="{DynamicResource Brush.Muted}" Margin="0,2,0,6" />
-              <Border CornerRadius="12" Padding="8,3" Background="{DynamicResource Brush.AmberSoft}" HorizontalAlignment="Left">
-                <TextBlock Text="{Binding KpiIndirectaPct}" FontSize="8" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Amber}" />
-              </Border>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <TextBlock Text="MO ind." FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,6,0" VerticalAlignment="Center" />
+              <TextBlock Text="{Binding KpiIndirecta}" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Amber}" VerticalAlignment="Center" />
             </StackPanel>
-          </Border>
-        </UniformGrid>
+          </DockPanel>
+        </Border>
 
         <!-- Chart + insights -->
         <Grid Margin="20,14,20,0">
@@ -227,15 +201,15 @@
             <DockPanel>
               <Border DockPanel.Dock="Top" Padding="14,12" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,0,1">
                 <DockPanel>
-                  <TextBlock Text="Curva de dotación" FontSize="13" FontWeight="Bold" VerticalAlignment="Center" />
+                  <TextBlock Text="Curva de dotación" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" VerticalAlignment="Center" />
                   <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
                     <StackPanel Orientation="Horizontal" Margin="0,0,12,0">
-                      <Border Width="8" Height="8" Background="#3B82F6" CornerRadius="2" VerticalAlignment="Center" Margin="0,0,5,0" />
-                      <TextBlock Text="Directa" FontSize="11" Foreground="{DynamicResource Brush.Muted}" />
+                      <Border Width="8" Height="8" Background="{DynamicResource Brush.Blue2}" CornerRadius="2" VerticalAlignment="Center" Margin="0,0,5,0" />
+                      <TextBlock Text="Directa" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" />
                     </StackPanel>
                     <StackPanel Orientation="Horizontal">
-                      <Border Width="8" Height="8" Background="#D97706" CornerRadius="2" VerticalAlignment="Center" Margin="0,0,5,0" />
-                      <TextBlock Text="Indirecta" FontSize="11" Foreground="{DynamicResource Brush.Muted}" />
+                      <Border Width="8" Height="8" Background="{DynamicResource Brush.AmberRisk}" CornerRadius="2" VerticalAlignment="Center" Margin="0,0,5,0" />
+                      <TextBlock Text="Indirecta" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" />
                     </StackPanel>
                   </StackPanel>
                 </DockPanel>
@@ -253,12 +227,12 @@
                         <Border Height="120" VerticalAlignment="Bottom">
                           <DockPanel LastChildFill="False" VerticalAlignment="Bottom">
                             <Border DockPanel.Dock="Bottom" Height="{Binding DirPct}" MinHeight="1"
-                                    Background="#3B82F6" CornerRadius="2,2,0,0" Opacity="0.9" />
+                                    Background="{DynamicResource Brush.Blue2}" CornerRadius="2,2,0,0" Opacity="0.9" />
                             <Border DockPanel.Dock="Bottom" Height="{Binding IndPct}" MinHeight="0"
-                                    Background="#D97706" CornerRadius="2,2,0,0" Opacity="0.85" Margin="0,0,0,0" />
+                                    Background="{DynamicResource Brush.AmberRisk}" CornerRadius="2,2,0,0" Opacity="0.85" Margin="0,0,0,0" />
                           </DockPanel>
                         </Border>
-                        <TextBlock Text="{Binding Label}" FontSize="8" FontFamily="{StaticResource Font.Mono}"
+                        <TextBlock Text="{Binding Label}" FontSize="{StaticResource Font.Size.micro}" FontFamily="{StaticResource Font.Mono}"
                                    Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Center" Margin="0,4,0,0" />
                       </StackPanel>
                     </DataTemplate>
@@ -269,48 +243,48 @@
           </Border>
 
           <StackPanel Grid.Column="2">
-            <Border CornerRadius="10" Padding="14,12" BorderThickness="1" BorderBrush="#C6E9D4" Background="#F4FBF7" Margin="0,0,0,10">
+            <Border CornerRadius="10" Padding="14,12" BorderThickness="1" BorderBrush="{DynamicResource Brush.SuccessBorder}" Background="{DynamicResource Brush.GreenSoft}" Margin="0,0,0,10">
               <StackPanel>
-                <TextBlock Text="MO Directa" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource Brush.Green}" />
-                <TextBlock TextWrapping="Wrap" Margin="0,4,0,0" FontSize="11" Foreground="{DynamicResource Brush.Ink2}" LineHeight="16">
+                <TextBlock Text="MO Directa" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" Foreground="{DynamicResource Brush.Green}" />
+                <TextBlock TextWrapping="Wrap" Margin="0,4,0,0" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink2}" LineHeight="16">
                   Trabajadores que ejecutan la obra. Su cantidad <Run FontWeight="SemiBold">varía según la etapa</Run>:
                   pocos al inicio, máximo en el pico y baja al cierre.
                 </TextBlock>
                 <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
                   <StackPanel Margin="0,0,16,0">
-                    <TextBlock Text="PICO" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" />
-                    <TextBlock Text="{Binding ExDirPico}" FontSize="13" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Green}" />
+                    <TextBlock Text="PICO" FontSize="{StaticResource Font.Size.2xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" />
+                    <TextBlock Text="{Binding ExDirPico}" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Green}" />
                   </StackPanel>
                   <StackPanel Margin="0,0,16,0">
-                    <TextBlock Text="SUELDO BASE" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" />
-                    <TextBlock Text="{Binding ExDirSueldoProm}" FontSize="13" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Green}" />
+                    <TextBlock Text="SUELDO BASE" FontSize="{StaticResource Font.Size.2xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" />
+                    <TextBlock Text="{Binding ExDirSueldoProm}" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Green}" />
                   </StackPanel>
                   <StackPanel>
-                    <TextBlock Text="+ LEYES" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" />
-                    <TextBlock Text="{Binding ExDirLeyVal}" FontSize="13" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Green}" />
+                    <TextBlock Text="+ LEYES" FontSize="{StaticResource Font.Size.2xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" />
+                    <TextBlock Text="{Binding ExDirLeyVal}" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Green}" />
                   </StackPanel>
                 </StackPanel>
               </StackPanel>
             </Border>
-            <Border CornerRadius="10" Padding="14,12" BorderThickness="1" BorderBrush="#EED9A8" Background="#FDF8EE">
+            <Border CornerRadius="10" Padding="14,12" BorderThickness="1" BorderBrush="{DynamicResource Brush.Amber2}" Background="{DynamicResource Brush.AmberSoft}">
               <StackPanel>
-                <TextBlock Text="MO Indirecta" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource Brush.Amber}" />
-                <TextBlock TextWrapping="Wrap" Margin="0,4,0,0" FontSize="11" Foreground="{DynamicResource Brush.Ink2}" LineHeight="16">
+                <TextBlock Text="MO Indirecta" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" Foreground="{DynamicResource Brush.Amber}" />
+                <TextBlock TextWrapping="Wrap" Margin="0,4,0,0" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink2}" LineHeight="16">
                   Supervisores y profesionales que <Run FontWeight="SemiBold">gestionan</Run> la obra.
                   Están <Run FontWeight="SemiBold">todos los meses</Run>. Dotación fija.
                 </TextBlock>
                 <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
                   <StackPanel Margin="0,0,16,0">
-                    <TextBlock Text="DURACIÓN" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" />
-                    <TextBlock Text="{Binding ExIndDur}" FontSize="13" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Amber}" />
+                    <TextBlock Text="DURACIÓN" FontSize="{StaticResource Font.Size.2xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" />
+                    <TextBlock Text="{Binding ExIndDur}" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Amber}" />
                   </StackPanel>
                   <StackPanel Margin="0,0,16,0">
-                    <TextBlock Text="ROLES" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" />
-                    <TextBlock Text="{Binding ExIndRoles}" FontSize="13" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Amber}" />
+                    <TextBlock Text="ROLES" FontSize="{StaticResource Font.Size.2xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" />
+                    <TextBlock Text="{Binding ExIndRoles}" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Amber}" />
                   </StackPanel>
                   <StackPanel>
-                    <TextBlock Text="SUELDO BASE" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" />
-                    <TextBlock Text="{Binding ExIndSueldoProm}" FontSize="13" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Amber}" />
+                    <TextBlock Text="SUELDO BASE" FontSize="{StaticResource Font.Size.2xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" />
+                    <TextBlock Text="{Binding ExIndSueldoProm}" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Amber}" />
                   </StackPanel>
                 </StackPanel>
               </StackPanel>
@@ -324,29 +298,29 @@
             <Border DockPanel.Dock="Top" Padding="14,12" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,0,1" Background="{DynamicResource Brush.Surface2}">
               <DockPanel>
                 <StackPanel>
-                  <TextBlock Text="Sueldos base por cargo" FontSize="13" FontWeight="Bold" />
-                  <TextBlock Text="Edita por categoría y rol · se recalcula al instante" FontSize="11" Foreground="{DynamicResource Brush.Muted}" Margin="0,2,0,0" />
+                  <TextBlock Text="Sueldos base por cargo" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" />
+                  <TextBlock Text="Edita por categoría y rol · se recalcula al instante" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" Margin="0,2,0,0" />
                 </StackPanel>
                 <Button DockPanel.Dock="Right" Content="Restablecer sueldos" Style="{StaticResource Button.Secondary}"
                         Command="{Binding ResetSueldosCommand}" HorizontalAlignment="Right" MinWidth="140" />
               </DockPanel>
             </Border>
-            <UniformGrid Columns="2" Margin="0">
+            <UniformGrid Columns="2" Margin="0" IsEnabled="{Binding CanEdit}">
               <!-- Directa -->
               <Border BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,1,0">
                 <DockPanel>
-                  <Border DockPanel.Dock="Top" Padding="14,10" Background="{DynamicResource Brush.Surface2}" BorderBrush="#C6E9D4" BorderThickness="0,0,0,1">
+                  <Border DockPanel.Dock="Top" Padding="14,10" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.SuccessBorder}" BorderThickness="0,0,0,1">
                     <StackPanel Orientation="Horizontal">
-                      <TextBlock Text="MO Directa" FontSize="13" FontWeight="Bold" VerticalAlignment="Center" />
+                      <TextBlock Text="MO Directa" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" VerticalAlignment="Center" />
                       <Border Margin="8,0,0,0" Padding="8,2" CornerRadius="10" Background="{DynamicResource Brush.GreenSoft}" VerticalAlignment="Center">
-                        <TextBlock Text="VARIABLE" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Green}" />
+                        <TextBlock Text="VARIABLE" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Green}" />
                       </Border>
                     </StackPanel>
                   </Border>
                   <Border DockPanel.Dock="Bottom" Padding="14,10" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,1,0,0">
                     <DockPanel>
-                      <TextBlock Text="Promedio base · c/leyes" FontSize="11" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
-                      <TextBlock Text="{Binding FootDir}" FontFamily="{StaticResource Font.Mono}" FontSize="12" FontWeight="SemiBold"
+                      <TextBlock Text="Promedio base · c/leyes" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
+                      <TextBlock Text="{Binding FootDir}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.md}" FontWeight="SemiBold"
                                  HorizontalAlignment="Right" VerticalAlignment="Center" />
                     </DockPanel>
                   </Border>
@@ -364,23 +338,23 @@
                             </Grid.ColumnDefinitions>
                             <Border Grid.Column="0" CornerRadius="4" Padding="4,2" Background="{DynamicResource Brush.GreenSoft}"
                                     HorizontalAlignment="Left" VerticalAlignment="Center">
-                              <TextBlock Text="{Binding Tag}" FontFamily="{StaticResource Font.Mono}" FontSize="10" FontWeight="Bold"
+                              <TextBlock Text="{Binding Tag}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold"
                                          Foreground="{DynamicResource Brush.Green}" />
                             </Border>
                             <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="8,0">
-                              <TextBlock Text="{Binding Nombre}" FontSize="13" FontWeight="SemiBold" />
-                              <TextBlock Text="{Binding Hint}" FontSize="10" Foreground="{DynamicResource Brush.Muted}" />
+                              <TextBlock Text="{Binding Nombre}" FontSize="{StaticResource Font.Size.base}" FontWeight="SemiBold" />
+                              <TextBlock Text="{Binding Hint}" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.Muted}" />
                             </StackPanel>
                             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
-                              <TextBlock Text="$" FontFamily="{StaticResource Font.Mono}" FontSize="12" Foreground="{DynamicResource Brush.Muted}"
+                              <TextBlock Text="$" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.md}" Foreground="{DynamicResource Brush.Muted}"
                                          VerticalAlignment="Center" Margin="0,0,4,0" />
                               <TextBox Style="{StaticResource Mo.SalaryInput}"
                                        Text="{Binding SueldoEditText, UpdateSourceTrigger=LostFocus}"
                                        LostFocus="OnSalaryLostFocus" />
                             </StackPanel>
                             <StackPanel Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Right">
-                              <TextBlock Text="c/ leyes" FontSize="9" Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Right" />
-                              <TextBlock Text="{Binding ConLeyesLabel}" FontFamily="{StaticResource Font.Mono}" FontSize="12" FontWeight="SemiBold"
+                              <TextBlock Text="c/ leyes" FontSize="{StaticResource Font.Size.2xs}" Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Right" />
+                              <TextBlock Text="{Binding ConLeyesLabel}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.md}" FontWeight="SemiBold"
                                          Foreground="{DynamicResource Brush.Ink2}" HorizontalAlignment="Right" />
                             </StackPanel>
                           </Grid>
@@ -394,18 +368,18 @@
               <!-- Indirecta -->
               <Border>
                 <DockPanel>
-                  <Border DockPanel.Dock="Top" Padding="14,10" Background="{DynamicResource Brush.Surface2}" BorderBrush="#EED9A8" BorderThickness="0,0,0,1">
+                  <Border DockPanel.Dock="Top" Padding="14,10" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Amber2}" BorderThickness="0,0,0,1">
                     <StackPanel Orientation="Horizontal">
-                      <TextBlock Text="MO Indirecta" FontSize="13" FontWeight="Bold" VerticalAlignment="Center" />
+                      <TextBlock Text="MO Indirecta" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" VerticalAlignment="Center" />
                       <Border Margin="8,0,0,0" Padding="8,2" CornerRadius="10" Background="{DynamicResource Brush.AmberSoft}" VerticalAlignment="Center">
-                        <TextBlock Text="FIJA" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Amber}" />
+                        <TextBlock Text="FIJA" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Amber}" />
                       </Border>
                     </StackPanel>
                   </Border>
                   <Border DockPanel.Dock="Bottom" Padding="14,10" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,1,0,0">
                     <DockPanel>
-                      <TextBlock Text="Promedio base · c/leyes" FontSize="11" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
-                      <TextBlock Text="{Binding FootInd}" FontFamily="{StaticResource Font.Mono}" FontSize="12" FontWeight="SemiBold"
+                      <TextBlock Text="Promedio base · c/leyes" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
+                      <TextBlock Text="{Binding FootInd}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.md}" FontWeight="SemiBold"
                                  HorizontalAlignment="Right" VerticalAlignment="Center" />
                     </DockPanel>
                   </Border>
@@ -423,23 +397,23 @@
                             </Grid.ColumnDefinitions>
                             <Border Grid.Column="0" CornerRadius="4" Padding="4,2" Background="{DynamicResource Brush.AmberSoft}"
                                     HorizontalAlignment="Left" VerticalAlignment="Center">
-                              <TextBlock Text="{Binding Tag}" FontFamily="{StaticResource Font.Mono}" FontSize="10" FontWeight="Bold"
+                              <TextBlock Text="{Binding Tag}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold"
                                          Foreground="{DynamicResource Brush.Amber}" />
                             </Border>
                             <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="8,0">
-                              <TextBlock Text="{Binding Nombre}" FontSize="13" FontWeight="SemiBold" />
-                              <TextBlock Text="{Binding Hint}" FontSize="10" Foreground="{DynamicResource Brush.Muted}" />
+                              <TextBlock Text="{Binding Nombre}" FontSize="{StaticResource Font.Size.base}" FontWeight="SemiBold" />
+                              <TextBlock Text="{Binding Hint}" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.Muted}" />
                             </StackPanel>
                             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
-                              <TextBlock Text="$" FontFamily="{StaticResource Font.Mono}" FontSize="12" Foreground="{DynamicResource Brush.Muted}"
+                              <TextBlock Text="$" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.md}" Foreground="{DynamicResource Brush.Muted}"
                                          VerticalAlignment="Center" Margin="0,0,4,0" />
                               <TextBox Style="{StaticResource Mo.SalaryInput}"
                                        Text="{Binding SueldoEditText, UpdateSourceTrigger=LostFocus}"
                                        LostFocus="OnSalaryLostFocus" />
                             </StackPanel>
                             <StackPanel Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Right">
-                              <TextBlock Text="c/ leyes" FontSize="9" Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Right" />
-                              <TextBlock Text="{Binding ConLeyesLabel}" FontFamily="{StaticResource Font.Mono}" FontSize="12" FontWeight="SemiBold"
+                              <TextBlock Text="c/ leyes" FontSize="{StaticResource Font.Size.2xs}" Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Right" />
+                              <TextBlock Text="{Binding ConLeyesLabel}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.md}" FontWeight="SemiBold"
                                          Foreground="{DynamicResource Brush.Ink2}" HorizontalAlignment="Right" />
                             </StackPanel>
                           </Grid>
@@ -458,9 +432,9 @@
           <StackPanel>
             <Border BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1" Padding="16,12" Background="{DynamicResource Brush.Surface2}">
               <DockPanel>
-                <TextBlock Text="Dotación mensual por cargo" Style="{StaticResource Text.PageTitle}" FontSize="13" />
+                <TextBlock Text="Dotación mensual por cargo" Style="{StaticResource Text.SectionTitle}" />
                 <TextBlock DockPanel.Dock="Right" Text="Celdas con color = carga relativa al pico · clic para editar"
-                           FontSize="11" Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                           FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Right" VerticalAlignment="Center" />
               </DockPanel>
             </Border>
             <ScrollViewer x:Name="CargoTableScroll" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Hidden">
@@ -474,8 +448,8 @@
           <StackPanel>
             <Border BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1" Padding="16,12" Background="{DynamicResource Brush.Surface2}">
               <DockPanel>
-                <TextBlock Text="Costo mensual · Sueldo base + Leyes sociales" Style="{StaticResource Text.PageTitle}" FontSize="13" />
-                <TextBlock DockPanel.Dock="Right" Text="{Binding CostHint}" FontSize="11" Foreground="{DynamicResource Brush.Muted}"
+                <TextBlock Text="Costo mensual · Sueldo base + Leyes sociales" Style="{StaticResource Text.SectionTitle}" />
+                <TextBlock DockPanel.Dock="Right" Text="{Binding CostHint}" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}"
                            HorizontalAlignment="Right" VerticalAlignment="Center" />
               </DockPanel>
             </Border>
@@ -493,12 +467,12 @@
               <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <StackPanel Grid.Column="0" VerticalAlignment="Center">
-              <TextBlock Text="{Binding TotalBarLabel}" FontSize="13" FontWeight="Bold" Foreground="#FFFFFF" />
-              <TextBlock Text="{Binding TotalBarSub}" FontSize="11" Foreground="{DynamicResource Brush.HeaderLabel}" Margin="0,3,0,0" TextWrapping="Wrap" />
+              <TextBlock Text="{Binding TotalBarLabel}" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" Foreground="{DynamicResource Brush.White}" />
+              <TextBlock Text="{Binding TotalBarSub}" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.HeaderLabel}" Margin="0,3,0,0" TextWrapping="Wrap" />
             </StackPanel>
             <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="20,0,0,0">
-              <TextBlock Text="{Binding TotalBarValue}" FontSize="24" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="#FFFFFF" TextAlignment="Right" />
-              <TextBlock Text="{Binding TotalBarUf}" FontSize="12" FontFamily="{StaticResource Font.Mono}" Foreground="#93C5FD" TextAlignment="Right" Margin="0,2,0,0" />
+              <TextBlock Text="{Binding TotalBarValue}" FontSize="{StaticResource Font.Size.2xl}" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.White}" TextAlignment="Right" />
+              <TextBlock Text="{Binding TotalBarUf}" FontSize="{StaticResource Font.Size.md}" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.BrandStroke}" TextAlignment="Right" Margin="0,2,0,0" />
             </StackPanel>
           </Grid>
         </Border>
@@ -508,32 +482,32 @@
           <DockPanel LastChildFill="False">
             <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
               <StackPanel Margin="0,0,20,0">
-                <TextBlock Text="Sueldos Base" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderMuted}" />
-                <TextBlock Text="{Binding SumBase}" FontSize="13" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="#FFFFFF" Margin="0,2,0,0" />
+                <TextBlock Text="Sueldos Base" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderMuted}" />
+                <TextBlock Text="{Binding SumBase}" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.White}" Margin="0,2,0,0" />
               </StackPanel>
-              <Border Width="1" Height="28" Background="#33FFFFFF" Margin="0,0,20,0" VerticalAlignment="Center" />
+              <Border Width="1" Height="28" Background="{DynamicResource Brush.White25}" Margin="0,0,20,0" VerticalAlignment="Center" />
               <StackPanel Margin="0,0,20,0">
-                <TextBlock Text="Leyes Sociales" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderMuted}" />
-                <TextBlock Text="{Binding SumLeyes}" FontSize="13" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="#93C5FD" Margin="0,2,0,0" />
+                <TextBlock Text="Leyes Sociales" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderMuted}" />
+                <TextBlock Text="{Binding SumLeyes}" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.BrandStroke}" Margin="0,2,0,0" />
               </StackPanel>
-              <Border Width="1" Height="28" Background="#33FFFFFF" Margin="0,0,20,0" VerticalAlignment="Center" />
+              <Border Width="1" Height="28" Background="{DynamicResource Brush.White25}" Margin="0,0,20,0" VerticalAlignment="Center" />
               <StackPanel Margin="0,0,20,0">
-                <TextBlock Text="MO Directa" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderMuted}" />
-                <TextBlock Text="{Binding SumDirecta}" FontSize="13" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="#86EFAC" Margin="0,2,0,0" />
+                <TextBlock Text="MO Directa" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderMuted}" />
+                <TextBlock Text="{Binding SumDirecta}" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.SuccessBright}" Margin="0,2,0,0" />
               </StackPanel>
-              <Border Width="1" Height="28" Background="#33FFFFFF" Margin="0,0,20,0" VerticalAlignment="Center" />
+              <Border Width="1" Height="28" Background="{DynamicResource Brush.White25}" Margin="0,0,20,0" VerticalAlignment="Center" />
               <StackPanel Margin="0,0,20,0">
-                <TextBlock Text="MO Indirecta" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderMuted}" />
-                <TextBlock Text="{Binding SumIndirecta}" FontSize="13" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="#FCD34D" Margin="0,2,0,0" />
+                <TextBlock Text="MO Indirecta" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderMuted}" />
+                <TextBlock Text="{Binding SumIndirecta}" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Amber2}" Margin="0,2,0,0" />
               </StackPanel>
-              <Border Width="1" Height="28" Background="#33FFFFFF" Margin="0,0,20,0" VerticalAlignment="Center" />
+              <Border Width="1" Height="28" Background="{DynamicResource Brush.White25}" Margin="0,0,20,0" VerticalAlignment="Center" />
               <StackPanel>
-                <TextBlock Text="Costo / mes prom." FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderMuted}" />
-                <TextBlock Text="{Binding SumPromMes}" FontSize="13" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="#FFFFFF" Margin="0,2,0,0" />
+                <TextBlock Text="Costo / mes prom." FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderMuted}" />
+                <TextBlock Text="{Binding SumPromMes}" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.White}" Margin="0,2,0,0" />
               </StackPanel>
             </StackPanel>
-            <TextBlock DockPanel.Dock="Right" Text="{Binding SumRight}" FontSize="11" FontFamily="{StaticResource Font.Mono}"
-                       Foreground="#93C5FD" VerticalAlignment="Center" Margin="20,0,0,0" />
+            <TextBlock DockPanel.Dock="Right" Text="{Binding SumRight}" FontSize="{StaticResource Font.Size.sm}" FontFamily="{StaticResource Font.Mono}"
+                       Foreground="{DynamicResource Brush.BrandStroke}" VerticalAlignment="Center" Margin="20,0,0,0" />
           </DockPanel>
         </Border>
 
@@ -558,9 +532,10 @@
         </Border.Effect>
         <DockPanel LastChildFill="True">
           <DockPanel DockPanel.Dock="Top" LastChildFill="True" Margin="0,0,0,10">
-            <TextBlock Text="Proyección de mano de obra" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" />
+            <TextBlock Text="Proyección de mano de obra" FontSize="{StaticResource Font.Size.lg}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" />
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
-              <Button Content="+ Agregar tarea" Style="{StaticResource Button.Secondary}" Click="OnAddProjectionTask" Margin="0,0,8,0" />
+              <Button Content="+ Agregar tarea" Style="{StaticResource Button.Secondary}" Click="OnAddProjectionTask" Margin="0,0,8,0"
+                      IsEnabled="{Binding CanEdit}" />
               <Button Content="Cerrar" Style="{StaticResource Button.Secondary}" Click="OnCloseProjection" />
             </StackPanel>
           </DockPanel>
@@ -570,5 +545,8 @@
         </DockPanel>
       </Border>
     </Popup>
+
+    <ctrl:SkeletonOverlayControl Panel.ZIndex="20" Message="Cargando mano de obra…"
+                                 Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibility}}" />
   </Grid>
 </UserControl>

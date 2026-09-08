@@ -2,9 +2,11 @@ using System;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media.Animation;
+using QubiCostElectrical;
 using QubiCostElectrical.Wpf.Infrastructure;
 using QubiCostElectrical.Wpf.Navigation;
 
@@ -16,21 +18,23 @@ public partial class ShellWindow : Window
     {
         InitializeComponent();
         SourceInitialized += ShellWindow_SourceInitialized;
-        Closing += (_, _) =>
-        {
-            if (!SuppressShutdownOnClose)
-                Application.Current.Shutdown();
-        };
+        StateChanged += OnShellStateChanged;
+        Closing += OnShellClosing;
         _viewModel = new ShellViewModel(host);
-        Closed += (_, _) => _viewModel.Dispose();
+        _dropHandler = new ShellFileDropHandler(_viewModel);
+        _requestUndoAction = _viewModel.Undo;
+        ShellNotificationService.RequestUndo = _requestUndoAction;
+        Closed += (_, _) =>
+        {
+            if (ReferenceEquals(ShellNotificationService.RequestUndo, _requestUndoAction))
+                ShellNotificationService.RequestUndo = null;
+            _viewModel.Dispose();
+        };
         DataContext = _viewModel;
         _viewModel.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName is nameof(ShellViewModel.CurrentRoute))
-            {
                 UpdateNavVisuals();
-                AnimatePageTransition();
-            }
             if (e.PropertyName is nameof(ShellViewModel.IsSearchPaletteOpen))
                 QuickSearchPopup.IsOpen = _viewModel.IsSearchPaletteOpen;
             if (e.PropertyName is nameof(ShellViewModel.IsProjectPickerOpen))
@@ -44,6 +48,7 @@ public partial class ShellWindow : Window
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
+        ShellNotificationService.RequestUndo = _requestUndoAction;
         NavProjectGroup.Items =
         [
             new NavDropdownItem { Label = "Datos del proyecto", Route = ShellRoute.Project },
@@ -66,8 +71,7 @@ public partial class ShellWindow : Window
         [
             new NavDropdownItem { Label = "Desglose de costos", Route = ShellRoute.Costo },
             new NavDropdownItem { Label = "Mano de obra", Route = ShellRoute.ManoDeObra },
-            new NavDropdownItem { Label = "EPP", Route = ShellRoute.Epp },
-            new NavDropdownItem { Label = "Editor económico", Route = ShellRoute.EconomicEditor }
+            new NavDropdownItem { Label = "EPP", Route = ShellRoute.Epp }
         ];
         NavCloseGroup.Items =
         [
@@ -79,11 +83,16 @@ public partial class ShellWindow : Window
         ];
         NavMoreGroup.Items =
         [
+            // Herramientas complementarias
+            new NavDropdownItem { Label = "APU (Análisis unitario)", Route = ShellRoute.Apu },
             new NavDropdownItem { Label = "Plantillas", Route = ShellRoute.Templates },
+            new NavDropdownItem { Label = "Preferencias", Route = ShellRoute.Preferences },
+            NavDropdownItem.Separator(),
+            // Herramientas avanzadas / análisis
+            new NavDropdownItem { Label = "Editor económico", Route = ShellRoute.EconomicEditor },
             new NavDropdownItem { Label = "Resumen por piso", Route = ShellRoute.FloorSummary },
-            new NavDropdownItem { Label = "Catálogo APU", Route = ShellRoute.ApuCatalog },
-            new NavDropdownItem { Label = "Fusión de versiones APU", Route = ShellRoute.ApuMerge },
-            new NavDropdownItem { Label = "Preferencias", Route = ShellRoute.Preferences }
+            new NavDropdownItem { Label = "APU · Catálogo", Route = ShellRoute.ApuCatalog },
+            new NavDropdownItem { Label = "APU · Fusión de versiones", Route = ShellRoute.ApuMerge }
         ];
         _viewModel.Navigate(ShellRoute.Dashboard);
         UpdateNavVisuals();
@@ -96,7 +105,6 @@ public partial class ShellWindow : Window
         NavProjectGroup.SetActiveState(ShellRouteNavigation.IsProjectRoute(route));
         NavigationVisuals.SetIsActive(NavItemizadoTab, route == ShellRoute.Itemized);
         NavCubicacionGroup.SetActiveState(ShellRouteNavigation.IsCubicacionRoute(route));
-        NavigationVisuals.SetIsActive(NavApuTab, route == ShellRoute.Apu);
         NavPricesGroup.SetActiveState(ShellRouteNavigation.IsPricesRoute(route));
         NavCostosGroup.SetActiveState(ShellRouteNavigation.IsCostosRoute(route));
         NavCloseGroup.SetActiveState(ShellRouteNavigation.IsCloseRoute(route));
@@ -114,13 +122,113 @@ public partial class ShellWindow : Window
     private void OnMinimizeClick(object sender, RoutedEventArgs e) =>
         WindowState = WindowState.Minimized;
 
-    private void OnMaxRestoreClick(object sender, RoutedEventArgs e)
+    private void OnMaxRestoreClick(object sender, RoutedEventArgs e) =>
+        ToggleMaximizeRestore();
+
+    private void ToggleMaximizeRestore()
     {
         WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
-        MaxRestoreIcon.Text = WindowState == WindowState.Maximized ? "" : "";
+        UpdateMaxRestoreIcons();
+    }
+
+    private void OnShellStateChanged(object? sender, EventArgs e) =>
+        UpdateMaxRestoreIcons();
+
+    private void UpdateMaxRestoreIcons()
+    {
+        var icon = WindowState == WindowState.Maximized ? "\uE923" : "\uE922";
+        if (MaxRestoreIcon != null)
+            MaxRestoreIcon.Text = icon;
+        if (LandingMaxRestoreIcon != null)
+            LandingMaxRestoreIcon.Text = icon;
     }
 
     private void OnCloseClick(object sender, RoutedEventArgs e) => Application.Current.Shutdown();
+
+    private void OnHeaderMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.ChangedButton != MouseButton.Left)
+            return;
+
+        if (e.ClickCount == 2)
+        {
+            ToggleMaximizeRestore();
+            return;
+        }
+
+        if (e.ButtonState == MouseButtonState.Pressed)
+        {
+            if (e.OriginalSource is DependencyObject dep)
+            {
+                if (FindVisualParent<ButtonBase>(dep) != null ||
+                    FindVisualParent<TextBox>(dep) != null ||
+                    FindVisualParent<ListBoxItem>(dep) != null)
+                {
+                    return;
+                }
+            }
+
+            try
+            {
+                DragMove();
+            }
+            catch (InvalidOperationException)
+            {
+                // DragMove puede fallar si el botón del mouse fue soltado antes de la llamada
+            }
+        }
+    }
+
+    private static T? FindVisualParent<T>(DependencyObject child) where T : DependencyObject
+    {
+        var current = child;
+        while (current != null)
+        {
+            if (current is T match)
+                return match;
+            current = System.Windows.Media.VisualTreeHelper.GetParent(current);
+        }
+        return null;
+    }
+
+    private async void OnShellClosing(object? sender, System.ComponentModel.CancelEventArgs e)
+    {
+        if (SuppressShutdownOnClose)
+            return;
+
+        if (_exitFlushCompleted)
+        {
+            IsClosing = true;
+            if (Application.Current.Dispatcher is { HasShutdownStarted: false })
+                Application.Current.Shutdown();
+            return;
+        }
+
+        // Cancelar el cierre hasta completar flush; luego reintentar con bandera.
+        e.Cancel = true;
+        IsClosing = true;
+        bool ok;
+        try
+        {
+            ok = await _viewModel.PrepareForAppExitAsync();
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error("Shell", "Falló el flush al cerrar la aplicación", ex);
+            ok = false;
+            WpfDialogService.Error("Salir", OperationFailureMessages.ToUserMessage(ex));
+        }
+
+        if (!ok)
+        {
+            IsClosing = false;
+            return;
+        }
+
+        _exitFlushCompleted = true;
+        if (Application.Current.Dispatcher is { HasShutdownStarted: false })
+            Application.Current.Shutdown();
+    }
 
     // ─── Navigation ───────────────────────────────────────────────────────
 
@@ -170,6 +278,7 @@ public partial class ShellWindow : Window
 
     private void OnProjectPickerPopupOpened(object? sender, EventArgs e)
     {
+        OnPopupSlideInOpened(sender, e);
         // Synchronous focus on border prevents Tab from escaping before BeginInvoke fires
         ProjectPickerRoot.Focus();
         Keyboard.Focus(ProjectPickerRoot);
@@ -311,40 +420,7 @@ public partial class ShellWindow : Window
 
     private void OnWindowKeyDown(object sender, KeyEventArgs e)
     {
-        // Ctrl+A / Ctrl+D → Casillas / Detalle en Cubicación, sin importar dónde esté el foco
-        // (incluido después de tocar un botón del marco de la ventana, como maximizar/pantalla
-        // completa). CubicacionView ya maneja estas teclas cuando el foco está DENTRO de esa
-        // vista; este bloque es la red de respaldo para cuando el foco quedó FUERA de ella.
-        if (e.Key is Key.A or Key.D && Keyboard.Modifiers == ModifierKeys.Control &&
-            _viewModel.CurrentRoute == ShellRoute.Takeoff &&
-            !(Keyboard.FocusedElement is DependencyObject focused && IsElementInsideDataGrid(focused)) &&
-            PageContent.Content is QubiCostElectrical.Wpf.Features.Cubicacion.CubicacionView cubicacionView &&
-            cubicacionView.DataContext is QubiCostElectrical.Wpf.Features.Cubicacion.CubicacionViewModel cubicacionVm)
-        {
-            if (e.Key == Key.A && cubicacionVm.ShowSectorMatrixCommand.CanExecute(null))
-                cubicacionVm.ShowSectorMatrixCommand.Execute(null);
-            else if (e.Key == Key.D && cubicacionVm.ShowResourceDetailCommand.CanExecute(null))
-                cubicacionVm.ShowResourceDetailCommand.Execute(null);
-            e.Handled = true;
-            return;
-        }
-
-        // Alt+↑/↓ → partida anterior/siguiente en Cubicación, misma red de respaldo que arriba:
-        // funciona aunque el foco haya quedado fuera de la vista (botón del marco, etc.).
-        {
-            var altKey = e.Key == Key.System ? e.SystemKey : e.Key;
-            if (altKey is Key.Up or Key.Down && Keyboard.Modifiers == ModifierKeys.Alt &&
-                _viewModel.CurrentRoute == ShellRoute.Takeoff &&
-                !(Keyboard.FocusedElement is DependencyObject focusedForAlt && IsElementInsideDataGrid(focusedForAlt)) &&
-                PageContent.Content is QubiCostElectrical.Wpf.Features.Cubicacion.CubicacionView cubicacionViewForAlt)
-            {
-                cubicacionViewForAlt.NavigatePartida(altKey == Key.Up ? -1 : 1);
-                e.Handled = true;
-                return;
-            }
-        }
-
-bool textBoxHasFocus = Keyboard.FocusedElement is System.Windows.Controls.TextBox or System.Windows.Controls.RichTextBox;
+        bool textBoxHasFocus = Keyboard.FocusedElement is System.Windows.Controls.TextBox or System.Windows.Controls.RichTextBox;
 
         if (e.Key == Key.Z && Keyboard.Modifiers == ModifierKeys.Control)
         {
@@ -406,6 +482,38 @@ bool textBoxHasFocus = Keyboard.FocusedElement is System.Windows.Controls.TextBo
             return;
         }
 
+        if (e.Key == Key.S && Keyboard.Modifiers == ModifierKeys.Control)
+        {
+            CancelActiveDataGridEdit();
+            _ = _viewModel.SaveProjectAsync();
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key == Key.N && Keyboard.Modifiers == ModifierKeys.Control)
+        {
+            CancelActiveDataGridEdit();
+            _ = _viewModel.NewProjectAsync();
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key == Key.O && Keyboard.Modifiers == ModifierKeys.Control)
+        {
+            CancelActiveDataGridEdit();
+            _ = _viewModel.OpenProjectAsync();
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key == Key.W && Keyboard.Modifiers == ModifierKeys.Control)
+        {
+            CancelActiveDataGridEdit();
+            _ = _viewModel.CloseProjectAsync();
+            e.Handled = true;
+            return;
+        }
+
         if (e.Key == Key.K && Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
         {
             _viewModel.OpenQuickSearch();
@@ -415,9 +523,26 @@ bool textBoxHasFocus = Keyboard.FocusedElement is System.Windows.Controls.TextBo
             return;
         }
 
+        if (e.Key == Key.F8 && Keyboard.Modifiers == ModifierKeys.None)
+        {
+            _viewModel.Navigate(ShellRoute.Review);
+            e.Handled = true;
+            return;
+        }
+
         if (e.Key == Key.F1)
         {
             KeyboardShortcutsDialog.Show(this);
+            e.Handled = true;
+            return;
+        }
+
+        if (!textBoxHasFocus && !_viewModel.IsSearchPaletteOpen
+            && _viewModel.CurrentRoute == ShellRoute.Takeoff
+            && !(Keyboard.FocusedElement is DependencyObject focusedShortcut && IsElementInsideDataGrid(focusedShortcut))
+            && PageContent.Content is QubiCostElectrical.Wpf.Features.Cubicacion.CubicacionView cubicacionShortcutView
+            && cubicacionShortcutView.TryHandleConfiguredShortcut(e))
+        {
             e.Handled = true;
             return;
         }
@@ -522,21 +647,15 @@ bool textBoxHasFocus = Keyboard.FocusedElement is System.Windows.Controls.TextBo
             _viewModel.IsUserMenuOpen = false;
     }
 
-    private void AnimatePageTransition()
+    private void OnPopupSlideInOpened(object? sender, EventArgs e)
     {
-        PageContent.Opacity = 0;
-        var story = new Storyboard();
-        var anim = new DoubleAnimation
-        {
-            From = 0,
-            To = 1,
-            Duration = new Duration(TimeSpan.FromSeconds(0.3)),
-            EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
-        };
-        Storyboard.SetTarget(anim, PageContent);
-        Storyboard.SetTargetProperty(anim, new PropertyPath("Opacity"));
-        story.Children.Add(anim);
-        story.Begin();
+        if (sender is not System.Windows.Controls.Primitives.Popup { Child: FrameworkElement root })
+            return;
+
+        root.Opacity = 0;
+        root.Margin = new Thickness(0, -12, 0, 12);
+        if (FindResource("Anim.SlideDownIn") is System.Windows.Media.Animation.Storyboard story)
+            story.Begin(root);
     }
 
     private void CloseAllDropdowns()
@@ -656,5 +775,46 @@ bool textBoxHasFocus = Keyboard.FocusedElement is System.Windows.Controls.TextBo
             handled = true;
         }
         return IntPtr.Zero;
+    }
+
+    private void OnWindowDragEnter(object sender, DragEventArgs e)
+    {
+        if (ShellFileDropHandler.HasValidDroppedFiles(e))
+        {
+            DragDropOverlay.Visibility = Visibility.Visible;
+            e.Effects = DragDropEffects.Copy;
+            e.Handled = true;
+        }
+    }
+
+    private void OnWindowDragOver(object sender, DragEventArgs e)
+    {
+        if (ShellFileDropHandler.HasValidDroppedFiles(e))
+        {
+            e.Effects = DragDropEffects.Copy;
+            e.Handled = true;
+        }
+        else
+        {
+            e.Effects = DragDropEffects.None;
+        }
+    }
+
+    private void OnWindowDragLeave(object sender, DragEventArgs e)
+    {
+        DragDropOverlay.Visibility = Visibility.Collapsed;
+    }
+
+    private async void OnWindowDrop(object sender, DragEventArgs e)
+    {
+        DragDropOverlay.Visibility = Visibility.Collapsed;
+        try
+        {
+            await _dropHandler.HandleDropAsync(e);
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error("ShellWindow", "Error al procesar archivo soltado", ex);
+        }
     }
 }

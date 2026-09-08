@@ -6,22 +6,28 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
+using QubiCostElectrical;
 using QubiCostElectrical.Wpf.Auth;
+using QubiCostElectrical.Wpf.Features.Cubicacion;
 using QubiCostElectrical.Wpf.Infrastructure;
 using QubiCostElectrical.Wpf.Infrastructure.Diagnostics;
+using QubiCostElectrical.Wpf.Shell;
 
 namespace QubiCostElectrical.Wpf.Features.Preferences;
 
-public sealed partial class PreferencesViewModel : ViewModelBase
+public sealed partial class PreferencesViewModel
 {
     public PreferencesViewModel(WpfAppHost host)
+        : this(host.Session, host.ProjectWorkspace, host.Auth, host.Permissions) { }
+
+    public PreferencesViewModel(BudgetProjectSession session, IProjectWorkspaceService workspace, IAuthService auth, IPermissionService permissions)
+        : base(session, workspace)
     {
-        this.host = host;
+        this.auth = auth;
+        this.permissions = permissions;
         _saved = UserPreferencesStore.Load();
         _draft = Clone(_saved);
         LoadFromDraft();
-        _ = RefreshUsersAsync();
-        _ = RefreshAuditAsync();
         Updates = new UpdatesViewModel(
             service: new VelopackUpdateService(ProductVersionInfo.GitHubReleasesUrl),
             confirmInstallFn: () => WpfDialogService.Confirm(
@@ -29,9 +35,38 @@ public sealed partial class PreferencesViewModel : ViewModelBase
                 "La aplicación se cerrará y reiniciará para instalar la actualización.\n¿Continuar?"),
             hasUnsavedProjectFn: () =>
             {
-                try { return host.Session?.IsDirty == true; }
+                try { return Session.IsDirty == true; }
                 catch { return false; }
             });
+        InitializeNavigation();
+        SyncWorkspaceGate();
+        _ = FinishInitialLoadAsync();
+    }
+
+    /// <summary>Preferencias son globales: siempre hay contenido (sin empty por proyecto).</summary>
+    protected override void SyncWorkspaceGate()
+    {
+        ShowEmptyState = false;
+        CanEdit = permissions.CanManageAppSettings;
+        OnWorkspaceGateChanged();
+    }
+
+    protected override void OnSessionChanged(object? sender, ProjectSessionChangedEventArgs e)
+    {
+        SyncWorkspaceGate();
+    }
+
+    private async Task FinishInitialLoadAsync()
+    {
+        IsLoading = true;
+        try
+        {
+            await RefreshUsersAsync();
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     [ObservableProperty] private string _defaultProjectFolder = "";
@@ -119,7 +154,7 @@ public sealed partial class PreferencesViewModel : ViewModelBase
     public IReadOnlyList<string> UserRoleFilters { get; } = ["Todos", "Admin", "Estimator", "Viewer"];
     public IReadOnlyList<string> UserActiveFilters { get; } = ["Todos", "Activos", "Inactivos"];
 
-    public bool IsSettingsReadOnly => !host.Permissions.CanManageAppSettings;
+    public bool IsSettingsReadOnly => !permissions.CanManageAppSettings;
 
     public string AppVersion => ProductVersionInfo.ProductVersionLabel;
     public string LogsFolderPath => new LogConfiguration().LogsFolderPath();
@@ -133,7 +168,7 @@ public sealed partial class PreferencesViewModel : ViewModelBase
         _allUsers.Clear();
         try
         {
-            var users = await host.Auth.GetUsersAsync();
+            var users = await auth.GetUsersAsync();
             foreach (var user in users)
                 _allUsers.Add(user);
             ApplyUserFilters();
@@ -150,7 +185,7 @@ public sealed partial class PreferencesViewModel : ViewModelBase
         _userAuditEntries.Clear();
         try
         {
-            var entries = await host.Auth.GetAdminAuditAsync(25);
+            var entries = await auth.GetAdminAuditAsync(25);
             foreach (var entry in entries)
             {
                 _userAuditEntries.Add(
@@ -171,7 +206,7 @@ public sealed partial class PreferencesViewModel : ViewModelBase
             return;
         }
 
-        var result = await host.Auth.CreateUserAsync(NewUserEmail, NewUserPin, NewUserDisplayName, NewUserRole, SessionManager.UserEmail);
+        var result = await auth.CreateUserAsync(NewUserEmail, NewUserPin, NewUserDisplayName, NewUserRole, SessionManager.UserEmail);
         if (!result.IsSuccess)
         {
             UserAdminStatus = result.Error switch
@@ -202,7 +237,7 @@ public sealed partial class PreferencesViewModel : ViewModelBase
             return;
         }
 
-        var result = await host.Auth.SetUserActiveAsync(user.Id, !user.IsActive, SessionManager.UserEmail);
+        var result = await auth.SetUserActiveAsync(user.Id, !user.IsActive, SessionManager.UserEmail);
         if (!result.IsSuccess)
         {
             UserAdminStatus = result.Error switch
@@ -228,7 +263,7 @@ public sealed partial class PreferencesViewModel : ViewModelBase
             return;
         }
 
-        var result = await host.Auth.SetUserRoleAsync(user.Id, role, SessionManager.UserEmail);
+        var result = await auth.SetUserRoleAsync(user.Id, role, SessionManager.UserEmail);
         if (!result.IsSuccess)
         {
             UserAdminStatus = "No se pudo actualizar el rol.";
@@ -249,7 +284,7 @@ public sealed partial class PreferencesViewModel : ViewModelBase
             return;
         }
 
-        var result = await host.Auth.UnlockUserAsync(user.Id, SessionManager.UserEmail);
+        var result = await auth.UnlockUserAsync(user.Id, SessionManager.UserEmail);
         if (!result.IsSuccess)
         {
             UserAdminStatus = "No se pudo desbloquear la cuenta.";
@@ -270,7 +305,7 @@ public sealed partial class PreferencesViewModel : ViewModelBase
             return;
         }
 
-        var result = await host.Auth.ResetUserPinAsync(user.Id, newPin, SessionManager.UserEmail);
+        var result = await auth.ResetUserPinAsync(user.Id, newPin, SessionManager.UserEmail);
         if (!result.IsSuccess)
         {
             UserAdminStatus = result.Error == AuthAdminError.InvalidInput
@@ -297,6 +332,8 @@ public sealed partial class PreferencesViewModel : ViewModelBase
         if (ValidationError != null) { SaveStatus = ""; return false; }
         CommitDraftToSaved();
         UserPreferencesStore.Save(_saved);
+        CubicacionShortcutRouting.InvalidateCache();
+        ShellShortcutRouting.InvalidateCache();
         HasPendingChanges = false;
         SaveStatus = "Preferencias guardadas correctamente.";
         return true;
@@ -313,6 +350,8 @@ public sealed partial class PreferencesViewModel : ViewModelBase
         if (ValidationError != null) return;
         CommitDraftToSaved();
         UserPreferencesStore.Save(_saved);
+        CubicacionShortcutRouting.InvalidateCache();
+        ShellShortcutRouting.InvalidateCache();
         HasPendingChanges = false;
         SaveStatus = "Preferencias guardadas correctamente.";
     }
@@ -328,6 +367,16 @@ public sealed partial class PreferencesViewModel : ViewModelBase
     }
 
     public void Cancel() => Discard();
+
+    bool IPageWithPendingChanges.HasPendingChanges => HasPendingChanges;
+
+    bool IPageWithPendingChanges.TryDiscardChanges()
+    {
+        Discard();
+        return true;
+    }
+
+    bool IPageWithCommitChanges.TryApplyChanges() => ApplyChanges();
 
     public bool RestoreDefaults(Func<bool> confirmFn)
     {
@@ -403,6 +452,8 @@ public sealed partial class PreferencesViewModel : ViewModelBase
             BlockSequences = PinBlockSequences,
             BlockRepeats = PinBlockRepeats
         };
+        SyncShortcutsToDraft();
+        _saved.KeyboardShortcuts = new Dictionary<string, string>(_draft.KeyboardShortcuts, StringComparer.Ordinal);
     }
 
     private void LoadFromDraft()
@@ -429,6 +480,7 @@ public sealed partial class PreferencesViewModel : ViewModelBase
         PinBlockSequences = _draft.PinSecurity?.BlockSequences ?? true;
         PinBlockRepeats = _draft.PinSecurity?.BlockRepeats ?? true;
         HasPendingChanges = false;
+        LoadShortcutsFromDraft();
     }
 
     private static UserPreferences Clone(UserPreferences src) => new()
@@ -466,6 +518,7 @@ public sealed partial class PreferencesViewModel : ViewModelBase
             BlockSequences = src.PinSecurity?.BlockSequences ?? true,
             BlockRepeats = src.PinSecurity?.BlockRepeats ?? true
         },
+        KeyboardShortcuts = new Dictionary<string, string>(src.KeyboardShortcuts ?? new Dictionary<string, string>(), StringComparer.Ordinal),
     };
 
     private static string EnsureWritableFolder(string preferredPath, string leafFolderName)

@@ -11,9 +11,14 @@ using QubiCostElectrical.Wpf.Shell;
 
 namespace QubiCostElectrical.Wpf.Features.Cubicacion;
 
-public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePage, IPageWithPendingChanges, IDisposable
+public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePage, IPageWithPendingChanges, IPageWithCommitChanges, IDisposable, ISessionChangeAware
 {
     internal const int MinVisibleRows = 8;
+
+    private static readonly System.Text.Json.JsonSerializerOptions BaselineJsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+    };
 
     private readonly BudgetProjectSession session;
     private readonly ICubicacionService cubSvc;
@@ -22,8 +27,10 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
     private readonly IShellNavigationHost shell;
     private readonly IMaterialSearchService materialSearch;
     private readonly IPriceBankStore priceBankStore;
-    private readonly WpfAppHost host;
+    private readonly IProjectWorkspaceService projectWorkspace;
+    private readonly WpfUndoService undo;
     private readonly CubicacionPresenter cubicacionPresenter;
+    private readonly ItemizadoPresenter itemizadoPresenter;
     private readonly ConjuntoElectricoService conjuntoService;
     private readonly CubicacionTotalsCalculator totalsCalculator;
     private readonly CubicacionAutocompleteService autocompleteService;
@@ -34,7 +41,7 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
     private readonly CubicacionRowMutationService rowMutationService;
     private readonly CubicacionClipboardCoordinator clipboardCoordinator;
 
-    // MarkDirty("cubicacion") dispara session.Changed de forma SÍNCRONA, y este mismo
+    // MarkDirty(ProjectDirtyScope.Cubicacion) dispara session.Changed de forma SÍNCRONA, y este mismo
     // ViewModel escucha ese evento para recargar Rows/Partidas desde session (necesario
     // cuando el cambio viene de OTRA pantalla, p. ej. CubicacionSc). El problema: cualquier
     // edición hecha AQUÍ (tipear un código, aplicar material, pegar) ya actualiza Rows en
@@ -43,4 +50,11 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
     // pulsación de tecla. Este contador suprime el eco sin afectar recargas genuinas
     // originadas fuera de esta instancia (Undo/Redo, importación, otra pantalla).
     private int suppressSessionReload;
+    /// <summary>Snapshot JSON de cubicación (+ capas) al Load/Refresh/Apply; restaura en Discard.</summary>
+    private List<CubicacionRow>? baselineCubicacion;
+    private List<CubicacionRecursoRow>? baselineRecursos;
+    private List<CubicacionZonaCantidadRow>? baselineZonas;
+    private List<CubicacionValorizacionRow>? baselineValorizaciones;
+
+    internal void PushUndoPoint(string description) => undo.PushUndoPoint(session, description);
 }

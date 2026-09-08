@@ -1,3 +1,4 @@
+using System;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Globalization;
@@ -8,6 +9,7 @@ namespace QubiCostElectrical.Wpf.Features.Cubicacion;
 
 public sealed partial class CubicacionRowVm : ViewModelBase, IGridCellValidationSource
 {
+    private readonly Func<bool>? canEdit;
     private string tipo;
     private string codigo;
     private string descripcion;

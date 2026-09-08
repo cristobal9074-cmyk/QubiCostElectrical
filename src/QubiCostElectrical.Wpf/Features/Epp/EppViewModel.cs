@@ -149,11 +149,13 @@ public sealed class EppCatalogEntryVm
     public string PrecioLabel => $"$ {Precio:N0}";
 }
 
-public sealed partial class EppViewModel : SessionAwareViewModelBase, IRefreshablePage
+public sealed partial class EppViewModel : SessionAwareViewModelBase, IRefreshablePage, IPageWithPendingChanges, IPageWithCommitChanges
 {
     private readonly IShellNavigationHost shell;
-    private readonly WpfAppHost host;
+    private readonly BudgetProjectSession session;
+    private readonly IProjectWorkspaceService workspace;
     private bool showEmptyState = true;
+    private bool isLoading;
     private bool hasPendingChanges;
     private bool canEdit;
     private bool suppressDirty;

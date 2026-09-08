@@ -13,7 +13,7 @@ internal sealed partial class CubicacionRowMutationService
         var selectedPartida = parent.SelectedPartida;
         if (!parent.CanEdit || selectedPartida == null || !selectedPartida.EsPartida) return;
 
-        host.UndoService.PushUndoPoint(session, $"Agregar recurso");
+        undo.PushUndoPoint(session, $"Agregar recurso");
 
         var row = new CubicacionRow
         {
@@ -24,7 +24,7 @@ internal sealed partial class CubicacionRowMutationService
         };
         session.Cubicacion.Add(row);
 
-        var vm = new CubicacionRowVm(row);
+        var vm = parent.CreateRowVm(row);
         parent.Rows.Add(vm);
         parent.SelectedRow = vm;
         parent.HasPendingUndoForEdit = false;
@@ -54,7 +54,7 @@ internal sealed partial class CubicacionRowMutationService
         if (!WpfDialogService.Confirm("Eliminar recursos", msg, isWarning: true))
             return;
 
-        host.UndoService.PushUndoPoint(session, $"Eliminar {toDelete.Count} recurso(s)");
+        undo.PushUndoPoint(session, $"Eliminar {toDelete.Count} recurso(s)");
 
         foreach (var vm in toDelete)
         {
@@ -92,13 +92,13 @@ internal sealed partial class CubicacionRowMutationService
         if (!src.IsSessionBacked)
             return;
 
-        host.UndoService.PushUndoPoint(session, $"Duplicar {src.Codigo}");
+        undo.PushUndoPoint(session, $"Duplicar {src.Codigo}");
 
         var clone = cubSvc.CloneRowForItem(src.Source, selectedPartida.Id);
         int idx = session.Cubicacion.IndexOf(src.Source);
         session.Cubicacion.Insert(idx + 1, clone);
 
-        var cloneVm = new CubicacionRowVm(clone);
+        var cloneVm = parent.CreateRowVm(clone);
         parent.InitializeSectorRow(cloneVm);
         int vmIdx = parent.Rows.IndexOf(src);
         parent.Rows.Insert(vmIdx + 1, cloneVm);
@@ -123,7 +123,7 @@ internal sealed partial class CubicacionRowMutationService
         int newVmIdx = vmIdx + direction;
         if (newVmIdx < 0 || newVmIdx >= parent.Rows.Count) return;
 
-        host.UndoService.PushUndoPoint(session, $"Mover {src.Codigo}");
+        undo.PushUndoPoint(session, $"Mover {src.Codigo}");
 
         // Intercambiar posiciones solo entre índices globales que pertenecen a esta partida:
         // AddRow siempre agrega al final de session.Cubicacion, por lo que las filas de una
@@ -185,7 +185,7 @@ internal sealed partial class CubicacionRowMutationService
             return;
         }
 
-        host.UndoService.PushUndoPoint(session, $"Actualizar precio de {targets.Count} recurso(s)");
+        undo.PushUndoPoint(session, $"Actualizar precio de {targets.Count} recurso(s)");
 
         int updated = 0;
         foreach (var row in targets)
@@ -214,13 +214,16 @@ internal sealed partial class CubicacionRowMutationService
         parent.MarkDirty();
         parent.NotifyCubicacionSummaryChanged();
         ShellNotificationService.Instance.ShowSuccess(
-            "Precios actualizados", $"{updated} recurso(s) actualizados desde el catálogo.");
+            "Precios actualizados",
+            $"{updated} recurso(s) actualizados desde el catálogo.",
+            actionLabel: "Deshacer",
+            action: () => ShellNotificationService.RequestUndo?.Invoke());
     }
 
     public void ApplyMaterial(MaterialRow? material)
     {
         if (!parent.CanEdit || material == null || parent.SelectedRow == null) return;
-        host.UndoService.PushUndoPoint(session, $"Aplicar material {material.Codigo}");
+        undo.PushUndoPoint(session, $"Aplicar material {material.Codigo}");
         // Si la fila era un placeholder (isSessionBacked=false, típico al aplicar material
         // en una fila nueva con Enter), antes se confiaba en que un evento posterior de la
         // grilla la agregara a session.Cubicacion. Con Enter esa confirmación no siempre
@@ -322,7 +325,7 @@ internal sealed partial class CubicacionRowMutationService
                     material.Proveedor = bankMaterial.Proveedor;
                     material.MonedaPrecio = bankMaterial.MonedaPrecio;
                     material.RecalcularUf(session.ProjectInfo.ValorUfClp);
-                    session.MarkDirty("materiales");
+                    session.MarkDirty(ProjectDirtyScope.Materiales);
                     row.SetPricesSilently(material.MatClp, material.MoClp);
                     return;
                 }
@@ -359,7 +362,7 @@ internal sealed partial class CubicacionRowMutationService
             return;
 
         session.Materiales.Add(material);
-        session.MarkDirty("materiales");
+        session.MarkDirty(ProjectDirtyScope.Materiales);
         parent.InvalidateAutocompleteMaterialIndex();
         parent.ValidationMaterialesIndex = null;
     }
@@ -376,7 +379,7 @@ internal sealed partial class CubicacionRowMutationService
             return;
         }
 
-        host.UndoService.PushUndoPoint(session, $"Insertar recurso");
+        undo.PushUndoPoint(session, $"Insertar recurso");
 
         var row = new CubicacionRow
         {
@@ -409,7 +412,7 @@ internal sealed partial class CubicacionRowMutationService
             session.Cubicacion.Add(row);
         }
 
-        var vm = new CubicacionRowVm(row, isSessionBacked: true);
+        var vm = parent.CreateRowVm(row, isSessionBacked: true);
         parent.InitializeSectorRow(vm);
 
         int vmIdx = parent.Rows.IndexOf(src);
@@ -447,7 +450,7 @@ internal sealed partial class CubicacionRowMutationService
                 Area = "General"
             };
 
-            var vm = new CubicacionRowVm(row, isSessionBacked: false);
+            var vm = parent.CreateRowVm(row, isSessionBacked: false);
             parent.InitializeSectorRow(vm);
             parent.Rows.Add(vm);
         }

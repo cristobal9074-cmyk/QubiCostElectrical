@@ -9,11 +9,12 @@ public static class ShellRouteNavigation
         route is ShellRoute.Takeoff or ShellRoute.CubicacionSc;
 
     public static bool IsCostosRoute(ShellRoute route) =>
-        route is ShellRoute.Costo or ShellRoute.Epp or ShellRoute.ManoDeObra or ShellRoute.EconomicEditor;
+        route is ShellRoute.Costo or ShellRoute.Epp or ShellRoute.ManoDeObra;
 
     public static bool IsMoreRoute(ShellRoute route) =>
-        route is ShellRoute.Templates or ShellRoute.FloorSummary or ShellRoute.ApuCatalog
-            or ShellRoute.ApuMerge or ShellRoute.Preferences;
+        route is ShellRoute.Apu or ShellRoute.Templates or ShellRoute.Preferences
+            or ShellRoute.EconomicEditor or ShellRoute.FloorSummary
+            or ShellRoute.ApuCatalog or ShellRoute.ApuMerge;
 
     public static bool IsBudgetRoute(ShellRoute route) =>
         route is ShellRoute.Itemized or ShellRoute.Takeoff or ShellRoute.CubicacionSc

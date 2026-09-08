@@ -4,13 +4,24 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:QubiCostElectrical.Wpf.Features.Solicitudes"
+             xmlns:ctrl="clr-namespace:QubiCostElectrical.Wpf.Controls"
+             xmlns:infra="clr-namespace:QubiCostElectrical.Wpf.Infrastructure"
              mc:Ignorable="d" 
              d:DesignHeight="750" d:DesignWidth="1200">
   <Grid Background="{DynamicResource Brush.Canvas}">
+    <ctrl:EmptyStateControl Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}}"
+                            Title="Sin proyecto abierto"
+                            Description="Abra un proyecto para gestionar solicitudes de materiales y EPP.">
+      <ctrl:EmptyStateControl.Actions>
+        <Button Style="{StaticResource Button.Primary}" Content="Abrir proyecto…" Command="{Binding OpenProjectCommand}" MinWidth="180" />
+      </ctrl:EmptyStateControl.Actions>
+    </ctrl:EmptyStateControl>
+
     <!-- App Shell Workspace Frame -->
     <Border Background="{DynamicResource Brush.Surface}"
             BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
-            CornerRadius="{StaticResource Radius.Lg}" Padding="24">
+            CornerRadius="{StaticResource Radius.Lg}" Padding="24"
+            Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
       <Grid>
         <Grid.RowDefinitions>
           <RowDefinition Height="Auto" />
@@ -116,6 +127,7 @@
                 <Border Grid.Row="1" Style="{StaticResource Card.Surface}" CornerRadius="0,0,8,8" Padding="0">
                   <DataGrid ItemsSource="{Binding Materiales}"
                             Style="{StaticResource DataGrid.Workspace}"
+                            infra:DataGridExcelNavigation.Enable="True"
                             AutoGenerateColumns="False"
                             CanUserAddRows="False"
                             CanUserDeleteRows="False"
@@ -191,6 +203,7 @@
                 <Border Grid.Row="1" Style="{StaticResource Card.Surface}" CornerRadius="0,0,8,8" Padding="0">
                   <DataGrid ItemsSource="{Binding Epps}"
                             Style="{StaticResource DataGrid.Workspace}"
+                            infra:DataGridExcelNavigation.Enable="True"
                             AutoGenerateColumns="False"
                             CanUserAddRows="False"
                             CanUserDeleteRows="False"

@@ -10,12 +10,16 @@ using QubiCostElectrical.Wpf.Shell;
 
 namespace QubiCostElectrical.Wpf.Features.Epp;
 
-public sealed partial class EppViewModel : SessionAwareViewModelBase, IRefreshablePage
+public sealed partial class EppViewModel : SessionAwareViewModelBase, IRefreshablePage, IPageWithPendingChanges, IPageWithCommitChanges
 {
-    public EppViewModel(IShellNavigationHost shell, WpfAppHost host) : base(host)
+    public EppViewModel(IShellNavigationHost shell, WpfAppHost host)
+        : this(shell, host.Session, host.ProjectWorkspace) { }
+
+    public EppViewModel(IShellNavigationHost shell, BudgetProjectSession session, IProjectWorkspaceService workspace) : base(session)
     {
         this.shell = shell;
-        this.host = host;
+        this.session = session;
+        this.workspace = workspace;
         OpenProjectCommand = new RelayCommand(() => _ = shell.OpenProjectAsync());
         GoToManoDeObraCommand = new RelayCommand(() => shell.RequestNavigate(ShellRoute.ManoDeObra), () => !ShowEmptyState);
         GoToCostoCommand = new RelayCommand(() => shell.RequestNavigate(ShellRoute.Costo), () => !ShowEmptyState);
@@ -55,6 +59,12 @@ public sealed partial class EppViewModel : SessionAwareViewModelBase, IRefreshab
     {
         get => showEmptyState;
         private set => SetProperty(ref showEmptyState, value);
+    }
+
+    public bool IsLoading
+    {
+        get => isLoading;
+        private set => SetProperty(ref isLoading, value);
     }
 
     public bool HasPendingChanges
@@ -171,6 +181,9 @@ public sealed partial class EppViewModel : SessionAwareViewModelBase, IRefreshab
     public string TotalMoIndirectaLabel => $"$ {TotalMoIndirecta:N0}";
     public string TotalAccOpcionalesLabel => $"$ {TotalAccOpcionales:N0}";
     public string GranTotalLabel => TotalEppLabel;
+    public decimal TotalEppUf => PriceConversion.ClpToUf(TotalEpp, session.ValorUfClp > 0m ? session.ValorUfClp : PriceConversion.DefaultValorUfClp);
+    public string TotalEppUfLabel => $"{TotalEppUf:N2} UF";
+    public string GranTotalDualLabel => TotalEpp > 0m ? $"$ {TotalEpp:N0} ({TotalEppUfLabel})" : "$ 0";
 
     public string MoDirectaCountLabel { get; private set; } = "";
     public string MoIndirectaCountLabel { get; private set; } = "";
@@ -231,7 +244,32 @@ public sealed partial class EppViewModel : SessionAwareViewModelBase, IRefreshab
         System.Windows.Application.Current?.Dispatcher.InvokeAsync(Refresh);
     }
 
-    public void Refresh() => LoadFromSession();
+    public void Refresh()
+    {
+        IsLoading = true;
+        try
+        {
+            LoadFromSession();
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    bool IPageWithPendingChanges.HasPendingChanges => HasPendingChanges;
+
+    bool IPageWithPendingChanges.TryDiscardChanges()
+    {
+        Cancel();
+        return true;
+    }
+
+    bool IPageWithCommitChanges.TryApplyChanges()
+    {
+        Save();
+        return !HasPendingChanges;
+    }
 
     public void PrepareAddFromCatalog(EppSeccionVm? seccion, string side)
     {
@@ -262,8 +300,8 @@ public sealed partial class EppViewModel : SessionAwareViewModelBase, IRefreshab
 
     private void LoadFromSession()
     {
-        ShowEmptyState = !host.ProjectWorkspace.HasOpenProject;
-        CanEdit = !ShowEmptyState && !host.Session.IsReadOnly;
+        ShowEmptyState = !workspace.HasOpenProject;
+        CanEdit = !ShowEmptyState && !session.IsReadOnly;
         (GoToManoDeObraCommand as RelayCommand)?.RaiseCanExecuteChanged();
         (GoToCostoCommand as RelayCommand)?.RaiseCanExecuteChanged();
         if (ShowEmptyState) return;
@@ -271,7 +309,7 @@ public sealed partial class EppViewModel : SessionAwareViewModelBase, IRefreshab
         suppressDirty = true;
         try
         {
-            var data = host.Session.Data;
+            var data = session.Data;
             ProjectSnapshotIntegrity.Ensure(data);
             var (dotDir, dotInd) = EppBudgetData.ReadMoDotacion(data);
 
@@ -284,7 +322,7 @@ public sealed partial class EppViewModel : SessionAwareViewModelBase, IRefreshab
                 {
                     EppBudgetData.PushToGoCategory(data, epp);
                     suppressSessionReload = true;
-                    try { host.Session.MarkDirty("epp", "gastos_operacionales"); }
+                    try { session.MarkDirty(ProjectDirtyScope.Epp, ProjectDirtyScope.GastosOperacionales); }
                     finally { suppressSessionReload = false; }
                 }
             }
@@ -314,7 +352,7 @@ public sealed partial class EppViewModel : SessionAwareViewModelBase, IRefreshab
         suppressDirty = true;
         try
         {
-            var epp = host.Session.Data.Epp ?? EppBudgetData.Default();
+            var epp = session.Data.Epp ?? EppBudgetData.Default();
             ApplyEppToUi(epp);
             HasPendingChanges = false;
             StatusMessage = $"Sincronizado con MO · {DotacionDirecta} dir. · {DotacionIndirecta} ind. → GO 3.5";
@@ -404,6 +442,7 @@ public sealed partial class EppViewModel : SessionAwareViewModelBase, IRefreshab
         OnPropertyChanged(nameof(TotalMoIndirectaLabel));
         OnPropertyChanged(nameof(TotalAccOpcionalesLabel));
         OnPropertyChanged(nameof(GranTotalLabel));
+        OnPropertyChanged(nameof(GranTotalDualLabel));
         OnPropertyChanged(nameof(MoDirectaCountLabel));
         OnPropertyChanged(nameof(MoIndirectaCountLabel));
         OnPropertyChanged(nameof(AccOpcionalesCountLabel));
@@ -450,14 +489,14 @@ public sealed partial class EppViewModel : SessionAwareViewModelBase, IRefreshab
 
     private void PersistEppAndGo()
     {
-        var data = host.Session.Data;
+        var data = session.Data;
         var epp = BuildData();
         data.Epp = epp;
         EppBudgetData.PushToGoCategory(data, epp);
         suppressSessionReload = true;
         try
         {
-            host.Session.MarkDirty("epp", "gastos_operacionales");
+            session.MarkDirty(ProjectDirtyScope.Epp, ProjectDirtyScope.GastosOperacionales);
         }
         finally
         {
@@ -468,7 +507,7 @@ public sealed partial class EppViewModel : SessionAwareViewModelBase, IRefreshab
     private void SyncFromMo(bool persist)
     {
         if (!CanEdit) return;
-        var data = host.Session.Data;
+        var data = session.Data;
         var (dotDir, dotInd) = EppBudgetData.ReadMoDotacion(data);
 
         suppressDirty = true;
@@ -511,7 +550,7 @@ public sealed partial class EppViewModel : SessionAwareViewModelBase, IRefreshab
         suppressDirty = true;
         try
         {
-            var (dotDir, dotInd) = EppBudgetData.ReadMoDotacion(host.Session.Data);
+            var (dotDir, dotInd) = EppBudgetData.ReadMoDotacion(session.Data);
             var seed = EppBudgetData.CreateSeed(dotDir, dotInd);
             ApplyEppToUi(seed);
         }

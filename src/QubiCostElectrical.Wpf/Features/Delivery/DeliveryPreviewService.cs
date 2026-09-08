@@ -29,13 +29,30 @@ public sealed class DeliveryExportResult
 
 public sealed class DeliveryPreviewService
 {
-    private readonly WpfAppHost host;
     private readonly IFileOpenService fileOpener;
+    private readonly IPdfProjectExporter pdfExporter;
+    private readonly IExcelProjectExporter excelExporter;
+    private readonly IPresentationLetterDocxExporter wordLetterExporter;
+    private readonly ICubicacionReportExcelExporter cubReportExcel;
+    private readonly ICubicacionReportPdfExporter cubReportPdf;
+    private readonly ICubicacionSCReportExcelExporter cubScReportExcel;
 
-    public DeliveryPreviewService(WpfAppHost host)
+    public DeliveryPreviewService(
+        IFileOpenService fileOpener,
+        IPdfProjectExporter pdfExporter,
+        IExcelProjectExporter excelExporter,
+        IPresentationLetterDocxExporter wordLetterExporter,
+        ICubicacionReportExcelExporter cubReportExcel,
+        ICubicacionReportPdfExporter cubReportPdf,
+        ICubicacionSCReportExcelExporter cubScReportExcel)
     {
-        this.host = host ?? throw new ArgumentNullException(nameof(host));
-        fileOpener = host.FileOpener;
+        this.fileOpener = fileOpener ?? throw new ArgumentNullException(nameof(fileOpener));
+        this.pdfExporter = pdfExporter;
+        this.excelExporter = excelExporter;
+        this.wordLetterExporter = wordLetterExporter;
+        this.cubReportExcel = cubReportExcel;
+        this.cubReportPdf = cubReportPdf;
+        this.cubScReportExcel = cubScReportExcel;
     }
 
     public async Task<DeliveryExportResult> GeneratePreviewAsync(ExportProjectContext ctx, bool openExternally = true)
@@ -46,7 +63,7 @@ public sealed class DeliveryPreviewService
         Directory.CreateDirectory(tempRoot);
 
         string previewPath = Path.Combine(tempRoot, "Preview-Oferta.pdf");
-        await Task.Run(() => host.Services.PdfExporter.Export(ctx, previewPath));
+        await Task.Run(() => pdfExporter.Export(ctx, previewPath));
 
         if (File.Exists(previewPath))
         {
@@ -77,17 +94,17 @@ public sealed class DeliveryPreviewService
             return docId switch
             {
                 "OfferPdf" => await ExportFileAsync(ctx, targetFolder, $"{baseName}-Oferta.pdf",
-                    (c, p) => host.Services.PdfExporter.Export(c, p)),
+                    (c, p) => pdfExporter.Export(c, p)),
                 "ControlExcel" => await ExportFileAsync(ctx, targetFolder, $"{baseName}-Control.xlsx",
-                    (c, p) => host.Services.ExcelExporter.Export(c, p)),
+                    (c, p) => excelExporter.Export(c, p)),
                 "LetterDocx" => await ExportFileAsync(ctx, targetFolder, $"{baseName}-Carta.docx",
-                    (c, p) => host.Services.WordLetterExporter.Export(c, p)),
+                    (c, p) => wordLetterExporter.Export(c, p)),
                 "MemoriaExcel" => await ExportFileAsync(ctx, targetFolder, $"{baseName}-Memoria-Cubicacion.xlsx",
-                    (c, p) => host.Services.CubicacionReportExcelExporter.Export(c, p)),
+                    (c, p) => cubReportExcel.Export(c, p)),
                 "MemoriaPdf" => await ExportFileAsync(ctx, targetFolder, $"{baseName}-Memoria-Cubicacion.pdf",
-                    (c, p) => host.Services.CubicacionReportPdfExporter.Export(c, p)),
+                    (c, p) => cubReportPdf.Export(c, p)),
                 "ReporteCSEC" => await ExportFileAsync(ctx, targetFolder, $"{baseName}-Reporte-CSEC.xlsx",
-                    (c, p) => host.Services.CubicacionSCReportExcelExporter.Export(c, p)),
+                    (c, p) => cubScReportExcel.Export(c, p)),
                 _ => new DeliveryExportResult(docId, false, errorMessage: "No se reconoció el tipo de documento solicitado.")
             };
         }

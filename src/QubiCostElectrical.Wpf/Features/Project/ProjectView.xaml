@@ -88,6 +88,8 @@
   </UserControl.Resources>
 
   <Grid>
+    <ctrl:SkeletonOverlayControl Panel.ZIndex="20" Message="Cargando proyecto…"
+                                 Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibility}}" />
     <ctrl:EmptyStateControl Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}}"
                             d:Visibility="Collapsed"
                             Title="Sin proyecto abierto"
@@ -104,12 +106,12 @@
         <RowDefinition Height="*" />
       </Grid.RowDefinitions>
 
-      <!-- Page header — fiel al HTML proyecto-datos-20b -->
+      <!-- Page header — compacto y proporcionado -->
       <Border Grid.Row="0"
               Background="{DynamicResource Brush.Surface}"
               BorderBrush="{DynamicResource Brush.Line}"
               BorderThickness="0,0,0,1"
-              Padding="22,18,22,14">
+              Padding="20,10,20,10">
         <Grid>
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
@@ -118,12 +120,12 @@
 
           <StackPanel Grid.Column="0" Margin="0,0,16,0">
             <TextBlock Text="DATOS DEL PROYECTO"
-                       FontSize="13" FontWeight="SemiBold"
+                       FontSize="11.5" FontWeight="SemiBold"
                        Foreground="{DynamicResource Brush.Ink3}"
-                       Margin="0,0,0,6" />
+                       Margin="0,0,0,2" />
 
             <TextBox Text="{Binding Nombre, UpdateSourceTrigger=PropertyChanged}"
-                     FontSize="20" FontWeight="Bold"
+                     FontSize="18" FontWeight="Bold"
                      BorderThickness="0,0,0,2"
                      Background="Transparent"
                      Padding="0,2"
@@ -143,8 +145,8 @@
               </TextBox.Style>
             </TextBox>
 
-            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-              <Border CornerRadius="999" Padding="10,5" Margin="0,0,8,0">
+            <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+              <Border CornerRadius="999" Padding="9,3" Margin="0,0,8,0">
                 <Border.Style>
                   <Style TargetType="Border">
                     <Setter Property="Background" Value="{DynamicResource Brush.Line2}" />
@@ -245,7 +247,7 @@
                 </StackPanel>
               </Border>
             </StackPanel>
-            <StackPanel Orientation="Horizontal" Margin="0,11,0,0">
+            <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
               <TextBlock Text="ARCHIVO QCE · " Style="{StaticResource Text.Caption}" />
               <TextBlock Text="{Binding ArchivoProyectoShortLabel, Mode=OneWay}" Style="{StaticResource Text.Caption}" FontWeight="SemiBold" />
               <TextBlock Text="  ·  Última modificación: " Style="{StaticResource Text.Caption}" Margin="12,0,0,0" />
@@ -253,13 +255,14 @@
             </StackPanel>
           </StackPanel>
 
-          <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
+          <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
             <Button Style="{StaticResource Button.Secondary}" Content="Generar ficha PDF"
                     Command="{Binding GenerateFichaPdfCommand}"
-                    Height="36" Padding="13,0" Margin="0,0,8,0" FontSize="12.5" />
+                    Height="30" Padding="12,0" Margin="0,0,8,0" FontSize="11.5" />
             <Button Content="Aplicar cambios" Command="{Binding SaveCommand}"
-                    Height="36" Padding="16,0" FontSize="12.5" FontWeight="SemiBold"
-                    Foreground="White" BorderThickness="0" Background="#1B6EF3">
+                    Height="30" Padding="14,0" FontSize="11.5" FontWeight="SemiBold"
+                    Foreground="{DynamicResource Brush.OnPrimary}" BorderThickness="0"
+                    Background="{DynamicResource Brush.Blue}">
               <Button.Template>
                 <ControlTemplate TargetType="Button">
                   <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="9"
@@ -268,11 +271,11 @@
                       <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.28" Color="#1B6EF3" />
                     </Border.Effect>
                     <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
-                                      TextElement.Foreground="White" />
+                                      TextElement.Foreground="{DynamicResource Brush.OnPrimary}" />
                   </Border>
                   <ControlTemplate.Triggers>
                     <Trigger Property="IsMouseOver" Value="True">
-                      <Setter TargetName="Bd" Property="Background" Value="#1559D1" />
+                      <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.BlueDark}" />
                     </Trigger>
                     <Trigger Property="IsEnabled" Value="False">
                       <Setter Property="Opacity" Value="0.45" />
@@ -513,107 +516,119 @@
         </Border>
 
         <!-- Panel -->
-        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" Padding="20,18,20,88">
+        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" Padding="20,12,20,16"
+                      IsEnabled="{Binding CanEdit}">
           <StackPanel>
 
             <!-- IDENTIDAD -->
             <StackPanel Visibility="{Binding IsSectionIdentidad, Converter={StaticResource BoolToVisibility}}">
-              <TextBlock Text="Identidad" FontSize="18" FontWeight="Bold" Margin="0,0,0,4" />
-              <TextBlock Text="Lo que aparece en portadas, cartas y ficha PDF."
-                         FontSize="13" Foreground="{DynamicResource Brush.Ink3}" Margin="0,0,0,16" />
+              <DockPanel Margin="0,0,0,10">
+                <TextBlock Text="Identidad" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" />
+                <TextBlock Text=" · Lo que aparece en portadas, cartas y ficha PDF."
+                           FontSize="12" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" Margin="6,0,0,0" />
+              </DockPanel>
 
-              <Border Style="{StaticResource ProjectCard}">
-                <StackPanel>
-                  <TextBlock Text="OBRA Y MANDANTE" Style="{StaticResource ProjectCardTitle}" />
-                  <TextBlock Text="NOMBRE DEL PROYECTO" Style="{StaticResource Form.Label}" />
-                  <TextBox Text="{Binding Nombre, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" MaxLength="120" Margin="0,0,0,12" />
-                  <Grid Margin="0,0,0,12">
-                    <Grid.ColumnDefinitions>
-                      <ColumnDefinition Width="*" />
-                      <ColumnDefinition Width="14" />
-                      <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <StackPanel Grid.Column="0">
-                      <TextBlock Text="CLIENTE / MANDANTE" Style="{StaticResource Form.Label}" />
-                      <TextBox Text="{Binding Cliente, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" MaxLength="120" />
-                    </StackPanel>
-                    <StackPanel Grid.Column="2">
-                      <TextBlock Text="TIPO DE PROYECTO" Style="{StaticResource Form.Label}" />
-                      <TextBox Text="{Binding TipoProyecto, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" MaxLength="80" />
-                    </StackPanel>
-                  </Grid>
-                  <TextBlock Text="UBICACIÓN DE LA OBRA" Style="{StaticResource Form.Label}" />
-                  <TextBox Text="{Binding Ubicacion, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" MaxLength="200" />
-                </StackPanel>
-              </Border>
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="1.25*" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
 
-              <Border Style="{StaticResource ProjectCard}">
-                <StackPanel>
-                  <TextBlock Text="ESTADO DEL PRESUPUESTO" Style="{StaticResource ProjectCardTitle}" />
-                  <Border Background="{DynamicResource Brush.Line2}" CornerRadius="10" Padding="3">
-                    <UniformGrid Columns="3">
-                      <Button Content="Borrador" Command="{Binding SetEstadoCommand}" CommandParameter="Borrador" Margin="2">
-                        <Button.Style>
-                          <Style TargetType="Button" BasedOn="{StaticResource EstadoSegBtn}">
-                            <Style.Triggers>
-                              <DataTrigger Binding="{Binding IsEstadoBorrador}" Value="True">
-                                <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
-                                <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
-                              </DataTrigger>
-                            </Style.Triggers>
-                          </Style>
-                        </Button.Style>
-                      </Button>
-                      <Button Content="En revisión" Command="{Binding SetEstadoCommand}" CommandParameter="En revisión" Margin="2">
-                        <Button.Style>
-                          <Style TargetType="Button" BasedOn="{StaticResource EstadoSegBtn}">
-                            <Style.Triggers>
-                              <DataTrigger Binding="{Binding IsEstadoEnRevision}" Value="True">
-                                <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
-                                <Setter Property="Foreground" Value="{DynamicResource Brush.Amber}" />
-                              </DataTrigger>
-                            </Style.Triggers>
-                          </Style>
-                        </Button.Style>
-                      </Button>
-                      <Button Content="Aprobado" Command="{Binding SetEstadoCommand}" CommandParameter="Aprobado" Margin="2">
-                        <Button.Style>
-                          <Style TargetType="Button" BasedOn="{StaticResource EstadoSegBtn}">
-                            <Style.Triggers>
-                              <DataTrigger Binding="{Binding IsEstadoAprobado}" Value="True">
-                                <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
-                                <Setter Property="Foreground" Value="{DynamicResource Brush.Success}" />
-                              </DataTrigger>
-                            </Style.Triggers>
-                          </Style>
-                        </Button.Style>
-                      </Button>
-                    </UniformGrid>
-                  </Border>
+                <!-- Obra y Mandante -->
+                <Border Grid.Column="0" Style="{StaticResource ProjectCard}" Margin="0,0,6,0">
+                  <StackPanel>
+                    <TextBlock Text="OBRA Y MANDANTE" Style="{StaticResource ProjectCardTitle}" />
+                    <TextBlock Text="NOMBRE DEL PROYECTO" Style="{StaticResource Form.Label}" />
+                    <TextBox Text="{Binding Nombre, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" MaxLength="120" Margin="0,0,0,10" />
+                    <Grid Margin="0,0,0,10">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="10" />
+                        <ColumnDefinition Width="*" />
+                      </Grid.ColumnDefinitions>
+                      <StackPanel Grid.Column="0">
+                        <TextBlock Text="CLIENTE / MANDANTE" Style="{StaticResource Form.Label}" />
+                        <TextBox Text="{Binding Cliente, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" MaxLength="120" />
+                      </StackPanel>
+                      <StackPanel Grid.Column="2">
+                        <TextBlock Text="TIPO DE PROYECTO" Style="{StaticResource Form.Label}" />
+                        <TextBox Text="{Binding TipoProyecto, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" MaxLength="80" />
+                      </StackPanel>
+                    </Grid>
+                    <TextBlock Text="UBICACIÓN DE LA OBRA" Style="{StaticResource Form.Label}" />
+                    <TextBox Text="{Binding Ubicacion, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" MaxLength="200" />
+                  </StackPanel>
+                </Border>
 
-                  <Grid Margin="0,14,0,0">
-                    <Grid.ColumnDefinitions>
-                      <ColumnDefinition Width="*" />
-                      <ColumnDefinition Width="14" />
-                      <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <StackPanel Grid.Column="0">
-                      <TextBlock Text="FECHA CREACIÓN" Style="{StaticResource Form.Label}" />
-                      <TextBox Text="{Binding FechaCreacionLabel, Mode=OneWay}" Style="{StaticResource Form.TextBox}" IsReadOnly="True"
-                               Background="{DynamicResource Brush.Surface2}" />
-                    </StackPanel>
-                    <StackPanel Grid.Column="2">
-                      <TextBlock Text="ÚLTIMA MODIFICACIÓN" Style="{StaticResource Form.Label}" />
-                      <TextBox Text="{Binding FechaModificacionLabel, Mode=OneWay}" Style="{StaticResource Form.TextBox}" IsReadOnly="True"
-                               Background="{DynamicResource Brush.Surface2}" />
-                    </StackPanel>
-                  </Grid>
-                  <TextBlock Text="ARCHIVO LOCAL" Style="{StaticResource Form.Label}" Margin="0,12,0,0" />
-                  <TextBox Text="{Binding ArchivoProyectoLabel, Mode=OneWay}" Style="{StaticResource Form.TextBox}" IsReadOnly="True"
-                           Background="{DynamicResource Brush.Surface2}" TextWrapping="NoWrap"
-                           ToolTip="{Binding ArchivoProyectoLabel}" />
-                </StackPanel>
-              </Border>
+                <!-- Estado del Presupuesto y Archivo -->
+                <Border Grid.Column="1" Style="{StaticResource ProjectCard}" Margin="6,0,0,0">
+                  <StackPanel>
+                    <TextBlock Text="ESTADO DEL PRESUPUESTO" Style="{StaticResource ProjectCardTitle}" />
+                    <Border Background="{DynamicResource Brush.Line2}" CornerRadius="8" Padding="2" Margin="0,0,0,10">
+                      <UniformGrid Columns="3">
+                        <Button Content="Borrador" Command="{Binding SetEstadoCommand}" CommandParameter="Borrador" Margin="1">
+                          <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource EstadoSegBtn}">
+                              <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsEstadoBorrador}" Value="True">
+                                  <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+                                  <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+                                </DataTrigger>
+                              </Style.Triggers>
+                            </Style>
+                          </Button.Style>
+                        </Button>
+                        <Button Content="En revisión" Command="{Binding SetEstadoCommand}" CommandParameter="En revisión" Margin="1">
+                          <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource EstadoSegBtn}">
+                              <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsEstadoEnRevision}" Value="True">
+                                  <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+                                  <Setter Property="Foreground" Value="{DynamicResource Brush.Amber}" />
+                                </DataTrigger>
+                              </Style.Triggers>
+                            </Style>
+                          </Button.Style>
+                        </Button>
+                        <Button Content="Aprobado" Command="{Binding SetEstadoCommand}" CommandParameter="Aprobado" Margin="1">
+                          <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource EstadoSegBtn}">
+                              <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsEstadoAprobado}" Value="True">
+                                  <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+                                  <Setter Property="Foreground" Value="{DynamicResource Brush.Success}" />
+                                </DataTrigger>
+                              </Style.Triggers>
+                            </Style>
+                          </Button.Style>
+                        </Button>
+                      </UniformGrid>
+                    </Border>
+
+                    <Grid Margin="0,0,0,10">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="10" />
+                        <ColumnDefinition Width="*" />
+                      </Grid.ColumnDefinitions>
+                      <StackPanel Grid.Column="0">
+                        <TextBlock Text="FECHA CREACIÓN" Style="{StaticResource Form.Label}" />
+                        <TextBox Text="{Binding FechaCreacionLabel, Mode=OneWay}" Style="{StaticResource Form.TextBox}" IsReadOnly="True"
+                                 Background="{DynamicResource Brush.Surface2}" />
+                      </StackPanel>
+                      <StackPanel Grid.Column="2">
+                        <TextBlock Text="ÚLTIMA MODIFICACIÓN" Style="{StaticResource Form.Label}" />
+                        <TextBox Text="{Binding FechaModificacionLabel, Mode=OneWay}" Style="{StaticResource Form.TextBox}" IsReadOnly="True"
+                                 Background="{DynamicResource Brush.Surface2}" />
+                      </StackPanel>
+                    </Grid>
+                    <TextBlock Text="ARCHIVO LOCAL" Style="{StaticResource Form.Label}" />
+                    <TextBox Text="{Binding ArchivoProyectoLabel, Mode=OneWay}" Style="{StaticResource Form.TextBox}" IsReadOnly="True"
+                             Background="{DynamicResource Brush.Surface2}" TextWrapping="NoWrap"
+                             ToolTip="{Binding ArchivoProyectoLabel}" />
+                  </StackPanel>
+                </Border>
+              </Grid>
             </StackPanel>
 
             <!-- COMERCIAL -->

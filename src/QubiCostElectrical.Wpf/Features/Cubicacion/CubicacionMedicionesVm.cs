@@ -123,7 +123,7 @@ public sealed class CubicacionMedicionesVm : ViewModelBase
     private void MarkDirtySuppressed()
     {
         using (owner?.SuppressSessionReload() ?? NullDisposable)
-            session.MarkDirty("cubicacion");
+            session.MarkDirty(ProjectDirtyScope.Cubicacion);
     }
 
     private static readonly IDisposable NullDisposable = new NoopDisposable();

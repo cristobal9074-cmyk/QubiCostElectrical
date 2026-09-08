@@ -5,20 +5,39 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using QubiCostElectrical;
 using QubiCostElectrical.Wpf.Infrastructure;
 
 namespace QubiCostElectrical.Wpf.Features.Itemizado;
 
 public partial class ItemizadoView : UserControl
 {
+    private readonly ItemizadoDragDropCoordinator _dragDropCoordinator;
+
     public ItemizadoView()
     {
         InitializeComponent();
-        DataGridExcelNavigation.Attach(ItemGrid);
+        _dragDropCoordinator = new ItemizadoDragDropCoordinator(ItemGrid, () => Vm);
         DataContextChanged += OnDataContextChanged;
+        ItemGrid.CurrentCellChanged += OnCurrentCellChanged;
     }
 
     private ItemizadoViewModel? Vm => DataContext as ItemizadoViewModel;
+
+    private void OnCurrentCellChanged(object? sender, EventArgs e)
+    {
+        try
+        {
+            if (ItemGrid.CurrentCell.Item is ItemizadoRowVm row && Vm != null && !ReferenceEquals(Vm.SelectedRow, row))
+            {
+                Vm.SelectedRow = row;
+            }
+        }
+        catch
+        {
+            // Evitar que excepciones de selección de celda interrumpan el dispatcher
+        }
+    }
 
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
     {
@@ -29,7 +48,7 @@ public partial class ItemizadoView : UserControl
     }
 
     // Al agregar una partida o un título, entra directo en modo edición sobre la
-    // columna Descripción de la fila nueva y selecciona todo su texto, para poder
+    // columna Ítem (o Descripción) de la fila nueva y selecciona todo su texto, para poder
     // escribir el nombre de inmediato sin F2 ni clic manual. No toca ningún otro
     // flujo de edición (F2, doble clic, navegación tipo Excel siguen igual).
     private void OnRowAdded(string rowId)
@@ -45,7 +64,8 @@ public partial class ItemizadoView : UserControl
         if (row == null)
             return;
 
-        var column = ItemGrid.Columns.FirstOrDefault(c => Equals(c.Header, "DESCRIPCIÓN"));
+        var column = ItemGrid.Columns.FirstOrDefault(c => Equals(c.Header, "ÍTEM"))
+                     ?? ItemGrid.Columns.FirstOrDefault(c => Equals(c.Header, "DESCRIPCIÓN"));
         if (column == null)
             return;
 
@@ -136,6 +156,15 @@ public partial class ItemizadoView : UserControl
         if (Vm == null)
             return;
 
+        if (!IsGridEditing()
+            && ShellShortcutRouting.Matches(e, ShellShortcutCatalog.Cubicar))
+        {
+            if (Vm.CubicarCommand.CanExecute(null))
+                Vm.CubicarCommand.Execute(null);
+            e.Handled = true;
+            return;
+        }
+
         if (e.Key == Key.Delete && Keyboard.Modifiers == ModifierKeys.None && !IsGridEditing())
         {
             Vm.HandleDeleteKey();
@@ -160,31 +189,16 @@ public partial class ItemizadoView : UserControl
             }
         }
 
-        if (!IsGridEditing() && Vm.SelectedRow != null)
+        if (!IsGridEditing() && Vm.SelectedRow != null && !Vm.IsReadOnly)
         {
-            bool ctrlPressed = Keyboard.Modifiers == ModifierKeys.Control;
-            bool noModifiers = Keyboard.Modifiers == ModifierKeys.None;
-
-            if (ctrlPressed || noModifiers)
+            // Ctrl+T: título
+            if (e.Key == Key.T && Keyboard.Modifiers == ModifierKeys.Control)
             {
-                if (e.Key is Key.T or Key.C)
-                {
-                    Vm.SelectedRow.EsTitulo = !Vm.SelectedRow.EsTitulo;
-                    e.Handled = true;
-                    return;
-                }
-                if (e.Key == Key.E)
-                {
-                    Vm.SelectedRow.ExcluidoCubicacion = !Vm.SelectedRow.ExcluidoCubicacion;
-                    e.Handled = true;
-                    return;
-                }
+                Vm.SelectedRow.EsTitulo = !Vm.SelectedRow.EsTitulo;
+                e.Handled = true;
+                return;
             }
         }
-
-        DataGridExcelNavigation.HandlePreviewKeyDown(ItemGrid, e);
-        if (e.Handled)
-            return;
 
         if (e.Key == Key.V && Keyboard.Modifiers == ModifierKeys.Control)
         {
@@ -199,6 +213,29 @@ public partial class ItemizadoView : UserControl
             {
                 Vm.AddPartidaCommand.Execute(null);
                 e.Handled = true;
+                return;
+            }
+        }
+
+        if ((e.Key == Key.Enter || e.Key == Key.Tab) && Keyboard.Modifiers == ModifierKeys.None && Vm != null && !Vm.IsReadOnly)
+        {
+            var lastRow = ItemGrid.Items.OfType<ItemizadoRowVm>().LastOrDefault();
+            var currentItem = ItemGrid.CurrentCell.Item as ItemizadoRowVm;
+            var currentColumn = ItemGrid.CurrentCell.Column;
+
+            bool isLastCell = lastRow != null
+                              && ReferenceEquals(currentItem, lastRow)
+                              && (currentColumn != null && (Equals(currentColumn.Header, "CANTIDAD") || Equals(currentColumn.Header, "EXCL. CUBIC.")));
+
+            if (isLastCell)
+            {
+                ItemGrid.CommitEdit(DataGridEditingUnit.Row, true);
+                if (Vm.AddPartidaCommand.CanExecute(null))
+                {
+                    Vm.AddPartidaCommand.Execute(null);
+                    e.Handled = true;
+                    return;
+                }
             }
         }
     }
@@ -231,9 +268,7 @@ public partial class ItemizadoView : UserControl
         SetItemEnabled(menu, "Eliminar", Vm.DeleteCommand.CanExecute(null));
 
         SetItemEnabled(menu, "Es título", !Vm.IsReadOnly);
-        SetItemEnabled(menu, "No cubicar", !Vm.IsReadOnly);
         SetItemChecked(menu, "Es título", Vm.SelectedRow?.EsTitulo == true);
-        SetItemChecked(menu, "No cubicar", Vm.SelectedRow?.ExcluidoCubicacion == true);
     }
 
     private static void SetItemEnabled(ContextMenu menu, string header, bool enabled)
@@ -307,14 +342,6 @@ public partial class ItemizadoView : UserControl
         if (Vm?.SelectedRow != null && !Vm.IsReadOnly)
         {
             Vm.SelectedRow.EsTitulo = !Vm.SelectedRow.EsTitulo;
-        }
-    }
-
-    private void OnRowMenuToggleNoCubicarClick(object sender, RoutedEventArgs e)
-    {
-        if (Vm?.SelectedRow != null && !Vm.IsReadOnly)
-        {
-            Vm.SelectedRow.ExcluidoCubicacion = !Vm.SelectedRow.ExcluidoCubicacion;
         }
     }
 

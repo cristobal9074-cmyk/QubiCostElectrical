@@ -50,7 +50,7 @@ public static class ShellWorkflowLogic
         bool s1 = hasName;
         bool s2 = totalPartidas > 0;
         bool s3 = review.EmptyPartidas == 0 && totalPartidas > 0;
-        bool s4 = review.MissingApus == 0 && totalPartidas > 0;
+        bool s4 = review.MaterialsWithoutPrice == 0 && totalPartidas > 0;
         bool s5 = review.ReadyToExport;
         bool s6 = review.ReadyToExport;
 
@@ -98,7 +98,10 @@ public static class ShellWorkflowLogic
         if (totalPartidas == 0)
             return "Sin partidas";
 
-        return $"{Math.Max(0, totalPartidas - review.MissingApus):N0} APUs";
+        if (review.MaterialsWithoutPrice > 0)
+            return $"{review.MaterialsWithoutPrice:N0} sin precio";
+
+        return "Precios vigentes";
     }
 
     private static ShellWorkflowStepDefinition Step(

@@ -4,6 +4,7 @@ using System.Windows;
 using QubiCostElectrical;
 using QubiCostElectrical.Wpf.Controls;
 using QubiCostElectrical.Wpf.Infrastructure;
+using QubiCostElectrical.Wpf.Infrastructure.Security;
 
 namespace QubiCostElectrical.Wpf.Infrastructure.Diagnostics;
 
@@ -158,15 +159,10 @@ public static class GlobalErrorHandler
 
     private static void OpenLogsFolder()
     {
-        try
+        var folder = new LogConfiguration().LogsFolderPath();
+        if (!SafeProcessLauncher.TryOpenFolder(folder, out var error))
         {
-            var folder = new LogConfiguration().LogsFolderPath();
-            if (Directory.Exists(folder))
-                Process.Start(new ProcessStartInfo(folder) { UseShellExecute = true });
-        }
-        catch (Exception ex)
-        {
-            logger?.Error("GlobalErrorHandler", "No se pudo abrir la carpeta de logs", ex);
+            logger?.Error("GlobalErrorHandler", $"No se pudo abrir la carpeta de logs: {error}");
         }
     }
 

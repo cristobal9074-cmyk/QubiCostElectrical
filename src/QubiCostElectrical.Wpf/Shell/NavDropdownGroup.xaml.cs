@@ -58,6 +58,12 @@ public partial class NavDropdownGroup : UserControl
         Popup.IsOpen = false;
     }
 
+    private void OnSeparatorClick(object sender, RoutedEventArgs e)
+    {
+        // Separadores no navegan; absorber el evento para evitar cierre accidental del popup.
+        e.Handled = true;
+    }
+
     private void OnTriggerClick(object sender, RoutedEventArgs e) =>
         Popup.IsOpen = Trigger.IsChecked == true;
 

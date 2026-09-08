@@ -221,7 +221,7 @@
           <Run Text="¿Olvidaste tu PIN?" />
           <Run Text="Contacta a tu administrador." Foreground="{DynamicResource Brush.Blue2}" />
         </TextBlock>
-        <TextBlock Text="Roles y bloqueo de edición en carpeta compartida. Solo un estimador edita a la vez; los demás abren en solo lectura. La actividad queda registrada en el proyecto."
+        <TextBlock Text="Colaboración por archivo en carpeta compartida (SMB/UNC): 1 editor + N consultores en solo lectura. No es edición simultánea tipo Google Docs. La actividad queda en el proyecto."
                    TextAlignment="Center"
                    FontSize="10"
                    Foreground="{DynamicResource Brush.HeaderLabel}"

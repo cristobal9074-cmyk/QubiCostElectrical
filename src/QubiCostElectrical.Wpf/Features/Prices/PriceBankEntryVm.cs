@@ -7,13 +7,15 @@ namespace QubiCostElectrical.Wpf.Features.Prices;
 public sealed class PriceBankEntryVm : ViewModelBase
 {
     private readonly PriceBankEntry source;
+    private readonly Func<bool>? canEdit;
     private string originalCodigo;
     private bool hasChanges;
     private decimal valorUfClp;
 
-    public PriceBankEntryVm(PriceBankEntry source, decimal valorUfClp = 0m)
+    public PriceBankEntryVm(PriceBankEntry source, decimal valorUfClp = 0m, Func<bool>? canEdit = null)
     {
         this.source = source ?? throw new ArgumentNullException(nameof(source));
+        this.canEdit = canEdit;
         originalCodigo = NormalizeCode(source.Codigo);
         hasChanges = false;
         this.valorUfClp = valorUfClp;
@@ -33,6 +35,8 @@ public sealed class PriceBankEntryVm : ViewModelBase
 
         source.RecalcularUf(valorUfClp);
     }
+
+    private bool AllowEdit => canEdit?.Invoke() ?? true;
 
     /// <summary>
     /// Valor de la UF del proyecto activo, usado para derivar MatUf/MoUf desde MatClp/MoClp.
@@ -70,6 +74,7 @@ public sealed class PriceBankEntryVm : ViewModelBase
         get => source.Codigo;
         set
         {
+            if (!AllowEdit) return;
             string normalized = NormalizeCode(value);
             if (string.Equals(source.Codigo, normalized, StringComparison.OrdinalIgnoreCase))
                 return;
@@ -84,6 +89,7 @@ public sealed class PriceBankEntryVm : ViewModelBase
         get => source.Descripcion;
         set
         {
+            if (!AllowEdit) return;
             if (source.Descripcion == value) return;
             source.Descripcion = value ?? "";
             MarkChanged();
@@ -96,6 +102,7 @@ public sealed class PriceBankEntryVm : ViewModelBase
         get => source.Unidad;
         set
         {
+            if (!AllowEdit) return;
             if (source.Unidad == value) return;
             source.Unidad = value ?? "";
             MarkChanged();
@@ -108,6 +115,7 @@ public sealed class PriceBankEntryVm : ViewModelBase
         get => source.Categoria;
         set
         {
+            if (!AllowEdit) return;
             if (source.Categoria == value) return;
             source.Categoria = value ?? "";
             MarkChanged();
@@ -122,6 +130,7 @@ public sealed class PriceBankEntryVm : ViewModelBase
         get => source.MatClp;
         set
         {
+            if (!AllowEdit) return;
             if (source.MatClp == value) return;
             source.MatClp = value;
             source.RecalcularUf(valorUfClp);
@@ -137,6 +146,7 @@ public sealed class PriceBankEntryVm : ViewModelBase
         get => source.MoClp;
         set
         {
+            if (!AllowEdit) return;
             if (source.MoClp == value) return;
             source.MoClp = value;
             source.RecalcularUf(valorUfClp);
@@ -159,6 +169,7 @@ public sealed class PriceBankEntryVm : ViewModelBase
         get => source.MonedaPrecio;
         set
         {
+            if (!AllowEdit) return;
             if (source.MonedaPrecio == value) return;
             source.MonedaPrecio = string.IsNullOrWhiteSpace(value) ? Moneda.UF : value;
             MarkChanged();
@@ -171,6 +182,7 @@ public sealed class PriceBankEntryVm : ViewModelBase
         get => source.Proveedor;
         set
         {
+            if (!AllowEdit) return;
             if (source.Proveedor == value) return;
             source.Proveedor = value ?? "";
             MarkChanged();
@@ -183,6 +195,7 @@ public sealed class PriceBankEntryVm : ViewModelBase
         get => source.Marca;
         set
         {
+            if (!AllowEdit) return;
             if (source.Marca == value) return;
             source.Marca = value ?? "";
             MarkChanged();
@@ -195,6 +208,7 @@ public sealed class PriceBankEntryVm : ViewModelBase
         get => source.FechaPrecio;
         set
         {
+            if (!AllowEdit) return;
             if (source.FechaPrecio == value) return;
             source.FechaPrecio = value == default ? DateTime.Today : value;
             MarkChanged();
@@ -214,6 +228,7 @@ public sealed class PriceBankEntryVm : ViewModelBase
         get => source.OrigenPrecio;
         set
         {
+            if (!AllowEdit) return;
             if (source.OrigenPrecio == value) return;
             source.OrigenPrecio = value ?? "";
             MarkChanged();
@@ -226,6 +241,7 @@ public sealed class PriceBankEntryVm : ViewModelBase
         get => source.ProyectoOrigen;
         set
         {
+            if (!AllowEdit) return;
             if (source.ProyectoOrigen == value) return;
             source.ProyectoOrigen = value ?? "";
             MarkChanged();

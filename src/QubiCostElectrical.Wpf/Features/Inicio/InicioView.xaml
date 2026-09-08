@@ -279,6 +279,7 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
                 <StackPanel>
@@ -309,7 +310,30 @@
                     </Border>
                 </StackPanel>
 
-                <Border Grid.Row="1" Style="{StaticResource Card.Section}" Margin="0,24,0,20">
+                <ItemsControl Grid.Row="1"
+                              ItemsSource="{Binding QuickSummaryCards}"
+                              Margin="0,20,0,0"
+                              Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="4" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Style="{StaticResource LandingMetricCard}" Margin="0,0,8,8">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Title}" Style="{StaticResource Text.SectionLabel}" Foreground="{DynamicResource Brush.Ink3}" />
+                                    <TextBlock Text="{Binding Value}" Style="{StaticResource Text.KpiValue}" Foreground="{Binding AccentBrush}" FontWeight="Bold" Margin="0,6,0,2" />
+                                    <TextBlock Text="{Binding Caption}" Style="{StaticResource Text.Caption}" Foreground="{Binding AccentBrush}" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <Border Grid.Row="2" Style="{StaticResource Card.Section}" Margin="0,20,0,20"
+                        Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}}">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />

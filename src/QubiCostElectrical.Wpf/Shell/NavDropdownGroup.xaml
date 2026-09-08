@@ -17,11 +17,36 @@
           <ItemsControl x:Name="ItemsHost">
             <ItemsControl.ItemTemplate>
               <DataTemplate>
-                <Button Style="{StaticResource Menu.DropdownItem}"
-                        Tag="{Binding Route}"
-                        Click="OnItemClick">
-                  <TextBlock Text="{Binding Label, Mode=OneWay}" Foreground="{DynamicResource Brush.Ink7}" />
-                </Button>
+                <Grid>
+                  <!-- Separador visual: línea horizontal cuando IsSeparator = true -->
+                  <Rectangle Height="1" Margin="8,4" Fill="{DynamicResource Brush.Line}"
+                             HorizontalAlignment="Stretch" VerticalAlignment="Center">
+                    <Rectangle.Style>
+                      <Style TargetType="Rectangle">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                          <DataTrigger Binding="{Binding IsSeparator}" Value="True">
+                            <Setter Property="Visibility" Value="Visible" />
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </Rectangle.Style>
+                  </Rectangle>
+                  <!-- Ítem de navegación normal -->
+                  <Button Tag="{Binding Route}"
+                          Click="OnItemClick">
+                    <Button.Style>
+                      <Style TargetType="Button" BasedOn="{StaticResource Menu.DropdownItem}">
+                        <Style.Triggers>
+                          <DataTrigger Binding="{Binding IsSeparator}" Value="True">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </Button.Style>
+                    <TextBlock Text="{Binding Label, Mode=OneWay}" Foreground="{DynamicResource Brush.Ink7}" />
+                  </Button>
+                </Grid>
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>

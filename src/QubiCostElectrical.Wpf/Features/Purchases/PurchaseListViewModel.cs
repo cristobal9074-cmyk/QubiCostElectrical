@@ -18,8 +18,11 @@ namespace QubiCostElectrical.Wpf.Features.Purchases;
 
 public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefreshablePage
 {
-    private readonly WpfAppHost host;
     private readonly IShellNavigationHost shell;
+    private readonly BudgetProjectSession session;
+    private readonly IProjectWorkspaceService workspace;
+    private readonly IPermissionService permissions;
+    private readonly IMaterialSearchService materialSearch;
     private readonly IPurchaseListService purchaseList;
     private readonly IPurchaseListExcelExporter purchaseListExcel;
     private readonly ObservableCollection<CompraMaterialViewModel> rows = new();
@@ -41,18 +44,25 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
     private bool isGroupedByProvider;
     private CompraMaterialViewModel? selectedRow;
 
-    public PurchaseListViewModel(IShellNavigationHost shell, WpfAppHost host) : base(host)
+    public PurchaseListViewModel(IShellNavigationHost shell, WpfAppHost host)
+        : this(shell, host.Session, host.ProjectWorkspace, host.Permissions, host.Services.MaterialSearch, host.Services.PurchaseList, host.Services.PurchaseListExcel) { }
+
+    public PurchaseListViewModel(IShellNavigationHost shell, BudgetProjectSession session, IProjectWorkspaceService workspace, IPermissionService permissions, IMaterialSearchService materialSearch, IPurchaseListService purchaseList, IPurchaseListExcelExporter purchaseListExcel) : base(session)
     {
-        this.host = host;
         this.shell = shell;
-        purchaseList = host.Services.PurchaseList;
-        purchaseListExcel = host.Services.PurchaseListExcel;
+        this.session = session;
+        this.workspace = workspace;
+        this.permissions = permissions;
+        this.materialSearch = materialSearch;
+        this.purchaseList = purchaseList;
+        this.purchaseListExcel = purchaseListExcel;
 
         refreshCommand = new RelayCommand(Refresh);
         exportExcelCommand = new RelayCommand(ExportExcel, CanExportExcel);
         clearFiltersCommand = new RelayCommand(ClearFilters);
         goToOriginCommand = new RelayCommand(GoToOrigin, () => selectedRow != null);
         groupByProviderCommand = new RelayCommand(ToggleGroupByProvider);
+        OpenProjectCommand = new RelayCommand(() => _ = shell.OpenProjectAsync());
 
         rowsView = CollectionViewSource.GetDefaultView(rows);
         rowsView.Filter = FilterRow;
@@ -68,7 +78,7 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
     public ObservableCollection<CompraMaterialViewModel> Rows => rows;
     public ICollectionView FilteredRows => rowsView;
     public ObservableCollection<string> CategoryOptions => categoryOptions;
-    public bool HasProject => host.ProjectWorkspace.HasOpenProject;
+    public bool HasProject => workspace.HasOpenProject;
 
     public string SearchText
     {
@@ -125,6 +135,12 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
 
     public bool ShowEmptyState { get => showEmptyState; private set => SetProperty(ref showEmptyState, value); }
 
+    public string EmptyStateTitle => HasProject ? "Lista vacía" : "Sin proyecto abierto";
+
+    public string EmptyStateDescription => HasProject
+        ? "Aún no hay recursos comprables en la cubicación activa."
+        : "Abra un proyecto para consolidar la lista de compra desde la cubicación.";
+
     public bool IsGroupedByProvider
     {
         get => isGroupedByProvider;
@@ -147,6 +163,7 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
     public ICommand ClearFiltersCommand => clearFiltersCommand;
     public ICommand GoToOriginCommand => goToOriginCommand;
     public ICommand GroupByProviderCommand => groupByProviderCommand;
+    public ICommand OpenProjectCommand { get; }
 
     public void Refresh()
     {
@@ -159,7 +176,7 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
         rows.Clear();
         if (HasProject)
         {
-            foreach (var row in purchaseList.Build(host.Session.Cubicacion, host.Session.Materiales, ToleranciaPct))
+            foreach (var row in purchaseList.Build(session.Cubicacion, session.Materiales, ToleranciaPct))
                 rows.Add(row);
         }
 
@@ -168,6 +185,8 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
         UpdateSummary();
         UpdateProjectSummary();
         ShowEmptyState = !HasProject || rows.Count == 0;
+        OnPropertyChanged(nameof(EmptyStateTitle));
+        OnPropertyChanged(nameof(EmptyStateDescription));
         StatusMessage = !HasProject
             ? "Abre o crea un proyecto para consolidar la lista de compra."
             : rows.Count == 0
@@ -198,10 +217,10 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
         if (obj is not CompraMaterialViewModel row)
             return false;
 
-        string query = host.Services.MaterialSearch.Normalize(SearchText);
+        string query = materialSearch.Normalize(SearchText);
         if (!string.IsNullOrWhiteSpace(query))
         {
-            string searchable = host.Services.MaterialSearch.Normalize(string.Join(' ', new[]
+            string searchable = materialSearch.Normalize(string.Join(' ', new[]
             {
                 row.Codigo,
                 row.Descripcion,
@@ -233,11 +252,14 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
         int visible = rowsView.Cast<object>().Count();
         decimal totalNeto = rowsView.Cast<CompraMaterialViewModel>().Sum(x => x.TotalNetoUf);
         decimal totalCompra = rowsView.Cast<CompraMaterialViewModel>().Sum(x => x.TotalCompraUf);
-        int missingPrices = rowsView.Cast<CompraMaterialViewModel>().Count(x => x.MatUfUnitario <= 0m);
+        decimal valorUf = session.ValorUfClp > 0m ? session.ValorUfClp : PriceConversion.DefaultValorUfClp;
+        decimal totalNetoClp = rowsView.Cast<CompraMaterialViewModel>().Sum(x => x.TotalNetoClp > 0m ? x.TotalNetoClp : x.TotalNetoUf * valorUf);
+        decimal totalCompraClp = rowsView.Cast<CompraMaterialViewModel>().Sum(x => x.TotalCompraClp > 0m ? x.TotalCompraClp : x.TotalCompraUf * valorUf);
+        int missingPrices = rowsView.Cast<CompraMaterialViewModel>().Count(x => x.MatUfUnitario <= 0m && x.MatClpUnitario <= 0m);
         SummaryText = $"{visible:N0} visibles · {rows.Count:N0} total · {missingPrices:N0} sin precio";
         StatusMessage = rows.Count == 0
             ? "No hay recursos comprables en la cubicación actual."
-            : $"Lista consolidada: $ {totalNeto:N0} neto · $ {totalCompra:N0} compra.";
+            : $"Lista consolidada: {totalNeto:N2} UF ($ {totalNetoClp:N0}) neto · {totalCompra:N2} UF ($ {totalCompraClp:N0}) compra.";
         exportExcelCommand.RaiseCanExecuteChanged();
     }
 
@@ -245,10 +267,10 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
     {
         ProjectSummary = !HasProject
             ? "Sin proyecto abierto."
-            : $"{host.Session.ProjectInfo.Nombre} · {host.Session.Cubicacion.Count:N0} recursos";
+            : $"{session.ProjectInfo.Nombre} · {session.Cubicacion.Count:N0} recursos";
     }
 
-    private bool CanExportExcel() => HasProject && rows.Count > 0 && host.Permissions.CanExportDocuments;
+    private bool CanExportExcel() => HasProject && rows.Count > 0 && permissions.CanExportDocuments;
 
     private void ExportExcel()
     {
@@ -263,7 +285,7 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
 
             var snapshot = rows.ToList();
             purchaseListExcel.Export(file, new PurchaseListExcelRequest(
-                host.Session.ProjectInfo.Nombre,
+                session.ProjectInfo.Nombre,
                 ToleranciaPct,
                 snapshot));
 
@@ -305,7 +327,7 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
         if (selectedRow == null)
             return;
 
-        var itemId = host.Session.Cubicacion
+        var itemId = session.Cubicacion
             .Where(c => string.Equals(c.Codigo, selectedRow.Codigo, StringComparison.OrdinalIgnoreCase))
             .Select(c => c.ItemId)
             .FirstOrDefault();

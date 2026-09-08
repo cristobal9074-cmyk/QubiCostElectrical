@@ -10,16 +10,25 @@ using QubiCostElectrical.Wpf.Shell;
 
 namespace QubiCostElectrical.Wpf.Features.CubicacionSc;
 
-public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, IRefreshablePage, IPageWithPendingChanges
+public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, IRefreshablePage, IPageWithPendingChanges, IPageWithCommitChanges
 {
     private readonly IShellNavigationHost shell;
-    private readonly WpfAppHost host;
+    private readonly IProjectWorkspaceService workspace;
+    private readonly WpfUndoService undo;
     private readonly BudgetProjectSession session;
     private CuadroScRowVm? selectedCuadro;
     private CircuitoScRowVm? selectedCircuito;
     private CircuitoSCRow? clipboardCircuito;
     private bool showEmptyState = true;
+    private bool isLoading;
     private string statusMessage = "";
     private string nuevoArtefactoNombre = "";
     private decimal nuevoArtefactoCantidad = 1;
+    private bool pendingUndoForEdit;
+    /// <summary>Snapshot profundo de cuadros SC al Load/Refresh/Apply; restaura en Discard.</summary>
+    private List<CuadroCargaSCRow>? baselineCuadros;
+    /// <summary>Snapshot profundo del catálogo SC al Load/Refresh/Apply; restaura en Discard.</summary>
+    private CubicacionScConfig? baselineConfig;
+    private bool suppressSessionReload;
+    private bool isAdvancedMode;
 }

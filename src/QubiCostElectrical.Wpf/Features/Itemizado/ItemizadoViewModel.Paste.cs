@@ -71,20 +71,20 @@ public sealed partial class ItemizadoViewModel
 
         if (lines.Length == 1 && !lines[0].Contains('\t'))
         {
-            ApplyPastedValue(row, startColumn, lines[0].Trim(), host.Session.Itemizado);
+            ApplyPastedValue(row, startColumn, lines[0].Trim(), session.Itemizado);
             OnCellEdited(header, row);
             if (overflowColumns > 0)
                 StatusMessage = $"Se ignoró {overflowColumns} columna(s) pegada(s) fuera de rango.";
             return true;
         }
 
-        bool canGrowGrid = !host.Session.IsReadOnly
+        bool canGrowGrid = !session.IsReadOnly
             && FilterMode == ItemizadoFilterMode.Todos
             && string.IsNullOrWhiteSpace(debouncedSearchText);
         int requiredNewRows = startRow + lines.Length - grid.Items.Count;
         int rowsSkippedForGrowth = 0;
 
-        host.UndoService.PushUndoPoint(host.Session, "Pegar celdas itemizado");
+        undo.PushUndoPoint(session, "Pegar celdas itemizado");
         hasPendingUndoForEdit = false;
 
         bool grewGrid = false;
@@ -92,7 +92,7 @@ public sealed partial class ItemizadoViewModel
         {
             if (canGrowGrid)
             {
-                int sessionIndex = host.Session.Itemizado.Count - 1;
+                int sessionIndex = session.Itemizado.Count - 1;
                 for (int g = 0; g < requiredNewRows; g++)
                 {
                     var addResult = presenter.AddBelow(sessionIndex, string.Empty, string.Empty);
@@ -116,7 +116,7 @@ public sealed partial class ItemizadoViewModel
             ? Rows
             : grid.Items.OfType<ItemizadoRowVm>().ToList();
 
-        var peers = host.Session.Itemizado;
+        var peers = session.Itemizado;
         int appliedRows = 0;
         for (int i = 0; i < lines.Length; i++)
         {
@@ -142,7 +142,7 @@ public sealed partial class ItemizadoViewModel
             appliedRows++;
         }
 
-        host.Session.MarkDirty("itemizado");
+        session.MarkDirty(ProjectDirtyScope.Itemizado);
         UpdateSaveState();
         RefreshPresentation(includeCosts: true);
 
@@ -183,14 +183,14 @@ public sealed partial class ItemizadoViewModel
         }
     }
 
-    private async Task ImportExcelAsync()
+    public async Task ImportExcelAsync(string? explicitPath = null)
     {
-        if (host.Session.IsReadOnly)
+        if (session.IsReadOnly)
         {
-            StatusMessage = "Solo lectura: " + host.Session.ReadOnlyReason;
+            StatusMessage = "Solo lectura: " + session.ReadOnlyReason;
             return;
         }
-        var path = WpfDialogService.PromptOpenExcel();
+        var path = !string.IsNullOrWhiteSpace(explicitPath) ? explicitPath : WpfDialogService.PromptOpenExcel();
         if (path == null)
             return;
 
@@ -223,7 +223,7 @@ public sealed partial class ItemizadoViewModel
                 return;
             }
 
-            host.UndoService.PushUndoPoint(host.Session, "Importar itemizado");
+            undo.PushUndoPoint(session, "Importar itemizado");
             presenter.CommitReplace(outcome.Rows);
             pendingSelectionId = outcome.Rows.FirstOrDefault(x => !x.EsTitulo)?.Id;
             Reload(syncOnly: false);
@@ -242,13 +242,9 @@ public sealed partial class ItemizadoViewModel
 
     private async Task PasteFromClipboardAsync(string text, bool showPreview = true)
     {
-        if (host.Session.IsReadOnly)
+        if (session.IsReadOnly)
         {
-            var reason = host.Session.ReadOnlyReason;
-            StatusMessage = string.IsNullOrWhiteSpace(reason)
-                ? "Proyecto en modo solo lectura."
-                : $"Solo lectura: {reason}";
-            WpfDialogService.Warning("Pegar itemizado", StatusMessage);
+            ModuleFeedback.NotifyReadOnly("Pegar itemizado", session.ReadOnlyReason);
             return;
         }
         try
@@ -278,7 +274,7 @@ public sealed partial class ItemizadoViewModel
                     presenter.BuildReplaceConfirmationMessage(outcome.Plan.CurrentRowCount, outcome.Plan.ActionLabel), isWarning: true))
                 return;
 
-            host.UndoService.PushUndoPoint(host.Session, "Pegar itemizado");
+            undo.PushUndoPoint(session, "Pegar itemizado");
             presenter.CommitReplace(outcome.Rows);
             pendingSelectionId = outcome.Rows.FirstOrDefault(x => !x.EsTitulo)?.Id;
             Reload(syncOnly: false);

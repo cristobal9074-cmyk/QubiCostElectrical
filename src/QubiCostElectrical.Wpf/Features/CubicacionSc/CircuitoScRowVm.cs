@@ -16,5 +16,7 @@ public sealed partial class CircuitoScRowVm : ViewModelBase
     private readonly CubicacionScConfig config;
     private readonly Action? onEstadoChanged;
     private readonly Action? onPisosChanged;
+    private readonly Func<bool>? canEdit;
+    private readonly Action? onChanged;
     private readonly IReadOnlyList<ZonaProyecto> zonas;
 }

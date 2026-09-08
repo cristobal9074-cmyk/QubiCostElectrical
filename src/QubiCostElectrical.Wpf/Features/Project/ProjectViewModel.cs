@@ -35,7 +35,11 @@ public sealed class ProjectAuditEntryVm
 public sealed partial class ProjectViewModel : ViewModelBase, IPageWithPendingChanges, IPageWithCommitChanges, IRefreshablePage
 {
     private readonly IShellNavigationHost shell;
-    private readonly WpfAppHost host;
+    private readonly BudgetProjectSession session;
+    private readonly IProjectWorkspaceService projectWorkspace;
+    private readonly ProjectAuditRecorder audit;
+    private readonly IPermissionService permissions;
+    private readonly IProjectEditWorkspaceService projectEdit;
     private ProjectEditSnapshot snapshot = new();
     private ProjectEditSnapshot? baseline;
     private string validationSummary = "";

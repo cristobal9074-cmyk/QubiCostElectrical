@@ -39,11 +39,17 @@ public sealed partial class SolicitudesViewModel : SessionAwareViewModelBase, IR
     public ICommand ApproveSolicitudCommand { get; }
     public ICommand OpenLinkCommand { get; }
     public ICommand SendSolicitudCommand { get; }
+    public ICommand OpenProjectCommand { get; }
 
-    public SolicitudesViewModel(IShellNavigationHost shell, WpfAppHost host) : base(host)
+    public SolicitudesViewModel(IShellNavigationHost shell, WpfAppHost host)
+        : this(shell, host.Session, host.ProjectWorkspace, host.Permissions) { }
+
+    public SolicitudesViewModel(IShellNavigationHost shell, BudgetProjectSession session, IProjectWorkspaceService workspace, IPermissionService permissions) : base(session)
     {
         this.shell = shell;
-        this.host = host;
+        this.session = session;
+        this.workspace = workspace;
+        this.permissions = permissions;
 
         AddMaterialCommand = new RelayCommand(AddMaterial);
         AddEppCommand = new RelayCommand(AddEpp);
@@ -53,11 +59,12 @@ public sealed partial class SolicitudesViewModel : SessionAwareViewModelBase, IR
         SaveCommand = new RelayCommand(SaveAndNotify);
         ExportPdfCommand = new RelayCommand(ExportPdf);
         ExportExcelCommand = new RelayCommand(ExportExcel);
-        ImportPacketCommand = new RelayCommand(ImportPacket, () => HasProject && !host.Session.IsReadOnly && CanImportSolicitud);
+        ImportPacketCommand = new RelayCommand(ImportPacket, () => HasProject && !session.IsReadOnly && CanImportSolicitud);
         ExportPacketCommand = new RelayCommand(ExportPacket, () => HasProject);
-        ApproveSolicitudCommand = new RelayCommand(ApproveSolicitud, () => HasProject && !host.Session.IsReadOnly && CanApproveSolicitud);
+        ApproveSolicitudCommand = new RelayCommand(ApproveSolicitud, () => HasProject && !session.IsReadOnly && CanApproveSolicitud);
         OpenLinkCommand = new RelayCommand<string>(OpenLink);
-        SendSolicitudCommand = new RelayCommand(SendSolicitud, () => HasProject && !host.Session.IsReadOnly);
+        SendSolicitudCommand = new RelayCommand(SendSolicitud, () => HasProject && !session.IsReadOnly);
+        OpenProjectCommand = new RelayCommand(() => _ = shell.OpenProjectAsync());
 
         Reload();
     }
@@ -74,22 +81,22 @@ public sealed partial class SolicitudesViewModel : SessionAwareViewModelBase, IR
         Materiales.Clear();
         Epps.Clear();
 
-        bool hasProject = host.ProjectWorkspace.HasOpenProject;
+        bool hasProject = workspace.HasOpenProject;
         ShowEmptyState = !hasProject;
 
         if (hasProject)
         {
-            RequestedBy = host.Session.ProjectInfo.UsuarioNombre;
-            WorkName = host.Session.ProjectInfo.Nombre;
+            RequestedBy = session.ProjectInfo.UsuarioNombre;
+            WorkName = session.ProjectInfo.Nombre;
             RequestDate = AppClock.Now.ToString("dd/MM/yyyy");
 
             // Seed default values if empty
-            if (host.Session.Solicitudes.Count == 0)
+            if (session.Solicitudes.Count == 0)
             {
                 SeedDefaultSolicitudes();
             }
 
-            foreach (var s in host.Session.Solicitudes)
+            foreach (var s in session.Solicitudes)
             {
                 if (s.Tipo == "Material")
                     Materiales.Add(new SolicitudItemRowVm(this, s));
@@ -113,13 +120,13 @@ public sealed partial class SolicitudesViewModel : SessionAwareViewModelBase, IR
             new() { Tipo = "EPP", Codigo = "EPP-GUANTE-C", Descripcion = "Guantes de Cabritilla", Unidad = "PAR", Cantidad = 20, Observaciones = "Para electricista en terreno" }
         };
 
-        host.Session.Solicitudes.AddRange(defaults);
-        host.Session.MarkDirty("solicitudes");
+        session.Solicitudes.AddRange(defaults);
+        session.MarkDirty(ProjectDirtyScope.Solicitudes);
     }
 
     private void AddMaterial()
     {
-        if (host.Session.IsReadOnly) return;
+        if (session.IsReadOnly) return;
         var item = new SolicitudItemRow { Tipo = "Material", Unidad = "UN", Cantidad = 1 };
         Materiales.Add(new SolicitudItemRowVm(this, item));
         SaveToSession();
@@ -127,7 +134,7 @@ public sealed partial class SolicitudesViewModel : SessionAwareViewModelBase, IR
 
     private void AddEpp()
     {
-        if (host.Session.IsReadOnly) return;
+        if (session.IsReadOnly) return;
         var item = new SolicitudItemRow { Tipo = "EPP", Unidad = "UN", Cantidad = 1 };
         Epps.Add(new SolicitudItemRowVm(this, item));
         SaveToSession();
@@ -135,21 +142,21 @@ public sealed partial class SolicitudesViewModel : SessionAwareViewModelBase, IR
 
     private void DeleteMaterialRow(SolicitudItemRowVm? row)
     {
-        if (row == null || host.Session.IsReadOnly) return;
+        if (row == null || session.IsReadOnly) return;
         Materiales.Remove(row);
         SaveToSession();
     }
 
     private void DeleteEppRow(SolicitudItemRowVm? row)
     {
-        if (row == null || host.Session.IsReadOnly) return;
+        if (row == null || session.IsReadOnly) return;
         Epps.Remove(row);
         SaveToSession();
     }
 
     private void AddEppPreset(string? presetKey)
     {
-        if (string.IsNullOrEmpty(presetKey) || host.Session.IsReadOnly) return;
+        if (string.IsNullOrEmpty(presetKey) || session.IsReadOnly) return;
 
         var catalogItem = EppCatalog.FirstOrDefault(e => e.Codigo.Equals(presetKey, StringComparison.OrdinalIgnoreCase));
         if (catalogItem == null) return;
@@ -177,12 +184,12 @@ public sealed partial class SolicitudesViewModel : SessionAwareViewModelBase, IR
 
     public void SaveToSession()
     {
-        if (host.Session.IsReadOnly) return;
+        if (session.IsReadOnly) return;
 
-        host.Session.Solicitudes.Clear();
-        host.Session.Solicitudes.AddRange(Materiales.Select(m => m.ToRow()));
-        host.Session.Solicitudes.AddRange(Epps.Select(e => e.ToRow()));
-        host.Session.MarkDirty("solicitudes");
+        session.Solicitudes.Clear();
+        session.Solicitudes.AddRange(Materiales.Select(m => m.ToRow()));
+        session.Solicitudes.AddRange(Epps.Select(e => e.ToRow()));
+        session.MarkDirty(ProjectDirtyScope.Solicitudes);
     }
 
     private void SaveAndNotify()
@@ -196,7 +203,7 @@ public sealed partial class SolicitudesViewModel : SessionAwareViewModelBase, IR
     {
         if (string.IsNullOrWhiteSpace(query)) return new List<AutocompleteItem>();
 
-        return host.Session.Materiales
+        return session.Materiales
             .Where(m => (m.Codigo ?? "").Contains(query, StringComparison.OrdinalIgnoreCase) ||
                         (m.Descripcion ?? "").Contains(query, StringComparison.OrdinalIgnoreCase))
             .Take(10)
@@ -239,8 +246,8 @@ public sealed partial class SolicitudesViewModel : SessionAwareViewModelBase, IR
             }
             if (dialog.ShowDialog() == true)
             {
-                host.Session.ProjectInfo.SolicitudCorrelativo++;
-                host.Session.MarkDirty("project_info");
+                session.ProjectInfo.SolicitudCorrelativo++;
+                session.MarkDirty(ProjectDirtyScope.ProjectInfo);
                 OnPropertyChanged(nameof(CodigoSolicitud));
             }
         }
@@ -262,8 +269,8 @@ public sealed partial class SolicitudesViewModel : SessionAwareViewModelBase, IR
             }
             if (dialog.ShowDialog() == true)
             {
-                host.Session.ProjectInfo.SolicitudCorrelativo++;
-                host.Session.MarkDirty("project_info");
+                session.ProjectInfo.SolicitudCorrelativo++;
+                session.MarkDirty(ProjectDirtyScope.ProjectInfo);
                 OnPropertyChanged(nameof(CodigoSolicitud));
             }
         }
@@ -294,7 +301,7 @@ public sealed partial class SolicitudesViewModel : SessionAwareViewModelBase, IR
                     SolicitadoPor = RequestedBy,
                     Fecha = RequestDate,
                     Estado = EstadoSolicitud.Pendiente,
-                    Items = host.Session.Solicitudes.ToList()
+                    Items = session.Solicitudes.ToList()
                 };
 
                 packet.SignatureHash = ComputeSignature(packet);
@@ -312,7 +319,7 @@ public sealed partial class SolicitudesViewModel : SessionAwareViewModelBase, IR
 
     private void ImportPacket()
     {
-        if (host.Session.IsReadOnly) return;
+        if (session.IsReadOnly) return;
 
         var dialog = new Microsoft.Win32.OpenFileDialog
         {
@@ -442,7 +449,7 @@ public sealed partial class SolicitudesViewModel : SessionAwareViewModelBase, IR
 
     private void SendSolicitud()
     {
-        if (!HasProject || host.Session.IsReadOnly)
+        if (!HasProject || session.IsReadOnly)
             return;
 
         StatusLabel = "Enviado";
@@ -451,12 +458,12 @@ public sealed partial class SolicitudesViewModel : SessionAwareViewModelBase, IR
 
     private void ApproveSolicitud()
     {
-        if (host.Session.IsReadOnly) return;
+        if (session.IsReadOnly) return;
         
         try
         {
-            host.Session.ProjectInfo.SolicitudCorrelativo++;
-            host.Session.MarkDirty("project_info");
+            session.ProjectInfo.SolicitudCorrelativo++;
+            session.MarkDirty(ProjectDirtyScope.ProjectInfo);
             OnPropertyChanged(nameof(CodigoSolicitud));
             StatusLabel = "Enviado";
 
@@ -479,29 +486,24 @@ public sealed partial class SolicitudesViewModel : SessionAwareViewModelBase, IR
             }
         }
         var serializedItems = string.Join(",", tempItems);
-        var rawData = $"{packet.Correlativo}|{packet.Obra}|{packet.SolicitadoPor}|{packet.Fecha}|{serializedItems}|QubiCostSecuritySalt2026";
-        using var sha256 = System.Security.Cryptography.SHA256.Create();
+        var projectId = session?.ProjectInfo?.Nombre ?? "QCE_PROJECT";
+        var user = session?.ProjectInfo?.UsuarioNombre ?? "USER";
+        var rawData = $"{packet.Correlativo}|{packet.Obra}|{packet.SolicitadoPor}|{packet.Fecha}|{serializedItems}|{projectId}|{user}";
+        
+        var keyBytes = System.Security.Cryptography.SHA256.HashData(
+            System.Text.Encoding.UTF8.GetBytes($"QCE_SIGN_{projectId}_{ProductVersionInfo.DatabaseSchemaVersion}"));
+        using var hmac = new System.Security.Cryptography.HMACSHA256(keyBytes);
         var bytes = System.Text.Encoding.UTF8.GetBytes(rawData);
-        var hash = sha256.ComputeHash(bytes);
+        var hash = hmac.ComputeHash(bytes);
         return Convert.ToBase64String(hash);
     }
 
     private void OpenLink(string? url)
     {
         if (string.IsNullOrWhiteSpace(url)) return;
-        try
+        if (!QubiCostElectrical.Wpf.Infrastructure.Security.SafeProcessLauncher.TryOpenUrl(url, out var error))
         {
-            var normalizedUrl = url.Trim();
-            if (!normalizedUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase) && 
-                !normalizedUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
-            {
-                normalizedUrl = "https://" + normalizedUrl;
-            }
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(normalizedUrl) { UseShellExecute = true });
-        }
-        catch (Exception ex)
-        {
-            WpfDialogService.Error("Error al abrir enlace", $"No se pudo abrir el enlace: {ex.Message}");
+            WpfDialogService.Error("Error al abrir enlace", error ?? "No se pudo abrir el enlace.");
         }
     }
 }

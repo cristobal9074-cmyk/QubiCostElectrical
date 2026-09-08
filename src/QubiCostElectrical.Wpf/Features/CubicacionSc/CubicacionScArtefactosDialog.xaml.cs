@@ -102,7 +102,7 @@ public partial class CubicacionScArtefactosDialog : Window
         {
             if (vistos.Add(z.Id))
             {
-                string suffix = targetIds.Contains(z.Id) ? " ⭐" : "";
+                string suffix = targetIds.Contains(z.Id) ? " · circuito" : "";
                 Zonas.Add(new ZonaArtefactoUi { Id = z.Id, Nombre = z.Nombre + suffix });
             }
         }

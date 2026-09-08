@@ -13,28 +13,24 @@ public sealed partial class ItemizadoViewModel
 {
     private void AddPartida()
     {
-        if (host.Session.IsReadOnly)
+        if (session.IsReadOnly)
         {
-            var reason = host.Session.ReadOnlyReason;
-            StatusMessage = string.IsNullOrWhiteSpace(reason)
-                ? "Proyecto en modo solo lectura."
-                : $"Solo lectura: {reason}";
-            WpfDialogService.Warning("Agregar partida", StatusMessage);
+            ModuleFeedback.NotifyReadOnly("Agregar partida", session.ReadOnlyReason);
             return;
         }
         try
         {
-            host.UndoService.PushUndoPoint(host.Session, "Agregar partida");
+            undo.PushUndoPoint(session, "Agregar partida");
             int index = IsSelectionVisible && SelectedRow != null
-                ? host.Session.Itemizado.FindIndex(x => x.Id == SelectedRow.Id)
+                ? session.Itemizado.FindIndex(x => x.Id == SelectedRow.Id)
                 : -1;
             var result = presenter.AddBelow(index, "Nueva partida", "GL");
-            string? newId = host.Session.Itemizado.ElementAtOrDefault(result.SelectedIndex)?.Id;
-            var newItem = host.Session.Itemizado.ElementAtOrDefault(result.SelectedIndex);
-            if (newItem != null && host.Session.ProjectInfo.CommercialModel != CommercialCostingModel.ApuDirectCostWithCommercialFactors)
+            string? newId = session.Itemizado.ElementAtOrDefault(result.SelectedIndex)?.Id;
+            var newItem = session.Itemizado.ElementAtOrDefault(result.SelectedIndex);
+            if (newItem != null && session.ProjectInfo.CommercialModel != CommercialCostingModel.ApuDirectCostWithCommercialFactors)
             {
-                host.Session.ProjectInfo.CommercialPartidaRules ??= new List<CommercialPartidaRule>();
-                host.Session.ProjectInfo.CommercialPartidaRules.Add(new CommercialPartidaRule { PartidaId = newItem.PartidaId, UseProjectModel = false, Model = host.Session.ProjectInfo.CommercialModel });
+                session.ProjectInfo.CommercialPartidaRules ??= new List<CommercialPartidaRule>();
+                session.ProjectInfo.CommercialPartidaRules.Add(new CommercialPartidaRule { PartidaId = newItem.PartidaId, UseProjectModel = false, Model = session.ProjectInfo.CommercialModel });
             }
             pendingSelectionId = newId;
             RefreshAfterStructureChange();
@@ -51,23 +47,19 @@ public sealed partial class ItemizadoViewModel
 
     private void AddTitle()
     {
-        if (host.Session.IsReadOnly)
+        if (session.IsReadOnly)
         {
-            var reason = host.Session.ReadOnlyReason;
-            StatusMessage = string.IsNullOrWhiteSpace(reason)
-                ? "Proyecto en modo solo lectura."
-                : $"Solo lectura: {reason}";
-            WpfDialogService.Warning("Agregar título", StatusMessage);
+            ModuleFeedback.NotifyReadOnly("Agregar título", session.ReadOnlyReason);
             return;
         }
         try
         {
-            host.UndoService.PushUndoPoint(host.Session, "Agregar título");
+            undo.PushUndoPoint(session, "Agregar título");
             int index = IsSelectionVisible && SelectedRow != null
-                ? host.Session.Itemizado.FindIndex(x => x.Id == SelectedRow.Id)
+                ? session.Itemizado.FindIndex(x => x.Id == SelectedRow.Id)
                 : -1;
             var result = presenter.AddTitle(index);
-            string? newId = host.Session.Itemizado.ElementAtOrDefault(result.SelectedIndex)?.Id;
+            string? newId = session.Itemizado.ElementAtOrDefault(result.SelectedIndex)?.Id;
             pendingSelectionId = newId;
             RefreshAfterStructureChange();
             StatusMessage = "Título agregado.";
@@ -83,64 +75,64 @@ public sealed partial class ItemizadoViewModel
 
     private void MoveUp()
     {
-        if (host.Session.IsReadOnly)
+        if (session.IsReadOnly)
             return;
         if (!IsSelectionVisible || SelectedRow == null)
             return;
-        host.UndoService.PushUndoPoint(host.Session, "Mover partida");
-        int index = host.Session.Itemizado.FindIndex(x => x.Id == SelectedRow.Id);
+        undo.PushUndoPoint(session, "Mover partida");
+        int index = session.Itemizado.FindIndex(x => x.Id == SelectedRow.Id);
         var result = presenter.Move(index, -1);
-        pendingSelectionId = host.Session.Itemizado.ElementAtOrDefault(result.SelectedIndex)?.Id;
+        pendingSelectionId = session.Itemizado.ElementAtOrDefault(result.SelectedIndex)?.Id;
         RefreshAfterStructureChange();
     }
 
     private void MoveDown()
     {
-        if (host.Session.IsReadOnly)
+        if (session.IsReadOnly)
             return;
         if (!IsSelectionVisible || SelectedRow == null)
             return;
-        host.UndoService.PushUndoPoint(host.Session, "Mover partida");
-        int index = host.Session.Itemizado.FindIndex(x => x.Id == SelectedRow.Id);
+        undo.PushUndoPoint(session, "Mover partida");
+        int index = session.Itemizado.FindIndex(x => x.Id == SelectedRow.Id);
         var result = presenter.Move(index, 1);
-        pendingSelectionId = host.Session.Itemizado.ElementAtOrDefault(result.SelectedIndex)?.Id;
+        pendingSelectionId = session.Itemizado.ElementAtOrDefault(result.SelectedIndex)?.Id;
         RefreshAfterStructureChange();
     }
 
     private void DuplicateSelected()
     {
-        if (host.Session.IsReadOnly)
+        if (session.IsReadOnly)
             return;
         if (!IsSelectionVisible || SelectedRow == null || SelectedRow.EsTitulo)
             return;
-        host.UndoService.PushUndoPoint(host.Session, "Duplicar partida");
-        int index = host.Session.Itemizado.FindIndex(x => x.Id == SelectedRow.Id);
+        undo.PushUndoPoint(session, "Duplicar partida");
+        int index = session.Itemizado.FindIndex(x => x.Id == SelectedRow.Id);
         var result = presenter.DuplicateAt(index);
-        pendingSelectionId = host.Session.Itemizado.ElementAtOrDefault(result.SelectedIndex)?.Id;
+        pendingSelectionId = session.Itemizado.ElementAtOrDefault(result.SelectedIndex)?.Id;
         RefreshAfterStructureChange();
         StatusMessage = "Partida duplicada.";
     }
 
     private void DeleteSelected()
     {
-        if (host.Session.IsReadOnly)
+        if (session.IsReadOnly)
             return;
         if (!IsSelectionVisible || SelectedRow == null)
             return;
-        int index = host.Session.Itemizado.FindIndex(x => x.Id == SelectedRow.Id);
+        int index = session.Itemizado.FindIndex(x => x.Id == SelectedRow.Id);
         if (index < 0)
             return;
 
         int affected = workspace.CountDeleteAffectedRows(presenter, index);
-        string description = workspace.BuildDeleteDescription(host.Session, index);
+        string description = workspace.BuildDeleteDescription(session, index);
         if (!WpfDialogService.Confirm("Eliminar",
                 presenter.BuildDeleteConfirmationMessage(description, affected), isWarning: true))
             return;
 
-        host.UndoService.PushUndoPoint(host.Session, affected > 1 ? "Eliminar filas" : "Eliminar partida");
+        undo.PushUndoPoint(session, affected > 1 ? "Eliminar filas" : "Eliminar partida");
         var result = presenter.DeleteAt(index);
         pendingSelectionId = result.SelectedIndex >= 0
-            ? host.Session.Itemizado.ElementAtOrDefault(result.SelectedIndex)?.Id
+            ? session.Itemizado.ElementAtOrDefault(result.SelectedIndex)?.Id
             : null;
         RefreshAfterStructureChange();
         StatusMessage = affected > 1 ? $"{affected:N0} filas eliminadas." : "Fila eliminada.";
@@ -148,23 +140,23 @@ public sealed partial class ItemizadoViewModel
 
     private void ClearAll()
     {
-        if (host.Session.IsReadOnly)
+        if (session.IsReadOnly)
             return;
         int count = presenter.CountRows();
         if (!WpfDialogService.Confirm("Vaciar itemizado",
                 presenter.BuildClearConfirmationMessage(count), isWarning: true))
             return;
 
-        host.UndoService.PushUndoPoint(host.Session, "Vaciar itemizado");
+        undo.PushUndoPoint(session, "Vaciar itemizado");
         presenter.ClearAll();
         RefreshAfterStructureChange();
         StatusMessage = "Itemizado vaciado.";
     }
 
-    private bool CanCubicar() => !host.Session.IsReadOnly
+    private bool CanCubicar() => !session.IsReadOnly
         && (GetSelectedPartidaIds().Count > 0 || (IsSelectionVisible && SelectedRow != null && !SelectedRow.EsTitulo));
 
-    private bool CanDuplicate() => !host.Session.IsReadOnly && IsSelectionVisible && SelectedRow != null && !SelectedRow.EsTitulo && !ShowEmptyState;
+    private bool CanDuplicate() => !session.IsReadOnly && IsSelectionVisible && SelectedRow != null && !SelectedRow.EsTitulo && !ShowEmptyState;
 
     private List<string> GetSelectedPartidaIds()
         => allRows
@@ -174,7 +166,7 @@ public sealed partial class ItemizadoViewModel
 
     private async Task CubicarSelectedAsync()
     {
-        if (host.Session.IsReadOnly)
+        if (session.IsReadOnly)
             return;
         var ids = GetSelectedPartidaIds();
         if (ids.Count == 0 && IsSelectionVisible && SelectedRow != null && !SelectedRow.EsTitulo)
@@ -186,25 +178,45 @@ public sealed partial class ItemizadoViewModel
             return;
         }
 
-        if (ids.Count > 1)
-            StatusMessage = $"Se abrirá cubicación de la primera de {ids.Count:N0} partidas marcadas.";
-
-        string targetId = ids[0];
-        string? validation = presenter.ValidateCubicacionNavigation(targetId);
-        if (!string.IsNullOrWhiteSpace(validation))
+        var valid = new List<(string Id, ItemizadoCubicacionNavigation Nav)>();
+        string? firstError = null;
+        foreach (var id in ids)
         {
-            WpfDialogService.Info("Cubicar", validation);
+            string? validation = presenter.ValidateCubicacionNavigation(id);
+            if (!string.IsNullOrWhiteSpace(validation))
+            {
+                firstError ??= validation;
+                continue;
+            }
+
+            var navigation = presenter.TryBuildCubicacionNavigation(id);
+            if (navigation == null)
+                continue;
+
+            valid.Add((id, navigation));
+        }
+
+        if (valid.Count == 0)
+        {
+            WpfDialogService.Info("Cubicar", firstError ?? "Ninguna de las partidas seleccionadas se puede cubicar.");
             return;
         }
 
-        var navigation = presenter.TryBuildCubicacionNavigation(targetId);
-        if (navigation == null)
+        if (valid.Count > 1 &&
+            !WpfDialogService.Confirm(
+                "Cubicar",
+                $"¿Abrir cubicación de {valid.Count:N0} partidas en secuencia?\n\nSe abrirá la primera; el resto quedará en cola con aviso «Siguiente».",
+                isWarning: false))
             return;
 
-        host.Session.PendingTakeoffNavigation = new TakeoffNavigationContext(
-            navigation.ItemId, navigation.ItemCode, navigation.Description);
-        host.Session.PendingItemizadoSelectionId = navigation.ItemId;
-        shell.RequestNavigate(ShellRoute.Takeoff, host.Session.PendingTakeoffNavigation);
+        session.SetPendingTakeoffQueue(
+            valid.Count > 1 ? valid.Skip(1).Select(v => v.Id).ToList() : null);
+
+        var first = valid[0].Nav;
+        session.PendingTakeoffNavigation = new TakeoffNavigationContext(
+            first.ItemId, first.ItemCode, first.Description);
+        session.PendingItemizadoSelectionId = first.ItemId;
+        shell.RequestNavigate(ShellRoute.Takeoff, session.PendingTakeoffNavigation);
     }
 
     private void RaiseCommandStates()
@@ -225,19 +237,19 @@ public sealed partial class ItemizadoViewModel
 
     private void ConfigureCommercialModel()
     {
-        if (SelectedRow?.Model is not { } item || item.EsTitulo || host.Session.IsReadOnly) return;
-        var project = host.Session.ProjectInfo;
+        if (SelectedRow?.Model is not { } item || item.EsTitulo || session.IsReadOnly) return;
+        var project = session.ProjectInfo;
         if (!project.AllowPartidaCommercialOverrides) { WpfDialogService.Info("Modelo comercial", "Las excepciones por partida están desactivadas en Proyecto → Comercial."); return; }
         project.CommercialPartidaRules ??= new List<CommercialPartidaRule>();
         var existing = project.CommercialPartidaRules.LastOrDefault(x => x.PartidaId == item.PartidaId);
         var draft = existing?.Clone() ?? new CommercialPartidaRule { PartidaId = item.PartidaId, UseProjectModel = true, Model = project.CommercialModel };
         var dialog = new CommercialPartidaRuleDialog(item, draft) { Owner = Application.Current?.MainWindow };
         if (dialog.ShowDialog() != true) return;
-        host.UndoService.PushUndoPoint(host.Session, "Modelo comercial de partida");
+        undo.PushUndoPoint(session, "Modelo comercial de partida");
         var result = dialog.Result;
         if (existing == null) project.CommercialPartidaRules.Add(result); else { int index = project.CommercialPartidaRules.IndexOf(existing); project.CommercialPartidaRules[index] = result; }
-        host.Audit.RecordPartidaChange(item.Id, "Modelo comercial", existing?.Model.DisplayName() ?? "Heredado", result.UseProjectModel ? "Heredado" : result.Model.DisplayName());
-        host.Session.MarkDirty("commercial_partida_rule");
+        audit.RecordPartidaChange(item.Id, "Modelo comercial", existing?.Model.DisplayName() ?? "Heredado", result.UseProjectModel ? "Heredado" : result.Model.DisplayName());
+        session.MarkDirty("commercial_partida_rule");
         RefreshPresentation(includeCosts: true); StatusMessage = result.UseProjectModel ? "La partida vuelve a heredar el modelo del proyecto." : $"Modelo comercial aplicado: {result.Model.DisplayName()}.";
     }
 }

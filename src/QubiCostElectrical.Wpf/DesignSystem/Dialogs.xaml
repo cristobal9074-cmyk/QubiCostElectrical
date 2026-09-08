@@ -2,6 +2,7 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <ResourceDictionary.MergedDictionaries>
     <ResourceDictionary Source="Colors.xaml" />
+    <ResourceDictionary Source="Typography.xaml" />
     <ResourceDictionary Source="Spacing.xaml" />
   </ResourceDictionary.MergedDictionaries>
 
@@ -34,4 +35,37 @@
   <Style x:Key="Dialog.Footer" TargetType="DockPanel">
     <Setter Property="Margin" Value="0,14,0,0" />
   </Style>
+
+  <Style x:Key="Dialog.Chrome" TargetType="Border">
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="14" />
+    <Setter Property="Padding" Value="20" />
+    <Setter Property="Effect">
+      <Setter.Value>
+        <DropShadowEffect BlurRadius="24" ShadowDepth="8" Direction="270"
+                          Color="{DynamicResource Color.Shadow}" Opacity="0.22" />
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <Style x:Key="Dialog.HeaderTitle" TargetType="TextBlock" BasedOn="{StaticResource Text.ViewTitle}">
+    <Setter Property="Margin" Value="0,0,0,4" />
+  </Style>
+
+  <Style x:Key="Dialog.HeaderSubtitle" TargetType="TextBlock" BasedOn="{StaticResource Text.Body}">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+    <Setter Property="Margin" Value="0,0,0,16" />
+  </Style>
+
+  <Style x:Key="Dialog.FooterBar" TargetType="Border">
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
+    <Setter Property="BorderThickness" Value="0,1,0,0" />
+    <Setter Property="Padding" Value="16,12" />
+    <Setter Property="Margin" Value="-20,-20,-20,-20" />
+  </Style>
+
 </ResourceDictionary>

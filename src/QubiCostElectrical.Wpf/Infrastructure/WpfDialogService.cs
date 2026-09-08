@@ -1,9 +1,12 @@
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 using QubiCostElectrical;
 using QubiCostElectrical.Wpf.Controls;
+using QubiCostElectrical.Wpf.Shell;
 
 namespace QubiCostElectrical.Wpf.Infrastructure;
 
@@ -18,71 +21,138 @@ public enum ProjectLockResolution
 
 public static class WpfDialogService
 {
+  private static T RestoreFocusAfterDialog<T>(Func<T> action)
+  {
+    var previous = Keyboard.FocusedElement as IInputElement;
+    try
+    {
+      return action();
+    }
+    finally
+    {
+      Application.Current?.Dispatcher.BeginInvoke(() =>
+      {
+        previous?.Focus();
+        ShellWindow.RestoreWorkspaceGridFocus();
+      }, DispatcherPriority.Input);
+    }
+  }
+
   public static string? PromptText(string title, string label, string defaultValue = "")
   {
+    if (!ShellWindow.CanShowModalDialog)
+        return null;
+
     var win = new Window
     {
-      Title = title, Width = 400, Height = 150,
+      Title = title,
+      Width = 440,
+      SizeToContent = SizeToContent.Height,
+      MinHeight = 180,
       WindowStartupLocation = WindowStartupLocation.CenterOwner,
       ResizeMode = ResizeMode.NoResize,
       ShowInTaskbar = false,
     };
+    TryApplyStyle(win, "Dialog.Window");
     if (Application.Current?.MainWindow != null)
       win.Owner = Application.Current.MainWindow;
 
-    var tb = new TextBox { Text = defaultValue, Margin = new Thickness(8, 4, 8, 4), SelectionStart = 0, SelectionLength = defaultValue.Length };
-    var ok = new Button { Content = "Aceptar", IsDefault = true, Width = 90, Margin = new Thickness(0, 0, 8, 0) };
-    var cancel = new Button { Content = "Cancelar", IsCancel = true, Width = 90 };
+    var tb = new TextBox { Text = defaultValue, Margin = new Thickness(0, 0, 0, 12) };
+    TryApplyStyle(tb, "Form.TextBox");
+    if (tb.Text.Length > 0)
+    {
+      tb.SelectionStart = 0;
+      tb.SelectionLength = defaultValue.Length;
+    }
+
+    var ok = new Button { Content = "Aceptar", IsDefault = true, MinWidth = 90, Margin = new Thickness(0, 0, 8, 0) };
+    var cancel = new Button { Content = "Cancelar", IsCancel = true, MinWidth = 90 };
+    TryApplyStyle(ok, "Button.Primary");
+    TryApplyStyle(cancel, "Button.Secondary");
 
     string? result = null;
     ok.Click += (_, _) => { result = tb.Text; win.DialogResult = true; };
     cancel.Click += (_, _) => win.DialogResult = false;
 
-    var btnRow = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(8) };
-    btnRow.Children.Add(ok); btnRow.Children.Add(cancel);
+    var btnRow = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
+    btnRow.Children.Add(ok);
+    btnRow.Children.Add(cancel);
 
-    var panel = new StackPanel { Margin = new Thickness(8) };
-    panel.Children.Add(new TextBlock { Text = label, Margin = new Thickness(0, 0, 0, 4) });
+    var titleBlock = new TextBlock { Text = title };
+    TryApplyStyle(titleBlock, "Dialog.HeaderTitle");
+    var labelBlock = new TextBlock { Text = label, Margin = new Thickness(0, 0, 0, 6), TextWrapping = TextWrapping.Wrap };
+    TryApplyStyle(labelBlock, "Dialog.HeaderSubtitle");
+
+    var panel = new StackPanel();
+    panel.Children.Add(titleBlock);
+    panel.Children.Add(labelBlock);
     panel.Children.Add(tb);
     panel.Children.Add(btnRow);
 
-    win.Content = panel;
+    var chrome = new Border { Child = panel, Margin = new Thickness(16) };
+    TryApplyStyle(chrome, "Dialog.Chrome");
+    win.Content = chrome;
     win.Loaded += (_, _) => { tb.Focus(); tb.SelectAll(); };
-    return win.ShowDialog() == true ? result : null;
+    return RestoreFocusAfterDialog(() => win.ShowDialog() == true ? result : null);
   }
 
   public static string? PromptChoice(string title, string label, IReadOnlyList<string> options, string? defaultValue = null)
   {
+    if (!ShellWindow.CanShowModalDialog)
+        return null;
+
     var win = new Window
     {
-      Title = title, Width = 400, Height = 150,
+      Title = title,
+      Width = 440,
+      SizeToContent = SizeToContent.Height,
+      MinHeight = 180,
       WindowStartupLocation = WindowStartupLocation.CenterOwner,
       ResizeMode = ResizeMode.NoResize,
       ShowInTaskbar = false,
     };
+    TryApplyStyle(win, "Dialog.Window");
     if (Application.Current?.MainWindow != null)
       win.Owner = Application.Current.MainWindow;
 
-    var combo = new ComboBox { ItemsSource = options, Margin = new Thickness(8, 4, 8, 4) };
+    var combo = new ComboBox { ItemsSource = options, Margin = new Thickness(0, 0, 0, 12) };
+    TryApplyStyle(combo, "Form.ComboBox");
     combo.SelectedItem = defaultValue != null && options.Contains(defaultValue) ? defaultValue : options.FirstOrDefault();
-    var ok = new Button { Content = "Aceptar", IsDefault = true, Width = 90, Margin = new Thickness(0, 0, 8, 0) };
-    var cancel = new Button { Content = "Cancelar", IsCancel = true, Width = 90 };
+    var ok = new Button { Content = "Aceptar", IsDefault = true, MinWidth = 90, Margin = new Thickness(0, 0, 8, 0) };
+    var cancel = new Button { Content = "Cancelar", IsCancel = true, MinWidth = 90 };
+    TryApplyStyle(ok, "Button.Primary");
+    TryApplyStyle(cancel, "Button.Secondary");
 
     string? result = null;
     ok.Click += (_, _) => { result = combo.SelectedItem as string; win.DialogResult = true; };
     cancel.Click += (_, _) => win.DialogResult = false;
 
-    var btnRow = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(8) };
-    btnRow.Children.Add(ok); btnRow.Children.Add(cancel);
+    var btnRow = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
+    btnRow.Children.Add(ok);
+    btnRow.Children.Add(cancel);
 
-    var panel = new StackPanel { Margin = new Thickness(8) };
-    panel.Children.Add(new TextBlock { Text = label, Margin = new Thickness(0, 0, 0, 4) });
+    var titleBlock = new TextBlock { Text = title };
+    TryApplyStyle(titleBlock, "Dialog.HeaderTitle");
+    var labelBlock = new TextBlock { Text = label, Margin = new Thickness(0, 0, 0, 6), TextWrapping = TextWrapping.Wrap };
+    TryApplyStyle(labelBlock, "Dialog.HeaderSubtitle");
+
+    var panel = new StackPanel();
+    panel.Children.Add(titleBlock);
+    panel.Children.Add(labelBlock);
     panel.Children.Add(combo);
     panel.Children.Add(btnRow);
 
-    win.Content = panel;
+    var chrome = new Border { Child = panel, Margin = new Thickness(16) };
+    TryApplyStyle(chrome, "Dialog.Chrome");
+    win.Content = chrome;
     win.Loaded += (_, _) => combo.Focus();
-    return win.ShowDialog() == true ? result : null;
+    return RestoreFocusAfterDialog(() => win.ShowDialog() == true ? result : null);
+  }
+
+  private static void TryApplyStyle(FrameworkElement element, string resourceKey)
+  {
+    if (Application.Current?.TryFindResource(resourceKey) is Style style)
+      element.Style = style;
   }
 
   public static bool Confirm(string title, string message, bool isWarning = false)
@@ -103,7 +173,7 @@ public static class WpfDialogService
     {
       ProjectLockState.RemoteRecent =>
           $"{holder}{Environment.NewLine}{Environment.NewLine}" +
-          "Solo una persona puede editar el proyecto a la vez. Puede abrirlo en solo lectura para consultar sin bloquear al editor activo.",
+          "Este .qce está en uso (bloqueo SMB/UNC). Solo 1 editor a la vez; puede abrirlo en solo lectura como consultor sin quitar el control al editor activo.",
       ProjectLockState.LocalMachineAlive =>
           $"{holder}{Environment.NewLine}{Environment.NewLine}" +
           "Otro proceso de Qubi Cost en este equipo tiene el control de edición.",
@@ -160,7 +230,7 @@ public static class WpfDialogService
       AddExtension = true,
       DefaultExt = ".qce"
     };
-    return dialog.ShowDialog() == true ? dialog.FileName : null;
+    return RestoreFocusAfterDialog(() => dialog.ShowDialog() == true ? dialog.FileName : null);
   }
 
   public static ThreeWayResult ConfirmSaveDiscardCancel(string title, string message)
@@ -187,7 +257,7 @@ public static class WpfDialogService
     {
       Filter = "Proyecto Qubi Cost Electrical (*.qce)|*.qce|Proyecto heredado (*.pepro)|*.pepro|Todos los archivos (*.*)|*.*"
     };
-    return dialog.ShowDialog() == true ? dialog.FileName : null;
+    return RestoreFocusAfterDialog(() => dialog.ShowDialog() == true ? dialog.FileName : null);
   }
 
   public static string? PromptOpenDocument()
@@ -196,7 +266,7 @@ public static class WpfDialogService
     {
       Filter = "Documentos (*.pdf;*.dwg;*.dxf;*.doc;*.docx)|*.pdf;*.dwg;*.dxf;*.doc;*.docx|Todos los archivos (*.*)|*.*"
     };
-    return dialog.ShowDialog() == true ? dialog.FileName : null;
+    return RestoreFocusAfterDialog(() => dialog.ShowDialog() == true ? dialog.FileName : null);
   }
 
   public static string[] PromptOpenDocuments()
@@ -206,17 +276,20 @@ public static class WpfDialogService
       Filter = "Documentos (*.pdf;*.dwg;*.dxf;*.doc;*.docx)|*.pdf;*.dwg;*.dxf;*.doc;*.docx|Todos los archivos (*.*)|*.*",
       Multiselect = true
     };
-    return dialog.ShowDialog() == true ? dialog.FileNames : Array.Empty<string>();
+    return RestoreFocusAfterDialog(() => dialog.ShowDialog() == true ? dialog.FileNames : Array.Empty<string>());
   }
 
   public static string? PromptSelectFolder(string title)
   {
     var dialog = new Microsoft.Win32.OpenFolderDialog { Title = title };
-    return dialog.ShowDialog() == true ? dialog.FolderName : null;
+    return RestoreFocusAfterDialog(() => dialog.ShowDialog() == true ? dialog.FolderName : null);
   }
 
   public static string[] PromptSelectFilesInFolder(string folderPath, string title)
   {
+    if (!ShellWindow.CanShowModalDialog)
+        return Array.Empty<string>();
+
     if (!System.IO.Directory.Exists(folderPath) || System.IO.Directory.GetFiles(folderPath, "*", System.IO.SearchOption.AllDirectories).Length == 0)
     {
       InfoModal(title, "La carpeta seleccionada no tiene archivos.");
@@ -227,7 +300,7 @@ public static class WpfDialogService
     if (Application.Current?.MainWindow != null)
       win.Owner = Application.Current.MainWindow;
 
-    return win.ShowDialog() == true ? win.SelectedFiles : Array.Empty<string>();
+    return RestoreFocusAfterDialog(() => win.ShowDialog() == true ? win.SelectedFiles : Array.Empty<string>());
   }
 
   public static string? PromptOpenExcel()
@@ -236,7 +309,7 @@ public static class WpfDialogService
     {
       Filter = "Excel (*.xlsx;*.xls)|*.xlsx;*.xls|Todos|*.*"
     };
-    return dialog.ShowDialog() == true ? dialog.FileName : null;
+    return RestoreFocusAfterDialog(() => dialog.ShowDialog() == true ? dialog.FileName : null);
   }
 
   public static string? PromptOpenJson(string title = "Abrir archivo JSON")
@@ -246,7 +319,7 @@ public static class WpfDialogService
       Title = title,
       Filter = "Biblioteca JSON (*.json)|*.json|Todos los archivos (*.*)|*.*"
     };
-    return dialog.ShowDialog() == true ? dialog.FileName : null;
+    return RestoreFocusAfterDialog(() => dialog.ShowDialog() == true ? dialog.FileName : null);
   }
 
   public static string? PromptSaveJson(string defaultName)
@@ -260,7 +333,7 @@ public static class WpfDialogService
       DefaultExt = ".json",
       OverwritePrompt = true
     };
-    return dialog.ShowDialog() == true ? dialog.FileName : null;
+    return RestoreFocusAfterDialog(() => dialog.ShowDialog() == true ? dialog.FileName : null);
   }
 
   public static ExportPriceFreezeDecision PromptExportWithoutFrozenPrices()

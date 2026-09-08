@@ -15,17 +15,24 @@ namespace QubiCostElectrical.Wpf.Features.Project;
 public sealed partial class ProjectViewModel : ViewModelBase, IPageWithPendingChanges, IPageWithCommitChanges, IRefreshablePage
 {
     public ProjectViewModel(IShellNavigationHost shell, WpfAppHost host)
+        : this(shell, host.Session, host.ProjectWorkspace, host.Audit, host.Permissions, host.ProjectEdit) { }
+
+    public ProjectViewModel(IShellNavigationHost shell, BudgetProjectSession session, IProjectWorkspaceService projectWorkspace, ProjectAuditRecorder audit, IPermissionService permissions, IProjectEditWorkspaceService projectEdit)
     {
         this.shell = shell;
-        this.host = host;
-        SaveCommand = new RelayCommand(Save, () => HasPendingChanges && !ShowEmptyState && !host.Session.IsReadOnly);
-        CancelCommand = new RelayCommand(Cancel, () => HasPendingChanges && !ShowEmptyState && !host.Session.IsReadOnly);
+        this.session = session;
+        this.projectWorkspace = projectWorkspace;
+        this.audit = audit;
+        this.permissions = permissions;
+        this.projectEdit = projectEdit;
+        SaveCommand = new RelayCommand(Save, () => HasPendingChanges && !ShowEmptyState && !session.IsReadOnly);
+        CancelCommand = new RelayCommand(Cancel, () => HasPendingChanges && !ShowEmptyState && !session.IsReadOnly);
         OpenProjectCommand = new RelayCommand(() => _ = shell.OpenProjectAsync());
-        GenerateFichaPdfCommand = new RelayCommand(GenerateFichaPdf, () => !ShowEmptyState);
+        GenerateFichaPdfCommand = new RelayCommand(GenerateFichaPdf, () => !ShowEmptyState && permissions.CanExportDocuments);
         SelectSectionCommand = new RelayCommand<string>(SelectSection);
-        SetEstadoCommand = new RelayCommand<string>(SetEstado, _ => !ShowEmptyState && !host.Session.IsReadOnly);
-        SetCommercialModelCommand = new RelayCommand<string>(SetCommercialModel, _ => !ShowEmptyState && !host.Session.IsReadOnly);
-        ApplyCommercialProfileCommand = new RelayCommand<string>(ApplyCommercialProfile, _ => !ShowEmptyState && !host.Session.IsReadOnly);
+        SetEstadoCommand = new RelayCommand<string>(SetEstado, _ => !ShowEmptyState && !session.IsReadOnly);
+        SetCommercialModelCommand = new RelayCommand<string>(SetCommercialModel, _ => !ShowEmptyState && !session.IsReadOnly);
+        ApplyCommercialProfileCommand = new RelayCommand<string>(ApplyCommercialProfile, _ => !ShowEmptyState && !session.IsReadOnly);
     }
 
     public bool ShowEmptyState
@@ -36,8 +43,12 @@ public sealed partial class ProjectViewModel : ViewModelBase, IPageWithPendingCh
             if (!SetProperty(ref showEmptyState, value)) return;
             ((RelayCommand)SaveCommand).RaiseCanExecuteChanged();
             ((RelayCommand)CancelCommand).RaiseCanExecuteChanged();
+            OnPropertyChanged(nameof(CanEdit));
         }
     }
+
+    public bool CanEdit => !showEmptyState && !session.IsReadOnly;
+    public bool IsLoading { get; private set; }
 
     public string Nombre { get => snapshot.Nombre; set { snapshot.Nombre = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasProjectName)); NotifyDirty(); } }
     public string Cliente { get => snapshot.Cliente; set { snapshot.Cliente = value; OnPropertyChanged(); OnPropertyChanged(nameof(ClienteChip)); NotifyDirty(); } }
@@ -166,12 +177,12 @@ public sealed partial class ProjectViewModel : ViewModelBase, IPageWithPendingCh
 
     public string FechaCreacionLabel { get; private set; } = "No disponible";
     public string FechaModificacionLabel { get; private set; } = "No disponible";
-    public string ArchivoProyectoLabel => string.IsNullOrWhiteSpace(host.Session.CurrentProjectPath)
+    public string ArchivoProyectoLabel => string.IsNullOrWhiteSpace(session.CurrentProjectPath)
         ? "Sin archivo guardado"
-        : host.Session.CurrentProjectPath;
-    public string ArchivoProyectoShortLabel => string.IsNullOrWhiteSpace(host.Session.CurrentProjectPath)
+        : session.CurrentProjectPath;
+    public string ArchivoProyectoShortLabel => string.IsNullOrWhiteSpace(session.CurrentProjectPath)
         ? "Sin archivo guardado"
-        : Path.GetFileName(host.Session.CurrentProjectPath);
+        : Path.GetFileName(session.CurrentProjectPath);
 
     public string GastosGeneralesKpi => $"{snapshot.GastosGeneralesPct.ToString("N1", CultureInfo.CurrentCulture)}%";
     public string UtilidadKpi => $"{snapshot.UtilidadPct.ToString("N1", CultureInfo.CurrentCulture)}%";
@@ -286,23 +297,33 @@ public sealed partial class ProjectViewModel : ViewModelBase, IPageWithPendingCh
 
     public void Load()
     {
-        ShowEmptyState = !host.ProjectWorkspace.HasOpenProject;
-        if (ShowEmptyState)
+        IsLoading = true;
+        OnPropertyChanged(nameof(IsLoading));
+        try
         {
-            baseline = null;
-            ValidationSummary = "";
-            OnPropertyChanged(nameof(HasPendingChanges));
-            return;
-        }
+            ShowEmptyState = !projectWorkspace.HasOpenProject;
+            if (ShowEmptyState)
+            {
+                baseline = null;
+                ValidationSummary = "";
+                OnPropertyChanged(nameof(HasPendingChanges));
+                return;
+            }
 
-        snapshot = host.ProjectEdit.Load();
-        baseline = snapshot.Clone();
-        var project = host.Session.ProjectInfo;
-        FechaCreacionLabel = project.FechaCreacion == DateTime.MinValue ? "No disponible" : project.FechaCreacion.ToString("dd/MM/yyyy");
-        FechaModificacionLabel = project.FechaModificacion == DateTime.MinValue ? "No disponible" : project.FechaModificacion.ToString("dd/MM/yyyy HH:mm");
-        ReloadAuditEntries();
-        ValidationSummary = "";
-        NotifyAll();
+            snapshot = projectEdit.Load();
+            baseline = snapshot.Clone();
+            var project = session.ProjectInfo;
+            FechaCreacionLabel = project.FechaCreacion == DateTime.MinValue ? "No disponible" : project.FechaCreacion.ToString("dd/MM/yyyy");
+            FechaModificacionLabel = project.FechaModificacion == DateTime.MinValue ? "No disponible" : project.FechaModificacion.ToString("dd/MM/yyyy HH:mm");
+            ReloadAuditEntries();
+            ValidationSummary = "";
+            NotifyAll();
+        }
+        finally
+        {
+            IsLoading = false;
+            OnPropertyChanged(nameof(IsLoading));
+        }
     }
 
     public bool TryDiscardChanges()
@@ -322,15 +343,15 @@ public sealed partial class ProjectViewModel : ViewModelBase, IPageWithPendingCh
     private void ReloadAuditEntries()
     {
         AuditEntries.Clear();
-        foreach (var entry in host.Audit.GetRecentEntries(300))
+        foreach (var entry in audit.GetRecentEntries(300))
             AuditEntries.Add(new ProjectAuditEntryVm(entry));
     }
 
     private void Save()
     {
-        if (host.Session.IsReadOnly)
+        if (session.IsReadOnly)
             return;
-        var errors = host.ProjectEdit.Validate(snapshot);
+        var errors = projectEdit.Validate(snapshot);
         if (errors.Count > 0)
         {
             ValidationSummary = string.Join(Environment.NewLine, errors);
@@ -338,11 +359,11 @@ public sealed partial class ProjectViewModel : ViewModelBase, IPageWithPendingCh
         }
 
         var previous = baseline?.Clone();
-        host.ProjectEdit.Apply(snapshot);
+        projectEdit.Apply(snapshot);
         if (previous != null && (previous.CommercialModel != snapshot.CommercialModel || previous.CommercialProfile != snapshot.CommercialProfile
             || previous.GastosGeneralesPct != snapshot.GastosGeneralesPct || previous.UtilidadPct != snapshot.UtilidadPct
             || previous.RiesgoPct != snapshot.RiesgoPct || previous.DescuentoPct != snapshot.DescuentoPct || previous.IvaPct != snapshot.IvaPct))
-            host.Audit.RecordLifecycle("ModeloComercial", $"{snapshot.CommercialModel.DisplayName()} · Perfil {snapshot.CommercialProfile.DisplayName()} · GG {snapshot.GastosGeneralesPct:0.##}% · UT {snapshot.UtilidadPct:0.##}% · Riesgo {snapshot.RiesgoPct:0.##}% · Desc. {snapshot.DescuentoPct:0.##}% · IVA {snapshot.IvaPct:0.##}%");
+            audit.RecordLifecycle("ModeloComercial", $"{snapshot.CommercialModel.DisplayName()} · Perfil {snapshot.CommercialProfile.DisplayName()} · GG {snapshot.GastosGeneralesPct:0.##}% · UT {snapshot.UtilidadPct:0.##}% · Riesgo {snapshot.RiesgoPct:0.##}% · Desc. {snapshot.DescuentoPct:0.##}% · IVA {snapshot.IvaPct:0.##}%");
         baseline = snapshot.Clone();
         ValidationSummary = "Cambios aplicados al proyecto. Use Guardar en la barra superior para persistir el archivo.";
         shell.RefreshChrome();
@@ -353,9 +374,9 @@ public sealed partial class ProjectViewModel : ViewModelBase, IPageWithPendingCh
 
     private void Cancel()
     {
-        if (host.Session.IsReadOnly)
+        if (session.IsReadOnly)
             return;
-        host.ProjectEdit.Discard();
+        projectEdit.Discard();
         Load();
         ((RelayCommand)SaveCommand).RaiseCanExecuteChanged();
         ((RelayCommand)CancelCommand).RaiseCanExecuteChanged();
@@ -405,10 +426,13 @@ public sealed partial class ProjectViewModel : ViewModelBase, IPageWithPendingCh
         OnPropertyChanged(nameof(HasProjectName));
         NotifyEstadoFlags();
         OnPropertyChanged(nameof(HasPendingChanges));
+        OnPropertyChanged(nameof(CanEdit));
     }
 
     private void GenerateFichaPdf()
     {
+        if (!permissions.CanExportDocuments)
+            return;
         var dlg = new SaveFileDialog
         {
             Title = "Exportar Ficha de Datos del Proyecto",

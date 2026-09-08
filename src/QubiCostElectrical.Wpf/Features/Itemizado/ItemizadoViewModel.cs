@@ -18,7 +18,10 @@ namespace QubiCostElectrical.Wpf.Features.Itemizado;
 public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRefreshablePage
 {
     private readonly IShellNavigationHost shell;
-    private readonly WpfAppHost host;
+    private readonly BudgetProjectSession session;
+    private readonly IProjectWorkspaceService projectWorkspace;
+    private readonly ProjectAuditRecorder audit;
+    private readonly WpfUndoService undo;
     private readonly ItemizadoPresenter presenter;
     private readonly IItemizadoWorkspaceService workspace;
     private readonly ItemizadoImportCoordinator importCoordinator;
@@ -32,6 +35,7 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
     private DispatcherTimer? searchDebounceTimer;
     private bool showEmptyState = true;
     private bool showEmptyItemizado;
+    private bool isLoading;
     private string headerSubtitle = "";
     private string saveStateLabel = "";
     private string statusMessage = "";
@@ -55,12 +59,18 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
     // se modifica.
     public event Action<string>? RowAdded;
 
-    public ItemizadoViewModel(IShellNavigationHost shell, WpfAppHost host) : base(host)
+    public ItemizadoViewModel(IShellNavigationHost shell, WpfAppHost host)
+        : this(shell, host.Session, host.ProjectWorkspace, host.Audit, host.UndoService, host.Itemizado, host.ItemizadoWorkspace) { }
+
+    public ItemizadoViewModel(IShellNavigationHost shell, BudgetProjectSession session, IProjectWorkspaceService projectWorkspace, ProjectAuditRecorder audit, WpfUndoService undo, ItemizadoPresenter presenter, IItemizadoWorkspaceService workspace) : base(session)
     {
         this.shell = shell;
-        this.host = host;
-        presenter = host.Itemizado;
-        workspace = host.ItemizadoWorkspace;
+        this.session = session;
+        this.projectWorkspace = projectWorkspace;
+        this.audit = audit;
+        this.undo = undo;
+        this.presenter = presenter;
+        this.workspace = workspace;
         importCoordinator = new ItemizadoImportCoordinator(presenter);
         rowsView = CollectionViewSource.GetDefaultView(Rows);
         rowsView.Filter = FilterRow;
@@ -68,21 +78,21 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
         searchDebounceTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(200) };
         searchDebounceTimer.Tick += OnSearchDebounceTick;
 
-        ImportExcelCommand = new RelayCommand(() => _ = ImportExcelAsync(), () => !ShowEmptyState && !host.Session.IsReadOnly);
-        PasteExcelCommand = new RelayCommand(() => _ = PasteFromClipboardAsync(), () => !ShowEmptyState && !host.Session.IsReadOnly);
-        AddPartidaCommand = new RelayCommand(AddPartida, () => !ShowEmptyState && !host.Session.IsReadOnly);
-        AddTitleCommand = new RelayCommand(AddTitle, () => !ShowEmptyState && !host.Session.IsReadOnly);
+        ImportExcelCommand = new RelayCommand(() => _ = ImportExcelAsync(), () => !ShowEmptyState && !session.IsReadOnly);
+        PasteExcelCommand = new RelayCommand(() => _ = PasteFromClipboardAsync(), () => !ShowEmptyState && !session.IsReadOnly);
+        AddPartidaCommand = new RelayCommand(AddPartida, () => !ShowEmptyState && !session.IsReadOnly);
+        AddTitleCommand = new RelayCommand(AddTitle, () => !ShowEmptyState && !session.IsReadOnly);
         CubicarCommand = new RelayCommand(() => _ = CubicarSelectedAsync(), CanCubicar);
-        MoveUpCommand = new RelayCommand(MoveUp, () => HasSelection && !host.Session.IsReadOnly);
-        MoveDownCommand = new RelayCommand(MoveDown, () => HasSelection && !host.Session.IsReadOnly);
+        MoveUpCommand = new RelayCommand(MoveUp, () => HasSelection && !session.IsReadOnly);
+        MoveDownCommand = new RelayCommand(MoveDown, () => HasSelection && !session.IsReadOnly);
         DuplicateCommand = new RelayCommand(DuplicateSelected, CanDuplicate);
-        DeleteCommand = new RelayCommand(DeleteSelected, () => HasSelection && !host.Session.IsReadOnly);
-        ClearAllCommand = new RelayCommand(ClearAll, () => !ShowEmptyState && !ShowEmptyItemizado && !host.Session.IsReadOnly);
+        DeleteCommand = new RelayCommand(DeleteSelected, () => HasSelection && !session.IsReadOnly);
+        ClearAllCommand = new RelayCommand(ClearAll, () => !ShowEmptyState && !ShowEmptyItemizado && !session.IsReadOnly);
         OpenProjectCommand = new RelayCommand(() => _ = shell.OpenProjectAsync());
         SetFilterCommand = new RelayCommand<ItemizadoFilterMode>(mode => FilterMode = mode);
         ClearSearchCommand = new RelayCommand(() => SearchText = "", () => !string.IsNullOrWhiteSpace(SearchText));
         ExportPdfCommand = new RelayCommand(ExportPdf, () => !ShowEmptyState);
-        ConfigureCommercialModelCommand = new RelayCommand(ConfigureCommercialModel, () => HasSelection && !host.Session.IsReadOnly && SelectedRow?.EsTitulo != true);
+        ConfigureCommercialModelCommand = new RelayCommand(ConfigureCommercialModel, () => HasSelection && !session.IsReadOnly && SelectedRow?.EsTitulo != true);
 
         // Session.Saved/Changed pueden dispararse desde un hilo de fondo: ProjectWorkspaceService
         // guarda con ConfigureAwait(false), así que su continuación final (Session.MarkSaved(),
@@ -97,7 +107,7 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
             hasPendingUndoForEdit = false;
             UpdateSaveState();
         });
-        host.Session.Saved += sessionSavedHandler;
+        session.Saved += sessionSavedHandler;
 
         Reload(syncOnly: false);
         ProcessPendingShellAction();
@@ -106,7 +116,7 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
     protected override void DisposeCore()
     {
         if (sessionSavedHandler != null)
-            host.Session.Saved -= sessionSavedHandler;
+            session.Saved -= sessionSavedHandler;
         searchDebounceTimer?.Stop();
         foreach (var vm in wiredRows.ToList())
             UnwireRowVm(vm);
@@ -181,7 +191,7 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
         }
     }
 
-    public bool IsReadOnly => host.Session.IsReadOnly;
+    public bool IsReadOnly => session.IsReadOnly;
 
     public bool ShowEmptyState
     {
@@ -203,6 +213,12 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
                 return;
             RaiseCommandStates();
         }
+    }
+
+    public bool IsLoading
+    {
+        get => isLoading;
+        private set => SetProperty(ref isLoading, value);
     }
 
     public string HeaderSubtitle
@@ -255,7 +271,7 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
 
     private bool HasSelection => IsSelectionVisible && !ShowEmptyState;
     private bool IsSelectionVisible => SelectedRow != null && PassesCurrentFilter(SelectedRow);
-    private bool CanEdit => !host.Session.IsReadOnly;
+    private bool CanEdit => !session.IsReadOnly;
 
     public void Refresh()
     {
@@ -265,28 +281,29 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
 
     public void ProcessPendingShellAction()
     {
-        var action = host.Session.PendingItemizadoAction;
+        var action = session.PendingItemizadoAction;
         if (action == ItemizadoPendingAction.None)
             return;
 
-        host.Session.PendingItemizadoAction = ItemizadoPendingAction.None;
+        session.PendingItemizadoAction = ItemizadoPendingAction.None;
         if (action == ItemizadoPendingAction.AddPartida)
             AddPartida();
     }
 
     public void OnCellEdited(string? columnHeader = null, ItemizadoRowVm? editedRow = null)
     {
-        if (host.Session.IsReadOnly)
+        if (session.IsReadOnly)
             return;
 
-        if (string.Equals(columnHeader, "Excl. cubic.", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(columnHeader, "Excl. cubic.", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(columnHeader, "NO CUBICAR", StringComparison.OrdinalIgnoreCase))
             return;
 
         var row = editedRow ?? SelectedRow;
         if (row == null)
             return;
 
-        var peers = host.Session.Itemizado;
+        var peers = session.Itemizado;
         if (string.Equals(columnHeader, "Ítem", StringComparison.OrdinalIgnoreCase))
             row.CommitItemEdit(peers);
 
@@ -294,10 +311,10 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
 
         if (!hasPendingUndoForEdit)
         {
-            host.UndoService.PushUndoPoint(host.Session, "Editar itemizado");
+            undo.PushUndoPoint(session, "Editar itemizado");
             hasPendingUndoForEdit = true;
         }
-        host.Session.MarkDirty("itemizado");
+        session.MarkDirty(ProjectDirtyScope.Itemizado);
         UpdateSaveState();
 
         bool needsCostRefresh = string.Equals(columnHeader, "Cantidad", StringComparison.OrdinalIgnoreCase);
@@ -339,12 +356,12 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
             var sfd = new Microsoft.Win32.SaveFileDialog
             {
                 Filter = "Archivo PDF (*.pdf)|*.pdf",
-                FileName = $"Itemizado_{host.Session.ProjectInfo.Nombre ?? "Proyecto"}.pdf"
+                FileName = $"Itemizado_{session.ProjectInfo.Nombre ?? "Proyecto"}.pdf"
             };
 
             if (sfd.ShowDialog() == true)
             {
-                ItemizadoPdfExporter.Export(host.Session.ProjectInfo, Rows.ToList(), sfd.FileName);
+                ItemizadoPdfExporter.Export(session.ProjectInfo, Rows.ToList(), sfd.FileName);
                 WpfDialogService.Info("Exportación Exitosa", $"Se ha exportado el itemizado valorado a {sfd.FileName}");
             }
         }

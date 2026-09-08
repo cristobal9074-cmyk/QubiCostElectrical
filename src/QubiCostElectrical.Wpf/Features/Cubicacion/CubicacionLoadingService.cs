@@ -33,6 +33,7 @@ internal sealed class CubicacionLoadingService
 
     public void LoadPartidas()
     {
+        parent.UpdateEmptyState();
         parent.Partidas.Clear();
         parent.FilteredPartidas.Clear();
 
@@ -127,7 +128,11 @@ internal sealed class CubicacionLoadingService
         }
 
         parent.HasPendingUndoForEdit = false;
-        int sourceCount = session.Cubicacion.Count(x => string.Equals(x.ItemId, selectedPartida.Id, StringComparison.OrdinalIgnoreCase));
+        var byItem = CubicacionItemIndex.Build(session.Cubicacion);
+        string itemId = selectedPartida.Id ?? "";
+        int sourceCount = byItem.TryGetValue(itemId, out var indexed)
+            ? indexed.Count
+            : 0;
         bool showLoading = sourceCount > 100;
 
         if (showLoading)
@@ -142,12 +147,12 @@ internal sealed class CubicacionLoadingService
 
         // Recalcular fórmulas solo de esta partida antes de mostrar (RecalculateAll recorría
         // todo el proyecto y podía congelar la UI en proyectos grandes).
-        querySvc.RecalculateForItem(session, selectedPartida.Id);
+        querySvc.RecalculateForItem(session, itemId, byItem);
 
-        var sourceRows = cubSvc.GetRowsForItem(session.Cubicacion, selectedPartida.Id);
+        var sourceRows = cubSvc.GetRowsForItem(byItem, itemId);
         foreach (var r in sourceRows)
         {
-            var vm = new CubicacionRowVm(r);
+            var vm = parent.CreateRowVm(r);
             parent.InitializeSectorRow(vm);
             parent.Rows.Add(vm);
         }
@@ -158,12 +163,12 @@ internal sealed class CubicacionLoadingService
             var row = new CubicacionRow
             {
                 Id = Guid.NewGuid().ToString("N"),
-                ItemId = selectedPartida.Id,
+                ItemId = itemId,
                 Tipo = "MAT",
                 Area = "General"
             };
 
-            var vm = new CubicacionRowVm(row, isSessionBacked: false);
+            var vm = parent.CreateRowVm(row, isSessionBacked: false);
             parent.InitializeSectorRow(vm);
             parent.Rows.Add(vm);
         }

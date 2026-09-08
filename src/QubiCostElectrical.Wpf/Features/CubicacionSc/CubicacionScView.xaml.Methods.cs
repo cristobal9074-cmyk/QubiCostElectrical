@@ -17,15 +17,21 @@ public partial class CubicacionScView : UserControl
     {
         InitializeComponent();
         DataContext = viewModel;
-        DataGridExcelNavigation.Attach(CircuitosGrid);
         // Al empezar a editar, dejar solo esa celda seleccionada — evita el “fila entera azul”
         // si antes había un rango o un circuito completo marcado vía N°.
+        CircuitosGrid.BeginningEdit += OnCircuitosGridBeginningEdit;
         CircuitosGrid.PreparingCellForEdit += (_, e) =>
         {
             CircuitosGrid.SelectedCells.Clear();
             if (e.Row.Item != null && e.Column != null)
                 CircuitosGrid.SelectedCells.Add(new DataGridCellInfo(e.Row.Item, e.Column));
         };
+    }
+
+    private void OnCircuitosGridBeginningEdit(object? sender, DataGridBeginningEditEventArgs e)
+    {
+        if (Vm.IsGridReadOnly || !Vm.CanEdit)
+            e.Cancel = true;
     }
 
     private void OnMoreActionsClick(object sender, System.Windows.RoutedEventArgs e)
@@ -60,12 +66,14 @@ public partial class CubicacionScView : UserControl
     // ── Renombrar tablero (sidebar) ──────────────────────────────────────────
     private void TableroItem_DoubleClick(object sender, MouseButtonEventArgs e)
     {
+        if (!Vm.CanEdit) return;
         if (sender is ListBoxItem { DataContext: CuadroScRowVm vm })
             vm.IsEditing = true;
     }
 
     private void TableroEdit_Click(object sender, RoutedEventArgs e)
     {
+        if (!Vm.CanEdit) return;
         if (sender is FrameworkElement { DataContext: CuadroScRowVm vm })
             vm.IsEditing = true;
     }
@@ -103,14 +111,14 @@ public partial class CubicacionScView : UserControl
     }
 
     // ── Flyout de pisos (celda "Ubicación / Pisos") ──────────────────────────
-    // La celda misma es un TextBox libre (un solo piso); el botón 🏢 de la esquina abre un
+    // La celda misma es un TextBox libre (un solo piso); el botón de pisos de la esquina abre un
     // Popup anclado con las zonas del proyecto para cuando el circuito pasa por varios pisos.
     // Sin checkbox: cada zona se activa sola al escribirle un largo (ver ZonaPisoQuickItem).
     private void PisosBtn_Click(object sender, RoutedEventArgs e)
     {
+        if (!Vm.CanEdit) return;
         if (sender is not FrameworkElement { DataContext: CircuitoScRowVm vm }) return;
-        if (DataContext is not CubicacionScViewModel scVm) return;
-        OpenPisosFlyout(vm, scVm.ZonasProyecto);
+        OpenPisosFlyout(vm, Vm.ZonasProyecto);
     }
 
     // El flyout usa StaysOpen="True" (nada lo cierra por foco/click, para eliminar el parpadeo).
@@ -142,6 +150,7 @@ public partial class CubicacionScView : UserControl
     // mouse reales de WPF (frágil de construir en pruebas).
     internal void OpenPisosFlyout(CircuitoScRowVm vm, IReadOnlyList<ZonaProyecto> zonasProyecto)
     {
+        if (!Vm.CanEdit) return;
         activePisosCircuito = vm;
         vm.PopulateZonaPisos(zonasProyecto);
         vm.PisosPopupOpen = true;
@@ -255,6 +264,7 @@ public partial class CubicacionScView : UserControl
         // de la celda del DataGrid y robaba el foco → el popup (StaysOpen=False) se cerraba y
         // reabría (parpadeo). Mientras el flyout esté abierto, el DataGrid no toca el tecleo.
         if (activePisosCircuito != null) return;
+        if (!Vm.CanEdit) return;
         if (DataGridExcelNavigation.TryBeginEditFromChar(CircuitosGrid, e.Text))
             e.Handled = true;
     }
@@ -401,14 +411,17 @@ public partial class CubicacionScView : UserControl
             }
         }
 
-        DataGridExcelNavigation.HandlePreviewKeyDown(CircuitosGrid, e);
-
-        if (e.Handled
-            && scVm != null
-            && Keyboard.Modifiers == ModifierKeys.Control
-            && e.Key is Key.D or Key.R)
+        var fillKey = e.Key;
+        var fillMods = Keyboard.Modifiers;
+        var notifyFill = (fillMods & ModifierKeys.Control) == ModifierKeys.Control
+                         && fillKey is Key.D or Key.R;
+        if (notifyFill)
         {
-            scVm.NotifyGridCellsEdited();
+            Dispatcher.BeginInvoke(() =>
+            {
+                if (e.Handled && scVm != null)
+                    scVm.NotifyGridCellsEdited();
+            }, System.Windows.Threading.DispatcherPriority.Input);
         }
     }
 
@@ -481,12 +494,14 @@ public partial class CubicacionScView : UserControl
     internal void TipoEditor_LostFocus(object sender, RoutedEventArgs e)
     {
         if (!TryConsumeEditor(sender, out TextBox textBox, out var row)) return;
+        if (!row.CanEdit) return;
         row.Tipo = textBox.Text;
     }
 
     internal void FaseEditor_LostFocus(object sender, RoutedEventArgs e)
     {
         if (!TryConsumeEditor(sender, out TextBox textBox, out var row)) return;
+        if (!row.CanEdit) return;
         row.Fase = textBox.Text;
     }
 
@@ -495,36 +510,42 @@ public partial class CubicacionScView : UserControl
     internal void SeccionTuberiaEditor_LostFocus(object sender, RoutedEventArgs e)
     {
         if (!TryConsumeFilterableCombo(sender, out ComboBox combo, out var row)) return;
+        if (!row.CanEdit) return;
         row.SeccionTuberia = combo.Text;
     }
 
     internal void TipoTuberiaEditor_LostFocus(object sender, RoutedEventArgs e)
     {
         if (!TryConsumeFilterableCombo(sender, out ComboBox combo, out var row)) return;
+        if (!row.CanEdit) return;
         row.TipoTuberia = combo.Text;
     }
 
     internal void ConductorBandEditor_LostFocus(object sender, RoutedEventArgs e)
     {
         if (!TryConsumeFilterableCombo(sender, out ComboBox combo, out var row)) return;
+        if (!row.CanEdit) return;
         row.ConductorDistribucion = combo.Text;
     }
 
     internal void SeccionBandEditor_LostFocus(object sender, RoutedEventArgs e)
     {
         if (!TryConsumeFilterableCombo(sender, out ComboBox combo, out var row)) return;
+        if (!row.CanEdit) return;
         row.SeccionDistribucion = combo.Text;
     }
 
     internal void ConductorPvcEditor_LostFocus(object sender, RoutedEventArgs e)
     {
         if (!TryConsumeFilterableCombo(sender, out ComboBox combo, out var row)) return;
+        if (!row.CanEdit) return;
         row.ConductorDerivacion = combo.Text;
     }
 
     internal void SeccionPvcEditor_LostFocus(object sender, RoutedEventArgs e)
     {
         if (!TryConsumeFilterableCombo(sender, out ComboBox combo, out var row)) return;
+        if (!row.CanEdit) return;
         row.SeccionDerivacion = combo.Text;
     }
 
@@ -676,6 +697,7 @@ public partial class CubicacionScView : UserControl
     {
         if (_cancelledFilterCombos.Remove(combo)) return;
         if (combo.DataContext is not CircuitoScRowVm row) return;
+        if (!row.CanEdit) return;
         if (combo.Tag is not string target || string.IsNullOrEmpty(target)) return;
 
         switch (target)

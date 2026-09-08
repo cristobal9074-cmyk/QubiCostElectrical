@@ -26,19 +26,24 @@ public sealed class QuoteProviderSummaryVm
 
 public sealed class QuoteEntryVm
 {
-    public QuoteEntryVm(PriceBankEntry source)
+    public QuoteEntryVm(PriceBankEntry source, decimal valorUf = 0m)
     {
         Source = source;
+        ValorUf = valorUf > 0m ? valorUf : PriceConversion.DefaultValorUfClp;
     }
 
     public PriceBankEntry Source { get; }
+    public decimal ValorUf { get; }
     public string Codigo => Source.Codigo;
     public string Descripcion => Source.Descripcion;
     public string Unidad => Source.Unidad;
     public string Categoria => Source.Categoria;
-    public decimal MatUf => Source.MatUf;
-    public decimal MoUf => Source.MoUf;
-    public decimal PrecioUf => Source.MatUf + Source.MoUf;
+    public decimal MatClp => Source.MatClpConFallback > 0m ? Source.MatClpConFallback : PriceConversion.UfToClp(Source.MatUf, ValorUf);
+    public decimal MoClp => Source.MoClpConFallback > 0m ? Source.MoClpConFallback : PriceConversion.UfToClp(Source.MoUf, ValorUf);
+    public decimal PrecioClp => MatClp + MoClp;
+    public decimal MatUf => Source.MatUf > 0m ? Source.MatUf : PriceConversion.ClpToUf(MatClp, ValorUf);
+    public decimal MoUf => Source.MoUf > 0m ? Source.MoUf : PriceConversion.ClpToUf(MoClp, ValorUf);
+    public decimal PrecioUf => MatUf + MoUf;
     public string Proveedor => Source.Proveedor;
     public string Marca => Source.Marca;
     public string Moneda => Source.MonedaPrecio;
@@ -55,7 +60,9 @@ public sealed class QuoteComparisonRowVm
         decimal precioSeleccionado,
         string proveedorMejor,
         decimal precioMejor,
-        string categoria)
+        string categoria,
+        decimal precioSeleccionadoClp = 0m,
+        decimal precioMejorClp = 0m)
     {
         Codigo = codigo;
         Descripcion = descripcion;
@@ -64,6 +71,8 @@ public sealed class QuoteComparisonRowVm
         ProveedorMejor = proveedorMejor;
         PrecioMejor = precioMejor;
         Categoria = categoria;
+        PrecioSeleccionadoClp = precioSeleccionadoClp;
+        PrecioMejorClp = precioMejorClp;
     }
 
     public string Codigo { get; }
@@ -75,12 +84,16 @@ public sealed class QuoteComparisonRowVm
     public decimal DeltaUf => PrecioSeleccionado - PrecioMejor;
     public decimal DeltaPct => PrecioMejor <= 0m ? 0m : (PrecioSeleccionado - PrecioMejor) / PrecioMejor * 100m;
     public string Categoria { get; }
+    public decimal PrecioSeleccionadoClp { get; }
+    public decimal PrecioMejorClp { get; }
 }
 
 public sealed partial class QuotesViewModel : SessionAwareViewModelBase, IRefreshablePage
 {
-    private readonly WpfAppHost host;
     private readonly IShellNavigationHost shell;
+    private readonly BudgetProjectSession session;
+    private readonly IProjectWorkspaceService workspace;
+    private readonly IMaterialSearchService materialSearch;
     private readonly IPriceBankStore store;
     private readonly ObservableCollection<QuoteProviderSummaryVm> providerSummaries = new();
     private readonly ObservableCollection<QuoteEntryVm> providerEntries = new();

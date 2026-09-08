@@ -14,19 +14,25 @@ namespace QubiCostElectrical.Wpf.Features.Versions;
 
 public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefreshablePage
 {
-    public VersionsViewModel(IShellNavigationHost shell, WpfAppHost host) : base(host)
+    public VersionsViewModel(IShellNavigationHost shell, WpfAppHost host)
+        : this(shell, host.Session, host.ProjectWorkspace, host.Dashboard, host.Services.VersionComparison) { }
+
+    public VersionsViewModel(IShellNavigationHost shell, BudgetProjectSession session, IProjectWorkspaceService workspace, DashboardPresenter dashboard, IVersionComparisonService versionComparison) : base(session)
     {
-        this.host = host;
         this.shell = shell;
-        versionComparison = host.Services.VersionComparison;
+        this.session = session;
+        this.workspace = workspace;
+        this.dashboard = dashboard;
+        this.versionComparison = versionComparison;
 
         refreshCommand = new RelayCommand(Refresh);
-        newCommand = new RelayCommand(CreateVersion, () => HasProject);
-        activateCommand = new RelayCommand(ActivateVersion, () => HasProject && selectedVersion != null);
-        renameCommand = new RelayCommand(RenameVersion, () => HasProject && selectedVersion != null);
-        deleteCommand = new RelayCommand(DeleteVersion, () => HasProject && selectedVersion != null);
+        newCommand = new RelayCommand(CreateVersion, () => HasProject && !session.IsReadOnly);
+        activateCommand = new RelayCommand(ActivateVersion, () => HasProject && !session.IsReadOnly && selectedVersion != null);
+        renameCommand = new RelayCommand(RenameVersion, () => HasProject && !session.IsReadOnly && selectedVersion != null);
+        deleteCommand = new RelayCommand(DeleteVersion, () => HasProject && !session.IsReadOnly && selectedVersion != null);
         refreshComparisonCommand = new RelayCommand(RefreshComparison);
         goToItemCommand = new RelayCommand(GoToItem, () => selectedComparisonRow != null);
+        OpenProjectCommand = new RelayCommand(() => _ = shell.OpenProjectAsync());
 
         versionsView = CollectionViewSource.GetDefaultView(versions);
         versionsView.SortDescriptions.Add(new SortDescription(nameof(VersionRowVm.FechaCreacion), ListSortDirection.Descending));
@@ -42,9 +48,18 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
     protected override void OnSessionChanged(object? sender, ProjectSessionChangedEventArgs e) =>
         System.Windows.Application.Current?.Dispatcher.InvokeAsync(Refresh);
 
-    public bool HasProject => host.ProjectWorkspace.HasOpenProject;
+    public bool HasProject => workspace.HasOpenProject;
+
+    public bool IsReadOnly => session.IsReadOnly;
 
     public bool ShowEmptyState { get => showEmptyState; private set => SetProperty(ref showEmptyState, value); }
+    public bool IsLoading { get => isLoading; private set => SetProperty(ref isLoading, value); }
+
+    public string EmptyStateTitle => HasProject ? "Sin versiones" : "Sin proyecto abierto";
+
+    public string EmptyStateDescription => HasProject
+        ? "Cree una versión para congelar un hito del presupuesto y comparar cambios."
+        : "Abra un proyecto para gestionar versiones y comparar hitos del presupuesto.";
 
     public ObservableCollection<VersionRowVm> Versions => versions;
     public ICollectionView FilteredVersions => versionsView;
@@ -194,9 +209,13 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
     public ICommand DeleteCommand => deleteCommand;
     public ICommand RefreshComparisonCommand => refreshComparisonCommand;
     public ICommand GoToItemCommand => goToItemCommand;
+    public ICommand OpenProjectCommand { get; }
 
     public void Refresh()
     {
+        IsLoading = true;
+        try
+        {
         if (!HasProject)
         {
             versions.Clear();
@@ -204,6 +223,9 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
             comparisonRows.Clear();
             SelectedComparisonRow = null;
             ShowEmptyState = true;
+            OnPropertyChanged(nameof(EmptyStateTitle));
+            OnPropertyChanged(nameof(EmptyStateDescription));
+            OnPropertyChanged(nameof(IsReadOnly));
             SummaryText = "Sin proyecto abierto";
             ActiveVersionText = "Sin versión activa";
             StatusMessage = "Abre o crea un proyecto para gestionar versiones.";
@@ -226,7 +248,7 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
         }
 
         string? selectedVersionId = SelectedVersion?.Source.Id;
-        var sorted = host.Session.Versiones
+        var sorted = session.Versiones
             .OrderByDescending(x => x.FechaCreacion)
             .ThenBy(x => x.Codigo, StringComparer.OrdinalIgnoreCase)
             .ToList();
@@ -235,7 +257,7 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
         for (int i = 0; i < sorted.Count; i++)
         {
             var current = sorted[i];
-            bool isActive = string.Equals(current.Id, host.Session.ActiveVersionId, StringComparison.OrdinalIgnoreCase);
+            bool isActive = string.Equals(current.Id, session.ActiveVersionId, StringComparison.OrdinalIgnoreCase);
             decimal delta = i + 1 < sorted.Count
                 ? current.MontoVentaUf - sorted[i + 1].MontoVentaUf
                 : 0m;
@@ -254,6 +276,9 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
         }
 
         ShowEmptyState = versions.Count == 0;
+        OnPropertyChanged(nameof(EmptyStateTitle));
+        OnPropertyChanged(nameof(EmptyStateDescription));
+        OnPropertyChanged(nameof(IsReadOnly));
         UpdateSummary();
         UpdateComparisonVersionOptions();
         RefreshComparison();
@@ -261,6 +286,11 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
         activateCommand.RaiseCanExecuteChanged();
         renameCommand.RaiseCanExecuteChanged();
         deleteCommand.RaiseCanExecuteChanged();
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     private void UpdateSummary()
@@ -321,7 +351,7 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
         {
             summary = versionComparison.Compare(
                 selected.Snapshot,
-                host.Session.CreateSnapshot(),
+                session.CreateSnapshot(),
                 baselineLabel,
                 "Estado actual");
         }
@@ -377,30 +407,30 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
 
     private void CreateVersion()
     {
-        int nextNum = host.Session.Versiones.Count + 1;
+        int nextNum = session.Versiones.Count + 1;
         string codigo = $"V{nextNum}";
         string nombre = $"Versión {nextNum}";
 
         if (!PromptVersionDialog("Nueva versión", ref codigo, ref nombre))
             return;
 
-        var snapshot = BudgetVersionData.FromProjectFileData(host.Session.CreateSnapshot());
-        decimal ventaUf = host.Dashboard.BuildPageState().Cost.TotalVentaUf;
+        var snapshot = BudgetVersionData.FromProjectFileData(session.CreateSnapshot());
+        decimal ventaUf = dashboard.BuildPageState().Cost.TotalVentaUf;
         var version = new BudgetVersionRow
         {
             Codigo = string.IsNullOrWhiteSpace(codigo) ? $"V{nextNum}" : codigo.Trim(),
             Nombre = string.IsNullOrWhiteSpace(nombre) ? $"Versión {nextNum}" : nombre.Trim(),
             Estado = "Preliminar",
-            CreadoPor = host.Session.ProjectInfo.UsuarioNombre,
+            CreadoPor = session.ProjectInfo.UsuarioNombre,
             FechaCreacion = AppClock.Now,
             FechaModificacion = AppClock.Now,
             MontoVentaUf = ventaUf,
             Snapshot = snapshot
         };
 
-        host.Session.Versiones.Add(version);
-        host.Session.ActiveVersionId = version.Id;
-        host.Session.MarkDirty("versiones");
+        session.Versiones.Add(version);
+        session.ActiveVersionId = version.Id;
+        session.MarkDirty(ProjectDirtyScope.Versiones);
         Refresh();
     }
 
@@ -410,8 +440,8 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
         if (version == null)
             return;
 
-        host.Session.ActiveVersionId = version.Id;
-        host.Session.MarkDirty("versiones");
+        session.ActiveVersionId = version.Id;
+        session.MarkDirty(ProjectDirtyScope.Versiones);
         Refresh();
     }
 
@@ -429,7 +459,7 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
         version.Codigo = string.IsNullOrWhiteSpace(codigo) ? version.Codigo : codigo.Trim();
         version.Nombre = string.IsNullOrWhiteSpace(nombre) ? version.Nombre : nombre.Trim();
         version.FechaModificacion = AppClock.Now;
-        host.Session.MarkDirty("versiones");
+        session.MarkDirty(ProjectDirtyScope.Versiones);
         Refresh();
     }
 
@@ -445,11 +475,11 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
                 isWarning: true))
             return;
 
-        host.Session.Versiones.Remove(version);
-        if (string.Equals(host.Session.ActiveVersionId, version.Id, StringComparison.OrdinalIgnoreCase))
-            host.Session.ActiveVersionId = host.Session.Versiones.LastOrDefault()?.Id ?? string.Empty;
+        session.Versiones.Remove(version);
+        if (string.Equals(session.ActiveVersionId, version.Id, StringComparison.OrdinalIgnoreCase))
+            session.ActiveVersionId = session.Versiones.LastOrDefault()?.Id ?? string.Empty;
 
-        host.Session.MarkDirty("versiones");
+        session.MarkDirty(ProjectDirtyScope.Versiones);
         Refresh();
     }
 

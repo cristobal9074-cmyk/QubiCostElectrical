@@ -34,6 +34,8 @@
 
     <!-- ── Semantic colors ───────────────────────────────────────────────── -->
     <Color x:Key="Color.Cyan">#22D3EE</Color>
+    <Color x:Key="Color.Pink">#F472B6</Color>
+    <Color x:Key="Color.PinkSoft">#3A1730</Color>
     <Color x:Key="Color.Green">#22C55E</Color>
     <Color x:Key="Color.GreenSoft">#14281A</Color>
     <Color x:Key="Color.Success">#22C55E</Color>
@@ -58,6 +60,8 @@
     <Color x:Key="Color.InfoBg">#182A47</Color>
     <Color x:Key="Color.Purple">#9B82D6</Color>
     <Color x:Key="Color.PurpleSoft">#241C38</Color>
+    <Color x:Key="Color.Violet">#A78BFA</Color>
+    <Color x:Key="Color.VioletDark">#8B5CF6</Color>
 
     <!-- ── Ink (text) spectrum ───────────────────────────────────────────── -->
     <Color x:Key="Color.Ink">#E1E4E8</Color>
@@ -141,6 +145,9 @@
     <SolidColorBrush x:Key="Brush.BrandStroke2"  Color="{StaticResource Color.BrandStroke2}" />
     <SolidColorBrush x:Key="Brush.BrandStroke3"  Color="{StaticResource Color.BrandStroke3}" />
 
+    <SolidColorBrush x:Key="Brush.Cyan"          Color="{StaticResource Color.Cyan}" />
+    <SolidColorBrush x:Key="Brush.Pink"          Color="{StaticResource Color.Pink}" />
+    <SolidColorBrush x:Key="Brush.PinkSoft"      Color="{StaticResource Color.PinkSoft}" />
     <SolidColorBrush x:Key="Brush.Green"         Color="{StaticResource Color.Green}" />
     <SolidColorBrush x:Key="Brush.GreenSoft"     Color="{StaticResource Color.GreenSoft}" />
     <SolidColorBrush x:Key="Brush.Success"       Color="{StaticResource Color.Success}" />
@@ -195,6 +202,8 @@
     <SolidColorBrush x:Key="Brush.InfoBg"       Color="{StaticResource Color.InfoBg}" />
     <SolidColorBrush x:Key="Brush.Purple"       Color="{StaticResource Color.Purple}" />
     <SolidColorBrush x:Key="Brush.PurpleSoft"   Color="{StaticResource Color.PurpleSoft}" />
+    <SolidColorBrush x:Key="Brush.Violet"       Color="{StaticResource Color.Violet}" />
+    <SolidColorBrush x:Key="Brush.VioletDark"   Color="{StaticResource Color.VioletDark}" />
 
     <SolidColorBrush x:Key="Brush.HeaderInk"        Color="{StaticResource Color.HeaderInk}" />
     <SolidColorBrush x:Key="Brush.HeaderMuted"       Color="{StaticResource Color.HeaderMuted}" />
@@ -209,8 +218,18 @@
     <SolidColorBrush x:Key="Brush.SaveDot"      Color="{StaticResource Color.SaveDot}" />
     <SolidColorBrush x:Key="Brush.AvatarBg"     Color="{StaticResource Color.AvatarBg}" />
 
+    <SolidColorBrush x:Key="Brush.Accent"       Color="{StaticResource Color.Blue2}" />
+    <SolidColorBrush x:Key="Brush.Warning"      Color="{StaticResource Color.Amber2}" />
     <SolidColorBrush x:Key="Brush.WarningSoft"  Color="#2D2410" />
     <SolidColorBrush x:Key="Brush.OnPrimary"    Color="#FFFFFF" />
+    <SolidColorBrush x:Key="Brush.TrackSoft"    Color="{StaticResource Color.Line2}" />
+    <SolidColorBrush x:Key="Brush.HighlightSoft" Color="#14263C" />
+    <SolidColorBrush x:Key="Brush.HighlightBorder" Color="#244A73" />
+
+    <!-- Aliases usados por Cubicación SC, Itemizado y diálogos legacy -->
+    <SolidColorBrush x:Key="Brush.SurfaceAlt"  Color="{StaticResource Color.Surface2}" />
+    <SolidColorBrush x:Key="Brush.Border"      Color="{StaticResource Color.Line}" />
+    <SolidColorBrush x:Key="Brush.SuccessSoft" Color="{StaticResource Color.GreenSoft}" />
 
     <!-- ── Header overlay brushes (adjusted for dark bg) ── -->
     <SolidColorBrush x:Key="Brush.White8"        Color="#0DFFFFFF" />

@@ -149,7 +149,9 @@ public sealed class AutocompleteItem
 public sealed partial class SolicitudesViewModel : SessionAwareViewModelBase, IRefreshablePage
 {
     private readonly IShellNavigationHost shell;
-    private readonly WpfAppHost host;
+    private readonly BudgetProjectSession session;
+    private readonly IProjectWorkspaceService workspace;
+    private readonly IPermissionService permissions;
 
     public ObservableCollection<SolicitudItemRowVm> Materiales { get; } = new();
     public ObservableCollection<SolicitudItemRowVm> Epps { get; } = new();
@@ -161,12 +163,12 @@ public sealed partial class SolicitudesViewModel : SessionAwareViewModelBase, IR
         private set => SetProperty(ref showEmptyState, value);
     }
 
-    public string CodigoSolicitud => $"SM {host.Session?.ProjectInfo?.SolicitudCorrelativo ?? 1}";
+    public string CodigoSolicitud => $"SM {session?.ProjectInfo?.SolicitudCorrelativo ?? 1}";
 
-    public bool HasProject => host.ProjectWorkspace.HasOpenProject;
+    public bool HasProject => workspace.HasOpenProject;
 
-    public bool CanApproveSolicitud => host.Permissions.CurrentRole == UserRole.Admin;
-    public bool CanImportSolicitud => host.Permissions.CurrentRole == UserRole.Admin || host.Permissions.CurrentRole == UserRole.Estimator;
+    public bool CanApproveSolicitud => permissions.CurrentRole == UserRole.Admin;
+    public bool CanImportSolicitud => permissions.CurrentRole == UserRole.Admin || permissions.CurrentRole == UserRole.Estimator;
 
     private string requestedBy = "";
     public string RequestedBy
@@ -176,8 +178,8 @@ public sealed partial class SolicitudesViewModel : SessionAwareViewModelBase, IR
         {
             if (SetProperty(ref requestedBy, value))
             {
-                host.Session.ProjectInfo.UsuarioNombre = value;
-                host.Session.MarkDirty("project_info");
+                session.ProjectInfo.UsuarioNombre = value;
+                session.MarkDirty(ProjectDirtyScope.ProjectInfo);
             }
         }
     }
@@ -190,8 +192,8 @@ public sealed partial class SolicitudesViewModel : SessionAwareViewModelBase, IR
         {
             if (SetProperty(ref workName, value))
             {
-                host.Session.ProjectInfo.Nombre = value;
-                host.Session.MarkDirty("project_info");
+                session.ProjectInfo.Nombre = value;
+                session.MarkDirty(ProjectDirtyScope.ProjectInfo);
             }
         }
     }

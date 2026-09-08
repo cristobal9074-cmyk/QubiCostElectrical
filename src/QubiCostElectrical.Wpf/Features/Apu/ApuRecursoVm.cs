@@ -6,12 +6,17 @@ namespace QubiCostElectrical.Wpf.Features.Apu;
 
 public sealed class ApuRecursoVm : ViewModelBase
 {
-    public ApuRecursoVm(ApuRecursoRow source)
+    private readonly Func<bool>? canEdit;
+
+    public ApuRecursoVm(ApuRecursoRow source, Func<bool>? canEdit = null)
     {
         Source = source;
+        this.canEdit = canEdit;
     }
 
     public ApuRecursoRow Source { get; }
+
+    private bool AllowEdit => canEdit?.Invoke() ?? true;
 
     // ─── Tipo (editable) ─────────────────────────────────────────────────────
     public ApuTipoRecurso Tipo
@@ -19,6 +24,7 @@ public sealed class ApuRecursoVm : ViewModelBase
         get => Source.Tipo;
         set
         {
+            if (!AllowEdit) return;
             if (Source.Tipo == value) return;
             Source.Tipo = value;
             OnPropertyChanged();
@@ -32,19 +38,34 @@ public sealed class ApuRecursoVm : ViewModelBase
     public string CodigoMaterial
     {
         get => Source.CodigoMaterial;
-        set { Source.CodigoMaterial = CodeHelper.Normalize(value); OnPropertyChanged(); }
+        set
+        {
+            if (!AllowEdit) return;
+            Source.CodigoMaterial = CodeHelper.Normalize(value);
+            OnPropertyChanged();
+        }
     }
 
     public string Descripcion
     {
         get => Source.Descripcion;
-        set { Source.Descripcion = value; OnPropertyChanged(); }
+        set
+        {
+            if (!AllowEdit) return;
+            Source.Descripcion = value;
+            OnPropertyChanged();
+        }
     }
 
     public string Unidad
     {
         get => Source.Unidad;
-        set { Source.Unidad = value; OnPropertyChanged(); }
+        set
+        {
+            if (!AllowEdit) return;
+            Source.Unidad = value;
+            OnPropertyChanged();
+        }
     }
 
     // ─── Cantidades y precios (editable en 5B) ────────────────────────────────
@@ -53,6 +74,7 @@ public sealed class ApuRecursoVm : ViewModelBase
         get => Source.Rendimiento;
         set
         {
+            if (!AllowEdit) return;
             if (Source.Rendimiento == value) return;
             Source.Rendimiento = value;
             OnPropertyChanged();
@@ -65,6 +87,7 @@ public sealed class ApuRecursoVm : ViewModelBase
         get => Source.PrecioUf;
         set
         {
+            if (!AllowEdit) return;
             if (Source.PrecioUf == value) return;
             Source.PrecioUf = value;
             OnPropertyChanged();
@@ -77,6 +100,7 @@ public sealed class ApuRecursoVm : ViewModelBase
         get => Source.ValorHHUf;
         set
         {
+            if (!AllowEdit) return;
             if (Source.ValorHHUf == value) return;
             Source.ValorHHUf = value;
             OnPropertyChanged();
@@ -89,6 +113,7 @@ public sealed class ApuRecursoVm : ViewModelBase
         get => Source.MermaPct;
         set
         {
+            if (!AllowEdit) return;
             if (Source.MermaPct == value) return;
             Source.MermaPct = value;
             OnPropertyChanged();
@@ -101,6 +126,7 @@ public sealed class ApuRecursoVm : ViewModelBase
         get => Source.ImprevistosPct;
         set
         {
+            if (!AllowEdit) return;
             if (Source.ImprevistosPct == value) return;
             Source.ImprevistosPct = value;
             OnPropertyChanged();
@@ -120,7 +146,12 @@ public sealed class ApuRecursoVm : ViewModelBase
     public string Nota
     {
         get => Source.Nota;
-        set { Source.Nota = value; OnPropertyChanged(); }
+        set
+        {
+            if (!AllowEdit) return;
+            Source.Nota = value;
+            OnPropertyChanged();
+        }
     }
 
     // ─── Presentación ────────────────────────────────────────────────────────

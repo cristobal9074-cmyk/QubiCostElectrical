@@ -14,14 +14,18 @@ using QubiCostElectrical.Wpf.Shell;
 
 namespace QubiCostElectrical.Wpf.Features.Apu;
 
-public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IPageWithPendingChanges
+public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IPageWithPendingChanges, IPageWithCommitChanges
 {
     public ApuWorkspaceVm(IShellNavigationHost shell, WpfAppHost host)
+        : this(shell, host.Session, host.ProjectWorkspace, host.UndoService, host.Services.Apu) { }
+
+    public ApuWorkspaceVm(IShellNavigationHost shell, BudgetProjectSession session, IProjectWorkspaceService workspace, WpfUndoService undo, IApuService apuSvc)
     {
         this.shell = shell;
-        this.host = host;
-        session = host.Session;
-        apuSvc = host.Services.Apu;
+        this.session = session;
+        this.workspace = workspace;
+        this.undo = undo;
+        this.apuSvc = apuSvc;
         try
         {
             templateStore = new ApuTemplateStore();
@@ -54,9 +58,12 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
         CrearConjuntoCommand = new RelayCommand(CrearConjunto, () => CanEdit && currentApu != null && currentApu.Recursos.Count > 0);
         ToggleCoefficientsCommand = new RelayCommand(() => IsShowCoefficients = !IsShowCoefficients);
         ResetMarkupsCommand = new RelayCommand(ResetMarkups, () => CanEdit);
+        OpenQuickJumpCommand = new RelayCommand(OpenQuickJumpPartida);
 
         Load();
     }
+
+    public ICommand OpenQuickJumpCommand { get; }
 
     // ─── Listas ──────────────────────────────────────────────────────────────
     public ObservableCollection<ApuPartidaVm> Partidas { get; }
@@ -137,7 +144,8 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
     public int KpiApuGenerados => Partidas.Count(p => !p.EsTitulo && p.TieneApu);
     public int KpiPrecioOk => Partidas.Count(p => !p.EsTitulo && p.Estado == "OK");
     public int KpiRequierenRevision => Partidas.Count(p => !p.EsTitulo && p.TieneApu && p.Estado != "OK");
-    private bool CanEdit => !session.IsReadOnly;
+    public bool IsReadOnly => session.IsReadOnly;
+    public bool CanEdit => !session.IsReadOnly;
 
     public string PartidaFilter
     {
@@ -145,7 +153,7 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
         set
         {
             if (!SetProperty(ref partidaFilter, value)) return;
-            ApplyFilter();
+            ScheduleApplyFilter();
         }
     }
 
@@ -167,9 +175,36 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
     // ─── IRefreshablePage ────────────────────────────────────────────────────
     public void Refresh() => Load();
 
-    // ─── IPageWithPendingChanges ─────────────────────────────────────────────
+    // ─── IPageWithPendingChanges / IPageWithCommitChanges ────────────────────
+    // Edición en vivo sobre session.Apus. Leave/Save persiste vía session.MarkDirty(ProjectDirtyScope.Apu).
+    // Discard restaura baseline JSON capturado en Load/Refresh/Apply.
     bool IPageWithPendingChanges.HasPendingChanges => hasPendingChanges;
-    bool IPageWithPendingChanges.TryDiscardChanges() { MarkClean(); return true; }
+    bool IPageWithPendingChanges.TryDiscardChanges() => TryDiscardChanges();
+    bool IPageWithCommitChanges.TryApplyChanges() => TryApplyChanges();
+
+    public bool TryDiscardChanges()
+    {
+        if (!hasPendingChanges)
+            return true;
+
+        RestoreBaseline();
+        MarkClean();
+        Load();
+        return true;
+    }
+
+    public bool TryApplyChanges()
+    {
+        if (!CanEdit)
+            return !hasPendingChanges;
+
+        if (!session.IsDirty)
+            session.MarkDirty(ProjectDirtyScope.Apu);
+
+        CaptureBaseline();
+        MarkClean();
+        return true;
+    }
 
     private void GoToPriceBank()
     {
@@ -183,11 +218,13 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
     // ─── Carga ───────────────────────────────────────────────────────────────
     public void Load()
     {
-        ShowEmptyState = !host.ProjectWorkspace.HasOpenProject;
+        ShowEmptyState = !workspace.HasOpenProject;
         if (ShowEmptyState)
         {
             Partidas.Clear();
             ClearApu();
+            baselineApus = null;
+            hasPendingChanges = false;
             return;
         }
 
@@ -212,12 +249,16 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
         OnPropertyChanged(nameof(KpiApuGenerados));
         OnPropertyChanged(nameof(KpiPrecioOk));
         OnPropertyChanged(nameof(KpiRequierenRevision));
+        OnPropertyChanged(nameof(IsReadOnly));
+        OnPropertyChanged(nameof(CanEdit));
 
         var toSelect = string.IsNullOrWhiteSpace(prevSelectedId)
             ? null
             : Partidas.FirstOrDefault(p => string.Equals(p.ItemId, prevSelectedId, StringComparison.OrdinalIgnoreCase));
 
         SelectedPartida = toSelect ?? Partidas.FirstOrDefault(p => !p.EsTitulo);
+        if (!hasPendingChanges)
+            ScheduleCaptureBaseline();
         CommandManager.InvalidateRequerySuggested();
     }
 
@@ -225,6 +266,24 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
     {
         var vm = Partidas.FirstOrDefault(p => string.Equals(p.ItemId, itemId, StringComparison.OrdinalIgnoreCase));
         if (vm != null) SelectedPartida = vm;
+    }
+
+    private void ScheduleApplyFilter()
+    {
+        filterDebounceTimer ??= new System.Windows.Threading.DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(200)
+        };
+        filterDebounceTimer.Stop();
+        filterDebounceTimer.Tick -= OnFilterDebounceTick;
+        filterDebounceTimer.Tick += OnFilterDebounceTick;
+        filterDebounceTimer.Start();
+    }
+
+    private void OnFilterDebounceTick(object? sender, EventArgs e)
+    {
+        filterDebounceTimer?.Stop();
+        ApplyFilter();
     }
 
     private void ApplyFilter()
@@ -243,6 +302,9 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
     // ─── Carga del APU de la partida seleccionada ────────────────────────────
     private void LoadApu(ApuPartidaVm? partida)
     {
+        IsLoading = true;
+        try
+        {
         currentApu = null;
         Recursos.Clear();
         RecursosMat.Clear(); RecursosMo.Clear(); RecursosEquipo.Clear();
@@ -264,7 +326,7 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
         {
             foreach (var r in apu.Recursos)
             {
-                var vm = new ApuRecursoVm(r);
+                var vm = CreateRecursoVm(r);
                 Recursos.Add(vm);
                 switch (r.Tipo)
                 {
@@ -287,6 +349,11 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
         OnPropertyChanged(nameof(TieneApu));
         OnPropertyChanged(nameof(HasRecursos));
         OnPropertyChanged(nameof(RecursoCount));
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     // ─── Totales desde ApuRow (sin recalcular) ───────────────────────────────
@@ -361,13 +428,15 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
             return;
         }
 
+        undo.PushUndoPoint(session, $"Generar APU {selectedPartida.CodigoItem}");
+        pendingUndoForEdit = true;
         var apu = ApuFromCubicacionService.BuildFromCubicacion(item, cubicacion, apuSvc);
         var existing = session.Apus.FindIndex(a =>
             string.Equals(a.ItemId, selectedPartida.ItemId, StringComparison.OrdinalIgnoreCase));
         if (existing >= 0) session.Apus[existing] = apu;
         else session.Apus.Add(apu);
 
-        session.MarkDirty("apu");
+        session.MarkDirty(ProjectDirtyScope.Apu);
         MarkDirty();
         LoadApu(selectedPartida);
     }
@@ -389,8 +458,17 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
 
             if (dialog.ShowDialog() == true && dialog.SelectedMaterials.Count > 0)
             {
+                undo.PushUndoPoint(session, "Agregar material APU");
+                pendingUndoForEdit = true;
                 foreach (var mat in dialog.SelectedMaterials)
                 {
+                    decimal precioUf = mat.MatUf;
+                    if (precioUf <= 0m && mat.MatClpConFallback > 0m)
+                    {
+                        decimal valorUf = session.ValorUfClp > 0m ? session.ValorUfClp : PriceConversion.DefaultValorUfClp;
+                        precioUf = PriceConversion.ClpToUf(mat.MatClpConFallback, valorUf);
+                    }
+
                     var recurso = new ApuRecursoRow
                     {
                         Tipo = ApuTipoRecurso.MAT,
@@ -398,14 +476,14 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
                         Descripcion = mat.Descripcion,
                         Unidad = mat.Unidad,
                         Rendimiento = 1m,
-                        PrecioUf = mat.MatUf,
+                        PrecioUf = precioUf,
                         MermaPct = 0m,
                         ImprevistosPct = 0m,
                         FuentePrecio = "Banco de precios",
                         FechaPrecio = AppClock.Now
                     };
                     currentApu.Recursos.Add(recurso);
-                    var vm = new ApuRecursoVm(recurso);
+                    var vm = CreateRecursoVm(recurso);
                     Recursos.Add(vm);
                     RecursosMat.Add(vm);
                 }
@@ -415,9 +493,11 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
         }
 
         // Para otros recursos no materiales, se mantiene el comportamiento de agregar una fila vacía
+        undo.PushUndoPoint(session, $"Agregar recurso {tipo}");
+        pendingUndoForEdit = true;
         var recursoVacio = new ApuRecursoRow { Tipo = tipo, Descripcion = "Nuevo recurso" };
         currentApu.Recursos.Add(recursoVacio);
-        var vmVacio = new ApuRecursoVm(recursoVacio);
+        var vmVacio = CreateRecursoVm(recursoVacio);
         Recursos.Add(vmVacio);
         switch (tipo)
         {
@@ -433,9 +513,11 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
     {
         if (!CanEdit || vm == null || currentApu == null) return;
         if (!WpfDialogService.Confirm("Eliminar recurso",
-            $"¿Eliminar '{vm.Descripcion}'? Esta acción no se puede deshacer.", isWarning: true))
+            $"¿Eliminar '{vm.Descripcion}'?", isWarning: true))
             return;
 
+        undo.PushUndoPoint(session, $"Eliminar recurso APU");
+        pendingUndoForEdit = true;
         currentApu.Recursos.Remove(vm.Source);
         Recursos.Remove(vm);
         RecursosMat.Remove(vm); RecursosMo.Remove(vm); RecursosEquipo.Remove(vm);
@@ -446,6 +528,8 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
     private void DuplicateRecurso(ApuRecursoVm? vm)
     {
         if (!CanEdit || vm == null || currentApu == null) return;
+        undo.PushUndoPoint(session, "Duplicar recurso APU");
+        pendingUndoForEdit = true;
         var clone = new ApuRecursoRow
         {
             Tipo = vm.Source.Tipo,
@@ -461,7 +545,7 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
             FechaPrecio = vm.Source.FechaPrecio,
         };
         currentApu.Recursos.Add(clone);
-        var cloneVm = new ApuRecursoVm(clone);
+        var cloneVm = CreateRecursoVm(clone);
         Recursos.Add(cloneVm);
         switch (clone.Tipo)
         {
@@ -477,6 +561,8 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
     private void RefrescarPrecios()
     {
         if (!CanEdit || currentApu == null) return;
+        undo.PushUndoPoint(session, "Refrescar precios APU");
+        pendingUndoForEdit = true;
         var materiales = session.Materiales;
         ApuFromCubicacionService.RefreshPricesFromCatalog(
             new List<ApuRow> { currentApu }, materiales, session.ProjectInfo.PreciosCongelados);
@@ -486,6 +572,9 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
 
     internal void OnRowEdited()
     {
+        if (CanEdit && currentApu != null && !pendingUndoForEdit)
+            undo.PushUndoPoint(session, "Editar recurso APU");
+        pendingUndoForEdit = false;
         RebuildGroupedCollections();
         RefreshTotals();
         BuildAlerts(currentApu!);
@@ -495,6 +584,8 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
         OnPropertyChanged(nameof(RecursoCount));
         CommandManager.InvalidateRequerySuggested();
     }
+
+    internal void ClearPendingUndoForEdit() => pendingUndoForEdit = false;
 
     private void RebuildGroupedCollections()
     {
@@ -529,19 +620,67 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
             }
         }
         _ = shell.SaveProjectAsync();
+        CaptureBaseline();
         MarkClean();
     }
 
     private void MarkDirty()
     {
+        if (session.IsReadOnly)
+            return;
+
         hasPendingChanges = true;
+        session.MarkDirty(ProjectDirtyScope.Apu);
         CommandManager.InvalidateRequerySuggested();
     }
 
     private void MarkClean()
     {
         hasPendingChanges = false;
+        pendingUndoForEdit = false;
         CommandManager.InvalidateRequerySuggested();
+    }
+
+    private ApuRecursoVm CreateRecursoVm(ApuRecursoRow row) => new(row, () => CanEdit);
+
+    private void CaptureBaseline()
+    {
+        baselineApus = CloneJson(session.Apus.ToList());
+    }
+
+    private void ScheduleCaptureBaseline()
+    {
+        var dispatcher = System.Windows.Application.Current?.Dispatcher;
+        if (dispatcher == null)
+        {
+            if (session.Apus.Count <= 500)
+                CaptureBaseline();
+            return;
+        }
+
+        _ = dispatcher.InvokeAsync(() =>
+        {
+            if (!hasPendingChanges)
+                CaptureBaseline();
+        }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+    }
+
+    private void RestoreBaseline()
+    {
+        if (baselineApus == null)
+            return;
+
+        var restored = CloneJson(baselineApus);
+        session.Apus.Clear();
+        foreach (var apu in restored)
+            session.Apus.Add(apu);
+    }
+
+    private static T CloneJson<T>(T source)
+    {
+        var json = JsonSerializer.Serialize(source, BaselineJsonOptions);
+        return JsonSerializer.Deserialize<T>(json, BaselineJsonOptions)
+               ?? throw new InvalidOperationException($"No se pudo clonar {typeof(T).Name} para baseline APU.");
     }
 
     // ─── Guardar como plantilla ──────────────────────────────────────────────
@@ -593,6 +732,8 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
             return;
         }
 
+        undo.PushUndoPoint(session, $"Aplicar plantilla APU");
+        pendingUndoForEdit = true;
         if (dialog.Reemplazar)
         {
             currentApu.Recursos.Clear();
@@ -603,7 +744,7 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
         {
             r.Id = Guid.NewGuid().ToString("N");
             currentApu.Recursos.Add(r);
-            Recursos.Add(new ApuRecursoVm(r));
+            Recursos.Add(CreateRecursoVm(r));
         }
         OnRowEdited();
     }
@@ -644,7 +785,7 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
         }
 
         session.ConjuntosElectricos.Add(conjunto);
-        session.MarkDirty("conjuntos");
+        session.MarkDirty(ProjectDirtyScope.ConjuntosElectricos);
         WpfDialogService.Info("Conjunto creado",
             $"Conjunto '{conjunto.Nombre}' creado con {conjunto.Recursos.Count} recursos.");
     }
@@ -670,12 +811,13 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
 
     public string MarkupConductoresText
     {
-        get => host.Session.GetFamilyMarkup("Conductores").ToString("N2", CultureInfo.CurrentCulture);
+        get => session.GetFamilyMarkup("Conductores").ToString("N2", CultureInfo.CurrentCulture);
         set
         {
+            if (!CanEdit) return;
             if (decimal.TryParse(value.Replace(",", "."), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var v))
             {
-                host.Session.SetFamilyMarkup("Conductores", v);
+                session.SetFamilyMarkup("Conductores", v);
                 OnPropertyChanged();
                 MarkDirty();
             }
@@ -684,12 +826,13 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
 
     public string MarkupCanalizacionText
     {
-        get => host.Session.GetFamilyMarkup("Canalización").ToString("N2", CultureInfo.CurrentCulture);
+        get => session.GetFamilyMarkup("Canalización").ToString("N2", CultureInfo.CurrentCulture);
         set
         {
+            if (!CanEdit) return;
             if (decimal.TryParse(value.Replace(",", "."), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var v))
             {
-                host.Session.SetFamilyMarkup("Canalización", v);
+                session.SetFamilyMarkup("Canalización", v);
                 OnPropertyChanged();
                 MarkDirty();
             }
@@ -698,12 +841,13 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
 
     public string MarkupTablerosText
     {
-        get => host.Session.GetFamilyMarkup("Tableros").ToString("N2", CultureInfo.CurrentCulture);
+        get => session.GetFamilyMarkup("Tableros").ToString("N2", CultureInfo.CurrentCulture);
         set
         {
+            if (!CanEdit) return;
             if (decimal.TryParse(value.Replace(",", "."), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var v))
             {
-                host.Session.SetFamilyMarkup("Tableros", v);
+                session.SetFamilyMarkup("Tableros", v);
                 OnPropertyChanged();
                 MarkDirty();
             }
@@ -712,12 +856,13 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
 
     public string MarkupProteccionesText
     {
-        get => host.Session.GetFamilyMarkup("Protecciones").ToString("N2", CultureInfo.CurrentCulture);
+        get => session.GetFamilyMarkup("Protecciones").ToString("N2", CultureInfo.CurrentCulture);
         set
         {
+            if (!CanEdit) return;
             if (decimal.TryParse(value.Replace(",", "."), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var v))
             {
-                host.Session.SetFamilyMarkup("Protecciones", v);
+                session.SetFamilyMarkup("Protecciones", v);
                 OnPropertyChanged();
                 MarkDirty();
             }
@@ -726,12 +871,13 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
 
     public string MarkupIluminacionText
     {
-        get => host.Session.GetFamilyMarkup("Iluminación").ToString("N2", CultureInfo.CurrentCulture);
+        get => session.GetFamilyMarkup("Iluminación").ToString("N2", CultureInfo.CurrentCulture);
         set
         {
+            if (!CanEdit) return;
             if (decimal.TryParse(value.Replace(",", "."), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var v))
             {
-                host.Session.SetFamilyMarkup("Iluminación", v);
+                session.SetFamilyMarkup("Iluminación", v);
                 OnPropertyChanged();
                 MarkDirty();
             }
@@ -740,12 +886,13 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
 
     public string MarkupEquiposText
     {
-        get => host.Session.GetFamilyMarkup("Equipos").ToString("N2", CultureInfo.CurrentCulture);
+        get => session.GetFamilyMarkup("Equipos").ToString("N2", CultureInfo.CurrentCulture);
         set
         {
+            if (!CanEdit) return;
             if (decimal.TryParse(value.Replace(",", "."), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var v))
             {
-                host.Session.SetFamilyMarkup("Equipos", v);
+                session.SetFamilyMarkup("Equipos", v);
                 OnPropertyChanged();
                 MarkDirty();
             }
@@ -754,12 +901,13 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
 
     public string MarkupEnchufesText
     {
-        get => host.Session.GetFamilyMarkup("Enchufes y tomacorrientes").ToString("N2", CultureInfo.CurrentCulture);
+        get => session.GetFamilyMarkup("Enchufes y tomacorrientes").ToString("N2", CultureInfo.CurrentCulture);
         set
         {
+            if (!CanEdit) return;
             if (decimal.TryParse(value.Replace(",", "."), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var v))
             {
-                host.Session.SetFamilyMarkup("Enchufes y tomacorrientes", v);
+                session.SetFamilyMarkup("Enchufes y tomacorrientes", v);
                 OnPropertyChanged();
                 MarkDirty();
             }
@@ -768,12 +916,13 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
 
     public string MarkupPuestaTierraText
     {
-        get => host.Session.GetFamilyMarkup("Puesta a tierra").ToString("N2", CultureInfo.CurrentCulture);
+        get => session.GetFamilyMarkup("Puesta a tierra").ToString("N2", CultureInfo.CurrentCulture);
         set
         {
+            if (!CanEdit) return;
             if (decimal.TryParse(value.Replace(",", "."), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var v))
             {
-                host.Session.SetFamilyMarkup("Puesta a tierra", v);
+                session.SetFamilyMarkup("Puesta a tierra", v);
                 OnPropertyChanged();
                 MarkDirty();
             }
@@ -782,12 +931,13 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
 
     public string MarkupAccesoriosText
     {
-        get => host.Session.GetFamilyMarkup("Accesorios").ToString("N2", CultureInfo.CurrentCulture);
+        get => session.GetFamilyMarkup("Accesorios").ToString("N2", CultureInfo.CurrentCulture);
         set
         {
+            if (!CanEdit) return;
             if (decimal.TryParse(value.Replace(",", "."), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var v))
             {
-                host.Session.SetFamilyMarkup("Accesorios", v);
+                session.SetFamilyMarkup("Accesorios", v);
                 OnPropertyChanged();
                 MarkDirty();
             }
@@ -796,15 +946,16 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
 
     private void ResetMarkups()
     {
-        host.Session.SetFamilyMarkup("Conductores", 1.00m);
-        host.Session.SetFamilyMarkup("Canalización", 1.00m);
-        host.Session.SetFamilyMarkup("Tableros", 1.00m);
-        host.Session.SetFamilyMarkup("Protecciones", 1.00m);
-        host.Session.SetFamilyMarkup("Iluminación", 1.00m);
-        host.Session.SetFamilyMarkup("Equipos", 1.00m);
-        host.Session.SetFamilyMarkup("Enchufes y tomacorrientes", 1.00m);
-        host.Session.SetFamilyMarkup("Puesta a tierra", 1.00m);
-        host.Session.SetFamilyMarkup("Accesorios", 1.00m);
+        undo.PushUndoPoint(session, "Reset markups APU");
+        session.SetFamilyMarkup("Conductores", 1.00m);
+        session.SetFamilyMarkup("Canalización", 1.00m);
+        session.SetFamilyMarkup("Tableros", 1.00m);
+        session.SetFamilyMarkup("Protecciones", 1.00m);
+        session.SetFamilyMarkup("Iluminación", 1.00m);
+        session.SetFamilyMarkup("Equipos", 1.00m);
+        session.SetFamilyMarkup("Enchufes y tomacorrientes", 1.00m);
+        session.SetFamilyMarkup("Puesta a tierra", 1.00m);
+        session.SetFamilyMarkup("Accesorios", 1.00m);
 
         OnPropertyChanged(nameof(MarkupConductoresText));
         OnPropertyChanged(nameof(MarkupCanalizacionText));
@@ -817,5 +968,56 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
         OnPropertyChanged(nameof(MarkupAccesoriosText));
 
         MarkDirty();
+    }
+
+    public void OpenQuickJumpPartida()
+    {
+        if (Partidas.Count == 0) return;
+
+        string currentCapitulo = "";
+        var jumpItems = new List<QubiCostElectrical.Wpf.Controls.QuickJumpPartidaItem>(Partidas.Count);
+
+        foreach (var p in Partidas)
+        {
+            if (p.EsTitulo)
+            {
+                currentCapitulo = p.Descripcion;
+                jumpItems.Add(new QubiCostElectrical.Wpf.Controls.QuickJumpPartidaItem
+                {
+                    Id = p.ItemId,
+                    Codigo = p.CodigoItem,
+                    Descripcion = p.Descripcion,
+                    EsTitulo = true
+                });
+            }
+            else
+            {
+                jumpItems.Add(new QubiCostElectrical.Wpf.Controls.QuickJumpPartidaItem
+                {
+                    Id = p.ItemId,
+                    Codigo = p.CodigoItem,
+                    Descripcion = p.Descripcion,
+                    Unidad = p.Unidad,
+                    Cantidad = p.Cantidad,
+                    EsTitulo = false,
+                    BadgeText = p.Estado,
+                    Capitulo = currentCapitulo
+                });
+            }
+        }
+
+        var dialog = new QubiCostElectrical.Wpf.Controls.QuickJumpPartidaDialog(jumpItems, SelectedPartida?.ItemId)
+        {
+            Owner = System.Windows.Application.Current?.MainWindow
+        };
+
+        if (dialog.ShowDialog() == true && !string.IsNullOrWhiteSpace(dialog.SelectedPartidaId))
+        {
+            var match = Partidas.FirstOrDefault(p => string.Equals(p.ItemId, dialog.SelectedPartidaId, StringComparison.OrdinalIgnoreCase));
+            if (match != null)
+            {
+                SelectedPartida = match;
+            }
+        }
     }
 }

@@ -3,116 +3,257 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ctrl="clr-namespace:QubiCostElectrical.Wpf.Controls"
+             xmlns:local="clr-namespace:QubiCostElectrical.Wpf.Features.Dashboard"
              mc:Ignorable="d"
-             d:DesignWidth="1920"
-             d:DesignHeight="900"
-             FontFamily="{StaticResource Font.Ui}">
+              d:DesignWidth="1280"
+              d:DesignHeight="720"
+              FontFamily="{StaticResource Font.Ui}">
   <UserControl.Resources>
-    <Style x:Key="Dashboard.PremiumCard" TargetType="Border" BasedOn="{StaticResource Card.Section}">
-      <Setter Property="Padding" Value="18" />
-      <Setter Property="CornerRadius" Value="12" />
+    <Style x:Key="Dashboard.CompactCard" TargetType="Border" BasedOn="{StaticResource Card.Section}">
+      <Setter Property="Padding" Value="14,12" />
+      <Setter Property="CornerRadius" Value="10" />
     </Style>
-    <Style x:Key="Dashboard.PremiumMetric" TargetType="Border" BasedOn="{StaticResource Card.Kpi}">
-      <Setter Property="Padding" Value="16" />
-      <Setter Property="MinHeight" Value="118" />
-      <Setter Property="CornerRadius" Value="11" />
+    <Style x:Key="Dashboard.CompactMetric" TargetType="Border" BasedOn="{StaticResource Card.Kpi}">
+      <Setter Property="Padding" Value="12,9" />
+      <Setter Property="MinHeight" Value="68" />
+      <Setter Property="CornerRadius" Value="8" />
+      <Setter Property="Margin" Value="0,0,8,0" />
     </Style>
+    <local:ReadinessToStrokeDashArrayConverter x:Key="ReadinessDashConverter" />
   </UserControl.Resources>
+
   <Grid>
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-      <StackPanel Margin="22,20,22,20">
-        <Grid Margin="0,0,0,14">
-          <StackPanel>
-            <TextBlock Text="{Binding GreetingText}" Style="{StaticResource Text.PageTitle}" Margin="0,3,0,2" />
-            <TextBlock Text="El proyecto está cerca de estar listo; hay decisiones que afectan la oferta." Style="{StaticResource Text.Body}" />
-          </StackPanel>
-          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-            <Button Content="Ver actividad" Command="{Binding GoToProjectCommand}" Style="{StaticResource Button.Secondary}" Margin="0,0,7,0" />
-            <Button Content="{Binding PrimaryCtaLabel}" Command="{Binding PrimaryCtaCommand}" Style="{StaticResource Button.Primary}" />
-          </StackPanel>
-        </Grid>
+      <Grid Margin="16,12,16,12" MinHeight="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType=ScrollContentPresenter}}">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="*" MinHeight="360" />
+          <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
 
-        <Grid Margin="0,0,0,14">
-          <Grid.ColumnDefinitions><ColumnDefinition Width="1.45*"/><ColumnDefinition Width="0.85*"/></Grid.ColumnDefinitions>
-          <Border Grid.Column="0" Background="{DynamicResource Brush.Navy3}" CornerRadius="13" Padding="24" MinHeight="214" Margin="0,0,7,0">
-            <Grid>
-              <Grid.RowDefinitions><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-              <StackPanel>
-                <TextBlock Text="PRÓXIMA ACCIÓN CON MAYOR IMPACTO" Style="{StaticResource Text.SectionLabel}" Foreground="{DynamicResource Brush.HeaderDate}" />
-                <TextBlock Text="{Binding NextStepTitle}" Foreground="{DynamicResource Brush.White}" FontSize="24" FontWeight="SemiBold" Margin="0,8,0,5" TextWrapping="Wrap" />
-                <TextBlock Text="{Binding NextStepDetail}" Foreground="{DynamicResource Brush.HeaderMuted}" FontSize="12" TextWrapping="Wrap" MaxWidth="620" />
+        <!-- 1. CABECERA EJECUTIVA COMPACTA -->
+        <Border Grid.Row="0" Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="8" Padding="14,9" Margin="0,0,0,10">
+          <DockPanel LastChildFill="True">
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
+              <Button Content="Ver proyecto" Command="{Binding GoToProjectCommand}" Style="{StaticResource Button.Secondary}" Height="28" Padding="12,0" FontSize="11" Margin="0,0,6,0" />
+              <Button Content="{Binding PrimaryCtaLabel, StringFormat={}{0} →}" Command="{Binding PrimaryCtaCommand}" Style="{StaticResource Button.Primary}" Height="28" Padding="14,0" FontSize="11" />
+            </StackPanel>
+
+            <StackPanel VerticalAlignment="Center">
+              <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                <TextBlock Text="{Binding GreetingText}" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" />
+                <Border Background="{DynamicResource Brush.GreenSoft}" BorderBrush="{DynamicResource Brush.Green}" BorderThickness="1" CornerRadius="4" Padding="6,1" Margin="8,0,0,0" VerticalAlignment="Center">
+                  <TextBlock Text="Proyecto Activo" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Green}" />
+                </Border>
               </StackPanel>
-              <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,20,0,0">
-                <Button Content="Abrir partidas bloqueadas →" Command="{Binding PrimaryCtaCommand}" Style="{StaticResource Button.Primary}" Background="{DynamicResource Brush.White}" Foreground="{DynamicResource Brush.Navy3}" BorderBrush="{DynamicResource Brush.White}" />
-                <TextBlock Text="{Binding PartidasReadyLabel}" Foreground="{DynamicResource Brush.HeaderMuted}" VerticalAlignment="Center" Margin="14,0,0,0" />
-              </StackPanel>
-            </Grid>
-          </Border>
-          <Border Grid.Column="1" Style="{StaticResource Dashboard.PremiumCard}" MinHeight="214" Margin="7,0,0,0">
-            <StackPanel>
-              <TextBlock Text="PREPARACIÓN DE OFERTA" Style="{StaticResource Text.SectionLabel}" />
-              <TextBlock Text="Control operativo antes de entregar al cliente." Style="{StaticResource Text.Caption}" Margin="0,3,0,12" />
-              <Grid>
-                <Grid.ColumnDefinitions><ColumnDefinition Width="82"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                <Grid Width="76" Height="76">
-                  <Ellipse Stroke="#E8EEF4" StrokeThickness="9"/>
-                  <Ellipse Stroke="{DynamicResource Brush.Success}" StrokeThickness="9" StrokeDashArray="21 4" StrokeStartLineCap="Round" RenderTransformOrigin="0.5,0.5"><Ellipse.RenderTransform><RotateTransform Angle="-90"/></Ellipse.RenderTransform></Ellipse>
-                  <TextBlock Text="{Binding PartidasReadyPercent, StringFormat={}{0:N0}%}" FontSize="16" FontWeight="Bold" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+              <TextBlock Text="{Binding SubtitleText}" FontSize="11" Foreground="{DynamicResource Brush.Ink3}" TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+          </DockPanel>
+        </Border>
+
+        <!-- 2. FRANJA HORIZONTAL ÚNICA DE KPIS CLAVE -->
+        <ItemsControl Grid.Row="1" ItemsSource="{Binding KpiCards}" Margin="0,0,0,10">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate><UniformGrid Columns="4" /></ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <Border Style="{StaticResource Dashboard.CompactMetric}">
+                <Grid>
+                  <Border Width="4" HorizontalAlignment="Right" VerticalAlignment="Stretch" Background="{Binding AccentBrush}" CornerRadius="0,6,6,0" Margin="0,-9,-12,-9" />
+                  <StackPanel Margin="0,0,8,0">
+                    <TextBlock Text="{Binding Title}" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="{Binding Value}" FontSize="18" FontWeight="Bold" Foreground="{Binding AccentBrush}" Margin="0,3,0,2" />
+                    <TextBlock Text="{Binding Caption}" Foreground="{DynamicResource Brush.Ink3}" FontSize="10" TextTrimming="CharacterEllipsis" />
+                  </StackPanel>
                 </Grid>
-                <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                  <TextBlock Text="●  Datos del proyecto" Foreground="{DynamicResource Brush.SuccessDark}" FontSize="11" Margin="0,2"/>
-                  <TextBlock Text="●  Itemizado importado" Foreground="{DynamicResource Brush.SuccessDark}" FontSize="11" Margin="0,2"/>
-                  <TextBlock Text="●  Cubicación completada" Foreground="{DynamicResource Brush.SuccessDark}" FontSize="11" Margin="0,2"/>
-                  <TextBlock Text="●  Precios por confirmar" Foreground="{DynamicResource Brush.AmberRisk}" FontSize="11" Margin="0,2"/>
-                </StackPanel>
-              </Grid>
-            </StackPanel>
-          </Border>
-        </Grid>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
 
-        <UniformGrid Columns="4" Margin="0,0,0,14">
-          <Border Style="{StaticResource Dashboard.PremiumMetric}" Margin="0,0,7,0"><StackPanel><TextBlock Text="MONTO OFERTADO" Style="{StaticResource Text.SectionLabel}"/><TextBlock Text="{Binding CostTotal}" Style="{StaticResource Text.KpiValue}" Foreground="{DynamicResource Brush.Blue}" Margin="0,7,0,3"/><TextBlock Text="↑ valor comercial vigente" Foreground="{DynamicResource Brush.SuccessDark}" FontSize="11"/></StackPanel></Border>
-          <Border Style="{StaticResource Dashboard.PremiumMetric}" Margin="0,0,7,0"><StackPanel><TextBlock Text="MARGEN ESTIMADO" Style="{StaticResource Text.SectionLabel}"/><TextBlock Text="{Binding UtilidadSimulatedPct, StringFormat={}{0:N1}%}" Style="{StaticResource Text.KpiValue}" Foreground="{DynamicResource Brush.Ink}" Margin="0,7,0,3"/><TextBlock Text="Dentro del rango objetivo" Foreground="{DynamicResource Brush.SuccessDark}" FontSize="11"/></StackPanel></Border>
-          <Border Style="{StaticResource Dashboard.PremiumMetric}" Margin="0,0,7,0"><StackPanel><TextBlock Text="PARTIDAS COMPLETAS" Style="{StaticResource Text.SectionLabel}"/><TextBlock Text="{Binding PartidasReadyLabel}" Style="{StaticResource Text.KpiValue}" Foreground="{DynamicResource Brush.Ink}" Margin="0,7,0,3"/><TextBlock Text="Requieren atención antes de ofertar" Foreground="{DynamicResource Brush.AmberRisk}" FontSize="11"/></StackPanel></Border>
-          <Border Style="{StaticResource Dashboard.PremiumMetric}"><StackPanel><TextBlock Text="VIGENCIA DE PRECIOS" Style="{StaticResource Text.SectionLabel}"/><TextBlock Text="{Binding PartidasReadyPercent, StringFormat={}{0:N0}%}" Style="{StaticResource Text.KpiValue}" Foreground="{DynamicResource Brush.Ink}" Margin="0,7,0,3"/><TextBlock Text="Revisar precios pendientes" Foreground="{DynamicResource Brush.Red}" FontSize="11"/></StackPanel></Border>
-        </UniformGrid>
+        <!-- 3. CUERPO PRINCIPAL EN 3 COLUMNAS PROPORCIONALES (LLENA EL ESPACIO VERTICAL) -->
+        <Grid Grid.Row="2" Margin="0,0,0,10">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="3.2*" />
+            <ColumnDefinition Width="4.8*" />
+            <ColumnDefinition Width="3.5*" />
+          </Grid.ColumnDefinitions>
 
-        <Grid Margin="0,0,0,14">
-          <Grid.ColumnDefinitions><ColumnDefinition Width="1.18*"/><ColumnDefinition Width="0.82*"/></Grid.ColumnDefinitions>
-          <Border Grid.Column="0" Style="{StaticResource Dashboard.PremiumCard}" MinHeight="270" Margin="0,0,7,0">
-            <StackPanel>
-              <DockPanel Margin="0,0,0,9"><TextBlock Text="Cola de decisiones" FontSize="13" FontWeight="SemiBold"/><TextBlock DockPanel.Dock="Right" Text="Ordenada por impacto comercial" Style="{StaticResource Text.Caption}"/></DockPanel>
-              <ItemsControl ItemsSource="{Binding Alerts}">
-                <ItemsControl.ItemTemplate><DataTemplate>
-                  <Grid Margin="0,0,0,0" MinHeight="45">
-                    <Grid.ColumnDefinitions><ColumnDefinition Width="10"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                    <Ellipse Width="8" Height="8" Fill="{DynamicResource Brush.AmberRisk}" Margin="0,4,0,0" />
-                    <StackPanel Grid.Column="1" Margin="7,0,8,0"><TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="11"/><TextBlock Text="{Binding Detail}" Style="{StaticResource Text.Caption}" TextWrapping="Wrap"/></StackPanel>
-                    <Border Grid.Column="2" Style="{StaticResource Badge.Warn}"><TextBlock Text="{Binding SeverityLabel}" Style="{StaticResource Text.Badge}"/></Border>
+          <!-- COLUMNA 1: COMPOSICIÓN DE COSTOS & SIMULADOR -->
+          <Border Grid.Column="0" Style="{StaticResource Dashboard.CompactCard}" Margin="0,0,5,0">
+            <DockPanel LastChildFill="True">
+              <DockPanel DockPanel.Dock="Top" Margin="0,0,0,10">
+                <TextBlock DockPanel.Dock="Right" Text="{Binding CostDirect}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" />
+                <TextBlock Text="Composición de Costos" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" />
+              </DockPanel>
+
+              <Border DockPanel.Dock="Bottom" Background="{DynamicResource Brush.Canvas}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="8" Padding="10,8" Margin="0,10,0,0">
+                <StackPanel>
+                  <DockPanel Margin="0,0,0,8">
+                    <TextBlock DockPanel.Dock="Right" Text="Margen directo" FontSize="10" Foreground="{DynamicResource Brush.Ink3}" />
+                    <TextBlock Text="Simulador de cierre" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" />
+                  </DockPanel>
+                  <Grid Margin="0,0,0,4">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Gastos Generales (GG)" FontSize="10" Foreground="{DynamicResource Brush.Ink3}" />
+                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding GastosGeneralesSimulatedPct, StringFormat={}{0:F1}%}" FontWeight="Bold" FontSize="10" Foreground="{DynamicResource Brush.Blue}" />
+                    <Slider Grid.Row="1" Grid.ColumnSpan="2" Minimum="0" Maximum="30" SmallChange="0.5" LargeChange="2" Value="{Binding GastosGeneralesSimulatedPct}" TickFrequency="0.5" IsSnapToTickEnabled="True" Margin="0,2,0,0" Height="16" />
                   </Grid>
-                </DataTemplate></ItemsControl.ItemTemplate>
+                  <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Margen de Utilidad" FontSize="10" Foreground="{DynamicResource Brush.Ink3}" />
+                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding UtilidadSimulatedPct, StringFormat={}{0:F1}%}" FontWeight="Bold" FontSize="10" Foreground="{DynamicResource Brush.Blue}" />
+                    <Slider Grid.Row="1" Grid.ColumnSpan="2" Minimum="0" Maximum="25" SmallChange="0.5" LargeChange="2" Value="{Binding UtilidadSimulatedPct}" TickFrequency="0.5" IsSnapToTickEnabled="True" Margin="0,2,0,0" Height="16" />
+                  </Grid>
+                </StackPanel>
+              </Border>
+
+              <ItemsControl ItemsSource="{Binding CostShares}" VerticalAlignment="Top">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <Grid Margin="0,4">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="42" />
+                      </Grid.ColumnDefinitions>
+                      <TextBlock Text="{Binding Label}" FontSize="11" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                      <ProgressBar Grid.Column="1" Style="{StaticResource Form.ProgressBar}" Value="{Binding PercentageValue, Mode=OneWay}" Maximum="100" Foreground="{Binding AccentBrush}" Height="6" Margin="6,0" VerticalAlignment="Center" />
+                      <TextBlock Grid.Column="2" Text="{Binding PercentageLabel}" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink}" TextAlignment="Right" VerticalAlignment="Center" />
+                    </Grid>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
               </ItemsControl>
-            </StackPanel>
+            </DockPanel>
           </Border>
-          <Border Grid.Column="1" Style="{StaticResource Dashboard.PremiumCard}" MinHeight="270" Margin="7,0,0,0">
-            <StackPanel>
-              <DockPanel Margin="0,0,0,16"><TextBlock Text="Flujo de producción" FontSize="13" FontWeight="SemiBold"/><TextBlock DockPanel.Dock="Right" Text="La app guía, no solo navega" Style="{StaticResource Text.Caption}"/></DockPanel>
-              <ItemsControl ItemsSource="{Binding WorkflowSteps}">
-                <ItemsControl.ItemTemplate><DataTemplate>
-                  <Grid Margin="0,0,0,9"><Grid.ColumnDefinitions><ColumnDefinition Width="10"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><Ellipse Width="8" Height="8" Fill="{DynamicResource Brush.Success}" Margin="0,4,0,0"/><StackPanel Grid.Column="1"><TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="11"/><TextBlock Text="{Binding Detail}" Style="{StaticResource Text.Caption}"/></StackPanel></Grid>
-                </DataTemplate></ItemsControl.ItemTemplate>
-              </ItemsControl>
-            </StackPanel>
+
+          <!-- COLUMNA 2: TOP PARTIDAS CRÍTICAS (PARETO) -->
+          <Border Grid.Column="1" Style="{StaticResource Dashboard.CompactCard}" Margin="5,0,5,0">
+            <DockPanel LastChildFill="True">
+              <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+                <Button DockPanel.Dock="Right" Style="{StaticResource Button.Link}" Content="Ver itemizado →" Command="{Binding GoToItemizadoCommand}" FontSize="11" />
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                  <TextBlock Text="Partidas Críticas" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" />
+                  <Border Background="{DynamicResource Brush.BlueSoft}" BorderBrush="{DynamicResource Brush.Blue}" BorderThickness="1" CornerRadius="3" Padding="4,1" Margin="6,0,0,0">
+                    <TextBlock Text="Pareto" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" />
+                  </Border>
+                </StackPanel>
+              </DockPanel>
+
+              <TextBlock DockPanel.Dock="Bottom" Text="💡 Estas partidas concentran la mayor incidencia en el presupuesto." FontSize="10" Foreground="{DynamicResource Brush.Ink3}" Margin="0,6,0,0" />
+
+              <DataGrid ItemsSource="{Binding FilteredTopPartidas}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column"
+                        Style="{StaticResource DataGrid.Workspace}" CanUserAddRows="False" SelectionMode="Single" VerticalAlignment="Stretch">
+                <DataGrid.Columns>
+                  <DataGridTextColumn Header="Ítem" Binding="{Binding Item}" Width="45" />
+                  <DataGridTextColumn Header="Partida" Binding="{Binding Partida}" Width="*" />
+                  <DataGridTextColumn Header="Costo CLP" Binding="{Binding TotalClpLabel}" Width="105">
+                    <DataGridTextColumn.ElementStyle>
+                      <Style TargetType="TextBlock">
+                        <Setter Property="HorizontalAlignment" Value="Right" />
+                        <Setter Property="FontWeight" Value="SemiBold" />
+                        <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+                      </Style>
+                    </DataGridTextColumn.ElementStyle>
+                  </DataGridTextColumn>
+                  <DataGridTextColumn Header="Costo UF" Binding="{Binding TotalUfLabel}" Width="80">
+                    <DataGridTextColumn.ElementStyle>
+                      <Style TargetType="TextBlock">
+                        <Setter Property="HorizontalAlignment" Value="Right" />
+                        <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
+                      </Style>
+                    </DataGridTextColumn.ElementStyle>
+                  </DataGridTextColumn>
+                  <DataGridTextColumn Header="%" Binding="{Binding PercentLabel}" Width="45">
+                    <DataGridTextColumn.ElementStyle>
+                      <Style TargetType="TextBlock">
+                        <Setter Property="HorizontalAlignment" Value="Right" />
+                        <Setter Property="FontWeight" Value="Bold" />
+                        <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
+                      </Style>
+                    </DataGridTextColumn.ElementStyle>
+                  </DataGridTextColumn>
+                </DataGrid.Columns>
+              </DataGrid>
+            </DockPanel>
+          </Border>
+
+          <!-- COLUMNA 3: ESTADO DE ENTREGA & CHECKLIST -->
+          <Border Grid.Column="2" Style="{StaticResource Dashboard.CompactCard}" Margin="5,0,0,0">
+            <DockPanel LastChildFill="True">
+              <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+                <TextBlock DockPanel.Dock="Right" Text="{Binding PartidasReadyLabel}" FontSize="10" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" />
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                  <TextBlock Text="Estado de Entrega" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" />
+                  <Border Background="{DynamicResource Brush.AmberSoft}" BorderBrush="{DynamicResource Brush.AmberRisk}" BorderThickness="1" CornerRadius="3" Padding="4,1" Margin="6,0,0,0">
+                    <TextBlock Text="Cierre" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.AmberRisk}" />
+                  </Border>
+                </StackPanel>
+              </DockPanel>
+
+              <Button DockPanel.Dock="Bottom" Style="{StaticResource Button.Secondary}" Content="Ir a revisión de cierre (F8) →" Command="{Binding GoToReviewCommand}" Height="28" FontSize="11" HorizontalAlignment="Stretch" Margin="0,8,0,0" />
+
+              <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" VerticalAlignment="Stretch">
+                <StackPanel>
+                  <!-- Items de Preparación de Oferta -->
+                  <ItemsControl ItemsSource="{Binding OfferReadinessItems}" Margin="0,0,0,4">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Border Margin="0,0,0,3" Padding="8,4" CornerRadius="6" Background="{DynamicResource Brush.Canvas}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1">
+                          <Grid>
+                            <Grid.ColumnDefinitions>
+                              <ColumnDefinition Width="14" />
+                              <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Ellipse Width="6" Height="6" Fill="{Binding StatusBrush}" VerticalAlignment="Center" HorizontalAlignment="Left" />
+                            <TextBlock Grid.Column="1" Text="{Binding Label}" FontSize="10.5" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                          </Grid>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+
+                  <!-- Alertas Prioritarias si existen -->
+                  <ItemsControl ItemsSource="{Binding Alerts}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Border Margin="0,0,0,3" Padding="8,4" CornerRadius="6" Background="{DynamicResource Brush.Canvas}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1">
+                          <Grid>
+                            <Grid.ColumnDefinitions>
+                              <ColumnDefinition Width="14" />
+                              <ColumnDefinition Width="*" />
+                              <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.AmberRisk}" VerticalAlignment="Center" HorizontalAlignment="Left" />
+                            <TextBlock Grid.Column="1" Text="{Binding Title}" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" Margin="0,0,4,0" TextTrimming="CharacterEllipsis" />
+                            <Border Grid.Column="2" Style="{StaticResource Badge.Warn}" Padding="3,1">
+                              <TextBlock Text="{Binding SeverityLabel}" Style="{StaticResource Text.Badge}" FontSize="8.5" />
+                            </Border>
+                          </Grid>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
+              </ScrollViewer>
+            </DockPanel>
           </Border>
         </Grid>
 
-        <Grid Margin="0,0,0,14">
-          <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
-          <Border Grid.Column="0" Style="{StaticResource Dashboard.PremiumCard}" MinHeight="205" Margin="0,0,7,0"><StackPanel><DockPanel Margin="0,0,0,12"><TextBlock Text="Cobertura por especialidad" FontSize="13" FontWeight="SemiBold"/><TextBlock DockPanel.Dock="Right" Text="Ver detalle" Foreground="{DynamicResource Brush.Blue}" FontWeight="SemiBold" FontSize="11"/></DockPanel><ItemsControl ItemsSource="{Binding CostShares}"><ItemsControl.ItemTemplate><DataTemplate><Grid Margin="0,7"><Grid.ColumnDefinitions><ColumnDefinition Width="125"/><ColumnDefinition Width="*"/><ColumnDefinition Width="45"/></Grid.ColumnDefinitions><TextBlock Text="{Binding Label}" FontSize="11"/><ProgressBar Grid.Column="1" Height="8" Value="{Binding PercentageValue}" Maximum="100" Margin="9,0"/><TextBlock Grid.Column="2" Text="{Binding PercentageLabel}" FontSize="11" FontWeight="SemiBold" TextAlignment="Right"/></Grid></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></StackPanel></Border>
-          <Border Grid.Column="1" Style="{StaticResource Dashboard.PremiumCard}" MinHeight="205" Margin="7,0,0,0"><StackPanel><DockPanel><TextBlock Text="Variación entre versiones" FontSize="13" FontWeight="SemiBold"/><TextBlock DockPanel.Dock="Right" Text="Comparar" Foreground="{DynamicResource Brush.Blue}" FontWeight="SemiBold" FontSize="11"/></DockPanel><TextBlock Text="v11 → v12" Style="{StaticResource Text.Caption}" Margin="0,3,0,12"/><Border Background="#F5F9FE" BorderBrush="#D7E7F8" BorderThickness="1" CornerRadius="8" Padding="11"><StackPanel><TextBlock Text="{Binding TopAlertTitle}" FontSize="12" FontWeight="SemiBold"/><TextBlock Text="{Binding TopAlertDetail}" Style="{StaticResource Text.Caption}" TextWrapping="Wrap" Margin="0,3,0,0"/></StackPanel></Border><Grid Margin="0,13,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="90"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="Costo directo" FontSize="11"/><ProgressBar Grid.Column="1" Height="8" Value="67" Maximum="100"/></Grid></StackPanel></Border>
-        </Grid>
-        <Border Style="{StaticResource Card.Surface}" Padding="9"><TextBlock Text="Sincronización correcta · auditoría activa · atajos: Ctrl+K buscar · F8 revisión · Alt+O oferta" Style="{StaticResource Text.Caption}"/></Border>
-      </StackPanel>
+        <!-- 4. FOOTER DISCRETO FIJADO AL FONDO -->
+        <Border Grid.Row="3" Style="{StaticResource Card.Surface}" Padding="10,6">
+          <DockPanel LastChildFill="True">
+            <TextBlock DockPanel.Dock="Right" Text="Atajos: Ctrl+K Buscar · F8 Revisión · Alt+O Oferta" FontSize="10.5" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" />
+            <TextBlock Text="Sincronización correcta · Base SQLite v21 · Auditoría activa" FontSize="10.5" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" />
+          </DockPanel>
+        </Border>
+
+      </Grid>
     </ScrollViewer>
   </Grid>
 </UserControl>

@@ -14,10 +14,17 @@ namespace QubiCostElectrical.Wpf.Features.Costo;
 
 public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefreshablePage
 {
-    public CostoViewModel(IShellNavigationHost shell, WpfAppHost host) : base(host)
+    public CostoViewModel(IShellNavigationHost shell, WpfAppHost host)
+        : this(shell, host.Session, host.ProjectWorkspace, host.Dashboard, host.Services.CurrencyConversion, host.Audit) { }
+
+    public CostoViewModel(IShellNavigationHost shell, BudgetProjectSession session, IProjectWorkspaceService workspace, DashboardPresenter dashboard, ICurrencyConversionService currencySvc, ProjectAuditRecorder? audit = null) : base(session)
     {
         this.shell = shell;
-        this.host = host;
+        this.session = session;
+        this.workspace = workspace;
+        this.dashboard = dashboard;
+        this.currencySvc = currencySvc;
+        this.audit = audit;
         OpenProjectCommand = new RelayCommand(() => _ = shell.OpenProjectAsync());
         goToTakeoffCommand = new RelayCommand(() => shell.RequestNavigate(ShellRoute.Takeoff), () => !ShowEmptyState);
         goToItemizedCommand = new RelayCommand(() => shell.RequestNavigate(ShellRoute.Itemized), () => !ShowEmptyState);
@@ -42,6 +49,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         AddStaffingRoleCommand = new RelayCommand(AddStaffingRole, () => CanEdit);
         RemoveStaffingRoleCommand = new RelayCommand<StaffingRoleVm>(RemoveStaffingRole, _ => CanEdit);
         ClosingPolicySection = new ClosingPolicySectionVm(CommitClosingPolicyType, CommitClosingPolicyParam);
+        NegotiationSimulator = new CommercialNegotiationVm(ApplyNegotiatedTargetPrice, () => CanEdit);
         EnsureCoefFactors();
         Refresh();
     }
@@ -52,6 +60,12 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
     {
         get => showEmptyState;
         private set => SetProperty(ref showEmptyState, value);
+    }
+
+    public bool IsLoading
+    {
+        get => isLoading;
+        private set => SetProperty(ref isLoading, value);
     }
 
     public bool ShowFamilias
@@ -144,8 +158,8 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
             suppressCoefRefresh = true;
             try
             {
-                host.Session.ProjectInfo.GastosGeneralesPct = pct;
-                host.Session.MarkDirty("project_info");
+                session.ProjectInfo.GastosGeneralesPct = pct;
+                session.MarkDirty(ProjectDirtyScope.ProjectInfo);
                 RefreshCostOnly();
             }
             finally
@@ -167,8 +181,8 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
             suppressCoefRefresh = true;
             try
             {
-                host.Session.ProjectInfo.UtilidadPct = pct;
-                host.Session.MarkDirty("project_info");
+                session.ProjectInfo.UtilidadPct = pct;
+                session.MarkDirty(ProjectDirtyScope.ProjectInfo);
                 RefreshCostOnly();
             }
             finally
@@ -190,8 +204,8 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
             suppressCoefRefresh = true;
             try
             {
-                host.Session.ProjectInfo.ValorAgregadoEquiposPct = pct;
-                host.Session.MarkDirty("project_info");
+                session.ProjectInfo.ValorAgregadoEquiposPct = pct;
+                session.MarkDirty(ProjectDirtyScope.ProjectInfo);
                 RefreshCostOnly();
             }
             finally
@@ -235,8 +249,8 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
             suppressCoefRefresh = true;
             try
             {
-                host.Session.ProjectInfo.PoliticaCostosExcel = value;
-                host.Session.MarkDirty("project_info");
+                session.ProjectInfo.PoliticaCostosExcel = value;
+                session.MarkDirty(ProjectDirtyScope.ProjectInfo);
                 UtilidadPolicyLabel = value ? "Utilidades (aditiva Excel)" : "Margen s/ venta";
                 RefreshCostOnly();
             }
@@ -246,6 +260,32 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
             }
         }
     }
+
+    /// <summary>
+    /// C3: fuerza la venta línea a línea por factores de presentación por familia. La política
+    /// Excel COSTOS ya lo implica; este switch permite activarlo también con markup global.
+    /// </summary>
+    public bool UsarFactoresPresentacionFamilia
+    {
+        get => usarFactoresPresentacionFamilia;
+        set
+        {
+            if (!SetProperty(ref usarFactoresPresentacionFamilia, value) || !CanEdit)
+                return;
+            suppressCoefRefresh = true;
+            try
+            {
+                session.ProjectInfo.UsarFactoresPresentacionFamilia = value;
+                session.MarkDirty(ProjectDirtyScope.ProjectInfo);
+                RefreshCostOnly();
+            }
+            finally
+            {
+                suppressCoefRefresh = false;
+            }
+        }
+    }
+    private bool usarFactoresPresentacionFamilia;
 
     public ObservableCollection<CostoRowVm> CostRows { get; } = new();
     public ObservableCollection<CostoOrigenVm> Origenes { get; } = new();
@@ -295,8 +335,8 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         private set => SetProperty(ref costosPresetHint, value);
     }
 
-    public bool HasCostosPreset => host.ProjectWorkspace.HasOpenProject
-        && host.Session.ProjectInfo.CostosPreset is { Factores.Count: > 0 };
+    public bool HasCostosPreset => workspace.HasOpenProject
+        && session.ProjectInfo.CostosPreset is { Factores.Count: > 0 };
 
     private readonly RelayCommand goToTakeoffCommand;
     private readonly RelayCommand goToItemizedCommand;
@@ -323,8 +363,11 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
 
     public void Refresh()
     {
-        ShowEmptyState = !host.ProjectWorkspace.HasOpenProject;
-        CanEdit = !ShowEmptyState && !host.Session.IsReadOnly;
+        IsLoading = true;
+        try
+        {
+        ShowEmptyState = !workspace.HasOpenProject;
+        CanEdit = !ShowEmptyState && !session.IsReadOnly;
         goToTakeoffCommand.RaiseCanExecuteChanged();
         goToItemizedCommand.RaiseCanExecuteChanged();
         goToManoDeObraCommand.RaiseCanExecuteChanged();
@@ -336,15 +379,14 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         RemoveStaffingRoleCommand.RaiseCanExecuteChanged();
         if (ShowEmptyState) return;
 
-        var session = host.Session;
         var project = session.ProjectInfo;
         var data = session.Data;
 
-        var cost = host.Dashboard.BuildCost(data);
-        var svc = host.Services.CurrencyConversion;
+        var cost = dashboard.BuildCost(data);
+        var svc = currencySvc;
         var moneda = svc.NormalizeCurrency(project.MonedaPresupuesto);
         var valorUf = project.ValorUfClp > 0 ? project.ValorUfClp : session.ValorUfClp;
-        if (valorUf <= 0) valorUf = 37998m;
+        if (valorUf <= 0) valorUf = PriceConversion.DefaultValorUfClp;
         currentValorUf = valorUf;
         var tipoCambio = project.TipoCambioUsdClp;
 
@@ -395,15 +437,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         RefreshNegotiatedDiscountsSection(data);
         RefreshStaffingPlanSection(data);
 
-        CostoDirectoLabel = $"{cost.CostoDirectoUf:N2} UF";
-        CostoDirectoSubLabel = svc.FormatMoneyFromUf(cost.CostoDirectoUf, moneda, valorUf, tipoCambio);
-        TotalVentaLabel = $"{cost.TotalVentaUf:N2} UF";
-        TotalVentaSubLabel = svc.FormatMoneyFromUf(cost.TotalVentaUf, moneda, valorUf, tipoCambio);
-        MargenLabel = $"{cost.MargenRealPct:N1} %";
-        UfM2Label = $"{cost.UfM2:N2} UF";
-        UfM2SubLabel = project.MetrosCuadrados > 0
-            ? $"{project.MetrosCuadrados:N0} m² · {svc.FormatMoneyFromUf(cost.UfM2, moneda, valorUf, tipoCambio)} / m²"
-            : "Sin m² configurados";
+        UpdateSummaryKpis(cost, project, valorUf);
 
         FillCostRows(CostRows, cost, project, moneda, valorUf, tipoCambio);
         RefreshClosingPolicySection(cost, moneda, valorUf, tipoCambio);
@@ -423,96 +457,52 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
             });
 
         ShowOrigenes = origenes.Count > 0;
-
-        ResumenFooterText = $"Costo ejecución {cost.CostoDirectoUf:N2} UF · Total venta {cost.TotalVentaUf:N2} UF · Margen {cost.MargenRealPct:N1}%";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
-    private static string DescribeOrigen(string origen)
-    {
-        if (string.IsNullOrWhiteSpace(origen)) return "Origen del costo directo";
-        if (origen.Contains("Cubic", StringComparison.OrdinalIgnoreCase)) return "Partidas valorizadas desde takeoff";
-        if (origen.Contains("APU", StringComparison.OrdinalIgnoreCase)) return "Complementarios y ajustes de APU";
-        if (origen.Contains("OC", StringComparison.OrdinalIgnoreCase) || origen.Contains("Orden", StringComparison.OrdinalIgnoreCase))
-            return "Órdenes de cambio aprobadas";
-        if (origen.Contains("Global", StringComparison.OrdinalIgnoreCase) || origen.Contains("Herramient", StringComparison.OrdinalIgnoreCase) || origen.Contains("Merma", StringComparison.OrdinalIgnoreCase))
-            return "Recargos globales del motor";
-        return origen;
-    }
+    private static string DescribeOrigen(string origen) => CostoOrigenDescriptor.Describe(origen);
 
     private void RefreshMoSection(ProjectFileData data, decimal valorUf)
     {
         MoDirectaRows.Clear();
         MoIndirectaRows.Clear();
 
-        if (data.MoDirecta != null && data.MoDirecta.Count > 0)
+        var projection = CostoMoLaborProjectionBuilder.Build(data.MoDirecta, data.MoIndirecta);
+        foreach (var line in projection.Directa)
         {
-            var clp = 0m;
-            foreach (var r in data.MoDirecta)
+            MoDirectaRows.Add(new MoDirectaRowVm
             {
-                var itemTotal = r.Dotacion * r.SueldoMensualClp;
-                clp += itemTotal;
-            }
-            foreach (var r in data.MoDirecta)
-            {
-                var itemTotal = r.Dotacion * r.SueldoMensualClp;
-                MoDirectaRows.Add(new MoDirectaRowVm
-                {
-                    Cargo = r.Cargo,
-                    Dotacion = r.Dotacion,
-                    SueldoMensualClp = r.SueldoMensualClp,
-                    Pct = clp > 0 ? itemTotal / clp * 100m : 0
-                });
-            }
-        }
-        else
-        {
-            // Sin datos: estructura de cargos con dotación 0 (no inventar personas).
-            MoDirectaRows.Add(new MoDirectaRowVm { Cargo = "Maestro eléctrico (M1/M2)", Dotacion = 0, SueldoMensualClp = 750000m, Pct = 0 });
-            MoDirectaRows.Add(new MoDirectaRowVm { Cargo = "Ayudante eléctrico (AA/AB)", Dotacion = 0, SueldoMensualClp = 650000m, Pct = 0 });
+                Cargo = line.Cargo,
+                Dotacion = line.Dotacion,
+                SueldoMensualClp = line.SueldoMensualClp,
+                Pct = line.Pct
+            });
         }
 
-        if (data.MoIndirecta != null && data.MoIndirecta.Count > 0)
+        foreach (var line in projection.Indirecta)
         {
-            var clpInd = 0m;
-            foreach (var r in data.MoIndirecta)
+            MoIndirectaRows.Add(new MoIndirectaRowVm
             {
-                var itemTotal = r.Dotacion * r.SueldoMensualClp;
-                clpInd += itemTotal;
-            }
-            foreach (var r in data.MoIndirecta)
-            {
-                var itemTotal = r.Dotacion * r.SueldoMensualClp;
-                MoIndirectaRows.Add(new MoIndirectaRowVm
-                {
-                    Cargo = r.Cargo,
-                    Dotacion = r.Dotacion,
-                    SueldoMensualClp = r.SueldoMensualClp,
-                    Pct = clpInd > 0 ? itemTotal / clpInd * 100m : 0
-                });
-            }
-        }
-        else
-        {
-            MoIndirectaRows.Add(new MoIndirectaRowVm { Cargo = "Administrador de obra", Dotacion = 0, SueldoMensualClp = 1237500m, Pct = 0 });
-            MoIndirectaRows.Add(new MoIndirectaRowVm { Cargo = "Supervisor de obra", Dotacion = 0, SueldoMensualClp = 1466667m, Pct = 0 });
-            MoIndirectaRows.Add(new MoIndirectaRowVm { Cargo = "Capataz de obra", Dotacion = 0, SueldoMensualClp = 916667m, Pct = 0 });
-            MoIndirectaRows.Add(new MoIndirectaRowVm { Cargo = "Oficina técnica", Dotacion = 0, SueldoMensualClp = 779167m, Pct = 0 });
-            MoIndirectaRows.Add(new MoIndirectaRowVm { Cargo = "Encargado de bodega", Dotacion = 0, SueldoMensualClp = 595833m, Pct = 0 });
-            MoIndirectaRows.Add(new MoIndirectaRowVm { Cargo = "Prevencionista de riesgos", Dotacion = 0, SueldoMensualClp = 641667m, Pct = 0 });
+                Cargo = line.Cargo,
+                Dotacion = line.Dotacion,
+                SueldoMensualClp = line.SueldoMensualClp,
+                Pct = line.Pct
+            });
         }
 
-        var totalDir = MoDirectaRows.Sum(r => r.TotalAnualClp);
-        var totalInd = MoIndirectaRows.Sum(r => r.TotalAnualClp);
-        var totalMo = totalDir + totalInd;
-
-        TotalMoDirectaLabel = CurrencyFormat.Clp(totalDir);
-        TotalMoIndirectaLabel = CurrencyFormat.Clp(totalInd);
-        TotalMoLabel = CurrencyFormat.Clp(totalMo);
-        TotalMoSubLabel = valorUf > 0 ? $"{totalMo / valorUf:N2} UF" : "";
-        MoDirectaPct = totalMo > 0 ? totalDir / totalMo * 100m : 0;
-        MoIndirectaPct = totalMo > 0 ? totalInd / totalMo * 100m : 0;
-        TotalMoDirectaDotacion = MoDirectaRows.Sum(r => r.Dotacion);
-        TotalMoDotacion = TotalMoDirectaDotacion + MoIndirectaRows.Sum(r => r.Dotacion);
+        var totals = projection.Totals;
+        TotalMoDirectaLabel = CurrencyFormat.Clp(totals.DirectaClp);
+        TotalMoIndirectaLabel = CurrencyFormat.Clp(totals.IndirectaClp);
+        TotalMoLabel = CurrencyFormat.Clp(totals.TotalClp);
+        TotalMoSubLabel = valorUf > 0 ? $"{totals.TotalClp / valorUf:N2} UF" : "";
+        MoDirectaPct = totals.DirectaPct;
+        MoIndirectaPct = totals.IndirectaPct;
+        TotalMoDirectaDotacion = totals.DirectaDotacion;
+        TotalMoDotacion = totals.TotalDotacion;
         OnPropertyChanged(nameof(TotalMoDirectaDotacionLabel));
 
         ShowMoSection = true; // Siempre visible: lectura desde MO / plantilla
@@ -532,7 +522,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         var first = true;
         foreach (var r in rows)
         {
-            GastosOperacionales.Add(new GastoOpCategoriaVm(r, valorUf, OnGoChanged, expanded: first));
+            GastosOperacionales.Add(new GastoOpCategoriaVm(r, valorUf, OnGoChanged, expanded: first, canEdit: () => CanEdit));
             first = false;
         }
 
@@ -568,7 +558,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
                 string.Equals(c.Codigo, "3.5", StringComparison.OrdinalIgnoreCase));
             if (row == null)
                 return false;
-            cat = new GastoOpCategoriaVm(row, valorUf, OnGoChanged);
+            cat = new GastoOpCategoriaVm(row, valorUf, OnGoChanged, canEdit: () => CanEdit);
             // Insertar cerca del orden natural (después de 3.4 si existe).
             var idx = GastosOperacionales.ToList().FindIndex(c =>
                 string.Compare(c.Codigo, "3.5", StringComparison.OrdinalIgnoreCase) > 0);
@@ -589,18 +579,16 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
     private bool EnsureTrasladoBusItem()
     {
         var cat = GastosOperacionales.FirstOrDefault(c =>
-            string.Equals(c.Codigo, "3.3", StringComparison.OrdinalIgnoreCase)
-            || c.Concepto.Contains("Movilización", StringComparison.OrdinalIgnoreCase));
+            GastoOperacionalCategoryMaintenance.IsMovilizacionCategory(c.Codigo, c.Concepto));
         if (cat == null)
             return false;
 
-        var exists = cat.Items.Any(i =>
-            i.Concepto.Contains("bus", StringComparison.OrdinalIgnoreCase)
-            || i.Concepto.Contains("Arriendo / traslado", StringComparison.OrdinalIgnoreCase));
-        if (exists)
+        if (GastoOperacionalCategoryMaintenance.HasTrasladoBusItem(cat.Items.Select(i => i.Concepto)))
             return false;
 
-        cat.AddItemSilent("Arriendo / traslado en bus", "viaje");
+        cat.AddItemSilent(
+            GastoOperacionalCategoryMaintenance.TrasladoBusConcepto,
+            GastoOperacionalCategoryMaintenance.TrasladoBusUnidad);
         return true;
     }
 
@@ -635,40 +623,27 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         GoComposeSegments.Clear();
         GoComposeLegend.Clear();
 
-        if (GastosOperacionales.Count == 0)
-            return;
+        var shares = GastosOperacionales
+            .Select(c => new CostoGoCategoryShare(c.Codigo, c.MontoClp, c.Pct))
+            .ToList();
+        var projection = CostoGoComposeProjectionBuilder.Build(shares, totalGoClp);
 
-        if (totalGoClp <= 0)
+        foreach (var seg in projection.Segments)
         {
             GoComposeSegments.Add(new GoComposeSegmentVm
             {
-                Fill = ParseBrush(GoPalette[0], 0.22),
-                WidthUnits = 1000,
+                Fill = ParseBrush(GoPalette[seg.PaletteIndex % GoPalette.Length], seg.FillOpacity),
+                WidthUnits = seg.WidthUnits,
             });
-            for (var i = 0; i < GastosOperacionales.Count; i++)
-            {
-                GoComposeLegend.Add(new GoComposeLegendVm
-                {
-                    Fill = ParseBrush(GoPalette[i % GoPalette.Length]),
-                    Codigo = GastosOperacionales[i].Codigo,
-                    PctLabel = "—",
-                });
-            }
-            return;
         }
 
-        for (var i = 0; i < GastosOperacionales.Count; i++)
+        foreach (var item in projection.Legend)
         {
-            var cat = GastosOperacionales[i];
-            var share = (double)(cat.MontoClp / totalGoClp);
-            var units = Math.Max(share * 1000, cat.MontoClp > 0 ? 18 : 0.01);
-            var fill = ParseBrush(GoPalette[i % GoPalette.Length]);
-            GoComposeSegments.Add(new GoComposeSegmentVm { Fill = fill, WidthUnits = units });
             GoComposeLegend.Add(new GoComposeLegendVm
             {
-                Fill = fill,
-                Codigo = cat.Codigo,
-                PctLabel = $"{cat.Pct:N0}%",
+                Fill = ParseBrush(GoPalette[item.PaletteIndex % GoPalette.Length]),
+                Codigo = item.Codigo,
+                PctLabel = item.PctLabel,
             });
         }
     }
@@ -688,14 +663,14 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         if (!CanEdit || ShowEmptyState)
             return;
 
-        host.Session.Data.GastosOperacionales = GastosOperacionales.Select(c => c.ToRow()).ToList();
+        session.Data.GastosOperacionales = GastosOperacionales.Select(c => c.ToRow()).ToList();
         if (!markDirty)
             return;
 
         suppressGoRefresh = true;
         try
         {
-            host.Session.MarkDirty("gastos_operacionales");
+            session.MarkDirty(ProjectDirtyScope.GastosOperacionales);
         }
         finally
         {
@@ -710,7 +685,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         if (!CanEdit || cat is not { IsViaticosCategory: true })
             return;
 
-        var data = host.Session.Data;
+        var data = session.Data;
         var picoDir = data.MoDirecta?.Sum(r => Math.Max(0, r.Dotacion)) ?? TotalMoDirectaDotacion;
         var rolesInd = data.MoIndirecta?.Count(r => r.Dotacion > 0) ?? MoIndirectaRows.Count(r => r.Dotacion > 0);
         if (rolesInd <= 0)
@@ -724,7 +699,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         var vm = new ViaticosProfesionalViewModel(currentValorUf, picoDir, rolesInd, mesesObra);
         vm.SyncFromMoRequested = () =>
         {
-            var d = host.Session.Data;
+            var d = session.Data;
             var p = d.MoDirecta?.Sum(r => Math.Max(0, r.Dotacion)) ?? 0;
             var ind = d.MoIndirecta?.Count(r => r.Dotacion > 0) ?? 0;
             if (ind <= 0)
@@ -778,7 +753,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
                 new GastoOperacionalItemRow { Concepto = "Nuevo ítem", Unidad = "un", Cantidad = 0, PrecioUnitarioClp = 0 }
             ],
         };
-        var vm = new GastoOpCategoriaVm(row, currentValorUf, OnGoChanged, expanded: true);
+        var vm = new GastoOpCategoriaVm(row, currentValorUf, OnGoChanged, expanded: true, canEdit: () => CanEdit);
         GastosOperacionales.Add(vm);
         OnGoChanged();
     }
@@ -800,25 +775,26 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         var first = true;
         foreach (var r in GastoOperacionalPlantilla.CreateClean())
         {
-            GastosOperacionales.Add(new GastoOpCategoriaVm(r, currentValorUf, OnGoChanged, expanded: first));
+            GastosOperacionales.Add(new GastoOpCategoriaVm(r, currentValorUf, OnGoChanged, expanded: first, canEdit: () => CanEdit));
             first = false;
         }
         OnGoChanged();
     }
 
-    private void AddRow(ObservableCollection<CostoRowVm> rows, string label, decimal uf, string explanation,
+    private void AddRow(ObservableCollection<CostoRowVm> rows, string label, decimal clp, string explanation,
         string moneda, decimal valorUf, decimal tipoCambio, string kind = "regular")
     {
-        var svc = host.Services.CurrencyConversion;
+        var svc = currencySvc;
+        decimal uf = PriceConversion.ClpToUf(clp, valorUf);
         rows.Add(new CostoRowVm
         {
             Concepto = label,
             ValorUf = uf,
-            ValorMoneda = uf,
+            ValorMoneda = clp,
             Explicacion = explanation,
             Kind = kind,
-            ValorMonedaLabel = uf > 0
-                ? svc.FormatMoneyFromUf(uf, moneda, valorUf, tipoCambio)
+            ValorMonedaLabel = clp != 0m
+                ? svc.FormatMoneyFromClp(clp, moneda, valorUf, tipoCambio)
                 : "$ 0"
         });
     }
@@ -843,8 +819,8 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
     {
         foreach (var f in CoefFactors)
         {
-            var m = host.Session.GetFamilyMarkup(f.FamilyKey);
-            var d = host.Session.GetFamilyDiscountPct(f.FamilyKey);
+            var m = session.GetFamilyMarkup(f.FamilyKey);
+            var d = session.GetFamilyDiscountPct(f.FamilyKey);
             f.SetEffectiveSilent(m, d);
         }
     }
@@ -873,8 +849,8 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         EnsureCoefFactors();
         foreach (var f in CoefFactors)
         {
-            f.SetValueSilent(host.Session.GetFamilyMarkup(f.FamilyKey));
-            f.SetDiscountSilent(host.Session.GetFamilyDiscountPct(f.FamilyKey));
+            f.SetValueSilent(session.GetFamilyMarkup(f.FamilyKey));
+            f.SetDiscountSilent(session.GetFamilyDiscountPct(f.FamilyKey));
         }
         RefreshCoefEffectiveLabels();
         UpdateCostosPresetHint(project);
@@ -896,6 +872,9 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         politicaCostosExcel = project.PoliticaCostosExcel;
         OnPropertyChanged(nameof(PoliticaCostosExcel));
 
+        usarFactoresPresentacionFamilia = project.UsarFactoresPresentacionFamilia;
+        OnPropertyChanged(nameof(UsarFactoresPresentacionFamilia));
+
         UpdateCoefChips();
     }
 
@@ -912,7 +891,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         int active = 0;
         foreach (var f in CoefFactors)
         {
-            var v = host.Session.GetFamilyPresentationFactor(f.FamilyKey);
+            var v = session.GetFamilyPresentationFactor(f.FamilyKey);
             sum += v;
             if (v > 1m) active++;
         }
@@ -929,7 +908,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         suppressCoefRefresh = true;
         try
         {
-            host.Session.SetFamilyMarkup(familyKey, value);
+            session.SetFamilyMarkup(familyKey, value);
             RefreshCoefEffectiveLabels();
             UpdateCoefChips();
             RefreshCostOnly();
@@ -947,7 +926,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         suppressCoefRefresh = true;
         try
         {
-            host.Session.SetFamilyDiscountPct(familyKey, pct);
+            session.SetFamilyDiscountPct(familyKey, pct);
             RefreshCoefEffectiveLabels();
             UpdateCoefChips();
             RefreshCostOnly();
@@ -964,7 +943,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
     {
         NegotiatedDiscounts.Clear();
         foreach (var row in data.NegotiatedDiscounts ?? new List<NegotiatedDiscountRow>())
-            NegotiatedDiscounts.Add(new NegotiatedDiscountVm(row, OnNegotiatedDiscountsChanged));
+            NegotiatedDiscounts.Add(new NegotiatedDiscountVm(row, OnNegotiatedDiscountsChanged, () => CanEdit));
     }
 
     private void OnNegotiatedDiscountsChanged() => PersistNegotiatedDiscounts(markDirty: true);
@@ -974,14 +953,14 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         if (!CanEdit || ShowEmptyState)
             return;
 
-        host.Session.Data.NegotiatedDiscounts = NegotiatedDiscounts.Select(x => x.ToRow()).ToList();
+        session.Data.NegotiatedDiscounts = NegotiatedDiscounts.Select(x => x.ToRow()).ToList();
         if (!markDirty)
             return;
 
         suppressNegotiatedDiscountsRefresh = true;
         try
         {
-            host.Session.MarkDirty("negotiated_discounts");
+            session.MarkDirty(ProjectDirtyScope.NegotiatedDiscounts);
             RefreshCostOnly();
         }
         finally
@@ -994,7 +973,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
     {
         if (!CanEdit)
             return;
-        NegotiatedDiscounts.Add(new NegotiatedDiscountVm(new NegotiatedDiscountRow(), OnNegotiatedDiscountsChanged));
+        NegotiatedDiscounts.Add(new NegotiatedDiscountVm(new NegotiatedDiscountRow(), OnNegotiatedDiscountsChanged, () => CanEdit));
         PersistNegotiatedDiscounts(markDirty: true);
     }
 
@@ -1012,7 +991,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
     {
         StaffingPlan.Clear();
         foreach (var row in data.StaffingPlan ?? new List<StaffingRoleRow>())
-            StaffingPlan.Add(new StaffingRoleVm(row, OnStaffingPlanChanged));
+            StaffingPlan.Add(new StaffingRoleVm(row, OnStaffingPlanChanged, () => CanEdit));
         UpdateStaffingPlanTotal();
     }
 
@@ -1032,14 +1011,14 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         if (!CanEdit || ShowEmptyState)
             return;
 
-        host.Session.Data.StaffingPlan = StaffingPlan.Select(x => x.ToRow()).ToList();
+        session.Data.StaffingPlan = StaffingPlan.Select(x => x.ToRow()).ToList();
         if (!markDirty)
             return;
 
         suppressStaffingPlanRefresh = true;
         try
         {
-            host.Session.MarkDirty("staffing_plan");
+            session.MarkDirty(ProjectDirtyScope.StaffingPlan);
             RefreshCostOnly();
         }
         finally
@@ -1052,7 +1031,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
     {
         if (!CanEdit)
             return;
-        StaffingPlan.Add(new StaffingRoleVm(new StaffingRoleRow { DedicacionPct = 100m, Meses = 1 }, OnStaffingPlanChanged));
+        StaffingPlan.Add(new StaffingRoleVm(new StaffingRoleRow { DedicacionPct = 100m, Meses = 1 }, OnStaffingPlanChanged, () => CanEdit));
         PersistStaffingPlan(markDirty: true);
     }
 
@@ -1069,7 +1048,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
     {
         if (!CanEdit)
             return;
-        var project = host.Session.ProjectInfo;
+        var project = session.ProjectInfo;
         var preset = new CostosCoeficientesPresetRow
         {
             Etiqueta = string.IsNullOrWhiteSpace(project.Nombre) ? "Preset del proyecto" : $"Preset · {project.Nombre}",
@@ -1081,14 +1060,14 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         };
         foreach (var f in CoefFactors)
         {
-            preset.Factores[f.FamilyKey] = host.Session.GetFamilyMarkup(f.FamilyKey);
-            var d = host.Session.GetFamilyDiscountPct(f.FamilyKey);
+            preset.Factores[f.FamilyKey] = session.GetFamilyMarkup(f.FamilyKey);
+            var d = session.GetFamilyDiscountPct(f.FamilyKey);
             if (d > 0m)
                 preset.DescuentosFamiliaPct[f.FamilyKey] = d;
         }
 
         project.CostosPreset = preset;
-        host.Session.MarkDirty("project_info");
+        session.MarkDirty(ProjectDirtyScope.ProjectInfo);
         UpdateCostosPresetHint(project);
     }
 
@@ -1096,7 +1075,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
     {
         if (!CanEdit)
             return;
-        var project = host.Session.ProjectInfo;
+        var project = session.ProjectInfo;
         var preset = project.CostosPreset;
         if (preset is not { Factores.Count: > 0 })
             return;
@@ -1107,9 +1086,9 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
             foreach (var f in CoefFactors)
             {
                 var markup = preset.Factores.TryGetValue(f.FamilyKey, out var m) ? m : 1m;
-                host.Session.SetFamilyMarkup(f.FamilyKey, markup);
+                session.SetFamilyMarkup(f.FamilyKey, markup);
                 var dsct = preset.DescuentosFamiliaPct.TryGetValue(f.FamilyKey, out var d) ? d : 0m;
-                host.Session.SetFamilyDiscountPct(f.FamilyKey, dsct);
+                session.SetFamilyDiscountPct(f.FamilyKey, dsct);
                 f.SetValueSilent(markup);
                 f.SetDiscountSilent(dsct);
             }
@@ -1119,7 +1098,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
             project.ValorAgregadoEquiposPct = preset.ValorAgregadoEquiposPct;
             project.PoliticaCostosExcel = preset.PoliticaCostosExcel;
             project.MarkupMethod = preset.PoliticaCostosExcel ? "SobreCosto" : project.MarkupMethod;
-            host.Session.MarkDirty("project_info");
+            session.MarkDirty(ProjectDirtyScope.ProjectInfo);
 
             gastosGeneralesText = preset.GastosGeneralesPct.ToString("N1", CultureInfo.CurrentCulture);
             OnPropertyChanged(nameof(GastosGeneralesText));
@@ -1146,53 +1125,71 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         if (ShowEmptyState)
             return;
 
-        var session = host.Session;
         var project = session.ProjectInfo;
         var data = session.Data;
-        var cost = host.Dashboard.BuildCost(data);
-        var svc = host.Services.CurrencyConversion;
+        var cost = dashboard.BuildCost(data);
+        var svc = currencySvc;
         var moneda = svc.NormalizeCurrency(project.MonedaPresupuesto);
         var valorUf = project.ValorUfClp > 0 ? project.ValorUfClp : session.ValorUfClp;
-        if (valorUf <= 0) valorUf = 37998m;
+        if (valorUf <= 0) valorUf = PriceConversion.DefaultValorUfClp;
         var tipoCambio = project.TipoCambioUsdClp;
 
-        CostoDirectoLabel = $"{cost.CostoDirectoUf:N2} UF";
-        CostoDirectoSubLabel = svc.FormatMoneyFromUf(cost.CostoDirectoUf, moneda, valorUf, tipoCambio);
-        TotalVentaLabel = $"{cost.TotalVentaUf:N2} UF";
-        TotalVentaSubLabel = svc.FormatMoneyFromUf(cost.TotalVentaUf, moneda, valorUf, tipoCambio);
-        MargenLabel = $"{cost.MargenRealPct:N1} %";
-        UfM2Label = $"{cost.UfM2:N2} UF";
-        UfM2SubLabel = project.MetrosCuadrados > 0
-            ? $"{project.MetrosCuadrados:N0} m² · {svc.FormatMoneyFromUf(cost.UfM2, moneda, valorUf, tipoCambio)} / m²"
-            : "Sin m² configurados";
-
+        UpdateSummaryKpis(cost, project, valorUf);
         FillCostRows(CostRows, cost, project, moneda, valorUf, tipoCambio);
         RefreshClosingPolicySection(cost, moneda, valorUf, tipoCambio);
-        ResumenFooterText = $"Costo ejecución {cost.CostoDirectoUf:N2} UF · Total venta {cost.TotalVentaUf:N2} UF · Margen {cost.MargenRealPct:N1}%";
+    }
+
+    private void UpdateSummaryKpis(CostBreakdown cost, ProjectInfoRow project, decimal valorUf)
+    {
+        decimal directoClp = cost.CostoDirectoClp;
+        decimal directoUf = PriceConversion.ClpToUf(directoClp, valorUf);
+        decimal ventaClp = cost.TotalVentaClp;
+        decimal ventaUf = PriceConversion.ClpToUf(ventaClp, valorUf);
+        decimal m2Clp = project.MetrosCuadrados > 0 ? ventaClp / project.MetrosCuadrados : 0m;
+
+        CostoDirectoLabel = $"$ {directoClp:N0}";
+        CostoDirectoSubLabel = $"{directoUf:N2} UF";
+        TotalVentaLabel = $"$ {ventaClp:N0}";
+        TotalVentaSubLabel = $"{ventaUf:N2} UF";
+        MargenLabel = $"{cost.MargenRealPct:N1} %";
+        UfM2Label = $"{PriceConversion.ClpToUf(m2Clp, valorUf):N2} UF/m²";
+        UfM2SubLabel = project.MetrosCuadrados > 0 ? $"{project.MetrosCuadrados:N0} m² · $ {m2Clp:N0} / m²" : "Sin m² configurados";
+        ResumenFooterText = $"Costo ejecución $ {directoClp:N0} ({directoUf:N2} UF) · Total venta $ {ventaClp:N0} ({ventaUf:N2} UF) · Margen {cost.MargenRealPct:N1}%";
+        NegotiationSimulator.UpdateBase(directoClp, ventaClp, valorUf);
     }
 
     private void RefreshClosingPolicySection(CostBreakdown cost, string moneda, decimal valorUf, decimal tipoCambio)
     {
-        var selection = host.Session.Data.ClosingPolicy ?? ClosingPolicySelection.Default();
+        var selection = session.Data.ClosingPolicy ?? ClosingPolicySelection.Default();
         ClosingPolicySection.SetSilent(selection);
-        var result = ClosingPolicyEngine.Apply(cost, selection);
-        var svc = host.Services.CurrencyConversion;
-        ClosingPolicySection.SetResult(result, svc.FormatMoneyFromUf(result.VentaFinalClp, moneda, valorUf, tipoCambio));
+        // El motor ya aplicó la política sobre el breakdown; leer su resultado en vez de recalcular.
+        var result = cost.ClosingPolicyResult ?? ClosingPolicyEngine.Apply(cost, selection);
+        var svc = currencySvc;
+        ClosingPolicySection.SetResult(result, svc.FormatMoneyFromClp(result.VentaFinalClp, moneda, valorUf, tipoCambio));
+        ClosingPolicySection.SetSafeguards(selection, cost.CostoDirectoClp);
     }
+
+    private static readonly HashSet<string> AbsoluteAmountParams = new(StringComparer.Ordinal)
+    {
+        nameof(ClosingPolicySelection.TargetPriceClp), nameof(ClosingPolicySelection.FeeClp),
+        nameof(ClosingPolicySelection.TargetCostClp), nameof(ClosingPolicySelection.GainshareCapClp)
+    };
 
     private void CommitClosingPolicyType(ClosingPolicyType policy)
     {
         if (!CanEdit) return;
-        var selection = host.Session.Data.ClosingPolicy ??= ClosingPolicySelection.Default();
+        var selection = session.Data.ClosingPolicy ??= ClosingPolicySelection.Default();
+        if (selection.Policy == policy) return;
+        audit?.RecordLifecycle("Política de cierre", $"{selection.Policy} → {policy}");
         selection.Policy = policy;
-        host.Session.MarkDirty("closing_policy");
+        session.MarkDirty(ProjectDirtyScope.ClosingPolicy);
         RefreshCostOnly();
     }
 
     private void CommitClosingPolicyParam(string paramName, decimal value)
     {
         if (!CanEdit) return;
-        var selection = host.Session.Data.ClosingPolicy ??= ClosingPolicySelection.Default();
+        var selection = session.Data.ClosingPolicy ??= ClosingPolicySelection.Default();
         switch (paramName)
         {
             case nameof(ClosingPolicySelection.TargetPriceClp): selection.TargetPriceClp = value; break;
@@ -1203,9 +1200,17 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
             case nameof(ClosingPolicySelection.GainsharePct): selection.GainsharePct = value; break;
             case nameof(ClosingPolicySelection.GainshareCapClp): selection.GainshareCapClp = value; break;
         }
-        host.Session.MarkDirty("closing_policy");
+        if (AbsoluteAmountParams.Contains(paramName))
+        {
+            selection.ParamsStampedAt = AppClock.Now;
+            try { selection.ParamsStampedCostoEjecucionClp = dashboard.BuildCost(session.Data).CostoDirectoUf; }
+            catch { /* breakdown no disponible: se sella sin costo de referencia */ }
+        }
+        session.MarkDirty(ProjectDirtyScope.ClosingPolicy);
         RefreshCostOnly();
     }
+
+    private void ApplyNegotiatedTargetPrice(decimal targetPrice) { CommitClosingPolicyType(ClosingPolicyType.TargetPrice); CommitClosingPolicyParam(nameof(ClosingPolicySelection.TargetPriceClp), targetPrice); }
 
     private void FillCostRows(
         ObservableCollection<CostoRowVm> rows,
@@ -1216,60 +1221,8 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         decimal tipoCambio)
     {
         rows.Clear();
-        var excel = project.PoliticaCostosExcel;
-
-        AddRow(rows, "Mano de obra", cost.ManoObraUf,
-            excel ? "MO efectiva (módulo o cubicación/APU)" : "Suma de mano de obra valorizada desde APU",
-            moneda, valorUf, tipoCambio);
-        AddRow(rows, "Materiales", cost.MaterialesUf, "Suma de materiales valorizados desde cubicación", moneda, valorUf, tipoCambio);
-        AddRow(rows, "Equipos", cost.EquiposUf, "Equipos desde APU / costos complementarios", moneda, valorUf, tipoCambio);
-        if (excel || cost.GastosOperacionalesUf > 0m)
-            AddRow(rows, "Gastos operacionales", cost.GastosOperacionalesUf, "GO 3.1–3.6 del módulo Costos", moneda, valorUf, tipoCambio);
-        AddRow(rows, "Subcontratos", cost.SubcontratosUf, "Subcontratos desde APU", moneda, valorUf, tipoCambio);
-        AddRow(rows, "Herramientas", cost.HerramientasUf, "Herramientas cuando aplica", moneda, valorUf, tipoCambio);
-        AddRow(rows, "Mermas", cost.MermasUf, "Mermas cuando aplica", moneda, valorUf, tipoCambio);
-        AddRow(rows, "Transporte", cost.TransporteUf, "Transporte desde APU", moneda, valorUf, tipoCambio);
-        AddRow(rows, "Órdenes de cambio", cost.OrdenesCambioUf, "OC aprobadas — separadas de subcontratos", moneda, valorUf, tipoCambio);
-
-        AddRow(rows, excel ? "Costo de ejecución" : "Costo directo", cost.CostoDirectoUf,
-            excel ? "Mat + MO + Equipos + GO + complementarios" : "Costo base del presupuesto",
-            moneda, valorUf, tipoCambio, "total");
-
-        AddRow(rows, "Riesgo", cost.RiesgoUf, "Imprevistos / riesgo comercial", moneda, valorUf, tipoCambio);
-
-        if (excel)
-        {
-            AddRow(rows, $"Gastos generales ({project.GastosGeneralesPct:N1}%)", cost.GastosGeneralesUf,
-                "GG sobre Mat + MO + GO (sin equipos) · Excel COSTOS", moneda, valorUf, tipoCambio, "coef");
-            AddRow(rows, $"Utilidades ({project.UtilidadPct:N1}%)", cost.UtilidadAditivaUf,
-                "Utilidad aditiva sobre Mat + MO + GO · Excel COSTOS", moneda, valorUf, tipoCambio, "coef");
-            AddRow(rows, $"VA sobre equipos ({project.ValorAgregadoEquiposPct:N1}%)", cost.ValorAgregadoEquiposUf,
-                "Valor agregado solo sobre equipos · Excel COSTOS", moneda, valorUf, tipoCambio, "coef");
-            AddRow(rows, "Costo total proyecto", cost.CostoProyectoUf,
-                "Ejecución + GG + UT + VA", moneda, valorUf, tipoCambio, "subtotal");
-            AddRow(rows, "Diferencia por factores", cost.DiferenciaFactoresUf,
-                "Venta − costo proyecto (aporte de los × de presentación)", moneda, valorUf, tipoCambio, "coef");
-        }
-        else
-        {
-            AddRow(rows, $"Gastos generales ({project.GastosGeneralesPct:N1}%)", cost.GastosGeneralesUf,
-                "GG sobre costo directo según política", moneda, valorUf, tipoCambio, "coef");
-            if (cost.ValorAgregadoEquiposUf > 0m || project.ValorAgregadoEquiposPct > 0m)
-                AddRow(rows, $"VA sobre equipos ({project.ValorAgregadoEquiposPct:N1}%)", cost.ValorAgregadoEquiposUf,
-                    "Valor agregado solo sobre equipos", moneda, valorUf, tipoCambio, "coef");
-            AddRow(rows, "Subtotal", cost.SubtotalUf, "Costo directo + riesgo + GG + VA", moneda, valorUf, tipoCambio, "subtotal");
-            var utilidadLabel = string.Equals(project.MarkupMethod, "SobreVenta", StringComparison.OrdinalIgnoreCase)
-                ? $"Margen s/ venta ({project.UtilidadPct:N1}%)"
-                : $"Utilidad ({project.UtilidadPct:N1}%)";
-            AddRow(rows, utilidadLabel, cost.UtilidadUf, "Utilidad / margen según política comercial", moneda, valorUf, tipoCambio, "coef");
-        }
-
-        AddRow(rows, "Descuento", cost.DescuentoUf, "Descuento comercial", moneda, valorUf, tipoCambio);
-        AddRow(rows, "Total venta neto", cost.TotalVentaNetoUf, "Total antes de IVA", moneda, valorUf, tipoCambio, "subtotal");
-        AddRow(rows, "IVA", cost.IvaUf, "IVA incluido en total", moneda, valorUf, tipoCambio);
-        AddRow(rows, "TOTAL VENTA", cost.TotalVentaUf, "Neto + IVA", moneda, valorUf, tipoCambio, "grand");
-        if (project.MetrosCuadrados > 0)
-            AddRow(rows, $"UF / m² ({project.MetrosCuadrados:N0} m²)", cost.UfM2, "Total venta / m²", moneda, valorUf, tipoCambio);
+        foreach (var line in CostoBreakdownLineBuilder.BuildLines(cost, project))
+            AddRow(rows, line.Label, line.AmountUf, line.Explanation, moneda, valorUf, tipoCambio, line.Kind);
     }
 
     private void ResetCoeficientes()
@@ -1281,8 +1234,8 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         {
             foreach (var f in CoefFactors)
             {
-                host.Session.SetFamilyMarkup(f.FamilyKey, 1.00m);
-                host.Session.SetFamilyDiscountPct(f.FamilyKey, 0m);
+                session.SetFamilyMarkup(f.FamilyKey, 1.00m);
+                session.SetFamilyDiscountPct(f.FamilyKey, 0m);
                 f.SetValueSilent(1.00m);
                 f.SetDiscountSilent(0m);
             }
@@ -1312,12 +1265,12 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
             foreach (var f in CoefFactors)
             {
                 var v = preset.TryGetValue(f.FamilyKey, out var x) ? x : fallback;
-                host.Session.SetFamilyMarkup(f.FamilyKey, v);
+                session.SetFamilyMarkup(f.FamilyKey, v);
                 f.SetValueSilent(v);
             }
 
-            ExcelCostosBridge.ApplyPoliticaExcelPel029(host.Session.ProjectInfo);
-            host.Session.MarkDirty("project_info");
+            ExcelCostosBridge.ApplyPoliticaExcelPel029(session.ProjectInfo);
+            session.MarkDirty(ProjectDirtyScope.ProjectInfo);
 
             gastosGeneralesText = "5,0";
             OnPropertyChanged(nameof(GastosGeneralesText));
@@ -1340,10 +1293,10 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
 
     private void ApplyCoeficientes()
     {
-        if (CanEdit && !host.Session.ProjectInfo.PoliticaCostosExcel)
+        if (CanEdit && !session.ProjectInfo.PoliticaCostosExcel)
         {
-            host.Session.ProjectInfo.PoliticaCostosExcel = true;
-            host.Session.MarkDirty("project_info");
+            session.ProjectInfo.PoliticaCostosExcel = true;
+            session.MarkDirty(ProjectDirtyScope.ProjectInfo);
             politicaCostosExcel = true;
             OnPropertyChanged(nameof(PoliticaCostosExcel));
             UtilidadPolicyLabel = "Utilidades (aditiva Excel)";

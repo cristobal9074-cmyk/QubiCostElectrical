@@ -13,9 +13,17 @@
   <sys:Double x:Key="Font.Size.xs">10</sys:Double>
   <sys:Double x:Key="Font.Size.sm">11</sys:Double>
   <sys:Double x:Key="Font.Size.md">12</sys:Double>
+  <sys:Double x:Key="Font.Size.base">13</sys:Double>
+  <sys:Double x:Key="Font.Size.kpi">15</sys:Double>
   <sys:Double x:Key="Font.Size.lg">14</sys:Double>
+  <sys:Double x:Key="Font.Size.price">17</sys:Double>
+  <sys:Double x:Key="Font.Size.h3">16</sys:Double>
+  <sys:Double x:Key="Font.Size.h2">18</sys:Double>
   <sys:Double x:Key="Font.Size.xl">20</sys:Double>
+  <sys:Double x:Key="Font.Size.hero">22</sys:Double>
   <sys:Double x:Key="Font.Size.2xl">24</sys:Double>
+  <sys:Double x:Key="Font.Size.3xl">28</sys:Double>
+  <sys:Double x:Key="Font.Size.micro">8</sys:Double>
 
   <Style x:Key="Text.Caption" TargetType="TextBlock">
     <Setter Property="FontFamily" Value="{StaticResource Font.Ui}" />
@@ -91,6 +99,28 @@
     <Setter Property="FontSize" Value="{StaticResource Font.Size.lg}" />
     <Setter Property="FontWeight" Value="SemiBold" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+  </Style>
+
+  <Style x:Key="Text.SectionTitle" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource Font.Ui}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.base}" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+  </Style>
+
+  <Style x:Key="Text.KpiLabel" TargetType="TextBlock" BasedOn="{StaticResource Text.SectionLabel}" />
+
+  <Style x:Key="Text.KpiInline" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.kpi}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+  </Style>
+
+  <Style x:Key="Text.Helper" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource Font.Ui}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.sm}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
   </Style>
 
 </ResourceDictionary>

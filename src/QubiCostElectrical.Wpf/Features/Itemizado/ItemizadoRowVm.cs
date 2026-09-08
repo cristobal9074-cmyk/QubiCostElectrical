@@ -19,8 +19,15 @@ public sealed class ItemizadoRowVm : ViewModelBase, IGridCellValidationSource
     private bool isSelected;
     private bool isTitleRow;
     private string? itemEditSnapshot;
+    private readonly Func<bool>? canEdit;
 
-    public ItemizadoRowVm(ItemizadoRow model) => this.model = model;
+    public ItemizadoRowVm(ItemizadoRow model, Func<bool>? canEdit = null)
+    {
+        this.model = model;
+        this.canEdit = canEdit;
+    }
+
+    private bool AllowEdit => canEdit?.Invoke() ?? true;
 
     public void UpdateModel(ItemizadoRow newModel)
     {
@@ -46,6 +53,7 @@ public sealed class ItemizadoRowVm : ViewModelBase, IGridCellValidationSource
         get => model.Item ?? "";
         set
         {
+            if (!AllowEdit) return;
             string normalized = value ?? "";
             if (string.Equals(model.Item, normalized, StringComparison.Ordinal))
                 return;
@@ -57,19 +65,35 @@ public sealed class ItemizadoRowVm : ViewModelBase, IGridCellValidationSource
     public string Descripcion
     {
         get => model.Descripcion ?? "";
-        set { model.Descripcion = value; OnPropertyChanged(); }
+        set
+        {
+            if (!AllowEdit) return;
+            model.Descripcion = value;
+            OnPropertyChanged();
+        }
     }
 
     public string Unidad
     {
         get => model.Unidad ?? "";
-        set { model.Unidad = value; OnPropertyChanged(); }
+        set
+        {
+            if (!AllowEdit) return;
+            model.Unidad = value;
+            OnPropertyChanged();
+        }
     }
 
     public decimal Cantidad
     {
         get => model.Cantidad;
-        set { model.Cantidad = value; OnPropertyChanged(); OnPropertyChanged(nameof(CantidadText)); }
+        set
+        {
+            if (!AllowEdit) return;
+            model.Cantidad = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(CantidadText));
+        }
     }
 
     public string CantidadText
@@ -88,6 +112,7 @@ public sealed class ItemizadoRowVm : ViewModelBase, IGridCellValidationSource
         get => model.EsTitulo;
         set
         {
+            if (!AllowEdit) return;
             if (model.EsTitulo == value)
                 return;
             model.EsTitulo = value;
@@ -157,11 +182,43 @@ public sealed class ItemizadoRowVm : ViewModelBase, IGridCellValidationSource
         get => model.ExcluidoCubicacion;
         set
         {
+            if (!AllowEdit) return;
             if (model.ExcluidoCubicacion == value)
                 return;
             model.ExcluidoCubicacion = value;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(MotivoNoCubicarHint));
             FieldCommitted?.Invoke(this, "Excl. cubic.");
+        }
+    }
+
+    /// <summary>Motivo opcional de exclusión (vacío = sin observación).</summary>
+    public string MotivoNoCubicar
+    {
+        get => model.MotivoNoCubicar ?? "";
+        set
+        {
+            if (!AllowEdit) return;
+            string clean = value ?? "";
+            if (string.Equals(model.MotivoNoCubicar, clean, StringComparison.Ordinal))
+                return;
+            model.MotivoNoCubicar = clean;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(MotivoNoCubicarHint));
+            FieldCommitted?.Invoke(this, "Motivo no cubicar");
+        }
+    }
+
+    public string MotivoNoCubicarHint
+    {
+        get
+        {
+            if (!model.ExcluidoCubicacion)
+                return "Marque «No cubicar» (Ctrl+E) si la partida no se toma en el takeoff.";
+            var motivo = (model.MotivoNoCubicar ?? "").Trim();
+            return string.IsNullOrEmpty(motivo)
+                ? "Marcada en Cubicación sin observación (escriba el motivo ahí)."
+                : "Excluida de cubicación: " + motivo;
         }
     }
 
@@ -246,6 +303,8 @@ public sealed class ItemizadoRowVm : ViewModelBase, IGridCellValidationSource
         IsTitleRow = presentation.EsTitulo;
         FilterPresentation = presentation;
         OnPropertyChanged(nameof(ExcluidoCubicacion));
+        OnPropertyChanged(nameof(MotivoNoCubicar));
+        OnPropertyChanged(nameof(MotivoNoCubicarHint));
         OnPropertyChanged(nameof(Item));
         OnPropertyChanged(nameof(Descripcion));
         OnPropertyChanged(nameof(Unidad));

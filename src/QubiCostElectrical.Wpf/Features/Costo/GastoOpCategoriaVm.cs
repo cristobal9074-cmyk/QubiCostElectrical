@@ -15,6 +15,7 @@ namespace QubiCostElectrical.Wpf.Features.Costo;
 public sealed class GastoOpCategoriaVm : ViewModelBase
 {
     private readonly Action? onChanged;
+    private readonly Func<bool>? canEdit;
     private string codigo;
     private string concepto;
     private decimal montoClp;
@@ -23,18 +24,21 @@ public sealed class GastoOpCategoriaVm : ViewModelBase
     private decimal valorUf = 1m;
     private bool isExpanded;
 
-    public GastoOpCategoriaVm(GastoOperacionalRow row, decimal valorUf, Action? onChanged, bool expanded = false)
+    public GastoOpCategoriaVm(GastoOperacionalRow row, decimal valorUf, Action? onChanged, bool expanded = false, Func<bool>? canEdit = null)
     {
         Id = string.IsNullOrWhiteSpace(row.Id) ? Guid.NewGuid().ToString("N") : row.Id;
         codigo = row.Codigo ?? "";
         concepto = row.Concepto ?? "";
         this.valorUf = valorUf > 0 ? valorUf : 1m;
         this.onChanged = onChanged;
+        this.canEdit = canEdit;
         isExpanded = expanded;
         foreach (var item in row.Items ?? Enumerable.Empty<GastoOperacionalItemRow>())
-            Items.Add(new GastoOpItemVm(item, NotifyItemChanged));
+            Items.Add(CreateItem(item));
         RecalcFromItems(notify: false);
     }
+
+    private bool AllowEdit => canEdit?.Invoke() ?? true;
 
     public string Id { get; }
     public ObservableCollection<GastoOpItemVm> Items { get; } = new();
@@ -58,6 +62,7 @@ public sealed class GastoOpCategoriaVm : ViewModelBase
         get => codigo;
         set
         {
+            if (!AllowEdit) return;
             if (SetProperty(ref codigo, value ?? ""))
             {
                 OnPropertyChanged(nameof(IsViaticosCategory));
@@ -71,6 +76,7 @@ public sealed class GastoOpCategoriaVm : ViewModelBase
         get => concepto;
         set
         {
+            if (!AllowEdit) return;
             if (SetProperty(ref concepto, value ?? ""))
             {
                 OnPropertyChanged(nameof(IsViaticosCategory));
@@ -132,13 +138,13 @@ public sealed class GastoOpCategoriaVm : ViewModelBase
 
     public void AddBlankItem()
     {
-        Items.Add(new GastoOpItemVm(new GastoOperacionalItemRow
+        Items.Add(CreateItem(new GastoOperacionalItemRow
         {
             Concepto = "Nuevo ítem",
             Unidad = "un",
             Cantidad = 0,
             PrecioUnitarioClp = 0,
-        }, NotifyItemChanged));
+        }));
         OnPropertyChanged(nameof(HasItems));
         OnPropertyChanged(nameof(ItemsCountLabel));
         IsExpanded = true;
@@ -147,13 +153,13 @@ public sealed class GastoOpCategoriaVm : ViewModelBase
 
     public void AddItemSilent(string concepto, string unidad)
     {
-        Items.Add(new GastoOpItemVm(new GastoOperacionalItemRow
+        Items.Add(CreateItem(new GastoOperacionalItemRow
         {
             Concepto = concepto,
             Unidad = unidad,
             Cantidad = 0,
             PrecioUnitarioClp = 0,
-        }, NotifyItemChanged));
+        }));
         OnPropertyChanged(nameof(HasItems));
         OnPropertyChanged(nameof(ItemsCountLabel));
         RecalcFromItems(notify: false);
@@ -172,14 +178,14 @@ public sealed class GastoOpCategoriaVm : ViewModelBase
     {
         Items.Clear();
         foreach (var row in rows)
-            Items.Add(new GastoOpItemVm(row, NotifyItemChanged));
+            Items.Add(CreateItem(row));
 
         if (preserveBus != null
             && !Items.Any(i =>
                 i.Concepto.Contains("bus", StringComparison.OrdinalIgnoreCase)
                 || i.Concepto.Contains("Arriendo / traslado", StringComparison.OrdinalIgnoreCase)))
         {
-            Items.Add(new GastoOpItemVm(preserveBus, NotifyItemChanged));
+            Items.Add(CreateItem(preserveBus));
         }
 
         OnPropertyChanged(nameof(HasItems));
@@ -195,6 +201,9 @@ public sealed class GastoOpCategoriaVm : ViewModelBase
         if (notify)
             onChanged?.Invoke();
     }
+
+    private GastoOpItemVm CreateItem(GastoOperacionalItemRow row) =>
+        new(row, NotifyItemChanged, canEdit);
 
     private void NotifyItemChanged() => RecalcFromItems();
 

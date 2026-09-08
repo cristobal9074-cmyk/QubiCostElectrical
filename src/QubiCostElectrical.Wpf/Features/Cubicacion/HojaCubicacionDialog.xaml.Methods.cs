@@ -113,12 +113,6 @@ public partial class HojaCubicacionDialog : Window
         if (loadedGrids.Add(grid))
             BuildColumns(grid, item);
 
-        // Reutiliza la infraestructura Excel ya probada del resto de la app (F2 para editar,
-        // Ctrl+A seleccionar todo, Ctrl+D/R rellenar, flechas mover/extender selección,
-        // Home/End/Ctrl+Home/End, marco de "copiado" animado, etc.) — misma esencia que
-        // Cubicación e Itemizado, no una reimplementación paralela.
-        DataGridExcelNavigation.Attach(grid);
-
         grid.PreviewKeyDown -= OnItemGridPreviewKeyDown;
         grid.PreviewKeyDown += OnItemGridPreviewKeyDown;
         grid.CurrentCellChanged -= OnItemGridCurrentCellChanged;
@@ -192,10 +186,6 @@ public partial class HojaCubicacionDialog : Window
             e.Handled = true;
             return;
         }
-
-        // El resto de los atajos "estilo Excel" (F2, flechas, Ctrl+flecha, Home/End, Ctrl+D/R,
-        // Delete, Escape, Ctrl+A) los resuelve el helper compartido.
-        DataGridExcelNavigation.HandlePreviewKeyDown(grid, e);
     }
 
     // ── Barra de fórmulas: muestra "celda actual" (ej. "C4") y su contenido crudo, editable

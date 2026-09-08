@@ -15,6 +15,124 @@ namespace QubiCostElectrical.Wpf.Features.Cubicacion;
 
 public partial class CubicacionView : UserControl
 {
+    private void FocusMotivoNoCubicarBox()
+    {
+        Dispatcher.BeginInvoke(new Action(() =>
+        {
+            if (MotivoNoCubicarBox == null)
+                return;
+
+            // Sale de la celda activa de la grilla para que el teclado escriba en la observación.
+            try
+            {
+                ResourceGrid.CommitEdit(DataGridEditingUnit.Cell, true);
+                ResourceGrid.CommitEdit(DataGridEditingUnit.Row, true);
+            }
+            catch
+            {
+                // Ignorar: a veces no hay edición activa.
+            }
+
+            MotivoNoCubicarBox.Focus();
+            Keyboard.Focus(MotivoNoCubicarBox);
+            MotivoNoCubicarBox.CaretIndex = MotivoNoCubicarBox.Text?.Length ?? 0;
+        }), System.Windows.Threading.DispatcherPriority.Input);
+    }
+
+    private void OnPartidasPanelPreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (Vm == null)
+            return;
+
+        var key = e.Key == Key.System ? e.SystemKey : e.Key;
+        var mods = Keyboard.Modifiers;
+
+        // Ctrl++ (y Ctrl+Shift++ en teclados donde + va con Shift) → agregar partida
+        bool ctrl = mods.HasFlag(ModifierKeys.Control);
+        bool alt = mods.HasFlag(ModifierKeys.Alt);
+        bool shift = mods.HasFlag(ModifierKeys.Shift);
+        if (ctrl && !alt && (key == Key.OemPlus || key == Key.Add))
+        {
+            if (Vm.AddPartidaCommand.CanExecute(null))
+                Vm.AddPartidaCommand.Execute(null);
+            e.Handled = true;
+            return;
+        }
+
+        // Ctrl+- → eliminar partida activa
+        if (ctrl && !alt && !shift && (key == Key.OemMinus || key == Key.Subtract))
+        {
+            if (Vm.DeletePartidaCommand.CanExecute(null))
+                Vm.DeletePartidaCommand.Execute(null);
+            e.Handled = true;
+            return;
+        }
+
+        // Espacio → Alternar marcado para aplicación de plantilla en lote
+        if (!ctrl && !alt && key == Key.Space && Keyboard.FocusedElement is not TextBox)
+        {
+            if (Vm.SelectedPartida != null && Vm.SelectedPartida.EsPartida)
+            {
+                Vm.SelectedPartida.IsTagged = !Vm.SelectedPartida.IsTagged;
+                e.Handled = true;
+            }
+        }
+    }
+
+    private void OnMoreActionsClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { ContextMenu: { } menu } button)
+        {
+            menu.PlacementTarget = button;
+            menu.Placement = PlacementMode.Bottom;
+            menu.DataContext = DataContext;
+            menu.IsOpen = true;
+        }
+    }
+
+    private void OnChipClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: string text } && Vm != null)
+        {
+            Vm.ApplyObservationChip(text);
+        }
+    }
+
+    private void OnClearObservationClick(object sender, RoutedEventArgs e)
+    {
+        Vm?.ClearObservation();
+    }
+
+    private void OnRecentObservationsClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button btn && Vm != null)
+        {
+            var menu = new ContextMenu();
+            var prefs = UserPreferencesStore.Load();
+            var suggestions = ObservationMemoryStore.GetSuggestions(prefs);
+
+            if (suggestions.Count == 0)
+            {
+                var emptyItem = new MenuItem { Header = "Sin observaciones recientes", IsEnabled = false };
+                menu.Items.Add(emptyItem);
+            }
+            else
+            {
+                foreach (var obs in suggestions)
+                {
+                    var item = new MenuItem { Header = obs };
+                    string captured = obs;
+                    item.Click += (_, _) => Vm.ApplyObservationChip(captured);
+                    menu.Items.Add(item);
+                }
+            }
+
+            menu.PlacementTarget = btn;
+            menu.Placement = PlacementMode.Bottom;
+            menu.IsOpen = true;
+        }
+    }
+
     private void SetFieldEditingState(TextBox tb, bool isEditing)
     {
         _fieldEditingState[tb] = isEditing;
@@ -30,10 +148,13 @@ public partial class CubicacionView : UserControl
     {
         InitializeComponent();
         DataContext = vm;
-        DataGridExcelNavigation.Attach(ResourceGrid);
         BindItemRowCellWidths();
         ApplyGridMode();
         Loaded += OnLoaded;
+        vm.RequestFocusMotivoNoCubicar += FocusMotivoNoCubicarBox;
+        vm.RequestFillDown += HandleFillDown;
+        vm.RequestFillRight += HandleFillRight;
+        vm.RequestRepeatMeasurement += HandleRepeatMeasurement;
         // Seleccionar primer ítem del popup al abrirse
         vm.PropertyChanged += (_, e) =>
         {
@@ -90,6 +211,38 @@ public partial class CubicacionView : UserControl
             ResourceGrid.Focus();
     }
 
+    private void OnPartidaHeaderBoxPreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter)
+        {
+            if (sender is TextBox tb)
+            {
+                var binding = BindingOperations.GetBindingExpression(tb, TextBox.TextProperty);
+                binding?.UpdateSource();
+                if (tb == PartidaCodigoBox)
+                {
+                    PartidaDescripcionBox?.Focus();
+                    PartidaDescripcionBox?.SelectAll();
+                }
+                else
+                {
+                    ResourceGrid?.Focus();
+                }
+                e.Handled = true;
+            }
+        }
+        else if (e.Key == Key.Escape)
+        {
+            if (sender is TextBox tb)
+            {
+                var binding = BindingOperations.GetBindingExpression(tb, TextBox.TextProperty);
+                binding?.UpdateTarget();
+                ResourceGrid?.Focus();
+                e.Handled = true;
+            }
+        }
+    }
+
     // ── Teclado global ────────────────────────────────────────────────────
     private void OnKeyDown(object sender, KeyEventArgs e)
     {
@@ -106,19 +259,35 @@ public partial class CubicacionView : UserControl
         }
 
         // Con Alt presionado WPF entrega Key.System; la tecla real va en SystemKey.
-        var key = e.Key == Key.System ? e.SystemKey : e.Key;
-
-        if (e.KeyboardDevice.Modifiers == ModifierKeys.Alt)
+        if (CubicacionShortcutRouting.TryHandle(e, Vm))
         {
-            if (key == Key.Up)
+            e.Handled = true;
+            return;
+        }
+
+        var key = e.Key == Key.System ? e.SystemKey : e.Key;
+        var mods = Keyboard.Modifiers;
+        bool ctrl = mods.HasFlag(ModifierKeys.Control);
+        bool alt = mods.HasFlag(ModifierKeys.Alt);
+        bool shift = mods.HasFlag(ModifierKeys.Shift);
+
+        // Ctrl++ → agregar partida
+        if (ctrl && !alt && (key == Key.OemPlus || key == Key.Add || (shift && (key == Key.OemPlus || key == Key.Oem1 || key == Key.OemQuestion))))
+        {
+            if (Vm.AddPartidaCommand.CanExecute(null))
             {
-                MoveSelectedPartida(-1);
+                Vm.AddPartidaCommand.Execute(null);
                 e.Handled = true;
                 return;
             }
-            if (key == Key.Down)
+        }
+
+        // Ctrl+- → eliminar partida activa
+        if (ctrl && !alt && !shift && (key == Key.OemMinus || key == Key.Subtract))
+        {
+            if (Vm.DeletePartidaCommand.CanExecute(null))
             {
-                MoveSelectedPartida(1);
+                Vm.DeletePartidaCommand.Execute(null);
                 e.Handled = true;
                 return;
             }
@@ -139,16 +308,6 @@ public partial class CubicacionView : UserControl
                         OnPasteKeyDown(sender, e);
                         e.Handled = true;
                     }
-                    return;
-                case Key.A:
-                    if (Vm.ShowSectorMatrixCommand.CanExecute(null))
-                        Vm.ShowSectorMatrixCommand.Execute(null);
-                    e.Handled = true;
-                    return;
-                case Key.D:
-                    if (Vm.ShowResourceDetailCommand.CanExecute(null))
-                        Vm.ShowResourceDetailCommand.Execute(null);
-                    e.Handled = true;
                     return;
             }
         }
@@ -657,7 +816,14 @@ public partial class CubicacionView : UserControl
             // SectorValues. Esto garantiza el commit sin depender del timing interno de WPF.
             int slot = _sectorColumns.IndexOf(e.Column);
             if (slot >= 0 && e.EditingElement is TextBox sectorBox)
+            {
                 row.SectorValues[slot] = sectorBox.Text;
+                RecordMeasurement(sectorBox.Text);
+            }
+            else if (e.EditingElement is TextBox generalBox)
+            {
+                RecordMeasurement(generalBox.Text);
+            }
 
             Vm.OnRowEdited(row);
         }
@@ -665,21 +831,20 @@ public partial class CubicacionView : UserControl
 
     private void OnGridPreviewKeyDown(object sender, KeyEventArgs e)
     {
-        // Ctrl+A → modo Casillas, Ctrl+D → modo Detalle. Se intercepta ANTES que
-        // DataGridExcelNavigation (que usa esas mismas teclas para seleccionar todo / rellenar
-        // hacia abajo en Itemizado y en el resto de esta grilla) para que en Cubicación ganen
-        // el cambio de vista, a pedido explícito — Itemizado conserva el comportamiento Excel.
-        if (!IsGridEditing() && e.KeyboardDevice.Modifiers == ModifierKeys.Control && e.Key is Key.A or Key.D)
+        var editing = IsGridEditing();
+        if (editing && MatchesConfiguredShortcut(e, CubicacionShortcutCatalog.PartidaPrevious, CubicacionShortcutCatalog.PartidaNext, CubicacionShortcutCatalog.QuickJump))
         {
-            if (e.Key == Key.A && Vm.ShowSectorMatrixCommand.CanExecute(null))
-                Vm.ShowSectorMatrixCommand.Execute(null);
-            else if (e.Key == Key.D && Vm.ShowResourceDetailCommand.CanExecute(null))
-                Vm.ShowResourceDetailCommand.Execute(null);
+            ResourceGrid.CommitEdit(DataGridEditingUnit.Cell, true);
+            ResourceGrid.CommitEdit(DataGridEditingUnit.Row, true);
+        }
+
+        if (CubicacionShortcutRouting.TryHandle(e, Vm))
+        {
             e.Handled = true;
             return;
         }
 
-        if (!IsGridEditing() && e.KeyboardDevice.Modifiers == ModifierKeys.Control && e.Key is Key.C or Key.X)
+        if (!editing && e.KeyboardDevice.Modifiers == ModifierKeys.Control && e.Key is Key.C or Key.X)
         {
             DataGridExcelNavigation.CopySelectionToClipboard(ResourceGrid);
             if (e.Key == Key.X)
@@ -739,10 +904,6 @@ public partial class CubicacionView : UserControl
         try
         {
             handledBySector = HandleSectorNavigation(e);
-            if (!handledBySector)
-            {
-                DataGridExcelNavigation.HandlePreviewKeyDown(ResourceGrid, e);
-            }
         }
         finally
         {
@@ -755,7 +916,6 @@ public partial class CubicacionView : UserControl
             return;
         }
 
-        bool editing = IsGridEditing();
         var modifiers = e.KeyboardDevice.Modifiers;
         // Con Alt presionado WPF entrega Key.System; la tecla real va en SystemKey.
         var key = e.Key == Key.System ? e.SystemKey : e.Key;
@@ -818,51 +978,12 @@ public partial class CubicacionView : UserControl
             e.Handled = true;
             return;
         }
-
-        // Alt+Arriba/Abajo → navegar entre partidas (incluso editando)
-        if (modifiers == ModifierKeys.Alt)
-        {
-            if (key == Key.Up)
-            {
-                if (editing)
-                {
-                    ResourceGrid.CommitEdit(DataGridEditingUnit.Cell, true);
-                    ResourceGrid.CommitEdit(DataGridEditingUnit.Row, true);
-                }
-                NavigatePartida(-1);
-                e.Handled = true;
-                return;
-            }
-            if (key == Key.Down)
-            {
-                if (editing)
-                {
-                    ResourceGrid.CommitEdit(DataGridEditingUnit.Cell, true);
-                    ResourceGrid.CommitEdit(DataGridEditingUnit.Row, true);
-                }
-                NavigatePartida(1);
-                e.Handled = true;
-                return;
-            }
-        }
-
-        // Alt+Shift+Arriba/Abajo → reordenar fila
-        if (modifiers == (ModifierKeys.Alt | ModifierKeys.Shift) && !editing)
-        {
-            if (key == Key.Up && Vm.MoveRowUpCommand.CanExecute(null))
-            {
-                Vm.MoveRowUpCommand.Execute(null);
-                e.Handled = true;
-                return;
-            }
-            if (key == Key.Down && Vm.MoveRowDownCommand.CanExecute(null))
-            {
-                Vm.MoveRowDownCommand.Execute(null);
-                e.Handled = true;
-                return;
-            }
-        }
     }
+
+    private static bool MatchesConfiguredShortcut(KeyEventArgs e, params string[] actionIds) =>
+        CubicacionShortcutRouting.Matches(e, actionIds);
+
+    public bool TryHandleConfiguredShortcut(KeyEventArgs e) => CubicacionShortcutRouting.TryHandle(e, Vm);
 
     // Público: usado también por ShellWindow como respaldo cuando Alt+↑/↓ se presiona con el
     // foco fuera de esta vista (ej. en un botón del marco de la ventana).
@@ -1467,27 +1588,10 @@ public partial class CubicacionView : UserControl
     // (o la actual lo está), salta directo a la próxima celda con contenido; si no hay ninguna
     // más en esa dirección, va al extremo del rango (0 o max-1).
     internal static bool SectorHasContent(string[]? expressions, int index)
-        => expressions != null && index >= 0 && index < expressions.Length && !string.IsNullOrWhiteSpace(expressions[index]);
+        => CubicacionSectorNavigation.HasContent(expressions, index);
 
     internal static int FindSectorDataEdge(string[]? expressions, int current, int direction, int max)
-    {
-        int next = current + direction;
-        if (next < 0) return 0;
-        if (next >= max) return max - 1;
-
-        if (SectorHasContent(expressions, current) && SectorHasContent(expressions, next))
-        {
-            int i = next;
-            while (i + direction >= 0 && i + direction < max && SectorHasContent(expressions, i + direction))
-                i += direction;
-            return i;
-        }
-
-        int j = next;
-        while (j >= 0 && j < max && !SectorHasContent(expressions, j))
-            j += direction;
-        return j < 0 ? 0 : j >= max ? max - 1 : j;
-    }
+        => CubicacionSectorNavigation.FindDataEdge(expressions, current, direction, max);
 
     // El carácter justo antes del cursor es un operador que espera un operando a continuación
     // — igual que Excel: recién ahí las flechas empiezan a "apuntar" a otra celda.
@@ -1754,6 +1858,187 @@ public partial class CubicacionView : UserControl
             targetIndex += offset;
         }
     }
+
+    private string? _lastEnteredMeasurement;
+
+    private void RecordMeasurement(string? value)
+    {
+        string clean = (value ?? "").Trim();
+        if (!string.IsNullOrEmpty(clean))
+            _lastEnteredMeasurement = clean;
+    }
+
+    private int GetSectorSlotFromColumn(DataGridColumn? column)
+    {
+        if (column == null) return -1;
+        return _sectorColumns.IndexOf(column);
+    }
+
+    private void HandleFillDown()
+    {
+        if (Vm == null || Vm.IsReadOnly || Vm.SelectedPartida == null)
+            return;
+
+        try
+        {
+            ResourceGrid.CommitEdit(DataGridEditingUnit.Cell, true);
+            ResourceGrid.CommitEdit(DataGridEditingUnit.Row, true);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[CubicacionView] CommitEdit en FillDown: {ex.Message}");
+        }
+
+        var selectedCells = ResourceGrid.SelectedCells.ToList();
+        if (selectedCells.Count == 0 && ResourceGrid.CurrentCell.IsValid)
+        {
+            selectedCells.Add(ResourceGrid.CurrentCell);
+        }
+
+        if (selectedCells.Count == 0)
+            return;
+
+        var byColumn = selectedCells.GroupBy(c => c.Column).ToList();
+
+        foreach (var colGroup in byColumn)
+        {
+            var col = colGroup.Key;
+            var rowsInCol = colGroup
+                .Select(c => c.Item as CubicacionRowVm)
+                .Where(r => r != null)
+                .Distinct()
+                .OrderBy(r => ResourceGrid.Items.IndexOf(r!))
+                .ToList();
+
+            if (rowsInCol.Count == 0)
+                continue;
+
+            CubicacionRowVm sourceRow;
+            List<CubicacionRowVm> targetRows;
+
+            int firstSelectedIdx = ResourceGrid.Items.IndexOf(rowsInCol[0]!);
+            if (rowsInCol.Count == 1)
+            {
+                if (firstSelectedIdx <= 0)
+                    continue;
+                sourceRow = (CubicacionRowVm)ResourceGrid.Items[firstSelectedIdx - 1];
+                targetRows = rowsInCol!;
+            }
+            else
+            {
+                sourceRow = rowsInCol[0]!;
+                targetRows = rowsInCol.Skip(1).ToList()!;
+            }
+
+            int sectorSlot = GetSectorSlotFromColumn(col);
+            if (sectorSlot >= 0 && sectorSlot < CubicacionViewModel.MaximumSectorCount)
+            {
+                Vm.ExecuteFillDownSector(sourceRow, targetRows, sectorSlot);
+            }
+            else if (col == CantidadColumn)
+            {
+                Vm.ExecuteFillDownCantidad(sourceRow, targetRows);
+            }
+        }
+    }
+
+    private void HandleFillRight()
+    {
+        if (Vm == null || Vm.IsReadOnly || Vm.SelectedPartida == null)
+            return;
+
+        try
+        {
+            ResourceGrid.CommitEdit(DataGridEditingUnit.Cell, true);
+            ResourceGrid.CommitEdit(DataGridEditingUnit.Row, true);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[CubicacionView] CommitEdit en FillRight: {ex.Message}");
+        }
+
+        var selectedCells = ResourceGrid.SelectedCells.ToList();
+        if (selectedCells.Count == 0 && ResourceGrid.CurrentCell.IsValid)
+        {
+            selectedCells.Add(ResourceGrid.CurrentCell);
+        }
+
+        if (selectedCells.Count == 0)
+            return;
+
+        var byRow = selectedCells
+            .GroupBy(c => c.Item as CubicacionRowVm)
+            .Where(g => g.Key != null)
+            .ToList();
+
+        foreach (var rowGroup in byRow)
+        {
+            var row = rowGroup.Key!;
+            var sectorCols = rowGroup
+                .Select(c => (Column: c.Column, Slot: GetSectorSlotFromColumn(c.Column)))
+                .Where(x => x.Slot >= 0 && x.Slot < CubicacionViewModel.MaximumSectorCount)
+                .OrderBy(x => x.Slot)
+                .ToList();
+
+            if (sectorCols.Count == 0)
+                continue;
+
+            int sourceSlot;
+            List<int> targetSlots;
+
+            if (sectorCols.Count == 1)
+            {
+                sourceSlot = sectorCols[0].Slot;
+                if (sourceSlot + 1 >= CubicacionViewModel.MaximumSectorCount)
+                    continue;
+                targetSlots = new List<int> { sourceSlot + 1 };
+            }
+            else
+            {
+                sourceSlot = sectorCols[0].Slot;
+                targetSlots = sectorCols.Skip(1).Select(x => x.Slot).ToList();
+            }
+
+            Vm.ExecuteFillRight(row, sourceSlot, targetSlots);
+        }
+    }
+
+    private void HandleRepeatMeasurement()
+    {
+        if (Vm == null || Vm.IsReadOnly || Vm.SelectedPartida == null || string.IsNullOrWhiteSpace(_lastEnteredMeasurement))
+            return;
+
+        try
+        {
+            ResourceGrid.CommitEdit(DataGridEditingUnit.Cell, true);
+            ResourceGrid.CommitEdit(DataGridEditingUnit.Row, true);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[CubicacionView] CommitEdit en RepeatMeasurement: {ex.Message}");
+        }
+
+        var currentCell = ResourceGrid.CurrentCell;
+        if (!currentCell.IsValid || currentCell.Item is not CubicacionRowVm row)
+            return;
+
+        int slot = GetSectorSlotFromColumn(currentCell.Column);
+        if (slot >= 0 && slot < CubicacionViewModel.MaximumSectorCount)
+        {
+            Vm.ExecuteRepeatMeasurement(row, slot, _lastEnteredMeasurement);
+        }
+        else if (currentCell.Column == CantidadColumn)
+        {
+            if (decimal.TryParse(_lastEnteredMeasurement, out decimal val))
+            {
+                Vm.PushUndoPoint("Repetir medición (F4)");
+                row.Cantidad = val;
+                Vm.OnRowEdited(row);
+                Vm.MarkDirty();
+                Vm.SaveStatusText = $"Cantidad repetida: '{val}' (F4).";
+            }
+        }
+    }
 }
 
 
@@ -1762,4 +2047,4 @@ public partial class CubicacionView : UserControl
 // empezar a editar", commit con Enter/Tab/flechas, etc. — todo el comportamiento de
 // DataGridExcelNavigation), pero cuando NO se está editando muestra el RESULTADO calculado de
 // la fórmula (SectorDisplayValues) en vez del texto crudo (SectorValues) — igual que una celda
-// de Excel: escribís "2+3" y ves "5", pero al volver a entrar a editar ves la fórmula original.
+// de Excel: escribís "2+3" y ves "5", pero al volver a entrar a editar ves la fórmula original.

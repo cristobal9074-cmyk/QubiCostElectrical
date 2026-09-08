@@ -32,9 +32,12 @@
     <Color x:Key="Color.BrandStroke">#60A5FA</Color>
     <Color x:Key="Color.BrandStroke2">#91B7FF</Color>
     <Color x:Key="Color.BrandStroke3">#BFDBFE</Color>
+    <Color x:Key="Color.CostoHeroNavy3">#1A3B6E</Color>
 
     <!-- ── Semantic colors ───────────────────────────────────────────────── -->
     <Color x:Key="Color.Cyan">#0891B2</Color>
+    <Color x:Key="Color.Pink">#EC4899</Color>
+    <Color x:Key="Color.PinkSoft">#FCE7F3</Color>
     <Color x:Key="Color.Green">#15803D</Color>
     <Color x:Key="Color.GreenSoft">#EAF8EF</Color>
     <Color x:Key="Color.Success">#1E7A4B</Color>
@@ -59,6 +62,8 @@
     <Color x:Key="Color.InfoBg">#E8EFFA</Color>
     <Color x:Key="Color.Purple">#6B4FA8</Color>
     <Color x:Key="Color.PurpleSoft">#EFEAFA</Color>
+    <Color x:Key="Color.Violet">#7C3AED</Color>
+    <Color x:Key="Color.VioletDark">#5B21B6</Color>
 
     <!-- ── Ink (text) spectrum: títulos/cuerpo/secundario/muted/deshabilitado ── -->
     <Color x:Key="Color.Ink">#101A26</Color>
@@ -141,6 +146,9 @@
     <SolidColorBrush x:Key="Brush.BrandStroke2"  Color="{StaticResource Color.BrandStroke2}" />
     <SolidColorBrush x:Key="Brush.BrandStroke3"  Color="{StaticResource Color.BrandStroke3}" />
 
+    <SolidColorBrush x:Key="Brush.Cyan"          Color="{StaticResource Color.Cyan}" />
+    <SolidColorBrush x:Key="Brush.Pink"          Color="{StaticResource Color.Pink}" />
+    <SolidColorBrush x:Key="Brush.PinkSoft"      Color="{StaticResource Color.PinkSoft}" />
     <SolidColorBrush x:Key="Brush.Green"         Color="{StaticResource Color.Green}" />
     <SolidColorBrush x:Key="Brush.GreenSoft"     Color="{StaticResource Color.GreenSoft}" />
     <SolidColorBrush x:Key="Brush.Success"       Color="{StaticResource Color.Success}" />
@@ -195,6 +203,8 @@
     <SolidColorBrush x:Key="Brush.InfoBg"       Color="{StaticResource Color.InfoBg}" />
     <SolidColorBrush x:Key="Brush.Purple"       Color="{StaticResource Color.Purple}" />
     <SolidColorBrush x:Key="Brush.PurpleSoft"   Color="{StaticResource Color.PurpleSoft}" />
+    <SolidColorBrush x:Key="Brush.Violet"       Color="{StaticResource Color.Violet}" />
+    <SolidColorBrush x:Key="Brush.VioletDark"   Color="{StaticResource Color.VioletDark}" />
 
     <SolidColorBrush x:Key="Brush.HeaderInk"        Color="{StaticResource Color.HeaderInk}" />
     <SolidColorBrush x:Key="Brush.HeaderMuted"       Color="{StaticResource Color.HeaderMuted}" />
@@ -209,9 +219,19 @@
     <SolidColorBrush x:Key="Brush.SaveDot"      Color="{StaticResource Color.SaveDot}" />
     <SolidColorBrush x:Key="Brush.AvatarBg"     Color="{StaticResource Color.AvatarBg}" />
 
-    <!-- Kept from original for backward compat -->
-    <SolidColorBrush x:Key="Brush.WarningSoft"  Color="#FFF0F0" />
+    <!-- Accent / warning aliases used across modules -->
+    <SolidColorBrush x:Key="Brush.Accent"       Color="{StaticResource Color.Blue}" />
+    <SolidColorBrush x:Key="Brush.Warning"      Color="{StaticResource Color.AmberRisk}" />
+    <SolidColorBrush x:Key="Brush.WarningSoft"  Color="{StaticResource Color.AmberSoft}" />
     <SolidColorBrush x:Key="Brush.OnPrimary"    Color="#FFFFFF" />
+    <SolidColorBrush x:Key="Brush.TrackSoft"    Color="{StaticResource Color.Line2}" />
+    <SolidColorBrush x:Key="Brush.HighlightSoft" Color="{StaticResource Color.BlueFaint}" />
+    <SolidColorBrush x:Key="Brush.HighlightBorder" Color="{StaticResource Color.BlueSoft}" />
+
+    <!-- Aliases usados por Cubicación SC, Itemizado y diálogos legacy -->
+    <SolidColorBrush x:Key="Brush.SurfaceAlt"  Color="{StaticResource Color.Surface2}" />
+    <SolidColorBrush x:Key="Brush.Border"      Color="{StaticResource Color.Line}" />
+    <SolidColorBrush x:Key="Brush.SuccessSoft" Color="{StaticResource Color.GreenSoft}" />
 
     <!-- ── Header overlay brushes (semi-transparent whites over dark bg) ── -->
     <SolidColorBrush x:Key="Brush.White8"        Color="#0DFFFFFF" />
@@ -230,6 +250,12 @@
     <LinearGradientBrush x:Key="Brush.HeaderBackground" StartPoint="0,0" EndPoint="0,1">
         <GradientStop Color="{StaticResource Color.Navy}" Offset="0" />
         <GradientStop Color="{StaticResource Color.NavyEnd}" Offset="1" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="Brush.HeroPanel" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="{StaticResource Color.Navy}" Offset="0" />
+        <GradientStop Color="{StaticResource Color.Navy2}" Offset="0.55" />
+        <GradientStop Color="{StaticResource Color.CostoHeroNavy3}" Offset="1" />
     </LinearGradientBrush>
 
     <LinearGradientBrush x:Key="Brush.PrimaryButton" StartPoint="0,0" EndPoint="0,1">

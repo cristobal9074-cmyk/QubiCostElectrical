@@ -1,0 +1,95 @@
+<UserControl x:Class="QubiCostElectrical.Wpf.Features.Contracts.ContractEditorView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ctrl="clr-namespace:QubiCostElectrical.Wpf.Controls"
+             Background="{DynamicResource Brush.Canvas}">
+
+  <ctrl:WorkspacePageChrome ShowEmptyState="{Binding ShowEmptyState}"
+                            IsLoading="{Binding IsLoading}"
+                            EmptyTitle="Sin proyecto abierto"
+                            EmptyDescription="Abra un proyecto para crear o editar un contrato."
+                            LoadingMessage="Guardando contrato…">
+    <ctrl:WorkspacePageChrome.Body>
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="24" MaxWidth="900" HorizontalAlignment="Left">
+
+          <TextBlock Text="Editor de contrato" Style="{StaticResource Text.PageTitle}" Margin="0,0,0,4" />
+          <TextBlock Text="{Binding Contract.Id.Value, StringFormat='Contrato: {0}'}"
+                     Style="{StaticResource Text.Body}" Margin="0,0,0,16" />
+
+          <Border Style="{StaticResource Card.Section}" Padding="16" Margin="0,0,0,14">
+            <StackPanel IsEnabled="{Binding CanEdit}">
+              <Grid Margin="0,0,0,10">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                  <TextBlock Text="TÍTULO" Style="{StaticResource Text.KpiLabel}" Margin="0,0,0,5" />
+                  <TextBox Text="{Binding Contract.Title, UpdateSourceTrigger=LostFocus}"
+                           Style="{StaticResource Form.TextBox}" />
+                </StackPanel>
+                <StackPanel Grid.Column="1">
+                  <TextBlock Text="TIPO" Style="{StaticResource Text.KpiLabel}" Margin="0,0,0,5" />
+                  <TextBox Text="{Binding Contract.Type, UpdateSourceTrigger=LostFocus}"
+                           Style="{StaticResource Form.TextBox}" />
+                </StackPanel>
+              </Grid>
+
+              <StackPanel Margin="0,0,0,10">
+                <TextBlock Text="DESCRIPCIÓN" Style="{StaticResource Text.KpiLabel}" Margin="0,0,0,5" />
+                <TextBox Text="{Binding Contract.Description, UpdateSourceTrigger=LostFocus}"
+                         Style="{StaticResource Form.TextBox}" AcceptsReturn="True" Height="60" TextWrapping="Wrap" />
+              </StackPanel>
+
+              <Grid Margin="0,0,0,10">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                  <TextBlock Text="CLIENTE" Style="{StaticResource Text.KpiLabel}" Margin="0,0,0,5" />
+                  <TextBox Text="{Binding Contract.ClientName, UpdateSourceTrigger=LostFocus}"
+                           Style="{StaticResource Form.TextBox}" />
+                </StackPanel>
+                <StackPanel Grid.Column="1">
+                  <TextBlock Text="CONTRATISTA" Style="{StaticResource Text.KpiLabel}" Margin="0,0,0,5" />
+                  <TextBox Text="{Binding Contract.ContractorName, UpdateSourceTrigger=LostFocus}"
+                           Style="{StaticResource Form.TextBox}" />
+                </StackPanel>
+              </Grid>
+
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                  <TextBlock Text="MONTO ORIGINAL" Style="{StaticResource Text.KpiLabel}" Margin="0,0,0,5" />
+                  <TextBox Text="{Binding Contract.OriginalAmount, UpdateSourceTrigger=LostFocus, StringFormat=F0}"
+                           Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" />
+                </StackPanel>
+                <StackPanel Grid.Column="1">
+                  <TextBlock Text="IMPUESTO" Style="{StaticResource Text.KpiLabel}" Margin="0,0,0,5" />
+                  <TextBox Text="{Binding Contract.TaxAmount, UpdateSourceTrigger=LostFocus, StringFormat=F0}"
+                           Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" />
+                </StackPanel>
+              </Grid>
+            </StackPanel>
+          </Border>
+
+          <TextBlock Text="{Binding ErrorMessage}" Style="{StaticResource Text.Helper}"
+                     Foreground="{DynamicResource Brush.Danger}" TextWrapping="Wrap" Margin="0,0,0,12" />
+
+          <StackPanel Orientation="Horizontal">
+            <Button Content="Guardar" Command="{Binding SaveCommand}"
+                    Style="{StaticResource Button.Primary}" Margin="0,0,8,0" />
+            <Button Content="Cancelar" Command="{Binding CancelCommand}"
+                    Style="{StaticResource Button.Secondary}" />
+          </StackPanel>
+
+        </StackPanel>
+      </ScrollViewer>
+    </ctrl:WorkspacePageChrome.Body>
+  </ctrl:WorkspacePageChrome>
+</UserControl>

@@ -25,13 +25,16 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
     };
 
     private readonly IShellNavigationHost shell;
-    private readonly WpfAppHost host;
+    private readonly BudgetProjectSession session;
+    private readonly IProjectWorkspaceService workspace;
     private bool showEmptyState = true;
+    private bool canEdit;
+    private bool isLoading;
     private bool hasLoaded;
     private bool suppressSalaryLoop;
     private int totalMeses = 12;
     private decimal lastTotalMoClp;
-    private decimal valorUf = 37998m;
+    private decimal valorUf = PriceConversion.DefaultValorUfClp;
     private decimal leyesSocialesPct = 35m;
     private string curvePreset = "bell";
     private int peakHeadcount; // Proyecto limpio: el usuario define la dotación
@@ -102,13 +105,17 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
     public int TotalMonths => totalMeses;
 
     public ManoDeObraViewModel(IShellNavigationHost shell, WpfAppHost host)
+        : this(shell, host.Session, host.ProjectWorkspace) { }
+
+    public ManoDeObraViewModel(IShellNavigationHost shell, BudgetProjectSession session, IProjectWorkspaceService workspace)
     {
         this.shell = shell;
-        this.host = host;
+        this.session = session;
+        this.workspace = workspace;
         OpenProjectCommand = new RelayCommand(() => _ = shell.OpenProjectAsync());
-        ApplyCommand = new RelayCommand(ExecuteApply);
-        ResetParamsCommand = new RelayCommand(ExecuteResetParams);
-        ResetSueldosCommand = new RelayCommand(ExecuteResetSueldos);
+        ApplyCommand = new RelayCommand(ExecuteApply, () => CanEdit);
+        ResetParamsCommand = new RelayCommand(ExecuteResetParams, () => CanEdit);
+        ResetSueldosCommand = new RelayCommand(ExecuteResetSueldos, () => CanEdit);
         SetCurrencyClpCommand = new RelayCommand(() => SetCurrency(false));
         SetCurrencyUfCommand = new RelayCommand(() => SetCurrency(true));
     }
@@ -121,6 +128,22 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
     public ICommand SetCurrencyUfCommand { get; }
 
     public bool ShowEmptyState { get => showEmptyState; private set => SetProperty(ref showEmptyState, value); }
+    public bool IsLoading { get => isLoading; private set => SetProperty(ref isLoading, value); }
+
+    public bool CanEdit
+    {
+        get => canEdit;
+        private set
+        {
+            if (SetProperty(ref canEdit, value))
+            {
+                (ApplyCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                (ResetParamsCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                (ResetSueldosCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            }
+        }
+    }
+
     public decimal ValorUF { get => valorUf; private set => SetProperty(ref valorUf, value); }
 
     public int TotalMeses
@@ -237,16 +260,20 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
 
     public void Load()
     {
-        ShowEmptyState = !host.ProjectWorkspace.HasOpenProject;
+        IsLoading = true;
+        try
+        {
+        ShowEmptyState = !workspace.HasOpenProject;
+        CanEdit = !ShowEmptyState && !session.IsReadOnly;
         if (ShowEmptyState)
             return;
+
+        ValorUF = session.ValorUfClp > 0 ? session.ValorUfClp : PriceConversion.DefaultValorUfClp;
 
         if (!hasLoaded)
         {
             hasLoaded = true;
-            if (host.Session.ValorUfClp > 0)
-                ValorUF = host.Session.ValorUfClp;
-            var project = host.Session.ProjectInfo;
+            var project = session.ProjectInfo;
             if (project.MoDuracionMeses > 0)
                 totalMeses = Math.Clamp(project.MoDuracionMeses, 1, 120);
             leyesSocialesPct = Math.Clamp(project.LeyesSocialesMoPct, 0m, 100m);
@@ -258,12 +285,17 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
         }
 
         Recalcular();
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     private void LoadProjectionTasks()
     {
         projectionTasks.Clear();
-        var saved = host.Session.Data.MoProjectionTasks;
+        var saved = session.Data.MoProjectionTasks;
         if (saved != null)
         {
             foreach (var row in saved)
@@ -291,6 +323,8 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
 
     public void AddProjectionTask()
     {
+        if (!CanEdit)
+            return;
         AddProjectionTaskCore($"Tarea {projectionTasks.Count + 1}");
         PersistProjectionTasks();
     }
@@ -308,21 +342,23 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
 
     private void PersistProjectionTasks()
     {
-        if (!host.ProjectWorkspace.HasOpenProject || host.Session.IsReadOnly)
+        if (!workspace.HasOpenProject || session.IsReadOnly)
             return;
 
-        var data = host.Session.Data;
+        var data = session.Data;
         data.MoProjectionTasks = projectionTasks.Select(t => new MoProjectionTaskRow
         {
             Id = t.Id,
             Nombre = t.Nombre,
             CantidadesMensuales = t.Cantidades
         }).ToList();
-        host.Session.MarkDirty("mo_projection_tasks");
+        session.MarkDirty("mo_projection_tasks");
     }
 
     private void ExecuteApply()
     {
+        if (!CanEdit)
+            return;
         SyncEditorsToCargos();
         Recalcular();
         PersistToSession();
@@ -330,6 +366,8 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
 
     private void ExecuteResetParams()
     {
+        if (!CanEdit)
+            return;
         TotalMeses = 12;
         LeyesSocialesPct = 35m;
         CurvePreset = "bell";
@@ -345,6 +383,8 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
 
     private void ExecuteResetSueldos()
     {
+        if (!CanEdit)
+            return;
         foreach (var c in CargosDef)
         {
             if (DefaultSueldos.TryGetValue(c.Tag, out var def) || DefaultSueldos.TryGetValue(c.Id, out def))
@@ -372,7 +412,7 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
 
     public void SetOverride(string cargoId, int monthIdx, int count)
     {
-        if (string.IsNullOrWhiteSpace(cargoId) || monthIdx < 0)
+        if (!CanEdit || string.IsNullOrWhiteSpace(cargoId) || monthIdx < 0)
             return;
         cellOverrides[$"{cargoId}_{monthIdx}"] = Math.Max(0, count);
         Recalcular();
@@ -381,7 +421,7 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
 
     public void ClearOverride(string cargoId, int monthIdx)
     {
-        if (string.IsNullOrWhiteSpace(cargoId) || monthIdx < 0)
+        if (!CanEdit || string.IsNullOrWhiteSpace(cargoId) || monthIdx < 0)
             return;
         if (!cellOverrides.Remove($"{cargoId}_{monthIdx}"))
             return;
@@ -410,10 +450,10 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
 
     private void PersistToSession()
     {
-        if (!host.ProjectWorkspace.HasOpenProject || host.Session.IsReadOnly)
+        if (!workspace.HasOpenProject || session.IsReadOnly)
             return;
 
-        var data = host.Session.Data;
+        var data = session.Data;
         var n = totalMeses;
 
         data.MoDirecta = CargosDef.Where(c => c.EsDirecta).Select(c => new MoDirectaRow
@@ -434,7 +474,7 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
             DotacionMensual = BuildMensualList(c.Id, n),
         }).ToList();
 
-        var project = data.Proyecto ?? host.Session.ProjectInfo;
+        var project = data.Proyecto ?? session.ProjectInfo;
         project.MoDuracionMeses = totalMeses;
         project.LeyesSocialesMoPct = leyesSocialesPct;
         // Solo sobrescribir el total si ya recalculamos (evita borrar MoTotalClp en SeedCargos).
@@ -444,7 +484,12 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
 
         // Cadena: MO → cantidades EPP → GO 3.5 en Desglose de costos.
         EppBudgetData.SyncEppAndGoFromMo(data);
-        host.Session.MarkDirty("mo_directa", "mo_indirecta", "epp", "gastos_operacionales", "project_info");
+        session.MarkDirty(
+            ProjectDirtyScope.Parse("mo_directa"),
+            ProjectDirtyScope.Parse("mo_indirecta"),
+            ProjectDirtyScope.Epp,
+            ProjectDirtyScope.GastosOperacionales,
+            ProjectDirtyScope.ProjectInfo);
     }
 
     private List<int> BuildMensualList(string cargoId, int n)
@@ -479,7 +524,7 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
 
     private void SeedCargos()
     {
-        var data = host.Session.Data;
+        var data = session.Data;
         var list = new List<MoCargoDef>();
 
         if (data.MoDirecta is { Count: > 0 })

@@ -12,14 +12,14 @@
   <UserControl.Resources>
     <Style x:Key="EppCellBox" TargetType="TextBox" BasedOn="{StaticResource Form.TextBox}">
       <Setter Property="Padding" Value="4,3" />
-      <Setter Property="FontSize" Value="11" />
+      <Setter Property="FontSize" Value="{StaticResource Font.Size.sm}" />
       <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
       <Setter Property="VerticalContentAlignment" Value="Center" />
       <Setter Property="MinHeight" Value="26" />
     </Style>
     <Style x:Key="EppConceptBox" TargetType="TextBox" BasedOn="{StaticResource Form.TextBox}">
       <Setter Property="Padding" Value="4,3" />
-      <Setter Property="FontSize" Value="11" />
+      <Setter Property="FontSize" Value="{StaticResource Font.Size.sm}" />
       <Setter Property="VerticalContentAlignment" Value="Center" />
       <Setter Property="MinHeight" Value="26" />
       <Setter Property="BorderThickness" Value="1" />
@@ -41,40 +41,40 @@
               <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <StackPanel>
-              <TextBlock Text="COSTOS" FontSize="13" FontWeight="SemiBold"
+              <TextBlock Text="COSTOS" FontSize="{StaticResource Font.Size.base}" FontWeight="SemiBold"
                          Foreground="{DynamicResource Brush.Ink3}" Margin="0,0,0,6" />
-              <TextBlock Text="EPP" FontSize="20" FontWeight="Bold"
+              <TextBlock Text="EPP" FontSize="{StaticResource Font.Size.xl}" FontWeight="Bold"
                          Foreground="{DynamicResource Brush.Ink}" />
-              <TextBlock Text="Indumentaria y elementos de seguridad — editable por ítem, sincronizable con la dotación de mano de obra y persistente en el proyecto."
-                         FontSize="13" Foreground="{DynamicResource Brush.Ink3}" TextWrapping="Wrap"
+              <TextBlock Text="Indumentaria y EPP por ítem; sincronizado con la dotación de mano de obra."
+                         FontSize="{StaticResource Font.Size.base}" Foreground="{DynamicResource Brush.Ink3}" TextWrapping="Wrap"
                          MaxWidth="640" Margin="0,4,0,0" />
               <WrapPanel Margin="0,12,0,0">
-                <Border CornerRadius="999" Padding="10,5" Margin="0,0,8,6" Background="{DynamicResource Brush.BlueSoft}">
-                  <TextBlock FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Blue}">
+                <Border CornerRadius="{StaticResource Radius.Chip}" Padding="10,5" Margin="0,0,8,6" Background="{DynamicResource Brush.BlueSoft}">
+                  <TextBlock FontSize="{StaticResource Font.Size.md}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Blue}">
                     <Run Text="{Binding ItemsCountLabel, Mode=OneWay}" />
                     <Run Text=" ítems" />
                   </TextBlock>
                 </Border>
-                <Border CornerRadius="999" Padding="10,5" Margin="0,0,8,6" Background="{DynamicResource Brush.SuccessBg}">
+                <Border CornerRadius="{StaticResource Radius.Chip}" Padding="10,5" Margin="0,0,8,6" Background="{DynamicResource Brush.SuccessBg}">
                   <StackPanel Orientation="Horizontal">
                     <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.Success}" VerticalAlignment="Center" Margin="0,0,6,0" />
-                    <TextBlock Text="{Binding MoSyncLabel}" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Success}" />
+                    <TextBlock Text="{Binding MoSyncLabel}" FontSize="{StaticResource Font.Size.md}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Success}" />
                   </StackPanel>
                 </Border>
-                <Border CornerRadius="999" Padding="10,5" Margin="0,0,8,6" Background="{DynamicResource Brush.AmberSoft}">
-                  <TextBlock FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Amber}">
+                <Border CornerRadius="{StaticResource Radius.Chip}" Padding="10,5" Margin="0,0,8,6" Background="{DynamicResource Brush.AmberSoft}">
+                  <TextBlock FontSize="{StaticResource Font.Size.md}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Amber}">
                     <Run Text="Directa " /><Run Text="{Binding MesesDirecta, Mode=OneWay}" /><Run Text=" m · Indirecta " />
                     <Run Text="{Binding MesesIndirecta, Mode=OneWay}" /><Run Text=" m" />
                   </TextBlock>
                 </Border>
-                <Border CornerRadius="999" Padding="10,5" Margin="0,0,8,6" Background="{DynamicResource Brush.PurpleSoft}">
-                  <TextBlock Text="Opcionales · costo fijo" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Purple}" />
+                <Border CornerRadius="{StaticResource Radius.Chip}" Padding="10,5" Margin="0,0,8,6" Background="{DynamicResource Brush.PurpleSoft}">
+                  <TextBlock Text="Opcionales · costo fijo" FontSize="{StaticResource Font.Size.md}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Purple}" />
                 </Border>
-                <Border CornerRadius="999" Padding="10,5" Margin="0,0,0,6" Background="{DynamicResource Brush.AmberSoft}"
+                <Border CornerRadius="{StaticResource Radius.Chip}" Padding="10,5" Margin="0,0,0,6" Background="{DynamicResource Brush.AmberSoft}"
                         Visibility="{Binding HasPendingChanges, Converter={StaticResource BoolToVisibility}}">
                   <StackPanel Orientation="Horizontal">
                     <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.Amber}" VerticalAlignment="Center" Margin="0,0,6,0" />
-                    <TextBlock Text="Cambios sin guardar" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Amber}" />
+                    <TextBlock Text="Cambios sin guardar" FontSize="{StaticResource Font.Size.md}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Amber}" />
                   </StackPanel>
                 </Border>
               </WrapPanel>
@@ -90,41 +90,31 @@
           </Grid>
         </Border>
 
-        <!-- KPIs -->
-        <UniformGrid Columns="4" Margin="20,14,20,0">
-          <Border Style="{StaticResource Card.Kpi}" Margin="0,0,10,0" MinHeight="80" Padding="14,12">
-            <StackPanel VerticalAlignment="Center">
-              <TextBlock Text="TOTAL EPP" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" />
-              <TextBlock Text="{Binding TotalEppLabel}" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" Margin="0,2,0,0" />
-              <TextBlock Text="Indumentaria + Accesorios" FontSize="10" Foreground="{DynamicResource Brush.Muted}" />
+        <!-- Resumen compacto -->
+        <Border Style="{StaticResource Card.Summary}" Margin="20,10,20,0" Padding="12,6">
+          <DockPanel LastChildFill="False">
+            <StackPanel Orientation="Horizontal" Margin="0,0,18,0" VerticalAlignment="Center">
+              <TextBlock Text="Total EPP" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,6,0" VerticalAlignment="Center" />
+              <TextBlock Text="{Binding GranTotalDualLabel}" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" VerticalAlignment="Center" />
             </StackPanel>
-          </Border>
-          <Border Style="{StaticResource Card.Kpi}" Margin="0,0,10,0" MinHeight="80" Padding="14,12">
-            <StackPanel VerticalAlignment="Center">
-              <TextBlock FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}">
-                <Run Text="M.O. DIRECTA (" /><Run Text="{Binding MesesDirecta, Mode=OneWay}" /><Run Text=" MESES)" />
+            <StackPanel Orientation="Horizontal" Margin="0,0,18,0" VerticalAlignment="Center">
+              <TextBlock FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,6,0" VerticalAlignment="Center">
+                <Run Text="MO dir. (" /><Run Text="{Binding MesesDirecta, Mode=OneWay}" /><Run Text=" m)" />
               </TextBlock>
-              <TextBlock Text="{Binding TotalMoDirectaLabel}" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" Margin="0,2,0,0" />
-              <TextBlock Text="{Binding MoDirectaCountLabel}" FontSize="10" Foreground="{DynamicResource Brush.Muted}" />
+              <TextBlock Text="{Binding TotalMoDirectaLabel}" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" />
             </StackPanel>
-          </Border>
-          <Border Style="{StaticResource Card.Kpi}" Margin="0,0,10,0" MinHeight="80" Padding="14,12">
-            <StackPanel VerticalAlignment="Center">
-              <TextBlock FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}">
-                <Run Text="M.O. INDIRECTA (" /><Run Text="{Binding MesesIndirecta, Mode=OneWay}" /><Run Text=" MESES)" />
+            <StackPanel Orientation="Horizontal" Margin="0,0,18,0" VerticalAlignment="Center">
+              <TextBlock FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,6,0" VerticalAlignment="Center">
+                <Run Text="MO ind. (" /><Run Text="{Binding MesesIndirecta, Mode=OneWay}" /><Run Text=" m)" />
               </TextBlock>
-              <TextBlock Text="{Binding TotalMoIndirectaLabel}" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" Margin="0,2,0,0" />
-              <TextBlock Text="{Binding MoIndirectaCountLabel}" FontSize="10" Foreground="{DynamicResource Brush.Muted}" />
+              <TextBlock Text="{Binding TotalMoIndirectaLabel}" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" />
             </StackPanel>
-          </Border>
-          <Border Style="{StaticResource Card.Kpi}" MinHeight="80" Padding="14,12">
-            <StackPanel VerticalAlignment="Center">
-              <TextBlock Text="ACCESORIOS OPCIONALES" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" />
-              <TextBlock Text="{Binding TotalAccOpcionalesLabel}" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource Brush.Amber}" Margin="0,2,0,0" />
-              <TextBlock Text="{Binding AccOpcionalesCountLabel}" FontSize="10" Foreground="{DynamicResource Brush.Muted}" />
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <TextBlock Text="Acc. opc." FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,6,0" VerticalAlignment="Center" />
+              <TextBlock Text="{Binding TotalAccOpcionalesLabel}" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" Foreground="{DynamicResource Brush.Amber}" VerticalAlignment="Center" />
             </StackPanel>
-          </Border>
-        </UniformGrid>
+          </DockPanel>
+        </Border>
 
         <StackPanel Margin="20,14,20,24">
 
@@ -138,11 +128,11 @@
                     <ColumnDefinition Width="Auto" />
                   </Grid.ColumnDefinitions>
                   <StackPanel>
-                    <TextBlock Text="M.O. Directa e Indirecta — Indumentaria" FontSize="13" FontWeight="Bold" />
-                    <TextBlock Text="{Binding IndumentariaTotalLabel}" FontSize="10.5" Foreground="{DynamicResource Brush.Muted}" Margin="0,2,0,0" />
+                    <TextBlock Text="M.O. Directa e Indirecta — Indumentaria" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" />
+                    <TextBlock Text="{Binding IndumentariaTotalLabel}" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" Margin="0,2,0,0" />
                   </StackPanel>
                   <Button Grid.Column="1" Style="{StaticResource Button.Ghost}" Content="Restablecer plantilla"
-                          Command="{Binding ResetSeedCommand}" FontSize="11.5" />
+                          Command="{Binding ResetSeedCommand}" FontSize="{StaticResource Font.Size.md}" />
                 </Grid>
               </Border>
 
@@ -150,19 +140,19 @@
               <Border Background="{DynamicResource Brush.BlueFaint}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1" Padding="16,12">
                 <UniformGrid Columns="4">
                   <StackPanel Margin="0,0,12,0" IsEnabled="{Binding CanEdit}">
-                    <TextBlock Text="MESES M.O. DIRECTA" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}" Margin="0,0,0,5" />
+                    <TextBlock Text="MESES M.O. DIRECTA" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}" Margin="0,0,0,5" />
                     <TextBox Style="{StaticResource EppCellBox}" Text="{Binding MesesDirecta, UpdateSourceTrigger=PropertyChanged}" />
                   </StackPanel>
                   <StackPanel Margin="0,0,12,0" IsEnabled="{Binding CanEdit}">
-                    <TextBlock Text="MESES M.O. INDIRECTA" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}" Margin="0,0,0,5" />
+                    <TextBlock Text="MESES M.O. INDIRECTA" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}" Margin="0,0,0,5" />
                     <TextBox Style="{StaticResource EppCellBox}" Text="{Binding MesesIndirecta, UpdateSourceTrigger=PropertyChanged}" />
                   </StackPanel>
                   <StackPanel Margin="0,0,12,0" IsEnabled="{Binding CanEdit}">
-                    <TextBlock Text="DOTACIÓN DIRECTA" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}" Margin="0,0,0,5" />
+                    <TextBlock Text="DOTACIÓN DIRECTA" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}" Margin="0,0,0,5" />
                     <TextBox Style="{StaticResource EppCellBox}" Text="{Binding DotacionDirecta, UpdateSourceTrigger=PropertyChanged}" />
                   </StackPanel>
                   <StackPanel IsEnabled="{Binding CanEdit}">
-                    <TextBlock Text="DOTACIÓN INDIRECTA" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}" Margin="0,0,0,5" />
+                    <TextBlock Text="DOTACIÓN INDIRECTA" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}" Margin="0,0,0,5" />
                     <TextBox Style="{StaticResource EppCellBox}" Text="{Binding DotacionIndirecta, UpdateSourceTrigger=PropertyChanged}" />
                   </StackPanel>
                 </UniformGrid>
@@ -179,8 +169,8 @@
                 <StackPanel Grid.Column="0">
                   <Border Background="{DynamicResource Brush.BlueSoft}" Padding="10,6" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1">
                     <Grid>
-                      <TextBlock Text="M.O. Directa" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" />
-                      <TextBlock Text="{Binding TotalMoDirectaLabel}" FontSize="12" FontWeight="Bold"
+                      <TextBlock Text="M.O. Directa" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" />
+                      <TextBlock Text="{Binding TotalMoDirectaLabel}" FontSize="{StaticResource Font.Size.md}" FontWeight="Bold"
                                  FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Blue}" HorizontalAlignment="Right" />
                     </Grid>
                   </Border>
@@ -193,10 +183,10 @@
                         <ColumnDefinition Width="85" />
                         <ColumnDefinition Width="28" />
                       </Grid.ColumnDefinitions>
-                      <TextBlock Text="CONCEPTO" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}" />
-                      <TextBlock Grid.Column="1" Text="CANT." FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}" TextAlignment="Right" />
-                      <TextBlock Grid.Column="2" Text="P. UNIT." FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}" TextAlignment="Right" />
-                      <TextBlock Grid.Column="3" Text="TOTAL" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}" TextAlignment="Right" />
+                      <TextBlock Text="CONCEPTO" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}" />
+                      <TextBlock Grid.Column="1" Text="CANT." FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}" TextAlignment="Right" />
+                      <TextBlock Grid.Column="2" Text="P. UNIT." FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}" TextAlignment="Right" />
+                      <TextBlock Grid.Column="3" Text="TOTAL" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}" TextAlignment="Right" />
                     </Grid>
                   </Border>
                   <ItemsControl ItemsSource="{Binding MoDirectaSecciones}">
@@ -207,9 +197,9 @@
                             <DockPanel>
                               <Button DockPanel.Dock="Right" Style="{StaticResource Button.Ghost}" Content="+ Ítem"
                                       Command="{Binding DataContext.AddItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                      CommandParameter="{Binding}" FontSize="11" Padding="6,2"
+                                      CommandParameter="{Binding}" FontSize="{StaticResource Font.Size.sm}" Padding="6,2"
                                       IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" />
-                              <TextBlock Text="{Binding Titulo}" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Blue}" VerticalAlignment="Center" />
+                              <TextBlock Text="{Binding Titulo}" FontSize="{StaticResource Font.Size.2xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Blue}" VerticalAlignment="Center" />
                             </DockPanel>
                           </Border>
                           <ItemsControl ItemsSource="{Binding Items}">
@@ -230,10 +220,10 @@
                                              Text="{Binding Cantidad, UpdateSourceTrigger=LostFocus}" Margin="0,0,4,0" />
                                     <TextBox Grid.Column="2" Style="{StaticResource EppCellBox}" TextAlignment="Right"
                                              Text="{Binding PrecioUnitario, UpdateSourceTrigger=LostFocus}" Margin="0,0,4,0" />
-                                    <TextBlock Grid.Column="3" Text="{Binding TotalLabel}" FontSize="10"
+                                    <TextBlock Grid.Column="3" Text="{Binding TotalLabel}" FontSize="{StaticResource Font.Size.xs}"
                                                FontFamily="{StaticResource Font.Mono}" FontWeight="SemiBold"
                                                Foreground="{DynamicResource Brush.Blue}" TextAlignment="Right" VerticalAlignment="Center" />
-                                    <Button Grid.Column="4" Style="{StaticResource Button.Ghost}" Content="×" FontSize="14"
+                                    <Button Grid.Column="4" Style="{StaticResource Button.Ghost}" Content="×" FontSize="{StaticResource Font.Size.lg}"
                                             Command="{Binding DataContext.RemoveItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                             CommandParameter="{Binding}" Padding="0" Width="24" Height="24"
                                             ToolTip="Quitar" />
@@ -244,8 +234,8 @@
                           </ItemsControl>
                           <Border Background="{DynamicResource Brush.Surface}" Padding="10,5" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,1,0,0">
                             <Grid>
-                              <TextBlock Text="Total" FontSize="10" FontWeight="SemiBold" />
-                              <TextBlock Text="{Binding SubtotalLabel}" FontSize="11" FontFamily="{StaticResource Font.Mono}" FontWeight="Bold"
+                              <TextBlock Text="Total" FontSize="{StaticResource Font.Size.xs}" FontWeight="SemiBold" />
+                              <TextBlock Text="{Binding SubtotalLabel}" FontSize="{StaticResource Font.Size.sm}" FontFamily="{StaticResource Font.Mono}" FontWeight="Bold"
                                          Foreground="{DynamicResource Brush.Blue}" HorizontalAlignment="Right" />
                             </Grid>
                           </Border>
@@ -259,11 +249,11 @@
 
                 <!-- Indirecta -->
                 <StackPanel Grid.Column="2">
-                  <Border Background="#FFF8E1" Padding="10,6" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1">
+                  <Border Background="{DynamicResource Brush.AmberSoft}" Padding="10,6" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1">
                     <Grid>
-                      <TextBlock Text="M.O. Indirecta" FontSize="10" FontWeight="Bold" Foreground="#D97706" />
-                      <TextBlock Text="{Binding TotalMoIndirectaLabel}" FontSize="12" FontWeight="Bold"
-                                 FontFamily="{StaticResource Font.Mono}" Foreground="#D97706" HorizontalAlignment="Right" />
+                      <TextBlock Text="M.O. Indirecta" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.AmberRisk}" />
+                      <TextBlock Text="{Binding TotalMoIndirectaLabel}" FontSize="{StaticResource Font.Size.md}" FontWeight="Bold"
+                                 FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.AmberRisk}" HorizontalAlignment="Right" />
                     </Grid>
                   </Border>
                   <Border Background="{DynamicResource Brush.Line2}" Padding="10,4">
@@ -275,10 +265,10 @@
                         <ColumnDefinition Width="85" />
                         <ColumnDefinition Width="28" />
                       </Grid.ColumnDefinitions>
-                      <TextBlock Text="CONCEPTO" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}" />
-                      <TextBlock Grid.Column="1" Text="CANT." FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}" TextAlignment="Right" />
-                      <TextBlock Grid.Column="2" Text="P. UNIT." FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}" TextAlignment="Right" />
-                      <TextBlock Grid.Column="3" Text="TOTAL" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}" TextAlignment="Right" />
+                      <TextBlock Text="CONCEPTO" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}" />
+                      <TextBlock Grid.Column="1" Text="CANT." FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}" TextAlignment="Right" />
+                      <TextBlock Grid.Column="2" Text="P. UNIT." FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}" TextAlignment="Right" />
+                      <TextBlock Grid.Column="3" Text="TOTAL" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}" TextAlignment="Right" />
                     </Grid>
                   </Border>
                   <ItemsControl ItemsSource="{Binding MoIndirectaSecciones}">
@@ -289,9 +279,9 @@
                             <DockPanel>
                               <Button DockPanel.Dock="Right" Style="{StaticResource Button.Ghost}" Content="+ Ítem"
                                       Command="{Binding DataContext.AddItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                      CommandParameter="{Binding}" FontSize="11" Padding="6,2"
+                                      CommandParameter="{Binding}" FontSize="{StaticResource Font.Size.sm}" Padding="6,2"
                                       IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" />
-                              <TextBlock Text="{Binding Titulo}" FontSize="9" FontWeight="SemiBold" Foreground="#D97706" VerticalAlignment="Center" />
+                              <TextBlock Text="{Binding Titulo}" FontSize="{StaticResource Font.Size.2xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.AmberRisk}" VerticalAlignment="Center" />
                             </DockPanel>
                           </Border>
                           <ItemsControl ItemsSource="{Binding Items}">
@@ -312,10 +302,10 @@
                                              Text="{Binding Cantidad, UpdateSourceTrigger=LostFocus}" Margin="0,0,4,0" />
                                     <TextBox Grid.Column="2" Style="{StaticResource EppCellBox}" TextAlignment="Right"
                                              Text="{Binding PrecioUnitario, UpdateSourceTrigger=LostFocus}" Margin="0,0,4,0" />
-                                    <TextBlock Grid.Column="3" Text="{Binding TotalLabel}" FontSize="10"
+                                    <TextBlock Grid.Column="3" Text="{Binding TotalLabel}" FontSize="{StaticResource Font.Size.xs}"
                                                FontFamily="{StaticResource Font.Mono}" FontWeight="SemiBold"
-                                               Foreground="#D97706" TextAlignment="Right" VerticalAlignment="Center" />
-                                    <Button Grid.Column="4" Style="{StaticResource Button.Ghost}" Content="×" FontSize="14"
+                                               Foreground="{DynamicResource Brush.AmberRisk}" TextAlignment="Right" VerticalAlignment="Center" />
+                                    <Button Grid.Column="4" Style="{StaticResource Button.Ghost}" Content="×" FontSize="{StaticResource Font.Size.lg}"
                                             Command="{Binding DataContext.RemoveItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                             CommandParameter="{Binding}" Padding="0" Width="24" Height="24" />
                                   </Grid>
@@ -325,9 +315,9 @@
                           </ItemsControl>
                           <Border Background="{DynamicResource Brush.Surface}" Padding="10,5" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,1,0,0">
                             <Grid>
-                              <TextBlock Text="Total" FontSize="10" FontWeight="SemiBold" />
-                              <TextBlock Text="{Binding SubtotalLabel}" FontSize="11" FontFamily="{StaticResource Font.Mono}" FontWeight="Bold"
-                                         Foreground="#D97706" HorizontalAlignment="Right" />
+                              <TextBlock Text="Total" FontSize="{StaticResource Font.Size.xs}" FontWeight="SemiBold" />
+                              <TextBlock Text="{Binding SubtotalLabel}" FontSize="{StaticResource Font.Size.sm}" FontFamily="{StaticResource Font.Mono}" FontWeight="Bold"
+                                         Foreground="{DynamicResource Brush.AmberRisk}" HorizontalAlignment="Right" />
                             </Grid>
                           </Border>
                         </StackPanel>
@@ -339,10 +329,10 @@
 
               <Border Background="{DynamicResource Brush.Navy}" Padding="14,8">
                 <Grid>
-                  <TextBlock Text="Valor Indumentaria" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource Brush.HeaderLabel}" />
+                  <TextBlock Text="Valor Indumentaria" FontSize="{StaticResource Font.Size.xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.HeaderLabel}" />
                   <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <TextBlock Text="{Binding TotalMoDirectaLabel}" FontSize="12" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="#FFFFFF" Margin="0,0,16,0" />
-                    <TextBlock Text="{Binding TotalMoIndirectaLabel}" FontSize="12" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="#FFFFFF" />
+                    <TextBlock Text="{Binding TotalMoDirectaLabel}" FontSize="{StaticResource Font.Size.md}" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.White}" Margin="0,0,16,0" />
+                    <TextBlock Text="{Binding TotalMoIndirectaLabel}" FontSize="{StaticResource Font.Size.md}" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.White}" />
                   </StackPanel>
                 </Grid>
               </Border>
@@ -359,16 +349,16 @@
                     <ColumnDefinition Width="Auto" />
                   </Grid.ColumnDefinitions>
                   <StackPanel>
-                    <TextBlock Text="Accesorios Opcionales" FontSize="13" FontWeight="Bold" />
-                    <TextBlock Text="Costo Fijo — Proyecto" FontSize="10.5" Foreground="{DynamicResource Brush.Muted}" Margin="0,2,0,0" />
+                    <TextBlock Text="Accesorios Opcionales" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" />
+                    <TextBlock Text="Costo Fijo — Proyecto" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" Margin="0,2,0,0" />
                   </StackPanel>
                   <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                     <CheckBox Content="Incluir en total" IsChecked="{Binding OpcionalesIncluidos}"
-                              FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,10,0"
+                              FontSize="{StaticResource Font.Size.md}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,10,0"
                               IsEnabled="{Binding CanEdit}" />
                     <Button Style="{StaticResource Button.Secondary}" Content="+ Ítem"
                             Command="{Binding AddOpcionalItemCommand}"
-                            IsEnabled="{Binding CanEdit}" FontSize="11.5" Padding="10,5" />
+                            IsEnabled="{Binding CanEdit}" FontSize="{StaticResource Font.Size.md}" Padding="10,5" />
                   </StackPanel>
                 </Grid>
               </Border>
@@ -376,8 +366,8 @@
                 <ItemsControl.ItemTemplate>
                   <DataTemplate>
                     <StackPanel>
-                      <Border Background="#F5F3FF" Padding="10,4" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,0,1">
-                        <TextBlock Text="{Binding Titulo}" FontSize="9" FontWeight="SemiBold" Foreground="#7C3AED" />
+                      <Border Background="{DynamicResource Brush.PurpleSoft}" Padding="10,4" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,0,1">
+                        <TextBlock Text="{Binding Titulo}" FontSize="{StaticResource Font.Size.2xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Violet}" />
                       </Border>
                       <ItemsControl ItemsSource="{Binding Items}">
                         <ItemsControl.ItemTemplate>
@@ -397,10 +387,10 @@
                                          Text="{Binding Cantidad, UpdateSourceTrigger=LostFocus}" Margin="0,0,4,0" />
                                 <TextBox Grid.Column="2" Style="{StaticResource EppCellBox}" TextAlignment="Right"
                                          Text="{Binding PrecioUnitario, UpdateSourceTrigger=LostFocus}" Margin="0,0,4,0" />
-                                <TextBlock Grid.Column="3" Text="{Binding TotalLabel}" FontSize="10"
+                                <TextBlock Grid.Column="3" Text="{Binding TotalLabel}" FontSize="{StaticResource Font.Size.xs}"
                                            FontFamily="{StaticResource Font.Mono}" FontWeight="SemiBold"
-                                           Foreground="#7C3AED" TextAlignment="Right" VerticalAlignment="Center" />
-                                <Button Grid.Column="4" Style="{StaticResource Button.Ghost}" Content="×" FontSize="14"
+                                           Foreground="{DynamicResource Brush.Violet}" TextAlignment="Right" VerticalAlignment="Center" />
+                                <Button Grid.Column="4" Style="{StaticResource Button.Ghost}" Content="×" FontSize="{StaticResource Font.Size.lg}"
                                         Command="{Binding DataContext.RemoveItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                         CommandParameter="{Binding}" Padding="0" Width="24" Height="24" />
                               </Grid>
@@ -408,11 +398,11 @@
                           </DataTemplate>
                         </ItemsControl.ItemTemplate>
                       </ItemsControl>
-                      <Border Background="#EDE9FE" Padding="10,5">
+                      <Border Background="{DynamicResource Brush.PinkSoft}" Padding="10,5">
                         <Grid>
-                          <TextBlock Text="Costo Fijo — Proyecto" FontSize="10" FontWeight="SemiBold" Foreground="#5B21B6" />
-                          <TextBlock Text="{Binding SubtotalLabel}" FontSize="12" FontFamily="{StaticResource Font.Mono}" FontWeight="Bold"
-                                     Foreground="#7C3AED" HorizontalAlignment="Right" />
+                          <TextBlock Text="Costo Fijo — Proyecto" FontSize="{StaticResource Font.Size.xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.VioletDark}" />
+                          <TextBlock Text="{Binding SubtotalLabel}" FontSize="{StaticResource Font.Size.md}" FontFamily="{StaticResource Font.Mono}" FontWeight="Bold"
+                                     Foreground="{DynamicResource Brush.Violet}" HorizontalAlignment="Right" />
                         </Grid>
                       </Border>
                     </StackPanel>
@@ -425,9 +415,9 @@
           <!-- Gran total -->
           <Border Background="{DynamicResource Brush.Navy}" Padding="14,10" CornerRadius="8" Margin="0,0,0,14">
             <Grid>
-              <TextBlock Text="GRAN TOTAL EPP (Indumentaria + Accesorios Opcionales)" FontSize="11" FontWeight="Bold" Foreground="#FFFFFF" VerticalAlignment="Center" />
-              <TextBlock Text="{Binding GranTotalLabel}" FontSize="16" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}"
-                         Foreground="#FFFFFF" HorizontalAlignment="Right" VerticalAlignment="Center" />
+              <TextBlock Text="GRAN TOTAL EPP (Indumentaria + Accesorios Opcionales)" FontSize="{StaticResource Font.Size.sm}" FontWeight="Bold" Foreground="{DynamicResource Brush.White}" VerticalAlignment="Center" />
+              <TextBlock Text="{Binding GranTotalLabel}" FontSize="{StaticResource Font.Size.h3}" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}"
+                         Foreground="{DynamicResource Brush.White}" HorizontalAlignment="Right" VerticalAlignment="Center" />
             </Grid>
           </Border>
 
@@ -435,9 +425,9 @@
           <Border Background="{DynamicResource Brush.Navy}" Padding="20,12" CornerRadius="8">
             <DockPanel LastChildFill="False">
               <StackPanel DockPanel.Dock="Left" VerticalAlignment="Center">
-                <TextBlock Text="RESUMEN EPP" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource Brush.HeaderMuted}" />
-                <TextBlock Text="{Binding FooterText}" FontSize="9" Foreground="{DynamicResource Brush.HeaderLabel}" Margin="0,1,0,0" />
-                <TextBlock Text="{Binding StatusMessage}" FontSize="10" Margin="0,4,0,0">
+                <TextBlock Text="RESUMEN EPP" FontSize="{StaticResource Font.Size.xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.HeaderMuted}" />
+                <TextBlock Text="{Binding FooterText}" FontSize="{StaticResource Font.Size.2xs}" Foreground="{DynamicResource Brush.HeaderLabel}" Margin="0,1,0,0" />
+                <TextBlock Text="{Binding StatusMessage}" FontSize="{StaticResource Font.Size.xs}" Margin="0,4,0,0">
                   <TextBlock.Style>
                     <Style TargetType="TextBlock">
                       <Setter Property="Foreground" Value="{DynamicResource Brush.HeaderLabel}" />
@@ -454,7 +444,7 @@
               <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
                 <Button Style="{StaticResource Button.Secondary}" Content="Cancelar" Command="{Binding CancelCommand}" Margin="0,0,8,0" />
                 <Button Style="{StaticResource Button.Primary}" Content="Guardar EPP" Command="{Binding SaveCommand}" Margin="0,0,16,0" />
-                <TextBlock Text="{Binding GranTotalLabel}" FontSize="18" FontWeight="Bold" Foreground="#FFFFFF" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding GranTotalLabel}" FontSize="{StaticResource Font.Size.h2}" FontWeight="Bold" Foreground="{DynamicResource Brush.White}" VerticalAlignment="Center" />
               </StackPanel>
             </DockPanel>
           </Border>
@@ -469,5 +459,8 @@
         <Button Style="{StaticResource Button.Primary}" Content="Abrir proyecto…" Command="{Binding OpenProjectCommand}" MinWidth="180" />
       </ctrl:EmptyStateControl.Actions>
     </ctrl:EmptyStateControl>
+
+    <ctrl:SkeletonOverlayControl Panel.ZIndex="20" Message="Cargando EPP…"
+                                 Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibility}}" />
   </Grid>
 </UserControl>

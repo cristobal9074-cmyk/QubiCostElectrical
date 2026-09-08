@@ -32,6 +32,18 @@
                      Duration="{StaticResource Anim.Fast}" />
   </Storyboard>
 
+  <!-- ═══ Slide in from right + fade (for toast notifications) ═══ -->
+  <Storyboard x:Key="Anim.SlideInRight">
+    <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1"
+                     Duration="{StaticResource Anim.Normal}" />
+    <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(TranslateTransform.X)" From="24" To="0"
+                     Duration="{StaticResource Anim.Normal}">
+      <DoubleAnimation.EasingFunction>
+        <QuadraticEase EasingMode="EaseOut" />
+      </DoubleAnimation.EasingFunction>
+    </DoubleAnimation>
+  </Storyboard>
+
   <!-- ═══ Shimmer (for loading skeleton) ═══ -->
   <Storyboard x:Key="Anim.Shimmer" RepeatBehavior="Forever">
     <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0.06" To="0.15"

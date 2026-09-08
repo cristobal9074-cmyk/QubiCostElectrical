@@ -15,9 +15,9 @@
           </Grid.ColumnDefinitions>
           <StackPanel>
             <TextBlock Text="GASTO OPERACIONAL 3.3 · METODOLOGÍA TIPO PER DIEM"
-                       FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.CostoWhite50}" Margin="0,0,0,6" />
+                       FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.CostoWhite50}" Margin="0,0,0,6" />
             <TextBlock Text="Movilización, alimentación y estadía"
-                       FontSize="22" FontWeight="Bold" Foreground="White" />
+                       FontSize="{StaticResource Font.Size.hero}" FontWeight="Bold" Foreground="{DynamicResource Brush.White}" />
             <TextBlock Text="Desglose profesional: pasajes, colación (con o sin provisión de la empresa) y arriendo/alojamiento. Al aplicar, genera las líneas del GO."
                        FontSize="{StaticResource Font.Size.md}" Foreground="{DynamicResource Brush.CostoWhite60}" TextWrapping="Wrap" MaxWidth="620" Margin="0,5,0,0" LineHeight="18" />
           </StackPanel>
@@ -31,7 +31,7 @@
                     <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center">
                       <ContentPresenter.Resources>
                         <Style TargetType="TextBlock">
-                          <Setter Property="Foreground" Value="White" />
+                          <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
                         </Style>
                       </ContentPresenter.Resources>
                     </ContentPresenter>
@@ -48,7 +48,7 @@
                     Padding="13,8" FontSize="{StaticResource Font.Size.sm}" FontWeight="SemiBold" Cursor="Hand">
               <Button.Template>
                 <ControlTemplate TargetType="Button">
-                  <Border x:Name="bd" Background="White" CornerRadius="{StaticResource Radius.Sm}" Padding="{TemplateBinding Padding}">
+                  <Border x:Name="bd" Background="{DynamicResource Brush.White}" CornerRadius="{StaticResource Radius.Sm}" Padding="{TemplateBinding Padding}">
                     <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center">
                       <ContentPresenter.Resources>
                         <Style TargetType="TextBlock">
@@ -72,31 +72,31 @@
           <Border Background="{DynamicResource Brush.White12}" BorderBrush="{DynamicResource Brush.White16}" BorderThickness="1" CornerRadius="11" Padding="12,10" Margin="0,0,8,0">
             <StackPanel>
               <TextBlock Text="PASAJES" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.CostoWhite50}" />
-              <TextBlock Text="{Binding KpiPasajes}" FontFamily="{StaticResource Font.Mono}" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource Brush.CostoChipValue}" Margin="0,3,0,0" />
+              <TextBlock Text="{Binding KpiPasajes}" Style="{StaticResource Text.KpiInline}" Foreground="{DynamicResource Brush.CostoChipValue}" Margin="0,3,0,0" />
             </StackPanel>
           </Border>
           <Border Background="{DynamicResource Brush.White12}" BorderBrush="{DynamicResource Brush.White16}" BorderThickness="1" CornerRadius="11" Padding="12,10" Margin="0,0,8,0">
             <StackPanel>
               <TextBlock Text="ALIMENTACIÓN" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.CostoWhite50}" />
-              <TextBlock Text="{Binding KpiAlim}" FontFamily="{StaticResource Font.Mono}" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource Brush.CostoFlash}" Margin="0,3,0,0" />
+              <TextBlock Text="{Binding KpiAlim}" Style="{StaticResource Text.KpiInline}" Foreground="{DynamicResource Brush.CostoFlash}" Margin="0,3,0,0" />
             </StackPanel>
           </Border>
           <Border Background="{DynamicResource Brush.White12}" BorderBrush="{DynamicResource Brush.White16}" BorderThickness="1" CornerRadius="11" Padding="12,10" Margin="0,0,8,0">
             <StackPanel>
               <TextBlock Text="ARRIENDO / ESTADÍA" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.CostoWhite50}" />
-              <TextBlock Text="{Binding KpiArriendo}" FontFamily="{StaticResource Font.Mono}" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource Brush.CostoHeroAmber}" Margin="0,3,0,0" />
+              <TextBlock Text="{Binding KpiArriendo}" Style="{StaticResource Text.KpiInline}" Foreground="{DynamicResource Brush.CostoHeroAmber}" Margin="0,3,0,0" />
             </StackPanel>
           </Border>
           <Border Background="{DynamicResource Brush.White12}" BorderBrush="{DynamicResource Brush.White16}" BorderThickness="1" CornerRadius="11" Padding="12,10" Margin="0,0,8,0">
             <StackPanel>
               <TextBlock Text="OTROS / INCIDENTALES" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.CostoWhite50}" />
-              <TextBlock Text="{Binding KpiOtros}" FontFamily="{StaticResource Font.Mono}" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource Brush.CostoChipValue}" Margin="0,3,0,0" />
+              <TextBlock Text="{Binding KpiOtros}" Style="{StaticResource Text.KpiInline}" Foreground="{DynamicResource Brush.CostoChipValue}" Margin="0,3,0,0" />
             </StackPanel>
           </Border>
           <Border Background="{DynamicResource Brush.White12}" BorderBrush="{DynamicResource Brush.White16}" BorderThickness="1" CornerRadius="11" Padding="12,10">
             <StackPanel>
               <TextBlock Text="TOTAL A GO 3.3" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.CostoWhite50}" />
-              <TextBlock Text="{Binding KpiTotal}" FontFamily="{StaticResource Font.Mono}" FontSize="17" FontWeight="SemiBold" Foreground="White" Margin="0,3,0,0" />
+              <TextBlock Text="{Binding KpiTotal}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.price}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.White}" Margin="0,3,0,0" />
             </StackPanel>
           </Border>
         </UniformGrid>

@@ -6,10 +6,23 @@ namespace QubiCostElectrical.Wpf.Features.Delivery;
 public sealed partial class OfferSettingsEditorVm : ObservableObject
 {
     private readonly BudgetProjectSession _session;
+    private readonly Func<bool>? canEdit;
 
-    public OfferSettingsEditorVm(BudgetProjectSession session)
+    public OfferSettingsEditorVm(BudgetProjectSession session, Func<bool>? canEdit = null)
     {
         _session = session ?? throw new ArgumentNullException(nameof(session));
+        this.canEdit = canEdit;
+    }
+
+    private bool AllowEdit => canEdit?.Invoke() ?? true;
+
+    public bool CanEdit => AllowEdit;
+    public bool IsReadOnly => !AllowEdit;
+
+    public void NotifyEditAccessChanged()
+    {
+        OnPropertyChanged(nameof(CanEdit));
+        OnPropertyChanged(nameof(IsReadOnly));
     }
 
     [ObservableProperty] private string companyName = "";
@@ -78,10 +91,14 @@ public sealed partial class OfferSettingsEditorVm : ObservableObject
         SignaturePhone = settings.SignaturePhone;
         SignatureEmail = settings.SignatureEmail;
         SignatureImagePath = settings.SignatureImagePath;
+        NotifyEditAccessChanged();
     }
 
     public void ApplyToSession()
     {
+        if (!AllowEdit)
+            return;
+
         var settings = _session.OfferPdfSettings;
         settings.CompanyName = CompanyName;
         settings.CompanyRut = CompanyRut;

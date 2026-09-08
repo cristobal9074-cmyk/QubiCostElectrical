@@ -366,6 +366,9 @@ public partial class ManoDeObraView : UserControl
 
         border.PreviewMouseLeftButtonDown += (_, e) =>
         {
+            if (!vm.CanEdit)
+                return;
+
             // Evita reiniciar el editor si ya está editando (clic dentro del TextBox).
             if (border.Child is TextBox)
                 return;

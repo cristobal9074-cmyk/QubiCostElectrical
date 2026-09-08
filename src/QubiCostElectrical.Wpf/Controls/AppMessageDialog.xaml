@@ -9,7 +9,8 @@
         ResizeMode="NoResize"
         ShowInTaskbar="False"
         WindowStartupLocation="CenterOwner">
-  <Grid Margin="22,18,22,16">
+  <Border Style="{StaticResource Dialog.Chrome}" Margin="16">
+  <Grid>
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto" />
       <RowDefinition Height="Auto" />
@@ -20,14 +21,14 @@
     <TextBlock x:Name="TitleText"
                Grid.Row="0"
                Text="{Binding DialogTitle, RelativeSource={RelativeSource AncestorType=Window}}"
-               Style="{StaticResource Text.SectionLabel}"
-               Margin="0,0,0,8" />
+               Style="{StaticResource Dialog.HeaderTitle}" />
 
     <TextBlock x:Name="MessageText"
                Grid.Row="1"
                Text="{Binding DialogMessage, RelativeSource={RelativeSource AncestorType=Window}}"
                Style="{StaticResource Text.Body}"
-               TextWrapping="Wrap" />
+               TextWrapping="Wrap"
+               Margin="0,0,0,4" />
 
     <Border x:Name="WarningBanner"
             Grid.Row="2"
@@ -71,4 +72,5 @@
       </StackPanel>
     </DockPanel>
   </Grid>
+  </Border>
 </Window>

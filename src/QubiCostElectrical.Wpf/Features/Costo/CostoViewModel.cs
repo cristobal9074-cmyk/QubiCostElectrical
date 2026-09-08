@@ -14,10 +14,15 @@ namespace QubiCostElectrical.Wpf.Features.Costo;
 
 public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefreshablePage
 {
-    private readonly WpfAppHost host;
     private readonly IShellNavigationHost shell;
+    private readonly BudgetProjectSession session;
+    private readonly IProjectWorkspaceService workspace;
+    private readonly DashboardPresenter dashboard;
+    private readonly ICurrencyConversionService currencySvc;
+    private readonly ProjectAuditRecorder? audit;
 
     private bool showEmptyState = true;
+    private bool isLoading;
     private bool showFamilias;
     private bool showMoSection;
     private bool showGoSection;
@@ -53,7 +58,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
     private bool suppressNegotiatedDiscountsRefresh;
     private bool suppressStaffingPlanRefresh;
     private string totalStaffingPlanLabel = "";
-    private decimal currentValorUf = 37998m;
+    private decimal currentValorUf = PriceConversion.DefaultValorUfClp;
     private string gastosGeneralesText = "";
     private string utilidadText = "";
     private string valorAgregadoEquiposText = "";
@@ -64,6 +69,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
     private bool politicaCostosExcel;
     private string costosPresetHint = "Sin preset guardado en este proyecto";
     public ClosingPolicySectionVm ClosingPolicySection { get; }
+    public CommercialNegotiationVm NegotiationSimulator { get; }
 
     private static readonly string[] GoPalette =
     [

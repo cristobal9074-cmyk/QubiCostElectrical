@@ -131,4 +131,27 @@
     <Setter Property="Margin" Value="0,0,0,16" />
   </Style>
 
+  <!-- Tarjetas estándar de proyecto y resúmenes compartidos -->
+  <Style x:Key="ProjectCard" TargetType="Border">
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="14" />
+    <Setter Property="Padding" Value="18" />
+    <Setter Property="Margin" Value="0,0,0,14" />
+  </Style>
+
+  <Style x:Key="ProjectCardTitle" TargetType="TextBlock">
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
+    <Setter Property="Margin" Value="0,0,0,14" />
+  </Style>
+
+  <Style x:Key="SummaryCardValue" TargetType="TextBlock">
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.lg}" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+  </Style>
+
 </ResourceDictionary>

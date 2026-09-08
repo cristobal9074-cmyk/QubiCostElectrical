@@ -11,26 +11,36 @@ namespace QubiCostElectrical.Wpf.Features.Documents;
 public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPendingChanges, IRefreshablePage
 {
     public DocumentsViewModel(IShellNavigationHost shell, WpfAppHost host)
+        : this(shell, host.Session, host.ProjectWorkspace, host.Permissions, host.Documents) { }
+
+    public DocumentsViewModel(IShellNavigationHost shell, BudgetProjectSession session, IProjectWorkspaceService projectWorkspace, IPermissionService permissions, IDocumentsWorkspaceService documents)
     {
         this.shell = shell;
-        this.host = host;
+        this.session = session;
+        this.projectWorkspace = projectWorkspace;
+        this.permissions = permissions;
+        this.documents = documents;
         FilteredRows = new ObservableCollection<AntecedenteRowVm>();
         TipoOptions = new ObservableCollection<string>(new[] { "Todos" }.Concat(AntecedenteTecnicoTipo.All));
 
-        AddAntecedenteCommand = new RelayCommand(AddAntecedenteConTipo, () => !ShowEmptyState && !host.Session.IsReadOnly);
-        DuplicateCommand = new RelayCommand(DuplicateSelected, () => SelectedRow != null && !host.Session.IsReadOnly);
-        RemoveCommand = new RelayCommand(RemoveSelected, () => SelectedRow != null && !host.Session.IsReadOnly);
-        MarkVigenteCommand = new RelayCommand(MarkVigente, () => SelectedRow != null && !host.Session.IsReadOnly);
-        AttachFileCommand = new RelayCommand(AttachFile, () => SelectedRow != null && !host.Session.IsReadOnly);
+        AddAntecedenteCommand = new RelayCommand(AddAntecedenteConTipo, () => !ShowEmptyState && !session.IsReadOnly);
+        DuplicateCommand = new RelayCommand(DuplicateSelected, () => SelectedRow != null && !session.IsReadOnly);
+        RemoveCommand = new RelayCommand(RemoveSelected, () => SelectedRow != null && !session.IsReadOnly);
+        MarkVigenteCommand = new RelayCommand(MarkVigente, () => SelectedRow != null && !session.IsReadOnly);
+        AttachFileCommand = new RelayCommand(AttachFile, () => SelectedRow != null && !session.IsReadOnly);
         OpenAttachedFileCommand = new RelayCommand(OpenAttachedFile, () => SelectedRow != null && !string.IsNullOrWhiteSpace(SelectedRow.RutaArchivo));
-        SaveCommand = new RelayCommand(Save, () => HasPendingChanges && !host.Session.IsReadOnly);
-        CancelCommand = new RelayCommand(Cancel, () => HasPendingChanges && !host.Session.IsReadOnly);
-        SyncPlanosCommand = new RelayCommand(SyncPlanos, () => !ShowEmptyState && !host.Session.IsReadOnly);
-        AppendExclusionsCommand = new RelayCommand(() => AppendExclusions(replace: false), () => !ShowEmptyState && !host.Session.IsReadOnly);
+        SaveCommand = new RelayCommand(Save, () => HasPendingChanges && !session.IsReadOnly);
+        CancelCommand = new RelayCommand(Cancel, () => HasPendingChanges && !session.IsReadOnly);
+        SyncPlanosCommand = new RelayCommand(SyncPlanos, () => !ShowEmptyState && !session.IsReadOnly);
+        AppendExclusionsCommand = new RelayCommand(() => AppendExclusions(replace: false), () => !ShowEmptyState && !session.IsReadOnly);
         OpenProjectCommand = new RelayCommand(() => _ = shell.OpenProjectAsync());
-        ExportPdfCommand = new RelayCommand(ExportPdf, () => !ShowEmptyState);
+        ExportPdfCommand = new RelayCommand(ExportPdf, () => !ShowEmptyState && permissions.CanExportDocuments);
         SelectTipoFilterCommand = new RelayCommand<string>(SelectTipoFilter);
     }
+
+    public bool CanEdit => !ShowEmptyState && !session.IsReadOnly;
+    public bool IsReadOnly => session.IsReadOnly;
+    public bool IsLoading { get; private set; }
 
     public ObservableCollection<AntecedenteRowVm> FilteredRows { get; }
     public ObservableCollection<string> TipoOptions { get; }
@@ -242,33 +252,45 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
 
     public void Load()
     {
-        ShowEmptyState = !host.ProjectWorkspace.HasOpenProject;
-        if (ShowEmptyState)
+        IsLoading = true;
+        OnPropertyChanged(nameof(IsLoading));
+        try
         {
+            ShowEmptyState = !projectWorkspace.HasOpenProject;
+            OnPropertyChanged(nameof(CanEdit));
+            OnPropertyChanged(nameof(IsReadOnly));
+            if (ShowEmptyState)
+            {
+                allRows.Clear();
+                FilteredRows.Clear();
+                SummaryText = "";
+                isDirty = false;
+                return;
+            }
+
+            documents.DiscardChanges();
             allRows.Clear();
-            FilteredRows.Clear();
-            SummaryText = "";
+            foreach (var row in documents.GetRows())
+                allRows.Add(new AntecedenteRowVm(row, OnRowEdited));
+
+            fechaCorte = documents.GetFechaCorte();
+            sinFechaCorte = fechaCorte == null;
+            OnPropertyChanged(nameof(FechaCorte));
+            OnPropertyChanged(nameof(SinFechaCorte));
+
+            var summary = documents.Summarize();
+            SummaryText = $"{summary.Total} documentos · {summary.Planos} planos · {summary.PendientesMandante} pendientes";
             isDirty = false;
-            return;
+            StatusMessage = "";
+            ApplyFilter();
+            NotifyDirty();
+            NotifyKpisChanged();
         }
-
-        host.Documents.DiscardChanges();
-        allRows.Clear();
-        foreach (var row in host.Documents.GetRows())
-            allRows.Add(new AntecedenteRowVm(row, OnRowEdited));
-
-        fechaCorte = host.Documents.GetFechaCorte();
-        sinFechaCorte = fechaCorte == null;
-        OnPropertyChanged(nameof(FechaCorte));
-        OnPropertyChanged(nameof(SinFechaCorte));
-
-        var summary = host.Documents.Summarize();
-        SummaryText = $"{summary.Total} documentos · {summary.Planos} planos · {summary.PendientesMandante} pendientes";
-        isDirty = false;
-        StatusMessage = "";
-        ApplyFilter();
-        NotifyDirty();
-        NotifyKpisChanged();
+        finally
+        {
+            IsLoading = false;
+            OnPropertyChanged(nameof(IsLoading));
+        }
     }
 
     public bool TryDiscardChanges()
@@ -281,7 +303,7 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
 
     private void AddAntecedenteConTipo()
     {
-        if (host.Session.IsReadOnly)
+        if (session.IsReadOnly)
             return;
         var tipo = WpfDialogService.PromptChoice(
             "Agregar antecedente",
@@ -294,7 +316,7 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
 
     private void AddNew(string tipo)
     {
-        if (host.Session.IsReadOnly)
+        if (session.IsReadOnly)
             return;
         var folderPath = WpfDialogService.PromptSelectFolder($"Seleccionar carpeta con archivos de tipo \"{tipo}\"");
         if (folderPath == null)
@@ -317,7 +339,7 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
             .Where(c => !string.IsNullOrWhiteSpace(c))
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        // ApplyFilter() recorre y reordena TODA la lista (host.Documents.Filter). Llamarlo una
+        // ApplyFilter() recorre y reordena TODA la lista (documents.Filter). Llamarlo una
         // vez POR ARCHIVO al importar una carpeta grande de planos (habitual: decenas o cientos
         // de PDFs) es O(n²) y se siente lento/pegado; se agrega cada fila en crudo y se refiltra
         // una sola vez al final.
@@ -350,7 +372,7 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
 
     private AntecedenteRowVm AddOneRowRaw(string tipo, string? filePath)
     {
-        var row = host.Documents.AddNew(tipo);
+        var row = documents.AddNew(tipo);
         var vm = new AntecedenteRowVm(row, OnRowEdited);
         if (!string.IsNullOrWhiteSpace(filePath))
         {
@@ -371,8 +393,8 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
 
     private void DuplicateSelected()
     {
-        if (host.Session.IsReadOnly || SelectedRow == null) return;
-        var copy = host.Documents.Duplicate(SelectedRow.Model);
+        if (session.IsReadOnly || SelectedRow == null) return;
+        var copy = documents.Duplicate(SelectedRow.Model);
         var vm = new AntecedenteRowVm(copy, OnRowEdited);
         allRows.Add(vm);
         EnsureVisibleInFilter(copy.Tipo);
@@ -384,10 +406,10 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
 
     private void RemoveSelected()
     {
-        if (host.Session.IsReadOnly || SelectedRow == null) return;
+        if (session.IsReadOnly || SelectedRow == null) return;
         if (!WpfDialogService.Confirm("Quitar antecedente", "¿Quitar el registro seleccionado?", isWarning: true))
             return;
-        host.Documents.Remove(SelectedRow.Model);
+        documents.Remove(SelectedRow.Model);
         allRows.Remove(SelectedRow);
         SelectedRow = null;
         ApplyFilter();
@@ -415,8 +437,8 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
 
     private void MarkVigente()
     {
-        if (host.Session.IsReadOnly || SelectedRow == null) return;
-        host.Documents.MarkVigente(SelectedRow.Model);
+        if (session.IsReadOnly || SelectedRow == null) return;
+        documents.MarkVigente(SelectedRow.Model);
         foreach (var row in allRows)
             row.RefreshEstado();
         MarkDirtyLocal();
@@ -424,7 +446,7 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
 
     private void AttachFile()
     {
-        if (host.Session.IsReadOnly || SelectedRow == null) return;
+        if (session.IsReadOnly || SelectedRow == null) return;
         var path = WpfDialogService.PromptOpenDocument();
         if (path == null) return;
         SelectedRow.RutaArchivo = path;
@@ -437,28 +459,18 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
         var path = SelectedRow?.RutaArchivo;
         if (string.IsNullOrWhiteSpace(path))
             return;
-        if (!System.IO.File.Exists(path))
+        if (!QubiCostElectrical.Wpf.Infrastructure.Security.SafeProcessLauncher.TryOpenFile(path, out var error))
         {
-            WpfDialogService.Warning("Abrir archivo", $"El archivo no se encuentra en la ruta guardada:\n{path}");
-            return;
-        }
-        try
-        {
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(path) { UseShellExecute = true });
-        }
-        catch (Exception ex)
-        {
-            AppLog.Error("Documents", "Falló abrir archivo adjunto de antecedente", ex);
-            WpfDialogService.Error("Abrir archivo", OperationFailureMessages.ToUserMessage(ex));
+            WpfDialogService.Error("Abrir archivo", error ?? "No se pudo abrir el archivo de forma segura.");
         }
     }
 
     private void Save()
     {
-        if (host.Session.IsReadOnly)
+        if (session.IsReadOnly)
             return;
-        host.Documents.SetFechaCorte(SinFechaCorte ? null : FechaCorte);
-        host.Documents.SaveChanges();
+        documents.SetFechaCorte(SinFechaCorte ? null : FechaCorte);
+        documents.SaveChanges();
         isDirty = false;
         StatusMessage = "Antecedentes guardados en el proyecto. Use Guardar en la barra superior para persistir el archivo.";
         shell.RefreshChrome();
@@ -468,18 +480,18 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
 
     private void Cancel()
     {
-        host.Documents.DiscardChanges();
+        documents.DiscardChanges();
         Load();
     }
 
     private void SyncPlanos()
     {
-        if (host.Session.IsReadOnly)
+        if (session.IsReadOnly)
             return;
         bool fromDraft = HasPendingChanges;
-        int count = host.Documents.SyncPlanosToOffer();
+        int count = documents.SyncPlanosToOffer();
         if (count > 0)
-            host.Session.MarkDirty("project_info");
+            session.MarkDirty(ProjectDirtyScope.ProjectInfo);
         StatusMessage = count > 0
             ? fromDraft
                 ? $"Se sincronizaron {count} planos vigentes del borrador actual a la oferta."
@@ -490,11 +502,11 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
 
     private void AppendExclusions(bool replace)
     {
-        if (host.Session.IsReadOnly)
+        if (session.IsReadOnly)
             return;
-        int count = host.Documents.AppendExclusionsToOffer(replace);
+        int count = documents.AppendExclusionsToOffer(replace);
         if (count > 0)
-            host.Session.MarkDirty("project_info");
+            session.MarkDirty(ProjectDirtyScope.ProjectInfo);
         StatusMessage = count > 0
             ? $"Se incorporaron {count} exclusiones al texto de oferta."
             : "No había exclusiones marcadas para incorporar.";
@@ -503,7 +515,7 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
 
     private void ApplyFilter()
     {
-        var filtered = host.Documents.Filter(SearchText, TipoFilter);
+        var filtered = documents.Filter(SearchText, TipoFilter);
         var ids = filtered.Select(x => x.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
         FilteredRows.Clear();
         foreach (var vm in allRows.Where(x => ids.Contains(x.Model.Id)))
@@ -513,7 +525,7 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
 
     private void MarkDirtyLocal()
     {
-        if (host.Session.IsReadOnly)
+        if (session.IsReadOnly)
             return;
         isDirty = true;
         if (string.IsNullOrWhiteSpace(StatusMessage) || StatusMessage.StartsWith("Antecedentes guardados", StringComparison.Ordinal))
@@ -561,12 +573,12 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
             var sfd = new Microsoft.Win32.SaveFileDialog
             {
                 Filter = "Archivo PDF (*.pdf)|*.pdf",
-                FileName = $"Antecedentes_{host.Session.ProjectInfo.Nombre ?? "Proyecto"}.pdf"
+                FileName = $"Antecedentes_{session.ProjectInfo.Nombre ?? "Proyecto"}.pdf"
             };
 
             if (sfd.ShowDialog() == true)
             {
-                DocumentsPdfExporter.Export(host.Session.ProjectInfo, FilteredRows.ToList(), sfd.FileName);
+                DocumentsPdfExporter.Export(session.ProjectInfo, FilteredRows.ToList(), sfd.FileName);
                 WpfDialogService.Info("Exportación Exitosa", $"Se ha exportado el registro de antecedentes a {sfd.FileName}");
             }
         }

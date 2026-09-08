@@ -30,9 +30,13 @@
   <CornerRadius x:Key="Radius.Brand">10</CornerRadius>
   <CornerRadius x:Key="Radius.Chip">6</CornerRadius>
   <CornerRadius x:Key="Radius.Dropdown">12</CornerRadius>
+  <CornerRadius x:Key="Radius.Card">8</CornerRadius>
 
   <Thickness x:Key="Padding.Page">22,20,22,40</Thickness>
+  <Thickness x:Key="Padding.PageCompact">16,12,16,24</Thickness>
   <Thickness x:Key="Padding.Card">16</Thickness>
   <Thickness x:Key="Padding.ContextBar">22,0</Thickness>
+  <Thickness x:Key="Padding.WorkflowStepper">12,2</Thickness>
+  <Thickness x:Key="Padding.ReadOnlyBanner">16,6</Thickness>
 
 </ResourceDictionary>

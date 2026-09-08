@@ -12,7 +12,28 @@ public sealed partial class ExportViewModel
 
     private async Task<bool> EnsureExportAllowedAsync()
     {
-        if (!priceFreezePolicy.RequiresConfirmation(host.Session.ProjectInfo))
+        if (!permissions.CanExportDocuments)
+        {
+            var roleMsg = UserRolePermissions.GetRoleReadOnlyMessage(permissions.CurrentRole);
+            await Application.Current.Dispatcher.InvokeAsync(() =>
+                WpfDialogService.Warning(
+                    "Exportar",
+                    string.IsNullOrWhiteSpace(roleMsg)
+                        ? "Su rol no permite exportar documentos."
+                        : roleMsg));
+            return false;
+        }
+
+        if (session.IsReadOnly)
+        {
+            await Application.Current.Dispatcher.InvokeAsync(() =>
+                WpfDialogService.Warning(
+                    "Exportar",
+                    "El proyecto está en solo lectura; no se puede exportar."));
+            return false;
+        }
+
+        if (!priceFreezePolicy.RequiresConfirmation(session.ProjectInfo))
             return true;
 
         var decision = await Application.Current.Dispatcher.InvokeAsync(
@@ -22,12 +43,12 @@ public sealed partial class ExportViewModel
         {
             case ExportPriceFreezeDecision.FreezeAndProceed:
                 priceFreezeService.Freeze(
-                    host.Session.Data,
-                    host.Session.ProjectInfo.UsuarioNombre ?? string.Empty);
-                host.Session.MarkDirty("project_info");
+                    session.Data,
+                    session.ProjectInfo.UsuarioNombre ?? string.Empty);
+                session.MarkDirty(ProjectDirtyScope.ProjectInfo);
                 return true;
             case ExportPriceFreezeDecision.ProceedWithRisk:
-                host.Audit.RecordLifecycle("ExportSinCongelar", "Exportación sin congelar precios del proyecto");
+                audit.RecordLifecycle("ExportSinCongelar", "Exportación sin congelar precios del proyecto");
                 return true;
             default:
                 return false;

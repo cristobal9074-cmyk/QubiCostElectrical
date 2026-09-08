@@ -8,10 +8,11 @@ namespace QubiCostElectrical.Wpf.Features.Cubicacion;
 
 public sealed partial class CubicacionRowVm : ViewModelBase, IGridCellValidationSource
 {
-    public CubicacionRowVm(CubicacionRow source, bool isSessionBacked = true)
+    public CubicacionRowVm(CubicacionRow source, bool isSessionBacked = true, Func<bool>? canEdit = null)
     {
         Source = source;
         this.isSessionBacked = isSessionBacked;
+        this.canEdit = canEdit;
         tipo = source.Tipo ?? "MAT";
         codigo = source.Codigo ?? "";
         descripcion = source.Descripcion ?? "";
@@ -28,6 +29,8 @@ public sealed partial class CubicacionRowVm : ViewModelBase, IGridCellValidation
         // SectorValues sigue guardando el texto crudo, usado solo mientras se edita la celda.
         SectorDisplayValues = new ObservableCollection<string>(Enumerable.Repeat(string.Empty, CubicacionViewModel.SectorWindowSize));
     }
+
+    private bool AllowEdit => canEdit?.Invoke() ?? true;
 
     internal Action<CubicacionRowVm, int, string>? SectorExpressionChanged { get; set; }
     internal Action<CubicacionRowVm, HashSet<int>>? SectorBatchExpressionChanged { get; set; }
@@ -134,6 +137,7 @@ public sealed partial class CubicacionRowVm : ViewModelBase, IGridCellValidation
         get => tipo;
         set
         {
+            if (!AllowEdit) return;
             if (SetProperty(ref tipo, value))
                 Source.Tipo = value;
         }
@@ -144,6 +148,7 @@ public sealed partial class CubicacionRowVm : ViewModelBase, IGridCellValidation
         get => codigo;
         set
         {
+            if (!AllowEdit) return;
             var normalized = CodeHelper.Normalize(value);
             string old = codigo;
             if (SetProperty(ref codigo, normalized))
@@ -166,6 +171,7 @@ public sealed partial class CubicacionRowVm : ViewModelBase, IGridCellValidation
         get => descripcion;
         set
         {
+            if (!AllowEdit) return;
             if (SetProperty(ref descripcion, value))
                 Source.Descripcion = value;
         }
@@ -176,6 +182,7 @@ public sealed partial class CubicacionRowVm : ViewModelBase, IGridCellValidation
         get => unidad;
         set
         {
+            if (!AllowEdit) return;
             if (SetProperty(ref unidad, value))
                 Source.Unidad = value;
         }
@@ -186,6 +193,7 @@ public sealed partial class CubicacionRowVm : ViewModelBase, IGridCellValidation
         get => cantidad;
         set
         {
+            if (!AllowEdit) return;
             if (SetProperty(ref cantidad, value))
             {
                 Source.Cantidad = value;
@@ -206,6 +214,7 @@ public sealed partial class CubicacionRowVm : ViewModelBase, IGridCellValidation
         get => matUf;
         set
         {
+            if (!AllowEdit) return;
             if (SetProperty(ref matUf, value))
             {
                 Source.MatUf = value;
@@ -220,6 +229,7 @@ public sealed partial class CubicacionRowVm : ViewModelBase, IGridCellValidation
         get => moUf;
         set
         {
+            if (!AllowEdit) return;
             if (SetProperty(ref moUf, value))
             {
                 Source.MoUf = value;
@@ -237,6 +247,7 @@ public sealed partial class CubicacionRowVm : ViewModelBase, IGridCellValidation
         get => Source.MatClp;
         set
         {
+            if (!AllowEdit) return;
             if (Source.MatClp == value) return;
             Source.MatClp = value;
             Source.RecalcularUf(valorUfClp);
@@ -252,6 +263,7 @@ public sealed partial class CubicacionRowVm : ViewModelBase, IGridCellValidation
         get => Source.MoClp;
         set
         {
+            if (!AllowEdit) return;
             if (Source.MoClp == value) return;
             Source.MoClp = value;
             Source.RecalcularUf(valorUfClp);
@@ -327,6 +339,7 @@ public sealed partial class CubicacionRowVm : ViewModelBase, IGridCellValidation
         get => area;
         set
         {
+            if (!AllowEdit) return;
             string v = string.IsNullOrWhiteSpace(value) ? "General" : value.Trim();
             if (SetProperty(ref area, v))
                 Source.Area = v;
@@ -340,6 +353,7 @@ public sealed partial class CubicacionRowVm : ViewModelBase, IGridCellValidation
         get => notaInterna;
         set
         {
+            if (!AllowEdit) return;
             if (SetProperty(ref notaInterna, value ?? ""))
                 Source.NotaInterna = value ?? "";
         }
@@ -492,6 +506,9 @@ public sealed partial class CubicacionRowVm : ViewModelBase, IGridCellValidation
         if (isLoadingSectorWindow)
             return;
 
+        if (!AllowEdit)
+            return;
+
         SectorExpressionChanged?.Invoke(
             this,
             e.NewStartingIndex,
@@ -522,7 +539,7 @@ public sealed partial class CubicacionRowVm : ViewModelBase, IGridCellValidation
                         material.MatClp = MatClp;
                         material.MoClp = MoClp;
                         material.RecalcularUf(valorUfClp);
-                        session.MarkDirty("materiales");
+                        session.MarkDirty(ProjectDirtyScope.Materiales);
                     }
                 }
                 else
@@ -537,7 +554,7 @@ public sealed partial class CubicacionRowVm : ViewModelBase, IGridCellValidation
                     };
                     material.RecalcularUf(valorUfClp);
                     session.Materiales.Add(material);
-                    session.MarkDirty("materiales");
+                    session.MarkDirty(ProjectDirtyScope.Materiales);
                 }
             }
         }

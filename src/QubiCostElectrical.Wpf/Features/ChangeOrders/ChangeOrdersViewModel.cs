@@ -8,7 +8,8 @@ namespace QubiCostElectrical.Wpf.Features.ChangeOrders;
 
 public sealed partial class ChangeOrdersViewModel : ObservableObject, IDisposable, IRefreshablePage
 {
-    private readonly WpfAppHost _host;
+    private readonly BudgetProjectSession _session;
+    private readonly WpfUndoService _undo;
 
     internal Func<ChangeOrderRow, bool, bool> ShowEditor = (oc, isNew) =>
         ChangeOrderEditorDialog.Show(oc, isNew);
@@ -40,30 +41,33 @@ public sealed partial class ChangeOrdersViewModel : ObservableObject, IDisposabl
 
     partial void OnSearchTextChanged(string value) => ApplyFilter();
 
-    public bool CanEdit           => Selected != null && !ChangeOrderStateMachine.IsLocked(Selected.Estado) && !_host.Session.IsReadOnly;
-    public bool CanDelete         => Selected != null && !ChangeOrderStateMachine.IsLocked(Selected.Estado) && !_host.Session.IsReadOnly;
-    public bool CanEnviarRevision => Selected != null && ChangeOrderStateMachine.IsTransitionAllowed(Selected.Estado, "En revisión") && !_host.Session.IsReadOnly;
-    public bool CanAprobar        => Selected != null && ChangeOrderStateMachine.IsTransitionAllowed(Selected.Estado, "Aprobado") && !_host.Session.IsReadOnly;
-    public bool CanRechazar       => Selected != null && ChangeOrderStateMachine.IsTransitionAllowed(Selected.Estado, "Rechazado") && !_host.Session.IsReadOnly;
-    public bool CanReabrir        => Selected != null && ChangeOrderStateMachine.IsTransitionAllowed(Selected.Estado, "Borrador") && Selected.Estado == "Rechazado" && !_host.Session.IsReadOnly;
+    public bool CanEdit           => Selected != null && !ChangeOrderStateMachine.IsLocked(Selected.Estado) && !_session.IsReadOnly;
+    public bool CanDelete         => Selected != null && !ChangeOrderStateMachine.IsLocked(Selected.Estado) && !_session.IsReadOnly;
+    public bool CanEnviarRevision => Selected != null && ChangeOrderStateMachine.IsTransitionAllowed(Selected.Estado, "En revisión") && !_session.IsReadOnly;
+    public bool CanAprobar        => Selected != null && ChangeOrderStateMachine.IsTransitionAllowed(Selected.Estado, "Aprobado") && !_session.IsReadOnly;
+    public bool CanRechazar       => Selected != null && ChangeOrderStateMachine.IsTransitionAllowed(Selected.Estado, "Rechazado") && !_session.IsReadOnly;
+    public bool CanReabrir        => Selected != null && ChangeOrderStateMachine.IsTransitionAllowed(Selected.Estado, "Borrador") && Selected.Estado == "Rechazado" && !_session.IsReadOnly;
 
-    public int     TotalOrdenes    => _host.Session.OrdenesCambio.Count;
+    public int     TotalOrdenes    => _session.OrdenesCambio.Count;
     public int     TotalBorrador   => Count("Borrador");
     public int     TotalEnRevision => Count("En revisión");
     public int     TotalAprobado   => Count("Aprobado");
     public int     TotalRechazado  => Count("Rechazado");
-    public decimal MontoAprobado   => _host.Session.OrdenesCambio
+    public decimal MontoAprobado   => _session.OrdenesCambio
                                           .Where(x => x.Estado == "Aprobado")
                                           .Sum(x => x.DeltaVentaUf);
-    public decimal MontoPendiente  => _host.Session.OrdenesCambio
+    public decimal MontoPendiente  => _session.OrdenesCambio
                                           .Where(x => x.Estado is "Borrador" or "En revisión")
                                           .Sum(x => x.DeltaVentaUf);
     public string  ImpactoNetoDisplay => $"{MontoAprobado:+0.###;-0.###;0} UF";
 
-    private bool HasProject => !string.IsNullOrEmpty(_host.Session.CurrentProjectPath);
-    public ChangeOrdersViewModel(WpfAppHost host)
+    private bool HasProject => !string.IsNullOrEmpty(_session.CurrentProjectPath);
+    public ChangeOrdersViewModel(WpfAppHost host) : this(host.Session, host.UndoService) { }
+
+    public ChangeOrdersViewModel(BudgetProjectSession session, WpfUndoService undo)
     {
-        _host = host;
+        _session = session;
+        _undo = undo;
         Reload();
     }
 
@@ -74,47 +78,47 @@ public sealed partial class ChangeOrdersViewModel : ObservableObject, IDisposabl
 
     public void AddNew()
     {
-        if (!HasProject || _host.Session.IsReadOnly) return;
+        if (!HasProject || _session.IsReadOnly) return;
         var oc = new ChangeOrderRow
         {
             Numero             = NextNumero(),
             Titulo             = "Nueva orden de cambio",
             Estado             = "Borrador",
-            CreadoPor          = _host.Session.ProjectInfo.UsuarioNombre,
-            GastosGeneralesPct = _host.Session.ProjectInfo.GastosGeneralesPct,
-            UtilidadPct        = _host.Session.ProjectInfo.UtilidadPct,
+            CreadoPor          = _session.ProjectInfo.UsuarioNombre,
+            GastosGeneralesPct = _session.ProjectInfo.GastosGeneralesPct,
+            UtilidadPct        = _session.ProjectInfo.UtilidadPct,
         };
 
-        var before = _host.Session.CreateSnapshot();
+        var before = _session.CreateSnapshot();
         if (!ShowEditor(oc, true)) return;
 
-        _host.UndoService.PushSnapshot(before, "Nueva orden de cambio");
-        _host.Session.OrdenesCambio.Add(oc);
-        _host.Session.MarkDirty("ordenes_cambio");
+        _undo.PushSnapshot(before, "Nueva orden de cambio");
+        _session.OrdenesCambio.Add(oc);
+        _session.MarkDirty(ProjectDirtyScope.OrdenesCambio);
         Reload();
         Selected = Items.FirstOrDefault(i => i.Id == oc.Id);
     }
 
     public void EditSelected()
     {
-        if (_host.Session.IsReadOnly || Selected is not { } vm) return;
+        if (_session.IsReadOnly || Selected is not { } vm) return;
         if (ChangeOrderStateMachine.IsLocked(vm.Estado)) return;
         var oc = FindRow(vm.Id);
         if (oc == null) return;
 
-        var before = _host.Session.CreateSnapshot();
+        var before = _session.CreateSnapshot();
         if (!ShowEditor(oc, false)) return;
-        _host.UndoService.PushSnapshot(before, $"Editar orden {oc.Numero}");
+        _undo.PushSnapshot(before, $"Editar orden {oc.Numero}");
 
         oc.FechaModificacion = AppClock.Now;
-        _host.Session.MarkDirty("ordenes_cambio");
+        _session.MarkDirty(ProjectDirtyScope.OrdenesCambio);
         Reload();
         Selected = Items.FirstOrDefault(i => i.Id == oc.Id);
     }
 
     public void DeleteSelected()
     {
-        if (_host.Session.IsReadOnly || Selected is not { } vm) return;
+        if (_session.IsReadOnly || Selected is not { } vm) return;
         if (ChangeOrderStateMachine.IsLocked(vm.Estado)) return;
         var oc = FindRow(vm.Id);
         if (oc == null) return;
@@ -122,9 +126,9 @@ public sealed partial class ChangeOrdersViewModel : ObservableObject, IDisposabl
         if (!ConfirmDelete($"¿Eliminar «{oc.Numero} — {oc.Titulo}»? Esta acción no se puede deshacer."))
             return;
 
-        _host.UndoService.PushUndoPoint(_host.Session, $"Eliminar orden {oc.Numero}");
-        _host.Session.OrdenesCambio.Remove(oc);
-        _host.Session.MarkDirty("ordenes_cambio");
+        _undo.PushUndoPoint(_session, $"Eliminar orden {oc.Numero}");
+        _session.OrdenesCambio.Remove(oc);
+        _session.MarkDirty(ProjectDirtyScope.OrdenesCambio);
         Reload();
     }
 
@@ -133,7 +137,7 @@ public sealed partial class ChangeOrdersViewModel : ObservableObject, IDisposabl
         if (!CanEnviarRevision) return;
         var oc = FindRow(Selected!.Id);
         if (oc == null) return;
-        _host.UndoService.PushUndoPoint(_host.Session, $"Enviar a revisión {oc.Numero}");
+        _undo.PushUndoPoint(_session, $"Enviar a revisión {oc.Numero}");
         Transition(oc, "En revisión");
     }
 
@@ -144,7 +148,7 @@ public sealed partial class ChangeOrdersViewModel : ObservableObject, IDisposabl
         if (oc == null) return;
         if (!ConfirmTransition("Aprobar orden", $"¿Aprobar «{oc.Numero}»? Una vez aprobada no podrá editarse."))
             return;
-        _host.UndoService.PushUndoPoint(_host.Session, $"Aprobar orden {oc.Numero}");
+        _undo.PushUndoPoint(_session, $"Aprobar orden {oc.Numero}");
         Transition(oc, "Aprobado");
     }
 
@@ -155,7 +159,7 @@ public sealed partial class ChangeOrdersViewModel : ObservableObject, IDisposabl
         if (oc == null) return;
         if (!ConfirmTransition("Rechazar orden", $"¿Rechazar «{oc.Numero}»?"))
             return;
-        _host.UndoService.PushUndoPoint(_host.Session, $"Rechazar orden {oc.Numero}");
+        _undo.PushUndoPoint(_session, $"Rechazar orden {oc.Numero}");
         Transition(oc, "Rechazado");
     }
 
@@ -166,7 +170,7 @@ public sealed partial class ChangeOrdersViewModel : ObservableObject, IDisposabl
         if (oc == null) return;
         if (!ConfirmTransition("Reabrir orden", $"¿Reabrir «{oc.Numero}» y pasarla a Borrador?"))
             return;
-        _host.UndoService.PushUndoPoint(_host.Session, $"Reabrir orden {oc.Numero}");
+        _undo.PushUndoPoint(_session, $"Reabrir orden {oc.Numero}");
         Transition(oc, "Borrador");
     }
 
@@ -179,7 +183,7 @@ public sealed partial class ChangeOrdersViewModel : ObservableObject, IDisposabl
     {
         oc.Estado = newEstado;
         oc.FechaModificacion = AppClock.Now;
-        _host.Session.MarkDirty("ordenes_cambio");
+        _session.MarkDirty(ProjectDirtyScope.OrdenesCambio);
         Reload();
         Selected = Items.FirstOrDefault(i => i.Id == oc.Id);
     }
@@ -195,7 +199,7 @@ public sealed partial class ChangeOrdersViewModel : ObservableObject, IDisposabl
             return;
         }
 
-        var all = _host.Session.OrdenesCambio
+        var all = _session.OrdenesCambio
             .OrderByDescending(r => r.FechaCreacion)
             .ToList();
 
@@ -245,7 +249,7 @@ public sealed partial class ChangeOrdersViewModel : ObservableObject, IDisposabl
     private string NextNumero()
     {
         int max = 0;
-        foreach (var oc in _host.Session.OrdenesCambio)
+        foreach (var oc in _session.OrdenesCambio)
         {
             if (oc.Numero.StartsWith("OC-") &&
                 int.TryParse(oc.Numero[3..], out int n) && n > max)
@@ -255,10 +259,10 @@ public sealed partial class ChangeOrdersViewModel : ObservableObject, IDisposabl
     }
 
     private ChangeOrderRow? FindRow(string id) =>
-        _host.Session.OrdenesCambio.FirstOrDefault(r => r.Id == id);
+        _session.OrdenesCambio.FirstOrDefault(r => r.Id == id);
 
     private int Count(string estado) =>
-        _host.Session.OrdenesCambio.Count(x => x.Estado == estado);
+        _session.OrdenesCambio.Count(x => x.Estado == estado);
 
 
     public void Dispose() { }

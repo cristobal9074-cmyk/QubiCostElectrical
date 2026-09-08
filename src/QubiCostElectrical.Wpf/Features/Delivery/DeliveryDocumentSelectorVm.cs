@@ -39,13 +39,13 @@ public sealed class DeliveryDocumentItemVm
 
 public sealed class DeliveryDocumentSelectorVm
 {
-    private readonly WpfAppHost host;
+    private readonly DashboardPresenter dashboard;
     public ObservableCollection<DeliveryDocumentItemVm> Documents { get; } = new();
     public event EventHandler? SelectionChanged;
 
-    public DeliveryDocumentSelectorVm(WpfAppHost host)
+    public DeliveryDocumentSelectorVm(DashboardPresenter dashboard)
     {
-        this.host = host ?? throw new ArgumentNullException(nameof(host));
+        this.dashboard = dashboard ?? throw new ArgumentNullException(nameof(dashboard));
         Documents.Add(new DeliveryDocumentItemVm("OfferPdf", "Oferta comercial PDF", "Documento principal con portada, totales, alcance, exclusiones y condiciones.", "PDF"));
         Documents.Add(new DeliveryDocumentItemVm("ControlExcel", "Excel interno de control", "Libro de control con trazabilidad completa, itemizado y cubicación.", "XLSX"));
         Documents.Add(new DeliveryDocumentItemVm("LetterDocx", "Carta de presentación", "Carta formal DOCX para acompañar la oferta comercial.", "DOCX"));
@@ -60,7 +60,7 @@ public sealed class DeliveryDocumentSelectorVm
     public ExportProjectContext GetSelectedContext(BudgetProjectSession session)
     {
         var snapshot = session.CreateSnapshot();
-        var dashboard = host.Dashboard.BuildPageState(snapshot, session.IsDirty, session.StateVersion);
+        var dashboardState = dashboard.BuildPageState(snapshot, session.IsDirty, session.StateVersion);
         var prefs = UserPreferencesStore.Load();
 
         var offerSnapshot = snapshot.Proyecto.OfertaPdf != null
@@ -69,7 +69,7 @@ public sealed class DeliveryDocumentSelectorVm
         LetterheadApplicator.Apply(prefs, offerSnapshot);
         snapshot.Proyecto.OfertaPdf = offerSnapshot;
 
-        var alerts = dashboard.Alerts;
+        var alerts = dashboardState.Alerts;
         var frozenSummary = new FinalReviewSummary
         {
             Issues = alerts.Issues.ToList()
@@ -81,7 +81,7 @@ public sealed class DeliveryDocumentSelectorVm
             CurrentProjectPath = session.CurrentProjectPath,
             ExportedBy = session.CurrentUserName,
             ExportedAt = AppClock.Now,
-            OfferNetAmountUf = dashboard.Cost.TotalVentaNetoUf,
+            OfferNetAmountUf = dashboardState.Cost.TotalVentaNetoUf,
             ReviewSummary = frozenSummary,
             CorporateTheme = new ExportCorporateThemeSettings
             {

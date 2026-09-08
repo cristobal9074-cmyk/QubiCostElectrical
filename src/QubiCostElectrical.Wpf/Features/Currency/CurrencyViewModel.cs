@@ -8,7 +8,8 @@ namespace QubiCostElectrical.Wpf.Features.Currency;
 
 public sealed class CurrencyViewModel : ViewModelBase, IPageWithPendingChanges, IPageWithCommitChanges
 {
-    private readonly WpfAppHost _host;
+    private readonly BudgetProjectSession _session;
+    private readonly WpfUndoService _undo;
     private readonly CurrencyConversionService _svc = new();
 
     private string _monedaBase = "CLP";
@@ -23,9 +24,12 @@ public sealed class CurrencyViewModel : ViewModelBase, IPageWithPendingChanges, 
     private string _validationError = "";
     private bool _cacheStale;
 
-    public CurrencyViewModel(WpfAppHost host)
+    public CurrencyViewModel(WpfAppHost host) : this(host.Session, host.UndoService) { }
+
+    public CurrencyViewModel(BudgetProjectSession session, WpfUndoService undo)
     {
-        _host = host;
+        _session = session;
+        _undo = undo;
         LoadFromSession();
     }
 
@@ -127,6 +131,8 @@ public sealed class CurrencyViewModel : ViewModelBase, IPageWithPendingChanges, 
         private set => SetProperty(ref _cacheStale, value);
     }
 
+    public bool CanEdit => !_session.IsReadOnly;
+
     // ─── Presentación calculada ─────────────────────────────────────────────
 
     public string ResumenClp => ValorUfClp > 0
@@ -152,7 +158,7 @@ public sealed class CurrencyViewModel : ViewModelBase, IPageWithPendingChanges, 
 
     private void LoadFromSession()
     {
-        var info = _host.Session.ProjectInfo;
+        var info = _session.ProjectInfo;
         MonedaBase = _svc.NormalizeCurrency(info.MonedaPresupuesto);
         _monedaSeleccionada = MonedaBase;
         OnPropertyChanged(nameof(MonedaSeleccionada));
@@ -182,6 +188,7 @@ public sealed class CurrencyViewModel : ViewModelBase, IPageWithPendingChanges, 
 
     public bool TryApplyChanges()
     {
+        if (!CanEdit) return false;
         ValidateEdits();
         if (!string.IsNullOrWhiteSpace(ValidationError)) return false;
 
@@ -203,20 +210,20 @@ public sealed class CurrencyViewModel : ViewModelBase, IPageWithPendingChanges, 
         decimal ufFinal = parsedUf ?? 0m;
         decimal usdFinal = parsedUsd ?? 0m;
 
-        bool cambioTasa = ufFinal != _host.Session.ProjectInfo.ValorUfClp
-            || usdFinal != _host.Session.ProjectInfo.TipoCambioUsdClp;
+        bool cambioTasa = ufFinal != _session.ProjectInfo.ValorUfClp
+            || usdFinal != _session.ProjectInfo.TipoCambioUsdClp;
 
-        if (cambioTasa && _host.Session.ProjectInfo.ValorUfClp > 0)
+        if (cambioTasa && _session.ProjectInfo.ValorUfClp > 0)
         {
             if (!Infrastructure.WpfDialogService.Confirm("Reemplazar tasa vigente",
-                    $"Esto reemplazará la tasa activa:\n  UF: $ {_host.Session.ProjectInfo.ValorUfClp:N0}\n  USD: $ {_host.Session.ProjectInfo.TipoCambioUsdClp:N0}\n\n¿Continuar?",
+                    $"Esto reemplazará la tasa activa:\n  UF: $ {_session.ProjectInfo.ValorUfClp:N0}\n  USD: $ {_session.ProjectInfo.TipoCambioUsdClp:N0}\n\n¿Continuar?",
                     isWarning: true))
                 return false;
         }
 
-        var beforeEdit = _host.Session.CreateSnapshot();
+        var beforeEdit = _session.CreateSnapshot();
 
-        var info = _host.Session.ProjectInfo;
+        var info = _session.ProjectInfo;
         info.MonedaPresupuesto = moneda;
 
         if (cambioTasa)
@@ -238,14 +245,15 @@ public sealed class CurrencyViewModel : ViewModelBase, IPageWithPendingChanges, 
         info.TipoCambioUsdClp = usdFinal;
         info.FechaTipoCambio = parsedFecha.Value;
 
-        _host.UndoService.PushSnapshot(beforeEdit, "Actualizar tasas de cambio");
-        _host.Session.MarkDirty();
+        _undo.PushSnapshot(beforeEdit, "Actualizar tasas de cambio");
+        _session.MarkDirty();
         LoadFromSession();
         return true;
     }
 
     public bool TryDiscardChanges()
     {
+        if (!CanEdit) return true;
         LoadFromSession();
         return true;
     }

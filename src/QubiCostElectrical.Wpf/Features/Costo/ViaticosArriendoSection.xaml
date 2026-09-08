@@ -4,8 +4,8 @@
   <UserControl.Resources><ResourceDictionary Source="ViaticosProfesionalDialog.Resources.xaml" /></UserControl.Resources>
   <Border Background="{DynamicResource Brush.PanelHeader}" Padding="20" BorderBrush="{DynamicResource Brush.SlateLight}" BorderThickness="1" CornerRadius="{StaticResource Radius.Md}">
     <StackPanel>
-      <TextBlock Text="Arriendo / alojamiento / estadía" FontSize="{StaticResource Font.Size.lg}" FontWeight="Bold" />
-      <TextBlock Text="{Binding BadgeArr}" Foreground="{DynamicResource Brush.Ink3}" Margin="0,4,0,14" />
+      <TextBlock Text="Arriendo / alojamiento / estadía" Style="{StaticResource Text.SectionTitle}" />
+      <TextBlock Text="{Binding BadgeArr}" Style="{StaticResource Text.Helper}" Margin="0,4,0,14" />
       <CheckBox AutomationProperties.Name="Incluir arriendo o campamento" Content="Incluir arriendo o campamento" IsChecked="{Binding InclArriendo}" Style="{StaticResource VToggle}" />
       <TextBlock Text="MODALIDAD" Style="{StaticResource VFieldLabel}" />
       <ComboBox AutomationProperties.Name="Modalidad de arriendo" SelectedValuePath="Tag" SelectedValue="{Binding ModalidadArriendo}" Style="{StaticResource VCombo}"><ComboBoxItem Content="Arriendo por noche-persona" Tag="noche" /><ComboBoxItem Content="Arriendo mensual" Tag="mes" /><ComboBoxItem Content="Aporte campamento" Tag="campamento" /></ComboBox>
@@ -14,7 +14,7 @@
       <TextBlock Text="PERSONAS / CUPOS" Style="{StaticResource VFieldLabel}" /><TextBox AutomationProperties.Name="Cupos de arriendo" Text="{Binding CuposArr, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource VInput}" />
       <TextBlock Text="MESES CON ARRIENDO" Style="{StaticResource VFieldLabel}" /><TextBox AutomationProperties.Name="Meses con arriendo" Text="{Binding MesesArr, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource VInput}" />
       <CheckBox AutomationProperties.Name="Incluir incidentales" Content="Incidentales / otros" IsChecked="{Binding InclOtros}" Style="{StaticResource VToggle}" /><TextBox AutomationProperties.Name="Porcentaje de incidentales" Text="{Binding PctOtros, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource VInput}" />
-      <TextBlock Text="{Binding EqArr}" TextWrapping="Wrap" Foreground="{DynamicResource Brush.Ink3}" Margin="0,14,0,0" /><DockPanel Margin="0,12,0,0"><TextBlock Text="SUBTOTAL ARRIENDO" Style="{StaticResource Text.Caption}" /><TextBlock Text="{Binding SubArrLabel}" FontWeight="Bold" HorizontalAlignment="Right" /></DockPanel>
+      <TextBlock Text="{Binding EqArr}" TextWrapping="Wrap" Style="{StaticResource Text.Helper}" Margin="0,14,0,0" /><DockPanel Margin="0,12,0,0"><TextBlock Text="SUBTOTAL ARRIENDO" Style="{StaticResource Text.Caption}" /><TextBlock Text="{Binding SubArrLabel}" Style="{StaticResource Text.KpiInline}" HorizontalAlignment="Right" /></DockPanel>
     </StackPanel>
   </Border>
 </UserControl>

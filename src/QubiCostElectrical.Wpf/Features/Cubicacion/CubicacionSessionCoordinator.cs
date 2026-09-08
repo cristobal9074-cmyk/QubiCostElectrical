@@ -1,21 +1,23 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using QubiCostElectrical;
+using QubiCostElectrical.Wpf.Infrastructure;
 
 namespace QubiCostElectrical.Wpf.Features.Cubicacion;
 
 /// <summary>
-/// Reacción a Session.Changed/Saved — extraído de CubicacionViewModel.Session.cs (ver plan en
-/// ~/.claude/plans/glittery-stargazing-hippo.md). Comportamiento preservado tal cual, incluyendo
-/// el marshalling a UI thread (Session.Changed/Saved pueden dispararse desde un hilo de fondo,
-/// ver comentario en RunOnUiThread) y la supresión de eco vía SuppressSessionReloadCount.
+/// Reacción a Session.Changed/Saved. Ola 2: acumula kinds en cache inactiva y flushea al reactivar.
 /// </summary>
-internal sealed class CubicacionSessionCoordinator : IDisposable
+internal sealed class CubicacionSessionCoordinator : IDisposable, ISessionChangeAware
 {
     private readonly CubicacionViewModel parent;
     private readonly BudgetProjectSession session;
     private EventHandler<ProjectSessionChangedEventArgs>? sessionChangedHandler;
     private EventHandler<ProjectSessionChangedEventArgs>? sessionSavedHandler;
+    private readonly Dictionary<ProjectSessionChangeKind, ProjectSessionChangedEventArgs> pendingByKind = new();
+    private bool pendingSaved;
+    private bool sessionChangeActive = true;
 
     public CubicacionSessionCoordinator(CubicacionViewModel parent, BudgetProjectSession session)
     {
@@ -23,24 +25,56 @@ internal sealed class CubicacionSessionCoordinator : IDisposable
         this.session = session;
     }
 
+    public bool HasPendingSessionChanges => pendingByKind.Count > 0 || pendingSaved;
+
     public void Initialize()
     {
-        // Session.Saved/Changed pueden dispararse desde un hilo de fondo: ProjectWorkspaceService
-        // guarda con ConfigureAwait(false), así que su continuación final (Session.MarkSaved(),
-        // que dispara Saved sincrónicamente) puede correr en un hilo del thread pool en vez del
-        // hilo de UI. Estos handlers terminan tocando ObservableCollection ligadas a la UI (Rows,
-        // etc.), lo que lanza NotSupportedException si no se marshalla antes al Dispatcher. Se
-        // ejecuta sincrónico cuando ya se está en el hilo correcto (o no hay Application real,
-        // como en tests) para no romper ese comportamiento síncrono existente.
-        sessionChangedHandler = (s, e) => RunOnUiThread(() => OnSessionChanged(s, e));
-        sessionSavedHandler = (_, _) => RunOnUiThread(() =>
+        sessionChangedHandler = (s, e) => RunOnUiThread(() => OnSessionChangedRaw(s, e));
+        sessionSavedHandler = (_, _) => RunOnUiThread(OnSessionSavedRaw);
+        session.Changed += sessionChangedHandler;
+        session.Saved += sessionSavedHandler;
+    }
+
+    public void SetSessionChangeActive(bool active)
+    {
+        sessionChangeActive = active;
+        if (active)
+            FlushPending();
+    }
+
+    private void OnSessionChangedRaw(object? sender, ProjectSessionChangedEventArgs e)
+    {
+        pendingByKind[e.Kind] = e;
+        if (!sessionChangeActive)
+            return;
+        FlushPending();
+    }
+
+    private void OnSessionSavedRaw()
+    {
+        pendingSaved = true;
+        if (!sessionChangeActive)
+            return;
+        FlushPending();
+    }
+
+    private void FlushPending()
+    {
+        if (pendingByKind.Count > 0)
         {
+            var batch = pendingByKind.Values.ToArray();
+            pendingByKind.Clear();
+            foreach (var args in batch)
+                OnSessionChanged(session, args);
+        }
+
+        if (pendingSaved)
+        {
+            pendingSaved = false;
             parent.HasPendingUndoForEdit = false;
             if (!parent.HasPendingChanges)
                 parent.SaveStatusText = "Guardado";
-        });
-        session.Changed += sessionChangedHandler;
-        session.Saved += sessionSavedHandler;
+        }
     }
 
     private static void RunOnUiThread(Action action)
@@ -79,9 +113,6 @@ internal sealed class CubicacionSessionCoordinator : IDisposable
                 RefreshCubicacionFromSession();
                 break;
             case ProjectSessionChangeKind.Materiales:
-                // Un precio del catálogo cambió (p. ej. se aplicó el Banco de Precios): las
-                // líneas ya cubicadas con ese código deben reflejarlo sin que el usuario tenga
-                // que hacer nada — ver CubicacionViewModel.RefreshPricesFromMaterialesCatalog.
                 parent.RefreshPricesFromMaterialesCatalog();
                 break;
         }
@@ -107,8 +138,6 @@ internal sealed class CubicacionSessionCoordinator : IDisposable
 
     private void RefreshCubicacionFromSession()
     {
-        // Eco del propio cambio de esta instancia: Rows ya está al día, recargar solo
-        // produciría el parpadeo de "Cargando partida…" en cada edición.
         if (parent.SuppressSessionReloadCount > 0)
             return;
 

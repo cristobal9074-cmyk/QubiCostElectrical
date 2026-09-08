@@ -16,21 +16,32 @@ namespace QubiCostElectrical.Wpf.Features.Prices;
 
 public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRefreshablePage, IPageWithPendingChanges
 {
-    public PriceBankViewModel(WpfAppHost host) : base(host)
+    public PriceBankViewModel(WpfAppHost host, IShellNavigationHost? shell = null)
+        : this(host.Session, host.ProjectWorkspace, host.Permissions, host.Services.MaterialSearch, host.Services.PriceBank, host.Services.PriceBankStore, shell) { }
+
+    public PriceBankViewModel(BudgetProjectSession session, IProjectWorkspaceService projectWorkspace, IPermissionService permissions, IMaterialSearchService materialSearch, PriceBankApplicationService priceBank, IPriceBankStore store, IShellNavigationHost? shell = null) : base(session)
     {
-        this.host = host;
-        store = host.Services.PriceBankStore;
-        priceBank = host.Services.PriceBank;
+        this.session = session;
+        this.projectWorkspace = projectWorkspace;
+        this.permissions = permissions;
+        this.materialSearch = materialSearch;
+        this.shell = shell;
+        this.store = store;
+        this.priceBank = priceBank;
 
         refreshCommand = new RelayCommand(Refresh);
-        importFileCommand = new RelayCommand(ImportFromFile, () => !host.Session.IsReadOnly);
+        importFileCommand = new RelayCommand(ImportFromFile, () => CanEdit);
+        downloadTemplateCommand = new RelayCommand(DownloadImportTemplate);
         importProjectCommand = new RelayCommand(ImportCurrentProject, CanImportCurrentProject);
-        saveSelectedCommand = new RelayCommand(SaveSelectedEntry, () => SelectedEntry != null && !host.Session.IsReadOnly);
-        deleteSelectedCommand = new RelayCommand(DeleteSelectedEntry, () => SelectedEntry != null && !host.Session.IsReadOnly);
-        deleteAllCommand = new RelayCommand(DeleteAllEntries, () => entries.Count > 0 && !host.Session.IsReadOnly);
-        newEntryCommand = new RelayCommand(CreateNewEntry, () => !host.Session.IsReadOnly);
+        saveSelectedCommand = new RelayCommand(SaveSelectedEntry, () => SelectedEntry != null && CanEdit);
+        deleteSelectedCommand = new RelayCommand(DeleteSelectedEntry, () => SelectedEntry != null && CanEdit);
+        deleteAllCommand = new RelayCommand(DeleteAllEntries, () => entries.Count > 0 && CanEdit);
+        newEntryCommand = new RelayCommand(CreateNewEntry, () => CanEdit);
         applyProjectPricesCommand = new RelayCommand(ApplyProjectPrices, CanApplyProjectPrices);
         clearFiltersCommand = new RelayCommand(ClearFilters);
+        OpenProjectCommand = shell != null
+            ? new RelayCommand(() => _ = shell.OpenProjectAsync())
+            : new RelayCommand(() => { }, () => false);
 
         // Sin SortDescriptions: la lista se muestra en el orden en que llegó (import/creación —
         // ver PriceBankStore, columna "orden"), no reordenada alfabéticamente por código. El
@@ -148,12 +159,18 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
         private set => SetProperty(ref isBusy, value);
     }
 
+    public bool IsReadOnly => session.IsReadOnly || !permissions.CanEditGlobalPriceBank;
+    public bool CanEdit => !IsReadOnly;
+
     public bool ShowEmptyState { get => showEmptyState; private set => SetProperty(ref showEmptyState, value); }
 
-    public bool HasProject => host.ProjectWorkspace.HasOpenProject;
+    public bool HasProject => projectWorkspace.HasOpenProject;
+
+    public ICommand OpenProjectCommand { get; }
 
     public ICommand RefreshCommand => refreshCommand;
     public ICommand ImportFileCommand => importFileCommand;
+    public ICommand DownloadTemplateCommand => downloadTemplateCommand;
     public ICommand ImportProjectCommand => importProjectCommand;
     public ICommand SaveSelectedCommand => saveSelectedCommand;
     public ICommand DeleteSelectedCommand => deleteSelectedCommand;
@@ -176,8 +193,8 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
             var selectedCode = SelectedEntry?.Codigo;
             SelectedEntry = null;
             entries.Clear();
-            decimal valorUf = HasProject ? host.Session.ProjectInfo.ValorUfClp : 0m;
-            foreach (var item in store.GetAll().Select(x => new PriceBankEntryVm(x, valorUf)))
+            decimal valorUf = HasProject ? session.ProjectInfo.ValorUfClp : 0m;
+            foreach (var item in store.GetAll().Select(x => new PriceBankEntryVm(x, valorUf, () => CanEdit)))
                 entries.Add(item);
 
             BuildFilterOptions();
@@ -187,6 +204,8 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
             RecomputeEntryStats();
             UpdateSummary();
             UpdateProjectSummary();
+            OnPropertyChanged(nameof(IsReadOnly));
+            OnPropertyChanged(nameof(CanEdit));
             StatusMessage = entries.Count == 0
                 ? "El banco de precios está vacío."
                 : $"Banco cargado con {entries.Count} registros.";
@@ -230,7 +249,7 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
     // — sin esto, la UF mostrada quedaría pegada al valor viejo hasta reabrir el banco.
     private void RefreshValorUfEnTodasLasFilas()
     {
-        decimal valorUf = HasProject ? host.Session.ProjectInfo.ValorUfClp : 0m;
+        decimal valorUf = HasProject ? session.ProjectInfo.ValorUfClp : 0m;
         foreach (var entry in entries)
             entry.ValorUfClp = valorUf;
     }
@@ -300,10 +319,10 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
         if (obj is not PriceBankEntryVm entry)
             return false;
 
-        string query = host.Services.MaterialSearch.Normalize(SearchText);
+        string query = materialSearch.Normalize(SearchText);
         if (!string.IsNullOrWhiteSpace(query))
         {
-            string searchable = host.Services.MaterialSearch.Normalize(string.Join(' ', new[]
+            string searchable = materialSearch.Normalize(string.Join(' ', new[]
             {
                 entry.Codigo,
                 entry.Descripcion,
@@ -349,7 +368,7 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
     private void UpdateProjectSummary()
     {
         ProjectSummary = HasProject
-            ? $"{host.Session.ProjectInfo.Nombre} · {host.Session.Materiales.Count:N0} materiales"
+            ? $"{session.ProjectInfo.Nombre} · {session.Materiales.Count:N0} materiales"
             : "Sin proyecto abierto.";
     }
 
@@ -362,7 +381,7 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
             return;
         }
 
-        foreach (var update in priceBank.PreviewProjectUpdates(host.Session.Materiales, host.Session.ProjectInfo.ValorUfClp))
+        foreach (var update in priceBank.PreviewProjectUpdates(session.Materiales, session.ProjectInfo.ValorUfClp))
             PreviewUpdates.Add(new PriceBankUpdateVm(update));
 
         UpdateProjectSummary();
@@ -370,13 +389,13 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
         importProjectCommand.RaiseCanExecuteChanged();
     }
 
-    private bool CanImportCurrentProject() => HasProject && host.Session.Materiales.Count > 0 && !host.Session.IsReadOnly;
+    private bool CanImportCurrentProject() => HasProject && session.Materiales.Count > 0 && CanEdit;
 
-    private bool CanApplyProjectPrices() => HasProject && PreviewUpdates.Count > 0 && !host.Session.IsReadOnly;
+    private bool CanApplyProjectPrices() => HasProject && PreviewUpdates.Count > 0 && CanEdit;
 
     private void CreateNewEntry()
     {
-        if (host.Session.IsReadOnly)
+        if (!CanEdit)
             return;
         var entry = new PriceBankEntry
         {
@@ -389,10 +408,10 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
             MonedaPrecio = Moneda.CLP,
             FechaPrecio = DateTime.Today,
             OrigenPrecio = "Edición manual",
-            ProyectoOrigen = HasProject ? host.Session.ProjectInfo.Nombre : ""
+            ProyectoOrigen = HasProject ? session.ProjectInfo.Nombre : ""
         };
 
-        var vm = new PriceBankEntryVm(entry, HasProject ? host.Session.ProjectInfo.ValorUfClp : 0m);
+        var vm = new PriceBankEntryVm(entry, HasProject ? session.ProjectInfo.ValorUfClp : 0m, () => CanEdit);
         entries.Insert(0, vm);
         entriesView.Refresh();
         SelectedEntry = vm;
@@ -405,7 +424,7 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
 
     private void SaveSelectedEntry()
     {
-        if (host.Session.IsReadOnly || SelectedEntry == null)
+        if (!CanEdit || SelectedEntry == null)
             return;
 
         if (string.IsNullOrWhiteSpace(SelectedEntry.Codigo))
@@ -426,18 +445,18 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
         SelectedEntry.MarkSavedAs(SelectedEntry.Codigo);
 
         // Sincronizar de inmediato con el catálogo del proyecto activo si está abierto y no es de solo lectura.
-        if (HasProject && !host.Session.IsReadOnly)
+        if (HasProject && CanEdit)
         {
             var codeToFind = renamed ? originalCode : savedCode;
-            var projectMat = host.Session.Materiales.FirstOrDefault(m => CodeHelper.Match(m.Codigo, codeToFind));
+            var projectMat = session.Materiales.FirstOrDefault(m => CodeHelper.Match(m.Codigo, codeToFind));
             
             if (projectMat == null)
             {
-                bool isUsedInCubicacion = host.Session.Cubicacion.Any(r => CodeHelper.Match(r.Codigo, codeToFind));
+                bool isUsedInCubicacion = session.Cubicacion.Any(r => CodeHelper.Match(r.Codigo, codeToFind));
                 if (isUsedInCubicacion)
                 {
                     projectMat = MapEntryToMaterial(SelectedEntry.Source);
-                    host.Session.Materiales.Add(projectMat);
+                    session.Materiales.Add(projectMat);
                 }
             }
 
@@ -452,14 +471,14 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
                 projectMat.FechaPrecio = SelectedEntry.FechaPrecio;
                 projectMat.Proveedor = SelectedEntry.Proveedor;
                 projectMat.MonedaPrecio = SelectedEntry.MonedaPrecio;
-                projectMat.RecalcularUf(host.Session.ProjectInfo.ValorUfClp);
+                projectMat.RecalcularUf(session.ProjectInfo.ValorUfClp);
 
                 // Sync fuerte: no depender de que Cubicación esté abierta para actualizar filas.
-                int synced = host.Session.SyncCubicacionPricesFromMateriales();
+                int synced = session.SyncCubicacionPricesFromMateriales();
                 if (synced > 0)
-                    host.Session.MarkDirty("materiales", "cubicacion");
+                    session.MarkDirty(ProjectDirtyScope.Materiales, ProjectDirtyScope.Cubicacion);
                 else
-                    host.Session.MarkDirty("materiales");
+                    session.MarkDirty(ProjectDirtyScope.Materiales);
             }
         }
 
@@ -473,7 +492,7 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
 
     private void DeleteSelectedEntry()
     {
-        if (host.Session.IsReadOnly || SelectedEntry == null)
+        if (!CanEdit || SelectedEntry == null)
             return;
 
         string codigo = SelectedEntry.Codigo;
@@ -504,7 +523,7 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
     // antes de tocar la base de datos.
     private void DeleteAllEntries()
     {
-        if (host.Session.IsReadOnly || entries.Count == 0)
+        if (!CanEdit || entries.Count == 0)
             return;
 
         int total = entries.Count;
@@ -526,6 +545,37 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
         deleteAllCommand.RaiseCanExecuteChanged();
     }
 
+    private void DownloadImportTemplate()
+    {
+        var dialog = new SaveFileDialog
+        {
+            Title = "Descargar plantilla de lista de precios",
+            Filter = "Excel (*.xlsx)|*.xlsx|CSV (*.csv)|*.csv",
+            FileName = "Plantilla_Lista_Precios_Qubi.xlsx",
+            AddExtension = true,
+            DefaultExt = ".xlsx",
+            OverwritePrompt = true
+        };
+
+        if (dialog.ShowDialog() != true || string.IsNullOrWhiteSpace(dialog.FileName))
+            return;
+
+        try
+        {
+            PriceBankSeeder.WriteImportTemplate(dialog.FileName);
+            StatusMessage = $"Plantilla guardada: {Path.GetFileName(dialog.FileName)}";
+            WpfDialogService.Info(
+                "Plantilla lista",
+                "Plantilla guardada con las columnas:\nCódigo | Descripción | UN | Precio CLP | Familia | MO\n\n" +
+                "Complete sus precios (CLP) e importe el archivo con «Importar Excel».");
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error("PriceBank", "Falló: Descargar plantilla", ex);
+            WpfDialogService.Error("Descargar plantilla", OperationFailureMessages.ToUserMessage(ex));
+        }
+    }
+
     private void ClearFilters()
     {
         SearchText = "";
@@ -537,11 +587,13 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
         StatusMessage = "Filtros limpiados.";
     }
 
-    private void ImportFromFile()
+    public void ImportFromFile() => ImportFromFile(null);
+
+    public void ImportFromFile(string? explicitPath)
     {
-        if (host.Session.IsReadOnly)
+        if (!CanEdit)
             return;
-        var file = PromptPriceFile();
+        var file = !string.IsNullOrWhiteSpace(explicitPath) ? explicitPath : PromptPriceFile();
         if (file == null)
             return;
 
@@ -556,7 +608,9 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
             var parsed = PriceBankSeeder.ParseFile(file);
             if (parsed.Count == 0)
             {
-                WpfDialogService.Info("Importar precios", "El archivo no contiene registros válidos.");
+                WpfDialogService.Info(
+                    "Importar precios",
+                    "El archivo no contiene registros válidos.\n\n" + PriceBankSeeder.ImportFormatHelpMessage);
                 return;
             }
 
@@ -578,7 +632,7 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
 
     private void ImportCurrentProject()
     {
-        if (host.Session.IsReadOnly || !CanImportCurrentProject())
+        if (!CanEdit || !CanImportCurrentProject())
         {
             WpfDialogService.Info("Banco de precios", "Abra un proyecto con materiales antes de importar al banco.");
             return;
@@ -592,9 +646,9 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
                     isWarning: true))
                 return;
 
-            var result = priceBank.ImportFromProject(host.Session.Materiales, host.Session.ProjectInfo.Nombre);
+            var result = priceBank.ImportFromProject(session.Materiales, session.ProjectInfo.Nombre);
             Refresh();
-            ImportSummary = $"Proyecto: {host.Session.ProjectInfo.Nombre} · materiales: {result.MaterialesProcesados:N0} · consolidados: {result.EntradasGuardadas:N0}";
+            ImportSummary = $"Proyecto: {session.ProjectInfo.Nombre} · materiales: {result.MaterialesProcesados:N0} · consolidados: {result.EntradasGuardadas:N0}";
             AppendImportLog(ImportSummary);
             StatusMessage = "Banco actualizado desde el proyecto activo.";
         }
@@ -609,7 +663,7 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
 
     private void ApplyProjectPrices()
     {
-        if (host.Session.IsReadOnly || !CanApplyProjectPrices())
+        if (!CanEdit || !CanApplyProjectPrices())
             return;
 
         if (!WpfDialogService.Confirm("Aplicar precios",
@@ -620,8 +674,8 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
         try
         {
             // Asegurar que todos los materiales usados en la cubicación que existen en el banco de precios estén en el catálogo del proyecto.
-            var existingCodes = new HashSet<string>(host.Session.Materiales.Select(m => CodeHelper.Normalize(m.Codigo)), StringComparer.OrdinalIgnoreCase);
-            var missingCodes = host.Session.Cubicacion
+            var existingCodes = new HashSet<string>(session.Materiales.Select(m => CodeHelper.Normalize(m.Codigo)), StringComparer.OrdinalIgnoreCase);
+            var missingCodes = session.Cubicacion
                 .Where(r => !string.IsNullOrWhiteSpace(r.Codigo))
                 .Select(r => r.Codigo)
                 .Distinct()
@@ -633,21 +687,21 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
                 var entry = store.GetByCodigo(code);
                 if (entry != null)
                 {
-                    host.Session.Materiales.Add(MapEntryToMaterial(entry));
+                    session.Materiales.Add(MapEntryToMaterial(entry));
                 }
             }
 
             var updates = priceBank.ApplyBankPricesToProject(
-                host.Session.Materiales,
-                host.Session.ProjectInfo,
+                session.Materiales,
+                session.ProjectInfo,
                 PreviewUpdates.Select(x => x.Source).ToList(),
-                host.Session.ProjectInfo.ValorUfClp,
+                session.ProjectInfo.ValorUfClp,
                 allowWhenFrozen: false);
 
             if (updates.Status == PriceBankApplyStatus.Applied && updates.AppliedCount > 0)
             {
-                host.Session.SyncCubicacionPricesFromMateriales();
-                host.Session.MarkDirty("materiales", "cubicacion");
+                session.SyncCubicacionPricesFromMateriales();
+                session.MarkDirty(ProjectDirtyScope.Materiales, ProjectDirtyScope.Cubicacion);
                 StatusMessage = $"Aplicados {updates.AppliedCount:N0} precios al proyecto.";
                 ReloadProjectPreview();
                 UpdateSummary();

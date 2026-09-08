@@ -33,6 +33,12 @@
             <Trigger Property="IsMouseOver" Value="True">
               <Setter TargetName="Bd" Property="Opacity" Value="0.92" />
             </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+              <Setter TargetName="Bd" Property="Opacity" Value="0.82" />
+            </Trigger>
+            <Trigger Property="IsKeyboardFocused" Value="True">
+              <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Brush.BlueFocus}" />
+            </Trigger>
             <Trigger Property="IsEnabled" Value="False">
               <Setter TargetName="Bd" Property="Opacity" Value="0.5" />
             </Trigger>
@@ -72,7 +78,7 @@
 
   <Style x:Key="Button.Ghost" TargetType="Button" BasedOn="{StaticResource Button.Base}">
     <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
-    <Setter Property="Background" Value="#F2F5F9" />
+    <Setter Property="Background" Value="{DynamicResource Brush.ChipBg}" />
     <Setter Property="BorderBrush" Value="Transparent" />
   </Style>
 

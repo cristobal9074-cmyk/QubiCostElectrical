@@ -24,5 +24,10 @@ public sealed partial class CubicacionViewModel
         TotalCostoDirecto = totals.CostoDirecto;
         PrecioUnitario = totals.PrecioUnitario;
         TotalPartida = totals.TotalPartida;
+        OnPropertyChanged(nameof(TotalMaterialesUf));
+        OnPropertyChanged(nameof(TotalManoObraUf));
+        OnPropertyChanged(nameof(TotalCostoDirectoUf));
+        OnPropertyChanged(nameof(PrecioUnitarioUf));
+        OnPropertyChanged(nameof(TotalPartidaUf));
     }
 }

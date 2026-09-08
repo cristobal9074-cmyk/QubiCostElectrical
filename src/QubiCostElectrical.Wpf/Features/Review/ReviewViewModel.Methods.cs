@@ -16,11 +16,16 @@ namespace QubiCostElectrical.Wpf.Features.Review;
 
 public sealed partial class ReviewViewModel : SessionAwareViewModelBase, IRefreshablePage
 {
-    public ReviewViewModel(IShellNavigationHost shell, WpfAppHost host) : base(host)
+    // Compat: se elimina cuando se borre WpfAppHost.
+    public ReviewViewModel(IShellNavigationHost shell, WpfAppHost host)
+        : this(shell, host.Session, host.ProjectWorkspace, host.Services.FinalReview) { }
+
+    public ReviewViewModel(IShellNavigationHost shell, BudgetProjectSession session, IProjectWorkspaceService workspace, IFinalReviewService finalReview) : base(session)
     {
-        this.host = host;
         this.shell = shell;
-        finalReview = host.Services.FinalReview;
+        this.session = session;
+        this.workspace = workspace;
+        this.finalReview = finalReview;
 
         refreshCommand = new RelayCommand(Refresh);
         goToIssueCommand = new RelayCommand(GoToSelectedIssue, CanGoToSelectedIssue);
@@ -30,6 +35,7 @@ public sealed partial class ReviewViewModel : SessionAwareViewModelBase, IRefres
         markResolvedLocalCommand = new RelayCommand(MarkResolvedLocal, () => FocusIssue != null);
         GoToExportCommand = new RelayCommand(() => shell.RequestNavigate(ShellRoute.OfferDocuments));
         GoToBudgetCommand = new RelayCommand(() => shell.RequestNavigate(ShellRoute.Itemized));
+        OpenProjectCommand = new RelayCommand(() => _ = shell.OpenProjectAsync());
 
         issuesView = CollectionViewSource.GetDefaultView(issues);
         issuesView.Filter = FilterIssue;
@@ -41,7 +47,35 @@ public sealed partial class ReviewViewModel : SessionAwareViewModelBase, IRefres
     }
 
     protected override void OnSessionChanged(object? sender, ProjectSessionChangedEventArgs e) =>
+        ScheduleSessionRefresh();
+
+    private void ScheduleSessionRefresh()
+    {
+        sessionRefreshDebounceTimer ??= new System.Windows.Threading.DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(300)
+        };
+        sessionRefreshDebounceTimer.Stop();
+        sessionRefreshDebounceTimer.Tick -= OnSessionRefreshDebounceTick;
+        sessionRefreshDebounceTimer.Tick += OnSessionRefreshDebounceTick;
+        sessionRefreshDebounceTimer.Start();
+    }
+
+    private void OnSessionRefreshDebounceTick(object? sender, EventArgs e)
+    {
+        sessionRefreshDebounceTimer?.Stop();
         System.Windows.Application.Current?.Dispatcher.InvokeAsync(Refresh);
+    }
+
+    protected override void DisposeCore()
+    {
+        if (sessionRefreshDebounceTimer != null)
+        {
+            sessionRefreshDebounceTimer.Stop();
+            sessionRefreshDebounceTimer.Tick -= OnSessionRefreshDebounceTick;
+            sessionRefreshDebounceTimer = null;
+        }
+    }
 
     public ObservableCollection<ReviewIssueVm> Issues => issues;
     public ICollectionView FilteredIssues => issuesView;
@@ -192,6 +226,20 @@ public sealed partial class ReviewViewModel : SessionAwareViewModelBase, IRefres
     public ICommand ResetFilterCommand => resetFilterCommand;
     public ICommand GoToExportCommand { get; }
     public ICommand GoToBudgetCommand { get; }
+    public ICommand OpenProjectCommand { get; }
+
+    public bool ShowEmptyState
+    {
+        get => showEmptyState;
+        private set => SetProperty(ref showEmptyState, value);
+    }
+
+    public bool IsLoading
+    {
+        get => isLoading;
+        private set => SetProperty(ref isLoading, value);
+    }
+
     public ICommand NextWarRoomIssueCommand => nextWarRoomIssueCommand;
     public ICommand PreviousWarRoomIssueCommand => previousWarRoomIssueCommand;
     public ICommand MarkResolvedLocalCommand => markResolvedLocalCommand;
@@ -215,42 +263,55 @@ public sealed partial class ReviewViewModel : SessionAwareViewModelBase, IRefres
 
     public void Refresh()
     {
-        string? selectedIssueId = SelectedIssue?.Source.Id;
-        string? focusIssueId = FocusIssue?.Source.Id;
-        var summary = finalReview.Build(
-            host.Session.Itemizado,
-            host.Session.Materiales,
-            host.Session.Cubicacion,
-            host.Session.Apus,
-            host.Session.ProjectInfo,
-            BudgetSettings.FromProject(host.Session.ProjectInfo),
-            host.Session.OrdenesCambio,
-            host.Session.AntecedentesTecnicos,
-            host.Session.Mediciones);
+        IsLoading = true;
+        try
+        {
+            System.Windows.Application.Current?.Dispatcher.Invoke(
+                () => { }, System.Windows.Threading.DispatcherPriority.Render);
 
-        issues.Clear();
-        foreach (var issue in summary.Issues)
-            issues.Add(new ReviewIssueVm(issue));
+            ShowEmptyState = !workspace.HasOpenProject;
 
-        // Mantener resolución local solo para IDs que siguen existiendo.
-        locallyResolvedIds.RemoveWhere(id => issues.All(x => !string.Equals(x.Source.Id, id, StringComparison.OrdinalIgnoreCase)));
+            string? selectedIssueId = SelectedIssue?.Source.Id;
+            string? focusIssueId = FocusIssue?.Source.Id;
+            var summary = finalReview.Build(
+                session.Itemizado,
+                session.Materiales,
+                session.Cubicacion,
+                session.Apus,
+                session.ProjectInfo,
+                ExcelCostosBridge.EnrichFromProjectData(BudgetSettings.FromProject(session.ProjectInfo), session.Data),
+                session.OrdenesCambio,
+                session.AntecedentesTecnicos,
+                session.Mediciones);
 
-        issuesView.Refresh();
+            issues.Clear();
+            foreach (var issue in summary.Issues)
+                issues.Add(new ReviewIssueVm(issue));
 
-        SelectedIssue = issues.FirstOrDefault(x => string.Equals(x.Source.Id, selectedIssueId, StringComparison.OrdinalIgnoreCase))
-            ?? issues.FirstOrDefault(x => !locallyResolvedIds.Contains(x.Source.Id));
+            // Mantener resolución local solo para IDs que siguen existiendo.
+            locallyResolvedIds.RemoveWhere(id => issues.All(x => !string.Equals(x.Source.Id, id, StringComparison.OrdinalIgnoreCase)));
 
-        IsWarRoomMode = summary.BlockingCount > 0 || isWarRoomMode;
-        SyncFocusIssue(focusIssueId);
+            issuesView.Refresh();
 
-        BuildCollections(summary);
-        UpdateProjectSummary();
-        UpdateSummary();
+            SelectedIssue = issues.FirstOrDefault(x => string.Equals(x.Source.Id, selectedIssueId, StringComparison.OrdinalIgnoreCase))
+                ?? issues.FirstOrDefault(x => !locallyResolvedIds.Contains(x.Source.Id));
+
+            IsWarRoomMode = summary.BlockingCount > 0 || isWarRoomMode;
+            SyncFocusIssue(focusIssueId);
+
+            BuildCollections(summary);
+            UpdateProjectSummary();
+            UpdateSummary();
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     private void BuildCollections(FinalReviewSummary summary)
     {
-        bool hasProject = host.ProjectWorkspace.HasOpenProject;
+        bool hasProject = workspace.HasOpenProject;
 
         checklist.Clear();
         checklist.Add(new ChecklistItemVm(
@@ -268,9 +329,10 @@ public sealed partial class ReviewViewModel : SessionAwareViewModelBase, IRefres
             summary.MaterialsWithoutPrice == 0 ? ChecklistStatus.Pass : ChecklistStatus.Fail,
             summary.MaterialsWithoutPrice, FinalReviewCategory.MaterialWithoutPrice,
             SetCategoryFilter, () => hasProject));
+        bool apuRequired = session.ApuCostingMode == BudgetApuMode.ApuManda;
         checklist.Add(new ChecklistItemVm(
-            summary.MissingApus == 0 ? "APU completos" : $"{summary.MissingApus:N0} APUs incompletos o faltantes",
-            summary.MissingApus == 0 ? ChecklistStatus.Pass : ChecklistStatus.Fail,
+            summary.MissingApus == 0 ? "APUs analizados" : (apuRequired ? $"{summary.MissingApus:N0} APUs requeridos faltantes" : $"{summary.MissingApus:N0} partidas sin APU (opcional)"),
+            (summary.MissingApus == 0 || !apuRequired) ? ChecklistStatus.Pass : ChecklistStatus.Warning,
             summary.MissingApus, FinalReviewCategory.MissingApu,
             SetCategoryFilter, () => hasProject));
         checklist.Add(new ChecklistItemVm(
@@ -306,8 +368,8 @@ public sealed partial class ReviewViewModel : SessionAwareViewModelBase, IRefres
 
     private void UpdateProjectSummary()
     {
-        ProjectSummary = host.ProjectWorkspace.HasOpenProject
-            ? $"{host.Session.ProjectInfo.Nombre} \u2014 {host.Session.Itemizado.Count(x => !x.EsTitulo):N0} partidas"
+        ProjectSummary = workspace.HasOpenProject
+            ? $"{session.ProjectInfo.Nombre} \u2014 {session.Itemizado.Count(x => !x.EsTitulo):N0} partidas"
             : "Sin proyecto abierto";
     }
 

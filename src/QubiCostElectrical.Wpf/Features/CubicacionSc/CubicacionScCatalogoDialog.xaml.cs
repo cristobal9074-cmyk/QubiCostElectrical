@@ -9,6 +9,7 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using QubiCostElectrical;
+using QubiCostElectrical.Wpf.Infrastructure;
 
 namespace QubiCostElectrical.Wpf.Features.CubicacionSc;
 
@@ -90,6 +91,15 @@ public partial class CubicacionScCatalogoDialog : Window
 
         RefreshCounts();
         CategoriaList.SelectedIndex = 0;
+    }
+
+    private void SimpleGrid_PreviewTextInput(object sender, TextCompositionEventArgs e)
+    {
+        if (sender is DataGrid grid
+            && DataGridExcelNavigation.TryBeginEditFromChar(grid, e.Text))
+        {
+            e.Handled = true;
+        }
     }
 
     private void HookCollection(INotifyCollectionChanged collection) =>

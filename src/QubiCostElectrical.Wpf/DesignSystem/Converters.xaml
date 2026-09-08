@@ -3,10 +3,13 @@
                     xmlns:infra="clr-namespace:QubiCostElectrical.Wpf.Infrastructure">
 
   <infra:BoolToVisibilityConverter x:Key="BoolToVisibility" />
+  <infra:InverseBoolConverter x:Key="InverseBool" />
+  <infra:BoolOrConverter x:Key="BoolOr" />
   <infra:BoolToFontWeightConverter x:Key="BoolToFontWeight" />
   <infra:NullToVisibilityConverter x:Key="NullToVisibility" />
   <infra:StringNotEmptyToBoolConverter x:Key="StringNotEmptyToBool" />
   <infra:StringNotEmptyToVisibilityConverter x:Key="StringNotEmptyToVisibility" />
+  <infra:StringNotEmptyToVisibilityConverter x:Key="StringToVisibility" />
   <infra:RowIndexConverter x:Key="RowIndexConverter" />
   <infra:EmptyToPlaceholderConverter x:Key="EmptyToPlaceholder" />
 

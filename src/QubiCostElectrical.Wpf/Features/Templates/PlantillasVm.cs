@@ -324,8 +324,9 @@ public sealed class ConjuntoRecursoVm : ViewModelBase
 public sealed partial class PlantillasVm : ViewModelBase, IRefreshablePage
 {
     private readonly IShellNavigationHost shell;
-    private readonly WpfAppHost host;
     private readonly BudgetProjectSession session;
+    private readonly IPermissionService permissions;
+    private readonly IPriceBankStore priceBankStore;
     private readonly IApuTemplateStore? templateStore;
     private readonly ConjuntoElectricoService conjuntoSvc = new();
 

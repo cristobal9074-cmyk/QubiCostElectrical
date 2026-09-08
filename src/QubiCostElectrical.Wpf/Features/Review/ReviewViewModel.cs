@@ -113,8 +113,9 @@ public sealed partial class ReviewViewModel : SessionAwareViewModelBase, IRefres
         "Info"
     ];
 
-    private readonly WpfAppHost host;
     private readonly IShellNavigationHost shell;
+    private readonly BudgetProjectSession session;
+    private readonly IProjectWorkspaceService workspace;
     private readonly IFinalReviewService finalReview;
     private readonly ObservableCollection<ReviewIssueVm> issues = new();
     private readonly ObservableCollection<ChecklistItemVm> checklist = new();
@@ -137,7 +138,10 @@ public sealed partial class ReviewViewModel : SessionAwareViewModelBase, IRefres
     private string projectSummary = "Sin proyecto abierto.";
     private string statusMessage = "Revisi\u00f3n no calculada.";
     private string readinessMessage = "Sin validaci\u00f3n.";
+    private System.Windows.Threading.DispatcherTimer? sessionRefreshDebounceTimer;
     private string visibleIssuesLabel = "0 visibles";
+    private bool showEmptyState;
+    private bool isLoading;
     private bool readyToExport;
     private bool isWarRoomMode = true;
     private decimal confidencePct;

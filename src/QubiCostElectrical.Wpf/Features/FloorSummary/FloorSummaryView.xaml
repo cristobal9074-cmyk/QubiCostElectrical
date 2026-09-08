@@ -213,7 +213,7 @@
             <TextBlock Text="TOTAL GENERAL ACUMULADO — MATERIALES DEL PROYECTO" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource Brush.HeaderMuted}" />
             <TextBlock Text="Consolidado final de todas las zonas/pisos y Servicios Comunes" FontSize="9" Foreground="{DynamicResource Brush.HeaderLabel}" Margin="0,1,0,0" />
           </StackPanel>
-          <TextBlock DockPanel.Dock="Right" Text="{Binding GrandTotalCost, StringFormat={}{0:C0}}" FontSize="18" FontWeight="Bold" Foreground="#FFFFFF" VerticalAlignment="Center" />
+          <TextBlock DockPanel.Dock="Right" Text="{Binding GrandTotalCost, StringFormat={}{0:C0}}" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource Brush.White}" VerticalAlignment="Center" />
         </DockPanel>
       </Border>
     </Grid>

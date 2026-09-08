@@ -1,0 +1,136 @@
+<Window x:Class="QubiCostElectrical.Wpf.Features.Cubicacion.MaterialBatchReplaceDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Buscar y Reemplazar Materiales en el Proyecto"
+        Width="880" Height="620"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResizeWithGrip"
+        Style="{StaticResource Dialog.Window}">
+    <Border Style="{StaticResource Dialog.Chrome}" Margin="16">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- 1. Encabezado -->
+            <StackPanel Grid.Row="0" Margin="0,0,0,14">
+                <DockPanel LastChildFill="False">
+                    <TextBlock Text="Buscar y Reemplazar Materiales (Ctrl+H)" Style="{StaticResource Dialog.HeaderTitle}" />
+                    <Border DockPanel.Dock="Right" Background="{DynamicResource Brush.BlueSoft}" CornerRadius="{StaticResource Radius.Chip}" Padding="8,3">
+                        <TextBlock Text="⚡ Mantiene intactos metrajes, casillas y fórmulas" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Blue}" />
+                    </Border>
+                </DockPanel>
+                <TextBlock Text="Actualice especificaciones técnicas (EETT) en todas las partidas del presupuesto en un solo paso."
+                           Style="{StaticResource Dialog.HeaderSubtitle}" Margin="0,2,0,0" />
+            </StackPanel>
+
+            <!-- 2. Formulario Origen y Destino -->
+            <Border Grid.Row="1" Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="{StaticResource Radius.Card}" Padding="14,12" Margin="0,0,0,12">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="32" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Columna Izquierda: Origen -->
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="1. MATERIAL A REEMPLAZAR (ORIGEN)" FontSize="10.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,4" />
+                        <ComboBox x:Name="SourceMaterialCombo"
+                                  IsEditable="True"
+                                  DisplayMemberPath="DisplayText"
+                                  SelectionChanged="OnSourceMaterialSelectionChanged"
+                                  Height="32"
+                                  ToolTip="Seleccione o tipee el material actualmente usado en el proyecto" />
+                        <TextBlock x:Name="SourceDetailsText" Text="" FontSize="11" Foreground="{DynamicResource Brush.Muted}" Margin="2,4,0,0" />
+                    </StackPanel>
+
+                    <!-- Icono Flecha Central -->
+                    <TextBlock Grid.Column="1" Text="➔" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,14,0,0" />
+
+                    <!-- Columna Derecha: Destino -->
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="2. NUEVO MATERIAL DE REEMPLAZO (DESTINO)" FontSize="10.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" Margin="0,0,0,4" />
+                        <TextBox x:Name="TargetMaterialSearchBox"
+                                 Height="32"
+                                 VerticalContentAlignment="Center"
+                                 Padding="8,4"
+                                 TextChanged="OnTargetSearchTextChanged"
+                                 ToolTip="Tipee para buscar en el Banco de Precios (ej. H07Z1-K 2.5 o Schneider)" />
+                        <Popup x:Name="TargetSearchPopup" PlacementTarget="{Binding ElementName=TargetMaterialSearchBox}" Placement="Bottom" StaysOpen="False" AllowsTransparency="True" MinWidth="400" MaxHeight="220">
+                            <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Padding="4">
+                                <ListBox x:Name="TargetSuggestionsList" SelectionChanged="OnTargetSuggestionSelected" MaxHeight="200" BorderThickness="0">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Padding="4,2">
+                                                <DockPanel LastChildFill="True">
+                                                    <TextBlock Text="{Binding Codigo}" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" Width="90" DockPanel.Dock="Left" />
+                                                    <TextBlock Text="{Binding PrecioDisplay}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Navy}" DockPanel.Dock="Right" Margin="8,0,0,0" />
+                                                    <TextBlock Text="{Binding Descripcion}" TextTrimming="CharacterEllipsis" />
+                                                </DockPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </Border>
+                        </Popup>
+                        <TextBlock x:Name="TargetDetailsText" Text="" FontSize="11" Foreground="{DynamicResource Brush.Navy}" FontWeight="SemiBold" Margin="2,4,0,0" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- 3. Grilla de Vista Previa de Ocurrencias -->
+            <GroupBox Grid.Row="2" Header="VISTA PREVIA DE IMPACTO EN EL PRESUPUESTO" FontSize="11" FontWeight="Bold" Margin="0,0,0,10">
+                <DataGrid x:Name="PreviewGrid"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          CanUserAddRows="False"
+                          CanUserDeleteRows="False"
+                          HeadersVisibility="Column"
+                          GridLinesVisibility="Horizontal"
+                          Style="{StaticResource DataGrid.Workspace}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Partida" Binding="{Binding PartidaItem}" Width="65" />
+                        <DataGridTextColumn Header="Nombre Partida" Binding="{Binding PartidaDescripcion}" Width="160" />
+                        <DataGridTextColumn Header="Módulo" Binding="{Binding Modulo}" Width="75" />
+                        <DataGridTextColumn Header="Metraje / Cantidad" Binding="{Binding Cantidad, StringFormat={}{0:N2}}" Width="110" />
+                        <DataGridTextColumn Header="Precio Actual" Binding="{Binding PrecioUnitarioActualClp, StringFormat={}$ {0:N0}}" Width="95" />
+                        <DataGridTextColumn Header="Nuevo Precio" Binding="{Binding NuevoPrecioUnitarioClp, StringFormat={}$ {0:N0}}" Width="95" />
+                        <DataGridTextColumn Header="Variación Costo" Binding="{Binding DeltaClp, StringFormat={}$ {0:N0}}" Width="*" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </GroupBox>
+
+            <!-- 4. Resumen de Impacto Económico -->
+            <Border Grid.Row="3" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="{StaticResource Radius.Card}" Padding="10,8" Margin="0,0,0,12">
+                <DockPanel LastChildFill="False">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="Resumen: " FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" />
+                        <TextBlock x:Name="SummaryPartidasCountText" Text="0 partidas afectadas" Margin="0,0,14,0" />
+                        <TextBlock x:Name="SummaryTotalDeltaText" Text="Variación: $ 0 CLP" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" />
+                    </StackPanel>
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                        <CheckBox x:Name="ReplaceCubicacionCheck" Content="Cubicación" IsChecked="True" Margin="0,0,12,0" Checked="OnOptionChanged" Unchecked="OnOptionChanged" />
+                        <CheckBox x:Name="ReplaceApuCheck" Content="APUs" IsChecked="True" Checked="OnOptionChanged" Unchecked="OnOptionChanged" />
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+            <!-- 5. Footer -->
+            <DockPanel Grid.Row="4" Style="{StaticResource Dialog.Footer}" LastChildFill="False">
+                <Button DockPanel.Dock="Left" Content="Cancelar (Esc)" Style="{StaticResource Button.Ghost}"
+                        Padding="14,6" Click="OnCancelClick" IsCancel="True" />
+                <Button x:Name="ExecuteButton" DockPanel.Dock="Right"
+                        Content="Reemplazar en Todo el Proyecto"
+                        Style="{StaticResource Button.Primary}"
+                        Padding="20,7" FontWeight="Bold"
+                        IsEnabled="False"
+                        Click="OnExecuteReplaceClick" />
+            </DockPanel>
+        </Grid>
+    </Border>
+</Window>

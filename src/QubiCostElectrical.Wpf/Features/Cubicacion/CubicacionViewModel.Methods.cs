@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
 using QubiCostElectrical;
 using QubiCostElectrical.Wpf.Features.Dashboard;
@@ -26,12 +27,14 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
 
     private PartidaListItemVm? selectedPartida;
     private string partidaFilter = "";
+    private System.Windows.Threading.DispatcherTimer? partidaFilterDebounceTimer;
     private bool isLeftPanelCollapsed;
     private bool isRightPanelCollapsed;
     private bool isLoading;
     private bool hasPendingChanges;
     private string saveStatusText = "Sin cambios";
     private bool hasPendingUndoForEdit;
+    private bool showEmptyState;
     // Índice código→material cacheado para validar filas. Reconstruirlo en cada tecleo
     // (antes: uno por revalidación de fila) era el mayor costo percibido al escribir en la
     // grilla; se invalida solo cuando el catálogo de materiales realmente cambia.
@@ -47,25 +50,43 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
     public CubicacionRightPanelVm RightPanel { get; }
 
     public CubicacionViewModel(IShellNavigationHost shell, WpfAppHost host)
+        : this(shell, host.Session, host.ProjectWorkspace, host.Cubicacion, host.Itemizado, host.UndoService,
+               host.Services.Cubicacion, host.Services.CubicacionTakeoffQuery, host.Services.ProjectRepository,
+               host.Services.MaterialSearch, host.Services.PriceBankStore) { }
+
+    public CubicacionViewModel(
+        IShellNavigationHost shell,
+        BudgetProjectSession session,
+        IProjectWorkspaceService projectWorkspace,
+        CubicacionPresenter cubicacionPresenter,
+        ItemizadoPresenter itemizadoPresenter,
+        WpfUndoService undo,
+        ICubicacionService cubSvc,
+        ICubicacionTakeoffQueryService querySvc,
+        IProjectRepository repo,
+        IMaterialSearchService materialSearch,
+        IPriceBankStore priceBankStore)
     {
         this.shell = shell;
-        this.host = host;
-        cubicacionPresenter = host.Cubicacion;
-        session = host.Session;
-        cubSvc = host.Services.Cubicacion;
-        querySvc = host.Services.CubicacionTakeoffQuery;
-        repo = host.Services.ProjectRepository;
-        materialSearch = host.Services.MaterialSearch;
-        priceBankStore = host.Services.PriceBankStore;
+        this.session = session;
+        this.projectWorkspace = projectWorkspace;
+        this.cubicacionPresenter = cubicacionPresenter;
+        this.itemizadoPresenter = itemizadoPresenter;
+        this.undo = undo;
+        this.cubSvc = cubSvc;
+        this.querySvc = querySvc;
+        this.repo = repo;
+        this.materialSearch = materialSearch;
+        this.priceBankStore = priceBankStore;
         conjuntoService = new ConjuntoElectricoService();
         totalsCalculator = new CubicacionTotalsCalculator(this, cubicacionPresenter);
         autocompleteService = new CubicacionAutocompleteService(this, session, materialSearch, priceBankStore);
         sessionCoordinator = new CubicacionSessionCoordinator(this, session);
-        persistenceService = new CubicacionPersistenceService(this, session, host, shell, cubicacionPresenter, conjuntoService);
+        persistenceService = new CubicacionPersistenceService(this, session, projectWorkspace, undo, shell, cubicacionPresenter, conjuntoService);
         loadingService = new CubicacionLoadingService(this, session, querySvc, cubSvc);
-        sectorService = new CubicacionSectorService(this, session, host, querySvc, cubicacionPresenter);
-        rowMutationService = new CubicacionRowMutationService(this, session, host, cubSvc, cubicacionPresenter, priceBankStore);
-        clipboardCoordinator = new CubicacionClipboardCoordinator(this, session, host, cubicacionPresenter, querySvc);
+        sectorService = new CubicacionSectorService(this, session, undo, querySvc, cubicacionPresenter);
+        rowMutationService = new CubicacionRowMutationService(this, session, undo, cubSvc, cubicacionPresenter, priceBankStore);
+        clipboardCoordinator = new CubicacionClipboardCoordinator(this, session, undo, cubicacionPresenter, querySvc);
 
         RightPanel = new CubicacionRightPanelVm(session, this);
         Partidas = new ObservableCollection<PartidaListItemVm>();
@@ -83,6 +104,8 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
         FilteredPartidas = new ObservableCollection<PartidaListItemVm>();
 
         AddRowCommand = new RelayCommand(() => rowMutationService.AddRow(), () => CanEdit && SelectedPartida?.EsPartida == true);
+        QuickAddMaterialCommand = new RelayCommand(() => BeginQuickAddMaterial(), () => CanEdit && SelectedPartida?.EsPartida == true);
+        PasteFromClipboardCommand = new RelayCommand(PasteFromClipboard, () => CanEdit && SelectedPartida?.EsPartida == true);
         InsertRowCommand = new RelayCommand(() => rowMutationService.InsertRow(), () => CanEdit && SelectedPartida?.EsPartida == true);
         DeleteRowCommand = new RelayCommand(() => rowMutationService.DeleteSelectedRows(), () => CanEdit && (Rows.Any(r => r.IsSelected) || SelectedRow != null));
         DuplicateRowCommand = new RelayCommand(() => rowMutationService.DuplicateSelectedRow(), () => CanEdit && (Rows.Any(r => r.IsSelected) || SelectedRow != null));
@@ -94,9 +117,13 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
         MoveRowDownCommand = new RelayCommand(() => rowMutationService.MoveSelectedRow(1), () => CanEdit && rowMutationService.CanMoveRow(1));
         AplicarConjuntoCommand = new RelayCommand(AplicarConjunto, () => !session.IsReadOnly);
         RefreshPricesCommand = new RelayCommand(() => rowMutationService.RefreshPricesForSelectedRows(), () => CanEdit && (Rows.Any(r => r.IsSelected) || SelectedRow != null));
+        OpenProjectCommand = new RelayCommand(() => _ = shell.OpenProjectAsync());
 
         InitializeSectorMatrix();
+        InitializeShortcutCommands();
+        InitializePartidaPanelCommands();
         LoadPartidas();
+        ScheduleCaptureBaseline();
         InitializeSessionHandlers();
 
         // Diferir la selección inicial al siguiente frame de render para que el clic en la
@@ -117,7 +144,44 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
             {
                 SelectFirstPartida();
             }
+
+            PromptTakeoffQueueContinuation();
         }, System.Windows.Threading.DispatcherPriority.Loaded);
+    }
+
+    /// <summary>Avisa si quedan partidas en cola tras Cubicar multi-selección.</summary>
+    internal void PromptTakeoffQueueContinuation()
+    {
+        var remaining = session.PendingTakeoffQueueCount;
+        if (remaining <= 0)
+            return;
+
+        ShellNotificationService.Instance.ShowInfo(
+            "Cola de cubicación",
+            remaining == 1
+                ? "Queda 1 partida pendiente."
+                : $"Quedan {remaining:N0} partidas pendientes.",
+            "Siguiente",
+            AdvanceTakeoffQueue);
+    }
+
+    private void AdvanceTakeoffQueue()
+    {
+        var nextId = session.TryDequeueNextTakeoff();
+        if (string.IsNullOrWhiteSpace(nextId))
+            return;
+
+        var target = Partidas.FirstOrDefault(p =>
+            string.Equals(p.Id, nextId, StringComparison.OrdinalIgnoreCase) && p.EsPartida);
+        if (target == null)
+        {
+            WpfDialogService.Info("Cubicar", "La siguiente partida de la cola ya no está disponible.");
+            PromptTakeoffQueueContinuation();
+            return;
+        }
+
+        SelectPartida(target);
+        PromptTakeoffQueueContinuation();
     }
 
     partial void InitializeSessionHandlers();
@@ -177,14 +241,21 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
             OnPropertyChanged(nameof(PartidaPositionText));
             OnPropertyChanged(nameof(PartidaCantidadText));
             OnPropertyChanged(nameof(PartidaObservacionesText));
+            OnPropertyChanged(nameof(ExcluidoCubicacion));
+            OnPropertyChanged(nameof(MotivoNoCubicarText));
+            OnPropertyChanged(nameof(HasPartidaNote));
+            OnPropertyChanged(nameof(PartidaNoteLabel));
             OnPropertyChanged(nameof(IsEmpty));
             OnPropertyChanged(nameof(HasPartida));
             OnPropertyChanged(nameof(IsReadOnly));
+            OnPropertyChanged(nameof(PartidaEstadoText));
             NotifyCubicacionSummaryChanged();
             LoadCubicacionRows();
             ((RelayCommand)AplicarConjuntoCommand).RaiseCanExecuteChanged();
             ((RelayCommand)AddRowCommand).RaiseCanExecuteChanged();
             ((RelayCommand)InsertRowCommand).RaiseCanExecuteChanged();
+            ((RelayCommand)DeletePartidaCommand).RaiseCanExecuteChanged();
+            ((RelayCommand)AddPartidaCommand).RaiseCanExecuteChanged();
         }
     }
 
@@ -207,8 +278,26 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
         set
         {
             if (SetProperty(ref partidaFilter, value))
-                ApplyFilter();
+                SchedulePartidaFilter();
         }
+    }
+
+    private void SchedulePartidaFilter()
+    {
+        partidaFilterDebounceTimer ??= new System.Windows.Threading.DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(200)
+        };
+        partidaFilterDebounceTimer.Stop();
+        partidaFilterDebounceTimer.Tick -= OnPartidaFilterDebounceTick;
+        partidaFilterDebounceTimer.Tick += OnPartidaFilterDebounceTick;
+        partidaFilterDebounceTimer.Start();
+    }
+
+    private void OnPartidaFilterDebounceTick(object? sender, EventArgs e)
+    {
+        partidaFilterDebounceTimer?.Stop();
+        ApplyFilter();
     }
 
     private string resourceSearchText = "";
@@ -265,9 +354,9 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
 
     public bool IsEmpty => !isLoading && SelectedPartida?.EsPartida == true && !Rows.Any(r => r.HasContent);
     public bool HasPartida => SelectedPartida?.EsPartida == true;
-    public bool IsReadOnly => session.IsReadOnly || SelectedPartida?.ExcluidoCubicacion == true;
+    public bool IsReadOnly => session.IsReadOnly || ExcluidoCubicacion;
 
-    internal bool CanEdit => !session.IsReadOnly && SelectedPartida?.ExcluidoCubicacion != true;
+    internal bool CanEdit => !session.IsReadOnly && !ExcluidoCubicacion;
 
     public bool HasPendingChanges
     {
@@ -281,18 +370,158 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
         internal set => SetProperty(ref saveStatusText, value);
     }
 
-    public string PartidaEstadoText => !HasPartida
-        ? "Sin partida seleccionada"
-        : SelectedPartida?.ExcluidoCubicacion == true
-            ? "Excluida de cubicación"
-            : (SelectedPartida?.TieneCubicacion == true ? "Partida cubicada" : "Partida vacía");
+    public string PartidaEstadoText
+    {
+        get
+        {
+            if (!HasPartida)
+                return "Sin partida seleccionada";
+            if (HasPartidaNote)
+                return MotivoNoCubicarText.Trim();
+            return SelectedPartida?.TieneCubicacion == true ? "Partida cubicada" : "Partida vacía";
+        }
+    }
+
+    /// <summary>Hay texto de observación (no implica exclusión).</summary>
+    public bool HasPartidaNote => !string.IsNullOrWhiteSpace(MotivoNoCubicarText);
+
+    public string PartidaNoteLabel => HasPartidaNote ? "Observación:" : "";
+
+    /// <summary>Exclusión de cubicación (Ctrl+E). Independiente de la observación.</summary>
+    public bool ExcluidoCubicacion
+    {
+        get => SelectedPartida?.ExcluidoCubicacion == true;
+        set
+        {
+            if (session.IsReadOnly || SelectedPartida?.EsPartida != true)
+                return;
+
+            var item = session.Itemizado.FirstOrDefault(x =>
+                string.Equals(x.Id, SelectedPartida.Id, StringComparison.OrdinalIgnoreCase));
+            if (item == null || item.ExcluidoCubicacion == value)
+                return;
+
+            undo.PushUndoPoint(session,
+                value ? $"Excluir de cubicación {SelectedPartida.Codigo}" : $"Incluir en cubicación {SelectedPartida.Codigo}");
+            item.ExcluidoCubicacion = value;
+            SelectedPartida.ExcluidoCubicacion = value;
+            MarkDirty();
+            OnPropertyChanged(nameof(ExcluidoCubicacion));
+            OnPropertyChanged(nameof(IsReadOnly));
+            OnPropertyChanged(nameof(PartidaEstadoText));
+            ((RelayCommand)AddRowCommand).RaiseCanExecuteChanged();
+            ((RelayCommand)InsertRowCommand).RaiseCanExecuteChanged();
+            ((RelayCommand)AplicarConjuntoCommand).RaiseCanExecuteChanged();
+            ((RelayCommand)OpenScTomarCommand).RaiseCanExecuteChanged();
+        }
+    }
+
+    /// <summary>
+    /// Observación interna de la partida (valorizada o no). No excluye de cubicación y no viaja a la oferta.
+    /// Para nota comercial de oferta use Observaciones en modo Detalle.
+    /// </summary>
+    public string MotivoNoCubicarText
+    {
+        get
+        {
+            if (selectedPartida == null)
+                return "";
+            var item = session.Itemizado.FirstOrDefault(x =>
+                string.Equals(x.Id, selectedPartida.Id, StringComparison.OrdinalIgnoreCase));
+            return item?.MotivoNoCubicar ?? "";
+        }
+        set
+        {
+            if (session.IsReadOnly || selectedPartida?.EsPartida != true)
+                return;
+            var item = session.Itemizado.FirstOrDefault(x =>
+                string.Equals(x.Id, selectedPartida.Id, StringComparison.OrdinalIgnoreCase));
+            if (item == null)
+                return;
+
+            string clean = value ?? "";
+            if (string.Equals(item.MotivoNoCubicar, clean, StringComparison.Ordinal))
+                return;
+
+            undo.PushUndoPoint(session, $"Observación partida {selectedPartida.Codigo}");
+            item.MotivoNoCubicar = clean;
+            if (!string.IsNullOrWhiteSpace(clean))
+            {
+                ObservationMemoryStore.Remember(UserPreferencesStore.Load(), clean);
+            }
+
+            OnPropertyChanged(nameof(MotivoNoCubicarText));
+            OnPropertyChanged(nameof(HasPartidaNote));
+            OnPropertyChanged(nameof(PartidaNoteLabel));
+            OnPropertyChanged(nameof(PartidaEstadoText));
+            MarkDirty();
+        }
+    }
+
+    public IReadOnlyList<ObservationChipPreset> ObservationChips => ObservationMemoryStore.StandardChips;
+
+    public void ApplyObservationChip(string text)
+    {
+        if (session.IsReadOnly || selectedPartida?.EsPartida != true)
+            return;
+
+        MotivoNoCubicarText = text;
+        SaveStatusText = $"Observación aplicada: '{text}'.";
+    }
+
+    public void ClearObservation()
+    {
+        if (session.IsReadOnly || selectedPartida?.EsPartida != true)
+            return;
+
+        MotivoNoCubicarText = string.Empty;
+        SaveStatusText = "Observación eliminada.";
+    }
 
     public string PartidaResumenText => !HasPartida
         ? "Seleccione una partida para ver el detalle"
         : $"{Rows.Count(r => r.HasContent):N0} recursos · $ {TotalPartida:N0} CLP";
 
-    public string PartidaCodigo => selectedPartida?.Codigo ?? "";
-    public string PartidaDescripcion => selectedPartida?.Descripcion ?? "";
+    public string PartidaCodigo
+    {
+        get => selectedPartida?.Codigo ?? "";
+        set
+        {
+            if (session.IsReadOnly || selectedPartida == null) return;
+            string clean = (value ?? "").Trim();
+            if (selectedPartida.Codigo == clean) return;
+
+            undo.PushUndoPoint(session, $"Cambiar ítem partida {selectedPartida.Codigo} a {clean}");
+            var item = session.Itemizado.FirstOrDefault(x => string.Equals(x.Id, selectedPartida.Id, StringComparison.OrdinalIgnoreCase));
+            if (item != null)
+                item.Item = clean;
+
+            selectedPartida.Codigo = clean;
+            OnPropertyChanged(nameof(PartidaCodigo));
+            OnPropertyChanged(nameof(PartidaPositionText));
+            MarkDirty();
+        }
+    }
+
+    public string PartidaDescripcion
+    {
+        get => selectedPartida?.Descripcion ?? "";
+        set
+        {
+            if (session.IsReadOnly || selectedPartida == null) return;
+            string clean = (value ?? "").Trim();
+            if (selectedPartida.Descripcion == clean) return;
+
+            undo.PushUndoPoint(session, $"Cambiar nombre partida {selectedPartida.Codigo}");
+            var item = session.Itemizado.FirstOrDefault(x => string.Equals(x.Id, selectedPartida.Id, StringComparison.OrdinalIgnoreCase));
+            if (item != null)
+                item.Descripcion = clean;
+
+            selectedPartida.Descripcion = clean;
+            OnPropertyChanged(nameof(PartidaDescripcion));
+            MarkDirty();
+        }
+    }
     public string PartidaUnidad => selectedPartida?.Unidad ?? "";
 
     // Unidad editable de la partida (modo Detalle) — cuando el itemizado no trae unidad, se
@@ -302,11 +531,12 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
         get => PartidaUnidad;
         set
         {
+            if (session.IsReadOnly) return;
             if (selectedPartida == null) return;
             string clean = (value ?? "").Trim();
             if (selectedPartida.Unidad == clean) return;
 
-            host.UndoService.PushUndoPoint(session, $"Cambiar unidad partida {selectedPartida.Codigo}");
+            undo.PushUndoPoint(session, $"Cambiar unidad partida {selectedPartida.Codigo}");
             var item = session.Itemizado.FirstOrDefault(x => string.Equals(x.Id, selectedPartida.Id, StringComparison.OrdinalIgnoreCase));
             if (item != null)
                 item.Unidad = clean;
@@ -338,6 +568,7 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
         }
         set
         {
+            if (session.IsReadOnly) return;
             if (selectedPartida == null) return;
             string clean = (value ?? "").Trim();
             decimal parsed;
@@ -367,7 +598,7 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
             {
                 if (selectedPartida.Cantidad != parsed)
                 {
-                    host.UndoService.PushUndoPoint(session, $"Cambiar cantidad partida {selectedPartida.Codigo}");
+                    undo.PushUndoPoint(session, $"Cambiar cantidad partida {selectedPartida.Codigo}");
 
                     var item = session.Itemizado.FirstOrDefault(x => string.Equals(x.Id, selectedPartida.Id, StringComparison.OrdinalIgnoreCase));
                     if (item != null)
@@ -396,12 +627,7 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
     // grilla — para que la Cantidad oficial (CANT, modo Detalle) pueda sumar/restar/multiplicar/
     // dividir filas de recursos escribiendo o "pickeando" referencias tipo Excel.
     private Dictionary<string, decimal> BuildPartidaCantidadVariables()
-    {
-        var dict = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
-        for (int i = 0; i < Rows.Count; i++)
-            dict[$"R{i + 1}"] = Rows[i].Cantidad;
-        return dict;
-    }
+        => PartidaCantidadVariablesBuilder.Build(Rows.Select(r => r.Cantidad).ToList());
 
     // Observación de la partida para la constructora — a diferencia de CubicacionRowVm.NotaInterna
     // (por recurso, solo revisión interna), esta viaja al Resumen/oferta. Se guarda en
@@ -417,6 +643,7 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
         }
         set
         {
+            if (session.IsReadOnly) return;
             if (selectedPartida == null) return;
             var item = session.Itemizado.FirstOrDefault(x => string.Equals(x.Id, selectedPartida.Id, StringComparison.OrdinalIgnoreCase));
             if (item == null) return;
@@ -424,7 +651,7 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
             string clean = value ?? "";
             if (item.Observaciones == clean) return;
 
-            host.UndoService.PushUndoPoint(session, $"Editar observación de {selectedPartida.Codigo}");
+            undo.PushUndoPoint(session, $"Editar observación de {selectedPartida.Codigo}");
             item.Observaciones = clean;
             OnPropertyChanged(nameof(PartidaObservacionesText));
             MarkDirty();
@@ -437,9 +664,17 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
     public decimal TotalCostoDirecto { get => totalCostoDirecto; private set => SetProperty(ref totalCostoDirecto, value); }
     public decimal PrecioUnitario { get => precioUnitario; private set => SetProperty(ref precioUnitario, value); }
     public decimal TotalPartida { get => totalPartida; private set => SetProperty(ref totalPartida, value); }
+    public decimal TotalMaterialesUf => PriceConversion.ClpToUf(TotalMateriales, ValorUfVigente);
+    public decimal TotalManoObraUf => PriceConversion.ClpToUf(TotalManoObra, ValorUfVigente);
+    public decimal TotalCostoDirectoUf => PriceConversion.ClpToUf(TotalCostoDirecto, ValorUfVigente);
+    public decimal PrecioUnitarioUf => PriceConversion.ClpToUf(PrecioUnitario, ValorUfVigente);
+    public decimal TotalPartidaUf => PriceConversion.ClpToUf(TotalPartida, ValorUfVigente);
+    private decimal ValorUfVigente => session.ValorUfClp > 0m ? session.ValorUfClp : PriceConversion.DefaultValorUfClp;
 
     // Comandos
     public ICommand AddRowCommand { get; }
+    public ICommand QuickAddMaterialCommand { get; }
+    public ICommand PasteFromClipboardCommand { get; }
     public ICommand InsertRowCommand { get; }
     public ICommand DeleteRowCommand { get; }
     public ICommand DuplicateRowCommand { get; }
@@ -451,10 +686,21 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
     public ICommand MoveRowDownCommand { get; }
     public ICommand AplicarConjuntoCommand { get; }
     public ICommand RefreshPricesCommand { get; private set; } = null!;
+    public ICommand OpenProjectCommand { get; }
+
+    public bool ShowEmptyState
+    {
+        get => showEmptyState;
+        private set => SetProperty(ref showEmptyState, value);
+    }
+
+    internal void UpdateEmptyState() =>
+        ShowEmptyState = !projectWorkspace.HasOpenProject;
 
     // IRefreshablePage
     public void Refresh()
     {
+        UpdateEmptyState();
         validationMaterialesIndex = null;
         var prev = selectedPartida;
         LoadPartidas();
@@ -468,9 +714,105 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
             else SelectFirstPartida();
         }
         else SelectFirstPartida();
+        if (!hasPendingChanges)
+            ScheduleCaptureBaseline();
     }
 
-    // IPageWithPendingChanges
+    // IPageWithPendingChanges / IPageWithCommitChanges — edición en vivo sobre session.Cubicacion.
+    // Leave/Save persiste porque MarkDirty ya llama session.MarkDirty(ProjectDirtyScope.Cubicacion).
+    // Discard restaura baseline JSON de cubicación (+ capas) capturado en Load/Refresh/Apply.
     bool IPageWithPendingChanges.HasPendingChanges => hasPendingChanges;
-    bool IPageWithPendingChanges.TryDiscardChanges() { MarkClean(); return true; }
+    bool IPageWithPendingChanges.TryDiscardChanges() => TryDiscardChanges();
+    bool IPageWithCommitChanges.TryApplyChanges() => TryApplyChanges();
+
+    public bool TryDiscardChanges()
+    {
+        if (!hasPendingChanges)
+            return true;
+
+        RestoreBaseline();
+        HasPendingChanges = false;
+        SaveStatusText = "Cambios descartados";
+        Refresh();
+        return true;
+    }
+
+    public bool TryApplyChanges()
+    {
+        if (session.IsReadOnly)
+            return !hasPendingChanges;
+
+        if (!session.IsDirty)
+        {
+            using (SuppressSessionReload())
+                session.MarkDirty(ProjectDirtyScope.Cubicacion);
+        }
+
+        CaptureBaseline();
+        MarkClean();
+        return true;
+    }
+
+    internal void ScheduleCaptureBaseline()
+    {
+        // Serializar miles de filas en el ctor/Refresh bloquea la UI (~2s en proyectos grandes).
+        var dispatcher = System.Windows.Application.Current?.Dispatcher;
+        if (dispatcher == null)
+        {
+            // Tests headless: sync solo en proyectos chicos (perf 800×15 no debe pagar JSON).
+            if (session.Cubicacion.Count <= 2_000)
+                CaptureBaseline();
+            return;
+        }
+
+        _ = dispatcher.InvokeAsync(() =>
+        {
+            if (!hasPendingChanges)
+                CaptureBaseline();
+        }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+    }
+
+    internal void CaptureBaseline()
+    {
+        baselineCubicacion = CloneJson(session.Cubicacion.ToList());
+        baselineRecursos = CloneJson(session.CubicacionRecursos.ToList());
+        baselineZonas = CloneJson(session.CubicacionZonaCantidades.ToList());
+        baselineValorizaciones = CloneJson(session.CubicacionValorizaciones.ToList());
+    }
+
+    private void RestoreBaseline()
+    {
+        if (baselineCubicacion == null)
+            return;
+
+        ReplaceList(session.Cubicacion, CloneJson(baselineCubicacion));
+        if (baselineRecursos != null)
+            ReplaceList(session.CubicacionRecursos, CloneJson(baselineRecursos));
+        if (baselineZonas != null)
+            ReplaceList(session.CubicacionZonaCantidades, CloneJson(baselineZonas));
+        if (baselineValorizaciones != null)
+            ReplaceList(session.CubicacionValorizaciones, CloneJson(baselineValorizaciones));
+    }
+
+    private static void ReplaceList<T>(List<T> target, List<T> source)
+    {
+        target.Clear();
+        foreach (var item in source)
+            target.Add(item);
+    }
+
+    private static T CloneJson<T>(T source)
+    {
+        var json = System.Text.Json.JsonSerializer.Serialize(source, BaselineJsonOptions);
+        return System.Text.Json.JsonSerializer.Deserialize<T>(json, BaselineJsonOptions)
+               ?? throw new InvalidOperationException($"No se pudo clonar {typeof(T).Name} para baseline Cubicación.");
+    }
+
+    private void PasteFromClipboard()
+    {
+        if (!Clipboard.ContainsText()) return;
+        var text = Clipboard.GetText();
+        if (string.IsNullOrWhiteSpace(text)) return;
+        PasteClipboardDirect(text, showPreviewDialog: true);
+    }
 }

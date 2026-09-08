@@ -1,11 +1,13 @@
 <Window x:Class="QubiCostElectrical.Wpf.Features.Itemizado.ItemizadoImportPreviewDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:infra="clr-namespace:QubiCostElectrical.Wpf.Infrastructure"
         Style="{StaticResource Dialog.Window}"
         Title="Importar itemizado"
         Width="920" Height="640" MinWidth="720" MinHeight="420"
         WindowStartupLocation="CenterScreen">
-  <Grid Margin="20">
+  <Border Style="{StaticResource Dialog.Chrome}" Margin="16">
+  <Grid>
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto" />
       <RowDefinition Height="*" />
@@ -14,9 +16,8 @@
     </Grid.RowDefinitions>
 
     <StackPanel Grid.Row="0" Margin="0,0,0,12">
-      <TextBlock x:Name="SummaryText" Style="{StaticResource Text.ViewTitle}" />
-      <TextBlock x:Name="NoteText" Style="{StaticResource Text.Body}" Margin="0,4,0,0"
-                 Foreground="{DynamicResource Brush.Ink4}" TextWrapping="Wrap" />
+      <TextBlock x:Name="SummaryText" Style="{StaticResource Dialog.HeaderTitle}" />
+      <TextBlock x:Name="NoteText" Style="{StaticResource Dialog.HeaderSubtitle}" />
       <TextBlock x:Name="WarningText" Margin="0,6,0,0" Foreground="{DynamicResource Brush.Amber}"
                  TextWrapping="Wrap" Visibility="Collapsed" />
     </StackPanel>
@@ -24,6 +25,7 @@
     <Border Grid.Row="1" Style="{StaticResource Card.Section}" Padding="0">
       <DataGrid x:Name="PreviewGrid"
                 Style="{StaticResource DataGrid.Workspace}"
+                infra:DataGridExcelNavigation.Enable="True"
                 AutoGenerateColumns="False"
                 CanUserAddRows="False"
                 CanUserDeleteRows="False"
@@ -57,4 +59,5 @@
               Click="OnCancelClick" />
     </DockPanel>
   </Grid>
+  </Border>
 </Window>

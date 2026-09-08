@@ -56,8 +56,10 @@ public sealed class VersionComparisonRowVm
 
 public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefreshablePage
 {
-    private readonly WpfAppHost host;
     private readonly IShellNavigationHost shell;
+    private readonly BudgetProjectSession session;
+    private readonly IProjectWorkspaceService workspace;
+    private readonly DashboardPresenter dashboard;
     private readonly IVersionComparisonService versionComparison;
     private readonly ObservableCollection<VersionRowVm> versions = new();
     private readonly ObservableCollection<VersionComparisonRowVm> comparisonRows = new();
@@ -76,6 +78,7 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
     private VersionComparisonRowVm? selectedComparisonRow;
     private bool compareAgainstCurrent = true;
     private bool showEmptyState = true;
+    private bool isLoading;
     private string summaryText = "0 versiones";
     private string activeVersionText = "Sin versión activa";
     private string statusMessage = "Gestión de versiones no calculada.";

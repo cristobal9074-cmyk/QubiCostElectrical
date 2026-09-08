@@ -1,6 +1,9 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows;
+using System.Windows.Input;
+using System.Windows.Threading;
+using QubiCostElectrical.Wpf.Shell;
 
 namespace QubiCostElectrical.Wpf.Controls;
 
@@ -60,12 +63,27 @@ public sealed partial class AppMessageDialog : Window, INotifyPropertyChanged
         bool isWarning = false,
         bool isError = false)
     {
+        if (!ShellWindow.CanShowModalDialog)
+            return AppMessageDialogResult.Cancel;
+
+        var previous = Keyboard.FocusedElement as IInputElement;
         var dialog = new AppMessageDialog();
         if (Application.Current?.MainWindow is { IsLoaded: true } owner)
             dialog.Owner = owner;
 
         dialog.Configure(title, message, primaryText, secondaryText, cancelText, isWarning, isError);
-        dialog.ShowDialog();
+        try
+        {
+            dialog.ShowDialog();
+        }
+        finally
+        {
+            Application.Current?.Dispatcher.BeginInvoke(() =>
+            {
+                previous?.Focus();
+                ShellWindow.RestoreWorkspaceGridFocus();
+            }, DispatcherPriority.Input);
+        }
         return dialog.Result;
     }
 

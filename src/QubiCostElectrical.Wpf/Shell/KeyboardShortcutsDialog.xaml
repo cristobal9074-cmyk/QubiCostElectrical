@@ -6,9 +6,7 @@
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         Style="{StaticResource Dialog.Window}">
-  <Border Padding="20" Background="{DynamicResource Brush.Surface}"
-          BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
-          CornerRadius="{StaticResource Radius.Lg}">
+  <Border Style="{StaticResource Dialog.Chrome}" Margin="16">
     <Grid>
       <Grid.RowDefinitions>
         <RowDefinition Height="Auto" />
@@ -17,9 +15,9 @@
       </Grid.RowDefinitions>
 
       <StackPanel Margin="0,0,0,12">
-        <TextBlock Text="Atajos de teclado" Style="{StaticResource Text.ViewTitle}" FontSize="18" />
-        <TextBlock Text="Referencia rápida para trabajar sin mouse."
-                   Style="{StaticResource Text.Body}" Foreground="{DynamicResource Brush.Muted}" Margin="0,4,0,0" />
+        <TextBlock Text="Atajos de teclado" Style="{StaticResource Dialog.HeaderTitle}" />
+        <TextBlock Text="Referencia rápida para trabajar sin mouse. Los atajos de Cubicación reflejan Preferencias."
+                   Style="{StaticResource Dialog.HeaderSubtitle}" Margin="0,0,0,0" />
       </StackPanel>
 
       <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
@@ -34,21 +32,22 @@
 
           <TextBlock Text="ITEMIZADO" Style="{StaticResource Text.SectionLabel}" Margin="0,8,0,6" />
           <TextBlock Style="{StaticResource Text.Body}" Margin="0,0,0,10" TextWrapping="Wrap"
-                     Text="Ins — Agregar partida · Alt+↑/↓ — Mover fila · Supr — Eliminar · Ctrl+V — Pegar desde Excel" />
+                     Text="Ins — Agregar partida · Alt+↑/↓ — Mover fila · Supr — Eliminar · Ctrl+V — Pegar desde Excel · Ctrl+Shift+C — Cubicar" />
 
           <TextBlock Text="CUBICACIÓN" Style="{StaticResource Text.SectionLabel}" Margin="0,8,0,6" />
-          <TextBlock Style="{StaticResource Text.Body}" Margin="0,0,0,10" TextWrapping="Wrap"
-                     Text="Alt+↑/↓ — Mover recurso · Ctrl+V — Pegar en grilla · Tab/Enter — Navegar celdas · Ctrl+←/→ — Ventana de sectores · Casillas/Detalle — Cambiar vista" />
+          <TextBlock x:Name="CubicacionShortcutsText" Style="{StaticResource Text.Body}" Margin="0,0,0,10" TextWrapping="Wrap"
+                     Text="Configurable en Preferencias" />
 
           <TextBlock Text="APU" Style="{StaticResource Text.SectionLabel}" Margin="0,8,0,6" />
           <TextBlock Style="{StaticResource Text.Body}" TextWrapping="Wrap"
-                     Text="Enter — Editar celda · Supr — Quitar recurso · Menú ⋯ — Plantillas y generar desde cubicación" />
+                     Text="Enter — Editar celda · Supr — Quitar recurso · Generar APU / Actualizar precios en la barra" />
         </StackPanel>
       </ScrollViewer>
 
-      <Button Grid.Row="2" Content="Cerrar" Style="{StaticResource Button.Primary}"
-              HorizontalAlignment="Right" Margin="0,14,0,0" Padding="20,8"
-              Click="OnCloseClick" IsDefault="True" />
+      <DockPanel Grid.Row="2" Style="{StaticResource Dialog.Footer}" LastChildFill="False">
+        <Button DockPanel.Dock="Right" Content="Cerrar" Style="{StaticResource Button.Primary}"
+                Padding="20,8" Click="OnCloseClick" IsDefault="True" />
+      </DockPanel>
     </Grid>
   </Border>
 </Window>

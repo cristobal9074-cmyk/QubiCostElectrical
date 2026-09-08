@@ -15,17 +15,22 @@ namespace QubiCostElectrical.Wpf.Features.Quotes;
 
 public sealed partial class QuotesViewModel : SessionAwareViewModelBase, IRefreshablePage
 {
-    public QuotesViewModel(IShellNavigationHost shell, WpfAppHost host) : base(host)
+    public QuotesViewModel(IShellNavigationHost shell, WpfAppHost host)
+        : this(shell, host.Session, host.ProjectWorkspace, host.Services.MaterialSearch, host.Services.PriceBankStore) { }
+
+    public QuotesViewModel(IShellNavigationHost shell, BudgetProjectSession session, IProjectWorkspaceService workspace, IMaterialSearchService materialSearch, IPriceBankStore store) : base(session)
     {
-        this.host = host;
         this.shell = shell;
-        store = host.Services.PriceBankStore;
+        this.session = session;
+        this.workspace = workspace;
+        this.materialSearch = materialSearch;
+        this.store = store;
 
         refreshCommand = new RelayCommand(Refresh);
         clearFiltersCommand = new RelayCommand(ClearFilters);
         importQuoteCommand = new RelayCommand(ImportQuote);
-        applyPriceCommand = new RelayCommand<QuoteComparisonRowVm>(ApplyPrice, r => r != null && !host.Session.IsReadOnly);
-        applyAllBestPricesCommand = new RelayCommand(ApplyAllBestPrices, () => FilteredComparisonRows.Any() && !host.Session.IsReadOnly);
+        applyPriceCommand = new RelayCommand<QuoteComparisonRowVm>(ApplyPrice, r => r != null && !session.IsReadOnly);
+        applyAllBestPricesCommand = new RelayCommand(ApplyAllBestPrices, () => FilteredComparisonRows.Any() && !session.IsReadOnly);
         applySelectionToBankCommand = new RelayCommand(ApplySelectionToBank, CanApplySelectionToBank);
 
         providerSummaryView = CollectionViewSource.GetDefaultView(providerSummaries);
@@ -124,19 +129,31 @@ public sealed partial class QuotesViewModel : SessionAwareViewModelBase, IRefres
     public ICommand ApplyAllBestPricesCommand => applyAllBestPricesCommand;
     public ICommand ApplySelectionToBankCommand => applySelectionToBankCommand;
 
+    public bool IsLoading { get; private set; }
+
     public void Refresh()
     {
-        BuildProviderSummaries();
-        UpdateProjectSummary();
+        IsLoading = true;
+        OnPropertyChanged(nameof(IsLoading));
+        try
+        {
+            BuildProviderSummaries();
+            UpdateProjectSummary();
 
-        if (SelectedProvider == null)
-            SelectedProvider = providerSummaries.FirstOrDefault();
+            if (SelectedProvider == null)
+                SelectedProvider = providerSummaries.FirstOrDefault();
 
-        RefreshSelectedProvider();
-        UpdateSummary();
-        applyAllBestPricesCommand.RaiseCanExecuteChanged();
-        applyPriceCommand.RaiseCanExecuteChanged();
-        applySelectionToBankCommand.RaiseCanExecuteChanged();
+            RefreshSelectedProvider();
+            UpdateSummary();
+            applyAllBestPricesCommand.RaiseCanExecuteChanged();
+            applyPriceCommand.RaiseCanExecuteChanged();
+            applySelectionToBankCommand.RaiseCanExecuteChanged();
+        }
+        finally
+        {
+            IsLoading = false;
+            OnPropertyChanged(nameof(IsLoading));
+        }
     }
 
     private void BuildProviderSummaries()
@@ -220,10 +237,10 @@ public sealed partial class QuotesViewModel : SessionAwareViewModelBase, IRefres
         if (obj is not QuoteProviderSummaryVm provider)
             return false;
 
-        string query = host.Services.MaterialSearch.Normalize(SearchText);
+        string query = materialSearch.Normalize(SearchText);
         if (!string.IsNullOrWhiteSpace(query))
         {
-            string searchable = host.Services.MaterialSearch.Normalize(string.Join(' ', new[]
+            string searchable = materialSearch.Normalize(string.Join(' ', new[]
             {
                 provider.Proveedor,
                 provider.Materiales.ToString(),
@@ -254,12 +271,13 @@ public sealed partial class QuotesViewModel : SessionAwareViewModelBase, IRefres
             return;
         }
 
+        decimal valorUf = session.ValorUfClp > 0m ? session.ValorUfClp : PriceConversion.DefaultValorUfClp;
         var selected = allEntries
             .Where(x => string.Equals(Normalize(x.Proveedor), Normalize(SelectedProvider.Proveedor), StringComparison.OrdinalIgnoreCase))
             .Where(FilterEntry)
             .OrderBy(x => x.Categoria, StringComparer.OrdinalIgnoreCase)
             .ThenBy(x => x.Codigo, StringComparer.OrdinalIgnoreCase)
-            .Select(x => new QuoteEntryVm(x))
+            .Select(x => new QuoteEntryVm(x, valorUf))
             .ToList();
 
         foreach (var item in selected)
@@ -276,8 +294,8 @@ public sealed partial class QuotesViewModel : SessionAwareViewModelBase, IRefres
     {
         if (!string.IsNullOrWhiteSpace(SearchText))
         {
-            string query = host.Services.MaterialSearch.Normalize(SearchText);
-            string searchable = host.Services.MaterialSearch.Normalize(string.Join(' ', new[]
+            string query = materialSearch.Normalize(SearchText);
+            string searchable = materialSearch.Normalize(string.Join(' ', new[]
             {
                 entry.Codigo,
                 entry.Descripcion,
@@ -310,14 +328,32 @@ public sealed partial class QuotesViewModel : SessionAwareViewModelBase, IRefres
 
         var rows = new List<QuoteComparisonRowVm>();
 
+        decimal valorUf = session.ValorUfClp > 0m ? session.ValorUfClp : PriceConversion.DefaultValorUfClp;
+        decimal EffectiveUf(PriceBankEntry e)
+        {
+            decimal uf = e.MatUf + e.MoUf;
+            if (uf > 0m) return uf;
+            decimal clp = e.MatClpConFallback + e.MoClpConFallback;
+            return clp > 0m ? PriceConversion.ClpToUf(clp, valorUf) : 0m;
+        }
+
         foreach (var (code, selectedEntry) in selectedByCode)
         {
             if (!byCode.TryGetValue(code, out var candidates) || candidates.Count == 0)
                 continue;
 
-            var best = candidates
-                .OrderBy(x => x.MatUf + x.MoUf)
+            var validCandidates = candidates.Where(x => EffectiveUf(x) > 0m).ToList();
+            if (validCandidates.Count == 0)
+                validCandidates = candidates;
+
+            var best = validCandidates
+                .OrderBy(x => EffectiveUf(x))
                 .First();
+
+            decimal bestUf = EffectiveUf(best);
+            decimal bestClp = (best.MatClpConFallback + best.MoClpConFallback) > 0m
+                ? (best.MatClpConFallback + best.MoClpConFallback)
+                : PriceConversion.UfToClp(bestUf, valorUf);
 
             rows.Add(new QuoteComparisonRowVm(
                 selectedEntry.Codigo,
@@ -325,8 +361,10 @@ public sealed partial class QuotesViewModel : SessionAwareViewModelBase, IRefres
                 selectedEntry.Proveedor,
                 selectedEntry.PrecioUf,
                 best.Proveedor,
-                best.MatUf + best.MoUf,
-                selectedEntry.Categoria));
+                bestUf,
+                selectedEntry.Categoria,
+                selectedEntry.PrecioClp,
+                bestClp));
         }
 
         rows = rows
@@ -348,8 +386,8 @@ public sealed partial class QuotesViewModel : SessionAwareViewModelBase, IRefres
 
     private void UpdateProjectSummary()
     {
-        ProjectSummary = host.ProjectWorkspace.HasOpenProject
-            ? $"{host.Session.ProjectInfo.Nombre} · banco activo"
+        ProjectSummary = workspace.HasOpenProject
+            ? $"{session.ProjectInfo.Nombre} · banco activo"
             : "Sin proyecto abierto";
     }
 
@@ -401,7 +439,7 @@ public sealed partial class QuotesViewModel : SessionAwareViewModelBase, IRefres
 
     private void ApplyAllBestPrices()
     {
-        if (host.Session.IsReadOnly)
+        if (session.IsReadOnly)
             return;
 
         int applied = 0;
@@ -412,7 +450,7 @@ public sealed partial class QuotesViewModel : SessionAwareViewModelBase, IRefres
         }
 
         if (applied > 0)
-            host.Session.MarkDirty("materiales", "cubicacion");
+            session.MarkDirty(ProjectDirtyScope.Materiales, ProjectDirtyScope.Cubicacion);
 
         StatusMessage = applied == 0
             ? "No hay mejores precios aplicables en la comparación visible."
@@ -422,11 +460,11 @@ public sealed partial class QuotesViewModel : SessionAwareViewModelBase, IRefres
     }
 
     private bool CanApplySelectionToBank() =>
-        !host.Session.IsReadOnly && (SelectedComparisonRow != null || FilteredComparisonRows.Any());
+        !session.IsReadOnly && (SelectedComparisonRow != null || FilteredComparisonRows.Any());
 
     private void ApplySelectionToBank()
     {
-        if (host.Session.IsReadOnly)
+        if (session.IsReadOnly)
             return;
 
         IReadOnlyList<QuoteComparisonRowVm> rows = SelectedComparisonRow != null
@@ -447,8 +485,8 @@ public sealed partial class QuotesViewModel : SessionAwareViewModelBase, IRefres
             clone.OrigenPrecio = "Adjudicación cotización";
             clone.FechaPrecio = DateTime.Today;
             clone.ActualizadoEn = AppClock.Now;
-            clone.ProyectoOrigen = host.ProjectWorkspace.HasOpenProject
-                ? host.Session.ProjectInfo.Nombre
+            clone.ProyectoOrigen = workspace.HasOpenProject
+                ? session.ProjectInfo.Nombre
                 : clone.ProyectoOrigen;
             entries.Add(clone);
         }
@@ -471,17 +509,17 @@ public sealed partial class QuotesViewModel : SessionAwareViewModelBase, IRefres
         if (row.PrecioMejor <= 0m)
             return false;
 
-        var material = host.Session.Materiales.FirstOrDefault(m =>
+        var material = session.Materiales.FirstOrDefault(m =>
             string.Equals(m.Codigo, row.Codigo, StringComparison.OrdinalIgnoreCase));
 
         if (material == null)
             return false;
 
-        decimal valorUf = host.Session.ProjectInfo.ValorUfClp > 0m ? host.Session.ProjectInfo.ValorUfClp : 39000m;
-        material.MatClp = row.PrecioMejor * valorUf;
+        decimal valorUf = session.ProjectInfo.ValorUfClp > 0m ? session.ProjectInfo.ValorUfClp : PriceConversion.DefaultValorUfClp;
+        material.MatClp = row.PrecioMejorClp > 0m ? row.PrecioMejorClp : row.PrecioMejor * valorUf;
         material.RecalcularUf(valorUf);
-        host.Session.SyncCubicacionPricesFromMateriales();
-        host.Session.MarkDirty("materiales", "cubicacion");
+        session.SyncCubicacionPricesFromMateriales();
+        session.MarkDirty(ProjectDirtyScope.Materiales, ProjectDirtyScope.Cubicacion);
         return true;
     }
 

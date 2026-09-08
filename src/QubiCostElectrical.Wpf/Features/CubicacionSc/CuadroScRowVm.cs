@@ -1,26 +1,26 @@
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
-using System.Windows.Input;
 using QubiCostElectrical;
-using QubiCostElectrical.Wpf.Features.Dashboard;
 using QubiCostElectrical.Wpf.Infrastructure;
-using QubiCostElectrical.Wpf.Shell;
 
 namespace QubiCostElectrical.Wpf.Features.CubicacionSc;
 
 public sealed class CuadroScRowVm : ViewModelBase
 {
     private readonly CuadroCargaSCRow row;
-    private readonly Action? onRenamed;
+    private readonly Action? onChanged;
+    private readonly Func<bool>? canEdit;
     private bool isEditing;
 
-    public CuadroScRowVm(CuadroCargaSCRow row, Action? onRenamed = null)
+    public CuadroScRowVm(CuadroCargaSCRow row, Action? onChanged = null, Func<bool>? canEdit = null)
     {
         this.row = row;
-        this.onRenamed = onRenamed;
+        this.onChanged = onChanged;
+        this.canEdit = canEdit;
     }
+
+    private bool AllowEdit => canEdit?.Invoke() ?? true;
+    public bool CanEdit => AllowEdit;
 
     public string Id => row.Id;
 
@@ -29,11 +29,12 @@ public sealed class CuadroScRowVm : ViewModelBase
         get => row.Nombre;
         set
         {
+            if (!AllowEdit) return;
             var limpio = string.IsNullOrWhiteSpace(value) ? row.Nombre : value.Trim();
             if (limpio == row.Nombre) return;
             row.Nombre = limpio;
             OnPropertyChanged();
-            onRenamed?.Invoke();
+            onChanged?.Invoke();
         }
     }
 
@@ -48,13 +49,27 @@ public sealed class CuadroScRowVm : ViewModelBase
     public string Descripcion
     {
         get => row.Descripcion;
-        set { row.Descripcion = value; OnPropertyChanged(); }
+        set
+        {
+            if (!AllowEdit) return;
+            if (row.Descripcion == value) return;
+            row.Descripcion = value;
+            OnPropertyChanged();
+            onChanged?.Invoke();
+        }
     }
 
     public int CircuitosProyectados
     {
         get => row.CircuitosProyectados;
-        set { row.CircuitosProyectados = value; OnPropertyChanged(); }
+        set
+        {
+            if (!AllowEdit) return;
+            if (row.CircuitosProyectados == value) return;
+            row.CircuitosProyectados = value;
+            OnPropertyChanged();
+            onChanged?.Invoke();
+        }
     }
 
     public int CircuitosActivos => row.Circuitos.Count(c => c.EsActivo);

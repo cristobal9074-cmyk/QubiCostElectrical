@@ -42,7 +42,8 @@
       </UniformGrid>
 
       <!-- ─── Editar tasas ───────────────────────────────────────────────── -->
-      <Border Style="{StaticResource Card.Section}" Padding="20" Margin="0,0,0,16">
+      <Border Style="{StaticResource Card.Section}" Padding="20" Margin="0,0,0,16"
+              IsEnabled="{Binding CanEdit}">
         <StackPanel>
           <TextBlock Text="Actualizar tasas" Style="{StaticResource Text.PageTitle}" FontSize="13" Margin="0,0,0,14"/>
 

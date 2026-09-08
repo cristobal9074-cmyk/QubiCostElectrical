@@ -69,7 +69,8 @@ public sealed class FloorCardVm : ViewModelBase
 public sealed class FloorSummaryViewModel : SessionAwareViewModelBase, IRefreshablePage
 {
     private readonly IShellNavigationHost shell;
-    private readonly WpfAppHost host;
+    private readonly BudgetProjectSession session;
+    private readonly IProjectWorkspaceService workspace;
     private readonly FloorSummaryService summarySvc;
 
     private bool showEmptyState = true;
@@ -164,10 +165,14 @@ public sealed class FloorSummaryViewModel : SessionAwareViewModelBase, IRefresha
     public ICommand ExportExcelCommand { get; }
     public ICommand FilterSourceCommand { get; }
 
-    public FloorSummaryViewModel(IShellNavigationHost shell, WpfAppHost host) : base(host)
+    public FloorSummaryViewModel(IShellNavigationHost shell, WpfAppHost host)
+        : this(shell, host.Session, host.ProjectWorkspace) { }
+
+    public FloorSummaryViewModel(IShellNavigationHost shell, BudgetProjectSession session, IProjectWorkspaceService workspace) : base(session)
     {
         this.shell = shell;
-        this.host = host;
+        this.session = session;
+        this.workspace = workspace;
         summarySvc = new FloorSummaryService();
 
         RefreshCommand = new RelayCommand(Refresh);
@@ -182,7 +187,7 @@ public sealed class FloorSummaryViewModel : SessionAwareViewModelBase, IRefresha
 
     public void Refresh()
     {
-        ShowEmptyState = !host.ProjectWorkspace.HasOpenProject;
+        ShowEmptyState = !workspace.HasOpenProject;
         if (ShowEmptyState)
         {
             FloorCards.Clear();
@@ -194,7 +199,7 @@ public sealed class FloorSummaryViewModel : SessionAwareViewModelBase, IRefresha
             return;
         }
 
-        var data = host.Session.Data;
+        var data = session.Data;
         var summaryDtos = summarySvc.GetSummary(BudgetVersionData.FromProjectFileData(data), SelectedConsolidacionModeValue);
 
         allFloorCards = summaryDtos.Select((dto, idx) => new FloorCardVm(dto, expandDefault: idx == 0)).ToList();

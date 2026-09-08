@@ -256,25 +256,70 @@ public partial class PreferencesView : UserControl
 
     private async void OnUsersGridPreviewKeyDown(object sender, KeyEventArgs e)
     {
-        if (DataContext is not PreferencesViewModel vm || vm.SelectedUser == null)
+        if (DataContext is PreferencesViewModel vm && vm.HandleShortcutCaptureKey(e))
+            return;
+
+        if (DataContext is not PreferencesViewModel vm2 || vm2.SelectedUser == null)
             return;
 
         if (e.Key == Key.F2 && Keyboard.Modifiers == ModifierKeys.None)
         {
             e.Handled = true;
-            var user = vm.SelectedUser;
+            var user = vm2.SelectedUser;
             var nextRole = user.Role switch
             {
                 UserRole.Admin => UserRole.Estimator,
                 UserRole.Estimator => UserRole.Viewer,
                 _ => UserRole.Admin
             };
-            await vm.ChangeUserRoleAsync(user, nextRole);
+            await vm2.ChangeUserRoleAsync(user, nextRole);
         }
         else if (e.Key == Key.U && Keyboard.Modifiers == ModifierKeys.Control)
         {
             e.Handled = true;
-            await vm.UnlockUserAsync(vm.SelectedUser);
+            await vm2.UnlockUserAsync(vm2.SelectedUser);
         }
+    }
+
+    private void OnPreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (DataContext is PreferencesViewModel vm)
+            vm.HandleShortcutCaptureKey(e);
+    }
+
+    private void OnChangeShortcutClick(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is not PreferencesViewModel vm) return;
+        if (sender is not Button { Tag: KeyboardShortcutPreferenceRowVm row }) return;
+        vm.BeginShortcutCapture(row);
+    }
+
+    private void OnResetShortcutClick(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is not PreferencesViewModel vm) return;
+        if (sender is not Button { Tag: KeyboardShortcutPreferenceRowVm row }) return;
+        vm.ResetShortcut(row);
+    }
+
+    private void OnResetAllShortcutsClick(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is not PreferencesViewModel vm) return;
+        if (!WpfDialogService.Confirm(
+                "Restaurar atajos",
+                "¿Restaurar todos los atajos de Cubicación a los valores predeterminados?",
+                isWarning: true))
+            return;
+        vm.ResetAllCubicacionShortcuts();
+    }
+
+    private void OnResetAllShellShortcutsClick(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is not PreferencesViewModel vm) return;
+        if (!WpfDialogService.Confirm(
+                "Restaurar atajos",
+                "¿Restaurar los atajos de shell / itemizado a los valores predeterminados?",
+                isWarning: true))
+            return;
+        vm.ResetAllShellShortcuts();
     }
 }

@@ -59,6 +59,8 @@ public sealed class DashboardPartidaVm
     public string Item { get; init; } = "";
     public string Partida { get; init; } = "";
     public string TotalLabel { get; init; } = "";
+    public string TotalClpLabel { get; init; } = "";
+    public string TotalUfLabel { get; init; } = "";
     public double SharePct { get; init; }
     public string PercentLabel => $"{SharePct:N1}%";
     public GridLength FillWidth => new(Math.Max(0.001, SharePct), GridUnitType.Star);
@@ -101,18 +103,32 @@ public sealed class DashboardCostShareVm
     public Brush AccentSoftBrush { get; init; } = DashboardKpiBrushes.BlueSoft;
 }
 
+public sealed class DashboardOfferReadinessItemVm
+{
+    public string Label { get; init; } = "";
+    public bool IsComplete { get; init; }
+    public bool IsWarning { get; init; }
+    public Brush StatusBrush { get; init; } = DashboardKpiBrushes.Green;
+}
+
+public sealed class DashboardNavItemVm
+{
+    public string Label { get; init; } = "";
+    public string Detail { get; init; } = "";
+}
+
 internal static class DashboardKpiBrushes
 {
-    public static readonly Brush Blue      = MakeFrozen("#2563EB");
-    public static readonly Brush BlueDark  = MakeFrozen("#1D4ED8");
-    public static readonly Brush Amber     = MakeFrozen("#B45309");
-    public static readonly Brush DangerDark= MakeFrozen("#B91C1C");
-    public static readonly Brush AmberRisk = MakeFrozen("#D97706");
-    public static readonly Brush Green     = MakeFrozen("#15803D");
-    public static readonly Brush BlueSoft  = MakeFrozen("#EAF1FF");
-    public static readonly Brush AmberSoft = MakeFrozen("#FFF5DD");
-    public static readonly Brush RedSoft   = MakeFrozen("#FFF0F0");
-    public static readonly Brush GreenSoft = MakeFrozen("#EAF8EF");
+    public static Brush Blue       => ThemeOrFallback("Brush.Blue", "#2563EB");
+    public static Brush BlueDark   => ThemeOrFallback("Brush.BlueDark", "#1D4ED8");
+    public static Brush Amber      => ThemeOrFallback("Brush.Amber", "#B45309");
+    public static Brush DangerDark => ThemeOrFallback("Brush.DangerDark", "#B91C1C");
+    public static Brush AmberRisk  => ThemeOrFallback("Brush.AmberRisk", "#D97706");
+    public static Brush Green      => ThemeOrFallback("Brush.Green", "#15803D");
+    public static Brush BlueSoft   => ThemeOrFallback("Brush.BlueSoft", "#EAF1FF");
+    public static Brush AmberSoft  => ThemeOrFallback("Brush.AmberSoft", "#FFF5DD");
+    public static Brush RedSoft    => ThemeOrFallback("Brush.RedSoft", "#FFF0F0");
+    public static Brush GreenSoft  => ThemeOrFallback("Brush.GreenSoft", "#EAF8EF");
 
     public static Brush ForAccent(DashboardExecutiveKpiAccent accent) => accent switch
     {
@@ -136,21 +152,30 @@ internal static class DashboardKpiBrushes
         _                                      => BlueSoft
     };
 
-    private static Brush MakeFrozen(string hex)
+    private static Brush ThemeOrFallback(string resourceKey, string fallbackHex)
     {
-        var brush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(hex));
+        if (Application.Current?.TryFindResource(resourceKey) is Brush themeBrush)
+            return themeBrush;
+
+        var brush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(fallbackHex));
         brush.Freeze();
         return brush;
     }
 }
 
-public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
+public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage, IDisposable
 {
     private readonly IShellNavigationHost shell;
-    private readonly WpfAppHost host;
+    private readonly BudgetProjectSession session;
+    private readonly IProjectWorkspaceService projectWorkspace;
+    private readonly ProjectAuditRecorder audit;
+    private readonly ICurrencyConversionService currency;
+    private readonly DashboardPresenter dashboard;
+    private readonly IProjectRepository projectRepo;
     private readonly RecentProjectsService recentProjectsService;
     private readonly ProjectFileFormatDetector formatDetector = new();
     private bool showEmptyState = true;
+    private bool isLoading;
     private string costMaterials = "—";
     private string costLabor = "—";
     private string costOtherDirect = "—";
@@ -173,6 +198,8 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
     private bool isRefreshing;
     private string? selectedCategoryFilter;
     private string nextStepTitle = "Siguiente paso";
+    private System.Windows.Threading.DispatcherTimer? sessionRefreshDebounceTimer;
+    private bool disposed;
 
     public string GreetingText
     {
@@ -193,4 +220,14 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
     private string topAlertTitle = "";
     private string topAlertDetail = "";
     private bool hasTopAlert;
+    private string subtitleText = "";
+    private string priceValidityLabel = "—";
+    private string priceValidityCaption = "";
+    private double priceValidityPercent;
+    private string versionComparisonLabel = "Sin versiones comparables";
+    private string versionDeltaCaption = "Guarde al menos dos versiones";
+    private double versionDirectCostDeltaPercent;
+    private bool hasVersionComparison;
+    private double offerReadinessRingPercent;
+    private readonly RelayCommand goToVersionsCommand;
 }

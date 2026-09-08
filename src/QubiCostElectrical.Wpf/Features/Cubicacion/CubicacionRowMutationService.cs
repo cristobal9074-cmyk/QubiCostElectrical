@@ -16,7 +16,7 @@ internal sealed partial class CubicacionRowMutationService
 {
     private readonly CubicacionViewModel parent;
     private readonly BudgetProjectSession session;
-    private readonly WpfAppHost host;
+    private readonly WpfUndoService undo;
     private readonly ICubicacionService cubSvc;
     private readonly CubicacionPresenter cubicacionPresenter;
     private readonly IPriceBankStore priceBankStore;
@@ -24,14 +24,14 @@ internal sealed partial class CubicacionRowMutationService
     public CubicacionRowMutationService(
         CubicacionViewModel parent,
         BudgetProjectSession session,
-        WpfAppHost host,
+        WpfUndoService undo,
         ICubicacionService cubSvc,
         CubicacionPresenter cubicacionPresenter,
         IPriceBankStore priceBankStore)
     {
         this.parent = parent;
         this.session = session;
-        this.host = host;
+        this.undo = undo;
         this.cubSvc = cubSvc;
         this.cubicacionPresenter = cubicacionPresenter;
         this.priceBankStore = priceBankStore;

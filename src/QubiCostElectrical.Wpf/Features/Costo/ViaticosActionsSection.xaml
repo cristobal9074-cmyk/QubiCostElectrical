@@ -2,8 +2,8 @@
 <Border Grid.Row="2" Background="{DynamicResource Brush.WorkspaceBar}" BorderBrush="{DynamicResource Brush.SlateLight}" BorderThickness="0,1,0,0" Padding="20,12">
       <DockPanel LastChildFill="False">
         <StackPanel VerticalAlignment="Center">
-          <TextBlock Text="Total a aplicar en Gastos Operacionales · 3.3" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink3}" />
-          <TextBlock Text="{Binding FootTotalLabel}" FontFamily="{StaticResource Font.Mono}" FontSize="20" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink}" Margin="0,2,0,0" />
+          <TextBlock Text="Total a aplicar en Gastos Operacionales · 3.3" Style="{StaticResource Text.Helper}" />
+          <TextBlock Text="{Binding FootTotalLabel}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.xl}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink}" Margin="0,2,0,0" />
         </StackPanel>
         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
           <Button AutomationProperties.Name="Cancelar" Content="Cancelar" Click="OnCancel" Style="{StaticResource Button.Secondary}" Padding="14,9" Margin="0,0,8,0" />

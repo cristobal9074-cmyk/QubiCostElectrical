@@ -1,10 +1,11 @@
 <Window x:Class="QubiCostElectrical.Wpf.Features.Costo.ViaticosProfesionalDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:infra="clr-namespace:QubiCostElectrical.Wpf.Infrastructure"
         Title="Calculadora profesional de viáticos"
         Width="1120" Height="780" MinWidth="960" MinHeight="640"
         WindowStartupLocation="CenterOwner"
-        Background="#EEF2F7"
+        Style="{StaticResource Dialog.Window}"
         FontFamily="{StaticResource Font.Ui}"
         KeyDown="OnWindowKeyDown"
         ResizeMode="CanResizeWithGrip">
@@ -12,7 +13,7 @@
     <Style x:Key="VFieldLabel" TargetType="TextBlock">
       <Setter Property="FontSize" Value="10" />
       <Setter Property="FontWeight" Value="Bold" />
-      <Setter Property="Foreground" Value="#7B8798" />
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Ink4}" />
       <Setter Property="Margin" Value="0,0,0,4" />
     </Style>
     <Style x:Key="VInput" TargetType="TextBox" BasedOn="{StaticResource Form.TextBox}">
@@ -31,13 +32,13 @@
     <Style x:Key="VSideH2" TargetType="TextBlock">
       <Setter Property="FontSize" Value="11" />
       <Setter Property="FontWeight" Value="Bold" />
-      <Setter Property="Foreground" Value="#7B8798" />
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Ink4}" />
       <Setter Property="Margin" Value="0,0,0,10" />
     </Style>
     <Style x:Key="VTabBtn" TargetType="Button">
       <Setter Property="Background" Value="Transparent" />
       <Setter Property="BorderThickness" Value="0" />
-      <Setter Property="Foreground" Value="#5C6A7C" />
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
       <Setter Property="FontSize" Value="12" />
       <Setter Property="FontWeight" Value="SemiBold" />
       <Setter Property="Padding" Value="8,9" />
@@ -50,8 +51,8 @@
             </Border>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True">
-                <Setter TargetName="bd" Property="Background" Value="#F1F5F9" />
-                <Setter Property="Foreground" Value="#101A26" />
+                <Setter TargetName="bd" Property="Background" Value="{DynamicResource Brush.Surface2}" />
+                <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
               </Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
@@ -59,10 +60,10 @@
       </Setter>
     </Style>
     <Style x:Key="VChip" TargetType="Button">
-      <Setter Property="Background" Value="#F1F5F9" />
-      <Setter Property="BorderBrush" Value="#E2E8F0" />
+      <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
       <Setter Property="BorderThickness" Value="1" />
-      <Setter Property="Foreground" Value="#3C4A5C" />
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}" />
       <Setter Property="FontSize" Value="11" />
       <Setter Property="FontWeight" Value="SemiBold" />
       <Setter Property="Padding" Value="9,5" />
@@ -87,18 +88,18 @@
         <Setter.Value>
           <ControlTemplate TargetType="CheckBox">
             <Grid Width="44" Height="24">
-              <Border x:Name="track" Background="#CBD5E1" CornerRadius="12" />
+              <Border x:Name="track" Background="{DynamicResource Brush.Slate3}" CornerRadius="12" />
               <Border x:Name="thumb" Width="18" Height="18" CornerRadius="9"
-                      Background="White" HorizontalAlignment="Left" Margin="3,0,0,0"
+                      Background="{DynamicResource Brush.White}" HorizontalAlignment="Left" Margin="3,0,0,0"
                       VerticalAlignment="Center">
                 <Border.Effect>
-                  <DropShadowEffect BlurRadius="3" ShadowDepth="1" Opacity="0.2" Color="#000" />
+                  <DropShadowEffect BlurRadius="3" ShadowDepth="1" Opacity="0.2" Color="{StaticResource Color.Ink}" />
                 </Border.Effect>
               </Border>
             </Grid>
             <ControlTemplate.Triggers>
               <Trigger Property="IsChecked" Value="True">
-                <Setter TargetName="track" Property="Background" Value="#2563B0" />
+                <Setter TargetName="track" Property="Background" Value="{DynamicResource Brush.Blue}" />
                 <Setter TargetName="thumb" Property="Margin" Value="23,0,0,0" />
               </Trigger>
             </ControlTemplate.Triggers>
@@ -107,8 +108,8 @@
       </Setter>
     </Style>
     <Style x:Key="VMealBtn" TargetType="Button">
-      <Setter Property="Background" Value="White" />
-      <Setter Property="BorderBrush" Value="#E2E8F0" />
+      <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
       <Setter Property="BorderThickness" Value="1" />
       <Setter Property="Cursor" Value="Hand" />
       <Setter Property="Padding" Value="10" />
@@ -122,7 +123,7 @@
             </Border>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True">
-                <Setter TargetName="bd" Property="BorderBrush" Value="#BFDBFE" />
+                <Setter TargetName="bd" Property="BorderBrush" Value="{DynamicResource Brush.BrandStroke3}" />
               </Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
@@ -131,6 +132,7 @@
     </Style>
   </Window.Resources>
 
+  <Border Style="{StaticResource Dialog.Chrome}" Margin="12">
   <Grid>
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto" />
@@ -142,9 +144,9 @@
     <Border Grid.Row="0" Padding="22,18,22,16">
       <Border.Background>
         <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-          <GradientStop Color="#101C30" Offset="0" />
-          <GradientStop Color="#14263C" Offset="0.55" />
-          <GradientStop Color="#1A3A58" Offset="1" />
+          <GradientStop Color="{StaticResource Color.Navy}" Offset="0" />
+          <GradientStop Color="{StaticResource Color.Navy2}" Offset="0.55" />
+          <GradientStop Color="{StaticResource Color.BrandDark}" Offset="1" />
         </LinearGradientBrush>
       </Border.Background>
       <StackPanel>
@@ -155,18 +157,18 @@
           </Grid.ColumnDefinitions>
           <StackPanel>
             <TextBlock Text="GASTO OPERACIONAL 3.3 · METODOLOGÍA TIPO PER DIEM"
-                       FontSize="10" FontWeight="Bold" Foreground="#80FFFFFF" Margin="0,0,0,6" />
+                       FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderMuted}" Margin="0,0,0,6" />
             <TextBlock Text="Movilización, alimentación y estadía"
-                       FontSize="22" FontWeight="Bold" Foreground="White" />
+                       FontSize="{StaticResource Font.Size.hero}" FontWeight="Bold" Foreground="{DynamicResource Brush.White}" />
             <TextBlock Text="Desglose profesional: pasajes, colación (con o sin provisión de la empresa) y arriendo/alojamiento. Al aplicar, genera las líneas del GO."
-                       FontSize="13" Foreground="#9EFFFFFF" TextWrapping="Wrap" MaxWidth="620" Margin="0,5,0,0" LineHeight="18" />
+                       FontSize="{StaticResource Font.Size.base}" Foreground="{DynamicResource Brush.HeaderControl}" TextWrapping="Wrap" MaxWidth="620" Margin="0,5,0,0" LineHeight="18" />
           </StackPanel>
           <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
             <Button Content="Sincronizar MO" Command="{Binding SyncFromMoCommand}"
-                    Padding="13,8" FontSize="12" FontWeight="SemiBold" Cursor="Hand" Margin="0,0,8,0">
+                    Padding="13,8" FontSize="{StaticResource Font.Size.md}" FontWeight="SemiBold" Cursor="Hand" Margin="0,0,8,0">
               <Button.Template>
                 <ControlTemplate TargetType="Button">
-                  <Border x:Name="bd" Background="#14FFFFFF" BorderBrush="#2EFFFFFF" BorderThickness="1"
+                  <Border x:Name="bd" Background="{DynamicResource Brush.White12}" BorderBrush="{DynamicResource Brush.White25}" BorderThickness="1"
                           CornerRadius="9" Padding="{TemplateBinding Padding}">
                     <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center">
                       <ContentPresenter.Resources>
@@ -178,28 +180,28 @@
                   </Border>
                   <ControlTemplate.Triggers>
                     <Trigger Property="IsMouseOver" Value="True">
-                      <Setter TargetName="bd" Property="Background" Value="#28FFFFFF" />
+                      <Setter TargetName="bd" Property="Background" Value="{DynamicResource Brush.White25}" />
                     </Trigger>
                   </ControlTemplate.Triggers>
                 </ControlTemplate>
               </Button.Template>
             </Button>
             <Button Content="Cargar ejemplo obra" Command="{Binding LoadDemoCommand}"
-                    Padding="13,8" FontSize="12" FontWeight="SemiBold" Cursor="Hand">
+                    Padding="13,8" FontSize="{StaticResource Font.Size.md}" FontWeight="SemiBold" Cursor="Hand">
               <Button.Template>
                 <ControlTemplate TargetType="Button">
-                  <Border x:Name="bd" Background="White" CornerRadius="9" Padding="{TemplateBinding Padding}">
+                  <Border x:Name="bd" Background="{DynamicResource Brush.White}" CornerRadius="9" Padding="{TemplateBinding Padding}">
                     <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center">
                       <ContentPresenter.Resources>
                         <Style TargetType="TextBlock">
-                          <Setter Property="Foreground" Value="#101A26" />
+                          <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
                         </Style>
                       </ContentPresenter.Resources>
                     </ContentPresenter>
                   </Border>
                   <ControlTemplate.Triggers>
                     <Trigger Property="IsMouseOver" Value="True">
-                      <Setter TargetName="bd" Property="Background" Value="#F1F5F9" />
+                      <Setter TargetName="bd" Property="Background" Value="{DynamicResource Brush.Surface2}" />
                     </Trigger>
                   </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -209,34 +211,34 @@
         </Grid>
 
         <UniformGrid Columns="5" Margin="0,14,0,0">
-          <Border Background="#12FFFFFF" BorderBrush="#1AFFFFFF" BorderThickness="1" CornerRadius="11" Padding="12,10" Margin="0,0,8,0">
+          <Border Background="{DynamicResource Brush.White9}" BorderBrush="{DynamicResource Brush.White16}" BorderThickness="1" CornerRadius="11" Padding="12,10" Margin="0,0,8,0">
             <StackPanel>
-              <TextBlock Text="PASAJES" FontSize="9" FontWeight="Bold" Foreground="#7AFFFFFF" />
-              <TextBlock Text="{Binding KpiPasajes}" FontFamily="{StaticResource Font.Mono}" FontSize="15" FontWeight="SemiBold" Foreground="#93C5FD" Margin="0,3,0,0" />
+              <TextBlock Text="PASAJES" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderDim}" />
+              <TextBlock Text="{Binding KpiPasajes}" Style="{StaticResource Text.KpiInline}" Foreground="{DynamicResource Brush.BrandStroke2}" Margin="0,3,0,0" />
             </StackPanel>
           </Border>
-          <Border Background="#12FFFFFF" BorderBrush="#1AFFFFFF" BorderThickness="1" CornerRadius="11" Padding="12,10" Margin="0,0,8,0">
+          <Border Background="{DynamicResource Brush.White9}" BorderBrush="{DynamicResource Brush.White16}" BorderThickness="1" CornerRadius="11" Padding="12,10" Margin="0,0,8,0">
             <StackPanel>
-              <TextBlock Text="ALIMENTACIÓN" FontSize="9" FontWeight="Bold" Foreground="#7AFFFFFF" />
-              <TextBlock Text="{Binding KpiAlim}" FontFamily="{StaticResource Font.Mono}" FontSize="15" FontWeight="SemiBold" Foreground="#86EFAC" Margin="0,3,0,0" />
+              <TextBlock Text="ALIMENTACIÓN" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderDim}" />
+              <TextBlock Text="{Binding KpiAlim}" Style="{StaticResource Text.KpiInline}" Foreground="{DynamicResource Brush.SuccessBright}" Margin="0,3,0,0" />
             </StackPanel>
           </Border>
-          <Border Background="#12FFFFFF" BorderBrush="#1AFFFFFF" BorderThickness="1" CornerRadius="11" Padding="12,10" Margin="0,0,8,0">
+          <Border Background="{DynamicResource Brush.White9}" BorderBrush="{DynamicResource Brush.White16}" BorderThickness="1" CornerRadius="11" Padding="12,10" Margin="0,0,8,0">
             <StackPanel>
-              <TextBlock Text="ARRIENDO / ESTADÍA" FontSize="9" FontWeight="Bold" Foreground="#7AFFFFFF" />
-              <TextBlock Text="{Binding KpiArriendo}" FontFamily="{StaticResource Font.Mono}" FontSize="15" FontWeight="SemiBold" Foreground="#FCD34D" Margin="0,3,0,0" />
+              <TextBlock Text="ARRIENDO / ESTADÍA" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderDim}" />
+              <TextBlock Text="{Binding KpiArriendo}" Style="{StaticResource Text.KpiInline}" Foreground="{DynamicResource Brush.Amber2}" Margin="0,3,0,0" />
             </StackPanel>
           </Border>
-          <Border Background="#12FFFFFF" BorderBrush="#1AFFFFFF" BorderThickness="1" CornerRadius="11" Padding="12,10" Margin="0,0,8,0">
+          <Border Background="{DynamicResource Brush.White9}" BorderBrush="{DynamicResource Brush.White16}" BorderThickness="1" CornerRadius="11" Padding="12,10" Margin="0,0,8,0">
             <StackPanel>
-              <TextBlock Text="OTROS / INCIDENTALES" FontSize="9" FontWeight="Bold" Foreground="#7AFFFFFF" />
-              <TextBlock Text="{Binding KpiOtros}" FontFamily="{StaticResource Font.Mono}" FontSize="15" FontWeight="SemiBold" Foreground="#93C5FD" Margin="0,3,0,0" />
+              <TextBlock Text="OTROS / INCIDENTALES" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderDim}" />
+              <TextBlock Text="{Binding KpiOtros}" Style="{StaticResource Text.KpiInline}" Foreground="{DynamicResource Brush.BrandStroke2}" Margin="0,3,0,0" />
             </StackPanel>
           </Border>
-          <Border Background="#12FFFFFF" BorderBrush="#1AFFFFFF" BorderThickness="1" CornerRadius="11" Padding="12,10">
+          <Border Background="{DynamicResource Brush.White9}" BorderBrush="{DynamicResource Brush.White16}" BorderThickness="1" CornerRadius="11" Padding="12,10">
             <StackPanel>
-              <TextBlock Text="TOTAL A GO 3.3" FontSize="9" FontWeight="Bold" Foreground="#7AFFFFFF" />
-              <TextBlock Text="{Binding KpiTotal}" FontFamily="{StaticResource Font.Mono}" FontSize="17" FontWeight="SemiBold" Foreground="White" Margin="0,3,0,0" />
+              <TextBlock Text="TOTAL A GO 3.3" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderDim}" />
+              <TextBlock Text="{Binding KpiTotal}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.price}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.White}" Margin="0,3,0,0" />
             </StackPanel>
           </Border>
         </UniformGrid>
@@ -251,7 +253,7 @@
       </Grid.ColumnDefinitions>
 
       <!-- Sidebar -->
-      <Border Grid.Column="0" Background="White" BorderBrush="#E2E8F0" BorderThickness="0,0,1,0" Padding="16">
+      <Border Grid.Column="0" Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,1,0" Padding="16">
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
           <StackPanel>
             <TextBlock Style="{StaticResource VSideH2}" Text="ALCANCE DEL CÁLCULO" />
@@ -261,9 +263,9 @@
                   <Style TargetType="Button" BasedOn="{StaticResource VChip}">
                     <Style.Triggers>
                       <DataTrigger Binding="{Binding UseDir}" Value="True">
-                        <Setter Property="Background" Value="#EAF1FF" />
-                        <Setter Property="Foreground" Value="#2563B0" />
-                        <Setter Property="BorderBrush" Value="#BFDBFE" />
+                        <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+                        <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
+                        <Setter Property="BorderBrush" Value="{DynamicResource Brush.BrandStroke3}" />
                       </DataTrigger>
                     </Style.Triggers>
                   </Style>
@@ -274,9 +276,9 @@
                   <Style TargetType="Button" BasedOn="{StaticResource VChip}">
                     <Style.Triggers>
                       <DataTrigger Binding="{Binding UseInd}" Value="True">
-                        <Setter Property="Background" Value="#FBF1DD" />
-                        <Setter Property="Foreground" Value="#9A6A10" />
-                        <Setter Property="BorderBrush" Value="#FDE68A" />
+                        <Setter Property="Background" Value="{DynamicResource Brush.AmberSoft}" />
+                        <Setter Property="Foreground" Value="{DynamicResource Brush.Amber}" />
+                        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Amber2}" />
                       </DataTrigger>
                     </Style.Triggers>
                   </Style>
@@ -311,7 +313,7 @@
               <ComboBoxItem Content="75% primer/último día (estilo GSA)" Tag="75" />
             </ComboBox>
             <TextBlock Text="En Chile el viático cubre alimentación, alojamiento y traslado cuando el trabajador se ausenta de su residencia. Si la empresa provee comida o casa, ese ítem se descuenta."
-                       FontSize="11" Foreground="#5C6A7C" TextWrapping="Wrap" LineHeight="15" />
+                       Style="{StaticResource Text.Helper}" TextWrapping="Wrap" LineHeight="15" />
           </StackPanel>
         </ScrollViewer>
       </Border>
@@ -323,15 +325,15 @@
           <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Border Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="12" Padding="4" Margin="0,0,0,14">
+        <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="12" Padding="4" Margin="0,0,0,14">
           <UniformGrid Columns="4">
             <Button Content="1 · Pasajes" Command="{Binding SelectTabCommand}" CommandParameter="pasajes">
               <Button.Style>
                 <Style TargetType="Button" BasedOn="{StaticResource VTabBtn}">
                   <Style.Triggers>
                     <DataTrigger Binding="{Binding IsTabPasajes}" Value="True">
-                      <Setter Property="Background" Value="#101C30" />
-                      <Setter Property="Foreground" Value="White" />
+                      <Setter Property="Background" Value="{DynamicResource Brush.Navy}" />
+                      <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
                     </DataTrigger>
                   </Style.Triggers>
                 </Style>
@@ -342,8 +344,8 @@
                 <Style TargetType="Button" BasedOn="{StaticResource VTabBtn}">
                   <Style.Triggers>
                     <DataTrigger Binding="{Binding IsTabAlim}" Value="True">
-                      <Setter Property="Background" Value="#101C30" />
-                      <Setter Property="Foreground" Value="White" />
+                      <Setter Property="Background" Value="{DynamicResource Brush.Navy}" />
+                      <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
                     </DataTrigger>
                   </Style.Triggers>
                 </Style>
@@ -354,8 +356,8 @@
                 <Style TargetType="Button" BasedOn="{StaticResource VTabBtn}">
                   <Style.Triggers>
                     <DataTrigger Binding="{Binding IsTabArriendo}" Value="True">
-                      <Setter Property="Background" Value="#101C30" />
-                      <Setter Property="Foreground" Value="White" />
+                      <Setter Property="Background" Value="{DynamicResource Brush.Navy}" />
+                      <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
                     </DataTrigger>
                   </Style.Triggers>
                 </Style>
@@ -366,8 +368,8 @@
                 <Style TargetType="Button" BasedOn="{StaticResource VTabBtn}">
                   <Style.Triggers>
                     <DataTrigger Binding="{Binding IsTabResumen}" Value="True">
-                      <Setter Property="Background" Value="#101C30" />
-                      <Setter Property="Foreground" Value="White" />
+                      <Setter Property="Background" Value="{DynamicResource Brush.Navy}" />
+                      <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
                     </DataTrigger>
                   </Style.Triggers>
                 </Style>
@@ -380,29 +382,29 @@
           <Grid>
             <!-- Tab Pasajes -->
             <Border Visibility="{Binding IsTabPasajes, Converter={StaticResource BoolToVisibility}}"
-                    Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="14" Padding="16">
+                    Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="14" Padding="16">
               <StackPanel>
                 <DockPanel Margin="0,0,0,12">
-                  <TextBlock Text="Pasajes y movilización" FontSize="14" FontWeight="Bold" Foreground="#101A26" />
-                  <Border DockPanel.Dock="Right" Background="#EAF1FF" CornerRadius="999" Padding="8,3" HorizontalAlignment="Right">
-                    <TextBlock Text="Traslado diario / semanal" FontSize="10" FontWeight="Bold" Foreground="#2563B0" />
+                  <TextBlock Text="Pasajes y movilización" Style="{StaticResource Text.SectionTitle}" />
+                  <Border DockPanel.Dock="Right" Background="{DynamicResource Brush.BlueSoft}" CornerRadius="999" Padding="8,3" HorizontalAlignment="Right">
+                    <TextBlock Text="Traslado diario / semanal" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" />
                   </Border>
                 </DockPanel>
-                <Border Background="#F1F5F9" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="10" Padding="12,10" Margin="0,0,0,10">
+                <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="10" Padding="12,10" Margin="0,0,0,10">
                   <DockPanel>
                     <CheckBox DockPanel.Dock="Right" Style="{StaticResource VToggle}" IsChecked="{Binding InclPasDir}" />
                     <StackPanel>
-                      <TextBlock Text="Incluir pasajes MO directa" FontSize="13" FontWeight="SemiBold" />
-                      <TextBlock Text="Transporte ida-vuelta o abono a faena" FontSize="11" Foreground="#5C6A7C" Margin="0,2,0,0" />
+                      <TextBlock Text="Incluir pasajes MO directa" FontSize="{StaticResource Font.Size.base}" FontWeight="SemiBold" />
+                      <TextBlock Text="Transporte ida-vuelta o abono a faena" Style="{StaticResource Text.Helper}" Margin="0,2,0,0" />
                     </StackPanel>
                   </DockPanel>
                 </Border>
-                <Border Background="#F1F5F9" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="10" Padding="12,10" Margin="0,0,0,10">
+                <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="10" Padding="12,10" Margin="0,0,0,10">
                   <DockPanel>
                     <CheckBox DockPanel.Dock="Right" Style="{StaticResource VToggle}" IsChecked="{Binding InclPasInd}" />
                     <StackPanel>
-                      <TextBlock Text="Incluir movilización MO indirecta" FontSize="13" FontWeight="SemiBold" />
-                      <TextBlock Text="Visitas a terreno / supervisión" FontSize="11" Foreground="#5C6A7C" Margin="0,2,0,0" />
+                      <TextBlock Text="Incluir movilización MO indirecta" FontSize="{StaticResource Font.Size.base}" FontWeight="SemiBold" />
+                      <TextBlock Text="Visitas a terreno / supervisión" Style="{StaticResource Text.Helper}" Margin="0,2,0,0" />
                     </StackPanel>
                   </DockPanel>
                 </Border>
@@ -421,15 +423,15 @@
                     <TextBox Style="{StaticResource VInput}" Text="{Binding TarifaPasInd, UpdateSourceTrigger=PropertyChanged}" />
                   </StackPanel>
                 </Grid>
-                <Border Background="#101C30" CornerRadius="11" Padding="14,12" Margin="0,14,0,0">
+                <Border Background="{DynamicResource Brush.Navy}" CornerRadius="11" Padding="14,12" Margin="0,14,0,0">
                   <StackPanel>
-                    <TextBlock Text="FÓRMULA PASAJES" FontSize="10" FontWeight="Bold" Foreground="#80FFFFFF" />
-                    <TextBlock Text="{Binding EqPasajes}" FontFamily="{StaticResource Font.Mono}" FontSize="11" Foreground="#93C5FD" TextWrapping="Wrap" Margin="0,6,0,0" />
-                    <Border BorderBrush="#1FFFFFFF" BorderThickness="0,1,0,0" Margin="0,10,0,0" Padding="0,10,0,0">
+                    <TextBlock Text="FÓRMULA PASAJES" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderMuted}" />
+                    <TextBlock Text="{Binding EqPasajes}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.BrandStroke2}" TextWrapping="Wrap" Margin="0,6,0,0" />
+                    <Border BorderBrush="{DynamicResource Brush.White9}" BorderThickness="0,1,0,0" Margin="0,10,0,0" Padding="0,10,0,0">
                       <DockPanel>
-                        <TextBlock Text="SUBTOTAL PASAJES" FontSize="10" FontWeight="Bold" Foreground="#80FFFFFF" VerticalAlignment="Center" />
+                        <TextBlock Text="SUBTOTAL PASAJES" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderMuted}" VerticalAlignment="Center" />
                         <TextBlock DockPanel.Dock="Right" Text="{Binding SubPasajesLabel}" FontFamily="{StaticResource Font.Mono}"
-                                   FontSize="18" FontWeight="SemiBold" Foreground="White" HorizontalAlignment="Right" />
+                                   FontSize="{StaticResource Font.Size.h2}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.White}" HorizontalAlignment="Right" />
                       </DockPanel>
                     </Border>
                   </StackPanel>
@@ -439,28 +441,28 @@
 
             <!-- Tab Alimentación -->
             <Border Visibility="{Binding IsTabAlim, Converter={StaticResource BoolToVisibility}}"
-                    Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="14" Padding="16">
+                    Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="14" Padding="16">
               <StackPanel>
                 <DockPanel Margin="0,0,0,12">
-                  <TextBlock Text="Alimentación / colación" FontSize="14" FontWeight="Bold" />
+                  <TextBlock Text="Alimentación / colación" Style="{StaticResource Text.SectionTitle}" />
                   <Border DockPanel.Dock="Right" CornerRadius="999" Padding="8,3" HorizontalAlignment="Right">
                     <Border.Style>
                       <Style TargetType="Border">
-                        <Setter Property="Background" Value="#EAF8EF" />
+                        <Setter Property="Background" Value="{DynamicResource Brush.GreenSoft}" />
                         <Style.Triggers>
                           <DataTrigger Binding="{Binding BadgeAlimIsOff}" Value="True">
-                            <Setter Property="Background" Value="#FEF2F2" />
+                            <Setter Property="Background" Value="{DynamicResource Brush.RedSoft}" />
                           </DataTrigger>
                         </Style.Triggers>
                       </Style>
                     </Border.Style>
-                    <TextBlock Text="{Binding BadgeAlim}" FontSize="10" FontWeight="Bold">
+                    <TextBlock Text="{Binding BadgeAlim}" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold">
                       <TextBlock.Style>
                         <Style TargetType="TextBlock">
-                          <Setter Property="Foreground" Value="#15803D" />
+                          <Setter Property="Foreground" Value="{DynamicResource Brush.Green}" />
                           <Style.Triggers>
                             <DataTrigger Binding="{Binding BadgeAlimIsOff}" Value="True">
-                              <Setter Property="Foreground" Value="#B91C1C" />
+                              <Setter Property="Foreground" Value="{DynamicResource Brush.DangerDark}" />
                             </DataTrigger>
                           </Style.Triggers>
                         </Style>
@@ -468,12 +470,12 @@
                     </TextBlock>
                   </Border>
                 </DockPanel>
-                <Border Background="#F1F5F9" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="10" Padding="12,10" Margin="0,0,0,12">
+                <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="10" Padding="12,10" Margin="0,0,0,12">
                   <DockPanel>
                     <CheckBox DockPanel.Dock="Right" Style="{StaticResource VToggle}" IsChecked="{Binding EmpresaProveAlim}" />
                     <StackPanel>
-                      <TextBlock Text="¿La empresa provee alimentación en obra?" FontSize="13" FontWeight="SemiBold" />
-                      <TextBlock Text="Si está activo, se descuenta el valor de las comidas marcadas" FontSize="11" Foreground="#5C6A7C" Margin="0,2,0,0" />
+                      <TextBlock Text="¿La empresa provee alimentación en obra?" FontSize="{StaticResource Font.Size.base}" FontWeight="SemiBold" />
+                      <TextBlock Text="Si está activo, se descuenta el valor de las comidas marcadas" Style="{StaticResource Text.Helper}" Margin="0,2,0,0" />
                     </StackPanel>
                   </DockPanel>
                 </Border>
@@ -498,15 +500,15 @@
                       <Style TargetType="Button" BasedOn="{StaticResource VMealBtn}">
                         <Style.Triggers>
                           <DataTrigger Binding="{Binding MealDes}" Value="True">
-                            <Setter Property="Background" Value="#EDF3FA" />
-                            <Setter Property="BorderBrush" Value="#3B82F6" />
+                            <Setter Property="Background" Value="{DynamicResource Brush.BlueFaint}" />
+                            <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue2}" />
                           </DataTrigger>
                         </Style.Triggers>
                       </Style>
                     </Button.Style>
                     <StackPanel HorizontalAlignment="Center">
-                      <TextBlock Text="Desayuno" FontSize="12" FontWeight="Bold" HorizontalAlignment="Center" />
-                      <TextBlock Text="{Binding MealDesLabel}" FontFamily="{StaticResource Font.Mono}" FontSize="11" Foreground="#5C6A7C" HorizontalAlignment="Center" Margin="0,4,0,0" />
+                      <TextBlock Text="Desayuno" FontSize="{StaticResource Font.Size.md}" FontWeight="Bold" HorizontalAlignment="Center" />
+                      <TextBlock Text="{Binding MealDesLabel}" Style="{StaticResource Text.Helper}" FontFamily="{StaticResource Font.Mono}" HorizontalAlignment="Center" Margin="0,4,0,0" />
                     </StackPanel>
                   </Button>
                   <Button Command="{Binding ToggleMealAlmCommand}" Margin="0,0,8,0">
@@ -514,15 +516,15 @@
                       <Style TargetType="Button" BasedOn="{StaticResource VMealBtn}">
                         <Style.Triggers>
                           <DataTrigger Binding="{Binding MealAlm}" Value="True">
-                            <Setter Property="Background" Value="#EDF3FA" />
-                            <Setter Property="BorderBrush" Value="#3B82F6" />
+                            <Setter Property="Background" Value="{DynamicResource Brush.BlueFaint}" />
+                            <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue2}" />
                           </DataTrigger>
                         </Style.Triggers>
                       </Style>
                     </Button.Style>
                     <StackPanel HorizontalAlignment="Center">
-                      <TextBlock Text="Almuerzo" FontSize="12" FontWeight="Bold" HorizontalAlignment="Center" />
-                      <TextBlock Text="{Binding MealAlmLabel}" FontFamily="{StaticResource Font.Mono}" FontSize="11" Foreground="#5C6A7C" HorizontalAlignment="Center" Margin="0,4,0,0" />
+                      <TextBlock Text="Almuerzo" FontSize="{StaticResource Font.Size.md}" FontWeight="Bold" HorizontalAlignment="Center" />
+                      <TextBlock Text="{Binding MealAlmLabel}" Style="{StaticResource Text.Helper}" FontFamily="{StaticResource Font.Mono}" HorizontalAlignment="Center" Margin="0,4,0,0" />
                     </StackPanel>
                   </Button>
                   <Button Command="{Binding ToggleMealCenCommand}">
@@ -530,15 +532,15 @@
                       <Style TargetType="Button" BasedOn="{StaticResource VMealBtn}">
                         <Style.Triggers>
                           <DataTrigger Binding="{Binding MealCen}" Value="True">
-                            <Setter Property="Background" Value="#EDF3FA" />
-                            <Setter Property="BorderBrush" Value="#3B82F6" />
+                            <Setter Property="Background" Value="{DynamicResource Brush.BlueFaint}" />
+                            <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue2}" />
                           </DataTrigger>
                         </Style.Triggers>
                       </Style>
                     </Button.Style>
                     <StackPanel HorizontalAlignment="Center">
-                      <TextBlock Text="Cena" FontSize="12" FontWeight="Bold" HorizontalAlignment="Center" />
-                      <TextBlock Text="{Binding MealCenLabel}" FontFamily="{StaticResource Font.Mono}" FontSize="11" Foreground="#5C6A7C" HorizontalAlignment="Center" Margin="0,4,0,0" />
+                      <TextBlock Text="Cena" FontSize="{StaticResource Font.Size.md}" FontWeight="Bold" HorizontalAlignment="Center" />
+                      <TextBlock Text="{Binding MealCenLabel}" Style="{StaticResource Text.Helper}" FontFamily="{StaticResource Font.Mono}" HorizontalAlignment="Center" Margin="0,4,0,0" />
                     </StackPanel>
                   </Button>
                 </UniformGrid>
@@ -548,21 +550,21 @@
                     <ColumnDefinition Width="12" />
                     <ColumnDefinition Width="*" />
                   </Grid.ColumnDefinitions>
-                  <Border Background="#F1F5F9" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="10" Padding="12,10">
+                  <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="10" Padding="12,10">
                     <DockPanel>
                       <CheckBox DockPanel.Dock="Right" Style="{StaticResource VToggle}" IsChecked="{Binding AlimDir}" />
                       <StackPanel>
-                        <TextBlock Text="Aplicar a MO directa" FontSize="13" FontWeight="SemiBold" />
-                        <TextBlock Text="Días efectivos en faena" FontSize="11" Foreground="#5C6A7C" Margin="0,2,0,0" />
+                        <TextBlock Text="Aplicar a MO directa" FontSize="{StaticResource Font.Size.base}" FontWeight="SemiBold" />
+                        <TextBlock Text="Días efectivos en faena" Style="{StaticResource Text.Helper}" Margin="0,2,0,0" />
                       </StackPanel>
                     </DockPanel>
                   </Border>
-                  <Border Grid.Column="2" Background="#F1F5F9" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="10" Padding="12,10">
+                  <Border Grid.Column="2" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="10" Padding="12,10">
                     <DockPanel>
                       <CheckBox DockPanel.Dock="Right" Style="{StaticResource VToggle}" IsChecked="{Binding AlimInd}" />
                       <StackPanel>
-                        <TextBlock Text="Aplicar a MO indirecta" FontSize="13" FontWeight="SemiBold" />
-                        <TextBlock Text="Días de visita estimados" FontSize="11" Foreground="#5C6A7C" Margin="0,2,0,0" />
+                        <TextBlock Text="Aplicar a MO indirecta" FontSize="{StaticResource Font.Size.base}" FontWeight="SemiBold" />
+                        <TextBlock Text="Días de visita estimados" Style="{StaticResource Text.Helper}" Margin="0,2,0,0" />
                       </StackPanel>
                     </DockPanel>
                   </Border>
@@ -571,15 +573,15 @@
                   <TextBlock Style="{StaticResource VFieldLabel}" Text="DÍAS VISITA INDIRECTA / MES" />
                   <TextBox Style="{StaticResource VInput}" Text="{Binding DiasVisitaInd, UpdateSourceTrigger=PropertyChanged}" />
                 </StackPanel>
-                <Border Background="#101C30" CornerRadius="11" Padding="14,12" Margin="0,14,0,0">
+                <Border Background="{DynamicResource Brush.Navy}" CornerRadius="11" Padding="14,12" Margin="0,14,0,0">
                   <StackPanel>
-                    <TextBlock Text="FÓRMULA ALIMENTACIÓN" FontSize="10" FontWeight="Bold" Foreground="#80FFFFFF" />
-                    <TextBlock Text="{Binding EqAlim}" FontFamily="{StaticResource Font.Mono}" FontSize="11" Foreground="#93C5FD" TextWrapping="Wrap" Margin="0,6,0,0" />
-                    <Border BorderBrush="#1FFFFFFF" BorderThickness="0,1,0,0" Margin="0,10,0,0" Padding="0,10,0,0">
+                    <TextBlock Text="FÓRMULA ALIMENTACIÓN" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderMuted}" />
+                    <TextBlock Text="{Binding EqAlim}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.BrandStroke2}" TextWrapping="Wrap" Margin="0,6,0,0" />
+                    <Border BorderBrush="{DynamicResource Brush.White9}" BorderThickness="0,1,0,0" Margin="0,10,0,0" Padding="0,10,0,0">
                       <DockPanel>
-                        <TextBlock Text="SUBTOTAL ALIMENTACIÓN NETA" FontSize="10" FontWeight="Bold" Foreground="#80FFFFFF" VerticalAlignment="Center" />
+                        <TextBlock Text="SUBTOTAL ALIMENTACIÓN NETA" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderMuted}" VerticalAlignment="Center" />
                         <TextBlock DockPanel.Dock="Right" Text="{Binding SubAlimLabel}" FontFamily="{StaticResource Font.Mono}"
-                                   FontSize="18" FontWeight="SemiBold" Foreground="White" HorizontalAlignment="Right" />
+                                   FontSize="{StaticResource Font.Size.h2}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.White}" HorizontalAlignment="Right" />
                       </DockPanel>
                     </Border>
                   </StackPanel>
@@ -589,28 +591,28 @@
 
             <!-- Tab Arriendo -->
             <Border Visibility="{Binding IsTabArriendo, Converter={StaticResource BoolToVisibility}}"
-                    Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="14" Padding="16">
+                    Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="14" Padding="16">
               <StackPanel>
                 <DockPanel Margin="0,0,0,12">
-                  <TextBlock Text="Arriendo / alojamiento / estadía" FontSize="14" FontWeight="Bold" />
+                  <TextBlock Text="Arriendo / alojamiento / estadía" Style="{StaticResource Text.SectionTitle}" />
                   <Border DockPanel.Dock="Right" CornerRadius="999" Padding="8,3" HorizontalAlignment="Right">
                     <Border.Style>
                       <Style TargetType="Border">
-                        <Setter Property="Background" Value="#F1F5F9" />
+                        <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
                         <Style.Triggers>
                           <DataTrigger Binding="{Binding BadgeArrIsOn}" Value="True">
-                            <Setter Property="Background" Value="#FBF1DD" />
+                            <Setter Property="Background" Value="{DynamicResource Brush.AmberSoft}" />
                           </DataTrigger>
                         </Style.Triggers>
                       </Style>
                     </Border.Style>
-                    <TextBlock Text="{Binding BadgeArr}" FontSize="10" FontWeight="Bold">
+                    <TextBlock Text="{Binding BadgeArr}" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold">
                       <TextBlock.Style>
                         <Style TargetType="TextBlock">
-                          <Setter Property="Foreground" Value="#5C6A7C" />
+                          <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
                           <Style.Triggers>
                             <DataTrigger Binding="{Binding BadgeArrIsOn}" Value="True">
-                              <Setter Property="Foreground" Value="#9A6A10" />
+                              <Setter Property="Foreground" Value="{DynamicResource Brush.Amber}" />
                             </DataTrigger>
                           </Style.Triggers>
                         </Style>
@@ -618,12 +620,12 @@
                     </TextBlock>
                   </Border>
                 </DockPanel>
-                <Border Background="#F1F5F9" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="10" Padding="12,10" Margin="0,0,0,12">
+                <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="10" Padding="12,10" Margin="0,0,0,12">
                   <DockPanel>
                     <CheckBox DockPanel.Dock="Right" Style="{StaticResource VToggle}" IsChecked="{Binding InclArriendo}" />
                     <StackPanel>
-                      <TextBlock Text="Incluir arriendo o campamento" FontSize="13" FontWeight="SemiBold" />
-                      <TextBlock Text="Solo tiene sentido en zona regional/remota o personal fuera de casa" FontSize="11" Foreground="#5C6A7C" Margin="0,2,0,0" />
+                      <TextBlock Text="Incluir arriendo o campamento" FontSize="{StaticResource Font.Size.base}" FontWeight="SemiBold" />
+                      <TextBlock Text="Solo tiene sentido en zona regional/remota o personal fuera de casa" Style="{StaticResource Text.Helper}" Margin="0,2,0,0" />
                     </StackPanel>
                   </DockPanel>
                 </Border>
@@ -661,12 +663,12 @@
                     <TextBox Style="{StaticResource VInput}" Text="{Binding MesesArr, UpdateSourceTrigger=PropertyChanged}" />
                   </StackPanel>
                 </Grid>
-                <Border Background="#F1F5F9" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="10" Padding="12,10" Margin="0,12,0,0">
+                <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="10" Padding="12,10" Margin="0,12,0,0">
                   <DockPanel>
                     <CheckBox DockPanel.Dock="Right" Style="{StaticResource VToggle}" IsChecked="{Binding InclOtros}" />
                     <StackPanel>
-                      <TextBlock Text="Incidentales / otros" FontSize="13" FontWeight="SemiBold" />
-                      <TextBlock Text="Lavandería, propinas, imprevistos menores (% sobre alim.+arriendo)" FontSize="11" Foreground="#5C6A7C" Margin="0,2,0,0" />
+                      <TextBlock Text="Incidentales / otros" FontSize="{StaticResource Font.Size.base}" FontWeight="SemiBold" />
+                      <TextBlock Text="Lavandería, propinas, imprevistos menores (% sobre alim.+arriendo)" Style="{StaticResource Text.Helper}" Margin="0,2,0,0" />
                     </StackPanel>
                   </DockPanel>
                 </Border>
@@ -674,15 +676,15 @@
                   <TextBlock Style="{StaticResource VFieldLabel}" Text="% INCIDENTALES" />
                   <TextBox Style="{StaticResource VInput}" Text="{Binding PctOtros, UpdateSourceTrigger=PropertyChanged}" />
                 </StackPanel>
-                <Border Background="#101C30" CornerRadius="11" Padding="14,12" Margin="0,14,0,0">
+                <Border Background="{DynamicResource Brush.Navy}" CornerRadius="11" Padding="14,12" Margin="0,14,0,0">
                   <StackPanel>
-                    <TextBlock Text="FÓRMULA ARRIENDO + INCIDENTALES" FontSize="10" FontWeight="Bold" Foreground="#80FFFFFF" />
-                    <TextBlock Text="{Binding EqArr}" FontFamily="{StaticResource Font.Mono}" FontSize="11" Foreground="#93C5FD" TextWrapping="Wrap" Margin="0,6,0,0" />
-                    <Border BorderBrush="#1FFFFFFF" BorderThickness="0,1,0,0" Margin="0,10,0,0" Padding="0,10,0,0">
+                    <TextBlock Text="FÓRMULA ARRIENDO + INCIDENTALES" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderMuted}" />
+                    <TextBlock Text="{Binding EqArr}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.BrandStroke2}" TextWrapping="Wrap" Margin="0,6,0,0" />
+                    <Border BorderBrush="{DynamicResource Brush.White9}" BorderThickness="0,1,0,0" Margin="0,10,0,0" Padding="0,10,0,0">
                       <DockPanel>
-                        <TextBlock Text="SUBTOTAL ARRIENDO + OTROS" FontSize="10" FontWeight="Bold" Foreground="#80FFFFFF" VerticalAlignment="Center" />
+                        <TextBlock Text="SUBTOTAL ARRIENDO + OTROS" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderMuted}" VerticalAlignment="Center" />
                         <TextBlock DockPanel.Dock="Right" Text="{Binding SubArrLabel}" FontFamily="{StaticResource Font.Mono}"
-                                   FontSize="18" FontWeight="SemiBold" Foreground="White" HorizontalAlignment="Right" />
+                                   FontSize="{StaticResource Font.Size.h2}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.White}" HorizontalAlignment="Right" />
                       </DockPanel>
                     </Border>
                   </StackPanel>
@@ -692,15 +694,17 @@
 
             <!-- Tab Resumen -->
             <StackPanel Visibility="{Binding IsTabResumen, Converter={StaticResource BoolToVisibility}}">
-              <Border Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="14" Padding="0" ClipToBounds="True">
+              <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="14" Padding="0" ClipToBounds="True">
                 <StackPanel>
                   <DockPanel Margin="16,14,16,8">
-                    <TextBlock Text="Líneas que se cargarán en GO 3.3" FontSize="14" FontWeight="Bold" />
-                    <Border DockPanel.Dock="Right" Background="#EAF1FF" CornerRadius="999" Padding="8,3" HorizontalAlignment="Right">
-                      <TextBlock Text="Listo para aplicar" FontSize="10" FontWeight="Bold" Foreground="#2563B0" />
+                    <TextBlock Text="Líneas que se cargarán en GO 3.3" Style="{StaticResource Text.SectionTitle}" />
+                    <Border DockPanel.Dock="Right" Background="{DynamicResource Brush.BlueSoft}" CornerRadius="999" Padding="8,3" HorizontalAlignment="Right">
+                      <TextBlock Text="Listo para aplicar" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" />
                     </Border>
                   </DockPanel>
-                  <DataGrid Style="{StaticResource DataGrid.Workspace}" ItemsSource="{Binding Lineas}" AutoGenerateColumns="False"
+                  <DataGrid Style="{StaticResource DataGrid.Workspace}"
+                            infra:DataGridExcelNavigation.Enable="True"
+                            ItemsSource="{Binding Lineas}" AutoGenerateColumns="False"
                             CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="True"
                             HeadersVisibility="Column" GridLinesVisibility="Horizontal"
                             BorderThickness="0" RowHeaderWidth="0" MinHeight="160"
@@ -716,19 +720,19 @@
                       <DataGridTextColumn Header="ESTADO" Binding="{Binding EstadoLabel}" Width="80" />
                     </DataGrid.Columns>
                   </DataGrid>
-                  <Border Background="#101C30" Padding="16,12">
+                  <Border Background="{DynamicResource Brush.Navy}" Padding="16,12">
                     <DockPanel>
-                      <TextBlock Text="Total categoría 3.3" FontWeight="Bold" Foreground="White" VerticalAlignment="Center" />
+                      <TextBlock Text="Total categoría 3.3" FontWeight="Bold" Foreground="{DynamicResource Brush.White}" VerticalAlignment="Center" />
                       <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
-                        <TextBlock Text="{Binding FootTotalLabel}" FontFamily="{StaticResource Font.Mono}" FontSize="14" FontWeight="Bold" Foreground="White" Margin="0,0,16,0" />
-                        <TextBlock Text="{Binding FootUfLabel}" FontFamily="{StaticResource Font.Mono}" FontSize="13" Foreground="#93C5FD" />
+                        <TextBlock Text="{Binding FootTotalLabel}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.lg}" FontWeight="Bold" Foreground="{DynamicResource Brush.White}" Margin="0,0,16,0" />
+                        <TextBlock Text="{Binding FootUfLabel}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.base}" Foreground="{DynamicResource Brush.BrandStroke2}" />
                       </StackPanel>
                     </DockPanel>
                   </Border>
                 </StackPanel>
               </Border>
-              <Border Background="#EAF1FF" BorderBrush="#24FFFFFF" BorderThickness="1" CornerRadius="11" Padding="13,11" Margin="0,12,0,0">
-                <TextBlock FontSize="12" Foreground="#1E40AF" TextWrapping="Wrap" LineHeight="17">
+              <Border Background="{DynamicResource Brush.BlueSoft}" BorderBrush="{DynamicResource Brush.White14}" BorderThickness="1" CornerRadius="11" Padding="13,11" Margin="0,12,0,0">
+                <TextBlock FontSize="{StaticResource Font.Size.md}" Foreground="{DynamicResource Brush.BlueDark}" TextWrapping="Wrap" LineHeight="17">
                   <Run FontWeight="Bold" Text="Práctica profesional: " />
                   <Run Text="las apps y estándares de viático separan traslado, alimentación (M&amp;IE) y alojamiento. Si la empresa da comida o casa, ese componente se descuenta. En Chile, movilización/colación/viático son compensatorios cuando cubren gasto real (DT)." />
                 </TextBlock>
@@ -740,11 +744,11 @@
     </Grid>
 
     <!-- Footer -->
-    <Border Grid.Row="2" Background="#F2F7F9FC" BorderBrush="#E2E8F0" BorderThickness="0,1,0,0" Padding="20,12">
+    <Border Grid.Row="2" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,1,0,0" Padding="20,12">
       <DockPanel LastChildFill="False">
         <StackPanel VerticalAlignment="Center">
-          <TextBlock Text="Total a aplicar en Gastos Operacionales · 3.3" FontSize="12" Foreground="#5C6A7C" />
-          <TextBlock Text="{Binding FootTotalLabel}" FontFamily="{StaticResource Font.Mono}" FontSize="20" FontWeight="SemiBold" Foreground="#101A26" Margin="0,2,0,0" />
+          <TextBlock Text="Total a aplicar en Gastos Operacionales · 3.3" Style="{StaticResource Text.Helper}" />
+          <TextBlock Text="{Binding FootTotalLabel}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.xl}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink}" Margin="0,2,0,0" />
         </StackPanel>
         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
           <Button Content="Cancelar" Click="OnCancel" Style="{StaticResource Button.Secondary}" Padding="14,9" Margin="0,0,8,0" />
@@ -753,4 +757,5 @@
       </DockPanel>
     </Border>
   </Grid>
+  </Border>
 </Window>

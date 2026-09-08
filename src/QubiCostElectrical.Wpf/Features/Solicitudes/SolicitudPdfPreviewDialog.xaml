@@ -8,6 +8,7 @@
         WindowStartupLocation="CenterOwner"
         KeyDown="OnWindowKeyDown">
   
+  <Border Style="{StaticResource Dialog.Chrome}" Margin="16">
   <Grid Background="{DynamicResource Brush.Canvas}">
     <Grid.RowDefinitions>
       <!-- Premium Top Bar Banner -->
@@ -35,7 +36,7 @@
         <!-- Brand Icon / Accent indicator -->
         <Border Grid.Column="1" Background="{DynamicResource Brush.Canvas}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="8" Padding="12,6" VerticalAlignment="Center">
           <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-            <Ellipse Width="8" Height="8" Fill="#1565C0" Margin="0,0,8,0" VerticalAlignment="Center" />
+            <Ellipse Width="8" Height="8" Fill="{DynamicResource Brush.Blue}" Margin="0,0,8,0" VerticalAlignment="Center" />
             <TextBlock Text="PLANILLA DE PEDIDO" FontSize="10" FontWeight="SemiBold" FontFamily="{StaticResource Font.Ui}" Foreground="{DynamicResource Brush.Ink2}" VerticalAlignment="Center" />
           </StackPanel>
         </Border>
@@ -65,11 +66,12 @@
 
         <!-- Right Actions -->
         <StackPanel Grid.Column="1" Orientation="Horizontal">
-          <Button Style="{StaticResource Button.Secondary}" Content="💾 Guardar Como..." Click="OnSaveClick" Margin="0,0,8,0" MinWidth="130" Height="32" />
-          <Button Style="{StaticResource Button.Primary}" Content="🖨️ Imprimir Reporte" Click="OnPrintClick" Margin="0,0,8,0" MinWidth="140" Height="32" />
-          <Button Style="{StaticResource Button.Secondary}" Content="❌ Cerrar" IsCancel="True" Click="OnCloseClick" MinWidth="90" Height="32" />
+          <Button Style="{StaticResource Button.Secondary}" Content="Guardar como…" Click="OnSaveClick" Margin="0,0,8,0" MinWidth="130" Height="32" />
+          <Button Style="{StaticResource Button.Primary}" Content="Imprimir reporte" Click="OnPrintClick" Margin="0,0,8,0" MinWidth="140" Height="32" />
+          <Button Style="{StaticResource Button.Secondary}" Content="Cerrar" IsCancel="True" Click="OnCloseClick" MinWidth="90" Height="32" />
         </StackPanel>
       </Grid>
     </Border>
   </Grid>
+  </Border>
 </Window>

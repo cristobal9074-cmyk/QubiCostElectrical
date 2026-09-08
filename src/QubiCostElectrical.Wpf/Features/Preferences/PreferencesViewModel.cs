@@ -6,15 +6,18 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
+using QubiCostElectrical;
 using QubiCostElectrical.Wpf.Auth;
 using QubiCostElectrical.Wpf.Infrastructure;
 using QubiCostElectrical.Wpf.Infrastructure.Diagnostics;
+using QubiCostElectrical.Wpf.Shell;
 
 namespace QubiCostElectrical.Wpf.Features.Preferences;
 
-public sealed partial class PreferencesViewModel : ViewModelBase
+public sealed partial class PreferencesViewModel : WorkspacePageViewModelBase, IPageWithPendingChanges, IPageWithCommitChanges
 {
-    private readonly WpfAppHost host;
+    private readonly IAuthService auth;
+    private readonly IPermissionService permissions;
     private UserPreferences _saved;
     private UserPreferences _draft = new();
     private BitmapImage? _logoImageSource;

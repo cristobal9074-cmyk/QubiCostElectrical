@@ -16,7 +16,11 @@ namespace QubiCostElectrical.Wpf.Features.Prices;
 
 public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRefreshablePage, IPageWithPendingChanges
 {
-    private readonly WpfAppHost host;
+    private readonly BudgetProjectSession session;
+    private readonly IProjectWorkspaceService projectWorkspace;
+    private readonly IPermissionService permissions;
+    private readonly IMaterialSearchService materialSearch;
+    private readonly IShellNavigationHost? shell;
     private readonly IPriceBankStore store;
     private readonly PriceBankApplicationService priceBank;
     private readonly PriceBankService priceBankDomain = new();
@@ -30,6 +34,7 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
 
     private readonly RelayCommand refreshCommand;
     private readonly RelayCommand importFileCommand;
+    private readonly RelayCommand downloadTemplateCommand;
     private readonly RelayCommand importProjectCommand;
     private readonly RelayCommand saveSelectedCommand;
     private readonly RelayCommand deleteSelectedCommand;

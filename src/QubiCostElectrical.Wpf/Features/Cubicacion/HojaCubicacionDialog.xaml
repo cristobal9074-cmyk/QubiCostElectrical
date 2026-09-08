@@ -1,12 +1,14 @@
 <Window x:Class="QubiCostElectrical.Wpf.Features.Cubicacion.HojaCubicacionDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:infra="clr-namespace:QubiCostElectrical.Wpf.Infrastructure"
         Style="{StaticResource Dialog.Window}"
         Title="Hoja de Cubicación"
         Width="1180" Height="760" MinWidth="820" MinHeight="480"
         WindowStartupLocation="CenterOwner"
         Closed="OnDialogClosed">
-  <Grid Margin="20">
+  <Border Style="{StaticResource Dialog.Chrome}" Margin="16">
+  <Grid>
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto" />
       <RowDefinition Height="Auto" />
@@ -15,9 +17,8 @@
     </Grid.RowDefinitions>
 
     <StackPanel Grid.Row="0" Margin="0,0,0,10">
-      <TextBlock Text="Hoja de Cubicación" Style="{StaticResource Text.ViewTitle}" />
-      <TextBlock Style="{StaticResource Text.Body}" Foreground="{DynamicResource Brush.Muted}"
-                 Margin="0,4,0,0" TextWrapping="Wrap"
+      <TextBlock Text="Hoja de Cubicación" Style="{StaticResource Dialog.HeaderTitle}" />
+      <TextBlock Style="{StaticResource Dialog.HeaderSubtitle}"
                  Text="Herramienta compartida de apoyo para cubicar: agregue un ítem por cada partida, y dentro de cada uno registre los datos medidos. La columna Suma se calcula sola." />
       <Border x:Name="PickModeBanner" Visibility="Collapsed" Background="{DynamicResource Brush.GreenSoft}"
               BorderBrush="{DynamicResource Brush.Green}" BorderThickness="1" CornerRadius="6"
@@ -63,7 +64,7 @@
                             BorderBrush="{DynamicResource Brush.Green}" BorderThickness="1"
                             CornerRadius="12" Padding="10,3" Margin="8,0,0,0" VerticalAlignment="Center">
                       <TextBlock Text="{Binding Subtotal, StringFormat={}{0:N2}}" FontWeight="Bold"
-                                 Foreground="{DynamicResource Brush.Green}" FontFamily="Consolas" FontSize="12" />
+                                 Foreground="{DynamicResource Brush.Green}" FontFamily="{StaticResource Font.Mono}" FontSize="12" />
                     </Border>
                     <Button DockPanel.Dock="Right" Content="🗑" Width="28" Height="28" Margin="8,0,0,0"
                             Style="{StaticResource Button.Secondary}" Padding="0" ToolTip="Quitar ítem"
@@ -93,20 +94,21 @@
                     <Border DockPanel.Dock="Left" Background="{DynamicResource Brush.Surface2}"
                             BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4"
                             Padding="8,3" MinWidth="46" Margin="0,0,6,0">
-                      <TextBlock x:Name="FormulaBarRef" FontFamily="Consolas" FontWeight="Bold" FontSize="11"
+                      <TextBlock x:Name="FormulaBarRef" FontFamily="{StaticResource Font.Mono}" FontWeight="Bold" FontSize="11"
                                  Foreground="{DynamicResource Brush.Blue}" HorizontalAlignment="Center" />
                     </Border>
                     <TextBlock DockPanel.Dock="Left" Text="fx" FontStyle="Italic" FontWeight="Bold"
                                VerticalAlignment="Center" Foreground="{DynamicResource Brush.Muted}"
                                Margin="0,0,6,0" />
                     <TextBox x:Name="FormulaBarInput" VerticalAlignment="Center" Height="26"
-                             FontFamily="Consolas" IsEnabled="False"
+                             FontFamily="{StaticResource Font.Mono}" IsEnabled="False"
                              KeyDown="OnFormulaBarKeyDown" LostFocus="OnFormulaBarLostFocus"
                              ToolTip="Contenido de la celda activa: número o fórmula (ej. =C+D*2)" />
                   </DockPanel>
 
                   <DataGrid ItemsSource="{Binding Filas}"
                             Style="{StaticResource DataGrid.Workspace.Excel}"
+                            infra:DataGridExcelNavigation.Enable="True"
                             AutoGenerateColumns="False"
                             CanUserAddRows="False"
                             CanUserDeleteRows="False"
@@ -145,8 +147,9 @@
               MinWidth="100" IsDefault="True" IsCancel="True" Click="OnCloseClick" />
       <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center" Style="{StaticResource Text.Body}">
         <Run Text="Total de todos los ítems: " Foreground="{DynamicResource Brush.Muted}" />
-        <Run x:Name="GrandTotalRun" Text="0.00" FontWeight="Bold" FontFamily="Consolas" />
+        <Run x:Name="GrandTotalRun" Text="0.00" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" />
       </TextBlock>
     </DockPanel>
   </Grid>
+  </Border>
 </Window>

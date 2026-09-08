@@ -1,0 +1,79 @@
+<Window x:Class="QubiCostElectrical.Wpf.Features.CubicacionSc.ResumenItemizadoDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:infra="clr-namespace:QubiCostElectrical.Wpf.Infrastructure"
+        Style="{StaticResource Dialog.Window}"
+        Title="Navegar itemizado"
+        Width="900" Height="620" MinWidth="760" MinHeight="480"
+        WindowStartupLocation="CenterOwner"
+        PreviewKeyDown="OnWindowPreviewKeyDown">
+  <Border Style="{StaticResource Dialog.Chrome}" Margin="16">
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+      <RowDefinition Height="Auto" />
+    </Grid.RowDefinitions>
+
+    <StackPanel Margin="0,0,0,12">
+      <TextBlock Text="Partidas del itemizado" Style="{StaticResource Dialog.HeaderTitle}" />
+      <TextBlock Text="{Binding SummaryText}" Style="{StaticResource Dialog.HeaderSubtitle}" Margin="0,0,0,0" />
+    </StackPanel>
+
+    <StackPanel Grid.Row="1" Margin="0,0,0,10">
+      <TextBox Style="{StaticResource Form.SearchBox}" Margin="0,0,0,8"
+               Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Tag="Buscar partida…" />
+      <ItemsControl ItemsSource="{Binding Filters}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <WrapPanel />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <Border Margin="0,0,8,0" Padding="10,6" CornerRadius="14" Cursor="Hand"
+                    Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+                    MouseLeftButtonDown="OnFilterChipClick">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="{Binding Nombre}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink2}" />
+                <TextBlock Text="{Binding Count, StringFormat=' ({0})'}" Foreground="{DynamicResource Brush.Muted}" Margin="4,0,0,0" />
+              </StackPanel>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </StackPanel>
+
+    <Border Grid.Row="2" Style="{StaticResource Card.Surface}" Padding="0">
+      <DataGrid x:Name="PartidaGrid"
+                infra:DataGridExcelNavigation.Enable="True"
+                ItemsSource="{Binding FlatRows}"
+                SelectedItem="{Binding SelectedRow, Mode=TwoWay}"
+                AutoGenerateColumns="False"
+                CanUserAddRows="False"
+                CanUserDeleteRows="False"
+                IsReadOnly="True"
+                SelectionMode="Single"
+                MouseDoubleClick="OnRowDoubleClick">
+        <DataGrid.Columns>
+          <DataGridTextColumn Header="Código" Binding="{Binding ItemCode}" Width="90" />
+          <DataGridTextColumn Header="Descripción" Binding="{Binding Descripcion}" Width="*" MinWidth="220" />
+          <DataGridTextColumn Header="Ud" Binding="{Binding Unidad}" Width="44" />
+          <DataGridTextColumn Header="Cant" Binding="{Binding CantidadDisplay}" Width="70" />
+          <DataGridTextColumn Header="Material" Binding="{Binding MaterialDisplay}" Width="100" />
+          <DataGridTextColumn Header="MO" Binding="{Binding ManoObraDisplay}" Width="100" />
+          <DataGridTextColumn Header="Costo dir." Binding="{Binding CostoDirectoDisplay}" Width="110" />
+        </DataGrid.Columns>
+      </DataGrid>
+    </Border>
+
+    <DockPanel Grid.Row="3" Style="{StaticResource Dialog.Footer}" Margin="0,14,0,0" LastChildFill="False">
+      <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center" Foreground="{DynamicResource Brush.Muted}"
+                 Text="Enter: ir · Ctrl+Shift+N: agregar recurso · Ctrl+Shift+Del: limpiar cubicación de la partida" TextWrapping="Wrap" />
+      <Button DockPanel.Dock="Right" Content="Cerrar" Style="{StaticResource Button.Secondary}"
+              MinWidth="100" IsCancel="True" Command="{Binding CerrarCommand}" />
+    </DockPanel>
+  </Grid>
+  </Border>
+</Window>

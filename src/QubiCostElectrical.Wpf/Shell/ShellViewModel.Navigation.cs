@@ -1,57 +1,43 @@
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows.Controls;
-using QubiCostElectrical;
-using QubiCostElectrical.Wpf.Features.Currency;
-using QubiCostElectrical.Wpf.Features.Dashboard;
-using QubiCostElectrical.Wpf.Features.Inicio;
-using QubiCostElectrical.Wpf.Features.Documents;
-using CubicacionFeature = QubiCostElectrical.Wpf.Features.Cubicacion;
-using CubicacionScFeature = QubiCostElectrical.Wpf.Features.CubicacionSc;
-using ApuFeature = QubiCostElectrical.Wpf.Features.Apu;
-using QuotesFeature = QubiCostElectrical.Wpf.Features.Quotes;
-using PurchasesFeature = QubiCostElectrical.Wpf.Features.Purchases;
-using TemplatesFeature = QubiCostElectrical.Wpf.Features.Templates;
-using QubiCostElectrical.Wpf.Features.Itemizado;
-using QubiCostElectrical.Wpf.Features.FloorSummary;
-using QubiCostElectrical.Wpf.Features.Solicitudes;
-using QubiCostElectrical.Wpf.Features.Costo;
-using QubiCostElectrical.Wpf.Features.Epp;
-using QubiCostElectrical.Wpf.Features.ManoDeObra;
-using ApuCatalogFeature = QubiCostElectrical.Wpf.Features.ApuCatalog;
-using ApuMergeFeature = QubiCostElectrical.Wpf.Features.ApuMerge;
-using EconomicEditorFeature = QubiCostElectrical.Wpf.Features.EconomicEditor;
-using ContractsFeature = QubiCostElectrical.Wpf.Features.Contracts;
-using QubiCostElectrical.Wpf.Features.Prices;
-using QubiCostElectrical.Wpf.Features.Project;
+using QubiCostElectrical.Wpf.Auth;
 using QubiCostElectrical.Wpf.Infrastructure;
+using QubiCostElectrical.Wpf.Infrastructure.Diagnostics;
 using QubiCostElectrical.Wpf.Navigation;
-using ExportFeature = QubiCostElectrical.Wpf.Features.Export;
-using ReviewFeature = QubiCostElectrical.Wpf.Features.Review;
-using VersionsFeature = QubiCostElectrical.Wpf.Features.Versions;
-using QubiCostElectrical.Wpf.Features.Preferences;
-using QubiCostElectrical.Wpf.Features.ChangeOrders;
 
 namespace QubiCostElectrical.Wpf.Shell;
 
 partial class ShellViewModel
 {
-    private readonly Dictionary<ShellRoute, CachedPage> pageCache = new();
-
-    private sealed record CachedPage(UserControl View, object? ViewModel);
+    private ShellNavigationCoordinator navigation = null!;
 
     public void ClearPageCache()
-    {
-        foreach (var entry in pageCache.Values)
+        => navigation.ClearCacheKeepingSurface(() =>
         {
-            if (entry.ViewModel is IDisposable disposable)
-                disposable.Dispose();
-        }
+            currentView = null;
+            currentPageVm = null;
+        });
 
-        pageCache.Clear();
-        currentView = null;
-        currentPageVm = null;
+    /// <summary>
+    /// Solo pruebas: registra una página en caché con un <see cref="UserControl"/> vacío
+    /// (sin XAML/tema) para ejercitar <see cref="RequestNavigate"/> y
+    /// <see cref="TryLeaveCurrentPage"/> sin construir vistas reales.
+    /// </summary>
+    internal void SeedCachedPageForTests(ShellRoute route, object? viewModel)
+        => navigation.SeedForTests(route, viewModel);
+
+    /// <summary>
+    /// Solo pruebas: activa una página previamente sembrada sin pasar por leave/create.
+    /// </summary>
+    internal void ActivateSeededPageForTests(ShellRoute route)
+    {
+        if (!navigation.TryActivateSeededForTests(route, out var view, out var viewModel))
+            throw new InvalidOperationException($"No hay página sembrada para {route}.");
+
+        CurrentRoute = route;
+        CurrentView = view;
+        currentPageVm = viewModel;
     }
 
     public bool RequestNavigate(ShellRoute route, bool force = false)
@@ -59,225 +45,60 @@ partial class ShellViewModel
 
     public bool RequestNavigate(ShellRoute route, WorkspaceNavigationContext? context, bool force = false)
     {
-        if (!force && currentPageVm is IPageWithPendingChanges pending && pending.HasPendingChanges)
-        {
-            _ = SaveProjectAsync();
-            pending.TryDiscardChanges();
-        }
+        var routeState = currentRoute;
+        var viewState = currentView;
+        var vmState = currentPageVm;
+        var ok = navigation.RequestNavigate(
+            ref routeState,
+            ref viewState,
+            ref vmState,
+            this,
+            route,
+            context,
+            force);
+        if (!ok)
+            return false;
 
-        if (context is TakeoffNavigationContext takeoff)
-            host.Session.PendingTakeoffNavigation = takeoff;
-
-        if (route == currentRoute && currentView != null)
-        {
-            ApplyNavigationContext(context, currentView);
-            if (currentPageVm is IRefreshablePage refreshableOnSameRoute)
-                refreshableOnSameRoute.Refresh();
-            return true;
-        }
-
-        if (pageCache.TryGetValue(route, out var cached))
-        {
-            CurrentRoute = route;
-            CurrentView = cached.View;
-            currentPageVm = cached.ViewModel;
-            if (currentPageVm is IRefreshablePage refreshable)
-                refreshable.Refresh();
-            RefreshContext();
-            ApplyNavigationContext(context, cached.View);
-            return true;
-        }
-
-        CurrentRoute = route;
-        var (view, vm) = CreateView(route, this, host);
-        pageCache[route] = new CachedPage(view, vm);
-        CurrentView = view;
-        currentPageVm = vm;
-        RefreshContext();
-        ApplyNavigationContext(context, view);
+        CurrentRoute = routeState;
+        CurrentView = viewState;
+        currentPageVm = vmState;
         return true;
     }
 
-    private static void ApplyNavigationContext(WorkspaceNavigationContext? context, UserControl view)
-    {
-        switch (context)
-        {
-            case ApuFeature.ApuNavContext apuCtx when view is ApuFeature.ApuView apuView:
-                apuView.ApplyNavContext(apuCtx);
-                break;
-            case PriceBankNavigationContext pbCtx when view is PriceBankView pbView:
-                pbView.ApplyNavContext(pbCtx);
-                break;
-            case TakeoffNavigationContext takeoffCtx when view is CubicacionFeature.CubicacionView takeoffView:
-                if (takeoffView.DataContext is CubicacionFeature.CubicacionViewModel vm)
-                {
-                    var target = vm.Partidas.FirstOrDefault(p =>
-                        string.Equals(p.Id, takeoffCtx.ItemId, StringComparison.OrdinalIgnoreCase));
-                    if (target != null)
-                        vm.SelectPartida(target);
-                }
-                break;
-            case ContractsFeature.ContractEditorNavContext contractEditorCtx when view is ContractsFeature.ContractEditorView contractEditorView:
-                contractEditorView.ApplyNavContext(contractEditorCtx);
-                break;
-            case ContractsFeature.ContractVersionsNavContext contractVersionsCtx when view is ContractsFeature.ContractVersionsView contractVersionsView:
-                contractVersionsView.ApplyNavContext(contractVersionsCtx);
-                break;
-        }
-    }
+    /// <summary>
+    /// Al cambiar de pestaña no se pregunta. Se aplica el draft de la página a la sesión
+    /// y se dispara guardado silencioso del .qce (flujo tipo Excel/Bluebeam).
+    /// El diálogo Guardar/Descartar queda solo para cerrar/abrir otro proyecto.
+    /// </summary>
+    internal bool TryLeaveCurrentPage()
+        => navigation.TryLeaveCurrentPage(currentPageVm);
 
-    private static (UserControl View, object? ViewModel) CreateView(ShellRoute route, IShellNavigationHost shell, WpfAppHost appHost)
+    private async Task PersistProjectSilentlyAsync(string reason)
     {
-        switch (route)
+        // Mantenido por compatibilidad / cierres explícitos; leave-page usa RequestPersistSoon.
+        if (!projectWorkspace.HasOpenProject || session.IsReadOnly || !session.IsDirty)
+            return;
+
+        try
         {
-            case ShellRoute.Dashboard:
-            {
-                var vm = new DashboardViewModel(shell, appHost);
-                // Inicio y Resumen son vistas independientes: el diseñador y el usuario
-                // nunca cargan ambas pantallas dentro del mismo XAML.
-                UserControl view = appHost.ProjectWorkspace.HasOpenProject
-                    ? new DashboardView { DataContext = vm }
-                    : new InicioView { DataContext = vm };
-                return (view, vm);
-            }
-            case ShellRoute.Project:
-            {
-                var vm = new ProjectViewModel(shell, appHost);
-                return (new ProjectView { DataContext = vm }, vm);
-            }
-            case ShellRoute.Documents:
-            {
-                var vm = new DocumentsViewModel(shell, appHost);
-                return (new DocumentsView { DataContext = vm }, vm);
-            }
-            case ShellRoute.Itemized:
-            {
-                var vm = new ItemizadoViewModel(shell, appHost);
-                return (new ItemizadoView { DataContext = vm }, vm);
-            }
-            case ShellRoute.Takeoff:
-            {
-                var vm = new CubicacionFeature.CubicacionViewModel(shell, appHost);
-                return (new CubicacionFeature.CubicacionView(vm), vm);
-            }
-            case ShellRoute.CubicacionSc:
-            {
-                var vm = new CubicacionScFeature.CubicacionScViewModel(shell, appHost);
-                return (new CubicacionScFeature.CubicacionScView(vm), vm);
-            }
-            case ShellRoute.Apu:
-            {
-                var vm = new ApuFeature.ApuWorkspaceVm(shell, appHost);
-                return (new ApuFeature.ApuView(vm), vm);
-            }
-            case ShellRoute.Templates:
-            {
-                var vm = new TemplatesFeature.PlantillasVm(shell, appHost);
-                return (new TemplatesFeature.PlantillasView(vm), vm);
-            }
-            case ShellRoute.Prices:
-            {
-                var vm = new PriceBankViewModel(appHost);
-                return (new PriceBankView(vm), vm);
-            }
-            case ShellRoute.Quotes:
-            {
-                var vm = new QuotesFeature.QuotesViewModel(shell, appHost);
-                return (new QuotesFeature.QuotesView { DataContext = vm }, vm);
-            }
-            case ShellRoute.Purchases:
-            {
-                var vm = new PurchasesFeature.PurchaseListViewModel(shell, appHost);
-                return (new PurchasesFeature.PurchaseListView { DataContext = vm }, vm);
-            }
-            case ShellRoute.Review:
-            {
-                var vm = new ReviewFeature.ReviewViewModel(shell, appHost);
-                return (new ReviewFeature.ReviewView { DataContext = vm }, vm);
-            }
-            case ShellRoute.Versions:
-            {
-                var vm = new VersionsFeature.VersionsViewModel(shell, appHost);
-                return (new VersionsFeature.VersionsView { DataContext = vm }, vm);
-            }
-            case ShellRoute.OfferDocuments:
-            {
-                var vm = new ExportFeature.ExportViewModel(appHost);
-                return (new ExportFeature.ExportView { DataContext = vm }, vm);
-            }
-            case ShellRoute.Currency:
-            {
-                var vm = new CurrencyViewModel(appHost);
-                return (new CurrencyView { DataContext = vm }, vm);
-            }
-            case ShellRoute.Preferences:
-            {
-                var vm = new PreferencesViewModel(appHost);
-                return (new PreferencesView(appHost) { DataContext = vm }, vm);
-            }
-            case ShellRoute.ChangeOrders:
-            {
-                var vm = new ChangeOrdersViewModel(appHost);
-                return (new ChangeOrdersView { DataContext = vm }, vm);
-            }
-            case ShellRoute.FloorSummary:
-            {
-                var vm = new FloorSummaryViewModel(shell, appHost);
-                return (new FloorSummaryView { DataContext = vm }, vm);
-            }
-            case ShellRoute.Solicitudes:
-            {
-                var vm = new SolicitudesViewModel(shell, appHost);
-                return (new SolicitudesView { DataContext = vm }, vm);
-            }
-            case ShellRoute.Costo:
-            {
-                var vm = new CostoViewModel(shell, appHost);
-                return (new CostoView { DataContext = vm }, vm);
-            }
-            case ShellRoute.Epp:
-            {
-                var vm = new EppViewModel(shell, appHost);
-                return (new EppView { DataContext = vm }, vm);
-            }
-            case ShellRoute.ManoDeObra:
-            {
-                var vm = new ManoDeObraViewModel(shell, appHost);
-                return (new ManoDeObraView { DataContext = vm }, vm);
-            }
-            case ShellRoute.ApuCatalog:
-            {
-                var vm = new ApuCatalogFeature.ApuCatalogViewModel(shell, appHost);
-                return (new ApuCatalogFeature.ApuCatalogView { DataContext = vm }, vm);
-            }
-            case ShellRoute.ApuMerge:
-            {
-                var vm = new ApuMergeFeature.ApuMergeViewModel(shell, appHost);
-                return (new ApuMergeFeature.ApuMergeView { DataContext = vm }, vm);
-            }
-            case ShellRoute.EconomicEditor:
-            {
-                var vm = new EconomicEditorFeature.EconomicEditorViewModel(shell, appHost);
-                return (new EconomicEditorFeature.EconomicEditorView { DataContext = vm }, vm);
-            }
-            case ShellRoute.ContractWorkspace:
-            {
-                var vm = new ContractsFeature.ContractWorkspaceViewModel(shell, appHost);
-                return (new ContractsFeature.ContractWorkspaceView { DataContext = vm }, vm);
-            }
-            case ShellRoute.ContractEditor:
-            {
-                var placeholder = new Contract { Id = ContractId.New(), Status = ContractStatus.Borrador };
-                var vm = new ContractsFeature.ContractEditorViewModel(shell, appHost, placeholder);
-                return (new ContractsFeature.ContractEditorView { DataContext = vm }, vm);
-            }
-            case ShellRoute.ContractVersions:
-            {
-                var vm = new ContractsFeature.ContractVersionsViewModel(shell, appHost, ContractId.New());
-                return (new ContractsFeature.ContractVersionsView { DataContext = vm }, vm);
-            }
-            default:
-                throw new InvalidOperationException($"La ruta {route} no tiene vista registrada.");
+            var user = CollaborationSessionBridge.CurrentUserContext();
+            session.ProjectInfo.UsuarioNombre = string.IsNullOrWhiteSpace(user.DisplayName)
+                ? user.Email
+                : user.DisplayName;
+            session.ProjectInfo.UsuarioRol = permissions.RoleDisplayName;
+
+            await projectWorkspace.SaveAsync().ConfigureAwait(true);
+            AutoSaveService.DeleteAutoSave(session.CurrentProjectPath);
+            autoSave.MarkSaved();
+            RefreshChrome();
+            AppLog.Info("ProjectWorkspace", $"Guardado silencioso ({reason}) OK.");
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error("ProjectWorkspace", $"Falló el guardado silencioso ({reason})", ex);
+            ShellNotificationService.Instance.ShowWarning(
+                "Sin guardar en disco",
+                OperationFailureMessages.ToUserMessage(ex));
         }
     }
 

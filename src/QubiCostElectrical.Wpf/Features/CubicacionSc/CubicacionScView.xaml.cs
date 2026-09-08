@@ -17,4 +17,6 @@ public partial class CubicacionScView : UserControl
     private static readonly ConditionalWeakTable<ComboBox, List<string>> ComboMasters = new();
     // Escape cancela el commit en LostFocus sin pisar el Tag (propiedad destino).
     private readonly HashSet<ComboBox> _cancelledFilterCombos = new();
+
+    private CubicacionScViewModel Vm => (CubicacionScViewModel)DataContext;
 }

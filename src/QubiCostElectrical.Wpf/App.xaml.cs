@@ -122,6 +122,7 @@ public partial class App : Application
         mutex?.ReleaseMutex();
         mutex?.Dispose();
         GlobalErrorHandler.Shutdown();
+        (Infrastructure.WpfAppHost.Provider as System.IDisposable)?.Dispose();
         Infrastructure.WpfAppHost.Logger?.Dispose();
         base.OnExit(e);
     }

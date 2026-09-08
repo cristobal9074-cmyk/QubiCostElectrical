@@ -34,7 +34,7 @@ public sealed partial class ExportViewModel
 
     public void ScheduleLivePreview()
     {
-        if (!HasOpenProject || !host.Permissions.CanExportDocuments)
+        if (!HasOpenProject || !permissions.CanExportDocuments)
             return;
 
         livePreviewCts?.Cancel();
@@ -106,14 +106,14 @@ public sealed partial class ExportViewModel
 
     private ExportProjectContext BuildPreviewContext()
     {
-        var snapshot = host.Session.CreateSnapshot();
+        var snapshot = session.CreateSnapshot();
         var offerSnapshot = snapshot.Proyecto.OfertaPdf != null
             ? CloneOfferSettings(snapshot.Proyecto.OfertaPdf)
             : new OfferPdfSettings();
         OfferSettings.CopyTo(offerSnapshot);
         var prefs = UserPreferencesStore.Load();
         LetterheadApplicator.Apply(prefs, offerSnapshot);
-        return host.Export.BuildContext(
+        return exportPresenter.BuildContext(
             ResolveScopeMode(),
             SelectedPartida?.Id,
             SelectedArea,

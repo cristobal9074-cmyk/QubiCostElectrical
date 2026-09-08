@@ -21,7 +21,7 @@ partial class ShellViewModel
         {
             IsProjectPickerOpen = false;
 
-            if (host.ProjectWorkspace.HasOpenProject)
+            if (projectWorkspace.HasOpenProject)
             {
                 if (!await CloseProjectAsync())
                     return;
@@ -53,32 +53,24 @@ partial class ShellViewModel
                 if (!string.IsNullOrWhiteSpace(dir))
                     Directory.CreateDirectory(dir);
 
-                var session = host.Session;
                 var userName = session.ProjectInfo.UsuarioNombre;
                 var userRole = session.ProjectInfo.UsuarioRol;
 
-                host.UndoService.Clear();
-                host.Services.BudgetCalculation.ResetIncrementalCache();
-                ClearPageCache();
+                projectLifecycle.PrepareWorkspaceForNewOrOpen();
                 session.NewProject(userName, userRole);
-                session.ProjectInfo.Nombre = dialog.ProjectName;
-                session.ProjectInfo.Cliente = dialog.Client;
-                session.ProjectInfo.Ubicacion = dialog.Location;
-                session.ProjectInfo.MonedaPresupuesto = dialog.Currency;
+                session.InitializeProjectParameters(
+                    dialog.ProjectName,
+                    dialog.Client,
+                    dialog.Location,
+                    dialog.Currency,
+                    dialog.BuildClosingPolicy(),
+                    dialog.SelectedTemplate?.CreateInstanceRows());
 
-                await host.ProjectWorkspace.SaveAsAsync(fullPath);
-                host.ProjectEdit.Discard();
-                host.Documents.DiscardChanges();
-                host.ProjectLock.ReleaseLock();
-                host.Audit.SetUser(CollaborationSessionBridge.CurrentUserContext());
-                host.Audit.Enable();
-                if (host.ProjectLock.TryAcquireLock(host.Session.CurrentProjectPath, CollaborationSessionBridge.CurrentUserContext()))
-                    host.Audit.RecordLifecycle("BloqueoAdquirido", "Nuevo proyecto");
-                autoSave.Start();
+                await projectWorkspace.SaveAsAsync(fullPath);
+                projectLifecycle.AfterProjectMaterialized(
+                    addRecent: () => recentProjects.AddProject(session.CurrentProjectPath));
 
-                RoleSessionSync.Apply(host.Session, host.Permissions.CurrentRole);
                 SyncReadOnlyFromSession();
-                recentProjects.AddProject(host.Session.CurrentProjectPath);
                 RefreshRecentProjects();
                 RefreshChrome();
                 RefreshCurrentPage();
@@ -98,60 +90,127 @@ partial class ShellViewModel
 
     public async Task<bool> CloseProjectAsync()
     {
-        if (!host.ProjectWorkspace.HasOpenProject)
+        if (!projectWorkspace.HasOpenProject)
             return true;
 
-        bool hasDirtyState = host.Session.IsDirty ||
+        bool hasDirtyState = session.IsDirty ||
             (currentPageVm is IPageWithPendingChanges p && p.HasPendingChanges);
 
         if (hasDirtyState)
         {
-            var choice = ShowCloseProjectDialog();
-            switch (choice)
+            // Flujo profesional: al cerrar se guarda en silencio (sin Guardar/Descartar).
+            // Descartar sigue disponible vía Undo mientras el proyecto esté abierto.
+            if (!TryApplyCurrentPageChanges())
             {
-                case ThreeWayResult.Save:
-                    if (!TryApplyCurrentPageChanges())
-                        return false;
-                    try
-                    {
-                        await host.ProjectWorkspace.SaveAsync();
-                        AutoSaveService.DeleteAutoSave(host.Session.CurrentProjectPath);
-                    }
-                    catch (Exception ex)
-                    {
-                        AppLog.Error("ProjectWorkspace", "Falló el guardado al cerrar el proyecto", ex);
-                        WpfDialogService.Error("Guardar proyecto", $"{OperationFailureMessages.ToUserMessage(ex)}\n\nEl cierre fue cancelado.");
-                        return false;
-                    }
-                    break;
+                WpfDialogService.Warning(
+                    "Cerrar proyecto",
+                    "No se pudieron aplicar los cambios de la pantalla actual. Corrija el error antes de cerrar.");
+                return false;
+            }
 
-                case ThreeWayResult.Discard:
-                    if (currentPageVm is IPageWithPendingChanges pending)
-                        pending.TryDiscardChanges();
-                    break;
-
-                case ThreeWayResult.Cancel:
+            if (session.IsDirty && !session.IsReadOnly)
+            {
+                try
+                {
+                    await projectLifecycle.PersistOpenProjectAsync();
+                }
+                catch (Exception ex)
+                {
+                    AppLog.Error("ProjectWorkspace", "Falló el guardado al cerrar el proyecto", ex);
+                    WpfDialogService.Error("Guardar proyecto", $"{OperationFailureMessages.ToUserMessage(ex)}\n\nEl cierre fue cancelado.");
                     return false;
+                }
             }
         }
 
-        autoSave.Stop();
-        host.Audit.RecordLifecycle("Cerrar", host.Session.CurrentProjectPath);
-        host.Audit.Disable();
-        host.ProjectLock.ReleaseLock();
-        host.Session.SetLockReadOnly(false);
-
-        host.UndoService.Clear();
-        ClearPageCache();
-        host.Session.NewProject(Environment.UserName);
-        host.ProjectEdit.Discard();
-        host.Documents.DiscardChanges();
-        RoleSessionSync.Apply(host.Session, host.Permissions.CurrentRole);
+        projectLifecycle.TearDownOpenProject("Cerrar");
         SyncReadOnlyFromSession();
 
         PostCloseNavigate();
         RefreshChrome();
         OnPropertyChanged(nameof(HasOpenProject));
+        return true;
+    }
+
+    /// <summary>
+    /// Antes de apagar la app (X / Alt+F4 / Shutdown): aplica página, pregunta Guardar/Descartar/Cancelar
+    /// si hay cambios, y libera el lock. En LockLostPending: no escribe .qce; preserva .autosave.
+    /// </summary>
+    public async Task<bool> PrepareForAppExitAsync()
+    {
+        if (!projectWorkspace.HasOpenProject)
+            return true;
+
+        if (!TryApplyCurrentPageChanges())
+        {
+            WpfDialogService.Warning(
+                "Salir",
+                "No se pudieron aplicar los cambios de la pantalla actual. Corrija el error antes de cerrar la aplicación.");
+            return false;
+        }
+
+        bool hasDirtyState = session.IsDirty ||
+            (currentPageVm is IPageWithPendingChanges p && p.HasPendingChanges);
+
+        if (session.IsDirty && session.IsReadOnly)
+        {
+            // LockLostPending (u otro RO): no SaveAsync al .qce compartido.
+            try
+            {
+                await autoSave.FlushSidecarAsync();
+            }
+            catch (Exception ex)
+            {
+                AppLog.Warning("ProjectWorkspace", "No se pudo escribir .autosave al salir con bloqueo perdido", ex);
+            }
+
+            projectLifecycle.ReleaseLockForAppExit();
+            return true;
+        }
+
+        if (hasDirtyState && !session.IsReadOnly)
+        {
+            var choice = ShowExitAppDialog();
+            if (choice == ThreeWayResult.Cancel)
+                return false;
+
+            if (choice == ThreeWayResult.Discard)
+            {
+                autoSave.CancelPendingPersist();
+                AutoSaveService.DeleteAutoSave(session.CurrentProjectPath);
+                projectLifecycle.ReleaseLockForAppExit();
+                return true;
+            }
+
+            // Guardar
+            try
+            {
+                await autoSave.FlushPersistAsync();
+                if (session.IsDirty)
+                {
+                    await projectWorkspace.SaveAsync();
+                    AutoSaveService.DeleteAutoSave(session.CurrentProjectPath);
+                    autoSave.MarkSaved();
+                }
+            }
+            catch (ProjectLockLostException ex)
+            {
+                AppLog.Warning("ProjectWorkspace", ex.Message);
+                session.SetLockReadOnly(true, "Otro usuario tomó el control de edición. Solo lectura.");
+                autoSave.CancelPendingPersist();
+                try { await autoSave.FlushSidecarAsync(); } catch { /* best effort */ }
+                projectLifecycle.ReleaseLockForAppExit();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                AppLog.Error("ProjectWorkspace", "Falló el guardado al salir de la aplicación", ex);
+                WpfDialogService.Error("Guardar proyecto", $"{OperationFailureMessages.ToUserMessage(ex)}\n\nLa salida fue cancelada.");
+                return false;
+            }
+        }
+
+        projectLifecycle.ReleaseLockForAppExit();
         return true;
     }
 
@@ -163,7 +222,7 @@ partial class ShellViewModel
         {
             IsProjectPickerOpen = false;
 
-            if (host.ProjectWorkspace.HasOpenProject)
+            if (projectWorkspace.HasOpenProject)
             {
                 if (!await CloseProjectAsync())
                     return;
@@ -203,7 +262,7 @@ partial class ShellViewModel
                 return;
             }
 
-            if (host.ProjectWorkspace.HasOpenProject)
+            if (projectWorkspace.HasOpenProject)
             {
                 if (!await CloseProjectAsync())
                     return;
@@ -233,12 +292,12 @@ partial class ShellViewModel
     {
         var routeBeforeOpen = CurrentRoute;
         var user = CollaborationSessionBridge.CurrentUserContext();
-        host.Audit.SetUser(user);
+        audit.SetUser(user);
 
-        var inspection = host.ProjectLock.InspectLock(path);
+        var inspection = projectLock.InspectLock(path);
         bool acquired = false;
         if (inspection.IsWritableCandidate)
-            acquired = host.ProjectLock.TryAcquireLock(path, user);
+            acquired = projectLock.TryAcquireLock(path, user);
 
         if (!acquired && inspection.State is not ProjectLockState.NotLocked)
         {
@@ -248,7 +307,7 @@ partial class ShellViewModel
                 case ProjectLockResolution.Cancel:
                     return;
                 case ProjectLockResolution.TakeOver:
-                    acquired = host.ProjectLock.ForceAcquireExpiredLock(path, user);
+                    acquired = projectLock.ForceAcquireExpiredLock(path, user);
                     if (!acquired)
                     {
                         WpfDialogService.Warning("Proyecto bloqueado", "No se pudo tomar el control de edición. Intente de nuevo o abra en solo lectura.");
@@ -263,36 +322,37 @@ partial class ShellViewModel
         string lockReason = acquired
             ? ""
             : inspection.HolderSummary + " · Modo consulta (solo lectura).";
-        host.Session.SetLockReadOnly(!acquired, acquired ? null : lockReason);
+        session.SetLockReadOnly(!acquired, acquired ? null : lockReason);
         SyncReadOnlyFromSession();
 
         try
         {
-            await host.ProjectWorkspace.OpenAsync(path);
-            host.Services.BudgetCalculation.ResetIncrementalCache();
+            await projectWorkspace.OpenAsync(path);
+            budgetCalculation.ResetIncrementalCache();
             ClearPageCache();
             TryApplyCachedUfValue();
-            host.UndoService.Clear();
-            host.ProjectEdit.Discard();
-            host.Documents.DiscardChanges();
+            undo.Clear();
+            projectEdit.Discard();
+            documents.DiscardChanges();
             if (acquired)
             {
-                host.Audit.Enable();
-                host.Audit.RecordLifecycle("Abrir", "Edición exclusiva adquirida");
+                audit.Enable();
+                audit.RecordLifecycle("Abrir", "Edición exclusiva adquirida");
             }
             else
             {
-                host.Audit.Disable();
+                audit.Disable();
             }
             autoSave.Start();
 
-            RoleSessionSync.Apply(host.Session, host.Permissions.CurrentRole);
+            RoleSessionSync.Apply(session, permissions.CurrentRole);
             SyncReadOnlyFromSession();
-            recentProjects.AddProject(host.Session.CurrentProjectPath);
+            await TryOfferAutoSaveRestoreAsync(path);
+            recentProjects.AddProject(session.CurrentProjectPath);
             RefreshRecentProjects();
             RefreshChrome();
             RefreshCurrentPage();
-            var nextRoute = routeBeforeOpen == ShellRoute.Dashboard && host.Session.Itemizado.Count > 0
+            var nextRoute = routeBeforeOpen == ShellRoute.Dashboard && session.Itemizado.Count > 0
                 ? ShellRoute.Itemized
                 : routeBeforeOpen;
             RequestNavigate(nextRoute, force: true);
@@ -305,9 +365,61 @@ partial class ShellViewModel
         }
     }
 
+    /// <summary>
+    /// Si existe un .autosave más reciente que el .qce, ofrece restaurarlo a la sesión
+    /// y opcionalmente guardarlo en el archivo del proyecto.
+    /// </summary>
+    private async Task TryOfferAutoSaveRestoreAsync(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path) || session.IsReadOnly)
+            return;
+        if (!AutoSaveService.IsAutoSaveNewer(path))
+            return;
+
+        var ts = AutoSaveService.GetAutoSaveTimestamp(path);
+        var when = ts.HasValue
+            ? ts.Value.ToLocalTime().ToString("g")
+            : "fecha desconocida";
+
+        if (!WpfDialogService.Confirm(
+                "Recuperar autoguardado",
+                $"Hay un autoguardado más reciente que el archivo del proyecto ({when}).\n\n¿Desea restaurar esos cambios en la sesión?",
+                isWarning: true))
+            return;
+
+        var data = AutoSaveService.TryLoadAutoSave(path);
+        if (data == null)
+        {
+            WpfDialogService.Warning("Autoguardado", "No se pudo leer el archivo de autoguardado.");
+            return;
+        }
+
+        session.ApplySnapshot(data, path, markDirty: true);
+        ClearPageCache();
+        RefreshCurrentPage();
+        RefreshChrome();
+
+        if (WpfDialogService.Confirm(
+                "Guardar recuperación",
+                "Los cambios del autoguardado están en memoria. ¿Desea guardarlos ahora en el archivo del proyecto?"))
+        {
+            try
+            {
+                await projectWorkspace.SaveAsync();
+                AutoSaveService.DeleteAutoSave(path);
+                RefreshChrome();
+            }
+            catch (Exception ex)
+            {
+                AppLog.Error("ProjectWorkspace", "Falló guardar tras restaurar autoguardado", ex);
+                WpfDialogService.Error("Guardar recuperación", OperationFailureMessages.ToUserMessage(ex));
+            }
+        }
+    }
+
     public async Task SaveProjectAsync()
     {
-        if (!host.ProjectWorkspace.HasOpenProject)
+        if (!projectWorkspace.HasOpenProject)
         {
             WpfDialogService.Info("Guardar", "No hay proyecto abierto.");
             return;
@@ -324,13 +436,13 @@ partial class ShellViewModel
                 return;
 
             var user = CollaborationSessionBridge.CurrentUserContext();
-            host.Session.ProjectInfo.UsuarioNombre = string.IsNullOrWhiteSpace(user.DisplayName) ? user.Email : user.DisplayName;
-            host.Session.ProjectInfo.UsuarioRol = host.Permissions.RoleDisplayName;
+            session.ProjectInfo.UsuarioNombre = string.IsNullOrWhiteSpace(user.DisplayName) ? user.Email : user.DisplayName;
+            session.ProjectInfo.UsuarioRol = permissions.RoleDisplayName;
 
-            await host.ProjectWorkspace.SaveAsync();
-            AutoSaveService.DeleteAutoSave(host.Session.CurrentProjectPath);
+            await projectWorkspace.SaveAsync();
+            AutoSaveService.DeleteAutoSave(session.CurrentProjectPath);
             RefreshChrome();
-            WpfDialogService.Info("Guardar", "Proyecto guardado correctamente.");
+            ShellNotificationService.Instance.ShowSuccess("Proyecto guardado", $"Los cambios se guardaron correctamente ({AppClock.Now:HH:mm:ss}).");
         }
         catch (Exception ex)
         {
@@ -341,10 +453,10 @@ partial class ShellViewModel
 
     public async Task SaveProjectAsAsync()
     {
-        if (!host.ProjectWorkspace.HasOpenProject)
+        if (!projectWorkspace.HasOpenProject)
         {
             await OpenProjectAsync();
-            if (!host.ProjectWorkspace.HasOpenProject)
+            if (!projectWorkspace.HasOpenProject)
                 return;
         }
         if (IsReadOnly)
@@ -353,12 +465,12 @@ partial class ShellViewModel
             return;
         }
 
-        string defaultName = ProjectTextValidator.MakeSafeFileName(host.Session.ProjectInfo.Nombre) + ProjectFileTypes.CurrentExtension;
+        string defaultName = ProjectTextValidator.MakeSafeFileName(session.ProjectInfo.Nombre) + ProjectFileTypes.CurrentExtension;
         var path = WpfDialogService.PromptSaveFile(defaultName);
         if (path == null)
             return;
 
-        var targetLock = host.ProjectLock.InspectLock(path);
+        var targetLock = projectLock.InspectLock(path);
         if (targetLock.State is ProjectLockState.LocalMachineAlive or ProjectLockState.RemoteRecent or ProjectLockState.Corrupt)
         {
             WpfDialogService.Warning("Guardar como", $"El destino ya está bloqueado o no es seguro ({targetLock.HolderSummary}).");
@@ -370,21 +482,21 @@ partial class ShellViewModel
             if (!TryApplyCurrentPageChanges())
                 return;
 
-            await host.ProjectWorkspace.SaveAsAsync(path);
-            host.ProjectLock.ReleaseLock();
+            await projectWorkspace.SaveAsAsync(path);
+            projectLock.ReleaseLock();
             var user = CollaborationSessionBridge.CurrentUserContext();
-            if (host.ProjectLock.TryAcquireLock(host.Session.CurrentProjectPath, user))
+            if (projectLock.TryAcquireLock(session.CurrentProjectPath, user))
             {
-                host.Session.SetLockReadOnly(false);
-                host.Audit.RecordLifecycle("GuardarComo", host.Session.CurrentProjectPath);
+                session.SetLockReadOnly(false);
+                audit.RecordLifecycle("GuardarComo", session.CurrentProjectPath);
             }
             SyncReadOnlyFromSession();
             autoSave.Start();
-            recentProjects.AddProject(host.Session.CurrentProjectPath);
+            recentProjects.AddProject(session.CurrentProjectPath);
             RefreshRecentProjects();
             RefreshChrome();
             RefreshCurrentPage();
-            WpfDialogService.Info("Guardar como", $"Copia guardada en:{Environment.NewLine}{host.Session.CurrentProjectPath}");
+            WpfDialogService.Info("Guardar como", $"Copia guardada en:{Environment.NewLine}{session.CurrentProjectPath}");
         }
         catch (Exception ex)
         {
@@ -395,22 +507,17 @@ partial class ShellViewModel
 
     private void OnSaved()
     {
-        host.UndoService.OnSaved();
-        AutoSaveService.DeleteAutoSave(host.Session.CurrentProjectPath);
+        undo.OnSaved();
+        AutoSaveService.DeleteAutoSave(session.CurrentProjectPath);
         Application.Current?.Dispatcher.InvokeAsync(RefreshChrome);
     }
 
     private void TryApplyCachedUfValue()
     {
-        if (host.Session.ValorUfClp > 0m) return;
-        var currency = host.Session.ProjectCurrency;
-        if (string.Equals(currency, "UF", StringComparison.OrdinalIgnoreCase)) return;
-
+        if (session.ValorUfClp > 0m) return;
         var cached = EconomicIndicatorCache.TryRead();
-        if (cached == null || EconomicIndicatorCache.IsStale(cached.FetchedAt)) return;
-
-        host.Session.ValorUfClp = cached.UfClp;
-        host.Session.MarkDirty();
+        session.ValorUfClp = cached != null && cached.UfClp > 0m ? cached.UfClp : PriceConversion.DefaultValorUfClp;
+        session.MarkDirty();
     }
 
     private void RefreshRecentProjects()

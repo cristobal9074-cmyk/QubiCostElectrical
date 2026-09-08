@@ -9,12 +9,13 @@ namespace QubiCostElectrical.Wpf.Features.Costo;
 public sealed class StaffingRoleVm : ViewModelBase
 {
     private readonly Action? onChanged;
+    private readonly Func<bool>? canEdit;
     private string cargo;
     private decimal tarifaMensualClp;
     private decimal dedicacionPct;
     private int meses;
 
-    public StaffingRoleVm(StaffingRoleRow row, Action? onChanged)
+    public StaffingRoleVm(StaffingRoleRow row, Action? onChanged, Func<bool>? canEdit = null)
     {
         Id = string.IsNullOrWhiteSpace(row.Id) ? Guid.NewGuid().ToString("N") : row.Id;
         cargo = row.Cargo ?? "";
@@ -22,8 +23,11 @@ public sealed class StaffingRoleVm : ViewModelBase
         dedicacionPct = row.DedicacionPct;
         meses = row.Meses;
         this.onChanged = onChanged;
+        this.canEdit = canEdit;
         RaiseValidation();
     }
+
+    private bool AllowEdit => canEdit?.Invoke() ?? true;
 
     public string Id { get; }
 
@@ -32,6 +36,7 @@ public sealed class StaffingRoleVm : ViewModelBase
         get => cargo;
         set
         {
+            if (!AllowEdit) return;
             if (SetProperty(ref cargo, value ?? ""))
             {
                 RaiseValidation();
@@ -45,6 +50,7 @@ public sealed class StaffingRoleVm : ViewModelBase
         get => tarifaMensualClp;
         set
         {
+            if (!AllowEdit) return;
             if (SetProperty(ref tarifaMensualClp, Math.Max(0m, value)))
             {
                 RaiseTotal();
@@ -58,6 +64,7 @@ public sealed class StaffingRoleVm : ViewModelBase
         get => dedicacionPct;
         set
         {
+            if (!AllowEdit) return;
             if (SetProperty(ref dedicacionPct, ClampPct(value)))
             {
                 RaiseTotal();
@@ -71,6 +78,7 @@ public sealed class StaffingRoleVm : ViewModelBase
         get => meses;
         set
         {
+            if (!AllowEdit) return;
             if (SetProperty(ref meses, Math.Max(0, value)))
             {
                 RaiseTotal();

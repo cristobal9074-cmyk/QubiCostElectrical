@@ -94,7 +94,10 @@ public sealed class AntecedenteRowVm : ViewModelBase
 public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPendingChanges, IRefreshablePage
 {
     private readonly IShellNavigationHost shell;
-    private readonly WpfAppHost host;
+    private readonly BudgetProjectSession session;
+    private readonly IProjectWorkspaceService projectWorkspace;
+    private readonly IPermissionService permissions;
+    private readonly IDocumentsWorkspaceService documents;
     private readonly List<AntecedenteRowVm> allRows = new();
     private AntecedenteRowVm? selectedRow;
     private string searchText = "";

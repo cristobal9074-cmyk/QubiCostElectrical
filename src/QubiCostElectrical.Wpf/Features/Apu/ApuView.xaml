@@ -4,7 +4,9 @@
              xmlns:local="clr-namespace:QubiCostElectrical.Wpf.Features.Apu"
              xmlns:domain="clr-namespace:QubiCostElectrical;assembly=QubiCostElectrical.Domain"
              xmlns:sys="clr-namespace:System;assembly=mscorlib"
-             xmlns:ctrl="clr-namespace:QubiCostElectrical.Wpf.Controls">
+             xmlns:ctrl="clr-namespace:QubiCostElectrical.Wpf.Controls"
+             xmlns:infra="clr-namespace:QubiCostElectrical.Wpf.Infrastructure"
+             KeyDown="OnUserControlKeyDown">
 
   <UserControl.Resources>
     <x:Array x:Key="TipoRecursoValues" Type="{x:Type domain:ApuTipoRecurso}">
@@ -18,7 +20,7 @@
     </x:Array>
 
     <Style x:Key="SummaryCardLabel" TargetType="TextBlock">
-      <Setter Property="FontSize" Value="11"/>
+      <Setter Property="FontSize" Value="{StaticResource Font.Size.sm}"/>
       <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}"/>
       <Setter Property="FontWeight" Value="SemiBold"/>
       <Setter Property="Margin" Value="0,0,0,2"/>
@@ -26,7 +28,7 @@
     </Style>
 
     <Style x:Key="SummaryCardValue" TargetType="TextBlock">
-      <Setter Property="FontSize" Value="14"/>
+      <Setter Property="FontSize" Value="{StaticResource Font.Size.lg}"/>
       <Setter Property="FontWeight" Value="Bold"/>
       <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}"/>
     </Style>
@@ -53,8 +55,12 @@
         <!-- Encabezado izquierdo -->
         <Border Grid.Row="0" Style="{StaticResource Card.LeftPanelHeader}">
           <DockPanel LastChildFill="True">
-            <Button DockPanel.Dock="Right" Style="{StaticResource Button.Secondary}" Content="⚙️ Coeficientes" Padding="6,2" FontSize="11"
-                    Command="{Binding ToggleCoefficientsCommand}" VerticalAlignment="Center" Margin="0,0,4,0"/>
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+              <Button Style="{StaticResource Button.Ghost}" Content="Ir (Ctrl+G)" Padding="6,2" FontSize="{StaticResource Font.Size.sm}"
+                      Command="{Binding OpenQuickJumpCommand}" ToolTip="Buscador Spotlight para saltar rápido a cualquier partida (Ctrl+G)" Margin="0,0,4,0"/>
+              <Button Style="{StaticResource Button.Secondary}" Content="Coeficientes" Padding="6,2" FontSize="{StaticResource Font.Size.sm}"
+                      Command="{Binding ToggleCoefficientsCommand}" Margin="0,0,4,0"/>
+            </StackPanel>
             <TextBlock Text="PARTIDAS" Style="{StaticResource Text.PartidaPanelTitle}" VerticalAlignment="Center" />
           </DockPanel>
         </Border>
@@ -94,7 +100,7 @@
 
                 <!-- Título -->
                 <TextBlock Grid.Row="0" Text="{Binding DisplayLabel}"
-                           FontSize="11" Foreground="{DynamicResource Brush.Ink}"
+                           FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink}"
                            TextTrimming="CharacterEllipsis"
                            FontWeight="{Binding EsTitulo, Converter={StaticResource BoolToFontWeight}}"/>
 
@@ -106,7 +112,7 @@
                       <SolidColorBrush Color="{Binding EstadoColor}"/>
                     </Ellipse.Fill>
                   </Ellipse>
-                  <TextBlock Text="{Binding Estado}" FontSize="9"
+                  <TextBlock Text="{Binding Estado}" FontSize="{StaticResource Font.Size.2xs}"
                              Foreground="{DynamicResource Brush.Muted}"/>
                 </StackPanel>
               </Grid>
@@ -136,7 +142,6 @@
 
       <!-- Contenido del APU -->
       <Grid Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
-        
         <!-- APU Details Grid (Visible when NOT showing coefficients) -->
         <Grid Visibility="{Binding IsShowCoefficients, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
           <Grid.RowDefinitions>
@@ -157,29 +162,29 @@
 
             <StackPanel Grid.Column="0">
               <StackPanel Orientation="Horizontal" Margin="0,0,0,3">
-                <TextBlock Text="{Binding ActiveItemCode}" FontSize="12" FontWeight="Bold"
+                <TextBlock Text="{Binding ActiveItemCode}" FontSize="{StaticResource Font.Size.md}" FontWeight="Bold"
                            Foreground="{DynamicResource Brush.Blue}" Margin="0,0,8,0"/>
-                <TextBlock Text="{Binding ActiveDescripcion}" FontSize="14" FontWeight="SemiBold"
+                <TextBlock Text="{Binding ActiveDescripcion}" FontSize="{StaticResource Font.Size.lg}" FontWeight="SemiBold"
                            Foreground="{DynamicResource Brush.Ink}" TextTrimming="CharacterEllipsis"/>
               </StackPanel>
               <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Unidad:" FontSize="11" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,4,0"/>
-                <TextBlock Text="{Binding ActiveUnidad}" FontSize="11" Foreground="{DynamicResource Brush.Ink2}" Margin="0,0,12,0"/>
-                <TextBlock Text="Cantidad:" FontSize="11" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,4,0"/>
-                <TextBlock Text="{Binding ActiveCantidad, StringFormat=N2}" FontSize="11" Foreground="{DynamicResource Brush.Ink2}" Margin="0,0,12,0"/>
-                <TextBlock Text="Estado:" FontSize="11" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,4,0"/>
-                <TextBlock Text="{Binding ActiveEstado}" FontSize="11" FontWeight="SemiBold"
+                <TextBlock Text="Unidad:" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,4,0"/>
+                <TextBlock Text="{Binding ActiveUnidad}" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink2}" Margin="0,0,12,0"/>
+                <TextBlock Text="Cantidad:" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,4,0"/>
+                <TextBlock Text="{Binding ActiveCantidad, StringFormat=N2}" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink2}" Margin="0,0,12,0"/>
+                <TextBlock Text="Estado:" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,4,0"/>
+                <TextBlock Text="{Binding ActiveEstado}" FontSize="{StaticResource Font.Size.sm}" FontWeight="SemiBold"
                            Foreground="{DynamicResource Brush.Ink2}"/>
               </StackPanel>
             </StackPanel>
 
             <!-- Precio unitario destacado -->
             <StackPanel Grid.Column="1" HorizontalAlignment="Right">
-              <TextBlock Text="Precio unitario" FontSize="11" Foreground="{DynamicResource Brush.Muted}"
+              <TextBlock Text="Precio unitario" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}"
                          HorizontalAlignment="Right"/>
-              <TextBlock Text="{Binding PrecioUnit, StringFormat='{}{0:N4} UF'}" FontSize="17" FontWeight="Bold"
+              <TextBlock Text="{Binding PrecioUnit, StringFormat='{}{0:N4} UF'}" FontSize="{StaticResource Font.Size.price}" FontWeight="Bold"
                          Foreground="{DynamicResource Brush.Blue}" HorizontalAlignment="Right"/>
-              <TextBlock Text="{Binding TotalPartida, StringFormat='Total: {0:N2} UF'}" FontSize="11"
+              <TextBlock Text="{Binding TotalPartida, StringFormat='Total: {0:N2} UF'}" FontSize="{StaticResource Font.Size.sm}"
                          Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Right"/>
             </StackPanel>
           </Grid>
@@ -190,20 +195,24 @@
         <Border Grid.Row="1" Style="{StaticResource Bar.Formula}">
           <DockPanel LastChildFill="False">
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-              <Button Style="{StaticResource Button.Toolbar}" Content="⋯" ToolTip="Plantillas, conjuntos y más">
+              <Button Style="{StaticResource Button.Ghost}" Content="⋯" Padding="12,4"
+                      ToolTip="Plantillas y conjuntos" Click="OnMoreActionsClick">
                 <Button.ContextMenu>
                   <ContextMenu>
                     <MenuItem Header="Desde plantilla" Command="{Binding AplicarPlantillaCommand}" />
                     <MenuItem Header="Guardar plantilla" Command="{Binding GuardarComoPlantillaCommand}" />
                     <MenuItem Header="Crear conjunto" Command="{Binding CrearConjuntoCommand}" />
-                    <Separator />
-                    <MenuItem Header="Generar APU desde cubicación" Command="{Binding GenerarApuCommand}" />
-                    <MenuItem Header="Actualizar precios" Command="{Binding RefrescarPreciosCommand}" />
                   </ContextMenu>
                 </Button.ContextMenu>
               </Button>
             </StackPanel>
             <StackPanel Orientation="Horizontal">
+              <Button Style="{StaticResource Button.ToolbarPrimary}" Content="Generar APU"
+                      Command="{Binding GenerarApuCommand}"
+                      ToolTip="Generar APU desde cubicación valorizada" />
+              <Button Style="{StaticResource Button.Toolbar}" Content="Actualizar precios"
+                      Command="{Binding RefrescarPreciosCommand}"
+                      ToolTip="Actualizar precios de recursos desde el banco / proyecto" />
               <Button Style="{StaticResource Button.Toolbar}" Content="Duplicar"
                       Command="{Binding DuplicateRecursoCommand}"
                       CommandParameter="{Binding SelectedRecurso}"/>
@@ -220,221 +229,156 @@
                 BorderBrush="{DynamicResource Brush.Amber}" BorderThickness="0,0,0,1"
                 Padding="12,6"
                 Visibility="{Binding HasAlerts, Converter={StaticResource BoolToVisibility}}">
-          <TextBlock Text="{Binding AlertText}" FontSize="11"
+          <TextBlock Text="{Binding AlertText}" FontSize="{StaticResource Font.Size.sm}"
                      Foreground="{DynamicResource Brush.Amber}" TextWrapping="Wrap"/>
         </Border>
 
         <!-- Estado sin APU -->
+        <!-- Vista unificada de APU en una sola grilla -->
         <Grid Grid.Row="3">
-          <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
-                        Visibility="{Binding TieneApu, Converter={StaticResource BoolToVisibility}}">
-            <StackPanel Margin="16,12,16,16">
+          <Grid Visibility="{Binding TieneApu, Converter={StaticResource BoolToVisibility}}">
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="*" />
+              <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
 
-              <!-- 1. EQUIPOS -->
-              <Border Background="{DynamicResource Brush.Canvas}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Margin="0,0,0,16">
-                <StackPanel>
-                  <Border Background="{DynamicResource Brush.Surface2}" Padding="12,8" BorderBrush="{DynamicResource Brush.Blue}" BorderThickness="3,0,0,0">
-                    <DockPanel LastChildFill="True">
-                      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="SUBTOTAL: " FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center"/>
-                        <TextBlock Text="{Binding CostoEquipo, StringFormat='{}{0:N4} UF'}" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" Margin="0,0,12,0" VerticalAlignment="Center"/>
-                        <Button Style="{StaticResource Button.ToolbarPrimary}" Content="+ Agregar equipo" Height="24" Padding="8,0" FontSize="11"
-                                Command="{Binding AddRecursoCommand}" CommandParameter="EQ"/>
-                      </StackPanel>
-                      <TextBlock Text="1. EQUIPO" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center"/>
-                    </DockPanel>
-                  </Border>
-                  <DataGrid Style="{StaticResource DataGrid.Workspace}" ItemsSource="{Binding RecursosEquipo}" SelectedItem="{Binding SelectedRecurso, Mode=TwoWay}"
-                            RowEditEnding="OnRowEditEnding"
-                            AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserSortColumns="False" GridLinesVisibility="Horizontal" HeadersVisibility="Column" RowHeight="32" FontSize="12" BorderThickness="0" Background="Transparent">
-                    <DataGrid.Columns>
-                      <DataGridTextColumn Header="Código" Binding="{Binding CodigoMaterial}" Width="90" IsReadOnly="False"/>
-                      <DataGridTextColumn Header="Descripción" Binding="{Binding Descripcion}" Width="*" IsReadOnly="False"/>
-                      <DataGridTextColumn Header="Ud" Binding="{Binding Unidad}" Width="45" IsReadOnly="False"/>
-                      <DataGridTextColumn Header="Rend." Binding="{Binding Rendimiento, StringFormat=N4}" Width="70" IsReadOnly="False">
-                        <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right"/><Setter Property="VerticalAlignment" Value="Center"/></Style></DataGridTextColumn.ElementStyle>
-                      </DataGridTextColumn>
-                      <DataGridTextColumn Header="Precio UF" Binding="{Binding PrecioUf, StringFormat=N4}" Width="80" IsReadOnly="False">
-                        <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right"/><Setter Property="VerticalAlignment" Value="Center"/></Style></DataGridTextColumn.ElementStyle>
-                      </DataGridTextColumn>
-                      <DataGridTextColumn Header="Costo UF" Binding="{Binding CostoUnitUf, StringFormat=N4, Mode=OneWay}" Width="80" IsReadOnly="True">
-                        <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right"/><Setter Property="VerticalAlignment" Value="Center"/><Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}"/></Style></DataGridTextColumn.ElementStyle>
-                      </DataGridTextColumn>
-                      <DataGridTextColumn Header="Estado" Binding="{Binding Estado}" Width="80" IsReadOnly="True">
-                        <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="VerticalAlignment" Value="Center"/></Style></DataGridTextColumn.ElementStyle>
-                      </DataGridTextColumn>
-                    </DataGrid.Columns>
-                  </DataGrid>
+            <!-- Toolbar rápida de recursos -->
+            <Border Grid.Row="0" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1" Padding="12,6">
+              <DockPanel LastChildFill="True">
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                  <Button Style="{StaticResource Button.Ghost}" Content="Duplicar" Height="26" Padding="8,0" FontSize="{StaticResource Font.Size.sm}" Margin="0,0,4,0"
+                          Command="{Binding DuplicateRecursoCommand}" CommandParameter="{Binding SelectedRecurso}" ToolTip="Duplica la fila seleccionada" />
+                  <Button Style="{StaticResource Button.Ghost}" Content="Eliminar" Height="26" Padding="8,0" FontSize="{StaticResource Font.Size.sm}"
+                          Command="{Binding DeleteRecursoCommand}" CommandParameter="{Binding SelectedRecurso}" ToolTip="Elimina la fila seleccionada" />
                 </StackPanel>
-              </Border>
 
-              <!-- 2. MATERIALES -->
-              <Border Background="{DynamicResource Brush.Canvas}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Margin="0,0,0,16">
-                <StackPanel>
-                  <Border Background="{DynamicResource Brush.Surface2}" Padding="12,8" BorderBrush="{DynamicResource Brush.Success}" BorderThickness="3,0,0,0">
-                    <DockPanel LastChildFill="True">
-                      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="SUBTOTAL: " FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center"/>
-                        <TextBlock Text="{Binding CostoMat, StringFormat='{}{0:N4} UF'}" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" Margin="0,0,12,0" VerticalAlignment="Center"/>
-                        <Button Style="{StaticResource Button.ToolbarPrimary}" Content="+ Agregar material" Height="24" Padding="8,0" FontSize="11"
-                                Command="{Binding AddRecursoCommand}" CommandParameter="MAT"/>
-                      </StackPanel>
-                      <TextBlock Text="2. MATERIALES" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center"/>
-                    </DockPanel>
-                  </Border>
-                  <DataGrid Style="{StaticResource DataGrid.Workspace}" ItemsSource="{Binding RecursosMat}" SelectedItem="{Binding SelectedRecurso, Mode=TwoWay}"
-                            RowEditEnding="OnRowEditEnding"
-                            AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserSortColumns="False" GridLinesVisibility="Horizontal" HeadersVisibility="Column" RowHeight="32" FontSize="12" BorderThickness="0" Background="Transparent">
-                    <DataGrid.Columns>
-                      <DataGridTextColumn Header="Código" Binding="{Binding CodigoMaterial}" Width="90" IsReadOnly="False"/>
-                      <DataGridTextColumn Header="Descripción" Binding="{Binding Descripcion}" Width="*" IsReadOnly="False"/>
-                      <DataGridTextColumn Header="Ud" Binding="{Binding Unidad}" Width="45" IsReadOnly="False"/>
-                      <DataGridTextColumn Header="Rend." Binding="{Binding Rendimiento, StringFormat=N4}" Width="70" IsReadOnly="False">
-                        <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right"/><Setter Property="VerticalAlignment" Value="Center"/></Style></DataGridTextColumn.ElementStyle>
-                      </DataGridTextColumn>
-                      <DataGridTextColumn Header="Precio UF" Binding="{Binding PrecioUf, StringFormat=N4}" Width="80" IsReadOnly="False">
-                        <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right"/><Setter Property="VerticalAlignment" Value="Center"/></Style></DataGridTextColumn.ElementStyle>
-                      </DataGridTextColumn>
-                      <DataGridTextColumn Header="Merma%" Binding="{Binding MermaPct, StringFormat=N1}" Width="60" IsReadOnly="False">
-                        <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right"/><Setter Property="VerticalAlignment" Value="Center"/></Style></DataGridTextColumn.ElementStyle>
-                      </DataGridTextColumn>
-                      <DataGridTextColumn Header="Imprev.%" Binding="{Binding ImprevistosPct, StringFormat=N1}" Width="65" IsReadOnly="False">
-                        <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right"/><Setter Property="VerticalAlignment" Value="Center"/></Style></DataGridTextColumn.ElementStyle>
-                      </DataGridTextColumn>
-                      <DataGridTextColumn Header="Costo UF" Binding="{Binding CostoUnitUf, StringFormat=N4, Mode=OneWay}" Width="80" IsReadOnly="True">
-                        <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right"/><Setter Property="VerticalAlignment" Value="Center"/><Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}"/></Style></DataGridTextColumn.ElementStyle>
-                      </DataGridTextColumn>
-                      <DataGridTextColumn Header="Estado" Binding="{Binding Estado}" Width="80" IsReadOnly="True">
-                        <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="VerticalAlignment" Value="Center"/></Style></DataGridTextColumn.ElementStyle>
-                      </DataGridTextColumn>
-                    </DataGrid.Columns>
-                  </DataGrid>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                  <TextBlock Text="AGREGAR:" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                  <Button Style="{StaticResource Button.ToolbarPrimary}" Content="+ Material" Height="26" Padding="8,0" FontSize="{StaticResource Font.Size.sm}" Margin="0,0,4,0"
+                          Command="{Binding AddRecursoCommand}" CommandParameter="MAT" />
+                  <Button Style="{StaticResource Button.ToolbarPrimary}" Content="+ M.O." Height="26" Padding="8,0" FontSize="{StaticResource Font.Size.sm}" Margin="0,0,4,0"
+                          Command="{Binding AddRecursoCommand}" CommandParameter="MO" />
+                  <Button Style="{StaticResource Button.ToolbarPrimary}" Content="+ Equipo" Height="26" Padding="8,0" FontSize="{StaticResource Font.Size.sm}" Margin="0,0,4,0"
+                          Command="{Binding AddRecursoCommand}" CommandParameter="EQ" />
+                  <Button Style="{StaticResource Button.ToolbarPrimary}" Content="+ Subcontrato" Height="26" Padding="8,0" FontSize="{StaticResource Font.Size.sm}" Margin="0,0,4,0"
+                          Command="{Binding AddRecursoCommand}" CommandParameter="SC" />
+                  <Button Style="{StaticResource Button.ToolbarPrimary}" Content="+ Transporte" Height="26" Padding="8,0" FontSize="{StaticResource Font.Size.sm}" Margin="0,0,4,0"
+                          Command="{Binding AddRecursoCommand}" CommandParameter="TR" />
+                  <Button Style="{StaticResource Button.ToolbarPrimary}" Content="+ Otro" Height="26" Padding="8,0" FontSize="{StaticResource Font.Size.sm}"
+                          Command="{Binding AddRecursoCommand}" CommandParameter="OTROS" />
                 </StackPanel>
-              </Border>
+              </DockPanel>
+            </Border>
 
-              <!-- 3. TRANSPORTES -->
-              <Border Background="{DynamicResource Brush.Canvas}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Margin="0,0,0,16">
-                <StackPanel>
-                  <Border Background="{DynamicResource Brush.Surface2}" Padding="12,8" BorderBrush="{DynamicResource Brush.Purple}" BorderThickness="3,0,0,0">
-                    <DockPanel LastChildFill="True">
-                      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="SUBTOTAL: " FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center"/>
-                        <TextBlock Text="{Binding CostoTransporteTotal, StringFormat='{}{0:N4} UF'}" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" Margin="0,0,12,0" VerticalAlignment="Center"/>
-                        <Button Style="{StaticResource Button.ToolbarPrimary}" Content="+ Agregar transporte" Height="24" Padding="8,0" FontSize="11"
-                                Command="{Binding AddRecursoCommand}" CommandParameter="TR"/>
-                      </StackPanel>
-                      <TextBlock Text="3. TRANSPORTES" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center"/>
-                    </DockPanel>
-                  </Border>
-                  <DataGrid Style="{StaticResource DataGrid.Workspace}" ItemsSource="{Binding RecursosOtros}" SelectedItem="{Binding SelectedRecurso, Mode=TwoWay}"
-                            RowEditEnding="OnRowEditEnding"
-                            AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserSortColumns="False" GridLinesVisibility="Horizontal" HeadersVisibility="Column" RowHeight="32" FontSize="12" BorderThickness="0" Background="Transparent">
-                    <DataGrid.Columns>
-                      <DataGridTextColumn Header="Código" Binding="{Binding CodigoMaterial}" Width="90" IsReadOnly="False"/>
-                      <DataGridTextColumn Header="Descripción" Binding="{Binding Descripcion}" Width="*" IsReadOnly="False"/>
-                      <DataGridTextColumn Header="Ud" Binding="{Binding Unidad}" Width="45" IsReadOnly="False"/>
-                      <DataGridTextColumn Header="Rend." Binding="{Binding Rendimiento, StringFormat=N4}" Width="70" IsReadOnly="False">
-                        <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right"/><Setter Property="VerticalAlignment" Value="Center"/></Style></DataGridTextColumn.ElementStyle>
-                      </DataGridTextColumn>
-                      <DataGridTextColumn Header="Precio UF" Binding="{Binding PrecioUf, StringFormat=N4}" Width="80" IsReadOnly="False">
-                        <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right"/><Setter Property="VerticalAlignment" Value="Center"/></Style></DataGridTextColumn.ElementStyle>
-                      </DataGridTextColumn>
-                      <DataGridTextColumn Header="Costo UF" Binding="{Binding CostoUnitUf, StringFormat=N4, Mode=OneWay}" Width="80" IsReadOnly="True">
-                        <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right"/><Setter Property="VerticalAlignment" Value="Center"/><Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}"/></Style></DataGridTextColumn.ElementStyle>
-                      </DataGridTextColumn>
-                      <DataGridTextColumn Header="Estado" Binding="{Binding Estado}" Width="80" IsReadOnly="True">
-                        <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="VerticalAlignment" Value="Center"/></Style></DataGridTextColumn.ElementStyle>
-                      </DataGridTextColumn>
-                    </DataGrid.Columns>
-                  </DataGrid>
+            <!-- Grilla única continua -->
+            <DataGrid Grid.Row="1" x:Name="ApuGrid" Style="{StaticResource DataGrid.Workspace}"
+                      ItemsSource="{Binding Recursos}"
+                      SelectedItem="{Binding SelectedRecurso, Mode=TwoWay}"
+                      infra:DataGridExcelNavigation.Enable="True"
+                      SelectionUnit="FullRow"
+                      SelectionMode="Extended"
+                      RowEditEnding="OnRowEditEnding"
+                      IsReadOnly="{Binding IsReadOnly}"
+                      AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserSortColumns="False"
+                      GridLinesVisibility="Horizontal" HeadersVisibility="Column" RowHeight="30"
+                      FontSize="{StaticResource Font.Size.md}" BorderThickness="0" Background="Transparent"
+                      EnableRowVirtualization="True"
+                      VirtualizingStackPanel.IsVirtualizing="True"
+                      VirtualizingStackPanel.VirtualizationMode="Recycling">
+              <DataGrid.Columns>
+                <DataGridComboBoxColumn Header="Tipo" SelectedItemBinding="{Binding Tipo, UpdateSourceTrigger=PropertyChanged}"
+                                        ItemsSource="{StaticResource TipoRecursoValues}" Width="75" />
+                <DataGridTextColumn Header="Código" Binding="{Binding CodigoMaterial}" Width="95" IsReadOnly="False" />
+                <DataGridTextColumn Header="Descripción" Binding="{Binding Descripcion}" Width="*" MinWidth="180" IsReadOnly="False" />
+                <DataGridTextColumn Header="Ud" Binding="{Binding Unidad}" Width="45" IsReadOnly="False" />
+                <DataGridTextColumn Header="Rend." Binding="{Binding Rendimiento, StringFormat=N4}" Width="75" IsReadOnly="False">
+                  <DataGridTextColumn.ElementStyle>
+                    <Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right"/><Setter Property="VerticalAlignment" Value="Center"/></Style>
+                  </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Precio UF" Binding="{Binding PrecioUf, StringFormat=N4}" Width="85" IsReadOnly="False">
+                  <DataGridTextColumn.ElementStyle>
+                    <Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right"/><Setter Property="VerticalAlignment" Value="Center"/></Style>
+                  </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Merma%" Binding="{Binding MermaPct, StringFormat=N1}" Width="65" IsReadOnly="False">
+                  <DataGridTextColumn.ElementStyle>
+                    <Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right"/><Setter Property="VerticalAlignment" Value="Center"/></Style>
+                  </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Imprev.%" Binding="{Binding ImprevistosPct, StringFormat=N1}" Width="70" IsReadOnly="False">
+                  <DataGridTextColumn.ElementStyle>
+                    <Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right"/><Setter Property="VerticalAlignment" Value="Center"/></Style>
+                  </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Costo UF" Binding="{Binding CostoUnitUf, StringFormat=N4, Mode=OneWay}" Width="85" IsReadOnly="True">
+                  <DataGridTextColumn.ElementStyle>
+                    <Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right"/><Setter Property="VerticalAlignment" Value="Center"/><Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}"/><Setter Property="FontWeight" Value="SemiBold"/></Style>
+                  </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Estado" Binding="{Binding Estado}" Width="80" IsReadOnly="True">
+                  <DataGridTextColumn.ElementStyle>
+                    <Style TargetType="TextBlock"><Setter Property="VerticalAlignment" Value="Center"/></Style>
+                  </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+              </DataGrid.Columns>
+            </DataGrid>
+
+            <!-- Subtotales interactivos por categoría -->
+            <Border Grid.Row="2" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,1,0,0" Padding="12,6">
+              <DockPanel LastChildFill="True">
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                  <TextBlock Text="COSTO DIRECTO: " FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
+                  <TextBlock Text="{Binding CostoDirecto, StringFormat='{}{0:N4} UF'}" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource Brush.Accent}" VerticalAlignment="Center" />
                 </StackPanel>
-              </Border>
 
-              <!-- 4. MANO DE OBRA -->
-              <Border Background="{DynamicResource Brush.Canvas}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Margin="0,0,0,16">
-                <StackPanel>
-                  <Border Background="{DynamicResource Brush.Surface2}" Padding="12,8" BorderBrush="{DynamicResource Brush.Amber}" BorderThickness="3,0,0,0">
-                    <DockPanel LastChildFill="True">
-                      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="SUBTOTAL: " FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center"/>
-                        <TextBlock Text="{Binding CostoMoTotal, StringFormat='{}{0:N4} UF'}" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" Margin="0,0,12,0" VerticalAlignment="Center"/>
-                        <Button Style="{StaticResource Button.ToolbarPrimary}" Content="+ Agregar M.O." Height="24" Padding="8,0" FontSize="11"
-                                Command="{Binding AddRecursoCommand}" CommandParameter="MO"/>
-                      </StackPanel>
-                      <TextBlock Text="4. MANO DE OBRA" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center"/>
-                    </DockPanel>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                  <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Padding="6,2" Margin="0,0,6,0">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="Mat: " FontSize="11" Foreground="{DynamicResource Brush.Muted}" />
+                      <TextBlock Text="{Binding CostoMat, StringFormat='{}{0:N4} UF'}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Success}" />
+                    </StackPanel>
                   </Border>
-                  <DataGrid Style="{StaticResource DataGrid.Workspace}" ItemsSource="{Binding RecursosMo}" SelectedItem="{Binding SelectedRecurso, Mode=TwoWay}"
-                            RowEditEnding="OnRowEditEnding"
-                            AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserSortColumns="False" GridLinesVisibility="Horizontal" HeadersVisibility="Column" RowHeight="32" FontSize="12" BorderThickness="0" Background="Transparent">
-                    <DataGrid.Columns>
-                      <DataGridTextColumn Header="Código" Binding="{Binding CodigoMaterial}" Width="90" IsReadOnly="False"/>
-                      <DataGridTextColumn Header="Descripción" Binding="{Binding Descripcion}" Width="*" IsReadOnly="False"/>
-                      <DataGridTextColumn Header="Ud" Binding="{Binding Unidad}" Width="45" IsReadOnly="False"/>
-                      <DataGridTextColumn Header="Rend." Binding="{Binding Rendimiento, StringFormat=N4}" Width="70" IsReadOnly="False">
-                        <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right"/><Setter Property="VerticalAlignment" Value="Center"/></Style></DataGridTextColumn.ElementStyle>
-                      </DataGridTextColumn>
-                      <DataGridTextColumn Header="Precio UF" Binding="{Binding PrecioUf, StringFormat=N4}" Width="80" IsReadOnly="False">
-                        <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right"/><Setter Property="VerticalAlignment" Value="Center"/></Style></DataGridTextColumn.ElementStyle>
-                      </DataGridTextColumn>
-                      <DataGridTextColumn Header="Costo UF" Binding="{Binding CostoUnitUf, StringFormat=N4, Mode=OneWay}" Width="80" IsReadOnly="True">
-                        <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right"/><Setter Property="VerticalAlignment" Value="Center"/><Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}"/></Style></DataGridTextColumn.ElementStyle>
-                      </DataGridTextColumn>
-                      <DataGridTextColumn Header="Estado" Binding="{Binding Estado}" Width="80" IsReadOnly="True">
-                        <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="VerticalAlignment" Value="Center"/></Style></DataGridTextColumn.ElementStyle>
-                      </DataGridTextColumn>
-                    </DataGrid.Columns>
-                  </DataGrid>
-                </StackPanel>
-              </Border>
 
-              <!-- 5. SUBCONTRATOS -->
-              <Border Background="{DynamicResource Brush.Canvas}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4">
-                <StackPanel>
-                  <Border Background="{DynamicResource Brush.Surface2}" Padding="12,8" BorderBrush="{DynamicResource Brush.Info}" BorderThickness="3,0,0,0">
-                    <DockPanel LastChildFill="True">
-                      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="SUBTOTAL: " FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center"/>
-                        <TextBlock Text="{Binding CostoSc, StringFormat='{}{0:N4} UF'}" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" Margin="0,0,12,0" VerticalAlignment="Center"/>
-                        <Button Style="{StaticResource Button.ToolbarPrimary}" Content="+ Agregar subcontrato" Height="24" Padding="8,0" FontSize="11"
-                                Command="{Binding AddRecursoCommand}" CommandParameter="SC"/>
-                      </StackPanel>
-                      <TextBlock Text="5. SUBCONTRATOS" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center"/>
-                    </DockPanel>
+                  <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Padding="6,2" Margin="0,0,6,0">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="M.O.: " FontSize="11" Foreground="{DynamicResource Brush.Muted}" />
+                      <TextBlock Text="{Binding CostoMoTotal, StringFormat='{}{0:N4} UF'}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Amber}" />
+                    </StackPanel>
                   </Border>
-                  <DataGrid Style="{StaticResource DataGrid.Workspace}" ItemsSource="{Binding RecursosSc}" SelectedItem="{Binding SelectedRecurso, Mode=TwoWay}"
-                            RowEditEnding="OnRowEditEnding"
-                            AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserSortColumns="False" GridLinesVisibility="Horizontal" HeadersVisibility="Column" RowHeight="32" FontSize="12" BorderThickness="0" Background="Transparent">
-                    <DataGrid.Columns>
-                      <DataGridTextColumn Header="Código" Binding="{Binding CodigoMaterial}" Width="90" IsReadOnly="False"/>
-                      <DataGridTextColumn Header="Descripción" Binding="{Binding Descripcion}" Width="*" IsReadOnly="False"/>
-                      <DataGridTextColumn Header="Ud" Binding="{Binding Unidad}" Width="45" IsReadOnly="False"/>
-                      <DataGridTextColumn Header="Rend." Binding="{Binding Rendimiento, StringFormat=N4}" Width="70" IsReadOnly="False">
-                        <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right"/><Setter Property="VerticalAlignment" Value="Center"/></Style></DataGridTextColumn.ElementStyle>
-                      </DataGridTextColumn>
-                      <DataGridTextColumn Header="Precio UF" Binding="{Binding PrecioUf, StringFormat=N4}" Width="80" IsReadOnly="False">
-                        <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right"/><Setter Property="VerticalAlignment" Value="Center"/></Style></DataGridTextColumn.ElementStyle>
-                      </DataGridTextColumn>
-                      <DataGridTextColumn Header="Costo UF" Binding="{Binding CostoUnitUf, StringFormat=N4, Mode=OneWay}" Width="80" IsReadOnly="True">
-                        <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right"/><Setter Property="VerticalAlignment" Value="Center"/><Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}"/></Style></DataGridTextColumn.ElementStyle>
-                      </DataGridTextColumn>
-                      <DataGridTextColumn Header="Estado" Binding="{Binding Estado}" Width="80" IsReadOnly="True">
-                        <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="VerticalAlignment" Value="Center"/></Style></DataGridTextColumn.ElementStyle>
-                      </DataGridTextColumn>
-                    </DataGrid.Columns>
-                  </DataGrid>
-                </StackPanel>
-              </Border>
 
-            </StackPanel>
-          </ScrollViewer>
+                  <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Padding="6,2" Margin="0,0,6,0">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="Eq: " FontSize="11" Foreground="{DynamicResource Brush.Muted}" />
+                      <TextBlock Text="{Binding CostoEquipo, StringFormat='{}{0:N4} UF'}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" />
+                    </StackPanel>
+                  </Border>
+
+                  <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Padding="6,2" Margin="0,0,6,0">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="SC: " FontSize="11" Foreground="{DynamicResource Brush.Muted}" />
+                      <TextBlock Text="{Binding CostoSc, StringFormat='{}{0:N4} UF'}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Info}" />
+                    </StackPanel>
+                  </Border>
+
+                  <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Padding="6,2">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="Transp/Otros: " FontSize="11" Foreground="{DynamicResource Brush.Muted}" />
+                      <TextBlock Text="{Binding CostoTransporteTotal, StringFormat='{}{0:N4} UF'}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Purple}" />
+                    </StackPanel>
+                  </Border>
+                </StackPanel>
+              </DockPanel>
+            </Border>
+          </Grid>
 
           <!-- Estado cuando la partida aún no tiene APU -->
           <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
                       Visibility="{Binding TieneApu, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
-            <TextBlock Text="Esta partida todavía no tiene APU" FontSize="14" FontWeight="SemiBold"
+            <TextBlock Text="Esta partida todavía no tiene APU" FontSize="{StaticResource Font.Size.lg}" FontWeight="SemiBold"
                        Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Center"/>
-            <TextBlock Text="Genere el APU desde la cubicación valorizada para revisar materiales, mano de obra y precio final." FontSize="12"
+            <TextBlock Text="Genere el APU desde la cubicación valorizada para revisar materiales, mano de obra y precio final." FontSize="{StaticResource Font.Size.md}"
                        Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Center" Margin="0,4,0,16"/>
             <Button Style="{StaticResource Button.Primary}" Content="Generar APU desde cubicación"
                     Command="{Binding GenerarApuCommand}" Padding="16,8" HorizontalAlignment="Center"/>
@@ -459,7 +403,7 @@
               <StackPanel>
                 <TextBlock Text="TOTAL PARTIDA" Style="{StaticResource Text.TotalsLabel}"/>
                 <TextBlock Text="{Binding TotalPartida, StringFormat=N2}" Style="{StaticResource Text.TotalsValue}"
-                           FontSize="16" Foreground="{DynamicResource Brush.Blue}"/>
+                           FontSize="{StaticResource Font.Size.h3}" Foreground="{DynamicResource Brush.Blue}"/>
               </StackPanel>
             </StackPanel>
 
@@ -495,7 +439,7 @@
             <StackPanel>
               <DockPanel Margin="0,0,0,6">
                 <Button DockPanel.Dock="Right" Style="{StaticResource Button.Secondary}" Content="Resetear a 1.00x" Command="{Binding ResetMarkupsCommand}" />
-                <TextBlock Text="Coeficientes de Sobreventa (Markups)" Style="{StaticResource Text.SectionLabel}" FontSize="12.5" VerticalAlignment="Center" />
+                <TextBlock Text="Coeficientes de Sobreventa (Markups)" Style="{StaticResource Text.SectionTitle}" VerticalAlignment="Center" />
               </DockPanel>
               <TextBlock Text="Multiplicadores aplicados sobre el costo neto de materiales en los análisis de precios unitarios (APU)."
                          Style="{StaticResource Text.Caption}" Margin="0,0,0,16" TextWrapping="Wrap" />
@@ -505,12 +449,12 @@
                 <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,0,6,8">
                   <StackPanel>
                     <DockPanel Margin="0,0,0,6">
-                      <TextBlock Text="Conductores" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" />
+                      <TextBlock Text="Conductores" FontSize="{StaticResource Font.Size.xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" />
                       <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.Success}" DockPanel.Dock="Right" HorizontalAlignment="Right" VerticalAlignment="Center" />
                     </DockPanel>
                     <DockPanel>
-                      <TextBlock Text="x" DockPanel.Dock="Right" FontSize="11" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center" Margin="2,0,0,0" />
-                      <TextBox Text="{Binding MarkupConductoresText, UpdateSourceTrigger=LostFocus}" BorderThickness="0" Background="Transparent" FontFamily="Consolas" FontSize="14" FontWeight="Bold" Padding="0" VerticalAlignment="Center" />
+                      <TextBlock Text="x" DockPanel.Dock="Right" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center" Margin="2,0,0,0" />
+                      <TextBox Text="{Binding MarkupConductoresText, UpdateSourceTrigger=LostFocus}" IsEnabled="{Binding CanEdit}" BorderThickness="0" Background="Transparent" FontFamily="Consolas" FontSize="{StaticResource Font.Size.lg}" FontWeight="Bold" Padding="0" VerticalAlignment="Center" />
                     </DockPanel>
                   </StackPanel>
                 </Border>
@@ -519,12 +463,12 @@
                 <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="8" Padding="10" Margin="3,0,3,8">
                   <StackPanel>
                     <DockPanel Margin="0,0,0,6">
-                      <TextBlock Text="Canalización" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" />
+                      <TextBlock Text="Canalización" FontSize="{StaticResource Font.Size.xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" />
                       <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.Success}" DockPanel.Dock="Right" HorizontalAlignment="Right" VerticalAlignment="Center" />
                     </DockPanel>
                     <DockPanel>
-                      <TextBlock Text="x" DockPanel.Dock="Right" FontSize="11" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center" Margin="2,0,0,0" />
-                      <TextBox Text="{Binding MarkupCanalizacionText, UpdateSourceTrigger=LostFocus}" BorderThickness="0" Background="Transparent" FontFamily="Consolas" FontSize="14" FontWeight="Bold" Padding="0" VerticalAlignment="Center" />
+                      <TextBlock Text="x" DockPanel.Dock="Right" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center" Margin="2,0,0,0" />
+                      <TextBox Text="{Binding MarkupCanalizacionText, UpdateSourceTrigger=LostFocus}" IsEnabled="{Binding CanEdit}" BorderThickness="0" Background="Transparent" FontFamily="Consolas" FontSize="{StaticResource Font.Size.lg}" FontWeight="Bold" Padding="0" VerticalAlignment="Center" />
                     </DockPanel>
                   </StackPanel>
                 </Border>
@@ -533,12 +477,12 @@
                 <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="8" Padding="10" Margin="6,0,0,8">
                   <StackPanel>
                     <DockPanel Margin="0,0,0,6">
-                      <TextBlock Text="Tableros" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" />
+                      <TextBlock Text="Tableros" FontSize="{StaticResource Font.Size.xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" />
                       <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.Success}" DockPanel.Dock="Right" HorizontalAlignment="Right" VerticalAlignment="Center" />
                     </DockPanel>
                     <DockPanel>
-                      <TextBlock Text="x" DockPanel.Dock="Right" FontSize="11" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center" Margin="2,0,0,0" />
-                      <TextBox Text="{Binding MarkupTablerosText, UpdateSourceTrigger=LostFocus}" BorderThickness="0" Background="Transparent" FontFamily="Consolas" FontSize="14" FontWeight="Bold" Padding="0" VerticalAlignment="Center" />
+                      <TextBlock Text="x" DockPanel.Dock="Right" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center" Margin="2,0,0,0" />
+                      <TextBox Text="{Binding MarkupTablerosText, UpdateSourceTrigger=LostFocus}" IsEnabled="{Binding CanEdit}" BorderThickness="0" Background="Transparent" FontFamily="Consolas" FontSize="{StaticResource Font.Size.lg}" FontWeight="Bold" Padding="0" VerticalAlignment="Center" />
                     </DockPanel>
                   </StackPanel>
                 </Border>
@@ -547,12 +491,12 @@
                 <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,0,6,8">
                   <StackPanel>
                     <DockPanel Margin="0,0,0,6">
-                      <TextBlock Text="Protecciones" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" />
+                      <TextBlock Text="Protecciones" FontSize="{StaticResource Font.Size.xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" />
                       <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.Success}" DockPanel.Dock="Right" HorizontalAlignment="Right" VerticalAlignment="Center" />
                     </DockPanel>
                     <DockPanel>
-                      <TextBlock Text="x" DockPanel.Dock="Right" FontSize="11" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center" Margin="2,0,0,0" />
-                      <TextBox Text="{Binding MarkupProteccionesText, UpdateSourceTrigger=LostFocus}" BorderThickness="0" Background="Transparent" FontFamily="Consolas" FontSize="14" FontWeight="Bold" Padding="0" VerticalAlignment="Center" />
+                      <TextBlock Text="x" DockPanel.Dock="Right" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center" Margin="2,0,0,0" />
+                      <TextBox Text="{Binding MarkupProteccionesText, UpdateSourceTrigger=LostFocus}" IsEnabled="{Binding CanEdit}" BorderThickness="0" Background="Transparent" FontFamily="Consolas" FontSize="{StaticResource Font.Size.lg}" FontWeight="Bold" Padding="0" VerticalAlignment="Center" />
                     </DockPanel>
                   </StackPanel>
                 </Border>
@@ -561,12 +505,12 @@
                 <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="8" Padding="10" Margin="3,0,3,8">
                   <StackPanel>
                     <DockPanel Margin="0,0,0,6">
-                      <TextBlock Text="Iluminación" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" />
+                      <TextBlock Text="Iluminación" FontSize="{StaticResource Font.Size.xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" />
                       <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.Success}" DockPanel.Dock="Right" HorizontalAlignment="Right" VerticalAlignment="Center" />
                     </DockPanel>
                     <DockPanel>
-                      <TextBlock Text="x" DockPanel.Dock="Right" FontSize="11" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center" Margin="2,0,0,0" />
-                      <TextBox Text="{Binding MarkupIluminacionText, UpdateSourceTrigger=LostFocus}" BorderThickness="0" Background="Transparent" FontFamily="Consolas" FontSize="14" FontWeight="Bold" Padding="0" VerticalAlignment="Center" />
+                      <TextBlock Text="x" DockPanel.Dock="Right" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center" Margin="2,0,0,0" />
+                      <TextBox Text="{Binding MarkupIluminacionText, UpdateSourceTrigger=LostFocus}" IsEnabled="{Binding CanEdit}" BorderThickness="0" Background="Transparent" FontFamily="Consolas" FontSize="{StaticResource Font.Size.lg}" FontWeight="Bold" Padding="0" VerticalAlignment="Center" />
                     </DockPanel>
                   </StackPanel>
                 </Border>
@@ -575,12 +519,12 @@
                 <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="8" Padding="10" Margin="6,0,0,8">
                   <StackPanel>
                     <DockPanel Margin="0,0,0,6">
-                      <TextBlock Text="Equipos" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" />
+                      <TextBlock Text="Equipos" FontSize="{StaticResource Font.Size.xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" />
                       <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.Success}" DockPanel.Dock="Right" HorizontalAlignment="Right" VerticalAlignment="Center" />
                     </DockPanel>
                     <DockPanel>
-                      <TextBlock Text="x" DockPanel.Dock="Right" FontSize="11" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center" Margin="2,0,0,0" />
-                      <TextBox Text="{Binding MarkupEquiposText, UpdateSourceTrigger=LostFocus}" BorderThickness="0" Background="Transparent" FontFamily="Consolas" FontSize="14" FontWeight="Bold" Padding="0" VerticalAlignment="Center" />
+                      <TextBlock Text="x" DockPanel.Dock="Right" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center" Margin="2,0,0,0" />
+                      <TextBox Text="{Binding MarkupEquiposText, UpdateSourceTrigger=LostFocus}" IsEnabled="{Binding CanEdit}" BorderThickness="0" Background="Transparent" FontFamily="Consolas" FontSize="{StaticResource Font.Size.lg}" FontWeight="Bold" Padding="0" VerticalAlignment="Center" />
                     </DockPanel>
                   </StackPanel>
                 </Border>
@@ -589,12 +533,12 @@
                 <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,0,6,0">
                   <StackPanel>
                     <DockPanel Margin="0,0,0,6">
-                      <TextBlock Text="Enchufes y T." FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" />
+                      <TextBlock Text="Enchufes y T." FontSize="{StaticResource Font.Size.xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" />
                       <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.Success}" DockPanel.Dock="Right" HorizontalAlignment="Right" VerticalAlignment="Center" />
                     </DockPanel>
                     <DockPanel>
-                      <TextBlock Text="x" DockPanel.Dock="Right" FontSize="11" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center" Margin="2,0,0,0" />
-                      <TextBox Text="{Binding MarkupEnchufesText, UpdateSourceTrigger=LostFocus}" BorderThickness="0" Background="Transparent" FontFamily="Consolas" FontSize="14" FontWeight="Bold" Padding="0" VerticalAlignment="Center" />
+                      <TextBlock Text="x" DockPanel.Dock="Right" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center" Margin="2,0,0,0" />
+                      <TextBox Text="{Binding MarkupEnchufesText, UpdateSourceTrigger=LostFocus}" IsEnabled="{Binding CanEdit}" BorderThickness="0" Background="Transparent" FontFamily="Consolas" FontSize="{StaticResource Font.Size.lg}" FontWeight="Bold" Padding="0" VerticalAlignment="Center" />
                     </DockPanel>
                   </StackPanel>
                 </Border>
@@ -603,12 +547,12 @@
                 <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="8" Padding="10" Margin="3,0,3,0">
                   <StackPanel>
                     <DockPanel Margin="0,0,0,6">
-                      <TextBlock Text="Puesta a T." FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" />
+                      <TextBlock Text="Puesta a T." FontSize="{StaticResource Font.Size.xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" />
                       <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.Success}" DockPanel.Dock="Right" HorizontalAlignment="Right" VerticalAlignment="Center" />
                     </DockPanel>
                     <DockPanel>
-                      <TextBlock Text="x" DockPanel.Dock="Right" FontSize="11" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center" Margin="2,0,0,0" />
-                      <TextBox Text="{Binding MarkupPuestaTierraText, UpdateSourceTrigger=LostFocus}" BorderThickness="0" Background="Transparent" FontFamily="Consolas" FontSize="14" FontWeight="Bold" Padding="0" VerticalAlignment="Center" />
+                      <TextBlock Text="x" DockPanel.Dock="Right" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center" Margin="2,0,0,0" />
+                      <TextBox Text="{Binding MarkupPuestaTierraText, UpdateSourceTrigger=LostFocus}" IsEnabled="{Binding CanEdit}" BorderThickness="0" Background="Transparent" FontFamily="Consolas" FontSize="{StaticResource Font.Size.lg}" FontWeight="Bold" Padding="0" VerticalAlignment="Center" />
                     </DockPanel>
                   </StackPanel>
                 </Border>
@@ -617,12 +561,12 @@
                 <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="8" Padding="10" Margin="6,0,0,0">
                   <StackPanel>
                     <DockPanel Margin="0,0,0,6">
-                      <TextBlock Text="Accesorios" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" />
+                      <TextBlock Text="Accesorios" FontSize="{StaticResource Font.Size.xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" />
                       <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.Success}" DockPanel.Dock="Right" HorizontalAlignment="Right" VerticalAlignment="Center" />
                     </DockPanel>
                     <DockPanel>
-                      <TextBlock Text="x" DockPanel.Dock="Right" FontSize="11" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center" Margin="2,0,0,0" />
-                      <TextBox Text="{Binding MarkupAccesoriosText, UpdateSourceTrigger=LostFocus}" BorderThickness="0" Background="Transparent" FontFamily="Consolas" FontSize="14" FontWeight="Bold" Padding="0" VerticalAlignment="Center" />
+                      <TextBlock Text="x" DockPanel.Dock="Right" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center" Margin="2,0,0,0" />
+                      <TextBox Text="{Binding MarkupAccesoriosText, UpdateSourceTrigger=LostFocus}" IsEnabled="{Binding CanEdit}" BorderThickness="0" Background="Transparent" FontFamily="Consolas" FontSize="{StaticResource Font.Size.lg}" FontWeight="Bold" Padding="0" VerticalAlignment="Center" />
                     </DockPanel>
                   </StackPanel>
                 </Border>
@@ -634,6 +578,8 @@
         </StackPanel>
       </ScrollViewer>
 
+        <ctrl:SkeletonOverlayControl Panel.ZIndex="20" Message="Cargando APU…"
+                                     Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibility}}" />
       </Grid>
     </Grid>
   </Grid>

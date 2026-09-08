@@ -7,7 +7,8 @@
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         KeyDown="OnWindowKeyDown">
-  <Grid Margin="20">
+  <Border Style="{StaticResource Dialog.Chrome}" Margin="16">
+  <Grid>
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto" />
       <RowDefinition Height="*" />
@@ -15,10 +16,9 @@
     </Grid.RowDefinitions>
 
     <StackPanel Grid.Row="0" Margin="0,0,0,12">
-      <TextBlock Text="Nuevo material del proyecto" Style="{StaticResource Text.ViewTitle}" />
+      <TextBlock Text="Nuevo material del proyecto" Style="{StaticResource Dialog.HeaderTitle}" />
       <TextBlock x:Name="ContextoText"
-                 Style="{StaticResource Text.Body}" Foreground="{DynamicResource Brush.Muted}"
-                 Margin="0,4,0,0" TextWrapping="Wrap" />
+                 Style="{StaticResource Dialog.HeaderSubtitle}" />
     </StackPanel>
 
     <StackPanel Grid.Row="1">
@@ -68,4 +68,5 @@
               MinWidth="100" Margin="0,0,8,0" IsCancel="True" />
     </DockPanel>
   </Grid>
+  </Border>
 </Window>

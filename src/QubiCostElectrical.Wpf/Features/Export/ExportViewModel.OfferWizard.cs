@@ -33,15 +33,15 @@ public sealed partial class ExportViewModel
         goToConfigureStepCommand = new RelayCommand(() => CurrentStep = OfferWizardStep.Configure, () => HasOpenProject);
         goToPreviewStepCommand = new RelayCommand(() => CurrentStep = OfferWizardStep.Preview, () => HasOpenProject);
         goToExportStepCommand = new RelayCommand(() => CurrentStep = OfferWizardStep.Export, () => HasOpenProject && CanExportActions);
-        saveOfferSettingsCommand = new RelayCommand(SaveOfferSettings, () => HasOpenProject && !host.Session.IsReadOnly);
+        saveOfferSettingsCommand = new RelayCommand(SaveOfferSettings, () => HasOpenProject && !session.IsReadOnly);
         deliverPackageCommand = new RelayCommand(async () => await DeliverPackageAsync(), CanDeliverPackage);
-        pickLogoCommand = new RelayCommand(PickLogo, () => !host.Session.IsReadOnly);
-        pickSignatureCommand = new RelayCommand(PickSignature, () => !host.Session.IsReadOnly);
+        pickLogoCommand = new RelayCommand(PickLogo, () => !session.IsReadOnly);
+        pickSignatureCommand = new RelayCommand(PickSignature, () => !session.IsReadOnly);
         openPreviewFolderCommand = new RelayCommand(OpenPreviewFolder, () => ExportResult.PreviewFilePath != null);
-        applyOfferPresetCommand = new RelayCommand<string>(ApplyOfferPreset);
+        applyOfferPresetCommand = new RelayCommand<string>(ApplyOfferPreset, _ => HasOpenProject && !session.IsReadOnly);
 
-        OfferSettings = new OfferSettingsEditorVm(host.Session);
-        DocumentSelector = new DeliveryDocumentSelectorVm(host);
+        OfferSettings = new OfferSettingsEditorVm(session, () => !session.IsReadOnly);
+        DocumentSelector = new DeliveryDocumentSelectorVm(dashboard);
         ExportResult = new DeliveryExportResultVm();
         HookLivePreview();
     }
@@ -51,7 +51,9 @@ public sealed partial class ExportViewModel
     public DeliveryExportResultVm ExportResult { get; private set; } = null!;
     public ObservableCollection<string> DocumentErrors { get; } = new();
 
-    public bool HasOpenProject => host.ProjectWorkspace.HasOpenProject;
+    public bool HasOpenProject => projectWorkspace.HasOpenProject;
+    public bool IsReadOnly => session.IsReadOnly;
+    public bool CanEdit => !session.IsReadOnly;
 
     public OfferWizardStep CurrentStep
     {
@@ -138,6 +140,9 @@ public sealed partial class ExportViewModel
     partial void RefreshOfferWizard()
     {
         OfferSettings.LoadFromSession();
+        OfferSettings.NotifyEditAccessChanged();
+        OnPropertyChanged(nameof(IsReadOnly));
+        OnPropertyChanged(nameof(CanEdit));
         ExportResult.Clear();
         UpdateDeliverySummary();
         CurrentStep = Blockers > 0 ? OfferWizardStep.Review : currentStep;
@@ -160,27 +165,23 @@ public sealed partial class ExportViewModel
 
     private void ApplyOfferPreset(string? preset)
     {
-        if (string.IsNullOrWhiteSpace(preset) || DocumentSelector == null)
+        if (session.IsReadOnly || string.IsNullOrWhiteSpace(preset) || DocumentSelector == null)
             return;
 
         SelectedOfferPreset = preset.Trim();
         foreach (var doc in DocumentSelector.Documents)
             doc.IsSelected = false;
 
-        switch (SelectedOfferPreset)
+        var ids = OfferPackagePresetCatalog.ResolveDocumentIds(SelectedOfferPreset);
+        if (ids == null)
         {
-            case "Mandante":
-                SetDocumentSelected("OfferPdf", true);
-                SetDocumentSelected("LetterDocx", true);
-                break;
-            case "Interno":
-                foreach (var doc in DocumentSelector.Documents)
-                    doc.IsSelected = true;
-                break;
-            case "Banco":
-                SetDocumentSelected("OfferPdf", true);
-                SetDocumentSelected("ControlExcel", true);
-                break;
+            foreach (var doc in DocumentSelector.Documents)
+                doc.IsSelected = true;
+        }
+        else
+        {
+            foreach (var id in ids)
+                SetDocumentSelected(id, true);
         }
 
         UpdateDeliverySummary();
@@ -196,36 +197,40 @@ public sealed partial class ExportViewModel
     }
 
     private bool CanExportActions =>
-        HasOpenProject
-        && host.Permissions.CanExportDocuments
-        && !host.Session.IsReadOnly
-        && Blockers == 0;
+        EvaluateExportEligibility().CanExportActions;
 
     private bool CanDeliverPackage() =>
-        CanExportActions
-        && !IsBusy
-        && DocumentSelector.Documents.Any(d => d.IsSelected);
+        EvaluateExportEligibility().CanDeliverPackage;
+
+    private ExportEligibility EvaluateExportEligibility() =>
+        ExportEligibilityEvaluator.Evaluate(
+            hasOpenProject: HasOpenProject,
+            canExportDocuments: permissions.CanExportDocuments,
+            isReadOnly: session.IsReadOnly,
+            blockingCount: Blockers,
+            isBusy: IsBusy,
+            hasSelectedDocuments: DocumentSelector.Documents.Any(d => d.IsSelected));
 
     private void SaveOfferSettings()
     {
-        if (!HasOpenProject || host.Session.IsReadOnly)
+        if (!HasOpenProject || session.IsReadOnly)
             return;
 
         OfferSettings.ApplyToSession();
-        host.Session.MarkDirty("project_info");
+        session.MarkDirty(ProjectDirtyScope.ProjectInfo);
         WpfDialogService.Info("Oferta", "Configuración de oferta guardada en el proyecto.");
     }
 
     private void PickLogo()
     {
-        var path = host.FileDialog.PromptOpenFile("Imágenes (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg|Todos|*.*");
+        var path = fileDialog.PromptOpenFile("Imágenes (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg|Todos|*.*");
         if (path != null)
             OfferSettings.LogoPath = path;
     }
 
     private void PickSignature()
     {
-        var path = host.FileDialog.PromptOpenFile("Imágenes (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg|Todos|*.*");
+        var path = fileDialog.PromptOpenFile("Imágenes (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg|Todos|*.*");
         if (path != null)
             OfferSettings.SignatureImagePath = path;
     }
@@ -238,7 +243,7 @@ public sealed partial class ExportViewModel
 
         var folder = System.IO.Path.GetDirectoryName(path);
         if (folder != null)
-            host.FileOpener.OpenFolder(folder);
+            fileOpener.OpenFolder(folder);
     }
 
     private async Task DeliverPackageAsync()
@@ -249,7 +254,7 @@ public sealed partial class ExportViewModel
         if (!await EnsureExportAllowedAsync())
             return;
 
-        var folder = host.FileDialog.PromptFolder("Selecciona la carpeta de destino para la exportación");
+        var folder = fileDialog.PromptFolder("Selecciona la carpeta de destino para la exportación");
         if (folder == null)
             return;
 
@@ -257,7 +262,7 @@ public sealed partial class ExportViewModel
         try
         {
             SaveOfferSettings();
-            var ctx = DocumentSelector.GetSelectedContext(host.Session);
+            var ctx = DocumentSelector.GetSelectedContext(session);
             var selectedIds = DocumentSelector.GetSelectedDocumentIds();
             var baseName = ProjectTextValidator.MakeSafeFileName(ProjectTitle);
             var results = await previewService.ExportAllAsync(ctx, folder, selectedIds, baseName);
@@ -270,9 +275,13 @@ public sealed partial class ExportViewModel
             var successCount = results.Count(r => r.IsSuccess);
             var failCount = results.Count(r => !r.IsSuccess);
             if (failCount == 0)
-                WpfDialogService.Info("Oferta y exportación", $"Todos los documentos ({successCount}) se generaron correctamente en:{Environment.NewLine}{folder}");
+                ShowExportSuccessWithFolderAction(
+                    "Oferta y exportación",
+                    $"Todos los documentos ({successCount}) se generaron correctamente en:{Environment.NewLine}{folder}",
+                    folder,
+                    pathIsFolder: true);
             else
-                WpfDialogService.Info("Oferta y exportación", $"{successCount} documento(s) generado(s), {failCount} con errores.");
+                ShellNotificationService.Instance.ShowWarning("Oferta y exportación", $"{successCount} documento(s) generado(s), {failCount} con errores.");
         }
         catch (Exception ex)
         {

@@ -2,40 +2,61 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Windows.Input;
 using QubiCostElectrical;
-using QubiCostElectrical.Wpf.Features.Dashboard;
 using QubiCostElectrical.Wpf.Infrastructure;
-using QubiCostElectrical.Wpf.Shell;
 
 namespace QubiCostElectrical.Wpf.Features.CubicacionSc;
 
 public sealed partial class CircuitoScRowVm : ViewModelBase
 {
-    public CircuitoScRowVm(CircuitoSCRow row, CubicacionScConfig config, IReadOnlyList<ZonaProyecto> zonas, Action? onEstadoChanged = null, Action? onPisosChanged = null)
+    public CircuitoScRowVm(
+        CircuitoSCRow row,
+        CubicacionScConfig config,
+        IReadOnlyList<ZonaProyecto> zonas,
+        Action? onEstadoChanged = null,
+        Action? onPisosChanged = null,
+        Func<bool>? canEdit = null,
+        Action? onChanged = null)
     {
         Source = row;
         this.config = config;
         this.zonas = zonas;
         this.onEstadoChanged = onEstadoChanged;
         this.onPisosChanged = onPisosChanged;
+        this.canEdit = canEdit;
+        this.onChanged = onChanged;
         // Sincroniza N° de conductores y merma con la alim/fase actual desde el catálogo, para que
         // los totales SIEMPRE se multipliquen por lo que corresponde a esa alim (×3/×4/×5 según el
         // catálogo) y por su merma, en vez de quedarse en el valor por defecto del modelo (3,2).
         // Solo tiene efecto si la alim existe en el catálogo; si no, deja los valores tal cual.
         if (config.Sistemas.Any(s => string.Equals(s.Nombre, row.Sistema, StringComparison.OrdinalIgnoreCase)))
             CubicacionSCEngine.ApplySistema(row, row.Sistema, config);
-        Artefactos = new ObservableCollection<ArtefactoScRowVm>(row.Artefactos.Select(a => new ArtefactoScRowVm(a)));
+        Artefactos = new ObservableCollection<ArtefactoScRowVm>(
+            row.Artefactos.Select(a => new ArtefactoScRowVm(a, canEdit, onChanged)));
     }
 
     private CircuitoSCRow row => Source;
+
+    private bool AllowEdit => canEdit?.Invoke() ?? true;
+
+    /// <summary>Expuesto para code-behind (LostFocus/combos) antes de mutar.</summary>
+    public bool CanEdit => AllowEdit;
+
+    private void NotifyModelChanged() => onChanged?.Invoke();
 
     public string Id => row.Id;
 
     public int Numero
     {
         get => row.Numero;
-        set { row.Numero = value; OnPropertyChanged(); }
+        set
+        {
+            if (!AllowEdit) return;
+            if (row.Numero == value) return;
+            row.Numero = value;
+            OnPropertyChanged();
+            NotifyModelChanged();
+        }
     }
 
     // "Tipo" = sistema de uso (A=Alumbrado, E=Enchufe, CL=Clima, C=Computación, F=Fuerza).
@@ -50,9 +71,17 @@ public sealed partial class CircuitoScRowVm : ViewModelBase
         get => row.Tipo;
         set
         {
+            if (!AllowEdit)
+            {
+                OnPropertyChanged();
+                return;
+            }
             var normalizado = NormalizeCode(value, TiposValidos);
             if (normalizado != null && !string.Equals(row.Tipo, normalizado, StringComparison.Ordinal))
+            {
                 row.Tipo = normalizado;
+                NotifyModelChanged();
+            }
             OnPropertyChanged();
         }
     }
@@ -67,7 +96,14 @@ public sealed partial class CircuitoScRowVm : ViewModelBase
     public string Descripcion
     {
         get => row.Descripcion;
-        set { row.Descripcion = value; OnPropertyChanged(); }
+        set
+        {
+            if (!AllowEdit) return;
+            if (row.Descripcion == value) return;
+            row.Descripcion = value;
+            OnPropertyChanged();
+            NotifyModelChanged();
+        }
     }
 
     // Ubicación / pisos del circuito: texto libre para un solo piso (ej: "1", "-2", "Azotea"),
@@ -81,10 +117,13 @@ public sealed partial class CircuitoScRowVm : ViewModelBase
             : row.Ubicacion;
         set
         {
+            if (!AllowEdit) return;
             if (row.TienePisos) return; // de solo lectura mientras tenga varias zonas activas
+            if (row.Ubicacion == (value ?? "")) return;
             row.Ubicacion = value ?? "";
             TryParseUbicacionRange(row.Ubicacion);
             OnPropertyChanged();
+            NotifyModelChanged();
         }
     }
 
@@ -144,7 +183,7 @@ public sealed partial class CircuitoScRowVm : ViewModelBase
         for (int i = 0; i < sortedZonas.Count; i++)
         {
             string name = sortedZonas[i].Nombre.ToLowerInvariant();
-            
+
             string normTerm = NormalizeAlphanumeric(term);
             string normName = NormalizeAlphanumeric(name);
             if (normName.Contains(normTerm) || normTerm.Contains(normName))
@@ -231,6 +270,7 @@ public sealed partial class CircuitoScRowVm : ViewModelBase
 
     public void CommitZonaPisos()
     {
+        if (!AllowEdit) return;
         var activas = ZonaPisos.Where(z => z.EsActiva).ToList();
         row.PisosTramos = activas
             .Select(z => new CircuitoPisoTramo { ZonaId = z.ZonaId, ZonaNombre = z.Nombre, MetrosBandeja = z.MetrosBandeja, MetrosTuberia = z.MetrosTuberia })
@@ -239,6 +279,7 @@ public sealed partial class CircuitoScRowVm : ViewModelBase
         // usuario escriba a mano de nuevo). Si nunca tuvo, no toca el texto que haya escrito.
         NotifyPisosChanged();
         onPisosChanged?.Invoke();
+        NotifyModelChanged();
     }
 
     // Tras confirmar el flyout de zonas: refresca ubicación (resumen/editable) y todos los totales.
@@ -258,19 +299,47 @@ public sealed partial class CircuitoScRowVm : ViewModelBase
     public string Estado
     {
         get => row.Estado;
-        set { row.Estado = value; OnPropertyChanged(); OnPropertyChanged(nameof(LargoDerivacion)); OnPropertyChanged(nameof(LargoDistribucion)); onEstadoChanged?.Invoke(); }
+        set
+        {
+            if (!AllowEdit) return;
+            if (row.Estado == value) return;
+            row.Estado = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(LargoDerivacion));
+            OnPropertyChanged(nameof(LargoDistribucion));
+            onEstadoChanged?.Invoke();
+            NotifyModelChanged();
+        }
     }
 
     public decimal DistanciaTablero
     {
         get => row.DistanciaTablero;
-        set { row.DistanciaTablero = value; OnPropertyChanged(); OnPropertyChanged(nameof(LargoDerivacion)); }
+        set
+        {
+            if (!AllowEdit) return;
+            if (row.DistanciaTablero == value) return;
+            row.DistanciaTablero = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(LargoDerivacion));
+            NotifyModelChanged();
+        }
     }
 
     public decimal LargoCircuito
     {
         get => row.LargoCircuito;
-        set { row.LargoCircuito = value; OnPropertyChanged(); OnPropertyChanged(nameof(LargoDistribucion)); OnPropertyChanged(nameof(LargoTuberia)); OnPropertyChanged(nameof(LargoBandeja)); }
+        set
+        {
+            if (!AllowEdit) return;
+            if (row.LargoCircuito == value) return;
+            row.LargoCircuito = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(LargoDistribucion));
+            OnPropertyChanged(nameof(LargoTuberia));
+            OnPropertyChanged(nameof(LargoBandeja));
+            NotifyModelChanged();
+        }
     }
 
     // "Sistema" (campo del dominio) = FASE de alimentación (M=Monofásico, T=Trifásico,
@@ -284,6 +353,11 @@ public sealed partial class CircuitoScRowVm : ViewModelBase
         get => row.Sistema;
         set
         {
+            if (!AllowEdit)
+            {
+                OnPropertyChanged();
+                return;
+            }
             var normalizado = NormalizeCode(value, FasesValidas);
             if (normalizado != null && !string.Equals(row.Sistema, normalizado, StringComparison.Ordinal))
             {
@@ -292,6 +366,7 @@ public sealed partial class CircuitoScRowVm : ViewModelBase
                 OnPropertyChanged(nameof(MermaPct));
                 OnPropertyChanged(nameof(LargoDerivacion));
                 OnPropertyChanged(nameof(LargoDistribucion));
+                NotifyModelChanged();
             }
             OnPropertyChanged();
         }
@@ -302,12 +377,15 @@ public sealed partial class CircuitoScRowVm : ViewModelBase
         get => row.TipoRecorrido;
         set
         {
+            if (!AllowEdit) return;
+            if (row.TipoRecorrido == value) return;
             row.TipoRecorrido = value;
             OnPropertyChanged();
             OnPropertyChanged(nameof(EsPorTuberia));
             OnPropertyChanged(nameof(EsPorBandeja));
             OnPropertyChanged(nameof(LargoTuberia));
             OnPropertyChanged(nameof(LargoBandeja));
+            NotifyModelChanged();
         }
     }
 
@@ -317,7 +395,14 @@ public sealed partial class CircuitoScRowVm : ViewModelBase
     public string TipoTuberia
     {
         get => row.TipoTuberia;
-        set { row.TipoTuberia = value; OnPropertyChanged(); }
+        set
+        {
+            if (!AllowEdit) return;
+            if (row.TipoTuberia == value) return;
+            row.TipoTuberia = value;
+            OnPropertyChanged();
+            NotifyModelChanged();
+        }
     }
 
     // Ducto Ø: edición por texto libre. Escribir solo el número ("32") lo normaliza a "32mm"
@@ -329,12 +414,18 @@ public sealed partial class CircuitoScRowVm : ViewModelBase
         get => row.SeccionTuberia;
         set
         {
+            if (!AllowEdit)
+            {
+                OnPropertyChanged();
+                return;
+            }
             var normalizado = NormalizeDiametro(value);
             if (row.SeccionTuberia != normalizado)
             {
                 row.SeccionTuberia = normalizado;
                 OnPropertyChanged(nameof(TmfMedida));
                 OnPropertyChanged(nameof(TmfCantidad));
+                NotifyModelChanged();
             }
             OnPropertyChanged();
         }
@@ -352,73 +443,164 @@ public sealed partial class CircuitoScRowVm : ViewModelBase
     public string TipoBandeja
     {
         get => row.TipoBandeja;
-        set { row.TipoBandeja = value; OnPropertyChanged(); }
+        set
+        {
+            if (!AllowEdit) return;
+            if (row.TipoBandeja == value) return;
+            row.TipoBandeja = value;
+            OnPropertyChanged();
+            NotifyModelChanged();
+        }
     }
 
     public decimal AnchoBandeja
     {
         get => row.AnchoBandeja;
-        set { row.AnchoBandeja = value; OnPropertyChanged(); }
+        set
+        {
+            if (!AllowEdit) return;
+            if (row.AnchoBandeja == value) return;
+            row.AnchoBandeja = value;
+            OnPropertyChanged();
+            NotifyModelChanged();
+        }
     }
 
     public string ConductorDerivacion
     {
         get => row.ConductorDerivacion;
-        set { row.ConductorDerivacion = value; OnPropertyChanged(); }
+        set
+        {
+            if (!AllowEdit) return;
+            if (row.ConductorDerivacion == value) return;
+            row.ConductorDerivacion = value;
+            OnPropertyChanged();
+            NotifyModelChanged();
+        }
     }
 
     public string SeccionDerivacion
     {
         get => row.SeccionDerivacion;
-        set { row.SeccionDerivacion = value; OnPropertyChanged(); }
+        set
+        {
+            if (!AllowEdit) return;
+            if (row.SeccionDerivacion == value) return;
+            row.SeccionDerivacion = value;
+            OnPropertyChanged();
+            NotifyModelChanged();
+        }
     }
 
     public string ConductorDistribucion
     {
         get => row.ConductorDistribucion;
-        set { row.ConductorDistribucion = value; OnPropertyChanged(); }
+        set
+        {
+            if (!AllowEdit) return;
+            if (row.ConductorDistribucion == value) return;
+            row.ConductorDistribucion = value;
+            OnPropertyChanged();
+            NotifyModelChanged();
+        }
     }
 
     public string SeccionDistribucion
     {
         get => row.SeccionDistribucion;
-        set { row.SeccionDistribucion = value; OnPropertyChanged(); }
+        set
+        {
+            if (!AllowEdit) return;
+            if (row.SeccionDistribucion == value) return;
+            row.SeccionDistribucion = value;
+            OnPropertyChanged();
+            NotifyModelChanged();
+        }
     }
 
     public decimal NumConductores
     {
         get => row.NumConductores;
-        set { row.NumConductores = value; OnPropertyChanged(); OnPropertyChanged(nameof(LargoDerivacion)); OnPropertyChanged(nameof(LargoDistribucion)); }
+        set
+        {
+            if (!AllowEdit) return;
+            if (row.NumConductores == value) return;
+            row.NumConductores = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(LargoDerivacion));
+            OnPropertyChanged(nameof(LargoDistribucion));
+            NotifyModelChanged();
+        }
     }
 
     public decimal MermaPct
     {
         get => row.MermaPct;
-        set { row.MermaPct = value; OnPropertyChanged(); OnPropertyChanged(nameof(LargoDerivacion)); OnPropertyChanged(nameof(LargoDistribucion)); }
+        set
+        {
+            if (!AllowEdit) return;
+            if (row.MermaPct == value) return;
+            row.MermaPct = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(LargoDerivacion));
+            OnPropertyChanged(nameof(LargoDistribucion));
+            NotifyModelChanged();
+        }
     }
 
     public decimal Cajas58
     {
         get => row.Cajas58;
-        set { row.Cajas58 = value; OnPropertyChanged(); OnPropertyChanged(nameof(TotalCajas)); }
+        set
+        {
+            if (!AllowEdit) return;
+            if (row.Cajas58 == value) return;
+            row.Cajas58 = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(TotalCajas));
+            NotifyModelChanged();
+        }
     }
 
     public decimal Cajas100x100
     {
         get => row.Cajas100x100;
-        set { row.Cajas100x100 = value; OnPropertyChanged(); OnPropertyChanged(nameof(TotalCajas)); }
+        set
+        {
+            if (!AllowEdit) return;
+            if (row.Cajas100x100 == value) return;
+            row.Cajas100x100 = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(TotalCajas));
+            NotifyModelChanged();
+        }
     }
 
     public decimal Cajas100x65
     {
         get => row.Cajas100x65;
-        set { row.Cajas100x65 = value; OnPropertyChanged(); OnPropertyChanged(nameof(TotalCajas)); }
+        set
+        {
+            if (!AllowEdit) return;
+            if (row.Cajas100x65 == value) return;
+            row.Cajas100x65 = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(TotalCajas));
+            NotifyModelChanged();
+        }
     }
 
     public decimal MontajesAlumbrado
     {
         get => row.MontajesAlumbrado;
-        set { row.MontajesAlumbrado = value; OnPropertyChanged(); }
+        set
+        {
+            if (!AllowEdit) return;
+            if (row.MontajesAlumbrado == value) return;
+            row.MontajesAlumbrado = value;
+            OnPropertyChanged();
+            NotifyModelChanged();
+        }
     }
 
     // El terminal flexible aplica al tramo de tubería: hay TMF si ese tramo tiene metraje.
@@ -436,6 +618,7 @@ public sealed partial class CircuitoScRowVm : ViewModelBase
         get => row.LargoTuberia;
         set
         {
+            if (!AllowEdit) return;
             if (row.MetrosTuberia != value)
             {
                 row.MetrosTuberia = value;
@@ -444,6 +627,7 @@ public sealed partial class CircuitoScRowVm : ViewModelBase
                 OnPropertyChanged(nameof(LargoDerivacion));
                 OnPropertyChanged(nameof(TmfCantidad));
                 OnPropertyChanged(nameof(TmfMedida));
+                NotifyModelChanged();
             }
         }
     }
@@ -453,12 +637,14 @@ public sealed partial class CircuitoScRowVm : ViewModelBase
         get => row.LargoBandeja;
         set
         {
+            if (!AllowEdit) return;
             if (row.MetrosBandeja != value)
             {
                 row.MetrosBandeja = value;
                 row.LargoCircuito = row.MetrosBandeja + row.MetrosTuberia;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(LargoDistribucion));
+                NotifyModelChanged();
             }
         }
     }
@@ -477,23 +663,27 @@ public sealed partial class CircuitoScRowVm : ViewModelBase
 
     // Texto del botón de la columna ARTEFACTOS × ZONA.
     public string ArtefactosResumen => TieneArtefactos
-        ? $"💡 {ArtefactosCantidadTotal} u · {ArtefactosZonasConteo} zona{(ArtefactosZonasConteo == 1 ? "" : "s")}"
-        : "＋ Agregar artefactos";
+        ? $"{ArtefactosCantidadTotal} u · {ArtefactosZonasConteo} zona{(ArtefactosZonasConteo == 1 ? "" : "s")}"
+        : "+ Agregar artefactos";
 
     public void AddArtefacto(string nombre, string categoria, decimal cantidad)
     {
+        if (!AllowEdit) return;
         if (string.IsNullOrWhiteSpace(nombre)) return;
         var artefacto = new ArtefactoSCRow { Nombre = nombre.Trim(), Categoria = categoria, Cantidad = cantidad <= 0 ? 1 : cantidad };
         row.Artefactos.Add(artefacto);
-        Artefactos.Add(new ArtefactoScRowVm(artefacto));
+        Artefactos.Add(new ArtefactoScRowVm(artefacto, canEdit, onChanged));
         NotifyArtefactosResumen();
+        // Dirty: lo marca el comando del ViewModel (AddArtefactoCommand).
     }
 
     public void RemoveArtefacto(ArtefactoScRowVm vm)
     {
+        if (!AllowEdit) return;
         row.Artefactos.Remove(vm.Source);
         Artefactos.Remove(vm);
         NotifyArtefactosResumen();
+        // Dirty: lo marca el comando del ViewModel (RemoveArtefactoCommand).
     }
 
     // Reconstruye la colección observable desde el modelo tras editar los artefactos por zona
@@ -502,7 +692,7 @@ public sealed partial class CircuitoScRowVm : ViewModelBase
     {
         Artefactos.Clear();
         foreach (var a in row.Artefactos)
-            Artefactos.Add(new ArtefactoScRowVm(a));
+            Artefactos.Add(new ArtefactoScRowVm(a, canEdit, onChanged));
         NotifyArtefactosResumen();
     }
 
@@ -520,6 +710,7 @@ public sealed partial class CircuitoScRowVm : ViewModelBase
     /// </summary>
     public void ApplyClipboardFrom(CircuitoSCRow template)
     {
+        if (!AllowEdit) return;
         row.Tipo = template.Tipo;
         row.Estado = template.Estado;
         row.Descripcion = template.Descripcion;
@@ -584,5 +775,6 @@ public sealed partial class CircuitoScRowVm : ViewModelBase
         OnPropertyChanged(nameof(Cajas100x65));
         OnPropertyChanged(nameof(TmfCantidad));
         OnPropertyChanged(nameof(TmfMedida));
+        // Dirty: lo marca el comando del ViewModel (PasteCircuitoCommand).
     }
 }

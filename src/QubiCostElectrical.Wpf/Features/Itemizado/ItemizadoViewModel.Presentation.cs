@@ -91,33 +91,44 @@ public sealed partial class ItemizadoViewModel
 
     private void Reload(bool syncOnly)
     {
-        ShowEmptyState = !host.ProjectWorkspace.HasOpenProject;
-        if (ShowEmptyState)
+        IsLoading = true;
+        try
         {
-            allRows.Clear();
-            rowsById.Clear();
-            Rows.Clear();
-            ShowEmptyItemizado = false;
-            return;
+            System.Windows.Application.Current?.Dispatcher.Invoke(
+                () => { }, System.Windows.Threading.DispatcherPriority.Render);
+
+            ShowEmptyState = !projectWorkspace.HasOpenProject;
+            if (ShowEmptyState)
+            {
+                allRows.Clear();
+                rowsById.Clear();
+                Rows.Clear();
+                ShowEmptyItemizado = false;
+                return;
+            }
+
+            if (!syncOnly)
+                SyncRowModels();
+
+            var state = workspace.BuildPageState(presenter, session);
+            ApplyPresentation(state, includeCosts: true, refreshView: true);
+            ShowEmptyItemizado = session.Itemizado.Count == 0;
+            UpdateHeader(state);
+            UpdateSaveState();
+            RestoreSelection();
+            hasPendingUndoForEdit = false;
+            OnPropertyChanged(nameof(IsReadOnly));
         }
-
-        if (!syncOnly)
-            SyncRowModels();
-
-        var state = workspace.BuildPageState(presenter, host.Session);
-        ApplyPresentation(state, includeCosts: true, refreshView: true);
-        ShowEmptyItemizado = host.Session.Itemizado.Count == 0;
-        UpdateHeader(state);
-        UpdateSaveState();
-        RestoreSelection();
-        hasPendingUndoForEdit = false;
-        OnPropertyChanged(nameof(IsReadOnly));
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     private void SyncRowModels()
     {
         InvalidateFilterPresentationCache();
-        var sessionRows = host.Session.Itemizado;
+        var sessionRows = session.Itemizado;
         var liveIds = new HashSet<string>(sessionRows.Select(x => x.Id ?? ""), StringComparer.OrdinalIgnoreCase);
 
         foreach (var id in rowsById.Keys.Where(id => !liveIds.Contains(id)).ToList())
@@ -141,7 +152,7 @@ public sealed partial class ItemizadoViewModel
             }
             else
             {
-                var vm = new ItemizadoRowVm(row);
+                var vm = new ItemizadoRowVm(row, () => !session.IsReadOnly);
                 rowsById[id] = vm;
                 allRows.Add(vm);
                 Rows.Add(vm);
@@ -156,7 +167,7 @@ public sealed partial class ItemizadoViewModel
 
     private void WireRowVm(ItemizadoRowVm vm)
     {
-        vm.PeersProvider = () => host.Session.Itemizado;
+        vm.PeersProvider = () => session.Itemizado;
         if (!wiredRows.Add(vm))
             return;
 
@@ -181,21 +192,22 @@ public sealed partial class ItemizadoViewModel
 
     private void OnRowFieldCommitted(ItemizadoRowVm row, string field)
     {
-        if (host.Session.IsReadOnly)
+        if (session.IsReadOnly)
             return;
 
         if (!hasPendingUndoForEdit)
         {
-            host.UndoService.PushUndoPoint(host.Session, "Editar itemizado");
+            undo.PushUndoPoint(session, "Editar itemizado");
             hasPendingUndoForEdit = true;
         }
 
-        host.Session.MarkDirty("itemizado");
+        session.MarkDirty(ProjectDirtyScope.Itemizado);
         UpdateSaveState();
 
-        if (string.Equals(field, "Excl. cubic.", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(field, "Excl. cubic.", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(field, "Motivo no cubicar", StringComparison.OrdinalIgnoreCase))
         {
-            row.ValidateEditableCells(host.Session.Itemizado);
+            row.ValidateEditableCells(session.Itemizado);
             RefreshPresentation(includeCosts: false);
         }
     }
@@ -203,7 +215,7 @@ public sealed partial class ItemizadoViewModel
     private void ReorderRowsFromSession()
     {
         var ordered = new List<ItemizadoRowVm>();
-        foreach (var row in host.Session.Itemizado)
+        foreach (var row in session.Itemizado)
         {
             if (rowsById.TryGetValue(row.Id ?? "", out var vm))
                 ordered.Add(vm);
@@ -226,7 +238,7 @@ public sealed partial class ItemizadoViewModel
         SyncRowModels();
         ReorderRowsFromSession();
         RefreshPresentation(includeCosts: true);
-        ShowEmptyItemizado = host.Session.Itemizado.Count == 0;
+        ShowEmptyItemizado = session.Itemizado.Count == 0;
         RestoreSelection();
         RaiseCommandStates();
     }
@@ -237,7 +249,7 @@ public sealed partial class ItemizadoViewModel
             return;
         var state = workspace.BuildPageState(
             presenter,
-            host.Session,
+            session,
             includeCosts ? null : costTotalsByItem);
         ApplyPresentation(state, includeCosts, refreshView: false);
         UpdateHeader(state);
@@ -295,9 +307,9 @@ public sealed partial class ItemizadoViewModel
 
     private void UpdateSaveState()
     {
-        SaveStateLabel = !host.ProjectWorkspace.HasOpenProject
+        SaveStateLabel = !projectWorkspace.HasOpenProject
             ? "Sin proyecto"
-            : host.Session.IsDirty ? "Cambios pendientes" : "Guardado";
+            : session.IsDirty ? "Cambios pendientes" : "Guardado";
         shell.RefreshChrome();
     }
 
@@ -343,12 +355,12 @@ public sealed partial class ItemizadoViewModel
 
     private void RestoreSelection()
     {
-        string? target = pendingSelectionId ?? host.Session.PendingItemizadoSelectionId;
+        string? target = pendingSelectionId ?? session.PendingItemizadoSelectionId;
         if (string.IsNullOrWhiteSpace(target))
             return;
 
         SelectedRow = allRows.FirstOrDefault(x => string.Equals(x.Id, target, StringComparison.OrdinalIgnoreCase));
         pendingSelectionId = null;
-        host.Session.PendingItemizadoSelectionId = null;
+        session.PendingItemizadoSelectionId = null;
     }
 }

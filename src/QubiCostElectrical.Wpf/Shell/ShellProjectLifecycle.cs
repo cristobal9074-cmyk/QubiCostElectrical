@@ -1,0 +1,109 @@
+using System;
+using System.IO;
+using System.Threading.Tasks;
+using QubiCostElectrical;
+using QubiCostElectrical.Wpf.Auth;
+using QubiCostElectrical.Wpf.Infrastructure;
+
+namespace QubiCostElectrical.Wpf.Shell;
+
+/// <summary>
+/// Operaciones de ciclo de vida del proyecto abiertas (sin diálogos de UI).
+/// El shell sigue dueño de confirmaciones y navegación post-cierre.
+/// </summary>
+internal sealed class ShellProjectLifecycle
+{
+    private readonly BudgetProjectSession session;
+    private readonly IProjectWorkspaceService projectWorkspace;
+    private readonly WpfUndoService undo;
+    private readonly IBudgetCalculationService budgetCalculation;
+    private readonly IProjectEditWorkspaceService projectEdit;
+    private readonly IDocumentsWorkspaceService documents;
+    private readonly ProjectCollaborationLockService projectLock;
+    private readonly ProjectAuditRecorder audit;
+    private readonly IPermissionService permissions;
+    private readonly AutoSaveService autoSave;
+    private readonly Action clearPageCache;
+
+    public ShellProjectLifecycle(
+        BudgetProjectSession session,
+        IProjectWorkspaceService projectWorkspace,
+        WpfUndoService undo,
+        IBudgetCalculationService budgetCalculation,
+        IProjectEditWorkspaceService projectEdit,
+        IDocumentsWorkspaceService documents,
+        ProjectCollaborationLockService projectLock,
+        ProjectAuditRecorder audit,
+        IPermissionService permissions,
+        AutoSaveService autoSave,
+        Action clearPageCache)
+    {
+        this.session = session;
+        this.projectWorkspace = projectWorkspace;
+        this.undo = undo;
+        this.budgetCalculation = budgetCalculation;
+        this.projectEdit = projectEdit;
+        this.documents = documents;
+        this.projectLock = projectLock;
+        this.audit = audit;
+        this.permissions = permissions;
+        this.autoSave = autoSave;
+        this.clearPageCache = clearPageCache;
+    }
+
+    public void PrepareWorkspaceForNewOrOpen()
+    {
+        undo.Clear();
+        budgetCalculation.ResetIncrementalCache();
+        clearPageCache();
+    }
+
+    public async Task PersistOpenProjectAsync()
+    {
+        await projectWorkspace.SaveAsync().ConfigureAwait(true);
+        AutoSaveService.DeleteAutoSave(session.CurrentProjectPath);
+        autoSave.MarkSaved();
+    }
+
+    public void AfterProjectMaterialized(string? recentPath = null, Action? addRecent = null)
+    {
+        projectEdit.Discard();
+        documents.DiscardChanges();
+        projectLock.ReleaseLock();
+        audit.SetUser(CollaborationSessionBridge.CurrentUserContext());
+        audit.Enable();
+        if (projectLock.TryAcquireLock(session.CurrentProjectPath, CollaborationSessionBridge.CurrentUserContext()))
+            audit.RecordLifecycle("BloqueoAdquirido", recentPath ?? session.CurrentProjectPath);
+        autoSave.Start();
+        RoleSessionSync.Apply(session, permissions.CurrentRole);
+        addRecent?.Invoke();
+    }
+
+    public void TearDownOpenProject(string lifecycleReason)
+    {
+        autoSave.Stop();
+        audit.RecordLifecycle(lifecycleReason, session.CurrentProjectPath);
+        audit.Disable();
+        projectLock.ReleaseLock();
+        session.SetLockReadOnly(false);
+        undo.Clear();
+        clearPageCache();
+        session.NewProject(Environment.UserName);
+        projectEdit.Discard();
+        documents.DiscardChanges();
+        RoleSessionSync.Apply(session, permissions.CurrentRole);
+    }
+
+    public void ReleaseLockForAppExit()
+    {
+        autoSave.Stop();
+        projectLock.ReleaseLock();
+    }
+
+    public static void EnsureParentDirectory(string fullPath)
+    {
+        var dir = Path.GetDirectoryName(fullPath);
+        if (!string.IsNullOrWhiteSpace(dir))
+            Directory.CreateDirectory(dir);
+    }
+}

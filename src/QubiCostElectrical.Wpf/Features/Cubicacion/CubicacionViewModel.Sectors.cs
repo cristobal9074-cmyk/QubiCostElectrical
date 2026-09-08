@@ -63,10 +63,16 @@ public sealed partial class CubicacionViewModel
 
     internal void InitializeSectorRow(CubicacionRowVm row) => sectorService.InitializeSectorRow(row);
 
+    internal CubicacionRowVm CreateRowVm(CubicacionRow row, bool isSessionBacked = true)
+        => new(row, isSessionBacked, () => CanEdit);
+
     internal void RefreshSectorWindow() => sectorService.RefreshSectorWindow();
 
     internal void NotifyVisibleSectorHeadersChanged() => OnPropertyChanged(nameof(VisibleSectorHeaders));
 
     public void SetSectorExpressionDirect(CubicacionRowVm row, int offset, string expression)
         => sectorService.SetSectorExpressionDirect(row, offset, expression);
+
+    public void ApplyBatchSectorExpressions(CubicacionRowVm row, HashSet<int> slots)
+        => sectorService.ApplyBatchSectorExpressions(row, slots);
 }

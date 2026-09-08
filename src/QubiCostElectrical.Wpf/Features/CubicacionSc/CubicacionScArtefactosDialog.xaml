@@ -41,7 +41,8 @@
     </Style>
   </Window.Resources>
 
-  <Grid Margin="18">
+  <Border Style="{StaticResource Dialog.Chrome}" Margin="16">
+  <Grid>
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto" />   <!-- header -->
       <RowDefinition Height="Auto" />   <!-- zonas -->
@@ -53,9 +54,8 @@
 
     <!-- Header -->
     <StackPanel Grid.Row="0" Margin="0,0,0,10">
-      <TextBlock x:Name="Titulo" Style="{StaticResource Text.ViewTitle}" />
-      <TextBlock x:Name="Subtitulo" Style="{StaticResource Text.Body}"
-                 Foreground="{DynamicResource Brush.Muted}" Margin="0,4,0,0" TextWrapping="Wrap" />
+      <TextBlock x:Name="Titulo" Style="{StaticResource Dialog.HeaderTitle}" />
+      <TextBlock x:Name="Subtitulo" Style="{StaticResource Dialog.HeaderSubtitle}" />
     </StackPanel>
 
     <!-- Zonas del proyecto -->
@@ -191,4 +191,5 @@
               MinWidth="100" Margin="0,0,8,0" IsCancel="True" />
     </DockPanel>
   </Grid>
+  </Border>
 </Window>

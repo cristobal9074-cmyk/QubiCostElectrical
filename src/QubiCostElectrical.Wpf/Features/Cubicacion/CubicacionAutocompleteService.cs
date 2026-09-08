@@ -83,43 +83,96 @@ internal sealed class CubicacionAutocompleteService
 
         try
         {
-            var projectResults = await Task.Run(() =>
-                materialSearch.FindMatches(query, session.Materiales, materialIndex, limit: 12), ct);
+            var usedCodes = new HashSet<string>(
+                session.Cubicacion
+                    .Select(c => c.Codigo)
+                    .Where(c => !string.IsNullOrWhiteSpace(c)),
+                StringComparer.OrdinalIgnoreCase);
 
-            // El Banco de Precios es un catálogo aparte del proyecto: completar con sus
-            // coincidencias para que un código conocido del banco también aparezca aquí,
-            // aunque todavía no se haya usado en este proyecto.
+            var projectResults = await Task.Run(() =>
+            {
+                var normQuery = materialSearch.Normalize(query);
+                var tokens = query.Trim()
+                    .Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(materialSearch.Normalize)
+                    .Where(t => t.Length > 0)
+                    .ToArray();
+
+                if (tokens.Length > 1)
+                {
+                    // Multi-token fuzzy matching
+                    var matched = new List<MaterialRow>();
+                    foreach (var entry in materialIndex)
+                    {
+                        bool allMatch = true;
+                        foreach (var token in tokens)
+                        {
+                            if (!entry.CodigoKey.Contains(token, StringComparison.OrdinalIgnoreCase) &&
+                                !entry.DescripcionKey.Contains(token, StringComparison.OrdinalIgnoreCase) &&
+                                !entry.SearchKey.Contains(token, StringComparison.OrdinalIgnoreCase))
+                            {
+                                allMatch = false;
+                                break;
+                            }
+                        }
+                        if (allMatch)
+                            matched.Add(entry.Material);
+                    }
+                    return matched;
+                }
+
+                return materialSearch.FindMatches(query, session.Materiales, materialIndex, limit: 20);
+            }, ct);
+
+            // Completar con el Banco de Precios si faltan resultados
             var results = new List<MaterialRow>(projectResults);
-            if (!ct.IsCancellationRequested && results.Count < 12)
+            if (!ct.IsCancellationRequested && results.Count < 20)
             {
                 var bankMatches = await Task.Run(() => priceBankStore.Search(query), ct);
                 foreach (var entry in bankMatches)
                 {
-                    if (results.Count >= 12) break;
+                    if (results.Count >= 25) break;
                     if (results.Any(m => CodeHelper.Match(m.Codigo, entry.Codigo))) continue;
                     results.Add(CubicacionViewModel.FromBankEntry(entry));
                 }
             }
 
+            // Ordenamiento por prioridad:
+            // 1. Coincidencia exacta de código
+            // 2. Materiales ya utilizados en el proyecto activo (usados en cubicación)
+            // 3. Catálogo del proyecto
+            // 4. Banco de precios
+            var normQ = materialSearch.Normalize(query);
+            var sortedResults = results
+                .OrderBy(m =>
+                {
+                    var normCode = materialSearch.Normalize(m.Codigo);
+                    if (string.Equals(normCode, normQ, StringComparison.OrdinalIgnoreCase)) return 0;
+                    if (usedCodes.Contains(m.Codigo)) return 1;
+                    return 2;
+                })
+                .Take(12)
+                .ToList();
+
             if (!ct.IsCancellationRequested)
             {
                 var trimmed = query.Trim();
                 parent.AutocompleteQueryText = trimmed;
-                var inCatalog = results.Any(m =>
+                var inCatalog = sortedResults.Any(m =>
                     string.Equals(m.Codigo, trimmed, StringComparison.OrdinalIgnoreCase));
 
                 parent.AutocompleteResults = new ObservableCollection<AutocompleteSuggestionVm>(
-                    results.Select(m => new AutocompleteSuggestionVm(m, GetMatchReason(trimmed, m))));
+                    sortedResults.Select(m => new AutocompleteSuggestionVm(m, GetMatchReason(trimmed, m, usedCodes))));
 
                 bool showCreate = !inCatalog && trimmed.Length >= 2;
-                parent.AutocompleteVisible = results.Count > 0 || showCreate;
-                bool exactCodeMatch = results.Count == 1 &&
-                    string.Equals(results[0].Codigo, trimmed, StringComparison.OrdinalIgnoreCase);
+                parent.AutocompleteVisible = sortedResults.Count > 0 || showCreate;
+                bool exactCodeMatch = sortedResults.Count == 1 &&
+                    string.Equals(sortedResults[0].Codigo, trimmed, StringComparison.OrdinalIgnoreCase);
 
-                parent.AutocompleteStatusText = results.Count > 0
+                parent.AutocompleteStatusText = sortedResults.Count > 0
                     ? exactCodeMatch
                         ? "Coincidencia exacta · Enter aplica · Tab confirma y sigue"
-                        : $"{results.Count:N0} sugerencia(s) · Enter aplica · Tab confirma y sigue"
+                        : $"{sortedResults.Count:N0} sugerencia(s) · Enter aplica · Tab confirma y sigue"
                     : showCreate
                         ? "Sin coincidencias. Puedes crear un material nuevo con este código."
                         : "Sin coincidencias.";
@@ -156,17 +209,19 @@ internal sealed class CubicacionAutocompleteService
         await SearchMaterialsAsync(query);
     }
 
-    private string GetMatchReason(string query, MaterialRow material)
+    private string GetMatchReason(string query, MaterialRow material, IReadOnlySet<string>? usedCodes = null)
     {
         string q = materialSearch.Normalize(query);
         if (string.IsNullOrWhiteSpace(q))
-            return "Sugerido";
+            return usedCodes != null && usedCodes.Contains(material.Codigo) ? "En proyecto" : "Sugerido";
 
         string code = materialSearch.Normalize(material.Codigo);
         string desc = materialSearch.Normalize(material.Descripcion);
 
         if (code.Equals(q, StringComparison.OrdinalIgnoreCase))
             return "Código exacto";
+        if (usedCodes != null && usedCodes.Contains(material.Codigo))
+            return "En proyecto";
         if (code.StartsWith(q, StringComparison.OrdinalIgnoreCase))
             return "Código";
         if (desc.StartsWith(q, StringComparison.OrdinalIgnoreCase))

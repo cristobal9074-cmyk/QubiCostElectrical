@@ -7,7 +7,7 @@
   <UserControl.Resources>
     <Style x:Key="GoCellBox" TargetType="TextBox" BasedOn="{StaticResource Form.TextBox}">
       <Setter Property="Padding" Value="7,5" />
-      <Setter Property="FontSize" Value="12" />
+      <Setter Property="FontSize" Value="{StaticResource Font.Size.md}" />
       <Setter Property="MinHeight" Value="28" />
       <Setter Property="VerticalContentAlignment" Value="Center" />
       <Setter Property="BorderThickness" Value="1" />
@@ -15,11 +15,11 @@
       <Setter Property="Background" Value="Transparent" />
       <Style.Triggers>
         <Trigger Property="IsMouseOver" Value="True">
-          <Setter Property="Background" Value="#FFFFFF" />
+          <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
           <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
         </Trigger>
         <Trigger Property="IsKeyboardFocused" Value="True">
-          <Setter Property="Background" Value="#FFFFFF" />
+          <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
           <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue2}" />
         </Trigger>
       </Style.Triggers>
@@ -33,59 +33,18 @@
       <Setter Property="Width" Value="26" />
       <Setter Property="Height" Value="26" />
       <Setter Property="Padding" Value="0" />
-      <Setter Property="FontSize" Value="14" />
+      <Setter Property="FontSize" Value="{StaticResource Font.Size.lg}" />
       <Setter Property="FontWeight" Value="SemiBold" />
     </Style>
-    <Style x:Key="GoViaticosBtn" TargetType="Button">
+    <Style x:Key="GoViaticosBtn" TargetType="Button" BasedOn="{StaticResource Button.Primary}">
       <Setter Property="Cursor" Value="Hand" />
-      <Setter Property="FontSize" Value="11" />
+      <Setter Property="FontSize" Value="{StaticResource Font.Size.sm}" />
       <Setter Property="FontWeight" Value="SemiBold" />
       <Setter Property="Padding" Value="11,6" />
       <Setter Property="Margin" Value="0,0,8,0" />
       <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="Content" Value="Calcular viáticos" />
       <Setter Property="ToolTip" Value="Abrir calculadora profesional de viáticos" />
-      <Setter Property="Template">
-        <Setter.Value>
-          <ControlTemplate TargetType="Button">
-            <Border x:Name="bd" CornerRadius="8" Padding="{TemplateBinding Padding}" BorderThickness="1">
-              <Border.Background>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                  <GradientStop Color="#1C324C" Offset="0" />
-                  <GradientStop Color="#2563B0" Offset="1" />
-                </LinearGradientBrush>
-              </Border.Background>
-              <Border.BorderBrush>
-                <SolidColorBrush Color="#3B82F6" Opacity="0.55" />
-              </Border.BorderBrush>
-              <Border.Effect>
-                <DropShadowEffect BlurRadius="10" ShadowDepth="1" Opacity="0.18" Color="#2563B0" />
-              </Border.Effect>
-              <StackPanel Orientation="Horizontal">
-                <TextBlock Text="◎" FontSize="10" Foreground="#93C5FD" VerticalAlignment="Center" Margin="0,0,6,0" />
-                <TextBlock Text="Calcular viáticos" Foreground="White" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" />
-              </StackPanel>
-            </Border>
-            <ControlTemplate.Triggers>
-              <Trigger Property="IsMouseOver" Value="True">
-                <Setter TargetName="bd" Property="Background">
-                  <Setter.Value>
-                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                      <GradientStop Color="#243B58" Offset="0" />
-                      <GradientStop Color="#1D4F96" Offset="1" />
-                    </LinearGradientBrush>
-                  </Setter.Value>
-                </Setter>
-              </Trigger>
-              <Trigger Property="IsPressed" Value="True">
-                <Setter TargetName="bd" Property="Opacity" Value="0.92" />
-              </Trigger>
-              <Trigger Property="IsEnabled" Value="False">
-                <Setter TargetName="bd" Property="Opacity" Value="0.45" />
-              </Trigger>
-            </ControlTemplate.Triggers>
-          </ControlTemplate>
-        </Setter.Value>
-      </Setter>
     </Style>
   </UserControl.Resources>
 
@@ -101,9 +60,7 @@
                 Padding="20,14">
           <DockPanel LastChildFill="False">
             <StackPanel>
-              <TextBlock Text="Desglose de costos"
-                         FontSize="20" FontWeight="Bold"
-                         Foreground="{DynamicResource Brush.Ink}" />
+              <TextBlock Text="Desglose de costos" Style="{StaticResource Text.PageTitle}" />
             </StackPanel>
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
               <Button Style="{StaticResource Button.Secondary}" Content="Cubicación" Command="{Binding GoToTakeoffCommand}" Margin="0,0,6,0" />
@@ -115,37 +72,27 @@
           </DockPanel>
         </Border>
 
-        <!-- KPI cards -->
-        <UniformGrid Columns="4" Margin="20,14,20,0">
-          <Border Style="{StaticResource Card.Kpi}" Margin="0,0,10,0" MinHeight="80" Padding="14,12">
-            <StackPanel VerticalAlignment="Center">
-              <TextBlock Text="COSTO DIRECTO" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" />
-              <TextBlock Text="{Binding CostoDirectoLabel}" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" Margin="0,2,0,0" />
-              <TextBlock Text="{Binding CostoDirectoSubLabel}" FontSize="10" Foreground="{DynamicResource Brush.Muted}" />
+        <!-- Resumen compacto -->
+        <Border Style="{StaticResource Card.Summary}" Margin="20,10,20,0" Padding="12,6">
+          <DockPanel LastChildFill="False">
+            <StackPanel Orientation="Horizontal" Margin="0,0,18,0" VerticalAlignment="Center">
+              <TextBlock Text="Costo directo" Style="{StaticResource Text.Helper}" Margin="0,0,6,0" VerticalAlignment="Center" />
+              <TextBlock Text="{Binding CostoDirectoLabel}" Style="{StaticResource Text.KpiInline}" VerticalAlignment="Center" />
             </StackPanel>
-          </Border>
-          <Border Style="{StaticResource Card.Kpi}" Margin="0,0,10,0" MinHeight="80" Padding="14,12">
-            <StackPanel VerticalAlignment="Center">
-              <TextBlock Text="TOTAL VENTA" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" />
-              <TextBlock Text="{Binding TotalVentaLabel}" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" Margin="0,2,0,0" />
-              <TextBlock Text="{Binding TotalVentaSubLabel}" FontSize="10" Foreground="{DynamicResource Brush.Muted}" />
+            <StackPanel Orientation="Horizontal" Margin="0,0,18,0" VerticalAlignment="Center">
+              <TextBlock Text="Total venta" Style="{StaticResource Text.Helper}" Margin="0,0,6,0" VerticalAlignment="Center" />
+              <TextBlock Text="{Binding TotalVentaLabel}" Style="{StaticResource Text.KpiInline}" Foreground="{DynamicResource Brush.Blue}" VerticalAlignment="Center" />
             </StackPanel>
-          </Border>
-          <Border Style="{StaticResource Card.Kpi}" Margin="0,0,10,0" MinHeight="80" Padding="14,12">
-            <StackPanel VerticalAlignment="Center">
-              <TextBlock Text="MARGEN REAL" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" />
-              <TextBlock Text="{Binding MargenLabel}" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource Brush.Green}" Margin="0,2,0,0" />
-              <TextBlock Text="Sobre total venta" FontSize="10" Foreground="{DynamicResource Brush.Muted}" />
+            <StackPanel Orientation="Horizontal" Margin="0,0,18,0" VerticalAlignment="Center">
+              <TextBlock Text="Margen" Style="{StaticResource Text.Helper}" Margin="0,0,6,0" VerticalAlignment="Center" />
+              <TextBlock Text="{Binding MargenLabel}" Style="{StaticResource Text.KpiInline}" Foreground="{DynamicResource Brush.Green}" VerticalAlignment="Center" />
             </StackPanel>
-          </Border>
-          <Border Style="{StaticResource Card.Kpi}" MinHeight="80" Padding="14,12">
-            <StackPanel VerticalAlignment="Center">
-              <TextBlock Text="UF / m²" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" />
-              <TextBlock Text="{Binding UfM2Label}" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource Brush.Amber}" Margin="0,2,0,0" />
-              <TextBlock Text="{Binding UfM2SubLabel}" FontSize="10" Foreground="{DynamicResource Brush.Muted}" />
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <TextBlock Text="UF / m²" Style="{StaticResource Text.Helper}" Margin="0,0,6,0" VerticalAlignment="Center" />
+              <TextBlock Text="{Binding UfM2Label}" Style="{StaticResource Text.KpiInline}" Foreground="{DynamicResource Brush.Amber}" VerticalAlignment="Center" />
             </StackPanel>
-          </Border>
-        </UniformGrid>
+          </DockPanel>
+        </Border>
 
         <StackPanel Margin="20,14,20,24">
 
@@ -153,8 +100,7 @@
           <Border Style="{StaticResource Card.Section}" Padding="16" Margin="0,0,0,14"
                   Visibility="{Binding ShowFamilias, Converter={StaticResource BoolToVisibility}}">
             <StackPanel>
-              <TextBlock Text="Costos por familia de materiales" FontSize="13" FontWeight="Bold"
-                         Foreground="{DynamicResource Brush.Ink}" Margin="0,0,0,8" />
+              <TextBlock Text="Costos por familia de materiales" Style="{StaticResource Text.SectionTitle}" Margin="0,0,0,8" />
               <ItemsControl ItemsSource="{Binding Familias}">
                 <ItemsControl.ItemTemplate>
                   <DataTemplate>
@@ -169,12 +115,12 @@
                         <TextBlock Grid.Column="0" Text="{Binding Familia}" FontWeight="SemiBold"
                                    Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" />
                         <TextBlock Grid.Column="1" Text="{Binding TotalLabel}" TextAlignment="Right"
-                                   FontFamily="{StaticResource Font.Mono}" FontSize="13" FontWeight="Bold"
+                                   FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold"
                                    Foreground="{DynamicResource Brush.Blue}" VerticalAlignment="Center" Margin="0,0,10,0" />
                         <TextBlock Grid.Column="2" Text="{Binding TotalMonedaLabel}" TextAlignment="Right"
-                                   FontFamily="{StaticResource Font.Mono}" FontSize="10"
+                                   FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.xs}"
                                    Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" Margin="0,0,10,0" />
-                        <TextBlock Grid.Column="3" Text="{Binding CountLabel}" FontSize="10"
+                        <TextBlock Grid.Column="3" Text="{Binding CountLabel}" FontSize="{StaticResource Font.Size.xs}"
                                    Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
                       </Grid>
                     </Border>
@@ -193,15 +139,14 @@
                   <ColumnDefinition Width="Auto" />
                   <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="Mano de Obra" FontSize="13" FontWeight="Bold"
-                           Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="0" Text="Mano de Obra" Style="{StaticResource Text.SectionTitle}" VerticalAlignment="Center" />
                 <TextBlock Grid.Column="1" Text="{Binding TotalMoLabel}"
-                           FontFamily="{StaticResource Font.Mono}" FontSize="13" FontWeight="Bold"
+                           Style="{StaticResource Text.KpiInline}"
                            Foreground="{DynamicResource Brush.Green}"
                            HorizontalAlignment="Right" VerticalAlignment="Center" />
               </Grid>
 
-              <TextBlock Text="MO Directa" FontSize="9" FontWeight="Bold"
+              <TextBlock Text="MO Directa" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold"
                          Foreground="{DynamicResource Brush.Blue}" Margin="0,4,0,2" />
               <ItemsControl ItemsSource="{Binding MoDirectaRows}" Margin="0,0,0,0">
                 <ItemsControl.ItemTemplate>
@@ -215,18 +160,18 @@
                           <ColumnDefinition Width="120" />
                           <ColumnDefinition Width="50" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="{Binding Cargo}" FontSize="11"
+                        <TextBlock Grid.Column="0" Text="{Binding Cargo}" FontSize="{StaticResource Font.Size.sm}"
                                    Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" />
-                        <TextBlock Grid.Column="1" Text="{Binding DotacionLabel}" FontSize="10"
+                        <TextBlock Grid.Column="1" Text="{Binding DotacionLabel}" FontSize="{StaticResource Font.Size.xs}"
                                    Foreground="{DynamicResource Brush.Muted}" TextAlignment="Right"
                                    VerticalAlignment="Center" Margin="0,0,8,0" />
-                        <TextBlock Grid.Column="2" Text="{Binding SueldoLabel}" FontSize="10"
+                        <TextBlock Grid.Column="2" Text="{Binding SueldoLabel}" FontSize="{StaticResource Font.Size.xs}"
                                    FontFamily="{StaticResource Font.Mono}" TextAlignment="Right"
                                    VerticalAlignment="Center" Margin="0,0,8,0" />
-                        <TextBlock Grid.Column="3" Text="{Binding TotalLabel}" FontSize="11"
+                        <TextBlock Grid.Column="3" Text="{Binding TotalLabel}" FontSize="{StaticResource Font.Size.sm}"
                                    FontFamily="{StaticResource Font.Mono}" FontWeight="SemiBold"
                                    TextAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0" />
-                        <TextBlock Grid.Column="4" Text="{Binding PctLabel}" FontSize="10"
+                        <TextBlock Grid.Column="4" Text="{Binding PctLabel}" FontSize="{StaticResource Font.Size.xs}"
                                    Foreground="{DynamicResource Brush.Muted}" TextAlignment="Right"
                                    VerticalAlignment="Center" />
                       </Grid>
@@ -244,17 +189,17 @@
                     <ColumnDefinition Width="120" />
                     <ColumnDefinition Width="50" />
                   </Grid.ColumnDefinitions>
-                  <TextBlock Grid.Column="0" Text="Total MO directa" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center" />
-                  <TextBlock Grid.Column="1" Text="{Binding TotalMoDirectaDotacionLabel}" FontSize="10"
+                  <TextBlock Grid.Column="0" Text="Total MO directa" FontSize="{StaticResource Font.Size.xs}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                  <TextBlock Grid.Column="1" Text="{Binding TotalMoDirectaDotacionLabel}" FontSize="{StaticResource Font.Size.xs}"
                              Foreground="{DynamicResource Brush.Muted}" TextAlignment="Right"
                              VerticalAlignment="Center" Margin="0,0,8,0" />
-                  <TextBlock Grid.Column="3" Text="{Binding TotalMoDirectaLabel}" FontSize="11"
+                  <TextBlock Grid.Column="3" Text="{Binding TotalMoDirectaLabel}" FontSize="{StaticResource Font.Size.sm}"
                              FontFamily="{StaticResource Font.Mono}" FontWeight="Bold"
                              TextAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0" />
                 </Grid>
               </Border>
 
-              <TextBlock Text="MO Indirecta" FontSize="9" FontWeight="Bold"
+              <TextBlock Text="MO Indirecta" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold"
                          Foreground="{DynamicResource Brush.Amber}" Margin="0,10,0,2" />
               <ItemsControl ItemsSource="{Binding MoIndirectaRows}">
                 <ItemsControl.ItemTemplate>
@@ -268,18 +213,18 @@
                           <ColumnDefinition Width="120" />
                           <ColumnDefinition Width="50" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="{Binding Cargo}" FontSize="11"
+                        <TextBlock Grid.Column="0" Text="{Binding Cargo}" FontSize="{StaticResource Font.Size.sm}"
                                    Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" />
-                        <TextBlock Grid.Column="1" Text="{Binding DotacionLabel}" FontSize="10"
+                        <TextBlock Grid.Column="1" Text="{Binding DotacionLabel}" FontSize="{StaticResource Font.Size.xs}"
                                    Foreground="{DynamicResource Brush.Muted}" TextAlignment="Right"
                                    VerticalAlignment="Center" Margin="0,0,8,0" />
-                        <TextBlock Grid.Column="2" Text="{Binding SueldoLabel}" FontSize="10"
+                        <TextBlock Grid.Column="2" Text="{Binding SueldoLabel}" FontSize="{StaticResource Font.Size.xs}"
                                    FontFamily="{StaticResource Font.Mono}" TextAlignment="Right"
                                    VerticalAlignment="Center" Margin="0,0,8,0" />
-                        <TextBlock Grid.Column="3" Text="{Binding TotalLabel}" FontSize="11"
+                        <TextBlock Grid.Column="3" Text="{Binding TotalLabel}" FontSize="{StaticResource Font.Size.sm}"
                                    FontFamily="{StaticResource Font.Mono}" FontWeight="SemiBold"
                                    TextAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0" />
-                        <TextBlock Grid.Column="4" Text="{Binding PctLabel}" FontSize="10"
+                        <TextBlock Grid.Column="4" Text="{Binding PctLabel}" FontSize="{StaticResource Font.Size.xs}"
                                    Foreground="{DynamicResource Brush.Muted}" TextAlignment="Right"
                                    VerticalAlignment="Center" />
                       </Grid>
@@ -297,8 +242,8 @@
                     <ColumnDefinition Width="120" />
                     <ColumnDefinition Width="50" />
                   </Grid.ColumnDefinitions>
-                  <TextBlock Grid.Column="0" Text="Total MO indirecta" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center" />
-                  <TextBlock Grid.Column="3" Text="{Binding TotalMoIndirectaLabel}" FontSize="11"
+                  <TextBlock Grid.Column="0" Text="Total MO indirecta" FontSize="{StaticResource Font.Size.xs}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                  <TextBlock Grid.Column="3" Text="{Binding TotalMoIndirectaLabel}" FontSize="{StaticResource Font.Size.sm}"
                              FontFamily="{StaticResource Font.Mono}" FontWeight="Bold"
                              TextAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0" />
                 </Grid>
@@ -311,12 +256,12 @@
                     <ColumnDefinition Width="120" />
                     <ColumnDefinition Width="Auto" />
                   </Grid.ColumnDefinitions>
-                  <TextBlock Grid.Column="0" Text="TOTAL MANO DE OBRA" FontSize="10" FontWeight="Bold"
-                             Foreground="#FFFFFF" VerticalAlignment="Center" />
-                  <TextBlock Grid.Column="1" Text="{Binding TotalMoLabel}" FontSize="14" FontWeight="Bold"
-                             FontFamily="{StaticResource Font.Mono}" Foreground="#FFFFFF"
+                  <TextBlock Grid.Column="0" Text="TOTAL MANO DE OBRA" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold"
+                             Foreground="{DynamicResource Brush.White}" VerticalAlignment="Center" />
+                  <TextBlock Grid.Column="1" Text="{Binding TotalMoLabel}" FontSize="{StaticResource Font.Size.lg}" FontWeight="Bold"
+                             FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.White}"
                              TextAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,0" />
-                  <TextBlock Grid.Column="2" Text="{Binding TotalMoSubLabel}" FontSize="9"
+                  <TextBlock Grid.Column="2" Text="{Binding TotalMoSubLabel}" FontSize="{StaticResource Font.Size.2xs}"
                              Foreground="{DynamicResource Brush.HeaderLabel}" VerticalAlignment="Center" />
                 </Grid>
               </Border>
@@ -327,16 +272,15 @@
           <Border Style="{StaticResource Card.Section}" Padding="16" Margin="0,0,0,14"
                   Visibility="{Binding ShowGoSection, Converter={StaticResource BoolToVisibility}}">
             <StackPanel>
-              <TextBlock Text="Gastos Operacionales" FontSize="13" FontWeight="Bold"
-                         Foreground="{DynamicResource Brush.Ink}" Margin="0,0,0,12" />
+              <TextBlock Text="Gastos Operacionales" Style="{StaticResource Text.SectionTitle}" Margin="0,0,0,12" />
 
               <!-- Hero -->
               <Border CornerRadius="12" Padding="18,16" Margin="0,0,0,12" ClipToBounds="True">
                 <Border.Background>
                   <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                    <GradientStop Color="#101C30" Offset="0" />
-                    <GradientStop Color="#14263C" Offset="0.55" />
-                    <GradientStop Color="#1A3A58" Offset="1" />
+                    <GradientStop Color="{StaticResource Color.Navy}" Offset="0" />
+                    <GradientStop Color="{StaticResource Color.Navy2}" Offset="0.55" />
+                    <GradientStop Color="{StaticResource Color.BrandDark}" Offset="1" />
                   </LinearGradientBrush>
                 </Border.Background>
                 <StackPanel>
@@ -346,43 +290,43 @@
                       <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <StackPanel>
-                      <TextBlock Text="TOTAL GASTOS OPERACIONALES" FontSize="10" FontWeight="Bold"
-                                 Foreground="#8CA0B8" />
-                      <TextBlock Text="{Binding TotalGoLabel}" FontSize="28" FontWeight="SemiBold"
-                                 FontFamily="{StaticResource Font.Mono}" Foreground="#FFFFFF"
+                      <TextBlock Text="TOTAL GASTOS OPERACIONALES" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold"
+                                 Foreground="{DynamicResource Brush.HeaderMuted}" />
+                      <TextBlock Text="{Binding TotalGoLabel}" FontSize="{StaticResource Font.Size.3xl}" FontWeight="SemiBold"
+                                 FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.White}"
                                  Margin="0,6,0,0" />
-                      <TextBlock Text="{Binding TotalGoUfSubLabel}" FontSize="12"
-                                 FontFamily="{StaticResource Font.Mono}" Foreground="#9FB0C4"
+                      <TextBlock Text="{Binding TotalGoUfSubLabel}" FontSize="{StaticResource Font.Size.md}"
+                                 FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.HeaderMuted}"
                                  Margin="0,6,0,0" />
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
-                      <Border Background="#14FFFFFF" BorderBrush="#1FFFFFFF" BorderThickness="1"
-                              CornerRadius="999" Padding="10,6" Margin="0,0,6,0">
-                        <TextBlock Text="{Binding GoCategoriaCountLabel}" FontSize="11" FontWeight="SemiBold" Foreground="#E8EEF6" />
+                      <Border Background="{DynamicResource Brush.White12}" BorderBrush="{DynamicResource Brush.White9}" BorderThickness="1"
+                              CornerRadius="{StaticResource Radius.Chip}" Padding="10,6" Margin="0,0,6,0">
+                        <TextBlock Text="{Binding GoCategoriaCountLabel}" FontSize="{StaticResource Font.Size.sm}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.HeaderInk}" />
                       </Border>
-                      <Border Background="#14FFFFFF" BorderBrush="#1FFFFFFF" BorderThickness="1"
-                              CornerRadius="999" Padding="10,6" Margin="0,0,6,0">
+                      <Border Background="{DynamicResource Brush.White12}" BorderBrush="{DynamicResource Brush.White9}" BorderThickness="1"
+                              CornerRadius="{StaticResource Radius.Chip}" Padding="10,6" Margin="0,0,6,0">
                         <StackPanel Orientation="Horizontal">
-                          <TextBlock Text="Ítems " FontSize="11" FontWeight="SemiBold" Foreground="#E8EEF6" />
-                          <TextBlock Text="{Binding GoItemCountLabel}" FontSize="11" FontWeight="SemiBold"
-                                     FontFamily="{StaticResource Font.Mono}" Foreground="#93C5FD" />
+                          <TextBlock Text="Ítems " FontSize="{StaticResource Font.Size.sm}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.HeaderInk}" />
+                          <TextBlock Text="{Binding GoItemCountLabel}" FontSize="{StaticResource Font.Size.sm}" FontWeight="SemiBold"
+                                     FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.BrandStroke2}" />
                         </StackPanel>
                       </Border>
-                      <Border Background="#14FFFFFF" BorderBrush="#1FFFFFFF" BorderThickness="1"
-                              CornerRadius="999" Padding="10,6">
-                        <TextBlock Text="Editable" FontSize="11" FontWeight="SemiBold" Foreground="#E8EEF6" />
+                      <Border Background="{DynamicResource Brush.White12}" BorderBrush="{DynamicResource Brush.White9}" BorderThickness="1"
+                              CornerRadius="{StaticResource Radius.Chip}" Padding="10,6">
+                        <TextBlock Text="Editable" FontSize="{StaticResource Font.Size.sm}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.HeaderInk}" />
                       </Border>
                     </StackPanel>
                   </Grid>
 
                   <DockPanel Margin="0,16,0,8" LastChildFill="False">
-                    <TextBlock DockPanel.Dock="Left" Text="COMPOSICIÓN DEL GO" FontSize="10" FontWeight="SemiBold"
-                               Foreground="#8094AA" />
-                    <TextBlock DockPanel.Dock="Right" Text="{Binding GoComposeHint}" FontSize="10"
-                               Foreground="#8094AA" />
+                    <TextBlock DockPanel.Dock="Left" Text="COMPOSICIÓN DEL GO" FontSize="{StaticResource Font.Size.xs}" FontWeight="SemiBold"
+                               Foreground="{DynamicResource Brush.HeaderDim}" />
+                    <TextBlock DockPanel.Dock="Right" Text="{Binding GoComposeHint}" FontSize="{StaticResource Font.Size.xs}"
+                               Foreground="{DynamicResource Brush.HeaderDim}" />
                   </DockPanel>
 
-                  <Border Height="10" CornerRadius="5" Background="#14FFFFFF" ClipToBounds="True">
+                  <Border Height="10" CornerRadius="5" Background="{DynamicResource Brush.White12}" ClipToBounds="True">
                     <Viewbox Stretch="Fill" Height="10" HorizontalAlignment="Stretch">
                       <ItemsControl ItemsSource="{Binding GoComposeSegments}" Height="10">
                         <ItemsControl.ItemsPanel>
@@ -410,9 +354,9 @@
                         <StackPanel Orientation="Horizontal" Margin="0,0,14,4">
                           <Border Width="8" Height="8" CornerRadius="2" Background="{Binding Fill}"
                                   VerticalAlignment="Center" Margin="0,0,6,0" />
-                          <TextBlock Text="{Binding Codigo}" FontSize="11" Foreground="#B8C5D6" VerticalAlignment="Center" />
-                          <TextBlock Text="{Binding PctLabel}" FontSize="10" FontWeight="SemiBold"
-                                     FontFamily="{StaticResource Font.Mono}" Foreground="#FFFFFF"
+                          <TextBlock Text="{Binding Codigo}" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.HeaderControl}" VerticalAlignment="Center" />
+                          <TextBlock Text="{Binding PctLabel}" FontSize="{StaticResource Font.Size.xs}" FontWeight="SemiBold"
+                                     FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.White}"
                                      VerticalAlignment="Center" Margin="4,0,0,0" />
                         </StackPanel>
                       </DataTemplate>
@@ -423,18 +367,18 @@
 
               <!-- Toolbar -->
               <DockPanel Margin="0,0,0,10" LastChildFill="False">
-                <TextBlock DockPanel.Dock="Left" FontSize="12" Foreground="{DynamicResource Brush.Ink3}"
+                <TextBlock DockPanel.Dock="Left" Style="{StaticResource Text.Helper}"
                            VerticalAlignment="Center">
                   <Run Text="Clic en categoría · " />
-                  <Run Text="Tab" FontFamily="{StaticResource Font.Mono}" FontSize="10" />
+                  <Run Text="Tab" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.xs}" />
                   <Run Text=" entre celdas · totales al salir" />
                 </TextBlock>
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                   <Button Content="Restablecer" Style="{StaticResource Button.Ghost}"
-                          Command="{Binding ResetGoPlantillaCommand}" FontSize="12" Margin="0,0,6,0"
+                          Command="{Binding ResetGoPlantillaCommand}" FontSize="{StaticResource Font.Size.md}" Margin="0,0,6,0"
                           IsEnabled="{Binding CanEdit}" ToolTip="Plantilla en 0" />
                   <Button Content="+ Categoría" Style="{StaticResource Button.Secondary}"
-                          Command="{Binding AddGoCategoriaCommand}" FontSize="12"
+                          Command="{Binding AddGoCategoriaCommand}" FontSize="{StaticResource Font.Size.md}"
                           IsEnabled="{Binding CanEdit}" />
                 </StackPanel>
               </DockPanel>
@@ -444,18 +388,13 @@
                 <ItemsControl.ItemTemplate>
                   <DataTemplate>
                     <Border Margin="0,0,0,8" CornerRadius="10" BorderThickness="1"
-                            BorderBrush="{DynamicResource Brush.Line}" Background="#FAFBFC">
+                            BorderBrush="{DynamicResource Brush.Line}" Background="{DynamicResource Brush.Surface2}">
                       <Border.Style>
                         <Style TargetType="Border">
                           <Style.Triggers>
                             <DataTrigger Binding="{Binding IsExpanded}" Value="True">
                               <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
-                              <Setter Property="BorderBrush" Value="#C7D7F0" />
-                              <Setter Property="Effect">
-                                <Setter.Value>
-                                  <DropShadowEffect BlurRadius="16" ShadowDepth="2" Opacity="0.08" Color="#2563B0" />
-                                </Setter.Value>
-                              </Setter>
+                              <Setter Property="BorderBrush" Value="{DynamicResource Brush.BrandStroke3}" />
                             </DataTrigger>
                           </Style.Triggers>
                         </Style>
@@ -473,7 +412,7 @@
                               <Style.Triggers>
                                 <DataTrigger Binding="{Binding IsExpanded}" Value="True">
                                   <Setter Property="Background" Value="{DynamicResource Brush.BlueFaint}" />
-                                  <Setter Property="BorderBrush" Value="#D9E6F7" />
+                                  <Setter Property="BorderBrush" Value="{DynamicResource Brush.BlueSoft}" />
                                   <Setter Property="BorderThickness" Value="0,0,0,1" />
                                 </DataTrigger>
                               </Style.Triggers>
@@ -496,12 +435,12 @@
                                   <Setter Property="Background" Value="Transparent" />
                                   <Style.Triggers>
                                     <DataTrigger Binding="{Binding IsExpanded}" Value="True">
-                                      <Setter Property="Background" Value="#1F2563B0" />
+                                      <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
                                     </DataTrigger>
                                   </Style.Triggers>
                                 </Style>
                               </Border.Style>
-                              <TextBlock Text="{Binding Chevron}" FontSize="11" FontWeight="SemiBold"
+                              <TextBlock Text="{Binding Chevron}" FontSize="{StaticResource Font.Size.sm}" FontWeight="SemiBold"
                                          HorizontalAlignment="Center" VerticalAlignment="Center"
                                          Foreground="{DynamicResource Brush.Muted}">
                                 <TextBlock.Style>
@@ -517,14 +456,14 @@
                             </Border>
                             <Border Grid.Column="1" Background="{DynamicResource Brush.BlueSoft}" CornerRadius="6"
                                     Padding="7,3" Margin="0,0,8,0" VerticalAlignment="Center">
-                              <TextBlock Text="{Binding Codigo}" FontSize="11" FontWeight="SemiBold"
+                              <TextBlock Text="{Binding Codigo}" FontSize="{StaticResource Font.Size.sm}" FontWeight="SemiBold"
                                          FontFamily="{StaticResource Font.Mono}"
                                          Foreground="{DynamicResource Brush.Blue}" />
                             </Border>
                             <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="0,0,8,0">
-                              <TextBlock Text="{Binding Concepto}" FontSize="13" FontWeight="SemiBold"
+                              <TextBlock Text="{Binding Concepto}" FontSize="{StaticResource Font.Size.base}" FontWeight="SemiBold"
                                          Foreground="{DynamicResource Brush.Ink}" TextTrimming="CharacterEllipsis" />
-                              <TextBlock Text="{Binding ItemsCountLabel}" FontSize="11"
+                              <TextBlock Text="{Binding ItemsCountLabel}" FontSize="{StaticResource Font.Size.sm}"
                                          Foreground="{DynamicResource Brush.Muted}" />
                             </StackPanel>
                             <Button Grid.Column="3" Style="{StaticResource GoViaticosBtn}"
@@ -532,15 +471,15 @@
                                     IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                     Command="{Binding DataContext.OpenViaticosCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                     CommandParameter="{Binding}" />
-                            <TextBlock Grid.Column="4" Text="{Binding UfLabel}" FontSize="11"
+                            <TextBlock Grid.Column="4" Text="{Binding UfLabel}" FontSize="{StaticResource Font.Size.sm}"
                                        FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink3}"
                                        TextAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0" />
-                            <TextBlock Grid.Column="5" Text="{Binding MontoLabel}" FontSize="13" FontWeight="SemiBold"
+                            <TextBlock Grid.Column="5" Text="{Binding MontoLabel}" FontSize="{StaticResource Font.Size.base}" FontWeight="SemiBold"
                                        FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink}"
                                        TextAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0" />
-                            <Border Grid.Column="6" Background="{DynamicResource Brush.BlueSoft}" CornerRadius="999"
+                            <Border Grid.Column="6" Background="{DynamicResource Brush.BlueSoft}" CornerRadius="{StaticResource Radius.Chip}"
                                     Padding="8,4" VerticalAlignment="Center" Margin="0,0,6,0">
-                              <TextBlock Text="{Binding PctLabel}" FontSize="10" FontWeight="Bold"
+                              <TextBlock Text="{Binding PctLabel}" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold"
                                          Foreground="{DynamicResource Brush.Blue}" />
                             </Border>
                             <StackPanel Grid.Column="7" Orientation="Horizontal" VerticalAlignment="Center"
@@ -567,11 +506,11 @@
                               <ColumnDefinition Width="100" />
                               <ColumnDefinition Width="32" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="CONCEPTO" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" />
-                            <TextBlock Grid.Column="1" Text="UN." FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" TextAlignment="Center" />
-                            <TextBlock Grid.Column="2" Text="CANT." FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" TextAlignment="Right" />
-                            <TextBlock Grid.Column="3" Text="P. UNIT." FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" TextAlignment="Right" />
-                            <TextBlock Grid.Column="4" Text="TOTAL" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" TextAlignment="Right" />
+                            <TextBlock Text="CONCEPTO" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" />
+                            <TextBlock Grid.Column="1" Text="UN." FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" TextAlignment="Center" />
+                            <TextBlock Grid.Column="2" Text="CANT." FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" TextAlignment="Right" />
+                            <TextBlock Grid.Column="3" Text="P. UNIT." FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" TextAlignment="Right" />
+                            <TextBlock Grid.Column="4" Text="TOTAL" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" TextAlignment="Right" />
                           </Grid>
                           <ItemsControl ItemsSource="{Binding Items}">
                             <ItemsControl.ItemTemplate>
@@ -593,7 +532,7 @@
                                            Text="{Binding Cantidad, UpdateSourceTrigger=LostFocus}" />
                                   <TextBox Grid.Column="3" Style="{StaticResource GoCellMono}" Margin="0,0,4,0"
                                            Text="{Binding PrecioUnitarioClp, UpdateSourceTrigger=LostFocus}" />
-                                  <TextBlock Grid.Column="4" Text="{Binding TotalLabel}" FontSize="12" FontWeight="SemiBold"
+                                  <TextBlock Grid.Column="4" Text="{Binding TotalLabel}" FontSize="{StaticResource Font.Size.md}" FontWeight="SemiBold"
                                              FontFamily="{StaticResource Font.Mono}" TextAlignment="Right"
                                              VerticalAlignment="Center" Margin="0,0,4,0">
                                     <TextBlock.Style>
@@ -616,9 +555,9 @@
                             </ItemsControl.ItemTemplate>
                           </ItemsControl>
                           <Button Content="+ Agregar ítem" HorizontalAlignment="Left"
-                                  Margin="46,6,12,10" Padding="11,6" FontSize="12" FontWeight="SemiBold"
+                                  Margin="46,6,12,10" Padding="11,6" FontSize="{StaticResource Font.Size.md}" FontWeight="SemiBold"
                                   Foreground="{DynamicResource Brush.Blue}" Background="Transparent"
-                                  BorderBrush="#C9D4E3" BorderThickness="1" Cursor="Hand"
+                                  BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" Cursor="Hand"
                                   Command="{Binding DataContext.AddGoItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                   CommandParameter="{Binding}">
                             <Button.Template>
@@ -631,7 +570,7 @@
                                 <ControlTemplate.Triggers>
                                   <Trigger Property="IsMouseOver" Value="True">
                                     <Setter TargetName="bd" Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
-                                    <Setter TargetName="bd" Property="BorderBrush" Value="#A8C4EF" />
+                                    <Setter TargetName="bd" Property="BorderBrush" Value="{DynamicResource Brush.BlueFocus}" />
                                   </Trigger>
                                 </ControlTemplate.Triggers>
                               </ControlTemplate>
@@ -648,8 +587,8 @@
               <Border CornerRadius="10" Padding="14,12" Margin="0,4,0,0">
                 <Border.Background>
                   <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                    <GradientStop Color="#101C30" Offset="0" />
-                    <GradientStop Color="#1C324C" Offset="1" />
+                    <GradientStop Color="{StaticResource Color.Navy}" Offset="0" />
+                    <GradientStop Color="{StaticResource Color.Navy3}" Offset="1" />
                   </LinearGradientBrush>
                 </Border.Background>
                 <Grid>
@@ -659,15 +598,15 @@
                     <ColumnDefinition Width="Auto" />
                   </Grid.ColumnDefinitions>
                   <StackPanel VerticalAlignment="Center">
-                    <TextBlock Text="TOTAL GO" FontSize="10" FontWeight="Bold" Foreground="#8CA0B8" />
-                    <TextBlock Text="{Binding GoFooterSubLabel}" FontSize="12" FontWeight="SemiBold"
-                               Foreground="#FFFFFF" Margin="0,3,0,0" />
+                    <TextBlock Text="TOTAL GO" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderMuted}" />
+                    <TextBlock Text="{Binding GoFooterSubLabel}" FontSize="{StaticResource Font.Size.md}" FontWeight="SemiBold"
+                               Foreground="{DynamicResource Brush.White}" Margin="0,3,0,0" />
                   </StackPanel>
-                  <TextBlock Grid.Column="1" Text="{Binding TotalGoLabel}" FontSize="20" FontWeight="SemiBold"
-                             FontFamily="{StaticResource Font.Mono}" Foreground="#FFFFFF"
+                  <TextBlock Grid.Column="1" Text="{Binding TotalGoLabel}" FontSize="{StaticResource Font.Size.xl}" FontWeight="SemiBold"
+                             FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.White}"
                              VerticalAlignment="Center" Margin="16,0" />
-                  <TextBlock Grid.Column="2" Text="{Binding TotalGoUfLabel}" FontSize="12"
-                             FontFamily="{StaticResource Font.Mono}" Foreground="#94A3B8"
+                  <TextBlock Grid.Column="2" Text="{Binding TotalGoUfLabel}" FontSize="{StaticResource Font.Size.md}"
+                             FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Slate2}"
                              VerticalAlignment="Center" />
                 </Grid>
               </Border>
@@ -675,13 +614,13 @@
           </Border>
 
           <!-- ═══ Coeficientes de sobreventa ═══ -->
-          <Border Margin="0,0,0,14" CornerRadius="12" BorderThickness="1" BorderBrush="#C7D7F0"
+          <Border Margin="0,0,0,14" CornerRadius="12" BorderThickness="1" BorderBrush="{DynamicResource Brush.BlueSoft}"
                   Background="{DynamicResource Brush.Surface}">
             <Border.Style>
               <Style TargetType="Border">
                 <Style.Triggers>
                   <DataTrigger Binding="{Binding CoefAppliedFlash}" Value="True">
-                    <Setter Property="BorderBrush" Value="#86EFAC" />
+                    <Setter Property="BorderBrush" Value="{DynamicResource Brush.SuccessBorder}" />
                     <Setter Property="BorderThickness" Value="2" />
                   </DataTrigger>
                 </Style.Triggers>
@@ -691,52 +630,52 @@
               <Border CornerRadius="12,12,0,0" Padding="16,14">
                 <Border.Background>
                   <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                    <GradientStop Color="#101C30" Offset="0" />
-                    <GradientStop Color="#14263C" Offset="0.55" />
-                    <GradientStop Color="#1A3A58" Offset="1" />
+                    <GradientStop Color="{StaticResource Color.Navy}" Offset="0" />
+                    <GradientStop Color="{StaticResource Color.Navy2}" Offset="0.55" />
+                    <GradientStop Color="{StaticResource Color.BrandDark}" Offset="1" />
                   </LinearGradientBrush>
                 </Border.Background>
                 <DockPanel LastChildFill="False">
                   <StackPanel DockPanel.Dock="Left" MaxWidth="520">
                     <TextBlock Text="POLÍTICA COMERCIAL · EXCEL -=COSTOS=-"
-                               FontSize="10" FontWeight="Bold" Foreground="#80FFFFFF" />
-                    <TextBlock Text="Coeficientes de sobreventa" FontSize="16" FontWeight="Bold"
-                               Foreground="White" Margin="0,4,0,0" />
+                               FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderMuted}" />
+                    <TextBlock Text="Coeficientes de sobreventa" FontSize="{StaticResource Font.Size.h3}" FontWeight="Bold"
+                               Foreground="{DynamicResource Brush.White}" Margin="0,4,0,0" />
                     <TextBlock Text="Factores × por familia (misma fuente que APU) + GG / utilidad / VA equipos. Al aplicar, recalcula el puente a venta."
-                               FontSize="12" Foreground="#99FFFFFF" TextWrapping="Wrap" Margin="0,4,0,0" />
+                               FontSize="{StaticResource Font.Size.md}" Foreground="{DynamicResource Brush.HeaderControl}" TextWrapping="Wrap" Margin="0,4,0,0" />
                     <WrapPanel Margin="0,12,0,0">
-                      <Border Background="#14FFFFFF" BorderBrush="#1FFFFFFF" BorderThickness="1"
-                              CornerRadius="999" Padding="10,5" Margin="0,0,8,0">
-                        <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="White">
-                          <Run Text="Factor medio " /><Run Text="{Binding CoefFactorMedioLabel, Mode=OneWay}" Foreground="#93C5FD" />
+                      <Border Background="{DynamicResource Brush.White12}" BorderBrush="{DynamicResource Brush.White9}" BorderThickness="1"
+                              CornerRadius="{StaticResource Radius.Chip}" Padding="10,5" Margin="0,0,8,0">
+                        <TextBlock FontSize="{StaticResource Font.Size.sm}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.White}">
+                          <Run Text="Factor medio " /><Run Text="{Binding CoefFactorMedioLabel, Mode=OneWay}" Foreground="{DynamicResource Brush.BrandStroke2}" />
                         </TextBlock>
                       </Border>
-                      <Border Background="#14FFFFFF" BorderBrush="#1FFFFFFF" BorderThickness="1"
-                              CornerRadius="999" Padding="10,5" Margin="0,0,8,0">
-                        <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="White">
-                          <Run Text="Familias activas " /><Run Text="{Binding CoefActivasLabel, Mode=OneWay}" Foreground="#93C5FD" />
+                      <Border Background="{DynamicResource Brush.White12}" BorderBrush="{DynamicResource Brush.White9}" BorderThickness="1"
+                              CornerRadius="{StaticResource Radius.Chip}" Padding="10,5" Margin="0,0,8,0">
+                        <TextBlock FontSize="{StaticResource Font.Size.sm}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.White}">
+                          <Run Text="Familias activas " /><Run Text="{Binding CoefActivasLabel, Mode=OneWay}" Foreground="{DynamicResource Brush.BrandStroke2}" />
                         </TextBlock>
                       </Border>
-                      <Border Background="#14FFFFFF" BorderBrush="#1FFFFFFF" BorderThickness="1"
-                              CornerRadius="999" Padding="10,5">
-                        <TextBlock Text="Sincronizado con APU ✓" FontSize="11" FontWeight="SemiBold" Foreground="White" />
+                      <Border Background="{DynamicResource Brush.White12}" BorderBrush="{DynamicResource Brush.White9}" BorderThickness="1"
+                              CornerRadius="{StaticResource Radius.Chip}" Padding="10,5">
+                        <TextBlock Text="Sincronizado con APU ✓" FontSize="{StaticResource Font.Size.sm}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.White}" />
                       </Border>
                     </WrapPanel>
                   </StackPanel>
                   <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top">
                     <Button Content="Cargar PEL029" Command="{Binding LoadPelCoeficientesCommand}"
                             ToolTip="Factores del Excel PEL029A2026 (1,57× Mat/PVC · 1,30× resto · GG 5% · UT 8% · VA 3%)"
-                            Margin="0,0,6,0" Padding="11,7" FontSize="11" FontWeight="SemiBold"
-                            Foreground="White" Cursor="Hand" IsEnabled="{Binding CanEdit}">
+                            Margin="0,0,6,0" Padding="11,7" FontSize="{StaticResource Font.Size.sm}" FontWeight="SemiBold"
+                            Foreground="{DynamicResource Brush.White}" Cursor="Hand" IsEnabled="{Binding CanEdit}">
                       <Button.Template>
                         <ControlTemplate TargetType="Button">
-                          <Border x:Name="bd" Background="#14FFFFFF" BorderBrush="#2EFFFFFF" BorderThickness="1"
+                          <Border x:Name="bd" Background="{DynamicResource Brush.White12}" BorderBrush="{DynamicResource Brush.White25}" BorderThickness="1"
                                   CornerRadius="8" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                           </Border>
                           <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                              <Setter TargetName="bd" Property="Background" Value="#28FFFFFF" />
+                              <Setter TargetName="bd" Property="Background" Value="{DynamicResource Brush.White25}" />
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                               <Setter TargetName="bd" Property="Opacity" Value="0.45" />
@@ -747,17 +686,17 @@
                     </Button>
                     <Button Content="Típicos" Command="{Binding LoadTipicosCoeficientesCommand}"
                             ToolTip="Promedio histórico genérico (1,50 / 1,44 / 1,10…)"
-                            Margin="0,0,6,0" Padding="11,7" FontSize="11" FontWeight="SemiBold"
-                            Foreground="White" Cursor="Hand" IsEnabled="{Binding CanEdit}">
+                            Margin="0,0,6,0" Padding="11,7" FontSize="{StaticResource Font.Size.sm}" FontWeight="SemiBold"
+                            Foreground="{DynamicResource Brush.White}" Cursor="Hand" IsEnabled="{Binding CanEdit}">
                       <Button.Template>
                         <ControlTemplate TargetType="Button">
-                          <Border x:Name="bd" Background="#14FFFFFF" BorderBrush="#2EFFFFFF" BorderThickness="1"
+                          <Border x:Name="bd" Background="{DynamicResource Brush.White12}" BorderBrush="{DynamicResource Brush.White25}" BorderThickness="1"
                                   CornerRadius="8" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                           </Border>
                           <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                              <Setter TargetName="bd" Property="Background" Value="#28FFFFFF" />
+                              <Setter TargetName="bd" Property="Background" Value="{DynamicResource Brush.White25}" />
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                               <Setter TargetName="bd" Property="Opacity" Value="0.45" />
@@ -767,17 +706,17 @@
                       </Button.Template>
                     </Button>
                     <Button Content="Reset 1,00×" Command="{Binding ResetCoeficientesCommand}"
-                            Margin="0,0,6,0" Padding="11,7" FontSize="11" FontWeight="SemiBold"
-                            Foreground="White" Cursor="Hand" IsEnabled="{Binding CanEdit}">
+                            Margin="0,0,6,0" Padding="11,7" FontSize="{StaticResource Font.Size.sm}" FontWeight="SemiBold"
+                            Foreground="{DynamicResource Brush.White}" Cursor="Hand" IsEnabled="{Binding CanEdit}">
                       <Button.Template>
                         <ControlTemplate TargetType="Button">
-                          <Border x:Name="bd" Background="#14FFFFFF" BorderBrush="#2EFFFFFF" BorderThickness="1"
+                          <Border x:Name="bd" Background="{DynamicResource Brush.White12}" BorderBrush="{DynamicResource Brush.White25}" BorderThickness="1"
                                   CornerRadius="8" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                           </Border>
                           <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                              <Setter TargetName="bd" Property="Background" Value="#28FFFFFF" />
+                              <Setter TargetName="bd" Property="Background" Value="{DynamicResource Brush.White25}" />
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                               <Setter TargetName="bd" Property="Opacity" Value="0.45" />
@@ -787,17 +726,17 @@
                       </Button.Template>
                     </Button>
                     <Button Content="Aplicar" Command="{Binding ApplyCoeficientesCommand}"
-                            Padding="11,7" FontSize="11" FontWeight="SemiBold"
+                            Padding="11,7" FontSize="{StaticResource Font.Size.sm}" FontWeight="SemiBold"
                             Cursor="Hand" IsEnabled="{Binding CanEdit}">
                       <Button.Template>
                         <ControlTemplate TargetType="Button">
-                          <Border x:Name="bd" Background="White" CornerRadius="8" Padding="{TemplateBinding Padding}">
+                          <Border x:Name="bd" Background="{DynamicResource Brush.Surface}" CornerRadius="8" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
-                                              TextBlock.Foreground="#101A26" />
+                                              TextBlock.Foreground="{DynamicResource Brush.Ink}" />
                           </Border>
                           <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                              <Setter TargetName="bd" Property="Background" Value="#F1F5F9" />
+                              <Setter TargetName="bd" Property="Background" Value="{DynamicResource Brush.Surface2}" />
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                               <Setter TargetName="bd" Property="Opacity" Value="0.45" />
@@ -811,10 +750,10 @@
               </Border>
 
               <StackPanel Margin="16,14,16,16">
-                <TextBlock Text="FACTORES DE PRESENTACIÓN (×)" FontSize="10" FontWeight="Bold"
+                <TextBlock Text="FACTORES DE PRESENTACIÓN (×)" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold"
                            Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,4" />
                 <TextBlock Text="Descuento % por familia (estilo Excel): el factor efectivo en cubicación es × × (1 − dscto)."
-                           FontSize="10" Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" Margin="0,0,0,8" />
+                           Style="{StaticResource Text.Helper}" TextWrapping="Wrap" Margin="0,0,0,8" />
                 <ItemsControl ItemsSource="{Binding CoefFactors}">
                   <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
@@ -825,45 +764,52 @@
                     <DataTemplate>
                       <Border Margin="0,0,8,8" Padding="11,10" CornerRadius="10"
                               BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
-                              Background="#F8FAFC" IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                              Background="{DynamicResource Brush.WorkspaceBar}" IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}">
                         <StackPanel>
-                          <TextBlock Text="{Binding Name}" FontSize="11" FontWeight="Bold"
+                          <TextBlock Text="{Binding Name}" FontSize="{StaticResource Font.Size.sm}" FontWeight="Bold"
                                      Foreground="{DynamicResource Brush.Ink2}" />
-                          <TextBlock Text="{Binding Map}" FontSize="10"
+                          <TextBlock Text="{Binding Map}" FontSize="{StaticResource Font.Size.xs}"
                                      Foreground="{DynamicResource Brush.Muted}" Margin="0,1,0,0" />
                           <DockPanel Margin="0,6,0,0">
-                            <TextBlock DockPanel.Dock="Right" Text="×" FontSize="12" FontWeight="Bold"
+                            <TextBlock DockPanel.Dock="Right" Text="×" FontSize="{StaticResource Font.Size.md}" FontWeight="Bold"
                                        Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" Margin="4,0,0,0" />
                             <TextBox Text="{Binding ValueText, UpdateSourceTrigger=LostFocus}"
                                      BorderThickness="0" Background="Transparent" Padding="0"
-                                     FontFamily="{StaticResource Font.Mono}" FontSize="18" FontWeight="SemiBold" />
+                                     FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.h2}" FontWeight="SemiBold" />
                           </DockPanel>
-                          <TextBlock Text="{Binding ExcelRef}" FontSize="10" Margin="0,4,0,0"
+                          <TextBlock Text="{Binding ExcelRef}" FontSize="{StaticResource Font.Size.xs}" Margin="0,4,0,0"
                                      FontFamily="{StaticResource Font.Mono}"
                                      Foreground="{DynamicResource Brush.Muted}" />
                           <DockPanel Margin="0,6,0,0">
-                            <TextBlock DockPanel.Dock="Right" Text="%" FontSize="10" FontWeight="Bold"
+                            <TextBlock DockPanel.Dock="Right" Text="%" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold"
                                        Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" Margin="4,0,0,0" />
-                            <TextBlock DockPanel.Dock="Left" Text="Dscto " FontSize="9" FontWeight="SemiBold"
+                            <TextBlock DockPanel.Dock="Left" Text="Dscto " FontSize="{StaticResource Font.Size.2xs}" FontWeight="SemiBold"
                                        Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" Margin="0,0,6,0" />
                             <TextBox Text="{Binding DiscountText, UpdateSourceTrigger=LostFocus}"
                                      BorderThickness="0" Background="Transparent" Padding="0"
-                                     FontFamily="{StaticResource Font.Mono}" FontSize="12" />
+                                     FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.md}" />
                           </DockPanel>
-                          <TextBlock Text="{Binding EffectiveLabel}" FontSize="10" FontWeight="SemiBold"
-                                     Foreground="#2563B0" Margin="0,4,0,0" />
+                          <TextBlock Text="{Binding EffectiveLabel}" FontSize="{StaticResource Font.Size.xs}" FontWeight="SemiBold"
+                                     Foreground="{DynamicResource Brush.Blue}" Margin="0,4,0,0" />
                         </StackPanel>
                       </Border>
                     </DataTemplate>
                   </ItemsControl.ItemTemplate>
                 </ItemsControl>
 
-                <TextBlock Text="POLÍTICA GG · UTILIDAD ADITIVA · VA EQUIPOS" FontSize="10" FontWeight="Bold"
+                <TextBlock Text="POLÍTICA GG · UTILIDAD ADITIVA · VA EQUIPOS" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold"
                            Foreground="{DynamicResource Brush.Muted}" Margin="0,6,0,8" />
                 <DockPanel Margin="0,0,0,10">
                   <CheckBox IsChecked="{Binding PoliticaCostosExcel}"
                             Content="Paridad Excel -=COSTOS=- (GG/UT sobre Mat+MO+GO, utilidad aditiva, diferencia por factores)"
-                            FontSize="11" FontWeight="SemiBold"
+                            FontSize="{StaticResource Font.Size.sm}" FontWeight="SemiBold"
+                            IsEnabled="{Binding CanEdit}"
+                            VerticalAlignment="Center" />
+                </DockPanel>
+                <DockPanel Margin="0,0,0,10">
+                  <CheckBox IsChecked="{Binding UsarFactoresPresentacionFamilia}"
+                            Content="Armar venta por factores de presentación por familia (markup × familia línea a línea; la paridad Excel ya lo implica)"
+                            FontSize="{StaticResource Font.Size.sm}" FontWeight="SemiBold"
                             IsEnabled="{Binding CanEdit}"
                             VerticalAlignment="Center" />
                 </DockPanel>
@@ -872,14 +818,14 @@
                           BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
                           Background="{DynamicResource Brush.BlueFaint}">
                     <StackPanel>
-                      <TextBlock Text="GASTOS GENERALES" FontSize="9" FontWeight="Bold"
+                      <TextBlock Text="GASTOS GENERALES" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold"
                                  Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,5" />
                       <DockPanel>
                         <TextBlock DockPanel.Dock="Right" Text="%" VerticalAlignment="Center" Margin="6,0,0,0"
                                    Foreground="{DynamicResource Brush.Ink2}" />
                         <TextBox Text="{Binding GastosGeneralesText, UpdateSourceTrigger=LostFocus}"
                                  Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}"
-                                 FontSize="14" FontWeight="SemiBold" IsEnabled="{Binding CanEdit}" />
+                                 FontSize="{StaticResource Font.Size.lg}" FontWeight="SemiBold" IsEnabled="{Binding CanEdit}" />
                       </DockPanel>
                     </StackPanel>
                   </Border>
@@ -887,29 +833,29 @@
                           BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
                           Background="{DynamicResource Brush.BlueFaint}">
                     <StackPanel>
-                      <TextBlock Text="{Binding UtilidadPolicyLabel}" FontSize="9" FontWeight="Bold"
+                      <TextBlock Text="{Binding UtilidadPolicyLabel}" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold"
                                  Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,5" />
                       <DockPanel>
                         <TextBlock DockPanel.Dock="Right" Text="%" VerticalAlignment="Center" Margin="6,0,0,0"
                                    Foreground="{DynamicResource Brush.Ink2}" />
                         <TextBox Text="{Binding UtilidadText, UpdateSourceTrigger=LostFocus}"
                                  Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}"
-                                 FontSize="14" FontWeight="SemiBold" IsEnabled="{Binding CanEdit}" />
+                                 FontSize="{StaticResource Font.Size.lg}" FontWeight="SemiBold" IsEnabled="{Binding CanEdit}" />
                       </DockPanel>
                     </StackPanel>
                   </Border>
                   <Border Padding="11,10" CornerRadius="10"
                           BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
-                          Background="#FBF1DD">
+                          Background="{DynamicResource Brush.AmberSoft}">
                     <StackPanel>
-                      <TextBlock Text="VA SOBRE EQUIPOS" FontSize="9" FontWeight="Bold"
+                      <TextBlock Text="VA SOBRE EQUIPOS" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold"
                                  Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,5" />
                       <DockPanel>
                         <TextBlock DockPanel.Dock="Right" Text="%" VerticalAlignment="Center" Margin="6,0,0,0"
                                    Foreground="{DynamicResource Brush.Ink2}" />
                         <TextBox Text="{Binding ValorAgregadoEquiposText, UpdateSourceTrigger=LostFocus}"
                                  Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}"
-                                 FontSize="14" FontWeight="SemiBold" IsEnabled="{Binding CanEdit}" />
+                                 FontSize="{StaticResource Font.Size.lg}" FontWeight="SemiBold" IsEnabled="{Binding CanEdit}" />
                       </DockPanel>
                     </StackPanel>
                   </Border>
@@ -918,13 +864,13 @@
                 <DockPanel Margin="0,12,0,0">
                   <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                     <Button Content="Guardar preset" Command="{Binding SaveCostosPresetCommand}"
-                            Margin="0,0,6,0" Padding="10,6" FontSize="11" FontWeight="SemiBold"
+                            Margin="0,0,6,0" Padding="10,6" FontSize="{StaticResource Font.Size.sm}" FontWeight="SemiBold"
                             IsEnabled="{Binding CanEdit}" Cursor="Hand" />
                     <Button Content="Restaurar preset" Command="{Binding RestoreCostosPresetCommand}"
-                            Padding="10,6" FontSize="11" FontWeight="SemiBold"
+                            Padding="10,6" FontSize="{StaticResource Font.Size.sm}" FontWeight="SemiBold"
                             IsEnabled="{Binding CanEdit}" Cursor="Hand" />
                   </StackPanel>
-                  <TextBlock Text="{Binding CostosPresetHint}" FontSize="10" Foreground="{DynamicResource Brush.Muted}"
+                  <TextBlock Text="{Binding CostosPresetHint}" Style="{StaticResource Text.Helper}"
                              VerticalAlignment="Center" TextWrapping="Wrap" />
                 </DockPanel>
               </StackPanel>
@@ -949,11 +895,11 @@
                       <Setter Property="FontWeight" Value="SemiBold" />
                     </DataTrigger>
                     <DataTrigger Binding="{Binding Kind}" Value="coef">
-                      <Setter Property="Background" Value="#EFF6FF" />
+                      <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
                     </DataTrigger>
                     <DataTrigger Binding="{Binding Kind}" Value="grand">
                       <Setter Property="Background" Value="{DynamicResource Brush.Navy}" />
-                      <Setter Property="Foreground" Value="#FFFFFF" />
+                      <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
                       <Setter Property="FontWeight" Value="Bold" />
                     </DataTrigger>
                   </Style.Triggers>
@@ -968,7 +914,7 @@
                       <Setter Property="Padding" Value="12,0,0,0" />
                       <Style.Triggers>
                         <DataTrigger Binding="{Binding Kind}" Value="grand">
-                          <Setter Property="Foreground" Value="#FFFFFF" />
+                          <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
                           <Setter Property="FontWeight" Value="Bold" />
                         </DataTrigger>
                       </Style.Triggers>
@@ -984,7 +930,7 @@
                       <Setter Property="Padding" Value="0,0,12,0" />
                       <Style.Triggers>
                         <DataTrigger Binding="{Binding Kind}" Value="grand">
-                          <Setter Property="Foreground" Value="#FFFFFF" />
+                          <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
                           <Setter Property="FontWeight" Value="Bold" />
                         </DataTrigger>
                       </Style.Triggers>
@@ -1006,7 +952,7 @@
                       <Setter Property="Padding" Value="0,0,12,0" />
                       <Style.Triggers>
                         <DataTrigger Binding="{Binding Kind}" Value="grand">
-                          <Setter Property="Foreground" Value="#FFFFFF" />
+                          <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
                           <Setter Property="FontWeight" Value="Bold" />
                         </DataTrigger>
                       </Style.Triggers>
@@ -1022,7 +968,7 @@
                       <Setter Property="Padding" Value="0,0,12,0" />
                       <Style.Triggers>
                         <DataTrigger Binding="{Binding Kind}" Value="grand">
-                          <Setter Property="Foreground" Value="#94A3B8" />
+                          <Setter Property="Foreground" Value="{DynamicResource Brush.Slate2}" />
                         </DataTrigger>
                       </Style.Triggers>
                     </Style>
@@ -1035,10 +981,9 @@
           <!-- Descuentos negociados por equipo/material específico -->
           <Border Style="{StaticResource Card.Section}" Padding="16" Margin="0,0,0,14">
             <StackPanel>
-              <TextBlock Text="Descuentos negociados" FontSize="13" FontWeight="Bold"
-                         Foreground="{DynamicResource Brush.Ink}" Margin="0,0,0,4" />
+              <TextBlock Text="Descuentos negociados" Style="{StaticResource Text.SectionTitle}" Margin="0,0,0,4" />
               <TextBlock Text="Descuento puntual por código de equipo/material (celdas, transformador, generador...), independiente del factor de presentación por categoría."
-                         FontSize="10" Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" Margin="0,0,0,10" />
+                         Style="{StaticResource Text.Helper}" TextWrapping="Wrap" Margin="0,0,0,10" />
 
               <Grid Margin="8,0,46,4">
                 <Grid.ColumnDefinitions>
@@ -1046,9 +991,9 @@
                   <ColumnDefinition Width="*" />
                   <ColumnDefinition Width="110" />
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="CÓDIGO" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" />
-                <TextBlock Grid.Column="1" Text="DESCRIPCIÓN" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="8,0,0,0" />
-                <TextBlock Grid.Column="2" Text="DESCUENTO %" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" TextAlignment="Right" />
+                <TextBlock Grid.Column="0" Text="CÓDIGO" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" />
+                <TextBlock Grid.Column="1" Text="DESCRIPCIÓN" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="8,0,0,0" />
+                <TextBlock Grid.Column="2" Text="DESCUENTO %" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" TextAlignment="Right" />
               </Grid>
 
               <ItemsControl ItemsSource="{Binding NegotiatedDiscounts}">
@@ -1064,15 +1009,15 @@
                           <ColumnDefinition Width="36" />
                         </Grid.ColumnDefinitions>
                         <TextBox Grid.Column="0" Text="{Binding Codigo, UpdateSourceTrigger=LostFocus}"
-                                 Style="{StaticResource Form.TextBox}" FontSize="11" Margin="0,0,8,0"
+                                 Style="{StaticResource Form.TextBox}" FontSize="{StaticResource Font.Size.sm}" Margin="0,0,8,0"
                                  IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" />
                         <TextBox Grid.Column="1" Text="{Binding Descripcion, UpdateSourceTrigger=LostFocus}"
-                                 Style="{StaticResource Form.TextBox}" FontSize="11" Margin="0,0,8,0"
+                                 Style="{StaticResource Form.TextBox}" FontSize="{StaticResource Font.Size.sm}" Margin="0,0,8,0"
                                  IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" />
                         <TextBox Grid.Column="2" Text="{Binding DescuentoPct, UpdateSourceTrigger=LostFocus, StringFormat={}{0:0.#}}"
-                                 Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" FontSize="11" TextAlignment="Right" Margin="0,0,8,0"
+                                 Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.sm}" TextAlignment="Right" Margin="0,0,8,0"
                                  IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" />
-                        <TextBlock Grid.Column="3" Text="⚠" FontSize="12" Foreground="#B45309" VerticalAlignment="Center"
+                        <TextBlock Grid.Column="3" Text="⚠" FontSize="{StaticResource Font.Size.md}" Foreground="{DynamicResource Brush.Warning}" VerticalAlignment="Center"
                                    ToolTip="{Binding ValidationHint}"
                                    Visibility="{Binding HasValidationError, Converter={StaticResource BoolToVisibility}}" />
                         <Button Grid.Column="4" Style="{StaticResource GoIconBtn}" Content="×" ToolTip="Quitar descuento"
@@ -1084,9 +1029,9 @@
                 </ItemsControl.ItemTemplate>
               </ItemsControl>
               <Button Content="+ Agregar descuento" HorizontalAlignment="Left"
-                      Margin="8,10,0,0" Padding="11,6" FontSize="12" FontWeight="SemiBold"
+                      Margin="8,10,0,0" Padding="11,6" FontSize="{StaticResource Font.Size.md}" FontWeight="SemiBold"
                       Foreground="{DynamicResource Brush.Blue}" Background="Transparent"
-                      BorderBrush="#C9D4E3" BorderThickness="1" Cursor="Hand"
+                      BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" Cursor="Hand"
                       Command="{Binding AddNegotiatedDiscountCommand}" />
             </StackPanel>
           </Border>
@@ -1099,17 +1044,16 @@
                   <ColumnDefinition Width="Auto" />
                   <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="Dotación indirecta" FontSize="13" FontWeight="Bold"
-                           Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="0" Text="Dotación indirecta" Style="{StaticResource Text.SectionTitle}" VerticalAlignment="Center" />
                 <TextBlock Grid.Column="1" Text="{Binding TotalStaffingPlanLabel}"
-                           FontFamily="{StaticResource Font.Mono}" FontSize="13" FontWeight="Bold"
+                           Style="{StaticResource Text.KpiInline}"
                            Foreground="{DynamicResource Brush.Green}"
                            HorizontalAlignment="Right" VerticalAlignment="Center" />
               </Grid>
-              <TextBlock FontSize="10" TextWrapping="Wrap" Margin="0,0,0,10">
+              <TextBlock FontSize="{StaticResource Font.Size.xs}" TextWrapping="Wrap" Margin="0,0,0,10">
                 <Run Foreground="{DynamicResource Brush.Muted}"
                      Text="Administrador, Supervisor, Capataz... por cargo, tarifa mensual, % de dedicación y meses. Se suma automáticamente a Gastos Operacionales." />
-                <Run Foreground="#B45309" FontWeight="SemiBold"
+                <Run Foreground="{DynamicResource Brush.Warning}" FontWeight="SemiBold"
                      Text=" No cargues el mismo rol también como ítem manual en Gastos Operacionales — se contaría dos veces." />
               </TextBlock>
 
@@ -1121,11 +1065,11 @@
                   <ColumnDefinition Width="60" />
                   <ColumnDefinition Width="120" />
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="CARGO" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" />
-                <TextBlock Grid.Column="1" Text="TARIFA MENSUAL" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" TextAlignment="Right" Margin="0,0,8,0" />
-                <TextBlock Grid.Column="2" Text="DEDIC. %" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" TextAlignment="Right" Margin="0,0,8,0" />
-                <TextBlock Grid.Column="3" Text="MESES" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" TextAlignment="Right" Margin="0,0,8,0" />
-                <TextBlock Grid.Column="4" Text="TOTAL" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" TextAlignment="Right" />
+                <TextBlock Grid.Column="0" Text="CARGO" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" />
+                <TextBlock Grid.Column="1" Text="TARIFA MENSUAL" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" TextAlignment="Right" Margin="0,0,8,0" />
+                <TextBlock Grid.Column="2" Text="DEDIC. %" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" TextAlignment="Right" Margin="0,0,8,0" />
+                <TextBlock Grid.Column="3" Text="MESES" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" TextAlignment="Right" Margin="0,0,8,0" />
+                <TextBlock Grid.Column="4" Text="TOTAL" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" TextAlignment="Right" />
               </Grid>
 
               <ItemsControl ItemsSource="{Binding StaffingPlan}">
@@ -1142,28 +1086,28 @@
                           <ColumnDefinition Width="36" />
                         </Grid.ColumnDefinitions>
                         <TextBox Grid.Column="0" Text="{Binding Cargo, UpdateSourceTrigger=LostFocus}"
-                                 FontSize="11" Margin="0,0,8,0" ToolTip="{Binding ValidationHint}"
+                                 FontSize="{StaticResource Font.Size.sm}" Margin="0,0,8,0" ToolTip="{Binding ValidationHint}"
                                  IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}">
                           <TextBox.Style>
                             <Style TargetType="TextBox" BasedOn="{StaticResource Form.TextBox}">
                               <Style.Triggers>
                                 <DataTrigger Binding="{Binding HasValidationError}" Value="True">
-                                  <Setter Property="BorderBrush" Value="#B45309" />
+                                  <Setter Property="BorderBrush" Value="{DynamicResource Brush.Warning}" />
                                 </DataTrigger>
                               </Style.Triggers>
                             </Style>
                           </TextBox.Style>
                         </TextBox>
                         <TextBox Grid.Column="1" Text="{Binding TarifaMensualClp, UpdateSourceTrigger=LostFocus, StringFormat={}{0:0}}"
-                                 Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" FontSize="11" TextAlignment="Right" Margin="0,0,8,0"
+                                 Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.sm}" TextAlignment="Right" Margin="0,0,8,0"
                                  IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" />
                         <TextBox Grid.Column="2" Text="{Binding DedicacionPct, UpdateSourceTrigger=LostFocus, StringFormat={}{0:0.#}}"
-                                 Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" FontSize="11" TextAlignment="Right" Margin="0,0,8,0"
+                                 Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.sm}" TextAlignment="Right" Margin="0,0,8,0"
                                  IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" />
                         <TextBox Grid.Column="3" Text="{Binding Meses, UpdateSourceTrigger=LostFocus}"
-                                 Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" FontSize="11" TextAlignment="Right" Margin="0,0,8,0"
+                                 Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.sm}" TextAlignment="Right" Margin="0,0,8,0"
                                  IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" />
-                        <TextBlock Grid.Column="4" Text="{Binding TotalLabel}" FontSize="11"
+                        <TextBlock Grid.Column="4" Text="{Binding TotalLabel}" FontSize="{StaticResource Font.Size.sm}"
                                    FontFamily="{StaticResource Font.Mono}" FontWeight="SemiBold"
                                    TextAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0" />
                         <Button Grid.Column="5" Style="{StaticResource GoIconBtn}" Content="×" ToolTip="Quitar cargo"
@@ -1175,17 +1119,137 @@
                 </ItemsControl.ItemTemplate>
               </ItemsControl>
               <Button Content="+ Agregar cargo" HorizontalAlignment="Left"
-                      Margin="8,10,0,0" Padding="11,6" FontSize="12" FontWeight="SemiBold"
+                      Margin="8,10,0,0" Padding="11,6" FontSize="{StaticResource Font.Size.md}" FontWeight="SemiBold"
                       Foreground="{DynamicResource Brush.Blue}" Background="Transparent"
-                      BorderBrush="#C9D4E3" BorderThickness="1" Cursor="Hand"
+                      BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" Cursor="Hand"
                       Command="{Binding AddStaffingRoleCommand}" />
+            </StackPanel>
+          </Border>
+
+          <!-- Simulador de Negociación Comercial y Margen -->
+          <Border Style="{StaticResource Card.Section}" Padding="16" Margin="0,0,0,14"
+                  DataContext="{Binding NegotiationSimulator}">
+            <StackPanel>
+              <DockPanel LastChildFill="True" Margin="0,0,0,6">
+                <Border DockPanel.Dock="Right" Padding="8,3" CornerRadius="6"
+                        Background="{Binding RiskBackgroundBrush}" BorderBrush="{Binding RiskBrush}" BorderThickness="1">
+                  <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Ellipse Width="8" Height="8" Fill="{Binding RiskBrush}" Margin="0,0,6,0" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding RiskBadgeText}" FontWeight="Bold" FontSize="11"
+                               Foreground="{Binding RiskBrush}" VerticalAlignment="Center" />
+                  </StackPanel>
+                </Border>
+                <StackPanel>
+                  <TextBlock Text="SIMULADOR DE NEGOCIACIÓN COMERCIAL" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold"
+                             Foreground="{DynamicResource Brush.Muted}" />
+                  <TextBlock Text="Explore descuentos rápidos o un precio pactado en reunión con el mandante para verificar la rentabilidad líquida y no sobrepasar el piso crítico de costo."
+                             Style="{StaticResource Text.Helper}" TextWrapping="Wrap" Margin="0,2,0,0" />
+                </StackPanel>
+              </DockPanel>
+
+              <!-- Grid de control: Slider y Presets -->
+              <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+                      CornerRadius="8" Padding="14,10" Margin="0,8,0,10">
+                <Grid>
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                  </Grid.RowDefinitions>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+
+                  <!-- Slider -->
+                  <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,16,0">
+                    <DockPanel LastChildFill="True" Margin="0,0,0,4">
+                      <TextBlock DockPanel.Dock="Right" Text="{Binding DiscountPct, StringFormat={}{0:0.0} %}"
+                                 FontWeight="Bold" FontSize="14" Foreground="{DynamicResource Brush.Blue}" />
+                      <TextBlock Text="Descuento comercial global" FontWeight="SemiBold" FontSize="12"
+                                 Foreground="{DynamicResource Brush.Ink}" />
+                    </DockPanel>
+                    <Slider Minimum="0" Maximum="25" Value="{Binding DiscountPct, Mode=TwoWay}"
+                            TickFrequency="1" IsSnapToTickEnabled="False" SmallChange="0.5" LargeChange="1.0"
+                            IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                  </StackPanel>
+
+                  <!-- Botones de preset rápido -->
+                  <StackPanel Grid.Row="0" Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock Text="Atajos rápidos:" FontSize="10" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,4" />
+                    <WrapPanel>
+                      <Button Content="0%" Command="{Binding SetDiscountPresetCommand}" CommandParameter="0"
+                              Style="{StaticResource Button.Ghost}" Padding="6,2" Margin="0,0,4,0" FontSize="11" />
+                      <Button Content="3%" Command="{Binding SetDiscountPresetCommand}" CommandParameter="3"
+                              Style="{StaticResource Button.Ghost}" Padding="6,2" Margin="0,0,4,0" FontSize="11" />
+                      <Button Content="5%" Command="{Binding SetDiscountPresetCommand}" CommandParameter="5"
+                              Style="{StaticResource Button.Ghost}" Padding="6,2" Margin="0,0,4,0" FontSize="11" />
+                      <Button Content="7%" Command="{Binding SetDiscountPresetCommand}" CommandParameter="7"
+                              Style="{StaticResource Button.Ghost}" Padding="6,2" Margin="0,0,4,0" FontSize="11" />
+                      <Button Content="10%" Command="{Binding SetDiscountPresetCommand}" CommandParameter="10"
+                              Style="{StaticResource Button.Ghost}" Padding="6,2" FontSize="11" />
+                    </WrapPanel>
+                  </StackPanel>
+
+                  <!-- Explicación semáforo -->
+                  <TextBlock Grid.Row="1" Grid.ColumnSpan="2" Text="{Binding RiskExplanationText}"
+                             FontSize="11" Foreground="{Binding RiskBrush}" FontWeight="SemiBold" Margin="0,8,0,0" TextWrapping="Wrap" />
+                </Grid>
+              </Border>
+
+              <!-- Panel comparativo de resultados -->
+              <UniformGrid Columns="4" Margin="0,0,0,10">
+                <!-- Precio Ofertado Negociado -->
+                <Border Margin="0,0,8,0" Padding="12,10" CornerRadius="8" Background="{DynamicResource Brush.Navy}">
+                  <StackPanel>
+                    <TextBlock Text="PRECIO NEGOCIADO" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Slate2}" />
+                    <TextBlock Text="{Binding NegotiatedPriceClp, StringFormat={}$ {0:N0}}" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource Brush.White}" Margin="0,2,0,0" />
+                    <TextBlock Text="{Binding NegotiatedPriceUf, StringFormat={}{0:N2} UF}" FontSize="11" Foreground="{DynamicResource Brush.Slate3}" />
+                  </StackPanel>
+                </Border>
+
+                <!-- Descuento Otorgado -->
+                <Border Margin="0,0,8,0" Padding="12,10" CornerRadius="8" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1">
+                  <StackPanel>
+                    <TextBlock Text="DESCUENTO OTORGADO" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" />
+                    <TextBlock Text="{Binding DiscountAmountClp, StringFormat={}$ {0:N0}}" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" Margin="0,2,0,0" />
+                    <TextBlock Text="{Binding DiscountAmountUf, StringFormat={}{0:N2} UF}" FontSize="11" Foreground="{DynamicResource Brush.Muted}" />
+                  </StackPanel>
+                </Border>
+
+                <!-- Utilidad Líquida -->
+                <Border Margin="0,0,8,0" Padding="12,10" CornerRadius="8" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1">
+                  <StackPanel>
+                    <TextBlock Text="UTILIDAD ESTIMADA" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" />
+                    <TextBlock Text="{Binding ResultingProfitClp, StringFormat={}$ {0:N0}}" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource Brush.Green}" Margin="0,2,0,0" />
+                    <TextBlock Text="{Binding ResultingProfitUf, StringFormat={}{0:N2} UF}" FontSize="11" Foreground="{DynamicResource Brush.Muted}" />
+                  </StackPanel>
+                </Border>
+
+                <!-- Margen Resultante -->
+                <Border Padding="12,10" CornerRadius="8" Background="{Binding RiskBackgroundBrush}" BorderBrush="{Binding RiskBrush}" BorderThickness="1">
+                  <StackPanel>
+                    <TextBlock Text="MARGEN RESULTANTE" FontSize="10" FontWeight="Bold" Foreground="{Binding RiskBrush}" />
+                    <TextBlock Text="{Binding ResultingMarginPct, StringFormat={}{0:N1} %}" FontSize="16" FontWeight="Bold" Foreground="{Binding RiskBrush}" Margin="0,2,0,0" />
+                    <TextBlock Text="{Binding RiskBadgeText}" FontSize="11" Foreground="{Binding RiskBrush}" FontWeight="SemiBold" />
+                  </StackPanel>
+                </Border>
+              </UniformGrid>
+
+              <!-- Botón de acción: Aplicar como Precio Objetivo -->
+              <DockPanel LastChildFill="False">
+                <Button DockPanel.Dock="Right" Content="Aplicar como Precio Objetivo al presupuesto"
+                        Style="{StaticResource Button.Primary}" Padding="14,7"
+                        Command="{Binding ApplyTargetPriceCommand}"
+                        IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                        ToolTip="Fija este precio en la política de cierre como Precio Objetivo y recalcula los factores comerciales." />
+              </DockPanel>
             </StackPanel>
           </Border>
 
           <!-- Política de cierre comercial -->
           <Border Style="{StaticResource Card.Section}" Padding="16" Margin="0,0,0,14">
             <StackPanel DataContext="{Binding ClosingPolicySection}">
-              <TextBlock Text="POLÍTICA DE CIERRE COMERCIAL" FontSize="10" FontWeight="Bold"
+              <TextBlock Text="POLÍTICA DE CIERRE COMERCIAL" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold"
                          Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,8" />
 
               <ComboBox ItemsSource="{Binding Options}"
@@ -1196,14 +1260,28 @@
                         HorizontalAlignment="Left" MinWidth="220"
                         Margin="0,0,0,12" />
 
+              <Border Margin="0,0,0,10" Padding="10,8" CornerRadius="8"
+                      Background="{DynamicResource Brush.WarningSoft}" BorderBrush="{DynamicResource Brush.Warning}" BorderThickness="1"
+                      Visibility="{Binding HasPolicyWarning, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock Text="{Binding PolicyWarning}" FontSize="{StaticResource Font.Size.xs}"
+                           Foreground="{DynamicResource Brush.Ink}" TextWrapping="Wrap" />
+              </Border>
+
+              <Border Margin="0,0,0,10" Padding="10,8" CornerRadius="8"
+                      Background="{DynamicResource Brush.WarningSoft}" BorderBrush="{DynamicResource Brush.Warning}" BorderThickness="1"
+                      Visibility="{Binding HasStampNote, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock Text="{Binding StampNote}" FontSize="{StaticResource Font.Size.xs}"
+                           Foreground="{DynamicResource Brush.Ink}" TextWrapping="Wrap" />
+              </Border>
+
               <!-- Precio Objetivo -->
               <Border Margin="0,0,0,10" Padding="11,10" CornerRadius="10" BorderBrush="{DynamicResource Brush.Line}"
                       BorderThickness="1" Background="{DynamicResource Brush.BlueFaint}"
                       Visibility="{Binding ShowTargetPrice, Converter={StaticResource BoolToVisibility}}">
                 <StackPanel>
-                  <TextBlock Text="PRECIO OBJETIVO (CLP)" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,5" />
+                  <TextBlock Text="PRECIO OBJETIVO (CLP)" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,5" />
                   <TextBox Text="{Binding TargetPriceClpText, UpdateSourceTrigger=LostFocus}"
-                           Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" FontSize="14" FontWeight="SemiBold"
+                           Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.lg}" FontWeight="SemiBold"
                            IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" />
                 </StackPanel>
               </Border>
@@ -1213,9 +1291,9 @@
                       BorderThickness="1" Background="{DynamicResource Brush.BlueFaint}"
                       Visibility="{Binding ShowLumpSum, Converter={StaticResource BoolToVisibility}}">
                 <StackPanel>
-                  <TextBlock Text="CONTINGENCIA MÍNIMA (%)" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,5" />
+                  <TextBlock Text="CONTINGENCIA MÍNIMA (%)" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,5" />
                   <TextBox Text="{Binding LumpSumMinRiskPctText, UpdateSourceTrigger=LostFocus}"
-                           Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" FontSize="14" FontWeight="SemiBold"
+                           Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.lg}" FontWeight="SemiBold"
                            IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" />
                 </StackPanel>
               </Border>
@@ -1226,18 +1304,18 @@
                 <Border Margin="0,0,8,0" Padding="11,10" CornerRadius="10" BorderBrush="{DynamicResource Brush.Line}"
                         BorderThickness="1" Background="{DynamicResource Brush.BlueFaint}">
                   <StackPanel>
-                    <TextBlock Text="FEE FIJO (CLP)" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,5" />
+                    <TextBlock Text="FEE FIJO (CLP)" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,5" />
                     <TextBox Text="{Binding FeeClpText, UpdateSourceTrigger=LostFocus}"
-                             Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" FontSize="14" FontWeight="SemiBold"
+                             Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.lg}" FontWeight="SemiBold"
                              IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" />
                   </StackPanel>
                 </Border>
                 <Border Padding="11,10" CornerRadius="10" BorderBrush="{DynamicResource Brush.Line}"
                         BorderThickness="1" Background="{DynamicResource Brush.BlueFaint}">
                   <StackPanel>
-                    <TextBlock Text="FEE % (si no hay fee fijo)" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,5" />
+                    <TextBlock Text="FEE % (si no hay fee fijo)" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,5" />
                     <TextBox Text="{Binding FeePctText, UpdateSourceTrigger=LostFocus}"
-                             Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" FontSize="14" FontWeight="SemiBold"
+                             Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.lg}" FontWeight="SemiBold"
                              IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" />
                   </StackPanel>
                 </Border>
@@ -1249,27 +1327,27 @@
                 <Border Margin="0,0,8,0" Padding="11,10" CornerRadius="10" BorderBrush="{DynamicResource Brush.Line}"
                         BorderThickness="1" Background="{DynamicResource Brush.BlueFaint}">
                   <StackPanel>
-                    <TextBlock Text="COSTO OBJETIVO (CLP)" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,5" />
+                    <TextBlock Text="COSTO OBJETIVO (CLP)" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,5" />
                     <TextBox Text="{Binding TargetCostClpText, UpdateSourceTrigger=LostFocus}"
-                             Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" FontSize="14" FontWeight="SemiBold"
+                             Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.lg}" FontWeight="SemiBold"
                              IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" />
                   </StackPanel>
                 </Border>
                 <Border Margin="0,0,8,0" Padding="11,10" CornerRadius="10" BorderBrush="{DynamicResource Brush.Line}"
                         BorderThickness="1" Background="{DynamicResource Brush.BlueFaint}">
                   <StackPanel>
-                    <TextBlock Text="% COMPARTIDO" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,5" />
+                    <TextBlock Text="% COMPARTIDO" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,5" />
                     <TextBox Text="{Binding GainsharePctText, UpdateSourceTrigger=LostFocus}"
-                             Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" FontSize="14" FontWeight="SemiBold"
+                             Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.lg}" FontWeight="SemiBold"
                              IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" />
                   </StackPanel>
                 </Border>
                 <Border Padding="11,10" CornerRadius="10" BorderBrush="{DynamicResource Brush.Line}"
                         BorderThickness="1" Background="{DynamicResource Brush.BlueFaint}">
                   <StackPanel>
-                    <TextBlock Text="TOPE (CLP, 0 = sin tope)" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,5" />
+                    <TextBlock Text="TOPE (CLP, 0 = sin tope)" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,5" />
                     <TextBox Text="{Binding GainshareCapClpText, UpdateSourceTrigger=LostFocus}"
-                             Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" FontSize="14" FontWeight="SemiBold"
+                             Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.lg}" FontWeight="SemiBold"
                              IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" />
                   </StackPanel>
                 </Border>
@@ -1280,16 +1358,16 @@
                 <StackPanel>
                   <UniformGrid Columns="2">
                     <StackPanel>
-                      <TextBlock Text="VENTA FINAL" FontSize="9" FontWeight="Bold" Foreground="#94A3B8" />
-                      <TextBlock Text="{Binding VentaFinalLabel}" FontSize="16" FontWeight="Bold" Foreground="White" />
-                      <TextBlock Text="{Binding VentaFinalSubLabel}" FontSize="10" Foreground="#94A3B8" />
+                      <TextBlock Text="VENTA FINAL" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Slate2}" />
+                      <TextBlock Text="{Binding VentaFinalLabel}" FontSize="{StaticResource Font.Size.h3}" FontWeight="Bold" Foreground="{DynamicResource Brush.White}" />
+                      <TextBlock Text="{Binding VentaFinalSubLabel}" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.Slate2}" />
                     </StackPanel>
                     <StackPanel>
-                      <TextBlock Text="MARGEN" FontSize="9" FontWeight="Bold" Foreground="#94A3B8" />
-                      <TextBlock Text="{Binding MargenLabel}" FontSize="16" FontWeight="Bold" Foreground="White" />
+                      <TextBlock Text="MARGEN" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Slate2}" />
+                      <TextBlock Text="{Binding MargenLabel}" FontSize="{StaticResource Font.Size.h3}" FontWeight="Bold" Foreground="{DynamicResource Brush.White}" />
                     </StackPanel>
                   </UniformGrid>
-                  <TextBlock Text="{Binding Explicacion}" FontSize="11" Foreground="#CBD5E1" TextWrapping="Wrap" Margin="0,8,0,0" />
+                  <TextBlock Text="{Binding Explicacion}" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Slate3}" TextWrapping="Wrap" Margin="0,8,0,0" />
                 </StackPanel>
               </Border>
 
@@ -1297,7 +1375,7 @@
                             Visibility="{Binding HasAdvertencias, Converter={StaticResource BoolToVisibility}}">
                 <ItemsControl.ItemTemplate>
                   <DataTemplate>
-                    <TextBlock Text="{Binding StringFormat='⚠ {0}'}" FontSize="10" Foreground="#B45309" TextWrapping="Wrap" Margin="0,2,0,0" />
+                    <TextBlock Text="{Binding StringFormat='⚠ {0}'}" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.Warning}" TextWrapping="Wrap" Margin="0,2,0,0" />
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
               </ItemsControl>
@@ -1308,8 +1386,7 @@
           <Border Style="{StaticResource Card.Section}" Padding="16" Margin="0,0,0,14"
                   Visibility="{Binding ShowOrigenes, Converter={StaticResource BoolToVisibility}}">
             <StackPanel>
-              <TextBlock Text="Desglose por origen" FontSize="13" FontWeight="Bold"
-                         Foreground="{DynamicResource Brush.Ink}" Margin="0,0,0,12" />
+              <TextBlock Text="Desglose por origen" Style="{StaticResource Text.SectionTitle}" Margin="0,0,0,12" />
               <ItemsControl ItemsSource="{Binding Origenes}">
                 <ItemsControl.ItemTemplate>
                   <DataTemplate>
@@ -1323,18 +1400,18 @@
                         </Grid.ColumnDefinitions>
                         <Border Grid.Column="0" Background="{DynamicResource Brush.BlueSoft}" CornerRadius="4"
                                 Padding="6,2" VerticalAlignment="Center" Margin="0,0,10,0">
-                          <TextBlock Text="{Binding Origen}" FontSize="9" FontWeight="Bold"
+                          <TextBlock Text="{Binding Origen}" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold"
                                      Foreground="{DynamicResource Brush.Blue}" />
                         </Border>
                         <TextBlock Grid.Column="1" Text="{Binding Descripcion}"
                                    Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" />
                         <TextBlock Grid.Column="2" Text="{Binding MaterialesUf, StringFormat={}{0:N2} UF}"
                                    TextAlignment="Right" VerticalAlignment="Center"
-                                   FontFamily="{StaticResource Font.Mono}" FontSize="11"
+                                   FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.sm}"
                                    Foreground="{DynamicResource Brush.Muted}" Margin="0,0,10,0" />
                         <TextBlock Grid.Column="3" Text="{Binding TotalUf, StringFormat={}{0:N2} UF}"
                                    TextAlignment="Right" VerticalAlignment="Center"
-                                   FontFamily="{StaticResource Font.Mono}" FontSize="11" FontWeight="SemiBold"
+                                   FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.sm}" FontWeight="SemiBold"
                                    Foreground="{DynamicResource Brush.Ink}" />
                       </Grid>
                     </Border>
@@ -1348,13 +1425,13 @@
           <Border Background="{DynamicResource Brush.Navy}" Padding="20,12" CornerRadius="8">
             <DockPanel LastChildFill="False">
               <StackPanel DockPanel.Dock="Left" VerticalAlignment="Center">
-                <TextBlock Text="RESUMEN DE COSTOS" FontSize="10" FontWeight="SemiBold"
+                <TextBlock Text="RESUMEN DE COSTOS" FontSize="{StaticResource Font.Size.xs}" FontWeight="SemiBold"
                            Foreground="{DynamicResource Brush.HeaderMuted}" />
-                <TextBlock Text="{Binding ResumenFooterText}" FontSize="9"
+                <TextBlock Text="{Binding ResumenFooterText}" FontSize="{StaticResource Font.Size.2xs}"
                            Foreground="{DynamicResource Brush.HeaderLabel}" Margin="0,1,0,0" />
               </StackPanel>
               <TextBlock DockPanel.Dock="Right" Text="{Binding TotalVentaLabel}"
-                         FontSize="18" FontWeight="Bold" Foreground="#FFFFFF" VerticalAlignment="Center" />
+                         FontSize="{StaticResource Font.Size.h2}" FontWeight="Bold" Foreground="{DynamicResource Brush.White}" VerticalAlignment="Center" />
             </DockPanel>
           </Border>
 
@@ -1370,5 +1447,8 @@
         <Button Style="{StaticResource Button.Primary}" Content="Abrir proyecto…" Command="{Binding OpenProjectCommand}" MinWidth="180" />
       </ctrl:EmptyStateControl.Actions>
     </ctrl:EmptyStateControl>
+
+    <ctrl:SkeletonOverlayControl Panel.ZIndex="20" Message="Cargando costos…"
+                                 Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibility}}" />
   </Grid>
 </UserControl>

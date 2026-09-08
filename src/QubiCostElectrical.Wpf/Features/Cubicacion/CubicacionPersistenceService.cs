@@ -18,7 +18,8 @@ internal sealed class CubicacionPersistenceService
 {
     private readonly CubicacionViewModel parent;
     private readonly BudgetProjectSession session;
-    private readonly WpfAppHost host;
+    private readonly IProjectWorkspaceService projectWorkspace;
+    private readonly WpfUndoService undo;
     private readonly IShellNavigationHost shell;
     private readonly CubicacionPresenter cubicacionPresenter;
     private readonly ConjuntoElectricoService conjuntoService;
@@ -26,14 +27,16 @@ internal sealed class CubicacionPersistenceService
     public CubicacionPersistenceService(
         CubicacionViewModel parent,
         BudgetProjectSession session,
-        WpfAppHost host,
+        IProjectWorkspaceService projectWorkspace,
+        WpfUndoService undo,
         IShellNavigationHost shell,
         CubicacionPresenter cubicacionPresenter,
         ConjuntoElectricoService conjuntoService)
     {
         this.parent = parent;
         this.session = session;
-        this.host = host;
+        this.projectWorkspace = projectWorkspace;
+        this.undo = undo;
         this.shell = shell;
         this.cubicacionPresenter = cubicacionPresenter;
         this.conjuntoService = conjuntoService;
@@ -41,7 +44,7 @@ internal sealed class CubicacionPersistenceService
 
     public async Task SaveAsync()
     {
-        if (!host.ProjectWorkspace.HasOpenProject) return;
+        if (!projectWorkspace.HasOpenProject) return;
         if (session.IsReadOnly)
         {
             WpfDialogService.Warning("Guardar", "El proyecto está en solo lectura. Abra una copia escribible para guardar cambios.");
@@ -50,7 +53,7 @@ internal sealed class CubicacionPersistenceService
         parent.SaveStatusText = "Guardando…";
         try
         {
-            await host.ProjectWorkspace.SaveAsync();
+            await projectWorkspace.SaveAsync();
             MarkClean();
             shell.RefreshChrome();
         }
@@ -70,7 +73,7 @@ internal sealed class CubicacionPersistenceService
         parent.SaveStatusText = "Cambios sin guardar";
         parent.NotifyCubicacionSummaryChanged();
         using (parent.SuppressSessionReload())
-            session.MarkDirty("cubicacion");
+            session.MarkDirty(ProjectDirtyScope.Cubicacion);
     }
 
     public void MarkClean()
@@ -78,6 +81,7 @@ internal sealed class CubicacionPersistenceService
         parent.HasPendingChanges = false;
         parent.SaveStatusText = $"Guardado a las {AppClock.Now:HH:mm}";
         parent.NotifyCubicacionSummaryChanged();
+        parent.ScheduleCaptureBaseline();
     }
 
     public void UpdatePartidaCount(PartidaListItemVm? partida)
@@ -122,7 +126,7 @@ internal sealed class CubicacionPersistenceService
         parent.TryAutoResolveFromPriceBank(row);
         if (!parent.HasPendingUndoForEdit)
         {
-            host.UndoService.PushUndoPoint(session, $"Editar {row.Codigo}");
+            undo.PushUndoPoint(session, $"Editar {row.Codigo}");
             parent.HasPendingUndoForEdit = true;
         }
         row.RefreshDisplayProperties();
@@ -140,26 +144,34 @@ internal sealed class CubicacionPersistenceService
 
     public void AplicarConjunto()
     {
-        var selectedPartida = parent.SelectedPartida;
         if (session.IsReadOnly)
         {
             WpfDialogService.Info("Solo lectura", "El proyecto está en solo lectura; no se pueden cargar plantillas.");
             return;
         }
 
-        if (selectedPartida == null || !selectedPartida.EsPartida)
+        var selectedPartida = parent.SelectedPartida;
+        var taggedPartidas = parent.Partidas
+            .Where(p => p.IsTagged && p.EsPartida && !p.ExcluidoCubicacion)
+            .ToList();
+
+        var targetPartidaVms = taggedPartidas.Count > 0
+            ? taggedPartidas
+            : (selectedPartida != null && selectedPartida.EsPartida && !selectedPartida.ExcluidoCubicacion
+                ? new List<PartidaListItemVm> { selectedPartida }
+                : new List<PartidaListItemVm>());
+
+        if (targetPartidaVms.Count == 0)
         {
+            if (selectedPartida != null && selectedPartida.ExcluidoCubicacion)
+            {
+                WpfDialogService.Info("Partida excluida", "Esta partida está marcada como excluida de cubicación.");
+                return;
+            }
+
             WpfDialogService.Info(
                 "Seleccione una partida",
-                "Elija una partida del listado izquierdo (no un título de sección) para cargar una plantilla de materiales.");
-            return;
-        }
-
-        if (selectedPartida.ExcluidoCubicacion)
-        {
-            WpfDialogService.Info(
-                "Partida excluida",
-                "Esta partida está marcada como excluida de cubicación.");
+                "Elija una partida del listado izquierdo o marque varias partidas con la barra espaciadora para cargar una plantilla.");
             return;
         }
 
@@ -185,14 +197,6 @@ internal sealed class CubicacionPersistenceService
         if (dialog.ShowDialog() != true || dialog.SelectedConjunto == null)
             return;
 
-        var partida = session.Itemizado.FirstOrDefault(i =>
-            string.Equals(i.Id, selectedPartida.Id, StringComparison.OrdinalIgnoreCase));
-        if (partida == null)
-        {
-            WpfDialogService.Info("Partida no encontrada", "No se encontró la partida seleccionada en el itemizado.");
-            return;
-        }
-
         if ((dialog.SelectedConjunto.Recursos?.Count ?? 0) == 0)
         {
             WpfDialogService.Info(
@@ -202,27 +206,57 @@ internal sealed class CubicacionPersistenceService
             return;
         }
 
-        host.UndoService.PushUndoPoint(session, "Aplicar plantilla de materiales");
+        string undoDesc = targetPartidaVms.Count > 1
+            ? $"Aplicar plantilla '{dialog.SelectedConjunto.Nombre}' a {targetPartidaVms.Count} partidas"
+            : $"Aplicar plantilla de materiales '{dialog.SelectedConjunto.Nombre}'";
 
-        if (dialog.Reemplazar)
-            cubicacionPresenter.DeleteRows(
-                session.Cubicacion
-                    .Where(c => string.Equals(c.ItemId, selectedPartida.Id, StringComparison.OrdinalIgnoreCase))
-                    .Select(c => c.Id)
-                    .ToList());
+        undo.PushUndoPoint(session, undoDesc);
 
-        var result = conjuntoService.ExpandToCubicacion(dialog.SelectedConjunto, partida, session.Materiales);
-        foreach (var row in result.Rows)
-            session.Cubicacion.Add(row);
+        int totalAdded = 0;
+        var allWarnings = new List<string>();
+
+        foreach (var targetVm in targetPartidaVms)
+        {
+            var partida = session.Itemizado.FirstOrDefault(i =>
+                string.Equals(i.Id, targetVm.Id, StringComparison.OrdinalIgnoreCase));
+            if (partida == null) continue;
+
+            if (dialog.Reemplazar)
+                cubicacionPresenter.DeleteRows(
+                    session.Cubicacion
+                        .Where(c => string.Equals(c.ItemId, targetVm.Id, StringComparison.OrdinalIgnoreCase))
+                        .Select(c => c.Id)
+                        .ToList());
+
+            var result = conjuntoService.ExpandToCubicacion(dialog.SelectedConjunto, partida, session.Materiales);
+            foreach (var row in result.Rows)
+                session.Cubicacion.Add(row);
+
+            totalAdded += result.Rows.Count;
+            if (result.Warnings.Count > 0)
+                allWarnings.AddRange(result.Warnings);
+        }
+
+        // Limpiar marcas de lote tras aplicar
+        foreach (var p in taggedPartidas)
+            p.IsTagged = false;
 
         using (parent.SuppressSessionReload())
-            session.MarkDirty("cubicacion");
+            session.MarkDirty(ProjectDirtyScope.Cubicacion);
         parent.LoadCubicacionRows();
 
-        if (result.Rows.Count == 0)
+        if (targetPartidaVms.Count > 1)
         {
-            var extra = result.Warnings.Count > 0
-                ? "\n\n" + string.Join("\n", result.Warnings)
+            WpfDialogService.Info(
+                "Plantilla aplicada en lote",
+                $"Se aplicó la plantilla '{dialog.SelectedConjunto.Nombre}' a {targetPartidaVms.Count} partidas con éxito ({totalAdded} líneas generadas).");
+            return;
+        }
+
+        if (totalAdded == 0)
+        {
+            var extra = allWarnings.Count > 0
+                ? "\n\n" + string.Join("\n", allWarnings)
                 : "";
             WpfDialogService.Info(
                 "Nada que cargar",
@@ -230,10 +264,10 @@ internal sealed class CubicacionPersistenceService
             return;
         }
 
-        if (result.Warnings.Count > 0)
+        if (allWarnings.Count > 0)
             WpfDialogService.Info(
                 "Plantilla aplicada con advertencias",
-                $"{result.Rows.Count} material(es) cargados.\n\n" + string.Join("\n", result.Warnings));
+                $"{totalAdded} material(es) cargados.\n\n" + string.Join("\n", allWarnings));
     }
 
     public void SyncGridRowSelection(IEnumerable<CubicacionRowVm> selected)

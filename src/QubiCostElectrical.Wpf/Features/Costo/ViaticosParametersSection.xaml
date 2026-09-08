@@ -1,5 +1,5 @@
 <UserControl x:Class="QubiCostElectrical.Wpf.Features.Costo.ViaticosParametersSection" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"><UserControl.Resources><ResourceDictionary Source="ViaticosProfesionalDialog.Resources.xaml" /></UserControl.Resources>
-<Border Grid.Column="0" Background="White" BorderBrush="{DynamicResource Brush.SlateLight}" BorderThickness="0,0,1,0" Padding="16">
+<Border Grid.Column="0" Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.SlateLight}" BorderThickness="0,0,1,0" Padding="16">
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
           <StackPanel>
             <TextBlock Style="{StaticResource VSideH2}" Text="ALCANCE DEL CÁLCULO" />
@@ -59,7 +59,7 @@
               <ComboBoxItem Content="75% primer/último día (estilo GSA)" Tag="75" />
             </ComboBox>
             <TextBlock Text="En Chile el viático cubre alimentación, alojamiento y traslado cuando el trabajador se ausenta de su residencia. Si la empresa provee comida o casa, ese ítem se descuenta."
-                       FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.Ink3}" TextWrapping="Wrap" LineHeight="15" />
+                       Style="{StaticResource Text.Helper}" TextWrapping="Wrap" LineHeight="15" />
           </StackPanel>
         </ScrollViewer>
       </Border>

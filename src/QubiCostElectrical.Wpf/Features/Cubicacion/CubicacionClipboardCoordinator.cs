@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Controls;
 using QubiCostElectrical;
 using QubiCostElectrical.Wpf.Infrastructure;
+using QubiCostElectrical.Wpf.Shell;
 
 namespace QubiCostElectrical.Wpf.Features.Cubicacion;
 
@@ -22,22 +23,24 @@ namespace QubiCostElectrical.Wpf.Features.Cubicacion;
 /// </summary>
 internal sealed class CubicacionClipboardCoordinator
 {
+    private static readonly Action UndoToastAction = () => ShellNotificationService.RequestUndo?.Invoke();
+
     private readonly CubicacionViewModel parent;
     private readonly BudgetProjectSession session;
-    private readonly WpfAppHost host;
+    private readonly WpfUndoService undo;
     private readonly CubicacionPresenter cubicacionPresenter;
     private readonly ICubicacionTakeoffQueryService querySvc;
 
     public CubicacionClipboardCoordinator(
         CubicacionViewModel parent,
         BudgetProjectSession session,
-        WpfAppHost host,
+        WpfUndoService undo,
         CubicacionPresenter cubicacionPresenter,
         ICubicacionTakeoffQueryService querySvc)
     {
         this.parent = parent;
         this.session = session;
-        this.host = host;
+        this.undo = undo;
         this.cubicacionPresenter = cubicacionPresenter;
         this.querySvc = querySvc;
     }
@@ -81,9 +84,9 @@ internal sealed class CubicacionClipboardCoordinator
             return false;
         }
 
-        host.UndoService.PushUndoPoint(session, $"Agregar material {material.Codigo}");
+        undo.PushUndoPoint(session, $"Agregar material {material.Codigo}");
         session.Materiales.Add(material);
-        session.MarkDirty("materiales");
+        session.MarkDirty(ProjectDirtyScope.Materiales);
         parent.InvalidateAutocompleteMaterialIndex();
         parent.ValidationMaterialesIndex = null;
 
@@ -104,7 +107,7 @@ internal sealed class CubicacionClipboardCoordinator
         if (!parent.CanEdit || session.IsReadOnly)
             return;
 
-        host.UndoService.PushUndoPoint(session, undoLabel);
+        undo.PushUndoPoint(session, undoLabel);
         parent.HasPendingUndoForEdit = true;
         try
         {
@@ -138,7 +141,7 @@ internal sealed class CubicacionClipboardCoordinator
         if (startRow < 0)
             return false;
 
-        host.UndoService.PushUndoPoint(session, "Pegar cubicación");
+        undo.PushUndoPoint(session, "Pegar cubicación");
         // Evita que OnRowEdited() empuje undo points adicionales por cada celda tocada
         // durante este pegado; ya se registró uno solo que cubre toda la operación.
         parent.HasPendingUndoForEdit = true;
@@ -172,7 +175,7 @@ internal sealed class CubicacionClipboardCoordinator
                     Area = "General"
                 };
                 session.Cubicacion.Add(source);
-                targetRow = new CubicacionRowVm(source);
+                targetRow = parent.CreateRowVm(source);
                 parent.InitializeSectorRow(targetRow);
                 parent.Rows.Add(targetRow);
             }
@@ -208,7 +211,9 @@ internal sealed class CubicacionClipboardCoordinator
 
         ShellNotificationService.Instance.ShowSuccess(
             "Pegado",
-            $"{imported} fila(s) actualizada(s) desde Excel.");
+            $"{imported} fila(s) actualizada(s) desde Excel.",
+            actionLabel: "Deshacer",
+            action: UndoToastAction);
         return true;
     }
 
@@ -228,8 +233,20 @@ internal sealed class CubicacionClipboardCoordinator
         {
             var owner = Application.Current?.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive);
             var dialog = new ExcelPastePreviewDialog(result) { Owner = owner };
-            if (dialog.ShowDialog() == true)
-                ApplyClipboardRows(dialog.RowsToImport);
+            var previous = System.Windows.Input.Keyboard.FocusedElement as System.Windows.IInputElement;
+            try
+            {
+                if (dialog.ShowDialog() == true)
+                    ApplyClipboardRows(dialog.RowsToImport);
+            }
+            finally
+            {
+                Application.Current?.Dispatcher.BeginInvoke(() =>
+                {
+                    previous?.Focus();
+                    ShellWindow.RestoreWorkspaceGridFocus();
+                }, System.Windows.Threading.DispatcherPriority.Input);
+            }
             return;
         }
 
@@ -247,7 +264,7 @@ internal sealed class CubicacionClipboardCoordinator
         string msg = rejected > 0
             ? $"{accepted.Count} fila(s) importada(s). {rejected} rechazada(s)."
             : $"{accepted.Count} fila(s) importada(s).";
-        ShellNotificationService.Instance.ShowSuccess("Pegado", msg);
+        ShellNotificationService.Instance.ShowSuccess("Pegado", msg, actionLabel: "Deshacer", action: UndoToastAction);
         parent.ValidateRows();
     }
 
@@ -283,7 +300,7 @@ internal sealed class CubicacionClipboardCoordinator
         var selectedPartida = parent.SelectedPartida;
         if (session.IsReadOnly || selectedPartida == null || !selectedPartida.EsPartida) return;
 
-        host.UndoService.PushUndoPoint(session, $"Pegar {rows.Count(r => !r.IsRejected)} recurso(s)");
+        undo.PushUndoPoint(session, $"Pegar {rows.Count(r => !r.IsRejected)} recurso(s)");
 
         foreach (var cr in rows.Where(r => !r.IsRejected))
         {
@@ -307,7 +324,7 @@ internal sealed class CubicacionClipboardCoordinator
             }
 
             session.Cubicacion.Add(row);
-            var vm = new CubicacionRowVm(row);
+            var vm = parent.CreateRowVm(row);
             parent.InitializeSectorRow(vm);
             parent.Rows.Add(vm);
             // Este camino de pegado (vista previa) no pasaba por OnRowEdited, así que a

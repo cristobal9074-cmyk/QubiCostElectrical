@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Text.Json;
 using System.Windows.Input;
 using QubiCostElectrical;
 using QubiCostElectrical.Wpf.Features.Dashboard;
@@ -10,13 +11,22 @@ using QubiCostElectrical.Wpf.Shell;
 
 namespace QubiCostElectrical.Wpf.Features.CubicacionSc;
 
-public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, IRefreshablePage, IPageWithPendingChanges
+public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, IRefreshablePage, IPageWithPendingChanges, IPageWithCommitChanges
 {
-    public CubicacionScViewModel(IShellNavigationHost shell, WpfAppHost host) : base(host)
+    private static readonly JsonSerializerOptions BaselineJsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+    };
+
+    public CubicacionScViewModel(IShellNavigationHost shell, WpfAppHost host)
+        : this(shell, host.Session, host.ProjectWorkspace, host.UndoService) { }
+
+    public CubicacionScViewModel(IShellNavigationHost shell, BudgetProjectSession session, IProjectWorkspaceService workspace, WpfUndoService undo) : base(session)
     {
         this.shell = shell;
-        this.host = host;
-        session = host.Session;
+        this.workspace = workspace;
+        this.undo = undo;
+        this.session = session;
 
         AddCuadroCommand = new RelayCommand(AddCuadro, () => !showEmptyState && CanEdit);
         RemoveCuadroCommand = new RelayCommand(RemoveCuadro, () => selectedCuadro != null && CanEdit);
@@ -33,12 +43,46 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
         OpenArtefactosCommand = new RelayCommand<CircuitoScRowVm>(AbrirArtefactos, c => c != null && CanEdit);
         OpenResumenCommand = new RelayCommand(AbrirResumen, () => !showEmptyState);
         ExportPdfCommand = new RelayCommand(ExportPdf, () => !showEmptyState);
+        ToggleAdvancedModeCommand = new RelayCommand(() =>
+        {
+            isAdvancedMode = !isAdvancedMode;
+            OnPropertyChanged(nameof(IsAdvancedMode));
+            OnPropertyChanged(nameof(AdvancedModeLabel));
+        });
 
         Refresh();
     }
 
-    protected override void OnSessionChanged(object? sender, ProjectSessionChangedEventArgs e) =>
+    public ICommand ToggleAdvancedModeCommand { get; }
+
+    /// <summary>Modo avanzado: muestra todas las columnas de la planilla de circuitos.
+    /// En modo entrada (false) solo se muestran las columnas esenciales: N°, Sist., Alim., Ubicación, Recorridos y Totales.</summary>
+    public bool IsAdvancedMode
+    {
+        get => isAdvancedMode;
+        private set
+        {
+            if (isAdvancedMode == value) return;
+            isAdvancedMode = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(AdvancedModeLabel));
+        }
+    }
+
+    public string AdvancedModeLabel => isAdvancedMode ? "Vista entrada" : "Vista avanzada";
+
+    protected override void OnSessionChanged(object? sender, ProjectSessionChangedEventArgs e)
+    {
+        if (suppressSessionReload)
+            return;
+
+        // Edición propia ya mutó session + UI; no recargar (borraría HasPendingChanges).
+        if (HasPendingChanges &&
+            string.Equals(e.Scope, "cubicacion_sc", StringComparison.OrdinalIgnoreCase))
+            return;
+
         System.Windows.Application.Current?.Dispatcher.InvokeAsync(Refresh);
+    }
 
     private CubicacionScConfig Config => session.CubicacionScConfig;
 
@@ -134,6 +178,7 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
                 return;
             LoadCircuitos();
             OnPropertyChanged(nameof(HasPendingChanges));
+            OnPropertyChanged(nameof(CircuitosFiltrados));
         }
     }
 
@@ -160,11 +205,23 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
         private set => SetProperty(ref statusMessage, value);
     }
 
-    // ── Filtro de Pisos ──────────────────────────────────────────────────────
+    // ── Filtro de Pisos / búsqueda ───────────────────────────────────────────
     private const string TodosPisos = "Todos los pisos";
     private string pisoFiltro = TodosPisos;
+    private string searchText = "";
 
     public ObservableCollection<string> PisosDisponibles { get; } = new();
+
+    public string SearchText
+    {
+        get => searchText;
+        set
+        {
+            if (!SetProperty(ref searchText, value)) return;
+            OnPropertyChanged(nameof(CuadrosFiltrados));
+            OnPropertyChanged(nameof(CircuitosFiltrados));
+        }
+    }
 
     public string PisoFiltro
     {
@@ -176,19 +233,41 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
         }
     }
 
+    public IEnumerable<CuadroScRowVm> CuadrosFiltrados
+    {
+        get
+        {
+            var q = searchText?.Trim() ?? "";
+            if (string.IsNullOrEmpty(q))
+                return Cuadros;
+            return Cuadros.Where(c =>
+                c.Nombre.Contains(q, StringComparison.OrdinalIgnoreCase));
+        }
+    }
+
     /// <summary>
-    /// Circuitos del tablero seleccionado, filtrados por piso cuando el usuario elige uno. Un
-    /// piso puede ser una zona del proyecto (circuito cubicado por varios pisos) o el texto
-    /// escrito a mano en Ubicación (circuito de un solo piso).
+    /// Circuitos del tablero seleccionado, filtrados por piso y texto de búsqueda.
     /// </summary>
     public IEnumerable<CircuitoScRowVm> CircuitosFiltrados
     {
         get
         {
-            if (pisoFiltro == TodosPisos || string.IsNullOrEmpty(pisoFiltro))
-                return Circuitos;
+            IEnumerable<CircuitoScRowVm> source = Circuitos;
+            if (pisoFiltro != TodosPisos && !string.IsNullOrEmpty(pisoFiltro))
+                source = source.Where(c => CircuitoPisos(c).Contains(pisoFiltro, StringComparer.OrdinalIgnoreCase));
 
-            return Circuitos.Where(c => CircuitoPisos(c).Contains(pisoFiltro, StringComparer.OrdinalIgnoreCase));
+            var q = searchText?.Trim() ?? "";
+            if (!string.IsNullOrEmpty(q))
+            {
+                source = source.Where(c =>
+                    c.Numero.ToString().Contains(q, StringComparison.OrdinalIgnoreCase)
+                    || (c.Tipo?.Contains(q, StringComparison.OrdinalIgnoreCase) ?? false)
+                    || (c.Ubicacion?.Contains(q, StringComparison.OrdinalIgnoreCase) ?? false)
+                    || (c.Estado?.Contains(q, StringComparison.OrdinalIgnoreCase) ?? false)
+                    || CircuitoPisos(c).Any(p => p.Contains(q, StringComparison.OrdinalIgnoreCase)));
+            }
+
+            return source;
         }
     }
 
@@ -235,7 +314,11 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
     public bool CanEdit => !session.IsReadOnly;
     public bool IsGridReadOnly => session.IsReadOnly;
     public bool HasPendingChanges { get; private set; }
-
+    public bool IsLoading
+    {
+        get => isLoading;
+        private set => SetProperty(ref isLoading, value);
+    }
 
     public ICommand AddCuadroCommand { get; }
     public ICommand RemoveCuadroCommand { get; }
@@ -255,8 +338,11 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
 
     public void Refresh()
     {
+        IsLoading = true;
+        try
+        {
         RefreshCatalogCollections();
-        ShowEmptyState = !host.ProjectWorkspace.HasOpenProject;
+        ShowEmptyState = !workspace.HasOpenProject;
         if (ShowEmptyState)
         {
             Cuadros.Clear();
@@ -264,12 +350,14 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
             SelectedCuadro = null;
             StatusMessage = "";
             HasPendingChanges = false;
+            baselineCuadros = null;
+            baselineConfig = null;
             return;
         }
 
         Cuadros.Clear();
         foreach (var cuadro in session.CubicacionSC)
-            Cuadros.Add(new CuadroScRowVm(cuadro, MarkDirty));
+            Cuadros.Add(new CuadroScRowVm(cuadro, MarkDirty, () => CanEdit));
 
         if (Cuadros.Count == 0)
             EnsureDefaultCuadro();
@@ -277,12 +365,25 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
         SelectedCuadro = Cuadros.FirstOrDefault();
         StatusMessage = $"{Cuadros.Count} tablero(s) SC · {session.CubicacionSC.Sum(c => c.Circuitos.Count)} circuitos";
         HasPendingChanges = false;
+        CaptureBaseline();
         NotifyKpiProperties();
+        OnPropertyChanged(nameof(CuadrosFiltrados));
+        OnPropertyChanged(nameof(CircuitosFiltrados));
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     public bool TryDiscardChanges()
     {
+        if (!HasPendingChanges)
+            return true;
+
+        RestoreBaseline();
         Refresh();
+        StatusMessage = "Cambios descartados";
         return true;
     }
 
@@ -292,11 +393,15 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
         return !HasPendingChanges;
     }
 
+    bool IPageWithPendingChanges.HasPendingChanges => HasPendingChanges;
+    bool IPageWithPendingChanges.TryDiscardChanges() => TryDiscardChanges();
+    bool IPageWithCommitChanges.TryApplyChanges() => TryApplyChanges();
+
     private void EnsureDefaultCuadro()
     {
         var cuadro = new CuadroCargaSCRow { Nombre = "TDA SC", Descripcion = "Tablero servicios comunes" };
         session.CubicacionSC.Add(cuadro);
-        Cuadros.Add(new CuadroScRowVm(cuadro, MarkDirty));
+        Cuadros.Add(new CuadroScRowVm(cuadro, MarkDirty, () => CanEdit));
         MarkDirty();
     }
 
@@ -318,16 +423,25 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
         }
 
         foreach (var circuito in cuadro.Circuitos.OrderBy(c => c.Numero))
-            Circuitos.Add(new CircuitoScRowVm(circuito, Config, session.ZonasProyecto, selectedCuadro.NotifyCircuitosActivosChanged, OnCircuitoPisosChanged));
+            Circuitos.Add(new CircuitoScRowVm(
+                circuito,
+                Config,
+                session.ZonasProyecto,
+                selectedCuadro.NotifyCircuitosActivosChanged,
+                OnCircuitoPisosChanged,
+                () => CanEdit,
+                MarkDirty));
 
         RefreshPisosDisponibles();
     }
 
     private void AddCuadro()
     {
+        undo.PushUndoPoint(session, "Agregar tablero SC");
+        pendingUndoForEdit = true;
         var cuadro = new CuadroCargaSCRow { Nombre = $"TDA SC {Cuadros.Count + 1}" };
         session.CubicacionSC.Add(cuadro);
-        var vm = new CuadroScRowVm(cuadro, MarkDirty);
+        var vm = new CuadroScRowVm(cuadro, MarkDirty, () => CanEdit);
         Cuadros.Add(vm);
         SelectedCuadro = vm;
         MarkDirty();
@@ -338,6 +452,8 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
         if (selectedCuadro == null)
             return;
 
+        undo.PushUndoPoint(session, "Eliminar tablero SC");
+        pendingUndoForEdit = true;
         var cuadro = session.CubicacionSC.FirstOrDefault(c => c.Id == selectedCuadro.Id);
         if (cuadro != null)
             session.CubicacionSC.Remove(cuadro);
@@ -356,6 +472,8 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
         if (cuadro == null)
             return;
 
+        undo.PushUndoPoint(session, "Agregar circuito SC");
+        pendingUndoForEdit = true;
         // Hereda canalización del circuito activo (conductor/sección/ducto/fase) para cargar
         // muchos circuitos iguales sin retippear — solo cambia REC/ubicación después.
         var circuito = new CircuitoSCRow
@@ -389,7 +507,13 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
     /// <summary>Marca dirty tras pegar/rellenar celdas desde la grilla (Ctrl+V / Ctrl+D fill).</summary>
     public void NotifyGridCellsEdited()
     {
+        if (!pendingUndoForEdit)
+        {
+            undo.PushUndoPoint(session, "Editar celdas SC");
+            pendingUndoForEdit = true;
+        }
         MarkDirty();
+        pendingUndoForEdit = false;
         StatusMessage = "Celdas actualizadas · Ctrl+D duplica · Ctrl+C en N° copia circuito · Ctrl+V pega sobre el actual";
     }
 
@@ -411,10 +535,13 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
     private void PasteCircuito()
     {
         if (clipboardCircuito == null || selectedCircuito == null) return;
+        undo.PushUndoPoint(session, "Pegar circuito SC");
+        pendingUndoForEdit = true;
         int destino = selectedCircuito.Numero;
         selectedCircuito.ApplyClipboardFrom(clipboardCircuito);
         selectedCuadro?.NotifyCircuitosActivosChanged();
         MarkDirty();
+        pendingUndoForEdit = false;
         StatusMessage = $"Circuito {destino} actualizado con la copia (mismo N°, sin fila nueva)";
     }
 
@@ -424,6 +551,8 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
         var cuadro = session.CubicacionSC.FirstOrDefault(c => c.Id == selectedCuadro.Id);
         if (cuadro == null) return;
 
+        undo.PushUndoPoint(session, "Duplicar circuito SC");
+        pendingUndoForEdit = true;
         int numero = NextCircuitoNumero(cuadro);
         var clone = selectedCircuito.Source.Clone(numero);
         InsertCircuitoVm(cuadro, clone);
@@ -437,7 +566,14 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
     {
         if (selectedCuadro == null) return;
         cuadro.Circuitos.Add(circuito);
-        var vm = new CircuitoScRowVm(circuito, Config, session.ZonasProyecto, selectedCuadro.NotifyCircuitosActivosChanged, OnCircuitoPisosChanged);
+        var vm = new CircuitoScRowVm(
+            circuito,
+            Config,
+            session.ZonasProyecto,
+            selectedCuadro.NotifyCircuitosActivosChanged,
+            OnCircuitoPisosChanged,
+            () => CanEdit,
+            MarkDirty);
         Circuitos.Add(vm);
         SelectedCircuito = vm;
         selectedCuadro.NotifyCircuitosActivosChanged();
@@ -449,6 +585,8 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
         if (selectedCircuito == null || string.IsNullOrWhiteSpace(NuevoArtefactoNombre))
             return;
 
+        undo.PushUndoPoint(session, "Agregar artefacto SC");
+        pendingUndoForEdit = true;
         string nombre = NuevoArtefactoNombre.Trim();
         string categoria = ResolveCategoriaYRegistrar(nombre);
         selectedCircuito.AddArtefacto(nombre, categoria, NuevoArtefactoCantidad);
@@ -456,6 +594,7 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
         NuevoArtefactoNombre = "";
         NuevoArtefactoCantidad = 1;
         MarkDirty();
+        pendingUndoForEdit = false;
     }
 
     private void RemoveArtefacto(ArtefactoScRowVm? artefacto)
@@ -463,8 +602,11 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
         if (selectedCircuito == null || artefacto == null)
             return;
 
+        undo.PushUndoPoint(session, "Eliminar artefacto SC");
+        pendingUndoForEdit = true;
         selectedCircuito.RemoveArtefacto(artefacto);
         MarkDirty();
+        pendingUndoForEdit = false;
     }
 
     private void RemoveCircuito()
@@ -472,6 +614,8 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
         if (selectedCuadro == null || selectedCircuito == null)
             return;
 
+        undo.PushUndoPoint(session, "Eliminar circuito SC");
+        pendingUndoForEdit = true;
         var cuadro = session.CubicacionSC.FirstOrDefault(c => c.Id == selectedCuadro.Id);
         var circuito = cuadro?.Circuitos.FirstOrDefault(c => c.Id == selectedCircuito.Id);
         if (circuito != null)
@@ -481,6 +625,7 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
         SelectedCircuito = Circuitos.FirstOrDefault();
         selectedCuadro.NotifyCircuitosActivosChanged();
         MarkDirty();
+        pendingUndoForEdit = false;
     }
 
     // Botón "Catálogo" en la barra de la planilla: abre un diálogo modal para editar
@@ -495,7 +640,6 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
             return;
 
         session.CubicacionScConfig = dialog.Result;
-        session.MarkDirty("cubicacion_sc");
         RefreshCatalogCollections();
         // Recarga los circuitos para que su constructor re-sincronice N° conductores / merma con el
         // catálogo nuevo (los VM anteriores capturaban el config viejo).
@@ -529,12 +673,11 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
     }
 
     // Invocado por cada CircuitoScRowVm (callback onPisosChanged) al confirmar el flyout de zonas
-    // de la esquina de la celda "Ubicación / Pisos": refresca los pisos disponibles del filtro y
-    // marca el proyecto como modificado.
+    // o al parsear un rango en Ubicación: solo refresca el filtro de pisos. El dirty lo dispara
+    // onChanged → MarkDirty (inyectado en el ctor del CircuitoScRowVm).
     private void OnCircuitoPisosChanged()
     {
         RefreshPisosDisponibles();
-        MarkDirty();
     }
 
     // Botón "Resumen" de la barra: abre el resumen del proyecto con sub-pestañas (total, por
@@ -552,17 +695,72 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
         if (!CanEdit)
             return;
 
-        session.MarkDirty("cubicacion_sc");
+        // Marca sesión por si el usuario pulsó Aplicar sin editar tras un baseline limpio.
+        if (!session.IsDirty)
+        {
+            suppressSessionReload = true;
+            try { session.MarkDirty(ProjectDirtyScope.CubicacionSc); }
+            finally { suppressSessionReload = false; }
+        }
+
         HasPendingChanges = false;
+        OnPropertyChanged(nameof(HasPendingChanges));
+        CaptureBaseline();
         StatusMessage = "Cambios aplicados. Use Guardar en la barra superior para persistir el archivo.";
         shell.RefreshChrome();
+        ((RelayCommand)ApplyCommand).RaiseCanExecuteChanged();
     }
 
     private void MarkDirty()
     {
+        if (session.IsReadOnly)
+            return;
+
+        if (!pendingUndoForEdit && !IsLoading)
+        {
+            undo.PushUndoPoint(session, "Editar cubicación SC");
+            pendingUndoForEdit = true;
+        }
+
         HasPendingChanges = true;
         OnPropertyChanged(nameof(HasPendingChanges));
         NotifyKpiProperties();
+        ((RelayCommand)ApplyCommand).RaiseCanExecuteChanged();
+
+        // Chrome "Sin guardar" + Leave/Save persisten el .qce (session.IsDirty).
+        suppressSessionReload = true;
+        try { session.MarkDirty(ProjectDirtyScope.CubicacionSc); }
+        finally
+        {
+            suppressSessionReload = false;
+            pendingUndoForEdit = false;
+        }
+    }
+
+    private void CaptureBaseline()
+    {
+        baselineCuadros = CloneJson(session.CubicacionSC.ToList());
+        baselineConfig = CloneJson(Config);
+    }
+
+    private void RestoreBaseline()
+    {
+        if (baselineCuadros == null || baselineConfig == null)
+            return;
+
+        var cuadros = CloneJson(baselineCuadros);
+        var config = CloneJson(baselineConfig);
+        session.CubicacionSC.Clear();
+        foreach (var cuadro in cuadros)
+            session.CubicacionSC.Add(cuadro);
+        session.CubicacionScConfig = config;
+    }
+
+    private static T CloneJson<T>(T source)
+    {
+        var json = JsonSerializer.Serialize(source, BaselineJsonOptions);
+        return JsonSerializer.Deserialize<T>(json, BaselineJsonOptions)
+               ?? throw new InvalidOperationException($"No se pudo clonar {typeof(T).Name} para baseline SC.");
     }
 
     public string KpiCanalizacionText
@@ -629,18 +827,18 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
             var sfd = new Microsoft.Win32.SaveFileDialog
             {
                 Filter = "Archivo PDF (*.pdf)|*.pdf",
-                FileName = $"Cubicacion_SC_{host.Session.ProjectInfo.Nombre ?? "Proyecto"}.pdf"
+                FileName = $"Cubicacion_SC_{session.ProjectInfo.Nombre ?? "Proyecto"}.pdf"
             };
 
             if (sfd.ShowDialog() == true)
             {
-                CubicacionScPdfExporter.Export(host.Session.ProjectInfo, session.CubicacionSC, session.ZonasProyecto, Config, sfd.FileName);
-                WpfDialogService.Info("Exportación Exitosa", $"Se ha exportado el registro de cubicación de Servicios Comunes a {sfd.FileName}");
+                CubicacionScPdfExporter.Export(session.ProjectInfo, session.CubicacionSC, session.ZonasProyecto, Config, sfd.FileName);
+                ShellNotificationService.Instance.ShowSuccess("PDF exportado", $"Registro C.SC guardado en {System.IO.Path.GetFileName(sfd.FileName)}.");
             }
         }
         catch (Exception ex)
         {
-            WpfDialogService.Error("Error al exportar", $"Ocurrió un error al generar el PDF: {ex.Message}");
+            ShellNotificationService.Instance.ShowError("Error al exportar PDF", ex.Message);
         }
     }
 }

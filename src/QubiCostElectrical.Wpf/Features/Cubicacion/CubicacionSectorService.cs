@@ -14,20 +14,20 @@ internal sealed class CubicacionSectorService
 {
     private readonly CubicacionViewModel parent;
     private readonly BudgetProjectSession session;
-    private readonly WpfAppHost host;
+    private readonly WpfUndoService undo;
     private readonly ICubicacionTakeoffQueryService querySvc;
     private readonly CubicacionPresenter cubicacionPresenter;
 
     public CubicacionSectorService(
         CubicacionViewModel parent,
         BudgetProjectSession session,
-        WpfAppHost host,
+        WpfUndoService undo,
         ICubicacionTakeoffQueryService querySvc,
         CubicacionPresenter cubicacionPresenter)
     {
         this.parent = parent;
         this.session = session;
-        this.host = host;
+        this.undo = undo;
         this.querySvc = querySvc;
         this.cubicacionPresenter = cubicacionPresenter;
     }
@@ -84,7 +84,7 @@ internal sealed class CubicacionSectorService
         if (dialog.ShowDialog() != true)
             return;
 
-        host.UndoService.PushUndoPoint(session, "Editar zonas del proyecto");
+        undo.PushUndoPoint(session, "Editar zonas del proyecto");
         session.ZonasProyecto.Clear();
         session.ZonasProyecto.AddRange(dialog.Zonas);
 
@@ -177,7 +177,7 @@ internal sealed class CubicacionSectorService
                 row.SetSectorDisplayValue(offset, string.Empty);
         }
 
-        var compactedExpressions = TrimTrailingEmptyExpressions(expressions);
+        var compactedExpressions = CubicacionSectorExpressionCompactor.TrimTrailingEmpty(expressions);
         row.Source.QtyExpressions = compactedExpressions;
         row.Source.TotalExpression = string.Empty;
 
@@ -208,7 +208,7 @@ internal sealed class CubicacionSectorService
 
         if (pushUndo && !parent.HasPendingUndoForEdit)
         {
-            host.UndoService.PushUndoPoint(session, $"Editar sector {offset + 1}");
+            undo.PushUndoPoint(session, $"Editar sector {offset + 1}");
             parent.HasPendingUndoForEdit = true;
         }
 
@@ -223,7 +223,7 @@ internal sealed class CubicacionSectorService
         int requiredLength = Math.Max(row.Source.QtyExpressions?.Length ?? 0, offset + 1);
         var expressions = querySvc.NormalizeExpressions(row.Source.QtyExpressions, requiredLength);
         expressions[offset] = expression?.Trim() ?? string.Empty;
-        var compactedExpressions = TrimTrailingEmptyExpressions(expressions);
+        var compactedExpressions = CubicacionSectorExpressionCompactor.TrimTrailingEmpty(expressions);
         row.Source.QtyExpressions = compactedExpressions;
         row.Source.TotalExpression = string.Empty;
         // Blanquear primero la celda editada: EvaluateStoredExpressions solo invoca el callback
@@ -253,19 +253,5 @@ internal sealed class CubicacionSectorService
         session.SyncCubicacionRowComposition(row.Source);
         if (ReferenceEquals(parent.SelectedRow, row))
             parent.RightPanel.LoadRow(row);
-    }
-
-    private static string[] TrimTrailingEmptyExpressions(string[] expressions)
-    {
-        int last = expressions.Length - 1;
-        while (last >= 0 && string.IsNullOrWhiteSpace(expressions[last]))
-            last--;
-
-        if (last < 0)
-            return Array.Empty<string>();
-
-        var result = new string[last + 1];
-        Array.Copy(expressions, result, result.Length);
-        return result;
     }
 }

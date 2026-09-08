@@ -31,8 +31,8 @@ public static class ThemeManager
         {
             if (_darkDict != null && !Application.Current.Resources.MergedDictionaries.Contains(_darkDict))
             {
-                // Insert at the beginning or replace to ensure it overrides colors key-by-key
-                Application.Current.Resources.MergedDictionaries.Insert(0, _darkDict);
+                // Add at the end to ensure it overrides light colors according to WPF dictionary precedence
+                Application.Current.Resources.MergedDictionaries.Add(_darkDict);
             }
         }
         else

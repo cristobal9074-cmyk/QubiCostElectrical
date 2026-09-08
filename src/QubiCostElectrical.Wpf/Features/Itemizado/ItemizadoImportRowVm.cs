@@ -202,6 +202,7 @@ public sealed partial class ItemizadoImportRowVm : ObservableObject
         ParentId = Source.ParentId,
         NivelJerarquico = Source.NivelJerarquico,
         ExcluidoCubicacion = Source.ExcluidoCubicacion,
+        MotivoNoCubicar = Source.MotivoNoCubicar,
         Observaciones = Source.Observaciones,
     };
 }

@@ -13,5 +13,6 @@
     <ResourceDictionary Source="Dialogs.xaml" />
     <ResourceDictionary Source="ScrollBars.xaml" />
     <ResourceDictionary Source="StatusBar.xaml" />
+    <ResourceDictionary Source="Animations.xaml" />
   </ResourceDictionary.MergedDictionaries>
 </ResourceDictionary>

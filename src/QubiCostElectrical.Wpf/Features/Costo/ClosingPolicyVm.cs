@@ -51,6 +51,10 @@ public sealed class ClosingPolicySectionVm : ViewModelBase
     private string margenLabel = "";
     private string explicacion = "";
     private bool hasAdvertencias;
+    private string stampNote = "";
+    private bool hasStampNote;
+    private string policyWarning = "";
+    private bool hasPolicyWarning;
 
     public ClosingPolicySectionVm(Action<ClosingPolicyType> onPolicyCommit, Action<string, decimal> onParamCommit)
     {
@@ -89,6 +93,42 @@ public sealed class ClosingPolicySectionVm : ViewModelBase
     public string MargenLabel { get => margenLabel; set => SetProperty(ref margenLabel, value); }
     public string Explicacion { get => explicacion; set => SetProperty(ref explicacion, value); }
     public bool HasAdvertencias { get => hasAdvertencias; set => SetProperty(ref hasAdvertencias, value); }
+    public string StampNote { get => stampNote; set => SetProperty(ref stampNote, value); }
+    public bool HasStampNote { get => hasStampNote; set => SetProperty(ref hasStampNote, value); }
+    public string PolicyWarning { get => policyWarning; set => SetProperty(ref policyWarning, value); }
+    public bool HasPolicyWarning { get => hasPolicyWarning; set => SetProperty(ref hasPolicyWarning, value); }
+
+    /// <summary>Actualiza los avisos de salvaguarda: parámetro obsoleto y política que ignora factores.</summary>
+    public void SetSafeguards(ClosingPolicySelection selection, decimal currentCostoEjecucionUf)
+    {
+        selection ??= ClosingPolicySelection.Default();
+
+        StampNote = "";
+        HasStampNote = false;
+        if (selection.ParamsStampedAt is { } stamped && selection.ParamsStampedCostoEjecucionClp > 0m)
+        {
+            decimal drift = Math.Abs(currentCostoEjecucionUf - selection.ParamsStampedCostoEjecucionClp)
+                / selection.ParamsStampedCostoEjecucionClp;
+            if (drift > 0.05m)
+            {
+                StampNote = $"Parámetro fijado el {stamped:d}, cuando el costo de ejecución era "
+                    + $"{selection.ParamsStampedCostoEjecucionClp:N2} UF (hoy {currentCostoEjecucionUf:N2} UF). Revíselo.";
+                HasStampNote = true;
+            }
+        }
+
+        PolicyWarning = selection.Policy switch
+        {
+            ClosingPolicyType.CostPlusFee =>
+                "Esta política ignora los factores por familia y el GG/utilidad configurados.",
+            ClosingPolicyType.TargetPrice =>
+                "El precio objetivo reemplaza la venta por factores; GG y utilidad quedan como margen residual.",
+            ClosingPolicyType.LumpSumEpc =>
+                "La venta se cierra sobre el piso comercial más la contingencia mínima; los factores por familia no aplican.",
+            _ => ""
+        };
+        HasPolicyWarning = PolicyWarning.Length > 0;
+    }
 
     public string TargetPriceClpText
     {

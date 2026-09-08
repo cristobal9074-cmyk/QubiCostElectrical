@@ -4,26 +4,20 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media;
 using Microsoft.Win32;
 using QubiCostElectrical;
 using QubiCostElectrical.Wpf.Features.Dashboard;
 using QubiCostElectrical.Wpf.Features.Delivery;
 using QubiCostElectrical.Wpf.Infrastructure;
+using QubiCostElectrical.Wpf.Shell;
 
 namespace QubiCostElectrical.Wpf.Features.Export;
 
 public sealed class ExportActionVm
 {
-    private static readonly System.Windows.Media.Brush BgBlue   = MakeFrozen("#EAF1FF");
-    private static readonly System.Windows.Media.Brush BgGreen  = MakeFrozen("#EAF8EF");
-    private static readonly System.Windows.Media.Brush BgAmber  = MakeFrozen("#FFF5DD");
-    private static readonly System.Windows.Media.Brush BgCanvas = MakeFrozen("#F3F5F8");
-    private static readonly System.Windows.Media.Brush FgBlue   = MakeFrozen("#2563EB");
-    private static readonly System.Windows.Media.Brush FgGreen  = MakeFrozen("#15803D");
-    private static readonly System.Windows.Media.Brush FgAmber  = MakeFrozen("#B45309");
-    private static readonly System.Windows.Media.Brush FgSlate  = MakeFrozen("#66758A");
-
     public ExportActionVm(string title, string description, string buttonText, ICommand command, bool primary = false, string iconText = "")
     {
         Title = title;
@@ -34,17 +28,17 @@ public sealed class ExportActionVm
         IconText = string.IsNullOrWhiteSpace(iconText) ? DeriveIcon(buttonText) : iconText;
         IconBackground = IconText switch
         {
-            "PDF" => BgBlue,
-            "XLS" => BgGreen,
-            "DOC" => BgAmber,
-            _     => BgCanvas
+            "PDF" => ThemeOrFallback("Brush.BlueSoft", "#EAF1FF"),
+            "XLS" => ThemeOrFallback("Brush.GreenSoft", "#EAF8EF"),
+            "DOC" => ThemeOrFallback("Brush.AmberSoft", "#FFF5DD"),
+            _     => ThemeOrFallback("Brush.Canvas", "#F3F5F8")
         };
         IconForeground = IconText switch
         {
-            "PDF" => FgBlue,
-            "XLS" => FgGreen,
-            "DOC" => FgAmber,
-            _     => FgSlate
+            "PDF" => ThemeOrFallback("Brush.Blue", "#2563EB"),
+            "XLS" => ThemeOrFallback("Brush.Green", "#15803D"),
+            "DOC" => ThemeOrFallback("Brush.Amber", "#B45309"),
+            _     => ThemeOrFallback("Brush.Ink3", "#66758A")
         };
     }
 
@@ -54,13 +48,15 @@ public sealed class ExportActionVm
     public ICommand Command { get; }
     public bool Primary { get; }
     public string IconText { get; }
-    public System.Windows.Media.Brush IconBackground { get; }
-    public System.Windows.Media.Brush IconForeground { get; }
+    public Brush IconBackground { get; }
+    public Brush IconForeground { get; }
 
-    private static System.Windows.Media.Brush MakeFrozen(string hex)
+    private static Brush ThemeOrFallback(string resourceKey, string fallbackHex)
     {
-        var brush = new System.Windows.Media.SolidColorBrush(
-            (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(hex));
+        if (Application.Current?.TryFindResource(resourceKey) is Brush themeBrush)
+            return themeBrush;
+
+        var brush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(fallbackHex));
         brush.Freeze();
         return brush;
     }
@@ -91,7 +87,22 @@ public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefres
 {
     private const string ScopeAreaLabel = "\u00c1rea";
 
-    private readonly WpfAppHost host;
+    private readonly BudgetProjectSession session;
+    private readonly IProjectWorkspaceService projectWorkspace;
+    private readonly IPermissionService permissions;
+    private readonly DashboardPresenter dashboard;
+    private readonly ExportPresenter exportPresenter;
+    private readonly ProjectAuditRecorder audit;
+    private readonly IFileDialogService fileDialog;
+    private readonly IFileOpenService fileOpener;
+    private readonly IPdfProjectExporter pdfExporter;
+    private readonly IExcelProjectExporter excelExporter;
+    private readonly IPresentationLetterDocxExporter wordLetterExporter;
+    private readonly ICubicacionReportExcelExporter cubReportExcel;
+    private readonly ICubicacionReportPdfExporter cubReportPdf;
+    private readonly ICubicacionSCReportExcelExporter cubScReportExcel;
+    private readonly IProjectRepository projectRepo;
+    private readonly IShellNavigationHost? shell;
     private readonly ObservableCollection<ExportActionVm> actions = new();
     private readonly ObservableCollection<ExportPackageItemVm> packageItems = new();
     private readonly ObservableCollection<string> scopeModes = new() { "Completo", "Partida", ScopeAreaLabel };
@@ -130,4 +141,6 @@ public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefres
     private decimal confidencePct;
     private int blockers;
     private int warnings;
+    private bool showEmptyState;
+    private bool isLoading;
 }

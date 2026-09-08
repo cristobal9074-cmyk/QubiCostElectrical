@@ -20,9 +20,23 @@ namespace QubiCostElectrical.Wpf.Shell;
 public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost, IDisposable
 {
     private readonly WpfAppHost host;
+    private readonly BudgetProjectSession session;
+    private readonly IProjectWorkspaceService projectWorkspace;
+    private readonly WpfUndoService undo;
+    private readonly ProjectCollaborationLockService projectLock;
+    private readonly IPermissionService permissions;
+    private readonly ProjectAuditRecorder audit;
+    private readonly IAuthService auth;
+    private readonly DashboardPresenter dashboard;
+    private readonly IProjectEditWorkspaceService projectEdit;
+    private readonly IDocumentsWorkspaceService documents;
+    private readonly IPriceBankStore priceBankStore;
+    private readonly IBudgetCalculationService budgetCalculation;
     private readonly AutoSaveService autoSave;
     private readonly RecentProjectsService recentProjects;
     private readonly ObservableCollection<RecentProjectInfo> recentProjectItems = new();
+    private ShellProjectLifecycle projectLifecycle = null!;
+    private SessionChangeCoalescer? chromeChangeCoalescer;
     private bool isReadOnly;
     private bool isBusy;
     private ShellRoute currentRoute = ShellRoute.Dashboard;
@@ -47,6 +61,15 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
         WpfDialogService.ConfirmSaveDiscardCancel("Cerrar proyecto",
             "El proyecto tiene cambios sin guardar.\n¿Desea guardarlos antes de cerrar?");
 
+    /// <summary>Diálogo al cerrar la app (X / Alt+F4) con cambios pendientes.</summary>
+    internal Func<ThreeWayResult> ShowExitAppDialog = () =>
+        WpfDialogService.ConfirmSaveDiscardCancel("Salir",
+            "El proyecto tiene cambios sin guardar.\n¿Desea guardarlos antes de salir?");
+
+    internal Func<ThreeWayResult> ShowLeavePageDialog = () =>
+        WpfDialogService.ConfirmSaveDiscardCancel("Cambios sin guardar",
+            "Hay cambios sin guardar en esta pantalla.\n¿Desea guardarlos antes de salir?");
+
     internal Func<bool> ShowPendingChangesOnNewDialog = () =>
         WpfDialogService.Confirm("Cambios sin guardar",
             "Hay cambios sin guardar. ¿Desea descartarlos y crear un nuevo proyecto?", isWarning: true);
@@ -61,7 +84,7 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
 
     internal Action PostCloseNavigate = null!;
 
-    // host.Session/host.UndoService viven toda la vida del WpfAppHost — sin desuscribirse, cada
+    // session/undo viven toda la vida del WpfAppHost — sin desuscribirse, cada
     // ShellViewModel nuevo (un ciclo de Cerrar sesión crea uno) deja la instancia vieja y su
     // AutoSaveService (con su propio Timer interno) retenidos para siempre. Mismo patrón de bug
     // ya corregido en otras 8 pantallas, ver SessionChangedSubscriptionLeakTests.cs.
@@ -70,24 +93,84 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
     private readonly EventHandler<ProjectSessionChangedEventArgs> sessionSavedHandler;
     private readonly PropertyChangedEventHandler undoServicePropertyChangedHandler;
     private readonly EventHandler<ProjectSessionChangedEventArgs> sessionChangedSyncReadOnlyHandler;
+    private readonly EventHandler projectLockLostHandler;
     private bool disposed;
 
     public ShellViewModel(WpfAppHost host)
+        : this(host ?? throw new ArgumentNullException(nameof(host)),
+               host.Session, host.ProjectWorkspace, host.UndoService, host.ProjectLock, host.Permissions,
+               host.Audit, host.Auth, host.Dashboard, host.ProjectEdit, host.Documents,
+               host.Services.PriceBankStore, host.Services.BudgetCalculation)
+    {
+    }
+
+    public ShellViewModel(
+        WpfAppHost host,
+        BudgetProjectSession session,
+        IProjectWorkspaceService projectWorkspace,
+        WpfUndoService undo,
+        ProjectCollaborationLockService projectLock,
+        IPermissionService permissions,
+        ProjectAuditRecorder audit,
+        IAuthService auth,
+        DashboardPresenter dashboard,
+        IProjectEditWorkspaceService projectEdit,
+        IDocumentsWorkspaceService documents,
+        IPriceBankStore priceBankStore,
+        IBudgetCalculationService budgetCalculation)
     {
         this.host = host ?? throw new ArgumentNullException(nameof(host));
-        autoSave = new AutoSaveService(this.host);
+        this.session = session;
+        this.projectWorkspace = projectWorkspace;
+        this.undo = undo;
+        this.projectLock = projectLock;
+        this.permissions = permissions;
+        this.audit = audit;
+        this.auth = auth;
+        this.dashboard = dashboard;
+        this.projectEdit = projectEdit;
+        this.documents = documents;
+        this.priceBankStore = priceBankStore;
+        this.budgetCalculation = budgetCalculation;
+        autoSave = new AutoSaveService(session, projectWorkspace);
         autoSavePropertyChangedHandler = (_, _) => Application.Current?.Dispatcher.InvokeAsync(RefreshChrome);
         autoSave.PropertyChanged += autoSavePropertyChangedHandler;
         recentProjects = new RecentProjectsService();
-        sessionChangedRefreshChromeHandler = (_, _) => Application.Current?.Dispatcher.InvokeAsync(RefreshChrome);
-        host.Session.Changed += sessionChangedRefreshChromeHandler;
+
+        var pageCache = new ShellPageCache();
+        navigation = new ShellNavigationCoordinator(
+            pageCache,
+            session,
+            projectWorkspace,
+            autoSave,
+            TryApplyCurrentPageChanges,
+            () => IsReadOnly,
+            RefreshContext);
+        projectLifecycle = new ShellProjectLifecycle(
+            session, projectWorkspace, undo, budgetCalculation, projectEdit, documents,
+            projectLock, audit, permissions, autoSave, ClearPageCache);
+
+        var dispatcher = Application.Current?.Dispatcher;
+        if (dispatcher != null)
+            chromeChangeCoalescer = new SessionChangeCoalescer(dispatcher, TimeSpan.FromMilliseconds(75), RefreshChrome);
+
+        sessionChangedRefreshChromeHandler = (_, _) =>
+        {
+            if (chromeChangeCoalescer != null)
+                chromeChangeCoalescer.Signal();
+            else
+                Application.Current?.Dispatcher.InvokeAsync(RefreshChrome);
+        };
+        session.Changed += sessionChangedRefreshChromeHandler;
         sessionSavedHandler = (_, _) => Application.Current?.Dispatcher.InvokeAsync(() => { autoSave.MarkSaved(); OnSaved(); });
-        host.Session.Saved += sessionSavedHandler;
+        session.Saved += sessionSavedHandler;
         undoServicePropertyChangedHandler = (_, _) => Application.Current?.Dispatcher.InvokeAsync(RefreshUndoRedo);
-        host.UndoService.PropertyChanged += undoServicePropertyChangedHandler;
+        undo.PropertyChanged += undoServicePropertyChangedHandler;
         sessionChangedSyncReadOnlyHandler = (_, _) => Application.Current?.Dispatcher.InvokeAsync(SyncReadOnlyFromSession);
-        host.Session.Changed += sessionChangedSyncReadOnlyHandler;
-        RoleSessionSync.Apply(host.Session, host.Permissions.CurrentRole);
+        session.Changed += sessionChangedSyncReadOnlyHandler;
+        projectLockLostHandler = (_, _) => Application.Current?.Dispatcher.InvokeAsync(OnProjectLockLost);
+        projectLock.LockLost += projectLockLostHandler;
+        RoleSessionSync.Apply(session, permissions.CurrentRole);
         SyncReadOnlyFromSession();
         ProductVersion = $"v{ProductVersionInfo.ProductVersion}";
         RefreshUserContext();
@@ -102,11 +185,35 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
         if (disposed) return;
         disposed = true;
         autoSave.PropertyChanged -= autoSavePropertyChangedHandler;
-        host.Session.Changed -= sessionChangedRefreshChromeHandler;
-        host.Session.Saved -= sessionSavedHandler;
-        host.UndoService.PropertyChanged -= undoServicePropertyChangedHandler;
-        host.Session.Changed -= sessionChangedSyncReadOnlyHandler;
+        session.Changed -= sessionChangedRefreshChromeHandler;
+        session.Saved -= sessionSavedHandler;
+        undo.PropertyChanged -= undoServicePropertyChangedHandler;
+        session.Changed -= sessionChangedSyncReadOnlyHandler;
+        projectLock.LockLost -= projectLockLostHandler;
+        chromeChangeCoalescer?.Dispose();
         autoSave.Dispose();
+    }
+
+    private void OnProjectLockLost()
+    {
+        session.SetLockReadOnly(true, "Otro usuario tomó el control de edición. Solo lectura.");
+        autoSave.CancelPendingPersist();
+        try
+        {
+            audit.RecordLifecycle("BloqueoPerdido", session.CurrentProjectPath);
+        }
+        catch
+        {
+            // Auditoría best-effort: no bloquear transición a LockLostPending.
+        }
+
+        SyncReadOnlyFromSession();
+        ShellNotificationService.Instance.ShowWarning(
+            "Bloqueo perdido",
+            "Otro editor tomó el control. Ya no se auto-guarda el .qce; se conserva una copia local (.autosave). Guarde una copia o reabra en solo lectura.");
+
+        // Preservar trabajo dirty en sidecar sin tocar el .qce.
+        _ = autoSave.FlushSidecarAsync();
     }
 
     public WpfAppHost Host => host;
@@ -132,12 +239,12 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
     {
         get
         {
-            if (!host.Session.IsReadOnly && host.ProjectLock.CurrentLockPath != null)
+            if (!session.IsReadOnly && projectLock.CurrentLockPath != null)
                 return $"Edición exclusiva · {CollaborationSessionBridge.CurrentUserContext().DisplayName}";
 
-            return string.IsNullOrWhiteSpace(host.Session.ReadOnlyReason)
+            return string.IsNullOrWhiteSpace(session.ReadOnlyReason)
                 ? "El proyecto está en solo lectura."
-                : host.Session.ReadOnlyReason;
+                : session.ReadOnlyReason;
         }
     }
 
@@ -170,8 +277,8 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
     public bool CanSaveProject => !isBusy && HasOpenProject && !IsReadOnly;
     public bool CanSaveProjectAs => !isBusy && HasOpenProject && !IsReadOnly;
 
-    public string ActiveProjectPath => host.ProjectWorkspace.HasOpenProject
-        ? host.Session.CurrentProjectPath
+    public string ActiveProjectPath => projectWorkspace.HasOpenProject
+        ? session.CurrentProjectPath
         : string.Empty;
 
     public string ApplicationName => "QUBI COST";
@@ -182,9 +289,9 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
     {
         get
         {
-            if (!host.ProjectWorkspace.HasOpenProject)
+            if (!projectWorkspace.HasOpenProject)
                 return "Sin proyecto abierto";
-            var name = MojibakeFixer.Fix(host.Session.ProjectInfo.Nombre);
+            var name = session.ProjectInfo.Nombre;
             return string.IsNullOrWhiteSpace(name) ? "Proyecto sin nombre" : name;
         }
     }
@@ -210,7 +317,7 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
     public string UserInitials { get; private set; } = "";
     public string UserDisplayName { get; private set; } = "";
     public string UserEmail { get; private set; } = "";
-    public string UserRoleLabel => host.Permissions.RoleDisplayName;
+    public string UserRoleLabel => permissions.RoleDisplayName;
 
     public string UserStatusLabel => string.IsNullOrWhiteSpace(UserRoleLabel)
         ? UserDisplayName
@@ -222,7 +329,7 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
         {
             try
             {
-                var count = host.Services.PriceBankStore.Count();
+                var count = priceBankStore.Count();
                 return count > 0
                     ? $"Banco de precios · {count:N0} materiales"
                     : "Banco de precios vacío";
@@ -236,7 +343,7 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
 
     private void SyncReadOnlyFromSession()
     {
-        IsReadOnly = host.Session.IsReadOnly;
+        IsReadOnly = session.IsReadOnly;
     }
 
     public bool IsUserMenuOpen
@@ -252,12 +359,12 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
         if (!await CloseProjectAsync())
             return;
 
-        host.Auth.Logout();
+        auth.Logout();
         SessionManager.ClearSession();
 
         _ = Application.Current.Dispatcher.BeginInvoke(() =>
         {
-            var login = new LoginWindow(host.Auth);
+            var login = new LoginWindow(auth);
             login.WindowStartupLocation = WindowStartupLocation.CenterScreen;
 
             foreach (Window window in Application.Current.Windows)
@@ -324,17 +431,17 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
         set => SetProperty(ref isProjectPickerOpen, value);
     }
 
-    public bool HasOpenProject => host.ProjectWorkspace.HasOpenProject;
+    public bool HasOpenProject => projectWorkspace.HasOpenProject;
 
-    public bool CanUndo => host.UndoService.CanUndo && !IsReadOnly;
-    public bool CanRedo => host.UndoService.CanRedo && !IsReadOnly;
+    public bool CanUndo => undo.CanUndo && !IsReadOnly;
+    public bool CanRedo => undo.CanRedo && !IsReadOnly;
 
-    public string UndoToolTip => CanUndo && !string.IsNullOrWhiteSpace(host.UndoService.LastUndoDescription)
-        ? $"Deshacer: {host.UndoService.LastUndoDescription} (Ctrl+Z)"
+    public string UndoToolTip => CanUndo && !string.IsNullOrWhiteSpace(undo.LastUndoDescription)
+        ? $"Deshacer: {undo.LastUndoDescription} (Ctrl+Z)"
         : "Deshacer (Ctrl+Z)";
 
-    public string RedoToolTip => CanRedo && !string.IsNullOrWhiteSpace(host.UndoService.LastRedoDescription)
-        ? $"Rehacer: {host.UndoService.LastRedoDescription} (Ctrl+Y)"
+    public string RedoToolTip => CanRedo && !string.IsNullOrWhiteSpace(undo.LastRedoDescription)
+        ? $"Rehacer: {undo.LastRedoDescription} (Ctrl+Y)"
         : "Rehacer (Ctrl+Y)";
 
     public string StatusBarHint => CurrentRoute switch
@@ -349,13 +456,13 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
 
     public void Undo()
     {
-        if (host.UndoService.Undo(host.Session))
+        if (undo.Undo(session))
             RefreshCurrentPage();
     }
 
     public void Redo()
     {
-        if (host.UndoService.Redo(host.Session))
+        if (undo.Redo(session))
             RefreshCurrentPage();
     }
 
@@ -489,8 +596,9 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
         RefreshUserContext();
         RefreshQuickSearchResults();
 
-        if (!host.ProjectWorkspace.HasOpenProject)
+        if (!projectWorkspace.HasOpenProject)
         {
+            dashboard.ClearAlertCache();
             SaveStateText = "Sin proyecto abierto";
             AlertCount = "0";
             StatusChip = "—";
@@ -502,20 +610,21 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
 
         string autoState = autoSave.StatusText;
         SaveStateText = string.IsNullOrWhiteSpace(autoState)
-            ? (host.Session.IsDirty ? "Sin guardar" : "Guardado")
+            ? (session.IsDirty ? "Sin guardar" : "Guardado")
             : autoState;
-        var review = host.Dashboard.BuildAlerts(host.Session.CreateSnapshot());
-        AlertCount = review.TotalIssues.ToString();
-        StatusChip = string.IsNullOrWhiteSpace(host.Session.ProjectInfo.EstadoPresupuesto)
+        // No CreateSnapshot/BuildAlerts aquí: Session.Changed dispara RefreshChrome con alta frecuencia.
+        // Usar el último total cacheado por Dashboard/Revisión; si aún no hay cache, "—".
+        AlertCount = dashboard.LastAlertTotalIssues?.ToString() ?? "—";
+        StatusChip = string.IsNullOrWhiteSpace(session.ProjectInfo.EstadoPresupuesto)
             ? "Borrador"
-            : host.Session.ProjectInfo.EstadoPresupuesto;
-        VersionChip = host.Session.ProjectInfo.OfertaPdf?.RevisionTag ?? "Rev 0";
-        string moneda = string.IsNullOrWhiteSpace(host.Session.ProjectInfo.MonedaPresupuesto)
+            : session.ProjectInfo.EstadoPresupuesto;
+        VersionChip = session.ProjectInfo.OfertaPdf?.RevisionTag ?? "Rev 0";
+        string moneda = string.IsNullOrWhiteSpace(session.ProjectInfo.MonedaPresupuesto)
             ? "CLP"
-            : host.Session.ProjectInfo.MonedaPresupuesto;
+            : session.ProjectInfo.MonedaPresupuesto;
         // UF es tasa opcional de referencia; no es requerida para calcular en CLP
-        CurrencyChip = host.Session.ProjectInfo.ValorUfClp > 0
-            ? $"{moneda} (UF={host.Session.ProjectInfo.ValorUfClp:N0})"
+        CurrencyChip = session.ProjectInfo.ValorUfClp > 0
+            ? $"{moneda} (UF={session.ProjectInfo.ValorUfClp:N0})"
             : moneda;
         RefreshContext();
     }
@@ -524,7 +633,7 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
     {
         var info = ShellRouteCatalog.Get(CurrentRoute);
         BreadcrumbGroup = info.Group;
-        BreadcrumbProject = host.ProjectWorkspace.HasOpenProject
+        BreadcrumbProject = projectWorkspace.HasOpenProject
             ? ActiveProjectLabel
             : "Sin proyecto";
         PageTitle = info.Title;
@@ -604,8 +713,8 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
 
     private IReadOnlyList<QuickSearchItemVm> BuildQuickSearchResults()
     {
-        return
-        [
+        var items = new List<QuickSearchItemVm>
+        {
             new QuickSearchItemVm("Resumen", "Ir al panel principal del proyecto", "Alt+1", () => NavigateAsync(ShellRoute.Dashboard)),
             new QuickSearchItemVm("Proyecto", "Datos generales y documentos", "Alt+P", () => NavigateAsync(ShellRoute.Project)),
             new QuickSearchItemVm("Itemizado", "Importar y editar partidas", "Alt+2", () => NavigateAsync(ShellRoute.Itemized)),
@@ -619,28 +728,34 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
             new QuickSearchItemVm("Revisión", "Validar pendientes y alertas", "Alt+9", () => NavigateAsync(ShellRoute.Review)),
             new QuickSearchItemVm("Versiones", "Administrar versiones del presupuesto", "Alt+0", () => NavigateAsync(ShellRoute.Versions)),
             new QuickSearchItemVm("Oferta y exportación", "Validar, configurar, previsualizar y exportar", "Alt+O", () => NavigateAsync(ShellRoute.OfferDocuments)),
-            new QuickSearchItemVm("Nuevo proyecto", "Crear un nuevo presupuesto", "Ctrl+N", NewProjectAsync),
             new QuickSearchItemVm("Abrir proyecto", "Abrir un presupuesto existente", "Ctrl+O", OpenProjectAsync),
-            new QuickSearchItemVm("Guardar proyecto", "Guardar los cambios actuales", "Ctrl+S", SaveProjectAsync),
-            new QuickSearchItemVm("Guardar como", "Crear una copia con nuevo nombre", "Ctrl+Shift+S", SaveProjectAsAsync),
             new QuickSearchItemVm("Cerrar proyecto", "Cerrar el proyecto activo", "Ctrl+W", () => CloseProjectAsync()),
             new QuickSearchItemVm("Ir a revisión", "Abrir la vista de revisión", "F8", () => NavigateAsync(ShellRoute.Review)),
             new QuickSearchItemVm("Monedas", "Ver y editar tasas UF y dólar", "Alt+M", () => NavigateAsync(ShellRoute.Currency)),
             new QuickSearchItemVm("Preferencias", "Configuración global de la aplicación", "Alt+,", () => NavigateAsync(ShellRoute.Preferences)),
             new QuickSearchItemVm("Órdenes de cambio", "Administrar órdenes de cambio del proyecto", "Alt+C", () => NavigateAsync(ShellRoute.ChangeOrders)),
-            new QuickSearchItemVm("Deshacer", "Deshacer la última acción", "Ctrl+Z", () => { Undo(); return Task.CompletedTask; }),
-            new QuickSearchItemVm("Rehacer", "Rehacer la última acción deshecha", "Ctrl+Y", () => { Redo(); return Task.CompletedTask; })
-        ];
+        };
+
+        // Visor / bloqueo: omitir mutaciones (nuevo, guardar, undo/redo). Navegación y Preferencias se mantienen.
+        if (!session.IsReadOnly)
+        {
+            items.Add(new QuickSearchItemVm("Nuevo proyecto", "Crear un nuevo presupuesto", "Ctrl+N", NewProjectAsync));
+            items.Add(new QuickSearchItemVm("Guardar proyecto", "Guardar los cambios actuales", "Ctrl+S", SaveProjectAsync));
+            items.Add(new QuickSearchItemVm("Guardar como", "Crear una copia con nuevo nombre", "Ctrl+Shift+S", SaveProjectAsAsync));
+            items.Add(new QuickSearchItemVm("Deshacer", "Deshacer la última acción", "Ctrl+Z", () => { Undo(); return Task.CompletedTask; }));
+            items.Add(new QuickSearchItemVm("Rehacer", "Rehacer la última acción deshecha", "Ctrl+Y", () => { Redo(); return Task.CompletedTask; }));
+        }
+
+        return items;
     }
 
     private IReadOnlyList<QuickSearchItemVm> BuildBusinessSearchResults(string query)
     {
         var results = new List<QuickSearchItemVm>();
 
-        if (!host.ProjectWorkspace.HasOpenProject)
+        if (!projectWorkspace.HasOpenProject)
             return results;
 
-        var session = host.Session;
         const int maxPerCategory = 5;
 
         AddActionSuggestions(query, results);
@@ -665,7 +780,7 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
             var itemDesc = row.Descripcion;
             results.Add(new QuickSearchItemVm(
                 label, "Ir a cubicación", "",
-                () => { host.Session.PendingTakeoffNavigation = new TakeoffNavigationContext(itemId, itemCode, itemDesc); RequestNavigate(ShellRoute.Takeoff); return Task.CompletedTask; }));
+                () => { session.PendingTakeoffNavigation = new TakeoffNavigationContext(itemId, itemCode, itemDesc); RequestNavigate(ShellRoute.Takeoff); return Task.CompletedTask; }));
         }
 
         var apuHits = 0;
@@ -697,7 +812,7 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
         }
 
         var bankHits = 0;
-        foreach (var entry in host.Services.PriceBankStore.GetAll())
+        foreach (var entry in priceBankStore.GetAll())
         {
             if (bankHits >= maxPerCategory) break;
 
@@ -722,13 +837,14 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
     private void AddActionSuggestions(string query, List<QuickSearchItemVm> results)
     {
         var q = Normalize(query);
+        var canMutate = !session.IsReadOnly;
 
-        if (ContainsAny(q, ["NUEV", "CRE", "AGREG"]))
+        if (canMutate && ContainsAny(q, ["NUEV", "CRE", "AGREG"]))
         {
             results.Add(new QuickSearchItemVm("Crear nueva partida", "Itemizado → agregar partida", "",
                 () =>
                 {
-                    host.Session.PendingItemizadoAction = ItemizadoPendingAction.AddPartida;
+                    session.PendingItemizadoAction = ItemizadoPendingAction.AddPartida;
                     if (currentRoute == ShellRoute.Itemized && currentPageVm is ItemizadoViewModel itemizadoVm)
                     {
                         itemizadoVm.ProcessPendingShellAction();
@@ -746,7 +862,7 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
                 () => { RequestNavigate(ShellRoute.Review); return Task.CompletedTask; }));
         }
 
-        if (ContainsAny(q, ["VERS", "VERSION"]))
+        if (canMutate && ContainsAny(q, ["VERS", "VERSION"]))
         {
             results.Add(new QuickSearchItemVm("Nueva versión del presupuesto", "Crear versionado del proyecto", "",
                 () => { RequestNavigate(ShellRoute.Versions); return Task.CompletedTask; }));
@@ -754,7 +870,7 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
 
         if (ContainsAny(q, ["EXCEL", "EXPORT", "PDF", "DOCX", "XLSX"]))
         {
-            results.Add(new QuickSearchItemVm("Oferta y exportación", "Validar, configurar y exportar el paquete comercial", "",
+            results.Add(new QuickSearchItemVm("Oferta y exportación", "Validar, configurar y exportar documentos de oferta", "",
                 () => { RequestNavigate(ShellRoute.OfferDocuments); return Task.CompletedTask; }));
         }
 

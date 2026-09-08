@@ -9,19 +9,23 @@ namespace QubiCostElectrical.Wpf.Features.Costo;
 public sealed class NegotiatedDiscountVm : ViewModelBase
 {
     private readonly Action? onChanged;
+    private readonly Func<bool>? canEdit;
     private string codigo;
     private string descripcion;
     private decimal descuentoPct;
 
-    public NegotiatedDiscountVm(NegotiatedDiscountRow row, Action? onChanged)
+    public NegotiatedDiscountVm(NegotiatedDiscountRow row, Action? onChanged, Func<bool>? canEdit = null)
     {
         Id = string.IsNullOrWhiteSpace(row.Id) ? Guid.NewGuid().ToString("N") : row.Id;
         codigo = row.Codigo ?? "";
         descripcion = row.Descripcion ?? "";
         descuentoPct = row.DescuentoPct;
         this.onChanged = onChanged;
+        this.canEdit = canEdit;
         RaiseValidation();
     }
+
+    private bool AllowEdit => canEdit?.Invoke() ?? true;
 
     public string Id { get; }
 
@@ -30,6 +34,7 @@ public sealed class NegotiatedDiscountVm : ViewModelBase
         get => codigo;
         set
         {
+            if (!AllowEdit) return;
             if (SetProperty(ref codigo, value ?? ""))
             {
                 RaiseValidation();
@@ -43,6 +48,7 @@ public sealed class NegotiatedDiscountVm : ViewModelBase
         get => descripcion;
         set
         {
+            if (!AllowEdit) return;
             if (SetProperty(ref descripcion, value ?? ""))
                 onChanged?.Invoke();
         }
@@ -55,6 +61,7 @@ public sealed class NegotiatedDiscountVm : ViewModelBase
         get => descuentoPct;
         set
         {
+            if (!AllowEdit) return;
             if (SetProperty(ref descuentoPct, ClampPct(value)))
                 onChanged?.Invoke();
         }

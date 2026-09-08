@@ -16,10 +16,14 @@ namespace QubiCostElectrical.Wpf.Features.Templates;
 public sealed partial class PlantillasVm : ViewModelBase, IRefreshablePage
 {
     public PlantillasVm(IShellNavigationHost shell, WpfAppHost host)
+        : this(shell, host.Session, host.Permissions, host.Services.PriceBankStore) { }
+
+    public PlantillasVm(IShellNavigationHost shell, BudgetProjectSession session, IPermissionService permissions, IPriceBankStore priceBankStore)
     {
         this.shell = shell;
-        this.host = host;
-        session = host.Session;
+        this.session = session;
+        this.permissions = permissions;
+        this.priceBankStore = priceBankStore;
         templateStore = TryGetTemplateStore();
 
         Templates = new ObservableCollection<ApuTemplateItemVm>();
@@ -27,12 +31,12 @@ public sealed partial class PlantillasVm : ViewModelBase, IRefreshablePage
         TemplateRecursos = new ObservableCollection<ApuRecursoRow>();
         ConjuntoRecursos = new ObservableCollection<ConjuntoRecursoVm>();
 
-        CreateTemplateCommand = new RelayCommand(CreateTemplate, () => templateStore != null);
-        DeleteTemplateCommand = new RelayCommand<ApuTemplateItemVm>(DeleteTemplate, t => t != null);
-        DuplicateTemplateCommand = new RelayCommand<ApuTemplateItemVm>(DuplicateTemplate, t => t != null);
-        RenameTemplateCommand = new RelayCommand<ApuTemplateItemVm>(RenameTemplate, t => t != null);
-        ImportCommand = new RelayCommand(ImportLibrary, () => templateStore != null);
-        ExportCommand = new RelayCommand(ExportLibrary, () => templateStore != null && Templates.Count > 0 && host.Permissions.CanExportDocuments);
+        CreateTemplateCommand = new RelayCommand(CreateTemplate, () => templateStore != null && CanEdit);
+        DeleteTemplateCommand = new RelayCommand<ApuTemplateItemVm>(DeleteTemplate, t => t != null && CanEdit);
+        DuplicateTemplateCommand = new RelayCommand<ApuTemplateItemVm>(DuplicateTemplate, t => t != null && CanEdit);
+        RenameTemplateCommand = new RelayCommand<ApuTemplateItemVm>(RenameTemplate, t => t != null && CanEdit);
+        ImportCommand = new RelayCommand(ImportLibrary, () => templateStore != null && CanEdit);
+        ExportCommand = new RelayCommand(ExportLibrary, () => templateStore != null && Templates.Count > 0 && permissions.CanExportDocuments);
 
         // Conjunto Commands
         CreateConjuntoCommand = new RelayCommand(CreateConjunto, () => CanEdit);
@@ -41,6 +45,7 @@ public sealed partial class PlantillasVm : ViewModelBase, IRefreshablePage
         RenameConjuntoCommand = new RelayCommand<ConjuntoItemVm>(RenameConjunto, c => c != null && CanEdit);
         AddRecursoCommand = new RelayCommand(AddRecurso, () => SelectedConjunto != null && CanEdit);
         DeleteRecursoCommand = new RelayCommand<ConjuntoRecursoVm>(DeleteRecurso, r => r != null && CanEdit);
+        OpenProjectCommand = new RelayCommand(() => _ = shell.OpenProjectAsync());
 
         Load();
     }
@@ -95,6 +100,7 @@ public sealed partial class PlantillasVm : ViewModelBase, IRefreshablePage
     public int KpiTemplatesCount => Templates.Count;
     public int KpiTotalRecursos => Conjuntos.Sum(c => c.RecursoCount) + Templates.Sum(t => t.RecursoCount);
     public bool CanEdit => !session.IsReadOnly;
+    public bool IsReadOnly => session.IsReadOnly;
 
     public ICommand CreateTemplateCommand { get; }
     public ICommand DeleteTemplateCommand { get; }
@@ -110,6 +116,7 @@ public sealed partial class PlantillasVm : ViewModelBase, IRefreshablePage
     public ICommand RenameConjuntoCommand { get; }
     public ICommand AddRecursoCommand { get; }
     public ICommand DeleteRecursoCommand { get; }
+    public ICommand OpenProjectCommand { get; }
 
     public void Refresh() => Load();
 
@@ -117,9 +124,14 @@ public sealed partial class PlantillasVm : ViewModelBase, IRefreshablePage
     {
         LoadTemplates();
         LoadConjuntos();
-        ShowEmptyState = templateStore == null && Conjuntos.Count == 0;
+        // Plantillas/conjuntos son globales (store), no dependen de .qce abierto.
+        ShowEmptyState = !HasTemplateStore;
         UpdateKpis();
+        OnPropertyChanged(nameof(CanEdit));
+        OnPropertyChanged(nameof(IsReadOnly));
         ((RelayCommand)ExportCommand).RaiseCanExecuteChanged();
+        ((RelayCommand)CreateTemplateCommand).RaiseCanExecuteChanged();
+        ((RelayCommand)ImportCommand).RaiseCanExecuteChanged();
     }
 
     private void LoadTemplates()
@@ -145,7 +157,7 @@ public sealed partial class PlantillasVm : ViewModelBase, IRefreshablePage
             {
                 Conjuntos.Add(new ConjuntoItemVm(c, () =>
                 {
-                    session.MarkDirty("conjuntos");
+                    session.MarkDirty(ProjectDirtyScope.ConjuntosElectricos);
                     UpdateKpis();
                 }));
             }
@@ -179,7 +191,7 @@ public sealed partial class PlantillasVm : ViewModelBase, IRefreshablePage
         {
             ConjuntoRecursos.Add(new ConjuntoRecursoVm(r, () =>
             {
-                session.MarkDirty("conjuntos");
+                session.MarkDirty(ProjectDirtyScope.ConjuntosElectricos);
                 UpdateKpis();
             }, LookupMaterial));
         }
@@ -197,7 +209,7 @@ public sealed partial class PlantillasVm : ViewModelBase, IRefreshablePage
 
     private void CreateTemplate()
     {
-        if (templateStore == null) return;
+        if (!CanEdit || templateStore == null) return;
 
         string? nombre = WpfDialogService.PromptText("Nueva plantilla", "Nombre de la plantilla:", "");
         if (string.IsNullOrWhiteSpace(nombre)) return;
@@ -223,7 +235,7 @@ public sealed partial class PlantillasVm : ViewModelBase, IRefreshablePage
 
     private void DeleteTemplate(ApuTemplateItemVm? item)
     {
-        if (item == null || templateStore == null) return;
+        if (!CanEdit || item == null || templateStore == null) return;
         if (!WpfDialogService.Confirm("Eliminar plantilla",
             $"¿Eliminar '{item.Nombre}'? Esta acción no se puede deshacer.", isWarning: true))
             return;
@@ -288,7 +300,7 @@ public sealed partial class PlantillasVm : ViewModelBase, IRefreshablePage
         };
 
         session.ConjuntosElectricos.Add(row);
-        session.MarkDirty("conjuntos");
+        session.MarkDirty(ProjectDirtyScope.ConjuntosElectricos);
         LoadConjuntos();
         SelectedConjunto = Conjuntos.FirstOrDefault(c => string.Equals(c.Source.Id, row.Id, StringComparison.OrdinalIgnoreCase));
         UpdateKpis();
@@ -302,7 +314,7 @@ public sealed partial class PlantillasVm : ViewModelBase, IRefreshablePage
             return;
 
         session.ConjuntosElectricos.Remove(item.Source);
-        session.MarkDirty("conjuntos");
+        session.MarkDirty(ProjectDirtyScope.ConjuntosElectricos);
         Conjuntos.Remove(item);
         if (SelectedConjunto == item) SelectedConjunto = null;
         UpdateKpis();
@@ -336,7 +348,7 @@ public sealed partial class PlantillasVm : ViewModelBase, IRefreshablePage
         };
 
         session.ConjuntosElectricos.Add(clone);
-        session.MarkDirty("conjuntos");
+        session.MarkDirty(ProjectDirtyScope.ConjuntosElectricos);
         LoadConjuntos();
         SelectedConjunto = Conjuntos.FirstOrDefault(c => string.Equals(c.Source.Id, clone.Id, StringComparison.OrdinalIgnoreCase));
         UpdateKpis();
@@ -351,7 +363,7 @@ public sealed partial class PlantillasVm : ViewModelBase, IRefreshablePage
             return;
 
         item.Nombre = nuevoNombre.Trim();
-        session.MarkDirty("conjuntos");
+        session.MarkDirty(ProjectDirtyScope.ConjuntosElectricos);
         StatusMessage = $"Plantilla renombrada a '{nuevoNombre.Trim()}'.";
     }
 
@@ -362,7 +374,7 @@ public sealed partial class PlantillasVm : ViewModelBase, IRefreshablePage
         // Combinar: materiales del proyecto activo + materiales del Banco de Precios global.
         // El banco global es la fuente principal cuando se definen plantillas de takeoff.
         var materialesProyecto = session.Materiales ?? new System.Collections.Generic.List<MaterialRow>();
-        var materialesBanco = host.Services.PriceBankStore.GetAll()
+        var materialesBanco = priceBankStore.GetAll()
             .Select(e => new MaterialRow
             {
                 Codigo       = e.Codigo ?? "",
@@ -412,7 +424,7 @@ public sealed partial class PlantillasVm : ViewModelBase, IRefreshablePage
 
                 var vm = new ConjuntoRecursoVm(r, () =>
                 {
-                    session.MarkDirty("conjuntos");
+                    session.MarkDirty(ProjectDirtyScope.ConjuntosElectricos);
                     UpdateKpis();
                 }, LookupMaterial);
 
@@ -420,7 +432,7 @@ public sealed partial class PlantillasVm : ViewModelBase, IRefreshablePage
             }
 
             SelectedConjunto.RefreshRecursoCount();
-            session.MarkDirty("conjuntos");
+            session.MarkDirty(ProjectDirtyScope.ConjuntosElectricos);
             UpdateKpis();
             StatusMessage = $"{dialog.SelectedMaterials.Count} material(es) agregado(s) a la plantilla.";
         }
@@ -431,7 +443,7 @@ public sealed partial class PlantillasVm : ViewModelBase, IRefreshablePage
         if (SelectedConjunto == null || recurso == null || !CanEdit) return;
         SelectedConjunto.Source.Recursos.Remove(recurso.Source);
         SelectedConjunto.RefreshRecursoCount();
-        session.MarkDirty("conjuntos");
+        session.MarkDirty(ProjectDirtyScope.ConjuntosElectricos);
         ConjuntoRecursos.Remove(recurso);
         UpdateKpis();
         StatusMessage = "Material eliminado de la plantilla.";

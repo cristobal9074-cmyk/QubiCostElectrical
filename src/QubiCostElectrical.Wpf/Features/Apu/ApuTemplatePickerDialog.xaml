@@ -1,6 +1,8 @@
 <Window x:Class="QubiCostElectrical.Wpf.Features.Apu.ApuTemplatePickerDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:infra="clr-namespace:QubiCostElectrical.Wpf.Infrastructure"
+        Style="{StaticResource Dialog.Window}"
         Title="Aplicar plantilla APU"
         Width="720" Height="480"
         MinWidth="500" MinHeight="360"
@@ -8,8 +10,10 @@
         ShowInTaskbar="False"
         ResizeMode="CanResizeWithGrip">
 
-  <Grid Margin="12">
+  <Border Style="{StaticResource Dialog.Chrome}" Margin="16">
+  <Grid>
     <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
       <RowDefinition Height="Auto"/>
       <RowDefinition Height="*"/>
       <RowDefinition Height="Auto"/>
@@ -21,26 +25,33 @@
       <ColumnDefinition Width="*"/>
     </Grid.ColumnDefinitions>
 
+    <StackPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,0,0,12">
+      <TextBlock Text="Aplicar plantilla APU" Style="{StaticResource Dialog.HeaderTitle}" />
+      <TextBlock Text="Elija una plantilla y decida si reemplaza o agrega recursos al APU actual."
+                 Style="{StaticResource Dialog.HeaderSubtitle}" />
+    </StackPanel>
+
     <!-- Filtro -->
-    <TextBox Grid.Row="0" Grid.Column="0"
+    <TextBox Grid.Row="1" Grid.Column="0"
              x:Name="FilterBox"
-             Padding="6,4" Margin="0,0,0,6"
-             FontSize="12"
+             Style="{StaticResource Form.SearchBox}"
+             Tag="Filtrar plantillas…"
+             Margin="0,0,0,6"
              TextChanged="FilterBox_TextChanged"/>
 
     <!-- Lista de plantillas -->
-    <ListBox Grid.Row="1" Grid.Column="0"
+    <ListBox Grid.Row="2" Grid.Column="0"
              x:Name="TemplateList"
-             BorderThickness="1" FontSize="12"
+             BorderThickness="1" FontSize="{StaticResource Font.Size.md}"
              SelectionChanged="TemplateList_SelectionChanged">
       <ListBox.ItemTemplate>
         <DataTemplate>
           <StackPanel Margin="2">
             <TextBlock Text="{Binding Nombre}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
             <StackPanel Orientation="Horizontal">
-              <TextBlock Text="{Binding Categoria}" FontSize="10" Foreground="{DynamicResource Brush.Muted}"/>
-              <TextBlock Text=" · " FontSize="10" Foreground="{DynamicResource Brush.Muted}"/>
-              <TextBlock Text="{Binding RecursoCount, StringFormat={}{0} rec.}" FontSize="10" Foreground="{DynamicResource Brush.Muted}"/>
+              <TextBlock Text="{Binding Categoria}" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.Muted}"/>
+              <TextBlock Text=" · " FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.Muted}"/>
+              <TextBlock Text="{Binding RecursoCount, StringFormat={}{0} rec.}" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.Muted}"/>
             </StackPanel>
           </StackPanel>
         </DataTemplate>
@@ -48,20 +59,21 @@
     </ListBox>
 
     <!-- Preview de recursos -->
-    <TextBlock Grid.Row="0" Grid.Column="2"
-               Text="Recursos de la plantilla" FontWeight="SemiBold" FontSize="12"
+    <TextBlock Grid.Row="1" Grid.Column="2"
+               Text="Recursos de la plantilla" FontWeight="SemiBold" FontSize="{StaticResource Font.Size.md}"
                Margin="0,0,0,6" VerticalAlignment="Center"/>
-    <TextBlock Grid.Row="0" Grid.Column="2"
+    <TextBlock Grid.Row="1" Grid.Column="2"
                x:Name="PreviewWarningTextBlock"
                Margin="0,24,0,0"
-               FontSize="10"
+               FontSize="{StaticResource Font.Size.xs}"
                Foreground="{DynamicResource Brush.Amber}"
                TextWrapping="Wrap"
                Visibility="Collapsed" />
 
-    <DataGrid Grid.Row="1" Grid.Column="2"
+    <DataGrid Grid.Row="2" Grid.Column="2"
               x:Name="PreviewGrid"
               Style="{StaticResource DataGrid.Workspace}"
+              infra:DataGridExcelNavigation.Enable="True"
               AutoGenerateColumns="False"
               IsReadOnly="True"
               GridLinesVisibility="Horizontal"
@@ -79,25 +91,26 @@
     </DataGrid>
 
     <!-- Opciones de aplicación -->
-    <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3"
+    <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3"
                 Orientation="Horizontal" Margin="0,8,0,8">
-      <TextBlock Text="Modo:" VerticalAlignment="Center" Margin="0,0,8,0" FontSize="12"/>
+      <TextBlock Text="Modo:" VerticalAlignment="Center" Margin="0,0,8,0" FontSize="{StaticResource Font.Size.md}"/>
       <RadioButton x:Name="RbReemplazar" Content="Reemplazar recursos existentes"
-                   IsChecked="True" VerticalAlignment="Center" Margin="0,0,16,0" FontSize="12"/>
+                   IsChecked="True" VerticalAlignment="Center" Margin="0,0,16,0" FontSize="{StaticResource Font.Size.md}"/>
       <RadioButton x:Name="RbFusionar" Content="Fusionar (agregar al final)"
-                   VerticalAlignment="Center" FontSize="12"/>
+                   VerticalAlignment="Center" FontSize="{StaticResource Font.Size.md}"/>
     </StackPanel>
 
     <!-- Botones -->
-    <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3"
-                Orientation="Horizontal" HorizontalAlignment="Right">
-      <Button x:Name="BtnAplicar" Content="Aplicar"
-              Width="90" Height="30" Margin="0,0,8,0"
+    <DockPanel Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3"
+               Style="{StaticResource Dialog.Footer}" LastChildFill="False">
+      <Button DockPanel.Dock="Right" x:Name="BtnAplicar" Content="Aplicar"
+              Style="{StaticResource Button.Primary}" MinWidth="90"
               IsDefault="True" IsEnabled="False"
               Click="BtnAplicar_Click"/>
-      <Button Content="Cancelar" Width="90" Height="30"
+      <Button DockPanel.Dock="Right" Content="Cancelar"
+              Style="{StaticResource Button.Secondary}" MinWidth="90" Margin="0,0,8,0"
               IsCancel="True"/>
-    </StackPanel>
+    </DockPanel>
   </Grid>
-
+  </Border>
 </Window>

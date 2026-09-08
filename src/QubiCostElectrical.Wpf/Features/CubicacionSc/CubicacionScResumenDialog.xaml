@@ -69,31 +69,31 @@
               <!-- Subtotales por categoría en formato premium chips -->
               <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                 <!-- Tuberia -->
-                <Border Background="#ECFDF5" BorderBrush="#A7F3D0" BorderThickness="1" CornerRadius="8" Padding="12,6" Margin="0,0,8,0">
+                <Border Style="{StaticResource Badge.Ok}" CornerRadius="8" Padding="12,6" Margin="0,0,8,0">
                   <StackPanel HorizontalAlignment="Right">
-                    <TextBlock Text="{Binding TuberiaMl, StringFormat={}{0:#,##0.##}}" FontSize="14" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="#059669" HorizontalAlignment="Right" />
-                    <TextBlock Text="TUBERÍA (ML)" FontSize="8" FontWeight="SemiBold" Foreground="#059669" Opacity="0.8" HorizontalAlignment="Right" />
+                    <TextBlock Text="{Binding TuberiaMl, StringFormat={}{0:#,##0.##}}" FontSize="14" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Style="{StaticResource Text.Badge}" HorizontalAlignment="Right" />
+                    <TextBlock Text="TUBERÍA (ML)" FontSize="8" FontWeight="SemiBold" Style="{StaticResource Text.Badge}" Opacity="0.8" HorizontalAlignment="Right" />
                   </StackPanel>
                 </Border>
                 <!-- Conductor -->
-                <Border Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="8" Padding="12,6" Margin="0,0,8,0">
+                <Border Style="{StaticResource Badge.Info}" CornerRadius="8" Padding="12,6" Margin="0,0,8,0">
                   <StackPanel HorizontalAlignment="Right">
-                    <TextBlock Text="{Binding ConductorMl, StringFormat={}{0:#,##0.##}}" FontSize="14" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="#2563EB" HorizontalAlignment="Right" />
-                    <TextBlock Text="CONDUCTOR (ML)" FontSize="8" FontWeight="SemiBold" Foreground="#2563EB" Opacity="0.8" HorizontalAlignment="Right" />
+                    <TextBlock Text="{Binding ConductorMl, StringFormat={}{0:#,##0.##}}" FontSize="14" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Style="{StaticResource Text.Badge}" HorizontalAlignment="Right" />
+                    <TextBlock Text="CONDUCTOR (ML)" FontSize="8" FontWeight="SemiBold" Style="{StaticResource Text.Badge}" Opacity="0.8" HorizontalAlignment="Right" />
                   </StackPanel>
                 </Border>
                 <!-- Cajas -->
-                <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="12,6" Margin="0,0,8,0">
+                <Border Background="{DynamicResource Brush.Canvas}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="8" Padding="12,6" Margin="0,0,8,0">
                   <StackPanel HorizontalAlignment="Right">
-                    <TextBlock Text="{Binding Cajas}" FontSize="14" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="#475569" HorizontalAlignment="Right" />
-                    <TextBlock Text="CAJAS" FontSize="8" FontWeight="SemiBold" Foreground="#475569" Opacity="0.8" HorizontalAlignment="Right" />
+                    <TextBlock Text="{Binding Cajas}" FontSize="14" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink}" HorizontalAlignment="Right" />
+                    <TextBlock Text="CAJAS" FontSize="8" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" Opacity="0.8" HorizontalAlignment="Right" />
                   </StackPanel>
                 </Border>
                 <!-- Artefactos -->
-                <Border Background="#FFFBEB" BorderBrush="#FDE68A" BorderThickness="1" CornerRadius="8" Padding="12,6">
+                <Border Style="{StaticResource Badge.Warn}" CornerRadius="8" Padding="12,6">
                   <StackPanel HorizontalAlignment="Right">
-                    <TextBlock Text="{Binding Artefactos}" FontSize="14" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="#D97706" HorizontalAlignment="Right" />
-                    <TextBlock Text="ARTEFACTOS" FontSize="8" FontWeight="SemiBold" Foreground="#D97706" Opacity="0.8" HorizontalAlignment="Right" />
+                    <TextBlock Text="{Binding Artefactos}" FontSize="14" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Style="{StaticResource Text.Badge}" HorizontalAlignment="Right" />
+                    <TextBlock Text="ARTEFACTOS" FontSize="8" FontWeight="SemiBold" Style="{StaticResource Text.Badge}" Opacity="0.8" HorizontalAlignment="Right" />
                   </StackPanel>
                 </Border>
               </StackPanel>
@@ -106,7 +106,8 @@
     </DataTemplate>
   </Window.Resources>
 
-  <Grid Margin="24">
+  <Border Style="{StaticResource Dialog.Chrome}" Margin="16">
+  <Grid>
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto" />
       <RowDefinition Height="*" />
@@ -115,9 +116,8 @@
 
     <!-- Encabezado de la Vista -->
     <StackPanel Grid.Row="0" Margin="0,0,0,16">
-      <TextBlock Text="Resumen · Cubicación Servicios Comunes" FontSize="20" FontWeight="Bold" FontFamily="{StaticResource Font.Ui}" Foreground="{DynamicResource Brush.Ink}" />
-      <TextBlock Style="{StaticResource Text.Body}" Foreground="{DynamicResource Brush.Muted}"
-                 Margin="0,4,0,0" TextWrapping="Wrap" FontSize="12"
+      <TextBlock Text="Resumen · Cubicación Servicios Comunes" Style="{StaticResource Dialog.HeaderTitle}" />
+      <TextBlock Style="{StaticResource Dialog.HeaderSubtitle}"
                  Text="Cantidad total de materiales del proyecto. Solo cuantifica (sin precio); el costeo va por APU." />
     </StackPanel>
 
@@ -128,31 +128,31 @@
         <DockPanel Margin="0,10,0,0">
           <UniformGrid DockPanel.Dock="Top" Columns="4" Margin="0,0,0,16">
             <!-- Tuberia -->
-            <Border Background="#ECFDF5" BorderBrush="#A7F3D0" BorderThickness="1" CornerRadius="10" Margin="0,0,12,0" Padding="16,12">
+            <Border Style="{StaticResource Badge.Ok}" CornerRadius="10" Margin="0,0,12,0" Padding="16,12">
               <StackPanel>
-                <TextBlock Text="{Binding Total.TuberiaMl, StringFormat={}{0:#,##0.##}}" FontSize="24" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="#059669" />
-                <TextBlock Text="Metros tubería" FontSize="11" FontWeight="Medium" Foreground="#059669" Opacity="0.8" Margin="0,4,0,0" />
+                <TextBlock Text="{Binding Total.TuberiaMl, StringFormat={}{0:#,##0.##}}" FontSize="24" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Style="{StaticResource Text.Badge}" />
+                <TextBlock Text="Metros tubería" FontSize="11" FontWeight="Medium" Style="{StaticResource Text.Badge}" Opacity="0.8" Margin="0,4,0,0" />
               </StackPanel>
             </Border>
             <!-- Conductor -->
-            <Border Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="10" Margin="0,0,12,0" Padding="16,12">
+            <Border Style="{StaticResource Badge.Info}" CornerRadius="10" Margin="0,0,12,0" Padding="16,12">
               <StackPanel>
-                <TextBlock Text="{Binding Total.ConductorMl, StringFormat={}{0:#,##0.##}}" FontSize="24" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="#2563EB" />
-                <TextBlock Text="Metros conductor" FontSize="11" FontWeight="Medium" Foreground="#2563EB" Opacity="0.8" Margin="0,4,0,0" />
+                <TextBlock Text="{Binding Total.ConductorMl, StringFormat={}{0:#,##0.##}}" FontSize="24" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Style="{StaticResource Text.Badge}" />
+                <TextBlock Text="Metros conductor" FontSize="11" FontWeight="Medium" Style="{StaticResource Text.Badge}" Opacity="0.8" Margin="0,4,0,0" />
               </StackPanel>
             </Border>
             <!-- Cajas -->
-            <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="10" Margin="0,0,12,0" Padding="16,12">
+            <Border Background="{DynamicResource Brush.Canvas}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="10" Margin="0,0,12,0" Padding="16,12">
               <StackPanel>
-                <TextBlock Text="{Binding Total.Cajas}" FontSize="24" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="#475569" />
-                <TextBlock Text="Cajas" FontSize="11" FontWeight="Medium" Foreground="#475569" Opacity="0.8" Margin="0,4,0,0" />
+                <TextBlock Text="{Binding Total.Cajas}" FontSize="24" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink}" />
+                <TextBlock Text="Cajas" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource Brush.Muted}" Opacity="0.8" Margin="0,4,0,0" />
               </StackPanel>
             </Border>
             <!-- Artefactos -->
-            <Border Background="#FFFBEB" BorderBrush="#FDE68A" BorderThickness="1" CornerRadius="10" Padding="16,12">
+            <Border Style="{StaticResource Badge.Warn}" CornerRadius="10" Padding="16,12">
               <StackPanel>
-                <TextBlock Text="{Binding Total.Artefactos}" FontSize="24" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="#D97706" />
-                <TextBlock Text="Artefactos" FontSize="11" FontWeight="Medium" Foreground="#D97706" Opacity="0.8" Margin="0,4,0,0" />
+                <TextBlock Text="{Binding Total.Artefactos}" FontSize="24" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Style="{StaticResource Text.Badge}" />
+                <TextBlock Text="Artefactos" FontSize="11" FontWeight="Medium" Style="{StaticResource Text.Badge}" Opacity="0.8" Margin="0,4,0,0" />
               </StackPanel>
             </Border>
           </UniformGrid>
@@ -221,10 +221,10 @@
                             <TextBlock Text="{Binding ZonaNombre}" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" />
                           </StackPanel>
                           
-                          <Border Grid.Column="1" Background="#FFFBEB" BorderBrush="#FDE68A" BorderThickness="1" CornerRadius="8" Padding="12,6" VerticalAlignment="Center">
+                          <Border Grid.Column="1" Style="{StaticResource Badge.Warn}" CornerRadius="8" Padding="12,6" VerticalAlignment="Center">
                             <StackPanel Orientation="Horizontal">
-                              <TextBlock Text="{Binding Total, StringFormat={}{0:#,##0.##}}" FontSize="14" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="#D97706" />
-                              <TextBlock Text=" UN" FontSize="8" FontWeight="SemiBold" Foreground="#D97706" Opacity="0.8" VerticalAlignment="Bottom" Margin="4,0,0,0" />
+                              <TextBlock Text="{Binding Total, StringFormat={}{0:#,##0.##}}" FontSize="14" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Style="{StaticResource Text.Badge}" />
+                              <TextBlock Text=" UN" FontSize="8" FontWeight="SemiBold" Style="{StaticResource Text.Badge}" Opacity="0.8" VerticalAlignment="Bottom" Margin="4,0,0,0" />
                             </StackPanel>
                           </Border>
                         </Grid>
@@ -242,7 +242,7 @@
                                 </Grid.ColumnDefinitions>
                                 
                                 <StackPanel Orientation="Horizontal" Grid.Column="0">
-                                  <Ellipse Width="8" Height="8" Fill="#D97706" Margin="0,0,12,0" VerticalAlignment="Center" />
+                                  <Ellipse Width="8" Height="8" Fill="{DynamicResource Brush.AmberRisk}" Margin="0,0,12,0" VerticalAlignment="Center" />
                                   <TextBlock Text="{Binding Nombre}" FontSize="12" FontFamily="{StaticResource Font.Ui}" FontWeight="Medium" Foreground="{DynamicResource Brush.Ink2}" VerticalAlignment="Center" />
                                   <Border Background="{DynamicResource Brush.Canvas}" CornerRadius="10" Padding="8,2" Margin="8,0,0,0" VerticalAlignment="Center">
                                     <TextBlock Text="{Binding Categoria}" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" />
@@ -279,5 +279,6 @@
               MinWidth="110" IsDefault="True" IsCancel="True" />
     </DockPanel>
   </Grid>
+  </Border>
 </Window>
 

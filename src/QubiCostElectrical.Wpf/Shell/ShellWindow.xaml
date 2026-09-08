@@ -13,6 +13,11 @@
         WindowStyle="None"
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource Brush.Canvas}"
+        AllowDrop="True"
+        DragEnter="OnWindowDragEnter"
+        DragOver="OnWindowDragOver"
+        DragLeave="OnWindowDragLeave"
+        Drop="OnWindowDrop"
         Loaded="OnLoaded"
         PreviewKeyDown="OnWindowKeyDown">
   <WindowChrome.WindowChrome>
@@ -35,7 +40,7 @@
 
     <Border Grid.Row="0"
             Background="{DynamicResource Brush.HeaderBackground}"
-            WindowChrome.IsHitTestVisibleInChrome="True"
+            MouseLeftButtonDown="OnHeaderMouseLeftButtonDown"
             Visibility="{Binding IsLandingScreen, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
       <StackPanel>
         <DockPanel Height="{StaticResource Layout.TopBarHeight}" Margin="20,0" LastChildFill="False">
@@ -55,7 +60,7 @@
             </StackPanel>
           </StackPanel>
 
-          <Button x:Name="ProjectPickerButton" DockPanel.Dock="Left" Margin="14,0,0,0" Height="36" MinWidth="240" Cursor="Hand" Background="{DynamicResource Brush.White8}" BorderBrush="{DynamicResource Brush.White18}" BorderThickness="1" Padding="11,0" Click="OnProjectPickerClick" AutomationProperties.Name="Selector de proyectos" AutomationProperties.HelpText="{Binding ActiveProjectLabel, Mode=OneWay}">
+          <Button x:Name="ProjectPickerButton" WindowChrome.IsHitTestVisibleInChrome="True" DockPanel.Dock="Left" Margin="14,0,0,0" Height="36" MinWidth="240" Cursor="Hand" Background="{DynamicResource Brush.White8}" BorderBrush="{DynamicResource Brush.White18}" BorderThickness="1" Padding="11,0" Click="OnProjectPickerClick" AutomationProperties.Name="Selector de proyectos" AutomationProperties.HelpText="{Binding ActiveProjectLabel, Mode=OneWay}">
             <StackPanel Orientation="Horizontal">
               <Border Width="22" Height="22" CornerRadius="6" Background="{DynamicResource Brush.HeaderIconBlue}" Margin="0,0,8,0">
                 <Viewbox Width="14" Height="14">
@@ -73,7 +78,7 @@
             </StackPanel>
           </Button>
 
-                    <Border x:Name="SearchShell" DockPanel.Dock="Left" Margin="14,0,0,0" Height="36" Width="380" Background="{DynamicResource Brush.NavyDeep}" BorderBrush="{DynamicResource Brush.NavyBorder}" BorderThickness="1" CornerRadius="11" VerticalAlignment="Center">
+          <Border x:Name="SearchShell" WindowChrome.IsHitTestVisibleInChrome="True" DockPanel.Dock="Left" Margin="14,0,0,0" Height="36" Width="380" Background="{DynamicResource Brush.NavyDeep}" BorderBrush="{DynamicResource Brush.NavyBorder}" BorderThickness="1" CornerRadius="11" VerticalAlignment="Center">
             <DockPanel Margin="10,0">
               <TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource Brush.Ink5}" VerticalAlignment="Center" Margin="0,0,8,0" FontSize="13" />
               <Border DockPanel.Dock="Right" BorderBrush="{DynamicResource Brush.NavyBorder2}" BorderThickness="1" CornerRadius="5" Padding="6,1" Margin="8,0,0,0" VerticalAlignment="Center" Background="{DynamicResource Brush.NavyDeep2}">
@@ -81,6 +86,7 @@
               </Border>
               <TextBox x:Name="TopSearchBox"
                        Style="{StaticResource Form.SearchBox}"
+                       Tag="Buscar módulo o comando…"
                        Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
                        VerticalAlignment="Center"
                        VerticalContentAlignment="Center"
@@ -95,8 +101,9 @@
                  HorizontalOffset="0"
                  VerticalOffset="8"
                  AllowsTransparency="True"
-                 PopupAnimation="Fade"
+                 PopupAnimation="None"
                  StaysOpen="False"
+                 Opened="OnPopupSlideInOpened"
                  Closed="OnQuickSearchPopupClosed">
             <Border Width="480"
                     Background="{DynamicResource Brush.Surface}"
@@ -479,7 +486,7 @@
             </Border>
           </Popup>
 
-<StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+<StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" WindowChrome.IsHitTestVisibleInChrome="True">
             <StackPanel Orientation="Horizontal" Margin="0,0,10,0" VerticalAlignment="Center">
               <Ellipse Width="5" Height="5" Fill="{DynamicResource Brush.SaveDot}" Margin="0,0,5,0" />
               <TextBlock Text="{Binding SaveStateText, Mode=OneWay}" FontSize="10" Foreground="{DynamicResource Brush.HeaderStatus}" />
@@ -496,7 +503,13 @@
                     AutomationProperties.Name="Rehacer">
               <TextBlock Text="&#xE7A6;" FontFamily="Segoe MDL2 Assets" FontSize="13" Foreground="{DynamicResource Brush.HeaderControl}" />
             </Button>
-            <Button Style="{StaticResource Button.Secondary}" Content="Guardar" Margin="0,0,6,0" Foreground="{DynamicResource Brush.White}" Background="{DynamicResource Brush.White12}" BorderBrush="{DynamicResource Brush.White18}" Click="OnSaveClick" IsEnabled="{Binding CanSaveProject, Mode=OneWay}" />
+            <Button Style="{StaticResource Button.Secondary}" Content="Guardar" Margin="0,0,6,0"
+                    Foreground="{DynamicResource Brush.White}" Background="{DynamicResource Brush.White12}" BorderBrush="{DynamicResource Brush.White18}"
+                    Click="OnSaveClick"
+                    IsEnabled="{Binding CanSaveProject, Mode=OneWay}"
+                    ToolTip="Guardar el proyecto (Ctrl+S). Deshabilitado en solo lectura (Visor o bloqueo)."
+                    AutomationProperties.Name="Guardar"
+                    AutomationProperties.HelpText="Disponible solo con proyecto abierto y modo edición" />
             <Button Style="{StaticResource Button.Primary}" Margin="0,0,6,0" Click="OnReviewClick">
               <Grid>
                 <Grid.ColumnDefinitions>
@@ -651,8 +664,6 @@
             <Button x:Name="NavItemizadoTab" Style="{StaticResource Button.NavHome}" Content="Itemizado"
                     Tag="{x:Static nav:ShellRoute.Itemized}" Click="OnBudgetTabClick" />
             <shell:NavDropdownGroup x:Name="NavCubicacionGroup" GroupTitle="Cubicación" SectionLabel="Toma de cantidades" Margin="1,0,0,0" />
-            <Button x:Name="NavApuTab" Style="{StaticResource Button.NavHome}" Content="APU"
-                    Tag="{x:Static nav:ShellRoute.Apu}" Click="OnBudgetTabClick" Margin="1,0,0,0" />
           </StackPanel>
           <shell:NavDropdownGroup x:Name="NavPricesGroup" GroupTitle="Precios" SectionLabel="Costos y abastecimiento" Margin="3,0,0,0" />
           <shell:NavDropdownGroup x:Name="NavCostosGroup" GroupTitle="Costos" SectionLabel="Indirectos y estructura" Margin="3,0,0,0" />
@@ -666,7 +677,7 @@
             Background="{DynamicResource Brush.Surface}"
             BorderBrush="{DynamicResource Brush.Line}"
             BorderThickness="0,0,0,1"
-            Padding="16,4"
+            Padding="{StaticResource Padding.WorkflowStepper}"
             Visibility="{Binding ShowWorkflowStepper, Converter={StaticResource BoolToVisibility}}">
       <shell:ShellWorkflowStepper VerticalAlignment="Center" />
     </Border>
@@ -675,14 +686,15 @@
             Background="{DynamicResource Brush.AmberSoft}"
             BorderBrush="{DynamicResource Brush.Amber2}"
             BorderThickness="0,0,0,1"
+            MaxHeight="40"
             Visibility="{Binding IsReadOnly, Converter={StaticResource BoolToVisibility}}">
-      <Grid Margin="20,10">
+      <Grid Margin="{StaticResource Padding.ReadOnlyBanner}">
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="Auto" />
           <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
-        <TextBlock Text="Solo lectura" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Amber}" Margin="0,0,10,0" />
-        <TextBlock Grid.Column="1" Text="{Binding ReadOnlyBannerText, Mode=OneWay}" FontSize="11" Foreground="{DynamicResource Brush.Amber}" TextWrapping="Wrap" />
+        <TextBlock Text="Solo lectura" Style="{StaticResource Text.SectionLabel}" Foreground="{DynamicResource Brush.Amber}" Margin="0,0,10,0" VerticalAlignment="Center" />
+        <TextBlock Grid.Column="1" Text="{Binding ReadOnlyBannerText, Mode=OneWay}" Style="{StaticResource Text.Helper}" Foreground="{DynamicResource Brush.Amber}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
       </Grid>
     </Border>
 
@@ -705,12 +717,7 @@
           <Style TargetType="ContentControl">
             <Style.Triggers>
               <EventTrigger RoutedEvent="Binding.TargetUpdated">
-                <BeginStoryboard>
-                  <Storyboard>
-                    <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                                     From="0.0" To="1.0" Duration="0:0:0.15" />
-                  </Storyboard>
-                </BeginStoryboard>
+                <BeginStoryboard Storyboard="{StaticResource Anim.FadeIn}" />
               </EventTrigger>
             </Style.Triggers>
           </Style>
@@ -741,6 +748,127 @@
       </DockPanel>
     </Border>
     </Grid>
+
+    <!-- Barra superior y controles de ventana en Landing Screen -->
+    <Border VerticalAlignment="Top" Height="42" Background="Transparent"
+            MouseLeftButtonDown="OnHeaderMouseLeftButtonDown"
+            Visibility="{Binding IsLandingScreen, Converter={StaticResource BoolToVisibility}}"
+            Panel.ZIndex="500">
+      <DockPanel LastChildFill="False" Margin="0,4,14,0">
+        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" WindowChrome.IsHitTestVisibleInChrome="True">
+          <Button x:Name="LandingMinimizeBtn" Width="34" Height="34"
+                  Background="Transparent" BorderThickness="0"
+                  Click="OnMinimizeClick" ToolTip="Minimizar"
+                  Cursor="Hand">
+            <Button.Style>
+              <Style TargetType="Button">
+                <Setter Property="Template">
+                  <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                      <Border x:Name="Bd" Background="Transparent" CornerRadius="6">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                      </Border>
+                      <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                          <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.Surface2}" />
+                        </Trigger>
+                      </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                  </Setter.Value>
+                </Setter>
+              </Style>
+            </Button.Style>
+            <TextBlock Text="&#xE921;" FontFamily="Segoe MDL2 Assets" FontSize="10" Foreground="{DynamicResource Brush.Ink3}" />
+          </Button>
+          <Button x:Name="LandingMaxRestoreBtn" Width="34" Height="34"
+                  Background="Transparent" BorderThickness="0"
+                  Click="OnMaxRestoreClick" ToolTip="Maximizar"
+                  Cursor="Hand">
+            <Button.Style>
+              <Style TargetType="Button">
+                <Setter Property="Template">
+                  <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                      <Border x:Name="Bd" Background="Transparent" CornerRadius="6">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                      </Border>
+                      <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                          <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.Surface2}" />
+                        </Trigger>
+                      </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                  </Setter.Value>
+                </Setter>
+              </Style>
+            </Button.Style>
+            <TextBlock x:Name="LandingMaxRestoreIcon" Text="&#xE922;" FontFamily="Segoe MDL2 Assets" FontSize="10" Foreground="{DynamicResource Brush.Ink3}" />
+          </Button>
+          <Button x:Name="LandingCloseBtn" Width="34" Height="34"
+                  Background="Transparent" BorderThickness="0"
+                  Click="OnCloseClick" ToolTip="Cerrar"
+                  Cursor="Hand">
+            <Button.Style>
+              <Style TargetType="Button">
+                <Setter Property="Template">
+                  <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                      <Border x:Name="Bd" Background="Transparent" CornerRadius="6">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                      </Border>
+                      <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                          <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.Danger}" />
+                        </Trigger>
+                      </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                  </Setter.Value>
+                </Setter>
+              </Style>
+            </Button.Style>
+            <TextBlock Text="&#xE8BB;" FontFamily="Segoe MDL2 Assets" FontSize="10" Foreground="{DynamicResource Brush.Ink3}">
+              <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Button}}" Value="True">
+                      <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </TextBlock.Style>
+            </TextBlock>
+          </Button>
+        </StackPanel>
+      </DockPanel>
+    </Border>
+
     <ctrl:ToastHost Panel.ZIndex="1000" VerticalAlignment="Bottom" HorizontalAlignment="Right" />
+
+    <!-- Overlay visual de Drag and Drop -->
+    <Border x:Name="DragDropOverlay" Panel.ZIndex="3000"
+            Background="#D90B132B"
+            Visibility="Collapsed"
+            IsHitTestVisible="False">
+      <Border HorizontalAlignment="Center" VerticalAlignment="Center"
+              Background="{DynamicResource Brush.Surface}"
+              BorderBrush="{DynamicResource Brush.Blue}"
+              BorderThickness="2"
+              CornerRadius="16" Padding="48,36" MaxWidth="540">
+        <StackPanel HorizontalAlignment="Center">
+          <Border Width="64" Height="64" CornerRadius="14"
+                  Background="{DynamicResource Brush.BlueFaint}"
+                  HorizontalAlignment="Center" Margin="0,0,0,16">
+            <TextBlock Text="📥" FontSize="32" HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Border>
+          <TextBlock Text="Soltar archivo aquí"
+                     FontSize="18" FontWeight="Bold"
+                     Foreground="{DynamicResource Brush.Ink}"
+                     HorizontalAlignment="Center" Margin="0,0,0,6" />
+          <TextBlock Text="Suelte un archivo .qce para abrir el presupuesto, o una planilla .xlsx para importar datos."
+                     FontSize="13" Foreground="{DynamicResource Brush.Muted}"
+                     TextWrapping="Wrap" TextAlignment="Center" />
+        </StackPanel>
+      </Border>
+    </Border>
   </Grid>
 </Window>

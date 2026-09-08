@@ -7,8 +7,17 @@ public sealed partial class CubicacionViewModel
     // contacto público que el constructor y Dispose() ya conocen, sin cambiar ninguna firma.
     partial void InitializeSessionHandlers() => sessionCoordinator.Initialize();
 
+    public void SetSessionChangeActive(bool active) => sessionCoordinator.SetSessionChangeActive(active);
+
+    public bool HasPendingSessionChanges => sessionCoordinator.HasPendingSessionChanges;
+
     public void Dispose()
     {
+        if (partidaFilterDebounceTimer != null)
+        {
+            partidaFilterDebounceTimer.Stop();
+            partidaFilterDebounceTimer.Tick -= OnPartidaFilterDebounceTick;
+        }
         sessionCoordinator.Dispose();
         totalsCalculator.Dispose();
     }

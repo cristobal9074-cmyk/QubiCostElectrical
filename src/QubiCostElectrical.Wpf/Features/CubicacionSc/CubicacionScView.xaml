@@ -4,6 +4,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:ctrl="clr-namespace:QubiCostElectrical.Wpf.Controls"
+             xmlns:infra="clr-namespace:QubiCostElectrical.Wpf.Infrastructure"
              mc:Ignorable="d"
              d:DesignHeight="720" d:DesignWidth="1280">
     <UserControl.Resources>
@@ -42,7 +43,7 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
-        <!-- Chip de sistema (tipo de uso del circuito) con colores del HTML -->
+        <!-- Chip de sistema (tipo de uso del circuito) -->
         <Style x:Key="SistemaChipBorder" TargetType="Border">
             <Setter Property="CornerRadius" Value="4" />
             <Setter Property="Padding" Value="6,3" />
@@ -51,19 +52,19 @@
             <Setter Property="Background" Value="{DynamicResource Brush.ChipBg}" />
             <Style.Triggers>
                 <DataTrigger Binding="{Binding Tipo}" Value="A">
-                    <Setter Property="Background" Value="#2A1E14" />
+                    <Setter Property="Background" Value="{DynamicResource Brush.WarningSoft}" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Tipo}" Value="E">
-                    <Setter Property="Background" Value="#172237" />
+                    <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Tipo}" Value="CL">
-                    <Setter Property="Background" Value="#231B3D" />
+                    <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Tipo}" Value="C">
-                    <Setter Property="Background" Value="#112F35" />
+                    <Setter Property="Background" Value="{DynamicResource Brush.SuccessBg}" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Tipo}" Value="F">
-                    <Setter Property="Background" Value="#2F2412" />
+                    <Setter Property="Background" Value="{DynamicResource Brush.WarningSoft}" />
                 </DataTrigger>
             </Style.Triggers>
         </Style>
@@ -73,24 +74,24 @@
             <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
             <Style.Triggers>
                 <DataTrigger Binding="{Binding Tipo}" Value="A">
-                    <Setter Property="Foreground" Value="#FFAE42" />
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Amber}" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Tipo}" Value="E">
-                    <Setter Property="Foreground" Value="#3B82F6" />
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Tipo}" Value="CL">
-                    <Setter Property="Foreground" Value="#8B5CF6" />
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Tipo}" Value="C">
-                    <Setter Property="Foreground" Value="#06B6D4" />
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Success}" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Tipo}" Value="F">
-                    <Setter Property="Foreground" Value="#F59E0B" />
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Amber}" />
                 </DataTrigger>
             </Style.Triggers>
         </Style>
 
-        <!-- Chip de Fase/Alimentación con colores del HTML -->
+        <!-- Chip de Fase/Alimentación -->
         <Style x:Key="FaseChipBorder" TargetType="Border">
             <Setter Property="CornerRadius" Value="4" />
             <Setter Property="Padding" Value="6,3" />
@@ -99,14 +100,14 @@
             <Setter Property="Background" Value="{DynamicResource Brush.ChipBg}" />
             <Style.Triggers>
                 <DataTrigger Binding="{Binding Fase}" Value="M">
-                    <Setter Property="Background" Value="#132D24" />
+                    <Setter Property="Background" Value="{DynamicResource Brush.SuccessBg}" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Fase}" Value="T">
-                    <Setter Property="Background" Value="#381A1A" />
+                    <Setter Property="Background" Value="{DynamicResource Brush.DangerBg}" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Fase}" Value="EM">
-                    <Setter Property="Background" Value="#4B1212" />
-                    <Setter Property="BorderBrush" Value="#EF4444" />
+                    <Setter Property="Background" Value="{DynamicResource Brush.DangerBg}" />
+                    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Danger}" />
                     <Setter Property="BorderThickness" Value="1" />
                 </DataTrigger>
             </Style.Triggers>
@@ -117,13 +118,13 @@
             <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
             <Style.Triggers>
                 <DataTrigger Binding="{Binding Fase}" Value="M">
-                    <Setter Property="Foreground" Value="#10B981" />
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Success}" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Fase}" Value="T">
-                    <Setter Property="Foreground" Value="#F87171" />
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Danger}" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Fase}" Value="EM">
-                    <Setter Property="Foreground" Value="#EF4444" />
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Danger}" />
                 </DataTrigger>
             </Style.Triggers>
         </Style>
@@ -160,30 +161,43 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0">
-                    <WrapPanel VerticalAlignment="Center">
-                        <TextBlock Text="Cubicación de Servicios Comunes (C.SC)" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" />
-                    </WrapPanel>
-                    <TextBlock Text="Cálculo de canalizaciones, bandejas portaconductores, cajas de derivación y terminales de servicios comunes por circuitos."
-                     Style="{StaticResource Text.Caption}" Margin="0,4,0,0" />
+                    <TextBlock Text="Cubicación de Servicios Comunes (C.SC)" Style="{StaticResource Text.PageTitle}" VerticalAlignment="Center" />
                 </StackPanel>
 
-                <Button Grid.Column="1" Style="{StaticResource Button.Secondary}" Command="{Binding ExportPdfCommand}" VerticalAlignment="Center" Padding="12,6">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="📄 " />
-                        <TextBlock Text="Exportar PDF" />
-                    </StackPanel>
-                </Button>
+                <Button Grid.Column="1" Style="{StaticResource Button.Secondary}" Content="Exportar PDF"
+                        Command="{Binding ExportPdfCommand}" VerticalAlignment="Center" Padding="12,6" />
             </Grid>
 
-            <!-- HUD Cards Row -->
+            <!-- Resumen compacto -->
+            <Border DockPanel.Dock="Top" Style="{StaticResource Card.Summary}" Margin="0,0,0,10" Padding="12,6">
+                <DockPanel LastChildFill="False">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,18,0" VerticalAlignment="Center">
+                        <TextBlock Text="Canalización" Style="{StaticResource Text.Helper}" Margin="0,0,6,0" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding KpiCanalizacionText}" Style="{StaticResource Text.KpiInline}" Foreground="{DynamicResource Brush.Blue}" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,18,0" VerticalAlignment="Center">
+                        <TextBlock Text="Tableros" Style="{StaticResource Text.Helper}" Margin="0,0,6,0" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding KpiTablerosCount}" Style="{StaticResource Text.KpiInline}" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,18,0" VerticalAlignment="Center">
+                        <TextBlock Text="Circuitos" Style="{StaticResource Text.Helper}" Margin="0,0,6,0" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding KpiCircuitosCount}" Style="{StaticResource Text.KpiInline}" Foreground="{DynamicResource Brush.Success}" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="Cajas / term." Style="{StaticResource Text.Helper}" Margin="0,0,6,0" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding KpiCajasTerminalesText}" Style="{StaticResource Text.KpiInline}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </DockPanel>
+            </Border>
 
             <!-- Control Panel / Actions Toolbar -->
             <Border DockPanel.Dock="Top" Style="{StaticResource Card.Surface}" Padding="12,8" Margin="0,0,0,12">
                 <DockPanel LastChildFill="True">
                     <!-- Right side: Actions -->
                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                        <Button Style="{StaticResource Button.Toolbar}" Content="📚 Catálogo" Command="{Binding OpenCatalogoCommand}" />
-                        <Button Style="{StaticResource Button.Toolbar}" Content="📊 Resumen" Command="{Binding OpenResumenCommand}" />
+                        <Button Style="{StaticResource Button.Toolbar}" Content="{Binding AdvancedModeLabel}" Command="{Binding ToggleAdvancedModeCommand}" ToolTip="Alterna entre modo de entrada (columnas esenciales) y modo avanzado (todas las columnas)" />
+                        <Button Style="{StaticResource Button.Toolbar}" Content="Catálogo" Command="{Binding OpenCatalogoCommand}" />
+                        <Button Style="{StaticResource Button.Toolbar}" Content="Resumen" Command="{Binding OpenResumenCommand}" />
                         <Button Style="{StaticResource Button.ToolbarPrimary}" Content="+ Agregar tablero" Command="{Binding AddCuadroCommand}" />
                         <Button Style="{StaticResource Button.Toolbar}" Content="+ Agregar circuito" Command="{Binding AddCircuitoCommand}" />
                         <Button Style="{StaticResource Button.Toolbar}" Content="Duplicar" Command="{Binding DuplicateCircuitoCommand}" />
@@ -202,8 +216,12 @@
                         </Button>
                     </StackPanel>
 
-                    <!-- Left side: Filter by Piso -->
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center"/>
+                    <!-- Left side: búsqueda de tableros / circuitos -->
+                    <TextBox Style="{StaticResource Form.SearchBox}"
+                             Width="260"
+                             Tag="Buscar tablero o circuito…"
+                             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                             VerticalAlignment="Center" />
                 </DockPanel>
             </Border>
 
@@ -229,7 +247,7 @@
                        FontSize="11" FontWeight="Bold"
                        Foreground="{DynamicResource Brush.Muted}"
                        Margin="0,0,0,5" />
-                        <ListBox ItemsSource="{Binding Cuadros}"
+                        <ListBox ItemsSource="{Binding CuadrosFiltrados}"
                      SelectedItem="{Binding SelectedCuadro, Mode=TwoWay}"
                      BorderThickness="0" Background="Transparent"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled">
@@ -252,7 +270,7 @@
                                                         <Setter Property="Background" Value="Transparent" />
                                                     </Trigger>
                                                     <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter Property="Background" Value="#0A1120" />
+                                                        <Setter Property="Background" Value="{DynamicResource Brush.NavyDeep}" />
                                                     </Trigger>
                                                 </ControlTemplate.Triggers>
                                             </ControlTemplate>
@@ -283,13 +301,24 @@
                                IsVisibleChanged="TableroNombre_VisibleChanged"
                                LostFocus="TableroNombre_LostFocus"
                                KeyDown="TableroNombre_KeyDown" />
-                                            <!-- Botón lápiz: renombra sin doble clic -->
-                                            <Button Grid.Column="1" Content="✎" FontSize="11" Padding="4,0" Margin="4,0,0,0"
-                              Background="Transparent" BorderThickness="0" Cursor="Hand"
-                              Foreground="{DynamicResource Brush.Muted}"
+                                            <!-- Botón lápiz: renombra sin doble clic (oculto en Visor / solo lectura) -->
+                                            <Button Grid.Column="1" Content="Renombrar" FontSize="11" Padding="4,0" Margin="4,0,0,0"
                               ToolTip="Renombrar tablero"
-                              Click="TableroEdit_Click"
-                              Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}" />
+                              Click="TableroEdit_Click">
+                                                <Button.Style>
+                                                    <Style TargetType="Button" BasedOn="{StaticResource Button.Ghost}">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsEditing}" Value="True">
+                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="False">
+                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
+                                            </Button>
                                         </Grid>
                                         <TextBlock FontSize="10" Foreground="{DynamicResource Brush.Muted}" Margin="0,2,0,0">
                       <Run Text="{Binding CircuitosActivos, Mode=OneWay}" /><Run Text=" / " /><Run Text="{Binding CircuitosProyectados, Mode=OneWay}" /><Run Text=" circuitos" />
@@ -383,7 +412,7 @@
                             </Border>
                             <Border Grid.Column="5" Style="{StaticResource GroupBandCell}">
                                 <DockPanel>
-                                    <Rectangle DockPanel.Dock="Bottom" Height="2" Fill="#EC4899" />
+                                    <Rectangle DockPanel.Dock="Bottom" Height="2" Fill="{DynamicResource Brush.Pink}" />
                                     <TextBlock Text="TRAMO BANDEJA" Style="{StaticResource GroupBandLabel}" />
                                 </DockPanel>
                             </Border>
@@ -395,7 +424,7 @@
                             </Border>
                             <Border Grid.Column="8" Style="{StaticResource GroupBandCell}">
                                 <DockPanel>
-                                    <Rectangle DockPanel.Dock="Bottom" Height="2" Fill="#06B6D4" />
+                                    <Rectangle DockPanel.Dock="Bottom" Height="2" Fill="{DynamicResource Brush.Cyan}" />
                                     <TextBlock Text="CAJAS" Style="{StaticResource GroupBandLabel}" />
                                 </DockPanel>
                             </Border>
@@ -421,6 +450,7 @@
                         <DataGrid x:Name="CircuitosGrid"
                       ItemsSource="{Binding CircuitosFiltrados}"
                       Style="{StaticResource DataGrid.Workspace.Excel}"
+                      infra:DataGridExcelNavigation.Enable="True"
                       AutoGenerateColumns="False"
                       CanUserAddRows="False"
                       CanUserDeleteRows="False"
@@ -433,7 +463,11 @@
                       PreviewMouseLeftButtonDown="CircuitosGrid_PreviewMouseLeftButtonDown"
                       PreviewKeyDown="CircuitosGrid_PreviewKeyDown"
                       PreviewTextInput="CircuitosGrid_PreviewTextInput"
-                      EnableRowVirtualization="False"
+                      EnableRowVirtualization="True"
+                      VirtualizingPanel.IsVirtualizing="True"
+                      VirtualizingPanel.VirtualizationMode="Recycling"
+                      VirtualizingPanel.ScrollUnit="Pixel"
+                      ScrollViewer.CanContentScroll="True"
                       ScrollViewer.HorizontalScrollBarVisibility="Auto"
                       ScrollViewer.VerticalScrollBarVisibility="Auto">
 
@@ -499,7 +533,7 @@
                                 </DataGridTemplateColumn>
 
                                 <!-- Ubicación / Pisos: la celda ES un campo de texto libre (un solo piso, ej. "1",
-                     "-2", "Azotea") — se escribe directo, sin abrir nada. El icono 🏢 de la
+                     "-2", "Azotea") — se escribe directo, sin abrir nada. El botón de pisos de la
                      esquina (solo visible al pasar el mouse o enfocar la celda) abre un flyout
                      anclado, estilo panel ejecutivo, con las zonas del proyecto (Cubicación) para
                      cuando el circuito pasa por varios pisos; cada zona lleva su propio L.Band/
@@ -515,11 +549,19 @@
                                             <Grid x:Name="UbicCellRoot">
                                                 <Border x:Name="UbicHost" Background="Transparent" CornerRadius="5" Margin="1">
                                                     <TextBox Text="{Binding Ubicacion, UpdateSourceTrigger=LostFocus}"
-                                   IsReadOnly="{Binding TienePisos}"
                                    BorderThickness="0" Background="Transparent"
                                    FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Blue}"
                                    TextAlignment="Left" VerticalContentAlignment="Center"
-                                   Padding="6,0,18,0" />
+                                   Padding="6,0,18,0">
+                                                        <!-- CellTemplate no hereda DataGrid.IsReadOnly: combinar Visor + TienePisos -->
+                                                        <TextBox.IsReadOnly>
+                                                            <MultiBinding Converter="{StaticResource BoolOr}">
+                                                                <Binding Path="TienePisos" />
+                                                                <Binding Path="DataContext.IsGridReadOnly"
+                                                                         RelativeSource="{RelativeSource AncestorType=DataGrid}" />
+                                                            </MultiBinding>
+                                                        </TextBox.IsReadOnly>
+                                                    </TextBox>
                                                 </Border>
                                                 <Button x:Name="PisosBtn" Padding="0"
                                 Width="16" Height="16"
@@ -527,7 +569,9 @@
                                 Background="Transparent" BorderThickness="0" Cursor="Hand"
                                 Foreground="{DynamicResource Brush.Muted}"
                                 ToolTip="Varios pisos (zonas del proyecto)"
-                                Click="PisosBtn_Click" Opacity="0">
+                                Click="PisosBtn_Click" Opacity="0"
+                                IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                IsHitTestVisible="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=DataGrid}}">
                                                     <Button.Style>
                                                         <Style TargetType="Button">
                                                             <Setter Property="Template">
@@ -535,7 +579,10 @@
                                                                     <ControlTemplate TargetType="Button">
                                                                         <Grid>
                                                                             <Border x:Name="Bg" CornerRadius="4" Background="Transparent" />
-                                                                            <TextBlock Text="🏢" FontSize="9" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                                            <Path Width="9" Height="9" Stretch="Uniform"
+                                                                                  Fill="{TemplateBinding Foreground}"
+                                                                                  HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                                  Data="M2,14 V6 L8,2 L14,6 V14 H2 M5,14 V9 H11 V14 M6,7.5 H7 M9,7.5 H10 M6,11.5 H7 M9,11.5 H10" />
                                                                             <Ellipse x:Name="Dot" Width="5" Height="5" Fill="{DynamicResource Brush.Amber}"
                                                HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-1,-1,0"
                                                Visibility="Collapsed" />
@@ -574,7 +621,10 @@
                                                                     <DockPanel LastChildFill="False" Margin="0,0,0,4">
                                                                         <Border DockPanel.Dock="Left" Width="20" Height="20" CornerRadius="5"
                                             Background="{DynamicResource Brush.BlueSoft}" Margin="0,0,7,0">
-                                                                            <TextBlock Text="🏢" FontSize="10" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                                            <Path Width="11" Height="11" Stretch="Uniform"
+                                                                                  Fill="{DynamicResource Brush.Blue}"
+                                                                                  HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                                  Data="M2,14 V6 L8,2 L14,6 V14 H2 M5,14 V9 H11 V14 M6,7.5 H7 M9,7.5 H10 M6,11.5 H7 M9,11.5 H10" />
                                                                         </Border>
                                                                         <TextBlock DockPanel.Dock="Left" Text="Varios pisos" FontSize="12"
                                                FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink}"
@@ -666,6 +716,7 @@
                                                    Background="{DynamicResource Brush.Surface2}"
                                                    BorderBrush="{DynamicResource Brush.Line}"
                                                    Foreground="{DynamicResource Brush.Ink}"
+                                                   IsReadOnly="{Binding DataContext.IsGridReadOnly, ElementName=CircuitosGrid}"
                                                    PreviewKeyDown="PisosPopupInput_PreviewKeyDown"
                                                    GotFocus="PisosPopupInput_GotFocus" Tag="0" />
                                                                                     <TextBox x:Name="PvcBox" Grid.Column="2" Margin="4,1,0,1"
@@ -674,6 +725,7 @@
                                                    Background="{DynamicResource Brush.Surface2}"
                                                    BorderBrush="{DynamicResource Brush.Line}"
                                                    Foreground="{DynamicResource Brush.Ink}"
+                                                   IsReadOnly="{Binding DataContext.IsGridReadOnly, ElementName=CircuitosGrid}"
                                                    PreviewKeyDown="PisosPopupInput_PreviewKeyDown"
                                                    GotFocus="PisosPopupInput_GotFocus" Tag="1" />
                                                                                 </Grid>
@@ -721,7 +773,7 @@
                                         <Style TargetType="TextBlock">
                                             <Setter Property="HorizontalAlignment" Value="Right" />
                                             <Setter Property="VerticalAlignment" Value="Center" />
-                                            <Setter Property="Foreground" Value="#EC4899" />
+                                            <Setter Property="Foreground" Value="{DynamicResource Brush.Pink}" />
                                             <Setter Property="FontWeight" Value="SemiBold" />
                                             <Setter Property="Margin" Value="0,0,6,0" />
                                         </Style>
@@ -737,7 +789,7 @@
                                         <Style TargetType="TextBlock">
                                             <Setter Property="HorizontalAlignment" Value="Right" />
                                             <Setter Property="VerticalAlignment" Value="Center" />
-                                            <Setter Property="Foreground" Value="#10B981" />
+                                            <Setter Property="Foreground" Value="{DynamicResource Brush.SuccessBright}" />
                                             <Setter Property="FontWeight" Value="SemiBold" />
                                             <Setter Property="Margin" Value="0,0,6,0" />
                                         </Style>
@@ -750,7 +802,8 @@
                      Sist./Alim./Ducto Ø (ver comentario ahí: un binding TwoWay no confirma de
                      forma confiable en un DataGridTemplateColumn). -->
                                 <DataGridTemplateColumn Header="COND&#x0a;BAND." Width="75"
-                                        ClipboardContentBinding="{Binding ConductorDistribucion}">
+                                        ClipboardContentBinding="{Binding ConductorDistribucion}"
+                                        Visibility="{Binding DataContext.IsAdvancedMode, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <TextBlock Text="{Binding ConductorDistribucion}"
@@ -773,7 +826,8 @@
 
                                 <!-- Sección Bandeja: catálogo SeccionesConductor -->
                                 <DataGridTemplateColumn Header="SEC POR&#x0a;BAND." Width="70"
-                                        ClipboardContentBinding="{Binding SeccionDistribucion}">
+                                        ClipboardContentBinding="{Binding SeccionDistribucion}"
+                                        Visibility="{Binding DataContext.IsAdvancedMode, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <TextBlock Text="{Binding SeccionDistribucion}"
@@ -802,7 +856,7 @@
                                         <Style TargetType="TextBlock">
                                             <Setter Property="HorizontalAlignment" Value="Right" />
                                             <Setter Property="VerticalAlignment" Value="Center" />
-                                            <Setter Property="Foreground" Value="#EC4899" />
+                                            <Setter Property="Foreground" Value="{DynamicResource Brush.Pink}" />
                                             <Setter Property="FontWeight" Value="SemiBold" />
                                             <Setter Property="Margin" Value="0,0,6,0" />
                                         </Style>
@@ -814,6 +868,7 @@
                      quedaba fijo en el valor por defecto. Ahora es editable con la misma lista
                      filtrada y commit manual en LostFocus que el resto del tramo. -->
                                 <DataGridTemplateColumn Header="TIPO&#x0a;DUCTO" Width="55"
+                                        Visibility="{Binding DataContext.IsAdvancedMode, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}"
                                         ClipboardContentBinding="{Binding TipoTuberia}">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
@@ -839,7 +894,8 @@
                      "32" filtra a "32mm" en la lista; Tab/Enter normaliza igual que antes
                      (CircuitoScRowVm.SeccionTuberia agrega "mm" si falta). -->
                                 <DataGridTemplateColumn Header="DUCTO Ø" Width="45"
-                                        ClipboardContentBinding="{Binding SeccionTuberia}">
+                                        ClipboardContentBinding="{Binding SeccionTuberia}"
+                                        Visibility="{Binding DataContext.IsAdvancedMode, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <TextBlock Text="{Binding SeccionTuberia}"
@@ -862,7 +918,8 @@
 
                                 <!-- Conductor PVC: catálogo TiposConductor -->
                                 <DataGridTemplateColumn Header="COND&#x0a;DUCTO" Width="75"
-                                        ClipboardContentBinding="{Binding ConductorDerivacion}">
+                                        ClipboardContentBinding="{Binding ConductorDerivacion}"
+                                        Visibility="{Binding DataContext.IsAdvancedMode, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <TextBlock Text="{Binding ConductorDerivacion}"
@@ -885,7 +942,8 @@
 
                                 <!-- Sección PVC: catálogo SeccionesConductor -->
                                 <DataGridTemplateColumn Header="SEC&#x0a;DUCTO" Width="70"
-                                        ClipboardContentBinding="{Binding SeccionDerivacion}">
+                                        ClipboardContentBinding="{Binding SeccionDerivacion}"
+                                        Visibility="{Binding DataContext.IsAdvancedMode, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <TextBlock Text="{Binding SeccionDerivacion}"
@@ -914,7 +972,7 @@
                                         <Style TargetType="TextBlock">
                                             <Setter Property="HorizontalAlignment" Value="Right" />
                                             <Setter Property="VerticalAlignment" Value="Center" />
-                                            <Setter Property="Foreground" Value="#10B981" />
+                                            <Setter Property="Foreground" Value="{DynamicResource Brush.SuccessBright}" />
                                             <Setter Property="FontWeight" Value="SemiBold" />
                                             <Setter Property="Margin" Value="0,0,6,0" />
                                         </Style>
@@ -925,6 +983,7 @@
                                 <DataGridTextColumn Header="MONT&#x0a;LUM"
                                     Binding="{Binding MontajesAlumbrado, UpdateSourceTrigger=LostFocus}"
                                     Width="52"
+                                    Visibility="{Binding DataContext.IsAdvancedMode, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}"
                                     EditingElementStyle="{StaticResource DataGrid.CellEditTextBox}">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="TextBlock">
@@ -938,6 +997,7 @@
                                 <DataGridTextColumn Header='CAJA&#x0a;5/8"'
                                     Binding="{Binding Cajas58, UpdateSourceTrigger=LostFocus}"
                                     Width="52"
+                                    Visibility="{Binding DataContext.IsAdvancedMode, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}"
                                     EditingElementStyle="{StaticResource DataGrid.CellEditTextBox}">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="TextBlock">
@@ -981,7 +1041,7 @@
                                         <Style TargetType="TextBlock">
                                             <Setter Property="HorizontalAlignment" Value="Center" />
                                             <Setter Property="VerticalAlignment" Value="Center" />
-                                            <Setter Property="Foreground" Value="#F59E0B" />
+                                            <Setter Property="Foreground" Value="{DynamicResource Brush.Amber}" />
                                             <Setter Property="FontWeight" Value="Bold" />
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
@@ -995,7 +1055,7 @@
                                         <Style TargetType="TextBlock">
                                             <Setter Property="HorizontalAlignment" Value="Center" />
                                             <Setter Property="VerticalAlignment" Value="Center" />
-                                            <Setter Property="Foreground" Value="#F59E0B" />
+                                            <Setter Property="Foreground" Value="{DynamicResource Brush.Amber}" />
                                             <Setter Property="FontWeight" Value="Bold" />
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
@@ -1012,7 +1072,8 @@
                               HorizontalAlignment="Stretch"
                               Content="{Binding ArtefactosResumen}"
                               Command="{Binding DataContext.OpenArtefactosCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                              CommandParameter="{Binding}" />
+                              CommandParameter="{Binding}"
+                              IsHitTestVisible="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
@@ -1025,6 +1086,9 @@
 
             </Grid>
         </DockPanel>
+
+        <ctrl:SkeletonOverlayControl Panel.ZIndex="20" Message="Cargando cubicación SC…"
+                                     Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibility}}" />
     </Grid>
 </UserControl>
 

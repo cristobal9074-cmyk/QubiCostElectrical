@@ -27,7 +27,12 @@ partial class ShellViewModel
         && CurrentRoute != ShellRoute.Costo
         && CurrentRoute != ShellRoute.Epp;
 
-    public bool ShowWorkflowStepper => false;
+    /// <summary>
+    /// Stepper de flujo de trabajo: visible cuando hay un proyecto abierto.
+    /// ShellWindow.xaml enlaza Visibility a este flag; RefreshWorkflowSteps dispara el PropertyChanged
+    /// en cada apertura/cierre de proyecto a través de RefreshChrome.
+    /// </summary>
+    public bool ShowWorkflowStepper => projectWorkspace.HasOpenProject;
 
     public bool ShowContextPageTitle => CurrentRoute switch
     {
@@ -76,20 +81,22 @@ partial class ShellViewModel
     {
         workflowSteps.Clear();
 
-        if (!host.ProjectWorkspace.HasOpenProject)
+        if (!projectWorkspace.HasOpenProject)
         {
             OnPropertyChanged(nameof(ShowWorkflowStepper));
             OnPropertyChanged(nameof(ShowContextBar));
             return;
         }
 
-        var review = host.Dashboard.BuildAlerts(host.Session.CreateSnapshot());
+        // Misma regla que AlertCount en RefreshChrome: no BuildAlerts aquí (Session.Changed
+        // es de alta frecuencia). Usar cache del dashboard; sin cache, resumen vacío.
+        var review = dashboard.LastAlertSummary ?? new FinalReviewSummary();
         var definitions = ShellWorkflowLogic.BuildSteps(
             CurrentRoute,
             review,
-            host.Session.ProjectInfo,
-            host.Session.Itemizado,
-            host.Session.CubicacionSC);
+            session.ProjectInfo,
+            session.Itemizado,
+            session.CubicacionSC);
 
         foreach (var def in definitions)
         {

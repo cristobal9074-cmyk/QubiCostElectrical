@@ -11,7 +11,7 @@ public sealed partial class ViaticosProfesionalViewModel : ViewModelBase
 {
     public ViaticosProfesionalViewModel(decimal valorUfClp, decimal picoDirecta, decimal rolesIndirectos, int mesesObra)
     {
-        valorUf = valorUfClp > 0 ? valorUfClp : 37998m;
+        valorUf = valorUfClp > 0 ? valorUfClp : PriceConversion.DefaultValorUfClp;
         dotDir = Math.Max(0, picoDirecta);
         dotInd = Math.Max(0, rolesIndirectos);
         meses = mesesObra > 0 ? mesesObra : 12;

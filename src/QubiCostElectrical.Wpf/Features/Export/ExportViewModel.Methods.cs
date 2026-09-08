@@ -10,14 +10,53 @@ using QubiCostElectrical;
 using QubiCostElectrical.Wpf.Features.Dashboard;
 using QubiCostElectrical.Wpf.Features.Delivery;
 using QubiCostElectrical.Wpf.Infrastructure;
+using QubiCostElectrical.Wpf.Shell;
 
 namespace QubiCostElectrical.Wpf.Features.Export;
 
 public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefreshablePage
 {
-    public ExportViewModel(WpfAppHost host) : base(host)
+    public ExportViewModel(WpfAppHost host, IShellNavigationHost? shell = null)
+        : this(host.Session, host.ProjectWorkspace, host.Permissions, host.Dashboard, host.Export, host.Audit,
+               host.FileDialog, host.FileOpener,
+               host.Services.PdfExporter, host.Services.ExcelExporter, host.Services.WordLetterExporter,
+               host.Services.CubicacionReportExcelExporter, host.Services.CubicacionReportPdfExporter,
+               host.Services.CubicacionSCReportExcelExporter, host.Services.ProjectRepository, shell) { }
+
+    public ExportViewModel(
+        BudgetProjectSession session,
+        IProjectWorkspaceService projectWorkspace,
+        IPermissionService permissions,
+        DashboardPresenter dashboard,
+        ExportPresenter exportPresenter,
+        ProjectAuditRecorder audit,
+        IFileDialogService fileDialog,
+        IFileOpenService fileOpener,
+        IPdfProjectExporter pdfExporter,
+        IExcelProjectExporter excelExporter,
+        IPresentationLetterDocxExporter wordLetterExporter,
+        ICubicacionReportExcelExporter cubReportExcel,
+        ICubicacionReportPdfExporter cubReportPdf,
+        ICubicacionSCReportExcelExporter cubScReportExcel,
+        IProjectRepository projectRepo,
+        IShellNavigationHost? shell = null) : base(session)
     {
-        this.host = host;
+        this.session = session;
+        this.projectWorkspace = projectWorkspace;
+        this.permissions = permissions;
+        this.dashboard = dashboard;
+        this.exportPresenter = exportPresenter;
+        this.audit = audit;
+        this.fileDialog = fileDialog;
+        this.fileOpener = fileOpener;
+        this.pdfExporter = pdfExporter;
+        this.excelExporter = excelExporter;
+        this.wordLetterExporter = wordLetterExporter;
+        this.cubReportExcel = cubReportExcel;
+        this.cubReportPdf = cubReportPdf;
+        this.cubScReportExcel = cubScReportExcel;
+        this.projectRepo = projectRepo;
+        this.shell = shell;
         refreshCommand = new RelayCommand(Refresh);
         exportOfferPdfCommand = new RelayCommand(async () => await ExportOfferPdfAsync(), CanExport);
         exportExcelCommand = new RelayCommand(async () => await ExportExcelAsync(), CanExport);
@@ -28,8 +67,11 @@ public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefres
         exportJsonCommand = new RelayCommand(async () => await ExportJsonAsync(), CanExport);
         exportPackageCommand = new RelayCommand(async () => await ExportPackageAsync(), CanExport);
         previewOfferCommand = new RelayCommand(async () => await PreviewOfferAsync(), CanPreview);
-        previewService = new DeliveryPreviewService(host);
+        previewService = new DeliveryPreviewService(fileOpener, pdfExporter, excelExporter, wordLetterExporter, cubReportExcel, cubReportPdf, cubScReportExcel);
         InitializeOfferWizard();
+        OpenProjectCommand = shell != null
+            ? new RelayCommand(() => _ = shell.OpenProjectAsync())
+            : new RelayCommand(() => { }, () => false);
 
         Refresh();
     }
@@ -192,14 +234,14 @@ public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefres
         private set => SetProperty(ref warnings, value);
     }
 
-    public bool PreciosCongelados => host.Session.ProjectInfo.PreciosCongelados;
+    public bool PreciosCongelados => session.ProjectInfo.PreciosCongelados;
 
     public string FreezeBannerTitle => PreciosCongelados
         ? "Precios congelados para la oferta"
         : "Precios sin congelar";
 
     public string FreezeBannerDetail => PreciosCongelados
-        ? $"Congelados el {host.Session.ProjectInfo.FechaCongelamientoPrecios:dd-MM-yyyy} · los cambios del banco de precios no afectan esta oferta."
+        ? $"Congelados el {session.ProjectInfo.FechaCongelamientoPrecios:dd-MM-yyyy} · los cambios del banco de precios no afectan esta oferta."
         : "Los cambios del banco de precios todavía afectan esta oferta. Al exportar se ofrecerá congelarlos.";
 
     // TotalUf contiene CLP desde la migración (nombre legado)
@@ -215,36 +257,57 @@ public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefres
     public ICommand ExportJsonCommand => exportJsonCommand;
     public ICommand ExportPackageCommand => exportPackageCommand;
     public ICommand PreviewOfferCommand => previewOfferCommand;
+    public ICommand OpenProjectCommand { get; }
+
+    public bool ShowEmptyState
+    {
+        get => showEmptyState;
+        private set => SetProperty(ref showEmptyState, value);
+    }
+
+    public bool IsLoading
+    {
+        get => isLoading;
+        private set => SetProperty(ref isLoading, value);
+    }
 
     public void Refresh()
     {
-        var snapshot = host.Session.CreateSnapshot();
-        var dashboard = host.Dashboard.BuildPageState(snapshot, host.Session.IsDirty, host.Session.StateVersion);
-        var prefs = UserPreferencesStore.Load();
-        var partidaOptionsSnapshot = host.Export.BuildPartidaOptions().Select(o => new ExportPartidaOptionVm(o)).ToList();
-        var areaOptionsSnapshot = host.Export.BuildAreaOptions();
+        IsLoading = true;
+        try
+        {
+            System.Windows.Application.Current?.Dispatcher.Invoke(
+                () => { }, System.Windows.Threading.DispatcherPriority.Render);
 
-        ProjectTitle = host.Session.ProjectInfo.Nombre;
-        ClientName = host.Session.ProjectInfo.Cliente;
-        StateText = string.IsNullOrWhiteSpace(host.Session.ProjectInfo.EstadoPresupuesto) ? "Borrador" : host.Session.ProjectInfo.EstadoPresupuesto;
-        VersionText = host.Session.ProjectInfo.OfertaPdf?.RevisionTag ?? "Rev 0";
-        TotalUf = dashboard.Cost.TotalVentaUf;
+            ShowEmptyState = !projectWorkspace.HasOpenProject;
+
+            var snapshot = session.CreateSnapshot();
+            var dashboardState = dashboard.BuildPageState(snapshot, session.IsDirty, session.StateVersion);
+            var prefs = UserPreferencesStore.Load();
+            var partidaOptionsSnapshot = exportPresenter.BuildPartidaOptions(snapshot).Select(o => new ExportPartidaOptionVm(o)).ToList();
+            var areaOptionsSnapshot = exportPresenter.BuildAreaOptions(snapshot);
+
+            ProjectTitle = session.ProjectInfo.Nombre;
+        ClientName = session.ProjectInfo.Cliente;
+        StateText = string.IsNullOrWhiteSpace(session.ProjectInfo.EstadoPresupuesto) ? "Borrador" : session.ProjectInfo.EstadoPresupuesto;
+        VersionText = session.ProjectInfo.OfertaPdf?.RevisionTag ?? "Rev 0";
+        TotalUf = dashboardState.Cost.TotalVentaUf;
         OnPropertyChanged(nameof(PreciosCongelados));
         OnPropertyChanged(nameof(FreezeBannerTitle));
         OnPropertyChanged(nameof(FreezeBannerDetail));
         OnPropertyChanged(nameof(TotalOfertaDisplay));
-        ConfidencePct = dashboard.Alerts.ConfidencePct;
-        Blockers = dashboard.Alerts.BlockingCount;
-        Warnings = dashboard.Alerts.WarningCount;
-        ExportReadinessText = dashboard.Alerts.ReadyToExport ? "Listo para exportar" : "Revisar antes de exportar";
+        ConfidencePct = dashboardState.Alerts.ConfidencePct;
+        Blockers = dashboardState.Alerts.BlockingCount;
+        Warnings = dashboardState.Alerts.WarningCount;
+        ExportReadinessText = dashboardState.Alerts.ReadyToExport ? "Listo para exportar" : "Revisar antes de exportar";
         DeliveryPackageText = "PDF de oferta, Excel interno, carta DOCX, memorias de cubicación y respaldo JSON.";
-        if (!host.ProjectWorkspace.HasOpenProject)
+        if (!projectWorkspace.HasOpenProject)
             ResetPreviewState();
-        SummaryText = host.ProjectWorkspace.HasOpenProject
-            ? $"$ {dashboard.Cost.TotalVentaUf:N0} CLP · {dashboard.Alerts.TotalIssues:N0} alertas · {dashboard.Alerts.WarningCount:N0} advertencias"
+        SummaryText = projectWorkspace.HasOpenProject
+            ? $"$ {dashboardState.Cost.TotalVentaUf:N0} CLP · {dashboardState.Alerts.TotalIssues:N0} alertas · {dashboardState.Alerts.WarningCount:N0} advertencias"
             : "Sin proyecto abierto.";
         LoadScopeOptions(partidaOptionsSnapshot, areaOptionsSnapshot);
-        StatusMessage = host.ProjectWorkspace.HasOpenProject
+        StatusMessage = projectWorkspace.HasOpenProject
             ? $"Usa las acciones de exportación para generar documentos finales sin salir del shell. {ExportScopeSummaryText}"
             : "Abre un proyecto para habilitar exportaciones.";
 
@@ -303,6 +366,11 @@ public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefres
         UpdateScopeSummary();
         RefreshOfferWizard();
         RaiseCanExecuteChanged();
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     private void LoadScopeOptions(IReadOnlyList<ExportPartidaOptionVm> partidas, IReadOnlyList<string> areas)
@@ -339,9 +407,14 @@ public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefres
         };
     }
 
-    private bool CanExport() => host.ProjectWorkspace.HasOpenProject;
+    private bool CanExport() =>
+        projectWorkspace.HasOpenProject
+        && permissions.CanExportDocuments
+        && !session.IsReadOnly;
 
-    private bool CanPreview() => host.ProjectWorkspace.HasOpenProject;
+    private bool CanPreview() =>
+        projectWorkspace.HasOpenProject
+        && permissions.CanExportDocuments;
 
     private ExportCorporateThemeSettings _corporateTheme = new();
     private ExportReportTemplateSettings _reportTemplate = new();
@@ -357,11 +430,16 @@ public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefres
         exportScTechnicalReportCommand.RaiseCanExecuteChanged();
         exportJsonCommand.RaiseCanExecuteChanged();
         exportPackageCommand.RaiseCanExecuteChanged();
+        deliverPackageCommand.RaiseCanExecuteChanged();
+        applyOfferPresetCommand.RaiseCanExecuteChanged();
+        saveOfferSettingsCommand.RaiseCanExecuteChanged();
+        pickLogoCommand.RaiseCanExecuteChanged();
+        pickSignatureCommand.RaiseCanExecuteChanged();
     }
 
     private ExportProjectContext BuildContext()
     {
-        var snapshot = host.Session.CreateSnapshot();
+        var snapshot = session.CreateSnapshot();
         var offerSnapshot = snapshot.Proyecto.OfertaPdf != null
             ? CloneOfferSettings(snapshot.Proyecto.OfertaPdf)
             : new OfferPdfSettings();
@@ -369,7 +447,7 @@ public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefres
             OfferSettings.CopyTo(offerSnapshot);
         var prefs = UserPreferencesStore.Load();
         LetterheadApplicator.Apply(prefs, offerSnapshot);
-        return host.Export.BuildContext(
+        return exportPresenter.BuildContext(
             ResolveScopeMode(),
             SelectedPartida?.Id,
             SelectedArea,
@@ -409,13 +487,13 @@ public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefres
             var path = PromptSave("PDF de oferta", $"{SafeFileName(ProjectTitle, "Oferta")}.pdf", "PDF de oferta (*.pdf)|*.pdf");
             if (path == null) return;
             var ctx = BuildContext();
-            await Task.Run(() => host.Services.PdfExporter.Export(ctx, path));
-            WpfDialogService.Info("Exportar PDF", $"Oferta generada en:{Environment.NewLine}{path}");
+            await Task.Run(() => pdfExporter.Export(ctx, path));
+            ShowExportSuccessWithFolderAction("Exportar PDF", $"Oferta generada en:{Environment.NewLine}{path}", path);
         }
         catch (Exception ex)
         {
             AppLog.Error("Export", "Falló la exportación: Exportar PDF", ex);
-            WpfDialogService.Error("Exportar PDF", OperationFailureMessages.ToUserMessage(ex));
+            ShellNotificationService.Instance.ShowError("Exportar PDF", OperationFailureMessages.ToUserMessage(ex));
         }
     }
 
@@ -466,13 +544,13 @@ public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefres
             var path = PromptSave("Excel interno", $"{SafeFileName(ProjectTitle, "Control")}.xlsx", "Excel (*.xlsx)|*.xlsx");
             if (path == null) return;
             var ctx = BuildContext();
-            await Task.Run(() => host.Services.ExcelExporter.Export(ctx, path));
-            WpfDialogService.Info("Exportar Excel", $"Libro generado en:{Environment.NewLine}{path}");
+            await Task.Run(() => excelExporter.Export(ctx, path));
+            ShowExportSuccessWithFolderAction("Exportar Excel", $"Libro generado en:{Environment.NewLine}{path}", path);
         }
         catch (Exception ex)
         {
             AppLog.Error("Export", "Falló la exportación: Exportar Excel", ex);
-            WpfDialogService.Error("Exportar Excel", OperationFailureMessages.ToUserMessage(ex));
+            ShellNotificationService.Instance.ShowError("Exportar Excel", OperationFailureMessages.ToUserMessage(ex));
         }
     }
 
@@ -485,8 +563,8 @@ public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefres
             var path = PromptSave("Carta de presentación", $"{SafeFileName(ProjectTitle, "Carta")}.docx", "Word (*.docx)|*.docx");
             if (path == null) return;
             var ctx = BuildContext();
-            await Task.Run(() => host.Services.WordLetterExporter.Export(ctx, path));
-            WpfDialogService.Info("Exportar DOCX", $"Carta generada en:{Environment.NewLine}{path}");
+            await Task.Run(() => wordLetterExporter.Export(ctx, path));
+            ShowExportSuccessWithFolderAction("Exportar DOCX", $"Carta generada en:{Environment.NewLine}{path}", path);
         }
         catch (Exception ex)
         {
@@ -504,8 +582,8 @@ public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefres
             var path = PromptSave("Memoria cubicación Excel", $"{SafeFileName(ProjectTitle, "Memoria-Cubicacion")}.xlsx", "Excel (*.xlsx)|*.xlsx");
             if (path == null) return;
             var ctx = BuildContext();
-            await Task.Run(() => host.Services.CubicacionReportExcelExporter.Export(ctx, path));
-            WpfDialogService.Info("Memoria Excel", $"Memoria generada en:{Environment.NewLine}{path}");
+            await Task.Run(() => cubReportExcel.Export(ctx, path));
+            ShowExportSuccessWithFolderAction("Memoria Excel", $"Memoria generada en:{Environment.NewLine}{path}", path);
         }
         catch (Exception ex)
         {
@@ -523,8 +601,8 @@ public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefres
             var path = PromptSave("Memoria cubicación PDF", $"{SafeFileName(ProjectTitle, "Memoria-Cubicacion")}.pdf", "PDF (*.pdf)|*.pdf");
             if (path == null) return;
             var ctx = BuildContext();
-            await Task.Run(() => host.Services.CubicacionReportPdfExporter.Export(ctx, path));
-            WpfDialogService.Info("Memoria PDF", $"Memoria generada en:{Environment.NewLine}{path}");
+            await Task.Run(() => cubReportPdf.Export(ctx, path));
+            ShowExportSuccessWithFolderAction("Memoria PDF", $"Memoria generada en:{Environment.NewLine}{path}", path);
         }
         catch (Exception ex)
         {
@@ -542,8 +620,8 @@ public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefres
             var path = PromptSave("Reporte tecnico C.SEC", $"{SafeFileName(ProjectTitle, "Reporte-CSEC")}.xlsx", "Excel (*.xlsx)|*.xlsx");
             if (path == null) return;
             var ctx = BuildContext();
-            await Task.Run(() => host.Services.CubicacionSCReportExcelExporter.Export(ctx, path));
-            WpfDialogService.Info("Reporte tecnico C.SEC", $"Reporte generado en:{Environment.NewLine}{path}");
+            await Task.Run(() => cubScReportExcel.Export(ctx, path));
+            ShowExportSuccessWithFolderAction("Reporte tecnico C.SEC", $"Reporte generado en:{Environment.NewLine}{path}", path);
         }
         catch (Exception ex)
         {
@@ -562,8 +640,8 @@ public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefres
             if (path == null) return;
 
             var ctx = BuildContext();
-            await host.Services.ProjectRepository.SaveProjectFileAsync(path, ctx.Data, ProjectJsonSerializer.Options);
-            WpfDialogService.Info("Exportar JSON", $"Snapshot generado en:{Environment.NewLine}{path}");
+            await projectRepo.SaveProjectFileAsync(path, ctx.Data, ProjectJsonSerializer.Options);
+            ShowExportSuccessWithFolderAction("Exportar JSON", $"Snapshot generado en:{Environment.NewLine}{path}", path);
         }
         catch (Exception ex)
         {
@@ -600,13 +678,13 @@ public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefres
                 string snapshotJson = Path.Combine(tempRoot, $"{baseName}.json");
                 string manifestTxt = Path.Combine(tempRoot, "MANIFEST.txt");
 
-                await Task.Run(() => host.Services.PdfExporter.Export(ctx, offerPdf));
-                await Task.Run(() => host.Services.ExcelExporter.Export(ctx, controlXlsx));
-                await Task.Run(() => host.Services.WordLetterExporter.Export(ctx, letterDocx));
-                await Task.Run(() => host.Services.CubicacionReportExcelExporter.Export(ctx, memoriaXlsx));
-                await Task.Run(() => host.Services.CubicacionReportPdfExporter.Export(ctx, memoriaPdf));
-                await Task.Run(() => host.Services.CubicacionSCReportExcelExporter.Export(ctx, reporteScXlsx));
-                await host.Services.ProjectRepository.SaveProjectFileAsync(snapshotJson, ctx.Data, ProjectJsonSerializer.Options);
+                await Task.Run(() => pdfExporter.Export(ctx, offerPdf));
+                await Task.Run(() => excelExporter.Export(ctx, controlXlsx));
+                await Task.Run(() => wordLetterExporter.Export(ctx, letterDocx));
+                await Task.Run(() => cubReportExcel.Export(ctx, memoriaXlsx));
+                await Task.Run(() => cubReportPdf.Export(ctx, memoriaPdf));
+                await Task.Run(() => cubScReportExcel.Export(ctx, reporteScXlsx));
+                await projectRepo.SaveProjectFileAsync(snapshotJson, ctx.Data, ProjectJsonSerializer.Options);
 
                 await File.WriteAllTextAsync(manifestTxt,
                     $"Proyecto: {ProjectTitle}{Environment.NewLine}" +
@@ -621,7 +699,7 @@ public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefres
                     File.Delete(path);
 
                 ZipFile.CreateFromDirectory(tempRoot, path, CompressionLevel.Optimal, includeBaseDirectory: false);
-                WpfDialogService.Info("Paquete final", $"ZIP generado en:{Environment.NewLine}{path}");
+                ShowExportSuccessWithFolderAction("Paquete final", $"ZIP generado en:{Environment.NewLine}{path}", path);
             }
             finally
             {
@@ -650,10 +728,23 @@ public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefres
         return dialog.ShowDialog() == true ? dialog.FileName : null;
     }
 
+    private void ShowExportSuccessWithFolderAction(string title, string message, string path, bool pathIsFolder = false)
+    {
+        string? folder = pathIsFolder
+            ? path
+            : Path.GetDirectoryName(path);
+
+        ShellNotificationService.Instance.ShowSuccess(
+            title,
+            message,
+            actionLabel: string.IsNullOrWhiteSpace(folder) ? null : "Abrir carpeta",
+            action: string.IsNullOrWhiteSpace(folder) ? null : () => fileOpener.OpenFolder(folder));
+    }
+
     private void ResetPreviewState()
     {
         ExportResult.SetPreview(null);
-        PreviewStatusText = host.ProjectWorkspace.HasOpenProject
+        PreviewStatusText = projectWorkspace.HasOpenProject
             ? "Vista previa de oferta lista para revisar antes de exportar."
             : "Abre un proyecto para ver la oferta antes de exportar.";
         PreviewFileText = "Sin vista previa generada.";
