@@ -86,21 +86,40 @@ public sealed partial class CubicacionTakeoffQueryService : ICubicacionTakeoffQu
 
     public void RecalculateForItem(BudgetProjectSession session, string itemId, int qtyColumnCount = 300)
     {
+        var itemRows = CubicacionItemIndex.FilterRows(session.Cubicacion, itemId);
+        RecalculateItemRows(session, itemId, itemRows, qtyColumnCount);
+    }
+
+    public void RecalculateForItem(
+        BudgetProjectSession session,
+        string itemId,
+        IReadOnlyDictionary<string, List<CubicacionRow>> index,
+        int qtyColumnCount = 300)
+    {
+        var itemRows = CubicacionItemIndex.GetRows(index, itemId);
+        RecalculateItemRows(session, itemId, itemRows, qtyColumnCount);
+    }
+
+    private void RecalculateItemRows(
+        BudgetProjectSession session,
+        string itemId,
+        IReadOnlyList<CubicacionRow> itemRows,
+        int qtyColumnCount)
+    {
         Dictionary<string, decimal>? baseVariables = null;
         string[]? headers = null;
         var workVars = new Dictionary<string, decimal>(64, StringComparer.OrdinalIgnoreCase);
 
-        foreach (var row in session.Cubicacion)
+        foreach (var row in itemRows)
         {
-            if (!string.Equals(row.ItemId, itemId, StringComparison.OrdinalIgnoreCase))
-                continue;
             if (!HasExpressions(row))
                 continue;
 
             baseVariables ??= BuildFormulaVariables(session, itemId);
             headers ??= GetHeaders(session, itemId, qtyColumnCount);
 
-            row.Cantidad = EvaluateStoredExpressionsCore(session, row, qtyColumnCount, baseVariables, headers, workVars);
+            row.Cantidad = EvaluateStoredExpressionsCore(
+                session, row, qtyColumnCount, baseVariables, headers, workVars, siblingRows: itemRows);
         }
     }
 
@@ -175,7 +194,8 @@ public sealed partial class CubicacionTakeoffQueryService : ICubicacionTakeoffQu
         BudgetProjectSession session, CubicacionRow row, int qtyColumnCount,
         Dictionary<string, decimal>? baseVariables, string[]? headers,
         Dictionary<string, decimal>? workVars = null,
-        Action<int, decimal>? onZoneComputed = null)
+        Action<int, decimal>? onZoneComputed = null,
+        IReadOnlyList<CubicacionRow>? siblingRows = null)
     {
         if (row == null) return 0m;
 
@@ -232,7 +252,8 @@ public sealed partial class CubicacionTakeoffQueryService : ICubicacionTakeoffQu
                 if (string.IsNullOrWhiteSpace(expression))
                     continue;
 
-                var result = EvaluateSafeWithRowReferences(expression, variables, session, row, i, depth: 0, visiting: null);
+                var result = EvaluateSafeWithRowReferences(
+                    expression, variables, session, row, i, depth: 0, visiting: null, siblingRows);
                 if (result.Success)
                 {
                     zoneValues[i] = result.Value;
@@ -380,7 +401,8 @@ public sealed partial class CubicacionTakeoffQueryService : ICubicacionTakeoffQu
         CubicacionRow row,
         int offset,
         int depth,
-        HashSet<(string RowId, int Offset)>? visiting)
+        HashSet<(string RowId, int Offset)>? visiting,
+        IReadOnlyList<CubicacionRow>? siblingRows = null)
     {
         var matches = CellReferenceRegex.Matches(expression);
         if (matches.Count == 0)
@@ -389,9 +411,7 @@ public sealed partial class CubicacionTakeoffQueryService : ICubicacionTakeoffQu
         if (depth >= MaxRowReferenceDepth)
             return new QuantityFormulaResult(0m, false, "Referencia entre casillas demasiado profunda o circular.");
 
-        var siblingRows = session.Cubicacion
-            .Where(x => string.Equals(x.ItemId, row.ItemId, StringComparison.OrdinalIgnoreCase))
-            .ToList();
+        siblingRows ??= CubicacionItemIndex.FilterRows(session.Cubicacion, row.ItemId);
 
         visiting ??= new HashSet<(string, int)>();
         bool addedSelf = visiting.Add((row.Id, offset));
@@ -422,7 +442,8 @@ public sealed partial class CubicacionTakeoffQueryService : ICubicacionTakeoffQu
                 if (!string.IsNullOrWhiteSpace(targetExpr))
                 {
                     visiting.Add(key);
-                    var nested = EvaluateSafeWithRowReferences(targetExpr, variables, session, targetRow, targetOffset, depth + 1, visiting);
+                    var nested = EvaluateSafeWithRowReferences(
+                        targetExpr, variables, session, targetRow, targetOffset, depth + 1, visiting, siblingRows);
                     visiting.Remove(key);
                     value = nested.Success ? nested.Value : 0m;
                 }

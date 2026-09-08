@@ -29,5 +29,5 @@ public static class ChangeOrderStateMachine
     /// Una orden aprobada está bloqueada: no puede editarse ni eliminarse.
     /// WinForms no tenía este bloqueo (ComboBox libre); WPF lo añade por seguridad.
     /// </summary>
-    public static bool IsLocked(string estado) => estado == "Aprobado";
+    public static bool IsLocked(string estado) => string.Equals(estado, "Aprobado", StringComparison.OrdinalIgnoreCase);
 }

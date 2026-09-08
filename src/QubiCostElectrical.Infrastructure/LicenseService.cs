@@ -86,7 +86,7 @@ public sealed class LicenseService : ILicenseService
 		{
 			text = File.ReadAllText(qclicFilePath);
 		}
-		catch (Exception ex) when (((ex is IOException || ex is UnauthorizedAccessException) ? 1 : 0) != 0)
+		catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
 		{
 			return Result<LicenseInfo, LicenseError>.Failure(LicenseError.IoError);
 		}
@@ -107,7 +107,7 @@ public sealed class LicenseService : ILicenseService
 			}
 			File.WriteAllText(_licenseFile, text);
 		}
-		catch (Exception ex2) when (((ex2 is IOException || ex2 is UnauthorizedAccessException) ? 1 : 0) != 0)
+		catch (Exception ex2) when (ex2 is IOException or UnauthorizedAccessException)
 		{
 			return Result<LicenseInfo, LicenseError>.Failure(LicenseError.IoError);
 		}
@@ -136,7 +136,7 @@ public sealed class LicenseService : ILicenseService
 		{
 			text = File.ReadAllText(_licenseFile);
 		}
-		catch (Exception ex) when (((ex is IOException || ex is UnauthorizedAccessException) ? 1 : 0) != 0)
+		catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
 		{
 			return null;
 		}

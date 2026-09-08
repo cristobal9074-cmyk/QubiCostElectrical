@@ -212,7 +212,7 @@ public sealed class ProjectEditWorkspaceService : IProjectEditWorkspaceService
         session.SetFamilyMarkup("Accesorios", snapshot.MarkupAccesorios);
 
         workingCopy = snapshot.Clone();
-        session.MarkDirty("project_info");
+        session.MarkDirty(ProjectDirtyScope.ProjectInfo);
     }
 
     public void Discard() => workingCopy = null;

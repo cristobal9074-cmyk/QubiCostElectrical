@@ -10,17 +10,20 @@ public sealed class ProjectUseCases
     public IValidationService Validation { get; }
     public IFinalReviewService FinalReview { get; }
 
-    public ProjectUseCases(IBudgetCalculationService budgetCalculation, IValidationService validation, IFinalReviewService finalReview)
+    private readonly System.Func<BudgetEngine> _engineFactory;
+
+    public ProjectUseCases(IBudgetCalculationService budgetCalculation, IValidationService validation, IFinalReviewService finalReview, System.Func<BudgetEngine>? engineFactory = null)
     {
         BudgetCalculation = budgetCalculation;
         Validation = validation;
         FinalReview = finalReview;
+        _engineFactory = engineFactory ?? (static () => new BudgetEngine());
     }
 
     public CostBreakdown Calculate(ProjectFileData data)
     {
         data ??= new ProjectFileData();
-        return new BudgetEngine().Calculate(
+        return _engineFactory().Calculate(
             data.Cubicacion,
             ExcelCostosBridge.EnrichFromProjectData(BudgetSettings.FromProject(data.Proyecto), data),
             data.Apus,

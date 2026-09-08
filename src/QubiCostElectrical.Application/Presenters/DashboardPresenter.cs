@@ -21,6 +21,18 @@ public sealed class DashboardPresenter
     private readonly DashboardPresenterServices services;
     private readonly BudgetProjectSession? session;
 
+    /// <summary>
+    /// Último resumen de alertas calculado por <see cref="BuildAlerts"/> / <see cref="BuildPageState"/>.
+    /// El chrome del shell y el stepper lo usan para no recalcular en cada Session.Changed.
+    /// </summary>
+    public FinalReviewSummary? LastAlertSummary { get; private set; }
+
+    /// <summary>
+    /// Último total de alertas calculado por <see cref="BuildAlerts"/> / <see cref="BuildPageState"/>.
+    /// El chrome del shell lo usa para no volver a clonar el proyecto en cada Session.Changed.
+    /// </summary>
+    public int? LastAlertTotalIssues { get; private set; }
+
     public DashboardPresenter(DashboardPresenterServices services) : this(services, null)
     {
     }
@@ -29,6 +41,12 @@ public sealed class DashboardPresenter
     {
         this.services = services;
         this.session = session;
+    }
+
+    public void ClearAlertCache()
+    {
+        LastAlertSummary = null;
+        LastAlertTotalIssues = null;
     }
 
     public DashboardPageState BuildPageState()
@@ -71,13 +89,17 @@ public sealed class DashboardPresenter
     public FinalReviewSummary BuildAlerts(ProjectFileData data)
     {
         data ??= new ProjectFileData();
-        return services.FinalReview.Build(
+        var reviewSettings = ExcelCostosBridge.EnrichFromProjectData(BudgetSettings.FromProject(data.Proyecto), data);
+        var summary = services.FinalReview.Build(
             data.Itemizado,
             data.Materiales,
             data.Cubicacion,
             data.Apus,
             data.Proyecto,
-            BudgetSettings.FromProject(data.Proyecto),
+            reviewSettings,
             antecedentes: data.Proyecto?.AntecedentesTecnicos);
+        LastAlertSummary = summary;
+        LastAlertTotalIssues = summary.TotalIssues;
+        return summary;
     }
 }

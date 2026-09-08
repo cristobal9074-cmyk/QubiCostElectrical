@@ -99,6 +99,7 @@ public sealed class ItemizadoImportPreviewRow
         ParentId = source.ParentId,
         NivelJerarquico = source.NivelJerarquico,
         ExcluidoCubicacion = source.ExcluidoCubicacion,
+        MotivoNoCubicar = source.MotivoNoCubicar,
         Observaciones = source.Observaciones,
     };
 }

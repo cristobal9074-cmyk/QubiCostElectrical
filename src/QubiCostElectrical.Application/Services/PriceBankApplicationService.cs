@@ -5,7 +5,7 @@ using System.Linq;
 namespace QubiCostElectrical;
 
 /// <summary>
-/// Resumen de una importaci�n de precios de proyecto al banco central.
+/// Resumen de una importación de precios de proyecto al banco central.
 /// </summary>
 public sealed record PriceBankImportResult(int MaterialesProcesados, int EntradasGuardadas);
 
@@ -19,7 +19,7 @@ public enum PriceBankApplyStatus
 public sealed record PriceBankApplyResult(PriceBankApplyStatus Status, int AppliedCount);
 
 /// <summary>
-/// Orquesta el banco de precios reutilizable: combina la l�gica pura (<see cref="PriceBankService"/>)
+/// Orquesta el banco de precios reutilizable: combina la lógica pura (<see cref="PriceBankService"/>)
 /// con la persistencia (<see cref="IPriceBankRepository"/>). Es el punto de entrada para la UI.
 /// </summary>
 public sealed class PriceBankApplicationService

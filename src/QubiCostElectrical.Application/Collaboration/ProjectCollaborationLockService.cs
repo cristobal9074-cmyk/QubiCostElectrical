@@ -19,9 +19,16 @@ public sealed class ProjectCollaborationLockService : IDisposable
     private readonly string instanceId = Guid.NewGuid().ToString("N");
     private Timer? heartbeatTimer;
     private string? currentLockPath;
+    /// <summary>Proyecto para el que exigimos lease (persiste tras LockLost hasta ReleaseLock intencional).</summary>
+    private string? exclusiveEditProjectPath;
     private FileStream? lockStream;
     private CollaborationUserContext? currentUser;
     private bool disposed;
+    private bool lockLostNotified;
+    private int writeLeaseCount;
+    private bool lockLostDeferred;
+
+    public event EventHandler? LockLost;
 
     public ProjectCollaborationLockService()
     {
@@ -29,6 +36,108 @@ public sealed class ProjectCollaborationLockService : IDisposable
     }
 
     public string? CurrentLockPath => currentLockPath;
+
+    /// <summary>
+    /// True si esta sesión abrió el proyecto en edición exclusiva y aún no liberó el contrato
+    /// (incluye LockLostPending: ya no hay stream, pero sigue prohibido escribir el .qce).
+    /// </summary>
+    public bool RequiresExclusiveLease(string projectPath)
+    {
+        if (string.IsNullOrWhiteSpace(exclusiveEditProjectPath) || string.IsNullOrWhiteSpace(projectPath))
+            return false;
+        try
+        {
+            return string.Equals(
+                exclusiveEditProjectPath,
+                Path.GetFullPath(projectPath),
+                StringComparison.OrdinalIgnoreCase);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ProjectLock] Error al verificar ruta exclusiva para '{projectPath}': {ex.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// True si esta instancia aún posee el .lock del proyecto.
+    /// Lee el archivo en disco (no solo el stream local) para detectar takeover.
+    /// </summary>
+    public bool OwnsActiveLock(string projectPath)
+    {
+        if (disposed || string.IsNullOrWhiteSpace(projectPath))
+            return false;
+        if (lockStream == null || string.IsNullOrWhiteSpace(currentLockPath))
+            return false;
+
+        var expected = GetLockPath(projectPath);
+        if (!string.Equals(currentLockPath, expected, StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        try
+        {
+            var data = ReadLockDataFromDisk(expected);
+            return data != null &&
+                   string.Equals(data.InstanceId, instanceId, StringComparison.OrdinalIgnoreCase);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ProjectLock] Error al leer lock en disco '{expected}': {ex.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Lease mid-write: mientras esté activo, un LockLost detectado por heartbeat
+    /// se difiere hasta <see cref="IDisposable.Dispose"/> del lease.
+    /// Devuelve null si ya no somos dueños.
+    /// </summary>
+    public IDisposable? TryBeginWriteLease(string projectPath)
+    {
+        if (!OwnsActiveLock(projectPath))
+            return null;
+
+        Interlocked.Increment(ref writeLeaseCount);
+        return new WriteLease(this);
+    }
+
+    /// <summary>Actualiza el heartbeat si aún somos dueños; false si el lease se perdió.</summary>
+    public bool TryRefreshLease(string projectPath)
+    {
+        if (!OwnsActiveLock(projectPath))
+            return false;
+
+        try
+        {
+            if (lockStream == null || currentUser == null)
+                return false;
+
+            var data = BuildLockData(projectPath, currentUser);
+            WriteLockDataToStream(data);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ProjectLock] Falló refresco de lease para '{projectPath}': {ex.Message}");
+            return false;
+        }
+    }
+
+    internal void RunHeartbeatForTests() => UpdateHeartbeat();
+
+    /// <summary>Simula que el .lock pertenece a otra instancia (tests de carrera / mid-write).</summary>
+    internal void SimulateForeignLockOnDiskForTests(string projectPath, ProjectLockData foreign)
+    {
+        var lockPath = GetLockPath(projectPath);
+        if (string.Equals(currentLockPath, lockPath, StringComparison.OrdinalIgnoreCase) && lockStream != null)
+        {
+            WriteLockDataToStream(foreign);
+            return;
+        }
+
+        var json = JsonSerializer.Serialize(foreign, JsonOpts);
+        File.WriteAllText(lockPath, json);
+    }
 
     public LockCheckResult CheckLock(string projectPath)
     {
@@ -92,6 +201,7 @@ public sealed class ProjectCollaborationLockService : IDisposable
             ReleaseLock();
 
         currentUser = user;
+        lockLostNotified = false;
         var inspection = InspectLock(projectPath);
 
         if (inspection.State is ProjectLockState.Corrupt or ProjectLockState.LocalMachineAlive or ProjectLockState.RemoteRecent)
@@ -100,6 +210,7 @@ public sealed class ProjectCollaborationLockService : IDisposable
         if (inspection.State == ProjectLockState.OwnLock)
         {
             currentLockPath = lockPath;
+            exclusiveEditProjectPath = Path.GetFullPath(projectPath);
             UpdateHeartbeat();
             return true;
         }
@@ -116,6 +227,7 @@ public sealed class ProjectCollaborationLockService : IDisposable
     public bool ForceAcquireExpiredLock(string projectPath, CollaborationUserContext user)
     {
         currentUser = user;
+        lockLostNotified = false;
         var lockPath = GetLockPath(projectPath);
         var inspection = InspectLock(projectPath);
         if (!inspection.CanTakeOver)
@@ -129,7 +241,10 @@ public sealed class ProjectCollaborationLockService : IDisposable
 
     public void ReleaseLock()
     {
+        writeLeaseCount = 0;
+        lockLostDeferred = false;
         CloseLockStream();
+        exclusiveEditProjectPath = null;
 
         if (currentLockPath == null)
             return;
@@ -200,6 +315,7 @@ public sealed class ProjectCollaborationLockService : IDisposable
             CloseLockStream();
             lockStream = new FileStream(lockPath, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.Read);
             currentLockPath = lockPath;
+            exclusiveEditProjectPath = Path.GetFullPath(projectPath);
 
             var data = BuildLockData(projectPath, user);
             WriteLockDataToStream(data);
@@ -264,15 +380,90 @@ public sealed class ProjectCollaborationLockService : IDisposable
 
         try
         {
-            var data = ReadLockData(currentLockPath);
+            // Disco primero: takeover visible aunque nuestro stream aún tenga JSON propio.
+            var data = ReadLockDataFromDisk(currentLockPath) ?? ReadLockData(currentLockPath);
             if (data == null || !string.Equals(data.InstanceId, instanceId, StringComparison.OrdinalIgnoreCase))
+            {
+                ScheduleOrNotifyLockLost();
                 return;
+            }
 
             data = data with { LastHeartbeatUtc = DateTime.UtcNow };
             WriteLockDataToStream(data);
         }
-        catch
+        catch (Exception ex)
         {
+            Debug.WriteLine($"[ProjectLock] Heartbeat falló al escribir stream: {ex.Message}");
+            // Fallo al escribir: confirmar pérdida real (otro tomó el .lock) antes de avisar.
+            try
+            {
+                var data = currentLockPath != null ? ReadLockDataFromDisk(currentLockPath) : null;
+                if (data == null || !string.Equals(data.InstanceId, instanceId, StringComparison.OrdinalIgnoreCase))
+                    ScheduleOrNotifyLockLost();
+            }
+            catch (Exception diskEx)
+            {
+                Debug.WriteLine($"[ProjectLock] Error al confirmar estado en disco tras fallo de heartbeat: {diskEx.Message}");
+                ScheduleOrNotifyLockLost();
+            }
+        }
+    }
+
+    private void ScheduleOrNotifyLockLost()
+    {
+        if (Volatile.Read(ref writeLeaseCount) > 0)
+        {
+            lockLostDeferred = true;
+            return;
+        }
+
+        NotifyLockLostOnce();
+    }
+
+    private void EndWriteLease()
+    {
+        if (Interlocked.Decrement(ref writeLeaseCount) > 0)
+            return;
+
+        if (!lockLostDeferred)
+            return;
+
+        lockLostDeferred = false;
+        NotifyLockLostOnce();
+    }
+
+    private void NotifyLockLostOnce()
+    {
+        if (lockLostNotified)
+            return;
+
+        lockLostNotified = true;
+        CloseLockStream();
+        currentLockPath = null;
+        // exclusiveEditProjectPath se mantiene: SaveAsync debe seguir exigiendo lease (fallar).
+        writeLeaseCount = 0;
+        lockLostDeferred = false;
+
+        try
+        {
+            LockLost?.Invoke(this, EventArgs.Empty);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ProjectLock] LockLost handler falló: {ex.Message}");
+        }
+    }
+
+    private sealed class WriteLease : IDisposable
+    {
+        private ProjectCollaborationLockService? owner;
+
+        public WriteLease(ProjectCollaborationLockService owner) => this.owner = owner;
+
+        public void Dispose()
+        {
+            var svc = Interlocked.Exchange(ref owner, null);
+            svc?.EndWriteLease();
         }
     }
 
@@ -294,13 +485,19 @@ public sealed class ProjectCollaborationLockService : IDisposable
         if (string.Equals(lockPath, currentLockPath, StringComparison.OrdinalIgnoreCase) && lockStream != null)
             return ReadLockDataFromStream(lockStream);
 
+        return ReadLockDataFromDisk(lockPath);
+    }
+
+    private ProjectLockData? ReadLockDataFromDisk(string lockPath)
+    {
         try
         {
             using var stream = new FileStream(lockPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
             return ReadLockDataFromStream(stream);
         }
-        catch
+        catch (Exception streamEx)
         {
+            Debug.WriteLine($"[ProjectLock] Stream falló al leer lock '{lockPath}': {streamEx.Message}. Intentando lectura directa de archivo.");
             try
             {
                 string json = File.ReadAllText(lockPath);
@@ -308,8 +505,9 @@ public sealed class ProjectCollaborationLockService : IDisposable
                     return null;
                 return JsonSerializer.Deserialize<ProjectLockData>(json, JsonOpts);
             }
-            catch
+            catch (Exception fileEx)
             {
+                Debug.WriteLine($"[ProjectLock] Lectura directa de lock falló para '{lockPath}': {fileEx.Message}");
                 return null;
             }
         }
@@ -327,8 +525,9 @@ public sealed class ProjectCollaborationLockService : IDisposable
                 return null;
             return JsonSerializer.Deserialize<ProjectLockData>(json, JsonOpts);
         }
-        catch
+        catch (Exception ex)
         {
+            Debug.WriteLine($"[ProjectLock] Deserialización de lock desde stream falló: {ex.Message}");
             return null;
         }
     }
@@ -339,8 +538,9 @@ public sealed class ProjectCollaborationLockService : IDisposable
         {
             lockStream?.Dispose();
         }
-        catch
+        catch (Exception ex)
         {
+            Debug.WriteLine($"[ProjectLock] Error al cerrar lockStream: {ex.Message}");
         }
         finally
         {

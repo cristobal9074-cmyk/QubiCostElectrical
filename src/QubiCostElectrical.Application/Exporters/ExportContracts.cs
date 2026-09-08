@@ -93,10 +93,10 @@ public sealed class ExportProjectContext
 
     public string ProjectTitle => string.IsNullOrWhiteSpace(Project.Nombre) ? "Proyecto sin nombre" : Project.Nombre;
     public string ClientName => string.IsNullOrWhiteSpace(Project.Cliente) ? "Cliente sin nombre" : Project.Cliente;
-    public string Location => string.IsNullOrWhiteSpace(Project.Ubicacion) ? "Sin ubicación" : Project.Ubicacion;
+    public string Location => string.IsNullOrWhiteSpace(Project.Ubicacion) ? "Sin ubicaciÃ³n" : Project.Ubicacion;
     public string BudgetStatus => string.IsNullOrWhiteSpace(Project.EstadoPresupuesto) ? "Borrador" : Project.EstadoPresupuesto;
     public bool IsDraft => string.Equals(BudgetStatus, "Borrador", StringComparison.OrdinalIgnoreCase);
     public string CurrencyLabel => string.IsNullOrWhiteSpace(Project.MonedaPresupuesto) ? "UF" : Project.MonedaPresupuesto.Trim().ToUpperInvariant();
-    public BudgetSettings BudgetSettings => BudgetSettings.FromProject(Project);
+    public BudgetSettings BudgetSettings => ExcelCostosBridge.EnrichFromProjectData(BudgetSettings.FromProject(Project), Data);
     public OfferPdfSettings OfferSettings => Project.OfertaPdf ?? new OfferPdfSettings();
 }

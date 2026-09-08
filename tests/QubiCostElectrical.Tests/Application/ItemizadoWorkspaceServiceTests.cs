@@ -45,6 +45,46 @@ public sealed class ItemizadoWorkspaceServiceTests
     }
 
     [Fact]
+    public void MatchesFilter_excluido_no_aparece_en_sin_cubicar()
+    {
+        var workspace = new ItemizadoWorkspaceService();
+        var excluida = new ItemizadoRowPresentation
+        {
+            SourceIndex = 0, Id = "3", ParentId = "1.0", Item = "3", Descripcion = "Fuera de alcance", Unidad = "GL", Cantidad = 1,
+            EsTitulo = false, ExcluidoCubicacion = true, CompletionState = PartidaCompletionState.Completed,
+            CompletionPct = 100, UnitPriceUf = 0, TotalUf = 0, HasPrice = false, StatusLabel = "Excluida", StatusKind = "neutral"
+        };
+
+        Assert.False(workspace.MatchesFilter(excluida, ItemizadoFilterMode.SinCubicar));
+        Assert.False(workspace.MatchesFilter(excluida, ItemizadoFilterMode.Incompletos));
+        Assert.False(workspace.MatchesFilter(excluida, ItemizadoFilterMode.Completos));
+        Assert.False(workspace.MatchesFilter(excluida, ItemizadoFilterMode.SinPrecio));
+        Assert.True(workspace.MatchesFilter(excluida, ItemizadoFilterMode.Todos));
+    }
+
+    [Fact]
+    public void BuildPageState_excluida_con_motivo_en_status()
+    {
+        var (presenter, session) = Create();
+        session.Itemizado.Add(new ItemizadoRow
+        {
+            Id = "1.0.00001",
+            Item = "1.1",
+            Descripcion = "No proyectada",
+            Unidad = "GL",
+            Cantidad = 1,
+            ExcluidoCubicacion = true,
+            MotivoNoCubicar = "Fuera de alcance del contrato"
+        });
+
+        var workspace = new ItemizadoWorkspaceService();
+        var state = workspace.BuildPageState(presenter, session);
+        var row = Assert.Single(state.Rows, r => !r.EsTitulo);
+        Assert.Equal("Excluida · Fuera de alcance del contra…", row.StatusLabel);
+        Assert.Equal("neutral", row.StatusKind);
+    }
+
+    [Fact]
     public void MatchesSearch_finds_by_description()
     {
         var workspace = new ItemizadoWorkspaceService();

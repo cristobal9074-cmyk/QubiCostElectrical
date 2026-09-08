@@ -1,5 +1,6 @@
 using System.IO;
 using QubiCostElectrical;
+using QubiCostElectrical.Wpf.Features.Project;
 using Xunit;
 
 namespace QubiCostElectrical.Tests.Workspace;
@@ -34,6 +35,44 @@ public sealed class ProjectWorkspaceServiceRoundtripTests
             Assert.Equal(1250m, session2.ProjectInfo.MetrosCuadrados);
             Assert.Equal("Alcance persistido", session2.ProjectInfo.OfertaPdf.ScopeText);
             Assert.False(session2.IsDirty);
+        }
+        finally
+        {
+            try
+            {
+                if (File.Exists(path))
+                    File.Delete(path);
+            }
+            catch (Exception)
+            {
+            }
+        }
+    }
+
+    [Fact]
+    public async Task SaveAsAndOpen_PreservesClosingPolicySelection()
+    {
+        var services = AppServices.CreateDefault();
+        var session = new BudgetProjectSession();
+        session.NewProject("closing-policy");
+        session.ProjectInfo.Nombre = "Proyecto política de cierre";
+        session.Data.ClosingPolicy = NewProjectDialog.BuildClosingPolicy(ClosingPolicyType.TargetPrice, 123_000_000m);
+        session.MarkDirty("test");
+
+        var workspace = new ProjectWorkspaceService(session, services.ProjectRepository, services.Validation);
+        string path = Path.Combine(Path.GetTempPath(), $"qce-cp-{Guid.NewGuid():N}.qce");
+
+        try
+        {
+            await workspace.SaveAsAsync(path);
+
+            var session2 = new BudgetProjectSession();
+            var workspace2 = new ProjectWorkspaceService(session2, services.ProjectRepository, services.Validation);
+            await workspace2.OpenAsync(path);
+
+            Assert.NotNull(session2.Data.ClosingPolicy);
+            Assert.Equal(ClosingPolicyType.TargetPrice, session2.Data.ClosingPolicy!.Policy);
+            Assert.Equal(123_000_000m, session2.Data.ClosingPolicy.TargetPriceClp);
         }
         finally
         {

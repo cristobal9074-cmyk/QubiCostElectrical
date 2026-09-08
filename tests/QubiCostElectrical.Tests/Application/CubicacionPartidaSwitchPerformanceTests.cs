@@ -52,8 +52,9 @@ public sealed class CubicacionPartidaSwitchPerformanceTests
         string targetItemId = $"item-{(partidaCount - 1):00000}";
 
         var sw = Stopwatch.StartNew();
-        querySvc.RecalculateForItem(session, targetItemId);
-        var rows = cubSvc.GetRowsForItem(session.Cubicacion, targetItemId);
+        var byItem = CubicacionItemIndex.Build(session.Cubicacion);
+        querySvc.RecalculateForItem(session, targetItemId, byItem);
+        var rows = cubSvc.GetRowsForItem(byItem, targetItemId);
         sw.Stop();
 
         Assert.Equal(rowsPerPartida, rows.Count);

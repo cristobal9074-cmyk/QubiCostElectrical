@@ -18,12 +18,18 @@ public sealed class ProjectWorkspaceService : IProjectWorkspaceService
     private readonly IProjectRepository repository;
     private readonly IValidationService validation;
     private readonly IProjectFileFormatDetector formatDetector;
+    private readonly ProjectCollaborationLockService? collaborationLock;
 
-    public ProjectWorkspaceService(BudgetProjectSession session, IProjectRepository repository, IValidationService validation)
+    public ProjectWorkspaceService(
+        BudgetProjectSession session,
+        IProjectRepository repository,
+        IValidationService validation,
+        ProjectCollaborationLockService? collaborationLock = null)
     {
         Session = session ?? throw new ArgumentNullException(nameof(session));
         this.repository = repository ?? throw new ArgumentNullException(nameof(repository));
         this.validation = validation ?? throw new ArgumentNullException(nameof(validation));
+        this.collaborationLock = collaborationLock;
         formatDetector = new ProjectFileFormatDetector();
     }
 
@@ -64,6 +70,7 @@ public sealed class ProjectWorkspaceService : IProjectWorkspaceService
         if (string.IsNullOrWhiteSpace(Session.CurrentProjectPath))
             throw new InvalidOperationException("No hay proyecto abierto para guardar.");
         Session.EnsureWritable("guardar el proyecto");
+        EnsureCollaborationLease(Session.CurrentProjectPath);
 
         await SaveAsAsync(Session.CurrentProjectPath, cancellationToken).ConfigureAwait(false);
     }
@@ -75,14 +82,48 @@ public sealed class ProjectWorkspaceService : IProjectWorkspaceService
         Session.EnsureWritable("guardar como");
 
         path = NormalizeCurrentProjectPath(path);
+        // SaveAs a otra ruta no exige el lease del archivo original; SaveAsync sí.
+        bool requiresLease = string.Equals(path, Session.CurrentProjectPath, StringComparison.OrdinalIgnoreCase);
+        if (requiresLease)
+            EnsureCollaborationLease(path);
+
+        using var writeLease = requiresLease ? collaborationLock?.TryBeginWriteLease(path) : null;
+        if (requiresLease && collaborationLock != null && collaborationLock.RequiresExclusiveLease(path) && writeLease == null)
+            throw new ProjectLockLostException();
+
+        if (requiresLease)
+        {
+            EnsureCollaborationLease(path);
+            collaborationLock?.TryRefreshLease(path);
+        }
+
         var snapshot = Session.CreateSnapshot();
         snapshot.Proyecto.FechaModificacion = AppClock.Now;
 
         await CreateSQLiteBackupIfNeededAsync(path, cancellationToken).ConfigureAwait(false);
         await repository.SaveSQLiteSnapshotAsync(path, snapshot, cancellationToken).ConfigureAwait(false);
 
+        if (requiresLease)
+            EnsureCollaborationLease(path);
+
         Session.ApplySnapshot(snapshot, path, markDirty: false);
         Session.MarkSaved();
+    }
+
+    /// <summary>
+    /// Si hay bloqueo de colaboración activo para esta sesión, exige que aún seamos dueños
+    /// antes de escribir el .qce (evita overwrite tras takeover).
+    /// </summary>
+    private void EnsureCollaborationLease(string projectPath)
+    {
+        if (collaborationLock == null)
+            return;
+        if (!collaborationLock.RequiresExclusiveLease(projectPath))
+            return;
+        if (collaborationLock.OwnsActiveLock(projectPath))
+            return;
+
+        throw new ProjectLockLostException();
     }
 
     public BudgetValidationResult ValidateCurrent()

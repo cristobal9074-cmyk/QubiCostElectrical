@@ -49,7 +49,7 @@ public static class QuantityFormulaService
     {
         string raw = (expression ?? "").Trim();
         if (string.IsNullOrWhiteSpace(raw)) return false;
-        if (raw.StartsWith("=", StringComparison.Ordinal)) return true;
+        if (raw.StartsWith("=", StringComparison.Ordinal) || raw.StartsWith("+", StringComparison.Ordinal)) return true;
 
         string text = NormalizeExpression(raw);
         return text.Any(ch => ch == '+' || ch == '*' || ch == '/' || ch == '^' || ch == '(' || ch == ')')
@@ -79,6 +79,10 @@ public static class QuantityFormulaService
         string text = (expression ?? "").Trim();
         if (text.StartsWith("=", StringComparison.Ordinal))
             text = text[1..].Trim();
+        if (text.StartsWith("+", StringComparison.Ordinal))
+            text = text[1..].Trim();
+        if (text.Contains('$'))
+            text = text.Replace("$", "");
         return text;
     }
 

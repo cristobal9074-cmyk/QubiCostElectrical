@@ -22,7 +22,7 @@ public static class SQLiteProjectBackup
         }
         catch (Exception ex)
         {
-            AppLog.Warning("SQLite", $"quick_check falló para '{databasePath}'", ex);
+            AppLog.Warning("SQLite", $"quick_check fallÃ³ para '{databasePath}'", ex);
             return false;
         }
     }
@@ -35,16 +35,16 @@ public static class SQLiteProjectBackup
         if (maxBackups <= 0)
             maxBackups = 10;
 
-        // Antes de copiar, forzamos checkpoint para que el .db tenga todo lo que está en WAL.
+        // Antes de copiar, forzamos checkpoint para que el .db tenga todo lo que estÃ¡ en WAL.
         CheckpointWal(databasePath);
 
         if (!IsDatabaseHealthy(databasePath))
-            throw new InvalidDataException("SQLite no pasó quick_check; no se crea backup para no rotar una base corrupta.");
+            throw new InvalidDataException("SQLite no pasÃ³ quick_check; no se crea backup para no rotar una base corrupta.");
 
         string dir = BackupDirectory(databasePath);
         Directory.CreateDirectory(dir);
 
-        // Rotación numerada: .bak.01 es el más reciente, .bak.N el más antiguo.
+        // RotaciÃ³n numerada: .bak.01 es el mÃ¡s reciente, .bak.N el mÃ¡s antiguo.
         string oldest = BackupPath(databasePath, maxBackups);
         if (File.Exists(oldest)) File.Delete(oldest);
 
@@ -59,11 +59,23 @@ public static class SQLiteProjectBackup
         }
 
         string latest = BackupPath(databasePath, 1);
-        File.Copy(databasePath, latest, overwrite: true);
+        if (File.Exists(latest)) File.Delete(latest);
+
+        using (var sourceConnection = Open(databasePath))
+        {
+            var destBuilder = new SqliteConnectionStringBuilder
+            {
+                DataSource = latest,
+                Mode = SqliteOpenMode.ReadWriteCreate
+            };
+            using var destConnection = new SqliteConnection(destBuilder.ToString());
+            destConnection.Open();
+            sourceConnection.BackupDatabase(destConnection);
+        }
 
         File.WriteAllText(
             Path.Combine(dir, "backup_manifest.txt"),
-            $"Último backup: {AppClock.Now:yyyy-MM-dd HH:mm:ss}\nBase: {Path.GetFileName(databasePath)}\nBackup: {Path.GetFileName(latest)}\nMotivo: {reason}\nBackups máximos: {maxBackups}\n",
+            $"Ãšltimo backup: {AppClock.Now:yyyy-MM-dd HH:mm:ss}\nBase: {Path.GetFileName(databasePath)}\nBackup: {Path.GetFileName(latest)}\nMotivo: {reason}\nBackups mÃ¡ximos: {maxBackups}\n",
             System.Text.Encoding.UTF8);
 
         return latest;
@@ -132,11 +144,13 @@ public static class SQLiteProjectBackup
         var builder = new SqliteConnectionStringBuilder
         {
             DataSource = databasePath,
-            Mode = SqliteOpenMode.ReadWriteCreate,
-            Cache = SqliteCacheMode.Shared
+            Mode = SqliteOpenMode.ReadWriteCreate
         };
         var connection = new SqliteConnection(builder.ToString());
         connection.Open();
+        using var cmd = connection.CreateCommand();
+        cmd.CommandText = "PRAGMA busy_timeout = 5000;";
+        cmd.ExecuteNonQuery();
         return connection;
     }
 
@@ -181,8 +195,9 @@ public static class SQLiteProjectBackup
         {
             if (File.Exists(path)) File.Delete(path);
         }
-        catch
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"[SQLiteBackup] No se pudo eliminar archivo temporal {path}: {ex.Message}");
         }
     }
 }

@@ -48,6 +48,12 @@ public sealed class CubicacionRow
 
     // $ UNIT: precio unitario en pesos (MAT + MO). SUBTOTAL: $ UNIT × cantidad.
     public decimal PrecioUnitClp => MatClp + MoClp;
+    /// <summary>
+    /// Precio unitario CLP usando la misma fuente-con-fallback que el costo del motor
+    /// (<see cref="MatClpConFallback"/> / <see cref="MoClpConFallback"/>). Evita que en proyectos
+    /// legacy sin MatClp la venta quede en 0 mientras el costo sí tiene valor.
+    /// </summary>
+    public decimal PrecioUnitClpConFallback => MatClpConFallback + MoClpConFallback;
     public decimal SubtotalClp => Cantidad * PrecioUnitClp;
     /// <summary>Subtotal solo de mano de obra: MoClp unitario × cantidad.</summary>
     public decimal MoSubtotalClp => Cantidad * MoClp;

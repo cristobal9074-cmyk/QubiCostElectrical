@@ -77,6 +77,17 @@ public static class ProjectSnapshotIntegrity
             if (r.MatClp > 0m || r.MoClp > 0m)
                 r.RecalcularUf(uf);
         }
+
+        // Migración C3 (motor v3): antes, cualquier GgUtFactor != 1 en una fila de cubicación
+        // activaba la venta línea a línea por factores de presentación. Ahora esa ruta es un
+        // opt-in explícito (UsarFactoresPresentacionFamilia). Para no cambiar el total de
+        // proyectos existentes al reabrirlos, si ya traen factores por familia se marca el flag.
+        if (!data.Proyecto.UsarFactoresPresentacionFamilia
+            && !data.Proyecto.PoliticaCostosExcel
+            && data.Cubicacion.Any(r => r.GgUtFactor != 1m))
+        {
+            data.Proyecto.UsarFactoresPresentacionFamilia = true;
+        }
     }
 
     // Migra la lista de precios de proyectos anteriores al modelo "CLP es la fuente": si un
@@ -170,6 +181,9 @@ public static class ProjectSnapshotIntegrity
 
     private static void EnsureProjectInfo(ProjectInfoRow project)
     {
+        if (project.ValorUfClp <= 0m)
+            project.ValorUfClp = PriceConversion.DefaultValorUfClp;
+
         project.AntecedentesTecnicos ??= new List<AntecedenteTecnicoRow>();
         project.LaborDaySettings ??= new LaborDaySettingsRow();
         project.Variables ??= new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);

@@ -69,7 +69,7 @@ public sealed class BudgetVersionRow
 {
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
     public string Codigo { get; set; } = "V1";
-    public string Nombre { get; set; } = "Versi�n preliminar";
+    public string Nombre { get; set; } = "Versión preliminar";
     public string Estado { get; set; } = "Preliminar";
     public string Nota { get; set; } = "";
     public string CreadoPor { get; set; } = "";

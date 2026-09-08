@@ -43,11 +43,23 @@ public sealed class PurchaseListService : IPurchaseListService
 
         decimal cantidadNeta = rows.Sum(x => x.Cantidad);
         decimal totalNetoUf = rows.Sum(x => x.Cantidad * x.MatUf);
+        decimal totalNetoClp = rows.Sum(x => x.Cantidad * x.MatClpConFallback);
         decimal cantidadCompra = cantidadNeta * factor;
         decimal matUfUnitario = cantidadNeta != 0m
             ? totalNetoUf / cantidadNeta
             : material?.MatUf ?? 0m;
+        decimal matClpUnitario = cantidadNeta != 0m
+            ? totalNetoClp / cantidadNeta
+            : (material?.MatClp > 0m ? material.MatClp : 0m);
+
+        if (matClpUnitario <= 0m && matUfUnitario > 0m)
+        {
+            matClpUnitario = PriceConversion.UfToClp(matUfUnitario, PriceConversion.DefaultValorUfClp);
+            totalNetoClp = cantidadNeta * matClpUnitario;
+        }
+
         decimal totalCompraUf = cantidadCompra * matUfUnitario;
+        decimal totalCompraClp = cantidadCompra * matClpUnitario;
 
         string descripcion = material?.Descripcion
             ?? rows.Select(x => x.Descripcion).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x))
@@ -72,7 +84,10 @@ public sealed class PurchaseListService : IPurchaseListService
             matUfUnitario,
             totalNetoUf,
             totalCompraUf,
-            rows.Count);
+            rows.Count,
+            matClpUnitario,
+            totalNetoClp,
+            totalCompraClp);
     }
 
     private static string ResolvePurchaseGroupKey(CubicacionRow row, IReadOnlyDictionary<string, MaterialRow> materialLookup)

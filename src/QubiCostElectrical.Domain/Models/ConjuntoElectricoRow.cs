@@ -1,4 +1,4 @@
-﻿namespace QubiCostElectrical;
+namespace QubiCostElectrical;
 
 public static class ConjuntoTipo
 {
@@ -7,7 +7,7 @@ public static class ConjuntoTipo
     public const string Alimentador = "Alimentador";
     public const string Tablero = "Tablero";
     public const string Bandeja = "Bandeja";
-    public const string Canalizacion = "Canalizaci�n";
+    public const string Canalizacion = "Canalización";
     public const string PuestaTierra = "Puesta a tierra";
     public const string General = "General";
 
@@ -47,7 +47,7 @@ public sealed class ConjuntoRecursoRow
 }
 
 /// <summary>
-/// Assembly el�ctrico reutilizable: recursos, MO, merma, herramientas y par�metros por unidad de partida.
+/// Assembly eléctrico reutilizable: recursos, MO, merma, herramientas y parámetros por unidad de partida.
 /// </summary>
 public sealed class ConjuntoElectricoRow
 {

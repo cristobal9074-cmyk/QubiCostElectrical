@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -239,7 +239,7 @@ public sealed class ConjuntoElectricoService
             ValorHHUf = isLabor ? hh : 0m,
             RendHH = isLabor ? rendimiento : 0m,
             MermaPct = recurso.MermaPct,
-            FuentePrecio = "Conjunto el�ctrico",
+            FuentePrecio = "Conjunto eléctrico",
             FechaPrecio = DateTime.Today,
             Estado = (isLabor ? hh : precio) <= 0m ? "Falta precio" : "OK"
         };
@@ -247,7 +247,7 @@ public sealed class ConjuntoElectricoService
 
     private static decimal ComputeQuantity(decimal baseQty, ConjuntoRecursoRow recurso, Dictionary<string, decimal>? parametros)
     {
-        // Modo Espaciamiento: Cantidad = Ceil(base / paso). Ej: soporte cada 1.5 m -> Ceil(1000/1.5) = 667.
+        // Modo Espaciamiento: Cantidad = Ceil(base / pasóo). Ej: soporte cada 1.5 m -> Ceil(1000/1.5) = 667.
         if (recurso.TipoCalculo == TipoCalculoParametrico.Espaciamiento && recurso.Espaciamiento > 0m)
             return ApplyMin((decimal)Math.Ceiling((double)(baseQty / recurso.Espaciamiento)), recurso.Minimo);
 

@@ -23,6 +23,7 @@ public sealed record CubicacionCloneResult(
 public interface ICubicacionService
 {
     List<CubicacionRow> GetRowsForItem(IEnumerable<CubicacionRow> cubicacion, string itemId, bool onlyWithCode = false);
+    List<CubicacionRow> GetRowsForItem(IReadOnlyDictionary<string, List<CubicacionRow>> index, string itemId, bool onlyWithCode = false);
     CubicacionRow? GetVisualRow(IEnumerable<CubicacionRow> cubicacion, string itemId, int visualIndex);
     CubicacionRow GetOrCreateVisualRow(List<CubicacionRow> cubicacion, string itemId, int visualIndex);
     void ClearRow(CubicacionRow row);
@@ -208,14 +209,21 @@ public interface ICurrencyConversionService
 
 public interface ICubicacionViewModelService
 {
-    CubicacionViewModel Build(IEnumerable<CubicacionRow> cubicacion, string itemId = "", decimal gastosGeneralesPct = 0m, decimal utilidadPct = 0m, decimal metrosCuadrados = 0m);
+    CubicacionViewModel Build(IEnumerable<CubicacionRow> cubicacion, string itemId = "", decimal gastosGeneralesPct = 0m, decimal utilidadPct = 0m, decimal metrosCuadrados = 0m, BudgetSettings? settings = null);
     CubicacionLineViewModel ToLine(CubicacionRow row);
-    CostSummaryViewModel BuildSummary(IEnumerable<CubicacionLineViewModel> rows, decimal gastosGeneralesPct, decimal utilidadPct, decimal metrosCuadrados);
+
+    /// <summary>Resumen de costos de un conjunto de líneas. Si <paramref name="settings"/> es
+    /// <c>null</c> se arma un <see cref="BudgetSettings"/> mínimo (GG%/Utilidad%/m²) y la venta
+    /// resultante es SIEMPRE Costo+Markup, sin política de cierre ni factores por familia — no
+    /// coincide con Costo/Exportación cuando el proyecto usa otra política. Los llamadores con
+    /// acceso al proyecto deben pasar un settings ya enriquecido vía
+    /// <see cref="ExcelCostosBridge.EnrichFromProjectData"/> para que el panel cuadre.</summary>
+    CostSummaryViewModel BuildSummary(IEnumerable<CubicacionLineViewModel> rows, decimal gastosGeneralesPct, decimal utilidadPct, decimal metrosCuadrados, BudgetSettings? settings = null);
 }
 
 public interface IProyectoViewModelService
 {
-    ProyectoViewModel Build(string nombre, string cliente, string ubicacion, string usuarioNombre, string usuarioRol, string moneda, string estadoPresupuesto, DateTime fechaCreacion, DateTime fechaModificacion, decimal valorUfClp, decimal tipoCambioUsdClp, decimal gastosGeneralesPct, decimal utilidadPct, decimal metrosCuadrados, IEnumerable<ItemizadoRow> itemizado, IEnumerable<MaterialRow> materiales, IEnumerable<CubicacionRow> cubicacion);
+    ProyectoViewModel Build(string nombre, string cliente, string ubicacion, string usuarioNombre, string usuarioRol, string moneda, string EstadoPresupuesto, DateTime fechaCreacion, DateTime fechaModificacion, decimal valorUfClp, decimal tipoCambioUsdClp, decimal gastosGeneralesPct, decimal utilidadPct, decimal metrosCuadrados, IEnumerable<ItemizadoRow> itemizado, IEnumerable<MaterialRow> materiales, IEnumerable<CubicacionRow> cubicacion);
 }
 
 

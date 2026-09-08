@@ -63,7 +63,7 @@ public sealed class ProductIdentityTests
     {
         var attr = WpfAssembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
         Assert.NotNull(attr);
-        Assert.StartsWith("1.1.0", attr.InformationalVersion, StringComparison.Ordinal);
+        Assert.StartsWith(ProductVersionInfo.ProductVersion, attr.InformationalVersion, StringComparison.Ordinal);
         Assert.DoesNotContain("rc", attr.InformationalVersion, StringComparison.OrdinalIgnoreCase);
     }
 

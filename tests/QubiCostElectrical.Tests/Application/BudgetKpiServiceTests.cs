@@ -79,6 +79,32 @@ public sealed class BudgetKpiServiceTests
     }
 
     [Fact]
+    public void GetMetricValue_VentaHonorsClosingPolicy()
+    {
+        var kpiSvc = new BudgetKpiService(new BudgetCalculationService());
+        var cubicacion = new List<CubicacionRow>
+        {
+            new() { ItemId = "P1", Codigo = "MAT1", Cantidad = 100m, MatClp = 1000m, MoClp = 500m }
+        };
+
+        BudgetVersionData Snapshot(ClosingPolicySelection policy) => new()
+        {
+            Cubicacion = cubicacion,
+            Proyecto = new ProjectInfoRow { GastosGeneralesPct = 10m, UtilidadPct = 10m },
+            ClosingPolicy = policy
+        };
+
+        decimal costPlus = kpiSvc.GetMetricValue("Venta", Snapshot(ClosingPolicySelection.Default()));
+        decimal target = kpiSvc.GetMetricValue("Venta", Snapshot(new ClosingPolicySelection
+        {
+            Policy = ClosingPolicyType.TargetPrice,
+            TargetPriceClp = 5_000_000m
+        }));
+
+        Assert.NotEqual(costPlus, target);
+    }
+
+    [Fact]
     public void GetMetricValue_ReturnsCorrectKey()
     {
         var version = new BudgetVersionRow();

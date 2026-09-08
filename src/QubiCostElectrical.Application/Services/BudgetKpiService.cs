@@ -85,9 +85,16 @@ public sealed class BudgetKpiService : IBudgetKpiService
 
     public decimal GetMetricValue(string metricKey, BudgetVersionData snapshot)
     {
+        // La venta/margen de una versión guardada debe respetar la política de cierre y los
+        // factores que tenía el proyecto al versionar; si no, se comparan políticas distintas
+        // como si todas fueran Costo+Markup. Enriquecemos igual que el resto de consumidores.
+        var settings = ExcelCostosBridge.EnrichFromProjectData(
+            BudgetSettings.FromProject(snapshot.Proyecto),
+            ToProjectFileData(snapshot));
+
         var cost = budgetCalculationService.CalculateBudget(
             snapshot.Cubicacion,
-            BudgetSettings.FromProject(snapshot.Proyecto),
+            settings,
             snapshot.Apus,
             snapshot.Itemizado);
 
@@ -98,6 +105,27 @@ public sealed class BudgetKpiService : IBudgetKpiService
             "UfM2" => cost.UfM2,
             "Venta" => cost.TotalVentaUf,
             _ => cost.CostoDirectoUf
+        };
+    }
+
+    /// <summary>Proyecta el snapshot de versión a <see cref="ProjectFileData"/> con los campos que
+    /// <see cref="ExcelCostosBridge.EnrichFromProjectData"/> necesita (política de cierre, gastos
+    /// operacionales, plan de dotación, descuentos y mano de obra).</summary>
+    private static ProjectFileData ToProjectFileData(BudgetVersionData snapshot)
+    {
+        snapshot ??= new BudgetVersionData();
+        return new ProjectFileData
+        {
+            Proyecto = snapshot.Proyecto,
+            Itemizado = snapshot.Itemizado,
+            Cubicacion = snapshot.Cubicacion,
+            Apus = snapshot.Apus,
+            GastosOperacionales = snapshot.GastosOperacionales,
+            StaffingPlan = snapshot.StaffingPlan,
+            NegotiatedDiscounts = snapshot.NegotiatedDiscounts,
+            MoDirecta = snapshot.MoDirecta,
+            MoIndirecta = snapshot.MoIndirecta,
+            ClosingPolicy = snapshot.ClosingPolicy ?? ClosingPolicySelection.Default()
         };
     }
 }

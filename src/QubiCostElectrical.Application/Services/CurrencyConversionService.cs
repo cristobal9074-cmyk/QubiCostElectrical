@@ -37,8 +37,8 @@ public sealed class CurrencyConversionService : ICurrencyConversionService
 
     public decimal ConvertClpToUf(decimal clp, decimal valorUfClp)
     {
-        if (valorUfClp <= 0m) return clp;
-        return Math.Round(clp / valorUfClp, 6, MidpointRounding.AwayFromZero);
+        decimal rate = valorUfClp > 0m ? valorUfClp : PriceConversion.DefaultValorUfClp;
+        return Math.Round(clp / rate, 6, MidpointRounding.AwayFromZero);
     }
 
     public decimal ConvertUfToUsd(decimal uf, decimal valorUfClp, decimal tipoCambioUsdClp)

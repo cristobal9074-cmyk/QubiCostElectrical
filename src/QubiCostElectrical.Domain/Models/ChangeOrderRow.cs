@@ -16,7 +16,7 @@ public sealed class ChangeOrderLineRow
     public string ItemId { get; set; } = "";
     public string Item { get; set; } = "";
     public string DescripcionPartida { get; set; } = "";
-    public string TipoCambio { get; set; } = "Modificación";
+    public string TipoCambio { get; set; } = "ModificaciÃ³n";
     public decimal CantidadBase { get; set; }
     public decimal CantidadNueva { get; set; }
     public decimal CostoBaseUf { get; set; }

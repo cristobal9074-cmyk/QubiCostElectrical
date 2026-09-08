@@ -119,6 +119,49 @@ public sealed class CubicacionSCEngineTests
     }
 
     [Fact]
+    public void AggregateConZonas_ReparteCantidadesPorZonaYOrdena()
+    {
+        var c = ActiveCircuito("20mm");
+        c.MetrosTuberia = 0m;
+        c.MetrosBandeja = 0m;
+        c.PisosTramos.Add(new CircuitoPisoTramo { ZonaId = "z1", ZonaNombre = "Piso 1", MetrosTuberia = 30m });
+        c.PisosTramos.Add(new CircuitoPisoTramo { ZonaId = "z2", ZonaNombre = "Piso 2", MetrosTuberia = 70m });
+        var cuadro = new CuadroCargaSCRow();
+        cuadro.Circuitos.Add(c);
+        var zonas = new List<ZonaProyecto>
+        {
+            new() { Id = "z1", Nombre = "Piso 1" },
+            new() { Id = "z2", Nombre = "Piso 2" }
+        };
+
+        var result = CubicacionSCEngine.AggregateConZonas(new[] { cuadro }, DefaultConfig(), zonas);
+
+        var tuberia = Assert.Single(result, m =>
+            m.Nombre.Equals("TUBERIA PVCLH 20mm", StringComparison.OrdinalIgnoreCase));
+        Assert.Equal(100m, tuberia.Total);
+        Assert.Equal(new[] { "Piso 1", "Piso 2" }, tuberia.Zonas.Select(z => z.ZonaNombre));
+        Assert.Equal(30m, tuberia.Zonas[0].Cantidad);
+        Assert.Equal(70m, tuberia.Zonas[1].Cantidad);
+    }
+
+    [Fact]
+    public void AggregateConZonas_IgnoraCircuitosInactivos()
+    {
+        var activo = ActiveCircuito("20mm");
+        var inactivo = ActiveCircuito("20mm");
+        inactivo.Estado = "Disponible";
+        var cuadro = new CuadroCargaSCRow();
+        cuadro.Circuitos.Add(activo);
+        cuadro.Circuitos.Add(inactivo);
+
+        var result = CubicacionSCEngine.AggregateConZonas(new[] { cuadro }, DefaultConfig());
+
+        var tuberia = Assert.Single(result, m =>
+            m.Nombre.Equals("TUBERIA PVCLH 20mm", StringComparison.OrdinalIgnoreCase));
+        Assert.Equal(20m, tuberia.Total);
+    }
+
+    [Fact]
     public void AggregateMaterialesPorPiso_AgrupaPorTextoDeUbicacionEscritoAMano()
     {
         var c1 = ActiveCircuito("20mm"); c1.Ubicacion = "1";

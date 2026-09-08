@@ -18,7 +18,8 @@ public sealed class CubicacionViewModelService : ICubicacionViewModelService
         string itemId = "",
         decimal gastosGeneralesPct = 0m,
         decimal utilidadPct = 0m,
-        decimal metrosCuadrados = 0m)
+        decimal metrosCuadrados = 0m,
+        BudgetSettings? settings = null)
     {
         IEnumerable<CubicacionRow> source = cubicacion ?? Enumerable.Empty<CubicacionRow>();
 
@@ -30,7 +31,7 @@ public sealed class CubicacionViewModelService : ICubicacionViewModelService
             .ToList();
 
         var validRows = rows.Where(x => !string.IsNullOrWhiteSpace(x.Codigo)).ToList();
-        var summary = BuildSummary(validRows, gastosGeneralesPct, utilidadPct, metrosCuadrados);
+        var summary = BuildSummary(validRows, gastosGeneralesPct, utilidadPct, metrosCuadrados, settings);
 
         return new CubicacionViewModel(
             itemId ?? "",
@@ -64,7 +65,8 @@ public sealed class CubicacionViewModelService : ICubicacionViewModelService
         IEnumerable<CubicacionLineViewModel> rows,
         decimal gastosGeneralesPct,
         decimal utilidadPct,
-        decimal metrosCuadrados)
+        decimal metrosCuadrados,
+        BudgetSettings? settings = null)
     {
         var cubicacionRows = (rows ?? Enumerable.Empty<CubicacionLineViewModel>())
             .Select(row => new CubicacionRow
@@ -82,9 +84,11 @@ public sealed class CubicacionViewModelService : ICubicacionViewModelService
             })
             .ToList();
 
+        // settings ya enriquecido (política de cierre + factores) cuando el llamador tiene el
+        // proyecto; si no, BudgetSettings mínimo → venta Costo+Markup (ver doc de la interfaz).
         var cost = budgetCalculationService.CalculateBudget(
             cubicacionRows,
-            BudgetSettings.FromValues(gastosGeneralesPct, utilidadPct, metrosCuadrados));
+            settings ?? BudgetSettings.FromValues(gastosGeneralesPct, utilidadPct, metrosCuadrados));
 
         return new CostSummaryViewModel(
             cost.MaterialesUf,

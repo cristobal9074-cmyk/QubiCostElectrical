@@ -84,7 +84,10 @@ public sealed class PartidaCompletionService : IPartidaCompletionService
 
         foreach (var item in items.Where(x => !x.EsTitulo))
         {
-            var state = GetPartidaState(item.Id, rows);
+            // Fuera de alcance / no proyectada: no cuenta como "sin cubicar".
+            var state = item.ExcluidoCubicacion
+                ? PartidaCompletionState.Completed
+                : GetPartidaState(item.Id, rows);
             states[item.Id] = state;
             details[item.Id] = BuildLeafDetail(item.Id, state);
         }

@@ -10,8 +10,13 @@ namespace QubiCostElectrical;
 /// </summary>
 public sealed class BudgetCalculationService : IBudgetCalculationService
 {
-    private readonly BudgetEngine engine = new();
+    private readonly BudgetEngine engine;
     private CostBreakdown? lastBudget;
+
+    public BudgetCalculationService() : this(null) { }
+
+    public BudgetCalculationService(Func<BudgetEngine>? engineFactory)
+        => engine = (engineFactory ?? (static () => new BudgetEngine()))();
 
     public void MarkDirtyItem(string? itemId) => engine.MarkDirtyItem(itemId);
     public void MarkDirtyItems(IEnumerable<string>? itemIds) => engine.MarkDirtyItems(itemIds);

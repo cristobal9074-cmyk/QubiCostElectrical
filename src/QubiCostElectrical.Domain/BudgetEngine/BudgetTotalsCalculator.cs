@@ -34,10 +34,34 @@ internal static class BudgetTotalsCalculator
         decimal subtotal = baseCosto + gg + vaEquipos;
         decimal bruto;
         decimal utilidad;
+        decimal diferenciaFactores = 0m;
+        decimal costoProyecto;
+        var extraInconsistencias = new List<BudgetInconsistencia>();
+        decimal pisoComercial;
         if (direct.HasRowLevelMarkups)
         {
+            // C-1: venta = Σ (costo_origen × factor_presentación_familia). El piso comercial es
+            // subtotal + utilidad mínima (GG ya está en subtotal). Si la venta por factores cae
+            // bajo ese piso, es una inconsistencia BLOQUEANTE (antes el signo se escondía con
+            // Math.Max(0, utilidad) en CostoProyectoUf).
             bruto = direct.SumVentaClp;
+            decimal utilidadFloor = (policy.MarkupMethod == MarkupMethod.SobreVenta && policy.SafeUtilidadPct < 100m)
+                ? subtotal / (1m - policy.SafeUtilidadPct / 100m) - subtotal
+                : subtotal * policy.SafeUtilidadPct / 100m;
+            decimal pisoConUtilidad = subtotal + utilidadFloor;
             utilidad = bruto - subtotal;
+            costoProyecto = pisoConUtilidad;
+            pisoComercial = pisoConUtilidad;
+            // C-1: solo para la ruta por factores/markup (CostPlusMarkup o sin política). El resto
+            // de políticas evalúan el piso en FinalizeVentaYCierre sobre su propio neto.
+            var polTipo = settings.ClosingPolicy?.Policy ?? ClosingPolicyType.CostPlusMarkup;
+            if (polTipo == ClosingPolicyType.CostPlusMarkup
+                && bruto < pisoConUtilidad && !direct.Inconsistencias.Any(x => x.Tipo == "UtilidadNegativa"))
+                extraInconsistencias.Add(new BudgetInconsistencia
+                {
+                    Tipo = "UtilidadNegativa",
+                    Detalle = $"La venta por factores ({bruto:N0}) no cubre el costo del proyecto con utilidad ({pisoConUtilidad:N0})."
+                });
         }
         else
         {
@@ -51,14 +75,20 @@ internal static class BudgetTotalsCalculator
                 utilidad = subtotal * policy.SafeUtilidadPct / 100m;
                 bruto = subtotal + utilidad;
             }
+            costoProyecto = subtotal + Math.Max(0m, utilidad);
+            pisoComercial = costoProyecto;
         }
-        decimal descuento = bruto * policy.SafeDescuentoPct / 100m;
-        decimal neto = Math.Max(0m, bruto - descuento);
-        decimal iva = neto * policy.SafeIvaPct / 100m;
-        decimal conIva = neto + iva;
-        decimal venta = policy.IncluirIvaEnTotal ? conIva : neto;
+
+        var fin = FinalizeVentaYCierre(bruto, direct.TotalUf, pisoComercial, riesgo, direct, policy, settings, extraInconsistencias);
+        decimal descuento = fin.Descuento;
+        decimal neto = fin.Neto;
+        decimal iva = fin.Iva;
+        decimal conIva = fin.ConIva;
+        decimal venta = fin.Venta;
+        diferenciaFactores = fin.DiferenciaFactores;
         decimal ufM2 = settings.MetrosCuadrados > 0m ? venta / settings.MetrosCuadrados : 0m;
-        decimal margenReal = venta > 0m ? (venta - direct.TotalUf) / venta * 100m : 0m;
+        // H-6: margen contra el NETO (post-descuento, pre-IVA), no contra la venta con IVA.
+        decimal margenReal = neto > 0m ? (neto - direct.TotalUf) / neto * 100m : 0m;
 
         return new CostBreakdown
         {
@@ -77,8 +107,8 @@ internal static class BudgetTotalsCalculator
             ValorAgregadoEquiposUf = vaEquipos,
             BaseGgUtUf = baseCosto,
             UtilidadAditivaUf = 0m,
-            DiferenciaFactoresUf = 0m,
-            CostoProyectoUf = subtotal + Math.Max(0m, utilidad),
+            DiferenciaFactoresUf = diferenciaFactores,
+            CostoProyectoUf = costoProyecto,
             SubtotalUf = subtotal,
             UtilidadUf = utilidad,
             DescuentoUf = descuento,
@@ -88,12 +118,92 @@ internal static class BudgetTotalsCalculator
             TotalVentaUf = venta,
             UfM2 = ufM2,
             MargenRealPct = margenReal,
+            ClosingPolicyResult = fin.Pol,
+            ClosingPolicy = fin.Pol.Policy,
             ApuMode = settings.ApuMode,
             Origenes = direct.Origenes,
             OrigenesResumen = SummarizeOrigins(direct.Origenes),
             MaterialesCriticos = SummarizeMaterialTotals(direct.Materiales),
-            Inconsistencias = BuildInconsistencias(direct.Inconsistencias, markupErrors)
+            Inconsistencias = BuildInconsistencias(direct.Inconsistencias, markupErrors, extraInconsistencias)
         };
+    }
+
+    private readonly record struct CierreTotals(
+        ClosingPolicyResult Pol,
+        decimal Neto0,
+        decimal Descuento,
+        decimal Neto,
+        decimal Iva,
+        decimal ConIva,
+        decimal Venta,
+        decimal DiferenciaFactores);
+
+    /// <summary>
+    /// Paso final común a ambas políticas de costo: aplica la política de cierre comercial
+    /// (<see cref="ClosingPolicyEngine"/>) sobre la venta base neta y luego descuento e IVA de
+    /// forma uniforme. Con <see cref="ClosingPolicyType.CostPlusMarkup"/> (por defecto) es
+    /// pass-through: <c>neto0 == ventaBaseNeta</c> y el pipeline no cambia.
+    /// </summary>
+    private static CierreTotals FinalizeVentaYCierre(
+        decimal ventaBaseNeta,
+        decimal costoEjecucion,
+        decimal pisoComercial,
+        decimal riesgo,
+        DirectCostResult direct,
+        MarkupPolicy policy,
+        BudgetSettings settings,
+        List<BudgetInconsistencia> extraInconsistencias)
+    {
+        var input = new ClosingPolicyInput
+        {
+            VentaBaseNetaClp = ventaBaseNeta,
+            CostoEjecucionClp = costoEjecucion,
+            PisoComercialClp = pisoComercial,
+            RiesgoImplicitoPct = costoEjecucion > 0m ? riesgo / costoEjecucion * 100m : 0m,
+            Origenes = direct.Origenes
+        };
+        var pol = ClosingPolicyEngine.ApplyNeto(input, settings.ClosingPolicy);
+        decimal neto0 = pol.VentaFinalClp;
+        decimal descuento = neto0 * policy.SafeDescuentoPct / 100m;
+        decimal neto = Math.Max(0m, neto0 - descuento);
+        decimal iva = neto * policy.SafeIvaPct / 100m;
+        decimal conIva = neto + iva;
+        decimal venta = policy.IncluirIvaEnTotal ? conIva : neto;
+
+        var polType = settings.ClosingPolicy?.Policy ?? ClosingPolicyType.CostPlusMarkup;
+
+        // H-2: "diferencia por factores" (neto vs piso comercial) solo tiene sentido para las
+        // políticas que venden por factores/markup. Para Costo+Fee, Precio Objetivo, Suma Alzada
+        // y Gainshare el neto no proviene de los factores y el delta sería engañoso.
+        bool factorPolicy = polType is ClosingPolicyType.CostPlusMarkup or ClosingPolicyType.UnitPricePure;
+        decimal diferenciaFactores = factorPolicy ? neto0 - pisoComercial : 0m;
+
+        // H-1: el bloqueo UtilidadNegativa es policy-aware.
+        //   CostPlusMarkup .......... lo maneja la comprobación C-1 previa (BuildLegacy/BuildExcelCostos).
+        //   UnitPricePure ........... bloquea si el neto no cubre el piso comercial (los unitarios
+        //                             contractuales deben cubrir GG + utilidad).
+        //   CostPlusFee ............. bloquea solo si el fee es ≤ 0 (neto ≤ costo de ejecución).
+        //   TargetPrice/LumpSum/Gainshare: bloquea solo si hay pérdida de caja real (neto < costo
+        //                             de ejecución); entre costo y piso ⇒ advertencia (ApplyNeto).
+        bool alreadyHasBlock = direct.Inconsistencias.Any(x => x.Tipo == "UtilidadNegativa")
+            || extraInconsistencias.Any(x => x.Tipo == "UtilidadNegativa");
+        bool block = polType switch
+        {
+            ClosingPolicyType.CostPlusMarkup => false,
+            ClosingPolicyType.UnitPricePure => neto0 < pisoComercial,
+            ClosingPolicyType.CostPlusFee => neto0 <= costoEjecucion,
+            _ => neto0 < costoEjecucion,
+        };
+        if (block && !alreadyHasBlock)
+            extraInconsistencias.Add(new BudgetInconsistencia
+            {
+                Tipo = "UtilidadNegativa",
+                Detalle = polType == ClosingPolicyType.UnitPricePure
+                    ? $"La venta con la política de cierre ({neto0:N0}) no cubre el costo del proyecto con utilidad ({pisoComercial:N0})."
+                    : $"La venta con la política de cierre ({neto0:N0}) no cubre el costo de ejecución ({costoEjecucion:N0}): margen negativo."
+            });
+
+        return new CierreTotals(pol, neto0, descuento, neto, iva, conIva, venta, diferenciaFactores);
     }
 
     /// <summary>
@@ -138,15 +248,31 @@ internal static class BudgetTotalsCalculator
             bruto = costoProyecto;
         }
 
-        decimal descuento = bruto * policy.SafeDescuentoPct / 100m;
-        decimal neto = Math.Max(0m, bruto - descuento);
-        decimal iva = neto * policy.SafeIvaPct / 100m;
-        decimal conIva = neto + iva;
-        decimal venta = policy.IncluirIvaEnTotal ? conIva : neto;
-        decimal diferenciaFactores = venta - costoProyecto;
+        var extraInconsistencias = new List<BudgetInconsistencia>();
+        var fin = FinalizeVentaYCierre(bruto, ejecucion, costoProyecto, riesgo, direct, policy, settings, extraInconsistencias);
+        decimal descuento = fin.Descuento;
+        decimal neto = fin.Neto;
+        decimal iva = fin.Iva;
+        decimal conIva = fin.ConIva;
+        decimal venta = fin.Venta;
+        decimal diferenciaFactores = fin.DiferenciaFactores;
+        // C-1 (ruta por factores, política CostPlusMarkup): la venta por factores PRE-política
+        // debe cubrir el costo del proyecto con utilidad. El resto de políticas se evalúan en
+        // FinalizeVentaYCierre sobre su propio neto (H-1), así que aquí no se duplica.
+        var polTipoExcel = settings.ClosingPolicy?.Policy ?? ClosingPolicyType.CostPlusMarkup;
+        if (polTipoExcel == ClosingPolicyType.CostPlusMarkup
+            && direct.HasRowLevelMarkups && bruto < costoProyecto
+            && !direct.Inconsistencias.Any(x => x.Tipo == "UtilidadNegativa")
+            && !extraInconsistencias.Any(x => x.Tipo == "UtilidadNegativa"))
+            extraInconsistencias.Add(new BudgetInconsistencia
+            {
+                Tipo = "UtilidadNegativa",
+                Detalle = $"La venta por factores ({bruto:N0}) no cubre el costo del proyecto con utilidad ({costoProyecto:N0})."
+            });
         decimal ufM2 = settings.MetrosCuadrados > 0m ? venta / settings.MetrosCuadrados : 0m;
-        // Margen observado estilo Excel: (venta − costo ejecución) / venta
-        decimal margenReal = venta > 0m ? (venta - ejecucion) / venta * 100m : 0m;
+        // Margen observado estilo Excel: (neto − costo ejecución) / neto. H-6: la base es el NETO
+        // post-descuento pre-IVA, no la venta con IVA (antes inflaba/deformaba el margen).
+        decimal margenReal = neto > 0m ? (neto - ejecucion) / neto * 100m : 0m;
 
         return new CostBreakdown
         {
@@ -177,11 +303,13 @@ internal static class BudgetTotalsCalculator
             TotalVentaUf = venta,
             UfM2 = ufM2,
             MargenRealPct = margenReal,
+            ClosingPolicyResult = fin.Pol,
+            ClosingPolicy = fin.Pol.Policy,
             ApuMode = settings.ApuMode,
             Origenes = direct.Origenes,
             OrigenesResumen = SummarizeOrigins(direct.Origenes),
             MaterialesCriticos = SummarizeMaterialTotals(direct.Materiales),
-            Inconsistencias = BuildInconsistencias(direct.Inconsistencias, markupErrors)
+            Inconsistencias = BuildInconsistencias(direct.Inconsistencias, markupErrors, extraInconsistencias)
         };
     }
 
@@ -231,11 +359,14 @@ internal static class BudgetTotalsCalculator
 
     private static List<BudgetInconsistencia> BuildInconsistencias(
         IEnumerable<BudgetInconsistencia> engineErrors,
-        IReadOnlyList<string> markupErrors)
+        IReadOnlyList<string> markupErrors,
+        IEnumerable<BudgetInconsistencia>? extra = null)
     {
         var list = new List<BudgetInconsistencia>(engineErrors);
         foreach (var msg in markupErrors)
             list.Add(new BudgetInconsistencia { Tipo = "PorcentajeInvalido", Detalle = msg });
+        if (extra != null)
+            list.AddRange(extra);
         return list;
     }
 }

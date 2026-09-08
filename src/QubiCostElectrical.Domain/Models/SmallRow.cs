@@ -21,7 +21,7 @@ public sealed class CubicacionCellCommentRow
 public sealed class TechnicalValidationRuleRow
 {
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
-    public string Nombre { get; set; } = "Regla t�cnica";
+    public string Nombre { get; set; } = "Regla técnica";
     public string Campo { get; set; } = "Descripcion";
     public string Contiene { get; set; } = "";
     public string UnidadEsperada { get; set; } = "";

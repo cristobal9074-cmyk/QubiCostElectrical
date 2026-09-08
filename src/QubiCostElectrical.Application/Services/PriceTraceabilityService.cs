@@ -15,7 +15,7 @@ public interface IPriceTraceabilityService
 }
 
 /// <summary>
-/// Hist.: Auditor�a profesional de precios.
+/// Hist.: Auditoría profesional de precios.
 /// Cada precio usado en el presupuesto queda trazable por origen, fecha, proveedor, moneda, UF usada, usuario y estado.
 /// </summary>
 public sealed class PriceTraceabilityService : IPriceTraceabilityService
@@ -56,13 +56,13 @@ public sealed class PriceTraceabilityService : IPriceTraceabilityService
                 Moneda = material?.MonedaPrecio ?? Moneda.CLP,
                 UfUsadaClp = proyecto.ValorUfClp,
                 Proveedor = material?.Proveedor ?? "",
-                Origen = material?.OrigenPrecio ?? (material != null ? "Lista de precios" : "Cubicaci�n manual"),
+                Origen = material?.OrigenPrecio ?? (material != null ? "Lista de precios" : "Cubicación manual"),
                 Usuario = string.IsNullOrWhiteSpace(material?.UsuarioPrecio) ? (usuario ?? "") : material!.UsuarioPrecio,
                 FechaPrecio = material?.FechaPrecio == default ? DateTime.Today : (material?.FechaPrecio ?? DateTime.Today),
                 UltimaActualizacion = material?.UltimaActualizacionPrecio == default ? (proyecto.FechaModificacion == default ? AppClock.Now : proyecto.FechaModificacion) : (material?.UltimaActualizacionPrecio ?? AppClock.Now),
                 Estado = ResolveMaterialStatus(material, precioUf, proyecto),
                 UsadoEn = string.Join(", ", group.Select(x => x.ItemId).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct().Take(8)),
-                Observacion = material == null ? "C�digo usado en cubicaci�n, pero no existe en la lista de precios." : "Precio tomado desde lista maestra."
+                Observacion = material == null ? "Código usado en cubicación, pero no existe en la lista de precios." : "Precio tomado desde lista maestra."
             });
         }
 

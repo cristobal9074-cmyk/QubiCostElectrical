@@ -10,7 +10,12 @@ public sealed class BudgetInconsistencia
 {
     public string? ItemId { get; set; }
     public string? Descripcion { get; set; }
-    /// <summary>CantidadCero | PorcentajeInvalido | ValorNegativo</summary>
+    /// <summary>
+    /// CantidadCero | PorcentajeInvalido | ValorNegativo | ModeloComercialIncompleto |
+    /// MermaDobleNivel | UtilidadNegativa.
+    /// <c>UtilidadNegativa</c> (BLOQUEANTE): la venta por factores de presentación cae bajo el
+    /// piso GG+utilidad+VA del costo del proyecto. Revisión Final impide exportar.
+    /// </summary>
     public string Tipo { get; set; } = "";
     public string Detalle { get; set; } = "";
 }
@@ -116,6 +121,17 @@ public sealed class CostBreakdown
     public decimal TotalVentaUf { get; set; }
     public decimal UfM2 { get; set; }
     public decimal MargenRealPct { get; set; }
+
+    /// <summary>
+    /// Resultado de aplicar la política de cierre comercial elegida en el proyecto. El motor
+    /// SIEMPRE la aplica (por defecto <see cref="ClosingPolicyType.CostPlusMarkup"/>, pass-through);
+    /// <c>VentaFinalClp</c> es el NETO pre-descuento y pre-IVA que alimenta el total.
+    /// </summary>
+    public ClosingPolicyResult? ClosingPolicyResult { get; set; }
+
+    /// <summary>Tipo de política de cierre efectivamente aplicada por el motor.</summary>
+    public ClosingPolicyType ClosingPolicy { get; set; } = ClosingPolicyType.CostPlusMarkup;
+
     public BudgetApuMode ApuMode { get; set; } = BudgetApuMode.CubicacionMasApuComplementarios;
     public List<CostOriginBreakdown> Origenes { get; set; } = new();
     public List<CostOriginSummary> OrigenesResumen { get; set; } = new();
@@ -137,6 +153,7 @@ public sealed class CostBreakdown
     public decimal MaterialesClp { get => MaterialesUf; set => MaterialesUf = value; }
     public decimal ManoObraClp { get => ManoObraUf; set => ManoObraUf = value; }
     public decimal CostoDirectoClp { get => CostoDirectoUf; set => CostoDirectoUf = value; }
+    public decimal TotalVentaClp { get => TotalVentaUf; set => TotalVentaUf = value; }
     public decimal Directo => CostoDirectoUf;
     public decimal GastosGenerales => GastosGeneralesUf;
     public decimal Subtotal => SubtotalUf;

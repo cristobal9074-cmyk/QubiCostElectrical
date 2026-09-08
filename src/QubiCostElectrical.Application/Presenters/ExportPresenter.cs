@@ -26,10 +26,16 @@ public sealed class ExportPresenter
     }
 
     public IReadOnlyList<ExportPartidaOption> BuildPartidaOptions()
-        => ExportScopeService.BuildPartidaOptions(_session.CreateSnapshot());
+        => BuildPartidaOptions(_session.CreateSnapshot());
+
+    public IReadOnlyList<ExportPartidaOption> BuildPartidaOptions(ProjectFileData snapshot)
+        => ExportScopeService.BuildPartidaOptions(snapshot);
 
     public IReadOnlyList<string> BuildAreaOptions()
-        => ExportScopeService.BuildAreaOptions(_session.CreateSnapshot());
+        => BuildAreaOptions(_session.CreateSnapshot());
+
+    public IReadOnlyList<string> BuildAreaOptions(ProjectFileData snapshot)
+        => ExportScopeService.BuildAreaOptions(snapshot);
 
     public ExportProjectContext BuildContext(
         ExportScopeMode scopeMode,

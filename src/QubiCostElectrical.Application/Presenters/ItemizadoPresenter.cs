@@ -113,7 +113,7 @@ public sealed class ItemizadoPresenter
             _session.QtyHeadersByItem,
             rows);
         _session.ClearCubicacionCompositionLayers();
-        _session.MarkDirty("itemizado", "cubicacion", "qty_headers", "apu");
+        _session.MarkDirty(ProjectDirtyScope.Itemizado, ProjectDirtyScope.Cubicacion, ProjectDirtyScope.QtyHeaders, ProjectDirtyScope.Apu);
     }
 
     public string BuildReplaceConfirmationMessage(int currentRowCount, string actionLabel)
@@ -139,7 +139,7 @@ public sealed class ItemizadoPresenter
     {
         _session.EnsureWritable("agregar una fila al itemizado");
         var result = _services.Itemizado.AddBelow(_session.Itemizado, selectedIndex, desc, unidad);
-        _session.MarkDirty("itemizado");
+        _session.MarkDirty(ProjectDirtyScope.Itemizado);
         return result;
     }
 
@@ -147,7 +147,7 @@ public sealed class ItemizadoPresenter
     {
         _session.EnsureWritable("agregar un título al itemizado");
         var result = _services.Itemizado.AddTitle(_session.Itemizado, selectedIndex);
-        _session.MarkDirty("itemizado");
+        _session.MarkDirty(ProjectDirtyScope.Itemizado);
         return result;
     }
 
@@ -155,7 +155,7 @@ public sealed class ItemizadoPresenter
     {
         _session.EnsureWritable("mover filas del itemizado");
         var result = _services.Itemizado.Move(_session.Itemizado, selectedIndex, direction);
-        _session.MarkDirty("itemizado");
+        _session.MarkDirty(ProjectDirtyScope.Itemizado);
         return result;
     }
 
@@ -169,7 +169,7 @@ public sealed class ItemizadoPresenter
             selectedIndex);
         _session.RemoveApusForItemIds(result.RemovedItemIds);
         _session.RemoveCubicacionForItemIds(result.RemovedItemIds);
-        _session.MarkDirty("itemizado", "cubicacion", "qty_headers", "apu");
+        _session.MarkDirty(ProjectDirtyScope.Itemizado, ProjectDirtyScope.Cubicacion, ProjectDirtyScope.QtyHeaders, ProjectDirtyScope.Apu);
         return result;
     }
 
@@ -177,7 +177,7 @@ public sealed class ItemizadoPresenter
     {
         _session.EnsureWritable("duplicar filas del itemizado");
         var result = _services.Itemizado.DuplicateAt(_session.Itemizado, selectedIndex);
-        _session.MarkDirty("itemizado");
+        _session.MarkDirty(ProjectDirtyScope.Itemizado);
         return result;
     }
 
@@ -187,14 +187,14 @@ public sealed class ItemizadoPresenter
         _services.Itemizado.Clear(_session.Itemizado, _session.Cubicacion, _session.QtyHeadersByItem);
         _session.ClearAllApus();
         _session.ClearCubicacionCompositionLayers();
-        _session.MarkDirty("itemizado", "cubicacion", "qty_headers", "apu");
+        _session.MarkDirty(ProjectDirtyScope.Itemizado, ProjectDirtyScope.Cubicacion, ProjectDirtyScope.QtyHeaders, ProjectDirtyScope.Apu);
     }
 
     public void ApplyAssistedPartida(int rowIndex, string code, string description, string unit)
     {
         _session.EnsureWritable("asistir una partida del itemizado");
         _services.Itemizado.ApplyAssistedPartidaDetails(_session.Itemizado, rowIndex, code, description, unit);
-        _session.MarkDirty("itemizado");
+        _session.MarkDirty(ProjectDirtyScope.Itemizado);
     }
 
     public ItemizadoCubicacionNavigation? TryBuildCubicacionNavigation(string itemId)
@@ -214,7 +214,12 @@ public sealed class ItemizadoPresenter
         if (item == null || item.EsTitulo)
             return "Selecciona una partida, no un título, para cubicar.";
         if (item.ExcluidoCubicacion)
-            return "Esta partida está marcada como excluida de cubicación.";
+        {
+            var motivo = (item.MotivoNoCubicar ?? "").Trim();
+            return string.IsNullOrEmpty(motivo)
+                ? "Esta partida está marcada como «No cubicar» (fuera de alcance)."
+                : $"Esta partida está marcada como «No cubicar»: {motivo}";
+        }
         return null;
     }
 

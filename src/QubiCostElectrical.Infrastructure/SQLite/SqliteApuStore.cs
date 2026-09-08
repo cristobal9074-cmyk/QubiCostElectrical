@@ -20,7 +20,7 @@ internal static class SqliteApuStore
                 descripcion = excluded.descripcion,
                 unidad = excluded.unidad,
                 precio_unit_uf = excluded.precio_unit_uf,
-                estado = excluded.estado,
+                Estado = excluded.Estado,
                 fuente_precio = excluded.fuente_precio,
                 proveedor = excluded.proveedor,
                 fecha_precio = excluded.fecha_precio,

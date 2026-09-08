@@ -463,8 +463,7 @@ public static partial class SQLiteProjectStore
         var builder = new SqliteConnectionStringBuilder
         {
             DataSource = databasePath,
-            Mode = SqliteOpenMode.ReadWriteCreate,
-            Cache = SqliteCacheMode.Shared
+            Mode = SqliteOpenMode.ReadWriteCreate
         };
 
         var connection = new SqliteConnection(builder.ToString());
@@ -472,7 +471,16 @@ public static partial class SQLiteProjectStore
 
         using (var cmd = connection.CreateCommand())
         {
-            cmd.CommandText = "PRAGMA journal_mode=WAL;";
+            cmd.CommandText = "PRAGMA busy_timeout = 5000;";
+            cmd.ExecuteNonQuery();
+        }
+
+        bool isNetwork = ProductPaths.IsNetworkOrUncPath(databasePath);
+
+        using (var cmd = connection.CreateCommand())
+        {
+            // SQLite WAL usa archivos -shm que fallan sobre SMB/red compartida; en red usamos TRUNCATE
+            cmd.CommandText = isNetwork ? "PRAGMA journal_mode=TRUNCATE;" : "PRAGMA journal_mode=WAL;";
             cmd.ExecuteNonQuery();
         }
         using (var cmd = connection.CreateCommand())

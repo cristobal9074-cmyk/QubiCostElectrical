@@ -13,6 +13,14 @@ public static class CubicacionSCEngine
 {
     public readonly record struct MaterialSC(string Nombre, decimal Cantidad, string Unidad);
 
+    /// <summary>Material SC agregado con desglose por zona del proyecto (para «Tomar de SC»).</summary>
+    public sealed record MaterialConZonasSC(
+        string Nombre,
+        string Unidad,
+        string Categoria,
+        decimal Total,
+        IReadOnlyList<(string ZonaNombre, decimal Cantidad)> Zonas);
+
     // Grupo de materiales (de un tablero o de un piso) con sus subtotales por categoría, para el
     // resumen. Materiales viene ordenado por categoría y nombre.
     public sealed record ResumenGrupoSC(
@@ -173,6 +181,91 @@ public static class CubicacionSCEngine
 
     private static string TramoLabel(CircuitoPisoTramo t) =>
         string.IsNullOrWhiteSpace(t.ZonaNombre) ? "Sin zona" : t.ZonaNombre.Trim();
+
+    /// <summary>
+    /// Agrega materiales SC con cantidades por zona del proyecto, para el diálogo «Tomar de SC».
+    /// </summary>
+    public static IReadOnlyList<MaterialConZonasSC> AggregateConZonas(
+        IEnumerable<CuadroCargaSCRow> cuadros,
+        CubicacionScConfig config,
+        IReadOnlyList<ZonaProyecto>? zonas = null)
+    {
+        ArgumentNullException.ThrowIfNull(cuadros);
+        ArgumentNullException.ThrowIfNull(config);
+
+        var porMaterial = new Dictionary<string, Dictionary<string, (decimal Cantidad, string Unidad)>>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var cuadro in cuadros)
+        foreach (var circuito in cuadro.Circuitos)
+        {
+            if (!circuito.EsActivo && !circuito.EsReservaEquipada) continue;
+            foreach (var (pisoLabel, mat) in CircuitoMaterialesPorPiso(circuito, config))
+            {
+                if (!porMaterial.TryGetValue(mat.Nombre, out var porZona))
+                {
+                    porZona = porMaterial[mat.Nombre] = new(StringComparer.OrdinalIgnoreCase);
+                }
+                var prev = porZona.TryGetValue(pisoLabel, out var cur) ? cur.Cantidad : 0m;
+                porZona[pisoLabel] = (prev + mat.Cantidad, mat.Unidad);
+            }
+        }
+
+        var ordenZona = (zonas ?? Array.Empty<ZonaProyecto>())
+            .Select((z, i) => (z.Nombre, Orden: i))
+            .GroupBy(x => x.Nombre, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First().Orden, StringComparer.OrdinalIgnoreCase);
+
+        var resultado = new List<MaterialConZonasSC>();
+        foreach (var (nombre, porZona) in porMaterial)
+        {
+            var unidad = porZona.Values.First().Unidad;
+            var total = porZona.Values.Sum(z => z.Cantidad);
+            var categoria = GetCategoriaFromNombre(nombre);
+            var zonasList = new List<(string ZonaNombre, decimal Cantidad)>();
+
+            foreach (var (zonaNombre, _) in ordenZona.OrderBy(kv => kv.Value))
+            {
+                var qty = porZona.TryGetValue(zonaNombre, out var z) ? z.Cantidad : 0m;
+                zonasList.Add((zonaNombre, qty));
+            }
+
+            foreach (var (zonaNombre, z) in porZona)
+            {
+                if (!ordenZona.ContainsKey(zonaNombre))
+                    zonasList.Add((zonaNombre, z.Cantidad));
+            }
+
+            resultado.Add(new MaterialConZonasSC(nombre, unidad, categoria, total, zonasList));
+        }
+
+        return resultado
+            .OrderBy(m => m.Categoria)
+            .ThenBy(m => m.Nombre, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private static string GetCategoriaFromNombre(string nombre)
+    {
+        if (nombre.StartsWith("TUBERIA FLEXIBLE", StringComparison.OrdinalIgnoreCase))
+            return "Flexible";
+        if (nombre.StartsWith("TUBERIA", StringComparison.OrdinalIgnoreCase))
+            return "Tubería";
+        if (nombre.StartsWith("CONDUCTOR", StringComparison.OrdinalIgnoreCase))
+            return "Conductor";
+        if (nombre.StartsWith("CAJA", StringComparison.OrdinalIgnoreCase))
+            return "Cajas";
+        if (nombre.StartsWith("SENSOR", StringComparison.OrdinalIgnoreCase))
+            return "Sensores";
+        if (nombre.StartsWith("SEÑALETICA", StringComparison.OrdinalIgnoreCase))
+            return "Señalética";
+        if (nombre.StartsWith("CINTA", StringComparison.OrdinalIgnoreCase))
+            return "Cinta LED";
+        if (nombre.StartsWith("MONTAJE", StringComparison.OrdinalIgnoreCase))
+            return "Montaje";
+        if (nombre.StartsWith("INT", StringComparison.OrdinalIgnoreCase))
+            return "Interruptores";
+        return "Artefactos";
+    }
 
     /// <summary>
     /// Materiales agrupados por piso/zona. Los circuitos cubicados por zona (PisosTramos, del

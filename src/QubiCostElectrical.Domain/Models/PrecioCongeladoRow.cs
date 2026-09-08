@@ -1,9 +1,9 @@
 namespace QubiCostElectrical;
 
 /// <summary>
-/// Snapshot del precio usado en un presupuesto cuando se congela la pol�tica de precios.
+/// Snapshot del precio usado en un presupuesto cuando se congela la política de precios.
 /// Fuente: <see cref="MatClp"/>/<see cref="MoClp"/>. <see cref="MatUf"/>/<see cref="MoUf"/>
-/// quedan como UF derivados (o legacy si el snapshot es anterior a la migraci�n CLP).
+/// quedan como UF derivados (o legacy si el snapshot es anterior a la migración CLP).
 /// </summary>
 public sealed class PrecioCongeladoRow
 {
@@ -20,8 +20,8 @@ public sealed class PrecioCongeladoRow
 
     /// <summary>
     /// Precio material en CLP del snapshot. Prefiere MatClp; si falta, interpreta MatUf
-    /// como pesos contaminados (&gt;1000), convierte UF reales con <see cref="UfUsadaClp"/>,
-    /// o trata MatUf como CLP si el snapshot antiguo marc� moneda CLP con montos enteros.
+    /// como pesos contaminados (&gt;1000), convierte UF AREAles con <see cref="UfUsadaClp"/>,
+    /// o trata MatUf como CLP si el snapshot antiguo marcó moneda CLP con montos enteros.
     /// </summary>
     public decimal ResolveMatClp()
     {
@@ -35,7 +35,7 @@ public sealed class PrecioCongeladoRow
         return 0m;
     }
 
-    /// <summary>Igual que <see cref="ResolveMatClp"/> para mano de obra (umbral de contaminaci�n MoUf &gt; 15).</summary>
+    /// <summary>Igual que <see cref="ResolveMatClp"/> para mano de obra (umbral de contaminación MoUf &gt; 15).</summary>
     public decimal ResolveMoClp()
     {
         if (MoClp > 0m) return MoClp;

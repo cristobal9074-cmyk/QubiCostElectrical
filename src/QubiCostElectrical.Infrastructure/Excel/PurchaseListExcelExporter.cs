@@ -11,7 +11,7 @@ public sealed class PurchaseListExcelExporter : IPurchaseListExcelExporter
     public void Export(string path, PurchaseListExcelRequest request)
     {
         if (string.IsNullOrWhiteSpace(path))
-            throw new ArgumentException("Ruta de exportaciÛn requerida.", nameof(path));
+            throw new ArgumentException("Ruta de exportaci√≥n requerida.", nameof(path));
         if (request == null)
             throw new ArgumentNullException(nameof(request));
 
@@ -39,8 +39,8 @@ public sealed class PurchaseListExcelExporter : IPurchaseListExcelExporter
         int headerRow = 4;
         ClosedXmlExportStyler.SetHeaderRow(ws, headerRow, new[]
         {
-            "RANK", "C”DIGO", "DESCRIPCI”N", "UNIDAD", "CATEGORÕA", "CANTIDAD NETA",
-            "TOLERANCIA %", "CANTIDAD COMPRA", "PRECIO MAT UF", "TOTAL NETO UF", "TOTAL COMPRA UF", "LÕNEAS"
+            "RANK", "C√ìDIGO", "DESCRIPCI√ìN", "UNIDAD", "CATEGOR√çA", "CANTIDAD NETA",
+            "TOLERANCIA %", "CANTIDAD COMPRA", "PRECIO MAT UF", "TOTAL NETO UF", "TOTAL COMPRA UF", "L√çNEAS"
         });
 
         int row = headerRow + 1;

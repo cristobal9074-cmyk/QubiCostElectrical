@@ -18,7 +18,7 @@ internal static class SqliteRevisionStore
                 sort_order = excluded.sort_order,
                 codigo = excluded.codigo,
                 nombre = excluded.nombre,
-                estado = excluded.estado,
+                Estado = excluded.Estado,
                 json = excluded.json,
                 updated_at = excluded.updated_at;
             """;
@@ -57,7 +57,7 @@ internal static class SqliteRevisionStore
                 sort_order = excluded.sort_order,
                 numero = excluded.numero,
                 titulo = excluded.titulo,
-                estado = excluded.estado,
+                Estado = excluded.Estado,
                 delta_costo_uf = excluded.delta_costo_uf,
                 delta_venta_uf = excluded.delta_venta_uf,
                 json = excluded.json,

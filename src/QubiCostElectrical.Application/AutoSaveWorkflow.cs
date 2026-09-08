@@ -56,7 +56,7 @@ public sealed class AutoSaveWorkflow : IAutoSaveWorkflow
 			await store.ReadAsync(snapshotPath, cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
 			return new RecoveryCandidate(projectPath, snapshotPath, snapshotTime.Value, 0L, "", IsValid: true, null);
 		}
-		catch (Exception ex) when (((ex is IOException || ex is InvalidOperationException || ex is JsonException) ? 1 : 0) != 0)
+		catch (Exception ex) when (ex is IOException or InvalidOperationException or JsonException)
 		{
 			return new RecoveryCandidate(projectPath, snapshotPath, snapshotTime.Value, 0L, "", IsValid: false, "El snapshot de recuperación no es válido.");
 		}

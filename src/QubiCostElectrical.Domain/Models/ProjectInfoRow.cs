@@ -48,6 +48,14 @@ public sealed class ProjectInfoRow
     public decimal ValorAgregadoEquiposPct { get; set; } = 0m;
     /// <summary>Si true, motor usa bases GG/UT estilo Excel -=COSTOS=-.</summary>
     public bool PoliticaCostosExcel { get; set; }
+    /// <summary>
+    /// Fuerza la venta línea a línea con el factor de presentación por familia
+    /// (markup × (1 − descuento%)) en vez del markup global GG/Utilidad. Independiente de
+    /// <see cref="PoliticaCostosExcel"/>, con la que se combina por OR: la política Excel COSTOS
+    /// ya implica factores por familia. Sin ninguna de las dos, un GgUtFactor ≠ 1 suelto NO
+    /// cambia el método de markup del presupuesto (C3).
+    /// </summary>
+    public bool UsarFactoresPresentacionFamilia { get; set; }
     /// <summary>Duración de obra en meses para MO de dotación (puente Excel).</summary>
     public int MoDuracionMeses { get; set; } = 12;
     /// <summary>Leyes sociales % sobre sueldos base de MO (puente Excel / módulo M. de obra).</summary>
@@ -96,7 +104,7 @@ public sealed class ProjectInfoRow
     /// <summary>Umbral de alza de precio de material que dispara alerta en el proyecto.</summary>
     public decimal PriceIncreaseAlertThresholdPct { get; set; } = 8m;
 
-    /// <summary>Si es true, el banco y el cat�logo no actualizan precios del proyecto sin confirmaci�n expl�cita.</summary>
+    /// <summary>Si es true, el banco y el catálogo no actualizan precios del proyecto sin confirmación explícita.</summary>
     public bool PreciosCongelados { get; set; }
 
     public DateTime? FechaCongelamientoPrecios { get; set; }
@@ -105,7 +113,7 @@ public sealed class ProjectInfoRow
     public decimal TipoCambioUsdClpCongelado { get; set; }
     public DateTime FechaTipoCambioCongelado { get; set; } = DateTime.MinValue;
 
-    /// <summary>Fecha de corte de antecedentes t�cnicos considerados para cubicar y ofertar.</summary>
+    /// <summary>Fecha de corte de antecedentes técnicos considerados para cubicar y ofertar.</summary>
     public DateTime? FechaCorteAntecedentes { get; set; }
 
     public List<AntecedenteTecnicoRow> AntecedentesTecnicos { get; set; } = new();

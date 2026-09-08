@@ -152,7 +152,7 @@ public sealed class CubicacionPresenter
 
         _session.EnsureWritable("eliminar recursos de cubicación");
         _session.RemoveCubicacionRows(rowIds);
-        _session.MarkDirty("cubicacion");
+        _session.MarkDirty(ProjectDirtyScope.Cubicacion);
     }
 
     private static bool HasFormula(CubicacionRow row)

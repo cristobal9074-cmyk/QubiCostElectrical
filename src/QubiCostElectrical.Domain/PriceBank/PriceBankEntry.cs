@@ -4,12 +4,12 @@ namespace QubiCostElectrical;
 
 /// <summary>
 /// Entrada del banco de precios central, reutilizable entre proyectos (equivalente al
-/// "cuadro de precios" / banco de Presto y Arqu�medes). Es un material deduplicado por
-/// c�digo con su mejor precio conocido y trazabilidad de origen.
+/// "cuadro de precios" / banco de Presto y Arquímedes). Es un material deduplicado por
+/// código con su mejor precio conocido y trazabilidad de origen.
 /// </summary>
 public sealed class PriceBankEntry
 {
-    /// <summary>C�digo normalizado (clave �nica en el banco).</summary>
+    /// <summary>Código normalizado (clave única en el banco).</summary>
     public string Codigo { get; set; } = "";
 
     public string Descripcion { get; set; } = "";
@@ -30,15 +30,15 @@ public sealed class PriceBankEntry
     public string Proveedor { get; set; } = "";
     public string Marca { get; set; } = "";
 
-    /// <summary>Fecha del precio (no del registro). Define qu� precio es "m�s nuevo".</summary>
+    /// <summary>Fecha del precio (no del registro). Define qué precio es "más nuevo".</summary>
     public DateTime FechaPrecio { get; set; } = DateTime.Today;
 
     public string OrigenPrecio { get; set; } = "Banco de precios";
 
-    /// <summary>Proyecto que aport� por �ltima vez este precio (para auditar la fuente).</summary>
+    /// <summary>Proyecto que aportó por última vez este precio (para auditar la fuente).</summary>
     public string ProyectoOrigen { get; set; } = "";
 
-    /// <summary>Marca de tiempo del �ltimo upsert en el banco (metadato de persistencia).</summary>
+    /// <summary>Marca de tiempo del último upsert en el banco (metadato de persistencia).</summary>
     public DateTime ActualizadoEn { get; set; } = AppClock.Now;
 
     public PriceBankEntry Clone() => (PriceBankEntry)MemberwiseClone();

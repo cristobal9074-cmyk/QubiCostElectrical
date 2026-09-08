@@ -183,6 +183,53 @@ public sealed class PriceBankSeederTests
         EntradaSimple("CCC-3"),
     ];
 
+    [Fact]
+    public void WriteImportTemplate_Excel_RoundTripsOfficialHeadersAndPrices()
+    {
+        string path = Path.Combine(Path.GetTempPath(), $"plantilla_precios_{Guid.NewGuid():N}.xlsx");
+        try
+        {
+            PriceBankSeeder.WriteImportTemplate(path);
+            var entries = PriceBankSeeder.ParseFile(path);
+
+            Assert.Equal(2, entries.Count);
+            Assert.Equal("H07Z1-K", entries[0].Codigo);
+            Assert.Equal(1250m, entries[0].MatClp);
+            Assert.Equal(350m, entries[0].MoClp);
+            Assert.Equal("Conductores", entries[0].Categoria);
+            Assert.Equal("ml", entries[0].Unidad);
+            Assert.Equal(890m, entries[1].MatClp);
+            Assert.Equal(120m, entries[1].MoClp);
+        }
+        finally
+        {
+            try { if (File.Exists(path)) File.Delete(path); } catch { /* ignore */ }
+        }
+    }
+
+    [Fact]
+    public void ParseCsv_PelStyleHeaders_MatDotAndMo_MapToClp()
+    {
+        string csv = """
+            CODIGO;DESCRIPCION;UN;MAT.;M.O.
+            CABLE-1;Cable prueba;ml;1000;200
+            """;
+        string path = CsvTempFile(csv);
+        try
+        {
+            var entries = PriceBankSeeder.ParseCsv(path);
+            var row = Assert.Single(entries);
+            Assert.Equal("CABLE-1", row.Codigo);
+            Assert.Equal(1000m, row.MatClp);
+            Assert.Equal(200m, row.MoClp);
+            Assert.Equal("ml", row.Unidad);
+        }
+        finally
+        {
+            try { if (File.Exists(path)) File.Delete(path); } catch { /* ignore */ }
+        }
+    }
+
     private static string CsvTempFile(string content)
     {
         string path = Path.Combine(Path.GetTempPath(), $"test_seed_{Guid.NewGuid():N}.csv");

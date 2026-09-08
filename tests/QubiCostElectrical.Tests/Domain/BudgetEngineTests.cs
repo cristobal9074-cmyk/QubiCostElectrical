@@ -340,8 +340,12 @@ public sealed class BudgetEngineTests
         Assert.True(result.CostoDirectoUf >= result.EquiposUf);
         Assert.Equal(0m, result.MaterialesUf);
         Assert.Equal(0m, result.ManoObraUf);
-        Assert.Equal(0.12m, result.HerramientasUf);
-        Assert.Equal(0.3424m, result.MermasUf);
+        // C1: en complementario, herramientas/transporte del APU solo entran si hay recursos
+        // HERR/TR explícitos (aquí no hay) — antes se cargaba 0.12 (3% de la MO no cobrada).
+        Assert.Equal(0m, result.HerramientasUf);
+        // Imprevistos de alza (2%) solo sobre la base complementaria real (equipos 3) = 0.06;
+        // antes 0.3424 porque se calculaba sobre el costo directo completo del APU (mat+MO incl.).
+        Assert.Equal(0.06m, result.MermasUf);
         Assert.DoesNotContain(result.MaterialesCriticos, x => x.Descripcion == "PVC 20 APU");
     }
 
@@ -461,7 +465,10 @@ public sealed class BudgetEngineTests
             {
                 apus.Add(new ApuRow { ItemId = itemId, Descripcion = $"APU {p}", Recursos = new List<ApuRecursoRow>
                 {
-                    new() { CodigoMaterial = $"APUMAT{p}", Descripcion = "Material APU", PrecioUf = 2m, Rendimiento = 1m, Tipo = ApuTipoRecurso.MAT }
+                    new() { CodigoMaterial = $"APUMAT{p}", Descripcion = "Material APU", PrecioUf = 2m, Rendimiento = 1m, Tipo = ApuTipoRecurso.MAT },
+                    // Recurso complementario real (equipo) para que el APU aporte algo en modo
+                    // complementario y su origen exista (C1: un APU solo-MAT ya no genera origen).
+                    new() { CodigoMaterial = $"APUEQ{p}", Descripcion = "Equipo APU", PrecioUf = 1m, Rendimiento = 1m, Tipo = ApuTipoRecurso.EQ }
                 }});
             }
         }

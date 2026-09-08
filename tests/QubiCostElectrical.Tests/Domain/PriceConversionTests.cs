@@ -13,9 +13,9 @@ public sealed class PriceConversionTests
     }
 
     [Fact]
-    public void ClpToUf_ValorUfCero_RetornaClp()
+    public void ClpToUf_ValorUfCero_UsaValorUfPorDefecto()
     {
-        Assert.Equal(5000m, PriceConversion.ClpToUf(5000m, 0m));
+        Assert.Equal(0.1282m, PriceConversion.ClpToUf(5000m, 0m));
     }
 
     [Fact]
@@ -57,7 +57,7 @@ public sealed class PriceConversionTests
 
         m.RecalcularUf(0m);
 
-        Assert.Equal(5000m, m.MatUf);
+        Assert.Equal(0.1282m, m.MatUf);
         Assert.Equal(38000m, m.UfUsadaClp); // conserva el último valor válido
     }
 

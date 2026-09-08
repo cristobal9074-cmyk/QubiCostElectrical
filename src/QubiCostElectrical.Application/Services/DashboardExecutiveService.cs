@@ -182,7 +182,7 @@ public sealed class DashboardExecutiveService
     private static int CountPartidasListas(FinalReviewSummary review, int totalPartidas)
     {
         if (totalPartidas <= 0) return 0;
-        int pendientes = review.EmptyPartidas + review.MissingApus;
+        int pendientes = review.EmptyPartidas + review.MaterialsWithoutPrice;
         return Math.Max(0, totalPartidas - pendientes);
     }
 

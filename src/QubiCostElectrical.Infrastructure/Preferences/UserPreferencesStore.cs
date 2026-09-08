@@ -175,6 +175,8 @@ public static class UserPreferencesStore
         // Funciones experimentales: default false si no existe en archivo antiguo.
         // No requiere sanitización adicional (bool).
 
+        KeyboardShortcutPreferences.Sanitize(p);
+
         return p;
     }
 

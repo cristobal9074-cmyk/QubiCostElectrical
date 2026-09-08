@@ -80,7 +80,7 @@ internal static class SqliteMigrationLedger
         cmd.Parameters.AddWithValue("$name", name);
         cmd.Parameters.AddWithValue("$applied_at", DateTime.UtcNow.ToString("O"));
         cmd.Parameters.AddWithValue("$app_version", ProductVersionInfo.ProductVersionLabel);
-        cmd.Parameters.AddWithValue("$note", "Migraci�n autom�tica con PRAGMA user_version.");
+        cmd.Parameters.AddWithValue("$note", "Migración automática con PRAGMA user_version.");
         cmd.ExecuteNonQuery();
     }
 
@@ -125,8 +125,8 @@ internal static class SqliteMigrationLedger
         }
         catch (Exception ex)
         {
-            // El backup de migraci�n es preventivo. Si falla por bloqueo de archivo, no detenemos la apertura del proyecto.
-            AppLog.Warning("SQLiteMigraci�n", $"No se pudo crear el backup preventivo previo a migrar '{connection.DataSource}'", ex);
+            // El backup de migración es preventivo. Si falló por bloqueo de archivo, no detenemos la apertura del proyecto.
+            AppLog.Warning("SQLiteMigración", $"No se pudo crear el backup preventivo previo a migrar '{connection.DataSource}'", ex);
         }
     }
 

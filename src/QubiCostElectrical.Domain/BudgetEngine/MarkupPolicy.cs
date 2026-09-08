@@ -18,6 +18,16 @@ public sealed class MarkupPolicy
     /// utilidad aditiva, VA sobre equipos, diferencia por factores.
     /// </summary>
     public bool PoliticaCostosExcel { get; set; }
+
+    /// <summary>
+    /// Decisión explícita de proyecto: la venta se arma línea a línea con el factor de
+    /// presentación por familia (<see cref="CubicacionRow.GgUtFactor"/>), en vez del markup
+    /// global GG/Utilidad sobre el subtotal. Solo cuando esto es <c>true</c> el motor mira
+    /// <c>GgUtFactor</c> para elegir el método; un factor ≠ 1 suelto ya NO cambia el método
+    /// de todo el presupuesto.
+    /// </summary>
+    public bool FactoresPresentacionPorFamilia { get; set; }
+
     public decimal RiesgoPct { get; set; } = 0m;
     public decimal DescuentoPct { get; set; } = 0m;
     public decimal IvaPct { get; set; } = 19m;

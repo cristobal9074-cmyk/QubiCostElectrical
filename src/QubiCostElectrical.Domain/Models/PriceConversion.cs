@@ -11,8 +11,13 @@ public static class PriceConversion
     /// <summary>Umbral de vigencia del precio: 6 meses (180 días) desde FechaPrecio.</summary>
     public const int VigenteDiasUmbral = 180;
 
-    public static decimal ClpToUf(decimal clp, decimal valorUfClp) =>
-        valorUfClp > 0m ? Math.Round(clp / valorUfClp, 4, MidpointRounding.AwayFromZero) : clp;
+    public const decimal DefaultValorUfClp = 39000m;
+
+    public static decimal ClpToUf(decimal clp, decimal valorUfClp)
+    {
+        decimal rate = valorUfClp > 0m ? valorUfClp : DefaultValorUfClp;
+        return Math.Round(clp / rate, 4, MidpointRounding.AwayFromZero);
+    }
 
     public static decimal UfToClp(decimal uf, decimal valorUfClp) =>
         valorUfClp > 0m ? Math.Round(uf * valorUfClp, 0, MidpointRounding.AwayFromZero) : 0m;

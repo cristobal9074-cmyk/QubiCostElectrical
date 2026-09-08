@@ -18,6 +18,11 @@ public interface ICubicacionTakeoffQueryService
 
     void RecalculateAll(BudgetProjectSession session, int qtyColumnCount = 300);
     void RecalculateForItem(BudgetProjectSession session, string itemId, int qtyColumnCount = 300);
+    void RecalculateForItem(
+        BudgetProjectSession session,
+        string itemId,
+        IReadOnlyDictionary<string, List<CubicacionRow>> index,
+        int qtyColumnCount = 300);
     decimal ApplyRounding(CubicacionRow row, decimal value);
     string[] NormalizeExpressions(string[]? expressions, int count);
 }

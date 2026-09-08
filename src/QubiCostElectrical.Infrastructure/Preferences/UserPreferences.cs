@@ -175,4 +175,23 @@ public sealed class UserPreferences
 
     /// <summary>Política de PIN para cuentas locales del equipo.</summary>
     public PinSecurityPolicy PinSecurity { get; set; } = new();
+
+    // ── Atajos de teclado ─────────────────────────────────────────────────
+    /// <summary>
+    /// Atajos personalizados por acción (clave = id del catálogo, valor = gesto tipo Alt+L).
+    /// Las acciones ausentes usan el valor por defecto del catálogo.
+    /// </summary>
+    public Dictionary<string, string> KeyboardShortcuts { get; set; } = new();
+
+    // ── Memoria de observaciones y justificaciones ──────────────────────
+    /// <summary>Memoria de observaciones y justificaciones frecuentes y recientes del usuario.</summary>
+    public List<string> RecentObservations { get; set; } = new()
+    {
+        "Por compañía eléctrica",
+        "Suministrado por Mandante",
+        "Valor proforma",
+        "No considerado en bases técnicas",
+        "Alternativa / Opcional",
+        "Se incluye en ítem matriz"
+    };
 }

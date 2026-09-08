@@ -99,6 +99,26 @@ public sealed partial class BudgetEngine
             AddMaterialTotalFromCubicacionRow(result, row, settings);
         }
 
+        foreach (var apu in apuList.Where(a => !string.IsNullOrWhiteSpace(a.ItemId) && !dirty.Contains(a.ItemId)))
+        {
+            bool hasValuedCubicacion = rowsByItem.TryGetValue(apu.ItemId, out var rList) && rList.Any(HasValuedCubicacionRow);
+            bool fullApu = settings.ApuMode == BudgetApuMode.ApuManda || (settings.ApuMode == BudgetApuMode.CubicacionManda && !hasValuedCubicacion);
+            if (fullApu && apu.CostoMaterialUf > 0m)
+            {
+                decimal qty = GetItemQuantity(itemizadoById, apu.ItemId, result);
+                if (qty > 0m)
+                {
+                    foreach (var r in apu.Recursos.Where(x => x.Tipo == ApuTipoRecurso.MAT))
+                    {
+                        var cantidad = r.Rendimiento * qty;
+                        var totalUf = r.CostoUnitUf * qty;
+                        if (totalUf > 0m)
+                            AddMaterialTotal(result, r.CodigoMaterial, r.Descripcion, r.Unidad, cantidad, totalUf);
+                    }
+                }
+            }
+        }
+
         var dirtyItemIdsToProcess = rows
             .Where(x => !string.IsNullOrWhiteSpace(x.ItemId) && dirty.Contains(x.ItemId))
             .Select(x => x.ItemId!)
@@ -271,7 +291,7 @@ public sealed partial class BudgetEngine
                 HerramientasUf = settings.ManualHerramientasUf,
                 MermasUf = settings.ManualMermasUf
             });
-            AddApprovedChangeOrders(result, changeOrders);
+            AddApprovedChangeOrders(result, changeOrders, settings);
             return result;
         }
 
@@ -312,8 +332,11 @@ public sealed partial class BudgetEngine
             case BudgetApuMode.ApuManda:
                 foreach (var apu in apuList.Where(a => !commercialRulesByItemId.ContainsKey(a.ItemId)))
                     AddApuRow(result, apu, GetItemQuantity(itemizadoById, apu.ItemId, result), fullApu: true, area: InferArea(areaByItemId, apu.ItemId), settings: settings);
-                foreach (var row in rows.Where(x => string.IsNullOrWhiteSpace(x.ItemId) || !itemsWithApu.Contains(x.ItemId)))
+                foreach (var row in rows.Where(x => (string.IsNullOrWhiteSpace(x.ItemId) || !itemsWithApu.Contains(x.ItemId)) && (string.IsNullOrWhiteSpace(x.ItemId) || !commercialRulesByItemId.ContainsKey(x.ItemId))))
+                {
+                    if (string.IsNullOrWhiteSpace(row.Codigo) && string.IsNullOrWhiteSpace(row.Descripcion) && row.Cantidad == 0m && row.MatClpConFallback == 0m && row.MoClpConFallback == 0m) continue;
                     AddCubicacionRow(result, row, settings);
+                }
                 break;
 
             case BudgetApuMode.CubicacionMasApuComplementarios:
@@ -329,7 +352,7 @@ public sealed partial class BudgetEngine
             AddCommercialRule(result, pair.Key, itemizadoById[pair.Key], pair.Value);
 
         AddGlobalPercentages(result, settings);
-        AddApprovedChangeOrders(result, changeOrders);
+        AddApprovedChangeOrders(result, changeOrders, settings);
         return result;
     }
 
@@ -378,7 +401,23 @@ public sealed partial class BudgetEngine
             material *= 1m - negotiatedDiscountPct / 100m;
         decimal total = material + manoObra;
         string tipo = (row.Tipo ?? "MAT").Trim().ToUpperInvariant();
-        decimal valorUf = settings.Currency.ValorUfClp > 0m ? settings.Currency.ValorUfClp : 39000m;
+
+        // C4: la venta de la línea se calcula DIRECTO en CLP (precio unitario × factor × cantidad).
+        // Antes se hacía CLP → UF (redondeo a 3 decimales) → CLP, lo que introducía ±20 CLP por
+        // línea y dependía de un valor UF de respaldo hardcodeado. La UF es solo presentación.
+        bool usaFactoresFamilia = settings.Markup?.FactoresPresentacionPorFamilia ?? false;
+
+        // C-1: venta = costo_origen × factor de presentación de la familia. El mapa por familia
+        // (BudgetSettings.FromProject, desde Variables) es la fuente de verdad; el factor suelto
+        // de la fila (GgUtFactor) solo se usa como respaldo si la categoría no está mapeada.
+        // H-7: así una familia fijada deliberadamente en 1.0 no cae al respaldo.
+        decimal factorPresentacion = 1m;
+        if (usaFactoresFamilia)
+        {
+            factorPresentacion = settings.TryResolvePresentationFactor(row.Categoria, out var famFactor)
+                ? famFactor
+                : (row.GgUtFactor != 1m ? row.GgUtFactor : settings.DefaultPresentationFactor);
+        }
 
         var origin = new CostOriginBreakdown
         {
@@ -389,8 +428,10 @@ public sealed partial class BudgetEngine
             Area = string.IsNullOrWhiteSpace(row.Area) ? "General" : row.Area.Trim(),
             MermaPctOverride = row.MermaPctOverride,
             HerramientasPctOverride = row.HerramientasPctOverride,
-            VentaClp = row.CalcularUfUnit(valorUf) * valorUf * row.Cantidad,
-            HasRowLevelMarkup = row.GgUtFactor != 1.0m
+            VentaClp = row.PrecioUnitClpConFallback * factorPresentacion * row.Cantidad,
+            // C-1: el flag ahora significa "el proyecto usa factores por familia"; toda línea
+            // lleva factor (aunque sea el default del proyecto), así la venta es reproducible.
+            HasRowLevelMarkup = usaFactoresFamilia
         };
 
         switch (tipo)
@@ -506,15 +547,53 @@ public sealed partial class BudgetEngine
             return;
         }
 
+        if (fullApu && apu.TieneMermaEnDosNiveles)
+        {
+            result.Inconsistencias.Add(new BudgetInconsistencia
+            {
+                ItemId = apu.ItemId,
+                Descripcion = apu.Descripcion,
+                Tipo = "MermaDobleNivel",
+                Detalle = $"APU '{apu.Descripcion}': hay recursos con merma propia y además merma de APU " +
+                          $"({apu.MermaPct:0.##}%). La merma de APU solo aplica a los materiales sin merma propia."
+            });
+        }
+
         decimal materiales = fullApu ? apu.CostoMaterialUf * cantidadPartida : 0m;
         decimal manoObra = fullApu ? (apu.CostoMoUf + apu.CostoHhUf) * cantidadPartida : 0m;
         decimal equipos = apu.CostoEquipoUf * cantidadPartida;
         decimal subcontratos = apu.CostoScUf * cantidadPartida;
-        decimal herramientas = apu.HerramientasCalculadoUf * cantidadPartida;
-        decimal transporte = apu.TransporteUf * cantidadPartida;
-        decimal mermas = (apu.MermaUf + apu.ImprevistosUf) * cantidadPartida;
+
+        decimal herramientas;
+        decimal transporte;
+        decimal mermas;
+        if (fullApu)
+        {
+            herramientas = apu.HerramientasCalculadoUf * cantidadPartida;
+            transporte = apu.TransporteUf * cantidadPartida;
+            mermas = (apu.MermaUf + apu.ImprevistosUf) * cantidadPartida;
+        }
+        else
+        {
+            // C1: en modo complementario la cubicación aporta materiales y MO; el APU solo suma
+            // equipos, subcontratos y los recursos HERR/TR explícitos. Herramientas, transporte,
+            // mermas e imprevistos porcentuales del APU se calculaban sobre bases (CostoMoUf,
+            // CostoMaterialUf, CostoDirectoUf) que incluyen materiales/MO que NO entran aquí:
+            // eso inflaba el complemento. Ahora solo entran los recursos explícitos y los
+            // imprevistos de alza se aplican sobre lo que realmente aporta el complemento.
+            herramientas = apu.CostoHerramientasRecursoUf * cantidadPartida;
+            transporte = apu.CostoTransporteRecursoUf * cantidadPartida;
+            decimal baseComplementaria = equipos + subcontratos + herramientas + transporte;
+            mermas = baseComplementaria * MarkupPolicy.ClampPct(apu.ImprevistosAlzaPct) / 100m;
+        }
 
         if (!fullApu && equipos == 0m && subcontratos == 0m && herramientas == 0m && transporte == 0m && mermas == 0m) return;
+
+        bool usaFactoresFamilia = settings.Markup?.FactoresPresentacionPorFamilia ?? false;
+        decimal factorPresentacion = usaFactoresFamilia ? settings.ResolvePresentationFactor(area) : 1m;
+        decimal costoAporteApu = fullApu
+            ? apu.PrecioUnitUf * cantidadPartida
+            : equipos + subcontratos + herramientas + transporte + mermas;
 
         if (fullApu && materiales > 0m)
         {
@@ -540,7 +619,11 @@ public sealed partial class BudgetEngine
             HerramientasUf = herramientas,
             TransporteUf = transporte,
             MermasUf = mermas,
-            VentaClp = PriceConversion.UfToClp(apu.PrecioUnitUf * cantidadPartida, settings.Currency.ValorUfClp)
+            // C4: apu.PrecioUnitUf ya está en CLP (migración de moneda del motor).
+            // C-1: cuando el proyecto usa factores por familia, el APU también los lleva
+            // (por el área de la partida; área desconocida → factor por defecto del proyecto).
+            VentaClp = costoAporteApu * factorPresentacion,
+            HasRowLevelMarkup = usaFactoresFamilia
         });
     }
 
@@ -550,6 +633,8 @@ public sealed partial class BudgetEngine
             .Where(x => x.HerramientasPctOverride < 0m)
             .Sum(x => x.ManoObraUf);
         decimal herramientasAuto = herramientasGlobalBase * MarkupPolicy.ClampPct(settings.HerramientasPct) / 100m;
+        bool usaFactoresFamilia = settings.Markup?.FactoresPresentacionPorFamilia ?? false;
+        decimal ventaFactor = usaFactoresFamilia ? settings.DefaultPresentationFactor : 0m;
         if (herramientasAuto != 0m)
         {
             AddOrigin(result, new CostOriginBreakdown
@@ -557,6 +642,8 @@ public sealed partial class BudgetEngine
                 Origen = BudgetCostOrigin.Manual,
                 Descripcion = $"Herramientas globales {settings.HerramientasPct:0.##}% sobre mano de obra",
                 HerramientasUf = herramientasAuto,
+                VentaClp = herramientasAuto * ventaFactor,
+                HasRowLevelMarkup = usaFactoresFamilia,
                 IsGlobalAutoCharge = true
             });
         }
@@ -572,13 +659,17 @@ public sealed partial class BudgetEngine
                 Origen = BudgetCostOrigin.Manual,
                 Descripcion = $"Mermas globales {settings.MermasPct:0.##}% sobre materiales",
                 MermasUf = mermasAuto,
+                VentaClp = mermasAuto * ventaFactor,
+                HasRowLevelMarkup = usaFactoresFamilia,
                 IsGlobalAutoCharge = true
             });
         }
     }
 
-    private static void AddApprovedChangeOrders(DirectCostResult result, IEnumerable<ChangeOrderRow>? changeOrders)
+    private static void AddApprovedChangeOrders(DirectCostResult result, IEnumerable<ChangeOrderRow>? changeOrders, BudgetSettings settings)
     {
+        bool usaFactoresFamilia = settings.Markup?.FactoresPresentacionPorFamilia ?? false;
+        decimal factorPresentacion = usaFactoresFamilia ? settings.DefaultPresentationFactor : 1m;
         foreach (var oc in changeOrders ?? Enumerable.Empty<ChangeOrderRow>())
         {
             if (!string.Equals(NormalizeStatus(oc.Estado), "APROBADA", StringComparison.OrdinalIgnoreCase)) continue;
@@ -590,7 +681,9 @@ public sealed partial class BudgetEngine
                 Descripcion = oc.Titulo,
                 Area = "OC aprobadas",
                 OrdenesCambioUf = oc.DeltaCostoUf,
-                VentaClp = oc.DeltaCostoUf
+                // C-1: la OC aprobada también lleva el factor por defecto del proyecto.
+                VentaClp = oc.DeltaCostoUf * factorPresentacion,
+                HasRowLevelMarkup = usaFactoresFamilia
             });
         }
     }

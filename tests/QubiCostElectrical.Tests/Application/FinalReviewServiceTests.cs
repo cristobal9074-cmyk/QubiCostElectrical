@@ -40,6 +40,27 @@ public sealed class FinalReviewServiceTests
     }
 
     [Fact]
+    public void Build_ExcluidoCubicacion_DoesNotCountAsEmptyOrMissingApu()
+    {
+        var itemizado = new[]
+        {
+            new ItemizadoRow
+            {
+                Id = "P1",
+                Item = "1.1",
+                Descripcion = "Fuera de alcance",
+                Cantidad = 1,
+                ExcluidoCubicacion = true
+            }
+        };
+        var result = _service.Build(itemizado, null, null, null);
+
+        Assert.Equal(0, result.EmptyPartidas);
+        Assert.DoesNotContain(result.Issues, i => i.Category == FinalReviewCategory.EmptyPartida);
+        Assert.DoesNotContain(result.Issues, i => i.Category == FinalReviewCategory.MissingApu);
+    }
+
+    [Fact]
     public void Build_PartidaWithCubicacion_NoEmptyPartidaIssues()
     {
         var itemizado = new[] { Partida("P1", "1.1", "Canalización") };

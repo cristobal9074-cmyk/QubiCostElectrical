@@ -210,6 +210,7 @@ public sealed class BudgetEngineCostTests
         var engine = new BudgetEngine();
         var settings = BudgetSettings.FromValues(0m, 0m, 0m); // global gg = 0, utilidad = 0
         settings.Currency.ValorUfClp = 40000m;
+        settings.Markup.FactoresPresentacionPorFamilia = true; // C3: opt-in explícito
 
         var row = new CubicacionRow
         {
@@ -230,12 +231,12 @@ public sealed class BudgetEngineCostTests
         // Costo = 10 * 1000 = 10000 CLP
         Assert.Equal(10000m, r.CostoDirectoUf);
 
-        // Venta unitaria: ROUND(1000 * 1.50 / 40000, 3) = ROUND(0.0375, 3) = 0.038 UF
-        // Venta total neta en CLP = 0.038 * 40000 * 10 = 15200 CLP
-        Assert.Equal(15200m, r.TotalVentaNetoUf);
+        // C4: la venta de línea se calcula DIRECTO en CLP, sin viaje por UF ni redondeo a 3
+        // decimales. Venta neta = 1000 * 1.50 * 10 = 15000 CLP (antes 15200 por el redondeo).
+        Assert.Equal(15000m, r.TotalVentaNetoUf);
 
-        // Con IVA del 19%: 15200 * 1.19 = 18088 CLP
-        Assert.Equal(18088m, r.TotalVentaUf);
+        // Con IVA del 19%: 15000 * 1.19 = 17850 CLP
+        Assert.Equal(17850m, r.TotalVentaUf);
     }
 
     [Fact]

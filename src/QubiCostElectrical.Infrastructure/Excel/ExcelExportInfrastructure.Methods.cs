@@ -204,11 +204,13 @@ public sealed partial class ExcelExportInfrastructure : IExcelProjectExporter
         }
         StyleTable(ws, 15, 1, idx - 1, 4, "tbl_control_hojas");
 
-        void WriteKpi(IXLWorksheet s, int row, string label, decimal ufValue, string source)
+        void WriteKpi(IXLWorksheet s, int row, string label, decimal clpValue, string source)
         {
+            decimal valorUf = Project.ValorUfClp > 0m ? Project.ValorUfClp : PriceConversion.DefaultValorUfClp;
+            decimal ufValue = PriceConversion.ClpToUf(clpValue, valorUf);
             s.Cell(row, 4).Value = label;
             s.Cell(row, 5).SetValue(D(ufValue));
-            s.Cell(row, 6).FormulaA1 = FormulaCurrency($"E{row}");
+            s.Cell(row, 6).SetValue(D(clpValue));
             s.Cell(row, 7).Value = source;
             s.Cell(row, 5).Style.NumberFormat.Format = UfFmt;
             s.Cell(row, 6).Style.NumberFormat.Format = ProjectFmt;
@@ -249,17 +251,20 @@ public sealed partial class ExcelExportInfrastructure : IExcelProjectExporter
         var ws = wb.Worksheets.Add("02_ITEMIZADO_CLIENTE");
         Prep(ws); Title(ws, "02 · ITEMIZADO CLIENTE", 7);
         Header(ws, 3, new[] { "ÍTEM", "DESCRIPCIÓN", "UNIDAD", "CANTIDAD", "TOTAL UF", "TOTAL " + Currency, "OBSERVACIÓN" });
+        decimal valorUf = Project.ValorUfClp > 0m ? Project.ValorUfClp : PriceConversion.DefaultValorUfClp;
         int row = 4;
         foreach (var x in BuildOfferRows())
         {
+            decimal rowClp = x.TotalUf;
+            decimal rowUf = PriceConversion.ClpToUf(rowClp, valorUf);
             ws.Cell(row, 1).Value = x.Item;
             ws.Cell(row, 2).Value = x.Descripcion;
             ws.Cell(row, 3).Value = x.Unidad;
             ws.Cell(row, 4).SetValue(D(x.Cantidad));
-            ws.Cell(row, 5).SetValue(D(x.TotalUf));
-            ws.Cell(row, 6).SetValue(D(ToCurrency(x.TotalUf)));
+            ws.Cell(row, 5).SetValue(D(rowUf));
+            ws.Cell(row, 6).SetValue(D(rowClp));
             ws.Cell(row, 7).Value = string.IsNullOrWhiteSpace(x.Observaciones)
-                ? (x.TotalUf > 0 ? "Valorizado" : "Título / sin valorización")
+                ? (rowClp > 0 ? "Valorizado" : "Título / sin valorización")
                 : x.Observaciones;
             row++;
         }
@@ -464,15 +469,18 @@ public sealed partial class ExcelExportInfrastructure : IExcelProjectExporter
             WriteCost(ws, 20, "TOTAL VENTA", cost.TotalVentaUf, Project.IncluirIvaEnTotal ? "Neto + IVA" : "Neto");
             WriteCost(ws, 21, "UF/m²", cost.UfM2, "Total venta / m²");
         }
-        StyleTable(ws, 3, 1, 20, 4, "tbl_hoja_costo");
-        ws.Range(4, 2, 20, 2).Style.NumberFormat.Format = UfFmt;
-        ws.Range(4, 3, 20, 3).Style.NumberFormat.Format = ProjectFmt;
+        int lastRow = Project.PoliticaCostosExcel ? 22 : 21;
+        StyleTable(ws, 3, 1, lastRow, 4, "tbl_hoja_costo");
+        ws.Range(4, 2, lastRow, 2).Style.NumberFormat.Format = UfFmt;
+        ws.Range(4, 3, lastRow, 3).Style.NumberFormat.Format = ProjectFmt;
 
-        void WriteCost(IXLWorksheet s, int row, string label, decimal uf, string note)
+        void WriteCost(IXLWorksheet s, int row, string label, decimal clpValue, string note)
         {
+            decimal valorUf = Project.ValorUfClp > 0m ? Project.ValorUfClp : PriceConversion.DefaultValorUfClp;
+            decimal ufValue = PriceConversion.ClpToUf(clpValue, valorUf);
             s.Cell(row, 1).Value = label;
-            s.Cell(row, 2).SetValue(D(uf));
-            s.Cell(row, 3).SetValue(D(ToCurrency(uf)));
+            s.Cell(row, 2).SetValue(D(ufValue));
+            s.Cell(row, 3).SetValue(D(clpValue));
             s.Cell(row, 4).Value = note;
         }
     }
@@ -520,7 +528,9 @@ public sealed partial class ExcelExportInfrastructure : IExcelProjectExporter
         Prep(ws); Title(ws, "09 · OFERTA CLIENTE", 8);
         var cost = Cost();
         // "Monto neto" en la oferta siempre es el neto sin IVA; el IVA se muestra por separado.
-        decimal netAmountUf = ctx.OfferNetAmountUf > 0m ? ctx.OfferNetAmountUf : cost.TotalVentaNetoUf;
+        decimal netAmountClp = ctx.OfferNetAmountUf > 0m ? ctx.OfferNetAmountUf : cost.TotalVentaNetoUf;
+        decimal valorUf = Project.ValorUfClp > 0m ? Project.ValorUfClp : PriceConversion.DefaultValorUfClp;
+        decimal netAmountUf = PriceConversion.ClpToUf(netAmountClp, valorUf);
         int r = 3;
         Info(ws, r++, "Proyecto", ctx.ProjectTitle);
         Info(ws, r++, "Cliente", ctx.ClientName);
@@ -528,7 +538,7 @@ public sealed partial class ExcelExportInfrastructure : IExcelProjectExporter
         Info(ws, r++, "N° oferta", Offer.OfferNumber);
         Info(ws, r++, "Revisión", Offer.RevisionTag);
         Info(ws, r++, "Monto neto UF", netAmountUf, UfFmt);
-        Info(ws, r++, "Monto neto " + Currency, ToCurrency(netAmountUf), ProjectFmt);
+        Info(ws, r++, "Monto neto " + Currency, netAmountClp, ProjectFmt);
         Info(ws, r++, "IVA", Offer.IncludeIvaNote ? "Se debe agregar IVA cuando corresponda" : "Según condiciones comerciales");
         Info(ws, r++, "Plazo ejecución", string.IsNullOrWhiteSpace(Offer.ProjectDuration) ? "Por definir" : Offer.ProjectDuration);
         Info(ws, r++, "Validez", $"{Offer.ValidityDays} días");
@@ -539,13 +549,14 @@ public sealed partial class ExcelExportInfrastructure : IExcelProjectExporter
         Header(ws, r, new[] { "ÁREA", "TOTAL UF", "TOTAL " + Currency, "%" });
         int header = r++;
         var areas = budgetCalculation.GetAreaTotals(ctx.Cubicacion);
-        if (areas.Count == 0) areas.Add(("General", netAmountUf));
+        if (areas.Count == 0) areas.Add(("General", netAmountClp));
         decimal totalArea = areas.Sum(a => a.Total);
         foreach (var a in areas)
         {
+            decimal areaUf = PriceConversion.ClpToUf(a.Total, valorUf);
             ws.Cell(r, 1).Value = a.Area;
-            ws.Cell(r, 2).SetValue(D(a.Total));
-            ws.Cell(r, 3).SetValue(D(ToCurrency(a.Total)));
+            ws.Cell(r, 2).SetValue(D(areaUf));
+            ws.Cell(r, 3).SetValue(D(a.Total));
             ws.Cell(r, 4).SetValue(D(totalArea > 0 ? a.Total / totalArea : 1m));
             r++;
         }

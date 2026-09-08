@@ -50,10 +50,20 @@ public sealed class ClosingPolicySelection
     /// <summary>Política 5 · Gainshare: techo del monto compartido en CLP (0 = sin techo).</summary>
     public decimal GainshareCapClp { get; set; }
 
+    /// <summary>Salvaguarda: momento en que se fijó por última vez un monto absoluto de la política
+    /// (precio objetivo, fee fijo, costo objetivo, tope de reparto).</summary>
+    public DateTime? ParamsStampedAt { get; set; }
+
+    /// <summary>Salvaguarda: costo de ejecución vigente cuando se fijó ese monto absoluto. Sirve para
+    /// avisar si el costo del proyecto se movió y el monto quedó obsoleto.</summary>
+    public decimal ParamsStampedCostoEjecucionClp { get; set; }
+
     public static ClosingPolicySelection Default() => new();
 }
 
-/// <summary>Resultado de aplicar una política de cierre sobre un CostBreakdown ya calculado.</summary>
+/// <summary>Resultado de aplicar una política de cierre. <see cref="VentaFinalClp"/> es el NETO
+/// (venta post-política, <b>pre-descuento y pre-IVA</b>); <c>BudgetTotalsCalculator</c> aplica
+/// descuento e IVA sobre ese neto de forma uniforme para todas las políticas.</summary>
 public sealed class ClosingPolicyResult
 {
     public ClosingPolicyType Policy { get; set; }
@@ -67,47 +77,98 @@ public sealed class ClosingPolicyResult
 }
 
 /// <summary>
-/// Aplica una política de cierre comercial sobre el resultado ya calculado por BudgetEngine.
-/// No recalcula cubicación ni APU: solo transforma costo en precio según la política elegida.
+/// Entrada mínima para <see cref="ClosingPolicyEngine.ApplyNeto"/>. Se arma en
+/// <c>BudgetTotalsCalculator</c> ANTES de construir el <see cref="CostBreakdown"/> final:
+/// por eso no se pasa el breakdown entero.
+/// </summary>
+public sealed class ClosingPolicyInput
+{
+    /// <summary>Venta por factores/markup del motor, post-factores, <b>pre-descuento y pre-IVA</b>.</summary>
+    public decimal VentaBaseNetaClp { get; set; }
+    /// <summary>Costo de ejecución (costo directo del motor, incl. GO en política Excel).</summary>
+    public decimal CostoEjecucionClp { get; set; }
+    /// <summary>Piso comercial: costo del proyecto con GG + utilidad + VA (bajo este piso ⇒ bloqueante).</summary>
+    public decimal PisoComercialClp { get; set; }
+    /// <summary>Contingencia/riesgo ya incluida en el costo de ejecución, como % de ese costo.</summary>
+    public decimal RiesgoImplicitoPct { get; set; }
+    /// <summary>Orígenes con su venta de línea (para <see cref="ClosingPolicyType.UnitPricePure"/>).</summary>
+    public IReadOnlyList<CostOriginBreakdown> Origenes { get; set; } = new List<CostOriginBreakdown>();
+
+    /// <summary>Reconstruye la entrada desde un breakdown ya calculado (fallback de UI/tests).</summary>
+    public static ClosingPolicyInput FromBreakdown(CostBreakdown breakdown)
+    {
+        breakdown ??= new CostBreakdown();
+        decimal costo = breakdown.CostoDirectoUf;
+        return new ClosingPolicyInput
+        {
+            VentaBaseNetaClp = breakdown.TotalVentaNetoUf > 0m ? breakdown.TotalVentaNetoUf : breakdown.TotalVentaUf,
+            CostoEjecucionClp = costo,
+            PisoComercialClp = breakdown.CostoProyectoUf > 0m ? breakdown.CostoProyectoUf : breakdown.SubtotalUf,
+            RiesgoImplicitoPct = costo > 0m ? breakdown.RiesgoUf / costo * 100m : 0m,
+            Origenes = breakdown.Origenes ?? new List<CostOriginBreakdown>()
+        };
+    }
+}
+
+/// <summary>
+/// Convierte la venta base del motor en el NETO de venta según la política comercial de cierre.
+/// No recalcula cubicación ni APU. El descuento y el IVA se aplican después, fuera de aquí.
 /// </summary>
 public static class ClosingPolicyEngine
 {
-    public static ClosingPolicyResult Apply(CostBreakdown breakdown, ClosingPolicySelection? selection)
+    public static ClosingPolicyResult ApplyNeto(ClosingPolicyInput input, ClosingPolicySelection? selection)
     {
-        breakdown ??= new CostBreakdown();
+        input ??= new ClosingPolicyInput();
         selection ??= ClosingPolicySelection.Default();
 
         var result = selection.Policy switch
         {
-            ClosingPolicyType.TargetPrice => ApplyTargetPrice(breakdown, selection),
-            ClosingPolicyType.LumpSumEpc => ApplyLumpSumEpc(breakdown, selection),
-            ClosingPolicyType.CostPlusFee => ApplyCostPlusFee(breakdown, selection),
-            ClosingPolicyType.UnitPricePure => ApplyUnitPricePure(breakdown),
-            ClosingPolicyType.GainsharePainshare => ApplyGainshare(breakdown, selection),
-            _ => ApplyCostPlusMarkup(breakdown)
+            ClosingPolicyType.TargetPrice => ApplyTargetPrice(input, selection),
+            ClosingPolicyType.LumpSumEpc => ApplyLumpSumEpc(input, selection),
+            ClosingPolicyType.CostPlusFee => ApplyCostPlusFee(input, selection),
+            ClosingPolicyType.UnitPricePure => ApplyUnitPricePure(input),
+            ClosingPolicyType.GainsharePainshare => ApplyGainshare(input, selection),
+            _ => ApplyCostPlusMarkup(input)
         };
 
         result.Policy = selection.Policy;
-        result.CostoEjecucionClp = breakdown.CostoDirectoUf;
-        result.CostoProyectoClp = breakdown.CostoProyectoUf > 0m ? breakdown.CostoProyectoUf : breakdown.SubtotalUf;
-        result.MargenClp = result.VentaFinalClp - result.CostoEjecucionClp;
+        result.CostoEjecucionClp = input.CostoEjecucionClp;
+        result.CostoProyectoClp = input.PisoComercialClp;
+        result.MargenClp = result.VentaFinalClp - input.CostoEjecucionClp;
         result.MargenPct = result.VentaFinalClp > 0m ? result.MargenClp / result.VentaFinalClp * 100m : 0m;
+
+        // Aviso NO bloqueante para políticas de precio-primero: la venta cubre el costo de
+        // ejecución pero queda bajo el piso comercial (costo del proyecto con GG + utilidad).
+        // FinalReviewService lo trata como advertencia (no contiene "margen negativo"/"no cubre").
+        if (selection.Policy is ClosingPolicyType.TargetPrice or ClosingPolicyType.LumpSumEpc
+                or ClosingPolicyType.GainsharePainshare)
+        {
+            decimal v = result.VentaFinalClp;
+            if (input.PisoComercialClp > 0m && v >= input.CostoEjecucionClp && v < input.PisoComercialClp)
+                result.Advertencias.Add(
+                    $"La venta con esta política ({v:N0}) está bajo el costo del proyecto con utilidad ({input.PisoComercialClp:N0}); margen reducido.");
+        }
+
         return result;
     }
 
-    private static ClosingPolicyResult ApplyCostPlusMarkup(CostBreakdown breakdown) => new()
+    /// <summary>Compat.: aplica la política sobre un breakdown ya calculado (fallback de UI/tests).</summary>
+    public static ClosingPolicyResult Apply(CostBreakdown breakdown, ClosingPolicySelection? selection)
+        => ApplyNeto(ClosingPolicyInput.FromBreakdown(breakdown), selection);
+
+    private static ClosingPolicyResult ApplyCostPlusMarkup(ClosingPolicyInput input) => new()
     {
-        VentaFinalClp = breakdown.TotalVentaUf,
+        VentaFinalClp = input.VentaBaseNetaClp,
         Explicacion = "Costo + Gastos Generales + Utilidad (política vigente del motor)."
     };
 
-    private static ClosingPolicyResult ApplyTargetPrice(CostBreakdown breakdown, ClosingPolicySelection selection)
+    private static ClosingPolicyResult ApplyTargetPrice(ClosingPolicyInput input, ClosingPolicySelection selection)
     {
         var warnings = new List<string>();
-        decimal venta = selection.TargetPriceClp > 0m ? selection.TargetPriceClp : breakdown.TotalVentaUf;
+        decimal venta = selection.TargetPriceClp > 0m ? selection.TargetPriceClp : input.VentaBaseNetaClp;
         if (selection.TargetPriceClp <= 0m)
             warnings.Add("No se definió un precio objetivo; se usa la venta calculada por el motor.");
-        if (venta < breakdown.CostoDirectoUf)
+        if (venta < input.CostoEjecucionClp)
             warnings.Add("El precio objetivo no cubre el costo de ejecución: margen negativo.");
 
         return new ClosingPolicyResult
@@ -118,13 +179,12 @@ public static class ClosingPolicyEngine
         };
     }
 
-    private static ClosingPolicyResult ApplyLumpSumEpc(CostBreakdown breakdown, ClosingPolicySelection selection)
+    private static ClosingPolicyResult ApplyLumpSumEpc(ClosingPolicyInput input, ClosingPolicySelection selection)
     {
-        decimal impliedRiskPct = breakdown.CostoDirectoUf > 0m ? breakdown.RiesgoUf / breakdown.CostoDirectoUf * 100m : 0m;
+        decimal impliedRiskPct = input.RiesgoImplicitoPct;
         decimal minRisk = Math.Max(0m, selection.LumpSumMinRiskPct);
         decimal extraRiskPct = Math.Max(0m, minRisk - impliedRiskPct);
-        decimal extraRiskClp = breakdown.CostoDirectoUf * extraRiskPct / 100m;
-        decimal costoProyecto = breakdown.CostoProyectoUf > 0m ? breakdown.CostoProyectoUf : breakdown.SubtotalUf;
+        decimal extraRiskClp = input.CostoEjecucionClp * extraRiskPct / 100m;
 
         var warnings = new List<string>();
         if (extraRiskPct > 0m)
@@ -132,35 +192,35 @@ public static class ClosingPolicyEngine
 
         return new ClosingPolicyResult
         {
-            VentaFinalClp = costoProyecto + extraRiskClp,
+            VentaFinalClp = input.PisoComercialClp + extraRiskClp,
             Advertencias = warnings,
             Explicacion = "Precio cerrado e inamovible: el contratista absorbe todo sobrecosto. Contingencia mínima forzada por sobre el riesgo configurado en el motor."
         };
     }
 
-    private static ClosingPolicyResult ApplyCostPlusFee(CostBreakdown breakdown, ClosingPolicySelection selection)
+    private static ClosingPolicyResult ApplyCostPlusFee(ClosingPolicyInput input, ClosingPolicySelection selection)
     {
         decimal fee = selection.FeeClp > 0m
             ? selection.FeeClp
-            : breakdown.CostoDirectoUf * Math.Max(0m, selection.FeePct) / 100m;
+            : input.CostoEjecucionClp * Math.Max(0m, selection.FeePct) / 100m;
 
         return new ClosingPolicyResult
         {
-            VentaFinalClp = breakdown.CostoDirectoUf + fee,
+            VentaFinalClp = input.CostoEjecucionClp + fee,
             Explicacion = selection.FeeClp > 0m
                 ? "Costo real traspasado 1:1 + fee fijo pactado, sin Gastos Generales cargados sobre el costo."
                 : $"Costo real traspasado 1:1 + fee del {selection.FeePct:0.#}% sobre el costo de ejecución."
         };
     }
 
-    private static ClosingPolicyResult ApplyUnitPricePure(CostBreakdown breakdown)
+    private static ClosingPolicyResult ApplyUnitPricePure(ClosingPolicyInput input)
     {
         // Algunos orígenes no traen precio unitario propio (cargos globales de herramientas/mermas,
         // órdenes de cambio aprobadas guardan solo el delta de costo): sin este fallback quedarían
         // en 0 y la venta se subcontaría silenciosamente. Se suman a costo (sin margen) y se avisa.
         decimal venta = 0m;
         bool hadCostOnlyOrigins = false;
-        foreach (var o in breakdown.Origenes ?? new List<CostOriginBreakdown>())
+        foreach (var o in input.Origenes ?? new List<CostOriginBreakdown>())
         {
             if (o.VentaClp > 0m)
             {
@@ -179,16 +239,16 @@ public static class ClosingPolicyEngine
 
         return new ClosingPolicyResult
         {
-            VentaFinalClp = venta > 0m ? venta : breakdown.TotalVentaUf,
+            VentaFinalClp = venta > 0m ? venta : input.VentaBaseNetaClp,
             Advertencias = warnings,
             Explicacion = "Venta = suma de precios unitarios contractuales por partida (el margen ya está embebido en cada precio unitario)."
         };
     }
 
-    private static ClosingPolicyResult ApplyGainshare(CostBreakdown breakdown, ClosingPolicySelection selection)
+    private static ClosingPolicyResult ApplyGainshare(ClosingPolicyInput input, ClosingPolicySelection selection)
     {
         var warnings = new List<string>();
-        decimal baseline = breakdown.TotalVentaUf;
+        decimal baseline = input.VentaBaseNetaClp;
         if (selection.TargetCostClp <= 0m)
         {
             warnings.Add("No se definió un costo objetivo pactado; se usa la venta calculada por el motor sin reparto.");
@@ -200,7 +260,7 @@ public static class ClosingPolicyEngine
             };
         }
 
-        decimal variance = selection.TargetCostClp - breakdown.CostoDirectoUf; // positivo = ahorro
+        decimal variance = selection.TargetCostClp - input.CostoEjecucionClp; // positivo = ahorro
         decimal shared = variance * MarkupPolicy.ClampPct(selection.GainsharePct) / 100m;
         if (selection.GainshareCapClp > 0m)
             shared = Math.Clamp(shared, -selection.GainshareCapClp, selection.GainshareCapClp);

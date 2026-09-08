@@ -108,9 +108,9 @@ public sealed class ItemizadoWorkspaceService : IItemizadoWorkspaceService
         {
             ItemizadoFilterMode.Todos => true,
             ItemizadoFilterMode.Incompletos => row.CompletionState != PartidaCompletionState.Completed && !row.ExcluidoCubicacion,
-            ItemizadoFilterMode.Completos => row.CompletionState == PartidaCompletionState.Completed,
-            ItemizadoFilterMode.SinCubicar => row.CompletionState == PartidaCompletionState.Empty,
-            ItemizadoFilterMode.SinPrecio => row.CompletionState != PartidaCompletionState.Empty && !row.HasPrice,
+            ItemizadoFilterMode.Completos => row.CompletionState == PartidaCompletionState.Completed && !row.ExcluidoCubicacion,
+            ItemizadoFilterMode.SinCubicar => row.CompletionState == PartidaCompletionState.Empty && !row.ExcluidoCubicacion,
+            ItemizadoFilterMode.SinPrecio => !row.ExcluidoCubicacion && row.CompletionState != PartidaCompletionState.Empty && !row.HasPrice,
             _ => true
         };
     }
@@ -196,6 +196,7 @@ public sealed class ItemizadoWorkspaceService : IItemizadoWorkspaceService
     {
         int sinPrecio = rows.Count(x =>
             !x.EsTitulo &&
+            !x.ExcluidoCubicacion &&
             completion.GetState(x.Id) != PartidaCompletionState.Empty &&
             (!totalsByItem.TryGetValue(x.Id ?? "", out var total) || total <= 0m));
 
@@ -215,13 +216,23 @@ public sealed class ItemizadoWorkspaceService : IItemizadoWorkspaceService
         if (row.EsTitulo)
             return "Capítulo";
         if (row.ExcluidoCubicacion)
-            return "Excluida";
+        {
+            var motivo = (row.MotivoNoCubicar ?? "").Trim();
+            return string.IsNullOrEmpty(motivo) ? "Excluida" : "Excluida · " + TruncateMotivo(motivo, 28);
+        }
         return state switch
         {
             PartidaCompletionState.Completed => "Completo",
             PartidaCompletionState.Incomplete => "Incompleto",
             _ => "Sin cubicar"
         };
+    }
+
+    private static string TruncateMotivo(string motivo, int maxChars)
+    {
+        if (motivo.Length <= maxChars)
+            return motivo;
+        return motivo[..(maxChars - 1)].TrimEnd() + "…";
     }
 
     private static string BuildStatusKind(ItemizadoRow row, PartidaCompletionState state, bool hasPrice)

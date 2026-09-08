@@ -11,13 +11,79 @@ namespace QubiCostElectrical;
 
 /// <summary>
 /// Importa materiales desde Excel (.xlsx) o CSV al banco de precios.
-/// Detecta columnas por nombre de cabecera — el orden no importa.
+/// Detecta columnas por nombre de cabecera (orden flexible).
+/// Plantilla oficial: Código | Descripción | UN | Precio CLP | Familia | MO
 /// </summary>
 public static class PriceBankSeeder
 {
     private static readonly string[] SeedFileNames = ["banco_inicial.xlsx", "banco_inicial.csv"];
 
     private const string EmbeddedResourceName = "QubiCostElectrical.PriceBank.banco_inicial.csv";
+
+    /// <summary>Cabeceras canónicas de la plantilla de importación (misma UI del banco).</summary>
+    public static readonly string[] ImportTemplateHeaders =
+    [
+        "Código",
+        "Descripción",
+        "UN",
+        "Precio CLP",
+        "Familia",
+        "MO"
+    ];
+
+    public static string ImportFormatHelpMessage =>
+        "Formato Qubi (fila 1, en este orden):\n" +
+        "Código | Descripción | UN | Precio CLP | Familia | MO\n\n" +
+        "Descargue la plantilla desde Banco de precios, copie sus precios ahí e importe de nuevo.\n" +
+        "Los precios van en pesos chilenos (CLP).";
+
+    /// <summary>
+    /// Escribe plantilla Excel (.xlsx) o CSV según extensión, con cabeceras oficiales + 2 filas de ejemplo.
+    /// </summary>
+    public static void WriteImportTemplate(string path)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        string ext = Path.GetExtension(path).ToLowerInvariant();
+        if (ext is ".xlsx" or ".xls")
+            WriteImportTemplateExcel(path);
+        else
+            WriteImportTemplateCsv(path);
+    }
+
+    private static void WriteImportTemplateExcel(string path)
+    {
+        using var wb = new XLWorkbook();
+        var ws = wb.AddWorksheet("Lista de precios");
+        for (int c = 0; c < ImportTemplateHeaders.Length; c++)
+            ws.Cell(1, c + 1).Value = ImportTemplateHeaders[c];
+
+        ws.Cell(2, 1).Value = "H07Z1-K";
+        ws.Cell(2, 2).Value = "Cable Cu libre de halógenos 1×2,5 mm²";
+        ws.Cell(2, 3).Value = "ml";
+        ws.Cell(2, 4).Value = 1250;
+        ws.Cell(2, 5).Value = "Conductores";
+        ws.Cell(2, 6).Value = 350;
+
+        ws.Cell(3, 1).Value = "TPRPE20";
+        ws.Cell(3, 2).Value = "Tubería PVC rígido 20 mm";
+        ws.Cell(3, 3).Value = "ml";
+        ws.Cell(3, 4).Value = 890;
+        ws.Cell(3, 5).Value = "Canalización";
+        ws.Cell(3, 6).Value = 120;
+
+        ws.Row(1).Style.Font.Bold = true;
+        ws.Columns().AdjustToContents();
+        wb.SaveAs(path);
+    }
+
+    private static void WriteImportTemplateCsv(string path)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine(string.Join(';', ImportTemplateHeaders));
+        sb.AppendLine("H07Z1-K;Cable Cu libre de halógenos 1×2,5 mm²;ml;1250;Conductores;350");
+        sb.AppendLine("TPRPE20;Tubería PVC rígido 20 mm;ml;890;Canalización;120");
+        File.WriteAllText(path, sb.ToString(), new UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
+    }
 
     /// <summary>
     /// Retorna los materiales del banco de precios embebido en el ensamblado.
@@ -141,12 +207,16 @@ public static class PriceBankSeeder
             Descripcion = Get("descripcion", "description", "nombre", "material", "item") ?? "",
             Unidad = Get("unidad", "unit", "um", "ud", "un") ?? "",
             Categoria = Get("familia", "categoria", "category", "rubro", "tipo") ?? "",
-            MatClp = ParseDecimal(Get("precioclp", "precio_clp", "precio clp", "preciomaterial", "precio mat", "precio", "matuf", "mat_uf", "mat uf", "costo mat")),
-            MoClp = ParseDecimal(Get("mo", "moclp", "mo_clp", "mo clp", "manoobra", "mano obra", "mano de obra", "mouf", "mo_uf", "mo uf", "costo mo")),
+            MatClp = ParseDecimal(Get(
+                "precioclp", "preciomaterial", "preciomat", "precio",
+                "mat", "matclp", "matuf", "costomat")),
+            MoClp = ParseDecimal(Get(
+                "mo", "moclp", "manoobra", "manodeobra",
+                "mouf", "costomo")),
             MonedaPrecio = "CLP",
             Proveedor = Get("proveedor", "supplier", "vendor") ?? "",
             Marca = Get("marca", "brand") ?? "",
-            FechaPrecio = ParseDate(Get("fecha", "fechaprecio", "fecha_precio", "fecha precio")) ?? DateTime.Today,
+            FechaPrecio = ParseDate(Get("fecha", "fechaprecio")) ?? DateTime.Today,
             OrigenPrecio = "Banco inicial",
             ProyectoOrigen = "",
             ActualizadoEn = DateTime.Now
@@ -178,11 +248,28 @@ public static class PriceBankSeeder
     }
 
     private static string NormalizeHeader(string raw)
-        => raw.Trim().ToLowerInvariant()
-              .Replace(" ", "")
-              .Replace("á", "a").Replace("é", "e").Replace("í", "i")
-              .Replace("ó", "o").Replace("ú", "u").Replace("ñ", "n")
-              .Replace("_", "");
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+            return "";
+
+        var sb = new StringBuilder(raw.Length);
+        foreach (char c in raw.Trim().ToLowerInvariant())
+        {
+            char mapped = c switch
+            {
+                'á' or 'à' => 'a',
+                'é' or 'è' => 'e',
+                'í' or 'ì' => 'i',
+                'ó' or 'ò' => 'o',
+                'ú' or 'ù' => 'u',
+                'ñ' => 'n',
+                _ => c
+            };
+            if (char.IsLetterOrDigit(mapped))
+                sb.Append(mapped);
+        }
+        return sb.ToString();
+    }
 
     private static decimal ParseDecimal(string? value)
     {

@@ -12,7 +12,10 @@ public sealed record CompraMaterialViewModel(
     decimal MatUfUnitario,
     decimal TotalNetoUf,
     decimal TotalCompraUf,
-    int Lineas)
+    int Lineas,
+    decimal MatClpUnitario = 0m,
+    decimal TotalNetoClp = 0m,
+    decimal TotalCompraClp = 0m)
 {
     /// <summary>
     /// Clave de agrupación: proveedor si existe; si no, categoría (fallback UI).

@@ -10,27 +10,26 @@ public sealed partial class BudgetProjectSession
     public int GetScopeVersion(string scope)
     {
         string normalized = NormalizeScope(scope);
-        return scopeVersions.TryGetValue(normalized, out int version) ? version : 0;
+        return dirtyTracker.GetScopeVersion(normalized);
     }
 
-    public IReadOnlyCollection<string> GetDirtyScopes() => dirtyScopes.ToArray();
+    public IReadOnlyCollection<string> GetDirtyScopes() => dirtyTracker.GetDirtyScopes();
 
     public bool HasDirtyScope(string scope)
     {
         string normalized = NormalizeScope(scope);
-        return dirtyScopes.Contains(normalized);
+        return dirtyTracker.HasDirtyScope(normalized);
     }
 
     public void ClearDirtyScopes(IEnumerable<string>? scopes = null)
     {
         if (scopes == null)
         {
-            dirtyScopes.Clear();
+            dirtyTracker.ClearDirtyScopes();
             return;
         }
 
-        foreach (string scope in scopes)
-            dirtyScopes.Remove(NormalizeScope(scope));
+        dirtyTracker.ClearDirtyScopes(scopes.Select(NormalizeScope));
     }
 
     public ProjectInfoRow ProjectInfo
@@ -114,18 +113,29 @@ public sealed partial class BudgetProjectSession
         set => Data.ActiveVersionId = value ?? "";
     }
 
-    public void MarkDirty() => MarkDirty("project_info");
+    public void MarkDirty() => MarkDirty(ProjectDirtyScope.ProjectInfo);
+
+    public void MarkDirty(params ProjectDirtyScope[] scopes)
+    {
+        if (scopes == null || scopes.Length == 0)
+        {
+            MarkDirty(ProjectDirtyScope.ProjectInfo.Key);
+            return;
+        }
+
+        MarkDirty(scopes.Select(s => s.Key).ToArray());
+    }
 
     public void MarkDirty(params string[] scopes)
     {
         EnsureWritable("marcar cambios");
-        IsDirty = true;
+        dirtyTracker.MarkDirtyFlag();
         StateVersion++;
 
         if (scopes == null || scopes.Length == 0)
         {
-            TouchScope("project_info");
-            PublishChanged("project_info", "Cambio de proyecto");
+            TouchScope(ProjectDirtyScope.ProjectInfo.Key);
+            PublishChanged(ProjectDirtyScope.ProjectInfo.Key, "Cambio de proyecto");
             return;
         }
 
@@ -143,8 +153,7 @@ public sealed partial class BudgetProjectSession
 
     public void MarkSaved()
     {
-        IsDirty = false;
-        dirtyScopes.Clear();
+        dirtyTracker.MarkSaved();
         StateVersion++;
         TouchScope("saved", markDirty: false);
         var args = new ProjectSessionChangedEventArgs(ProjectSessionChangeKind.Saved, "saved", "Proyecto guardado", IsDirty);
@@ -219,14 +228,46 @@ public sealed partial class BudgetProjectSession
         };
 
         CurrentProjectPath = "";
-        IsDirty = false;
+        dirtyTracker.ResetVersionsAndDirty();
         StateVersion++;
-        scopeVersions.Clear();
-        dirtyScopes.Clear();
         TouchScope("reset", markDirty: false);
         EnsureIntegrity(data);
         SyncCubicacionGgUtFactorsFromVariablesInternal();
         PublishChanged("reset", "Nuevo proyecto");
+    }
+
+    public void ApplyItemizadoTemplate(IEnumerable<ItemizadoRow>? templateRows)
+    {
+        EnsureWritable("aplicar plantilla de itemizado");
+        if (templateRows == null) return;
+        data.Itemizado.Clear();
+        data.Itemizado.AddRange(templateRows);
+        MarkDirty(ProjectDirtyScope.Itemizado);
+        PublishChanged("itemizado", "Plantilla de obra aplicada");
+    }
+
+    public void InitializeProjectParameters(
+        string name,
+        string client,
+        string location,
+        string currency,
+        ClosingPolicySelection closingPolicy,
+        IEnumerable<ItemizadoRow>? templateRows = null)
+    {
+        EnsureWritable("inicializar parámetros del proyecto");
+        ProjectInfo.Nombre = name;
+        ProjectInfo.Cliente = client;
+        ProjectInfo.Ubicacion = location;
+        ProjectInfo.MonedaPresupuesto = currency;
+        Data.ClosingPolicy = closingPolicy;
+        MarkDirty(ProjectDirtyScope.ClosingPolicy);
+        if (templateRows != null)
+        {
+            data.Itemizado.Clear();
+            data.Itemizado.AddRange(templateRows);
+            MarkDirty(ProjectDirtyScope.Itemizado);
+        }
+        PublishChanged("project_info", "Inicialización de proyecto");
     }
 
     public void ApplySnapshot(ProjectFileData? snapshot, string? projectPath = null, bool markDirty = false)
@@ -235,10 +276,10 @@ public sealed partial class BudgetProjectSession
         EnsureIntegrity(data);
         if (projectPath != null)
             CurrentProjectPath = projectPath;
-        IsDirty = markDirty;
+        dirtyTracker.ResetVersionsAndDirty();
+        if (markDirty)
+            dirtyTracker.MarkDirtyFlag();
         StateVersion++;
-        scopeVersions.Clear();
-        dirtyScopes.Clear();
         SyncCubicacionGgUtFactorsFromVariablesInternal();
         TouchScope(markDirty ? "project_info" : "saved", markDirty);
         PublishChanged(markDirty ? "project_info" : "saved", markDirty ? "Snapshot aplicado con cambios" : "Snapshot aplicado");
@@ -251,18 +292,8 @@ public sealed partial class BudgetProjectSession
         if (ProjectInfo.Variables.TryGetValue(key, out decimal val))
             return val;
 
-        return norm switch
-        {
-            "CONDUCTORES" => 1.50m,
-            "CANALIZACION" => 1.44m,
-            "TABLEROS" => 1.10m,
-            "PROTECCIONES" => 1.12m,
-            "ILUMINACION" => 1.17m,
-            "EQUIPOS" => 1.12m,
-            "ENCHUFES Y TOMACORRIENTES" or "ENCHUFES" => 1.15m,
-            "PUESTA A TIERRA" => 1.20m,
-            _ => 1.14m
-        };
+        // Regla única en Domain (FamilyPresentationDefaults) para no duplicar la tabla.
+        return FamilyPresentationDefaults.DefaultMarkup(norm);
     }
 
     public void SetFamilyMarkup(string familyName, decimal value)
@@ -271,7 +302,7 @@ public sealed partial class BudgetProjectSession
         var norm = NormalizeFamilyName(familyName);
         string key = $"MarkupFactor_{norm}";
         ProjectInfo.Variables[key] = value;
-        MarkDirty("project_info");
+        MarkDirty(ProjectDirtyScope.ProjectInfo);
         SyncCubicacionGgUtFactorsFromVariables();
     }
 
@@ -292,7 +323,7 @@ public sealed partial class BudgetProjectSession
             ProjectInfo.Variables.Remove(key);
         else
             ProjectInfo.Variables[key] = pct;
-        MarkDirty("project_info");
+        MarkDirty(ProjectDirtyScope.ProjectInfo);
         SyncCubicacionGgUtFactorsFromVariables();
     }
 
@@ -307,68 +338,39 @@ public sealed partial class BudgetProjectSession
     {
         EnsureWritable("sincronizar markups de cubicación");
         SyncCubicacionGgUtFactorsFromVariablesInternal();
-        MarkDirty("cubicacion");
+        MarkDirty(ProjectDirtyScope.Cubicacion);
     }
 
     private void SyncCubicacionGgUtFactorsFromVariablesInternal()
     {
+        // C-1: toda línea (MAT y no-MAT) lleva el factor de presentación de su familia cuando el
+        // proyecto usa factores; si no, 1.0 como antes.
+        bool usaFactores = ProjectInfo.UsarFactoresPresentacionFamilia || ProjectInfo.PoliticaCostosExcel;
         foreach (var row in data.Cubicacion)
         {
-            if (row.Tipo == TipoRecurso.MAT)
-            {
-                row.GgUtFactor = GetFamilyPresentationFactor(row.Categoria);
-                row.RecalcularUf(data.Proyecto.ValorUfClp);
-            }
-            else
-            {
-                row.GgUtFactor = 1.0m;
-                row.RecalcularUf(data.Proyecto.ValorUfClp);
-            }
+            row.GgUtFactor = usaFactores ? GetFamilyPresentationFactor(row.Categoria) : 1.0m;
+            row.RecalcularUf(data.Proyecto.ValorUfClp);
         }
     }
 
-    private static string NormalizeFamilyName(string? name)
-    {
-        if (string.IsNullOrWhiteSpace(name)) return "ACCESORIOS";
-        return name.Trim().ToUpperInvariant()
-            .Replace("Á", "A")
-            .Replace("É", "E")
-            .Replace("Í", "I")
-            .Replace("Ó", "O")
-            .Replace("Ú", "U");
-    }
+    private static string NormalizeFamilyName(string? name) => FamilyPresentationDefaults.Normalize(name);
 
     public void SetReadOnly(bool isReadOnly, string? reason = null) =>
         SetLockReadOnly(isReadOnly, reason);
 
     public void SetLockReadOnly(bool isReadOnly, string? reason = null)
     {
-        lockReadOnly = isReadOnly;
-        lockReadOnlyReason = isReadOnly
-            ? (string.IsNullOrWhiteSpace(reason) ? "Proyecto abierto en modo solo lectura." : reason.Trim())
-            : "";
+        accessGate.SetLockReadOnly(isReadOnly, reason);
         PublishChanged("lock_access", isReadOnly ? "Lock de solo lectura activado" : "Lock liberado");
     }
 
     public void SetRoleReadOnly(bool isReadOnly, string? reason = null)
     {
-        roleReadOnly = isReadOnly;
-        roleReadOnlyReason = isReadOnly
-            ? (string.IsNullOrWhiteSpace(reason) ? "Tu rol no permite editar." : reason.Trim())
-            : "";
+        accessGate.SetRoleReadOnly(isReadOnly, reason);
         PublishChanged("role_access", isReadOnly ? "Restricción por rol activada" : "Restricción por rol liberada");
     }
 
-    public void EnsureWritable(string operation)
-    {
-        if (!IsReadOnly)
-            return;
-
-        throw new InvalidOperationException(
-            string.IsNullOrWhiteSpace(operation)
-                ? "El proyecto est� en modo solo lectura."
-                : $"El proyecto est� en modo solo lectura. No se puede {operation}.");
-    }
+    public void EnsureWritable(string operation) => accessGate.EnsureWritable(operation);
 
     public ProjectFileData CreateMutableSnapshot()
     {
@@ -424,10 +426,7 @@ public sealed partial class BudgetProjectSession
     private string TouchScope(string scope, bool markDirty = true)
     {
         string normalized = NormalizeScope(scope);
-        scopeVersions[normalized] = scopeVersions.TryGetValue(normalized, out int current) ? current + 1 : 1;
-        if (markDirty && normalized != "saved" && normalized != "reset")
-            dirtyScopes.Add(normalized);
-        return normalized;
+        return dirtyTracker.Touch(normalized, markDirty);
     }
 
     private void PublishChanged(string scope, string reason)
@@ -464,44 +463,9 @@ public sealed partial class BudgetProjectSession
         }
     }
 
-    private static string NormalizeScope(string? scope)
-    {
-        if (string.IsNullOrWhiteSpace(scope)) return "project_info";
-        return scope.Trim().ToLowerInvariant() switch
-        {
-            "plantillas" or "template" or "templates" => "plantillas",
-            "conjuntos" or "conjuntos_electricos" => "conjuntos_electricos",
-            "apu" or "apus" or "hoja_costo" => "apu",
-            "ordenes" or "ordenes_cambio" or "change_orders" => "ordenes_cambio",
-            "version" or "versions" or "versiones" => "versiones",
-            "qty" or "qty_headers" or "cantidad_headers" => "qty_headers",
-            "calc" or "calculadora" => "calculadora",
-            "material" or "materiales" => "materiales",
-            "item" or "itemizado" => "itemizado",
-            "cubicacion" or "cubicación" => "cubicacion",
-            "reset" => "reset",
-            "saved" => "saved",
-            "project" or "proyecto" or "project_info" => "project_info",
-            var value => value
-        };
-    }
+    private static string NormalizeScope(string? scope) => ProjectDirtyScope.Parse(scope).Key;
 
-    private static ProjectSessionChangeKind MapKind(string scope) => scope switch
-    {
-        "project_info" => ProjectSessionChangeKind.ProjectInfo,
-        "itemizado" => ProjectSessionChangeKind.Itemizado,
-        "materiales" => ProjectSessionChangeKind.Materiales,
-        "cubicacion" => ProjectSessionChangeKind.Cubicacion,
-        "plantillas" => ProjectSessionChangeKind.Plantillas,
-        "apu" => ProjectSessionChangeKind.Apu,
-        "ordenes_cambio" => ProjectSessionChangeKind.OrdenesCambio,
-        "versiones" => ProjectSessionChangeKind.Versiones,
-        "qty_headers" => ProjectSessionChangeKind.QtyHeaders,
-        "zonas" => ProjectSessionChangeKind.Zonas,
-        "saved" => ProjectSessionChangeKind.Saved,
-        "reset" => ProjectSessionChangeKind.Reset,
-        _ => ProjectSessionChangeKind.Unknown
-    };
+    private static ProjectSessionChangeKind MapKind(string scope) => ProjectDirtyScope.Parse(scope).ChangeKind;
 
     private static void EnsureIntegrity(ProjectFileData value)
     {

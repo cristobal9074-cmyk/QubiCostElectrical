@@ -12,7 +12,7 @@ public sealed class TemplateSpreadsheetService : ITemplateSpreadsheetService
     public void Export(string path, IReadOnlyList<TemplateRow> templates, string sourceProject, string sourceClient)
     {
         if (string.IsNullOrWhiteSpace(path))
-            throw new ArgumentException("Ruta de exportaciÛn requerida.", nameof(path));
+            throw new ArgumentException("Ruta de exportaci√≥n requerida.", nameof(path));
         if (templates == null)
             throw new ArgumentNullException(nameof(templates));
 
@@ -20,60 +20,60 @@ public sealed class TemplateSpreadsheetService : ITemplateSpreadsheetService
         {
             using var wb = new XLWorkbook();
 
-        var wsTpl = wb.Worksheets.Add("Plantillas");
-        string[] tplHeaders = { "Nombre", "Descripcion", "UnidadBase", "Area", "Keywords", "Componentes" };
-        for (int c = 0; c < tplHeaders.Length; c++)
-            wsTpl.Cell(1, c + 1).Value = tplHeaders[c];
+            var wsTpl = wb.Worksheets.Add("Plantillas");
+            string[] tplHeaders = { "Nombre", "Descripcion", "UnidadBase", "Area", "Keywords", "Componentes" };
+            for (int c = 0; c < tplHeaders.Length; c++)
+                wsTpl.Cell(1, c + 1).Value = tplHeaders[c];
 
-        int r = 2;
-        foreach (var tpl in templates.OrderBy(x => x.Nombre, StringComparer.OrdinalIgnoreCase))
-        {
-            wsTpl.Cell(r, 1).Value = tpl.Nombre;
-            wsTpl.Cell(r, 2).Value = tpl.Descripcion;
-            wsTpl.Cell(r, 3).Value = tpl.UnidadBase;
-            wsTpl.Cell(r, 4).Value = tpl.Area;
-            wsTpl.Cell(r, 5).Value = tpl.Keywords;
-            wsTpl.Cell(r, 6).Value = tpl.Items.Count;
-            r++;
-        }
-        FormatTemplateWorksheet(wsTpl, tplHeaders.Length);
-
-        var wsItems = wb.Worksheets.Add("Componentes");
-        string[] itemHeaders = { "Plantilla", "Clase", "Codigo", "SubPlantilla", "Tipo", "Factor", "Minimo" };
-        for (int c = 0; c < itemHeaders.Length; c++)
-            wsItems.Cell(1, c + 1).Value = itemHeaders[c];
-
-        r = 2;
-        foreach (var tpl in templates.OrderBy(x => x.Nombre, StringComparer.OrdinalIgnoreCase))
-        {
-            foreach (var item in tpl.Items)
+            int r = 2;
+            foreach (var tpl in templates.OrderBy(x => x.Nombre, StringComparer.OrdinalIgnoreCase))
             {
-                wsItems.Cell(r, 1).Value = tpl.Nombre;
-                wsItems.Cell(r, 2).Value = string.IsNullOrWhiteSpace(item.Clase) ? "MATERIAL" : item.Clase;
-                wsItems.Cell(r, 3).Value = item.Codigo;
-                wsItems.Cell(r, 4).Value = item.SubPlantilla;
-                wsItems.Cell(r, 5).Value = item.Tipo;
-                wsItems.Cell(r, 6).SetValue(ClosedXmlExportStyler.ToDouble(item.Factor));
-                wsItems.Cell(r, 7).SetValue(ClosedXmlExportStyler.ToDouble(item.Minimo));
+                wsTpl.Cell(r, 1).Value = tpl.Nombre;
+                wsTpl.Cell(r, 2).Value = tpl.Descripcion;
+                wsTpl.Cell(r, 3).Value = tpl.UnidadBase;
+                wsTpl.Cell(r, 4).Value = tpl.Area;
+                wsTpl.Cell(r, 5).Value = tpl.Keywords;
+                wsTpl.Cell(r, 6).Value = tpl.Items.Count;
                 r++;
             }
-        }
-        FormatTemplateWorksheet(wsItems, itemHeaders.Length);
-        wsItems.Column(6).Style.NumberFormat.Format = "#,##0.000";
-        wsItems.Column(7).Style.NumberFormat.Format = "#,##0.00";
+            FormatTemplateWorksheet(wsTpl, tplHeaders.Length);
 
-        var wsInfo = wb.Worksheets.Add("Info");
-        wsInfo.Cell(1, 1).Value = "Formato";
-        wsInfo.Cell(1, 2).Value = "QubiCostElectrical.TemplateLibrary";
-        wsInfo.Cell(2, 1).Value = "Version";
-        wsInfo.Cell(2, 2).Value = 1;
-        wsInfo.Cell(3, 1).Value = "Proyecto origen";
-        wsInfo.Cell(3, 2).Value = sourceProject;
-        wsInfo.Cell(4, 1).Value = "Cliente origen";
-        wsInfo.Cell(4, 2).Value = sourceClient;
-        wsInfo.Cell(5, 1).Value = "Exportado";
-        wsInfo.Cell(5, 2).Value = AppClock.Now;
-        FormatTemplateWorksheet(wsInfo, 2);
+            var wsItems = wb.Worksheets.Add("Componentes");
+            string[] itemHeaders = { "Plantilla", "Clase", "Codigo", "SubPlantilla", "Tipo", "Factor", "Minimo" };
+            for (int c = 0; c < itemHeaders.Length; c++)
+                wsItems.Cell(1, c + 1).Value = itemHeaders[c];
+
+            r = 2;
+            foreach (var tpl in templates.OrderBy(x => x.Nombre, StringComparer.OrdinalIgnoreCase))
+            {
+                foreach (var item in tpl.Items)
+                {
+                    wsItems.Cell(r, 1).Value = tpl.Nombre;
+                    wsItems.Cell(r, 2).Value = string.IsNullOrWhiteSpace(item.Clase) ? "MATERIAL" : item.Clase;
+                    wsItems.Cell(r, 3).Value = item.Codigo;
+                    wsItems.Cell(r, 4).Value = item.SubPlantilla;
+                    wsItems.Cell(r, 5).Value = item.Tipo;
+                    wsItems.Cell(r, 6).SetValue(ClosedXmlExportStyler.ToDouble(item.Factor));
+                    wsItems.Cell(r, 7).SetValue(ClosedXmlExportStyler.ToDouble(item.Minimo));
+                    r++;
+                }
+            }
+            FormatTemplateWorksheet(wsItems, itemHeaders.Length);
+            wsItems.Column(6).Style.NumberFormat.Format = "#,##0.000";
+            wsItems.Column(7).Style.NumberFormat.Format = "#,##0.00";
+
+            var wsInfo = wb.Worksheets.Add("Info");
+            wsInfo.Cell(1, 1).Value = "Formato";
+            wsInfo.Cell(1, 2).Value = "QubiCostElectrical.TemplateLibrary";
+            wsInfo.Cell(2, 1).Value = "Version";
+            wsInfo.Cell(2, 2).Value = 1;
+            wsInfo.Cell(3, 1).Value = "Proyecto origen";
+            wsInfo.Cell(3, 2).Value = sourceProject;
+            wsInfo.Cell(4, 1).Value = "Cliente origen";
+            wsInfo.Cell(4, 2).Value = sourceClient;
+            wsInfo.Cell(5, 1).Value = "Exportado";
+            wsInfo.Cell(5, 2).Value = AppClock.Now;
+            FormatTemplateWorksheet(wsInfo, 2);
 
             wb.SaveAs(path);
         });
@@ -106,10 +106,10 @@ public sealed class TemplateSpreadsheetService : ITemplateSpreadsheetService
         var tplHeaders = ReadHeader(wsTpl);
 
         int cNombre = ItemizadoImportParser.FindColumn(tplHeaders, "NOMBRE", "PLANTILLA", "TEMPLATE");
-        int cDesc = ItemizadoImportParser.FindColumn(tplHeaders, "DESCRIPCION", "DESCRIPCI”N", "DETALLE");
+        int cDesc = ItemizadoImportParser.FindColumn(tplHeaders, "DESCRIPCION", "DESCRIPCI√ìN", "DETALLE");
         int cUnidad = ItemizadoImportParser.FindColumn(tplHeaders, "UNIDADBASE", "UNIDAD", "UD", "UNI");
-        int cArea = ItemizadoImportParser.FindColumn(tplHeaders, "AREA", "¡REA", "FAMILIA");
-        int cKeywords = ItemizadoImportParser.FindColumn(tplHeaders, "KEYWORDS", "PALABRASCLAVE", "BUSQUEDA", "B⁄SQUEDA");
+        int cArea = ItemizadoImportParser.FindColumn(tplHeaders, "AREA", "√ÅREA", "FAMILIA");
+        int cKeywords = ItemizadoImportParser.FindColumn(tplHeaders, "KEYWORDS", "PALABRASCLAVE", "BUSQUEDA", "B√öSQUEDA");
 
         if (cNombre < 0)
             throw new InvalidDataException("La hoja Plantillas debe tener una columna Nombre.");
@@ -139,11 +139,11 @@ public sealed class TemplateSpreadsheetService : ITemplateSpreadsheetService
             var itemHeaders = ReadHeader(wsItems);
             int cPlantilla = ItemizadoImportParser.FindColumn(itemHeaders, "PLANTILLA", "NOMBREPLANTILLA", "TEMPLATE");
             int cClase = ItemizadoImportParser.FindColumn(itemHeaders, "CLASE", "TIPOREFERENCIA");
-            int cCodigo = ItemizadoImportParser.FindColumn(itemHeaders, "CODIGO", "C”DIGO", "MATERIAL", "CODE");
+            int cCodigo = ItemizadoImportParser.FindColumn(itemHeaders, "CODIGO", "C√ìDIGO", "MATERIAL", "CODE");
             int cSub = ItemizadoImportParser.FindColumn(itemHeaders, "SUBPLANTILLA", "SUBPLANTILLA", "PLANTILLAHIJA", "HIJA");
             int cTipo = ItemizadoImportParser.FindColumn(itemHeaders, "TIPO", "RECURSO");
             int cFactor = ItemizadoImportParser.FindColumn(itemHeaders, "FACTOR", "RENDIMIENTO", "CANTIDAD");
-            int cMinimo = ItemizadoImportParser.FindColumn(itemHeaders, "MINIMO", "MÕNIMO", "MIN");
+            int cMinimo = ItemizadoImportParser.FindColumn(itemHeaders, "MINIMO", "M√çNIMO", "MIN");
 
             if (cPlantilla >= 0)
             {

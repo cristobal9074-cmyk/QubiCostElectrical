@@ -73,6 +73,26 @@ public sealed class PartidaCompletionServiceTests
     }
 
     [Fact]
+    public void Build_ExcluidoCubicacion_CountsAsCompletedNotEmpty()
+    {
+        var items = new[]
+        {
+            new ItemizadoRow
+            {
+                Id = "P1",
+                Item = "1.1",
+                Descripcion = "No proyectada",
+                ExcluidoCubicacion = true
+            }
+        };
+        var result = _service.Build(items, Enumerable.Empty<CubicacionRow>());
+
+        Assert.Equal(1, result.CompletedPartidas);
+        Assert.Equal(0, result.EmptyPartidas);
+        Assert.Equal(PartidaCompletionState.Completed, result.GetState("P1"));
+    }
+
+    [Fact]
     public void Build_MultiplePartidas_MixedStates()
     {
         var items = new[] { Item("P1", "1.1"), Item("P2", "1.2") };

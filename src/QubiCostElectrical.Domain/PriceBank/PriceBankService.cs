@@ -5,13 +5,13 @@ using System.Linq;
 namespace QubiCostElectrical;
 
 /// <summary>
-/// L�gica pura del banco de precios: normalizaci�n de c�digos, fusi�n de precios por
-/// antig�edad y c�lculo de qu� precios del banco deber�an actualizar un proyecto.
+/// Lógica pura del banco de precios: normalización de códigos, fusión de precios por
+/// antigüedad y cálculo de qué precios del banco deberían actualizar un proyecto.
 /// No conoce SQLite ni UI, por lo que es totalmente testeable.
 /// </summary>
 public sealed class PriceBankService
 {
-    /// <summary>Normaliza un c�digo para usarlo como clave del banco (trim + may�sculas).</summary>
+    /// <summary>Normaliza un código para usarlo como clave del banco (trim + mayúsculas).</summary>
     public string NormalizeCode(string? codigo)
         => (codigo ?? string.Empty).Trim().ToUpperInvariant();
 
@@ -41,7 +41,7 @@ public sealed class PriceBankService
 
     /// <summary>
     /// El precio entrante reemplaza al existente solo si su fecha de precio es estrictamente
-    /// m�s reciente. Empates y precios m�s viejos conservan el banco (evita pisar con datos rancios).
+    /// más reciente. Empates y precios más viejos conservan el banco (evita pisar con datos rancios).
     /// </summary>
     public bool IsNewer(PriceBankEntry incoming, PriceBankEntry? existing)
     {
@@ -60,7 +60,7 @@ public sealed class PriceBankService
         if (!IsNewer(incoming, existing)) return existing;
 
         var merged = incoming.Clone();
-        // Conserva descripci�n/categor�a del banco si la entrante viene vac�a.
+        // Conserva descripción/categoría del banco si la entrante viene vacía.
         if (string.IsNullOrWhiteSpace(merged.Descripcion)) merged.Descripcion = existing.Descripcion;
         if (string.IsNullOrWhiteSpace(merged.Categoria)) merged.Categoria = existing.Categoria;
         if (string.IsNullOrWhiteSpace(merged.Unidad)) merged.Unidad = existing.Unidad;
@@ -68,7 +68,7 @@ public sealed class PriceBankService
     }
 
     /// <summary>
-    /// Deduplica una lista de materiales por c�digo, conservando el precio m�s reciente de cada uno.
+    /// Deduplica una lista de materiales por código, conservando el precio más reciente de cada uno.
     /// </summary>
     public IReadOnlyList<PriceBankEntry> Consolidate(IEnumerable<MaterialRow>? materiales, string proyectoOrigen = "")
     {
@@ -86,8 +86,8 @@ public sealed class PriceBankService
     }
 
     /// <summary>
-    /// Calcula qu� materiales del proyecto deber�an actualizarse porque el banco tiene un precio
-    /// m�s reciente. No muta el proyecto: devuelve la lista de cambios propuestos para que la UI
+    /// Calcula qué materiales del proyecto deberían actualizarse porque el banco tiene un precio
+    /// más reciente. No muta el proyecto: devuelve la lista de cambios propuestos para que la UI
     /// los confirme y aplique.
     /// </summary>
     public IReadOnlyList<PriceBankPriceUpdate> BuildProjectUpdates(

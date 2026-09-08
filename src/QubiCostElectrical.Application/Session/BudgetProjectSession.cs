@@ -41,18 +41,18 @@ public sealed class ProjectSessionChangedEventArgs : EventArgs
 }
 
 /// <summary>
-/// Estado vivo del proyecto abierto.
+/// estado vivo del proyecto abierto.
 ///
-/// Antes este estado viv�a directamente en MainForm como decenas de campos
-/// privados. Mantenerlo aquí permite que MainForm act�e como shell de UI y que
+/// Antes este estado vivía directamente en MainForm como decenas de campos
+/// privados. Mantenerlo aquí permite que MainForm actúe como shell de UI y que
 /// Cubicación, Itemizado, Materiales, APU, Exportación y Dashboard puedan
-/// consumir una �nica sesi�n sin duplicar datos ni depender de estado global de
-/// controles WinForms.
+/// consumir una única sesión sin duplicar datos ni depender de estado global de
+/// controles WinFormás.
 ///
-/// Hist.: adem�s de centralizar datos, esta clase publica eventos de cambio por
-/// dominio. As� los m�dulos pueden suscribirse a MaterialsChanged,
+/// Hist.: además de centralizar datos, esta clase publica eventos de cambio por
+/// dominio. Así los módulos pueden suscribirse a MaterialsChanged,
 /// CubicacionChanged, ItemizadoChanged, etc., sin revisar strings ni acoplarse a
-/// MainForm. MainForm mantiene propiedades de compatibilidad, pero el estado real
+/// MainForm. MainForm mantiene propiedades de compatibilidad, pero el estado AREAl
 /// y sus invalidaciones viven aquí.
 /// </summary>
 public sealed partial class BudgetProjectSession
@@ -74,25 +74,11 @@ public sealed partial class BudgetProjectSession
     }
 
     public string CurrentProjectPath { get; set; } = "";
-    public bool IsReadOnly => lockReadOnly || roleReadOnly;
-    public string ReadOnlyReason
-    {
-        get
-        {
-            if (lockReadOnly && roleReadOnly)
-                return $"{roleReadOnlyReason} {lockReadOnlyReason}".Trim();
-            if (roleReadOnly)
-                return roleReadOnlyReason;
-            if (lockReadOnly)
-                return lockReadOnlyReason;
-            return "";
-        }
-    }
+    public bool IsReadOnly => accessGate.IsReadOnly;
+    public string ReadOnlyReason => accessGate.ReadOnlyReason;
 
-    private bool lockReadOnly;
-    private bool roleReadOnly;
-    private string lockReadOnlyReason = "";
-    private string roleReadOnlyReason = "";
+    private readonly ProjectAccessGate accessGate = new();
+    private readonly ProjectDirtyTracker dirtyTracker = new();
     public string CurrentProjectName
     {
         get => ProjectInfo.Nombre;
@@ -237,7 +223,17 @@ public sealed partial class BudgetProjectSession
         set => ProjectInfo.OfertaPdf = value ?? new OfferPdfSettings();
     }
 
-    public bool IsDirty { get; private set; }
+    public bool IsDirty
+    {
+        get => dirtyTracker.IsDirty;
+        private set
+        {
+            if (value)
+                dirtyTracker.MarkDirtyFlag();
+            else
+                dirtyTracker.MarkSaved();
+        }
+    }
     public int StateVersion { get; private set; }
 
     public string? PendingItemizadoSelectionId { get; set; }
@@ -246,9 +242,30 @@ public sealed partial class BudgetProjectSession
     public string? PendingMaterialSelectionCode { get; set; }
     public string? PendingBuscadorTab { get; set; }
 
-    // Hist.: dirty-tracking granular por m�dulo. Permite autoguardado inteligente,
-    // invalidaci�n incremental de KPIs y cach�s de gr�ficos sin depender de strings sueltos
-    // repartidos en MainForm.
-    private readonly Dictionary<string, int> scopeVersions = new(StringComparer.OrdinalIgnoreCase);
-    private readonly HashSet<string> dirtyScopes = new(StringComparer.OrdinalIgnoreCase);
+    private List<string>? pendingTakeoffQueue;
+
+    /// <summary>IDs de partidas pendientes de cubicación secuencial (cola FIFO).</summary>
+    public int PendingTakeoffQueueCount => pendingTakeoffQueue?.Count ?? 0;
+
+    public void SetPendingTakeoffQueue(List<string>? queue)
+    {
+        pendingTakeoffQueue = queue is { Count: > 0 } ? queue : null;
+    }
+
+    /// <summary>Extrae el siguiente ID de la cola y lo elimina. Devuelve null si la cola está vacía.</summary>
+    public string? TryDequeueNextTakeoff()
+    {
+        if (pendingTakeoffQueue == null || pendingTakeoffQueue.Count == 0)
+        {
+            pendingTakeoffQueue = null;
+            return null;
+        }
+        var next = pendingTakeoffQueue[0];
+        pendingTakeoffQueue.RemoveAt(0);
+        if (pendingTakeoffQueue.Count == 0)
+            pendingTakeoffQueue = null;
+        return next;
+    }
+
+    // Hist.: dirty-tracking granular por módulo vive en ProjectDirtyTracker.
 }

@@ -9,15 +9,10 @@ public sealed record QtyHeaderUpdateResult(string[] Values, bool Changed, bool S
 public sealed class CubicacionService : ICubicacionService
 {
     public List<CubicacionRow> GetRowsForItem(IEnumerable<CubicacionRow> cubicacion, string itemId, bool onlyWithCode = false)
-    {
-        var rows = (cubicacion ?? Enumerable.Empty<CubicacionRow>())
-            .Where(x => string.Equals(x.ItemId, itemId ?? "", StringComparison.OrdinalIgnoreCase));
+        => CubicacionItemIndex.FilterRows(cubicacion, itemId, onlyWithCode);
 
-        if (onlyWithCode)
-            rows = rows.Where(x => !string.IsNullOrWhiteSpace(x.Codigo));
-
-        return rows.ToList();
-    }
+    public List<CubicacionRow> GetRowsForItem(IReadOnlyDictionary<string, List<CubicacionRow>> index, string itemId, bool onlyWithCode = false)
+        => CubicacionItemIndex.GetRows(index, itemId, onlyWithCode);
 
     public CubicacionRow? GetVisualRow(IEnumerable<CubicacionRow> cubicacion, string itemId, int visualIndex)
     {
@@ -29,7 +24,7 @@ public sealed class CubicacionService : ICubicacionService
     public Result<CubicacionRow, ValidationError> TryGetOrCreateVisualRow(List<CubicacionRow> cubicacion, string itemId, int visualIndex)
     {
         if (cubicacion == null)
-            return Result<CubicacionRow, ValidationError>.Failure(new ValidationError("CUB-ROW-001", "La lista de cubicaci�n no puede ser nula.", nameof(cubicacion)));
+            return Result<CubicacionRow, ValidationError>.Failure(new ValidationError("CUB-ROW-001", "La lista de cubicación no puede ser nula.", nameof(cubicacion)));
         if (string.IsNullOrWhiteSpace(itemId))
             return Result<CubicacionRow, ValidationError>.Failure(new ValidationError("CUB-ROW-002", "Debe seleccionar una partida antes de agregar materiales.", nameof(itemId)));
         if (visualIndex < 0)
@@ -103,7 +98,7 @@ public sealed class CubicacionService : ICubicacionService
 
     /// <summary>
     /// Igual que <see cref="SyncPricesFromCatalog(IEnumerable{CubicacionRow}, IEnumerable{MaterialRow}, decimal)"/>
-    /// y, si se pasan valorizaciones, actualiza también el snapshot CLP de cada recurso.
+    /// y, si se pasóan valorizaciones, actualiza también el snapshot CLP de cada recurso.
     /// </summary>
     public int SyncPricesFromCatalog(
         IEnumerable<CubicacionRow> cubicacion,

@@ -113,6 +113,9 @@ public static class ExcelCostosBridge
         int months = project.MoDuracionMeses > 0 ? project.MoDuracionMeses : 12;
         settings.GastosOperacionalesClp = SumGastosOperacionalesClp(data.GastosOperacionales) + SumStaffingPlanClp(data.StaffingPlan);
         settings.NegotiatedDiscounts = data.NegotiatedDiscounts ?? new List<NegotiatedDiscountRow>();
+        // La política de cierre vive en ProjectFileData (no en ProjectInfoRow): este es el punto
+        // único donde el motor la recibe para que mande sobre el precio de venta en todos los consumidores.
+        settings.ClosingPolicy = data.ClosingPolicy;
         // Preferir total del módulo MO (leyes + curva); si no hay, recomputar desde filas.
         settings.ManoObraDotacionClp = project.MoTotalClp > 0m
             ? project.MoTotalClp

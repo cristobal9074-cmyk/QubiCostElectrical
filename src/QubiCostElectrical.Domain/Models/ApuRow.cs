@@ -74,6 +74,20 @@ public sealed class ApuRow
     public List<ApuRecursoRow> Recursos { get; set; } = new();
 
     public decimal CostoMaterialUf => Recursos.Where(r => r.Tipo == ApuTipoRecurso.MAT).Sum(r => r.CostoUnitUf);
+
+    /// <summary>
+    /// C2: base para la merma de nivel APU. La merma es UNA sola capa: si un recurso ya declara
+    /// su propia <see cref="ApuRecursoRow.MermaPct"/>, la merma del APU NO se vuelve a aplicar
+    /// sobre él. Así se evita la merma-sobre-merma. La merma del APU cubre solo los materiales
+    /// que no traen desperdicio propio (patrón estándar: % general de desperdicio de obra).
+    /// </summary>
+    public decimal MermaBaseUf => Recursos
+        .Where(r => r.Tipo == ApuTipoRecurso.MAT && r.MermaPct <= 0m)
+        .Sum(r => r.CostoBaseUf);
+
+    /// <summary>true si algún recurso MAT declara merma propia y además el APU tiene MermaPct.</summary>
+    public bool TieneMermaEnDosNiveles =>
+        MermaPct > 0m && Recursos.Any(r => r.Tipo == ApuTipoRecurso.MAT && r.MermaPct > 0m);
     public decimal CostoMoUf => Recursos.Where(r => r.Tipo == ApuTipoRecurso.MO).Sum(r => ApuLaborEngine.CostoUnitLabor(r, CondicionesLaborales));
     public decimal CostoEquipoUf => Recursos.Where(r => r.Tipo == ApuTipoRecurso.EQ).Sum(r => r.CostoUnitUf);
     public decimal CostoScUf => Recursos.Where(r => r.Tipo == ApuTipoRecurso.SC).Sum(r => ApuLaborEngine.CostoUnitLabor(r, CondicionesLaborales));
@@ -82,7 +96,7 @@ public sealed class ApuRow
     public decimal CostoTransporteRecursoUf => Recursos.Where(r => r.Tipo == ApuTipoRecurso.TR).Sum(r => r.CostoUnitUf);
     public decimal CostoDirectoBaseUf => CostoMaterialUf + CostoMoUf + CostoEquipoUf + CostoScUf + CostoHhUf + CostoHerramientasRecursoUf + CostoTransporteRecursoUf;
     public decimal HerramientasCalculadoUf => CostoHerramientasRecursoUf > 0m ? CostoHerramientasRecursoUf : (CostoMoUf + CostoHhUf) * HerramientasPct / 100m;
-    public decimal MermaUf => CostoMaterialUf * MermaPct / 100m;
+    public decimal MermaUf => MermaBaseUf * MermaPct / 100m;
     public decimal TransporteUf => CostoTransporteRecursoUf > 0m ? CostoTransporteRecursoUf : (CostoMaterialUf + CostoEquipoUf) * TransportePct / 100m;
     public decimal CostoDirectoUf => CostoDirectoBaseUf + (CostoHerramientasRecursoUf > 0m ? 0m : HerramientasCalculadoUf) + MermaUf + (CostoTransporteRecursoUf > 0m ? 0m : TransporteUf);
     public decimal ImprevistosUf => CostoDirectoUf * ImprevistosAlzaPct / 100m;

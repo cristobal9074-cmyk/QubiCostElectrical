@@ -117,7 +117,7 @@ public sealed class DocumentsWorkspaceService : IDocumentsWorkspaceService
     {
         session.EnsureWritable("guardar antecedentes técnicos");
         Project.AntecedentesTecnicos = WorkingRows.Select(CloneRow).ToList();
-        session.MarkDirty("project_info");
+        session.MarkDirty(ProjectDirtyScope.ProjectInfo);
         workingCopy = null;
     }
 

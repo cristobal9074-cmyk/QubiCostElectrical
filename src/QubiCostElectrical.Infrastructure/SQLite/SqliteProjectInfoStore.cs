@@ -28,7 +28,7 @@ internal static class SqliteProjectInfoStore
                 nombre = excluded.nombre,
                 cliente = excluded.cliente,
                 moneda = excluded.moneda,
-                estado = excluded.estado,
+                Estado = excluded.Estado,
                 ubicacion = excluded.ubicacion,
                 fecha_modificacion = excluded.fecha_modificacion,
                 carta_presentacion_titulo = excluded.carta_presentacion_titulo,

@@ -36,6 +36,8 @@ internal static class ProjectFileDataAssertions
         Assert.Equal(pExp.DescuentoPct, pAct.DescuentoPct);
         Assert.Equal(pExp.IvaPct, pAct.IvaPct);
         Assert.Equal(pExp.IncluirIvaEnTotal, pAct.IncluirIvaEnTotal);
+        Assert.Equal(pExp.PoliticaCostosExcel, pAct.PoliticaCostosExcel);
+        Assert.Equal(pExp.UsarFactoresPresentacionFamilia, pAct.UsarFactoresPresentacionFamilia);
         Assert.Equal(pExp.MetrosCuadrados, pAct.MetrosCuadrados);
         Assert.Equal(pExp.PriceExpiryWarningDays, pAct.PriceExpiryWarningDays);
         Assert.Equal(pExp.PriceExpiryCriticalDays, pAct.PriceExpiryCriticalDays);

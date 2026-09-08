@@ -65,6 +65,31 @@ public static class ProductPaths
         return trimmed.StartsWith(@"\\", StringComparison.Ordinal);
     }
 
+    public static bool IsNetworkOrUncPath(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            return false;
+
+        if (IsUncPath(path))
+            return true;
+
+        try
+        {
+            var root = Path.GetPathRoot(path);
+            if (!string.IsNullOrEmpty(root))
+            {
+                var drive = new DriveInfo(root);
+                return drive.DriveType == DriveType.Network;
+            }
+        }
+        catch
+        {
+            // Ignorar excepciones al consultar DriveInfo en rutas virtuales o no accesibles
+        }
+
+        return false;
+    }
+
     public static bool IsAbsolutePriceBankPath(string? path)
     {
         if (string.IsNullOrWhiteSpace(path))

@@ -18,5 +18,12 @@ public sealed class ItemizadoRow
     public decimal Cantidad { get; set; } = 0;
     public bool EsTitulo { get; set; }
     public bool ExcluidoCubicacion { get; set; }
+
+    /// <summary>
+    /// Motivo interno de «No cubicar» (fuera de alcance / no proyectada). Opcional; no viaja a la oferta.
+    /// Distinto de <see cref="Observaciones"/>, que sí puede salir en Resumen/oferta.
+    /// </summary>
+    public string MotivoNoCubicar { get; set; } = "";
+
     public string Observaciones { get; set; } = "";
 }

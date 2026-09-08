@@ -3,10 +3,10 @@ namespace QubiCostElectrical;
 public static class AntecedenteTecnicoTipo
 {
     public const string Plano = "Plano";
-    public const string Especificacion = "Especificación";
+    public const string Especificacion = "EspecificaciÃ³n";
     public const string Addenda = "Addenda";
     public const string Consulta = "Consulta";
-    public const string Aclaracion = "Aclaración";
+    public const string Aclaracion = "AclaraciÃ³n";
     public const string Otro = "Otro";
 
     public static readonly string[] All =
@@ -16,7 +16,7 @@ public static class AntecedenteTecnicoTipo
 }
 
 /// <summary>
-/// Registro central de antecedentes técnicos del presupuesto (planos, especificaciones, addendas, etc.).
+/// Registro central de antecedentes tÃ©cnicos del presupuesto (planos, especificaciones, addendas, etc.).
 /// </summary>
 public sealed class AntecedenteTecnicoRow
 {

@@ -34,6 +34,8 @@ internal static class ProjectFileDataFixtures
                 DescuentoPct = 0m,
                 IvaPct = 19m,
                 IncluirIvaEnTotal = true,
+                PoliticaCostosExcel = true,
+                UsarFactoresPresentacionFamilia = true,
                 MetrosCuadrados = 2500m,
                 PriceExpiryWarningDays = 90,
                 PriceExpiryCriticalDays = 120,
