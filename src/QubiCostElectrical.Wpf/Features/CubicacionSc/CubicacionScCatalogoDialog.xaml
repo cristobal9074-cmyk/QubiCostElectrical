@@ -51,7 +51,7 @@
     </Style>
 
     <Style x:Key="CatalogRailIconText" TargetType="TextBlock">
-      <Setter Property="FontSize" Value="12" />
+      <Setter Property="FontSize" Value="{StaticResource Font.Size.md}" />
       <Setter Property="FontWeight" Value="SemiBold" />
       <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
       <Setter Property="HorizontalAlignment" Value="Center" />
@@ -60,7 +60,7 @@
 
     <Style x:Key="CatalogCount" TargetType="TextBlock">
       <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
-      <Setter Property="FontSize" Value="11" />
+      <Setter Property="FontSize" Value="{StaticResource Font.Size.sm}" />
       <Setter Property="FontWeight" Value="SemiBold" />
       <Setter Property="Foreground" Value="{DynamicResource Brush.Ink4}" />
       <Setter Property="VerticalAlignment" Value="Center" />
@@ -90,13 +90,13 @@
       <Setter Property="CanUserDeleteRows" Value="True" />
       <Setter Property="SelectionMode" Value="Extended" />
       <Setter Property="RowHeight" Value="44" />
-      <Setter Property="FontSize" Value="13" />
+      <Setter Property="FontSize" Value="{StaticResource Font.Size.base}" />
     </Style>
 
     <Style x:Key="CatalogHeader" TargetType="DataGridColumnHeader" BasedOn="{StaticResource DataGridColumnHeader.Prototype}">
       <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
       <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
-      <Setter Property="FontSize" Value="10.5" />
+      <Setter Property="FontSize" Value="{StaticResource Font.Size.xs}" />
       <Setter Property="FontWeight" Value="Bold" />
       <Setter Property="Padding" Value="14,11" />
       <Setter Property="BorderThickness" Value="0,0,0,1" />
@@ -123,12 +123,12 @@
       <DockPanel LastChildFill="True">
         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Bottom" Margin="16,0,0,0">
           <Border Style="{StaticResource CatalogChip}" Margin="0,0,8,0">
-            <TextBlock FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink3}">
+            <TextBlock FontSize="{StaticResource Font.Size.sm}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink3}">
               <Run Text="Proyecto · " /><Run x:Name="ProyectoNombreRun" FontFamily="{StaticResource Font.Mono}" Text="—" />
             </TextBlock>
           </Border>
           <Border Style="{StaticResource CatalogChipBlue}">
-            <TextBlock FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Blue}">
+            <TextBlock FontSize="{StaticResource Font.Size.sm}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Blue}">
               <Run x:Name="TotalItemsRun" FontFamily="{StaticResource Font.Mono}" Text="0" /><Run Text=" ítems" />
             </TextBlock>
           </Border>
@@ -157,7 +157,7 @@
         <DockPanel>
           <TextBlock DockPanel.Dock="Top"
                      Text="CATEGORÍAS"
-                     FontSize="10" FontWeight="Bold"
+                     FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold"
                      Foreground="{DynamicResource Brush.Ink4}"
                      Margin="10,4,10,10" />
           <ListBox x:Name="CategoriaList"
@@ -176,7 +176,7 @@
                 <Border Style="{StaticResource CatalogRailIcon}">
                   <TextBlock Style="{StaticResource CatalogRailIconText}" Text="C" />
                 </Border>
-                <TextBlock Grid.Column="2" Text="Conductores" FontSize="13" FontWeight="SemiBold"
+                <TextBlock Grid.Column="2" Text="Conductores" FontSize="{StaticResource Font.Size.base}" FontWeight="SemiBold"
                            VerticalAlignment="Center" Foreground="{DynamicResource Brush.Ink2}" />
                 <TextBlock x:Name="CountConductores" Grid.Column="3" Style="{StaticResource CatalogCount}" Text="0" />
               </Grid>
@@ -192,7 +192,7 @@
                 <Border Style="{StaticResource CatalogRailIcon}">
                   <TextBlock Style="{StaticResource CatalogRailIconText}" Text="⌀" />
                 </Border>
-                <TextBlock Grid.Column="2" Text="Secciones" FontSize="13" FontWeight="SemiBold"
+                <TextBlock Grid.Column="2" Text="Secciones" FontSize="{StaticResource Font.Size.base}" FontWeight="SemiBold"
                            VerticalAlignment="Center" Foreground="{DynamicResource Brush.Ink2}" />
                 <TextBlock x:Name="CountSecciones" Grid.Column="3" Style="{StaticResource CatalogCount}" Text="0" />
               </Grid>
@@ -208,7 +208,7 @@
                 <Border Style="{StaticResource CatalogRailIcon}">
                   <TextBlock Style="{StaticResource CatalogRailIconText}" Text="▭" />
                 </Border>
-                <TextBlock Grid.Column="2" Text="Tipos de tubería" FontSize="13" FontWeight="SemiBold"
+                <TextBlock Grid.Column="2" Text="Tipos de tubería" FontSize="{StaticResource Font.Size.base}" FontWeight="SemiBold"
                            VerticalAlignment="Center" Foreground="{DynamicResource Brush.Ink2}" />
                 <TextBlock x:Name="CountTiposTuberia" Grid.Column="3" Style="{StaticResource CatalogCount}" Text="0" />
               </Grid>
@@ -224,7 +224,7 @@
                 <Border Style="{StaticResource CatalogRailIcon}">
                   <TextBlock Style="{StaticResource CatalogRailIconText}" Text="◎" />
                 </Border>
-                <TextBlock Grid.Column="2" Text="Diámetros" FontSize="13" FontWeight="SemiBold"
+                <TextBlock Grid.Column="2" Text="Diámetros" FontSize="{StaticResource Font.Size.base}" FontWeight="SemiBold"
                            VerticalAlignment="Center" Foreground="{DynamicResource Brush.Ink2}" />
                 <TextBlock x:Name="CountDiametros" Grid.Column="3" Style="{StaticResource CatalogCount}" Text="0" />
               </Grid>
@@ -240,7 +240,7 @@
                 <Border Style="{StaticResource CatalogRailIcon}">
                   <TextBlock Style="{StaticResource CatalogRailIconText}" Text="⊞" />
                 </Border>
-                <TextBlock Grid.Column="2" Text="Bandejas" FontSize="13" FontWeight="SemiBold"
+                <TextBlock Grid.Column="2" Text="Bandejas" FontSize="{StaticResource Font.Size.base}" FontWeight="SemiBold"
                            VerticalAlignment="Center" Foreground="{DynamicResource Brush.Ink2}" />
                 <TextBlock x:Name="CountBandejas" Grid.Column="3" Style="{StaticResource CatalogCount}" Text="0" />
               </Grid>
@@ -256,7 +256,7 @@
                 <Border Style="{StaticResource CatalogRailIcon}">
                   <TextBlock Style="{StaticResource CatalogRailIconText}" Text="▣" />
                 </Border>
-                <TextBlock Grid.Column="2" Text="Cajas" FontSize="13" FontWeight="SemiBold"
+                <TextBlock Grid.Column="2" Text="Cajas" FontSize="{StaticResource Font.Size.base}" FontWeight="SemiBold"
                            VerticalAlignment="Center" Foreground="{DynamicResource Brush.Ink2}" />
                 <TextBlock x:Name="CountCajas" Grid.Column="3" Style="{StaticResource CatalogCount}" Text="0" />
               </Grid>
@@ -272,7 +272,7 @@
                 <Border Style="{StaticResource CatalogRailIcon}">
                   <TextBlock Style="{StaticResource CatalogRailIconText}" Text="M" />
                 </Border>
-                <TextBlock Grid.Column="2" Text="Sistemas / Fases" FontSize="13" FontWeight="SemiBold"
+                <TextBlock Grid.Column="2" Text="Sistemas / Fases" FontSize="{StaticResource Font.Size.base}" FontWeight="SemiBold"
                            VerticalAlignment="Center" Foreground="{DynamicResource Brush.Ink2}" />
                 <TextBlock x:Name="CountSistemas" Grid.Column="3" Style="{StaticResource CatalogCount}" Text="0" />
               </Grid>
@@ -288,7 +288,7 @@
                 <Border Style="{StaticResource CatalogRailIcon}">
                   <TextBlock Style="{StaticResource CatalogRailIconText}" Text="∿" />
                 </Border>
-                <TextBlock Grid.Column="2" Text="Terminales flex." FontSize="13" FontWeight="SemiBold"
+                <TextBlock Grid.Column="2" Text="Terminales flex." FontSize="{StaticResource Font.Size.base}" FontWeight="SemiBold"
                            VerticalAlignment="Center" Foreground="{DynamicResource Brush.Ink2}" />
                 <TextBlock x:Name="CountFlexibles" Grid.Column="3" Style="{StaticResource CatalogCount}" Text="0" />
               </Grid>
@@ -304,7 +304,7 @@
                 <Border Style="{StaticResource CatalogRailIcon}">
                   <TextBlock Style="{StaticResource CatalogRailIconText}" Text="◇" />
                 </Border>
-                <TextBlock Grid.Column="2" Text="Artefactos" FontSize="13" FontWeight="SemiBold"
+                <TextBlock Grid.Column="2" Text="Artefactos" FontSize="{StaticResource Font.Size.base}" FontWeight="SemiBold"
                            VerticalAlignment="Center" Foreground="{DynamicResource Brush.Ink2}" />
                 <TextBlock x:Name="CountArtefactos" Grid.Column="3" Style="{StaticResource CatalogCount}" Text="0" />
               </Grid>
@@ -333,10 +333,10 @@
           </StackPanel>
           <StackPanel VerticalAlignment="Center">
             <TextBlock x:Name="CategoriaTitulo" Text="Conductores"
-                       FontSize="15" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" />
+                       FontSize="{StaticResource Font.Size.kpi}" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" />
             <TextBlock x:Name="CategoriaSubtitulo"
                        Text="Tipos de cable disponibles en la planilla de circuitos"
-                       FontSize="12" Foreground="{DynamicResource Brush.Ink3}" Margin="0,2,0,0" />
+                       FontSize="{StaticResource Font.Size.md}" Foreground="{DynamicResource Brush.Ink3}" Margin="0,2,0,0" />
           </StackPanel>
         </DockPanel>
 
@@ -349,19 +349,19 @@
                   BorderBrush="{DynamicResource Brush.Line}"
                   BorderThickness="1" CornerRadius="10" Padding="12,0" Height="38">
             <DockPanel>
-              <TextBlock DockPanel.Dock="Left" Text="⌕" FontSize="14"
+              <TextBlock DockPanel.Dock="Left" Text="⌕" FontSize="{StaticResource Font.Size.lg}"
                          Foreground="{DynamicResource Brush.Ink4}"
                          VerticalAlignment="Center" Margin="0,0,8,0" />
               <Border DockPanel.Dock="Right" Background="{DynamicResource Brush.Line2}"
                       BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
                       CornerRadius="5" Padding="6,3" VerticalAlignment="Center" Margin="8,0,0,0">
-                <TextBlock Text="/" FontFamily="{StaticResource Font.Mono}" FontSize="10"
+                <TextBlock Text="/" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.xs}"
                            Foreground="{DynamicResource Brush.Ink3}" />
               </Border>
               <TextBox x:Name="SearchBox"
                        BorderThickness="0" Background="Transparent"
                        VerticalContentAlignment="Center"
-                       FontSize="13"
+                       FontSize="{StaticResource Font.Size.base}"
                        TextChanged="OnSearchTextChanged"
                        ToolTip="Buscar en esta categoría (/)" />
             </DockPanel>
@@ -383,7 +383,7 @@
               <DockPanel LastChildFill="False">
                 <TextBlock DockPanel.Dock="Left"
                            Text="Vacío al final · Enter agrega · Delete quita la fila seleccionada"
-                           FontSize="12.5" Foreground="{DynamicResource Brush.Ink4}"
+                           FontSize="{StaticResource Font.Size.md}" Foreground="{DynamicResource Brush.Ink4}"
                            VerticalAlignment="Center" />
                 <Button DockPanel.Dock="Right" Style="{StaticResource Button.Ghost}"
                         Content="Agregar al final →" Click="OnAgregarFilaClick" Padding="8,4" />
@@ -411,12 +411,12 @@
                                   VerticalAlignment="Center">
                             <TextBlock Text="{Binding Value}"
                                        FontFamily="{StaticResource Font.Mono}"
-                                       FontSize="12" FontWeight="SemiBold"
+                                       FontSize="{StaticResource Font.Size.md}" FontWeight="SemiBold"
                                        Foreground="{DynamicResource Brush.SlateLight}"
                                        MaxWidth="160" TextTrimming="CharacterEllipsis" />
                           </Border>
                           <TextBlock Text="{Binding Value}"
-                                     FontSize="13" FontWeight="Medium"
+                                     FontSize="{StaticResource Font.Size.base}" FontWeight="Medium"
                                      VerticalAlignment="Center"
                                      Foreground="{DynamicResource Brush.Ink}" />
                         </DockPanel>
@@ -425,7 +425,7 @@
                     <DataGridTemplateColumn.CellEditingTemplate>
                       <DataTemplate>
                         <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}"
-                                 Margin="8,4" Padding="6,4" FontSize="13"
+                                 Margin="8,4" Padding="6,4" FontSize="{StaticResource Font.Size.base}"
                                  VerticalContentAlignment="Center" />
                       </DataTemplate>
                     </DataGridTemplateColumn.CellEditingTemplate>
@@ -490,16 +490,16 @@
             Padding="18,12">
       <DockPanel LastChildFill="False">
         <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
-          <TextBlock FontSize="12" Foreground="{DynamicResource Brush.Ink3}" Margin="0,0,14,0">
+          <TextBlock FontSize="{StaticResource Font.Size.md}" Foreground="{DynamicResource Brush.Ink3}" Margin="0,0,14,0">
             <Run FontFamily="{StaticResource Font.Mono}" Background="{DynamicResource Brush.Line2}"> Del </Run>
             <Run Text=" quitar fila" />
           </TextBlock>
-          <TextBlock FontSize="12" Foreground="{DynamicResource Brush.Ink3}" Margin="0,0,14,0">
+          <TextBlock FontSize="{StaticResource Font.Size.md}" Foreground="{DynamicResource Brush.Ink3}" Margin="0,0,14,0">
             <Run FontFamily="{StaticResource Font.Mono}">Ctrl</Run><Run Text="+"/>
             <Run FontFamily="{StaticResource Font.Mono}">S</Run>
             <Run Text=" guardar" />
           </TextBlock>
-          <TextBlock FontSize="12" Foreground="{DynamicResource Brush.Ink3}">
+          <TextBlock FontSize="{StaticResource Font.Size.md}" Foreground="{DynamicResource Brush.Ink3}">
             <Run FontFamily="{StaticResource Font.Mono}">Esc</Run>
             <Run Text=" cancelar" />
           </TextBlock>

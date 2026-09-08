@@ -41,13 +41,13 @@
       <Grid Grid.Row="0" Margin="0,0,0,12">
         <TextBox x:Name="SearchBox"
                  Style="{StaticResource Form.TextBox}"
-                 Padding="32,8,12,8" FontSize="12"
+                 Padding="32,8,12,8" FontSize="{StaticResource Font.Size.md}"
                  TextChanged="SearchBox_TextChanged"/>
-        <TextBlock Text="🔍" VerticalAlignment="Center" Margin="10,0,0,0" FontSize="12" Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Left" IsHitTestVisible="False"/>
+        <TextBlock Text="🔍" VerticalAlignment="Center" Margin="10,0,0,0" FontSize="{StaticResource Font.Size.md}" Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Left" IsHitTestVisible="False"/>
         
         <!-- Hint visible cuando está vacío -->
         <TextBlock Text="Buscar por código o descripción en el catálogo..." 
-                   VerticalAlignment="Center" Margin="32,0,0,0" FontSize="12" 
+                   VerticalAlignment="Center" Margin="32,0,0,0" FontSize="{StaticResource Font.Size.md}" 
                    Foreground="{DynamicResource Brush.Muted}" Opacity="0.5" 
                    HorizontalAlignment="Left" IsHitTestVisible="False">
           <TextBlock.Style>

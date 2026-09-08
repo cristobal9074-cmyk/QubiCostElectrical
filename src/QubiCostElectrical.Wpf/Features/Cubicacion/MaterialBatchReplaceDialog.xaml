@@ -21,7 +21,7 @@
                 <DockPanel LastChildFill="False">
                     <TextBlock Text="Buscar y Reemplazar Materiales (Ctrl+H)" Style="{StaticResource Dialog.HeaderTitle}" />
                     <Border DockPanel.Dock="Right" Background="{DynamicResource Brush.BlueSoft}" CornerRadius="{StaticResource Radius.Chip}" Padding="8,3">
-                        <TextBlock Text="⚡ Mantiene intactos metrajes, casillas y fórmulas" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Blue}" />
+                        <TextBlock Text="⚡ Mantiene intactos metrajes, casillas y fórmulas" FontSize="{StaticResource Font.Size.sm}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Blue}" />
                     </Border>
                 </DockPanel>
                 <TextBlock Text="Actualice especificaciones técnicas (EETT) en todas las partidas del presupuesto en un solo paso."
@@ -39,22 +39,22 @@
 
                     <!-- Columna Izquierda: Origen -->
                     <StackPanel Grid.Column="0">
-                        <TextBlock Text="1. MATERIAL A REEMPLAZAR (ORIGEN)" FontSize="10.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,4" />
+                        <TextBlock Text="1. MATERIAL A REEMPLAZAR (ORIGEN)" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,4" />
                         <ComboBox x:Name="SourceMaterialCombo"
                                   IsEditable="True"
                                   DisplayMemberPath="DisplayText"
                                   SelectionChanged="OnSourceMaterialSelectionChanged"
                                   Height="32"
                                   ToolTip="Seleccione o tipee el material actualmente usado en el proyecto" />
-                        <TextBlock x:Name="SourceDetailsText" Text="" FontSize="11" Foreground="{DynamicResource Brush.Muted}" Margin="2,4,0,0" />
+                        <TextBlock x:Name="SourceDetailsText" Text="" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" Margin="2,4,0,0" />
                     </StackPanel>
 
                     <!-- Icono Flecha Central -->
-                    <TextBlock Grid.Column="1" Text="➔" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,14,0,0" />
+                    <TextBlock Grid.Column="1" Text="➔" FontSize="{StaticResource Font.Size.h2}" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,14,0,0" />
 
                     <!-- Columna Derecha: Destino -->
                     <StackPanel Grid.Column="2">
-                        <TextBlock Text="2. NUEVO MATERIAL DE REEMPLAZO (DESTINO)" FontSize="10.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" Margin="0,0,0,4" />
+                        <TextBlock Text="2. NUEVO MATERIAL DE REEMPLAZO (DESTINO)" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" Margin="0,0,0,4" />
                         <TextBox x:Name="TargetMaterialSearchBox"
                                  Height="32"
                                  VerticalContentAlignment="Center"
@@ -78,13 +78,13 @@
                                 </ListBox>
                             </Border>
                         </Popup>
-                        <TextBlock x:Name="TargetDetailsText" Text="" FontSize="11" Foreground="{DynamicResource Brush.Navy}" FontWeight="SemiBold" Margin="2,4,0,0" />
+                        <TextBlock x:Name="TargetDetailsText" Text="" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Navy}" FontWeight="SemiBold" Margin="2,4,0,0" />
                     </StackPanel>
                 </Grid>
             </Border>
 
             <!-- 3. Grilla de Vista Previa de Ocurrencias -->
-            <GroupBox Grid.Row="2" Header="VISTA PREVIA DE IMPACTO EN EL PRESUPUESTO" FontSize="11" FontWeight="Bold" Margin="0,0,0,10">
+            <GroupBox Grid.Row="2" Header="VISTA PREVIA DE IMPACTO EN EL PRESUPUESTO" FontSize="{StaticResource Font.Size.sm}" FontWeight="Bold" Margin="0,0,0,10">
                 <DataGrid x:Name="PreviewGrid"
                           AutoGenerateColumns="False"
                           IsReadOnly="True"

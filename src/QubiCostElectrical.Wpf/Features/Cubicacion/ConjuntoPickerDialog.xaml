@@ -50,7 +50,7 @@
                 </Grid.ColumnDefinitions>
                 <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" 
                                   VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
-                <TextBlock x:Name="Indicator" Text="➔" Grid.Column="1" Foreground="{DynamicResource Brush.Blue}" FontSize="12" VerticalAlignment="Center" Margin="8,0,0,0" Opacity="0"/>
+                <TextBlock x:Name="Indicator" Text="➔" Grid.Column="1" Foreground="{DynamicResource Brush.Blue}" FontSize="{StaticResource Font.Size.md}" VerticalAlignment="Center" Margin="8,0,0,0" Opacity="0"/>
               </Grid>
             </Border>
             <ControlTemplate.Triggers>
@@ -90,9 +90,9 @@
     <!-- Dialog Header Banner -->
     <Border Grid.Row="0" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1" Padding="20,16">
       <StackPanel>
-        <TextBlock Text="CARGAR PLANTILLA DE MATERIALES" FontSize="16" FontWeight="Black" Foreground="{DynamicResource Brush.Ink}"/>
+        <TextBlock Text="CARGAR PLANTILLA DE MATERIALES" FontSize="{StaticResource Font.Size.h3}" FontWeight="Black" Foreground="{DynamicResource Brush.Ink}"/>
         <TextBlock Text="Selecciona una plantilla para cargar sus materiales en la partida seleccionada de tu cubicación."
-                   FontSize="11" Foreground="{DynamicResource Brush.Muted}" Margin="0,4,0,0" />
+                   FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" Margin="0,4,0,0" />
       </StackPanel>
     </Border>
 
@@ -116,7 +116,7 @@
           <Border Grid.Row="0" Padding="10,8" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1">
             <Grid>
               <TextBox x:Name="FilterBox"
-                       Padding="26,6,8,6" FontSize="12"
+                       Padding="26,6,8,6" FontSize="{StaticResource Font.Size.md}"
                        Background="{DynamicResource Brush.Surface2}"
                        BorderBrush="{DynamicResource Brush.Line}"
                        BorderThickness="1"
@@ -126,7 +126,7 @@
                     <Style.Resources>
                       <VisualBrush x:Key="HintBrush" TileMode="None" Stretch="None" AlignmentX="Left" AlignmentY="Center">
                         <VisualBrush.Visual>
-                          <TextBlock Text="Buscar plantilla..." Foreground="{DynamicResource Brush.Muted}" FontSize="12" Margin="26,0,0,0" Opacity="0.7"/>
+                          <TextBlock Text="Buscar plantilla..." Foreground="{DynamicResource Brush.Muted}" FontSize="{StaticResource Font.Size.md}" Margin="26,0,0,0" Opacity="0.7"/>
                         </VisualBrush.Visual>
                       </VisualBrush>
                     </Style.Resources>
@@ -138,7 +138,7 @@
                   </Style>
                 </TextBox.Style>
               </TextBox>
-              <TextBlock Text="🔍" VerticalAlignment="Center" Margin="8,0,0,0" FontSize="11" Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Left" IsHitTestVisible="False"/>
+              <TextBlock Text="🔍" VerticalAlignment="Center" Margin="8,0,0,0" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Left" IsHitTestVisible="False"/>
             </Grid>
           </Border>
 
@@ -161,14 +161,14 @@
                   </Grid.RowDefinitions>
                   <StackPanel Grid.Row="0" Orientation="Horizontal">
                     <Border Background="{DynamicResource Brush.BlueSoft}" CornerRadius="4" Padding="4,2" Margin="0,0,8,0" VerticalAlignment="Center">
-                      <TextBlock Text="{Binding Codigo}" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}"/>
+                      <TextBlock Text="{Binding Codigo}" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}"/>
                     </Border>
                     <TextBlock Text="{Binding Nombre}" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" TextTrimming="CharacterEllipsis"/>
                   </StackPanel>
                   <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,4,0,0">
-                    <TextBlock Text="{Binding Recursos.Count, StringFormat={}{0} materiales}" FontSize="10" Foreground="{DynamicResource Brush.Muted}"/>
-                    <TextBlock Text=" · " FontSize="10" Foreground="{DynamicResource Brush.Muted}"/>
-                    <TextBlock Text="{Binding Unidad, StringFormat=Unidad: {0}}" FontSize="10" Foreground="{DynamicResource Brush.Muted}"/>
+                    <TextBlock Text="{Binding Recursos.Count, StringFormat={}{0} materiales}" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.Muted}"/>
+                    <TextBlock Text=" · " FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.Muted}"/>
+                    <TextBlock Text="{Binding Unidad, StringFormat=Unidad: {0}}" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.Muted}"/>
                   </StackPanel>
                 </Grid>
               </DataTemplate>
@@ -189,7 +189,7 @@
         </Grid.RowDefinitions>
 
         <!-- Preview Title -->
-        <TextBlock Grid.Row="0" Text="Vista previa de materiales de la plantilla" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,8"/>
+        <TextBlock Grid.Row="0" Text="Vista previa de materiales de la plantilla" FontSize="{StaticResource Font.Size.sm}" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,8"/>
 
         <!-- Preview Grid -->
         <Border Grid.Row="1" Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="10">
@@ -216,7 +216,7 @@
 
         <!-- Warning label if template is empty -->
         <TextBlock Grid.Row="2" x:Name="WarnText"
-                   Text="" FontSize="11" Foreground="{DynamicResource Brush.Amber}"
+                   Text="" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Amber}"
                    Margin="0,8,0,0" TextWrapping="Wrap" Visibility="Collapsed"/>
       </Grid>
     </Grid>
@@ -231,11 +231,11 @@
 
         <!-- Mode choices -->
         <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-          <TextBlock Text="Modo de aplicación:" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource Brush.Ink}" Margin="0,0,16,0" VerticalAlignment="Center"/>
+          <TextBlock Text="Modo de aplicación:" FontWeight="Bold" FontSize="{StaticResource Font.Size.md}" Foreground="{DynamicResource Brush.Ink}" Margin="0,0,16,0" VerticalAlignment="Center"/>
           <RadioButton x:Name="RbReemplazar" Content="Reemplazar materiales existentes en la partida"
-                       IsChecked="True" VerticalAlignment="Center" Margin="0,0,16,0" FontSize="11" Foreground="{DynamicResource Brush.Ink}"/>
+                       IsChecked="True" VerticalAlignment="Center" Margin="0,0,16,0" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink}"/>
           <RadioButton x:Name="RbAgregar" Content="Agregar al final"
-                       VerticalAlignment="Center" FontSize="11" Foreground="{DynamicResource Brush.Ink}"/>
+                       VerticalAlignment="Center" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink}"/>
         </StackPanel>
 
         <!-- Buttons -->

@@ -13,6 +13,11 @@ using QubiCostElectrical.Wpf.Shell;
 
 namespace QubiCostElectrical.Wpf.Features.ScenarioWorkspace;
 
+/// <summary>
+/// Prototipo experimental de comparación de escenarios económicos (WIP).
+/// Mantenido intencionalmente fuera de <see cref="QubiCostElectrical.Wpf.Navigation.ShellRoute"/>
+/// en la versión actual (1.1.1) hasta completar integración de cálculo real y persistencia.
+/// </summary>
 public sealed class ScenarioWorkspaceViewModel : WorkspacePageViewModelBase
 {
 	private readonly ObservableCollection<ScenarioVm> scenarios = new ObservableCollection<ScenarioVm>();

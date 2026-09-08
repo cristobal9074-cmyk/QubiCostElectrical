@@ -29,7 +29,7 @@
       <DockPanel>
         <TextBox DockPanel.Dock="Top" Style="{StaticResource Form.SearchBox}" Margin="0,0,0,10"
                  Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Tag="Buscar material…" />
-        <TextBlock DockPanel.Dock="Bottom" Text="{Binding SidebarFooterText}" FontSize="10"
+        <TextBlock DockPanel.Dock="Bottom" Text="{Binding SidebarFooterText}" FontSize="{StaticResource Font.Size.xs}"
                    Foreground="{DynamicResource Brush.Muted}" Margin="0,10,0,0" TextWrapping="Wrap" />
         <ItemsControl ItemsSource="{Binding Categorias}">
           <ItemsControl.ItemTemplate>

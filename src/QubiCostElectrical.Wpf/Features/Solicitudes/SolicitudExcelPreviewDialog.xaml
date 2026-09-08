@@ -28,16 +28,16 @@
         </Grid.ColumnDefinitions>
 
         <StackPanel Grid.Column="0" VerticalAlignment="Center">
-          <TextBlock Text="Vista Previa de Archivo Excel (.xlsx)" FontSize="18" FontWeight="Bold" FontFamily="{StaticResource Font.Ui}" Foreground="{DynamicResource Brush.Ink}" />
+          <TextBlock Text="Vista Previa de Archivo Excel (.xlsx)" FontSize="{StaticResource Font.Size.h2}" FontWeight="Bold" FontFamily="{StaticResource Font.Ui}" Foreground="{DynamicResource Brush.Ink}" />
           <TextBlock Text="Previsualiza la distribución de columnas, hojas y metadatos del libro de cálculo que se exportará."
-                     FontSize="11" Foreground="{DynamicResource Brush.Muted}" Margin="0,4,0,0" />
+                     FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" Margin="0,4,0,0" />
         </StackPanel>
 
         <!-- Accent indicator -->
         <Border Grid.Column="1" Background="{DynamicResource Brush.Canvas}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="8" Padding="12,6" VerticalAlignment="Center">
           <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
             <Ellipse Width="8" Height="8" Fill="{DynamicResource Brush.Green}" Margin="0,0,8,0" VerticalAlignment="Center" />
-            <TextBlock Text="HOJA DE CÁLCULO EXCEL" FontSize="10" FontWeight="SemiBold" FontFamily="{StaticResource Font.Ui}" Foreground="{DynamicResource Brush.Ink2}" VerticalAlignment="Center" />
+            <TextBlock Text="HOJA DE CÁLCULO EXCEL" FontSize="{StaticResource Font.Size.xs}" FontWeight="SemiBold" FontFamily="{StaticResource Font.Ui}" Foreground="{DynamicResource Brush.Ink2}" VerticalAlignment="Center" />
           </StackPanel>
         </Border>
       </Grid>
@@ -154,8 +154,8 @@
         </Grid.ColumnDefinitions>
 
         <StackPanel Grid.Column="0" VerticalAlignment="Center" Orientation="Horizontal">
-          <TextBlock Text="Pestañas de salida:" FontWeight="SemiBold" FontSize="11" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,6,0" />
-          <TextBlock Text="[Materiales e Insumos]  |  [EPP]" VerticalAlignment="Center" Foreground="{DynamicResource Brush.Ink2}" FontSize="11" />
+          <TextBlock Text="Pestañas de salida:" FontWeight="SemiBold" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,6,0" />
+          <TextBlock Text="[Materiales e Insumos]  |  [EPP]" VerticalAlignment="Center" Foreground="{DynamicResource Brush.Ink2}" FontSize="{StaticResource Font.Size.sm}" />
         </StackPanel>
 
         <!-- Right Actions -->

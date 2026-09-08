@@ -28,7 +28,7 @@
             </Style.Triggers>
         </Style>
         <Style x:Key="EstadoChipText" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="10" />
+            <Setter Property="FontSize" Value="{StaticResource Font.Size.xs}" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
             <Style.Triggers>
@@ -69,7 +69,7 @@
             </Style.Triggers>
         </Style>
         <Style x:Key="SistemaChipText" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="10" />
+            <Setter Property="FontSize" Value="{StaticResource Font.Size.xs}" />
             <Setter Property="FontWeight" Value="Bold" />
             <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
             <Style.Triggers>
@@ -113,7 +113,7 @@
             </Style.Triggers>
         </Style>
         <Style x:Key="FaseChipText" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="10" />
+            <Setter Property="FontSize" Value="{StaticResource Font.Size.xs}" />
             <Setter Property="FontWeight" Value="Bold" />
             <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
             <Style.Triggers>
@@ -227,7 +227,7 @@
 
             <!-- ── Barra de estado inferior ──────────────────────────────── -->
             <TextBlock DockPanel.Dock="Bottom" Text="{Binding StatusMessage}"
-                 Margin="0,8,0,0" FontSize="11" Foreground="{DynamicResource Brush.Muted}" />
+                 Margin="0,8,0,0" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" />
 
             <!-- ── Cuerpo: sidebar + planilla ────────────────────────────── -->
             <Grid>
@@ -243,10 +243,10 @@
                 BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,12,0">
                     <DockPanel>
                         <TextBlock DockPanel.Dock="Top"
-                       Text="1 · TABLEROS SC"
-                       FontSize="11" FontWeight="Bold"
-                       Foreground="{DynamicResource Brush.Muted}"
-                       Margin="0,0,0,5" />
+                        Text="1 · TABLEROS SC"
+                        FontSize="{StaticResource Font.Size.sm}" FontWeight="Bold"
+                        Foreground="{DynamicResource Brush.Muted}"
+                        Margin="0,0,0,5" />
                         <ListBox ItemsSource="{Binding CuadrosFiltrados}"
                      SelectedItem="{Binding SelectedCuadro, Mode=TwoWay}"
                      BorderThickness="0" Background="Transparent"
@@ -288,7 +288,7 @@
                                             </Grid.ColumnDefinitions>
                                             <!-- Nombre en modo lectura -->
                                             <TextBlock Grid.Column="0" Text="{Binding Nombre}"
-                                 FontSize="12" FontWeight="SemiBold"
+                                 FontSize="{StaticResource Font.Size.md}" FontWeight="SemiBold"
                                  TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
                                  Foreground="{DynamicResource Brush.Ink}"
                                  ToolTip="Doble clic para renombrar"
@@ -296,13 +296,13 @@
                                             <!-- Nombre en modo edición -->
                                             <TextBox Grid.Column="0" Grid.ColumnSpan="2"
                                Text="{Binding Nombre, UpdateSourceTrigger=LostFocus}"
-                               FontSize="12" FontWeight="SemiBold" Padding="2,0" MaxLength="60"
+                               FontSize="{StaticResource Font.Size.md}" FontWeight="SemiBold" Padding="2,0" MaxLength="60"
                                Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}"
                                IsVisibleChanged="TableroNombre_VisibleChanged"
                                LostFocus="TableroNombre_LostFocus"
                                KeyDown="TableroNombre_KeyDown" />
                                             <!-- Botón lápiz: renombra sin doble clic (oculto en Visor / solo lectura) -->
-                                            <Button Grid.Column="1" Content="Renombrar" FontSize="11" Padding="4,0" Margin="4,0,0,0"
+                                            <Button Grid.Column="1" Content="Renombrar" FontSize="{StaticResource Font.Size.sm}" Padding="4,0" Margin="4,0,0,0"
                               ToolTip="Renombrar tablero"
                               Click="TableroEdit_Click">
                                                 <Button.Style>
@@ -320,7 +320,7 @@
                                                 </Button.Style>
                                             </Button>
                                         </Grid>
-                                        <TextBlock FontSize="10" Foreground="{DynamicResource Brush.Muted}" Margin="0,2,0,0">
+                                        <TextBlock FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.Muted}" Margin="0,2,0,0">
                       <Run Text="{Binding CircuitosActivos, Mode=OneWay}" /><Run Text=" / " /><Run Text="{Binding CircuitosProyectados, Mode=OneWay}" /><Run Text=" circuitos" />
                                         </TextBlock>
                                     </StackPanel>
@@ -340,7 +340,7 @@
                         <!-- Cabecera de la planilla -->
                         <DockPanel DockPanel.Dock="Top" Margin="0,0,0,10" LastChildFill="False">
                             <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center"
-                         FontSize="12" FontWeight="Bold"
+                         FontSize="{StaticResource Font.Size.md}" FontWeight="Bold"
                          Foreground="{DynamicResource Brush.Accent}">
                 <Run Text="2 · PLANILLA DE CIRCUITOS (" /><Run Text="{Binding SelectedCuadro.Nombre, FallbackValue='—'}" /><Run Text=")" />
                             </TextBlock>
@@ -387,7 +387,7 @@
                                     <Setter Property="BorderThickness" Value="0,1,1,0" />
                                 </Style>
                                 <Style x:Key="GroupBandLabel" TargetType="TextBlock">
-                                    <Setter Property="FontSize" Value="9.5" />
+                                    <Setter Property="FontSize" Value="{StaticResource Font.Size.2xs}" />
                                     <Setter Property="FontWeight" Value="Bold" />
                                     <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
                                     <Setter Property="HorizontalAlignment" Value="Center" />
@@ -458,7 +458,7 @@
                       GridLinesVisibility="All"
                       HeadersVisibility="Column"
                       RowHeaderWidth="0"
-                      FontSize="11"
+                      FontSize="{StaticResource Font.Size.sm}"
                       CurrentCellChanged="CircuitosGrid_CurrentCellChanged"
                       PreviewMouseLeftButtonDown="CircuitosGrid_PreviewMouseLeftButtonDown"
                       PreviewKeyDown="CircuitosGrid_PreviewKeyDown"
@@ -506,7 +506,7 @@
                                         <DataTemplate>
                                             <TextBox Text="{Binding Tipo, Mode=OneWay}"
                                Style="{StaticResource DataGrid.CellEditTextBox}"
-                               FontSize="11" HorizontalContentAlignment="Center"
+                               FontSize="{StaticResource Font.Size.sm}" HorizontalContentAlignment="Center"
                                LostFocus="TipoEditor_LostFocus" />
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellEditingTemplate>
@@ -526,7 +526,7 @@
                                         <DataTemplate>
                                             <TextBox Text="{Binding Fase, Mode=OneWay}"
                                Style="{StaticResource DataGrid.CellEditTextBox}"
-                               FontSize="11" HorizontalContentAlignment="Center"
+                               FontSize="{StaticResource Font.Size.sm}" HorizontalContentAlignment="Center"
                                LostFocus="FaseEditor_LostFocus" />
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellEditingTemplate>
@@ -550,7 +550,7 @@
                                                 <Border x:Name="UbicHost" Background="Transparent" CornerRadius="5" Margin="1">
                                                     <TextBox Text="{Binding Ubicacion, UpdateSourceTrigger=LostFocus}"
                                    BorderThickness="0" Background="Transparent"
-                                   FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Blue}"
+                                   FontSize="{StaticResource Font.Size.sm}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Blue}"
                                    TextAlignment="Left" VerticalContentAlignment="Center"
                                    Padding="6,0,18,0">
                                                         <!-- CellTemplate no hereda DataGrid.IsReadOnly: combinar Visor + TienePisos -->
@@ -626,15 +626,15 @@
                                                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
                                                                                   Data="M2,14 V6 L8,2 L14,6 V14 H2 M5,14 V9 H11 V14 M6,7.5 H7 M9,7.5 H10 M6,11.5 H7 M9,11.5 H10" />
                                                                         </Border>
-                                                                        <TextBlock DockPanel.Dock="Left" Text="Varios pisos" FontSize="12"
+                                                                        <TextBlock DockPanel.Dock="Left" Text="Varios pisos" FontSize="{StaticResource Font.Size.md}"
                                                FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink}"
                                                VerticalAlignment="Center" />
-                                                                        <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center" FontSize="10"
+                                                                        <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center" FontSize="{StaticResource Font.Size.xs}"
                                                Foreground="{DynamicResource Brush.Muted}">
                                       <Run Text="circuito " /><Run Text="{Binding Numero, Mode=OneWay}" />
                                                                         </TextBlock>
                                                                     </DockPanel>
-                                                                    <TextBlock FontSize="9.5" Foreground="{DynamicResource Brush.Muted}"
+                                                                    <TextBlock FontSize="{StaticResource Font.Size.2xs}" Foreground="{DynamicResource Brush.Muted}"
                                              TextWrapping="Wrap" Margin="27,0,0,0" LineHeight="14">
                                     <Run Text="↑ ↓" FontWeight="Bold" /><Run Text=" cambia de zona · " />
                                     <Run Text="← →" FontWeight="Bold" /><Run Text=" cambia de columna · " />
@@ -650,11 +650,11 @@
                                                                     <ColumnDefinition Width="62" />
                                                                     <ColumnDefinition Width="62" />
                                                                 </Grid.ColumnDefinitions>
-                                                                <TextBlock Grid.Column="0" Text="ZONA" FontSize="9" FontWeight="Bold"
+                                                                <TextBlock Grid.Column="0" Text="ZONA" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold"
                                            Foreground="{DynamicResource Brush.Muted}" />
-                                                                <TextBlock Grid.Column="1" Text="L. BAND" FontSize="9" FontWeight="Bold"
+                                                                <TextBlock Grid.Column="1" Text="L. BAND" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold"
                                            Foreground="{DynamicResource Brush.Muted}" TextAlignment="Right" />
-                                                                <TextBlock Grid.Column="2" Text="L. PVC" FontSize="9" FontWeight="Bold"
+                                                                <TextBlock Grid.Column="2" Text="L. PVC" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold"
                                            Foreground="{DynamicResource Brush.Muted}" TextAlignment="Right" Margin="6,0,0,0" />
                                                             </Grid>
 
@@ -694,7 +694,7 @@
                                                                                                 </Style>
                                                                                             </Ellipse.Style>
                                                                                         </Ellipse>
-                                                                                        <TextBlock Text="{Binding Nombre}" FontSize="11.5"
+                                                                                        <TextBlock Text="{Binding Nombre}" FontSize="{StaticResource Font.Size.sm}"
                                                        VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
                                                                                             <TextBlock.Style>
                                                                                                 <Style TargetType="TextBlock">
@@ -712,7 +712,7 @@
 
                                                                                     <TextBox x:Name="BandBox" Grid.Column="1" Margin="4,1,0,1"
                                                    Text="{Binding BandText, UpdateSourceTrigger=PropertyChanged}"
-                                                   FontSize="11.5" Padding="6,5" TextAlignment="Right" BorderThickness="1"
+                                                   FontSize="{StaticResource Font.Size.sm}" Padding="6,5" TextAlignment="Right" BorderThickness="1"
                                                    Background="{DynamicResource Brush.Surface2}"
                                                    BorderBrush="{DynamicResource Brush.Line}"
                                                    Foreground="{DynamicResource Brush.Ink}"
@@ -721,7 +721,7 @@
                                                    GotFocus="PisosPopupInput_GotFocus" Tag="0" />
                                                                                     <TextBox x:Name="PvcBox" Grid.Column="2" Margin="4,1,0,1"
                                                    Text="{Binding PvcText, UpdateSourceTrigger=PropertyChanged}"
-                                                   FontSize="11.5" Padding="6,5" TextAlignment="Right" BorderThickness="1"
+                                                   FontSize="{StaticResource Font.Size.sm}" Padding="6,5" TextAlignment="Right" BorderThickness="1"
                                                    Background="{DynamicResource Brush.Surface2}"
                                                    BorderBrush="{DynamicResource Brush.Line}"
                                                    Foreground="{DynamicResource Brush.Ink}"
@@ -739,11 +739,11 @@
                                                             <Border Background="{DynamicResource Brush.Surface2}" CornerRadius="0,0,10,10"
                                       BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,1,0,0" Padding="12,8">
                                                                 <DockPanel LastChildFill="False">
-                                                                    <TextBlock DockPanel.Dock="Left" FontSize="10.5" Foreground="{DynamicResource Brush.Muted}">
+                                                                    <TextBlock DockPanel.Dock="Left" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.Muted}">
                                     <Run Text="Total " /><Run Text="{Binding ZonaPisosTotal, Mode=OneWay}" FontWeight="Bold"
                                                               Foreground="{DynamicResource Brush.Blue}" /><Run Text=" m" />
                                                                     </TextBlock>
-                                                                    <TextBlock DockPanel.Dock="Right" FontSize="9.5" Foreground="{DynamicResource Brush.Muted}">
+                                                                    <TextBlock DockPanel.Dock="Right" FontSize="{StaticResource Font.Size.2xs}" Foreground="{DynamicResource Brush.Muted}">
                                     <Run Text="Esc" FontWeight="Bold" /><Run Text=" cierra" />
                                                                     </TextBlock>
                                                                 </DockPanel>
@@ -810,13 +810,13 @@
                                  HorizontalAlignment="Center" VerticalAlignment="Center" Margin="4,0" />
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
-                                    <DataGridTemplateColumn.CellEditingTemplate>
+                                     <DataGridTemplateColumn.CellEditingTemplate>
                                         <DataTemplate>
                                             <ComboBox Style="{StaticResource DataGrid.CellEditCombo}"
                                 Tag="ConductorDistribucion"
                                 ItemsSource="{Binding DataContext.TiposConductor, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                 Text="{Binding ConductorDistribucion, Mode=OneWay}"
-                                FontSize="11"
+                                FontSize="{StaticResource Font.Size.sm}"
                                 Loaded="FilterableCombo_Loaded"
                                 TextBoxBase.TextChanged="FilterableCombo_TextChanged"
                                 LostFocus="ConductorBandEditor_LostFocus" />
@@ -840,7 +840,7 @@
                                 Tag="SeccionDistribucion"
                                 ItemsSource="{Binding DataContext.SeccionesConductor, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                 Text="{Binding SeccionDistribucion, Mode=OneWay}"
-                                FontSize="11"
+                                FontSize="{StaticResource Font.Size.sm}"
                                 Loaded="FilterableCombo_Loaded"
                                 TextBoxBase.TextChanged="FilterableCombo_TextChanged"
                                 LostFocus="SeccionBandEditor_LostFocus" />
@@ -882,7 +882,7 @@
                                 Tag="TipoTuberia"
                                 ItemsSource="{Binding DataContext.TiposTuberia, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                 Text="{Binding TipoTuberia, Mode=OneWay}"
-                                FontSize="11"
+                                FontSize="{StaticResource Font.Size.sm}"
                                 Loaded="FilterableCombo_Loaded"
                                 TextBoxBase.TextChanged="FilterableCombo_TextChanged"
                                 LostFocus="TipoTuberiaEditor_LostFocus" />
@@ -908,7 +908,7 @@
                                 Tag="SeccionTuberia"
                                 ItemsSource="{Binding DataContext.DiametrosTuberia, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                 Text="{Binding SeccionTuberia, Mode=OneWay}"
-                                FontSize="11"
+                                FontSize="{StaticResource Font.Size.sm}"
                                 Loaded="FilterableCombo_Loaded"
                                 TextBoxBase.TextChanged="FilterableCombo_TextChanged"
                                 LostFocus="SeccionTuberiaEditor_LostFocus" />
@@ -932,7 +932,7 @@
                                 Tag="ConductorDerivacion"
                                 ItemsSource="{Binding DataContext.TiposConductor, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                 Text="{Binding ConductorDerivacion, Mode=OneWay}"
-                                FontSize="11"
+                                FontSize="{StaticResource Font.Size.sm}"
                                 Loaded="FilterableCombo_Loaded"
                                 TextBoxBase.TextChanged="FilterableCombo_TextChanged"
                                 LostFocus="ConductorPvcEditor_LostFocus" />
@@ -956,7 +956,7 @@
                                 Tag="SeccionDerivacion"
                                 ItemsSource="{Binding DataContext.SeccionesConductor, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                 Text="{Binding SeccionDerivacion, Mode=OneWay}"
-                                FontSize="11"
+                                FontSize="{StaticResource Font.Size.sm}"
                                 Loaded="FilterableCombo_Loaded"
                                 TextBoxBase.TextChanged="FilterableCombo_TextChanged"
                                 LostFocus="SeccionPvcEditor_LostFocus" />
@@ -1068,7 +1068,7 @@
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <Button Style="{StaticResource Button.Secondary}"
-                              Margin="4,2" Padding="6,3" FontSize="11"
+                              Margin="4,2" Padding="6,3" FontSize="{StaticResource Font.Size.sm}"
                               HorizontalAlignment="Stretch"
                               Content="{Binding ArtefactosResumen}"
                               Command="{Binding DataContext.OpenArtefactosCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"

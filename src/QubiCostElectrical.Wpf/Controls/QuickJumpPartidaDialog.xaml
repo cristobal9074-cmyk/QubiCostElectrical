@@ -23,7 +23,7 @@
         <Border DockPanel.Dock="Right" Background="{DynamicResource Brush.Surface2}"
                 BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
                 CornerRadius="6" Padding="6,2" VerticalAlignment="Center">
-          <TextBlock Text="Ctrl+G" FontWeight="Bold" FontSize="11" Foreground="{DynamicResource Brush.Muted}" />
+          <TextBlock Text="Ctrl+G" FontWeight="Bold" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" />
         </Border>
         <StackPanel VerticalAlignment="Center">
           <TextBlock Text="Ir a partida" Style="{StaticResource Dialog.HeaderTitle}" Margin="0,0,0,2" />
@@ -36,7 +36,7 @@
       <Border Grid.Row="1" Margin="0,0,0,10">
         <TextBox x:Name="SearchBox"
                  Style="{StaticResource Form.SearchBox}"
-                 FontSize="13"
+                 FontSize="{StaticResource Font.Size.base}"
                  Padding="8,8"
                  Tag="Buscar por código (ej. 1.2.3), descripción o capítulo…"
                  TextChanged="OnSearchBoxTextChanged"
@@ -87,7 +87,7 @@
                   <TextBlock Text="{Binding Codigo}"
                              FontFamily="Consolas, Segoe UI Mono, monospace"
                              FontWeight="Bold"
-                             FontSize="11"
+                             FontSize="{StaticResource Font.Size.sm}"
                              Foreground="{DynamicResource Brush.Accent}"
                              HorizontalAlignment="Center" />
                 </Border>
@@ -100,7 +100,7 @@
                              Foreground="{DynamicResource Brush.Ink}"
                              TextTrimming="CharacterEllipsis" />
                   <TextBlock Text="{Binding Capitulo}"
-                             FontSize="10" Foreground="{DynamicResource Brush.Muted}"
+                             FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.Muted}"
                              TextTrimming="CharacterEllipsis"
                              Margin="0,2,0,0"
                              Visibility="{Binding HasCapitulo, Converter={StaticResource BoolToVisibility}}" />
@@ -109,7 +109,7 @@
                 <!-- Cantidad / Badge -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
                   <TextBlock Text="{Binding CantidadUnidadText}"
-                             FontSize="11" Foreground="{DynamicResource Brush.Muted}"
+                             FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}"
                              VerticalAlignment="Center" Margin="0,0,8,0"
                              Visibility="{Binding CantidadUnidadText, Converter={StaticResource StringNotEmptyToVisibility}}" />
 
@@ -118,7 +118,7 @@
                           CornerRadius="10" Padding="8,2" VerticalAlignment="Center"
                           Visibility="{Binding HasBadge, Converter={StaticResource BoolToVisibility}}">
                     <TextBlock Text="{Binding BadgeText}"
-                               FontSize="10" FontWeight="SemiBold"
+                               FontSize="{StaticResource Font.Size.xs}" FontWeight="SemiBold"
                                Foreground="{DynamicResource Brush.Ink2}" />
                   </Border>
                 </StackPanel>
@@ -132,23 +132,23 @@
       <DockPanel Grid.Row="3" Margin="0,10,0,0" LastChildFill="False">
         <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
           <Border Background="{DynamicResource Brush.Surface2}" CornerRadius="3" Padding="4,1" Margin="0,0,4,0">
-            <TextBlock Text="Enter" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink2}" />
+            <TextBlock Text="Enter" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink2}" />
           </Border>
-          <TextBlock Text="Ir a partida" FontSize="11" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,12,0" VerticalAlignment="Center" />
+          <TextBlock Text="Ir a partida" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,12,0" VerticalAlignment="Center" />
 
           <Border Background="{DynamicResource Brush.Surface2}" CornerRadius="3" Padding="4,1" Margin="0,0,4,0">
-            <TextBlock Text="↑ ↓" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink2}" />
+            <TextBlock Text="↑ ↓" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink2}" />
           </Border>
-          <TextBlock Text="Navegar" FontSize="11" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,12,0" VerticalAlignment="Center" />
+          <TextBlock Text="Navegar" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,12,0" VerticalAlignment="Center" />
 
           <Border Background="{DynamicResource Brush.Surface2}" CornerRadius="3" Padding="4,1" Margin="0,0,4,0">
-            <TextBlock Text="Esc" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink2}" />
+            <TextBlock Text="Esc" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink2}" />
           </Border>
-          <TextBlock Text="Cerrar" FontSize="11" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
+          <TextBlock Text="Cerrar" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
         </StackPanel>
 
         <TextBlock x:Name="CountLabel" DockPanel.Dock="Right"
-                   VerticalAlignment="Center" FontSize="11" Foreground="{DynamicResource Brush.Muted}" />
+                   VerticalAlignment="Center" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" />
       </DockPanel>
     </Grid>
   </Border>

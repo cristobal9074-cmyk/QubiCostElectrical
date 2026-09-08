@@ -64,7 +64,7 @@
                             BorderBrush="{DynamicResource Brush.Green}" BorderThickness="1"
                             CornerRadius="12" Padding="10,3" Margin="8,0,0,0" VerticalAlignment="Center">
                       <TextBlock Text="{Binding Subtotal, StringFormat={}{0:N2}}" FontWeight="Bold"
-                                 Foreground="{DynamicResource Brush.Green}" FontFamily="{StaticResource Font.Mono}" FontSize="12" />
+                                 Foreground="{DynamicResource Brush.Green}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.md}" />
                     </Border>
                     <Button DockPanel.Dock="Right" Content="🗑" Width="28" Height="28" Margin="8,0,0,0"
                             Style="{StaticResource Button.Secondary}" Padding="0" ToolTip="Quitar ítem"
@@ -94,7 +94,7 @@
                     <Border DockPanel.Dock="Left" Background="{DynamicResource Brush.Surface2}"
                             BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4"
                             Padding="8,3" MinWidth="46" Margin="0,0,6,0">
-                      <TextBlock x:Name="FormulaBarRef" FontFamily="{StaticResource Font.Mono}" FontWeight="Bold" FontSize="11"
+                      <TextBlock x:Name="FormulaBarRef" FontFamily="{StaticResource Font.Mono}" FontWeight="Bold" FontSize="{StaticResource Font.Size.sm}"
                                  Foreground="{DynamicResource Brush.Blue}" HorizontalAlignment="Center" />
                     </Border>
                     <TextBlock DockPanel.Dock="Left" Text="fx" FontStyle="Italic" FontWeight="Bold"
