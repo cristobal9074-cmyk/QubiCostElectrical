@@ -29,7 +29,7 @@ public sealed class DeliveryFrozenContextTests
         host.Session.Itemizado.Add(new ItemizadoRow { Id = "P1", Item = "1.1", ParentId = "T1", Descripcion = "Partida 1", Unidad = "GL" });
         host.Session.Cubicacion.Add(new CubicacionRow { ItemId = "P1", Codigo = "MAT01", Descripcion = "Mat 1", Cantidad = 10m, MatUf = 1m, Unidad = "UN" });
 
-        var selector = new DeliveryDocumentSelectorVm(WpfAppHost.Current);
+        var selector = new DeliveryDocumentSelectorVm(WpfAppHost.Current.Dashboard);
         var ctx = selector.GetSelectedContext(host.Session);
 
         var beforeBlockers = ctx.ReviewSummary?.BlockingCount ?? -1;
@@ -52,7 +52,7 @@ public sealed class DeliveryFrozenContextTests
         host.Session.Itemizado.Add(new ItemizadoRow { Id = "P1", Item = "1.1", Descripcion = "Partida 1" });
         host.Session.Cubicacion.Add(new CubicacionRow { ItemId = "P1", Codigo = "MAT01", Cantidad = 10m, MatUf = 1m });
 
-        var selector = new DeliveryDocumentSelectorVm(WpfAppHost.Current);
+        var selector = new DeliveryDocumentSelectorVm(WpfAppHost.Current.Dashboard);
         var ctx1 = selector.GetSelectedContext(host.Session);
         var ctx2 = selector.GetSelectedContext(host.Session);
 

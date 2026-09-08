@@ -90,6 +90,49 @@ public sealed class CubicacionViewModelTests
         Assert.False(vm.SaveCommand.CanExecute(null));
     }
 
+    [Fact]
+    public void ReadOnly_PartidaHeaderSetters_DoNotMutateOrMarkDirty()
+    {
+        var host = WpfAppHost.Current;
+        host.Session.NewProject("cubicacion-header-readonly");
+        host.Session.Itemizado.Add(new ItemizadoRow
+        {
+            Id = "P1",
+            Item = "1.1",
+            Descripcion = "Canalización",
+            Unidad = "ML",
+            Cantidad = 10m,
+            Observaciones = "Obs original"
+        });
+
+        var vm = new CubicacionPageVm(new FakeShell(), host);
+        vm.SelectPartida(vm.Partidas.Single(p => p.Id == "P1"));
+
+        Assert.False(host.Session.IsDirty);
+        Assert.False(vm.HasPendingChanges);
+
+        try
+        {
+            host.Session.SetRoleReadOnly(true, "Rol Visor");
+            Assert.True(vm.IsReadOnly);
+
+            vm.PartidaUnidadText = "GL";
+            vm.PartidaCantidadText = "99";
+            vm.PartidaObservacionesText = "intentado por visor";
+
+            Assert.Equal("ML", vm.PartidaUnidadText);
+            Assert.Equal("ML", host.Session.Itemizado.Single(i => i.Id == "P1").Unidad);
+            Assert.Equal(10m, host.Session.Itemizado.Single(i => i.Id == "P1").Cantidad);
+            Assert.Equal("Obs original", vm.PartidaObservacionesText);
+            Assert.False(host.Session.IsDirty);
+            Assert.False(vm.HasPendingChanges);
+        }
+        finally
+        {
+            host.Session.SetRoleReadOnly(false);
+        }
+    }
+
 
     [Fact]
     public async Task SelectPartida_LoadsRowsForItem()
@@ -530,7 +573,7 @@ public sealed class CubicacionViewModelTests
     }
 
     [Fact]
-    public void ExcludedPartida_IsReadOnlyInCubicacion()
+    public void ExcludedWithoutNote_LocksGrid_DoesNotShowNoteBanner()
     {
         var host = WpfAppHost.Current;
         host.Session.NewProject("cubicacion-excluded");
@@ -547,9 +590,137 @@ public sealed class CubicacionViewModelTests
         var vm = new CubicacionPageVm(new FakeShell(), host);
         vm.SelectPartida(vm.Partidas.Single(p => p.Id == "P1"));
 
+        Assert.True(vm.ExcluidoCubicacion);
         Assert.True(vm.IsReadOnly);
+        Assert.False(vm.HasPartidaNote);
+        Assert.Equal("Partida vacía", vm.PartidaEstadoText);
         Assert.False(vm.AddRowCommand.CanExecute(null));
-        Assert.Equal("Excluida de cubicación", vm.PartidaEstadoText);
+    }
+
+    [Fact]
+    public void ObservationWithoutExclusion_KeepsGridEditable()
+    {
+        var host = WpfAppHost.Current;
+        host.Session.NewProject("cubicacion-obs-libre");
+        host.Session.Itemizado.Add(new ItemizadoRow
+        {
+            Id = "P1",
+            Item = "1.1",
+            Descripcion = "Canalización",
+            Unidad = "ML",
+            Cantidad = 1m
+        });
+
+        var vm = new CubicacionPageVm(new FakeShell(), host);
+        vm.SelectPartida(vm.Partidas.Single(p => p.Id == "P1"));
+
+        vm.MotivoNoCubicarText = "Revisar diámetro con arquitectura";
+        Assert.True(vm.HasPartidaNote);
+        Assert.False(vm.ExcluidoCubicacion);
+        Assert.False(vm.IsReadOnly);
+        Assert.Equal("Revisar diámetro con arquitectura", vm.PartidaEstadoText);
+        Assert.True(vm.AddRowCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public void CtrlE_TogglesExclusion_IndependentOfObservation()
+    {
+        var host = WpfAppHost.Current;
+        host.Session.NewProject("cubicacion-ctrl-e");
+        host.Session.Itemizado.Add(new ItemizadoRow
+        {
+            Id = "P1",
+            Item = "1.1",
+            Descripcion = "Canalización",
+            Unidad = "ML",
+            Cantidad = 1m
+        });
+
+        var vm = new CubicacionPageVm(new FakeShell(), host);
+        vm.SelectPartida(vm.Partidas.Single(p => p.Id == "P1"));
+
+        vm.MotivoNoCubicarText = "Nota libre";
+        Assert.False(vm.ExcluidoCubicacion);
+
+        Assert.True(vm.TryExecuteShortcut(CubicacionShortcutCatalog.NoCubicar));
+        Assert.True(vm.ExcluidoCubicacion);
+        Assert.True(vm.IsReadOnly);
+        Assert.Equal("Nota libre", vm.MotivoNoCubicarText);
+
+        Assert.True(vm.TryExecuteShortcut(CubicacionShortcutCatalog.NoCubicar));
+        Assert.False(vm.ExcluidoCubicacion);
+        Assert.False(vm.IsReadOnly);
+        Assert.Equal("Nota libre", host.Session.Itemizado[0].MotivoNoCubicar);
+    }
+
+    [Fact]
+    public void CtrlShiftE_FocusesObservation_WithoutExcluding()
+    {
+        var host = WpfAppHost.Current;
+        host.Session.NewProject("cubicacion-obs-focus");
+        host.Session.Itemizado.Add(new ItemizadoRow
+        {
+            Id = "P1",
+            Item = "1.1",
+            Descripcion = "Canalización",
+            Unidad = "ML",
+            Cantidad = 1m
+        });
+
+        var vm = new CubicacionPageVm(new FakeShell(), host);
+        vm.SelectPartida(vm.Partidas.Single(p => p.Id == "P1"));
+
+        bool focused = false;
+        vm.RequestFocusMotivoNoCubicar += () => focused = true;
+
+        Assert.True(vm.TryExecuteShortcut(CubicacionShortcutCatalog.Observacion));
+        Assert.True(focused);
+        Assert.False(vm.ExcluidoCubicacion);
+    }
+
+    [Fact]
+    public void CtrlPlus_OnPartidasPanel_AddsPartidaBelowSelection()
+    {
+        var host = WpfAppHost.Current;
+        host.Session.NewProject("cubicacion-add-partida");
+        host.Session.Itemizado.Add(new ItemizadoRow
+        {
+            Id = "1.0.00001",
+            Item = "1.1",
+            Descripcion = "Existente",
+            Unidad = "UN",
+            Cantidad = 1m
+        });
+
+        var vm = new CubicacionPageVm(new FakeShell(), host);
+        vm.SelectPartida(vm.Partidas.Single(p => p.Id == "1.0.00001"));
+
+        Assert.True(vm.AddPartidaCommand.CanExecute(null));
+        vm.AddPartidaCommand.Execute(null);
+
+        Assert.True(host.Session.Itemizado.Count >= 2);
+        Assert.Contains(host.Session.Itemizado, x => !x.EsTitulo && x.Descripcion == "Nueva partida");
+        Assert.Equal("Nueva partida", vm.SelectedPartida?.Descripcion);
+    }
+
+    [Fact]
+    public void DeletePartidaCommand_CanExecute_WhenPartidaSelected()
+    {
+        var host = WpfAppHost.Current;
+        host.Session.NewProject("cubicacion-del-partida");
+        host.Session.Itemizado.Add(new ItemizadoRow
+        {
+            Id = "1.0.00001",
+            Item = "1.1",
+            Descripcion = "A borrar",
+            Unidad = "UN",
+            Cantidad = 1m
+        });
+
+        var vm = new CubicacionPageVm(new FakeShell(), host);
+        vm.SelectPartida(vm.Partidas.Single(p => p.Id == "1.0.00001"));
+
+        Assert.True(vm.DeletePartidaCommand.CanExecute(null));
     }
 
     [Fact]

@@ -79,7 +79,7 @@ public sealed class ProjectLifecycleTests : IDisposable
     }
 
     [Fact]
-    public async Task Close_WithDirtyState_Discard_ReturnsTrue()
+    public async Task Close_WithDirtyState_SilentSave_ReturnsTrueWithoutDialog()
     {
         WpfTestHost.EnsureInitialized();
         var host = WpfAppHost.Current;
@@ -88,7 +88,8 @@ public sealed class ProjectLifecycleTests : IDisposable
         {
             host.Session.MarkDirty();
             var svm = MakeVm();
-            svm.ShowCloseProjectDialog = () => ThreeWayResult.Discard;
+            svm.ShowCloseProjectDialog = () =>
+                throw new InvalidOperationException("ShowCloseProjectDialog no debe llamarse en cierre silencioso.");
 
             var result = await svm.CloseProjectAsync();
             Assert.True(result);
@@ -100,7 +101,7 @@ public sealed class ProjectLifecycleTests : IDisposable
     }
 
     [Fact]
-    public async Task Close_WithDirtyState_Cancel_ReturnsFalse()
+    public async Task Close_WithDirtyState_SilentSave_ClosesProject()
     {
         WpfTestHost.EnsureInitialized();
         var host = WpfAppHost.Current;
@@ -109,31 +110,12 @@ public sealed class ProjectLifecycleTests : IDisposable
         {
             host.Session.MarkDirty();
             var svm = MakeVm();
-            svm.ShowCloseProjectDialog = () => ThreeWayResult.Cancel;
+            svm.ShowCloseProjectDialog = () =>
+                throw new InvalidOperationException("ShowCloseProjectDialog no debe llamarse en cierre silencioso.");
 
             var result = await svm.CloseProjectAsync();
-            Assert.False(result);
-        }
-        finally
-        {
-            Cleanup(path);
-        }
-    }
-
-    [Fact]
-    public async Task Close_Cancel_ProjectRemainsOpen()
-    {
-        WpfTestHost.EnsureInitialized();
-        var host = WpfAppHost.Current;
-        var path = await SetupOpenProject(host);
-        try
-        {
-            host.Session.MarkDirty();
-            var svm = MakeVm();
-            svm.ShowCloseProjectDialog = () => ThreeWayResult.Cancel;
-
-            await svm.CloseProjectAsync();
-            Assert.True(host.ProjectWorkspace.HasOpenProject);
+            Assert.True(result);
+            Assert.False(host.ProjectWorkspace.HasOpenProject);
         }
         finally
         {

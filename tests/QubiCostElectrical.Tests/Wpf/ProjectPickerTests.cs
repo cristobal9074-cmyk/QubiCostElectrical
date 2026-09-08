@@ -125,7 +125,6 @@ public sealed class ProjectPickerTests : IDisposable
         svc.AddProject(@"C:\no\existe.pepro");
 
         var svm = MakeVm();
-        svm.ShowCloseProjectDialog = () => ThreeWayResult.Cancel;
         svm.ShowMissingFileWarning = _ => { };   // suprimir diálogo en tests
 
         var countBefore = svm.RecentProjects.Count;
@@ -242,10 +241,10 @@ public sealed class ProjectPickerTests : IDisposable
         Assert.False(svm.IsProjectPickerOpen);
     }
 
-    // ─── Cerrar con Descartar ────────────────────────────────────────────
+    // ─── Cerrar con guardado silencioso ───────────────────────────────────
 
     [Fact]
-    public async Task CloseProject_Discard_ReturnsTrueAndProjectClosed()
+    public async Task CloseProject_WithDirtyState_SilentSave_ReturnsTrueAndProjectClosed()
     {
         WpfTestHost.EnsureInitialized();
         var host = WpfAppHost.Current;
@@ -257,39 +256,12 @@ public sealed class ProjectPickerTests : IDisposable
             host.Session.MarkDirty();
 
             var svm = MakeVm();
-            svm.ShowCloseProjectDialog = () => ThreeWayResult.Discard;
+            svm.ShowCloseProjectDialog = () =>
+                throw new InvalidOperationException("ShowCloseProjectDialog no debe llamarse en cierre silencioso.");
 
             var result = await svm.CloseProjectAsync();
             Assert.True(result);
             Assert.False(host.ProjectWorkspace.HasOpenProject);
-        }
-        finally
-        {
-            foreach (var p in new[] { path, path + ".autosave", path + ".lock" })
-                try { if (File.Exists(p)) File.Delete(p); } catch { }
-        }
-    }
-
-    // ─── Cerrar con Cancelar ──────────────────────────────────────────────
-
-    [Fact]
-    public async Task CloseProject_Cancel_KeepsProjectOpen()
-    {
-        WpfTestHost.EnsureInitialized();
-        var host = WpfAppHost.Current;
-        var path = Path.Combine(Path.GetTempPath(), $"picker_cancel_{Guid.NewGuid():N}.qce");
-        try
-        {
-            host.Session.NewProject("picker-cancel-test");
-            await host.ProjectWorkspace.SaveAsAsync(path);
-            host.Session.MarkDirty();
-
-            var svm = MakeVm();
-            svm.ShowCloseProjectDialog = () => ThreeWayResult.Cancel;
-
-            var result = await svm.CloseProjectAsync();
-            Assert.False(result);
-            Assert.True(host.ProjectWorkspace.HasOpenProject);
         }
         finally
         {

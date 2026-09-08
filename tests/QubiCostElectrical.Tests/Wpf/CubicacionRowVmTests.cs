@@ -264,6 +264,80 @@ public sealed class CubicacionRowVmTests
     }
 
     [Fact]
+    public void MutableSetters_DoNotMutateSource_WhenCanEditIsFalse()
+    {
+        var source = new CubicacionRow
+        {
+            Tipo = "MAT",
+            Codigo = "COD-1",
+            Descripcion = "Original",
+            Unidad = "ML",
+            Cantidad = 4m,
+            MatUf = 1m,
+            MoUf = 2m,
+            Area = "Piso 1",
+            NotaInterna = "nota"
+        };
+        var vm = new CubicacionRowVm(source, canEdit: () => false);
+
+        vm.Codigo = "OTRO";
+        vm.Cantidad = 99m;
+        vm.Descripcion = "Cambiado";
+        vm.Tipo = "MO";
+        vm.Unidad = "GL";
+        vm.MatUf = 10m;
+        vm.MoUf = 20m;
+        vm.MatClp = 1000m;
+        vm.MoClp = 2000m;
+        vm.Area = "Piso 9";
+        vm.NotaInterna = "otra";
+
+        Assert.Equal("COD-1", source.Codigo);
+        Assert.Equal(4m, source.Cantidad);
+        Assert.Equal("Original", source.Descripcion);
+        Assert.Equal("MAT", source.Tipo);
+        Assert.Equal("ML", source.Unidad);
+        Assert.Equal(1m, source.MatUf);
+        Assert.Equal(2m, source.MoUf);
+        Assert.Equal(0m, source.MatClp);
+        Assert.Equal(0m, source.MoClp);
+        Assert.Equal("Piso 1", source.Area);
+        Assert.Equal("nota", source.NotaInterna);
+    }
+
+    [Fact]
+    public void MutableSetters_WriteThroughToSource_WhenCanEditIsTrue()
+    {
+        var source = new CubicacionRow
+        {
+            Codigo = "COD-1",
+            Descripcion = "Original",
+            Cantidad = 4m
+        };
+        var vm = new CubicacionRowVm(source, canEdit: () => true);
+
+        vm.Codigo = "OTRO";
+        vm.Cantidad = 8m;
+        vm.Descripcion = "Nueva";
+
+        Assert.Equal("OTRO", source.Codigo);
+        Assert.Equal(8m, source.Cantidad);
+        Assert.Equal("Nueva", source.Descripcion);
+    }
+
+    [Fact]
+    public void SectorExpressionChanged_DoesNotFire_WhenCanEditIsFalse()
+    {
+        var vm = new CubicacionRowVm(new CubicacionRow(), canEdit: () => false);
+        var fired = false;
+        vm.SectorExpressionChanged = (_, _, _) => fired = true;
+
+        vm.SectorValues[0] = "2+3";
+
+        Assert.False(fired);
+    }
+
+    [Fact]
     public void Codigo_Clearing_ResetsDescriptionUnitAndPrices()
     {
         var vm = Make();

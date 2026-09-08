@@ -497,6 +497,25 @@ public sealed class PreferencesViewModelTests
         Assert.False(vm.PinBlockRepeats);
     }
 
+    [Fact]
+    public void PreferencesViewModel_LoadsAllCubicacionAndShellShortcuts()
+    {
+        using var _ = UserPreferencesStore.UsePreferencesFilePathForTests(TempPath());
+        var vm = new PreferencesViewModel(WpfAppHost.Current);
+
+        // Verify that newly added shortcuts exist in the collection
+        Assert.Contains(vm.CubicacionShortcuts, r => r.ActionId == CubicacionShortcutCatalog.AddPartida);
+        Assert.Contains(vm.CubicacionShortcuts, r => r.ActionId == CubicacionShortcutCatalog.DeletePartida);
+        Assert.Contains(vm.CubicacionShortcuts, r => r.ActionId == CubicacionShortcutCatalog.FillDown);
+        Assert.Contains(vm.CubicacionShortcuts, r => r.ActionId == CubicacionShortcutCatalog.FillRight);
+        Assert.Contains(vm.CubicacionShortcuts, r => r.ActionId == CubicacionShortcutCatalog.RepeatMeasurement);
+        Assert.Contains(vm.CubicacionShortcuts, r => r.ActionId == CubicacionShortcutCatalog.QuickJump);
+        Assert.Contains(vm.CubicacionShortcuts, r => r.ActionId == CubicacionShortcutCatalog.SectorMatrix);
+
+        Assert.True(vm.CubicacionShortcuts.Count >= 18);
+        Assert.True(vm.ShellShortcuts.Count >= 4);
+    }
+
     // ─── Helper ───────────────────────────────────────────────────────────
 
     private sealed class FakeFileOpener(Action<string> onOpenFolder) : IFileOpenService

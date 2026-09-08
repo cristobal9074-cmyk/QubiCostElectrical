@@ -119,6 +119,57 @@ public sealed class VersionsViewModelTests
         Assert.Contains("todavía no tiene versiones", vm.StatusMessage);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ShowEmptyState_IsTrue_WhenNoProjectOrNoVersions(bool withProject)
+    {
+        var host = WpfAppHost.Current;
+        if (withProject)
+        {
+            var path = Path.Combine(Path.GetTempPath(), $"ver-empty-theory-{Guid.NewGuid():N}.qce");
+            host.Session.NewProject("ver-empty-theory");
+            host.Session.Versiones.Clear();
+            await host.ProjectWorkspace.SaveAsAsync(path);
+        }
+        else
+        {
+            host.Session.NewProject("ver-no-project");
+        }
+
+        var vm = new VersionsViewModel(new FakeShellHost(), WpfAppHost.Current);
+
+        Assert.True(vm.ShowEmptyState);
+        Assert.Empty(vm.Versions);
+    }
+
+    // 5b. Solo lectura — NewCommand deshabilitado (rol Visor / lock)
+    [Fact]
+    public async Task ReadOnly_DisablesNewCommand()
+    {
+        var host = WpfAppHost.Current;
+        var path = Path.Combine(Path.GetTempPath(), $"ver-readonly-{Guid.NewGuid():N}.qce");
+        host.Session.NewProject("ver-readonly-test");
+        host.Session.Versiones.Clear();
+        host.Session.Versiones.Add(MakeVersion("V1", "Base"));
+        await host.ProjectWorkspace.SaveAsAsync(path);
+
+        try
+        {
+            host.Session.SetRoleReadOnly(true, "Prueba solo lectura");
+            var vm = new VersionsViewModel(new FakeShellHost(), host);
+            vm.Refresh();
+
+            Assert.True(vm.IsReadOnly);
+            Assert.False(vm.NewCommand.CanExecute(null));
+            Assert.False(vm.ActivateCommand.CanExecute(null));
+        }
+        finally
+        {
+            host.Session.SetRoleReadOnly(false);
+        }
+    }
+
     // 5. Proyecto con versiones — habilita comandos y oculta empty state
     [Fact]
     public async Task Refresh_ProjectWithVersions_HidesEmptyStateAndEnablesNew()

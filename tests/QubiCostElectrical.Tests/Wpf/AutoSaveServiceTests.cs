@@ -14,6 +14,13 @@ public sealed class AutoSaveServiceTests
     }
 
     [Fact]
+    public void Intervals_MatchProfessionalFluidSaveDefaults()
+    {
+        Assert.Equal(TimeSpan.FromSeconds(15), AutoSaveService.SidecarInterval);
+        Assert.Equal(TimeSpan.FromMilliseconds(2500), AutoSaveService.PersistDebounceInterval);
+    }
+
+    [Fact]
     public void GetAutoSavePath_QceProject_ReturnsQceAutosave()
     {
         var path = AutoSaveService.GetAutoSavePath(@"C:\proyecto.qce");

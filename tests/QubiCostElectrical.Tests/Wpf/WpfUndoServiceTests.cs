@@ -480,7 +480,7 @@ public sealed class WpfUndoServiceTests
     public void Currency_TryApplyChanges_CanBeUndone()
     {
         var host = SetupHost("currency-undo");
-        host.Session.ProjectInfo.ValorUfClp = 0m;
+        host.Session.ProjectInfo.ValorUfClp = 35000m;
 
         var svc = host.UndoService;
         svc.PushUndoPoint(host.Session, "before-rate");
@@ -490,7 +490,7 @@ public sealed class WpfUndoServiceTests
         Assert.Equal(37000m, host.Session.ProjectInfo.ValorUfClp);
 
         svc.Undo(host.Session);
-        Assert.Equal(0m, host.Session.ProjectInfo.ValorUfClp);
+        Assert.Equal(35000m, host.Session.ProjectInfo.ValorUfClp);
     }
 
     // ════════════════════════════════════════════════════════════════════════════

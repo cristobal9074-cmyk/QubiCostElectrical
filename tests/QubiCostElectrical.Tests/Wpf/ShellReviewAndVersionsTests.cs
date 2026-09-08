@@ -116,6 +116,7 @@ public sealed class ShellReviewAndVersionsTests
             ItemId = "P1",
             Descripcion = "PVC 20",
             Cantidad = 10m,
+            MatClp = 39000m,
             MatUf = 1m
         });
 
@@ -139,6 +140,7 @@ public sealed class ShellReviewAndVersionsTests
                     Codigo = "PVC20",
                     Descripcion = "PVC 20",
                     Cantidad = 10m,
+                    MatClp = 39000m,
                     MatUf = 1m
                 }
             ]

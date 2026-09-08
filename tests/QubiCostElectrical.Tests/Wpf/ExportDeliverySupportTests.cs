@@ -10,7 +10,7 @@ public sealed class ExportDeliverySupportTests
     [Fact]
     public void DocumentSelector_HasSixDocuments_AllSelectedByDefault()
     {
-        var selector = new DeliveryDocumentSelectorVm(WpfAppHost.Current);
+        var selector = new DeliveryDocumentSelectorVm(WpfAppHost.Current.Dashboard);
 
         Assert.Equal(6, selector.Documents.Count);
         Assert.All(selector.Documents, d => Assert.True(d.IsSelected));
@@ -19,7 +19,7 @@ public sealed class ExportDeliverySupportTests
     [Fact]
     public void DocumentSelector_GetSelectedDocumentIds_ReturnsOnlySelected()
     {
-        var selector = new DeliveryDocumentSelectorVm(WpfAppHost.Current);
+        var selector = new DeliveryDocumentSelectorVm(WpfAppHost.Current.Dashboard);
 
         selector.Documents[1].IsSelected = false;
         selector.Documents[3].IsSelected = false;
@@ -36,7 +36,7 @@ public sealed class ExportDeliverySupportTests
     [Fact]
     public void DocumentSelector_SelectionChanged_FiresEvent()
     {
-        var selector = new DeliveryDocumentSelectorVm(WpfAppHost.Current);
+        var selector = new DeliveryDocumentSelectorVm(WpfAppHost.Current.Dashboard);
         var fired = false;
         selector.SelectionChanged += (_, _) => fired = true;
 
