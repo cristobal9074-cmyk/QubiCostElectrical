@@ -4,6 +4,13 @@ Las versiones siguen el formato `MAJOR.MINOR.PATCH` y corresponden a `Directory.
 
 ## 1.1.1
 
+### Cierre Comercial GA y Estabilización UI (2026-09-08)
+- **Smoke Test Humano Semana A (PASS)**: Validación y firma formal en `docs/SMOKE_TEST.md` de los 5 bloques críticos (Cubicación completa, Cubicación SC, roles y permisos, persistencia con flush al salir y overlay en oferta/exportación). Artefacto SHA-256 verificado y archivado.
+- **Endurecimiento del Rol Visor**: Blindaje completo de solo lectura en los 6 módulos principales y cabecera de Cubicación (`UnidadHeaderBox`, `CantHeaderBox`, `ObservacionHeaderBox` enlazados a `IsReadOnly`, setters con guard clauses ante `session.IsReadOnly`). Acciones de exportación estrictamente bloqueadas.
+- **Persistencia y Resistencia a Fallos**: Implementación de guardado atómico con flush inmediato en segundo plano ante cierre abrupto con la «X» (<2,5 s) sin pérdida de datos en `.qce`.
+- **Tokenización Tipográfica 100%**: Migración completa de tamaños de fuente literales a tokens del sistema de diseño semántico (`DesignSystem/Typography.xaml`) en vistas principales, Cubicación SC, diálogos secundarios (`QuickJumpPartidaDialog`, `ConjuntoPickerDialog`, `MaterialBatchReplaceDialog`, `SolicitudExcelPreviewDialog`, `SolicitudPdfPreviewDialog`, etc.) y controles de usuario.
+- **Arquitectura y Sanidad de Código**: Desvinculación de stubs experimentales (`ScenarioWorkspace`) de rutas de navegación visibles; suite completa de 1.821 pruebas automatizadas y guardias de arquitectura en verde (0 fallos, 0 advertencias).
+
 ### Motor de cálculo v5 — la política de cierre comercial manda sobre el precio de venta (2026-09-01)
 - **Problema**: `ClosingPolicySelection` (6 políticas: Costo+Markup, Precio Objetivo, Suma
   Alzada/EPC, Costo+Fee, Precio Unitario Puro, Gainshare/Painshare) se persistía por proyecto
