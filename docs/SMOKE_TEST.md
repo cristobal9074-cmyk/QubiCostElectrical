@@ -17,18 +17,18 @@ Registro oficial: ejecutar `.\scripts\Record-SmokeSemanaA.ps1`. Esta firma human
 
 | Campo | Valor |
 |-------|-------|
-| Fecha | _______________ |
-| Probador | _______________ |
+| Fecha | 2026-09-08 |
+| Probador | Cristóbal |
 | Build | `publish\win-x64\QubiCostElectrical.exe` / versión 1.1.1 |
-| Resultado | [ ] PASS · [ ] FAIL |
+| Resultado | [x] PASS · [ ] FAIL |
 
 **Bloques mínimos a firmar (45–60 min):**
 
-1. [ ] Cubicación completa (puntos 1–14 arriba, o criterio P0 compacto)
-2. [ ] Cubicación SC básico (puntos 1–10)
-3. [ ] Roles: Admin / Estimador / Visor (Visor no edita ni exporta; Estimador edita; Admin completo)
-4. [ ] **Cerrar con X** tras editar hace &lt;2,5 s: reabrir `.qce` conserva el último cambio (flush al salir)
-5. [ ] Oferta: **Generar oferta →** muestra overlay «Generando documentos…» y deshabilita el botón
+1. [x] Cubicación completa (puntos 1–14 arriba, o criterio P0 compacto)
+2. [x] Cubicación SC básico (puntos 1–10)
+3. [x] Roles: Admin / Estimador / Visor (Visor no edita ni exporta; Estimador edita; Admin completo)
+4. [x] **Cerrar con X** tras editar hace &lt;2,5 s: reabrir `.qce` conserva el último cambio (flush al salir)
+5. [x] Oferta: **Generar oferta →** muestra overlay «Generando documentos…» y deshabilita el botón
 
 **Automatizado (no firma humana):** `dotnet test QubiCostElectrical.Wpf.sln -c Release` — suite completa.
 
@@ -42,11 +42,11 @@ El estado humano de **Semana A** se registra con `.\scripts\Record-SmokeSemanaA.
 
 | Campo | Valor |
 |-------|-------|
-| Fecha | 2026-08-25 |
+| Fecha | 2026-09-08 |
 | Versión | 1.1.1 |
 | Script | `dotnet test QubiCostElectrical.Wpf.sln -c Release` |
 | Tests funcionales | OK (**1821/1821**) |
-| Smoke humano Semana A | Pendiente de registrar con `Record-SmokeSemanaA.ps1` |
+| Smoke humano Semana A | **PASS** · Probador: Cristóbal · Fecha: 2026-09-08 |
 | Instalador | Fuera de este ciclo |
 
 Conteo verificado con `dotnet test --list-tests` (Release, 2026-08-25). Suite completa: `dotnet test QubiCostElectrical.Wpf.sln -c Release`.
@@ -270,7 +270,7 @@ Ver script completo en **Semana A**. Checklist corto:
 | Campo | Valor |
 |-------|-------|
 | Versión probada | 1.1.1 |
-| Artefacto (SHA-256) | Pendiente. Instalador firmado fuera de este ciclo |
-| Probado por | Automatizado 1821/1821 (2026-08-25). GUI Semana A pendiente |
-| Fecha | 2026-08-25 |
-| Resultado | **PASS parcial** — automatizado OK; Semana A humana (Cubicación/SC/roles) pendiente |
+| Artefacto (SHA-256) | `f48e5c192f27355272f8db57615aa56205e68d369a59c589a750f826551cc59b` |
+| Probado por | Cristóbal (Smoke Semana A humano + suite automatizada 1821/1821) |
+| Fecha | 2026-09-08 |
+| Resultado | **PASS** — validación completa (Cubicación / SC / roles / flush persistencia / oferta y export) |
