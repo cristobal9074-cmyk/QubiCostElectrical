@@ -34,9 +34,9 @@ dotnet run --project src/QubiCostElectrical.Wpf/QubiCostElectrical.Wpf.csproj
 | Componente | Versión |
 |---|---|
 | Producto | 1.1.1 |
-| Base de datos SQLite | 32 |
+| Base de datos SQLite | 33 |
 | Formato de proyecto | 6 |
-| Motor de cálculo | 3 |
+| Motor de cálculo | 5 |
 
 ## Reglas de arquitectura
 

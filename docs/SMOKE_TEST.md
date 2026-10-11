@@ -130,7 +130,7 @@ Set-Location "C:\Users\cristobal1\Desktop\QubiCost Electrical"
 
 El script verifica identidad, build Release, suite de tests, gates Fase 1–3, navegación unificada, roundtrip `.qce` y golden-file Excel. El último resultado queda en `docs/SMOKE_TEST_AUTOMATED_LAST_RUN.txt`.
 
-Conteo actual de tests: **1821/1821** (Release, 2026-08-25).
+Conteo actual de tests: **2501** en total (Release, 2026-10-11: 2499 superados, 1 omitido, 1 fallo flaky de umbral de tiempo en `ApuPerformanceTests`).
 
 ### Histórico automatizado
 
