@@ -4,7 +4,6 @@
 
 - .NET 10 SDK (o la versión indicada en `global.json` si existe)
 - Git
-- Inno Setup 6 (instalador `.exe` en CI)
 - **Firma Authenticode** (obligatoria antes de GA comercial):
   - Certificado de firma de código (EV recomendado para SmartScreen)
   - Variables: `CODE_SIGNING_CERT_PFX`, `CODE_SIGNING_CERT_PASSWORD`
@@ -75,14 +74,18 @@ git push origin master --tags
 
 ### 8. CI publica artefactos
 
-El workflow `.github/workflows/build.yml` en push/tag `v*`:
+El workflow único `.github/workflows/ci.yml` es la fuente de verdad de CI (dispara en `main`/`master`, PR y tags `v*`). En push/tag `v*`:
 
-1. Build + test (`QubiCostElectrical.Wpf.sln`)
-2. Publish win-x64 self-contained
-3. Firma Authenticode (si hay secretos de certificado)
-4. Instalador Inno Setup (`installer/QubiCostElectrical.iss`)
-5. ZIP fuente + SHA-256
-6. GitHub Release
+1. Restore + build + test (`QubiCostElectrical.Wpf.sln`) + `ArchitectureTests`
+2. Gates informativos (no bloquean): vulnerabilidades, `dotnet format` y tamaño de archivo (máx. 500 líneas, hoy con deuda reportada como advertencia)
+3. Publish win-x64 self-contained (carpeta, `PublishSingleFile=false`)
+4. Firma Authenticode del ejecutable (si hay secretos de certificado)
+5. Empaquetado **Velopack** (`vpk pack`) → instalador `QubiCostElectrical-win-Setup.exe` + canal de auto-update en `deploy/releases`
+6. Firma Authenticode de los artefactos Velopack
+7. SHA-256 + smoke automatizado (`scripts/Run-SmokeAutomated.ps1 -CI`)
+8. Subida de artefactos y GitHub Release en tags `v*`
+
+El auto-update in-app (Preferencias → Actualizaciones) consume el canal generado por Velopack. Antes de distribuir, verificar que `ProductVersionInfo.GitHubReleasesUrl` apunte al repositorio real de releases.
 
 ### 9. Build local wrapper
 
