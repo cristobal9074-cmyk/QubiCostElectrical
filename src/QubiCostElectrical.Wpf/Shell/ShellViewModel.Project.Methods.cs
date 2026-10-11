@@ -97,10 +97,7 @@ partial class ShellViewModel
         if (!projectWorkspace.HasOpenProject)
             return true;
 
-        bool hasDirtyState = session.IsDirty ||
-            (currentPageVm is IPageWithPendingChanges p && p.HasPendingChanges);
-
-        if (hasDirtyState)
+        if (currentPageVm is IPageWithPendingChanges pendingChanges && pendingChanges.HasPendingChanges)
         {
             // Flujo profesional: al cerrar se guarda en silencio (sin Guardar/Descartar).
             // Descartar sigue disponible vía Undo mientras el proyecto esté abierto.
@@ -111,22 +108,25 @@ partial class ShellViewModel
                     "No se pudieron aplicar los cambios de la pantalla actual. Corrija el error antes de cerrar.");
                 return false;
             }
+        }
 
-            if (session.IsDirty && !session.IsReadOnly)
+        // El cierre persiste siempre que el proyecto sea escribible, aunque no haya cambios
+        // pendientes: así el evento de auditoría "Cerrar" queda en el .qce también en un
+        // cierre limpio. En solo lectura no hay forma de escribirlo y el evento es efímero.
+        if (!session.IsReadOnly)
+        {
+            // Se registra ANTES de persistir: la auditoría vive en el buffer del proyecto
+            // y grabarla después lo descarta NewProject().
+            projectLifecycle.RecordCloseBeforePersist();
+            try
             {
-                // El evento "Cerrar" se registra ANTES de persistir: la auditoría vive en
-                // el buffer del proyecto y grabarla después lo borra NewProject().
-                projectLifecycle.RecordCloseBeforePersist();
-                try
-                {
-                    await projectLifecycle.PersistOpenProjectAsync();
-                }
-                catch (Exception ex)
-                {
-                    AppLog.Error("ProjectWorkspace", "Falló el guardado al cerrar el proyecto", ex);
-                    WpfDialogService.Error("Guardar proyecto", $"{OperationFailureMessages.ToUserMessage(ex)}\n\nEl cierre fue cancelado.");
-                    return false;
-                }
+                await projectLifecycle.PersistOpenProjectAsync();
+            }
+            catch (Exception ex)
+            {
+                AppLog.Error("ProjectWorkspace", "Falló el guardado al cerrar el proyecto", ex);
+                WpfDialogService.Error("Guardar proyecto", $"{OperationFailureMessages.ToUserMessage(ex)}\n\nEl cierre fue cancelado.");
+                return false;
             }
         }
 
