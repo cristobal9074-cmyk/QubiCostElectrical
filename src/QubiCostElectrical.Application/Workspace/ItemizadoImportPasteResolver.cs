@@ -66,7 +66,7 @@ public static class ItemizadoImportPasteResolver
 
         if (previewRows.Count(r => !r.EsTitulo && !r.IsRejected) == 0)
             return new ItemizadoPasteResolveResult(ItemizadoImportResolveAction.Failed, Array.Empty<ItemizadoRow>(),
-                "Importación cancelada: sin partidas válidas.", "Importar Excel", "No hay partidas válidas para importar.");
+                "Importación cancelada: sin partidas válidas.", "Importar tabla", "No hay partidas válidas para importar.");
 
         return new ItemizadoPasteResolveResult(
             ItemizadoImportResolveAction.AcceptDirectly,

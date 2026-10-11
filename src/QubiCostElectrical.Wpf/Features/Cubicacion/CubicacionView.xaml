@@ -7,6 +7,14 @@
              xmlns:infra="clr-namespace:QubiCostElectrical.Wpf.Infrastructure"
              KeyDown="OnKeyDown">
 
+    <UserControl.CommandBindings>
+        <CommandBinding Command="ApplicationCommands.Find" Executed="OnFindExecuted" />
+    </UserControl.CommandBindings>
+    <UserControl.InputBindings>
+        <KeyBinding Key="B" Modifiers="Control" Command="ApplicationCommands.Find" />
+        <KeyBinding Key="F" Modifiers="Control" Command="ApplicationCommands.Find" />
+    </UserControl.InputBindings>
+
     <!-- Layout principal tres zonas -->
     <Grid>
         <ctrl:EmptyStateControl Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}}"
@@ -65,17 +73,44 @@
                     </DockPanel>
                 </Border>
 
-                <!-- Buscador -->
+                <!-- Buscador y Filtro Rápido de Estado -->
                 <Border Grid.Row="1" Padding="8,6" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1">
-                    <DockPanel LastChildFill="True">
-                        <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center" Margin="8,0,0,0"
-                                   FontSize="9" Foreground="{DynamicResource Brush.Muted}"
-                                   Text="Ctrl++ / Ctrl+-"
-                                   ToolTip="Ctrl++ agregar partida bajo la selección · Ctrl+- eliminar la partida activa" />
-                        <TextBox Text="{Binding PartidaFilter, UpdateSourceTrigger=PropertyChanged}"
-                   Style="{StaticResource Form.SearchBox}"
-                   Tag="Buscar partida…" />
-                    </DockPanel>
+                    <StackPanel>
+                        <DockPanel LastChildFill="True" Margin="0,0,0,6">
+                            <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center" Margin="8,0,0,0"
+                                       FontSize="9" Foreground="{DynamicResource Brush.Muted}"
+                                       Text="Ctrl++ / Ctrl+-"
+                                       ToolTip="Ctrl++ agregar partida bajo la selección · Ctrl+- eliminar la partida activa" />
+                            <TextBox Text="{Binding PartidaFilter, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource Form.SearchBox}"
+                                     Tag="Buscar partida…" />
+                        </DockPanel>
+
+                        <!-- Chips de Estado: [ Todas (149) ] · [ ✓ Listas (102) ] · [ ⚠️ Pendientes (47) ] -->
+                        <Border Background="{DynamicResource Brush.ChipBg}"
+                                BorderBrush="{DynamicResource Brush.Line}"
+                                BorderThickness="1"
+                                CornerRadius="7"
+                                Padding="2">
+                            <UniformGrid Columns="3">
+                                <RadioButton Content="{Binding TotalFilterLabel}"
+                                             IsChecked="{Binding IsPartidaFilterTodos, Mode=TwoWay}"
+                                             GroupName="CubicacionStatusFilter"
+                                             ToolTip="Mostrar todas las partidas"
+                                             Style="{StaticResource FilterChip.Base}" />
+                                <RadioButton Content="{Binding ListasFilterLabel}"
+                                             IsChecked="{Binding IsPartidaFilterListas, Mode=TwoWay}"
+                                             GroupName="CubicacionStatusFilter"
+                                             ToolTip="Filtrar partidas completas (con cubicación lista)"
+                                             Style="{StaticResource FilterChip.Success}" />
+                                <RadioButton Content="{Binding PendientesFilterLabel}"
+                                             IsChecked="{Binding IsPartidaFilterPendientes, Mode=TwoWay}"
+                                             GroupName="CubicacionStatusFilter"
+                                             ToolTip="Filtrar partidas pendientes (sin cubicación o incompletas)"
+                                             Style="{StaticResource FilterChip.Warning}" />
+                            </UniformGrid>
+                        </Border>
+                    </StackPanel>
                 </Border>
 
                 <!-- Lista de partidas -->
@@ -87,6 +122,8 @@
                  VirtualizingPanel.IsVirtualizing="True"
                  VirtualizingPanel.VirtualizationMode="Recycling"
                  VirtualizingPanel.ScrollUnit="Pixel"
+                 VirtualizingPanel.CacheLength="15,15"
+                 VirtualizingPanel.CacheLengthUnit="Item"
                  ScrollViewer.CanContentScroll="True"
                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                  ScrollViewer.VerticalScrollBarVisibility="Auto">
@@ -108,21 +145,9 @@
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-
-                                <!-- Checkbox para marcado de lote -->
-                                <CheckBox Grid.Row="0" Grid.Column="0"
-                                          IsChecked="{Binding IsTagged, Mode=TwoWay}"
-                                          Margin="0,1,6,0" VerticalAlignment="Top"
-                                          Focusable="False"
-                                          ToolTip="Marcar para aplicar plantilla en lote (Espacio)"
-                                          Visibility="{Binding EsPartida, Converter={StaticResource BoolToVisibility}}" />
 
                                 <!-- Título/nombre de partida o sección -->
-                                <TextBlock Grid.Row="0" Grid.Column="1"
+                                <TextBlock Grid.Row="0"
                                            Text="{Binding DisplayLabel}"
                                            FontSize="11"
                                            TextTrimming="CharacterEllipsis"
@@ -145,7 +170,7 @@
                                     </TextBlock.Style>
                                 </TextBlock>
                                 <!-- Badge de estado (solo partidas, no títulos) -->
-                                <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Margin="0,2,0,0">
+                                <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,2,0,0">
                                     <StackPanel.Style>
                                         <Style TargetType="StackPanel">
                                             <Style.Triggers>
@@ -210,6 +235,7 @@
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" DockPanel.Dock="Left">
                         <TextBox x:Name="PartidaCodigoBox"
                                  Text="{Binding PartidaCodigo, UpdateSourceTrigger=LostFocus}"
+                                 FontFamily="{StaticResource Font.Mono}"
                                  FontSize="13" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}"
                                  Background="Transparent" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
                                  Padding="6,3" Margin="0,0,8,0" MinWidth="55" MaxWidth="120"
@@ -217,52 +243,81 @@
                                  PreviewKeyDown="OnPartidaHeaderBoxPreviewKeyDown" />
                         <TextBox x:Name="PartidaDescripcionBox"
                                  Text="{Binding PartidaDescripcion, UpdateSourceTrigger=LostFocus}"
-                                 FontSize="14" FontWeight="Bold" Foreground="{DynamicResource Brush.Navy}"
+                                 FontSize="14" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}"
                                  Background="Transparent" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
                                  Padding="8,3" MinWidth="250" MaxWidth="850"
                                  ToolTip="Editar nombre/descripción de la partida · Enter para guardar"
                                  PreviewKeyDown="OnPartidaHeaderBoxPreviewKeyDown" />
                     </StackPanel>
                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                        <Button Style="{StaticResource Button.Secondary}" Content="Tomar SC" Height="28"
-                    Command="{Binding OpenScTomarCommand}" Margin="0,0,8,0"
-                    ToolTip="Tomar materiales desde Cubicación SC (Alt+L)" />
-                        <Button Content="Casillas" Height="28" Command="{Binding ShowSectorMatrixCommand}" Margin="0,0,4,0"
-                    ToolTip="Recorrer ventanas de sectores con Ctrl+Izquierda/Derecha">
-                            <Button.Style>
-                                <Style TargetType="Button" BasedOn="{StaticResource Button.Secondary}">
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsSectorMatrixMode}" Value="True">
-                                            <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
-                                            <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
-                                            <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Button.Style>
-                        </Button>
-                        <Button Content="Detalle" Height="28" Command="{Binding ShowResourceDetailCommand}" Margin="0,0,4,0">
-                            <Button.Style>
-                                <Style TargetType="Button" BasedOn="{StaticResource Button.Secondary}">
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsDetailMode}" Value="True">
-                                            <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
-                                            <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
-                                            <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Button.Style>
-                        </Button>
-                        <Button Content="Reemplazar (Ctrl+H)" Height="28" Command="{Binding OpenBatchReplaceCommand}" Margin="0,0,4,0"
-                                Style="{StaticResource Button.Secondary}"
-                                ToolTip="Buscar y reemplazar materiales en todo el presupuesto manteniendo mediciones y fórmulas" />
+                        <Button Style="{StaticResource Button.Toolbar}" Content="Tomar SC"
+                                Command="{Binding OpenScTomarCommand}"
+                                ToolTip="Tomar materiales desde Cubicación SC (Alt+L)" />
+                        <Button Style="{StaticResource Button.Toolbar}" Content="Ver / Generar APU"
+                                Command="{Binding NavigateToApuCommand}" Margin="0,0,8,0"
+                                ToolTip="Abrir herramienta auxiliar de APU para esta partida" />
+                        <!-- Selector de Vista: [ Casillas | Detalle ] -->
+                        <Border Background="{DynamicResource Brush.ChipBg}"
+                                BorderBrush="{DynamicResource Brush.Line}"
+                                BorderThickness="1"
+                                CornerRadius="6"
+                                Padding="1.5"
+                                Margin="0,0,8,0"
+                                VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="Casillas" Height="24" Command="{Binding ShowSectorMatrixCommand}"
+                                        ToolTip="Vista de matriz por sectores (Ctrl+Izquierda/Derecha)">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource Button.Ghost}">
+                                            <Setter Property="FontSize" Value="11" />
+                                            <Setter Property="FontWeight" Value="SemiBold" />
+                                            <Setter Property="Padding" Value="10,2" />
+                                            <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsSectorMatrixMode}" Value="True">
+                                                    <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+                                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                                <Button Content="Detalle" Height="24" Command="{Binding ShowResourceDetailCommand}"
+                                        ToolTip="Vista detallada de recursos y materiales">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource Button.Ghost}">
+                                            <Setter Property="FontSize" Value="11" />
+                                            <Setter Property="FontWeight" Value="SemiBold" />
+                                            <Setter Property="Padding" Value="10,2" />
+                                            <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDetailMode}" Value="True">
+                                                    <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+                                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                            </StackPanel>
+                        </Border>
+
+                        <Button Content="Buscar (Ctrl+F)" Click="OnOpenSearchClick"
+                                Style="{StaticResource Button.Toolbar}"
+                                ToolTip="Buscar en tabla y resaltar coincidencias (Ctrl+F / F3)" />
                         <Button Style="{StaticResource Button.Ghost}" Content="⋯" Height="28" Padding="12,4"
-                    ToolTip="Hoja de cubicación, plantillas, reemplazo y zonas" Click="OnMoreActionsClick">
+                    ToolTip="Duplicar, reemplazar, hoja de cubicación y zonas" Click="OnMoreActionsClick">
                             <Button.ContextMenu>
                                 <ContextMenu>
+                                    <MenuItem Header="Duplicar fila (Ctrl+D)" Command="{Binding DuplicateRowCommand}"
+                                              ToolTip="Duplicar la fila seleccionada con todas sus mediciones y fórmulas" />
                                     <MenuItem Header="Buscar y Reemplazar Material… (Ctrl+H)" Command="{Binding OpenBatchReplaceCommand}"
                                               ToolTip="Reemplazar un material en todas las partidas manteniendo intactas las mediciones y fórmulas" />
+                                    <MenuItem Header="Cambio de Línea o Familia Masivo… (Ctrl+Shift+H)" Command="{Binding OpenFamilyBatchReplaceCommand}"
+                                              ToolTip="Ingeniería de valor: reemplazar familias completas de materiales con auto-mapeo del banco de precios" />
+                                    <Separator />
+                                    <MenuItem Header="Generar / Ver APU de esta partida" Command="{Binding NavigateToApuCommand}"
+                                              ToolTip="Abrir herramienta auxiliar de análisis de precios unitarios para la partida activa" />
                                     <MenuItem Header="Hoja de Cubicación" Command="{Binding OpenHojaCubicacionCommand}"
                                               ToolTip="Herramienta de apoyo para cubicar: agregue ítems y sume sus mediciones antes de trasladarlas a la partida" />
                                     <MenuItem Header="Cargar Plantilla…" Command="{Binding AplicarConjuntoCommand}"
@@ -275,25 +330,28 @@
                     </StackPanel>
                 </DockPanel>
 
-                <!-- Barra de Observación / Justificación Inteligente -->
-                <Border Margin="0,8,0,0" Padding="8,5" CornerRadius="{StaticResource Radius.Card}"
-                        Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
-                        Visibility="{Binding HasPartida, Converter={StaticResource BoolToVisibility}}">
+                <!-- Observación colapsable (cerrada por defecto) -->
+                <Expander Margin="0,8,0,0" IsExpanded="False"
+                          Visibility="{Binding HasPartida, Converter={StaticResource BoolToVisibility}}">
+                    <Expander.Header>
+                        <TextBlock Text="Observación" FontSize="11" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" />
+                    </Expander.Header>
+                    <Border Margin="0,6,0,0" Padding="8,5" CornerRadius="{StaticResource Radius.Card}"
+                            Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1">
                     <StackPanel Orientation="Vertical">
                         <DockPanel LastChildFill="True">
                             <TextBlock DockPanel.Dock="Left"
-                                       Text="Observación / Justificación:"
+                                       Text="Justificación:"
                                        FontSize="11" FontWeight="Bold"
                                        VerticalAlignment="Center"
                                        Margin="0,0,8,0"
                                        Foreground="{DynamicResource Brush.Ink}" />
-                            <!-- Botón limpiar si hay texto -->
                             <Button DockPanel.Dock="Right" Style="{StaticResource Button.Ghost}"
                                     Content="✕" FontSize="11" Padding="6,2" Margin="4,0,0,0"
                                     Click="OnClearObservationClick"
                                     Visibility="{Binding HasPartidaNote, Converter={StaticResource BoolToVisibility}}"
                                     ToolTip="Eliminar observación de la partida" />
-                            <!-- Botón menú memoria reciente -->
                             <Button x:Name="RecentObservationsBtn" DockPanel.Dock="Right" Style="{StaticResource Button.Secondary}"
                                     Content="Memoria ▼" FontSize="10.5" Padding="6,2" Margin="4,0,0,0"
                                     Click="OnRecentObservationsClick"
@@ -305,29 +363,29 @@
                                      FontSize="11.5"
                                      MinHeight="26"
                                      BorderThickness="1"
-                                     BorderBrush="{DynamicResource Brush.Line2}"
-                                     Background="{DynamicResource Brush.Surface2}"
+                                     BorderBrush="{DynamicResource Brush.InputBorder}"
+                                     Background="{DynamicResource Brush.Surface}"
                                      ToolTip="Observación o justificación formal de la partida · Enter para guardar · Ctrl+Shift+E para enfocar rápido" />
                         </DockPanel>
 
-                        <!-- Chips rápidos de justificación de 1-clic -->
                         <WrapPanel Orientation="Horizontal" Margin="0,5,0,0">
                             <TextBlock Text="Rápido:" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" Margin="0,0,6,0" />
-                            <Button Style="{StaticResource Button.Ghost}" Content="⚡ Cía. Eléctrica" FontSize="10" Padding="5,1" Margin="0,0,4,2"
+                            <Button Style="{StaticResource Button.Ghost}" Content="Cía. Eléctrica" FontSize="10" Padding="5,1" Margin="0,0,4,2"
                                     Click="OnChipClick" Tag="Por compañía eléctrica" ToolTip="Asignar 'Por compañía eléctrica'" />
-                            <Button Style="{StaticResource Button.Ghost}" Content="🔗 Incluido en ítem..." FontSize="10" Padding="5,1" Margin="0,0,4,2"
+                            <Button Style="{StaticResource Button.Ghost}" Content="Incluido en ítem..." FontSize="10" Padding="5,1" Margin="0,0,4,2"
                                     Click="OnChipClick" Tag="Se incluye en ítem" ToolTip="Asignar 'Se incluye en ítem'" />
-                            <Button Style="{StaticResource Button.Ghost}" Content="🏢 Por Mandante" FontSize="10" Padding="5,1" Margin="0,0,4,2"
+                            <Button Style="{StaticResource Button.Ghost}" Content="Por Mandante" FontSize="10" Padding="5,1" Margin="0,0,4,2"
                                     Click="OnChipClick" Tag="Suministrado por Mandante" ToolTip="Asignar 'Suministrado por Mandante'" />
-                            <Button Style="{StaticResource Button.Ghost}" Content="📄 Valor Proforma" FontSize="10" Padding="5,1" Margin="0,0,4,2"
+                            <Button Style="{StaticResource Button.Ghost}" Content="Valor Proforma" FontSize="10" Padding="5,1" Margin="0,0,4,2"
                                     Click="OnChipClick" Tag="Valor proforma" ToolTip="Asignar 'Valor proforma'" />
-                            <Button Style="{StaticResource Button.Ghost}" Content="🚫 No Considerado" FontSize="10" Padding="5,1" Margin="0,0,4,2"
+                            <Button Style="{StaticResource Button.Ghost}" Content="No Considerado" FontSize="10" Padding="5,1" Margin="0,0,4,2"
                                     Click="OnChipClick" Tag="No considerado en bases técnicas" ToolTip="Asignar 'No considerado en bases técnicas'" />
-                            <Button Style="{StaticResource Button.Ghost}" Content="⏳ Opcional" FontSize="10" Padding="5,1" Margin="0,0,4,2"
+                            <Button Style="{StaticResource Button.Ghost}" Content="Opcional" FontSize="10" Padding="5,1" Margin="0,0,4,2"
                                     Click="OnChipClick" Tag="Alternativa / Opcional" ToolTip="Asignar 'Alternativa / Opcional'" />
                         </WrapPanel>
                     </StackPanel>
-                </Border>
+                    </Border>
+                </Expander>
                 </StackPanel>
             </Border>
 
@@ -339,8 +397,12 @@
            su columna (BindItemRowCellWidths en el code-behind). En Casillas se oculta y vuelven
            los encabezados nativos del DataGrid. -->
             <Border Grid.Row="1" Background="{DynamicResource Brush.ActiveRowBg}" BorderBrush="{DynamicResource Brush.Blue}" BorderThickness="0,0,0,2"
-              Visibility="{Binding IsDetailMode, Converter={StaticResource BoolToVisibility}}">
-                <DockPanel LastChildFill="True" Height="30">
+                    ClipToBounds="True"
+                    Visibility="{Binding IsDetailHeaderVisible, Converter={StaticResource BoolToVisibility}}">
+                <DockPanel x:Name="ItemRowHost" LastChildFill="True" Height="30">
+                    <DockPanel.RenderTransform>
+                        <TranslateTransform X="0" />
+                    </DockPanel.RenderTransform>
                     <!-- Código de la partida (ej. 2.1) -->
                     <Border x:Name="ItemRowCodigoCell" DockPanel.Dock="Left" Padding="8,0"
                   BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0">
@@ -371,7 +433,7 @@
                         <TextBox x:Name="CantHeaderBox"
                      Text="{Binding PartidaCantidadText, UpdateSourceTrigger=LostFocus}"
                      IsReadOnly="{Binding IsReadOnly}"
-                     FontFamily="{StaticResource Font.Ui}" FontSize="12" FontWeight="Bold"
+                     FontFamily="{StaticResource Font.Mono}" FontSize="12" FontWeight="Bold"
                      HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                      Padding="0" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource Brush.Success}"
                      GotFocus="OnCantHeaderBoxGotFocus" LostFocus="OnCantHeaderBoxLostFocus"
@@ -427,7 +489,22 @@
 
             <!-- DataGrid de recursos -->
             <Grid Grid.Row="2">
+              <!-- Empty state contextual cuando no hay partida seleccionada -->
+              <ctrl:EmptyStateControl
+                  Visibility="{Binding HasPartida, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}"
+                  HorizontalAlignment="Center" VerticalAlignment="Center"
+                  Title="Sin partida seleccionada"
+                  Description="Seleccione una partida en el panel lateral para ver sus mediciones y recursos, o cree una nueva partida.">
+                <ctrl:EmptyStateControl.Actions>
+                  <WrapPanel HorizontalAlignment="Center">
+                    <Button Style="{StaticResource Button.Primary}" Content="Ir a Itemizado" Command="{Binding NavigateToItemizadoCommand}" Margin="4" />
+                    <Button Style="{StaticResource Button.Secondary}" Content="+ Crear Partida" Command="{Binding AddPartidaCommand}" Margin="4" />
+                  </WrapPanel>
+                </ctrl:EmptyStateControl.Actions>
+              </ctrl:EmptyStateControl>
+
               <DataGrid x:Name="ResourceGrid"
+                Visibility="{Binding HasPartida, Converter={StaticResource BoolToVisibility}}"
                 Style="{StaticResource DataGrid.Workspace.Excel}"
                 infra:DataGridExcelNavigation.Enable="True"
                 ItemsSource="{Binding Rows}"
@@ -436,9 +513,12 @@
                 CanUserSortColumns="False" CanUserReorderColumns="False"
                 AutoGenerateColumns="False"
                 EnableRowVirtualization="True"
+                EnableColumnVirtualization="True"
                 VirtualizingPanel.IsVirtualizing="True"
                 VirtualizingPanel.VirtualizationMode="Recycling"
                 VirtualizingPanel.ScrollUnit="Pixel"
+                VirtualizingPanel.CacheLength="20,20"
+                VirtualizingPanel.CacheLengthUnit="Item"
                 ScrollViewer.CanContentScroll="True"
                 ScrollViewer.IsDeferredScrollingEnabled="False"
                 ScrollViewer.HorizontalScrollBarVisibility="Auto"
@@ -563,12 +643,14 @@
                     </DataGridTextColumn>
 
                     <!-- Cantidad -->
-                    <DataGridTextColumn x:Name="CantidadColumn" Header="CANT" Binding="{Binding CantidadDisplay}" Width="56" IsReadOnly="True">
+                    <DataGridTextColumn x:Name="CantidadColumn" Header="CANT fx" Binding="{Binding CantidadDisplay}" Width="62" IsReadOnly="True" HeaderStyle="{StaticResource DataGridColumnHeader.Formula}">
                         <DataGridTextColumn.ElementStyle>
                             <Style TargetType="TextBlock">
                                 <Setter Property="HorizontalAlignment" Value="Right" />
                                 <Setter Property="Margin" Value="0,0,4,0" />
-                                <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+                                <Setter Property="Foreground" Value="{DynamicResource Brush.CellFormulaInk}" />
+                                <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
+                                <Setter Property="ToolTip" Value="Cantidad calculada desde la matriz de sectores o fórmula de medición" />
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding HasFormula}" Value="True">
                                         <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
@@ -585,75 +667,75 @@
                     <!-- MAT: precio del material en CLP, editable — precargado desde la lista de precios
                al elegir el material, pero se puede sobreescribir por fila (exclusiva de Detalle). -->
                     <DataGridTextColumn x:Name="MaterialPriceColumn" Header="MAT $" Binding="{Binding MatClp, UpdateSourceTrigger=LostFocus, StringFormat=N0}"
-                              Width="70">
+                              HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" Width="70">
                         <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="HorizontalAlignment" Value="Center" />
-                                <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource Text.Cell.Editable}">
+                                <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+                                <Setter Property="ToolTip" Value="Precio unitario de material (editable)" />
                             </Style>
                         </DataGridTextColumn.ElementStyle>
                     </DataGridTextColumn>
                     <!-- MO: mano de obra unitaria en CLP, editable (exclusiva de Detalle) -->
                     <DataGridTextColumn x:Name="LaborPriceColumn" Header="MO $" Binding="{Binding MoClp, UpdateSourceTrigger=LostFocus, StringFormat=N0}"
-                              Width="70">
+                              HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" Width="70">
                         <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="HorizontalAlignment" Value="Center" />
-                                <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource Text.Cell.Editable}">
+                                <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+                                <Setter Property="ToolTip" Value="Precio unitario de mano de obra (editable)" />
                             </Style>
                         </DataGridTextColumn.ElementStyle>
                     </DataGridTextColumn>
                     <!-- $ UNIT: MAT + MO en CLP, calculado (exclusiva de Detalle) -->
-                    <DataGridTextColumn x:Name="TotalPriceColumn" Header="$ UNIT" Binding="{Binding PrecioUnitClpDisplay}"
-                              Width="76" IsReadOnly="True">
+                    <DataGridTextColumn x:Name="TotalPriceColumn" Header="$ UNIT fx" Binding="{Binding PrecioUnitClpDisplay}"
+                              HeaderStyle="{StaticResource DataGridColumnHeader.Formula}" Width="80" IsReadOnly="True">
                         <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="HorizontalAlignment" Value="Center" />
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource Text.Cell.Formula}">
                                 <Setter Property="FontWeight" Value="SemiBold" />
                                 <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
+                                <Setter Property="ToolTip" Value="$ UNIT = MAT $ + MO $ (calculado)" />
                             </Style>
                         </DataGridTextColumn.ElementStyle>
                     </DataGridTextColumn>
                     <!-- SUBTOTAL: $ UNIT × cantidad, en CLP (exclusiva de Detalle) -->
-                    <DataGridTextColumn x:Name="SubtotalColumn" Header="SUBTOTAL $" Binding="{Binding SubtotalClpDisplay}"
-                              Width="92" IsReadOnly="True">
+                    <DataGridTextColumn x:Name="SubtotalColumn" Header="SUBTOTAL $ fx" Binding="{Binding SubtotalClpDisplay}"
+                              HeaderStyle="{StaticResource DataGridColumnHeader.Formula}" Width="96" IsReadOnly="True">
                         <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="HorizontalAlignment" Value="Center" />
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource Text.Cell.Formula}">
                                 <Setter Property="FontWeight" Value="SemiBold" />
                                 <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
+                                <Setter Property="ToolTip" Value="Subtotal CLP = $ UNIT × Cantidad (calculado)" />
                             </Style>
                         </DataGridTextColumn.ElementStyle>
                     </DataGridTextColumn>
-                    <DataGridTextColumn x:Name="GgUtColumn" Header="GG+UT" Binding="{Binding GgUtFactor, StringFormat=N2}"
-                              Width="56" IsReadOnly="True">
+                    <DataGridTextColumn x:Name="GgUtColumn" Header="GG+UT fx" Binding="{Binding GgUtFactor, StringFormat=N2}"
+                              HeaderStyle="{StaticResource DataGridColumnHeader.Formula}" Width="64" IsReadOnly="True">
                         <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="HorizontalAlignment" Value="Center" />
-                                <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource Text.Cell.Formula}">
+                                <Setter Property="Foreground" Value="{DynamicResource Brush.CellFormulaInk}" />
+                                <Setter Property="ToolTip" Value="Factor de Gastos Generales y Utilidad aplicado" />
                             </Style>
                         </DataGridTextColumn.ElementStyle>
                     </DataGridTextColumn>
                     <!-- UF UNIT = REDONDEAR($ UNIT × GG+UT / valor UF ; 3) — el valor UF sale del proyecto
                (pestaña Moneda). Exclusiva de Detalle. -->
-                    <DataGridTextColumn x:Name="UfUnitColumn" Header="UF UNIT" Binding="{Binding UfUnitCalculadoDisplay}"
-                              Width="76" IsReadOnly="True">
+                    <DataGridTextColumn x:Name="UfUnitColumn" Header="UF UNIT fx" Binding="{Binding UfUnitCalculadoDisplay}"
+                              HeaderStyle="{StaticResource DataGridColumnHeader.Formula}" Width="82" IsReadOnly="True">
                         <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="HorizontalAlignment" Value="Center" />
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource Text.Cell.Formula}">
                                 <Setter Property="FontWeight" Value="SemiBold" />
                                 <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
+                                <Setter Property="ToolTip" Value="UF UNIT = ($ UNIT × GG+UT) / Valor UF (calculado)" />
                             </Style>
                         </DataGridTextColumn.ElementStyle>
                     </DataGridTextColumn>
                     <!-- SUBTOTAL UF = UF UNIT x CANTIDAD. Exclusiva de Detalle. -->
-                    <DataGridTextColumn x:Name="SubtotalUfColumn" Header="SUBTOTAL UF" Binding="{Binding UfSubtotalCalculadoDisplay}"
-                              Width="90" IsReadOnly="True">
+                    <DataGridTextColumn x:Name="SubtotalUfColumn" Header="SUBTOTAL UF fx" Binding="{Binding UfSubtotalCalculadoDisplay}"
+                              HeaderStyle="{StaticResource DataGridColumnHeader.Formula}" Width="96" IsReadOnly="True">
                         <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="HorizontalAlignment" Value="Center" />
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource Text.Cell.Formula}">
                                 <Setter Property="FontWeight" Value="SemiBold" />
                                 <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
+                                <Setter Property="ToolTip" Value="Subtotal UF = UF UNIT × Cantidad (calculado)" />
                             </Style>
                         </DataGridTextColumn.ElementStyle>
                     </DataGridTextColumn>
@@ -672,7 +754,7 @@
                         </DataGridTextColumn.CellStyle>
                         <DataGridTextColumn.ElementStyle>
                             <Style TargetType="TextBlock">
-                                <Setter Property="Foreground" Value="#888780" />
+                                <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
                                 <Setter Property="FontStyle" Value="Italic" />
                                 <Setter Property="FontSize" Value="10.5" />
                                 <Setter Property="TextTrimming" Value="CharacterEllipsis" />
@@ -710,6 +792,14 @@
                      para escribir/pegar al instante (flujo Excel). Acciones siguen en la toolbar. -->
                 <ctrl:SkeletonOverlayControl Panel.ZIndex="10" Message="Cargando partida…"
                                              Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibility}}" />
+
+                <!-- Buscador Flotante In-Grid (Ctrl+F / F3) -->
+                <ctrl:DataGridSearchOverlay x:Name="ResourceSearchOverlay"
+                                            TargetGrid="{Binding ElementName=ResourceGrid}"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Top"
+                                            Margin="0,8,18,0"
+                                            Panel.ZIndex="100" />
             </Grid>
 
             <!-- Totales -->
@@ -759,8 +849,8 @@
                             <StackPanel>
                                 <TextBlock Style="{StaticResource Text.TotalsLabel}" Text="COSTO DIR. TOTAL" Foreground="{DynamicResource Brush.Blue}" Margin="0,0,0,4" />
                                 <TextBlock Style="{StaticResource Text.TotalsValue}" FontSize="14" FontWeight="Bold"
-                           Foreground="{DynamicResource Brush.Navy}"
-                           Text="{Binding TotalPartida, StringFormat='$ {0:N0}'}" />
+                            Foreground="{DynamicResource Brush.Ink}"
+                            Text="{Binding TotalPartida, StringFormat='$ {0:N0}'}" />
                                 <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding TotalPartidaUf, StringFormat='{}{0:N2} UF'}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Blue}" HorizontalAlignment="Center" Margin="0,2,0,0" />
                             </StackPanel>
                         </Border>

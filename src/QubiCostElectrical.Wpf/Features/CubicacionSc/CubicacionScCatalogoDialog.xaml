@@ -261,6 +261,22 @@
                 <TextBlock x:Name="CountCajas" Grid.Column="3" Style="{StaticResource CatalogCount}" Text="0" />
               </Grid>
             </ListBoxItem>
+            <ListBoxItem Tag="SistemasCircuito">
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="28" />
+                  <ColumnDefinition Width="8" />
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Border Style="{StaticResource CatalogRailIcon}">
+                  <TextBlock Style="{StaticResource CatalogRailIconText}" Text="S" />
+                </Border>
+                <TextBlock Grid.Column="2" Text="Sistemas (SIST)" FontSize="{StaticResource Font.Size.base}" FontWeight="SemiBold"
+                           VerticalAlignment="Center" Foreground="{DynamicResource Brush.Ink2}" />
+                <TextBlock x:Name="CountSistemasCircuito" Grid.Column="3" Style="{StaticResource CatalogCount}" Text="0" />
+              </Grid>
+            </ListBoxItem>
             <ListBoxItem Tag="Sistemas">
               <Grid>
                 <Grid.ColumnDefinitions>
@@ -272,7 +288,7 @@
                 <Border Style="{StaticResource CatalogRailIcon}">
                   <TextBlock Style="{StaticResource CatalogRailIconText}" Text="M" />
                 </Border>
-                <TextBlock Grid.Column="2" Text="Sistemas / Fases" FontSize="{StaticResource Font.Size.base}" FontWeight="SemiBold"
+                <TextBlock Grid.Column="2" Text="Alimentación (ALIM)" FontSize="{StaticResource Font.Size.base}" FontWeight="SemiBold"
                            VerticalAlignment="Center" Foreground="{DynamicResource Brush.Ink2}" />
                 <TextBlock x:Name="CountSistemas" Grid.Column="3" Style="{StaticResource CatalogCount}" Text="0" />
               </Grid>
@@ -433,7 +449,21 @@
                 </DataGrid.Columns>
               </DataGrid>
 
-              <!-- Sistemas -->
+              <!-- Sistemas de circuito (SIST: A, E, CL, CO, etc.) -->
+              <DataGrid x:Name="SistemasCircuitoGrid"
+                        Style="{StaticResource CatalogDataGrid}"
+                        ColumnHeaderStyle="{StaticResource CatalogHeader}"
+                        infra:DataGridExcelNavigation.Enable="True"
+                        AutoGenerateColumns="False"
+                        CanUserAddRows="False"
+                        Visibility="Collapsed">
+                <DataGrid.Columns>
+                  <DataGridTextColumn Header="CÓDIGO (SIST)" Binding="{Binding Codigo, UpdateSourceTrigger=LostFocus}" Width="150" />
+                  <DataGridTextColumn Header="DESCRIPCIÓN / SISTEMA" Binding="{Binding Nombre, UpdateSourceTrigger=LostFocus}" Width="*" />
+                </DataGrid.Columns>
+              </DataGrid>
+
+              <!-- Alimentación (ALIM: M, T, EM) -->
               <DataGrid x:Name="SistemasGrid"
                         Style="{StaticResource CatalogDataGrid}"
                         ColumnHeaderStyle="{StaticResource CatalogHeader}"

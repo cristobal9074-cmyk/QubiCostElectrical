@@ -57,32 +57,31 @@ public sealed class UserPreferences
     /// <summary>Ruta personalizada del archivo SQLite del banco de precios. Vacío = ubicación predeterminada.</summary>
     public string PriceBankDatabasePath { get; set; } = "";
 
-    // ── Ventana ───────────────────────────────────────────────────────────
-    /// <summary>Estado de la ventana al cerrar: "Maximized" | "Normal"</summary>
-    public string WindowState  { get; set; } = "Maximized";
-    public int    WindowX      { get; set; } = 100;
-    public int    WindowY      { get; set; } = 100;
-    public int    WindowWidth  { get; set; } = 1600;
-    public int    WindowHeight { get; set; } = 950;
-
     // ── Navegación ────────────────────────────────────────────────────────
-    /// <summary>Última pestaña abierta al cerrar la app.</summary>
-    public string LastPage        { get; set; } = "Cubicacion";
     /// <summary>Email del último usuario que inició sesión (para pre-llenar login).</summary>
     public string LastUserEmail { get; set; } = "";
-    /// <summary>Ruta del último proyecto abierto (para ofrecer reapertura).</summary>
-    public string LastProjectPath { get; set; } = "";
+
+    /// <summary>
+    /// Si es verdadero, los cambios se escriben solos al .qce unos segundos después de editar.
+    /// Desactivado por defecto: Guardar es manual y un .bak permite recuperar un cierre inesperado.
+    /// </summary>
+    public bool AutosaveEnabled { get; set; } = false;
+    /// <summary>
+    /// Default para proyectos nuevos: usar M.O. de instalación por rendimiento
+    /// (tarifa D/H ÷ rendimiento del material) en vez del M.O. directo del catálogo.
+    /// </summary>
+    public bool MoInstalacionPorRendimientoDefault { get; set; } = false;
     /// <summary>Últimas N rutas abiertas (max 8), más reciente primero.</summary>
     public List<string> RecentFiles { get; set; } = new();
+
+    /// <summary>Rutas de proyectos fijados al inicio con PIN (permanecen arriba).</summary>
+    public List<string> PinnedRecentFiles { get; set; } = new();
 
     /// <summary>Estado expandido/colapsado de cada grupo del sidebar por clave de módulo.</summary>
     public Dictionary<string, bool> SidebarGroupsExpanded { get; set; } = new();
 
     /// <summary>Modo compacto del sidebar: sólo íconos para ganar espacio en pantallas pequeñas.</summary>
     public bool SidebarCompactMode { get; set; } = true;
-
-    /// <summary>Historial de comandos ejecutados desde la Command Palette.</summary>
-    public List<string> CommandHistory { get; set; } = new();
 
     // ── Tipografía / zoom ────────────────────────────────────────────────
     /// <summary>Tamaño base de fuente en puntos. Rango recomendado: 8.0 – 11.0 (defecto 9.0).</summary>
@@ -138,21 +137,18 @@ public sealed class UserPreferences
     public string ProfessionalRole { get; set; } = "Ingeniero Eléctrico";
     public string ProfessionalRegistroSec { get; set; } = "";
     public string ProfessionalSignatureImagePath { get; set; } = "";
-
-    // ── Grillas: anchos de columna ────────────────────────────────────────
-    /// <summary>
-    /// Ancho de columnas por grilla.
-    /// Clave externa: nombre de grilla ("Materiales", "Itemizado").
-    /// Clave interna: nombre de columna tal como aparece en DataGridView.Columns.
-    /// </summary>
-    public Dictionary<string, Dictionary<string, int>> GridColumnWidths { get; set; } = new();
-
-    // ── Grillas: visibilidad de columnas ──────────────────────────────────
-    /// <summary>Columnas ocultas por el usuario.</summary>
-    public Dictionary<string, List<string>> GridHiddenColumns { get; set; } = new();
-
-    /// <summary>Orden visual de columnas por grilla, persistido por DisplayIndex.</summary>
-    public Dictionary<string, Dictionary<string, int>> GridColumnDisplayIndexes { get; set; } = new();
+    /// <summary>Teléfono del firmante guardado como predeterminado global.</summary>
+    public string ProfessionalPhone { get; set; } = "";
+    /// <summary>Correo del firmante guardado como predeterminado global.</summary>
+    public string ProfessionalEmail { get; set; } = "";
+    /// <summary>Clase de licencia SEC (A, B, C, D) guardada como predeterminado global.</summary>
+    public string ProfessionalSecClass { get; set; } = "";
+    /// <summary>Ancho predeterminado de la firma en el PDF, en milímetros (0 = sin definir).</summary>
+    public int ProfessionalSignatureWidthMm { get; set; } = 0;
+    /// <summary>Alto predeterminado de la firma en el PDF, en milímetros (0 = sin definir).</summary>
+    public int ProfessionalSignatureHeightMm { get; set; } = 0;
+    /// <summary>Ruta local del logo del mandante/cliente usado en exportaciones.</summary>
+    public string LetterheadClientLogoPath { get; set; } = "";
 
     // ── Paginación ────────────────────────────────────────────────────────
     /// <summary>Filas por página en la grilla de materiales.</summary>

@@ -10,11 +10,6 @@ public sealed class ShellNotificationServiceTests
 {
     public ShellNotificationServiceTests() => WpfTestHost.EnsureInitialized();
 
-    private static void EnsureApplication()
-    {
-        _ = System.Windows.Application.Current ?? new System.Windows.Application();
-    }
-
     [Fact]
     public void ToastMessage_HasAction_IsTrueOnlyWhenLabelAndActionExist()
     {
@@ -30,7 +25,9 @@ public sealed class ShellNotificationServiceTests
     [Fact]
     public void ShowSuccess_WithAction_StoresActionLabel()
     {
-        EnsureApplication();
+        // Headless: no se crea Application.Current. En este proceso de pruebas nunca existe
+        // (si existiría, su Dispatcher vivo cambiaría coalescers y rutas de todo el resto de
+        // la colección WpfHost); ShellNotificationService acepta dispatcher nulo.
         var service = new ShellNotificationService();
         try
         {

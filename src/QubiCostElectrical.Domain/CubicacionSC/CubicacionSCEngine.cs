@@ -32,18 +32,22 @@ public static class CubicacionSCEngine
     /// Materiales que aporta UN circuito (tubería, conductores, terminal flexible, artefactos,
     /// sensores/señalética/cinta/montaje y cajas). Fuente única usada por todas las agregaciones.
     /// </summary>
-    private static IEnumerable<MaterialSC> CircuitoMateriales(CircuitoSCRow c, CubicacionScConfig config)
+    private static IEnumerable<MaterialSC> CircuitoMateriales(CircuitoSCRow c, CubicacionScConfig config, bool isDepto = false)
     {
         if (c.EsActivo)
         {
             yield return new($"TUBERIA {c.TipoTuberia} {c.SeccionTuberia}", c.LargoTuberia, "ML");
             yield return new($"CONDUCTOR {c.ConductorDerivacion} {c.SeccionDerivacion}", c.LargoDerivacion, "ML");
-            yield return new($"CONDUCTOR {c.ConductorDistribucion} {c.SeccionDistribucion}", c.LargoDistribucion, "ML");
 
-            var flex = config.Flexibles.FirstOrDefault(f =>
-                string.Equals(f.Diametro, c.SeccionTuberia, StringComparison.OrdinalIgnoreCase));
-            if (flex != null && c.TotalCajas > 0 && flex.MetrosPorCaja > 0m)
-                yield return new(flex.TipoFlexible, c.TotalCajas * flex.MetrosPorCaja, "ML");
+            if (!isDepto)
+            {
+                yield return new($"CONDUCTOR {c.ConductorDistribucion} {c.SeccionDistribucion}", c.LargoDistribucion, "ML");
+
+                var flex = config.Flexibles.FirstOrDefault(f =>
+                    string.Equals(f.Diametro, c.SeccionTuberia, StringComparison.OrdinalIgnoreCase));
+                if (flex != null && c.TotalCajas > 0 && flex.MetrosPorCaja > 0m)
+                    yield return new(flex.TipoFlexible, c.TotalCajas * flex.MetrosPorCaja, "ML");
+            }
 
             foreach (var a in c.Artefactos)
                 yield return new(a.Nombre, a.Cantidad, "UN");
@@ -52,9 +56,14 @@ public static class CubicacionSCEngine
             yield return new("SEÑALETICA EMERGENCIA", c.Senaleticas, "UN");
             yield return new("CINTA LED", c.CintaLedMts, "ML");
             yield return new("MONTAJE LUMINARIA", c.MontajesAlumbrado, "UN");
-            yield return new("CAJA 5/8", c.Cajas58, "UN");
-            yield return new("CAJA 100X100", c.Cajas100x100, "UN");
-            yield return new("CAJA 100X65", c.Cajas100x65, "UN");
+
+            string nombreCaja58 = isDepto ? "CAJA 5/8\"" : "CAJA 5/8";
+            string nombreCaja100 = isDepto ? "CAJA A11 (100X100)" : "CAJA 100X100";
+            string nombreCaja65 = isDepto ? "CAJA A01 (100X65)" : "CAJA 100X65";
+
+            yield return new(nombreCaja58, c.Cajas58, "UN");
+            yield return new(nombreCaja100, c.Cajas100x100, "UN");
+            yield return new(nombreCaja65, c.Cajas100x65, "UN");
         }
         else if (c.EsReservaEquipada)
         {
@@ -109,9 +118,12 @@ public static class CubicacionSCEngine
 
         var totals = new Dictionary<string, MaterialSC>(StringComparer.OrdinalIgnoreCase);
         foreach (var cuadro in cuadros)
-        foreach (var c in cuadro.Circuitos)
-        foreach (var m in CircuitoMateriales(c, config))
-            AddMaterial(totals, m);
+        {
+            bool isDepto = cuadro.EsDepto;
+            foreach (var c in cuadro.Circuitos)
+                foreach (var m in CircuitoMateriales(c, config, isDepto))
+                    AddMaterial(totals, m);
+        }
         return totals;
     }
 
@@ -134,10 +146,11 @@ public static class CubicacionSCEngine
         var grupos = new List<ResumenGrupoSC>();
         foreach (var cuadro in cuadros)
         {
+            bool isDepto = cuadro.EsDepto;
             var totals = new Dictionary<string, MaterialSC>(StringComparer.OrdinalIgnoreCase);
             foreach (var c in cuadro.Circuitos)
-            foreach (var m in CircuitoMateriales(c, config))
-                AddMaterial(totals, m);
+                foreach (var m in CircuitoMateriales(c, config, isDepto))
+                    AddMaterial(totals, m);
             if (totals.Count == 0) continue;
             int circuitos = cuadro.Circuitos.Count(c => c.EsActivo || c.EsReservaEquipada);
             grupos.Add(BuildGrupo(cuadro.Nombre, $"{circuitos} circuitos", totals));
@@ -152,7 +165,7 @@ public static class CubicacionSCEngine
     // conductor por tramo y el resto (flexible, cajas, artefactos, sensores, montaje) al primer
     // tramo. Circuitos con piso escrito a mano (Ubicación, un solo piso) van a ese texto tal
     // cual — así, si coincide con el nombre de una zona, se fusiona con esos totales.
-    private static IEnumerable<(string PisoLabel, MaterialSC Mat)> CircuitoMaterialesPorPiso(CircuitoSCRow c, CubicacionScConfig config)
+    private static IEnumerable<(string PisoLabel, MaterialSC Mat)> CircuitoMaterialesPorPiso(CircuitoSCRow c, CubicacionScConfig config, bool isDepto = false)
     {
         if (c.EsActivo && c.TienePisos)
         {
@@ -164,17 +177,20 @@ public static class CubicacionSCEngine
                 yield return (label, new($"TUBERIA {c.TipoTuberia} {c.SeccionTuberia}", tramo.MetrosTuberia, "ML"));
                 yield return (label, new($"CONDUCTOR {c.ConductorDerivacion} {c.SeccionDerivacion}",
                     Math.Round(tramo.MetrosTuberia * factor, 0, MidpointRounding.AwayFromZero), "ML"));
-                yield return (label, new($"CONDUCTOR {c.ConductorDistribucion} {c.SeccionDistribucion}",
-                    Math.Round(tramo.MetrosBandeja * factor, 0, MidpointRounding.AwayFromZero), "ML"));
+                if (!isDepto)
+                {
+                    yield return (label, new($"CONDUCTOR {c.ConductorDistribucion} {c.SeccionDistribucion}",
+                        Math.Round(tramo.MetrosBandeja * factor, 0, MidpointRounding.AwayFromZero), "ML"));
+                }
             }
             // Materiales no dependientes del largo → al primer tramo del circuito.
-            foreach (var m in CircuitoMateriales(c, config).Where(m => !EsTuberia(m.Nombre) && !EsConductor(m.Nombre)))
+            foreach (var m in CircuitoMateriales(c, config, isDepto).Where(m => !EsTuberia(m.Nombre) && !EsConductor(m.Nombre)))
                 yield return (primerTramo, m);
         }
         else
         {
             var piso = string.IsNullOrWhiteSpace(c.Ubicacion) ? SinPisoKey : c.Ubicacion.Trim();
-            foreach (var m in CircuitoMateriales(c, config))
+            foreach (var m in CircuitoMateriales(c, config, isDepto))
                 yield return (piso, m);
         }
     }
@@ -196,17 +212,20 @@ public static class CubicacionSCEngine
         var porMaterial = new Dictionary<string, Dictionary<string, (decimal Cantidad, string Unidad)>>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var cuadro in cuadros)
-        foreach (var circuito in cuadro.Circuitos)
         {
-            if (!circuito.EsActivo && !circuito.EsReservaEquipada) continue;
-            foreach (var (pisoLabel, mat) in CircuitoMaterialesPorPiso(circuito, config))
+            bool isDepto = cuadro.EsDepto;
+            foreach (var circuito in cuadro.Circuitos)
             {
-                if (!porMaterial.TryGetValue(mat.Nombre, out var porZona))
+                if (!circuito.EsActivo && !circuito.EsReservaEquipada) continue;
+                foreach (var (pisoLabel, mat) in CircuitoMaterialesPorPiso(circuito, config, isDepto))
                 {
-                    porZona = porMaterial[mat.Nombre] = new(StringComparer.OrdinalIgnoreCase);
+                    if (!porMaterial.TryGetValue(mat.Nombre, out var porZona))
+                    {
+                        porZona = porMaterial[mat.Nombre] = new(StringComparer.OrdinalIgnoreCase);
+                    }
+                    var prev = porZona.TryGetValue(pisoLabel, out var cur) ? cur.Cantidad : 0m;
+                    porZona[pisoLabel] = (prev + mat.Cantidad, mat.Unidad);
                 }
-                var prev = porZona.TryGetValue(pisoLabel, out var cur) ? cur.Cantidad : 0m;
-                porZona[pisoLabel] = (prev + mat.Cantidad, mat.Unidad);
             }
         }
 
@@ -286,19 +305,22 @@ public static class CubicacionSCEngine
         var etiquetaOriginal = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var cuadro in cuadros)
-        foreach (var c in cuadro.Circuitos)
         {
-            if (!c.EsActivo && !c.EsReservaEquipada) continue;
-            foreach (var (piso, mat) in CircuitoMaterialesPorPiso(c, config))
+            bool isDepto = cuadro.EsDepto;
+            foreach (var c in cuadro.Circuitos)
             {
-                if (!porPiso.TryGetValue(piso, out var totals))
+                if (!c.EsActivo && !c.EsReservaEquipada) continue;
+                foreach (var (piso, mat) in CircuitoMaterialesPorPiso(c, config, isDepto))
                 {
-                    totals = porPiso[piso] = new(StringComparer.OrdinalIgnoreCase);
-                    circuitosPorPiso[piso] = new();
-                    etiquetaOriginal[piso] = piso;
+                    if (!porPiso.TryGetValue(piso, out var totals))
+                    {
+                        totals = porPiso[piso] = new(StringComparer.OrdinalIgnoreCase);
+                        circuitosPorPiso[piso] = new();
+                        etiquetaOriginal[piso] = piso;
+                    }
+                    circuitosPorPiso[piso].Add(c.Id);
+                    AddMaterial(totals, mat);
                 }
-                circuitosPorPiso[piso].Add(c.Id);
-                AddMaterial(totals, mat);
             }
         }
 
@@ -349,21 +371,21 @@ public static class CubicacionSCEngine
         var acumulado = new Dictionary<string, Dictionary<string, (string Categoria, decimal Cantidad)>>(StringComparer.Ordinal);
 
         foreach (var cuadro in cuadros)
-        foreach (var c in cuadro.Circuitos)
-        {
-            if (!c.EsActivo && !c.EsReservaEquipada) continue;
-            foreach (var a in c.Artefactos)
+            foreach (var c in cuadro.Circuitos)
             {
-                if (a.Cantidad <= 0m || string.IsNullOrWhiteSpace(a.Nombre)) continue;
-                var zonaId = nombrePorId.ContainsKey(a.ZonaId ?? "") ? a.ZonaId! : SinZonaId;
-                var porArtefacto = acumulado.TryGetValue(zonaId, out var d)
-                    ? d
-                    : acumulado[zonaId] = new(StringComparer.OrdinalIgnoreCase);
-                var nombre = a.Nombre.Trim();
-                var prev = porArtefacto.TryGetValue(nombre, out var cur) ? cur.Cantidad : 0m;
-                porArtefacto[nombre] = (a.Categoria, prev + a.Cantidad);
+                if (!c.EsActivo && !c.EsReservaEquipada) continue;
+                foreach (var a in c.Artefactos)
+                {
+                    if (a.Cantidad <= 0m || string.IsNullOrWhiteSpace(a.Nombre)) continue;
+                    var zonaId = nombrePorId.ContainsKey(a.ZonaId ?? "") ? a.ZonaId! : SinZonaId;
+                    var porArtefacto = acumulado.TryGetValue(zonaId, out var d)
+                        ? d
+                        : acumulado[zonaId] = new(StringComparer.OrdinalIgnoreCase);
+                    var nombre = a.Nombre.Trim();
+                    var prev = porArtefacto.TryGetValue(nombre, out var cur) ? cur.Cantidad : 0m;
+                    porArtefacto[nombre] = (a.Categoria, prev + a.Cantidad);
+                }
             }
-        }
 
         if (acumulado.ContainsKey(SinZonaId) && !nombrePorId.ContainsKey(SinZonaId))
             orden.Add((SinZonaId, "Sin zona"));
@@ -394,6 +416,7 @@ public static class CubicacionSCEngine
         ArgumentNullException.ThrowIfNull(config);
 
         return cuadros
+            .Where(t => !t.EsDepto)
             .SelectMany(t => t.Circuitos)
             .Any(c => c.EsActivo && c.TotalCajas > 0 &&
                       config.Flexibles.All(f =>
@@ -413,6 +436,6 @@ public static class CubicacionSCEngine
             string.Equals(s.Nombre, nombreSistema, StringComparison.OrdinalIgnoreCase));
         if (sistema == null) return;
         circuito.NumConductores = sistema.NumConductores;
-        circuito.MermaPct       = sistema.MermaPct;
+        circuito.MermaPct = sistema.MermaPct;
     }
 }

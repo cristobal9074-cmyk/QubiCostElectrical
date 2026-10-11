@@ -1,0 +1,143 @@
+<UserControl x:Class="QubiCostElectrical.Wpf.Controls.UndoRedoHudHost"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:infra="clr-namespace:QubiCostElectrical.Wpf.Infrastructure"
+             Focusable="False">
+  <UserControl.Resources>
+    <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+  </UserControl.Resources>
+
+  <Border x:Name="HudContainer"
+          CornerRadius="22"
+          Padding="14,6,8,6"
+          Background="{DynamicResource Brush.Surface}"
+          BorderBrush="{DynamicResource Brush.Line}"
+          BorderThickness="1"
+          SnapsToDevicePixels="True"
+          MouseEnter="OnHudMouseEnter"
+          MouseLeave="OnHudMouseLeave">
+    <Border.RenderTransform>
+      <TranslateTransform Y="0" />
+    </Border.RenderTransform>
+    <Border.Effect>
+      <DropShadowEffect BlurRadius="20" ShadowDepth="4" Direction="270"
+                        Color="#000000" Opacity="0.18" />
+    </Border.Effect>
+    <Border.Style>
+      <Style TargetType="Border">
+        <Setter Property="Visibility" Value="Collapsed" />
+        <Setter Property="Opacity" Value="0" />
+        <Style.Triggers>
+          <DataTrigger Binding="{Binding IsVisible}" Value="True">
+            <Setter Property="Visibility" Value="Visible" />
+            <DataTrigger.EnterActions>
+              <BeginStoryboard>
+                <Storyboard>
+                  <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                   From="0" To="1" Duration="0:0:0.22">
+                    <DoubleAnimation.EasingFunction>
+                      <CubicEase EasingMode="EaseOut" />
+                    </DoubleAnimation.EasingFunction>
+                  </DoubleAnimation>
+                  <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)"
+                                   From="16" To="0" Duration="0:0:0.22">
+                    <DoubleAnimation.EasingFunction>
+                      <CubicEase EasingMode="EaseOut" />
+                    </DoubleAnimation.EasingFunction>
+                  </DoubleAnimation>
+                </Storyboard>
+              </BeginStoryboard>
+            </DataTrigger.EnterActions>
+            <DataTrigger.ExitActions>
+              <BeginStoryboard>
+                <Storyboard>
+                  <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                   To="0" Duration="0:0:0.18">
+                    <DoubleAnimation.EasingFunction>
+                      <CubicEase EasingMode="EaseIn" />
+                    </DoubleAnimation.EasingFunction>
+                  </DoubleAnimation>
+                  <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)"
+                                   To="12" Duration="0:0:0.18">
+                    <DoubleAnimation.EasingFunction>
+                      <CubicEase EasingMode="EaseIn" />
+                    </DoubleAnimation.EasingFunction>
+                  </DoubleAnimation>
+                </Storyboard>
+              </BeginStoryboard>
+            </DataTrigger.ExitActions>
+          </DataTrigger>
+        </Style.Triggers>
+      </Style>
+    </Border.Style>
+
+    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+      <!-- Glifo circular indicativo con acento semántico -->
+      <Border Width="26" Height="26" CornerRadius="13" Margin="0,0,10,0" VerticalAlignment="Center">
+        <Border.Style>
+          <Style TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+            <Style.Triggers>
+              <DataTrigger Binding="{Binding IsUndo}" Value="False">
+                <Setter Property="Background" Value="{DynamicResource Brush.GreenSoft}" />
+              </DataTrigger>
+            </Style.Triggers>
+          </Style>
+        </Border.Style>
+        <TextBlock Text="{Binding Glyph}" FontSize="13" FontWeight="Bold"
+                   HorizontalAlignment="Center" VerticalAlignment="Center">
+          <TextBlock.Style>
+            <Style TargetType="TextBlock">
+              <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
+              <Style.Triggers>
+                <DataTrigger Binding="{Binding IsUndo}" Value="False">
+                  <Setter Property="Foreground" Value="{DynamicResource Brush.Green}" />
+                </DataTrigger>
+              </Style.Triggers>
+            </Style>
+          </TextBlock.Style>
+        </TextBlock>
+      </Border>
+
+      <!-- Mensaje descriptivo con context bold -->
+      <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+        <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="12"
+                   Foreground="{DynamicResource Brush.Ink}" Margin="0,0,3,0" />
+        <TextBlock Text=":" FontWeight="Bold" FontSize="12"
+                   Foreground="{DynamicResource Brush.Ink}" Margin="0,0,6,0" />
+        <TextBlock Text="{Binding Description}" FontSize="12"
+                   Foreground="{DynamicResource Brush.Ink2}"
+                   MaxWidth="380" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+      </StackPanel>
+
+      <!-- Separador vertical elegante -->
+      <Border Width="1" Height="18" Background="{DynamicResource Brush.Line}" Margin="0,0,10,0" VerticalAlignment="Center" />
+
+      <!-- Botón de reversión en 1 clic -->
+      <Button Command="{Binding RevertCommand}"
+              ToolTip="{Binding ActionToolTip}"
+              Style="{StaticResource Button.Ghost}"
+              Padding="10,3" Height="28"
+              FontWeight="SemiBold" FontSize="11" Margin="0,0,4,0"
+              Cursor="Hand">
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+          <TextBlock Text="{Binding ActionLabel}" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" />
+          <Border Margin="6,0,0,0" Background="{DynamicResource Brush.ChipBg}" CornerRadius="3" Padding="4,1">
+            <TextBlock Text="{Binding ActionHint}" FontSize="9.5"
+                       Foreground="{DynamicResource Brush.Muted}" FontWeight="Normal" />
+          </Border>
+        </StackPanel>
+      </Button>
+
+      <!-- Botón de descarte inmediato (✕) -->
+      <Button Command="{Binding DismissCommand}"
+              ToolTip="Cerrar notificación (Esc)"
+              Style="{StaticResource Button.Ghost}"
+              Width="24" Height="24" Padding="0" Margin="2,0,0,0"
+              Cursor="Hand" VerticalAlignment="Center">
+        <TextBlock Text="✕" FontSize="11" Foreground="{DynamicResource Brush.Muted}"
+                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+      </Button>
+    </StackPanel>
+  </Border>
+</UserControl>

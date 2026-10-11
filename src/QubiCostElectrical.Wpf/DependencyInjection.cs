@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using QubiCostElectrical;
+using QubiCostElectrical.Wpf.Features.EstadosPago;
 using QubiCostElectrical.Wpf.Infrastructure;
 
 namespace QubiCostElectrical.Wpf;
@@ -15,6 +16,7 @@ public static class WpfServiceCollectionExtensions
         services.AddSingleton<IFileDialogService, WpfFileDialogService>();
         services.AddSingleton<IFileOpenService, WpfFileOpenService>();
         services.AddSingleton<WpfUndoService>();
+        services.AddSingleton<EstadosPagoExportCoordinator>();
         services.AddViewModels();
 
         // Fachada histórica: agrega presenters/workspaces/auth/lock/audit resueltos del contenedor.

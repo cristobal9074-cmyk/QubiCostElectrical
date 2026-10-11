@@ -1,6 +1,9 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
+using System.IO;
 using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using QubiCostElectrical;
 using QubiCostElectrical.Wpf.Features.Dashboard;
 using QubiCostElectrical.Wpf.Infrastructure;
@@ -28,7 +31,8 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
         RemoveCommand = new RelayCommand(RemoveSelected, () => SelectedRow != null && !session.IsReadOnly);
         MarkVigenteCommand = new RelayCommand(MarkVigente, () => SelectedRow != null && !session.IsReadOnly);
         AttachFileCommand = new RelayCommand(AttachFile, () => SelectedRow != null && !session.IsReadOnly);
-        OpenAttachedFileCommand = new RelayCommand(OpenAttachedFile, () => SelectedRow != null && !string.IsNullOrWhiteSpace(SelectedRow.RutaArchivo));
+        OpenAttachedFileCommand = new RelayCommand<object>(OpenAttachedFile, param => (param is AntecedenteRowVm r && !string.IsNullOrWhiteSpace(r.RutaArchivo)) || (SelectedRow != null && !string.IsNullOrWhiteSpace(SelectedRow.RutaArchivo)));
+        OpenContainingFolderCommand = new RelayCommand(OpenContainingFolder, () => SelectedRow != null && !string.IsNullOrWhiteSpace(SelectedRow.RutaArchivo));
         SaveCommand = new RelayCommand(Save, () => HasPendingChanges && !session.IsReadOnly);
         CancelCommand = new RelayCommand(Cancel, () => HasPendingChanges && !session.IsReadOnly);
         SyncPlanosCommand = new RelayCommand(SyncPlanos, () => !ShowEmptyState && !session.IsReadOnly);
@@ -36,6 +40,10 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
         OpenProjectCommand = new RelayCommand(() => _ = shell.OpenProjectAsync());
         ExportPdfCommand = new RelayCommand(ExportPdf, () => !ShowEmptyState && permissions.CanExportDocuments);
         SelectTipoFilterCommand = new RelayCommand<string>(SelectTipoFilter);
+        SelectNavFilterCommand = new RelayCommand<string>(SelectNavFilter);
+        ToggleInspectionFilterCommand = new RelayCommand<string>(ToggleInspectionFilter);
+        PreviousPreviewPageCommand = new RelayCommand(PreviousPreviewPage, () => currentPreviewPageIndex > 0);
+        NextPreviewPageCommand = new RelayCommand(NextPreviewPage, () => currentPreviewPageIndex < totalPreviewPages - 1);
     }
 
     public bool CanEdit => !ShowEmptyState && !session.IsReadOnly;
@@ -43,8 +51,33 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
     public bool IsLoading { get; private set; }
 
     public ObservableCollection<AntecedenteRowVm> FilteredRows { get; }
+    public ObservableCollection<PlanoEspecialidadFilterItem> EspecialidadesPlanos { get; } = new();
     public ObservableCollection<string> TipoOptions { get; }
     public ObservableCollection<string> TipoChoices { get; } = new(AntecedenteTecnicoTipo.All);
+    public ObservableCollection<string> DisciplinaChoices { get; } = new(AntecedenteDisciplina.All);
+
+    private ImageSource? previewImage;
+    private bool hasPreviewImage;
+    private bool isPreviewLoading;
+    private string selectedFileExtensionBadge = "DOC";
+    private string selectedFileSizeText = "";
+    private bool selectedFileExists;
+    private bool isPdfMultiPage;
+    private string previewPageIndicator = "1 / 1";
+    private int currentPreviewPageIndex;
+    private int totalPreviewPages;
+    private CancellationTokenSource? previewCts;
+
+    public ImageSource? PreviewImage { get => previewImage; private set => SetProperty(ref previewImage, value); }
+    public bool HasPreviewImage { get => hasPreviewImage; private set => SetProperty(ref hasPreviewImage, value); }
+    public bool IsPreviewLoading { get => isPreviewLoading; private set => SetProperty(ref isPreviewLoading, value); }
+    public string SelectedFileExtensionBadge { get => selectedFileExtensionBadge; private set => SetProperty(ref selectedFileExtensionBadge, value); }
+    public string SelectedFileSizeText { get => selectedFileSizeText; private set => SetProperty(ref selectedFileSizeText, value); }
+    public bool SelectedFileExists { get => selectedFileExists; private set => SetProperty(ref selectedFileExists, value); }
+    public bool IsPdfMultiPage { get => isPdfMultiPage; private set => SetProperty(ref isPdfMultiPage, value); }
+    public string PreviewPageIndicator { get => previewPageIndicator; private set => SetProperty(ref previewPageIndicator, value); }
+    public ICommand PreviousPreviewPageCommand { get; }
+    public ICommand NextPreviewPageCommand { get; }
 
     public AntecedenteRowVm? SelectedRow
     {
@@ -54,6 +87,7 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
             SetProperty(ref selectedRow, value);
             OnPropertyChanged(nameof(HasSelectedRow));
             RaiseSelectionCommands();
+            UpdateFilePreview();
         }
     }
 
@@ -193,6 +227,29 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
         }
     }
 
+    public string KpiExpedienteSubtext => KpiTotalCount == 0
+        ? "Sin documentos incorporados"
+        : $"{KpiPlanosCount} Planos · {KpiEspecCount} EETT · {KpiAddendasCount + KpiConsultasCount} Anexos";
+
+    public string KpiVigentesRatioText => KpiTotalCount == 0
+        ? "0 / 0"
+        : $"{KpiVigentesCount} / {KpiTotalCount} ({KpiReadinessPercent})";
+
+    public string KpiVigenciaSubtext
+    {
+        get
+        {
+            int hist = allRows.Count(r => !r.EsVigente && !r.EsPendienteMandante);
+            return hist == 0 ? "● Todo el expediente vigente" : $"● {hist} revisiones archivadas/sustituidas";
+        }
+    }
+
+    public int KpiCcddCount => allRows.Count(r =>
+        (r.Disciplina != null && (r.Disciplina.IndexOf("débil", StringComparison.OrdinalIgnoreCase) >= 0 || r.Disciplina.IndexOf("ccdd", StringComparison.OrdinalIgnoreCase) >= 0)) ||
+        (r.Codigo != null && r.Codigo.IndexOf("ccdd", StringComparison.OrdinalIgnoreCase) >= 0));
+
+    public int KpiConArchivoCount => allRows.Count(r => r.HasFile);
+
     public string FechaCorteChip => SinFechaCorte || FechaCorte == null
         ? "Sin fecha de corte"
         : $"Corte · {FechaCorte.Value.ToString("dd MMM yyyy", CultureInfo.GetCultureInfo("es-CL"))}";
@@ -206,11 +263,24 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
         }
     }
 
+    public string SelectedNavFilter => selectedNavFilter;
+    public string? SelectedPlanoDisciplina => selectedPlanoDisciplina;
+    public string InspectionFilter => inspectionFilter;
+
     public bool IsTipoTodos => string.Equals(TipoFilter, "Todos", StringComparison.OrdinalIgnoreCase);
     public bool IsTipoPlano => string.Equals(TipoFilter, AntecedenteTecnicoTipo.Plano, StringComparison.OrdinalIgnoreCase);
     public bool IsTipoEspec => string.Equals(TipoFilter, AntecedenteTecnicoTipo.Especificacion, StringComparison.OrdinalIgnoreCase);
     public bool IsTipoAddenda => string.Equals(TipoFilter, AntecedenteTecnicoTipo.Addenda, StringComparison.OrdinalIgnoreCase);
     public bool IsTipoConsulta => string.Equals(TipoFilter, AntecedenteTecnicoTipo.Consulta, StringComparison.OrdinalIgnoreCase);
+
+    public bool IsNavTodos => string.Equals(selectedNavFilter, "Todos", StringComparison.OrdinalIgnoreCase) && string.Equals(inspectionFilter, "Todos", StringComparison.OrdinalIgnoreCase);
+    public bool IsNavPlanosTodos => string.Equals(selectedNavFilter, "Planos_Todos", StringComparison.OrdinalIgnoreCase) || (string.Equals(TipoFilter, AntecedenteTecnicoTipo.Plano, StringComparison.OrdinalIgnoreCase) && string.IsNullOrWhiteSpace(selectedPlanoDisciplina));
+    public bool IsNavEspec => string.Equals(selectedNavFilter, AntecedenteTecnicoTipo.Especificacion, StringComparison.OrdinalIgnoreCase) || string.Equals(TipoFilter, AntecedenteTecnicoTipo.Especificacion, StringComparison.OrdinalIgnoreCase);
+    public bool IsNavAddenda => string.Equals(selectedNavFilter, AntecedenteTecnicoTipo.Addenda, StringComparison.OrdinalIgnoreCase) || string.Equals(TipoFilter, AntecedenteTecnicoTipo.Addenda, StringComparison.OrdinalIgnoreCase);
+    public bool IsNavConsulta => string.Equals(selectedNavFilter, AntecedenteTecnicoTipo.Consulta, StringComparison.OrdinalIgnoreCase) || string.Equals(TipoFilter, AntecedenteTecnicoTipo.Consulta, StringComparison.OrdinalIgnoreCase);
+
+    public bool IsFilterSoloVigentes => string.Equals(inspectionFilter, "SoloVigentes", StringComparison.OrdinalIgnoreCase);
+    public bool IsFilterConArchivo => string.Equals(inspectionFilter, "ConArchivo", StringComparison.OrdinalIgnoreCase);
 
     public string SyncPlanosHelp => "Copia planos vigentes al listado de planos de la oferta PDF.";
     public string AppendExclusionsHelp => "Agrega exclusiones marcadas al texto de exclusiones de la oferta.";
@@ -221,6 +291,7 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
     public ICommand MarkVigenteCommand { get; }
     public ICommand AttachFileCommand { get; }
     public ICommand OpenAttachedFileCommand { get; }
+    public ICommand OpenContainingFolderCommand { get; }
     public ICommand SaveCommand { get; }
     public ICommand CancelCommand { get; }
     public ICommand SyncPlanosCommand { get; }
@@ -228,10 +299,58 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
     public ICommand OpenProjectCommand { get; }
     public ICommand ExportPdfCommand { get; }
     public ICommand SelectTipoFilterCommand { get; }
+    public ICommand SelectNavFilterCommand { get; }
+    public ICommand ToggleInspectionFilterCommand { get; }
 
-    private void SelectTipoFilter(string? tipo)
+    private void SelectTipoFilter(string? tipo) => SelectNavFilter(tipo);
+
+    public void SelectNavFilter(string? target)
     {
-        TipoFilter = string.IsNullOrWhiteSpace(tipo) ? "Todos" : tipo.Trim();
+        var filter = string.IsNullOrWhiteSpace(target) ? "Todos" : target.Trim();
+        selectedNavFilter = filter;
+
+        if (filter.StartsWith("Plano_Esp:", StringComparison.OrdinalIgnoreCase))
+        {
+            tipoFilter = "Plano";
+            selectedPlanoDisciplina = filter.Substring("Plano_Esp:".Length);
+        }
+        else if (string.Equals(filter, "Planos_Todos", StringComparison.OrdinalIgnoreCase) || string.Equals(filter, "Plano", StringComparison.OrdinalIgnoreCase))
+        {
+            tipoFilter = "Plano";
+            selectedPlanoDisciplina = null;
+        }
+        else
+        {
+            tipoFilter = filter;
+            selectedPlanoDisciplina = null;
+        }
+
+        UpdatePlanoEspecialidadSelection();
+        ApplyFilter();
+        NotifyNavFlags();
+    }
+
+    public void ToggleInspectionFilter(string? target)
+    {
+        if (string.IsNullOrWhiteSpace(target)) return;
+        inspectionFilter = string.Equals(inspectionFilter, target, StringComparison.OrdinalIgnoreCase) ? "Todos" : target;
+        ApplyFilter();
+        NotifyNavFlags();
+    }
+
+    private void NotifyNavFlags()
+    {
+        OnPropertyChanged(nameof(SelectedNavFilter));
+        OnPropertyChanged(nameof(SelectedPlanoDisciplina));
+        OnPropertyChanged(nameof(InspectionFilter));
+        OnPropertyChanged(nameof(IsNavTodos));
+        OnPropertyChanged(nameof(IsNavPlanosTodos));
+        OnPropertyChanged(nameof(IsNavEspec));
+        OnPropertyChanged(nameof(IsNavAddenda));
+        OnPropertyChanged(nameof(IsNavConsulta));
+        OnPropertyChanged(nameof(IsFilterSoloVigentes));
+        OnPropertyChanged(nameof(IsFilterConArchivo));
+        NotifyTipoFlags();
     }
 
     private void NotifyTipoFlags()
@@ -241,6 +360,83 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
         OnPropertyChanged(nameof(IsTipoEspec));
         OnPropertyChanged(nameof(IsTipoAddenda));
         OnPropertyChanged(nameof(IsTipoConsulta));
+    }
+
+    private void UpdateEspecialidadesPlanos()
+    {
+        var planos = allRows.Where(r => r.IsTipoPlano).ToList();
+        var groups = planos
+            .GroupBy(r => string.IsNullOrWhiteSpace(r.Disciplina) ? "Sin clasificar" : r.Disciplina.Trim(), StringComparer.OrdinalIgnoreCase)
+            .OrderBy(g => g.Key, StringComparer.CurrentCultureIgnoreCase)
+            .ToList();
+
+        var existingMap = EspecialidadesPlanos.ToDictionary(x => x.Disciplina, StringComparer.OrdinalIgnoreCase);
+        var toRemove = EspecialidadesPlanos.Where(x => !groups.Any(g => string.Equals(g.Key, x.Disciplina, StringComparison.OrdinalIgnoreCase))).ToList();
+        foreach (var rem in toRemove)
+            EspecialidadesPlanos.Remove(rem);
+
+        foreach (var g in groups)
+        {
+            var disc = g.Key;
+            var count = g.Count();
+            var icon = GetIconForDisciplina(disc);
+            var isSel = string.Equals(tipoFilter, "Plano", StringComparison.OrdinalIgnoreCase)
+                && !string.IsNullOrWhiteSpace(selectedPlanoDisciplina)
+                && string.Equals(selectedPlanoDisciplina, disc, StringComparison.OrdinalIgnoreCase);
+
+            if (existingMap.TryGetValue(disc, out var existing))
+            {
+                existing.Count = count;
+                existing.IsSelected = isSel;
+            }
+            else
+            {
+                var item = new PlanoEspecialidadFilterItem
+                {
+                    Disciplina = disc,
+                    DisplayName = disc,
+                    Icon = icon,
+                    Count = count,
+                    IsSelected = isSel,
+                    SelectCommand = new RelayCommand(() => SelectNavFilter($"Plano_Esp:{disc}"))
+                };
+                EspecialidadesPlanos.Add(item);
+            }
+        }
+        UpdatePlanoEspecialidadSelection();
+    }
+
+    private void UpdatePlanoEspecialidadSelection()
+    {
+        foreach (var item in EspecialidadesPlanos)
+        {
+            item.IsSelected = string.Equals(tipoFilter, "Plano", StringComparison.OrdinalIgnoreCase)
+                && !string.IsNullOrWhiteSpace(selectedPlanoDisciplina)
+                && string.Equals(item.Disciplina, selectedPlanoDisciplina, StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    private static string GetIconForDisciplina(string? disciplina)
+    {
+        if (string.IsNullOrWhiteSpace(disciplina)) return "📐";
+        var d = disciplina.Trim();
+        if (d.IndexOf("eléctr", StringComparison.OrdinalIgnoreCase) >= 0 || d.IndexOf("electr", StringComparison.OrdinalIgnoreCase) >= 0)
+            return "⚡";
+        if (d.IndexOf("débil", StringComparison.OrdinalIgnoreCase) >= 0 || d.IndexOf("debil", StringComparison.OrdinalIgnoreCase) >= 0 || d.IndexOf("ccdd", StringComparison.OrdinalIgnoreCase) >= 0)
+            return "📡";
+        if (d.IndexOf("telecom", StringComparison.OrdinalIgnoreCase) >= 0 || d.IndexOf("red", StringComparison.OrdinalIgnoreCase) >= 0)
+            return "📶";
+        if (d.IndexOf("clima", StringComparison.OrdinalIgnoreCase) >= 0 || d.IndexOf("hvac", StringComparison.OrdinalIgnoreCase) >= 0)
+            return "❄️";
+        if (d.IndexOf("sanitar", StringComparison.OrdinalIgnoreCase) >= 0 || d.IndexOf("agua", StringComparison.OrdinalIgnoreCase) >= 0)
+            return "💧";
+        if (d.IndexOf("arquitec", StringComparison.OrdinalIgnoreCase) >= 0)
+            return "🏛️";
+        if (d.IndexOf("estructur", StringComparison.OrdinalIgnoreCase) >= 0)
+            return "🏗️";
+        if (d.IndexOf("seguridad", StringComparison.OrdinalIgnoreCase) >= 0 || d.IndexOf("incendio", StringComparison.OrdinalIgnoreCase) >= 0)
+            return "🚨";
+        return "📐";
     }
 
     private void NotifyListMeta()
@@ -282,6 +478,7 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
             SummaryText = $"{summary.Total} documentos · {summary.Planos} planos · {summary.PendientesMandante} pendientes";
             isDirty = false;
             StatusMessage = "";
+            UpdateEspecialidadesPlanos();
             ApplyFilter();
             NotifyDirty();
             NotifyKpisChanged();
@@ -318,20 +515,77 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
     {
         if (session.IsReadOnly)
             return;
-        var folderPath = WpfDialogService.PromptSelectFolder($"Seleccionar carpeta con archivos de tipo \"{tipo}\"");
-        if (folderPath == null)
-            return;
 
-        var filePaths = WpfDialogService.PromptSelectFilesInFolder(folderPath, "Agregar antecedente");
-        if (filePaths.Length == 0)
-            return;
+        string? disciplina = null;
+        if (string.Equals(tipo, AntecedenteTecnicoTipo.Plano, StringComparison.OrdinalIgnoreCase))
+        {
+            disciplina = WpfDialogService.PromptChoice(
+                "Especialidad del plano",
+                "¿De qué especialidad son los planos a agregar?",
+                AntecedenteDisciplina.All,
+                AntecedenteDisciplina.Electricidad);
+            if (disciplina == null)
+                return;
 
-        AddFiles(tipo, filePaths);
+            var modo = WpfDialogService.PromptChoice(
+                $"Incorporar planos · {disciplina}",
+                "Seleccione cómo desea seleccionar los planos:",
+                new[] { "Seleccionar archivos de planos (con vista previa)", "Importar carpeta completa" },
+                "Seleccionar archivos de planos (con vista previa)");
+            if (modo == null)
+                return;
+
+            string[] filePaths;
+            if (modo.StartsWith("Seleccionar archivos", StringComparison.OrdinalIgnoreCase))
+            {
+                filePaths = WpfDialogService.PromptSelectBlueprintFiles($"Seleccionar planos de {disciplina}");
+            }
+            else
+            {
+                var folderPath = WpfDialogService.PromptSelectFolder($"Seleccionar carpeta de planos · {disciplina}");
+                if (folderPath == null)
+                    return;
+                filePaths = WpfDialogService.PromptSelectFilesInFolder(folderPath, "Agregar planos desde carpeta");
+            }
+
+            if (filePaths == null || filePaths.Length == 0)
+                return;
+
+            AddFiles(tipo, filePaths, disciplina);
+        }
+        else
+        {
+            var modo = WpfDialogService.PromptChoice(
+                $"Incorporar {tipo}",
+                "Seleccione cómo desea agregar los documentos:",
+                new[] { "Seleccionar archivos directamente", "Importar carpeta completa" },
+                "Seleccionar archivos directamente");
+            if (modo == null)
+                return;
+
+            string[] filePaths;
+            if (modo.StartsWith("Seleccionar archivos", StringComparison.OrdinalIgnoreCase))
+            {
+                filePaths = WpfDialogService.PromptOpenDocuments();
+            }
+            else
+            {
+                var folderPath = WpfDialogService.PromptSelectFolder($"Seleccionar carpeta con archivos de tipo \"{tipo}\"");
+                if (folderPath == null)
+                    return;
+                filePaths = WpfDialogService.PromptSelectFilesInFolder(folderPath, "Agregar antecedente");
+            }
+
+            if (filePaths == null || filePaths.Length == 0)
+                return;
+
+            AddFiles(tipo, filePaths, null);
+        }
     }
 
     // Separado de AddNew() para poder testear el comportamiento de agregado masivo (dedup +
     // un solo refiltrado al final) sin depender de los diálogos reales de carpeta/archivo.
-    internal void AddFiles(string tipo, string[] filePaths)
+    internal void AddFiles(string tipo, string[] filePaths, string? disciplina = null)
     {
         var existingCodes = allRows
             .Where(x => string.Equals(x.Tipo, tipo, StringComparison.OrdinalIgnoreCase))
@@ -345,23 +599,35 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
         // una sola vez al final.
         AntecedenteRowVm? last = null;
         int skipped = 0;
+        bool isPlano = string.Equals(tipo, AntecedenteTecnicoTipo.Plano, StringComparison.OrdinalIgnoreCase);
         foreach (var filePath in filePaths)
         {
-            var codigo = System.IO.Path.GetFileNameWithoutExtension(filePath);
+            var baseCodigo = System.IO.Path.GetFileNameWithoutExtension(filePath);
+            var codigo = isPlano && disciplina != null
+                ? AntecedenteDisciplina.ApplyCodigoPrefix(baseCodigo, disciplina)
+                : baseCodigo;
             if (!string.IsNullOrWhiteSpace(codigo) && existingCodes.Contains(codigo))
             {
                 skipped++;
                 continue;
             }
-            last = AddOneRowRaw(tipo, filePath);
+            last = AddOneRowRaw(tipo, filePath, disciplina);
             if (!string.IsNullOrWhiteSpace(codigo))
                 existingCodes.Add(codigo);
         }
 
         if (last != null)
         {
-            EnsureVisibleInFilter(tipo);
-            ApplyFilter();
+            UpdateEspecialidadesPlanos();
+            if (!string.IsNullOrWhiteSpace(disciplina) && isPlano)
+            {
+                SelectNavFilter($"Plano_Esp:{disciplina}");
+            }
+            else
+            {
+                EnsureVisibleInFilter(tipo);
+                ApplyFilter();
+            }
             SelectedRow = last;
             MarkDirtyLocal();
             NotifyKpisChanged();
@@ -370,15 +636,23 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
             StatusMessage = $"{skipped} archivo(s) omitido(s) por tener el mismo código que un registro \"{tipo}\" existente.";
     }
 
-    private AntecedenteRowVm AddOneRowRaw(string tipo, string? filePath)
+    private AntecedenteRowVm AddOneRowRaw(string tipo, string? filePath, string? disciplina = null)
     {
         var row = documents.AddNew(tipo);
         var vm = new AntecedenteRowVm(row, OnRowEdited);
+        if (!string.IsNullOrWhiteSpace(disciplina))
+            vm.Disciplina = disciplina;
         if (!string.IsNullOrWhiteSpace(filePath))
         {
             vm.RutaArchivo = filePath;
             if (string.IsNullOrWhiteSpace(vm.Codigo))
-                vm.Codigo = System.IO.Path.GetFileNameWithoutExtension(filePath);
+            {
+                var baseCodigo = System.IO.Path.GetFileNameWithoutExtension(filePath);
+                vm.Codigo = !string.IsNullOrWhiteSpace(disciplina)
+                    && string.Equals(tipo, AntecedenteTecnicoTipo.Plano, StringComparison.OrdinalIgnoreCase)
+                    ? AntecedenteDisciplina.ApplyCodigoPrefix(baseCodigo, disciplina)
+                    : baseCodigo;
+            }
         }
         allRows.Add(vm);
         return vm;
@@ -397,6 +671,7 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
         var copy = documents.Duplicate(SelectedRow.Model);
         var vm = new AntecedenteRowVm(copy, OnRowEdited);
         allRows.Add(vm);
+        UpdateEspecialidadesPlanos();
         EnsureVisibleInFilter(copy.Tipo);
         ApplyFilter();
         SelectedRow = vm;
@@ -412,6 +687,7 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
         documents.Remove(SelectedRow.Model);
         allRows.Remove(SelectedRow);
         SelectedRow = null;
+        UpdateEspecialidadesPlanos();
         ApplyFilter();
         MarkDirtyLocal();
         NotifyKpisChanged();
@@ -423,12 +699,17 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
         OnPropertyChanged(nameof(KpiEspecCount));
         OnPropertyChanged(nameof(KpiAddendasCount));
         OnPropertyChanged(nameof(KpiConsultasCount));
+        OnPropertyChanged(nameof(KpiCcddCount));
+        OnPropertyChanged(nameof(KpiConArchivoCount));
         OnPropertyChanged(nameof(KpiTotalCount));
         OnPropertyChanged(nameof(KpiVigentesCount));
         OnPropertyChanged(nameof(KpiPendientesMandanteCount));
         OnPropertyChanged(nameof(HasPendingAddendas));
         OnPropertyChanged(nameof(KpiReadinessPercent));
         OnPropertyChanged(nameof(KpiReadinessLabel));
+        OnPropertyChanged(nameof(KpiExpedienteSubtext));
+        OnPropertyChanged(nameof(KpiVigentesRatioText));
+        OnPropertyChanged(nameof(KpiVigenciaSubtext));
         OnPropertyChanged(nameof(KpiLastReviewLabel));
         OnPropertyChanged(nameof(KpiLastReviewResponsible));
         OnPropertyChanged(nameof(FechaCorteChip));
@@ -450,18 +731,206 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
         var path = WpfDialogService.PromptOpenDocument();
         if (path == null) return;
         SelectedRow.RutaArchivo = path;
-        ((RelayCommand)OpenAttachedFileCommand).RaiseCanExecuteChanged();
+        ((RelayCommand<object>)OpenAttachedFileCommand).RaiseCanExecuteChanged();
+        ((RelayCommand)OpenContainingFolderCommand).RaiseCanExecuteChanged();
+        UpdateFilePreview();
         MarkDirtyLocal();
     }
 
-    private void OpenAttachedFile()
+    private void OpenAttachedFile(object? param = null)
     {
-        var path = SelectedRow?.RutaArchivo;
+        var row = param as AntecedenteRowVm ?? SelectedRow;
+        var path = row?.RutaArchivo;
         if (string.IsNullOrWhiteSpace(path))
             return;
         if (!QubiCostElectrical.Wpf.Infrastructure.Security.SafeProcessLauncher.TryOpenFile(path, out var error))
         {
             WpfDialogService.Error("Abrir archivo", error ?? "No se pudo abrir el archivo de forma segura.");
+        }
+    }
+
+    private void OpenContainingFolder()
+    {
+        var path = SelectedRow?.RutaArchivo;
+        if (string.IsNullOrWhiteSpace(path))
+            return;
+        var dir = Path.GetDirectoryName(path);
+        if (!string.IsNullOrWhiteSpace(dir) && Directory.Exists(dir))
+        {
+            if (!QubiCostElectrical.Wpf.Infrastructure.Security.SafeProcessLauncher.TryOpenFolder(dir, out var error))
+            {
+                WpfDialogService.Error("Abrir carpeta", error ?? "No se pudo abrir la carpeta del archivo.");
+            }
+        }
+        else
+        {
+            WpfDialogService.Error("Abrir carpeta", "La carpeta contenedora del archivo no existe o no es accesible.");
+        }
+    }
+
+    private void UpdateFilePreview()
+    {
+        previewCts?.Cancel();
+        var path = SelectedRow?.RutaArchivo;
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            PreviewImage = null;
+            HasPreviewImage = false;
+            IsPreviewLoading = false;
+            SelectedFileExtensionBadge = SelectedRow?.Tipo?.ToUpperInvariant() ?? "DOC";
+            SelectedFileSizeText = "Sin archivo adjunto";
+            SelectedFileExists = false;
+            IsPdfMultiPage = false;
+            totalPreviewPages = 0;
+            currentPreviewPageIndex = 0;
+            PreviewPageIndicator = "";
+            return;
+        }
+
+        string ext = Path.GetExtension(path).TrimStart('.').ToUpperInvariant();
+        SelectedFileExtensionBadge = string.IsNullOrWhiteSpace(ext) ? "DOC" : ext;
+
+        if (!File.Exists(path))
+        {
+            PreviewImage = null;
+            HasPreviewImage = false;
+            IsPreviewLoading = false;
+            SelectedFileSizeText = "Archivo no encontrado";
+            SelectedFileExists = false;
+            IsPdfMultiPage = false;
+            totalPreviewPages = 0;
+            currentPreviewPageIndex = 0;
+            PreviewPageIndicator = "";
+            return;
+        }
+
+        SelectedFileExists = true;
+        try
+        {
+            var fi = new FileInfo(path);
+            SelectedFileSizeText = fi.Length >= 1024 * 1024
+                ? $"{fi.Length / (1024.0 * 1024.0):N1} MB"
+                : $"{fi.Length / 1024.0:N0} KB";
+        }
+        catch
+        {
+            SelectedFileSizeText = "Disponible";
+        }
+
+        currentPreviewPageIndex = 0;
+        LoadCurrentPagePreview(path, ext);
+    }
+
+    private async void LoadCurrentPagePreview(string path, string ext)
+    {
+        previewCts?.Cancel();
+        previewCts?.Dispose();
+        previewCts = new CancellationTokenSource();
+        var ct = previewCts.Token;
+
+        try
+        {
+            if (string.Equals(ext, "PDF", StringComparison.OrdinalIgnoreCase))
+            {
+                IsPreviewLoading = true;
+                PreviewImage = null;
+                HasPreviewImage = false;
+
+                var result = await PdfPageRenderer.RenderPageAsync(path, currentPreviewPageIndex, dpi: 110, ct);
+
+                if (ct.IsCancellationRequested)
+                    return;
+
+                totalPreviewPages = result.PageCount;
+                IsPdfMultiPage = totalPreviewPages > 1;
+                PreviewPageIndicator = totalPreviewPages > 0 ? $"{currentPreviewPageIndex + 1} / {totalPreviewPages}" : "1 / 1";
+                PreviewImage = result.Image;
+                HasPreviewImage = PreviewImage != null;
+                IsPreviewLoading = false;
+            }
+            else if (ext is "PNG" or "JPG" or "JPEG" or "BMP")
+            {
+                IsPreviewLoading = true;
+                var bmp = await Task.Run(() =>
+                {
+                    try
+                    {
+                        var img = new BitmapImage();
+                        img.BeginInit();
+                        img.CacheOption = BitmapCacheOption.OnLoad;
+                        img.UriSource = new Uri(path);
+                        img.EndInit();
+                        img.Freeze();
+                        return img;
+                    }
+                    catch
+                    {
+                        return null;
+                    }
+                }, ct);
+
+                if (ct.IsCancellationRequested)
+                    return;
+
+                totalPreviewPages = 1;
+                IsPdfMultiPage = false;
+                PreviewPageIndicator = "1 / 1";
+                PreviewImage = bmp;
+                HasPreviewImage = bmp != null;
+                IsPreviewLoading = false;
+            }
+            else
+            {
+                IsPreviewLoading = false;
+                totalPreviewPages = 0;
+                IsPdfMultiPage = false;
+                PreviewPageIndicator = "";
+                PreviewImage = null;
+                HasPreviewImage = false;
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Operación cancelada por nueva selección de plano
+        }
+        catch
+        {
+            PreviewImage = null;
+            HasPreviewImage = false;
+            IsPdfMultiPage = false;
+            PreviewPageIndicator = "";
+            IsPreviewLoading = false;
+        }
+        finally
+        {
+            if (!ct.IsCancellationRequested)
+            {
+                IsPreviewLoading = false;
+                ((RelayCommand)PreviousPreviewPageCommand).RaiseCanExecuteChanged();
+                ((RelayCommand)NextPreviewPageCommand).RaiseCanExecuteChanged();
+            }
+        }
+    }
+
+    private void PreviousPreviewPage()
+    {
+        if (currentPreviewPageIndex > 0 && SelectedRow?.RutaArchivo != null)
+        {
+            currentPreviewPageIndex--;
+            var path = SelectedRow.RutaArchivo;
+            var ext = Path.GetExtension(path).TrimStart('.').ToUpperInvariant();
+            LoadCurrentPagePreview(path, ext);
+        }
+    }
+
+    private void NextPreviewPage()
+    {
+        if (currentPreviewPageIndex < totalPreviewPages - 1 && SelectedRow?.RutaArchivo != null)
+        {
+            currentPreviewPageIndex++;
+            var path = SelectedRow.RutaArchivo;
+            var ext = Path.GetExtension(path).TrimStart('.').ToUpperInvariant();
+            LoadCurrentPagePreview(path, ext);
         }
     }
 
@@ -515,11 +984,63 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
 
     private void ApplyFilter()
     {
-        var filtered = documents.Filter(SearchText, TipoFilter);
-        var ids = filtered.Select(x => x.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        IEnumerable<AntecedenteRowVm> query = allRows;
+
+        if (string.Equals(tipoFilter, "Plano", StringComparison.OrdinalIgnoreCase))
+        {
+            query = query.Where(x => x.IsTipoPlano);
+            if (!string.IsNullOrWhiteSpace(selectedPlanoDisciplina))
+            {
+                query = query.Where(x => string.Equals(x.Disciplina?.Trim(), selectedPlanoDisciplina.Trim(), StringComparison.OrdinalIgnoreCase));
+            }
+        }
+        else if (string.Equals(tipoFilter, AntecedenteTecnicoTipo.Especificacion, StringComparison.OrdinalIgnoreCase))
+        {
+            query = query.Where(x => x.IsTipoEspec);
+        }
+        else if (string.Equals(tipoFilter, AntecedenteTecnicoTipo.Addenda, StringComparison.OrdinalIgnoreCase))
+        {
+            query = query.Where(x => x.IsTipoAddenda);
+        }
+        else if (string.Equals(tipoFilter, AntecedenteTecnicoTipo.Consulta, StringComparison.OrdinalIgnoreCase))
+        {
+            query = query.Where(x => x.IsTipoConsulta);
+        }
+
+        if (string.Equals(inspectionFilter, "SoloVigentes", StringComparison.OrdinalIgnoreCase))
+        {
+            query = query.Where(x => x.EsVigente && !x.EsPendienteMandante);
+        }
+        else if (string.Equals(inspectionFilter, "ConArchivo", StringComparison.OrdinalIgnoreCase))
+        {
+            query = query.Where(x => x.HasFile);
+        }
+
+        if (!string.IsNullOrWhiteSpace(SearchText))
+        {
+            string s = SearchText.Trim();
+            query = query.Where(x =>
+                (x.Codigo ?? "").Contains(s, StringComparison.OrdinalIgnoreCase)
+                || (x.Descripcion ?? "").Contains(s, StringComparison.OrdinalIgnoreCase)
+                || (x.Revision ?? "").Contains(s, StringComparison.OrdinalIgnoreCase)
+                || (x.Disciplina ?? "").Contains(s, StringComparison.OrdinalIgnoreCase)
+                || (x.Notas ?? "").Contains(s, StringComparison.OrdinalIgnoreCase)
+                || (x.ResponsableRevision ?? "").Contains(s, StringComparison.OrdinalIgnoreCase)
+                || (x.RutaArchivoNombre ?? "").Contains(s, StringComparison.OrdinalIgnoreCase));
+        }
+
+        var result = query
+            .OrderByDescending(x => x.FechaDocumento)
+            .ThenBy(x => x.Codigo)
+            .ToList();
+
         FilteredRows.Clear();
-        foreach (var vm in allRows.Where(x => ids.Contains(x.Model.Id)))
+        foreach (var vm in result)
             FilteredRows.Add(vm);
+
+        if (SelectedRow == null || !FilteredRows.Contains(SelectedRow))
+            SelectedRow = FilteredRows.FirstOrDefault();
+
         NotifyListMeta();
     }
 
@@ -555,13 +1076,15 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
         ((RelayCommand)RemoveCommand).RaiseCanExecuteChanged();
         ((RelayCommand)MarkVigenteCommand).RaiseCanExecuteChanged();
         ((RelayCommand)AttachFileCommand).RaiseCanExecuteChanged();
-        ((RelayCommand)OpenAttachedFileCommand).RaiseCanExecuteChanged();
+        ((RelayCommand<object>)OpenAttachedFileCommand).RaiseCanExecuteChanged();
+        ((RelayCommand)OpenContainingFolderCommand).RaiseCanExecuteChanged();
     }
 
     public void OnGridEdited() => OnRowEdited();
 
     private void OnRowEdited()
     {
+        UpdateEspecialidadesPlanos();
         MarkDirtyLocal();
         NotifyKpisChanged();
     }

@@ -17,15 +17,23 @@ namespace QubiCostElectrical.Wpf.Features.Apu;
 public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IPageWithPendingChanges, IPageWithCommitChanges
 {
     public ApuWorkspaceVm(IShellNavigationHost shell, WpfAppHost host)
-        : this(shell, host.Session, host.ProjectWorkspace, host.UndoService, host.Services.Apu) { }
+        : this(shell, host.Session, host.ProjectWorkspace, host.UndoService, host.Services.Apu, host.PriceBankStore, host.Services.MaterialSearch) { }
 
-    public ApuWorkspaceVm(IShellNavigationHost shell, BudgetProjectSession session, IProjectWorkspaceService workspace, WpfUndoService undo, IApuService apuSvc)
+    public ApuWorkspaceVm(
+        IShellNavigationHost shell,
+        BudgetProjectSession session,
+        IProjectWorkspaceService workspace,
+        WpfUndoService undo,
+        IApuService apuSvc,
+        IPriceBankStore? priceBankStore = null,
+        IMaterialSearchService? materialSearch = null)
     {
         this.shell = shell;
         this.session = session;
         this.workspace = workspace;
         this.undo = undo;
         this.apuSvc = apuSvc;
+        this.autocompleteEngine = new ApuAutocompleteEngine(session, materialSearch ?? new MaterialSearchService(), priceBankStore);
         try
         {
             templateStore = new ApuTemplateStore();
@@ -48,6 +56,8 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
         GenerarApuCommand = new RelayCommand(GenerarApu, () => CanEdit && SelectedPartida != null && !showEmptyState);
         SaveCommand = new RelayCommand(Save, () => hasPendingChanges && CanEdit);
         AddRecursoCommand = new RelayCommand<string>(AddRecurso, _ => CanEdit && currentApu != null);
+        AddMaterialInlineCommand = new RelayCommand(() => AddMaterialInline(), () => CanEdit && currentApu != null);
+        OpenMaterialPickerCommand = new RelayCommand(OpenMaterialPickerModal, () => CanEdit && currentApu != null);
         DeleteRecursoCommand = new RelayCommand<ApuRecursoVm>(DeleteRecurso, r => r != null && CanEdit && currentApu != null);
         DuplicateRecursoCommand = new RelayCommand<ApuRecursoVm>(DuplicateRecurso, r => r != null && CanEdit && currentApu != null);
         GoToCubicacionCommand = new RelayCommand(() => shell.RequestNavigate(ShellRoute.Takeoff));
@@ -64,6 +74,8 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
     }
 
     public ICommand OpenQuickJumpCommand { get; }
+    public ICommand AddMaterialInlineCommand { get; }
+    public ICommand OpenMaterialPickerCommand { get; }
 
     // ─── Listas ──────────────────────────────────────────────────────────────
     public ObservableCollection<ApuPartidaVm> Partidas { get; }
@@ -252,9 +264,15 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
         OnPropertyChanged(nameof(IsReadOnly));
         OnPropertyChanged(nameof(CanEdit));
 
-        var toSelect = string.IsNullOrWhiteSpace(prevSelectedId)
-            ? null
-            : Partidas.FirstOrDefault(p => string.Equals(p.ItemId, prevSelectedId, StringComparison.OrdinalIgnoreCase));
+        var pendingId = session.PendingItemizadoSelectionId;
+        if (!string.IsNullOrWhiteSpace(pendingId))
+            session.PendingItemizadoSelectionId = null;
+
+        var toSelect = !string.IsNullOrWhiteSpace(pendingId)
+            ? Partidas.FirstOrDefault(p => string.Equals(p.ItemId, pendingId, StringComparison.OrdinalIgnoreCase))
+            : (string.IsNullOrWhiteSpace(prevSelectedId)
+                ? null
+                : Partidas.FirstOrDefault(p => string.Equals(p.ItemId, prevSelectedId, StringComparison.OrdinalIgnoreCase)));
 
         SelectedPartida = toSelect ?? Partidas.FirstOrDefault(p => !p.EsTitulo);
         if (!hasPendingChanges)
@@ -305,50 +323,50 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
         IsLoading = true;
         try
         {
-        currentApu = null;
-        Recursos.Clear();
-        RecursosMat.Clear(); RecursosMo.Clear(); RecursosEquipo.Clear();
-        RecursosSc.Clear(); RecursosOtros.Clear();
+            currentApu = null;
+            Recursos.Clear();
+            RecursosMat.Clear(); RecursosMo.Clear(); RecursosEquipo.Clear();
+            RecursosSc.Clear(); RecursosOtros.Clear();
 
-        if (partida == null || partida.EsTitulo)
-        {
-            ClearApu();
-            NotifyHeaderChanged();
-            return;
-        }
-
-        var apu = session.Apus.FirstOrDefault(a =>
-            string.Equals(a.ItemId, partida.ItemId, StringComparison.OrdinalIgnoreCase));
-
-        currentApu = apu;
-
-        if (apu != null)
-        {
-            foreach (var r in apu.Recursos)
+            if (partida == null || partida.EsTitulo)
             {
-                var vm = CreateRecursoVm(r);
-                Recursos.Add(vm);
-                switch (r.Tipo)
-                {
-                    case ApuTipoRecurso.MAT: RecursosMat.Add(vm); break;
-                    case ApuTipoRecurso.MO or ApuTipoRecurso.HH: RecursosMo.Add(vm); break;
-                    case ApuTipoRecurso.EQ: RecursosEquipo.Add(vm); break;
-                    case ApuTipoRecurso.SC: RecursosSc.Add(vm); break;
-                    default: RecursosOtros.Add(vm); break;
-                }
+                ClearApu();
+                NotifyHeaderChanged();
+                return;
             }
-            RefreshTotals();
-            BuildAlerts(apu);
-        }
-        else
-        {
-            ClearApu();
-        }
 
-        NotifyHeaderChanged();
-        OnPropertyChanged(nameof(TieneApu));
-        OnPropertyChanged(nameof(HasRecursos));
-        OnPropertyChanged(nameof(RecursoCount));
+            var apu = session.Apus.FirstOrDefault(a =>
+                string.Equals(a.ItemId, partida.ItemId, StringComparison.OrdinalIgnoreCase));
+
+            currentApu = apu;
+
+            if (apu != null)
+            {
+                foreach (var r in apu.Recursos)
+                {
+                    var vm = CreateRecursoVm(r);
+                    Recursos.Add(vm);
+                    switch (r.Tipo)
+                    {
+                        case ApuTipoRecurso.MAT: RecursosMat.Add(vm); break;
+                        case ApuTipoRecurso.MO or ApuTipoRecurso.HH: RecursosMo.Add(vm); break;
+                        case ApuTipoRecurso.EQ: RecursosEquipo.Add(vm); break;
+                        case ApuTipoRecurso.SC: RecursosSc.Add(vm); break;
+                        default: RecursosOtros.Add(vm); break;
+                    }
+                }
+                RefreshTotals();
+                BuildAlerts(apu);
+            }
+            else
+            {
+                ClearApu();
+            }
+
+            NotifyHeaderChanged();
+            OnPropertyChanged(nameof(TieneApu));
+            OnPropertyChanged(nameof(HasRecursos));
+            OnPropertyChanged(nameof(RecursoCount));
         }
         finally
         {
@@ -375,21 +393,31 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
         Imprevistos = apu.ImprevistosUf;
         PrecioUnit = apu.PrecioUnitUf;
 
-        var gg = session.ProjectInfo.GastosGeneralesPct;
-        var util = session.ProjectInfo.UtilidadPct;
-        var markupMethod = Enum.TryParse<MarkupMethod>(session.ProjectInfo.MarkupMethod, true, out var mm) ? mm : MarkupMethod.SobreVenta;
-        VentaUnit = ApuFromCubicacionService.CalculateSaleUnitUf(apu, gg, util, markupMethod);
+        var closingPolicy = session.Data.ClosingPolicy?.Policy ?? ClosingPolicyType.CostPlusMarkup;
+        if (closingPolicy == ClosingPolicyType.CostPlusFee)
+        {
+            VentaUnit = PrecioUnit; // Costo directo comprobable: sin GG ni markup sobre el APU
+        }
+        else
+        {
+            var gg = session.ProjectInfo.GastosGeneralesPct;
+            var util = session.ProjectInfo.UtilidadPct;
+            var markupMethod = Enum.TryParse<MarkupMethod>(session.ProjectInfo.MarkupMethod, true, out var mm) ? mm : MarkupMethod.SobreVenta;
+            VentaUnit = ApuFromCubicacionService.CalculateSaleUnitUf(apu, gg, util, markupMethod);
+        }
         TotalPartida = apu.TotalPartidaUf;
 
         selectedPartida?.Refresh(apu);
         OnPropertyChanged(nameof(CostoMoTotal));
         OnPropertyChanged(nameof(CostoTransporteTotal));
+        CostDistribution.Recalculate(CostoMat, CostoMoTotal, CostoEquipo, CostoSc, CostoTransporteTotal, CostoDirecto);
     }
 
     private void ClearApu()
     {
         CostoMat = CostoMo = CostoEquipo = CostoSc = CostoHerr = 0m;
         CostoDirecto = Imprevistos = PrecioUnit = VentaUnit = TotalPartida = 0m;
+        CostDistribution.Recalculate(0, 0, 0, 0, 0, 0);
         AlertText = "";
         HasAlerts = false;
     }
@@ -441,6 +469,77 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
         LoadApu(selectedPartida);
     }
 
+    public ApuRecursoVm? AddMaterialInline()
+    {
+        if (!CanEdit || currentApu == null) return null;
+        undo.PushUndoPoint(session, "Agregar material APU (inline)");
+        pendingUndoForEdit = true;
+        var recurso = new ApuRecursoRow
+        {
+            Tipo = ApuTipoRecurso.MAT,
+            CodigoMaterial = "",
+            Descripcion = "",
+            Unidad = "un",
+            Rendimiento = 1m,
+            PrecioUf = 0m,
+            MermaPct = 0m,
+            ImprevistosPct = 0m,
+            FuentePrecio = "Banco de precios",
+            FechaPrecio = AppClock.Now
+        };
+        currentApu.Recursos.Add(recurso);
+        var vm = CreateRecursoVm(recurso);
+        Recursos.Add(vm);
+        RecursosMat.Add(vm);
+        SelectedRecurso = vm;
+        OnRowEdited();
+        return vm;
+    }
+
+    public void OpenMaterialPickerModal()
+    {
+        if (!CanEdit || currentApu == null) return;
+        var dialog = new Templates.MaterialPickerDialog(session.Materiales);
+        if (System.Windows.Application.Current.MainWindow != null)
+        {
+            dialog.Owner = System.Windows.Application.Current.MainWindow;
+        }
+
+        if (dialog.ShowDialog() == true && dialog.SelectedMaterials.Count > 0)
+        {
+            undo.PushUndoPoint(session, "Agregar material APU");
+            pendingUndoForEdit = true;
+            foreach (var mat in dialog.SelectedMaterials)
+            {
+                decimal precioUf = mat.MatUf;
+                if (precioUf <= 0m && mat.MatClpConFallback > 0m)
+                {
+                    decimal valorUf = session.ValorUfClp > 0m ? session.ValorUfClp : PriceConversion.DefaultValorUfClp;
+                    precioUf = PriceConversion.ClpToUf(mat.MatClpConFallback, valorUf);
+                }
+
+                var recurso = new ApuRecursoRow
+                {
+                    Tipo = ApuTipoRecurso.MAT,
+                    CodigoMaterial = mat.Codigo,
+                    Descripcion = mat.Descripcion,
+                    Unidad = mat.Unidad,
+                    Rendimiento = 1m,
+                    PrecioUf = precioUf,
+                    MermaPct = 0m,
+                    ImprevistosPct = 0m,
+                    FuentePrecio = "Banco de precios",
+                    FechaPrecio = AppClock.Now
+                };
+                currentApu.Recursos.Add(recurso);
+                var vm = CreateRecursoVm(recurso);
+                Recursos.Add(vm);
+                RecursosMat.Add(vm);
+            }
+            OnRowEdited();
+        }
+    }
+
     private void AddRecurso(string? tipoStr)
     {
         if (!CanEdit || currentApu == null) return;
@@ -450,45 +549,7 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
 
         if (tipo == ApuTipoRecurso.MAT)
         {
-            var dialog = new Templates.MaterialPickerDialog(session.Materiales);
-            if (System.Windows.Application.Current.MainWindow != null)
-            {
-                dialog.Owner = System.Windows.Application.Current.MainWindow;
-            }
-
-            if (dialog.ShowDialog() == true && dialog.SelectedMaterials.Count > 0)
-            {
-                undo.PushUndoPoint(session, "Agregar material APU");
-                pendingUndoForEdit = true;
-                foreach (var mat in dialog.SelectedMaterials)
-                {
-                    decimal precioUf = mat.MatUf;
-                    if (precioUf <= 0m && mat.MatClpConFallback > 0m)
-                    {
-                        decimal valorUf = session.ValorUfClp > 0m ? session.ValorUfClp : PriceConversion.DefaultValorUfClp;
-                        precioUf = PriceConversion.ClpToUf(mat.MatClpConFallback, valorUf);
-                    }
-
-                    var recurso = new ApuRecursoRow
-                    {
-                        Tipo = ApuTipoRecurso.MAT,
-                        CodigoMaterial = mat.Codigo,
-                        Descripcion = mat.Descripcion,
-                        Unidad = mat.Unidad,
-                        Rendimiento = 1m,
-                        PrecioUf = precioUf,
-                        MermaPct = 0m,
-                        ImprevistosPct = 0m,
-                        FuentePrecio = "Banco de precios",
-                        FechaPrecio = AppClock.Now
-                    };
-                    currentApu.Recursos.Add(recurso);
-                    var vm = CreateRecursoVm(recurso);
-                    Recursos.Add(vm);
-                    RecursosMat.Add(vm);
-                }
-                OnRowEdited();
-            }
+            AddMaterialInline();
             return;
         }
 
@@ -506,6 +567,93 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
             case ApuTipoRecurso.SC: RecursosSc.Add(vmVacio); break;
             default: RecursosOtros.Add(vmVacio); break;
         }
+        OnRowEdited();
+    }
+
+    // ─── Autocompletado e IntelliSense en Grilla APU ──────────────────────────
+    public ObservableCollection<ApuAutocompleteSuggestionVm> AutocompleteResults
+    {
+        get => autocompleteResults;
+        set => SetProperty(ref autocompleteResults, value);
+    }
+
+    public bool AutocompleteVisible
+    {
+        get => autocompleteVisible;
+        set
+        {
+            if (SetProperty(ref autocompleteVisible, value) && !value)
+            {
+                autocompleteCts?.Cancel();
+            }
+        }
+    }
+
+    public ApuAutocompleteSuggestionVm? SelectedAutocompleteItem
+    {
+        get => selectedAutocompleteItem;
+        set => SetProperty(ref selectedAutocompleteItem, value);
+    }
+
+    public string AutocompleteStatusText
+    {
+        get => autocompleteStatusText;
+        set => SetProperty(ref autocompleteStatusText, value);
+    }
+
+    public ApuAutocompleteSuggestionVm? AutocompleteFirstItem =>
+        AutocompleteResults.Count > 0 ? AutocompleteResults[0] : null;
+
+    public async Task SearchAutocompleteAsync(string query)
+    {
+        autocompleteCts?.Cancel();
+        autocompleteCts?.Dispose();
+        autocompleteCts = new System.Threading.CancellationTokenSource();
+        var ct = autocompleteCts.Token;
+
+        if (string.IsNullOrWhiteSpace(query) || query.Trim().Length < 2)
+        {
+            AutocompleteVisible = false;
+            AutocompleteResults = new ObservableCollection<ApuAutocompleteSuggestionVm>();
+            SelectedAutocompleteItem = null;
+            return;
+        }
+
+        try
+        {
+            var results = await autocompleteEngine.SearchAsync(query, ct);
+            if (!ct.IsCancellationRequested)
+            {
+                AutocompleteResults = new ObservableCollection<ApuAutocompleteSuggestionVm>(results);
+                SelectedAutocompleteItem = AutocompleteFirstItem;
+                AutocompleteVisible = results.Count > 0;
+                AutocompleteStatusText = results.Count > 0
+                    ? $"{results.Count} sugerencias · ↑↓ navegar · Enter o Tab insertar"
+                    : "Sin coincidencias";
+                OnPropertyChanged(nameof(AutocompleteFirstItem));
+            }
+        }
+        catch (OperationCanceledException) { }
+    }
+
+    public void ApplyAutocompleteSuggestion(ApuRecursoVm row, ApuAutocompleteSuggestionVm suggestion)
+    {
+        if (row == null || suggestion == null || !CanEdit) return;
+        undo.PushUndoPoint(session, $"Aplicar insumo {suggestion.Codigo}");
+        pendingUndoForEdit = true;
+
+        row.CodigoMaterial = suggestion.Codigo;
+        row.Descripcion = suggestion.Descripcion;
+        row.Unidad = string.IsNullOrWhiteSpace(suggestion.Unidad) ? "un" : suggestion.Unidad;
+        row.PrecioUf = suggestion.MatUf;
+        row.Tipo = ApuTipoRecurso.MAT;
+        row.FuentePrecio = suggestion.SourceBadge;
+        if (!string.IsNullOrWhiteSpace(suggestion.Proveedor))
+            row.Nota = suggestion.Proveedor;
+        if (row.Rendimiento <= 0m)
+            row.Rendimiento = 1m;
+
+        row.RefreshCalculated();
         OnRowEdited();
     }
 
@@ -565,15 +713,22 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
         pendingUndoForEdit = true;
         var materiales = session.Materiales;
         ApuFromCubicacionService.RefreshPricesFromCatalog(
-            new List<ApuRow> { currentApu }, materiales, session.ProjectInfo.PreciosCongelados);
+            new List<ApuRow> { currentApu }, materiales, session.ProjectInfo.PreciosCongelados, session.ProjectInfo);
         foreach (var vm in Recursos) vm.RefreshCalculated();
         OnRowEdited();
     }
 
-    internal void OnRowEdited()
+    public ProjectFileData? CaptureSnapshot() => CanEdit ? session.CreateSnapshot() : null;
+
+    internal void OnRowEdited(ProjectFileData? preEditSnapshot = null)
     {
-        if (CanEdit && currentApu != null && !pendingUndoForEdit)
-            undo.PushUndoPoint(session, "Editar recurso APU");
+        if (CanEdit && currentApu != null)
+        {
+            if (preEditSnapshot != null)
+                undo.PushSnapshot(preEditSnapshot, "Editar recurso APU");
+            else if (!pendingUndoForEdit)
+                undo.PushUndoPoint(session, "Editar recurso APU");
+        }
         pendingUndoForEdit = false;
         RebuildGroupedCollections();
         RefreshTotals();
@@ -786,8 +941,12 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
 
         session.ConjuntosElectricos.Add(conjunto);
         session.MarkDirty(ProjectDirtyScope.ConjuntosElectricos);
+        bool guardadoGlobal = ConjuntoTemplateStore.TrySave(conjunto);
         WpfDialogService.Info("Conjunto creado",
-            $"Conjunto '{conjunto.Nombre}' creado con {conjunto.Recursos.Count} recursos.");
+            $"Conjunto '{conjunto.Nombre}' creado con {conjunto.Recursos.Count} recursos." +
+            (guardadoGlobal
+                ? "\nGuardado en la biblioteca global: visible en todos los proyectos."
+                : "\nNo se pudo guardar en la biblioteca global (solo en este proyecto)."));
     }
 
     private bool isShowCoefficients;

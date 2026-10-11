@@ -83,8 +83,8 @@ public sealed class ShellFileDropHandler
         if (viewModel.HasOpenProject)
         {
             bool importToItemizado = WpfDialogService.Confirm(
-                "Importar archivo Excel",
-                $"Ha soltado la planilla: «{fileName}»\n\n¿Desea importarla como partidas en el Itemizado del proyecto actual?\n\n(Haga clic en «Cancelar» si prefiere importarla en el Banco de Precios).",
+                "Importar archivo",
+                $"Ha soltado el archivo: «{fileName}»\n\n¿Desea importarlo como partidas en el Itemizado del proyecto actual?\n\n(Haga clic en «Cancelar» si prefiere importarlo en el Banco de Precios).",
                 isWarning: false);
 
             if (importToItemizado)
@@ -102,17 +102,9 @@ public sealed class ShellFileDropHandler
             return;
         }
 
-        // Si no hay ningún proyecto abierto
-        bool importToGlobalPrices = WpfDialogService.Confirm(
-            "Importar banco de precios",
-            $"No hay ningún proyecto abierto.\n\n¿Desea importar «{fileName}» en el Banco de Precios global?",
-            isWarning: false);
-
-        if (importToGlobalPrices)
-        {
-            viewModel.Navigate(ShellRoute.Prices);
-            if (viewModel.CurrentView?.DataContext is PriceBankViewModel targetPricesVm)
-                targetPricesVm.ImportFromFile(excelFile);
-        }
+        // Si no hay ningún proyecto abierto: importa al Banco de Precios global
+        viewModel.Navigate(ShellRoute.Prices);
+        if (viewModel.CurrentView?.DataContext is PriceBankViewModel noProjectPricesVm)
+            noProjectPricesVm.ImportFromFile(excelFile);
     }
 }

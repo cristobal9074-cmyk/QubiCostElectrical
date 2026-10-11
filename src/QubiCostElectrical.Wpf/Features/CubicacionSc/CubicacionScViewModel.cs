@@ -16,6 +16,7 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
     private readonly IProjectWorkspaceService workspace;
     private readonly WpfUndoService undo;
     private readonly BudgetProjectSession session;
+    private readonly ICubicacionSCReportExcelExporter cubScExcel;
     private CuadroScRowVm? selectedCuadro;
     private CircuitoScRowVm? selectedCircuito;
     private CircuitoSCRow? clipboardCircuito;
@@ -31,4 +32,11 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
     private CubicacionScConfig? baselineConfig;
     private bool suppressSessionReload;
     private bool isAdvancedMode;
+    private CubScPerspective currentPerspective = CubScPerspective.Generales;
+}
+
+public enum CubScPerspective
+{
+    Generales,
+    Deptos
 }

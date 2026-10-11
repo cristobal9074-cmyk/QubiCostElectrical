@@ -1,0 +1,63 @@
+<UserControl x:Class="QubiCostElectrical.Wpf.Features.Cubicacion.Building3DViewport"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignHeight="500" d:DesignWidth="500">
+  <Border Background="#0B132B" CornerRadius="10" BorderBrush="#1C2B4A" BorderThickness="1" ClipToBounds="True">
+    <Grid>
+      <!-- Fondo con grilla técnica arquitectónica (Blueprint sutil) -->
+      <Canvas x:Name="BackgroundGridCanvas" IsHitTestVisible="False" Opacity="0.15" />
+
+      <!-- Canvas principal de dibujo isométrico 3D -->
+      <Canvas x:Name="RenderCanvas" ClipToBounds="True" />
+
+      <!-- Badges flotantes de alta tecnología BIM -->
+      <StackPanel HorizontalAlignment="Left" VerticalAlignment="Top" Margin="14,12,0,0">
+        <StackPanel Orientation="Horizontal">
+          <Border Background="#1E293B" BorderBrush="#3B82F6" BorderThickness="1" CornerRadius="6" Padding="6,2" Margin="0,0,6,0">
+            <TextBlock Text="AXONOMETRÍA 3D BIM" FontFamily="Consolas, monospace" FontSize="9.5" FontWeight="Bold" Foreground="#60A5FA" />
+          </Border>
+          <Border Background="#111827" BorderBrush="#374151" BorderThickness="1" CornerRadius="6" Padding="6,2">
+            <TextBlock x:Name="TxtScaleBadge" Text="ESCALA 1:100" FontFamily="Consolas, monospace" FontSize="9" Foreground="#9CA3AF" />
+          </Border>
+        </StackPanel>
+
+        <!-- KPI flotante de altura -->
+        <Border Background="#1E293B" Opacity="0.9" BorderBrush="#334155" BorderThickness="1" CornerRadius="8" Padding="8,4" Margin="0,6,0,0">
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Text="ALTURA TOTAL: " FontSize="9" FontWeight="Bold" Foreground="#94A3B8" />
+            <TextBlock x:Name="TxtAlturaTotal" Text="+60.00 m" FontSize="10" FontWeight="Bold" Foreground="#38BDF8" />
+            <TextBlock Text="  |  SUBTERRÁNEO: " FontSize="9" FontWeight="Bold" Foreground="#94A3B8" Margin="8,0,0,0" />
+            <TextBlock x:Name="TxtCotaSub" Text="-6.00 m" FontSize="10" FontWeight="Bold" Foreground="#F59E0B" />
+          </StackPanel>
+        </Border>
+      </StackPanel>
+
+      <!-- Badge de total de zonas a la derecha -->
+      <Border HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,12,14,0"
+              Background="#1E293B" Opacity="0.9" BorderBrush="#334155" BorderThickness="1" CornerRadius="8" Padding="10,6">
+        <StackPanel HorizontalAlignment="Right">
+          <TextBlock Text="ZONAS GENERADAS" FontSize="8.5" FontWeight="Bold" Foreground="#94A3B8" HorizontalAlignment="Right" />
+          <TextBlock x:Name="TxtZonasCount" Text="23 ZONAS" FontSize="13" FontWeight="Bold" Foreground="#10B981" HorizontalAlignment="Right" />
+        </StackPanel>
+      </Border>
+
+      <!-- Leyenda de Rasante abajo a la izquierda -->
+      <Border HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="14,0,0,12"
+              Background="#0F172A" Opacity="0.85" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="6" Padding="8,4">
+        <StackPanel Orientation="Horizontal">
+          <Border Width="10" Height="10" Background="#3B82F6" CornerRadius="2" Margin="0,0,5,0" />
+          <TextBlock Text="Torres" FontSize="9" Foreground="#E2E8F0" Margin="0,0,8,0" />
+          <Border Width="10" Height="10" Background="#0284C7" CornerRadius="2" Margin="0,0,5,0" />
+          <TextBlock Text="Pisos Compartidos (Podio)" FontSize="9" Foreground="#E2E8F0" Margin="0,0,8,0" />
+          <Border Width="10" Height="10" Background="#475569" CornerRadius="2" Margin="0,0,5,0" />
+          <TextBlock Text="Subterráneo" FontSize="9" Foreground="#E2E8F0" Margin="0,0,8,0" />
+          <Border Width="10" Height="10" Background="#10B981" CornerRadius="2" Margin="0,0,5,0" />
+          <TextBlock Text="Cota ±0.00 (Terreno)" FontSize="9" Foreground="#E2E8F0" />
+        </StackPanel>
+      </Border>
+    </Grid>
+  </Border>
+</UserControl>

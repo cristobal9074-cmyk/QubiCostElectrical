@@ -4,6 +4,7 @@ using System.Linq;
 using System.Windows.Input;
 using QubiCostElectrical;
 using QubiCostElectrical.Wpf.Infrastructure;
+using QubiCostElectrical.Wpf.Navigation;
 
 namespace QubiCostElectrical.Wpf.Features.Cubicacion;
 
@@ -11,12 +12,14 @@ public sealed partial class CubicacionViewModel
 {
     public ICommand AddPartidaCommand { get; private set; } = null!;
     public ICommand DeletePartidaCommand { get; private set; } = null!;
+    public ICommand NavigateToItemizadoCommand { get; private set; } = null!;
 
     private void InitializePartidaPanelCommands()
     {
         AddPartidaCommand = new RelayCommand(AddPartidaBelowSelected, () => !session.IsReadOnly);
         DeletePartidaCommand = new RelayCommand(DeleteSelectedPartida, () =>
             !session.IsReadOnly && SelectedPartida?.EsPartida == true);
+        NavigateToItemizadoCommand = new RelayCommand(() => shell.RequestNavigate(ShellRoute.Itemized));
     }
 
     /// <summary>Ctrl++ en el panel PARTIDAS: agrega una partida bajo la selección.</summary>

@@ -86,6 +86,24 @@
     <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}" />
   </Style>
 
+  <Style x:Key="Text.Numeric.Right" TargetType="TextBlock" BasedOn="{StaticResource Text.Numeric}">
+    <Setter Property="TextAlignment" Value="Right" />
+    <Setter Property="HorizontalAlignment" Value="Right" />
+    <Setter Property="Padding" Value="0,0,8,0" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <Style x:Key="Text.Cell.Formula" TargetType="TextBlock" BasedOn="{StaticResource Text.Numeric.Right}">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.CellFormulaInk}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="ToolTip" Value="Cálculo automático mediante fórmula en tiempo real" />
+  </Style>
+
+  <Style x:Key="Text.Cell.Editable" TargetType="TextBlock" BasedOn="{StaticResource Text.Numeric.Right}">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+    <Setter Property="FontWeight" Value="Normal" />
+  </Style>
+
   <Style x:Key="Text.Kbd" TargetType="TextBlock">
     <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
     <Setter Property="FontSize" Value="{StaticResource Font.Size.2xs}" />
@@ -121,6 +139,41 @@
     <Setter Property="FontFamily" Value="{StaticResource Font.Ui}" />
     <Setter Property="FontSize" Value="{StaticResource Font.Size.sm}" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
+  </Style>
+
+  <!-- Opciones de renderizado de texto cristalino en toda la jerarquía tipográfica -->
+  <Style TargetType="TextBlock">
+    <Setter Property="TextOptions.TextFormattingMode" Value="Display" />
+    <Setter Property="TextOptions.TextRenderingMode" Value="ClearType" />
+    <Setter Property="RenderOptions.ClearTypeHint" Value="Enabled" />
+  </Style>
+
+  <!-- ToolTip Ejecutivo Global de Alta Gama -->
+  <Style TargetType="ToolTip">
+    <Setter Property="Background" Value="{DynamicResource Brush.Navy}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
+    <Setter Property="FontFamily" Value="{StaticResource Font.Ui}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.sm}" />
+    <Setter Property="Padding" Value="9,6" />
+    <Setter Property="HasDropShadow" Value="False" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ToolTip">
+          <Border Background="{TemplateBinding Background}"
+                  BorderBrush="{TemplateBinding BorderBrush}"
+                  BorderThickness="{TemplateBinding BorderThickness}"
+                  CornerRadius="6"
+                  Padding="{TemplateBinding Padding}">
+            <Border.Effect>
+              <DropShadowEffect BlurRadius="12" Direction="270" ShadowDepth="3" Color="#000000" Opacity="0.30" />
+            </Border.Effect>
+            <ContentPresenter TextElement.Foreground="{TemplateBinding Foreground}" />
+          </Border>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
   </Style>
 
 </ResourceDictionary>

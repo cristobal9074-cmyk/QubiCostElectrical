@@ -35,6 +35,9 @@ public static class SQLiteProjectBackup
         if (maxBackups <= 0)
             maxBackups = 10;
 
+        // Liberar pools para asegurar que no queden file handles abiertos en archivos .bak
+        SqliteConnection.ClearAllPools();
+
         // Antes de copiar, forzamos checkpoint para que el .db tenga todo lo que está en WAL.
         CheckpointWal(databasePath);
 
@@ -46,31 +49,31 @@ public static class SQLiteProjectBackup
 
         // Rotación numerada: .bak.01 es el más reciente, .bak.N el más antiguo.
         string oldest = BackupPath(databasePath, maxBackups);
-        if (File.Exists(oldest)) File.Delete(oldest);
+        SafeDeleteFile(oldest);
 
         for (int i = maxBackups - 1; i >= 1; i--)
         {
             string source = BackupPath(databasePath, i);
-            if (!File.Exists(source)) continue;
-
             string target = BackupPath(databasePath, i + 1);
-            if (File.Exists(target)) File.Delete(target);
-            File.Move(source, target);
+            SafeRotateBackupSlot(source, target);
         }
 
         string latest = BackupPath(databasePath, 1);
-        if (File.Exists(latest)) File.Delete(latest);
+        SafeDeleteFile(latest);
 
         using (var sourceConnection = Open(databasePath))
         {
             var destBuilder = new SqliteConnectionStringBuilder
             {
                 DataSource = latest,
-                Mode = SqliteOpenMode.ReadWriteCreate
+                Mode = SqliteOpenMode.ReadWriteCreate,
+                Pooling = false
             };
             using var destConnection = new SqliteConnection(destBuilder.ToString());
             destConnection.Open();
             sourceConnection.BackupDatabase(destConnection);
+            destConnection.Close();
+            SqliteConnection.ClearPool(destConnection);
         }
 
         File.WriteAllText(
@@ -121,13 +124,14 @@ public static class SQLiteProjectBackup
         if (!IsDatabaseHealthy(backupPath))
             return false;
 
+        SqliteConnection.ClearAllPools();
         Directory.CreateDirectory(Path.GetDirectoryName(databasePath) ?? AppContext.BaseDirectory);
 
-        DeleteIfExists(databasePath + "-wal");
-        DeleteIfExists(databasePath + "-shm");
+        SafeDeleteFile(databasePath + "-wal");
+        SafeDeleteFile(databasePath + "-shm");
         File.Copy(backupPath, databasePath, overwrite: true);
-        DeleteIfExists(databasePath + "-wal");
-        DeleteIfExists(databasePath + "-shm");
+        SafeDeleteFile(databasePath + "-wal");
+        SafeDeleteFile(databasePath + "-shm");
         return IsDatabaseHealthy(databasePath);
     }
 
@@ -139,12 +143,71 @@ public static class SQLiteProjectBackup
         cmd.ExecuteNonQuery();
     }
 
+    private static void SafeRotateBackupSlot(string source, string target)
+    {
+        if (!File.Exists(source)) return;
+
+        SafeDeleteFile(target);
+
+        for (int attempt = 0; attempt < 3; attempt++)
+        {
+            try
+            {
+                File.Move(source, target);
+                return;
+            }
+            catch (IOException) when (attempt < 2)
+            {
+                SqliteConnection.ClearAllPools();
+                System.Threading.Thread.Sleep(60);
+                SafeDeleteFile(target);
+            }
+            catch (Exception ex)
+            {
+                try
+                {
+                    File.Copy(source, target, overwrite: true);
+                    SafeDeleteFile(source);
+                    return;
+                }
+                catch
+                {
+                    AppLog.Warning("SQLite", $"No se pudo rotar slot de backup de '{source}' a '{target}'.", ex);
+                    return;
+                }
+            }
+        }
+    }
+
+    private static void SafeDeleteFile(string path)
+    {
+        if (!File.Exists(path)) return;
+        for (int attempt = 0; attempt < 3; attempt++)
+        {
+            try
+            {
+                File.Delete(path);
+                return;
+            }
+            catch (IOException) when (attempt < 2)
+            {
+                SqliteConnection.ClearAllPools();
+                System.Threading.Thread.Sleep(50);
+            }
+            catch
+            {
+                break;
+            }
+        }
+    }
+
     private static SqliteConnection Open(string databasePath)
     {
         var builder = new SqliteConnectionStringBuilder
         {
             DataSource = databasePath,
-            Mode = SqliteOpenMode.ReadWriteCreate
+            Mode = SqliteOpenMode.ReadWriteCreate,
+            Pooling = false
         };
         var connection = new SqliteConnection(builder.ToString());
         connection.Open();
@@ -160,7 +223,7 @@ public static class SQLiteProjectBackup
         {
             DataSource = databasePath,
             Mode = SqliteOpenMode.ReadOnly,
-            Cache = SqliteCacheMode.Shared
+            Pooling = false
         };
         var connection = new SqliteConnection(builder.ToString());
         connection.Open();

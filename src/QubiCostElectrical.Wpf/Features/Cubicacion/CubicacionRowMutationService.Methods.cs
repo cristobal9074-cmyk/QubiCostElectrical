@@ -25,6 +25,7 @@ internal sealed partial class CubicacionRowMutationService
         session.Cubicacion.Add(row);
 
         var vm = parent.CreateRowVm(row);
+        parent.InitializeSectorRow(vm);
         parent.Rows.Add(vm);
         parent.SelectedRow = vm;
         parent.HasPendingUndoForEdit = false;
@@ -33,6 +34,7 @@ internal sealed partial class CubicacionRowMutationService
         parent.NotifyCubicacionSummaryChanged();
         parent.UpdatePartidaCount(selectedPartida);
         RefreshRowNumbers();
+        parent.NotifyRowAdded(row.Id);
     }
 
     public void DeleteSelectedRows()
@@ -81,6 +83,8 @@ internal sealed partial class CubicacionRowMutationService
     public void DuplicateSelectedRow()
     {
         if (!parent.CanEdit)
+            return;
+        if (parent.Rows.Count(r => r.IsSelected) > 1)
             return;
         var src = parent.Rows.FirstOrDefault(r => r.IsSelected) ?? parent.SelectedRow;
         var selectedPartida = parent.SelectedPartida;
@@ -223,7 +227,7 @@ internal sealed partial class CubicacionRowMutationService
     public void ApplyMaterial(MaterialRow? material)
     {
         if (!parent.CanEdit || material == null || parent.SelectedRow == null) return;
-        undo.PushUndoPoint(session, $"Aplicar material {material.Codigo}");
+        undo.PushUndoPoint(session, $"Asignar material {material.Codigo}");
         // Si la fila era un placeholder (isSessionBacked=false, típico al aplicar material
         // en una fila nueva con Enter), antes se confiaba en que un evento posterior de la
         // grilla la agregara a session.Cubicacion. Con Enter esa confirmación no siempre
@@ -234,7 +238,7 @@ internal sealed partial class CubicacionRowMutationService
         // La sugerencia puede venir del Banco de Precios (no del catálogo del proyecto);
         // copiarla al proyecto para que quede disponible de aquí en adelante.
         EnsureMaterialInProjectCatalog(material);
-        cubSvc.ApplyMaterial(parent.SelectedRow.Source, material, parent.SelectedRow.ValorUfClp);
+        cubSvc.ApplyMaterial(parent.SelectedRow.Source, material, parent.SelectedRow.ValorUfClp, session.ProjectInfo);
         parent.SelectedRow.Codigo = material.Codigo;
         parent.SelectedRow.Descripcion = material.Descripcion;
         parent.SelectedRow.Unidad = material.Unidad;
@@ -286,6 +290,19 @@ internal sealed partial class CubicacionRowMutationService
 
         session.Cubicacion.Insert(insertAt, row.Source);
         row.IsSessionBacked = true;
+
+        if (!string.IsNullOrWhiteSpace(row.Source.ItemId))
+        {
+            var itemizadoRow = session.Itemizado.FirstOrDefault(x =>
+                string.Equals(x.Id, row.Source.ItemId, StringComparison.OrdinalIgnoreCase));
+            if (itemizadoRow != null && itemizadoRow.EsTitulo)
+            {
+                itemizadoRow.EsTitulo = false;
+                if (itemizadoRow.Cantidad <= 0m) itemizadoRow.Cantidad = 1m;
+                if (string.IsNullOrWhiteSpace(itemizadoRow.Unidad)) itemizadoRow.Unidad = Unidades.GL;
+                session.MarkDirty(ProjectDirtyScope.Itemizado);
+            }
+        }
     }
 
     // El Banco de Precios es un catálogo compartido entre proyectos; cada proyecto
@@ -317,16 +334,21 @@ internal sealed partial class CubicacionRowMutationService
             {
                 // Si los precios o la mano de obra del banco difieren de los del proyecto,
                 // actualizamos el material en el catálogo local del proyecto Y la fila.
-                if (material.MatClp != bankMaterial.MatClp || material.MoClp != bankMaterial.MoClp)
+                if (material.MatClp != bankMaterial.MatClp || material.MoClp != bankMaterial.MoClp
+                    || !string.Equals(material.MoFormulaTipo, bankMaterial.MoFormulaTipo, StringComparison.OrdinalIgnoreCase)
+                    || material.MoPorcentajeMaterial != bankMaterial.MoPorcentajeMaterial)
                 {
                     material.MatClp = bankMaterial.MatClp;
                     material.MoClp = bankMaterial.MoClp;
+                    material.MoFormulaTipo = bankMaterial.MoFormulaTipo;
+                    material.MoPorcentajeMaterial = bankMaterial.MoPorcentajeMaterial;
                     material.FechaPrecio = bankMaterial.FechaPrecio;
                     material.Proveedor = bankMaterial.Proveedor;
                     material.MonedaPrecio = bankMaterial.MonedaPrecio;
                     material.RecalcularUf(session.ProjectInfo.ValorUfClp);
                     session.MarkDirty(ProjectDirtyScope.Materiales);
-                    row.SetPricesSilently(material.MatClp, material.MoClp);
+                    // M.O. efectiva (rendimiento/porcentaje/fija) — nunca el M.O. crudo del banco.
+                    row.SetPricesSilently(material.MatClp, MaterialMoResolver.MoClpEfectiva(material, session.ProjectInfo));
                     return;
                 }
             }
@@ -342,7 +364,11 @@ internal sealed partial class CubicacionRowMutationService
         if (string.IsNullOrWhiteSpace(row.Unidad))
             row.Unidad = material.Unidad;
         decimal targetMat = row.MatClp == 0m ? material.MatClp : row.MatClp;
-        decimal targetMo = row.MoClp == 0m ? material.MoClp : row.MoClp;
+        // Efectiva = misma precedencia que el motor (rendimiento > porcentaje > directa); si el
+        // material es directo devuelve exactamente material.MoClp (comportamiento histórico).
+        decimal targetMo = row.MoClp == 0m
+            ? MaterialMoResolver.MoClpEfectiva(material, session.ProjectInfo)
+            : row.MoClp;
         row.SetPricesSilently(targetMat, targetMo);
     }
 

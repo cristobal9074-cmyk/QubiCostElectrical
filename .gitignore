@@ -131,6 +131,8 @@ build-release-real.txt
 *_inspect.txt
 lista_pr_*.txt
 unique_families.txt
+trace_*.txt
+proyeccion-*.html
 
 # ── Local command marker ───────────────────────────────────────────────────────
 /_no

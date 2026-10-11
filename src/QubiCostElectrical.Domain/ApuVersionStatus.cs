@@ -2,11 +2,11 @@ namespace QubiCostElectrical;
 
 public enum ApuVersionStatus
 {
-	Draft,
-	PendingReview,
-	InReview,
-	Approved,
-	Rejected,
-	Obsolete,
-	Archived
+    Draft,
+    PendingReview,
+    InReview,
+    Approved,
+    Rejected,
+    Obsolete,
+    Archived
 }

@@ -12,6 +12,9 @@ public sealed class DisplayBindingTextColumn : DataGridTextColumn
 {
     public System.Windows.Data.BindingBase? DisplayBinding { get; set; }
 
+    /// <summary>Índice de casilla/sector (0..N). -1 = no es columna de sector.</summary>
+    public int SectorSlot { get; set; } = -1;
+
     protected override FrameworkElement GenerateElement(DataGridCell cell, object dataItem)
     {
         var element = base.GenerateElement(cell, dataItem);

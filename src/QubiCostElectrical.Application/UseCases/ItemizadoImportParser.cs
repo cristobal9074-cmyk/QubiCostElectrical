@@ -54,7 +54,7 @@ public static class ItemizadoImportParser
                 {
                     // Verificar si UNIDAD/CANTIDAD están en la misma fila o en la siguiente
                     bool hasUnidadSameRow = FindColumn(row, "UNIDAD", "UD", "UN", "UND", "UNID", "UNIDADES") >= 0;
-                    bool hasCantSameRow   = FindColumn(row, "CANTIDAD", "CANT", "QTY", "CANTIDADITEM", "CANTIDADES", "NUEVASCANTIDADES") >= 0;
+                    bool hasCantSameRow = FindColumn(row, "CANTIDAD", "CANT", "QTY", "CANTIDADITEM", "CANTIDADES", "NUEVASCANTIDADES") >= 0;
                     if (!hasUnidadSameRow || !hasCantSameRow)
                     {
                         // Intentar fila siguiente como encabezado complementario
@@ -63,7 +63,7 @@ public static class ItemizadoImportParser
                         {
                             var nextRow = rows[nextR];
                             bool nextHasUnidad = FindColumn(nextRow, "UNIDAD", "UD", "UN", "UND", "UNID", "UNIDADES") >= 0;
-                            bool nextHasCant   = FindColumn(nextRow, "CANTIDAD", "CANT", "QTY", "CANTIDADITEM", "CANTIDADES", "NUEVASCANTIDADES") >= 0;
+                            bool nextHasCant = FindColumn(nextRow, "CANTIDAD", "CANT", "QTY", "CANTIDADITEM", "CANTIDADES", "NUEVASCANTIDADES") >= 0;
                             if (nextHasUnidad || nextHasCant)
                                 return (r, nextR);  // 2-row header
                         }
@@ -265,17 +265,21 @@ public static class ItemizadoImportParser
     // ─── Detección de títulos ─────────────────────────────────────────────
 
     /// <summary>
-    /// Un ítem es un título de sección si su código es un número entero o
-    /// termina en ".0" (ej. "1", "2", "1.0", "3.0").
+    /// Un ítem es un título de sección si su código es un número entero,
+    /// termina en ".0", o usa punto final/números romanos (ej. "1", "1.", "01.", "2", "1.0", "3.0", "I.").
     /// </summary>
     public static bool IsImportedTitleCode(string itemCode)
     {
         if (string.IsNullOrWhiteSpace(itemCode)) return false;
         string raw = itemCode.Trim().Replace(",", ".");
-        // Número entero o terminado en .0 → título de sección (ej. "1", "2", "1.0")
-        if (Regex.IsMatch(raw, @"^\d+(\.0)?$")) return true;
         // Asterisco (*) → marcador de subsección/título especial
         if (raw == "*") return true;
+
+        string trimmed = raw.TrimEnd('.');
+        // Número entero o terminado en .0 → título de sección (ej. "1", "2", "01", "1.0", "01.0")
+        if (Regex.IsMatch(trimmed, @"^\d+(\.0)?$")) return true;
+        // Números romanos para capítulos (ej. "I", "II", "III", "IV", "V", etc.)
+        if (Regex.IsMatch(trimmed, @"^(I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII)$", RegexOptions.IgnoreCase)) return true;
         return false;
     }
 
@@ -290,13 +294,67 @@ public static class ItemizadoImportParser
         if (string.IsNullOrWhiteSpace(raw))
             return $"{fallback}.0";
 
-        if (Regex.IsMatch(raw, @"^\d+$"))
-            return raw + ".0";
+        string trimmed = raw.TrimEnd('.');
 
-        if (Regex.IsMatch(raw, @"^\d+\.0$"))
-            return raw;
+        if (int.TryParse(trimmed, out int num))
+            return $"{num}.0";
+
+        if (Regex.IsMatch(trimmed, @"^\d+\.0$"))
+            return trimmed;
 
         return $"{fallback}.0";
+    }
+
+    /// <summary>
+    /// Determina si en una tabla estructurada (Excel o portapapeles) existen filas posteriores
+    /// que sean sub-partidas del código actual (ej. para "15.0", busca "15.1", "15.2").
+    /// Si una fila tipo "15.0" no tiene partidas hijas y trae unidad o cantidad, debe tratarse como partida valorizable.
+    /// </summary>
+    public static bool HasSubItemsInTable(
+        IReadOnlyList<List<string>> table,
+        int currentIndex,
+        int cItem,
+        int cDesc,
+        string itemCode)
+    {
+        if (string.IsNullOrWhiteSpace(itemCode) || table == null)
+            return false;
+
+        string clean = itemCode.Trim().Replace(",", ".").TrimEnd('.');
+        string baseNumber = clean.Split('.')[0];
+        if (!int.TryParse(baseNumber, out _))
+            return false;
+
+        for (int j = currentIndex + 1; j < table.Count; j++)
+        {
+            var row = table[j];
+            string nextCode = GetCell(row, cItem).Trim().Replace(",", ".").TrimEnd('.');
+            string nextDesc = GetCell(row, cDesc).Trim();
+
+            if (string.IsNullOrWhiteSpace(nextCode) && string.IsNullOrWhiteSpace(nextDesc))
+                continue;
+
+            string descKey = HeaderKey(nextDesc);
+            if (descKey is "DESCRIPCION" or "DETALLE" or "NOMBRE" or "PARTIDADESCRIPCION")
+                continue;
+
+            if (nextCode.StartsWith(baseNumber + ".", StringComparison.Ordinal)
+                && nextCode != clean
+                && nextCode != baseNumber + ".0"
+                && nextCode != baseNumber)
+            {
+                return true;
+            }
+
+            if (IsImportedTitleCode(nextCode))
+            {
+                string nextBase = nextCode.Split('.')[0];
+                if (nextBase != baseNumber)
+                    return false;
+            }
+        }
+
+        return false;
     }
 
     // ─── Parser de valores numéricos ─────────────────────────────────────
@@ -327,7 +385,7 @@ public static class ItemizadoImportParser
         }
 
         int lastComma = text.LastIndexOf(',');
-        int lastDot   = text.LastIndexOf('.');
+        int lastDot = text.LastIndexOf('.');
         string normalized;
 
         if (lastComma >= 0 && lastDot >= 0)

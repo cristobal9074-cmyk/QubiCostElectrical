@@ -23,8 +23,8 @@ public sealed class ChangeOrdersViewModelTests
     private static ChangeOrdersViewModel Vm(WpfAppHost host)
     {
         var vm = new ChangeOrdersViewModel(host);
-        vm.ShowEditor      = (oc, _) => true;
-        vm.ConfirmDelete   = _ => true;
+        vm.ShowEditor = (oc, _) => true;
+        vm.ConfirmDelete = _ => true;
         vm.ConfirmTransition = (_, _) => true;
         return vm;
     }
@@ -70,7 +70,7 @@ public sealed class ChangeOrdersViewModelTests
     public void AddNew_Cancel_DoesNotAdd()
     {
         var host = SetupHost();
-        var vm   = new ChangeOrdersViewModel(host);
+        var vm = new ChangeOrdersViewModel(host);
         vm.ShowEditor = (_, _) => false;
         vm.AddNew();
         Assert.Empty(host.Session.OrdenesCambio);
@@ -307,7 +307,7 @@ public sealed class ChangeOrdersViewModelTests
         vm.Selected = vm.Items[0];
         vm.AprobarSelected();
         Assert.Equal(200m, vm.MontoAprobado);
-        Assert.Equal(0m,   vm.MontoPendiente);
+        Assert.Equal(0m, vm.MontoPendiente);
     }
 
     // ── 23. Filtro por estado ────────────────────────────────────────────
@@ -400,7 +400,7 @@ public sealed class ChangeOrdersViewModelTests
         try
         {
             var host = SetupHost("persist-test");
-            var vm   = Vm(host);
+            var vm = Vm(host);
             vm.AddNew();
             await host.ProjectWorkspace.SaveAsAsync(path);
 
@@ -420,7 +420,7 @@ public sealed class ChangeOrdersViewModelTests
         try
         {
             var host = SetupHost("delete-test");
-            var vm   = Vm(host);
+            var vm = Vm(host);
             vm.AddNew();
             vm.Selected = vm.Items[0];
             vm.DeleteSelected();
@@ -442,7 +442,7 @@ public sealed class ChangeOrdersViewModelTests
         try
         {
             var host = SetupHost("estado-test");
-            var vm   = Vm(host);
+            var vm = Vm(host);
             vm.AddNew();
             vm.Selected = vm.Items[0];
             vm.EnviarARevision();
@@ -475,7 +475,7 @@ public sealed class ChangeOrdersViewModelTests
         try
         {
             var host = SetupHost("dirty-test");
-            var vm   = Vm(host);
+            var vm = Vm(host);
             vm.AddNew();
             Assert.True(host.Session.IsDirty);
             await host.ProjectWorkspace.SaveAsAsync(path);
@@ -489,7 +489,7 @@ public sealed class ChangeOrdersViewModelTests
     public void EditSelected_IfEditorFails_KeepsDraft()
     {
         var host = SetupHost();
-        var vm   = Vm(host);
+        var vm = Vm(host);
         vm.AddNew();
         vm.Selected = vm.Items[0];
         var tituloOriginal = host.Session.OrdenesCambio[0].Titulo;
@@ -525,7 +525,7 @@ public sealed class ChangeOrdersViewModelTests
     public void Refresh_AfterProjectChange_ClearsItems()
     {
         var host = SetupHost();
-        var vm   = Vm(host);
+        var vm = Vm(host);
         vm.AddNew();
         Assert.Single(vm.Items);
 
@@ -542,7 +542,7 @@ public sealed class ChangeOrdersViewModelTests
     public void WpfAssembly_DoesNotReference_WinForms()
     {
         var wpfAsm = typeof(ChangeOrdersViewModel).Assembly;
-        var refs   = wpfAsm.GetReferencedAssemblies();
+        var refs = wpfAsm.GetReferencedAssemblies();
         Assert.DoesNotContain(refs, r =>
             r.Name != null &&
             (r.Name.Contains("WinForms", StringComparison.OrdinalIgnoreCase) ||
@@ -557,7 +557,7 @@ public sealed class ChangeOrdersViewModelTests
         try
         {
             var host = SetupHost("compat-test");
-            var vm   = Vm(host);
+            var vm = Vm(host);
             vm.ShowEditor = (oc, _) => { oc.Titulo = "OC compat"; return true; };
             vm.AddNew();
             await host.ProjectWorkspace.SaveAsAsync(path);
@@ -580,7 +580,7 @@ public sealed class ChangeOrdersViewModelTests
         try
         {
             var host = SetupHost();
-            var vm   = Vm(host);
+            var vm = Vm(host);
             vm.AddNew();
             Assert.False(File.Exists(testPath));
         }
@@ -596,7 +596,7 @@ public sealed class ChangeOrdersViewModelTests
     public void SummaryCounters_ReflectActualStates()
     {
         var host = SetupHost();
-        var vm   = Vm(host);
+        var vm = Vm(host);
         vm.AddNew(); // borrador
         vm.AddNew(); // borrador
         vm.Selected = vm.Items[0];
@@ -616,7 +616,7 @@ public sealed class ChangeOrdersViewModelTests
     public void CanCapabilities_AreCorrectByState()
     {
         var host = SetupHost();
-        var vm   = Vm(host);
+        var vm = Vm(host);
         vm.AddNew();
         vm.Selected = vm.Items[0];
 
@@ -635,9 +635,9 @@ public sealed class ChangeOrdersViewModelTests
     [Fact]
     public void RowVm_EstadoDisplay_FormatsAllStates()
     {
-        Assert.Contains("Borrador",    new ChangeOrderRowVm(new ChangeOrderRow { Estado = "Borrador" }, 1).EstadoDisplay);
-        Assert.Contains("Aprobado",    new ChangeOrderRowVm(new ChangeOrderRow { Estado = "Aprobado" }, 1).EstadoDisplay);
-        Assert.Contains("Rechazado",   new ChangeOrderRowVm(new ChangeOrderRow { Estado = "Rechazado" }, 1).EstadoDisplay);
+        Assert.Contains("Borrador", new ChangeOrderRowVm(new ChangeOrderRow { Estado = "Borrador" }, 1).EstadoDisplay);
+        Assert.Contains("Aprobado", new ChangeOrderRowVm(new ChangeOrderRow { Estado = "Aprobado" }, 1).EstadoDisplay);
+        Assert.Contains("Rechazado", new ChangeOrderRowVm(new ChangeOrderRow { Estado = "Rechazado" }, 1).EstadoDisplay);
         Assert.Contains("En revisión", new ChangeOrderRowVm(new ChangeOrderRow { Estado = "En revisión" }, 1).EstadoDisplay);
     }
 
@@ -645,10 +645,10 @@ public sealed class ChangeOrdersViewModelTests
     [Fact]
     public void IsTransitionAllowed_ValidTransitions()
     {
-        Assert.True(ChangeOrderStateMachine.IsTransitionAllowed("Borrador",    "En revisión"));
+        Assert.True(ChangeOrderStateMachine.IsTransitionAllowed("Borrador", "En revisión"));
         Assert.True(ChangeOrderStateMachine.IsTransitionAllowed("En revisión", "Aprobado"));
         Assert.True(ChangeOrderStateMachine.IsTransitionAllowed("En revisión", "Rechazado"));
-        Assert.True(ChangeOrderStateMachine.IsTransitionAllowed("Rechazado",   "Borrador"));
+        Assert.True(ChangeOrderStateMachine.IsTransitionAllowed("Rechazado", "Borrador"));
     }
 
     // ── Bonus: AprobarSelected sin confirmación no cambia estado ─────────
@@ -656,7 +656,7 @@ public sealed class ChangeOrdersViewModelTests
     public void AprobarSelected_UserCancels_StateUnchanged()
     {
         var host = SetupHost();
-        var vm   = Vm(host);
+        var vm = Vm(host);
         vm.AddNew();
         vm.Selected = vm.Items[0];
         vm.EnviarARevision();
@@ -729,7 +729,7 @@ public sealed class ChangeOrdersViewModelTests
         vm.LoadFrom(new ChangeOrderRow { Numero = "OC-007", Titulo = "Obra extra" });
         vm.DeltaVentaText = "250.500";
         vm.DeltaCostoText = "200.000";
-        vm.CostoBaseText  = "1000.000";
+        vm.CostoBaseText = "1000.000";
         vm.Nota = "Nota de prueba";
 
         var target = new ChangeOrderRow();
@@ -769,7 +769,7 @@ public sealed class ChangeOrdersViewModelTests
     public void AprobadaOrder_DomainLock_BlocksEditAndDelete()
     {
         var host = SetupHost();
-        var vm   = Vm(host);
+        var vm = Vm(host);
         vm.AddNew();
         vm.Selected = vm.Items[0];
         vm.EnviarARevision();

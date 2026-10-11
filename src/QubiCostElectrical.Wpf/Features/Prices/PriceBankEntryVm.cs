@@ -11,14 +11,20 @@ public sealed class PriceBankEntryVm : ViewModelBase
     private string originalCodigo;
     private bool hasChanges;
     private decimal valorUfClp;
+    private bool modoRendimiento;
+    private decimal tarifaDhClp;
+    private decimal indiceMoFa;
 
-    public PriceBankEntryVm(PriceBankEntry source, decimal valorUfClp = 0m, Func<bool>? canEdit = null)
+    public PriceBankEntryVm(PriceBankEntry source, decimal valorUfClp = 0m, Func<bool>? canEdit = null, bool modoRendimiento = false, decimal tarifaDhClp = 0m, decimal indiceMoFa = 0m)
     {
         this.source = source ?? throw new ArgumentNullException(nameof(source));
         this.canEdit = canEdit;
         originalCodigo = NormalizeCode(source.Codigo);
         hasChanges = false;
         this.valorUfClp = valorUfClp;
+        this.modoRendimiento = modoRendimiento;
+        this.tarifaDhClp = tarifaDhClp;
+        this.indiceMoFa = indiceMoFa > 0m ? indiceMoFa : MaterialMoResolver.IndiceMoFaDefault;
 
         // Sanación de entradas ya contaminadas (pesos en columna MoUf)
         if (source.MoClp == 0m && source.MoUf > 15m)
@@ -161,6 +167,101 @@ public sealed class PriceBankEntryVm : ViewModelBase
     public decimal PrecioUfCalculado => source.MatUf;
     public decimal MoUfCalculado => source.MoUf;
 
+    /// <summary>Rendimiento de instalación en unidades por día-hombre (REND). 0 = sin rendimiento.</summary>
+    public decimal RendimientoDh
+    {
+        get => source.RendimientoDh;
+        set
+        {
+            if (!AllowEdit) return;
+            if (source.RendimientoDh == value) return;
+            source.RendimientoDh = value;
+            MarkChanged();
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(MoDerivadaClp));
+        }
+    }
+
+    /// <summary>Rendimiento por día-pareja (informativo). 0 = no aplica.</summary>
+    public decimal DiaXPareja
+    {
+        get => source.DiaXPareja;
+        set
+        {
+            if (!AllowEdit) return;
+            if (source.DiaXPareja == value) return;
+            source.DiaXPareja = value;
+            MarkChanged();
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>Fórmula de M.O.: "" = fija, "Porcentaje" = Material × % × FA (columna M.O. modo).</summary>
+    public string MoFormulaTipo
+    {
+        get => source.MoFormulaTipo;
+        set
+        {
+            if (!AllowEdit) return;
+            string normalized = value ?? "";
+            if (string.Equals(source.MoFormulaTipo, normalized, StringComparison.OrdinalIgnoreCase))
+                return;
+            source.MoFormulaTipo = normalized;
+            MarkChanged();
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(MoDerivadaClp));
+        }
+    }
+
+    /// <summary>Porcentaje de M.O. sobre el material como número (2.5 = 2,5%). Columna % M.O.</summary>
+    public decimal MoPorcentajeMaterial
+    {
+        get => source.MoPorcentajeMaterial;
+        set
+        {
+            if (!AllowEdit) return;
+            if (source.MoPorcentajeMaterial == value) return;
+            source.MoPorcentajeMaterial = value;
+            MarkChanged();
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(MoDerivadaClp));
+        }
+    }
+
+    /// <summary>Activa la fórmula M.O. = Precio × % M.O. × FA para este material (columna M.O. por %).</summary>
+    public bool MoEsPorcentaje
+    {
+        get => string.Equals(source.MoFormulaTipo, MaterialMoResolver.MoFormulaPorcentaje, StringComparison.OrdinalIgnoreCase);
+        set
+        {
+            if (!AllowEdit) return;
+            string nuevo = value ? MaterialMoResolver.MoFormulaPorcentaje : "";
+            if (string.Equals(source.MoFormulaTipo, nuevo, StringComparison.OrdinalIgnoreCase))
+                return;
+            source.MoFormulaTipo = nuevo;
+            MarkChanged();
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(MoDerivadaClp));
+        }
+    }
+
+    /// <summary>
+    /// MO efectiva mostrada, con la misma precedencia que MaterialMoResolver: modo rendimiento
+    /// (Tarifa D/H ÷ Rendimiento) &gt; fórmula porcentaje (Material × % × FA) &gt; M.O. directo.
+    /// </summary>
+    public decimal MoDerivadaClp
+    {
+        get
+        {
+            if (modoRendimiento && tarifaDhClp > 0m && source.RendimientoDh > 0m)
+                return Math.Round(tarifaDhClp / source.RendimientoDh, 2, MidpointRounding.AwayFromZero);
+            if (string.Equals(source.MoFormulaTipo, MaterialMoResolver.MoFormulaPorcentaje, StringComparison.OrdinalIgnoreCase)
+                && source.MoPorcentajeMaterial > 0m)
+                return Math.Round(source.MatClp * (source.MoPorcentajeMaterial / 100m) * indiceMoFa, 2, MidpointRounding.AwayFromZero);
+            return source.MoClp;
+        }
+    }
+
     // Compatibilidad interna: algunos consumidores (PriceBankService, exportadores) siguen
     // leyendo MatUf/MoUf directo del modelo — no de este VM — así que no se tocan.
 
@@ -295,6 +396,9 @@ public sealed class PriceBankUpdateVm
     public decimal MatClpAnterior => Source.MatClpAnterior;
     public decimal MatClpNuevo => Source.MatClpNuevo;
     public decimal MatClpDelta => Source.MatClpNuevo - Source.MatClpAnterior;
+    public bool IsDeltaPositive => MatClpDelta > 0;
+    public bool IsDeltaNegative => MatClpDelta < 0;
+    public string FormattedDelta => MatClpDelta > 0 ? $"+{MatClpDelta:N0}" : $"{MatClpDelta:N0}";
     public decimal MoClpAnterior => Source.MoClpAnterior;
     public decimal MoClpNuevo => Source.MoClpNuevo;
     public decimal MoClpDelta => Source.MoClpNuevo - Source.MoClpAnterior;

@@ -39,13 +39,13 @@ public sealed partial class ChangeOrderEditorViewModel : ObservableObject
 
     public void LoadFrom(ChangeOrderRow oc)
     {
-        Numero         = oc.Numero;
-        Titulo         = oc.Titulo;
-        CreadoPor      = oc.CreadoPor;
+        Numero = oc.Numero;
+        Titulo = oc.Titulo;
+        CreadoPor = oc.CreadoPor;
         DeltaVentaText = oc.DeltaVentaUf.ToString("N3", CultureInfo.InvariantCulture);
         DeltaCostoText = oc.DeltaCostoUf.ToString("N3", CultureInfo.InvariantCulture);
-        CostoBaseText  = oc.CostoBaseUf.ToString("N3", CultureInfo.InvariantCulture);
-        Nota           = oc.Nota;
+        CostoBaseText = oc.CostoBaseUf.ToString("N3", CultureInfo.InvariantCulture);
+        Nota = oc.Nota;
         ValidationErrorMessage = null;
     }
 
@@ -80,13 +80,13 @@ public sealed partial class ChangeOrderEditorViewModel : ObservableObject
             return false;
         }
 
-        target.Numero       = numero;
-        target.Titulo       = titulo;
-        target.CreadoPor    = CreadoPor.Trim();
+        target.Numero = numero;
+        target.Titulo = titulo;
+        target.CreadoPor = CreadoPor.Trim();
         target.DeltaVentaUf = deltaVenta;
         target.DeltaCostoUf = deltaCosto;
-        target.CostoBaseUf  = costoBase;
-        target.Nota         = Nota.Trim();
+        target.CostoBaseUf = costoBase;
+        target.Nota = Nota.Trim();
 
         ValidationErrorMessage = null;
         return true;

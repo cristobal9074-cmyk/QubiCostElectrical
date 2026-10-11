@@ -156,6 +156,7 @@ public sealed class CubicacionPresenter
     }
 
     private static bool HasFormula(CubicacionRow row)
-        => !string.IsNullOrWhiteSpace(row.TotalExpression)
+        => !string.IsNullOrWhiteSpace(row.Operacion)
+           || !string.IsNullOrWhiteSpace(row.TotalExpression)
            || (row.QtyExpressions != null && row.QtyExpressions.Any(e => !string.IsNullOrWhiteSpace(e)));
 }

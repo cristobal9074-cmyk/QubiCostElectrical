@@ -9,18 +9,39 @@ public sealed class KeyboardShortcutPreferenceRowVm : ViewModelBase
     private bool isCapturing;
 
     public KeyboardShortcutPreferenceRowVm(string actionId, string label, string? description, string defaultGesture)
+        : this(actionId, "cubicacion", "Cubicación", "📐", label, description, defaultGesture, isConfigurable: true)
+    {
+    }
+
+    public KeyboardShortcutPreferenceRowVm(
+        string actionId,
+        string scope,
+        string scopeLabel,
+        string scopeIcon,
+        string label,
+        string? description,
+        string defaultGesture,
+        bool isConfigurable = true)
     {
         ActionId = actionId;
+        Scope = scope;
+        ScopeLabel = scopeLabel;
+        ScopeIcon = scopeIcon;
         Label = label;
         Description = description ?? "";
         DefaultGesture = defaultGesture;
         effectiveGesture = defaultGesture;
+        IsConfigurable = isConfigurable;
     }
 
     public string ActionId { get; }
+    public string Scope { get; }
+    public string ScopeLabel { get; }
+    public string ScopeIcon { get; }
     public string Label { get; }
     public string Description { get; }
     public string DefaultGesture { get; }
+    public bool IsConfigurable { get; }
 
     public string EffectiveGesture
     {
@@ -31,6 +52,7 @@ public sealed class KeyboardShortcutPreferenceRowVm : ViewModelBase
             {
                 OnPropertyChanged(nameof(IsCustomized));
                 OnPropertyChanged(nameof(GestureDisplay));
+                OnPropertyChanged(nameof(StatusBadge));
             }
         }
     }
@@ -41,7 +63,16 @@ public sealed class KeyboardShortcutPreferenceRowVm : ViewModelBase
             : EffectiveGesture;
 
     public bool IsCustomized =>
-        !string.Equals(EffectiveGesture, DefaultGesture, StringComparison.OrdinalIgnoreCase);
+        IsConfigurable && !string.Equals(EffectiveGesture, DefaultGesture, StringComparison.OrdinalIgnoreCase);
+
+    public string StatusBadge
+    {
+        get
+        {
+            if (!IsConfigurable) return "Nativo";
+            return IsCustomized ? "Personalizado" : "Por defecto";
+        }
+    }
 
     public bool IsCapturing
     {
@@ -61,5 +92,9 @@ public sealed class KeyboardShortcutPreferenceRowVm : ViewModelBase
         private set => SetProperty(ref captureHint, value);
     }
 
-    public void ResetToDefault() => EffectiveGesture = DefaultGesture;
+    public void ResetToDefault()
+    {
+        if (IsConfigurable)
+            EffectiveGesture = DefaultGesture;
+    }
 }

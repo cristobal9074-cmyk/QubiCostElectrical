@@ -50,4 +50,24 @@ public partial class InicioView : UserControl
         if (vm.OpenRecentProjectCommand.CanExecute(project.Path))
             vm.OpenRecentProjectCommand.Execute(project.Path);
     }
+
+    private void OnProjectOptionsButtonClick(object sender, System.Windows.RoutedEventArgs e)
+    {
+        if (sender is System.Windows.FrameworkElement fe)
+        {
+            System.Windows.DependencyObject current = fe;
+            while (current != null && current is not Grid { ContextMenu: not null })
+            {
+                current = System.Windows.Media.VisualTreeHelper.GetParent(current);
+            }
+
+            if (current is Grid { ContextMenu: not null } parentGrid)
+            {
+                parentGrid.ContextMenu.PlacementTarget = fe;
+                parentGrid.ContextMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+                parentGrid.ContextMenu.IsOpen = true;
+            }
+        }
+        e.Handled = true;
+    }
 }

@@ -198,4 +198,27 @@ public sealed class ShellNavigationTests
         var ctx = Assert.IsType<ApuNavContext>(shell.LastContext);
         Assert.Equal("P3", ctx.ItemId);
     }
+
+    [Fact]
+    public void ShellViewModel_SelectPhase_SwitchesPhaseAndActiveRoute()
+    {
+        var vm = new ShellViewModel(WpfAppHost.Current);
+
+        // Starts in Presupuesto
+        Assert.Equal(ShellLifecyclePhase.Presupuesto, vm.CurrentPhase);
+        Assert.True(vm.IsPresupuestoPhase);
+        Assert.False(vm.IsPlanificacionPhase);
+        Assert.False(vm.IsEjecucionPhase);
+
+        // Select Planificacion
+        vm.SelectPhase(ShellLifecyclePhase.Planificacion);
+        Assert.Equal(ShellLifecyclePhase.Planificacion, vm.CurrentPhase);
+        Assert.True(vm.IsPlanificacionPhase);
+
+        // Select Ejecucion
+        vm.SelectPhase(ShellLifecyclePhase.Ejecucion);
+        Assert.Equal(ShellLifecyclePhase.Ejecucion, vm.CurrentPhase);
+        Assert.True(vm.IsEjecucionPhase);
+    }
 }
+

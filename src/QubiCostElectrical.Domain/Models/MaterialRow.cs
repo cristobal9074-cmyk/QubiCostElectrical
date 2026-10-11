@@ -61,4 +61,16 @@ public sealed class MaterialRow
     public DateTime UltimaActualizacionPrecio { get; set; } = AppClock.Now;
     public string EstadoPrecio { get; set; } = EstadoRecurso.OK;
     public PrecioCongeladoRow? PrecioCongelado { get; set; }
+
+    /// <summary>Rendimiento de instalación en unidades por día-hombre (columna REND de LISTA-PR). 0 = sin rendimiento.</summary>
+    public decimal RendimientoDh { get; set; }
+
+    /// <summary>Rendimiento por día-pareja (columna DIA x PAREJA de LISTA-PR). Informativo; 0 = no aplica.</summary>
+    public decimal DiaXPareja { get; set; }
+
+    /// <summary>Fórmula de M.O.: vacío = M.O. fija (MoClp); <see cref="MaterialMoResolver.MoFormulaPorcentaje"/> = Material × MoPorcentajeMaterial × FA.</summary>
+    public string MoFormulaTipo { get; set; } = "";
+
+    /// <summary>Porcentaje de M.O. sobre el material como número (2.5 = 2,5%). Solo aplica con fórmula "Porcentaje".</summary>
+    public decimal MoPorcentajeMaterial { get; set; } = 2.5m;
 }

@@ -21,6 +21,7 @@ public sealed class CuadroScRowVm : ViewModelBase
 
     private bool AllowEdit => canEdit?.Invoke() ?? true;
     public bool CanEdit => AllowEdit;
+    public CuadroCargaSCRow Source => row;
 
     public string Id => row.Id;
 
@@ -34,9 +35,35 @@ public sealed class CuadroScRowVm : ViewModelBase
             if (limpio == row.Nombre) return;
             row.Nombre = limpio;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(NombreCorto));
+            OnPropertyChanged(nameof(NombreCompletoTooltip));
             onChanged?.Invoke();
         }
     }
+
+    public string NombreCorto
+    {
+        get
+        {
+            var n = Nombre?.Trim();
+            if (string.IsNullOrEmpty(n)) return "T";
+            if (n.Length <= 4) return n.ToUpperInvariant();
+
+            var parts = n.Split(new[] { ' ', '-', '_' }, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length > 1)
+            {
+                if (char.IsDigit(parts[^1][0]))
+                    return (parts[0][..1] + parts[^1]).ToUpperInvariant();
+
+                var initials = string.Concat(parts.Select(p => p[..1])).ToUpperInvariant();
+                if (initials.Length <= 4) return initials;
+            }
+
+            return n.Length > 3 ? n[..3].ToUpperInvariant() : n.ToUpperInvariant();
+        }
+    }
+
+    public string NombreCompletoTooltip => $"{Nombre} ({CircuitosActivos}/{CircuitosProyectados} circ)";
 
     // Edición inline del nombre en el sidebar: doble clic activa el TextBox; al confirmar
     // (Enter/perder foco) o cancelar (Escape) vuelve a false. Ver CubicacionScView.xaml.cs.
@@ -68,11 +95,35 @@ public sealed class CuadroScRowVm : ViewModelBase
             if (row.CircuitosProyectados == value) return;
             row.CircuitosProyectados = value;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(NombreCompletoTooltip));
             onChanged?.Invoke();
         }
     }
 
     public int CircuitosActivos => row.Circuitos.Count(c => c.EsActivo);
 
-    public void NotifyCircuitosActivosChanged() => OnPropertyChanged(nameof(CircuitosActivos));
+    public string Categoria
+    {
+        get => row.Categoria ?? "Generales";
+        set
+        {
+            if (!AllowEdit) return;
+            var val = string.IsNullOrWhiteSpace(value) ? "Generales" : value.Trim();
+            if (row.Categoria == val) return;
+            row.Categoria = val;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsDepto));
+            onChanged?.Invoke();
+        }
+    }
+
+    public bool IsDepto => row.EsDepto;
+
+    public static bool IsCuadroDepto(CuadroCargaSCRow? row) => row?.EsDepto ?? false;
+
+    public void NotifyCircuitosActivosChanged()
+    {
+        OnPropertyChanged(nameof(CircuitosActivos));
+        OnPropertyChanged(nameof(NombreCompletoTooltip));
+    }
 }

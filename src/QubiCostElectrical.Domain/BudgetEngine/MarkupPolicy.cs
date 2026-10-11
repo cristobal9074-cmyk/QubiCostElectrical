@@ -11,10 +11,10 @@ public sealed class MarkupPolicy
     public MarkupMethod MarkupMethod { get; set; } = MarkupMethod.SobreVenta;
     public decimal GastosGeneralesPct { get; set; } = 14m;
     public decimal UtilidadPct { get; set; } = 18m;
-    /// <summary>Valor agregado solo sobre equipos (paridad Excel COSTOS, típ. 3%).</summary>
+    /// <summary>Valor agregado solo sobre equipos (paridad estándar de costos, típ. 3%).</summary>
     public decimal ValorAgregadoEquiposPct { get; set; } = 0m;
     /// <summary>
-    /// Paridad hoja Excel -=COSTOS=-: GG/UT sobre Mat+MO+GO (sin equipos),
+    /// Paridad estándar de costos: GG/UT sobre Mat+MO+GO (sin equipos),
     /// utilidad aditiva, VA sobre equipos, diferencia por factores.
     /// </summary>
     public bool PoliticaCostosExcel { get; set; }

@@ -96,6 +96,8 @@ public sealed class CostBreakdown
     public decimal TransporteUf { get; set; }
     public decimal MermasUf { get; set; }
     public decimal OrdenesCambioUf { get; set; }
+    /// <summary>Estimación de ferretería en CLP. Ya va incluida dentro de <see cref="MaterialesUf"/> y del costo de ejecución.</summary>
+    public decimal FerreteriaUf { get; set; }
     public decimal CostoDirectoUf { get; set; }
     public decimal RiesgoUf { get; set; }
     public decimal BaseCostoUf { get; set; }

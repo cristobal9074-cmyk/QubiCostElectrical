@@ -10,13 +10,13 @@ public partial class ChangeOrdersView : UserControl
 
     private ChangeOrdersViewModel? Vm => DataContext as ChangeOrdersViewModel;
 
-    private void OnAddClick(object sender, RoutedEventArgs e)           => Vm?.AddNew();
-    private void OnEditClick(object sender, RoutedEventArgs e)          => Vm?.EditSelected();
-    private void OnDeleteClick(object sender, RoutedEventArgs e)        => Vm?.DeleteSelected();
+    private void OnAddClick(object sender, RoutedEventArgs e) => Vm?.AddNew();
+    private void OnEditClick(object sender, RoutedEventArgs e) => Vm?.EditSelected();
+    private void OnDeleteClick(object sender, RoutedEventArgs e) => Vm?.DeleteSelected();
     private void OnEnviarRevisionClick(object sender, RoutedEventArgs e) => Vm?.EnviarARevision();
-    private void OnAprobarClick(object sender, RoutedEventArgs e)       => Vm?.AprobarSelected();
-    private void OnRechazarClick(object sender, RoutedEventArgs e)      => Vm?.RechazarSelected();
-    private void OnReabrirClick(object sender, RoutedEventArgs e)       => Vm?.ReabrirSelected();
+    private void OnAprobarClick(object sender, RoutedEventArgs e) => Vm?.AprobarSelected();
+    private void OnRechazarClick(object sender, RoutedEventArgs e) => Vm?.RechazarSelected();
+    private void OnReabrirClick(object sender, RoutedEventArgs e) => Vm?.ReabrirSelected();
 
     private void OnRowDoubleClick(object sender, MouseButtonEventArgs e)
     {
@@ -34,7 +34,7 @@ public partial class ChangeOrdersView : UserControl
     private void OnClearFiltersClick(object sender, RoutedEventArgs e)
     {
         if (Vm == null) return;
-        Vm.SearchText   = "";
+        Vm.SearchText = "";
         Vm.FilterEstado = "";
         EstadoFilterBox.SelectedIndex = 0;
     }

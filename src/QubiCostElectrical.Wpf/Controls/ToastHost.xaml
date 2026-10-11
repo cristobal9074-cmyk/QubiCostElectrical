@@ -34,6 +34,10 @@
                 BorderBrush="{DynamicResource Brush.Line}"
                 MouseEnter="OnToastMouseEnter"
                 MouseLeave="OnToastMouseLeave">
+          <Border.Effect>
+            <DropShadowEffect BlurRadius="16" ShadowDepth="4" Direction="270"
+                              Color="{DynamicResource Color.Shadow}" Opacity="0.18" />
+          </Border.Effect>
           <Border.Style>
             <Style TargetType="Border">
               <Style.Triggers>

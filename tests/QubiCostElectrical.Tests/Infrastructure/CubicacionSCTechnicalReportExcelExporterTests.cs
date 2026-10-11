@@ -66,10 +66,11 @@ public sealed class CubicacionSCTechnicalReportExcelExporterTests : IDisposable
         Assert.True(File.Exists(path));
         using var wb = new XLWorkbook(path);
 
-        Assert.Equal(5, wb.Worksheets.Count);
+        Assert.Equal(6, wb.Worksheets.Count);
         Assert.Equal("REPORTE TECNICO C.SEC", wb.Worksheet("00_RESUMEN").Cell(1, 1).GetString());
         Assert.Equal("TDA Principal", wb.Worksheet("01_TABLEROS").Cell(5, 1).GetString());
         Assert.Equal("PVC", wb.Worksheet("02_CIRCUITOS").Cell(5, 8).GetString());
         Assert.NotEmpty(wb.Worksheet("03_MATERIALES").Cell(5, 2).GetString());
+        Assert.True(wb.Worksheets.Contains("05_CUADRO_CARGAS_SEC"));
     }
 }

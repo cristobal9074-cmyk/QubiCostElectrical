@@ -124,14 +124,14 @@ internal sealed class CubicacionAutocompleteService
                 return materialSearch.FindMatches(query, session.Materiales, materialIndex, limit: 20);
             }, ct);
 
-            // Completar con el Banco de Precios si faltan resultados
+            // Solo consultar el Banco de Precios si no existe ningún resultado en el proyecto/cubicación
             var results = new List<MaterialRow>(projectResults);
-            if (!ct.IsCancellationRequested && results.Count < 20)
+            if (!ct.IsCancellationRequested && results.Count == 0)
             {
                 var bankMatches = await Task.Run(() => priceBankStore.Search(query), ct);
                 foreach (var entry in bankMatches)
                 {
-                    if (results.Count >= 25) break;
+                    if (results.Count >= 15) break;
                     if (results.Any(m => CodeHelper.Match(m.Codigo, entry.Codigo))) continue;
                     results.Add(CubicacionViewModel.FromBankEntry(entry));
                 }

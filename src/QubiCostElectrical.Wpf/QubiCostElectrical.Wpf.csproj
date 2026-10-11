@@ -58,13 +58,4 @@
     <ProjectReference Include="..\QubiCostElectrical.Infrastructure\QubiCostElectrical.Infrastructure.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <!-- Legacy retirado: placeholders Fase 1 y DeliveryView duplicado de Export -->
-    <Compile Remove="Views\Placeholder\**\*.cs" />
-    <Page Remove="Views\Placeholder\**\*.xaml" />
-    <Compile Remove="Features\Delivery\DeliveryView.xaml.cs" />
-    <Compile Remove="Features\Delivery\DeliveryViewModel.cs" />
-    <Page Remove="Features\Delivery\DeliveryView.xaml" />
-  </ItemGroup>
-
 </Project>

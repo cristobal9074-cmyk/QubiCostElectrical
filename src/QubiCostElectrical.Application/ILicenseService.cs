@@ -5,13 +5,13 @@ namespace QubiCostElectrical;
 
 public interface ILicenseService
 {
-	LicenseStatus Status { get; }
+    LicenseStatus Status { get; }
 
-	bool IsReadOnly { get; }
+    bool IsReadOnly { get; }
 
-	LicenseInfo? CurrentLicense { get; }
+    LicenseInfo? CurrentLicense { get; }
 
-	string LicenseeCompanyName { get; }
+    string LicenseeCompanyName { get; }
 
-	Result<LicenseInfo, LicenseError> Activate(string qclicFilePath);
+    Result<LicenseInfo, LicenseError> Activate(string qclicFilePath);
 }

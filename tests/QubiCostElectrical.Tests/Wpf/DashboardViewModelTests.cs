@@ -53,10 +53,11 @@ public sealed class DashboardViewModelTests
 
         Assert.False(vm.ShowEmptyState);
         Assert.Equal(4, vm.KpiCards.Count);
-        Assert.Equal(3, vm.CostShares.Count);
+        Assert.Equal(4, vm.CostShares.Count);
         Assert.Equal(GridUnitType.Star, vm.MaterialShareWidth.GridUnitType);
         Assert.Equal(GridUnitType.Star, vm.LaborShareWidth.GridUnitType);
-        Assert.Equal(GridUnitType.Star, vm.OtherShareWidth.GridUnitType);
+        Assert.Equal(GridUnitType.Star, vm.GoShareWidth.GridUnitType);
+        Assert.Equal(GridUnitType.Star, vm.MarginShareWidth.GridUnitType);
         Assert.Equal(6, vm.WorkflowSteps.Count);
     }
 
@@ -182,7 +183,7 @@ public sealed class DashboardViewModelTests
             vm.Load();
             Assert.False(vm.ShowEmptyState);
             Assert.Equal(4, vm.KpiCards.Count);
-            Assert.Equal(3, vm.CostShares.Count);
+            Assert.Equal(4, vm.CostShares.Count);
             Assert.Equal(6, vm.WorkflowSteps.Count);
 
             // "Cerrar" el proyecto: NewProject() deja CurrentProjectPath vacío, que es lo
@@ -194,5 +195,45 @@ public sealed class DashboardViewModelTests
             Assert.Empty(vm.CostShares);
             Assert.Empty(vm.WorkflowSteps);
         }
+    }
+
+    [Fact]
+    public void DashboardParetoSummary_Calculate_CorrectlyClassifiesABC()
+    {
+        var partidas = new List<DashboardPartidaVm>
+        {
+            new() { Rank = 1, Item = "1.1", Partida = "Tablero General", SharePct = 50.0, AccumPct = 50.0 },
+            new() { Rank = 2, Item = "1.2", Partida = "Alimentador Principal", SharePct = 30.0, AccumPct = 80.0 },
+            new() { Rank = 3, Item = "1.3", Partida = "Subalimentador", SharePct = 15.0, AccumPct = 95.0 },
+            new() { Rank = 4, Item = "1.4", Partida = "Canalización", SharePct = 5.0, AccumPct = 100.0 }
+        };
+
+        var summary = DashboardParetoSummary.Calculate(partidas, 100_000_000m, 38_000m);
+
+        Assert.True(summary.HasData);
+        Assert.Equal(2, summary.CountA); // 50% + 30% <= 80.5%
+        Assert.Equal(1, summary.CountB); // 95%
+        Assert.Equal(1, summary.CountC); // 100%
+        Assert.Equal(80.0, summary.PctA);
+        Assert.Equal(15.0, summary.PctB);
+        Assert.Equal(5.0, summary.PctC);
+        Assert.Contains("Tipo A", summary.BadgeA);
+        Assert.Contains("Tipo B", summary.BadgeB);
+        Assert.Contains("Tipo C", summary.BadgeC);
+        Assert.Equal("A", partidas[0].ParetoClass);
+        Assert.Equal("A", partidas[1].ParetoClass);
+        Assert.Equal("B", partidas[2].ParetoClass);
+        Assert.Equal("C", partidas[3].ParetoClass);
+    }
+
+    [Fact]
+    public void QuickTemplates_ContainsRichRicTemplates()
+    {
+        var templates = DashboardLandingCoordinator.CreateQuickTemplates(new FakeShell()).ToList();
+        Assert.Equal(4, templates.Count);
+        Assert.Contains(templates, t => t.Id == "residential_building");
+        Assert.Contains(templates, t => t.Id == "industrial_warehouse");
+        Assert.Contains(templates, t => t.Id == "commercial_retail");
+        Assert.Contains(templates, t => t.Id == "solar_pv_plant");
     }
 }

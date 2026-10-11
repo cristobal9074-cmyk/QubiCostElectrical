@@ -50,6 +50,7 @@ public partial class CubicacionScCatalogoDialog : Window
     private readonly ObservableCollection<CatalogTextItem> diametros = new();
     private readonly ObservableCollection<CatalogTextItem> bandejas = new();
     private readonly ObservableCollection<CatalogTextItem> cajas = new();
+    private readonly ObservableCollection<SistemaCircuitoSC> sistemasCircuito = new();
     private readonly ObservableCollection<SistemaSC> sistemas = new();
     private readonly ObservableCollection<FlexibleMapSC> flexibles = new();
     private readonly ObservableCollection<ArtefactoCatalogoItem> artefactos = new();
@@ -70,6 +71,11 @@ public partial class CubicacionScCatalogoDialog : Window
         FillSimple(diametros, config.DiametrosTuberia);
         FillSimple(bandejas, config.TiposBandeja);
         FillSimple(cajas, config.TiposCaja);
+        var scSource = config.SistemasCircuito != null && config.SistemasCircuito.Count > 0
+            ? config.SistemasCircuito
+            : CubicacionScConfig.Default().SistemasCircuito;
+        foreach (var sc in scSource)
+            sistemasCircuito.Add(new SistemaCircuitoSC { Codigo = sc.Codigo, Nombre = sc.Nombre });
         foreach (var s in config.Sistemas)
             sistemas.Add(new SistemaSC { Nombre = s.Nombre, NumConductores = s.NumConductores, MermaPct = s.MermaPct });
         foreach (var f in config.Flexibles)
@@ -85,6 +91,7 @@ public partial class CubicacionScCatalogoDialog : Window
         HookCollection(diametros);
         HookCollection(bandejas);
         HookCollection(cajas);
+        HookCollection(sistemasCircuito);
         HookCollection(sistemas);
         HookCollection(flexibles);
         HookCollection(artefactos);
@@ -119,12 +126,13 @@ public partial class CubicacionScCatalogoDialog : Window
         CountDiametros.Text = diametros.Count.ToString();
         CountBandejas.Text = bandejas.Count.ToString();
         CountCajas.Text = cajas.Count.ToString();
+        CountSistemasCircuito.Text = sistemasCircuito.Count.ToString();
         CountSistemas.Text = sistemas.Count.ToString();
         CountFlexibles.Text = flexibles.Count.ToString();
         CountArtefactos.Text = artefactos.Count.ToString();
         TotalItemsRun.Text = (
             conductores.Count + secciones.Count + tiposTuberia.Count + diametros.Count +
-            bandejas.Count + cajas.Count + sistemas.Count + flexibles.Count + artefactos.Count
+            bandejas.Count + cajas.Count + sistemasCircuito.Count + sistemas.Count + flexibles.Count + artefactos.Count
         ).ToString();
     }
 
@@ -137,6 +145,7 @@ public partial class CubicacionScCatalogoDialog : Window
         SearchBox.Text = "";
 
         SimpleGrid.Visibility = Visibility.Collapsed;
+        SistemasCircuitoGrid.Visibility = Visibility.Collapsed;
         SistemasGrid.Visibility = Visibility.Collapsed;
         FlexiblesGrid.Visibility = Visibility.Collapsed;
         ArtefactosGrid.Visibility = Visibility.Collapsed;
@@ -161,8 +170,11 @@ public partial class CubicacionScCatalogoDialog : Window
             case "Cajas":
                 SetCategory("Cajas", "Tipos de caja de derivación / registro", SimpleGrid, cajas);
                 break;
+            case "SistemasCircuito":
+                SetCategory("Sistemas de circuitos (SIST)", "Códigos de sistema y destino (A = Alumbrado, E = Enchufe, CL = Clima, CO = Computación...)", SistemasCircuitoGrid, sistemasCircuito);
+                break;
             case "Sistemas":
-                SetCategory("Sistemas / Fases", "Códigos de alimentación y merma por sistema", SistemasGrid, sistemas);
+                SetCategory("Alimentación (ALIM)", "Códigos de alimentación y merma por fase (M, T, EM)", SistemasGrid, sistemas);
                 break;
             case "Flexibles":
                 SetCategory("Terminales flexibles", "Relación diámetro ducto → flexible y metros/caja", FlexiblesGrid, flexibles);
@@ -193,6 +205,7 @@ public partial class CubicacionScCatalogoDialog : Window
         return obj switch
         {
             CatalogTextItem t => Contains(t.Value, q),
+            SistemaCircuitoSC sc => Contains(sc.Codigo, q) || Contains(sc.Nombre, q),
             SistemaSC s => Contains(s.Nombre, q) || Contains(s.NumConductores.ToString(), q) || Contains(s.MermaPct.ToString(), q),
             FlexibleMapSC f => Contains(f.Diametro, q) || Contains(f.TipoFlexible, q) || Contains(f.MetrosPorCaja.ToString(), q),
             ArtefactoCatalogoItem a => Contains(a.Nombre, q) || Contains(a.Categoria, q),
@@ -211,6 +224,7 @@ public partial class CubicacionScCatalogoDialog : Window
     private DataGrid? ActiveGrid()
     {
         if (SimpleGrid.Visibility == Visibility.Visible) return SimpleGrid;
+        if (SistemasCircuitoGrid.Visibility == Visibility.Visible) return SistemasCircuitoGrid;
         if (SistemasGrid.Visibility == Visibility.Visible) return SistemasGrid;
         if (FlexiblesGrid.Visibility == Visibility.Visible) return FlexiblesGrid;
         if (ArtefactosGrid.Visibility == Visibility.Visible) return ArtefactosGrid;
@@ -238,6 +252,9 @@ public partial class CubicacionScCatalogoDialog : Window
                 break;
             case "Cajas":
                 cajas.Add(new CatalogTextItem { Value = "" });
+                break;
+            case "SistemasCircuito":
+                sistemasCircuito.Add(new SistemaCircuitoSC { Codigo = "", Nombre = "" });
                 break;
             case "Sistemas":
                 sistemas.Add(new SistemaSC { Nombre = "" });
@@ -275,6 +292,9 @@ public partial class CubicacionScCatalogoDialog : Window
             {
                 case CatalogTextItem t:
                     GetActiveSimpleCollection()?.Add(new CatalogTextItem { Value = t.Value });
+                    break;
+                case SistemaCircuitoSC sc:
+                    sistemasCircuito.Add(new SistemaCircuitoSC { Codigo = sc.Codigo, Nombre = sc.Nombre });
                     break;
                 case SistemaSC s:
                     sistemas.Add(new SistemaSC { Nombre = s.Nombre, NumConductores = s.NumConductores, MermaPct = s.MermaPct });
@@ -316,6 +336,9 @@ public partial class CubicacionScCatalogoDialog : Window
                 case CatalogTextItem t:
                     GetActiveSimpleCollection()?.Remove(t);
                     break;
+                case SistemaCircuitoSC sc:
+                    sistemasCircuito.Remove(sc);
+                    break;
                 case SistemaSC s:
                     sistemas.Remove(s);
                     break;
@@ -333,9 +356,11 @@ public partial class CubicacionScCatalogoDialog : Window
 
     private void OnAcceptClick(object sender, RoutedEventArgs e)
     {
+        var validSistemasCircuito = sistemasCircuito.Where(s => !string.IsNullOrWhiteSpace(s.Codigo)).ToList();
         Result = new CubicacionScConfig
         {
-            Tipos = tiposOriginal,
+            SistemasCircuito = validSistemasCircuito,
+            Tipos = validSistemasCircuito.Select(s => s.Codigo).ToList(),
             TiposRecorrido = tiposRecorridoOriginal,
             TiposBandeja = ToStrings(bandejas),
             TiposTuberia = ToStrings(tiposTuberia),

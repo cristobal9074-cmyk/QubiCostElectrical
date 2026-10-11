@@ -8,18 +8,57 @@ using System.Windows.Threading;
 using QubiCostElectrical;
 using QubiCostElectrical.Wpf.Infrastructure;
 
+using QubiCostElectrical.Wpf.Controls;
+
 namespace QubiCostElectrical.Wpf.Features.Itemizado;
 
-public partial class ItemizadoView : UserControl
+public partial class ItemizadoView : UserControl, IInGridSearchable
 {
     private readonly ItemizadoDragDropCoordinator _dragDropCoordinator;
 
     public ItemizadoView()
     {
         InitializeComponent();
+        ItemSearchOverlay.TargetGrid = ItemGrid;
         _dragDropCoordinator = new ItemizadoDragDropCoordinator(ItemGrid, () => Vm);
         DataContextChanged += OnDataContextChanged;
         ItemGrid.CurrentCellChanged += OnCurrentCellChanged;
+        Loaded += (_, _) => Dispatcher.BeginInvoke(DispatcherPriority.Loaded, (Action)DistributeColumnWidths);
+    }
+
+    public void OpenGridSearch() => ItemSearchOverlay.Open();
+    public void StepGridSearch(bool backward) { if (backward) ItemSearchOverlay.FindPrevious(); else ItemSearchOverlay.FindNext(); }
+    public void CloseGridSearch() => ItemSearchOverlay.Close();
+    public bool IsGridSearchOpen => ItemSearchOverlay.IsOpen;
+
+    public void ApplyNavContext(ItemizadoNavigationContext ctx)
+    {
+        if (Vm == null) return;
+        if (ctx.FilterMode.HasValue)
+        {
+            Vm.FilterMode = ctx.FilterMode.Value;
+        }
+        if (!string.IsNullOrWhiteSpace(ctx.TargetRowId) || !string.IsNullOrWhiteSpace(ctx.TargetCode))
+        {
+            SelectAndScrollToRow(ctx.TargetRowId, ctx.TargetCode);
+        }
+    }
+
+    public void SelectAndScrollToRow(string? id, string? code)
+    {
+        if (Vm == null) return;
+        var match = Vm.Rows.FirstOrDefault(r =>
+            (!string.IsNullOrWhiteSpace(id) && string.Equals(r.Id, id, StringComparison.OrdinalIgnoreCase)) ||
+            (!string.IsNullOrWhiteSpace(code) && string.Equals(r.Item, code, StringComparison.OrdinalIgnoreCase)));
+        if (match != null)
+        {
+            Vm.SelectedRow = match;
+            ItemGrid.SelectedItem = match;
+            Dispatcher.BeginInvoke(DispatcherPriority.Loaded, () =>
+            {
+                ItemGrid.ScrollIntoView(match);
+            });
+        }
     }
 
     private ItemizadoViewModel? Vm => DataContext as ItemizadoViewModel;
@@ -36,6 +75,43 @@ public partial class ItemizadoView : UserControl
         catch
         {
             // Evitar que excepciones de selección de celda interrumpan el dispatcher
+        }
+    }
+
+    private void OnItemGridSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        if (!e.WidthChanged || ItemGrid == null || ItemGrid.ActualWidth <= 0)
+            return;
+
+        DistributeColumnWidths();
+    }
+
+    private void DistributeColumnWidths()
+    {
+        if (ItemGrid == null || ItemGrid.Columns.Count < 7)
+            return;
+
+        double available = ItemGrid.ActualWidth;
+        if (available <= 600)
+            return;
+
+        // Suma de columnas métricas fijas + márgenes y scrollbar:
+        // ÍTEM: 72, UD: 52, CANTIDAD: 90, P.U.: 115, TOTAL: 125, Scroll/Borders: ~26 = 480 px
+        const double fixedColumnsWidth = 480.0;
+        double remaining = available - fixedColumnsWidth;
+
+        if (remaining > 500)
+        {
+            // Observaciones: 26% del espacio restante, acotado ergonómicamente entre 220px y 360px
+            double obsWidth = Math.Clamp(Math.Round(remaining * 0.26), 220.0, 360.0);
+            // Descripción: absorbe el resto del espacio disponible (mínimo 380px)
+            double descWidth = Math.Max(380.0, Math.Round(remaining - obsWidth));
+
+            if (ColDescripcion != null)
+                ColDescripcion.Width = new DataGridLength(descWidth, DataGridLengthUnitType.Pixel);
+
+            if (ColObservaciones != null)
+                ColObservaciones.Width = new DataGridLength(obsWidth, DataGridLengthUnitType.Pixel);
         }
     }
 
@@ -64,8 +140,8 @@ public partial class ItemizadoView : UserControl
         if (row == null)
             return;
 
-        var column = ItemGrid.Columns.FirstOrDefault(c => Equals(c.Header, "ÍTEM"))
-                     ?? ItemGrid.Columns.FirstOrDefault(c => Equals(c.Header, "DESCRIPCIÓN"));
+        var column = ItemGrid.Columns.FirstOrDefault(c => c.Header?.ToString()?.StartsWith("DESCRIPCIÓN", StringComparison.OrdinalIgnoreCase) == true)
+                     ?? ItemGrid.Columns.FirstOrDefault(c => c.Header?.ToString()?.StartsWith("ÍTEM", StringComparison.OrdinalIgnoreCase) == true);
         if (column == null)
             return;
 
@@ -104,6 +180,46 @@ public partial class ItemizadoView : UserControl
         return null;
     }
 
+    private void OnRowMouseDoubleClick(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is not DataGridRow row || row.Item is not ItemizadoRowVm rowVm || Vm == null)
+            return;
+
+        if (rowVm.EsTitulo)
+        {
+            Vm.ToggleChapterCollapse(rowVm);
+            e.Handled = true;
+            return;
+        }
+
+        if (rowVm.ExcluidoCubicacion)
+        {
+            ShellNotificationService.Instance.ShowInfo("Itemizado", "Esta partida está marcada como excluida de cubicación.");
+            e.Handled = true;
+            return;
+        }
+
+        Vm.SelectedRow = rowVm;
+        if (Vm.CubicarCommand.CanExecute(null))
+        {
+            Vm.CubicarCommand.Execute(null);
+            e.Handled = true;
+        }
+    }
+
+    private void OnGridPreviewTextInput(object sender, TextCompositionEventArgs e)
+    {
+        if (Vm == null || Vm.IsReadOnly)
+            return;
+
+        if (DataGridExcelNavigation.TryBeginEditFromChar(ItemGrid, e.Text))
+        {
+            e.Handled = true;
+        }
+    }
+
+    private ProjectFileData? _cellPreEditSnapshot;
+
     private void OnGridBeginningEdit(object sender, DataGridBeginningEditEventArgs e)
     {
         if (Vm?.IsReadOnly == true)
@@ -111,6 +227,8 @@ public partial class ItemizadoView : UserControl
             e.Cancel = true;
             return;
         }
+
+        _cellPreEditSnapshot = Vm?.CaptureSnapshot();
 
         if (e.Row.Item is ItemizadoRowVm row)
         {
@@ -122,13 +240,25 @@ public partial class ItemizadoView : UserControl
         if (e.Row.Item is ItemizadoRowVm row2 && row2.EsTitulo)
         {
             string? header = e.Column.Header?.ToString();
-            if (header is "Ud." or "Cantidad" or "Excl. cubic.")
+            if (string.Equals(header, "UD", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(header, "Ud.", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(header, "CANTIDAD", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(header, "Cantidad", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(header, "Excl. cubic.", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(header, "NO CUBICAR", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(header, "OBSERVACIONES", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(header, "Observaciones", StringComparison.OrdinalIgnoreCase))
+            {
                 e.Cancel = true;
+            }
         }
     }
 
     private void OnCellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
     {
+        var preEditSnapshot = _cellPreEditSnapshot;
+        _cellPreEditSnapshot = null;
+
         if (e.EditAction != DataGridEditAction.Commit)
             return;
 
@@ -147,7 +277,7 @@ public partial class ItemizadoView : UserControl
         // se acumulara y quedara pendiente hasta que algo forzaba al dispatcher a
         // vaciarla (p.ej. cambiar de pestaña), dando la sensación de UI trabada o de
         // botones que "no funcionan".
-        Dispatcher.BeginInvoke(new Action(() => Vm?.OnCellEdited(header, row)),
+        Dispatcher.BeginInvoke(new Action(() => Vm?.OnCellEdited(header, row, preEditSnapshot)),
             System.Windows.Threading.DispatcherPriority.Normal);
     }
 
@@ -189,12 +319,23 @@ public partial class ItemizadoView : UserControl
             }
         }
 
+        // Ctrl+D: duplicar fila activa (solo si hay a lo sumo 1 fila seleccionada)
+        if (e.Key == Key.D && Keyboard.Modifiers == ModifierKeys.Control && !IsGridEditing())
+        {
+            if (Vm.DuplicateCommand.CanExecute(null) && ItemGrid.SelectedItems.Count <= 1 && ItemGrid.SelectedCells.Count <= 1)
+            {
+                Vm.DuplicateCommand.Execute(null);
+            }
+            e.Handled = true;
+            return;
+        }
+
         if (!IsGridEditing() && Vm.SelectedRow != null && !Vm.IsReadOnly)
         {
             // Ctrl+T: título
             if (e.Key == Key.T && Keyboard.Modifiers == ModifierKeys.Control)
             {
-                Vm.SelectedRow.EsTitulo = !Vm.SelectedRow.EsTitulo;
+                Vm.ToggleSelectedRowEsTitulo();
                 e.Handled = true;
                 return;
             }
@@ -217,17 +358,16 @@ public partial class ItemizadoView : UserControl
             }
         }
 
-        if ((e.Key == Key.Enter || e.Key == Key.Tab) && Keyboard.Modifiers == ModifierKeys.None && Vm != null && !Vm.IsReadOnly)
+        if (e.Key == Key.Tab && Keyboard.Modifiers == ModifierKeys.None && Vm != null && !Vm.IsReadOnly)
         {
             var lastRow = ItemGrid.Items.OfType<ItemizadoRowVm>().LastOrDefault();
             var currentItem = ItemGrid.CurrentCell.Item as ItemizadoRowVm;
             var currentColumn = ItemGrid.CurrentCell.Column;
 
-            bool isLastCell = lastRow != null
-                              && ReferenceEquals(currentItem, lastRow)
-                              && (currentColumn != null && (Equals(currentColumn.Header, "CANTIDAD") || Equals(currentColumn.Header, "EXCL. CUBIC.")));
+            bool isLastRow = lastRow != null && ReferenceEquals(currentItem, lastRow);
+            bool isLastEditableCell = currentColumn != null && (Equals(currentColumn.Header, "OBSERVACIONES") || Equals(currentColumn.Header, "CANTIDAD"));
 
-            if (isLastCell)
+            if (isLastRow && isLastEditableCell)
             {
                 ItemGrid.CommitEdit(DataGridEditingUnit.Row, true);
                 if (Vm.AddPartidaCommand.CanExecute(null))
@@ -341,7 +481,7 @@ public partial class ItemizadoView : UserControl
     {
         if (Vm?.SelectedRow != null && !Vm.IsReadOnly)
         {
-            Vm.SelectedRow.EsTitulo = !Vm.SelectedRow.EsTitulo;
+            Vm.ToggleSelectedRowEsTitulo();
         }
     }
 
@@ -353,5 +493,26 @@ public partial class ItemizadoView : UserControl
                 return true;
         }
         return false;
+    }
+
+    private void OnContextMenuButtonClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { ContextMenu: { } menu } button)
+        {
+            menu.PlacementTarget = button;
+            menu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+            menu.DataContext = DataContext;
+            menu.IsOpen = true;
+        }
+    }
+
+    private void OnOpenSearchClick(object sender, RoutedEventArgs e)
+    {
+        ItemSearchOverlay.Open();
+    }
+
+    private void OnFindExecuted(object sender, ExecutedRoutedEventArgs e)
+    {
+        ItemSearchOverlay.Open();
     }
 }

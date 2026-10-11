@@ -3,9 +3,9 @@ namespace QubiCostElectrical;
 
 public enum LicenseError
 {
-	FileNotFound,
-	CorruptFile,
-	InvalidSignature,
-	InvalidPayload,
-	IoError
+    FileNotFound,
+    CorruptFile,
+    InvalidSignature,
+    InvalidPayload,
+    IoError
 }

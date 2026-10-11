@@ -116,6 +116,8 @@ public sealed partial class ExcelExportInfrastructure : IExcelProjectExporter
             MetrosCuadrados = source.MetrosCuadrados,
             HerramientasPct = source.HerramientasPct,
             MermasPct = source.MermasPct,
+            FerreteriaActiva = source.FerreteriaActiva,
+            FerreteriaPct = source.FerreteriaPct,
             ApuMode = source.ApuMode,
             Markup = source.Markup,
             Currency = source.Currency,
@@ -249,28 +251,154 @@ public sealed partial class ExcelExportInfrastructure : IExcelProjectExporter
     private void ExportItemizadoCliente(XLWorkbook wb)
     {
         var ws = wb.Worksheets.Add("02_ITEMIZADO_CLIENTE");
-        Prep(ws); Title(ws, "02 · ITEMIZADO CLIENTE", 7);
-        Header(ws, 3, new[] { "ÍTEM", "DESCRIPCIÓN", "UNIDAD", "CANTIDAD", "TOTAL UF", "TOTAL " + Currency, "OBSERVACIÓN" });
+        Prep(ws); Title(ws, "02 · ITEMIZADO CLIENTE", 9);
+
         decimal valorUf = Project.ValorUfClp > 0m ? Project.ValorUfClp : PriceConversion.DefaultValorUfClp;
-        int row = 4;
-        foreach (var x in BuildOfferRows())
+
+        // Fila 2: Parámetros del presupuesto y anclaje dinámico de Valor UF en B2 ($B$2)
+        ws.Cell(2, 1).Value = "VALOR UF REF:";
+        ws.Cell(2, 1).Style.Font.Bold = true;
+        ws.Cell(2, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+        ws.Cell(2, 2).SetValue(D(valorUf));
+        ws.Cell(2, 2).Style.Font.Bold = true;
+        ws.Cell(2, 2).Style.NumberFormat.Format = ClosedXmlExportStyler.ClpExcelFormat();
+        ws.Cell(2, 3).Value = "CLIENTE:";
+        ws.Cell(2, 3).Style.Font.Bold = true;
+        ws.Cell(2, 3).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+        ws.Cell(2, 4).Value = ctx.ClientName;
+        ws.Cell(2, 5).Value = "OBRA:";
+        ws.Cell(2, 5).Style.Font.Bold = true;
+        ws.Cell(2, 5).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+        ws.Cell(2, 6).Value = ctx.ProjectTitle;
+        ws.Cell(2, 7).Value = "FECHA:";
+        ws.Cell(2, 7).Style.Font.Bold = true;
+        ws.Cell(2, 7).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+        ws.Cell(2, 8).Value = Offer.OfferDate == default ? DateTime.Today.ToString("dd-MM-yyyy") : Offer.OfferDate.ToString("dd-MM-yyyy");
+
+        // Fila 3: Encabezados de tabla
+        Header(ws, 3, new[] { "ÍTEM", "DESCRIPCIÓN", "UNIDAD", "CANTIDAD", "P.U. UF", "TOTAL UF", "P.U. " + Currency, "TOTAL " + Currency, "OBSERVACIÓN" });
+
+        var offerRows = BuildOfferRows();
+
+        // Identificar capítulos y sus rangos de filas para fórmulas de subtotales
+        var chapterHeaderRows = new List<int>();
+        var chapterRanges = new List<(int HeaderRow, int StartPartida, int EndPartida)>();
+        int currentHeaderRow = -1;
+        int currentStartPartida = -1;
+        int currentEndPartida = -1;
+
+        int scanRow = 4;
+        for (int i = 0; i < offerRows.Count; i++)
         {
-            decimal rowClp = x.TotalUf;
-            decimal rowUf = PriceConversion.ClpToUf(rowClp, valorUf);
-            ws.Cell(row, 1).Value = x.Item;
-            ws.Cell(row, 2).Value = x.Descripcion;
-            ws.Cell(row, 3).Value = x.Unidad;
-            ws.Cell(row, 4).SetValue(D(x.Cantidad));
-            ws.Cell(row, 5).SetValue(D(rowUf));
-            ws.Cell(row, 6).SetValue(D(rowClp));
-            ws.Cell(row, 7).Value = string.IsNullOrWhiteSpace(x.Observaciones)
-                ? (rowClp > 0 ? "Valorizado" : "Título / sin valorización")
-                : x.Observaciones;
+            if (offerRows[i].EsTitulo)
+            {
+                if (currentHeaderRow != -1 && currentEndPartida >= currentStartPartida)
+                {
+                    chapterRanges.Add((currentHeaderRow, currentStartPartida, currentEndPartida));
+                }
+                currentHeaderRow = scanRow;
+                chapterHeaderRows.Add(scanRow);
+                currentStartPartida = scanRow + 1;
+                currentEndPartida = scanRow;
+            }
+            else
+            {
+                if (currentHeaderRow != -1)
+                {
+                    currentEndPartida = scanRow;
+                }
+            }
+            scanRow++;
+        }
+        if (currentHeaderRow != -1 && currentEndPartida >= currentStartPartida)
+        {
+            chapterRanges.Add((currentHeaderRow, currentStartPartida, currentEndPartida));
+        }
+
+        int row = 4;
+        foreach (var x in offerRows)
+        {
+            if (x.EsTitulo)
+            {
+                ws.Cell(row, 1).Value = x.Item;
+                ws.Cell(row, 2).Value = x.Descripcion;
+                ws.Range(row, 1, row, 9).Style.Font.Bold = true;
+                ws.Range(row, 1, row, 9).Style.Fill.BackgroundColor = XLColor.FromColor(Color.FromArgb(237, 242, 247));
+
+                // Fórmula viva de subtotal del capítulo
+                var rng = chapterRanges.FirstOrDefault(c => c.HeaderRow == row);
+                if (rng.HeaderRow == row && rng.EndPartida >= rng.StartPartida)
+                {
+                    ws.Cell(row, 6).FormulaA1 = $"=SUM(F{rng.StartPartida}:F{rng.EndPartida})";
+                    ws.Cell(row, 8).FormulaA1 = $"=SUM(H{rng.StartPartida}:H{rng.EndPartida})";
+                }
+                ws.Cell(row, 9).Value = "Subtotal Capítulo";
+            }
+            else
+            {
+                decimal rowClp = x.TotalUf; // En el flujo de oferta, TotalUf contiene el monto CLP base
+                decimal rowUf = PriceConversion.ClpToUf(rowClp, valorUf);
+                decimal puUf = x.Cantidad > 0m ? Math.Round(rowUf / x.Cantidad, 4) : 0m;
+
+                ws.Cell(row, 1).Value = x.Item;
+                ws.Cell(row, 2).Value = x.Descripcion;
+                ws.Cell(row, 3).Value = x.Unidad;
+                ws.Cell(row, 4).SetValue(D(x.Cantidad));
+                ws.Cell(row, 5).SetValue(D(puUf));
+
+                // Fórmulas matemáticas vivas
+                ws.Cell(row, 6).FormulaA1 = $"=D{row}*E{row}";
+                ws.Cell(row, 7).FormulaA1 = $"=E{row}*$B$2";
+                ws.Cell(row, 8).FormulaA1 = $"=D{row}*G{row}";
+
+                ws.Cell(row, 9).Value = string.IsNullOrWhiteSpace(x.Observaciones)
+                    ? (rowClp > 0 ? "Valorizado" : "")
+                    : x.Observaciones;
+            }
             row++;
         }
-        StyleTable(ws, 3, 1, Math.Max(row - 1, 3), 7, "tbl_itemizado_cliente");
-        ws.Range(4, 5, Math.Max(row - 1, 4), 5).Style.NumberFormat.Format = UfFmt;
-        ws.Range(4, 6, Math.Max(row - 1, 4), 6).Style.NumberFormat.Format = ProjectFmt;
+
+        int dataEndRow = Math.Max(row - 1, 4);
+
+        // Bloque de Totales Vivos al pie del itemizado
+        int totalNetoRow = row;
+        ws.Cell(totalNetoRow, 2).Value = "TOTAL NETO PRESUPUESTO";
+        ws.Cell(totalNetoRow, 2).Style.Font.Bold = true;
+        if (chapterRanges.Count > 0)
+        {
+            ws.Cell(totalNetoRow, 6).FormulaA1 = "=" + string.Join("+", chapterRanges.Select(c => $"F{c.HeaderRow}"));
+            ws.Cell(totalNetoRow, 8).FormulaA1 = "=" + string.Join("+", chapterRanges.Select(c => $"H{c.HeaderRow}"));
+        }
+        else
+        {
+            ws.Cell(totalNetoRow, 6).FormulaA1 = $"=SUM(F4:F{dataEndRow})";
+            ws.Cell(totalNetoRow, 8).FormulaA1 = $"=SUM(H4:H{dataEndRow})";
+        }
+        ws.Range(totalNetoRow, 1, totalNetoRow, 9).Style.Font.Bold = true;
+        ws.Range(totalNetoRow, 1, totalNetoRow, 9).Style.Fill.BackgroundColor = XLColor.FromColor(ClosedXmlExportStyler.Navy);
+        ws.Range(totalNetoRow, 1, totalNetoRow, 9).Style.Font.FontColor = XLColor.White;
+
+        int ivaRow = totalNetoRow + 1;
+        ws.Cell(ivaRow, 2).Value = "IVA (19%)";
+        ws.Cell(ivaRow, 2).Style.Font.Bold = true;
+        ws.Cell(ivaRow, 6).FormulaA1 = $"=F{totalNetoRow}*0.19";
+        ws.Cell(ivaRow, 8).FormulaA1 = $"=H{totalNetoRow}*0.19";
+        ws.Range(ivaRow, 1, ivaRow, 9).Style.Font.Bold = true;
+        ws.Range(ivaRow, 1, ivaRow, 9).Style.Fill.BackgroundColor = XLColor.FromColor(Color.FromArgb(241, 245, 249));
+
+        int totalBrutoRow = ivaRow + 1;
+        ws.Cell(totalBrutoRow, 2).Value = "TOTAL GENERAL (CON IVA)";
+        ws.Cell(totalBrutoRow, 2).Style.Font.Bold = true;
+        ws.Cell(totalBrutoRow, 6).FormulaA1 = $"=F{totalNetoRow}+F{ivaRow}";
+        ws.Cell(totalBrutoRow, 8).FormulaA1 = $"=H{totalNetoRow}+H{ivaRow}";
+        ws.Range(totalBrutoRow, 1, totalBrutoRow, 9).Style.Font.Bold = true;
+        ws.Range(totalBrutoRow, 1, totalBrutoRow, 9).Style.Fill.BackgroundColor = XLColor.FromColor(ClosedXmlExportStyler.Blue);
+        ws.Range(totalBrutoRow, 1, totalBrutoRow, 9).Style.Font.FontColor = XLColor.White;
+
+        StyleTable(ws, 3, 1, totalBrutoRow, 9, "tbl_itemizado_cliente");
+        ws.Range(4, 4, totalBrutoRow, 4).Style.NumberFormat.Format = "#,##0.00";
+        ws.Range(4, 5, totalBrutoRow, 6).Style.NumberFormat.Format = UfFmt;
+        ws.Range(4, 7, totalBrutoRow, 8).Style.NumberFormat.Format = ProjectFmt;
     }
 
     private void ExportCubicacion(XLWorkbook wb)
@@ -433,7 +561,22 @@ public sealed partial class ExcelExportInfrastructure : IExcelProjectExporter
     {
         var ws = wb.Worksheets.Add("06_HOJA_COSTO");
         Prep(ws); Title(ws, "06 · HOJA DE COSTO", 4);
-        Header(ws, 3, new[] { "CONCEPTO", "VALOR UF", "VALOR " + Currency, "EXPLICACIÓN" });
+
+        decimal valorUf = Project.ValorUfClp > 0m ? Project.ValorUfClp : PriceConversion.DefaultValorUfClp;
+
+        // Fila 2: Parámetros del presupuesto y celda de referencia dinámica B2 ($B$2)
+        ws.Cell(2, 1).Value = "VALOR UF REF:";
+        ws.Cell(2, 1).Style.Font.Bold = true;
+        ws.Cell(2, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+        ws.Cell(2, 2).SetValue(D(valorUf));
+        ws.Cell(2, 2).Style.Font.Bold = true;
+        ws.Cell(2, 2).Style.NumberFormat.Format = ClosedXmlExportStyler.ClpExcelFormat();
+        ws.Cell(2, 3).Value = "MONEDA:";
+        ws.Cell(2, 3).Style.Font.Bold = true;
+        ws.Cell(2, 3).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+        ws.Cell(2, 4).Value = Currency;
+
+        Header(ws, 3, new[] { "CONCEPTO", "VALOR UF", "VALOR " + Currency, "EXPLICACIÓN / FÓRMULA" });
         var cost = Cost();
         WriteCost(ws, 4, "Materiales", cost.MaterialesUf, "Suma de materiales valorizados");
         WriteCost(ws, 5, "Mano de obra", cost.ManoObraUf, "Suma de mano de obra valorizada");
@@ -442,12 +585,17 @@ public sealed partial class ExcelExportInfrastructure : IExcelProjectExporter
         WriteCost(ws, 8, "Herramientas", cost.HerramientasUf, $"Herramientas {Project.HerramientasPct:N2}% cuando aplica");
         WriteCost(ws, 9, "Mermas", cost.MermasUf, $"Mermas {Project.MermasPct:N2}% cuando aplica");
         WriteCost(ws, 10, "Órdenes de cambio", cost.OrdenesCambioUf, "OC aprobadas — separadas de subcontratos");
-        WriteCost(ws, 11, "Costo directo", cost.CostoDirectoUf, "Costo base del presupuesto");
+
+        // Fila 11: Costo directo con fórmula viva
+        WriteCost(ws, 11, "Costo directo", cost.CostoDirectoUf, "=SUM(B4:B10) · Costo base del presupuesto");
+        ws.Cell(11, 2).FormulaA1 = "=SUM(B4:B10)";
+        ws.Range(11, 1, 11, 4).Style.Font.Bold = true;
+
         WriteCost(ws, 12, $"Riesgo {Project.RiesgoPct:N2}%", cost.RiesgoUf, "Imprevistos / riesgo comercial");
         if (Project.PoliticaCostosExcel)
         {
             WriteCost(ws, 13, $"Gastos generales {Project.GastosGeneralesPct:N2}%", cost.GastosGeneralesUf, "GG sobre Mat+MO+GO");
-            WriteCost(ws, 14, $"Utilidades {Project.UtilidadPct:N2}%", cost.UtilidadAditivaUf, "Utilidad aditiva Excel");
+            WriteCost(ws, 14, $"Utilidades {Project.UtilidadPct:N2}%", cost.UtilidadAditivaUf, "Utilidad aditiva");
             WriteCost(ws, 15, $"VA equipos {Project.ValorAgregadoEquiposPct:N2}%", cost.ValorAgregadoEquiposUf, "Valor agregado solo sobre equipos");
             WriteCost(ws, 16, "Costo total proyecto", cost.CostoProyectoUf, "Ejecución + GG + UT + VA");
             WriteCost(ws, 17, "Diferencia por factores", cost.DiferenciaFactoresUf, "Venta − costo proyecto");
@@ -476,11 +624,10 @@ public sealed partial class ExcelExportInfrastructure : IExcelProjectExporter
 
         void WriteCost(IXLWorksheet s, int row, string label, decimal clpValue, string note)
         {
-            decimal valorUf = Project.ValorUfClp > 0m ? Project.ValorUfClp : PriceConversion.DefaultValorUfClp;
             decimal ufValue = PriceConversion.ClpToUf(clpValue, valorUf);
             s.Cell(row, 1).Value = label;
             s.Cell(row, 2).SetValue(D(ufValue));
-            s.Cell(row, 3).SetValue(D(clpValue));
+            s.Cell(row, 3).FormulaA1 = $"=B{row}*$B$2";
             s.Cell(row, 4).Value = note;
         }
     }
@@ -662,6 +809,7 @@ public sealed partial class ExcelExportInfrastructure : IExcelProjectExporter
                 Unidad = r.Unidad,
                 Cantidad = r.Cantidad,
                 TotalUf = r.TotalUf,
+                EsTitulo = r.EsTitulo,
                 Observaciones = r.Observaciones
             })
             .ToList();
@@ -686,6 +834,7 @@ public sealed partial class ExcelExportInfrastructure : IExcelProjectExporter
         public string Unidad { get; set; } = "";
         public decimal Cantidad { get; set; }
         public decimal TotalUf { get; set; }
+        public bool EsTitulo { get; set; }
         public string Observaciones { get; set; } = "";
     }
 }

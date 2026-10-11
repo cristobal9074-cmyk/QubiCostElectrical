@@ -84,11 +84,11 @@ public class ExcelCostosBridgeTests
     }
 
     [Fact]
-    public void PresetPel029_HasMatAndPvcAt157()
+    public void PresetEstandar_HasMatAndPvcAt157()
     {
-        Assert.Equal(1.57m, ExcelCostosBridge.PresetFactoresPel029["Conductores"]);
-        Assert.Equal(1.57m, ExcelCostosBridge.PresetFactoresPel029["Canalización"]);
-        Assert.Equal(1.30m, ExcelCostosBridge.PresetFactoresPel029["Equipos"]);
+        Assert.Equal(1.57m, ExcelCostosBridge.PresetFactoresEstandar["Conductores"]);
+        Assert.Equal(1.57m, ExcelCostosBridge.PresetFactoresEstandar["Canalización"]);
+        Assert.Equal(1.30m, ExcelCostosBridge.PresetFactoresEstandar["Equipos"]);
     }
 
     [Fact]
@@ -96,5 +96,42 @@ public class ExcelCostosBridgeTests
     {
         var eff = ExcelCostosBridge.PresentationFactor(1.57m, 10m);
         Assert.Equal(1.413m, eff);
+    }
+
+    [Fact]
+    public void SumMoIndirecta_MultipliesByFraccionObra()
+    {
+        var indirecta = new List<MoIndirectaRow>
+        {
+            new() { Cargo = "Admin", Dotacion = 1, SueldoMensualClp = 1_000_000m, FraccionObra = 0.3m },
+            new() { Cargo = "Supervisor", Dotacion = 1, SueldoMensualClp = 1_000_000m }, // default 1
+        };
+
+        // (0,3 × 1M + 1 × 1M) × 3 meses = 3_900_000
+        Assert.Equal(3_900_000m, ExcelCostosBridge.SumMoIndirecta(indirecta, fallbackMonths: 3));
+    }
+
+    [Fact]
+    public void SumMoIndirecta_FraccionObraCero_NoCobraNada()
+    {
+        var indirecta = new List<MoIndirectaRow>
+        {
+            new() { Cargo = "Admin", Dotacion = 1, SueldoMensualClp = 1_000_000m, FraccionObra = 0m }
+        };
+
+        Assert.Equal(0m, ExcelCostosBridge.SumMoIndirecta(indirecta, fallbackMonths: 12));
+    }
+
+    [Fact]
+    public void SumMoIndirecta_JsonSinFraccionObra_RetrocompatibleConValorUno()
+    {
+        // Fila guardada por una versión anterior (sin el campo): debe seguir cobrando 100%.
+        const string json = """{"id":"abc","cargo":"Admin","dotacion":1,"sueldoMensualClp":1000000}""";
+        var row = System.Text.Json.JsonSerializer.Deserialize<MoIndirectaRow>(json,
+            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+        Assert.NotNull(row);
+        Assert.Equal(1m, row!.FraccionObra);
+        Assert.Equal(1_000_000m, ExcelCostosBridge.SumMoIndirecta(new List<MoIndirectaRow> { row }, fallbackMonths: 1));
     }
 }

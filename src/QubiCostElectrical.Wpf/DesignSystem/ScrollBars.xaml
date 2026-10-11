@@ -63,12 +63,6 @@
               </Track.Thumb>
             </Track>
           </Grid>
-          <ControlTemplate.Triggers>
-            <Trigger Property="IsMouseOver" Value="true">
-              <Setter Property="Width" Value="8"/>
-              <Setter Property="MinWidth" Value="8"/>
-            </Trigger>
-          </ControlTemplate.Triggers>
         </ControlTemplate>
       </Setter.Value>
     </Setter>
@@ -94,12 +88,6 @@
                   </Track.Thumb>
                 </Track>
               </Grid>
-              <ControlTemplate.Triggers>
-                <Trigger Property="IsMouseOver" Value="true">
-                  <Setter Property="Height" Value="8"/>
-                  <Setter Property="MinHeight" Value="8"/>
-                </Trigger>
-              </ControlTemplate.Triggers>
             </ControlTemplate>
           </Setter.Value>
         </Setter>

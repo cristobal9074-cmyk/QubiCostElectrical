@@ -13,6 +13,7 @@ public sealed partial class CubicacionViewModel
     public ICommand OpenItemizadoCommand { get; private set; } = null!;
     public ICommand OpenQuickJumpCommand { get; private set; } = null!;
     public ICommand OpenBatchReplaceCommand { get; private set; } = null!;
+    public ICommand OpenFamilyBatchReplaceCommand { get; private set; } = null!;
 
     private void InitializeShortcutCommands()
     {
@@ -21,12 +22,20 @@ public sealed partial class CubicacionViewModel
         OpenItemizadoCommand = new RelayCommand(OpenCubicacionItemizado);
         OpenQuickJumpCommand = new RelayCommand(OpenQuickJumpPartida);
         OpenBatchReplaceCommand = new RelayCommand(OpenBatchReplace, () => CanEdit);
+        OpenFamilyBatchReplaceCommand = new RelayCommand(OpenFamilyBatchReplace, () => CanEdit);
     }
 
     internal bool TryExecuteShortcut(string actionId)
     {
         switch (actionId)
         {
+            case CubicacionShortcutCatalog.FamilyBatchReplace:
+                if (OpenFamilyBatchReplaceCommand.CanExecute(null))
+                {
+                    OpenFamilyBatchReplaceCommand.Execute(null);
+                    return true;
+                }
+                return false;
             case CubicacionShortcutCatalog.BatchReplace:
                 if (OpenBatchReplaceCommand.CanExecute(null))
                 {
@@ -306,6 +315,11 @@ public sealed partial class CubicacionViewModel
         var targetPartida = Partidas.FirstOrDefault(p => string.Equals(p.Id, targetId, StringComparison.OrdinalIgnoreCase));
         if (targetPartida == null) return;
 
+        if (!FilteredPartidas.Contains(targetPartida))
+        {
+            IsPartidaFilterTodos = true;
+        }
+
         SelectPartida(targetPartida);
         if (dialog.ShouldAddResource && AddRowCommand.CanExecute(null))
             AddRowCommand.Execute(null);
@@ -394,6 +408,27 @@ public sealed partial class CubicacionViewModel
             }
             MarkDirty();
             SaveStatusText = $"Reemplazo completado: {result.PartidasActualizadas} partidas actualizadas (Δ {(result.DeltaTotalClp >= 0 ? "+ " : "")}$ {result.DeltaTotalClp:N0} CLP).";
+        }
+    }
+
+    private void OpenFamilyBatchReplace()
+    {
+        if (session.IsReadOnly)
+        {
+            ModuleFeedback.NotifyReadOnly("Cambio de familia", session.ReadOnlyReason);
+            return;
+        }
+
+        var result = FamilyBatchReplaceDialog.Execute(Application.Current?.MainWindow, session, priceBankStore, undo);
+        if (result != null)
+        {
+            if (SelectedPartida != null)
+            {
+                var current = SelectedPartida;
+                SelectPartida(current);
+            }
+            MarkDirty();
+            SaveStatusText = $"Cambio de familia completado: {result.ItemsReemplazados} materiales y {result.PartidasActualizadas} partidas actualizadas (Δ {(result.DeltaTotalClp >= 0 ? "+ " : "")}$ {result.DeltaTotalClp:N0} CLP).";
         }
     }
 

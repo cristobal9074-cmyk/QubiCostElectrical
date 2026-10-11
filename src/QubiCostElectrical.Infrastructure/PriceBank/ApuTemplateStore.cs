@@ -77,14 +77,14 @@ public sealed class ApuTemplateStore : IApuTemplateStore
                 json_recursos = excluded.json_recursos,
                 actualizado_en = excluded.actualizado_en;
             """;
-        cmd.Parameters.AddWithValue("$id",          t.Id);
-        cmd.Parameters.AddWithValue("$nombre",      t.Nombre ?? "");
-        cmd.Parameters.AddWithValue("$categoria",   t.Categoria ?? "");
+        cmd.Parameters.AddWithValue("$id", t.Id);
+        cmd.Parameters.AddWithValue("$nombre", t.Nombre ?? "");
+        cmd.Parameters.AddWithValue("$categoria", t.Categoria ?? "");
         cmd.Parameters.AddWithValue("$descripcion", t.Descripcion ?? "");
-        cmd.Parameters.AddWithValue("$unidad",      t.Unidad ?? "");
-        cmd.Parameters.AddWithValue("$json",        string.IsNullOrEmpty(t.JsonRecursos) ? "[]" : t.JsonRecursos);
-        cmd.Parameters.AddWithValue("$creado",      t.CreadoEn.ToString("o", CultureInfo.InvariantCulture));
-        cmd.Parameters.AddWithValue("$act",         now);
+        cmd.Parameters.AddWithValue("$unidad", t.Unidad ?? "");
+        cmd.Parameters.AddWithValue("$json", string.IsNullOrEmpty(t.JsonRecursos) ? "[]" : t.JsonRecursos);
+        cmd.Parameters.AddWithValue("$creado", t.CreadoEn.ToString("o", CultureInfo.InvariantCulture));
+        cmd.Parameters.AddWithValue("$act", now);
         cmd.ExecuteNonQuery();
         tx.Commit();
     }
@@ -145,13 +145,13 @@ public sealed class ApuTemplateStore : IApuTemplateStore
         while (r.Read())
             list.Add(new ApuTemplateRow
             {
-                Id           = r.GetString(0),
-                Nombre       = r.IsDBNull(1) ? "" : r.GetString(1),
-                Categoria    = r.IsDBNull(2) ? "" : r.GetString(2),
-                Descripcion  = r.IsDBNull(3) ? "" : r.GetString(3),
-                Unidad       = r.IsDBNull(4) ? "" : r.GetString(4),
+                Id = r.GetString(0),
+                Nombre = r.IsDBNull(1) ? "" : r.GetString(1),
+                Categoria = r.IsDBNull(2) ? "" : r.GetString(2),
+                Descripcion = r.IsDBNull(3) ? "" : r.GetString(3),
+                Unidad = r.IsDBNull(4) ? "" : r.GetString(4),
                 JsonRecursos = r.IsDBNull(5) ? "[]" : r.GetString(5),
-                CreadoEn     = r.IsDBNull(6) ? DateTime.UtcNow : ParseDate(r.GetString(6)),
+                CreadoEn = r.IsDBNull(6) ? DateTime.UtcNow : ParseDate(r.GetString(6)),
                 ActualizadoEn = r.IsDBNull(7) ? DateTime.UtcNow : ParseDate(r.GetString(7))
             });
         return list;

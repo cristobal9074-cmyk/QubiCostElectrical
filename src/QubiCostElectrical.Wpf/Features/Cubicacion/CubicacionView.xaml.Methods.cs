@@ -6,6 +6,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Input;
+using System.Windows.Media;
 using QubiCostElectrical;
 using QubiCostElectrical.Wpf.Infrastructure;
 using QubiCostElectrical.Wpf.Controls;
@@ -36,6 +37,41 @@ public partial class CubicacionView : UserControl
             MotivoNoCubicarBox.Focus();
             Keyboard.Focus(MotivoNoCubicarBox);
             MotivoNoCubicarBox.CaretIndex = MotivoNoCubicarBox.Text?.Length ?? 0;
+        }), System.Windows.Threading.DispatcherPriority.Input);
+    }
+
+    private void OnRowAdded(string rowId)
+    {
+        Dispatcher.BeginInvoke(new Action(() => BeginEditNewRow(rowId)), System.Windows.Threading.DispatcherPriority.ContextIdle);
+    }
+
+    private void BeginEditNewRow(string rowId)
+    {
+        var row = ResourceGrid.Items.OfType<CubicacionRowVm>().FirstOrDefault(r => r.Id == rowId);
+        if (row == null)
+            return;
+
+        var column = CodigoColumn ?? ResourceGrid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible && !c.IsReadOnly)
+                     ?? ResourceGrid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible);
+        if (column == null)
+            return;
+
+        ResourceGrid.ScrollIntoView(row, column);
+        ResourceGrid.UpdateLayout();
+        ResourceGrid.SelectedItem = row;
+        ResourceGrid.CurrentCell = new DataGridCellInfo(row, column);
+        ResourceGrid.Focus();
+
+        if (!ResourceGrid.BeginEdit())
+            return;
+
+        Dispatcher.BeginInvoke(new Action(() =>
+        {
+            if (DataGridExcelNavigation.FindEditingTextBox(ResourceGrid) is { } textBox)
+            {
+                textBox.Focus();
+                textBox.SelectAll();
+            }
         }), System.Windows.Threading.DispatcherPriority.Input);
     }
 
@@ -155,6 +191,7 @@ public partial class CubicacionView : UserControl
         vm.RequestFillDown += HandleFillDown;
         vm.RequestFillRight += HandleFillRight;
         vm.RequestRepeatMeasurement += HandleRepeatMeasurement;
+        vm.RowAdded += OnRowAdded;
         // Seleccionar primer ítem del popup al abrirse
         vm.PropertyChanged += (_, e) =>
         {
@@ -209,6 +246,15 @@ public partial class CubicacionView : UserControl
         // hasta que el usuario hace clic. Enfocar la grilla al entrar.
         if (!IsKeyboardFocusWithin)
             ResourceGrid.Focus();
+
+        // Sincronizar desplazamiento horizontal entre la fila de cabecera (ItemRowHost) y las columnas de ResourceGrid
+        ResourceGrid.AddHandler(ScrollViewer.ScrollChangedEvent, new ScrollChangedEventHandler((_, args) =>
+        {
+            if (args.HorizontalChange != 0 && ItemRowHost.RenderTransform is TranslateTransform tt)
+            {
+                tt.X = -args.HorizontalOffset;
+            }
+        }));
     }
 
     private void OnPartidaHeaderBoxPreviewKeyDown(object sender, KeyEventArgs e)
@@ -683,6 +729,8 @@ public partial class CubicacionView : UserControl
     }
 
     // ── DataGrid ─────────────────────────────────────────────────────────
+    private ProjectFileData? _cellPreEditSnapshot;
+
     private void OnGridBeginningEdit(object sender, DataGridBeginningEditEventArgs e)
     {
         if (Vm.IsReadOnly)
@@ -691,20 +739,22 @@ public partial class CubicacionView : UserControl
             return;
         }
 
+        _cellPreEditSnapshot = Vm.CaptureSnapshot();
+
         if (e.Row.Item is not CubicacionRowVm row) return;
     }
 
     private void OnGridPreparingCellForEdit(object sender, DataGridPreparingCellForEditEventArgs e)
     {
-        if (ReferenceEquals(e.Column, CodigoColumn) && e.EditingElement is TextBox tb)
+        if ((ReferenceEquals(e.Column, CodigoColumn) || ReferenceEquals(e.Column, DescripcionColumn)) && e.EditingElement is TextBox tb)
         {
             _codigoEditor = tb;
             tb.TextChanged += OnCodigoEditorTextChanged;
             tb.PreviewKeyDown += OnCodigoEditorPreviewKeyDown;
-            
+
             // Vincular el popup con la celda activa que se está editando
             AutocompletePopup.PlacementTarget = tb;
-            
+
             // Si la edición empezó tecleando un carácter, ese carácter ya quedó en el
             // TextBox con el cursor detrás; seleccionar todo aquí lo dejaría marcado y la
             // siguiente tecla lo borraría en vez de continuar escribiendo el código.
@@ -717,10 +767,15 @@ public partial class CubicacionView : UserControl
 
     private void OnCodigoEditorTextChanged(object sender, TextChangedEventArgs e)
     {
-        // Escribir código = modo teclado: el mouse quieto no debe robar el ítem marcado.
+        // Escribir código o descripción = modo teclado: el mouse quieto no debe robar el ítem marcado.
         FreezeAutocompleteHover();
         if (sender is TextBox tb && ResourceGrid.CurrentItem is CubicacionRowVm row)
-            _ = Vm.NotifyCodigoChangedAsync(row, tb.Text);
+        {
+            if (ReferenceEquals(ResourceGrid.CurrentCell.Column, CodigoColumn))
+                _ = Vm.NotifyCodigoChangedAsync(row, tb.Text);
+            else
+                _ = Vm.SearchMaterialsAsync(tb.Text);
+        }
     }
 
     private void OnCodigoEditorPreviewKeyDown(object sender, KeyEventArgs e)
@@ -741,13 +796,18 @@ public partial class CubicacionView : UserControl
                 break;
 
             case Key.Enter:
-                var targetEnter = AutocompleteList.SelectedItem as AutocompleteSuggestionVm
-                    ?? Vm.AutocompleteFirstItem;
+                var targetEnter = AutocompleteList.SelectedItem as AutocompleteSuggestionVm ?? Vm.AutocompleteFirstItem;
                 if (targetEnter != null)
                 {
                     Vm.ApplyMaterialCommand.Execute(targetEnter.Material);
-                    ResourceGrid.CommitEdit(DataGridEditingUnit.Cell, true);
+                    ResourceGrid.CommitEdit(DataGridEditingUnit.Row, true);
                     e.Handled = true;
+                    int nextIdx = ResourceGrid.SelectedIndex + 1;
+                    var col = CodigoColumn ?? ResourceGrid.CurrentCell.Column;
+                    if (nextIdx > 0 && nextIdx < ResourceGrid.Items.Count && col != null)
+                    {
+                        ResourceGrid.Dispatcher.BeginInvoke(new Action(() => DataGridExcelNavigation.FocusCell(ResourceGrid, nextIdx, col)), System.Windows.Threading.DispatcherPriority.Input);
+                    }
                 }
                 break;
 
@@ -797,7 +857,7 @@ public partial class CubicacionView : UserControl
         _sectorLastPickedRow = -1;
         _sectorLastPickedCol = -1;
 
-        if (ReferenceEquals(e.Column, CodigoColumn) && e.EditingElement is TextBox tb)
+        if ((ReferenceEquals(e.Column, CodigoColumn) || ReferenceEquals(e.Column, DescripcionColumn)) && e.EditingElement is TextBox tb)
         {
             tb.TextChanged -= OnCodigoEditorTextChanged;
             tb.PreviewKeyDown -= OnCodigoEditorPreviewKeyDown;
@@ -806,6 +866,9 @@ public partial class CubicacionView : UserControl
             AutocompletePopup.PlacementTarget = null;
             Vm.AutocompleteVisible = false;
         }
+
+        var preEditSnapshot = _cellPreEditSnapshot;
+        _cellPreEditSnapshot = null;
 
         if (e.EditAction == DataGridEditAction.Commit && e.Row.Item is CubicacionRowVm row)
         {
@@ -825,7 +888,7 @@ public partial class CubicacionView : UserControl
                 RecordMeasurement(generalBox.Text);
             }
 
-            Vm.OnRowEdited(row);
+            Vm.OnRowEdited(row, preEditSnapshot);
         }
     }
 
@@ -910,9 +973,14 @@ public partial class CubicacionView : UserControl
             _suppressSelectionSync = false;
         }
 
-        if (handledBySector || e.Handled)
+        if (handledBySector)
         {
             SyncGridSelectionFromGrid();
+            return;
+        }
+
+        if (e.Handled)
+        {
             return;
         }
 
@@ -938,10 +1006,10 @@ public partial class CubicacionView : UserControl
             return;
         }
 
-        // Ctrl+D → duplicar fila seleccionada
+        // Ctrl+D → duplicar fila seleccionada (solo si hay a lo sumo 1 fila activa, no si se seleccionó todo)
         if (e.Key == Key.D && modifiers == ModifierKeys.Control && !editing)
         {
-            if (Vm.DuplicateRowCommand.CanExecute(null))
+            if (Vm.DuplicateRowCommand.CanExecute(null) && ResourceGrid.SelectedItems.Count <= 1 && ResourceGrid.SelectedCells.Count <= 1)
                 Vm.DuplicateRowCommand.Execute(null);
             e.Handled = true;
             return;
@@ -1008,7 +1076,12 @@ public partial class CubicacionView : UserControl
 
     private void SyncGridSelectionFromGrid()
     {
-        var selected = ResourceGrid.SelectedCells.Select(c => c.Item).OfType<CubicacionRowVm>().Distinct().ToList();
+        List<CubicacionRowVm> selected;
+        if (ResourceGrid.SelectedCells.Count > 100)
+            selected = ResourceGrid.SelectedItems.OfType<CubicacionRowVm>().Distinct().ToList();
+        else
+            selected = ResourceGrid.SelectedCells.Select(c => c.Item).OfType<CubicacionRowVm>().Distinct().ToList();
+
         if (selected.Count == 0 && ResourceGrid.CurrentCell.Item is CubicacionRowVm currentFromCell)
             selected.Add(currentFromCell);
 
@@ -1047,7 +1120,7 @@ public partial class CubicacionView : UserControl
             {
                 pasted = DataGridExcelNavigation.TryPasteIntoSelection(
                     ResourceGrid, text,
-                    col => CubicacionViewModel.ResolveAnchoredPasteColumn(col.Header?.ToString() ?? "") >= 0);
+                    col => CubicacionViewModel.IsFixedPasteColumn(col));
                 if (pasted)
                 {
                     foreach (var row in rows)
@@ -1212,12 +1285,13 @@ public partial class CubicacionView : UserControl
         }
 
         Vm.SelectedPartida = partida;
+        PartidasList.ScrollIntoView(partida);
         // Scroll a la primera fila de la grilla al cambiar partida y enfocar directamente la columna Código
         if (ResourceGrid.Items.Count > 0)
         {
             var firstItem = ResourceGrid.Items[0];
             ResourceGrid.ScrollIntoView(firstItem);
-            
+
             Dispatcher.BeginInvoke(new Action(() =>
             {
                 DataGridColumn? col = CodigoColumn != null && CodigoColumn.Visibility == Visibility.Visible ? CodigoColumn : null;
@@ -1241,13 +1315,7 @@ public partial class CubicacionView : UserControl
 
     private static T? FindParent<T>(DependencyObject child) where T : DependencyObject
     {
-        var parent = System.Windows.Media.VisualTreeHelper.GetParent(child);
-        while (parent != null)
-        {
-            if (parent is T found) return found;
-            parent = System.Windows.Media.VisualTreeHelper.GetParent(parent);
-        }
-        return null;
+        return QubiCostElectrical.Wpf.Infrastructure.VisualTreeHelperSafe.FindAncestor<T>(child);
     }
 
     // Alterna entre los títulos normales (Casillas) y encabezados delgados sin texto (Detalle,
@@ -1279,12 +1347,12 @@ public partial class CubicacionView : UserControl
 
     private void ApplyGridMode()
     {
-        foreach (var column in _sectorColumns)
-            ResourceGrid.Columns.Remove(column);
-        _sectorColumns.Clear();
-
         if (!Vm.IsSectorMatrixMode)
         {
+            // Ocultar columnas de sector instantáneamente sin destruirlas
+            foreach (var column in _sectorColumns)
+                column.Visibility = Visibility.Collapsed;
+
             // Modo Detalle: la tabla del boceto — orden ITEM/DESCRIPCIÓN/UNIDAD/CANTIDAD/MAT/MO/
             // $ UNIT/SUBTOTAL/GG+UT/UF UNIT. Se ocultan los encabezados nativos del DataGrid (la
             // fila de partida de arriba hace de encabezado + datos editables) y el panel/totales
@@ -1367,30 +1435,30 @@ public partial class CubicacionView : UserControl
         ResourceGrid.FrozenColumnCount = 5;
         SetBottomChromeVisible(showTotals: true, showStatus: true);
 
-        for (int slot = 0; slot < CubicacionViewModel.SectorWindowSize; slot++)
+        // Si las columnas de sector ya fueron instanciadas, las mostramos instantáneamente
+        // actualizando sus etiquetas sin reconstruir 300 columnas en el árbol visual.
+        if (_sectorColumns.Count > 0)
         {
-            // Ya no hay "ventana": las 300 columnas de sector existen todas a la vez y el
-            // offset absoluto de un sector coincide siempre con su índice/slot.
-            int absoluteOffset = slot;
-            string headerText = slot < Vm.VisibleSectorHeaders.Count
-                ? Vm.VisibleSectorHeaders[slot]
-                : "";
-
-            var header = new StackPanel
+            for (int slot = 0; slot < _sectorColumns.Count; slot++)
             {
-                ToolTip = headerText,
-                HorizontalAlignment = HorizontalAlignment.Center
-            };
-            header.Children.Add(new TextBlock
-            {
-                Text = headerText,
-                FontSize = 10,
-                FontWeight = FontWeights.SemiBold,
-                MaxWidth = 48,
-                TextWrapping = TextWrapping.Wrap,
-                HorizontalAlignment = HorizontalAlignment.Center
-            });
-
+                var column = _sectorColumns[slot];
+                column.Visibility = Visibility.Visible;
+                string headerText = slot < Vm.VisibleSectorHeaders.Count
+                    ? Vm.VisibleSectorHeaders[slot]
+                    : "";
+                if (column.Header is StackPanel sp && sp.Children.Count > 0 && sp.Children[0] is TextBlock tb)
+                {
+                    if (tb.Text != headerText)
+                    {
+                        tb.Text = headerText;
+                        // ToolTip vacío = popup navy sin texto (píldora negra flotante).
+                        sp.ToolTip = string.IsNullOrEmpty(headerText) ? null : headerText;
+                    }
+                }
+            }
+        }
+        else
+        {
             var elementStyle = new Style(typeof(TextBlock));
             elementStyle.Setters.Add(new Setter(TextBlock.HorizontalAlignmentProperty, HorizontalAlignment.Right));
             elementStyle.Setters.Add(new Setter(FrameworkElement.MarginProperty, new Thickness(3, 0, 7, 0)));
@@ -1399,46 +1467,67 @@ public partial class CubicacionView : UserControl
             editingStyle.Setters.Add(new Setter(TextBox.HorizontalContentAlignmentProperty, HorizontalAlignment.Right));
             editingStyle.Setters.Add(new Setter(TextBox.PaddingProperty, new Thickness(3, 0, 5, 0)));
 
-            var cellStyle = new Style(typeof(DataGridCell), (Style)FindResource("DataGridCell.Excel"));
-            cellStyle.Setters.Add(new Setter(Control.BackgroundProperty, (System.Windows.Media.Brush)FindResource("Brush.Surface2")));
+            var baseCellStyle = (Style)FindResource("DataGridCell.Excel");
+            var surf2Brush = (System.Windows.Media.Brush)FindResource("Brush.Surface2");
+            var blueSoftBrush = (System.Windows.Media.Brush)FindResource("Brush.BlueSoft");
+            var blueBrush = (System.Windows.Media.Brush)FindResource("Brush.Blue");
 
-            // Resalta la celda EXACTA (no toda la fila) apuntada al armar una referencia entre
-            // casillas con las flechas (ver HandleSectorPick) — sin esto, con solo la fila
-            // resaltada, no se distinguía cuál columna iba a quedar seleccionada.
-            var pickTrigger = new DataTrigger
+            for (int slot = 0; slot < CubicacionViewModel.SectorWindowSize; slot++)
             {
-                Binding = new Binding(nameof(CubicacionRowVm.FormulaPickTargetOffsets))
-                {
-                    Converter = SectorPickOffsetEqualsConverter.Instance,
-                    ConverterParameter = absoluteOffset
-                },
-                Value = true
-            };
-            pickTrigger.Setters.Add(new Setter(Control.BackgroundProperty, (System.Windows.Media.Brush)FindResource("Brush.BlueSoft")));
-            pickTrigger.Setters.Add(new Setter(Control.BorderBrushProperty, (System.Windows.Media.Brush)FindResource("Brush.Blue")));
-            pickTrigger.Setters.Add(new Setter(Control.BorderThicknessProperty, new Thickness(2)));
-            cellStyle.Triggers.Add(pickTrigger);
+                int absoluteOffset = slot;
+                string headerText = slot < Vm.VisibleSectorHeaders.Count ? Vm.VisibleSectorHeaders[slot] : "";
 
-            var column = new DisplayBindingTextColumn
-            {
-                Header = header,
-                Width = 52,
-                MinWidth = 52,
-                CanUserResize = false,
-                CanUserSort = false,
-                Binding = new Binding($"SectorValues[{slot}]")
+                var header = new StackPanel
                 {
-                    Mode = BindingMode.TwoWay,
-                    UpdateSourceTrigger = UpdateSourceTrigger.LostFocus
-                },
-                DisplayBinding = new Binding($"SectorDisplayValues[{slot}]"),
-                ElementStyle = elementStyle,
-                EditingElementStyle = editingStyle,
-                CellStyle = cellStyle
-            };
+                    // ToolTip vacío = popup navy sin texto (píldora negra flotante en la grilla).
+                    ToolTip = string.IsNullOrEmpty(headerText) ? null : headerText,
+                    HorizontalAlignment = HorizontalAlignment.Center
+                };
+                header.Children.Add(new TextBlock
+                {
+                    Text = headerText,
+                    FontSize = 10,
+                    FontWeight = FontWeights.SemiBold,
+                    MaxWidth = 48,
+                    TextWrapping = TextWrapping.Wrap,
+                    HorizontalAlignment = HorizontalAlignment.Center
+                });
 
-            ResourceGrid.Columns.Add(column);
-            _sectorColumns.Add(column);
+                var cellStyle = new Style(typeof(DataGridCell), baseCellStyle);
+                cellStyle.Setters.Add(new Setter(Control.BackgroundProperty, surf2Brush));
+
+                var pickTrigger = new DataTrigger
+                {
+                    Binding = new Binding(nameof(CubicacionRowVm.FormulaPickTargetOffsets))
+                    {
+                        Converter = SectorPickOffsetEqualsConverter.Instance,
+                        ConverterParameter = absoluteOffset
+                    },
+                    Value = true
+                };
+                pickTrigger.Setters.Add(new Setter(Control.BackgroundProperty, blueSoftBrush));
+                pickTrigger.Setters.Add(new Setter(Control.BorderBrushProperty, blueBrush));
+                pickTrigger.Setters.Add(new Setter(Control.BorderThicknessProperty, new Thickness(2)));
+                cellStyle.Triggers.Add(pickTrigger);
+
+                var column = new DisplayBindingTextColumn
+                {
+                    Header = header,
+                    SectorSlot = absoluteOffset,
+                    Width = 52,
+                    MinWidth = 52,
+                    CanUserResize = false,
+                    CanUserSort = false,
+                    Binding = new Binding($"SectorValues[{slot}]") { Mode = BindingMode.TwoWay, UpdateSourceTrigger = UpdateSourceTrigger.LostFocus },
+                    DisplayBinding = new Binding($"SectorDisplayValues[{slot}]"),
+                    ElementStyle = elementStyle,
+                    EditingElementStyle = editingStyle,
+                    CellStyle = cellStyle
+                };
+
+                ResourceGrid.Columns.Add(column);
+                _sectorColumns.Add(column);
+            }
         }
 
         // En modo Casillas, seleccionar todo / extender selección desde una casilla de sector
@@ -2039,12 +2128,27 @@ public partial class CubicacionView : UserControl
             }
         }
     }
+
+    public void SelectAndScrollToRow(CubicacionRowVm row)
+    {
+        if (row == null) return;
+        Dispatcher.BeginInvoke(() =>
+        {
+            try
+            {
+                ResourceGrid.ScrollIntoView(row);
+                var col = CodigoColumn ?? ResourceGrid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible);
+                if (col != null && ResourceGrid.SelectionUnit != DataGridSelectionUnit.FullRow)
+                {
+                    ResourceGrid.SelectedCells.Clear();
+                    var cell = new DataGridCellInfo(row, col);
+                    ResourceGrid.SelectedCells.Add(cell);
+                    ResourceGrid.CurrentCell = cell;
+                }
+                else { ResourceGrid.SelectedItem = row; }
+                ResourceGrid.Focus();
+            }
+            catch { }
+        }, System.Windows.Threading.DispatcherPriority.Loaded);
+    }
 }
-
-
-
-// Columna de sector: se edita como una DataGridTextColumn normal (conserva "escribir para
-// empezar a editar", commit con Enter/Tab/flechas, etc. — todo el comportamiento de
-// DataGridExcelNavigation), pero cuando NO se está editando muestra el RESULTADO calculado de
-// la fórmula (SectorDisplayValues) en vez del texto crudo (SectorValues) — igual que una celda
-// de Excel: escribís "2+3" y ves "5", pero al volver a entrar a editar ves la fórmula original.

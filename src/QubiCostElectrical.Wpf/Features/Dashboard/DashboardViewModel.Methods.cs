@@ -18,7 +18,10 @@ namespace QubiCostElectrical.Wpf.Features.Dashboard;
 public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage, IDisposable
 {
     public DashboardViewModel(IShellNavigationHost shell, WpfAppHost host)
-        : this(shell, host.Session, host.ProjectWorkspace, host.Audit, host.Currency, host.Dashboard, host.Services.ProjectRepository) { }
+        : this(shell, host.Session, host.ProjectWorkspace, host.Audit, host.Currency, host.Dashboard, host.Services.ProjectRepository)
+    {
+        ufUpdater = new DashboardUfUpdateService(session, host.UndoService);
+    }
 
     public DashboardViewModel(IShellNavigationHost shell, BudgetProjectSession session, IProjectWorkspaceService projectWorkspace, ProjectAuditRecorder audit, ICurrencyConversionService currency, DashboardPresenter dashboard, IProjectRepository projectRepo)
     {
@@ -30,6 +33,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
         this.dashboard = dashboard;
         this.projectRepo = projectRepo;
         recentProjectsService = new RecentProjectsService();
+        ufUpdater = new DashboardUfUpdateService(session, undo: null);
         KpiCards = new ObservableCollection<DashboardKpiCardVm>();
         CostShares = new ObservableCollection<DashboardCostShareVm>();
         WorkflowSteps = new ObservableCollection<DashboardWorkflowStepVm>();
@@ -38,14 +42,31 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
         TopPartidas = new ObservableCollection<DashboardPartidaVm>();
         RecentProjects = new ObservableCollection<DashboardRecentProjectVm>();
         QuickSummaryCards = new ObservableCollection<DashboardMetricVm>();
+        QuickTemplates = new ObservableCollection<DashboardTemplateCardVm>();
         RecentAuditEntries = new ObservableCollection<ProjectAuditEntryVm>();
+        SensitivityCurve = new ObservableCollection<DashboardSensitivityPoint>();
+
+        PopulateQuickTemplates();
 
         NewProjectCommand = new RelayCommand(() => _ = shell.NewProjectAsync());
+        CreateProjectFromTemplateCommand = new RelayCommand<string>(templateId => _ = shell.NewProjectWithTemplateAsync(templateId ?? "residential_building"));
+        OpenFolderRecentProjectCommand = new RelayCommand<string>(path => OpenProjectFolder(path));
+        CopyRecentProjectPathCommand = new RelayCommand<string>(path => CopyProjectPathToClipboard(path));
+        TogglePinRecentProjectCommand = new RelayCommand<string>(path => TogglePin(path));
+        RemoveRecentProjectCommand = new RelayCommand<string>(path => RemoveRecent(path));
         OpenProjectCommand = new RelayCommand(() => _ = shell.OpenProjectAsync());
+        ActualizarUfCommand = new RelayCommand(() => _ = ActualizarUfAsync(), () => PuedeActualizarUf);
         continueTakeoffCommand = new RelayCommand(() => shell.RequestNavigate(ShellRoute.Takeoff), () => !ShowEmptyState);
-        primaryCtaCommand = new RelayCommand(() => shell.RequestNavigate(primaryCtaRoute), () => !ShowEmptyState);
+        primaryCtaCommand = new RelayCommand(() =>
+        {
+            if (ShowEmptyState)
+                _ = shell.OpenProjectAsync();
+            else
+                shell.RequestNavigate(primaryCtaRoute);
+        });
         goToProjectCommand = new RelayCommand(() => shell.RequestNavigate(ShellRoute.Project), () => !ShowEmptyState);
         goToReviewCommand = new RelayCommand(() => shell.RequestNavigate(ShellRoute.Review), () => !ShowEmptyState);
+        goToOfferDocumentsCommand = new RelayCommand(() => shell.RequestNavigate(ShellRoute.OfferDocuments), () => !ShowEmptyState);
         goToItemizadoCommand = new RelayCommand(() => shell.RequestNavigate(ShellRoute.Itemized), () => !ShowEmptyState);
         toggleDetailCommand = new RelayCommand(() => IsDetailExpanded = !IsDetailExpanded);
         goToVersionsCommand = new RelayCommand(() => shell.RequestNavigate(ShellRoute.Versions), () => !ShowEmptyState);
@@ -54,6 +75,23 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
         GoToPreferencesCommand = new RelayCommand(() => shell.RequestNavigate(ShellRoute.Preferences));
         OpenRecentProjectCommand = new RelayCommand<string>(path => _ = shell.OpenRecentProjectAsync(path ?? string.Empty), path => !string.IsNullOrWhiteSpace(path));
         ExitApplicationCommand = new RelayCommand(ExitApplication);
+        GoToPartidaCommand = new RelayCommand<DashboardPartidaVm>(p =>
+        {
+            if (p != null && !string.IsNullOrWhiteSpace(p.ItemId))
+            {
+                session.PendingItemizadoSelectionId = p.ItemId;
+                shell.RequestNavigate(ShellRoute.Itemized);
+            }
+        });
+        GoToApuPartidaCommand = new RelayCommand<DashboardPartidaVm>(p =>
+        {
+            if (p != null && !string.IsNullOrWhiteSpace(p.ItemId))
+                shell.RequestNavigate(ShellRoute.Apu, new QubiCostElectrical.Wpf.Features.Apu.ApuNavContext(p.ItemId, p.Item, p.Partida));
+        });
+        SetParetoFilterCommand = new RelayCommand<string?>(f =>
+        {
+            SelectedParetoFilter = SelectedParetoFilter == f ? null : f;
+        });
 
         ToggleThemeCommand = new RelayCommand(() =>
         {
@@ -120,191 +158,42 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
             primaryCtaCommand.RaiseCanExecuteChanged();
             goToProjectCommand.RaiseCanExecuteChanged();
             goToReviewCommand.RaiseCanExecuteChanged();
+            goToOfferDocumentsCommand.RaiseCanExecuteChanged();
             goToItemizadoCommand.RaiseCanExecuteChanged();
         }
     }
 
-    public bool IsLoading
-    {
-        get => isLoading;
-        private set => SetProperty(ref isLoading, value);
-    }
-
-    public string NextStepTitle
-    {
-        get => nextStepTitle;
-        private set => SetProperty(ref nextStepTitle, value);
-    }
-
-    public string NextStepDetail
-    {
-        get => nextStepDetail;
-        private set => SetProperty(ref nextStepDetail, value);
-    }
-
-    public string PrimaryCtaLabel
-    {
-        get => primaryCtaLabel;
-        private set => SetProperty(ref primaryCtaLabel, value);
-    }
-
-    public int BlockingAlertCount
-    {
-        get => blockingAlertCount;
-        private set => SetProperty(ref blockingAlertCount, value);
-    }
-
-    public string PartidasReadyLabel
-    {
-        get => partidasReadyLabel;
-        private set => SetProperty(ref partidasReadyLabel, value);
-    }
-
-    public double PartidasReadyPercent
-    {
-        get => partidasReadyPercent;
-        private set => SetProperty(ref partidasReadyPercent, value);
-    }
-
-    public bool IsDetailExpanded
-    {
-        get => isDetailExpanded;
-        set => SetProperty(ref isDetailExpanded, value);
-    }
-
-    public string TopAlertTitle
-    {
-        get => topAlertTitle;
-        private set => SetProperty(ref topAlertTitle, value);
-    }
-
-    public string TopAlertDetail
-    {
-        get => topAlertDetail;
-        private set => SetProperty(ref topAlertDetail, value);
-    }
-
-    public bool HasTopAlert
-    {
-        get => hasTopAlert;
-        private set => SetProperty(ref hasTopAlert, value);
-    }
-
-    public string SubtitleText
-    {
-        get => subtitleText;
-        private set => SetProperty(ref subtitleText, value);
-    }
-
-    public string PriceValidityLabel
-    {
-        get => priceValidityLabel;
-        private set => SetProperty(ref priceValidityLabel, value);
-    }
-
-    public string PriceValidityCaption
-    {
-        get => priceValidityCaption;
-        private set => SetProperty(ref priceValidityCaption, value);
-    }
-
-    public double PriceValidityPercent
-    {
-        get => priceValidityPercent;
-        private set => SetProperty(ref priceValidityPercent, value);
-    }
-
-    public string VersionComparisonLabel
-    {
-        get => versionComparisonLabel;
-        private set => SetProperty(ref versionComparisonLabel, value);
-    }
-
-    public string VersionDeltaCaption
-    {
-        get => versionDeltaCaption;
-        private set => SetProperty(ref versionDeltaCaption, value);
-    }
-
-    public double VersionDirectCostDeltaPercent
-    {
-        get => versionDirectCostDeltaPercent;
-        private set => SetProperty(ref versionDirectCostDeltaPercent, value);
-    }
-
-    public bool HasVersionComparison
-    {
-        get => hasVersionComparison;
-        private set => SetProperty(ref hasVersionComparison, value);
-    }
-
-    public double OfferReadinessRingPercent
-    {
-        get => offerReadinessRingPercent;
-        private set => SetProperty(ref offerReadinessRingPercent, value);
-    }
-
-    public bool HasRecentProjects
-    {
-        get => hasRecentProjects;
-        private set => SetProperty(ref hasRecentProjects, value);
-    }
-
+    public bool IsLoading { get => isLoading; private set => SetProperty(ref isLoading, value); }
+    public string NextStepTitle { get => nextStepTitle; private set => SetProperty(ref nextStepTitle, value); }
+    public string NextStepDetail { get => nextStepDetail; private set => SetProperty(ref nextStepDetail, value); }
+    public string PrimaryCtaLabel { get => primaryCtaLabel; private set => SetProperty(ref primaryCtaLabel, value); }
+    public int BlockingAlertCount { get => blockingAlertCount; private set => SetProperty(ref blockingAlertCount, value); }
+    public string PartidasReadyLabel { get => partidasReadyLabel; private set => SetProperty(ref partidasReadyLabel, value); }
+    public double PartidasReadyPercent { get => partidasReadyPercent; private set => SetProperty(ref partidasReadyPercent, value); }
+    public bool IsDetailExpanded { get => isDetailExpanded; set => SetProperty(ref isDetailExpanded, value); }
+    public string TopAlertTitle { get => topAlertTitle; private set => SetProperty(ref topAlertTitle, value); }
+    public string TopAlertDetail { get => topAlertDetail; private set => SetProperty(ref topAlertDetail, value); }
+    public bool HasTopAlert { get => hasTopAlert; private set => SetProperty(ref hasTopAlert, value); }
+    public string SubtitleText { get => subtitleText; private set => SetProperty(ref subtitleText, value); }
+    public string PriceValidityLabel { get => priceValidityLabel; private set => SetProperty(ref priceValidityLabel, value); }
+    public string PriceValidityCaption { get => priceValidityCaption; private set => SetProperty(ref priceValidityCaption, value); }
+    public double PriceValidityPercent { get => priceValidityPercent; private set => SetProperty(ref priceValidityPercent, value); }
+    public string VersionComparisonLabel { get => versionComparisonLabel; private set => SetProperty(ref versionComparisonLabel, value); }
+    public string VersionDeltaCaption { get => versionDeltaCaption; private set => SetProperty(ref versionDeltaCaption, value); }
+    public double VersionDirectCostDeltaPercent { get => versionDirectCostDeltaPercent; private set => SetProperty(ref versionDirectCostDeltaPercent, value); }
+    public bool HasVersionComparison { get => hasVersionComparison; private set => SetProperty(ref hasVersionComparison, value); }
+    public double OfferReadinessRingPercent { get => offerReadinessRingPercent; private set => SetProperty(ref offerReadinessRingPercent, value); }
+    public bool HasRecentProjects { get => hasRecentProjects; private set => SetProperty(ref hasRecentProjects, value); }
     public Task? LastRefreshTask { get; private set; }
-
-    public string CostMaterials
-    {
-        get => costMaterials;
-        private set => SetProperty(ref costMaterials, value);
-    }
-
-    public string CostLabor
-    {
-        get => costLabor;
-        private set => SetProperty(ref costLabor, value);
-    }
-
-    public string CostOtherDirect
-    {
-        get => costOtherDirect;
-        private set => SetProperty(ref costOtherDirect, value);
-    }
-
-    public string CostDirect
-    {
-        get => costDirect;
-        private set => SetProperty(ref costDirect, value);
-    }
-
-    public string CostTotal
-    {
-        get => costTotal;
-        private set => SetProperty(ref costTotal, value);
-    }
-
-    public string CostUfM2
-    {
-        get => costUfM2;
-        private set => SetProperty(ref costUfM2, value);
-    }
-
-    public GridLength MaterialShareWidth
-    {
-        get => materialShareWidth;
-        private set => SetProperty(ref materialShareWidth, value);
-    }
-
-    public GridLength LaborShareWidth
-    {
-        get => laborShareWidth;
-        private set => SetProperty(ref laborShareWidth, value);
-    }
-
-    public GridLength OtherShareWidth
-    {
-        get => otherShareWidth;
-        private set => SetProperty(ref otherShareWidth, value);
-    }
+    public string CostMaterials { get => costMaterials; private set => SetProperty(ref costMaterials, value); }
+    public string CostLabor { get => costLabor; private set => SetProperty(ref costLabor, value); }
+    public string CostOtherDirect { get => costOtherDirect; private set => SetProperty(ref costOtherDirect, value); }
+    public string CostDirect { get => costDirect; private set => SetProperty(ref costDirect, value); }
+    public string CostTotal { get => costTotal; private set => SetProperty(ref costTotal, value); }
+    public string CostUfM2 { get => costUfM2; private set => SetProperty(ref costUfM2, value); }
+    public GridLength MaterialShareWidth { get => materialShareWidth; private set => SetProperty(ref materialShareWidth, value); }
+    public GridLength LaborShareWidth { get => laborShareWidth; private set => SetProperty(ref laborShareWidth, value); }
+    public GridLength OtherShareWidth { get => otherShareWidth; private set => SetProperty(ref otherShareWidth, value); }
 
     public double GastosGeneralesSimulatedPct
     {
@@ -360,9 +249,12 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
     {
         get
         {
-            if (string.IsNullOrEmpty(SelectedCategoryFilter))
-                return TopPartidas;
-            return TopPartidas.Where(p => p.Category == SelectedCategoryFilter);
+            var query = (IEnumerable<DashboardPartidaVm>)TopPartidas;
+            if (!string.IsNullOrEmpty(SelectedCategoryFilter))
+                query = query.Where(p => p.Category == SelectedCategoryFilter);
+            if (!string.IsNullOrEmpty(SelectedParetoFilter))
+                query = query.Where(p => p.ParetoClass == SelectedParetoFilter);
+            return query;
         }
     }
 
@@ -377,6 +269,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
     public ICommand ToggleDetailCommand => toggleDetailCommand;
     public ICommand GoToProjectCommand => goToProjectCommand;
     public ICommand GoToReviewCommand => goToReviewCommand;
+    public ICommand GoToOfferDocumentsCommand => goToOfferDocumentsCommand;
     public ICommand GoToItemizadoCommand => goToItemizadoCommand;
     public ICommand GoToVersionsCommand => goToVersionsCommand;
     public ICommand GoToPriceBankCommand { get; }
@@ -384,12 +277,32 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
     public ICommand GoToPreferencesCommand { get; }
     public ICommand OpenRecentProjectCommand { get; }
     public ICommand NewProjectCommand { get; }
+    public ICommand CreateProjectFromTemplateCommand { get; }
+    public ICommand OpenFolderRecentProjectCommand { get; }
+    public ICommand CopyRecentProjectPathCommand { get; }
+    public ICommand TogglePinRecentProjectCommand { get; }
+    public ICommand RemoveRecentProjectCommand { get; }
     public ICommand ExitApplicationCommand { get; }
     public ICommand ToggleThemeCommand { get; }
     public ICommand ToggleFilterCommand { get; }
+    public ObservableCollection<DashboardTemplateCardVm> QuickTemplates { get; }
     public ObservableCollection<ProjectAuditEntryVm> RecentAuditEntries { get; }
+    public ObservableCollection<DashboardSensitivityPoint> SensitivityCurve { get; }
+    public string MaterialImpact10PctLabel { get => materialImpact10PctLabel; private set => SetProperty(ref materialImpact10PctLabel, value); }
+    public double ParetoAxisMaxPct { get => paretoAxisMaxPct; private set => SetProperty(ref paretoAxisMaxPct, value); }
+    public int MajorAlertCount => Alerts.Count(a => a.SeverityLabel is "Crítico" or "Mayor");
+    public bool HasBlockingAlerts => BlockingAlertCount > 0;
+    public bool HasMajorAlerts => MajorAlertCount > 0;
     public bool IsDarkMode => QubiCostElectrical.Wpf.DesignSystem.ThemeManager.IsDarkMode;
     public string VersionLabel => $"v{ProductVersionInfo.ProductVersion}";
+    public string SyncFooterLabel =>
+        $"Sincronización correcta · Base SQLite v{ProductVersionInfo.DatabaseSchemaVersion} · Auditoría activa";
+
+    public bool HasAlerts => Alerts.Count > 0;
+    public bool HasTopPartidas => TopPartidas.Count > 0;
+    public bool HasRecentAudit => RecentAuditEntries.Count > 0;
+    public bool IsOfferReady => OfferReadinessRingPercent >= 99.5;
+    public string ReadinessBadgeLabel => IsOfferReady ? "Listo" : "En curso";
 
     public void Refresh() => Load();
 
@@ -413,12 +326,15 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
                 Alerts.Clear();
                 OfferReadinessItems.Clear();
                 TopPartidas.Clear();
+                ParetoSummary = DashboardParetoSummary.Empty;
                 RecentAuditEntries.Clear();
                 LoadLandingState();
-                CostMaterials = CostLabor = CostOtherDirect = CostDirect = CostTotal = CostUfM2 = "—";
+                CostMaterials = CostLabor = CostOtherDirect = CostDirect = CostTotal = CostUfM2 = CostGo = CostMargin = MargenRealPctLabel = "—";
                 MaterialShareWidth = new GridLength(0);
                 LaborShareWidth = new GridLength(0);
                 OtherShareWidth = new GridLength(0);
+                GoShareWidth = new GridLength(0);
+                MarginShareWidth = new GridLength(0);
                 NextStepTitle = "Abra un proyecto";
                 NextStepDetail = "Cree o abra un archivo .qce para ver el resumen ejecutivo.";
                 PrimaryCtaLabel = "Abrir proyecto";
@@ -428,6 +344,12 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
                 HasTopAlert = false;
                 TopAlertTitle = "";
                 TopAlertDetail = "";
+                OnPropertyChanged(nameof(HasAlerts));
+                OnPropertyChanged(nameof(HasTopPartidas));
+                OnPropertyChanged(nameof(HasRecentAudit));
+                OnPropertyChanged(nameof(IsOfferReady));
+                OnPropertyChanged(nameof(ReadinessBadgeLabel));
+                primaryCtaCommand.RaiseCanExecuteChanged();
                 return;
             }
 
@@ -459,6 +381,19 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
 
                 decimal totalVentaClp = state.Cost.TotalVentaClp;
                 decimal totalVentaUf = PriceConversion.ClpToUf(totalVentaClp, valorUf);
+
+                BuildWorkflow(state.Alerts);
+                BuildAlerts(state.Alerts);
+                BuildOfferReadiness(state.Alerts);
+                BuildPriceValidity();
+                BuildVersionComparison();
+                UpdateNextStep(state.Alerts);
+                OnPropertyChanged(nameof(HasAlerts));
+                OnPropertyChanged(nameof(IsOfferReady));
+                OnPropertyChanged(nameof(ReadinessBadgeLabel));
+                OnPropertyChanged(nameof(MajorAlertCount));
+                OnPropertyChanged(nameof(HasBlockingAlerts));
+                OnPropertyChanged(nameof(HasMajorAlerts));
 
                 KpiCards.Clear();
                 foreach (var kpi in state.Executive.Kpis)
@@ -492,6 +427,33 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
                         cap = kpi.Caption;
                     }
 
+                    int pendientes = kpi.Title == "PARTIDAS LISTAS"
+                        ? state.Alerts.EmptyPartidas + state.Alerts.MaterialsWithoutPrice
+                        : 0;
+                    string chip = kpi.Title switch
+                    {
+                        "TOTAL VENTA" => HasVersionComparison
+                            ? $"{VersionDirectCostDeltaPercent:+0.0;-0.0;0.0}% vs v. anterior"
+                            : "Valor oficial",
+                        "PARTIDAS LISTAS" => pendientes > 0 ? $"{pendientes} pendientes" : "Todo listo",
+                        _ when kpi.Title.Contains("m²") => project.MetrosCuadrados > 0 ? $"{project.MetrosCuadrados:N0} m² útiles" : "Configurar m²",
+                        _ => kpi.Accent == DashboardExecutiveKpiAccent.RiskLow ? "Riesgo bajo" : (kpi.TextValue ?? "")
+                    };
+                    string chipKind = kpi.Accent switch
+                    {
+                        DashboardExecutiveKpiAccent.RiskHigh => "danger",
+                        DashboardExecutiveKpiAccent.RiskMedium or DashboardExecutiveKpiAccent.Orange => "warn",
+                        DashboardExecutiveKpiAccent.RiskLow => "up",
+                        _ => "mute"
+                    };
+                    if (kpi.Title == "TOTAL VENTA" && HasVersionComparison)
+                        chipKind = VersionDirectCostDeltaPercent >= 0 ? "up" : "danger";
+                    double gauge = kpi.Title == "PARTIDAS LISTAS" ? PartidasReadyPercent : 0;
+                    string iconKind = kpi.Title == "TOTAL VENTA" ? "total"
+                        : kpi.Title == "PARTIDAS LISTAS" ? "listas"
+                        : kpi.Title.Contains("m²") ? "m2"
+                        : "riesgo";
+
                     KpiCards.Add(new DashboardKpiCardVm
                     {
                         Title = kpi.Title,
@@ -500,16 +462,30 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
                         IsPrimary = kpi.IsPrimary,
                         Accent = kpi.Accent,
                         AccentBrush = DashboardKpiBrushes.ForAccent(kpi.Accent),
-                        AccentSoftBrush = DashboardKpiBrushes.ForAccentSoft(kpi.Accent)
+                        AccentSoftBrush = DashboardKpiBrushes.ForAccentSoft(kpi.Accent),
+                        ChipLabel = chip,
+                        ChipKind = chipKind,
+                        IconKind = iconKind,
+                        ShowUfUpdateButton = kpi.Title == "TOTAL VENTA",
+                        GaugePercent = gauge,
+                        GaugeFillWidth = new GridLength(Math.Max(0.001, gauge), GridUnitType.Star),
+                        GaugeRemainWidth = new GridLength(Math.Max(0.001, 100 - gauge), GridUnitType.Star)
                     });
                 }
 
-                BuildWorkflow(state.Alerts);
-                BuildAlerts(state.Alerts);
-                BuildOfferReadiness(state.Alerts);
-                BuildPriceValidity();
-                BuildVersionComparison();
-                UpdateNextStep(state.Alerts);
+                ProjectClient = string.IsNullOrWhiteSpace(project.Cliente) ? "Sin cliente" : project.Cliente;
+                ProjectTitle = string.IsNullOrWhiteSpace(project.Nombre) ? "Proyecto sin nombre" : project.Nombre;
+                var pol = session.Data.ClosingPolicy?.Policy ?? ClosingPolicyType.CostPlusMarkup;
+                ClosingPolicyLabel = pol switch
+                {
+                    ClosingPolicyType.CostPlusMarkup => "Costo + Markup",
+                    ClosingPolicyType.TargetPrice => "Precio Objetivo",
+                    ClosingPolicyType.LumpSumEpc => "Suma Alzada / EPC",
+                    ClosingPolicyType.CostPlusFee => "Costo + Fee",
+                    ClosingPolicyType.UnitPricePure => "Precio Unitario Puro",
+                    ClosingPolicyType.GainsharePainshare => "Gainshare / Painshare",
+                    _ => "Costo + Markup"
+                };
 
                 CostMaterials = FormatDual(state.Cost.MaterialesUf);
                 CostLabor = FormatDual(state.Cost.ManoObraUf);
@@ -518,36 +494,59 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
                 CostOtherDirect = FormatDual(otherDirect);
                 CostDirect = FormatDual(costDirect);
                 CostTotal = FormatDual(state.Cost.TotalVentaUf);
+                CostGo = FormatDual(state.Cost.GastosOperacionalesUf);
+                decimal marginClp = Math.Max(0m, state.Cost.TotalVentaUf - state.Cost.CostoProyectoUf);
+                CostMargin = FormatDual(marginClp);
+                MargenRealPctLabel = $"{state.Cost.MargenRealPct:N1}%";
+
                 CostUfM2 = project.MetrosCuadrados > 0
                     ? $"{PriceConversion.ClpToUf(totalVentaClp / project.MetrosCuadrados, valorUf):N2} UF/m² · $ {(totalVentaClp / project.MetrosCuadrados):N0}/m²"
                     : "Configure m² en datos del proyecto";
-                UpdateCostDistribution(costDirect, state.Cost.MaterialesUf, state.Cost.ManoObraUf, otherDirect);
+                UpdateCostDistribution(state.Cost.TotalVentaUf, state.Cost.MaterialesUf, state.Cost.ManoObraUf, state.Cost.GastosOperacionalesUf, marginClp);
 
                 TopPartidas.Clear();
-                foreach (var row in state.Executive.TopPartidas.Take(8))
+                double runningAccum = 0;
+                int rank = 1;
+                foreach (var row in state.Executive.TopPartidas.Take(10))
                 {
                     double sharePct = costDirect > 0m ? (double)(row.TotalUf / costDirect * 100m) : 0;
+                    runningAccum += sharePct;
                     string category = GetCategoryForPartida(row.Item, row.Partida);
                     decimal rowClp = row.TotalUf;
                     decimal rowUf = PriceConversion.ClpToUf(rowClp, valorUf);
+                    var itemRow = session.Itemizado.FirstOrDefault(x => string.Equals(x.Item, row.Item, StringComparison.OrdinalIgnoreCase) || string.Equals(x.Descripcion, row.Partida, StringComparison.OrdinalIgnoreCase));
+                    string itemId = itemRow?.Id ?? "";
                     TopPartidas.Add(new DashboardPartidaVm
                     {
+                        Rank = rank++,
+                        ItemId = itemId,
                         Item = row.Item,
                         Partida = row.Partida,
                         TotalLabel = $"$ {rowClp:N0} ({rowUf:N1} UF)",
                         TotalClpLabel = $"$ {rowClp:N0}",
                         TotalUfLabel = $"{rowUf:N2} UF",
                         SharePct = Math.Clamp(sharePct, 0, 100),
+                        AccumPct = Math.Clamp(runningAccum, 0, 100),
                         Category = category
                     });
                 }
+                ParetoSummary = DashboardParetoSummary.Calculate(TopPartidas, costDirect, valorUf);
+                double maxShare = TopPartidas.Count > 0 ? TopPartidas.Max(p => p.SharePct) : 10;
+                ParetoAxisMaxPct = Math.Max(5, Math.Ceiling(maxShare / 5) * 5);
                 OnPropertyChanged(nameof(FilteredTopPartidas));
+                OnPropertyChanged(nameof(HasTopPartidas));
+
+                SensitivityCurve.Clear();
+                foreach (var pt in state.Executive.SensitivityCurve)
+                    SensitivityCurve.Add(pt);
+                MaterialImpact10PctLabel = $"+10% → {state.Executive.MaterialImpact10Pct:+0.0;-0.0;0.0}%";
 
                 RecentAuditEntries.Clear();
                 foreach (var entry in audit.GetRecentEntries(5))
                 {
                     RecentAuditEntries.Add(new ProjectAuditEntryVm(entry));
                 }
+                OnPropertyChanged(nameof(HasRecentAudit));
 
                 // Actualiza el badge del shell con el total ya calculado (sin CreateSnapshot extra).
                 shell.RefreshChrome();
@@ -566,7 +565,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
     private static string GetCategoryForPartida(string item, string name)
     {
         string text = (name ?? "").ToLowerInvariant();
-        if (text.Contains("conductor") || text.Contains("cable") || text.Contains("tubería") || text.Contains("tuberia") || 
+        if (text.Contains("conductor") || text.Contains("cable") || text.Contains("tubería") || text.Contains("tuberia") ||
             text.Contains("pvc") || text.Contains("canaliz") || text.Contains("artefacto") || text.Contains("led") ||
             text.Contains("enchufe") || text.Contains("interruptor"))
         {
@@ -683,12 +682,33 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
             },
             DisplayDate = project.DisplayDate,
             IsMissing = project.IsMissing,
+            IsPinned = project.IsPinned,
             StateKind = state,
             AccentBrush = accent,
             AccentSoftBrush = soft,
-            StatusForeground = accent
+            StatusForeground = accent,
+            OpenCommand = new RelayCommand(() => _ = shell.OpenRecentProjectAsync(project.Path)),
+            OpenFolderCommand = new RelayCommand(() => OpenProjectFolder(project.Path)),
+            CopyPathCommand = new RelayCommand(() => CopyProjectPathToClipboard(project.Path)),
+            TogglePinCommand = new RelayCommand(() => TogglePin(project.Path)),
+            RemoveRecentCommand = new RelayCommand(() => RemoveRecent(project.Path))
         };
     }
+
+    private void PopulateQuickTemplates()
+    {
+        QuickTemplates.Clear();
+        foreach (var t in DashboardLandingCoordinator.CreateQuickTemplates(shell))
+            QuickTemplates.Add(t);
+    }
+
+    private void OpenProjectFolder(string? path) => DashboardLandingCoordinator.OpenProjectFolder(path);
+
+    private void CopyProjectPathToClipboard(string? path) => DashboardLandingCoordinator.CopyProjectPathToClipboard(path);
+
+    private void TogglePin(string? path) => DashboardLandingCoordinator.TogglePin(recentProjectsService, path, LoadLandingState);
+
+    private void RemoveRecent(string? path) => DashboardLandingCoordinator.RemoveRecent(recentProjectsService, shell, path, LoadLandingState);
 
     private DashboardProjectStateKind DetermineProjectState(RecentProjectInfo project)
     {
@@ -738,24 +758,26 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
         }
     }
 
-    private void UpdateCostDistribution(decimal direct, decimal materials, decimal labor, decimal other)
+    private void UpdateCostDistribution(decimal totalVenta, decimal materials, decimal labor, decimal go, decimal margin)
     {
-        var safeDirect = direct <= 0m ? 1m : direct;
-        var materialPct = materials / safeDirect * 100m;
-        var laborPct = labor / safeDirect * 100m;
-        var otherPct = Math.Max(0m, 100m - materialPct - laborPct);
+        var safeTotal = totalVenta <= 0m ? 1m : totalVenta;
+        var matPct = Math.Max(0m, materials / safeTotal * 100m);
+        var moPct = Math.Max(0m, labor / safeTotal * 100m);
+        var goPct = Math.Max(0m, go / safeTotal * 100m);
+        var mgPct = Math.Max(0m, margin / safeTotal * 100m);
 
-        MaterialShareWidth = new GridLength((double)Math.Max(materialPct, 0.1m), GridUnitType.Star);
-        LaborShareWidth = new GridLength((double)Math.Max(laborPct, 0.1m), GridUnitType.Star);
-        OtherShareWidth = new GridLength((double)Math.Max(otherPct, 0.1m), GridUnitType.Star);
+        MaterialShareWidth = new GridLength((double)Math.Max(matPct, 0.1m), GridUnitType.Star);
+        LaborShareWidth = new GridLength((double)Math.Max(moPct, 0.1m), GridUnitType.Star);
+        GoShareWidth = new GridLength((double)Math.Max(goPct, 0.1m), GridUnitType.Star);
+        MarginShareWidth = new GridLength((double)Math.Max(mgPct, 0.1m), GridUnitType.Star);
 
         CostShares.Clear();
         CostShares.Add(new DashboardCostShareVm
         {
             Label = "Materiales",
             AmountLabel = CostMaterials,
-            PercentageLabel = $"{materialPct:N0}%",
-            PercentageValue = (double)materialPct,
+            PercentageLabel = $"{matPct:N0}%",
+            PercentageValue = (double)matPct,
             Accent = DashboardExecutiveKpiAccent.Blue,
             AccentBrush = DashboardKpiBrushes.Blue,
             AccentSoftBrush = DashboardKpiBrushes.BlueSoft
@@ -764,21 +786,31 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
         {
             Label = "Mano de obra",
             AmountLabel = CostLabor,
-            PercentageLabel = $"{laborPct:N0}%",
-            PercentageValue = (double)laborPct,
+            PercentageLabel = $"{moPct:N0}%",
+            PercentageValue = (double)moPct,
             Accent = DashboardExecutiveKpiAccent.RiskLow,
             AccentBrush = DashboardKpiBrushes.Green,
             AccentSoftBrush = DashboardKpiBrushes.GreenSoft
         });
         CostShares.Add(new DashboardCostShareVm
         {
-            Label = "Otros directos",
-            AmountLabel = CostOtherDirect,
-            PercentageLabel = $"{otherPct:N0}%",
-            PercentageValue = (double)otherPct,
+            Label = "Gastos Op. (Faena)",
+            AmountLabel = CostGo,
+            PercentageLabel = $"{goPct:N0}%",
+            PercentageValue = (double)goPct,
             Accent = DashboardExecutiveKpiAccent.Orange,
             AccentBrush = DashboardKpiBrushes.Amber,
             AccentSoftBrush = DashboardKpiBrushes.AmberSoft
+        });
+        CostShares.Add(new DashboardCostShareVm
+        {
+            Label = "Margen Bruto",
+            AmountLabel = CostMargin,
+            PercentageLabel = $"{mgPct:N0}%",
+            PercentageValue = (double)mgPct,
+            Accent = DashboardExecutiveKpiAccent.Primary,
+            AccentBrush = DashboardKpiBrushes.BlueDark,
+            AccentSoftBrush = DashboardKpiBrushes.BlueSoft
         });
     }
 
@@ -814,6 +846,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
             var r = route;
             WorkflowSteps.Add(new DashboardWorkflowStepVm
             {
+                Index = i + 1,
                 Title = title,
                 Detail = detail,
                 IsComplete = complete,
@@ -834,7 +867,13 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
             {
                 Title = issue.Problem,
                 Detail = issue.Recommendation,
-                SeverityLabel = issue.Severity.ToString(),
+                SeverityLabel = issue.Severity switch
+                {
+                    FinalReviewSeverity.Blocker => "Bloqueante",
+                    FinalReviewSeverity.Critical => "Crítico",
+                    FinalReviewSeverity.Warning => "Mayor",
+                    _ => "Info"
+                },
                 Category = category,
                 NavigateCommand = new RelayCommand(() =>
                 {
@@ -882,8 +921,8 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
                 "Itemizado" => "Ir al itemizado",
                 "Cubicación" => "Continuar cubicación",
                 "APU/Costos" => "Completar APU",
-                "Revisión" => "Revisar alertas",
-                "Exportar" => "Ir a oferta",
+                "Revisión" => "Ir a revisión",
+                "Exportar" => "Cerrar oferta",
                 _ => $"Continuar {current.Title.ToLowerInvariant()}"
             };
             primaryCtaRoute = current.Title switch
@@ -929,32 +968,38 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
         {
             Label = "Datos del proyecto",
             IsComplete = hasProjectData,
-            StatusBrush = hasProjectData ? DashboardKpiBrushes.Green : DashboardKpiBrushes.AmberRisk
+            StatusBrush = hasProjectData ? DashboardKpiBrushes.Green : DashboardKpiBrushes.AmberRisk,
+            NavigateCommand = new RelayCommand(() => shell.RequestNavigate(ShellRoute.Project), () => !ShowEmptyState)
         });
         OfferReadinessItems.Add(new DashboardOfferReadinessItemVm
         {
             Label = "Itemizado importado",
             IsComplete = hasItemizado,
-            StatusBrush = hasItemizado ? DashboardKpiBrushes.Green : DashboardKpiBrushes.AmberRisk
+            StatusBrush = hasItemizado ? DashboardKpiBrushes.Green : DashboardKpiBrushes.AmberRisk,
+            NavigateCommand = new RelayCommand(() => shell.RequestNavigate(ShellRoute.Itemized), () => !ShowEmptyState)
         });
         OfferReadinessItems.Add(new DashboardOfferReadinessItemVm
         {
             Label = "Cubicación completada",
             IsComplete = cubicacionOk,
-            StatusBrush = cubicacionOk ? DashboardKpiBrushes.Green : DashboardKpiBrushes.AmberRisk
+            StatusBrush = cubicacionOk ? DashboardKpiBrushes.Green : DashboardKpiBrushes.AmberRisk,
+            NavigateCommand = new RelayCommand(() => shell.RequestNavigate(ShellRoute.Takeoff), () => !ShowEmptyState)
         });
         OfferReadinessItems.Add(new DashboardOfferReadinessItemVm
         {
             Label = stalePrices > 0 ? $"Precios por confirmar ({stalePrices:N0})" : "Precios vigentes",
             IsComplete = stalePrices == 0,
             IsWarning = stalePrices > 0,
-            StatusBrush = stalePrices > 0 ? DashboardKpiBrushes.AmberRisk : DashboardKpiBrushes.Green
+            StatusBrush = stalePrices > 0 ? DashboardKpiBrushes.AmberRisk : DashboardKpiBrushes.Green,
+            NavigateCommand = new RelayCommand(() => shell.RequestNavigate(ShellRoute.Prices), () => !ShowEmptyState)
         });
 
         int completeCount = OfferReadinessItems.Count(i => i.IsComplete);
         OfferReadinessRingPercent = OfferReadinessItems.Count == 0
             ? 0
             : Math.Min(100, completeCount * 100d / OfferReadinessItems.Count);
+        OnPropertyChanged(nameof(IsOfferReady));
+        OnPropertyChanged(nameof(ReadinessBadgeLabel));
     }
 
     private int CountStalePrices()

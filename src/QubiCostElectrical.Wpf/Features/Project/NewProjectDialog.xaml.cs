@@ -52,12 +52,31 @@ public sealed partial class NewProjectDialog : Window, INotifyPropertyChanged
         }
     }
 
-    public NewProjectDialog()
+    public NewProjectDialog() : this(null, null)
+    {
+    }
+
+    public NewProjectDialog(string? initialTemplateId, string? suggestedName = null)
     {
         InitializeComponent();
         DataContext = this;
         TemplateBox.ItemsSource = ProjectTemplateCatalog.All;
-        TemplateBox.SelectedIndex = 1; // Edificio Residencial SEC por defecto
+
+        if (!string.IsNullOrWhiteSpace(initialTemplateId))
+        {
+            var found = ProjectTemplateCatalog.All.FirstOrDefault(t => string.Equals(t.Id, initialTemplateId, StringComparison.OrdinalIgnoreCase));
+            TemplateBox.SelectedItem = found ?? ProjectTemplateCatalog.All.ElementAtOrDefault(1) ?? ProjectTemplateCatalog.All.FirstOrDefault();
+        }
+        else
+        {
+            TemplateBox.SelectedIndex = 1; // Edificio Residencial SEC por defecto
+        }
+
+        if (!string.IsNullOrWhiteSpace(suggestedName))
+        {
+            NameBox.Text = suggestedName.Trim();
+        }
+
         var docs = System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments);
         FolderBox.Text = Path.Combine(docs, "Presupuestos Electricos");
         try

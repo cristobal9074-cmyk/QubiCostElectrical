@@ -234,8 +234,8 @@ public sealed class FloorSummaryViewModel : SessionAwareViewModelBase, IRefresha
             if (!string.IsNullOrWhiteSpace(SearchText))
             {
                 string term = SearchText.Trim().ToUpperInvariant();
-                filteredMaterials = filteredMaterials.Where(m => 
-                    (m.Codigo ?? "").ToUpperInvariant().Contains(term) || 
+                filteredMaterials = filteredMaterials.Where(m =>
+                    (m.Codigo ?? "").ToUpperInvariant().Contains(term) ||
                     (m.Descripcion ?? "").ToUpperInvariant().Contains(term));
             }
 

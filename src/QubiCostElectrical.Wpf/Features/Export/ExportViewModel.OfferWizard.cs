@@ -6,22 +6,26 @@ using System.Windows.Input;
 using QubiCostElectrical;
 using QubiCostElectrical.Wpf.Features.Delivery;
 using QubiCostElectrical.Wpf.Infrastructure;
+using QubiCostElectrical.Wpf.Navigation;
+using QubiCostElectrical.Wpf.Shell;
 
 namespace QubiCostElectrical.Wpf.Features.Export;
 
 public sealed partial class ExportViewModel
 {
-    private RelayCommand goToReviewStepCommand = null!;
+    private RelayCommand goToFinalReviewCommand = null!;
     private RelayCommand goToConfigureStepCommand = null!;
     private RelayCommand goToPreviewStepCommand = null!;
     private RelayCommand goToExportStepCommand = null!;
     private RelayCommand saveOfferSettingsCommand = null!;
     private RelayCommand deliverPackageCommand = null!;
     private RelayCommand pickLogoCommand = null!;
+    private RelayCommand pickClientLogoCommand = null!;
     private RelayCommand pickSignatureCommand = null!;
     private RelayCommand openPreviewFolderCommand = null!;
+    private RelayCommand selectAllDocumentsCommand = null!;
 
-    private OfferWizardStep currentStep = OfferWizardStep.Review;
+    private OfferWizardStep currentStep = OfferWizardStep.Configure;
     private bool isBusy;
     private string deliverySummaryText = "Selecciona los documentos para preparar la exportación.";
     private string selectedOfferPreset = "";
@@ -29,19 +33,24 @@ public sealed partial class ExportViewModel
 
     partial void InitializeOfferWizard()
     {
-        goToReviewStepCommand = new RelayCommand(() => CurrentStep = OfferWizardStep.Review);
+        goToFinalReviewCommand = new RelayCommand(
+            () => shell?.RequestNavigate(ShellRoute.Review),
+            () => shell != null && HasOpenProject);
         goToConfigureStepCommand = new RelayCommand(() => CurrentStep = OfferWizardStep.Configure, () => HasOpenProject);
         goToPreviewStepCommand = new RelayCommand(() => CurrentStep = OfferWizardStep.Preview, () => HasOpenProject);
         goToExportStepCommand = new RelayCommand(() => CurrentStep = OfferWizardStep.Export, () => HasOpenProject && CanExportActions);
         saveOfferSettingsCommand = new RelayCommand(SaveOfferSettings, () => HasOpenProject && !session.IsReadOnly);
         deliverPackageCommand = new RelayCommand(async () => await DeliverPackageAsync(), CanDeliverPackage);
         pickLogoCommand = new RelayCommand(PickLogo, () => !session.IsReadOnly);
+        pickClientLogoCommand = new RelayCommand(PickClientLogo, () => !session.IsReadOnly);
         pickSignatureCommand = new RelayCommand(PickSignature, () => !session.IsReadOnly);
         openPreviewFolderCommand = new RelayCommand(OpenPreviewFolder, () => ExportResult.PreviewFilePath != null);
         applyOfferPresetCommand = new RelayCommand<string>(ApplyOfferPreset, _ => HasOpenProject && !session.IsReadOnly);
+        selectAllDocumentsCommand = new RelayCommand(SelectAllDocuments, () => HasOpenProject && !session.IsReadOnly);
 
-        OfferSettings = new OfferSettingsEditorVm(session, () => !session.IsReadOnly);
+        OfferSettings = new OfferSettingsEditorVm(session, () => !session.IsReadOnly, () => permissions.CanManageAppSettings);
         DocumentSelector = new DeliveryDocumentSelectorVm(dashboard);
+        DocumentSelector.SelectionChanged += (_, _) => OnDocumentSelectionChanged();
         ExportResult = new DeliveryExportResultVm();
         HookLivePreview();
     }
@@ -54,6 +63,7 @@ public sealed partial class ExportViewModel
     public bool HasOpenProject => projectWorkspace.HasOpenProject;
     public bool IsReadOnly => session.IsReadOnly;
     public bool CanEdit => !session.IsReadOnly;
+    public bool HasBlockers => Blockers > 0;
 
     public OfferWizardStep CurrentStep
     {
@@ -63,7 +73,6 @@ public sealed partial class ExportViewModel
             if (!SetProperty(ref currentStep, value))
                 return;
 
-            OnPropertyChanged(nameof(IsReviewStep));
             OnPropertyChanged(nameof(IsConfigureStep));
             OnPropertyChanged(nameof(IsPreviewStep));
             OnPropertyChanged(nameof(IsExportStep));
@@ -74,34 +83,28 @@ public sealed partial class ExportViewModel
             OnPropertyChanged(nameof(IsStep2Completed));
             OnPropertyChanged(nameof(IsStep3Active));
             OnPropertyChanged(nameof(IsStep3Completed));
-            OnPropertyChanged(nameof(IsStep4Active));
-            OnPropertyChanged(nameof(IsStep4Completed));
 
             if (value is OfferWizardStep.Configure or OfferWizardStep.Preview)
                 ScheduleLivePreview();
         }
     }
 
-    public bool IsReviewStep => CurrentStep == OfferWizardStep.Review;
     public bool IsConfigureStep => CurrentStep == OfferWizardStep.Configure;
     public bool IsPreviewStep => CurrentStep == OfferWizardStep.Preview;
     public bool IsExportStep => CurrentStep == OfferWizardStep.Export;
 
-    public bool IsStep1Active => CurrentStep == OfferWizardStep.Review;
-    public bool IsStep1Completed => (int)CurrentStep > (int)OfferWizardStep.Review;
-    public bool IsStep2Active => CurrentStep == OfferWizardStep.Configure;
-    public bool IsStep2Completed => (int)CurrentStep > (int)OfferWizardStep.Configure;
-    public bool IsStep3Active => CurrentStep == OfferWizardStep.Preview;
-    public bool IsStep3Completed => (int)CurrentStep > (int)OfferWizardStep.Preview;
-    public bool IsStep4Active => CurrentStep == OfferWizardStep.Export;
-    public bool IsStep4Completed => false;
+    public bool IsStep1Active => CurrentStep == OfferWizardStep.Configure;
+    public bool IsStep1Completed => (int)CurrentStep > (int)OfferWizardStep.Configure;
+    public bool IsStep2Active => CurrentStep == OfferWizardStep.Preview;
+    public bool IsStep2Completed => (int)CurrentStep > (int)OfferWizardStep.Preview;
+    public bool IsStep3Active => CurrentStep == OfferWizardStep.Export;
+    public bool IsStep3Completed => false;
 
     public string WizardStepTitle => CurrentStep switch
     {
-        OfferWizardStep.Review => "1. Validar oferta",
-        OfferWizardStep.Configure => "2. Configurar oferta",
-        OfferWizardStep.Preview => "3. Vista previa",
-        _ => "4. Exportar paquete"
+        OfferWizardStep.Configure => "1. Configurar oferta",
+        OfferWizardStep.Preview => "2. Vista previa",
+        _ => "3. Exportar paquete"
     };
 
     public bool IsBusy
@@ -126,13 +129,14 @@ public sealed partial class ExportViewModel
         private set => SetProperty(ref selectedOfferPreset, value);
     }
 
-    public ICommand GoToReviewStepCommand => goToReviewStepCommand;
+    public ICommand GoToFinalReviewCommand => goToFinalReviewCommand;
     public ICommand GoToConfigureStepCommand => goToConfigureStepCommand;
     public ICommand GoToPreviewStepCommand => goToPreviewStepCommand;
     public ICommand GoToExportStepCommand => goToExportStepCommand;
     public ICommand SaveOfferSettingsCommand => saveOfferSettingsCommand;
     public ICommand DeliverPackageCommand => deliverPackageCommand;
     public ICommand PickLogoCommand => pickLogoCommand;
+    public ICommand PickClientLogoCommand => pickClientLogoCommand;
     public ICommand PickSignatureCommand => pickSignatureCommand;
     public ICommand OpenPreviewFolderCommand => openPreviewFolderCommand;
     public ICommand ApplyOfferPresetCommand => applyOfferPresetCommand;
@@ -143,10 +147,9 @@ public sealed partial class ExportViewModel
         OfferSettings.NotifyEditAccessChanged();
         OnPropertyChanged(nameof(IsReadOnly));
         OnPropertyChanged(nameof(CanEdit));
+        OnPropertyChanged(nameof(HasBlockers));
         ExportResult.Clear();
-        UpdateDeliverySummary();
-        CurrentStep = Blockers > 0 ? OfferWizardStep.Review : currentStep;
-        ScheduleLivePreview();
+        OnDocumentSelectionChanged();
     }
 
     private void UpdateDeliverySummary()
@@ -226,6 +229,13 @@ public sealed partial class ExportViewModel
         var path = fileDialog.PromptOpenFile("Imágenes (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg|Todos|*.*");
         if (path != null)
             OfferSettings.LogoPath = path;
+    }
+
+    private void PickClientLogo()
+    {
+        var path = fileDialog.PromptOpenFile("Imágenes (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg|Todos|*.*");
+        if (path != null)
+            OfferSettings.ClientLogoPath = path;
     }
 
     private void PickSignature()

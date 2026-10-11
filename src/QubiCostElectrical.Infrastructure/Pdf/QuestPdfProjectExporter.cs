@@ -13,17 +13,17 @@ namespace QubiCostElectrical;
 
 public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
 {
-    // Paleta corporativa
-    private const string CNavy    = "#0B2442";
-    private const string CBlue    = "#1565C0";
-    private const string CLight   = "#E8F0FE";
-    private const string CText    = "#1A2332";
-    private const string CMuted   = "#5A6472";
-    private const string CLine    = "#C8D8E8";
-    private const string CRowAlt  = "#F7F9FC";
-    private const string CHead    = "#EBF2FB";
-    private const string CWhite   = "#FFFFFF";
-    private const string CAccent  = "#2962CC";
+    // Paleta corporativa base
+    private const string FallbackNavy = "#0B2442";
+    private const string FallbackBlue = "#1565C0";
+    private const string CLight = "#E8F0FE";
+    private const string CText = "#1A2332";
+    private const string CMuted = "#5A6472";
+    private const string CLine = "#C8D8E8";
+    private const string CRowAlt = "#F7F9FC";
+    private const string FallbackHead = "#EBF2FB";
+    private const string CWhite = "#FFFFFF";
+    private const string FallbackAccent = "#2962CC";
 
     private readonly IBudgetCalculationService budgetCalculation;
     private readonly ICurrencyConversionService currencyConversion;

@@ -12,6 +12,7 @@ public sealed class ProjectEditSnapshot
     public string EstadoPresupuesto { get; set; } = "Borrador";
     public decimal ValorUfClp { get; set; }
     public decimal TipoCambioUsdClp { get; set; }
+    public decimal TipoCambioEurClp { get; set; } = 1050m;
     public decimal GastosGeneralesPct { get; set; }
     public decimal UtilidadPct { get; set; }
     public decimal RiesgoPct { get; set; }
@@ -20,6 +21,7 @@ public sealed class ProjectEditSnapshot
     public CommercialCostingModel CommercialModel { get; set; } = CommercialCostingModel.ApuDirectCostWithCommercialFactors;
     public CommercialProfile CommercialProfile { get; set; } = CommercialProfile.StandardConstructor;
     public bool AllowPartidaCommercialOverrides { get; set; } = true;
+    public string ApuCostingMode { get; set; } = "CubicacionMasApuComplementarios";
     public decimal MetrosCuadrados { get; set; }
     public string ScopeText { get; set; } = "";
     public string ExclusionsText { get; set; } = "";
@@ -48,6 +50,7 @@ public sealed class ProjectEditSnapshot
         EstadoPresupuesto = EstadoPresupuesto,
         ValorUfClp = ValorUfClp,
         TipoCambioUsdClp = TipoCambioUsdClp,
+        TipoCambioEurClp = TipoCambioEurClp,
         GastosGeneralesPct = GastosGeneralesPct,
         UtilidadPct = UtilidadPct,
         RiesgoPct = RiesgoPct,
@@ -56,6 +59,7 @@ public sealed class ProjectEditSnapshot
         CommercialModel = CommercialModel,
         CommercialProfile = CommercialProfile,
         AllowPartidaCommercialOverrides = AllowPartidaCommercialOverrides,
+        ApuCostingMode = ApuCostingMode,
         MetrosCuadrados = MetrosCuadrados,
         ScopeText = ScopeText,
         ExclusionsText = ExclusionsText,
@@ -77,11 +81,12 @@ public sealed class ProjectEditSnapshot
         && Nombre == other.Nombre && Cliente == other.Cliente && Ubicacion == other.Ubicacion
         && TipoProyecto == other.TipoProyecto && UsuarioNombre == other.UsuarioNombre && UsuarioRol == other.UsuarioRol
         && MonedaPresupuesto == other.MonedaPresupuesto && EstadoPresupuesto == other.EstadoPresupuesto
-        && ValorUfClp == other.ValorUfClp && TipoCambioUsdClp == other.TipoCambioUsdClp
+        && ValorUfClp == other.ValorUfClp && TipoCambioUsdClp == other.TipoCambioUsdClp && TipoCambioEurClp == other.TipoCambioEurClp
         && GastosGeneralesPct == other.GastosGeneralesPct && UtilidadPct == other.UtilidadPct
         && RiesgoPct == other.RiesgoPct && DescuentoPct == other.DescuentoPct && IvaPct == other.IvaPct
         && CommercialModel == other.CommercialModel && CommercialProfile == other.CommercialProfile
         && AllowPartidaCommercialOverrides == other.AllowPartidaCommercialOverrides
+        && ApuCostingMode == other.ApuCostingMode
         && MetrosCuadrados == other.MetrosCuadrados && ScopeText == other.ScopeText
         && ExclusionsText == other.ExclusionsText && ValidityDays == other.ValidityDays
         && MarkupConductores == other.MarkupConductores && MarkupCanalizacion == other.MarkupCanalizacion
@@ -132,6 +137,8 @@ public sealed class ProjectEditWorkspaceService : IProjectEditWorkspaceService
             errors.Add("Valor UF (CLP): no puede ser negativo.");
         if (snapshot.TipoCambioUsdClp < 0)
             errors.Add("Tipo de cambio USD: no puede ser negativo.");
+        if (snapshot.TipoCambioEurClp < 0)
+            errors.Add("Tipo de cambio EUR: no puede ser negativo.");
         if (snapshot.GastosGeneralesPct < 0 || snapshot.GastosGeneralesPct > 100)
             errors.Add("Gastos generales %: debe estar entre 0 y 100.");
         if (snapshot.UtilidadPct < 0 || snapshot.UtilidadPct > 100)
@@ -185,6 +192,31 @@ public sealed class ProjectEditWorkspaceService : IProjectEditWorkspaceService
         project.EstadoPresupuesto = string.IsNullOrWhiteSpace(snapshot.EstadoPresupuesto) ? "Borrador" : snapshot.EstadoPresupuesto.Trim();
         project.ValorUfClp = snapshot.ValorUfClp;
         project.TipoCambioUsdClp = snapshot.TipoCambioUsdClp;
+        project.TipoCambioEurClp = snapshot.TipoCambioEurClp;
+
+        if (project.ValorUfClp > 0)
+        {
+            project.HistorialTasas ??= new();
+            if (!project.HistorialTasas.Any(h => h.Activa && h.UfClp == project.ValorUfClp && h.UsdClp == project.TipoCambioUsdClp && h.EurClp == project.TipoCambioEurClp))
+            {
+                foreach (var h in project.HistorialTasas) h.Activa = false;
+                project.HistorialTasas.Add(new TasaCambioHistorialRow
+                {
+                    Fecha = AppClock.Now,
+                    UfClp = project.ValorUfClp,
+                    UsdClp = project.TipoCambioUsdClp,
+                    EurClp = project.TipoCambioEurClp,
+                    Activa = true
+                });
+                project.FechaTipoCambio = AppClock.Now;
+            }
+
+            foreach (var row in session.Cubicacion)
+            {
+                row.RecalcularUf(project.ValorUfClp);
+            }
+        }
+
         project.GastosGeneralesPct = snapshot.GastosGeneralesPct;
         project.UtilidadPct = snapshot.UtilidadPct;
         project.RiesgoPct = snapshot.RiesgoPct;
@@ -193,6 +225,7 @@ public sealed class ProjectEditWorkspaceService : IProjectEditWorkspaceService
         project.CommercialModel = snapshot.CommercialModel;
         project.CommercialProfile = snapshot.CommercialProfile;
         project.AllowPartidaCommercialOverrides = snapshot.AllowPartidaCommercialOverrides;
+        project.ApuCostingMode = string.IsNullOrWhiteSpace(snapshot.ApuCostingMode) ? "CubicacionMasApuComplementarios" : snapshot.ApuCostingMode;
         project.MetrosCuadrados = snapshot.MetrosCuadrados;
         project.FechaModificacion = AppClock.Now;
         project.OfertaPdf ??= new OfferPdfSettings();
@@ -239,6 +272,7 @@ public sealed class ProjectEditWorkspaceService : IProjectEditWorkspaceService
             EstadoPresupuesto = project.EstadoPresupuesto,
             ValorUfClp = project.ValorUfClp,
             TipoCambioUsdClp = project.TipoCambioUsdClp,
+            TipoCambioEurClp = project.TipoCambioEurClp,
             GastosGeneralesPct = project.GastosGeneralesPct,
             UtilidadPct = project.UtilidadPct,
             RiesgoPct = project.RiesgoPct,
@@ -247,6 +281,7 @@ public sealed class ProjectEditWorkspaceService : IProjectEditWorkspaceService
             CommercialModel = project.CommercialModel,
             CommercialProfile = project.CommercialProfile,
             AllowPartidaCommercialOverrides = project.AllowPartidaCommercialOverrides,
+            ApuCostingMode = string.IsNullOrWhiteSpace(project.ApuCostingMode) ? "CubicacionMasApuComplementarios" : project.ApuCostingMode,
             MetrosCuadrados = project.MetrosCuadrados,
             ScopeText = project.OfertaPdf.ScopeText,
             ExclusionsText = project.OfertaPdf.ExclusionsText,

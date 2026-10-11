@@ -28,11 +28,9 @@ partial class ShellViewModel
         && CurrentRoute != ShellRoute.Epp;
 
     /// <summary>
-    /// Stepper de flujo de trabajo: visible cuando hay un proyecto abierto.
-    /// ShellWindow.xaml enlaza Visibility a este flag; RefreshWorkflowSteps dispara el PropertyChanged
-    /// en cada apertura/cierre de proyecto a través de RefreshChrome.
+    /// Stepper de flujo de trabajo: retirado de la interfaz a petición del usuario.
     /// </summary>
-    public bool ShowWorkflowStepper => projectWorkspace.HasOpenProject;
+    public bool ShowWorkflowStepper => false;
 
     public bool ShowContextPageTitle => CurrentRoute switch
     {
@@ -50,6 +48,7 @@ partial class ShellViewModel
         ShellRoute.Quotes => false,
         ShellRoute.Solicitudes => false,
         ShellRoute.FloorSummary => false,
+        ShellRoute.EstadosPagos => false,
         _ => true
     };
 

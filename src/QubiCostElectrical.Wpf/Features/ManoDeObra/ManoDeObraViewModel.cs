@@ -18,24 +18,31 @@ public sealed class MoCargoDef
     public bool EsDirecta { get; set; }
     public int DotPico { get; set; }
     public decimal SueldoBase { get; set; }
+    /// <summary>Solo indirecta: fracción del sueldo cobrada en esta obra (0..1; 1 = 100%).</summary>
+    public decimal FraccionObra { get; set; } = 1m;
 }
 
 public sealed class MoCargoEditorVm : ViewModelBase
 {
-    private readonly Action onSalaryChanged;
+    private readonly Action onEditorChanged;
     private decimal sueldoBase;
+    private decimal fraccionObra;
+    private decimal leyesPct;
     private string sueldoEditText = "0";
+    private string fraccionEditText = "";
     private string conLeyesLabel = "";
 
-    public MoCargoEditorVm(MoCargoDef def, string hint, Action onSalaryChanged)
+    public MoCargoEditorVm(MoCargoDef def, string hint, Action onEditorChanged)
     {
         Id = def.Id;
         Tag = def.Tag;
         Nombre = def.Nombre;
         Hint = hint;
-        this.onSalaryChanged = onSalaryChanged;
+        this.onEditorChanged = onEditorChanged;
         sueldoBase = def.SueldoBase;
         sueldoEditText = FormatEdit(def.SueldoBase);
+        fraccionObra = ClampFraccion(def.FraccionObra);
+        fraccionEditText = FormatFraccion(fraccionObra);
     }
 
     public string Id { get; }
@@ -44,6 +51,9 @@ public sealed class MoCargoEditorVm : ViewModelBase
     public string Hint { get; }
 
     public decimal SueldoBase => sueldoBase;
+
+    /// <summary>Fracción efectiva 0..1 (directa siempre 1).</summary>
+    public decimal FraccionObra => fraccionObra;
 
     public string SueldoEditText
     {
@@ -57,7 +67,24 @@ public sealed class MoCargoEditorVm : ViewModelBase
                 return;
             sueldoBase = parsed;
             OnPropertyChanged(nameof(SueldoBase));
-            onSalaryChanged();
+            onEditorChanged();
+        }
+    }
+
+    public string FraccionEditText
+    {
+        get => fraccionEditText;
+        set
+        {
+            if (!SetProperty(ref fraccionEditText, value ?? ""))
+                return;
+            var parsed = ParseFraccion(value, fraccionObra);
+            if (parsed == fraccionObra)
+                return;
+            fraccionObra = parsed;
+            OnPropertyChanged(nameof(FraccionObra));
+            UpdateConLeyes(leyesPct);
+            onEditorChanged();
         }
     }
 
@@ -71,16 +98,41 @@ public sealed class MoCargoEditorVm : ViewModelBase
     {
         sueldoBase = ParseMoney(sueldoEditText);
         sueldoEditText = FormatEdit(sueldoBase);
+        fraccionObra = ParseFraccion(fraccionEditText, fraccionObra);
+        fraccionEditText = FormatFraccion(fraccionObra);
         OnPropertyChanged(nameof(SueldoEditText));
         OnPropertyChanged(nameof(SueldoBase));
-        onSalaryChanged();
+        OnPropertyChanged(nameof(FraccionEditText));
+        OnPropertyChanged(nameof(FraccionObra));
+        onEditorChanged();
     }
 
-    public void UpdateConLeyes(decimal leyesPct)
-        => ConLeyesLabel = "$ " + Math.Round(sueldoBase * (1 + leyesPct)).ToString("N0", CultureInfo.GetCultureInfo("es-CL"));
+    public void UpdateConLeyes(decimal pct)
+    {
+        leyesPct = pct;
+        var cobrado = sueldoBase * fraccionObra;
+        ConLeyesLabel = "$ " + Math.Round(cobrado * (1 + pct)).ToString("N0", CultureInfo.GetCultureInfo("es-CL"));
+    }
 
     private static string FormatEdit(decimal n)
         => Math.Round(n).ToString("N0", CultureInfo.GetCultureInfo("es-CL"));
+
+    private static string FormatFraccion(decimal n)
+        => n.ToString("N2", CultureInfo.GetCultureInfo("es-CL"));
+
+    private static decimal ClampFraccion(decimal n)
+        => Math.Clamp(n, 0m, 1m);
+
+    /// <summary>Acepta coma o punto decimal (0,3 / 0.3) y recorta a 0..1. Vacío = conserva el valor actual.</summary>
+    private static decimal ParseFraccion(string? raw, decimal fallback)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+            return fallback;
+        var text = raw.Trim().Replace(',', '.');
+        return decimal.TryParse(text, NumberStyles.Number, CultureInfo.InvariantCulture, out var n)
+            ? ClampFraccion(n)
+            : fallback;
+    }
 
     private static decimal ParseMoney(string? raw)
     {
@@ -126,6 +178,7 @@ public sealed class MoTableRow
     public bool EsDirecta { get; init; }
     public int DotPico { get; init; }
     public string SueldoBaseStr { get; init; } = "";
+    public string FraccionStr { get; init; } = "";
     public string LeyesStr { get; init; } = "";
     public string TotalMensualStr { get; init; } = "";
     public int[] Dotaciones { get; init; } = Array.Empty<int>();

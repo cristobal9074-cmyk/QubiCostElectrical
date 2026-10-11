@@ -22,8 +22,6 @@ using SolicitudesF = QubiCostElectrical.Wpf.Features.Solicitudes;
 using CostoF = QubiCostElectrical.Wpf.Features.Costo;
 using EppF = QubiCostElectrical.Wpf.Features.Epp;
 using ManoDeObraF = QubiCostElectrical.Wpf.Features.ManoDeObra;
-using ApuCatalogF = QubiCostElectrical.Wpf.Features.ApuCatalog;
-using ApuMergeF = QubiCostElectrical.Wpf.Features.ApuMerge;
 using EconomicEditorF = QubiCostElectrical.Wpf.Features.EconomicEditor;
 using ContractsF = QubiCostElectrical.Wpf.Features.Contracts;
 using PricesF = QubiCostElectrical.Wpf.Features.Prices;
@@ -33,6 +31,7 @@ using ReviewF = QubiCostElectrical.Wpf.Features.Review;
 using VersionsF = QubiCostElectrical.Wpf.Features.Versions;
 using PreferencesF = QubiCostElectrical.Wpf.Features.Preferences;
 using ChangeOrdersF = QubiCostElectrical.Wpf.Features.ChangeOrders;
+using EstadosPagoF = QubiCostElectrical.Wpf.Features.EstadosPago;
 
 namespace QubiCostElectrical.Tests.Architecture;
 
@@ -58,8 +57,6 @@ public sealed class ServiceProviderValidationTests
     [InlineData(typeof(IExcelProjectExporter))]
     [InlineData(typeof(IPdfProjectExporter))]
     [InlineData(typeof(IPresentationLetterDocxExporter))]
-    [InlineData(typeof(IApuCatalogService))]
-    [InlineData(typeof(IBenchmarkService))]
     [InlineData(typeof(IEconomicCalculationService))]
     [InlineData(typeof(PriceBankApplicationService))]
     [InlineData(typeof(DashboardPresenter))]
@@ -82,15 +79,14 @@ public sealed class ServiceProviderValidationTests
         Assert.NotNull(s.PriceBankStore);
         Assert.NotNull(s.ExcelExporter);
         Assert.NotNull(s.PdfExporter);
-        Assert.NotNull(s.ApuCatalog);
-        Assert.NotNull(s.Benchmark);
+        Assert.NotNull(s.ApuCatalogRepository);
         Assert.NotNull(s.EconomicCalculation);
         Assert.NotNull(s.FinalReview);
     }
 }
 
 /// <summary>
-/// Garantía de fitness: cada uno de los 28 ViewModels de página registrados en
+/// Garantía de fitness: cada uno de los 27 ViewModels de página registrados en
 /// <c>ViewModelRegistration</c> debe poder construirse íntegramente desde el contenedor real
 /// (vía <c>ActivatorUtilities.CreateInstance</c>, tal como lo hace <c>ShellPageFactory</c>).
 /// Esto prueba que el constructor primario "concreto" de cada VM tiene todas sus dependencias
@@ -119,7 +115,7 @@ public sealed class PageViewModelContainerResolutionTests
 
     public PageViewModelContainerResolutionTests() => WpfTestHost.EnsureInitialized();
 
-    // Los 28 VMs de página, en el mismo orden que ViewModelRegistration.AddViewModels.
+    // Los 27 VMs de página, en el mismo orden que ViewModelRegistration.AddViewModels.
     public static IEnumerable<object[]> PageViewModelTypes() => new[]
     {
         new object[] { typeof(DashboardF.DashboardViewModel) },
@@ -144,12 +140,11 @@ public sealed class PageViewModelContainerResolutionTests
         new object[] { typeof(CostoF.CostoViewModel) },
         new object[] { typeof(EppF.EppViewModel) },
         new object[] { typeof(ManoDeObraF.ManoDeObraViewModel) },
-        new object[] { typeof(ApuCatalogF.ApuCatalogViewModel) },
-        new object[] { typeof(ApuMergeF.ApuMergeViewModel) },
         new object[] { typeof(EconomicEditorF.EconomicEditorViewModel) },
         new object[] { typeof(ContractsF.ContractWorkspaceViewModel) },
         new object[] { typeof(ContractsF.ContractEditorViewModel) },
         new object[] { typeof(ContractsF.ContractVersionsViewModel) },
+        new object[] { typeof(EstadosPagoF.EstadosPagoViewModel) },
     };
 
     // CurrencyViewModel, PreferencesViewModel y ChangeOrdersViewModel se crean en
@@ -166,7 +161,7 @@ public sealed class PageViewModelContainerResolutionTests
         // cubrirlo también aquí.
         var covered = 0;
         foreach (var _ in PageViewModelTypes()) covered++;
-        Assert.Equal(28, covered);
+        Assert.Equal(27, covered);
     }
 
     [Theory]

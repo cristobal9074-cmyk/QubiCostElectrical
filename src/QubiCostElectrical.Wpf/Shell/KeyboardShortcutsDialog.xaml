@@ -24,15 +24,15 @@
         <StackPanel>
           <TextBlock Text="GLOBAL" Style="{StaticResource Text.SectionLabel}" Margin="0,0,0,6" />
           <TextBlock Style="{StaticResource Text.Body}" Margin="0,0,0,10" TextWrapping="Wrap"
-                     Text="Ctrl+K — Búsqueda rápida · Ctrl+S — Guardar · Ctrl+Z/Y — Deshacer/Rehacer · Ctrl+N/O/W — Proyecto · F1 — Esta ayuda · F8 — Revisión" />
+                     Text="Ctrl+K — Paleta de comandos · Ctrl+S — Guardar · Ctrl+Shift+S — Guardar como · Ctrl+Z/Y — Deshacer/Rehacer · Ctrl+N/O/W — Proyecto · F1 — Esta ayuda · F8 — Revisión" />
 
           <TextBlock Text="NAVEGACIÓN" Style="{StaticResource Text.SectionLabel}" Margin="0,8,0,6" />
           <TextBlock Style="{StaticResource Text.Body}" Margin="0,0,0,10" TextWrapping="Wrap"
-                     Text="Alt+1 Resumen · Alt+2 Itemizado · Alt+3 Cubicación · Alt+Shift+3 C.SC · Alt+4 APU · Alt+6 Precios · Alt+9 Revisión · Alt+O Exportar" />
+                     Text="Alt+← / Alt+→ — Vista anterior / siguiente (Historial) · Alt+1 Resumen · Alt+2 Itemizado · Alt+3 Cubicación · Alt+Shift+3 C.SC · Alt+4 APU · Alt+6 Precios · Alt+9 Revisión · Alt+O Exportar" />
 
           <TextBlock Text="ITEMIZADO" Style="{StaticResource Text.SectionLabel}" Margin="0,8,0,6" />
           <TextBlock Style="{StaticResource Text.Body}" Margin="0,0,0,10" TextWrapping="Wrap"
-                     Text="Ins — Agregar partida · Alt+↑/↓ — Mover fila · Supr — Eliminar · Ctrl+V — Pegar desde Excel · Ctrl+Shift+C — Cubicar" />
+                     Text="Ins — Agregar partida · Alt+↑/↓ — Mover fila · Supr — Eliminar · Ctrl+V — Pegar filas · Ctrl+Shift+C — Cubicar" />
 
           <TextBlock Text="CUBICACIÓN" Style="{StaticResource Text.SectionLabel}" Margin="0,8,0,6" />
           <TextBlock x:Name="CubicacionShortcutsText" Style="{StaticResource Text.Body}" Margin="0,0,0,10" TextWrapping="Wrap"

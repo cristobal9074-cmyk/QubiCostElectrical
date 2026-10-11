@@ -56,4 +56,68 @@ public static class PriceConversion
             ? Math.Round(ufField * valorUfClp, 0, MidpointRounding.AwayFromZero)
             : 0m;
     }
+
+    public static decimal ConvertToDeliveryCurrency(
+        decimal amountClp,
+        string currency,
+        decimal valorUfClp,
+        decimal usdClp,
+        decimal eurClp)
+    {
+        if (amountClp == 0m)
+            return 0m;
+
+        string c = (currency ?? Moneda.UF).Trim().ToUpperInvariant();
+        return c switch
+        {
+            Moneda.CLP => amountClp,
+            Moneda.USD => usdClp > 0m ? amountClp / usdClp : (amountClp / 950m),
+            Moneda.EUR => eurClp > 0m ? amountClp / eurClp : (amountClp / 1050m),
+            _ => valorUfClp > 0m ? amountClp / valorUfClp : (amountClp / DefaultValorUfClp)
+        };
+    }
+
+    public static string FormatDeliveryPrice(decimal amountInCurrency, string currency, bool isUnitPrice)
+    {
+        if (amountInCurrency <= 0m)
+            return "—";
+
+        string c = (currency ?? Moneda.UF).Trim().ToUpperInvariant();
+        return c switch
+        {
+            Moneda.CLP => isUnitPrice
+                ? amountInCurrency.ToString("N0", System.Globalization.CultureInfo.CurrentCulture)
+                : amountInCurrency.ToString("N0", System.Globalization.CultureInfo.CurrentCulture),
+            Moneda.USD => amountInCurrency.ToString("N2", System.Globalization.CultureInfo.CurrentCulture),
+            Moneda.EUR => amountInCurrency.ToString("N2", System.Globalization.CultureInfo.CurrentCulture),
+            _ => isUnitPrice
+                ? amountInCurrency.ToString("N3", System.Globalization.CultureInfo.CurrentCulture)
+                : amountInCurrency.ToString("N2", System.Globalization.CultureInfo.CurrentCulture)
+        };
+    }
+
+    public static string GetCurrencySymbol(string currency)
+    {
+        string c = (currency ?? Moneda.UF).Trim().ToUpperInvariant();
+        return c switch
+        {
+            Moneda.CLP => "$",
+            Moneda.USD => "US$",
+            Moneda.EUR => "€",
+            _ => "UF"
+        };
+    }
+
+    public static string GetCurrencyHeaderLabel(string baseLabel, string currency)
+    {
+        string c = (currency ?? Moneda.UF).Trim().ToUpperInvariant();
+        string suffix = c switch
+        {
+            Moneda.CLP => "$",
+            Moneda.USD => "USD",
+            Moneda.EUR => "€",
+            _ => "UF"
+        };
+        return $"{baseLabel} ({suffix})";
+    }
 }

@@ -11,6 +11,8 @@ public sealed class CubicacionClipboardRow
     public string? Descripcion { get; init; }
     public string? Unidad { get; init; }
     public string? CantidadRaw { get; init; }
+    /// <summary>Valores de casillas/sectores pegados a partir de la 5.ª columna (índice 0 = primer sector).</summary>
+    public IReadOnlyList<string> SectorValues { get; init; } = Array.Empty<string>();
     public bool IsRejected { get; init; }
     public string? RejectionReason { get; init; }
 }
@@ -38,19 +40,23 @@ public static class CubicacionClipboardService
         var rows = new List<CubicacionClipboardRow>();
         var warnings = new List<string>();
         int rejectedCount = 0;
-        bool hasExtraColumns = false;
+        int sectorColumnsSeen = 0;
 
         foreach (var line in lines)
         {
             var cells = line.Split(ColumnSeparators);
-            if (cells.Length > 4)
-                hasExtraColumns = true;
             string codigo = cells.Length > 0 ? cells[0].Trim() : "";
             string descripcion = cells.Length > 1 ? cells[1].Trim() : "";
             string unidad = cells.Length > 2 ? cells[2].Trim() : "";
             string cantidadRaw = cells.Length > 3 ? cells[3].Trim() : "";
+            var sectorValues = cells.Length > 4
+                ? cells.Skip(4).Select(c => c.Trim()).ToArray()
+                : Array.Empty<string>();
+            if (sectorValues.Length > sectorColumnsSeen)
+                sectorColumnsSeen = sectorValues.Length;
 
-            if (string.IsNullOrWhiteSpace(codigo) && string.IsNullOrWhiteSpace(descripcion) && string.IsNullOrWhiteSpace(cantidadRaw))
+            if (string.IsNullOrWhiteSpace(codigo) && string.IsNullOrWhiteSpace(descripcion) && string.IsNullOrWhiteSpace(cantidadRaw)
+                && sectorValues.All(string.IsNullOrWhiteSpace))
                 continue;
 
             bool cantidadInvalida = false;
@@ -75,6 +81,7 @@ public static class CubicacionClipboardService
                     Descripcion = descripcion,
                     Unidad = unidad,
                     CantidadRaw = cantidadRaw,
+                    SectorValues = sectorValues,
                     IsRejected = true,
                     RejectionReason = $"Cantidad inválida: '{cantidadRaw}'"
                 });
@@ -90,13 +97,14 @@ public static class CubicacionClipboardService
                     Codigo = codigo,
                     Descripcion = descripcion,
                     Unidad = unidad,
-                    CantidadRaw = cantidadRaw
+                    CantidadRaw = cantidadRaw,
+                    SectorValues = sectorValues
                 });
             }
         }
 
-        if (hasExtraColumns)
-            warnings.Add("Se pegaron columnas más allá de Código/Descripción/Unidad/Cantidad; el resto se ignoró.");
+        if (sectorColumnsSeen > 0)
+            warnings.Add($"{sectorColumnsSeen} columna(s) de casilla/sector detectada(s) y se aplicarán al pegar.");
 
         return new CubicacionClipboardParseResult
         {

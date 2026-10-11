@@ -15,8 +15,17 @@ public sealed class FinalReviewServiceTests
 
     private static CubicacionRow Cub(string itemId, string codigo, string desc, decimal cantidad, decimal matUf = 1m,
         decimal moUf = 0m, string area = "Piso 1")
-        => new() { ItemId = itemId, Codigo = codigo, Descripcion = desc, Unidad = "UN",
-            Cantidad = cantidad, MatUf = matUf, MoUf = moUf, Area = area };
+        => new()
+        {
+            ItemId = itemId,
+            Codigo = codigo,
+            Descripcion = desc,
+            Unidad = "UN",
+            Cantidad = cantidad,
+            MatUf = matUf,
+            MoUf = moUf,
+            Area = area
+        };
 
     private static MaterialRow Mat(string codigo, string desc, decimal matUf = 1m, decimal moUf = 0m)
         => new() { Codigo = codigo, Descripcion = desc, Unidad = "UN", MatUf = matUf, MoUf = moUf };
@@ -26,17 +35,32 @@ public sealed class FinalReviewServiceTests
 
     private static ApuRecursoRow Recurso(string codigo, decimal precio = 1m, decimal rendimiento = 1m,
         ApuTipoRecurso tipo = ApuTipoRecurso.MAT)
-        => new() { CodigoMaterial = codigo, Descripcion = codigo, PrecioUf = precio,
-            Rendimiento = rendimiento, Tipo = tipo };
+        => new()
+        {
+            CodigoMaterial = codigo,
+            Descripcion = codigo,
+            PrecioUf = precio,
+            Rendimiento = rendimiento,
+            Tipo = tipo
+        };
 
     [Fact]
-    public void Build_EmptyPartida_ReturnsBlocker()
+    public void Build_EmptyPartidas_AreOneProgressWarning_NotABlockerEach()
     {
-        var itemizado = new[] { Partida("P1", "1.1", "Canalización") };
+        var itemizado = new[]
+        {
+            Partida("P1", "1.1", "Canalización"),
+            Partida("P2", "1.2", "Conductores"),
+            Partida("P3", "1.3", "Tableros")
+        };
         var result = _service.Build(itemizado, null, null, null);
 
-        Assert.True(result.EmptyPartidas > 0);
-        Assert.False(result.ReadyToExport);
+        Assert.Equal(3, result.EmptyPartidas);
+        var issue = Assert.Single(result.Issues, i => i.Id == "EMPTY|SUMMARY");
+        Assert.Equal(FinalReviewSeverity.Warning, issue.Severity);
+        Assert.Equal(3, issue.Count);
+        Assert.DoesNotContain(result.Issues, i => i.Category == FinalReviewCategory.EmptyPartida && i.Severity == FinalReviewSeverity.Blocker);
+        Assert.Contains(result.Issues, i => i.Id == "TOTAL|ZERO");
     }
 
     [Fact]
@@ -122,13 +146,13 @@ public sealed class FinalReviewServiceTests
     }
 
     [Fact]
-    public void Build_MissingApu_ReturnsBlocker()
+    public void Build_TakeoffWithoutApu_DoesNotRaiseAnIssuePerPartida()
     {
         var itemizado = new[] { Partida("P1", "1.1", "Canalización") };
         var cubicacion = new[] { Cub("P1", "PVC20", "PVC 20mm", 50m) };
         var result = _service.Build(itemizado, null, cubicacion, null);
 
-        Assert.True(result.MissingApus > 0);
+        Assert.Equal(0, result.MissingApus);
     }
 
     [Fact]
@@ -158,7 +182,8 @@ public sealed class FinalReviewServiceTests
         var materiales = new[] { Mat("PVC20", "PVC 20mm", 0m) };
         var result = _service.Build(itemizado, materiales, cubicacion, apus);
 
-        Assert.True(result.Issues.Any(i => i.Category == FinalReviewCategory.ApuIncomplete));
+        var issue = Assert.Single(result.Issues, i => i.Category == FinalReviewCategory.ApuIncomplete);
+        Assert.Equal(FinalReviewSeverity.Warning, issue.Severity);
     }
 
     [Fact]
@@ -324,5 +349,76 @@ public sealed class FinalReviewServiceTests
         var result = _service.Build(itemizado, null, cubicacion, null, new ProjectInfoRow(), settings);
 
         Assert.DoesNotContain(result.Issues, i => i.Category == FinalReviewCategory.MissingApu && i.Severity == FinalReviewSeverity.Blocker);
+    }
+
+    [Fact]
+    public void Build_BrokenFormulaInTotalExpression_ReturnsBlocker()
+    {
+        var itemizado = new[] { Partida("P1", "1.1", "Canalización") };
+        var row = Cub("P1", "PVC20", "PVC 20mm", 50m);
+        row.TotalExpression = "=10+*5"; // Frmula rota / sintaxis invlida
+        var result = _service.Build(itemizado, null, new[] { row }, null);
+
+        Assert.True(result.FormulaErrors > 0);
+        Assert.False(result.ReadyToExport);
+        var issue = Assert.Single(result.Issues, i => i.Category == FinalReviewCategory.FormulaSyntaxError);
+        Assert.Equal(FinalReviewSeverity.Blocker, issue.Severity);
+        Assert.Contains("f\u00f3rmula de total", issue.Problem, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Build_BrokenFormulaInQtyExpressionsCasilla_ReturnsBlocker()
+    {
+        var itemizado = new[] { Partida("P1", "1.1", "Canalización") };
+        var row = Cub("P1", "PVC20", "PVC 20mm", 50m);
+        row.QtyExpressions = new string[35];
+        row.QtyExpressions[2] = "=5+*2"; // Frmula rota con sintaxis invlida en casilla 3
+        var result = _service.Build(itemizado, null, new[] { row }, null);
+
+        Assert.True(result.FormulaErrors > 0);
+        var issue = Assert.Single(result.Issues, i => i.Category == FinalReviewCategory.FormulaSyntaxError);
+        Assert.Equal(FinalReviewSeverity.Blocker, issue.Severity);
+        Assert.Contains("casilla #3", issue.Problem, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Build_ValidFormula_DoesNotTriggerFormulaSyntaxError()
+    {
+        var itemizado = new[] { Partida("P1", "1.1", "Canalización") };
+        var row = Cub("P1", "PVC20", "PVC 20mm", 50m);
+        row.TotalExpression = "=10+2*5";
+        row.QtyExpressions = new string[35];
+        row.QtyExpressions[0] = "=(4+2)*3";
+        row.QtyExpressions[1] = "15.5";
+        var result = _service.Build(itemizado, null, new[] { row }, null);
+
+        Assert.Equal(0, result.FormulaErrors);
+        Assert.DoesNotContain(result.Issues, i => i.Category == FinalReviewCategory.FormulaSyntaxError);
+    }
+
+    [Fact]
+    public void Build_ApuMandaMode_DoesNotRequireAnApu()
+    {
+        var itemizado = new[] { Partida("P1", "1.1", "Canalización") };
+        var cubicacion = new[] { Cub("P1", "PVC20", "PVC 20mm", 50m) };
+        var settings = new BudgetSettings { ApuMode = BudgetApuMode.ApuManda };
+
+        var result = _service.Build(itemizado, null, cubicacion, null, settings: settings);
+
+        Assert.DoesNotContain(result.Issues, i => i.Category == FinalReviewCategory.MissingApu);
+        Assert.DoesNotContain(result.Issues, i => i.Severity == FinalReviewSeverity.Blocker && i.Category == FinalReviewCategory.ApuIncomplete);
+    }
+
+    [Fact]
+    public void Build_CubicacionMandaMode_DoesNotProduceMissingApuIssues()
+    {
+        var itemizado = new[] { Partida("P1", "1.1", "Canalización") };
+        var cubicacion = new[] { Cub("P1", "PVC20", "PVC 20mm", 50m) };
+        var settings = new BudgetSettings { ApuMode = BudgetApuMode.CubicacionManda };
+
+        var result = _service.Build(itemizado, null, cubicacion, null, settings: settings);
+
+        Assert.Equal(0, result.MissingApus);
+        Assert.DoesNotContain(result.Issues, i => i.Category == FinalReviewCategory.MissingApu);
     }
 }

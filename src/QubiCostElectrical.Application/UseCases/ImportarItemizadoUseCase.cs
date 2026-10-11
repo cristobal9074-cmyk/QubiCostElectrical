@@ -22,22 +22,22 @@ public sealed class ImportarItemizadoUseCase
     public ImportarItemizadoResult Execute(List<List<string>> table)
     {
         if (table == null || table.Count == 0)
-            return Fail("El Excel no tiene datos.");
+            return Fail("El archivo no tiene datos.");
 
         var (headerRow, extraHeaderRow) = ItemizadoImportParser.FindHeaderRowRange(table, "itemizado");
         if (headerRow < 0)
-            return Fail("No encontré encabezados válidos. El Excel debe tener columnas: ITEM, DESCRIPCIÓN, UNIDAD, CANTIDAD.");
+            return Fail("No encontré encabezados válidos. La tabla debe tener columnas: ITEM, DESCRIPCIÓN, UNIDAD, CANTIDAD.");
 
         var headers = table[headerRow];
         // Cuando hay 2 filas de encabezado, las columnas UNIDAD/CANT pueden estar en la fila extra
         var extraHeaders = extraHeaderRow >= 0 ? table[extraHeaderRow] : null;
-        int cItem   = ItemizadoImportParser.FindColumn(headers, extraHeaders, "ITEM", "ÍTEM", "NITEM", "NUMEROITEM", "PARTIDA");
-        int cDesc   = ItemizadoImportParser.FindColumn(headers, extraHeaders, "DESCRIPCION", "DESCRIPCIÓN", "DETALLE", "NOMBRE", "PARTIDADESCRIPCION");
+        int cItem = ItemizadoImportParser.FindColumn(headers, extraHeaders, "ITEM", "ÍTEM", "NITEM", "NUMEROITEM", "PARTIDA");
+        int cDesc = ItemizadoImportParser.FindColumn(headers, extraHeaders, "DESCRIPCION", "DESCRIPCIÓN", "DETALLE", "NOMBRE", "PARTIDADESCRIPCION");
         int cUnidad = ItemizadoImportParser.FindColumn(headers, extraHeaders, "UNIDAD", "UD", "UN", "UND", "UNID", "UNIDADES");
-        int cCant   = ItemizadoImportParser.FindColumn(headers, extraHeaders, "CANTIDAD", "CANT", "QTY", "CANTIDADITEM", "CANTIDADES", "NUEVASCANTIDADES");
+        int cCant = ItemizadoImportParser.FindColumn(headers, extraHeaders, "CANTIDAD", "CANT", "QTY", "CANTIDADITEM", "CANTIDADES", "NUEVASCANTIDADES");
 
         if (cDesc < 0)
-            return Fail("No encontré columna DESCRIPCIÓN en el Excel.");
+            return Fail("No encontré columna DESCRIPCIÓN en la tabla.");
 
         // dataStart es la fila siguiente al último encabezado (puede ser 1 o 2 filas)
         int lastHeaderRow = extraHeaderRow >= 0 ? extraHeaderRow : headerRow;
@@ -46,7 +46,7 @@ public sealed class ImportarItemizadoUseCase
 
         var rows = BuildRows(table, dataStartRow, cItem, cDesc, cUnidad, cCant);
         if (rows.Count == 0)
-            return Fail("El Excel tiene encabezados pero no contiene filas de datos.");
+            return Fail("La tabla tiene encabezados pero no contiene filas de datos.");
 
         string? limitError = ItemizadoImportValidation.ValidateRowCount(rows.Count);
         if (limitError != null)
@@ -65,14 +65,14 @@ public sealed class ImportarItemizadoUseCase
         int dataStartRow)
     {
         if (table == null || table.Count == 0)
-            return Fail("El Excel no tiene datos.");
+            return Fail("El archivo no tiene datos.");
 
         if (cDesc < 0)
             return Fail("La columna de Descripción es requerida para la importación.");
 
         var rows = BuildRows(table, dataStartRow, cItem, cDesc, cUnidad, cCant);
         if (rows.Count == 0)
-            return Fail("El Excel no contiene filas de datos válidas con el mapeo seleccionado.");
+            return Fail("La tabla no contiene filas de datos válidas con el mapeo seleccionado.");
 
         string? limitError = ItemizadoImportValidation.ValidateRowCount(rows.Count);
         if (limitError != null)
@@ -96,8 +96,8 @@ public sealed class ImportarItemizadoUseCase
         {
             var row = table[i];
             string itemCode = ItemizadoImportParser.GetCell(row, cItem).Trim();
-            string desc     = ItemizadoImportParser.GetCell(row, cDesc).Trim();
-            string unidad   = ItemizadoImportParser.GetCell(row, cUnidad).Trim();
+            string desc = ItemizadoImportParser.GetCell(row, cDesc).Trim();
+            string unidad = ItemizadoImportParser.GetCell(row, cUnidad).Trim();
             string cantText = ItemizadoImportParser.GetCell(row, cCant).Trim();
 
             if (string.IsNullOrWhiteSpace(itemCode) && string.IsNullOrWhiteSpace(desc))
@@ -114,12 +114,18 @@ public sealed class ImportarItemizadoUseCase
             // No inventar unidad: si no viene, se deja vacía para que el usuario la complete
             // (antes se forzaba "GL" para cualquier unidad vacía, lo cual modifica los datos del Excel)
 
-            bool esTitulo = ItemizadoImportParser.IsImportedTitleCode(itemCode);
-
             // Cantidad vacía = 0 (no 1); se respeta el valor exacto del Excel
             decimal cant = string.IsNullOrWhiteSpace(cantText)
                 ? 0m
                 : ItemizadoImportParser.ParseDecimal(cantText);
+
+            bool isTitleCode = ItemizadoImportParser.IsImportedTitleCode(itemCode);
+            bool hasQuantityOrUnit = cant > 0m || !string.IsNullOrWhiteSpace(unidad);
+            bool hasSubItems = isTitleCode && ItemizadoImportParser.HasSubItemsInTable(table, i, cItem, cDesc, itemCode);
+
+            // Es título si cumple el patrón de código de capítulo Y (no tiene unidad/cantidad O agrupa sub-partidas)
+            bool esTitulo = isTitleCode && (!hasQuantityOrUnit || hasSubItems);
+
             if (!esTitulo)
                 cant = ItemizadoHierarchyRules.NormalizePartidaQuantity(cant);
 

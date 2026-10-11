@@ -124,6 +124,11 @@ public sealed partial class PreferencesViewModel
     [ObservableProperty]
     private bool _isDarkMode;
 
+    [ObservableProperty]
+    private bool _autosaveEnabled;
+
+    partial void OnAutosaveEnabledChanged(bool value) => HasPendingChanges = true;
+
     partial void OnIsDarkModeChanged(bool value)
     {
         DesignSystem.ThemeManager.SetDarkMode(value);
@@ -430,21 +435,22 @@ public sealed partial class PreferencesViewModel
 
     private void CommitDraftToSaved()
     {
-        _saved.DefaultProjectFolder            = DefaultProjectFolder;
-        _saved.PriceBankDatabasePath           = PriceBankDatabasePath;
-        _saved.LetterheadCompanyName           = CompanyName;
-        _saved.LetterheadRut                   = Rut;
-        _saved.LetterheadAddress               = Address;
-        _saved.LetterheadPhone                 = Phone;
-        _saved.LetterheadEmail                 = Email;
-        _saved.LetterheadWebsite               = Website;
-        _saved.LetterheadLogoPath              = LogoPath;
-        _saved.ProfessionalName                = ProfessionalName;
-        _saved.ProfessionalRut                 = ProfessionalRut;
-        _saved.ProfessionalRole                = ProfessionalRole;
-        _saved.ProfessionalRegistroSec         = ProfessionalRegistroSec;
-        _saved.ProfessionalSignatureImagePath  = ProfessionalSignatureImagePath;
-        _saved.DarkMode                        = IsDarkMode;
+        _saved.DefaultProjectFolder = DefaultProjectFolder;
+        _saved.PriceBankDatabasePath = PriceBankDatabasePath;
+        _saved.LetterheadCompanyName = CompanyName;
+        _saved.LetterheadRut = Rut;
+        _saved.LetterheadAddress = Address;
+        _saved.LetterheadPhone = Phone;
+        _saved.LetterheadEmail = Email;
+        _saved.LetterheadWebsite = Website;
+        _saved.LetterheadLogoPath = LogoPath;
+        _saved.ProfessionalName = ProfessionalName;
+        _saved.ProfessionalRut = ProfessionalRut;
+        _saved.ProfessionalRole = ProfessionalRole;
+        _saved.ProfessionalRegistroSec = ProfessionalRegistroSec;
+        _saved.ProfessionalSignatureImagePath = ProfessionalSignatureImagePath;
+        _saved.DarkMode = IsDarkMode;
+        _saved.AutosaveEnabled = AutosaveEnabled;
         _saved.PinSecurity = new PinSecurityPolicy
         {
             MinLength = PinMinLength,
@@ -475,6 +481,7 @@ public sealed partial class PreferencesViewModel
         ProfessionalRegistroSec = _draft.ProfessionalRegistroSec;
         ProfessionalSignatureImagePath = _draft.ProfessionalSignatureImagePath;
         IsDarkMode = _draft.DarkMode;
+        AutosaveEnabled = _draft.AutosaveEnabled;
         PinMinLength = _draft.PinSecurity?.MinLength ?? 4;
         PinMaxLength = _draft.PinSecurity?.MaxLength ?? 6;
         PinBlockSequences = _draft.PinSecurity?.BlockSequences ?? true;
@@ -485,28 +492,28 @@ public sealed partial class PreferencesViewModel
 
     private static UserPreferences Clone(UserPreferences src) => new()
     {
-        DefaultProjectFolder       = src.DefaultProjectFolder,
-        PriceBankDatabasePath      = src.PriceBankDatabasePath,
-        LetterheadCompanyName      = src.LetterheadCompanyName,
-        LetterheadRut              = src.LetterheadRut,
-        LetterheadAddress          = src.LetterheadAddress,
-        LetterheadPhone            = src.LetterheadPhone,
-        LetterheadEmail            = src.LetterheadEmail,
-        LetterheadWebsite          = src.LetterheadWebsite,
-        LetterheadLogoPath         = src.LetterheadLogoPath,
-        ProfessionalName           = src.ProfessionalName,
-        ProfessionalRut            = src.ProfessionalRut,
-        ProfessionalRole           = src.ProfessionalRole,
-        ProfessionalRegistroSec    = src.ProfessionalRegistroSec,
+        DefaultProjectFolder = src.DefaultProjectFolder,
+        PriceBankDatabasePath = src.PriceBankDatabasePath,
+        LetterheadCompanyName = src.LetterheadCompanyName,
+        LetterheadRut = src.LetterheadRut,
+        LetterheadAddress = src.LetterheadAddress,
+        LetterheadPhone = src.LetterheadPhone,
+        LetterheadEmail = src.LetterheadEmail,
+        LetterheadWebsite = src.LetterheadWebsite,
+        LetterheadLogoPath = src.LetterheadLogoPath,
+        ProfessionalName = src.ProfessionalName,
+        ProfessionalRut = src.ProfessionalRut,
+        ProfessionalRole = src.ProfessionalRole,
+        ProfessionalRegistroSec = src.ProfessionalRegistroSec,
         ProfessionalSignatureImagePath = src.ProfessionalSignatureImagePath,
-        MaterialsPageSize          = src.MaterialsPageSize,
-        FontSize                   = src.FontSize,
-        ThemeName                  = src.ThemeName,
-        DarkMode                   = src.DarkMode,
-        LastPage                   = src.LastPage,
+        MaterialsPageSize = src.MaterialsPageSize,
+        FontSize = src.FontSize,
+        ThemeName = src.ThemeName,
+        DarkMode = src.DarkMode,
+        AutosaveEnabled = src.AutosaveEnabled,
         ExperimentalFeaturesEnabled = src.ExperimentalFeaturesEnabled,
-        RecentFiles                = new List<string>(src.RecentFiles),
-        PriceFeedUrls              = new List<string>(src.PriceFeedUrls),
+        RecentFiles = new List<string>(src.RecentFiles),
+        PriceFeedUrls = new List<string>(src.PriceFeedUrls),
         // src.PinSecurity puede llegar null si preferences.json es de una versión anterior a
         // este campo, o fue editado a mano: LoadFromDraft() ya se defiende con "?." (línea
         // 435-438) pero este Clone() no lo hacía, y se llama en el constructor de esta pantalla

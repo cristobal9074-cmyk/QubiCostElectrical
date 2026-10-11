@@ -3,40 +3,63 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:QubiCostElectrical.Wpf.Features.Templates"
              xmlns:ctrl="clr-namespace:QubiCostElectrical.Wpf.Controls"
-             xmlns:infra="clr-namespace:QubiCostElectrical.Wpf.Infrastructure"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="700">
+             mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="760">
 
     <UserControl.Resources>
-        <!-- Custom styling tokens -->
-        <Style x:Key="PremiumCard" TargetType="Border">
-            <Setter Property="Background" Value="{DynamicResource Brush.Surface}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="Padding" Value="16"/>
-        </Style>
 
-        <Style x:Key="GlassPanel" TargetType="Border">
+        <!-- ── Buscadores con placeholder (hint mientras Text esté vacío) ────── -->
+        <Style x:Key="SearchConjunto" TargetType="TextBox">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="26,6,8,6"/>
             <Setter Property="Background" Value="{DynamicResource Brush.Surface2}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="10"/>
-            <Setter Property="Padding" Value="18"/>
+            <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}"/>
+            <Setter Property="CaretBrush" Value="{DynamicResource Brush.Ink}"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Style.Resources>
+                <VisualBrush x:Key="HintBrush" TileMode="None" Stretch="None" AlignmentX="Left" AlignmentY="Center">
+                    <VisualBrush.Visual>
+                        <TextBlock Text="Buscar plantilla…" Foreground="{DynamicResource Brush.Muted}" FontSize="12" Margin="30,0,0,0" Opacity="0.8"/>
+                    </VisualBrush.Visual>
+                </VisualBrush>
+            </Style.Resources>
+            <Style.Triggers>
+                <Trigger Property="Text" Value="">
+                    <Setter Property="Background" Value="{StaticResource HintBrush}"/>
+                </Trigger>
+            </Style.Triggers>
         </Style>
 
-        <Style x:Key="PanelHeader" TargetType="Border">
+        <Style x:Key="SearchApu" TargetType="TextBox">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="26,6,8,6"/>
             <Setter Property="Background" Value="{DynamicResource Brush.Surface2}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}"/>
-            <Setter Property="BorderThickness" Value="0,0,0,1"/>
-            <Setter Property="Padding" Value="16,14"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}"/>
+            <Setter Property="CaretBrush" Value="{DynamicResource Brush.Ink}"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Style.Resources>
+                <VisualBrush x:Key="HintBrush" TileMode="None" Stretch="None" AlignmentX="Left" AlignmentY="Center">
+                    <VisualBrush.Visual>
+                        <TextBlock Text="Buscar plantilla APU…" Foreground="{DynamicResource Brush.Muted}" FontSize="12" Margin="30,0,0,0" Opacity="0.8"/>
+                    </VisualBrush.Visual>
+                </VisualBrush>
+            </Style.Resources>
+            <Style.Triggers>
+                <Trigger Property="Text" Value="">
+                    <Setter Property="Background" Value="{StaticResource HintBrush}"/>
+                </Trigger>
+            </Style.Triggers>
         </Style>
 
-        <!-- Custom ListBoxItem Style for a glassmorphic sidebar item -->
+        <!-- ── Ítem de listado lateral (conjuntos y plantillas APU) ─────────── -->
         <Style x:Key="ListItem" TargetType="ListBoxItem">
-            <Setter Property="Padding" Value="12,10"/>
-            <Setter Property="Margin" Value="6,4"/>
+            <Setter Property="Padding" Value="12,9"/>
+            <Setter Property="Margin" Value="6,3"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
@@ -44,18 +67,18 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="ListBoxItem">
                         <Border x:Name="Bd"
-                    Background="{TemplateBinding Background}"
-                    BorderBrush="{TemplateBinding BorderBrush}"
-                    BorderThickness="{TemplateBinding BorderThickness}"
-                    Padding="{TemplateBinding Padding}"
-                    CornerRadius="8">
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}"
+                                CornerRadius="8">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" 
-                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                                <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
                                 <TextBlock x:Name="Indicator" Text="➔" Grid.Column="1" Foreground="{DynamicResource Brush.Blue}" FontSize="12" VerticalAlignment="Center" Margin="8,0,0,0" Opacity="0"/>
                             </Grid>
                         </Border>
@@ -75,177 +98,383 @@
             </Setter>
         </Style>
 
-        <!-- Stat boxes styles -->
-        <Style x:Key="StatTitle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="10"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}"/>
-            <Setter Property="Margin" Value="0,0,0,4"/>
+        <!-- ── Celda de grilla transparente (deja ver el resalte ámbar de fila) ── -->
+        <Style x:Key="PlantillasCell" TargetType="DataGridCell">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="6,0"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}"/>
+                </Trigger>
+                <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                    <Setter Property="BorderThickness" Value="1"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}"/>
+                </Trigger>
+            </Style.Triggers>
         </Style>
 
-        <Style x:Key="StatValue" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="24"/>
-            <Setter Property="FontWeight" Value="ExtraBold"/>
+        <!-- ── Combos en línea dentro de celdas (siempre visibles, sin modo edición) ── -->
+        <Style x:Key="GridCombo" TargetType="ComboBox">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="2,0"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="MinWidth" Value="0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsReadOnly, RelativeSource={RelativeSource AncestorType=DataGrid}}" Value="True">
+                    <Setter Property="IsEnabled" Value="False"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Chip de rol: el ComboBox es el texto visible; el borde pintado es el chip. -->
+        <Style x:Key="RolChip" TargetType="Border">
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="4,1"/>
+            <Setter Property="Background" Value="{DynamicResource Brush.Surface2}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Rol}" Value="Maestro">
+                    <Setter Property="Background" Value="{DynamicResource Brush.AmberSoft}"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Amber}"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Rol}" Value="Esclavo">
+                    <Setter Property="Background" Value="{DynamicResource Brush.Surface2}"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line2}"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Rol}" Value="Operación">
+                    <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="RolChipCombo" TargetType="ComboBox" BasedOn="{StaticResource GridCombo}">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Rol}" Value="Maestro">
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Amber}"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Rol}" Value="Esclavo">
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Rol}" Value="Operación">
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Opciones del dropdown del chip de rol, coloreadas por valor (el popup no
+             hereda el color del combo para no teñir la lista completa). -->
+        <Style x:Key="RolChipItem" TargetType="ComboBoxItem">
+            <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding}" Value="Maestro">
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Amber}"/>
+                    <Setter Property="FontWeight" Value="SemiBold"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding}" Value="Operación">
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}"/>
+                    <Setter Property="FontWeight" Value="SemiBold"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- ── Columna «Regla»: combo de tipo de cálculo (el valor vive en la columna «Valor») ── -->
+        <Style x:Key="ReglaCombo" TargetType="ComboBox" BasedOn="{StaticResource GridCombo}">
+            <Setter Property="Width" Value="118"/>
+            <Setter Property="ToolTip" Value="Factor: Cant = Base × Factor · Espaciamiento: Cant = ⌈Base ÷ Paso⌉"/>
+        </Style>
+
+        <Style x:Key="ReglaValor" TargetType="TextBox">
+            <Setter Property="FontFamily" Value="{StaticResource Font.Mono}"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}"/>
+            <Setter Property="CaretBrush" Value="{DynamicResource Brush.Ink}"/>
+            <Setter Property="Padding" Value="2,0"/>
+            <Setter Property="TextAlignment" Value="Right"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Style.Triggers>
+                <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource Brush.Surface2}"/>
+                    <Setter Property="BorderThickness" Value="1"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}"/>
+                </Trigger>
+                <DataTrigger Binding="{Binding IsReadOnly, RelativeSource={RelativeSource AncestorType=DataGrid}}" Value="True">
+                    <Setter Property="IsEnabled" Value="False"/>
+                </DataTrigger>
+            </Style.Triggers>
         </Style>
 
-        <!-- Right-aligned style for DataGrid -->
-        <Style x:Key="RightAlignText" TargetType="TextBlock">
-            <Setter Property="HorizontalAlignment" Value="Right"/>
-            <Setter Property="Margin" Value="0,0,6,0"/>
+        <Style x:Key="ReglaFormula" TargetType="TextBox">
+            <Setter Property="FontFamily" Value="{StaticResource Font.Mono}"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}"/>
+            <Setter Property="CaretBrush" Value="{DynamicResource Brush.Blue}"/>
+            <Setter Property="Padding" Value="2,0"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Style.Triggers>
+                <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource Brush.Surface2}"/>
+                    <Setter Property="BorderThickness" Value="1"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}"/>
+                </Trigger>
+                <DataTrigger Binding="{Binding IsReadOnly, RelativeSource={RelativeSource AncestorType=DataGrid}}" Value="True">
+                    <Setter Property="IsEnabled" Value="False"/>
+                </DataTrigger>
+            </Style.Triggers>
         </Style>
+
+        <!-- ── Variantes de botón para la barra contextual ───────────────────── -->
+        <Style x:Key="Button.Amber" TargetType="Button" BasedOn="{StaticResource Button.Secondary}">
+            <Setter Property="Background" Value="{DynamicResource Brush.AmberSoft}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Brush.Amber}"/>
+            <Setter Property="Foreground" Value="{DynamicResource Brush.Amber}"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource Brush.AmberSoft}"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Amber}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Amber}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="Button.Danger" TargetType="Button" BasedOn="{StaticResource Button.Secondary}">
+            <Setter Property="Foreground" Value="{DynamicResource Brush.Red}"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource Brush.RedSoft}"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Red}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Red}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
     </UserControl.Resources>
 
-    <Grid HorizontalAlignment="Stretch">
+    <Grid>
         <ctrl:EmptyStateControl Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}}"
                                 Title="Catálogo de plantillas no disponible"
-                                Description="No se pudo cargar el almacén de plantillas APU y conjuntos eléctricos." />
+                                Description="No se pudo cargar el almacén de plantillas APU y conjuntos eléctricos."/>
 
         <!-- Contenido principal -->
         <Grid Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" MinHeight="95.56"/>
-                <RowDefinition Height="Auto" MinHeight="16"/>
-                <RowDefinition/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <!-- View header -->
+            <!-- ═══ Encabezado: título + KPIs reales + acciones ═══ -->
+            <Border Grid.Row="0" Background="{DynamicResource Brush.Surface2}"
+                    BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1" Padding="16,10">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
 
-            <!-- Stats Cards (Glassmorphism look) -->
-            <UniformGrid Grid.Row="1" Columns="3" Margin="16,0,16,16">
-                <!-- Card 1: Total plantillas -->
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <TextBlock Text="Plantillas" Style="{StaticResource Text.PageTitle}"/>
+                        <TextBlock Text="Conjuntos eléctricos paramétricos y plantillas APU listas para usar."
+                                   FontSize="12" Foreground="{DynamicResource Brush.Muted}" Margin="0,3,0,0"/>
+                    </StackPanel>
 
-                <!-- Card 2: Total recursos -->
+                    <!-- KPIs: conjuntos, plantillas APU, recursos totales -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="32,0,0,0">
+                        <StackPanel Margin="0,0,26,0">
+                            <TextBlock Text="CONJUNTOS" Style="{StaticResource Text.KpiLabel}"/>
+                            <TextBlock Text="{Binding KpiConjuntosCount}" Style="{StaticResource Text.KpiInline}"/>
+                        </StackPanel>
+                        <StackPanel Margin="0,0,26,0">
+                            <TextBlock Text="PLANTILLAS APU" Style="{StaticResource Text.KpiLabel}"/>
+                            <TextBlock Text="{Binding KpiTemplatesCount}" Style="{StaticResource Text.KpiInline}"/>
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="RECURSOS" Style="{StaticResource Text.KpiLabel}"/>
+                            <TextBlock Text="{Binding KpiTotalRecursos}" Style="{StaticResource Text.KpiInline}"/>
+                        </StackPanel>
+                    </StackPanel>
 
-                <!-- Card 3: Estado de edición -->
-            </UniformGrid>
+                    <!-- Acciones globales -->
+                    <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Content="⤓ Importar" Command="{Binding ImportCommand}"
+                                Style="{DynamicResource Button.Secondary}" Height="30" Margin="0,0,8,0"
+                                ToolTip="Importar catálogo APU (JSON)"/>
+                        <Button Content="⤒ Exportar" Command="{Binding ExportCommand}"
+                                Style="{DynamicResource Button.Secondary}" Height="30" Margin="0,0,10,0"
+                                ToolTip="Exportar catálogo APU (JSON)"/>
+                        <TextBlock x:Name="TxtSinGuardar" Text="● sin guardar"
+                                   FontSize="11" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource Brush.Amber}"
+                                   VerticalAlignment="Center" Margin="0,0,8,0"
+                                   ToolTip="Hay cambios en los conjuntos eléctricos que aún no están en la biblioteca global de la app"
+                                   Visibility="{Binding HasPendingChanges, Converter={StaticResource BoolToVisibility}}"/>
+                        <Button x:Name="BtnGuardarPlantillas" Content="💾 Guardar" Command="{Binding SaveCommand}"
+                                Style="{DynamicResource Button.Primary}" Height="32" Padding="14,0" Margin="0,0,8,0"
+                                ToolTip="Guarda los conjuntos eléctricos en la biblioteca global de la app (disponible en todos los proyectos)"/>
+                        <Button Content="＋ Nueva plantilla" Command="{Binding CreateConjuntoCommand}"
+                                Style="{DynamicResource Button.Primary}" Height="32" Padding="14,0" FontWeight="Bold"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
 
-            <!-- Main Layout Splitter wrapped in Form.TabControl -->
-            <TabControl Style="{StaticResource Form.TabControl}" Margin="16,65,16,16" Grid.RowSpan="3">
-                <TabItem Header="Plantillas ">
-                    <Grid Margin="0,12,0,0">
+            <!-- ═══ Pestañas: Conjuntos eléctricos / Plantillas APU ═══ -->
+            <TabControl Grid.Row="1" x:Name="PlantillasTabs" Style="{StaticResource Form.TabControl}" Margin="16,10,16,16"
+                        SelectedIndex="{Binding ActiveTab, Mode=TwoWay}">
+
+                <!-- ── Pestaña 1: Conjuntos eléctricos ── -->
+                <TabItem>
+                    <TabItem.Header>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Conjuntos eléctricos"/>
+                            <Border Background="{DynamicResource Brush.BlueFaint}" CornerRadius="8" Padding="7,1" Margin="8,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding KpiConjuntosCount}" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}"/>
+                            </Border>
+                        </StackPanel>
+                    </TabItem.Header>
+
+                    <Grid Margin="0,4,0,0">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="280" MinWidth="240"/>
-                            <ColumnDefinition Width="8"/>
-                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="252"/>
+                            <ColumnDefinition Width="6"/>
+                            <ColumnDefinition Width="*" MinWidth="660"/>
+                            <ColumnDefinition Width="6"/>
+                            <ColumnDefinition Width="284"/>
                         </Grid.ColumnDefinitions>
 
-                        <!-- Panel izquierdo: Listado de plantillas -->
-                        <Border Grid.Column="0" Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="10">
+                        <!-- Panel izquierdo: listado de conjuntos -->
+                        <Border Grid.Column="0" Background="{DynamicResource Brush.Surface}"
+                                BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="10">
                             <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="112*"/>
-                                    <ColumnDefinition Width="37*"/>
-                                    <ColumnDefinition Width="129*"/>
-                                </Grid.ColumnDefinitions>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
 
-                                <Border Grid.Row="0" Style="{StaticResource PanelHeader}" Margin="0,-23,0,0" Grid.ColumnSpan="3">
-                                    <TextBlock Text="MIS LISTAS DE PLANTILLAS" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}"/>
+                                <Border Grid.Row="0" Padding="12,10" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1">
+                                    <TextBlock Text="CONJUNTOS ELÉCTRICOS" Style="{StaticResource Text.SectionLabel}"/>
                                 </Border>
 
-                                <!-- Buscador premium -->
-                                <Border Grid.Row="1" Padding="12,8" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1" Grid.ColumnSpan="3">
+                                <!-- Buscador -->
+                                <Border Grid.Row="1" Padding="12,8" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1">
                                     <Grid>
-                                        <TextBox Text="{Binding ConjuntoFilter, UpdateSourceTrigger=PropertyChanged}"
-                             Padding="28,6,8,6" FontSize="12"
-                             Background="{DynamicResource Brush.Surface2}"
-                             BorderBrush="{DynamicResource Brush.Line}"
-                             BorderThickness="1">
-                                            <TextBox.Style>
-                                                <Style TargetType="TextBox">
-                                                    <Style.Resources>
-                                                        <VisualBrush x:Key="HintBrush" TileMode="None" Stretch="None" AlignmentX="Left" AlignmentY="Center">
-                                                            <VisualBrush.Visual>
-                                                                <TextBlock Text="Buscar plantilla..." Foreground="{DynamicResource Brush.Muted}" FontSize="12" Margin="28,0,0,0" Opacity="0.7"/>
-                                                            </VisualBrush.Visual>
-                                                        </VisualBrush>
-                                                    </Style.Resources>
-                                                    <Style.Triggers>
-                                                        <Trigger Property="Text" Value="">
-                                                            <Setter Property="Background" Value="{StaticResource HintBrush}"/>
-                                                        </Trigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </TextBox.Style>
-                                        </TextBox>
-                                        <!-- Icono de búsqueda -->
-                                        <TextBlock Text="🔍" VerticalAlignment="Center" Margin="10,0,0,0" FontSize="11" Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Left" IsHitTestVisible="False"/>
+                                        <TextBox Style="{StaticResource SearchConjunto}"
+                                                 Text="{Binding ConjuntoFilter, UpdateSourceTrigger=PropertyChanged}"
+                                                 ToolTip="Filtra por nombre o código"/>
+                                        <TextBlock Text="🔍" VerticalAlignment="Center" Margin="9,0,0,0" FontSize="11"
+                                                   Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Left" IsHitTestVisible="False"/>
                                     </Grid>
                                 </Border>
 
-                                <!-- Listbox de plantillas -->
+                                <!-- Listado -->
                                 <ListBox Grid.Row="2"
-                         ItemsSource="{Binding Conjuntos}"
-                         SelectedItem="{Binding SelectedConjunto}"
-                         ItemContainerStyle="{StaticResource ListItem}"
-                         BorderThickness="0"
-                         Background="Transparent"
-                         VirtualizingPanel.IsVirtualizing="True"
-                         VirtualizingPanel.VirtualizationMode="Recycling"
-                         Padding="0,6" Grid.ColumnSpan="3">
+                                         ItemsSource="{Binding Conjuntos}"
+                                         SelectedItem="{Binding SelectedConjunto}"
+                                         ItemContainerStyle="{StaticResource ListItem}"
+                                         BorderThickness="0"
+                                         Background="Transparent"
+                                         VirtualizingPanel.IsVirtualizing="True"
+                                         VirtualizingPanel.VirtualizationMode="Recycling"
+                                         Padding="0,6">
                                     <ListBox.ItemTemplate>
                                         <DataTemplate>
-                                            <Grid Margin="2">
+                                            <Grid Margin="1,4">
                                                 <Grid.RowDefinitions>
-                                                    <RowDefinition/>
-                                                    <RowDefinition/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
                                                 </Grid.RowDefinitions>
-                                                <StackPanel Grid.Row="0" Orientation="Horizontal">
-                                                    <Border Background="{DynamicResource Brush.BlueSoft}" CornerRadius="4" Padding="4,2" Margin="0,0,8,0" VerticalAlignment="Center">
-                                                        <TextBlock Text="{Binding Codigo}" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}"/>
-                                                    </Border>
-                                                    <TextBlock Text="{Binding Nombre}"
-                                     FontSize="12" FontWeight="Bold"
-                                     Foreground="{DynamicResource Brush.Ink}"
-                                     TextTrimming="CharacterEllipsis"
-                                     VerticalAlignment="Center"/>
-                                                </StackPanel>
-                                                <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,4,0,0">
-                                                    <TextBlock Text="{Binding RecursoCount, StringFormat={}{0} materiales}"
-                                     FontSize="10" Foreground="{DynamicResource Brush.Muted}"/>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <Border Grid.Row="0" Grid.Column="0" Background="{DynamicResource Brush.BlueSoft}"
+                                                        CornerRadius="4" Padding="4,2" Margin="0,0,8,0" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Codigo}" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}"/>
+                                                </Border>
+                                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Nombre}"
+                                                           FontSize="12" FontWeight="Bold"
+                                                           Foreground="{DynamicResource Brush.Ink}"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           VerticalAlignment="Center"/>
+
+                                                <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,4,0,0">
+                                                    <TextBlock Text="{Binding RecursoCount, StringFormat={}{0} recursos}"
+                                                               FontSize="10" Foreground="{DynamicResource Brush.Muted}"/>
                                                     <TextBlock Text=" · " FontSize="10" Foreground="{DynamicResource Brush.Muted}"/>
                                                     <TextBlock Text="{Binding Unidad, StringFormat=Unidad: {0}}"
-                                     FontSize="10" Foreground="{DynamicResource Brush.Muted}"/>
+                                                               FontSize="10" Foreground="{DynamicResource Brush.Muted}"/>
                                                 </StackPanel>
                                             </Grid>
                                         </DataTemplate>
                                     </ListBox.ItemTemplate>
                                 </ListBox>
+
+                                <!-- Pie del listado -->
+                                <Border Grid.Row="3" Padding="12,8" Background="{DynamicResource Brush.Surface2}"
+                                        BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,1,0,0">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding Conjuntos.Count, StringFormat={}{0} plantillas}"
+                                                   Style="{StaticResource Text.Helper}" VerticalAlignment="Center"/>
+                                        <Button Grid.Column="1" Content="＋ Nueva" Command="{Binding CreateConjuntoCommand}"
+                                                Style="{DynamicResource Button.Link}" HorizontalAlignment="Right"
+                                                VerticalAlignment="Center" ToolTip="Nueva plantilla de conjuntos eléctricos"/>
+                                    </Grid>
+                                </Border>
                             </Grid>
                         </Border>
 
-                        <!-- Grid Splitter -->
-                        <GridSplitter Grid.Column="1" Width="8" HorizontalAlignment="Stretch" Background="Transparent"/>
+                        <GridSplitter Grid.Column="1" Width="6" HorizontalAlignment="Stretch" Background="Transparent"/>
 
-                        <!-- Panel derecho: Diseñador / Detalle -->
+                        <!-- Panel central: editor de la plantilla seleccionada -->
                         <Grid Grid.Column="2">
-                            <!-- Vista sin selección -->
+                            <!-- Sin selección -->
                             <Border Visibility="{Binding SelectedConjunto, Converter={StaticResource NullToVisibility}}"
-                      Background="{DynamicResource Brush.Surface}"
-                      BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
-                      CornerRadius="10" Padding="40">
+                                    Background="{DynamicResource Brush.Surface}"
+                                    BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+                                    CornerRadius="10" Padding="40">
                                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                                     <TextBlock Text="📋" FontSize="56" HorizontalAlignment="Center" Margin="0,0,0,16" Opacity="0.5"/>
                                     <TextBlock Text="Selecciona una plantilla de la lista"
-                             FontSize="16" FontWeight="Bold"
-                             Foreground="{DynamicResource Brush.Ink}"
-                             HorizontalAlignment="Center" Margin="0,0,0,8"/>
-                                    <TextBlock Text="O haz clic en '+ Nueva Plantilla' para crear una lista de materiales en blanco y personalizarla."
-                             FontSize="12" Foreground="{DynamicResource Brush.Muted}"
-                             TextWrapping="Wrap" TextAlignment="Center" MaxWidth="300"/>
+                                               FontSize="16" FontWeight="Bold"
+                                               Foreground="{DynamicResource Brush.Ink}"
+                                               HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                                    <TextBlock Text="O haz clic en «＋ Nueva plantilla» para crear un conjunto eléctrico en blanco y personalizarlo."
+                                               FontSize="12" Foreground="{DynamicResource Brush.Muted}"
+                                               TextWrapping="Wrap" TextAlignment="Center" MaxWidth="320"/>
                                 </StackPanel>
                             </Border>
 
-                            <!-- Detalle de la plantilla seleccionada -->
+                            <!-- Detalle -->
                             <Border Visibility="{Binding SelectedConjunto, Converter={StaticResource NullToVisibility}, ConverterParameter=Inverse}"
-                      Background="{DynamicResource Brush.Surface}"
-                      BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
-                      CornerRadius="10">
+                                    Background="{DynamicResource Brush.Surface}"
+                                    BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+                                    CornerRadius="10">
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
@@ -255,201 +484,803 @@
                                         <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
 
-                                    <!-- Encabezado de Detalle -->
-                                    <Border Grid.Row="0" Style="{StaticResource PanelHeader}" Margin="0,-24,0,0">
+                                    <!-- Encabezado del editor: Cód · Nombre · Ud · acciones -->
+                                    <Border Grid.Row="0" Padding="12,9" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="CÓD" Style="{StaticResource Text.SectionLabel}" Margin="0,0,6,0"/>
+                                                <TextBox Text="{Binding SelectedConjunto.Codigo, UpdateSourceTrigger=PropertyChanged}"
+                                                         IsReadOnly="{Binding IsReadOnly}"
+                                                         Width="84" FontFamily="{StaticResource Font.Mono}" FontSize="12"
+                                                         FontWeight="SemiBold" Foreground="{DynamicResource Brush.Blue}"
+                                                         Background="{DynamicResource Brush.Surface2}"
+                                                         BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+                                                         Padding="4,3" VerticalContentAlignment="Center"
+                                                         ToolTip="Código de la plantilla (editable)"/>
+                                            </StackPanel>
+
+                                            <TextBox Grid.Column="1"
+                                                     Text="{Binding SelectedConjunto.Nombre, UpdateSourceTrigger=PropertyChanged}"
+                                                     IsReadOnly="{Binding IsReadOnly}"
+                                                     BorderThickness="0" Background="Transparent"
+                                                     FontSize="13" FontWeight="SemiBold"
+                                                     Foreground="{DynamicResource Brush.Ink}"
+                                                     Padding="8,4" Margin="4,0" VerticalAlignment="Center"
+                                                     ToolTip="Nombre de la plantilla (editable)"/>
+
+                                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="6,0,0,0">
+                                                <TextBlock Text="UD" Style="{StaticResource Text.SectionLabel}" Margin="0,0,6,0"/>
+                                                <TextBox Text="{Binding SelectedConjunto.Unidad, UpdateSourceTrigger=PropertyChanged}"
+                                                         IsReadOnly="{Binding IsReadOnly}"
+                                                         Width="44" FontFamily="{StaticResource Font.Mono}" FontSize="12"
+                                                         FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink}"
+                                                         Background="{DynamicResource Brush.Surface2}"
+                                                         BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+                                                         Padding="2,3" TextAlignment="Center" VerticalContentAlignment="Center"
+                                                         ToolTip="Unidad del conjunto completo (editable)"/>
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,0,0">
+                                                <Button Content="ⓘ Reglas" Command="{Binding ToggleAyudaCommand}"
+                                                        Style="{DynamicResource Button.Link}" Margin="0,0,8,0"
+                                                        Visibility="{Binding ShowRulesStrip, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}"
+                                                        ToolTip="Mostrar la ayuda de reglas paramétricas"/>
+                                                <Button Content="Duplicar" Command="{Binding DuplicateConjuntoCommand}"
+                                                        CommandParameter="{Binding SelectedConjunto}"
+                                                        Style="{DynamicResource Button.Secondary}"
+                                                        Height="28" Padding="12,0" Margin="0,0,6,0"/>
+                                                <Button Content="Eliminar" Command="{Binding DeleteConjuntoCommand}"
+                                                        CommandParameter="{Binding SelectedConjunto}"
+                                                        Style="{StaticResource Button.Danger}"
+                                                        Height="28" Padding="12,0"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- Strip de ayuda colapsable -->
+                                    <Border Grid.Row="1" Padding="12,7" Background="{DynamicResource Brush.BlueFaint}"
+                                            BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1"
+                                            Visibility="{Binding ShowRulesStrip, Converter={StaticResource BoolToVisibility}}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="ⓘ" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}"
+                                                       VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                            <TextBlock Grid.Column="1" FontSize="11" Foreground="{DynamicResource Brush.Ink2}"
+                                                       TextWrapping="Wrap" VerticalAlignment="Center">
+                                                <Run FontWeight="Bold">Maestro</Run> calcula su cantidad · <Run FontWeight="Bold">Esclavo</Run> deriva de su maestro («Dividir de») · <Run FontWeight="Bold">Operación</Run> combina filas con fórmula. Los maestros se marcan en ámbar.
+                                            </TextBlock>
+                                            <Button Grid.Column="2" Content="Ocultar" Command="{Binding ToggleAyudaCommand}"
+                                                    Style="{DynamicResource Button.Link}" Margin="8,0,0,0"
+                                                    VerticalAlignment="Center" ToolTip="Ocultar la ayuda de reglas"/>
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- Barra contextual ámbar: visible con selección y en modo edición -->
+                                    <Border x:Name="CtxBar" Grid.Row="2" Padding="12,7"
+                                            Background="{DynamicResource Brush.AmberSoft}"
+                                            BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <MultiDataTrigger>
+                                                        <MultiDataTrigger.Conditions>
+                                                            <Condition Binding="{Binding HasSelectedRecursos}" Value="True"/>
+                                                            <Condition Binding="{Binding IsReadOnly}" Value="False"/>
+                                                        </MultiDataTrigger.Conditions>
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </MultiDataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding SelectedRecursosCount, StringFormat={}{0} filas}"
+                                                       FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Amber}"
+                                                       VerticalAlignment="Center" Margin="0,0,10,0"/>
+
+                                            <Button Content="◆ Marcar maestro" Command="{Binding MarcarMaestrosSeleccionCommand}"
+                                                    Style="{StaticResource Button.Amber}" Height="26" FontSize="11"
+                                                    Padding="9,0" Margin="0,0,8,0" VerticalAlignment="Center"
+                                                    ToolTip="Las filas seleccionadas pasan a calcular su propia cantidad"/>
+
+                                            <TextBlock Text="Esclavo de:" FontSize="11" Foreground="{DynamicResource Brush.Ink2}"
+                                                       VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                            <ComboBox x:Name="EsclavoDeCombo"
+                                                      ItemsSource="{Binding MaestrosParaSeleccion}"
+                                                      SelectedItem="{Binding MaestroDestinoSeleccion}"
+                                                      SelectionChanged="AsignarMaestroCombo_SelectionChanged"
+                                                      DisplayMemberPath="Label"
+                                                      Width="150" Height="26" FontSize="11" Margin="0,0,8,0"
+                                                      VerticalContentAlignment="Center"
+                                                      ToolTip="Convierte las filas seleccionadas en esclavas del maestro elegido"/>
+
+                                            <Button Content="⇄ Liberar" Command="{Binding LiberarSeleccionCommand}"
+                                                    Style="{DynamicResource Button.Amber}" Height="26" FontSize="11"
+                                                    Padding="9,0" Margin="0,0,8,0" VerticalAlignment="Center"
+                                                    ToolTip="Las filas seleccionadas dejan de depender de su maestro"/>
+
+                                            <Button Content="✕ Eliminar" Command="{Binding EliminarSeleccionCommand}"
+                                                    Style="{StaticResource Button.Danger}" Height="26" FontSize="11"
+                                                    Padding="9,0" Margin="0,0,10,0" VerticalAlignment="Center"
+                                                    ToolTip="Elimina las filas seleccionadas (los esclavos se liberan)"/>
+
+                                            <Button Content="Limpiar selección" Click="ClearSelection_Click"
+                                                    Style="{DynamicResource Button.Link}" FontSize="11"
+                                                    Foreground="{DynamicResource Brush.Blue}" VerticalAlignment="Center"/>
+                                        </WrapPanel>
+                                    </Border>
+
+                                    <!-- Grilla de recursos -->
+                                    <Grid Grid.Row="3">
+                                        <DataGrid x:Name="ResourcesGrid"
+                                                  ItemsSource="{Binding ConjuntoRecursos}"
+                                                  AutoGenerateColumns="False"
+                                                  IsReadOnly="{Binding IsReadOnly}"
+                                                  GridLinesVisibility="Horizontal"
+                                                  HeadersVisibility="Column"
+                                                  CanUserResizeRows="False"
+                                                  CanUserAddRows="False"
+                                                  SelectionMode="Extended"
+                                                  SelectionUnit="FullRow"
+                                                  FontSize="12"
+                                                  BorderThickness="0"
+                                                  Background="Transparent"
+                                                  CellStyle="{StaticResource PlantillasCell}"
+                                                  EnableRowVirtualization="True"
+                                                  EnableColumnVirtualization="True"
+                                                  VirtualizingPanel.IsVirtualizing="True"
+                                                  VirtualizingPanel.VirtualizationMode="Recycling"
+                                                  ScrollViewer.CanContentScroll="True"
+                                                  Style="{StaticResource DataGrid.Workspace}">
+                                            <DataGrid.RowStyle>
+                                                <Style TargetType="DataGridRow" BasedOn="{StaticResource DataGridRow.Prototype}">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding EsMaestro}" Value="True">
+                                                            <Setter Property="Background" Value="{DynamicResource Brush.AmberSoft}"/>
+                                                            <Setter Property="ToolTip" Value="Fila maestro (ámbar): otras filas pueden dividir de ella."/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding EsOperacion}" Value="True">
+                                                            <Setter Property="ToolTip" Value="Fila operación: combina otras filas por fórmula."/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding EsEsclavo}" Value="True">
+                                                            <Setter Property="ToolTip" Value="Fila esclava: deriva su cantidad del maestro de «Dividir de»."/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </DataGrid.RowStyle>
+                                            <DataGrid.Columns>
+
+                                                <!-- Tipo (con franja ámbar en filas maestro) -->
+                                                <DataGridTemplateColumn Header="Tipo" Width="68">
+                                                    <DataGridTemplateColumn.CellTemplate>
+                                                        <DataTemplate>
+                                                            <Border Padding="6,0">
+                                                                <Border.Style>
+                                                                    <Style TargetType="Border">
+                                                                        <Setter Property="BorderThickness" Value="0"/>
+                                                                        <Setter Property="Padding" Value="6,0"/>
+                                                                        <Setter Property="BorderBrush" Value="Transparent"/>
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding EsMaestro}" Value="True">
+                                                                                <Setter Property="BorderThickness" Value="3,0,0,0"/>
+                                                                                <Setter Property="BorderBrush" Value="{DynamicResource Brush.Amber}"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Border.Style>
+                                                                <ComboBox Style="{StaticResource GridCombo}"
+                                                                          ItemsSource="{Binding Source={x:Static local:PlantillasView.ApuTiposRecurso}}"
+                                                                          SelectedItem="{Binding Tipo}"
+                                                                          ToolTip="Tipo de recurso"/>
+                                                            </Border>
+                                                        </DataTemplate>
+                                                    </DataGridTemplateColumn.CellTemplate>
+                                                </DataGridTemplateColumn>
+
+                                                <!-- Código -->
+                                                <DataGridTextColumn Header="Código" Width="96"
+                                                                    Binding="{Binding Codigo, UpdateSourceTrigger=PropertyChanged}"/>
+
+                                                <!-- Descripción -->
+                                                <DataGridTextColumn Header="Descripción" Width="*"
+                                                                    Binding="{Binding Descripcion, UpdateSourceTrigger=PropertyChanged}"/>
+
+                                                <!-- Unidad -->
+                                                <DataGridTextColumn Header="Ud." Width="44"
+                                                                    Binding="{Binding Unidad, UpdateSourceTrigger=PropertyChanged}"/>
+
+                                                <!-- Rol (chip vivo: Maestro / Esclavo / Operación) -->
+                                                <DataGridTemplateColumn Header="Rol" Width="138">
+                                                    <DataGridTemplateColumn.CellTemplate>
+                                                        <DataTemplate>
+                                                            <Border Style="{StaticResource RolChip}" HorizontalAlignment="Stretch">
+                                                                <ComboBox Style="{StaticResource RolChipCombo}"
+                                                                          ItemsSource="{Binding Source={x:Static local:PlantillasView.RolesRecurso}}"
+                                                                          SelectedItem="{Binding Rol}"
+                                                                          ItemContainerStyle="{StaticResource RolChipItem}"
+                                                                          ToolTip="Maestro: calcula su cantidad. Esclavo: deriva de su maestro (se vincula al primero disponible). Operación: combina filas con fórmula."/>
+                                                            </Border>
+                                                        </DataTemplate>
+                                                    </DataGridTemplateColumn.CellTemplate>
+                                                </DataGridTemplateColumn>
+
+                                                <!-- Dividir de: fila maestro de la que deriva la cantidad -->
+                                                <DataGridComboBoxColumn Header="Dividir de" Width="132"
+                                                                        SelectedValueBinding="{Binding MaestroId, UpdateSourceTrigger=PropertyChanged}">
+                                                    <DataGridComboBoxColumn.ElementStyle>
+                                                        <Style TargetType="ComboBox">
+                                                            <Setter Property="ItemsSource" Value="{Binding MaestrosDisponibles}"/>
+                                                            <Setter Property="SelectedValuePath" Value="Id"/>
+                                                            <Setter Property="DisplayMemberPath" Value="Label"/>
+                                                            <Setter Property="BorderThickness" Value="0"/>
+                                                            <Setter Property="Background" Value="Transparent"/>
+                                                            <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}"/>
+                                                            <Setter Property="FontSize" Value="11"/>
+                                                            <Setter Property="Padding" Value="2,0"/>
+                                                            <Setter Property="ToolTip" Value="Fila maestro de la que deriva la cantidad (solo si Rol = Esclavo). Sin opciones si no hay maestros disponibles."/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsReadOnly, RelativeSource={RelativeSource AncestorType=DataGrid}}" Value="True">
+                                                                    <Setter Property="IsEnabled" Value="False"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </DataGridComboBoxColumn.ElementStyle>
+                                                    <DataGridComboBoxColumn.EditingElementStyle>
+                                                        <Style TargetType="ComboBox">
+                                                            <Setter Property="ItemsSource" Value="{Binding MaestrosDisponibles}"/>
+                                                            <Setter Property="SelectedValuePath" Value="Id"/>
+                                                            <Setter Property="DisplayMemberPath" Value="Label"/>
+                                                            <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}"/>
+                                                            <Setter Property="FontSize" Value="11"/>
+                                                        </Style>
+                                                    </DataGridComboBoxColumn.EditingElementStyle>
+                                                </DataGridComboBoxColumn>
+
+                                                <!-- Regla: combo de tipo de cálculo, o fórmula si es operación -->
+                                                <DataGridTemplateColumn Header="Regla" Width="156">
+                                                    <DataGridTemplateColumn.CellTemplate>
+                                                        <DataTemplate>
+                                                            <Grid>
+                                                                <!-- Normal: combo de tipo -->
+                                                                <ComboBox Style="{StaticResource ReglaCombo}"
+                                                                          Visibility="{Binding EsOperacion, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}"
+                                                                          ItemsSource="{Binding Source={x:Static local:PlantillasView.TiposCalculo}}"
+                                                                          SelectedItem="{Binding TipoCalculo}"/>
+
+                                                                <!-- Operación: fórmula libre -->
+                                                                <TextBox Style="{StaticResource ReglaFormula}"
+                                                                         Visibility="{Binding EsOperacion, Converter={StaticResource BoolToVisibility}}"
+                                                                         Text="{Binding Operacion, UpdateSourceTrigger=PropertyChanged}"
+                                                                         ToolTip="Fórmula con códigos de otras filas de la plantilla (ej. PAZ * 2 + TEEG500)."/>
+                                                            </Grid>
+                                                        </DataTemplate>
+                                                    </DataGridTemplateColumn.CellTemplate>
+                                                </DataGridTemplateColumn>
+
+                                                <!-- Valor: celda numérica con edición nativa de la grilla (estilo Excel):
+                                                     F2 o dígito inicia edición, Enter confirma y baja, Tab avanza.
+                                                     LostFocus evita reformatear mientras se teclea "1,5". -->
+                                                <DataGridTextColumn Header="Valor" Width="68"
+                                                                    Binding="{Binding PasoFactor, UpdateSourceTrigger=LostFocus, StringFormat=N2}"
+                                                                    HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}">
+                                                    <DataGridTextColumn.ElementStyle>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="HorizontalAlignment" Value="Right"/>
+                                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                                            <Setter Property="Padding" Value="0,0,8,0"/>
+                                                            <Setter Property="FontFamily" Value="{StaticResource Font.Mono}"/>
+                                                            <Setter Property="FontSize" Value="11"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsReadOnly, RelativeSource={RelativeSource AncestorType=DataGrid}}" Value="True">
+                                                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding EsOperacion}" Value="True">
+                                                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </DataGridTextColumn.ElementStyle>
+                                                    <DataGridTextColumn.EditingElementStyle>
+                                                        <Style TargetType="TextBox" BasedOn="{StaticResource ReglaValor}">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding EsOperacion}" Value="True">
+                                                                    <Setter Property="IsEnabled" Value="False"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </DataGridTextColumn.EditingElementStyle>
+                                                </DataGridTextColumn>
+
+                                            </DataGrid.Columns>
+                                        </DataGrid>
+                                    </Grid>
+
+                                    <!-- Pie: agregar + contadores por rol + estado -->
+                                    <Border Grid.Row="4" Padding="12,8"
+                                            Background="{DynamicResource Brush.Surface2}"
+                                            BorderBrush="{DynamicResource Brush.Line}"
+                                            BorderThickness="0,1,0,0">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <Button Grid.Column="0" Content="＋ Agregar Material"
+                                                    Command="{Binding AddRecursoCommand}"
+                                                    Style="{DynamicResource Button.Secondary}"
+                                                    Height="28" Padding="12,0"
+                                                    Background="{DynamicResource Brush.BlueSoft}"
+                                                    BorderBrush="{DynamicResource Brush.Blue}"
+                                                    Foreground="{DynamicResource Brush.Blue}"/>
+
+                                            <!-- Contadores por rol -->
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="12,0">
+                                                <Ellipse Width="7" Height="7" Fill="{DynamicResource Brush.Amber}" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{Binding ConteoMaestros}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink}" Margin="5,0,1,0"/>
+                                                <TextBlock Text="maestros" FontSize="11" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,10,0"/>
+
+                                                <Ellipse Width="7" Height="7" Fill="{DynamicResource Brush.Ink3}" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{Binding ConteoEsclavos}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink}" Margin="5,0,1,0"/>
+                                                <TextBlock Text="esclavos" FontSize="11" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,10,0"/>
+
+                                                <Ellipse Width="7" Height="7" Fill="{DynamicResource Brush.Blue}" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{Binding ConteoOperaciones}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink}" Margin="5,0,1,0"/>
+                                                <TextBlock Text="operaciones" FontSize="11" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,10,0"/>
+
+                                                <TextBlock Text="{Binding SelectedConjunto.RecursoCount}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink}" Margin="0,0,1,0"/>
+                                                <TextBlock Text="recursos" FontSize="11" Foreground="{DynamicResource Brush.Muted}"/>
+                                            </StackPanel>
+
+                                            <!-- Último mensaje de la VM (resultado de acciones masivas, etc.) -->
+                                            <TextBlock Grid.Column="2" Text="{Binding StatusMessage}"
+                                                       FontSize="11" Foreground="{DynamicResource Brush.Muted}"
+                                                       VerticalAlignment="Center" HorizontalAlignment="Right"
+                                                       TextTrimming="CharacterEllipsis" MaxWidth="260"/>
+                                        </Grid>
+                                    </Border>
+                                </Grid>
+                            </Border>
+                        </Grid>
+
+                        <GridSplitter Grid.Column="3" Width="6" HorizontalAlignment="Stretch" Background="Transparent"/>
+
+                        <!-- Panel derecho: jerarquía + vista previa -->
+                        <Border Grid.Column="4" Background="{DynamicResource Brush.Surface}"
+                                BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="10">
+                            <Grid>
+                                <!-- Sin selección -->
+                                <StackPanel Visibility="{Binding SelectedConjunto, Converter={StaticResource NullToVisibility}}"
+                                            HorizontalAlignment="Center" VerticalAlignment="Center" Margin="16">
+                                    <TextBlock Text="Sin plantilla seleccionada" FontSize="12" FontWeight="Bold"
+                                               Foreground="{DynamicResource Brush.Ink2}" HorizontalAlignment="Center"/>
+                                    <TextBlock Text="Elige un conjunto para ver su jerarquía de cálculo y la vista previa de expansión."
+                                               FontSize="11" Foreground="{DynamicResource Brush.Muted}"
+                                               TextWrapping="Wrap" TextAlignment="Center" Margin="0,6,0,0"/>
+                                </StackPanel>
+
+                                <ScrollViewer Visibility="{Binding SelectedConjunto, Converter={StaticResource NullToVisibility}, ConverterParameter=Inverse}"
+                                              VerticalScrollBarVisibility="Auto">
+                                    <StackPanel>
+
+                                        <!-- Jerarquía maestro → esclavo -->
+                                        <Border Padding="12,10" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1">
+                                            <StackPanel>
+                                                <TextBlock Text="JERARQUÍA DE CÁLCULO" Style="{StaticResource Text.SectionLabel}"/>
+                                                <TextBlock Text="Se actualiza al editar vínculos · solo lectura"
+                                                           Style="{StaticResource Text.Helper}" Margin="0,3,0,0"/>
+
+                                                <ItemsControl ItemsSource="{Binding Jerarquia}" Margin="0,6,0,0">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <StackPanel Margin="0,3,0,0">
+                                                                <Grid>
+                                                                    <Grid.RowDefinitions>
+                                                                        <RowDefinition Height="Auto"/>
+                                                                        <RowDefinition Height="Auto"/>
+                                                                        <RowDefinition Height="Auto"/>
+                                                                    </Grid.RowDefinitions>
+                                                                    <Grid.ColumnDefinitions>
+                                                                        <ColumnDefinition Width="Auto"/>
+                                                                        <ColumnDefinition Width="*"/>
+                                                                    </Grid.ColumnDefinitions>
+
+                                                                    <!-- Chip de tipo de nodo -->
+                                                                    <Border Grid.Row="0" Grid.Column="0" CornerRadius="7"
+                                                                            BorderThickness="1" Padding="5,0" MinWidth="20"
+                                                                            Margin="0,1,7,0" VerticalAlignment="Top">
+                                                                        <Border.Style>
+                                                                            <Style TargetType="Border">
+                                                                                <Setter Property="Background" Value="{DynamicResource Brush.Surface2}"/>
+                                                                                <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line2}"/>
+                                                                                <Style.Triggers>
+                                                                                    <DataTrigger Binding="{Binding Kind}" Value="master">
+                                                                                        <Setter Property="Background" Value="{DynamicResource Brush.AmberSoft}"/>
+                                                                                        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Amber}"/>
+                                                                                    </DataTrigger>
+                                                                                    <DataTrigger Binding="{Binding Kind}" Value="op">
+                                                                                        <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}"/>
+                                                                                        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}"/>
+                                                                                    </DataTrigger>
+                                                                                    <DataTrigger Binding="{Binding Kind}" Value="orphan">
+                                                                                        <Setter Property="Background" Value="{DynamicResource Brush.RedSoft}"/>
+                                                                                        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Red}"/>
+                                                                                    </DataTrigger>
+                                                                                </Style.Triggers>
+                                                                            </Style>
+                                                                        </Border.Style>
+                                                                        <TextBlock FontSize="9" FontWeight="Bold" HorizontalAlignment="Center">
+                                                                            <TextBlock.Style>
+                                                                                <Style TargetType="TextBlock">
+                                                                                    <Setter Property="Text" Value="→"/>
+                                                                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}"/>
+                                                                                    <Style.Triggers>
+                                                                                        <DataTrigger Binding="{Binding Kind}" Value="master">
+                                                                                            <Setter Property="Text" Value="◆"/>
+                                                                                            <Setter Property="Foreground" Value="{DynamicResource Brush.Amber}"/>
+                                                                                        </DataTrigger>
+                                                                                        <DataTrigger Binding="{Binding Kind}" Value="op">
+                                                                                            <Setter Property="Text" Value="ƒ"/>
+                                                                                            <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}"/>
+                                                                                        </DataTrigger>
+                                                                                        <DataTrigger Binding="{Binding Kind}" Value="orphan">
+                                                                                            <Setter Property="Text" Value="?"/>
+                                                                                            <Setter Property="Foreground" Value="{DynamicResource Brush.Red}"/>
+                                                                                        </DataTrigger>
+                                                                                    </Style.Triggers>
+                                                                                </Style>
+                                                                            </TextBlock.Style>
+                                                                        </TextBlock>
+                                                                    </Border>
+
+                                                                    <!-- Código + descripción -->
+                                                                    <Grid Grid.Row="0" Grid.Column="1">
+                                                                        <Grid.ColumnDefinitions>
+                                                                            <ColumnDefinition Width="Auto"/>
+                                                                            <ColumnDefinition Width="*"/>
+                                                                        </Grid.ColumnDefinitions>
+                                                                        <TextBlock Text="{Binding Codigo}" FontFamily="{StaticResource Font.Mono}"
+                                                                                   FontSize="11" FontWeight="SemiBold"
+                                                                                   Foreground="{DynamicResource Brush.Ink}"/>
+                                                                        <TextBlock Grid.Column="1" Text="{Binding Descripcion}"
+                                                                                   FontSize="11" Foreground="{DynamicResource Brush.Muted}"
+                                                                                   Margin="7,0,0,0" TextTrimming="CharacterEllipsis"
+                                                                                   MaxWidth="150" VerticalAlignment="Center"
+                                                                                   ToolTip="{Binding Descripcion}"/>
+                                                                    </Grid>
+
+                                                                    <!-- Regla del nodo -->
+                                                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Regla}"
+                                                                               FontSize="10" Foreground="{DynamicResource Brush.Ink3}"
+                                                                               Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
+
+                                                                    <!-- Hijos (esclavos) con línea vertical -->
+                                                                    <Border Grid.Row="2" Grid.Column="1"
+                                                                            BorderThickness="1,0,0,0"
+                                                                            BorderBrush="{DynamicResource Brush.Line2}"
+                                                                            Padding="12,0,0,0" Margin="0,3,0,0"
+                                                                            Visibility="{Binding TieneHijos, Converter={StaticResource BoolToVisibility}}">
+                                                                        <ItemsControl ItemsSource="{Binding Hijos}">
+                                                                            <ItemsControl.ItemTemplate>
+                                                                                <DataTemplate>
+                                                                                    <Grid Margin="0,3,0,0">
+                                                                                        <Grid.ColumnDefinitions>
+                                                                                            <ColumnDefinition Width="Auto"/>
+                                                                                            <ColumnDefinition Width="*"/>
+                                                                                        </Grid.ColumnDefinitions>
+                                                                                        <Border CornerRadius="6" BorderThickness="1"
+                                                                                                BorderBrush="{DynamicResource Brush.Line2}"
+                                                                                                Background="{DynamicResource Brush.Surface2}"
+                                                                                                Padding="4,0" Margin="0,0,7,0"
+                                                                                                VerticalAlignment="Center">
+                                                                                            <TextBlock Text="→" FontSize="8" FontWeight="Bold"
+                                                                                                       Foreground="{DynamicResource Brush.Ink3}"/>
+                                                                                        </Border>
+                                                                                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                                                            <TextBlock Text="{Binding Codigo}" FontFamily="{StaticResource Font.Mono}"
+                                                                                                       FontSize="10" FontWeight="SemiBold"
+                                                                                                       Foreground="{DynamicResource Brush.Ink2}"/>
+                                                                                            <TextBlock Text="{Binding Regla}" FontSize="10"
+                                                                                                       Foreground="{DynamicResource Brush.Muted}"
+                                                                                                       Margin="6,0,0,0" TextTrimming="CharacterEllipsis"
+                                                                                                       MaxWidth="90"/>
+                                                                                        </StackPanel>
+                                                                                    </Grid>
+                                                                                </DataTemplate>
+                                                                            </ItemsControl.ItemTemplate>
+                                                                        </ItemsControl>
+                                                                    </Border>
+                                                                </Grid>
+                                                            </StackPanel>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </StackPanel>
+                                        </Border>
+
+                                        <!-- Vista previa de expansión (base 1) -->
+                                        <Border Padding="12,10" Background="{DynamicResource Brush.Surface2}">
+                                            <StackPanel>
+                                                <TextBlock Text="VISTA PREVIA DE EXPANSIÓN" Style="{StaticResource Text.SectionLabel}"/>
+                                                <TextBlock Text="Con base 1 (receta unitaria): así queda al llevarla a una partida. MO/HH/HERR no se cargan en cubicación."
+                                                           Style="{StaticResource Text.Helper}" Margin="0,3,0,0" TextWrapping="Wrap"/>
+
+                                                <ItemsControl ItemsSource="{Binding PreviewFilas}" Margin="0,6,0,0">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Grid Margin="0,3">
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                    <ColumnDefinition Width="*"/>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                </Grid.ColumnDefinitions>
+                                                                <TextBlock Text="{Binding Codigo}" FontFamily="{StaticResource Font.Mono}"
+                                                                           FontSize="11" FontWeight="SemiBold"
+                                                                           Foreground="{DynamicResource Brush.Ink}"/>
+                                                                <TextBlock Grid.Column="1" Text="{Binding Descripcion}"
+                                                                           FontSize="10" Foreground="{DynamicResource Brush.Muted}"
+                                                                           Margin="7,0,0,0" TextTrimming="CharacterEllipsis"
+                                                                           MaxWidth="120" VerticalAlignment="Center"
+                                                                           ToolTip="{Binding Descripcion}"/>
+                                                                <StackPanel Grid.Column="2" Orientation="Horizontal"
+                                                                            HorizontalAlignment="Right" VerticalAlignment="Center">
+                                                                    <TextBlock Text="{Binding Cantidad}" FontFamily="{StaticResource Font.Mono}"
+                                                                               FontSize="11" FontWeight="SemiBold"
+                                                                               Foreground="{DynamicResource Brush.Blue}"
+                                                                               TextAlignment="Right"/>
+                                                                    <TextBlock Text="{Binding Unidad}" FontSize="10"
+                                                                               Foreground="{DynamicResource Brush.Muted}"
+                                                                               Margin="4,0,0,0"/>
+                                                                </StackPanel>
+                                                            </Grid>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </StackPanel>
+                                        </Border>
+
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </TabItem>
+
+                <!-- ── Pestaña 2: Plantillas APU ── -->
+                <TabItem>
+                    <TabItem.Header>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Plantillas APU"/>
+                            <Border Background="{DynamicResource Brush.BlueFaint}" CornerRadius="8" Padding="7,1" Margin="8,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding KpiTemplatesCount}" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}"/>
+                            </Border>
+                        </StackPanel>
+                    </TabItem.Header>
+
+                    <Grid Margin="0,4,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="300"/>
+                            <ColumnDefinition Width="6"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Listado de plantillas APU -->
+                        <Border Grid.Column="0" Background="{DynamicResource Brush.Surface}"
+                                BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="10">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <Border Grid.Row="0" Padding="12,10" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1">
+                                    <TextBlock Text="PLANTILLAS APU" Style="{StaticResource Text.SectionLabel}"/>
+                                </Border>
+
+                                <Border Grid.Row="1" Padding="12,8" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1">
+                                    <Grid>
+                                        <TextBox Style="{StaticResource SearchApu}"
+                                                 Text="{Binding TemplateFilter, UpdateSourceTrigger=PropertyChanged}"
+                                                 ToolTip="Filtra por nombre o categoría"/>
+                                        <TextBlock Text="🔍" VerticalAlignment="Center" Margin="9,0,0,0" FontSize="11"
+                                                   Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Left" IsHitTestVisible="False"/>
+                                    </Grid>
+                                </Border>
+
+                                <ListBox Grid.Row="2"
+                                         ItemsSource="{Binding Templates}"
+                                         SelectedItem="{Binding SelectedTemplate}"
+                                         ItemContainerStyle="{StaticResource ListItem}"
+                                         BorderThickness="0"
+                                         Background="Transparent"
+                                         VirtualizingPanel.IsVirtualizing="True"
+                                         VirtualizingPanel.VirtualizationMode="Recycling"
+                                         Padding="0,6">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="1,4">
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <Border Grid.Row="0" Grid.Column="0" Background="{DynamicResource Brush.BlueFaint}"
+                                                        CornerRadius="4" Padding="4,2" Margin="0,0,8,0" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Categoria}" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}"/>
+                                                </Border>
+                                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Nombre}"
+                                                           FontSize="12" FontWeight="Bold"
+                                                           Foreground="{DynamicResource Brush.Ink}"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           VerticalAlignment="Center"/>
+
+                                                <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,4,0,0">
+                                                    <TextBlock Text="{Binding RecursoCount, StringFormat={}{0} recursos}"
+                                                               FontSize="10" Foreground="{DynamicResource Brush.Muted}"/>
+                                                    <TextBlock Text=" · " FontSize="10" Foreground="{DynamicResource Brush.Muted}"/>
+                                                    <TextBlock Text="{Binding Unidad, StringFormat=Unidad: {0}}"
+                                                               FontSize="10" Foreground="{DynamicResource Brush.Muted}"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+
+                                <Border Grid.Row="3" Padding="12,8" Background="{DynamicResource Brush.Surface2}"
+                                        BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,1,0,0">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding Templates.Count, StringFormat={}{0} plantillas APU}"
+                                                   Style="{StaticResource Text.Helper}" VerticalAlignment="Center"/>
+                                        <Button Grid.Column="1" Content="＋ Nueva" Command="{Binding CreateTemplateCommand}"
+                                                Style="{DynamicResource Button.Link}" HorizontalAlignment="Right"
+                                                VerticalAlignment="Center" ToolTip="Nueva plantilla APU"/>
+                                    </Grid>
+                                </Border>
+                            </Grid>
+                        </Border>
+
+                        <GridSplitter Grid.Column="1" Width="6" HorizontalAlignment="Stretch" Background="Transparent"/>
+
+                        <!-- Detalle de la plantilla APU -->
+                        <Grid Grid.Column="2">
+                            <Border Visibility="{Binding SelectedTemplate, Converter={StaticResource NullToVisibility}}"
+                                    Background="{DynamicResource Brush.Surface}"
+                                    BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+                                    CornerRadius="10" Padding="40">
+                                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <TextBlock Text="📐" FontSize="56" HorizontalAlignment="Center" Margin="0,0,0,16" Opacity="0.5"/>
+                                    <TextBlock Text="Selecciona una plantilla APU"
+                                               FontSize="16" FontWeight="Bold"
+                                               Foreground="{DynamicResource Brush.Ink}"
+                                               HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                                    <TextBlock Text="Mira sus recursos, rendimientos y precios UF. Crea una con «＋ Nueva» en la lista."
+                                               FontSize="12" Foreground="{DynamicResource Brush.Muted}"
+                                               TextWrapping="Wrap" TextAlignment="Center" MaxWidth="320"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Visibility="{Binding SelectedTemplate, Converter={StaticResource NullToVisibility}, ConverterParameter=Inverse}"
+                                    Background="{DynamicResource Brush.Surface}"
+                                    BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+                                    CornerRadius="10">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+
+                                    <!-- Encabezado: categoría + nombre + acciones -->
+                                    <Border Grid.Row="0" Padding="12,9" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
 
-                                            <!-- Título y Código editables -->
-                                            <StackPanel Grid.Column="0" Orientation="Horizontal">
-                                                <TextBox Text="{Binding SelectedConjunto.Codigo, UpdateSourceTrigger=PropertyChanged}"
-                                 FontSize="12" FontWeight="Bold"
-                                 Foreground="{DynamicResource Brush.Blue}"
-                                 Background="{DynamicResource Brush.Surface2}"
-                                 BorderBrush="{DynamicResource Brush.Line}"
-                                 Padding="6,4" Width="691" Margin="0,0,12,0" VerticalAlignment="Center"
-                                 ToolTip="Código de la plantilla (editable)"/>
-
-                                                <TextBox Text="{Binding SelectedConjunto.Nombre, UpdateSourceTrigger=PropertyChanged}"
-                                 FontSize="16" FontWeight="ExtraBold"
-                                 Foreground="{DynamicResource Brush.Ink}"
-                                 Background="Transparent"
-                                 BorderThickness="0"
-                                 Padding="0,4" MinWidth="250" MaxWidth="500" VerticalAlignment="Center"
-                                 ToolTip="Nombre de la plantilla (editable)"/>
+                                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Border Background="{DynamicResource Brush.BlueSoft}" BorderBrush="{DynamicResource Brush.Blue}"
+                                                        BorderThickness="1" CornerRadius="9" Padding="6,2" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding SelectedTemplate.Categoria}" FontSize="10" FontWeight="Bold"
+                                                               Foreground="{DynamicResource Brush.Blue}"/>
+                                                </Border>
+                                                <TextBlock Text="{Binding SelectedTemplate.Nombre}" Style="{StaticResource Text.SectionTitle}"
+                                                           Margin="10,0,0,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{Binding SelectedTemplate.Unidad, StringFormat= ·  Ud. {0}}"
+                                                           FontSize="11" Foreground="{DynamicResource Brush.Muted}"
+                                                           Margin="10,0,0,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{Binding TemplateRecursos.Count, StringFormat= ·  {0} recursos}"
+                                                           FontSize="11" Foreground="{DynamicResource Brush.Muted}"
+                                                           Margin="4,0,0,0" VerticalAlignment="Center"/>
                                             </StackPanel>
 
-                                            <!-- Botones de Acción de la Plantilla -->
                                             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                                <Button Content="Duplicar"
-                                Command="{Binding DuplicateConjuntoCommand}"
-                                CommandParameter="{Binding SelectedConjunto}"
-                                Style="{DynamicResource Button.Secondary}"
-                                Height="28" Padding="12,0" Margin="0,0,8,0"/>
-                                                <Button Content="Eliminar"
-                                Command="{Binding DeleteConjuntoCommand}"
-                                CommandParameter="{Binding SelectedConjunto}"
-                                Style="{DynamicResource Button.Secondary}"
-                                Height="28" Padding="12,0" Foreground="{DynamicResource Brush.Muted}"/>
+                                                <Button Content="Duplicar" Command="{Binding DuplicateTemplateCommand}"
+                                                        CommandParameter="{Binding SelectedTemplate}"
+                                                        Style="{DynamicResource Button.Secondary}"
+                                                        Height="28" Padding="12,0" Margin="0,0,6,0"/>
+                                                <Button Content="Renombrar" Command="{Binding RenameTemplateCommand}"
+                                                        CommandParameter="{Binding SelectedTemplate}"
+                                                        Style="{DynamicResource Button.Secondary}"
+                                                        Height="28" Padding="12,0" Margin="0,0,6,0"/>
+                                                <Button Content="Eliminar" Command="{Binding DeleteTemplateCommand}"
+                                                        CommandParameter="{Binding SelectedTemplate}"
+                                                        Style="{StaticResource Button.Danger}"
+                                                        Height="28" Padding="12,0"/>
                                             </StackPanel>
                                         </Grid>
                                     </Border>
 
-                                    <!-- Parámetros Globales de la Plantilla (Merma, Imprevistos, etc.) -->
-
-                                    <!-- Banner explicativo de reglas parametricas -->
-                                    <Border Grid.Row="2" Padding="14,8" Background="{DynamicResource Brush.BlueSoft}"
-                          BorderBrush="{DynamicResource Brush.Blue}" BorderThickness="0,0,0,1">
-                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="&#x26A1;" FontSize="13" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                            <TextBlock FontSize="11" Foreground="{DynamicResource Brush.Ink}" TextWrapping="Wrap">
-                        <Run FontWeight="Bold">Tipo C&#xE1;lculo:</Run>
-                        <Run>Factor = Cantidad&#xD7;Factor&#x2003;&#x2502;&#x2003;Cada N m = &#x2308;Cantidad&#xF7;Paso&#x2309;&#x2003;(ej. soporte cada 1.5 m &#x2192; 1000 m / 1.5 = 667 UN)</Run>
-                                            </TextBlock>
-                                        </StackPanel>
-                                    </Border>
-
-                                    <!-- Tabla Principal de Materiales -->
-                                    <Grid Grid.Row="3">
-                                        <DataGrid x:Name="ResourcesGrid"
-                              ItemsSource="{Binding ConjuntoRecursos}"
-                              infra:DataGridExcelNavigation.Enable="True"
-                              AutoGenerateColumns="False"
-                              IsReadOnly="{Binding IsReadOnly}"
-                              GridLinesVisibility="Horizontal"
-                              HeadersVisibility="Column"
-                              CanUserResizeRows="False"
-                              CanUserAddRows="False"
-                              SelectionMode="Single"
-                              FontSize="12"
-                              BorderThickness="0"
-                              Background="Transparent"
-                              EnableRowVirtualization="True"
-                              EnableColumnVirtualization="True"
-                              VirtualizingPanel.IsVirtualizing="True"
-                              VirtualizingPanel.VirtualizationMode="Recycling"
-                              ScrollViewer.CanContentScroll="True"
-                              Style="{StaticResource DataGrid.Workspace}">
+                                    <!-- Recursos de la plantilla (solo lectura) -->
+                                    <Grid Grid.Row="1">
+                                        <DataGrid ItemsSource="{Binding TemplateRecursos}"
+                                                  AutoGenerateColumns="False"
+                                                  IsReadOnly="True"
+                                                  GridLinesVisibility="Horizontal"
+                                                  HeadersVisibility="Column"
+                                                  CanUserResizeRows="False"
+                                                  CanUserAddRows="False"
+                                                  BorderThickness="0"
+                                                  Background="Transparent"
+                                                  CellStyle="{StaticResource PlantillasCell}"
+                                                  EnableRowVirtualization="True"
+                                                  ScrollViewer.CanContentScroll="True"
+                                                  Style="{StaticResource DataGrid.Workspace}">
                                             <DataGrid.Columns>
-                                                <!-- Tipo de Recurso -->
-                                                <DataGridComboBoxColumn Header="Tipo" Width="70" 
-                                                SelectedItemBinding="{Binding Tipo}">
-                                                    <DataGridComboBoxColumn.ElementStyle>
-                                                        <Style TargetType="ComboBox">
-                                                            <Setter Property="ItemsSource" Value="{Binding Source={x:Static local:PlantillasView.ApuTiposRecurso}}"/>
-                                                            <Setter Property="BorderThickness" Value="0"/>
-                                                            <Setter Property="Background" Value="Transparent"/>
-                                                        </Style>
-                                                    </DataGridComboBoxColumn.ElementStyle>
-                                                    <DataGridComboBoxColumn.EditingElementStyle>
-                                                        <Style TargetType="ComboBox">
-                                                            <Setter Property="ItemsSource" Value="{Binding Source={x:Static local:PlantillasView.ApuTiposRecurso}}"/>
-                                                        </Style>
-                                                    </DataGridComboBoxColumn.EditingElementStyle>
-                                                </DataGridComboBoxColumn>
-
-                                                <!-- Código -->
-                                                <DataGridTextColumn Header="Código" Binding="{Binding Codigo, UpdateSourceTrigger=PropertyChanged}" Width="100"/>
-
-                                                <!-- Descripción -->
-                                                <DataGridTextColumn Header="Descripción del Material" Binding="{Binding Descripcion, UpdateSourceTrigger=PropertyChanged}" Width="*"/>
-
-                                                <!-- Unidad -->
-                                                <DataGridTextColumn Header="Ud." Binding="{Binding Unidad, UpdateSourceTrigger=PropertyChanged}" Width="50"/>
-
-                                                <!-- Tipo de Calculo Parametrico -->
-                                                <DataGridComboBoxColumn Header="Tipo C&#xE1;lculo" Width="130"
-                                                SelectedItemBinding="{Binding TipoCalculo}">
-                                                    <DataGridComboBoxColumn.ElementStyle>
-                                                        <Style TargetType="ComboBox">
-                                                            <Setter Property="ItemsSource" Value="{Binding Source={x:Static local:PlantillasView.TiposCalculo}}"/>
-                                                            <Setter Property="BorderThickness" Value="0"/>
-                                                            <Setter Property="Background" Value="Transparent"/>
-                                                            <Setter Property="ToolTip" Value="Factor: Cant = Base x Factor | Cada N m: Cant = Ceil(Base / Paso)"/>
-                                                        </Style>
-                                                    </DataGridComboBoxColumn.ElementStyle>
-                                                    <DataGridComboBoxColumn.EditingElementStyle>
-                                                        <Style TargetType="ComboBox">
-                                                            <Setter Property="ItemsSource" Value="{Binding Source={x:Static local:PlantillasView.TiposCalculo}}"/>
-                                                        </Style>
-                                                    </DataGridComboBoxColumn.EditingElementStyle>
-                                                </DataGridComboBoxColumn>
-
-                                                <!-- Paso (m) / Factor -->
-                                                <DataGridTextColumn Header="Paso (m) / Factor"
-                                            Binding="{Binding Espaciamiento, UpdateSourceTrigger=PropertyChanged, StringFormat=N2}"
-                                            Width="110">
+                                                <DataGridTextColumn Header="Tipo" Width="56" Binding="{Binding Tipo}"/>
+                                                <DataGridTextColumn Header="Código" Width="100" Binding="{Binding Codigo}"/>
+                                                <DataGridTextColumn Header="Descripción" Width="*" Binding="{Binding Descripcion}"/>
+                                                <DataGridTextColumn Header="Ud." Width="46" Binding="{Binding Unidad}"/>
+                                                <DataGridTextColumn Header="Rend." Width="86" Binding="{Binding Rendimiento, StringFormat=N2}"
+                                                                    HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}">
                                                     <DataGridTextColumn.ElementStyle>
                                                         <Style TargetType="TextBlock">
                                                             <Setter Property="HorizontalAlignment" Value="Right"/>
                                                             <Setter Property="VerticalAlignment" Value="Center"/>
                                                             <Setter Property="Padding" Value="0,0,8,0"/>
-                                                            <Setter Property="ToolTip" Value="Factor: multiplicador sobre la cantidad base.&#x0a;Cada N metros: metros entre unidades (ej. 1.5 = soporte cada 1.5 m)."/>
+                                                        </Style>
+                                                    </DataGridTextColumn.ElementStyle>
+                                                </DataGridTextColumn>
+                                                <DataGridTextColumn Header="P. UF" Width="90" Binding="{Binding PrecioUf, StringFormat=N2}"
+                                                                    HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}">
+                                                    <DataGridTextColumn.ElementStyle>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="HorizontalAlignment" Value="Right"/>
+                                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                                            <Setter Property="Padding" Value="0,0,8,0"/>
                                                         </Style>
                                                     </DataGridTextColumn.ElementStyle>
                                                 </DataGridTextColumn>
                                             </DataGrid.Columns>
                                         </DataGrid>
                                     </Grid>
-
-                                    <!-- Footer de la tabla con acciones rápidas -->
-                                    <Border Grid.Row="4" Padding="14,10"
-                          Background="{DynamicResource Brush.Surface2}"
-                          BorderBrush="{DynamicResource Brush.Line}"
-                          BorderThickness="0,1,0,0">
-                                        <DockPanel LastChildFill="False">
-                                            <!-- Métricas rápidas a la izquierda -->
-                                            <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
-                                                <TextBlock Text="Total:" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}"/>
-                                                <TextBlock Text="{Binding SelectedConjunto.RecursoCount, StringFormat={}{0} materiales}" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" Margin="6,0,16,0"/>
-
-                                                <TextBlock Text="Unidad de salida:" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}"/>
-                                                <TextBox Text="{Binding SelectedConjunto.Unidad, UpdateSourceTrigger=PropertyChanged}" 
-                                 FontSize="12" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}"
-                                 Background="Transparent" BorderThickness="0" Padding="2,0" Margin="6,0,0,0" Width="40"
-                                 ToolTip="Unidad del conjunto completo (editable)"/>
-                                            </StackPanel>
-
-                                            <!-- Acciones de edición de tabla a la derecha -->
-                                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                                                <Button Content="＋ Agregar Material"
-                                Command="{Binding AddRecursoCommand}"
-                                Style="{DynamicResource Button.Secondary}"
-                                Height="28" Padding="12,0" Margin="0,0,8,0"
-                                Background="{DynamicResource Brush.BlueSoft}"
-                                BorderBrush="{DynamicResource Brush.Blue}"
-                                Foreground="{DynamicResource Brush.Blue}"/>
-
-                                                <Button Content="✕ Eliminar Seleccionado"
-                                Command="{Binding DeleteRecursoCommand}"
-                                CommandParameter="{Binding SelectedItem, ElementName=ResourcesGrid}"
-                                Style="{DynamicResource Button.Secondary}"
-                                Height="28" Padding="12,0"
-                                Foreground="{DynamicResource Brush.Muted}"/>
-                                            </StackPanel>
-                                        </DockPanel>
-                                    </Border>
                                 </Grid>
                             </Border>
                         </Grid>
                     </Grid>
                 </TabItem>
             </TabControl>
-            <Border Grid.Row="0" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1" Margin="0,0,0,118" Height="60">
-                <DockPanel LastChildFill="False">
-                    <StackPanel DockPanel.Dock="Left" Margin="20,10,0,10" VerticalAlignment="Center">
-                        <TextBlock Text="Plantillas" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}"/>
-                        <TextBlock Text="Diseña y organiza conjuntos de materiales listos para cargar en tu hoja de cubicación."
-                       FontSize="12" Foreground="{DynamicResource Brush.Muted}" Margin="0,4,0,0" TextWrapping="Wrap" Width="488" />
-                    </StackPanel>
-                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                        <Button Style="{DynamicResource Button.Primary}" Content="＋ Nueva Plantilla" Command="{Binding CreateConjuntoCommand}" Padding="16,8" Height="36" FontWeight="Bold" Background="{DynamicResource Brush.Blue}" RenderTransformOrigin="-0.401,0.542" Margin="10,10,20,10"/>
-                    </StackPanel>
-                </DockPanel>
-            </Border>
         </Grid>
     </Grid>
 </UserControl>

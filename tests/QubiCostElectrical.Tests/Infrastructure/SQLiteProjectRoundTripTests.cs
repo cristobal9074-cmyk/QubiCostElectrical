@@ -60,7 +60,8 @@ public sealed class SQLiteProjectRoundTripTests : IDisposable
             "ordenes_cambio",
             "zonas",
             "mediciones",
-            "cubicacion_sc"
+            "cubicacion_sc",
+            "estados_pago"
         ];
 
         foreach (string scope in scopes)

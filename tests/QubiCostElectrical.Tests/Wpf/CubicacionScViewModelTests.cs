@@ -42,7 +42,7 @@ public sealed class CubicacionScViewModelTests
     {
         var vm = CreateWithProject("csc-tipos");
 
-        Assert.Equal(new[] { "A", "E", "CL", "C", "F" }, vm.Tipos);
+        Assert.Equal(new[] { "A", "E", "CL", "CO", "C", "F" }, vm.Tipos);
     }
 
     [Fact]
@@ -201,6 +201,10 @@ public sealed class CubicacionScViewModelTests
     [InlineData("e", "E")]
     [InlineData("E", "E")]
     [InlineData(" cl ", "CL")]
+    [InlineData("co", "CO")]
+    [InlineData("CO", "CO")]
+    [InlineData("computacion", "CO")]
+    [InlineData("Alumbrado", "A")]
     [InlineData("f", "F")]
     public void Tipo_TextoLibre_NormalizaACodigoValido(string escrito, string esperado)
     {
@@ -250,6 +254,69 @@ public sealed class CubicacionScViewModelTests
         circuito.SeccionTuberia = "32";
 
         Assert.Equal("32mm", circuito.SeccionTuberia);
+    }
+
+    [Fact]
+    public void SeccionTuberia_25_NormalizaA25mm_YNoA50mm()
+    {
+        var vm = CreateWithProject("csc-ducto-25");
+        vm.AddCircuitoCommand.Execute(null);
+        var circuito = vm.SelectedCircuito!;
+
+        circuito.SeccionTuberia = "25";
+
+        Assert.Equal("25mm", circuito.SeccionTuberia);
+    }
+
+    [Theory]
+    [InlineData("25", "25mm")]
+    [InlineData("20", "20mm")]
+    [InlineData("16", "16mm")]
+    [InlineData("32", "32mm")]
+    [InlineData("50", "50mm")]
+    public void FindBestCatalogMatch_DiametrosTuberia(string input, string esperado)
+    {
+        var catalogo = new[] { "16mm", "20mm", "25mm", "32mm", "40mm", "50mm", "63mm" };
+        var res = QubiCostElectrical.Wpf.Features.CubicacionSc.CubicacionScView.FindBestCatalogMatch(catalogo, input);
+        Assert.Equal(esperado, res);
+    }
+
+    [Theory]
+    [InlineData("25", "25mm2")]
+    [InlineData("2.5", "2.5mm2")]
+    [InlineData("2,5", "2.5mm2")]
+    [InlineData("1.5", "1.5mm2")]
+    [InlineData("4", "4mm2")]
+    [InlineData("50", "50mm2")]
+    public void FindBestCatalogMatch_SeccionesConductor(string input, string esperado)
+    {
+        var catalogo = new[] { "1.5mm2", "2.5mm2", "4mm2", "6mm2", "10mm2", "16mm2", "25mm2", "35mm2", "50mm2" };
+        var res = QubiCostElectrical.Wpf.Features.CubicacionSc.CubicacionScView.FindBestCatalogMatch(catalogo, input);
+        Assert.Equal(esperado, res);
+    }
+
+    [Theory]
+    [InlineData("emt", "EMT")]
+    [InlineData("EMT", "EMT")]
+    [InlineData("ca", "CAÑERIA")]
+    [InlineData("pvc", "PVC")]
+    public void FindBestCatalogMatch_TiposTuberia(string input, string esperado)
+    {
+        var catalogo = new[] { "PVC", "EMT", "CAÑERIA", "PVCLH" };
+        var res = QubiCostElectrical.Wpf.Features.CubicacionSc.CubicacionScView.FindBestCatalogMatch(catalogo, input);
+        Assert.Equal(esperado, res);
+    }
+
+    [Theory]
+    [InlineData("eva", "EVA")]
+    [InlineData("evan", "EVANOTOX")]
+    [InlineData("thhn", "THHN")]
+    [InlineData("nya", "NYA")]
+    public void FindBestCatalogMatch_TiposConductor(string input, string esperado)
+    {
+        var catalogo = new[] { "NYA", "H07V-U", "SUPERFLEX", "THHN", "RVK", "XTU", "EVA", "EVANOTOX", "RZ1-K" };
+        var res = QubiCostElectrical.Wpf.Features.CubicacionSc.CubicacionScView.FindBestCatalogMatch(catalogo, input);
+        Assert.Equal(esperado, res);
     }
 
     // Regresión: agregar un artefacto que YA existe en el catálogo del proyecto debe heredar
@@ -448,6 +515,32 @@ public sealed class CubicacionScViewModelTests
     }
 
     [Fact]
+    public void AddCircuito_EnDeptos_A01NoQuedaFijoEnUnoYSePuedeEditar()
+    {
+        var vm = CreateWithProject("csc-depto-a01");
+        vm.SelectPerspective("Deptos");
+        vm.AddCuadroCommand.Execute(null);
+
+        vm.AddCircuitoCommand.Execute(null);
+        Assert.Equal(0m, vm.SelectedCircuito!.Cajas100x65);
+
+        vm.SelectedCircuito.Cajas100x65 = 3m;
+        Assert.Equal(3m, vm.SelectedCircuito.Cajas100x65);
+
+        vm.AddCircuitoCommand.Execute(null);
+        Assert.Equal(0m, vm.SelectedCircuito!.Cajas100x65);
+    }
+
+    [Fact]
+    public void AddCircuito_EnGenerales_A01SigueEnUno()
+    {
+        var vm = CreateWithProject("csc-gen-a01");
+        vm.AddCircuitoCommand.Execute(null);
+
+        Assert.Equal(1m, vm.SelectedCircuito!.Cajas100x65);
+    }
+
+    [Fact]
     public void AddCircuito_HeredaConductorDelCircuitoActivo()
     {
         var vm = CreateWithProject("csc-hereda-cond");
@@ -540,5 +633,123 @@ public sealed class CubicacionScViewModelTests
 
         Assert.Contains("H07V-U", vm.TiposConductor);
         Assert.Contains("4mm2", vm.SeccionesConductor);
+    }
+
+    [Fact]
+    public void AltA_ConVariosPisos_MuestraSoloLosDelCircuito()
+    {
+        var zonas = new[]
+        {
+            new ZonaProyecto { Id = "z1", Nombre = "Piso 1", Orden = 1 },
+            new ZonaProyecto { Id = "z2", Nombre = "Piso 2", Orden = 2 },
+            new ZonaProyecto { Id = "z3", Nombre = "Azotea", Orden = 3 }
+        };
+        var circuito = new CircuitoSCRow
+        {
+            PisosTramos =
+            {
+                new CircuitoPisoTramo { ZonaId = "z1", ZonaNombre = "Piso 1" },
+                new CircuitoPisoTramo { ZonaId = "z3", ZonaNombre = "Azotea" }
+            }
+        };
+
+        var pisos = CubicacionScArtefactosDialog.ResolverPisos(circuito, zonas, Array.Empty<string>());
+
+        Assert.Equal(new[] { "Piso 1", "Azotea" }, pisos.Select(p => p.Nombre).ToArray());
+    }
+
+    [Fact]
+    public void AltA_ConUnPiso_NoAgregaElRestoDeZonas()
+    {
+        var zonas = new[]
+        {
+            new ZonaProyecto { Id = "z1", Nombre = "Piso 1" },
+            new ZonaProyecto { Id = "z2", Nombre = "Piso 2" }
+        };
+        var circuito = new CircuitoSCRow { Ubicacion = "Piso 2" };
+
+        var pisos = CubicacionScArtefactosDialog.ResolverPisos(circuito, zonas, Array.Empty<string>());
+
+        Assert.Equal(("z2", "Piso 2"), Assert.Single(pisos));
+    }
+
+    [Fact]
+    public void Resumen_TrasAutoguardado_MuestraArtefactosQueSiguenEnLaGrilla()
+    {
+        var host = WpfAppHost.Current;
+        var vm = CreateWithProject("csc-resumen-artefactos");
+        vm.AddCircuitoCommand.Execute(null);
+        vm.SelectedCircuito!.AddArtefacto("INT 9/12", "Interruptor", 4m);
+        vm.SelectedCircuito.AddArtefacto("ENCH S10", "Enchufe", 2m);
+
+        vm.SetSessionChangeActive(false);
+        try
+        {
+            var snapshot = host.Session.CreateSnapshot();
+            foreach (var circuito in snapshot.CubicacionSC.SelectMany(c => c.Circuitos))
+                circuito.Artefactos.Clear();
+            host.Session.ApplySnapshot(snapshot, host.Session.CurrentProjectPath, markDirty: false);
+
+            vm.SelectedCircuito.Cajas58 = 100m;
+            vm.SelectedCircuito.Cajas100x100 = 100m;
+            vm.SelectedCircuito.Cajas100x65 = 100m;
+
+            Assert.Empty(host.Session.CubicacionSC.SelectMany(c => c.Circuitos).SelectMany(c => c.Artefactos));
+            Assert.Equal(0m, host.Session.CubicacionSC.SelectMany(c => c.Circuitos).Single().Cajas58);
+            Assert.Equal(2, vm.SelectedCircuito.Source.Artefactos.Count);
+            Assert.True(vm.SincronizarGrillaConSesion());
+
+            var total = CubicacionSCEngine.AggregateTotal(host.Session.CubicacionSC, host.Session.CubicacionScConfig);
+            Assert.Equal(6, total.Artefactos);
+            Assert.Equal(300, total.Cajas);
+            Assert.Contains(total.Materiales, m => m.Nombre == "INT 9/12" && m.Cantidad == 4m);
+            Assert.Contains(total.Materiales, m => m.Nombre == "ENCH S10" && m.Cantidad == 2m);
+            Assert.Contains(total.Materiales, m => m.Nombre.Contains("5/8", StringComparison.Ordinal) && m.Cantidad == 100m);
+            Assert.Contains(total.Materiales, m => m.Nombre.Contains("100X100", StringComparison.OrdinalIgnoreCase) && m.Cantidad == 100m);
+            Assert.Contains(total.Materiales, m => m.Nombre.Contains("100X65", StringComparison.OrdinalIgnoreCase) && m.Cantidad == 100m);
+        }
+        finally
+        {
+            vm.SetSessionChangeActive(true);
+        }
+    }
+
+    [Fact]
+    public void Resumen_AgrupaCajasYNoSumaTuberiaConConductor()
+    {
+        var lineas = ResumenScPresentacion.Agrupar(
+        [
+            new CubicacionSCEngine.MaterialSC("TUBERIA PVCLH 20mm", 10m, "ML"),
+            new CubicacionSCEngine.MaterialSC("CONDUCTOR H07V-U 4mm2", 32m, "ML"),
+            new CubicacionSCEngine.MaterialSC("CAJA 5/8", 100m, "UN"),
+            new CubicacionSCEngine.MaterialSC("CAJA A11 (100X100)", 100m, "UN"),
+            new CubicacionSCEngine.MaterialSC("CAJA A01 (100X65)", 100m, "UN"),
+            new CubicacionSCEngine.MaterialSC("INT 9/12", 10m, "UN"),
+            new CubicacionSCEngine.MaterialSC("MONTAJE LUMINARIA", 100m, "UN")
+        ], "");
+
+        Assert.Contains(lineas, l => l.EsGrupo && l.Nombre == "CANALIZACIÓN");
+        Assert.DoesNotContain(lineas, l => l.EsSubtotal && l.Nombre.Contains("canalización", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(lineas, l => l.EsSubtotal && l.Nombre.Contains("cajas", StringComparison.OrdinalIgnoreCase) && l.Cantidad == ResumenScPresentacion.Fmt(300m));
+        Assert.Contains(lineas, l => l.EsSubtotal && l.Nombre.Contains("artefactos", StringComparison.OrdinalIgnoreCase) && l.Cantidad == ResumenScPresentacion.Fmt(110m));
+
+        var filtradas = ResumenScPresentacion.Agrupar(
+        [
+            new CubicacionSCEngine.MaterialSC("CAJA 5/8", 100m, "UN"),
+            new CubicacionSCEngine.MaterialSC("INT 9/12", 10m, "UN")
+        ], "caja");
+        Assert.Single(filtradas, l => l.Nombre == "CAJA 5/8");
+        Assert.DoesNotContain(filtradas, l => l.Nombre == "INT 9/12");
+    }
+
+    [Fact]
+    public void AltA_Cantidad_AceptaOperaciones()
+    {
+        Assert.True(CubicacionScArtefactosDialog.TryEvaluarCantidad("13+5+6+5", out var suma));
+        Assert.Equal(29m, suma);
+        Assert.True(CubicacionScArtefactosDialog.TryEvaluarCantidad("2*4", out var producto));
+        Assert.Equal(8m, producto);
+        Assert.True(CubicacionScArtefactosDialog.TryEvaluarCantidad("12", out var plano));
+        Assert.Equal(12m, plano);
     }
 }

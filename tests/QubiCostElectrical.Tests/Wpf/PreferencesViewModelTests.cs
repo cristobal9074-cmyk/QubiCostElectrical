@@ -81,8 +81,8 @@ public sealed class PreferencesViewModelTests
 
         var vm = new PreferencesViewModel(WpfAppHost.Current);
         vm.CompanyName = "Constructora ABC Ltda.";
-        vm.Rut         = "12.345.678-9";
-        vm.Email       = "contacto@abc.cl";
+        vm.Rut = "12.345.678-9";
+        vm.Email = "contacto@abc.cl";
         vm.TrySave();
 
         Assert.False(vm.HasPendingChanges);
@@ -90,7 +90,7 @@ public sealed class PreferencesViewModelTests
 
         var loaded = UserPreferencesStore.Load();
         Assert.Equal("Constructora ABC Ltda.", loaded.LetterheadCompanyName);
-        Assert.Equal("12.345.678-9",           loaded.LetterheadRut);
+        Assert.Equal("12.345.678-9", loaded.LetterheadRut);
     }
 
     [Fact]
@@ -426,15 +426,15 @@ public sealed class PreferencesViewModelTests
         using var _ = UserPreferencesStore.UsePreferencesFilePathForTests(path);
 
         var vm = new PreferencesViewModel(WpfAppHost.Current);
-        vm.ProfessionalName        = "Juan Pérez";
-        vm.ProfessionalRole        = "Ingeniero Eléctrico";
+        vm.ProfessionalName = "Juan Pérez";
+        vm.ProfessionalRole = "Ingeniero Eléctrico";
         vm.ProfessionalRegistroSec = "SEC-1234";
         vm.TrySave();
 
         var vm2 = new PreferencesViewModel(WpfAppHost.Current);
-        Assert.Equal("Juan Pérez",          vm2.ProfessionalName);
+        Assert.Equal("Juan Pérez", vm2.ProfessionalName);
         Assert.Equal("Ingeniero Eléctrico", vm2.ProfessionalRole);
-        Assert.Equal("SEC-1234",            vm2.ProfessionalRegistroSec);
+        Assert.Equal("SEC-1234", vm2.ProfessionalRegistroSec);
     }
 
     // ─── PIN de seguridad (regresión) ──────────────────────────────────────
@@ -514,6 +514,54 @@ public sealed class PreferencesViewModelTests
 
         Assert.True(vm.CubicacionShortcuts.Count >= 18);
         Assert.True(vm.ShellShortcuts.Count >= 4);
+    }
+
+    [Fact]
+    public void PreferencesViewModel_ShortcutCategories_InitializedAndFilteredCorrectly()
+    {
+        using var _ = UserPreferencesStore.UsePreferencesFilePathForTests(TempPath());
+        var vm = new PreferencesViewModel(WpfAppHost.Current);
+
+        // Categorías inicializadas
+        Assert.NotEmpty(vm.ShortcutCategories);
+        Assert.Contains(vm.ShortcutCategories, c => c.Id == "all");
+        Assert.Contains(vm.ShortcutCategories, c => c.Id == ItemizadoShortcutCatalog.Scope);
+        Assert.Contains(vm.ShortcutCategories, c => c.Id == CubicacionShortcutCatalog.Scope);
+        Assert.Contains(vm.ShortcutCategories, c => c.Id == CubicacionScShortcutCatalog.Scope);
+        Assert.Contains(vm.ShortcutCategories, c => c.Id == ApuShortcutCatalog.Scope);
+        Assert.Contains(vm.ShortcutCategories, c => c.Id == PricesShortcutCatalog.Scope);
+        Assert.Contains(vm.ShortcutCategories, c => c.Id == ShellShortcutCatalog.Scope);
+
+        // Todas las categorías tienen conteos mayores a cero
+        foreach (var cat in vm.ShortcutCategories)
+            Assert.True(cat.Count > 0, $"Category {cat.Id} count should be > 0");
+
+        // Conmutar a Itemizado
+        vm.SelectShortcutCategory(ItemizadoShortcutCatalog.Scope);
+        Assert.All(vm.FilteredShortcuts, r => Assert.Equal(ItemizadoShortcutCatalog.Scope, r.Scope));
+        Assert.Contains(vm.FilteredShortcuts, r => r.ActionId == ItemizadoShortcutCatalog.AddPartida);
+
+        // Conmutar a APU
+        vm.SelectShortcutCategory(ApuShortcutCatalog.Scope);
+        Assert.All(vm.FilteredShortcuts, r => Assert.Equal(ApuShortcutCatalog.Scope, r.Scope));
+        Assert.Contains(vm.FilteredShortcuts, r => r.ActionId == ApuShortcutCatalog.AddMaterial);
+
+        // Conmutar a Cubicación SC
+        vm.SelectShortcutCategory(CubicacionScShortcutCatalog.Scope);
+        Assert.All(vm.FilteredShortcuts, r => Assert.Equal(CubicacionScShortcutCatalog.Scope, r.Scope));
+        Assert.Contains(vm.FilteredShortcuts, r => r.ActionId == CubicacionScShortcutCatalog.AddTablero);
+
+        // Filtrado por texto (ej: "IntelliSense")
+        vm.SelectShortcutCategory("all");
+        vm.ShortcutSearchFilter = "IntelliSense";
+        Assert.NotEmpty(vm.FilteredShortcuts);
+        Assert.All(vm.FilteredShortcuts, r =>
+            Assert.Contains("IntelliSense", r.Description + " " + r.Label, StringComparison.OrdinalIgnoreCase));
+
+        // Filtrado por texto de tecla (ej: "Ctrl+T")
+        vm.ShortcutSearchFilter = "Ctrl+T";
+        Assert.NotEmpty(vm.FilteredShortcuts);
+        Assert.Contains(vm.FilteredShortcuts, r => r.ActionId == CubicacionScShortcutCatalog.AddTablero);
     }
 
     // ─── Helper ───────────────────────────────────────────────────────────

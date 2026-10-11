@@ -170,6 +170,31 @@ internal static class ProjectFileDataAssertions
         foreach (var kv in expected.QtyHeadersByItem)
             Assert.Equal(kv.Value, actual.QtyHeadersByItem[kv.Key]);
 
+        Assert.Equal(expected.EstadoPagoMeses.Count, actual.EstadoPagoMeses.Count);
+        for (int i = 0; i < expected.EstadoPagoMeses.Count; i++)
+        {
+            var eMes = expected.EstadoPagoMeses[i];
+            var aMes = actual.EstadoPagoMeses[i];
+            Assert.Equal(eMes.Id, aMes.Id);
+            Assert.Equal(eMes.Anio, aMes.Anio);
+            Assert.Equal(eMes.Mes, aMes.Mes);
+            Assert.Equal(eMes.Estado, aMes.Estado);
+            Assert.Equal(eMes.Folio, aMes.Folio);
+            Assert.Equal(eMes.FechaEmision, aMes.FechaEmision);
+            Assert.Equal(eMes.AprobadoPor, aMes.AprobadoPor);
+            Assert.Equal(eMes.FechaAprobacion, aMes.FechaAprobacion);
+            Assert.Equal(eMes.AvancesPorItem.Count, aMes.AvancesPorItem.Count);
+            foreach (var kv in eMes.AvancesPorItem)
+                Assert.Equal(kv.Value, aMes.AvancesPorItem[kv.Key]);
+        }
+
+        Assert.NotNull(actual.EstadoPagoConfig);
+        Assert.Equal(expected.EstadoPagoConfig.Anio, actual.EstadoPagoConfig.Anio);
+        Assert.Equal(expected.EstadoPagoConfig.CantMeses, actual.EstadoPagoConfig.CantMeses);
+        Assert.Equal(expected.EstadoPagoConfig.AnticipoPct, actual.EstadoPagoConfig.AnticipoPct);
+        Assert.Equal(expected.EstadoPagoConfig.RetencionPct, actual.EstadoPagoConfig.RetencionPct);
+        Assert.Equal(expected.EstadoPagoConfig.IvaPct, actual.EstadoPagoConfig.IvaPct);
+
         Assert.Equal(expected.ActiveVersionId, actual.ActiveVersionId);
     }
 }

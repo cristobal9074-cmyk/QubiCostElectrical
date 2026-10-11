@@ -200,6 +200,8 @@ public sealed class PriceBankSeederTests
             Assert.Equal("ml", entries[0].Unidad);
             Assert.Equal(890m, entries[1].MatClp);
             Assert.Equal(120m, entries[1].MoClp);
+            Assert.Equal(100m, entries[0].RendimientoDh);
+            Assert.Equal(40m, entries[1].RendimientoDh);
         }
         finally
         {
@@ -208,7 +210,7 @@ public sealed class PriceBankSeederTests
     }
 
     [Fact]
-    public void ParseCsv_PelStyleHeaders_MatDotAndMo_MapToClp()
+    public void ParseCsv_LegacyHeaders_MatDotAndMo_MapToClp()
     {
         string csv = """
             CODIGO;DESCRIPCION;UN;MAT.;M.O.
@@ -228,6 +230,58 @@ public sealed class PriceBankSeederTests
         {
             try { if (File.Exists(path)) File.Delete(path); } catch { /* ignore */ }
         }
+    }
+
+    [Fact]
+    public void ParseCsv_PorcentajeMO_MayorQueCero_ActivaFormulaPorcentaje()
+    {
+        string csv = """
+            CODIGO;DESCRIPCION;UN;PRECIO CLP;FAMILIA;MO;M.O. POR %;PORCENTAJE M.O.;RENDIMIENTO
+            PCT-1;Material sin M.O. propia;ml;1000;;;;2,5;
+            """;
+        string path = CsvTempFile(csv);
+        try
+        {
+            var entries = PriceBankSeeder.ParseCsv(path);
+            var row = Assert.Single(entries);
+            Assert.Equal(1000m, row.MatClp);
+            Assert.Equal(MaterialMoResolver.MoFormulaPorcentaje, row.MoFormulaTipo);
+            Assert.Equal(2.5m, row.MoPorcentajeMaterial);
+        }
+        finally
+        {
+            try { if (File.Exists(path)) File.Delete(path); } catch { /* ignore */ }
+        }
+    }
+
+    [Fact]
+    public void ParseCsv_FormulaExplicitaNo_SobrescribePorcentajeDesactivado()
+    {
+        string csv = """
+            CODIGO;DESCRIPCION;UN;PRECIO CLP;FAMILIA;MO;M.O. POR %;PORCENTAJE M.O.;RENDIMIENTO
+            PCT-2;Material con MO fija;ml;500;;200;No;3,5;
+            """;
+        string path = CsvTempFile(csv);
+        try
+        {
+            var entries = PriceBankSeeder.ParseCsv(path);
+            var row = Assert.Single(entries);
+            Assert.Equal("", row.MoFormulaTipo);
+            Assert.Equal(3.5m, row.MoPorcentajeMaterial); // el valor queda guardado, inactivo
+            Assert.Equal(200m, row.MoClp);
+        }
+        finally
+        {
+            try { if (File.Exists(path)) File.Delete(path); } catch { /* ignore */ }
+        }
+    }
+
+    [Fact]
+    public void ImportTemplate_IncluyeColumnasDeFormulaMOPorcentaje()
+    {
+        Assert.Contains("M.O. por %", PriceBankSeeder.ImportTemplateHeaders);
+        Assert.Contains("Porcentaje M.O.", PriceBankSeeder.ImportTemplateHeaders);
+        Assert.Equal(9, PriceBankSeeder.ImportTemplateHeaders.Length);
     }
 
     private static string CsvTempFile(string content)

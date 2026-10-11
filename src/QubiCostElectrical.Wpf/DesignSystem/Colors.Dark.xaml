@@ -31,6 +31,7 @@
     <Color x:Key="Color.BrandStroke">#60A5FA</Color>
     <Color x:Key="Color.BrandStroke2">#91B7FF</Color>
     <Color x:Key="Color.BrandStroke3">#BFDBFE</Color>
+    <Color x:Key="Color.CostoHeroNavy3">#162B48</Color>
 
     <!-- ── Semantic colors ───────────────────────────────────────────────── -->
     <Color x:Key="Color.Cyan">#22D3EE</Color>
@@ -40,7 +41,7 @@
     <Color x:Key="Color.GreenSoft">#14281A</Color>
     <Color x:Key="Color.Success">#22C55E</Color>
     <Color x:Key="Color.SuccessBright">#4ADE80</Color>
-    <Color x:Key="Color.SuccessDark">#166534</Color>
+    <Color x:Key="Color.SuccessDark">#86EFAC</Color>
     <Color x:Key="Color.SuccessBg">#0F1F14</Color>
     <Color x:Key="Color.SuccessBorder">#1A3D24</Color>
     <Color x:Key="Color.Amber">#F59E0B</Color>
@@ -51,7 +52,7 @@
     <Color x:Key="Color.RedSoft">#2D1414</Color>
     <Color x:Key="Color.Danger">#EF4444</Color>
     <Color x:Key="Color.Danger2">#F87171</Color>
-    <Color x:Key="Color.DangerDark">#B91C1C</Color>
+    <Color x:Key="Color.DangerDark">#FCA5A5</Color>
     <Color x:Key="Color.DangerBg">#1F0F0F</Color>
     <Color x:Key="Color.DangerBorder">#3D1A1A</Color>
 
@@ -93,11 +94,18 @@
     <Color x:Key="Color.ChipBg">#20242C</Color>
     <Color x:Key="Color.ChapterRowBg">#22262E</Color>
     <Color x:Key="Color.ActiveRowBg">#1E2D4A</Color>
+    <Color x:Key="Color.CellFormulaBg">#171A21</Color>
+    <Color x:Key="Color.CellEditableBg">#1C1F26</Color>
+    <Color x:Key="Color.CellEditableHover">#222D3E</Color>
+    <Color x:Key="Color.CellFormulaInk">#94A3B8</Color>
+    <Color x:Key="Color.FormulaBadge">#8494A7</Color>
+    <Color x:Key="Color.FormulaBadgeBg">#232832</Color>
     <Color x:Key="Color.White">#FFFFFF</Color>
 
     <!-- ── Borders / lines ───────────────────────────────────────────────── -->
     <Color x:Key="Color.Line">#2D3038</Color>
-    <Color x:Key="Color.Line2">#252830</Color>
+    <Color x:Key="Color.Line2">#323844</Color>
+    <Color x:Key="Color.InputHoverBorder">#3F5175</Color>
 
     <!-- ── Header text / icons (keep legible on dark navy) ───────────────── -->
     <Color x:Key="Color.HeaderInk">#EEF4FB</Color>
@@ -189,6 +197,7 @@
     <SolidColorBrush x:Key="Brush.PanelHeader"  Color="{StaticResource Color.PanelHeader}" />
     <SolidColorBrush x:Key="Brush.PanelSidebar" Color="{StaticResource Color.PanelSidebar}" />
     <SolidColorBrush x:Key="Brush.InputBorder"  Color="{StaticResource Color.InputBorder}" />
+    <SolidColorBrush x:Key="Brush.InputHoverBorder" Color="{StaticResource Color.InputHoverBorder}" />
     <SolidColorBrush x:Key="Brush.DropdownHover" Color="{StaticResource Color.DropdownHover}" />
     <SolidColorBrush x:Key="Brush.White"        Color="{StaticResource Color.White}" />
     <SolidColorBrush x:Key="Brush.Line"         Color="{StaticResource Color.Line}" />
@@ -219,12 +228,20 @@
     <SolidColorBrush x:Key="Brush.AvatarBg"     Color="{StaticResource Color.AvatarBg}" />
 
     <SolidColorBrush x:Key="Brush.Accent"       Color="{StaticResource Color.Blue2}" />
-    <SolidColorBrush x:Key="Brush.Warning"      Color="{StaticResource Color.Amber2}" />
+    <SolidColorBrush x:Key="Brush.Warning"      Color="{StaticResource Color.Amber}" />
     <SolidColorBrush x:Key="Brush.WarningSoft"  Color="#2D2410" />
     <SolidColorBrush x:Key="Brush.OnPrimary"    Color="#FFFFFF" />
     <SolidColorBrush x:Key="Brush.TrackSoft"    Color="{StaticResource Color.Line2}" />
     <SolidColorBrush x:Key="Brush.HighlightSoft" Color="#14263C" />
     <SolidColorBrush x:Key="Brush.HighlightBorder" Color="#244A73" />
+
+    <!-- ── Celdas editables vs fórmulas (Estilo Excel Profesional) ──────────── -->
+    <SolidColorBrush x:Key="Brush.CellFormulaBg"       Color="{StaticResource Color.CellFormulaBg}" />
+    <SolidColorBrush x:Key="Brush.CellEditableBg"      Color="{StaticResource Color.CellEditableBg}" />
+    <SolidColorBrush x:Key="Brush.CellEditableHoverBg" Color="{StaticResource Color.CellEditableHover}" />
+    <SolidColorBrush x:Key="Brush.CellFormulaInk"      Color="{StaticResource Color.CellFormulaInk}" />
+    <SolidColorBrush x:Key="Brush.FormulaBadge"        Color="{StaticResource Color.FormulaBadge}" />
+    <SolidColorBrush x:Key="Brush.FormulaBadgeBg"      Color="{StaticResource Color.FormulaBadgeBg}" />
 
     <!-- Aliases usados por Cubicación SC, Itemizado y diálogos legacy -->
     <SolidColorBrush x:Key="Brush.SurfaceAlt"  Color="{StaticResource Color.Surface2}" />
@@ -250,9 +267,15 @@
         <GradientStop Color="{StaticResource Color.NavyEnd}" Offset="1" />
     </LinearGradientBrush>
 
+    <LinearGradientBrush x:Key="Brush.HeroPanel" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="{StaticResource Color.Navy}" Offset="0" />
+        <GradientStop Color="{StaticResource Color.Navy2}" Offset="0.55" />
+        <GradientStop Color="{StaticResource Color.CostoHeroNavy3}" Offset="1" />
+    </LinearGradientBrush>
+
     <LinearGradientBrush x:Key="Brush.PrimaryButton" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Color="{StaticResource Color.Blue2}" Offset="0" />
-        <GradientStop Color="{StaticResource Color.Blue}" Offset="1" />
+        <GradientStop Color="#2563EB" Offset="0" />
+        <GradientStop Color="#1D4ED8" Offset="1" />
     </LinearGradientBrush>
 
     <LinearGradientBrush x:Key="Brush.BrandMark" StartPoint="0,0" EndPoint="1,1">

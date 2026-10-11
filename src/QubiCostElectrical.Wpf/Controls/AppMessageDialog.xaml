@@ -9,7 +9,7 @@
         ResizeMode="NoResize"
         ShowInTaskbar="False"
         WindowStartupLocation="CenterOwner">
-  <Border Style="{StaticResource Dialog.Chrome}" Margin="16">
+  <Border Style="{StaticResource Dialog.Chrome}">
   <Grid>
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto" />
@@ -45,7 +45,7 @@
             Visibility="Collapsed">
       <TextBlock x:Name="ErrorBannerText"
                  Style="{StaticResource Dialog.Banner.Text}"
-                 Foreground="{DynamicResource Brush.DangerDark}" />
+                 Foreground="{DynamicResource Brush.Danger2}" />
     </Border>
 
     <DockPanel Grid.Row="3" Style="{StaticResource Dialog.Footer}">

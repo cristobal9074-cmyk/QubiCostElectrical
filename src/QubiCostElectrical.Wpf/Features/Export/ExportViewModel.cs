@@ -31,14 +31,14 @@ public sealed class ExportActionVm
             "PDF" => ThemeOrFallback("Brush.BlueSoft", "#EAF1FF"),
             "XLS" => ThemeOrFallback("Brush.GreenSoft", "#EAF8EF"),
             "DOC" => ThemeOrFallback("Brush.AmberSoft", "#FFF5DD"),
-            _     => ThemeOrFallback("Brush.Canvas", "#F3F5F8")
+            _ => ThemeOrFallback("Brush.Canvas", "#F3F5F8")
         };
         IconForeground = IconText switch
         {
             "PDF" => ThemeOrFallback("Brush.Blue", "#2563EB"),
             "XLS" => ThemeOrFallback("Brush.Green", "#15803D"),
             "DOC" => ThemeOrFallback("Brush.Amber", "#B45309"),
-            _     => ThemeOrFallback("Brush.Ink3", "#66758A")
+            _ => ThemeOrFallback("Brush.Ink3", "#66758A")
         };
     }
 
@@ -71,18 +71,6 @@ public sealed class ExportActionVm
     };
 }
 
-public sealed class ExportPackageItemVm
-{
-    public ExportPackageItemVm(string title, string description)
-    {
-        Title = title;
-        Description = description;
-    }
-
-    public string Title { get; }
-    public string Description { get; }
-}
-
 public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefreshablePage
 {
     private const string ScopeAreaLabel = "\u00c1rea";
@@ -96,6 +84,7 @@ public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefres
     private readonly IFileDialogService fileDialog;
     private readonly IFileOpenService fileOpener;
     private readonly IPdfProjectExporter pdfExporter;
+    private readonly IOfferLetterPdfExporter offerLetterExporter;
     private readonly IExcelProjectExporter excelExporter;
     private readonly IPresentationLetterDocxExporter wordLetterExporter;
     private readonly ICubicacionReportExcelExporter cubReportExcel;
@@ -104,7 +93,6 @@ public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefres
     private readonly IProjectRepository projectRepo;
     private readonly IShellNavigationHost? shell;
     private readonly ObservableCollection<ExportActionVm> actions = new();
-    private readonly ObservableCollection<ExportPackageItemVm> packageItems = new();
     private readonly ObservableCollection<string> scopeModes = new() { "Completo", "Partida", ScopeAreaLabel };
     private readonly ObservableCollection<ExportPartidaOptionVm> partidaOptions = new();
     private readonly ObservableCollection<string> areaOptions = new();
@@ -132,12 +120,13 @@ public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefres
     private string reportTemplateText = "Plantilla de informe: Oferta profesional";
     private string deliveryPackageText = "PDF de oferta, Excel interno, carta DOCX, memorias de cubicación y respaldo JSON.";
     private string exportScopeSummaryText = "Exportación completa del proyecto.";
-    private string previewStatusText = "Vista previa de oferta lista para revisar antes de exportar.";
+    private string previewStatusText = "Vista previa de la Carta de Oferta lista para revisar antes de exportar.";
     private string previewFileText = "Sin vista previa generada.";
     private string selectedScopeMode = "Completo";
     private ExportPartidaOptionVm? selectedPartida;
     private string selectedArea = "";
     private decimal totalUf;
+    private decimal totalClp;
     private decimal confidencePct;
     private int blockers;
     private int warnings;

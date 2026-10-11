@@ -115,4 +115,42 @@ public sealed class ProjectEditWorkspaceServiceTests
         b.IvaPct = 0m;
         Assert.False(a.ContentEquals(b));
     }
+
+    [Fact]
+    public void Load_IncludesCurrentApuCostingMode()
+    {
+        var session = new BudgetProjectSession();
+        session.NewProject("tester");
+        session.ProjectInfo.ApuCostingMode = "CubicacionManda";
+        var service = new ProjectEditWorkspaceService(session);
+
+        var snapshot = service.Load();
+
+        Assert.Equal("CubicacionManda", snapshot.ApuCostingMode);
+    }
+
+    [Fact]
+    public void Apply_PersistsApuCostingMode()
+    {
+        var session = new BudgetProjectSession();
+        session.NewProject("tester");
+        var service = new ProjectEditWorkspaceService(session);
+        var snapshot = service.Load();
+        snapshot.ApuCostingMode = "ApuManda";
+
+        service.Apply(snapshot);
+
+        Assert.Equal("ApuManda", session.ProjectInfo.ApuCostingMode);
+    }
+
+    [Fact]
+    public void ContentEquals_DetectsApuCostingModeChange()
+    {
+        var a = new ProjectEditSnapshot { ApuCostingMode = "CubicacionManda" };
+        var b = a.Clone();
+        Assert.True(a.ContentEquals(b));
+
+        b.ApuCostingMode = "ApuManda";
+        Assert.False(a.ContentEquals(b));
+    }
 }

@@ -33,12 +33,12 @@ public sealed class LockLostPendingExitTests
             Assert.True(ok);
             Assert.True(host.Session.IsDirty);
             Assert.Equal(beforeUtc, File.GetLastWriteTimeUtc(path));
-            Assert.True(File.Exists(path + ".autosave"));
+            Assert.True(File.Exists(path + ".bak"));
         }
         finally
         {
             host.Session.SetLockReadOnly(false);
-            foreach (var p in new[] { path, path + ".autosave", path + ".lock" })
+            foreach (var p in new[] { path, path + ".bak", path + ".autosave", path + ".lock" })
             {
                 try { if (File.Exists(p)) File.Delete(p); } catch { /* ignore */ }
             }
@@ -69,7 +69,7 @@ public sealed class LockLostPendingExitTests
         finally
         {
             host.Session.SetLockReadOnly(false);
-            foreach (var p in new[] { path, path + ".autosave", path + ".lock" })
+            foreach (var p in new[] { path, path + ".bak", path + ".autosave", path + ".lock" })
             {
                 try { if (File.Exists(p)) File.Delete(p); } catch { /* ignore */ }
             }

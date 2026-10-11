@@ -5,11 +5,11 @@ namespace QubiCostElectrical;
 
 public interface IEconomicCalculationService
 {
-	EconomicResult Calculate(EconomicInput input, CancellationToken ct = default(CancellationToken));
+    EconomicResult Calculate(EconomicInput input, CancellationToken ct = default(CancellationToken));
 
-	EconomicValidationResult Validate(EconomicConfig config);
+    EconomicValidationResult Validate(EconomicConfig config);
 
-	EconomicResult CalculateScenario(Scenario scenario, EconomicInput baseInput, CancellationToken ct = default(CancellationToken));
+    EconomicResult CalculateScenario(Scenario scenario, EconomicInput baseInput, CancellationToken ct = default(CancellationToken));
 
-	ScenarioComparison Compare(EconomicResult baseResult, EconomicResult comparedResult, string baseName, string comparedName);
+    ScenarioComparison Compare(EconomicResult baseResult, EconomicResult comparedResult, string baseName, string comparedName);
 }

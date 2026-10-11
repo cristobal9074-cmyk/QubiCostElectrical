@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using System.Windows.Controls;
+using CommunityToolkit.Mvvm.Input;
 using QubiCostElectrical.Wpf.Auth;
 using QubiCostElectrical.Wpf.Infrastructure;
 using QubiCostElectrical.Wpf.Infrastructure.Diagnostics;
@@ -11,13 +12,85 @@ namespace QubiCostElectrical.Wpf.Shell;
 partial class ShellViewModel
 {
     private ShellNavigationCoordinator navigation = null!;
+    private readonly ShellNavigationHistory navigationHistory = new();
+    private ShellLifecyclePhase currentPhase = ShellLifecyclePhase.Presupuesto;
+
+    public ShellLifecyclePhase CurrentPhase
+    {
+        get => currentPhase;
+        set
+        {
+            if (SetProperty(ref currentPhase, value))
+            {
+                OnPropertyChanged(nameof(IsPresupuestoPhase));
+                OnPropertyChanged(nameof(IsPlanificacionPhase));
+                OnPropertyChanged(nameof(IsEjecucionPhase));
+            }
+        }
+    }
+
+    public bool IsPresupuestoPhase => CurrentPhase == ShellLifecyclePhase.Presupuesto;
+    public bool IsPlanificacionPhase => CurrentPhase == ShellLifecyclePhase.Planificacion;
+    public bool IsEjecucionPhase => CurrentPhase == ShellLifecyclePhase.Ejecucion;
+
+    [RelayCommand]
+    public void SelectPhase(ShellLifecyclePhase phase)
+    {
+        CurrentPhase = phase;
+        var phaseOfCurrent = ShellRouteNavigation.GetLifecyclePhase(CurrentRoute);
+        if (CurrentRoute != ShellRoute.Dashboard && phaseOfCurrent != phase)
+        {
+            var targetRoute = phase switch
+            {
+                ShellLifecyclePhase.Planificacion => ShellRoute.Purchases,
+                ShellLifecyclePhase.Ejecucion => ShellRoute.ChangeOrders,
+                _ => ShellRoute.Takeoff
+            };
+            Navigate(targetRoute);
+        }
+    }
+
+    public bool CanNavigateBack => navigationHistory.CanNavigateBack;
+    public bool CanNavigateForward => navigationHistory.CanNavigateForward;
+
+    [RelayCommand(CanExecute = nameof(CanNavigateBack))]
+    public void NavigateBack()
+    {
+        if (navigationHistory.TryNavigateBack(CurrentRoute, out var targetRoute))
+        {
+            RequestNavigate(targetRoute, force: false);
+            UpdateNavigationHistoryCommands();
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanNavigateForward))]
+    public void NavigateForward()
+    {
+        if (navigationHistory.TryNavigateForward(CurrentRoute, out var targetRoute))
+        {
+            RequestNavigate(targetRoute, force: false);
+            UpdateNavigationHistoryCommands();
+        }
+    }
+
+    private void UpdateNavigationHistoryCommands()
+    {
+        OnPropertyChanged(nameof(CanNavigateBack));
+        OnPropertyChanged(nameof(CanNavigateForward));
+        NavigateBackCommand.NotifyCanExecuteChanged();
+        NavigateForwardCommand.NotifyCanExecuteChanged();
+    }
 
     public void ClearPageCache()
-        => navigation.ClearCacheKeepingSurface(() =>
+    {
+        navigationHistory.Clear();
+        UpdateNavigationHistoryCommands();
+        navigation.ClearCacheKeepingSurface(() =>
         {
             currentView = null;
             currentPageVm = null;
         });
+    }
 
     /// <summary>
     /// Solo pruebas: registra una página en caché con un <see cref="UserControl"/> vacío
@@ -45,6 +118,17 @@ partial class ShellViewModel
 
     public bool RequestNavigate(ShellRoute route, WorkspaceNavigationContext? context, bool force = false)
     {
+        if (!force && !NavVisibilityPolicy.IsNavigable(route))
+        {
+            ShellNotificationService.Instance.ShowInfo(
+                "Ciclo de obra",
+                "Esta pantalla forma parte del ciclo de obra (próximamente). Volviendo al resumen.");
+            if (currentRoute == ShellRoute.Dashboard)
+                return true;
+            return RequestNavigate(ShellRoute.Dashboard, null, force: false);
+        }
+
+        var previousRoute = currentRoute;
         var routeState = currentRoute;
         var viewState = currentView;
         var vmState = currentPageVm;
@@ -59,9 +143,12 @@ partial class ShellViewModel
         if (!ok)
             return false;
 
+        navigationHistory.RecordNavigation(routeState, previousRoute);
         CurrentRoute = routeState;
         CurrentView = viewState;
         currentPageVm = vmState;
+        CurrentPhase = ShellRouteNavigation.GetLifecyclePhase(routeState);
+        UpdateNavigationHistoryCommands();
         return true;
     }
 

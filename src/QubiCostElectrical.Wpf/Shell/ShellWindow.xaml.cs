@@ -14,6 +14,7 @@ public partial class ShellWindow : Window
 {
     private readonly ShellViewModel _viewModel;
     private readonly Action _requestUndoAction;
+    private readonly Action _requestRedoAction;
     private readonly ShellFileDropHandler _dropHandler;
     private bool _suppressNextProjectPickerToggle;
     private bool _exitFlushCompleted;

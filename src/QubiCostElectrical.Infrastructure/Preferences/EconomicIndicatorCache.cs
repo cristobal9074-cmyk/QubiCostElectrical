@@ -12,7 +12,7 @@ public static class EconomicIndicatorCache
 {
     public const int StaleHours = 24;
 
-    private const string FileName  = "indicators_cache.json";
+    private const string FileName = "indicators_cache.json";
     private static string? cachePathOverride;
 
     private static readonly JsonSerializerOptions JsonOpts = new()
@@ -38,9 +38,9 @@ public static class EconomicIndicatorCache
 
     public sealed class CachedIndicators
     {
-        public decimal UfClp       { get; set; }
-        public decimal UsdClp      { get; set; }
-        public DateTime FetchedAt  { get; set; } = DateTime.MinValue;
+        public decimal UfClp { get; set; }
+        public decimal UsdClp { get; set; }
+        public DateTime FetchedAt { get; set; } = DateTime.MinValue;
     }
 
     /// <summary>
@@ -74,9 +74,9 @@ public static class EconomicIndicatorCache
         {
             string path = CachePath;
             Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-            var data  = new CachedIndicators { UfClp = ufClp, UsdClp = usdClp, FetchedAt = fetchedAt };
+            var data = new CachedIndicators { UfClp = ufClp, UsdClp = usdClp, FetchedAt = fetchedAt };
             string json = JsonSerializer.Serialize(data, JsonOpts);
-            string tmp  = path + ".tmp";
+            string tmp = path + ".tmp";
             File.WriteAllText(tmp, json, System.Text.Encoding.UTF8);
             File.Move(tmp, path, overwrite: true);
         }

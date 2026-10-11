@@ -3,11 +3,11 @@ namespace QubiCostElectrical;
 
 public enum ContractType
 {
-	Principal,
-	Subcontrato,
-	OrdenServicio,
-	Convenio,
-	ContratoMarco,
-	AcuerdoComplementario,
-	Otro
+    Principal,
+    Subcontrato,
+    OrdenServicio,
+    Convenio,
+    ContratoMarco,
+    AcuerdoComplementario,
+    Otro
 }

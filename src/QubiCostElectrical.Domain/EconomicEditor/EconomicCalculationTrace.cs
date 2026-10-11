@@ -5,9 +5,9 @@ namespace QubiCostElectrical;
 
 public sealed record EconomicCalculationTrace
 {
-	public int StepsExecuted { get; init; }
+    public int StepsExecuted { get; init; }
 
-	public TimeSpan Elapsed { get; init; }
+    public TimeSpan Elapsed { get; init; }
 
-	public IReadOnlyList<EconomicStep> Steps { get; init; } = Array.Empty<EconomicStep>();
+    public IReadOnlyList<EconomicStep> Steps { get; init; } = Array.Empty<EconomicStep>();
 }

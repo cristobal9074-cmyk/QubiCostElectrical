@@ -5,7 +5,8 @@ public sealed record CostoMoLaborLine(
     int Dotacion,
     decimal SueldoMensualClp,
     decimal Pct,
-    bool IsDirecta);
+    bool IsDirecta,
+    decimal FraccionObra = 1m);
 
 public sealed record CostoMoLaborTotals(
     decimal DirectaClp,
@@ -48,7 +49,7 @@ public static class CostoMoLaborProjectionBuilder
         var indLines = BuildIndirecta(indirecta);
 
         var totalDir = dirLines.Sum(r => r.Dotacion * r.SueldoMensualClp);
-        var totalInd = indLines.Sum(r => r.Dotacion * r.SueldoMensualClp);
+        var totalInd = indLines.Sum(r => r.Dotacion * r.SueldoMensualClp * r.FraccionObra);
         var totalMo = totalDir + totalInd;
         var totals = new CostoMoLaborTotals(
             totalDir,
@@ -88,16 +89,17 @@ public static class CostoMoLaborProjectionBuilder
     {
         if (rows is { Count: > 0 })
         {
-            var clp = rows.Sum(r => r.Dotacion * r.SueldoMensualClp);
+            var clp = rows.Sum(r => r.Dotacion * r.SueldoMensualClp * r.FraccionEfectiva);
             return rows.Select(r =>
             {
-                var itemTotal = r.Dotacion * r.SueldoMensualClp;
+                var itemTotal = r.Dotacion * r.SueldoMensualClp * r.FraccionEfectiva;
                 return new CostoMoLaborLine(
                     r.Cargo,
                     r.Dotacion,
                     r.SueldoMensualClp,
                     clp > 0 ? itemTotal / clp * 100m : 0,
-                    IsDirecta: false);
+                    IsDirecta: false,
+                    FraccionObra: r.FraccionEfectiva);
             }).ToList();
         }
 

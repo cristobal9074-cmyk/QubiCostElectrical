@@ -5,17 +5,17 @@ namespace QubiCostElectrical;
 
 public interface IApuVersionRepository
 {
-	Task<ApuVersion?> GetByIdAsync(string versionId);
+    Task<ApuVersion?> GetByIdAsync(string versionId);
 
-	Task<IReadOnlyList<ApuVersion>> GetByApuIdAsync(string apuId);
+    Task<IReadOnlyList<ApuVersion>> GetByApuIdAsync(string apuId);
 
-	Task<IReadOnlyList<ApuVersion>> GetAllAsync();
+    Task<IReadOnlyList<ApuVersion>> GetAllAsync();
 
-	Task SaveAsync(ApuVersion version);
+    Task SaveAsync(ApuVersion version);
 
-	Task DeleteAsync(string versionId);
+    Task DeleteAsync(string versionId);
 
-	Task<bool> ExistsAsync(string versionId);
+    Task<bool> ExistsAsync(string versionId);
 
-	Task<int> GetNextVersionNumberAsync(string apuId);
+    Task<int> GetNextVersionNumberAsync(string apuId);
 }

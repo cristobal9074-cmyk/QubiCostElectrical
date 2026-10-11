@@ -106,11 +106,20 @@ public sealed partial class ReviewViewModel : SessionAwareViewModelBase, IRefres
                 return;
             OnPropertyChanged(nameof(FocusIssueSummary));
             OnPropertyChanged(nameof(WarRoomProgressText));
+            OnPropertyChanged(nameof(IsFocusBlocker));
+            OnPropertyChanged(nameof(IsFocusCritical));
+            OnPropertyChanged(nameof(IsFocusWarning));
+            OnPropertyChanged(nameof(IsFocusInfo));
             markResolvedLocalCommand.RaiseCanExecuteChanged();
             nextWarRoomIssueCommand.RaiseCanExecuteChanged();
             previousWarRoomIssueCommand.RaiseCanExecuteChanged();
         }
     }
+
+    public bool IsFocusBlocker => FocusIssue?.IsBlocker ?? false;
+    public bool IsFocusCritical => FocusIssue?.IsCritical ?? false;
+    public bool IsFocusWarning => FocusIssue?.IsWarning ?? false;
+    public bool IsFocusInfo => FocusIssue?.IsInfo ?? false;
 
     public bool IsWarRoomMode
     {
@@ -320,20 +329,39 @@ public sealed partial class ReviewViewModel : SessionAwareViewModelBase, IRefres
             summary.BlockingCount, null,
             _ => { }, () => hasProject));
         checklist.Add(new ChecklistItemVm(
-            summary.EmptyPartidas == 0 ? "Partidas completas" : $"{summary.EmptyPartidas:N0} partidas vac\u00edas",
-            summary.EmptyPartidas == 0 ? ChecklistStatus.Pass : ChecklistStatus.Fail,
+            summary.FormulaErrors == 0 ? "F\u00f3rmulas \u00edntegras" : $"{summary.FormulaErrors:N0} f\u00f3rmula(s) inv\u00e1lida(s)",
+            summary.FormulaErrors == 0 ? ChecklistStatus.Pass : ChecklistStatus.Fail,
+            summary.FormulaErrors, FinalReviewCategory.FormulaSyntaxError,
+            SetCategoryFilter, () => hasProject));
+        checklist.Add(new ChecklistItemVm(
+            summary.EmptyPartidas == 0 ? "Partidas completas" : $"{summary.EmptyPartidas:N0} partidas aún sin cubicación",
+            summary.EmptyPartidas == 0 ? ChecklistStatus.Pass : ChecklistStatus.Warning,
             summary.EmptyPartidas, FinalReviewCategory.EmptyPartida,
+            SetCategoryFilter, () => hasProject));
+        int zeroQuantities = summary.Issues.Count(x => x.Category == FinalReviewCategory.ZeroQuantity);
+        checklist.Add(new ChecklistItemVm(
+            zeroQuantities == 0 ? "Cubicaciones con metraje válido" : $"{zeroQuantities:N0} partida(s) con metraje cero",
+            zeroQuantities == 0 ? ChecklistStatus.Pass : ChecklistStatus.Fail,
+            zeroQuantities, FinalReviewCategory.ZeroQuantity,
             SetCategoryFilter, () => hasProject));
         checklist.Add(new ChecklistItemVm(
             summary.MaterialsWithoutPrice == 0 ? "Precios completos" : $"{summary.MaterialsWithoutPrice:N0} materiales sin precio",
             summary.MaterialsWithoutPrice == 0 ? ChecklistStatus.Pass : ChecklistStatus.Fail,
             summary.MaterialsWithoutPrice, FinalReviewCategory.MaterialWithoutPrice,
             SetCategoryFilter, () => hasProject));
-        bool apuRequired = session.ApuCostingMode == BudgetApuMode.ApuManda;
+        int incompleteCommercialModels = summary.Issues.Count(x => x.Category == FinalReviewCategory.CommercialModelIncomplete);
         checklist.Add(new ChecklistItemVm(
-            summary.MissingApus == 0 ? "APUs analizados" : (apuRequired ? $"{summary.MissingApus:N0} APUs requeridos faltantes" : $"{summary.MissingApus:N0} partidas sin APU (opcional)"),
-            (summary.MissingApus == 0 || !apuRequired) ? ChecklistStatus.Pass : ChecklistStatus.Warning,
-            summary.MissingApus, FinalReviewCategory.MissingApu,
+            incompleteCommercialModels == 0 ? "Modelos comerciales completos" : $"{incompleteCommercialModels:N0} modelo(s) comercial(es) incompleto(s)",
+            incompleteCommercialModels == 0 ? ChecklistStatus.Pass : ChecklistStatus.Fail,
+            incompleteCommercialModels, FinalReviewCategory.CommercialModelIncomplete,
+            SetCategoryFilter, () => hasProject));
+        int apuPorRevisar = summary.Issues.Count(x => x.Category == FinalReviewCategory.ApuIncomplete);
+        checklist.Add(new ChecklistItemVm(
+            apuPorRevisar == 0
+                ? "APU opcional (herramienta o lista de precios)"
+                : $"{apuPorRevisar:N0} APU con precio por revisar",
+            apuPorRevisar == 0 ? ChecklistStatus.Pass : ChecklistStatus.Warning,
+            apuPorRevisar, FinalReviewCategory.ApuIncomplete,
             SetCategoryFilter, () => hasProject));
         checklist.Add(new ChecklistItemVm(
             summary.AreasNotAssigned == 0 ? "\u00c1reas asignadas" : $"{summary.AreasNotAssigned:N0} l\u00edneas sin \u00e1rea",
@@ -369,7 +397,7 @@ public sealed partial class ReviewViewModel : SessionAwareViewModelBase, IRefres
     private void UpdateProjectSummary()
     {
         ProjectSummary = workspace.HasOpenProject
-            ? $"{session.ProjectInfo.Nombre} \u2014 {session.Itemizado.Count(x => !x.EsTitulo):N0} partidas"
+            ? $"{session.ProjectInfo.Nombre} \u2014 {session.Itemizado.Count(x => !x.EsTitulo):N0} partidas \u2014 {session.ProjectInfo.CommercialModel.DisplayName()}"
             : "Sin proyecto abierto";
     }
 

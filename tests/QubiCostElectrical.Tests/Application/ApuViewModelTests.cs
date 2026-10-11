@@ -15,20 +15,24 @@ public sealed class ApuViewModelTests
 
     private static ApuRecursoRow MatRow(string descripcion = "Cable", decimal rend = 2m,
         decimal precio = 0.5m, decimal merma = 5m) => new()
-    {
-        Tipo = ApuTipoRecurso.MAT,
-        CodigoMaterial = "CAB-001",
-        Descripcion = descripcion,
-        Unidad = "ML",
-        Rendimiento = rend,
-        PrecioUf = precio,
-        MermaPct = merma,
-    };
+        {
+            Tipo = ApuTipoRecurso.MAT,
+            CodigoMaterial = "CAB-001",
+            Descripcion = descripcion,
+            Unidad = "ML",
+            Rendimiento = rend,
+            PrecioUf = precio,
+            MermaPct = merma,
+        };
 
     private static ItemizadoRow PartidaRow(string id = "P1", decimal cantidad = 10m) => new()
     {
-        Id = id, Item = "1.1", Descripcion = "Instalación eléctrica", Unidad = "GL",
-        Cantidad = cantidad, EsTitulo = false
+        Id = id,
+        Item = "1.1",
+        Descripcion = "Instalación eléctrica",
+        Unidad = "GL",
+        Cantidad = cantidad,
+        EsTitulo = false
     };
 
     private static ApuRow ApuConRecursos(string itemId = "P1", params ApuRecursoRow[] recursos) => new()
@@ -97,7 +101,9 @@ public sealed class ApuViewModelTests
         var mat = MatRow(rend: 1m, precio: 1m, merma: 0m);
         var mo = new ApuRecursoRow
         {
-            Tipo = ApuTipoRecurso.MO, Rendimiento = 8m, ValorHHUf = 0.2m
+            Tipo = ApuTipoRecurso.MO,
+            Rendimiento = 8m,
+            ValorHHUf = 0.2m
         };
         var apu = ApuConRecursos("P1", mat, mo);
 

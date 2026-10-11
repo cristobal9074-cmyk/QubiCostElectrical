@@ -1,0 +1,286 @@
+<Window x:Class="QubiCostElectrical.Wpf.Features.Cubicacion.PresetsZonasDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:infra="clr-namespace:QubiCostElectrical.Wpf.Infrastructure"
+        Style="{StaticResource Dialog.Window}"
+        Title="Catálogo de Presets y Estructuras Sectoriales"
+        Width="940" Height="680" MinWidth="840" MinHeight="540"
+        WindowStartupLocation="CenterOwner"
+        FocusManager.FocusedElement="{Binding ElementName=SearchBox}"
+        PreviewKeyDown="OnWindowPreviewKeyDown">
+
+  <Window.Resources>
+    <!-- Atajos estilo Kbd Badge -->
+    <Style x:Key="KbdBadge" TargetType="Border">
+      <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="4" />
+      <Setter Property="Padding" Value="5,2" />
+      <Setter Property="Margin" Value="0,0,4,0" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style x:Key="KbdText" TargetType="TextBlock">
+      <Setter Property="FontFamily" Value="Consolas, Segoe UI Mono, monospace" />
+      <Setter Property="FontSize" Value="10" />
+      <Setter Property="FontWeight" Value="Bold" />
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}" />
+    </Style>
+
+    <!-- Estilo para tarjeta de preset -->
+    <Style x:Key="PresetCardItem" TargetType="ListBoxItem">
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="Margin" Value="0,0,0,8" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ListBoxItem">
+            <Border x:Name="CardBorder" Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}"
+                    BorderThickness="1" CornerRadius="8" Padding="12,10" Cursor="Hand">
+              <ContentPresenter />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="CardBorder" Property="Background" Value="{DynamicResource Brush.Surface2}" />
+                <Setter TargetName="CardBorder" Property="BorderBrush" Value="{DynamicResource Brush.BlueDark}" />
+              </Trigger>
+              <Trigger Property="IsSelected" Value="True">
+                <Setter TargetName="CardBorder" Property="Background" Value="#EFF6FF" />
+                <Setter TargetName="CardBorder" Property="BorderBrush" Value="#3B82F6" />
+                <Setter TargetName="CardBorder" Property="BorderThickness" Value="1.5" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+  </Window.Resources>
+
+  <Border Style="{StaticResource Dialog.Chrome}" Margin="16" Padding="18">
+    <Grid>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="*" />
+        <RowDefinition Height="Auto" />
+      </Grid.RowDefinitions>
+
+      <!-- ── CABECERA COCKPIT ─────────────────────────────────────────────── -->
+      <DockPanel Grid.Row="0" Margin="0,0,0,14" LastChildFill="True">
+        <!-- KPIs a la derecha -->
+        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+          <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+                  CornerRadius="8" Padding="12,6" Margin="0,0,8,0">
+            <StackPanel HorizontalAlignment="Center">
+              <TextBlock Text="PRESETS TOTALES" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" />
+              <TextBlock x:Name="TxtTotalPresets" Text="0" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" Margin="0,1,0,0" />
+            </StackPanel>
+          </Border>
+
+          <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+                  CornerRadius="8" Padding="12,6">
+            <StackPanel HorizontalAlignment="Center">
+              <TextBlock Text="MIS PRESETS" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" />
+              <TextBlock x:Name="TxtCustomPresets" Text="0" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource Brush.BlueDark}" Margin="0,1,0,0" />
+            </StackPanel>
+          </Border>
+        </StackPanel>
+
+        <!-- Título y subtítulo a la izquierda -->
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+          <Border Width="42" Height="42" CornerRadius="10" Background="#EFF6FF" BorderBrush="#DBEAFE" BorderThickness="1" Margin="0,0,12,0" VerticalAlignment="Center">
+            <TextBlock Text="✨" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Border>
+          <StackPanel VerticalAlignment="Center">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <TextBlock Text="Hub de Presets de Estructura Sectorial" Style="{StaticResource Dialog.HeaderTitle}" FontSize="16" />
+              <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="5" Padding="6,2" Margin="10,0,0,0" VerticalAlignment="Center">
+                <TextBlock Text="CATÁLOGO MULTI-INDUSTRIA" FontFamily="Consolas, Segoe UI Mono, monospace" FontWeight="Bold" FontSize="10" Foreground="{DynamicResource Brush.BlueDark}" />
+              </Border>
+            </StackPanel>
+            <TextBlock Text="Plantillas estandarizadas para Minería, Solar, Industria y Hospitales. Guarde sus propios presets para usarlos siempre."
+                       FontSize="11.5" Foreground="{DynamicResource Brush.Muted}" Margin="0,2,0,0" />
+          </StackPanel>
+        </StackPanel>
+      </DockPanel>
+
+      <!-- ── SPOTLIGHT Y SEGMENTED CONTROL DE CATEGORÍAS ─────────────────── -->
+      <StackPanel Grid.Row="1" Margin="0,0,0,12">
+        <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+                CornerRadius="8" Padding="8" Margin="0,0,0,10">
+          <DockPanel LastChildFill="True">
+            <Button DockPanel.Dock="Right" Style="{StaticResource Button.Secondary}" Padding="12,5" Margin="8,0,0,0" Click="OnCrearNuevoPresetClick">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="➕" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center" />
+                <TextBlock Text="Nuevo Preset Personalizado" FontWeight="SemiBold" FontSize="11.5" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
+
+            <!-- Spotlight Search Box -->
+            <DockPanel LastChildFill="True" VerticalAlignment="Center">
+              <TextBlock DockPanel.Dock="Left" Text="🔍" FontSize="12" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" Margin="4,0,8,0" />
+              <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="6,0,6,0">
+                <Border Style="{StaticResource KbdBadge}">
+                  <TextBlock Style="{StaticResource KbdText}" Text="Ctrl+B" />
+                </Border>
+                <Border Style="{StaticResource KbdBadge}">
+                  <TextBlock Style="{StaticResource KbdText}" Text="ESC" />
+                </Border>
+              </StackPanel>
+              <TextBox x:Name="SearchBox" TextChanged="OnSearchBoxTextChanged"
+                       FontSize="12" BorderThickness="0" Background="Transparent" VerticalContentAlignment="Center"
+                       Foreground="{DynamicResource Brush.Ink}" MinWidth="180" />
+            </DockPanel>
+          </DockPanel>
+        </Border>
+
+        <!-- Chips de Categoría -->
+        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+          <StackPanel x:Name="CategoriesPanel" Orientation="Horizontal">
+            <!-- Los chips se configuran en el code-behind dinámicamente -->
+          </StackPanel>
+        </ScrollViewer>
+      </StackPanel>
+
+      <!-- ── MASTER-DETAIL: LISTA DE TARJETAS Y PREVISUALIZACIÓN ─────────── -->
+      <Grid Grid.Row="2">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" MinWidth="340" />
+          <ColumnDefinition Width="12" />
+          <ColumnDefinition Width="380" MinWidth="300" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Panel Izquierdo: Lista de Presets -->
+        <ListBox x:Name="PresetsList" Grid.Column="0"
+                 ItemContainerStyle="{StaticResource PresetCardItem}"
+                 SelectionChanged="OnPresetsListSelectionChanged"
+                 BorderThickness="0" Background="Transparent"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+          <ListBox.ItemTemplate>
+            <DataTemplate>
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Icono de Industria -->
+                <Border Grid.Column="0" Width="44" Height="44" CornerRadius="10" Background="{DynamicResource Brush.Surface2}"
+                        BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" VerticalAlignment="Top" Margin="0,0,12,0">
+                  <TextBlock Text="{Binding Icon}" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+
+                <!-- Información del Preset -->
+                <StackPanel Grid.Column="1">
+                  <DockPanel LastChildFill="True">
+                    <!-- Badges -->
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                      <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+                              CornerRadius="8" Padding="6,2" Margin="0,0,4,0">
+                        <TextBlock Text="{Binding Category}" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink2}" />
+                      </Border>
+                    </StackPanel>
+                    <TextBlock Text="{Binding Name}" FontSize="13.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" TextTrimming="CharacterEllipsis" />
+                  </DockPanel>
+
+                  <TextBlock Text="{Binding Description}" FontSize="11" Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" Margin="0,4,0,6" />
+
+                  <!-- Cantidad de Zonas -->
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="⚡ " FontSize="10.5" Foreground="{DynamicResource Brush.BlueDark}" />
+                    <TextBlock Text="{Binding Zonas.Count}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.BlueDark}" />
+                    <TextBlock Text=" zonas incluidas" FontSize="11" Foreground="{DynamicResource Brush.Muted}" Margin="3,0,0,0" />
+                  </StackPanel>
+                </StackPanel>
+              </Grid>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+
+        <!-- Divisor sutil -->
+        <GridSplitter Grid.Column="1" Width="2" HorizontalAlignment="Center" Background="{DynamicResource Brush.Line}" />
+
+        <!-- Panel Derecho: Previsualización de Zonas -->
+        <Border Grid.Column="2" Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}"
+                BorderThickness="1" CornerRadius="8" Padding="12">
+          <Grid>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="*" />
+              <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- Cabecera de Previsualización -->
+            <DockPanel Grid.Row="0" Margin="0,0,0,10" LastChildFill="True">
+              <TextBlock DockPanel.Dock="Left" Text="Zonas de la Estructura" FontSize="12.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" />
+              <TextBlock x:Name="TxtPreviewCount" DockPanel.Dock="Right" Text="0 zonas" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
+            </DockPanel>
+
+            <!-- Lista de Zonas con chips de nivel -->
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+              <ItemsControl x:Name="PreviewZonasItems">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+                            CornerRadius="6" Padding="8,5" Margin="0,0,0,4">
+                      <DockPanel LastChildFill="True">
+                        <Border DockPanel.Dock="Left" Width="26" Height="20" CornerRadius="4" Background="{DynamicResource Brush.Surface}"
+                                BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" Margin="0,0,8,0">
+                          <TextBlock Text="{Binding Numero}" FontFamily="Consolas, monospace" FontSize="10" FontWeight="Bold"
+                                     HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource Brush.Muted}" />
+                        </Border>
+                        <TextBlock Text="{Binding Nombre}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink}"
+                                   VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                      </DockPanel>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </ScrollViewer>
+
+            <!-- Acciones sobre el Preset seleccionado (p. ej. eliminar si es personalizado) -->
+            <DockPanel Grid.Row="2" Margin="0,10,0,0" LastChildFill="True">
+              <Button x:Name="BtnDeletePreset" DockPanel.Dock="Left" Style="{StaticResource Button.Ghost}"
+                      Click="OnDeletePresetClick" Visibility="Collapsed" ToolTip="Eliminar este preset personalizado">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="🗑" Margin="0,0,4,0" Foreground="{DynamicResource Brush.Danger}" />
+                  <TextBlock Text="Eliminar Preset" FontSize="11" Foreground="{DynamicResource Brush.Danger}" />
+                </StackPanel>
+              </Button>
+            </DockPanel>
+          </Grid>
+        </Border>
+      </Grid>
+
+      <!-- ── FOOTER CON ACCIONES DE APLICACIÓN ────────────────────────────── -->
+      <DockPanel Grid.Row="3" Margin="0,14,0,0" LastChildFill="True">
+        <!-- Botones de Acción a la Derecha -->
+        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+          <Button Style="{StaticResource Button.Secondary}" Content="Cancelar" MinWidth="90" Margin="0,0,8,0" IsCancel="True" />
+          <Button Style="{StaticResource Button.Secondary}" Content="➕ Añadir al Final" MinWidth="130" Margin="0,0,8,0" Click="OnAppendClick" />
+          <Button Style="{StaticResource Button.Primary}" Content="✓ Reemplazar Zonas Actuales" MinWidth="180" IsDefault="True" Click="OnReplaceClick" />
+        </StackPanel>
+
+        <!-- Leyenda de Atajos de Teclado -->
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+          <Border Style="{StaticResource KbdBadge}">
+            <TextBlock Style="{StaticResource KbdText}" Text="Enter" />
+          </Border>
+          <TextBlock Text="Reemplazar" FontSize="10.5" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,10,0" VerticalAlignment="Center" />
+
+          <Border Style="{StaticResource KbdBadge}">
+            <TextBlock Style="{StaticResource KbdText}" Text="Ctrl+B" />
+          </Border>
+          <TextBlock Text="Buscar" FontSize="10.5" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,10,0" VerticalAlignment="Center" />
+
+          <Border Style="{StaticResource KbdBadge}">
+            <TextBlock Style="{StaticResource KbdText}" Text="ESC" />
+          </Border>
+          <TextBlock Text="Cerrar" FontSize="10.5" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
+        </StackPanel>
+      </DockPanel>
+    </Grid>
+  </Border>
+</Window>

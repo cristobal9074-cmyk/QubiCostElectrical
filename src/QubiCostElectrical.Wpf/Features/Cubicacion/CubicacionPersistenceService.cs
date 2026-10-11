@@ -89,6 +89,7 @@ internal sealed class CubicacionPersistenceService
         if (partida == null || !ReferenceEquals(partida, parent.SelectedPartida)) return;
         // Rows ya está filtrado a la partida activa, evita re-escanear toda la sesión.
         partida.RecursoCount = parent.Rows.Count(r => r.HasContent);
+        parent.UpdateFilterCounts();
     }
 
     public void ValidateRows()
@@ -118,15 +119,22 @@ internal sealed class CubicacionPersistenceService
         row.PrecioVencido = validation.PrecioVencido;
     }
 
-    public void OnRowEdited(CubicacionRowVm row)
+    public void OnRowEdited(CubicacionRowVm row, ProjectFileData? preEditSnapshot = null)
     {
         if (session.IsReadOnly)
             return;
         parent.EnsureRowInSession(row);
         parent.TryAutoResolveFromPriceBank(row);
-        if (!parent.HasPendingUndoForEdit)
+        if (preEditSnapshot != null)
         {
-            undo.PushUndoPoint(session, $"Editar {row.Codigo}");
+            string desc = !string.IsNullOrWhiteSpace(row.Codigo) ? $"Modificar recurso {row.Codigo}" : "Editar recurso";
+            undo.PushSnapshot(preEditSnapshot, desc);
+            parent.HasPendingUndoForEdit = false;
+        }
+        else if (!parent.HasPendingUndoForEdit)
+        {
+            string desc = !string.IsNullOrWhiteSpace(row.Codigo) ? $"Modificar recurso {row.Codigo}" : "Editar recurso";
+            undo.PushUndoPoint(session, desc);
             parent.HasPendingUndoForEdit = true;
         }
         row.RefreshDisplayProperties();
@@ -175,7 +183,11 @@ internal sealed class CubicacionPersistenceService
             return;
         }
 
-        var conjuntos = (session.ConjuntosElectricos ?? new List<ConjuntoElectricoRow>())
+        // Biblioteca global (banco_precios.db) unida con la copia del .qce abierto: los
+        // proyectos nuevos ven las plantillas de la app sin importarlas de nuevo.
+        var conjuntos = ConjuntoTemplateStore.Combinar(
+                ConjuntoTemplateStore.TryGetAll(),
+                session.ConjuntosElectricos)
             .Where(c => c != null && !string.IsNullOrWhiteSpace(c.Nombre))
             .OrderBy(c => c.Codigo, StringComparer.OrdinalIgnoreCase)
             .ThenBy(c => c.Nombre, StringComparer.OrdinalIgnoreCase)
@@ -185,8 +197,8 @@ internal sealed class CubicacionPersistenceService
         {
             WpfDialogService.Info(
                 "Sin plantillas",
-                "No hay plantillas de materiales en este proyecto.\n\n" +
-                "Cree una en la pestaña Plantillas (＋ Nueva Plantilla), agregue materiales y vuelva a Cubicación.");
+                "No hay plantillas de materiales en la app.\n\n" +
+                "Cree una en la pestaña Plantillas (＋ Nueva plantilla), agréguele materiales y pulse Guardar.");
             return;
         }
 
@@ -228,7 +240,9 @@ internal sealed class CubicacionPersistenceService
                         .Select(c => c.Id)
                         .ToList());
 
-            var result = conjuntoService.ExpandToCubicacion(dialog.SelectedConjunto, partida, session.Materiales);
+            // Carga en cero: la plantilla aporta material + vínculos maestro→esclavo; las
+            // cantidades se ingresan en la hoja (pedido explícito: nunca aparece 1 por defecto).
+            var result = conjuntoService.ExpandToCubicacion(dialog.SelectedConjunto, partida, session.Materiales, cantidadesEnCero: true);
             foreach (var row in result.Rows)
                 session.Cubicacion.Add(row);
 

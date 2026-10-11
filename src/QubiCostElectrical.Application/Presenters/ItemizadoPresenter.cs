@@ -197,11 +197,39 @@ public sealed class ItemizadoPresenter
         _session.MarkDirty(ProjectDirtyScope.Itemizado);
     }
 
+    public bool HasChildPartidas(string? titleId)
+    {
+        if (string.IsNullOrWhiteSpace(titleId))
+            return false;
+        return _session.Itemizado.Any(x =>
+            !string.Equals(x.Id, titleId, StringComparison.OrdinalIgnoreCase) &&
+            (!x.EsTitulo && (
+                string.Equals(x.ParentId, titleId, StringComparison.OrdinalIgnoreCase) ||
+                (x.Id ?? "").StartsWith(titleId + ".", StringComparison.Ordinal) ||
+                string.Equals(ItemizadoHierarchyRules.ParentIdOf(x.Id, _session.Itemizado), titleId, StringComparison.OrdinalIgnoreCase)
+            )));
+    }
+
+    public bool TryPromoteLeafTitleToPartida(ItemizadoRow? item)
+    {
+        if (item == null) return false;
+        if (!item.EsTitulo) return true;
+        if (HasChildPartidas(item.Id)) return false;
+        item.EsTitulo = false;
+        if (item.Cantidad <= 0m) item.Cantidad = 1m;
+        if (string.IsNullOrWhiteSpace(item.Unidad)) item.Unidad = Unidades.GL;
+        _session.MarkDirty(ProjectDirtyScope.Itemizado);
+        return true;
+    }
+
     public ItemizadoCubicacionNavigation? TryBuildCubicacionNavigation(string itemId)
     {
         var item = _session.Itemizado.FirstOrDefault(x =>
             string.Equals(x.Id, itemId ?? "", StringComparison.OrdinalIgnoreCase));
-        if (item == null || item.EsTitulo || item.ExcluidoCubicacion)
+        if (item == null || item.ExcluidoCubicacion)
+            return null;
+
+        if (item.EsTitulo && !TryPromoteLeafTitleToPartida(item))
             return null;
 
         return new ItemizadoCubicacionNavigation(item.Id, item.Item ?? "", item.Descripcion ?? "");
@@ -211,8 +239,12 @@ public sealed class ItemizadoPresenter
     {
         var item = _session.Itemizado.FirstOrDefault(x =>
             string.Equals(x.Id, itemId ?? "", StringComparison.OrdinalIgnoreCase));
-        if (item == null || item.EsTitulo)
-            return "Selecciona una partida, no un título, para cubicar.";
+        if (item == null)
+            return "Partida no encontrada.";
+
+        if (item.EsTitulo && HasChildPartidas(item.Id))
+            return "Selecciona una partida o un ítem sin subpartidas agrupadas para cubicar.";
+
         if (item.ExcluidoCubicacion)
         {
             var motivo = (item.MotivoNoCubicar ?? "").Trim();

@@ -37,7 +37,7 @@ public sealed partial class CubicacionViewModel
 
     internal IReadOnlyDictionary<string, MaterialRow> GetValidationMaterialesIndex() => persistenceService.GetValidationMaterialesIndex();
 
-    public void OnRowEdited(CubicacionRowVm row) => persistenceService.OnRowEdited(row);
+    public void OnRowEdited(CubicacionRowVm row, ProjectFileData? preEditSnapshot = null) => persistenceService.OnRowEdited(row, preEditSnapshot);
 
     private void AplicarConjunto() => persistenceService.AplicarConjunto();
 

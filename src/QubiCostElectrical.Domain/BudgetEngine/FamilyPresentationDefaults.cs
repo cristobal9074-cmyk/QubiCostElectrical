@@ -21,6 +21,26 @@ public static class FamilyPresentationDefaults
     }
 
     /// <summary>Markup por defecto por familia (idéntico a la tabla histórica de GetFamilyMarkup).</summary>
+    public static bool IsCanonical(string? normalized) => normalized is
+        "CONDUCTORES" or "CANALIZACION" or "TABLEROS" or "ILUMINACION" or "EQUIPOS"
+        or "ACCESORIOS" or "ENCHUFES Y TOMACORRIENTES" or "ENCHUFES"
+        or "PROTECCIONES" or "PUESTA A TIERRA";
+
+    /// <summary>
+    /// Si la familia viene de la lista de precios y el usuario la movió a una fila canónica,
+    /// el factor que aplica es el de esa fila. Las filas canónicas no se redirigen.
+    /// </summary>
+    public static string FollowAssignment(IReadOnlyDictionary<string, string>? assigned, string? family)
+    {
+        var norm = Normalize(family);
+        if (IsCanonical(norm) || assigned == null)
+            return norm;
+        if (!assigned.TryGetValue(norm, out var target) || string.IsNullOrWhiteSpace(target))
+            return norm;
+        var next = Normalize(target);
+        return IsCanonical(next) ? next : norm;
+    }
+
     public static decimal DefaultMarkup(string normalizedFamily) => normalizedFamily switch
     {
         "CONDUCTORES" => 1.50m,

@@ -6,22 +6,14 @@ namespace QubiCostElectrical.Wpf.Infrastructure;
 
 public static partial class DataGridExcelNavigation
 {
-    public static readonly DependencyProperty EnableProperty =
-        DependencyProperty.RegisterAttached(
-            "Enable",
-            typeof(bool),
-            typeof(DataGridExcelNavigation),
-            new PropertyMetadata(false, OnEnableChanged));
+    public static readonly DependencyProperty EnableProperty = DependencyProperty.RegisterAttached(
+        "Enable", typeof(bool), typeof(DataGridExcelNavigation), new PropertyMetadata(false, OnEnableChanged));
 
     public static void SetEnable(DataGrid grid, bool value) => grid.SetValue(EnableProperty, value);
     public static bool GetEnable(DataGrid grid) => (bool)grid.GetValue(EnableProperty);
 
-    private static readonly DependencyProperty HookProperty =
-        DependencyProperty.RegisterAttached(
-            "Hook",
-            typeof(bool),
-            typeof(DataGridExcelNavigation),
-            new PropertyMetadata(false));
+    private static readonly DependencyProperty HookProperty = DependencyProperty.RegisterAttached(
+        "Hook", typeof(bool), typeof(DataGridExcelNavigation), new PropertyMetadata(false));
 
     private static void OnEnableChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {

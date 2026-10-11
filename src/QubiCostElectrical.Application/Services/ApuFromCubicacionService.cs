@@ -28,7 +28,7 @@ public static class ApuFromCubicacionService
         MarkupMethod method = MarkupMethod.SobreVenta)
     {
         ArgumentNullException.ThrowIfNull(apu);
-        decimal directo  = apu.CostoDirectoUf;
+        decimal directo = apu.CostoDirectoUf;
         decimal subtotal = directo + directo * gastosGeneralesPct / 100m;
         if (method == MarkupMethod.SobreVenta && utilidadPct < 100m)
             return subtotal / (1m - utilidadPct / 100m);
@@ -60,31 +60,31 @@ public static class ApuFromCubicacionService
 
             nuevo.Recursos.Add(new ApuRecursoRow
             {
-                Tipo           = ApuTipoRecurso.MAT,
+                Tipo = ApuTipoRecurso.MAT,
                 CodigoMaterial = CodeHelper.Normalize(row.Codigo),
-                Descripcion    = row.Descripcion,
-                Unidad         = row.Unidad,
-                Rendimiento    = rendimiento,
-                PrecioUf       = row.MatUf,
-                FuentePrecio   = "Cubicacion",
-                FechaPrecio    = DateTime.Today,
-                Estado         = row.MatUf > 0m ? "OK" : "Falta precio"
+                Descripcion = row.Descripcion,
+                Unidad = row.Unidad,
+                Rendimiento = rendimiento,
+                PrecioUf = row.MatUf,
+                FuentePrecio = "Cubicacion",
+                FechaPrecio = DateTime.Today,
+                Estado = row.MatUf > 0m ? "OK" : "Falta precio"
             });
 
             if (row.MoUf > 0m)
             {
                 nuevo.Recursos.Add(new ApuRecursoRow
                 {
-                    Tipo           = ApuTipoRecurso.MO,
+                    Tipo = ApuTipoRecurso.MO,
                     CodigoMaterial = CodeHelper.Normalize(row.Codigo),
-                    Descripcion    = "Instalacion " + row.Descripcion,
-                    Unidad         = "HH",
-                    Rendimiento    = rendimiento,
-                    PrecioUf       = row.MoUf,
-                    ValorHHUf      = row.MoUf,
-                    FuentePrecio   = "Cubicacion",
-                    FechaPrecio    = DateTime.Today,
-                    Estado         = "Revisar rendimiento"
+                    Descripcion = "Instalacion " + row.Descripcion,
+                    Unidad = "HH",
+                    Rendimiento = rendimiento,
+                    PrecioUf = row.MoUf,
+                    ValorHHUf = row.MoUf,
+                    FuentePrecio = "Cubicacion",
+                    FechaPrecio = DateTime.Today,
+                    Estado = "Revisar rendimiento"
                 });
             }
         }
@@ -139,7 +139,8 @@ public static class ApuFromCubicacionService
     public static int RefreshPricesFromCatalog(
         List<ApuRow> apus,
         IReadOnlyList<MaterialRow> materiales,
-        bool preciosCongelados)
+        bool preciosCongelados,
+        ProjectInfoRow? project = null)
     {
         ArgumentNullException.ThrowIfNull(apus);
         ArgumentNullException.ThrowIfNull(materiales);
@@ -162,7 +163,7 @@ public static class ApuFromCubicacionService
                 if (!catalogo.TryGetValue(recurso.CodigoMaterial, out var mat)) continue;
 
                 bool esManoObra = recurso.Tipo is ApuTipoRecurso.MO or ApuTipoRecurso.HH;
-                decimal precioCatalogo = esManoObra ? mat.MoUf : mat.MatUf;
+                decimal precioCatalogo = esManoObra ? ResolveMoUfEfectiva(mat, project) : mat.MatUf;
                 if (precioCatalogo <= 0m) continue;
 
                 decimal precioActual = esManoObra && recurso.ValorHHUf > 0m
@@ -173,7 +174,7 @@ public static class ApuFromCubicacionService
                 recurso.PrecioUf = precioCatalogo;
                 if (esManoObra) recurso.ValorHHUf = precioCatalogo;
                 recurso.FuentePrecio = "Catalogo de materiales";
-                recurso.FechaPrecio  = mat.FechaPrecio == default ? DateTime.Today : mat.FechaPrecio;
+                recurso.FechaPrecio = mat.FechaPrecio == default ? DateTime.Today : mat.FechaPrecio;
                 if (string.Equals(recurso.Estado, "Falta precio", StringComparison.OrdinalIgnoreCase))
                     recurso.Estado = "OK";
                 cambios++;
@@ -188,5 +189,15 @@ public static class ApuFromCubicacionService
         }
 
         return cambios;
+    }
+
+    /// <summary>MO en UF: histórica (mat.MoUf) o derivada (rendimiento / fórmula porcentaje) si el proyecto lo pide.</summary>
+    private static decimal ResolveMoUfEfectiva(MaterialRow mat, ProjectInfoRow? project)
+    {
+        bool derivada = MaterialMoResolver.DebeUsarRendimiento(mat, project)
+                     || MaterialMoResolver.DebeUsarPorcentaje(mat);
+        if (!derivada || project == null || project.ValorUfClp <= 0m)
+            return mat.MoUf;
+        return PriceConversion.ClpToUf(MaterialMoResolver.MoClpEfectiva(mat, project), project.ValorUfClp);
     }
 }

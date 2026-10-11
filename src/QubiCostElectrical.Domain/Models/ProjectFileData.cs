@@ -140,5 +140,7 @@ public sealed class ProjectFileData
     public List<StaffingRoleRow> StaffingPlan { get; set; } = new();
     public EppBudgetData Epp { get; set; } = EppBudgetData.Default();
     public ClosingPolicySelection ClosingPolicy { get; set; } = ClosingPolicySelection.Default();
+    public List<EstadoPagoMesRow> EstadoPagoMeses { get; set; } = new();
+    public EstadoPagoConfig EstadoPagoConfig { get; set; } = EstadoPagoConfig.Default();
     public string ActiveVersionId { get; set; } = "";
 }

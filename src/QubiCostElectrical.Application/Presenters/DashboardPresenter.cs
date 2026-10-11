@@ -99,7 +99,7 @@ public sealed class DashboardPresenter
             reviewSettings,
             antecedentes: data.Proyecto?.AntecedentesTecnicos);
         LastAlertSummary = summary;
-        LastAlertTotalIssues = summary.TotalIssues;
+        LastAlertTotalIssues = summary.BlockingCount;
         return summary;
     }
 }

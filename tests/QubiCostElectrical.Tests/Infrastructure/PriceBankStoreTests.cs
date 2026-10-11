@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using Microsoft.Data.Sqlite;
 using QubiCostElectrical;
 using Xunit;
 
@@ -148,6 +149,171 @@ public sealed class PriceBankStoreTests
         var store = StoreEnMemoria();
 
         Assert.Equal(0, store.DeleteAll());
+    }
+
+    // ── Sanidad de esquema: una DB con user_version de otro build (número mayor que
+    // LatestSchemaVersion) pero sin las columnas de este esquema debe sanearse al abrir.
+    // Regresión: el arranque de 1.1.1 moría con "no such column: rendimiento_dh".
+    [Fact]
+    public void Constructor_DbConUserVersionAjeno_SinColumnasNuevas_LasAnadeYSigueOperativo()
+    {
+        string db = Path.Combine(Path.GetTempPath(), $"test_pricebank_foreign_{Guid.NewGuid():N}.db");
+        try
+        {
+            using (var cn = new SqliteConnection($"Data Source={db}"))
+            {
+                cn.Open();
+                using var cmd = cn.CreateCommand();
+                cmd.CommandText = """
+                    CREATE TABLE price_bank (
+                        codigo TEXT PRIMARY KEY,
+                        descripcion TEXT NOT NULL DEFAULT '',
+                        unidad TEXT NOT NULL DEFAULT '',
+                        categoria TEXT NOT NULL DEFAULT '',
+                        mat_uf REAL NOT NULL DEFAULT 0,
+                        mo_uf REAL NOT NULL DEFAULT 0,
+                        moneda TEXT NOT NULL DEFAULT 'CLP',
+                        proveedor TEXT NOT NULL DEFAULT '',
+                        marca TEXT NOT NULL DEFAULT '',
+                        fecha_precio TEXT NOT NULL DEFAULT '',
+                        origen_precio TEXT NOT NULL DEFAULT '',
+                        proyecto_origen TEXT NOT NULL DEFAULT '',
+                        actualizado_en TEXT NOT NULL DEFAULT '',
+                        mat_clp REAL NOT NULL DEFAULT 0,
+                        mo_clp REAL NOT NULL DEFAULT 0,
+                        orden INTEGER NOT NULL DEFAULT 0,
+                        mo_formula_tipo TEXT NOT NULL DEFAULT '',
+                        mo_porcentaje_material REAL NOT NULL DEFAULT 0,
+                        mo_factor_aplicacion REAL NOT NULL DEFAULT 0,
+                        grupo TEXT NOT NULL DEFAULT ''
+                    );
+                    PRAGMA user_version = 5;
+                    """;
+                cmd.ExecuteNonQuery();
+            }
+
+            var store = new PriceBankStore(db);
+            store.Upsert(new PriceBankEntry { Codigo = "HEAL-1", RendimientoDh = 464m, DiaXPareja = 10m });
+
+            var reloaded = store.GetByCodigo("HEAL-1");
+            Assert.NotNull(reloaded);
+            Assert.Equal(464m, reloaded!.RendimientoDh);
+            Assert.Equal(10m, reloaded.DiaXPareja);
+
+            using (var cn2 = new SqliteConnection($"Data Source={db}"))
+            {
+                cn2.Open();
+                using var v = cn2.CreateCommand();
+                v.CommandText = "PRAGMA user_version;";
+                Assert.Equal(5, Convert.ToInt32(v.ExecuteScalar()));
+            }
+        }
+        finally
+        {
+            foreach (var suffix in new[] { "", "-wal", "-shm" })
+            {
+                try { File.Delete(db + suffix); } catch { /* archivo temporal */ }
+            }
+        }
+    }
+
+    // ── M.O. por %: columnas de fórmula (migración v5 + roundtrip) ───────────
+
+    [Fact]
+    public void Upsert_MoFormulaPorcentaje_RoundTripsEnEsquemaPropio()
+    {
+        var store = StoreEnMemoria();
+        store.Upsert(new PriceBankEntry
+        {
+            Codigo = "PCT-1",
+            MatClp = 1000m,
+            MoClp = 350m,
+            MoFormulaTipo = MaterialMoResolver.MoFormulaPorcentaje,
+            MoPorcentajeMaterial = 3.75m
+        });
+
+        var reloaded = store.GetByCodigo("PCT-1");
+        Assert.NotNull(reloaded);
+        Assert.Equal(MaterialMoResolver.MoFormulaPorcentaje, reloaded!.MoFormulaTipo);
+        Assert.Equal(3.75m, reloaded.MoPorcentajeMaterial);
+    }
+
+    [Fact]
+    public void Upsert_SinFormula_LlegaVacia_RoundTrips()
+    {
+        var store = StoreEnMemoria();
+        store.Upsert(new PriceBankEntry { Codigo = "FIJ-1", MoClp = 200m });
+
+        var reloaded = store.GetByCodigo("FIJ-1");
+        Assert.NotNull(reloaded);
+        Assert.Equal("", reloaded!.MoFormulaTipo);
+        Assert.Equal(2.5m, reloaded.MoPorcentajeMaterial); // default de la columna
+    }
+
+    [Fact]
+    public void Constructor_DbV4_MigraAV5_AnadeColumnasDeFormulaMOPorcentaje()
+    {
+        string db = Path.Combine(Path.GetTempPath(), $"test_pricebank_v4_{Guid.NewGuid():N}.db");
+        try
+        {
+            using (var cn = new SqliteConnection($"Data Source={db}"))
+            {
+                cn.Open();
+                using var cmd = cn.CreateCommand();
+                cmd.CommandText = """
+                    CREATE TABLE price_bank (
+                        codigo TEXT PRIMARY KEY,
+                        descripcion TEXT NOT NULL DEFAULT '',
+                        unidad TEXT NOT NULL DEFAULT '',
+                        categoria TEXT NOT NULL DEFAULT '',
+                        mat_uf REAL NOT NULL DEFAULT 0,
+                        mo_uf REAL NOT NULL DEFAULT 0,
+                        moneda TEXT NOT NULL DEFAULT 'CLP',
+                        proveedor TEXT NOT NULL DEFAULT '',
+                        marca TEXT NOT NULL DEFAULT '',
+                        fecha_precio TEXT NOT NULL DEFAULT '',
+                        origen_precio TEXT NOT NULL DEFAULT '',
+                        proyecto_origen TEXT NOT NULL DEFAULT '',
+                        actualizado_en TEXT NOT NULL DEFAULT '',
+                        mat_clp REAL NOT NULL DEFAULT 0,
+                        mo_clp REAL NOT NULL DEFAULT 0,
+                        orden INTEGER NOT NULL DEFAULT 0,
+                        rendimiento_dh REAL NOT NULL DEFAULT 0,
+                        dia_pareja REAL NOT NULL DEFAULT 0
+                    );
+                    PRAGMA user_version = 4;
+                    """;
+                cmd.ExecuteNonQuery();
+            }
+
+            var store = new PriceBankStore(db);
+            store.Upsert(new PriceBankEntry
+            {
+                Codigo = "V4-1",
+                MoFormulaTipo = MaterialMoResolver.MoFormulaPorcentaje,
+                MoPorcentajeMaterial = 4m
+            });
+
+            var reloaded = store.GetByCodigo("V4-1");
+            Assert.NotNull(reloaded);
+            Assert.Equal(MaterialMoResolver.MoFormulaPorcentaje, reloaded!.MoFormulaTipo);
+            Assert.Equal(4m, reloaded.MoPorcentajeMaterial);
+
+            using (var cn2 = new SqliteConnection($"Data Source={db}"))
+            {
+                cn2.Open();
+                using var v = cn2.CreateCommand();
+                v.CommandText = "PRAGMA user_version;";
+                Assert.Equal(5, Convert.ToInt32(v.ExecuteScalar()));
+            }
+        }
+        finally
+        {
+            foreach (var suffix in new[] { "", "-wal", "-shm" })
+            {
+                try { File.Delete(db + suffix); } catch { /* archivo temporal */ }
+            }
+        }
     }
 
     private static PriceBankStore StoreEnMemoria()

@@ -35,6 +35,10 @@ public sealed partial class ItemizadoViewModel
             pendingSelectionId = newId;
             RefreshAfterStructureChange();
             StatusMessage = "Partida agregada.";
+            var itemCode = newItem?.Item;
+            var desc = newItem?.Descripcion ?? "Nueva partida";
+            var label = string.IsNullOrWhiteSpace(itemCode) ? desc : $"{itemCode} · {desc}";
+            ShellNotificationService.Instance.ShowSuccess("Partida agregada", $"Se agregó {label} al presupuesto.");
             if (!string.IsNullOrEmpty(newId))
                 RowAdded?.Invoke(newId);
         }
@@ -63,6 +67,7 @@ public sealed partial class ItemizadoViewModel
             pendingSelectionId = newId;
             RefreshAfterStructureChange();
             StatusMessage = "Título agregado.";
+            ShellNotificationService.Instance.ShowSuccess("Capítulo agregado", "Nuevo título / capítulo WBS agregado al presupuesto.");
             if (!string.IsNullOrEmpty(newId))
                 RowAdded?.Invoke(newId);
         }
@@ -111,6 +116,7 @@ public sealed partial class ItemizadoViewModel
         pendingSelectionId = session.Itemizado.ElementAtOrDefault(result.SelectedIndex)?.Id;
         RefreshAfterStructureChange();
         StatusMessage = "Partida duplicada.";
+        ShellNotificationService.Instance.ShowSuccess("Partida duplicada", "Partida y su estructura duplicadas con éxito.");
     }
 
     private void DeleteSelected()
@@ -129,13 +135,17 @@ public sealed partial class ItemizadoViewModel
                 presenter.BuildDeleteConfirmationMessage(description, affected), isWarning: true))
             return;
 
-        undo.PushUndoPoint(session, affected > 1 ? "Eliminar filas" : "Eliminar partida");
+        string undoDesc = affected > 1
+            ? $"Eliminación de {affected} filas"
+            : (!string.IsNullOrWhiteSpace(SelectedRow.Item) ? $"Eliminación de partida {SelectedRow.Item}" : "Eliminación de partida");
+        undo.PushUndoPoint(session, undoDesc);
         var result = presenter.DeleteAt(index);
         pendingSelectionId = result.SelectedIndex >= 0
             ? session.Itemizado.ElementAtOrDefault(result.SelectedIndex)?.Id
             : null;
         RefreshAfterStructureChange();
         StatusMessage = affected > 1 ? $"{affected:N0} filas eliminadas." : "Fila eliminada.";
+        ShellNotificationService.Instance.ShowInfo("Itemizado", affected > 1 ? $"{affected:N0} filas eliminadas." : "Fila eliminada.");
     }
 
     private void ClearAll()
@@ -154,13 +164,13 @@ public sealed partial class ItemizadoViewModel
     }
 
     private bool CanCubicar() => !session.IsReadOnly
-        && (GetSelectedPartidaIds().Count > 0 || (IsSelectionVisible && SelectedRow != null && !SelectedRow.EsTitulo));
+        && (GetSelectedPartidaIds().Count > 0 || (IsSelectionVisible && SelectedRow != null && (!SelectedRow.EsTitulo || !presenter.HasChildPartidas(SelectedRow.Id))));
 
-    private bool CanDuplicate() => !session.IsReadOnly && IsSelectionVisible && SelectedRow != null && !SelectedRow.EsTitulo && !ShowEmptyState;
+    private bool CanDuplicate() => !session.IsReadOnly && IsSelectionVisible && SelectedRow != null && !SelectedRow.EsTitulo && !ShowEmptyState && allRows.Count(r => r.IsSelected) <= 1;
 
     private List<string> GetSelectedPartidaIds()
         => allRows
-            .Where(x => x.IsSelected && !x.EsTitulo && PassesCurrentFilter(x))
+            .Where(x => x.IsSelected && (!x.EsTitulo || !presenter.HasChildPartidas(x.Id)) && PassesCurrentFilter(x))
             .Select(x => x.Id)
             .ToList();
 
@@ -169,7 +179,7 @@ public sealed partial class ItemizadoViewModel
         if (session.IsReadOnly)
             return;
         var ids = GetSelectedPartidaIds();
-        if (ids.Count == 0 && IsSelectionVisible && SelectedRow != null && !SelectedRow.EsTitulo)
+        if (ids.Count == 0 && IsSelectionVisible && SelectedRow != null && (!SelectedRow.EsTitulo || !presenter.HasChildPartidas(SelectedRow.Id)))
             ids.Add(SelectedRow.Id);
 
         if (ids.Count == 0)
@@ -194,6 +204,12 @@ public sealed partial class ItemizadoViewModel
                 continue;
 
             valid.Add((id, navigation));
+        }
+
+        if (SelectedRow != null && SelectedRow.EsTitulo != SelectedRow.Model.EsTitulo)
+        {
+            SelectedRow.IsTitleRow = SelectedRow.Model.EsTitulo;
+            SelectedRow.UpdateModel(SelectedRow.Model);
         }
 
         if (valid.Count == 0)
@@ -233,7 +249,11 @@ public sealed partial class ItemizadoViewModel
         (DeleteCommand as RelayCommand)?.RaiseCanExecuteChanged();
         (ClearAllCommand as RelayCommand)?.RaiseCanExecuteChanged();
         (ConfigureCommercialModelCommand as RelayCommand)?.RaiseCanExecuteChanged();
+        (LoadStandardTemplateCommand as RelayCommand<string>)?.RaiseCanExecuteChanged();
     }
+
+    private void LoadStandardTemplate(string? templateId) =>
+        ItemizadoTemplateCoordinator.LoadTemplate(session, templateId, undo, audit, () => RefreshPresentation(includeCosts: false), msg => StatusMessage = msg);
 
     private void ConfigureCommercialModel()
     {

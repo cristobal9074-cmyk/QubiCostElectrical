@@ -1,7 +1,6 @@
 <Window x:Class="QubiCostElectrical.Wpf.Features.Templates.MaterialPickerDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:infra="clr-namespace:QubiCostElectrical.Wpf.Infrastructure"
         Style="{StaticResource Dialog.Window}"
         Title="Seleccionar Material del Banco de Precios"
         Width="750" Height="480" MinWidth="600" MinHeight="350"
@@ -42,7 +41,8 @@
         <TextBox x:Name="SearchBox"
                  Style="{StaticResource Form.TextBox}"
                  Padding="32,8,12,8" FontSize="{StaticResource Font.Size.md}"
-                 TextChanged="SearchBox_TextChanged"/>
+                 TextChanged="SearchBox_TextChanged"
+                 PreviewKeyDown="SearchBox_PreviewKeyDown"/>
         <TextBlock Text="🔍" VerticalAlignment="Center" Margin="10,0,0,0" FontSize="{StaticResource Font.Size.md}" Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Left" IsHitTestVisible="False"/>
         
         <!-- Hint visible cuando está vacío -->
@@ -67,7 +67,6 @@
       <Border Grid.Row="1" Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="8">
         <DataGrid x:Name="MaterialsGrid"
                   Style="{StaticResource DataGrid.Workspace}"
-                  infra:DataGridExcelNavigation.Enable="True"
                   AutoGenerateColumns="False"
                   IsReadOnly="True"
                   GridLinesVisibility="Horizontal"
@@ -90,6 +89,7 @@
       <Button x:Name="BtnSeleccionar" Content="Agregar Seleccionados"
               Style="{StaticResource Button.Primary}"
               MinWidth="160" Height="34" DockPanel.Dock="Right"
+              IsDefault="True"
               Click="BtnSeleccionar_Click"/>
       <Button Content="Cancelar"
               Style="{StaticResource Button.Secondary}"

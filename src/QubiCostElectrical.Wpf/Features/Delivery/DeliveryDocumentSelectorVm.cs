@@ -47,6 +47,7 @@ public sealed class DeliveryDocumentSelectorVm
     {
         this.dashboard = dashboard ?? throw new ArgumentNullException(nameof(dashboard));
         Documents.Add(new DeliveryDocumentItemVm("OfferPdf", "Oferta comercial PDF", "Documento principal con portada, totales, alcance, exclusiones y condiciones.", "PDF"));
+        Documents.Add(new DeliveryDocumentItemVm("OfferLetter", "Carta de oferta PDF", "Carta de oferta formal con logo, planos de proyecto, alcances, condiciones comerciales y valor total. Formato carta formal.", "PDF"));
         Documents.Add(new DeliveryDocumentItemVm("ControlExcel", "Excel interno de control", "Libro de control con trazabilidad completa, itemizado y cubicación.", "XLSX"));
         Documents.Add(new DeliveryDocumentItemVm("LetterDocx", "Carta de presentación", "Carta formal DOCX para acompañar la oferta comercial.", "DOCX"));
         Documents.Add(new DeliveryDocumentItemVm("MemoriaExcel", "Memoria cubicación Excel", "Detalle técnico de cubicación en formato Excel.", "XLSX"));

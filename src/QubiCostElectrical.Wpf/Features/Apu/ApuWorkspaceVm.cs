@@ -45,18 +45,18 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
     private List<ApuRow>? baselineApus;
 
     // Resumen del APU seleccionado
-    private decimal costoMat;
-    private decimal costoMo;
-    private decimal costoEquipo;
-    private decimal costoSc;
-    private decimal costoHerr;
-    private decimal costoDirecto;
-    private decimal imprevistos;
-    private decimal precioUnit;
-    private decimal ventaUnit;
-    private decimal totalPartida;
+    private decimal costoMat, costoMo, costoEquipo, costoSc, costoHerr, costoDirecto, imprevistos, precioUnit, ventaUnit, totalPartida;
+    public ApuCostDistributionCoordinator CostDistribution { get; } = new();
 
     // Alertas
     private string alertText = "";
     private bool hasAlerts;
+
+    // Autocompletado e IntelliSense
+    private readonly ApuAutocompleteEngine autocompleteEngine;
+    private ObservableCollection<ApuAutocompleteSuggestionVm> autocompleteResults = new();
+    private bool autocompleteVisible;
+    private ApuAutocompleteSuggestionVm? selectedAutocompleteItem;
+    private string autocompleteStatusText = "";
+    private System.Threading.CancellationTokenSource? autocompleteCts;
 }

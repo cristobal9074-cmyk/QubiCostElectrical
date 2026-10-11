@@ -51,25 +51,56 @@
   </Style>
 
   <Style x:Key="Badge.Status" TargetType="Border">
-    <Setter Property="CornerRadius" Value="12" />
+    <Setter Property="CornerRadius" Value="6" />
     <Setter Property="Padding" Value="7,3" />
     <Setter Property="HorizontalAlignment" Value="Left" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
   </Style>
 
   <Style x:Key="Badge.Ok" TargetType="Border" BasedOn="{StaticResource Badge.Status}">
-    <Setter Property="Background" Value="{DynamicResource Brush.GreenSoft}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.SuccessBg}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.SuccessBorder}" />
   </Style>
 
   <Style x:Key="Badge.Warn" TargetType="Border" BasedOn="{StaticResource Badge.Status}">
     <Setter Property="Background" Value="{DynamicResource Brush.AmberSoft}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Amber2}" />
   </Style>
 
   <Style x:Key="Badge.Info" TargetType="Border" BasedOn="{StaticResource Badge.Status}">
     <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.BlueFocus}" />
   </Style>
 
   <Style x:Key="Badge.Bad" TargetType="Border" BasedOn="{StaticResource Badge.Status}">
-    <Setter Property="Background" Value="{DynamicResource Brush.RedSoft}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.DangerBg}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.DangerBorder}" />
+  </Style>
+
+  <!-- Etiqueta de metadatos (estado/moneda/cliente): rectangular, borde fino, sin píldora. -->
+  <Style x:Key="Meta.Tag" TargetType="Border">
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="2" />
+    <Setter Property="Padding" Value="7,3" />
+    <Setter Property="Margin" Value="0,0,6,0" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="SnapsToDevicePixels" Value="True" />
+  </Style>
+
+  <Style x:Key="Meta.Tag.Accent" TargetType="Border" BasedOn="{StaticResource Meta.Tag}">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
+  </Style>
+
+  <Style x:Key="Meta.Tag.Text" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource Font.Ui}" />
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
 
   <Style x:Key="Text.Badge" TargetType="TextBlock">

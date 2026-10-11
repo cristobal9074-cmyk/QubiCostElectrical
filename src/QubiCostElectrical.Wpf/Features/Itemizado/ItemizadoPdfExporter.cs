@@ -58,31 +58,31 @@ public static class ItemizadoPdfExporter
                     {
                         c.Item().Row(r =>
                         {
-                            r.RelativeItem(1.2f).Text(t => 
-                            { 
-                                t.DefaultTextStyle(x => x.FontSize(8.5f)); 
-                                t.Span("Proyecto: ").Bold(); 
-                                t.Span(projName); 
+                            r.RelativeItem(1.2f).Text(t =>
+                            {
+                                t.DefaultTextStyle(x => x.FontSize(8.5f));
+                                t.Span("Proyecto: ").Bold();
+                                t.Span(projName);
                             });
-                            r.RelativeItem(0.8f).Text(t => 
-                            { 
-                                t.DefaultTextStyle(x => x.FontSize(8.5f)); 
-                                t.Span("Cliente: ").Bold(); 
-                                t.Span(clientName); 
+                            r.RelativeItem(0.8f).Text(t =>
+                            {
+                                t.DefaultTextStyle(x => x.FontSize(8.5f));
+                                t.Span("Cliente: ").Bold();
+                                t.Span(clientName);
                             });
                         });
                         c.Item().PaddingTop(4).Row(r =>
                         {
-                            r.RelativeItem(1.2f).Text(t => 
-                            { 
-                                t.DefaultTextStyle(x => x.FontSize(8.5f)); 
-                                t.Span("Estimador: ").Bold(); 
-                                t.Span(estimador); 
+                            r.RelativeItem(1.2f).Text(t =>
+                            {
+                                t.DefaultTextStyle(x => x.FontSize(8.5f));
+                                t.Span("Estimador: ").Bold();
+                                t.Span(estimador);
                             });
-                            r.RelativeItem(0.8f).Text(t => 
-                            { 
-                                t.DefaultTextStyle(x => x.FontSize(8.5f)); 
-                                t.Span("Unidades de Medida").Bold(); 
+                            r.RelativeItem(0.8f).Text(t =>
+                            {
+                                t.DefaultTextStyle(x => x.FontSize(8.5f));
+                                t.Span("Unidades de Medida").Bold();
                             });
                         });
                     });

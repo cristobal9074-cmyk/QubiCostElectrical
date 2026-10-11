@@ -238,7 +238,7 @@ public sealed partial class SolicitudesViewModel : SessionAwareViewModelBase, IR
             var path = System.IO.Path.Combine(tempFolder, $"Solicitud_Materiales_{cleanName}_{DateTime.Now:yyyyMMdd_HHmmss}.pdf");
 
             SolicitudesPdfExporter.Export(path, CodigoSolicitud, WorkName, RequestedBy, RequestDate, Materiales.ToList(), Epps.ToList());
-            
+
             var dialog = new SolicitudPdfPreviewDialog(path);
             if (System.Windows.Application.Current?.MainWindow != null)
             {
@@ -347,7 +347,7 @@ public sealed partial class SolicitudesViewModel : SessionAwareViewModelBase, IR
                             "Esto indica que el archivo pudo haber sido modificado o editado manualmente fuera de Qubi Cost. " +
                             "\n\n¿Desea importar la solicitud de todas formas?",
                             isWarning: true);
-                        
+
                         if (!proceed)
                             return;
                     }
@@ -377,7 +377,7 @@ public sealed partial class SolicitudesViewModel : SessionAwareViewModelBase, IR
                     {
                         var cellObra = wsMat.Cell(2, 2).Value.ToString();
                         var cellSolicitado = wsMat.Cell(3, 2).Value.ToString();
-                        
+
                         if (!string.IsNullOrWhiteSpace(cellObra)) WorkName = cellObra;
                         if (!string.IsNullOrWhiteSpace(cellSolicitado)) RequestedBy = cellSolicitado;
 
@@ -432,11 +432,11 @@ public sealed partial class SolicitudesViewModel : SessionAwareViewModelBase, IR
                         foreach (var m in tempMat) Materiales.Add(new SolicitudItemRowVm(this, m));
                         foreach (var e in tempEpp) Epps.Add(new SolicitudItemRowVm(this, e));
                         SaveToSession();
-                        WpfDialogService.Info("Importación Exitosa", $"Se cargaron {tempMat.Count} materiales y {tempEpp.Count} EPPs desde el archivo Excel.");
+                        WpfDialogService.Info("Importación Exitosa", $"Se cargaron {tempMat.Count} materiales y {tempEpp.Count} EPPs desde el archivo.");
                     }
                     else
                     {
-                        throw new Exception("No se encontraron filas válidas para importar en el archivo Excel.");
+                        throw new Exception("No se encontraron filas válidas para importar en el archivo.");
                     }
                 }
             }
@@ -459,7 +459,7 @@ public sealed partial class SolicitudesViewModel : SessionAwareViewModelBase, IR
     private void ApproveSolicitud()
     {
         if (session.IsReadOnly) return;
-        
+
         try
         {
             session.ProjectInfo.SolicitudCorrelativo++;
@@ -489,7 +489,7 @@ public sealed partial class SolicitudesViewModel : SessionAwareViewModelBase, IR
         var projectId = session?.ProjectInfo?.Nombre ?? "QCE_PROJECT";
         var user = session?.ProjectInfo?.UsuarioNombre ?? "USER";
         var rawData = $"{packet.Correlativo}|{packet.Obra}|{packet.SolicitadoPor}|{packet.Fecha}|{serializedItems}|{projectId}|{user}";
-        
+
         var keyBytes = System.Security.Cryptography.SHA256.HashData(
             System.Text.Encoding.UTF8.GetBytes($"QCE_SIGN_{projectId}_{ProductVersionInfo.DatabaseSchemaVersion}"));
         using var hmac = new System.Security.Cryptography.HMACSHA256(keyBytes);

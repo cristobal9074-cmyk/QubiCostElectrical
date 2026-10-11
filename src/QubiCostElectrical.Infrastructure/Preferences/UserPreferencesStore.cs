@@ -19,12 +19,12 @@ namespace QubiCostElectrical;
 /// </summary>
 public static class UserPreferencesStore
 {
-    private const string FileName     = "preferences.json";
+    private const string FileName = "preferences.json";
     private static string? preferencesFilePathOverride;
 
     private static readonly JsonSerializerOptions _opts = new()
     {
-        WriteIndented            = true,
+        WriteIndented = true,
         PropertyNameCaseInsensitive = true,
     };
 
@@ -91,7 +91,7 @@ public static class UserPreferencesStore
             Directory.CreateDirectory(Path.GetDirectoryName(path)!);
 
             string json = JsonSerializer.Serialize(prefs, _opts);
-            string tmp  = path + ".tmp";
+            string tmp = path + ".tmp";
 
             File.WriteAllText(tmp, json, Encoding.UTF8);
 
@@ -114,10 +114,6 @@ public static class UserPreferencesStore
         if (p.FontSize < 7.5f || p.FontSize > 13f)
             p.FontSize = 9.0f;
 
-        // Tamaño de ventana: mínimos razonables
-        if (p.WindowWidth  < 800)  p.WindowWidth  = 1600;
-        if (p.WindowHeight < 600)  p.WindowHeight = 950;
-
         // Página de materiales
         if (p.MaterialsPageSize is not (50 or 100 or 250 or 500 or 1000))
             p.MaterialsPageSize = 250;
@@ -136,27 +132,30 @@ public static class UserPreferencesStore
 
         // Membrete corporativo: normaliza nulos de archivos antiguos.
         p.LetterheadCompanyName = (p.LetterheadCompanyName ?? "").Trim();
-        p.LetterheadRut         = (p.LetterheadRut ?? "").Trim();
-        p.LetterheadAddress     = (p.LetterheadAddress ?? "").Trim();
-        p.LetterheadPhone       = (p.LetterheadPhone ?? "").Trim();
-        p.LetterheadEmail       = (p.LetterheadEmail ?? "").Trim();
-        p.LetterheadWebsite     = (p.LetterheadWebsite ?? "").Trim();
-        p.LetterheadLogoPath               = (p.LetterheadLogoPath ?? "").Trim();
-        p.ProfessionalName                 = (p.ProfessionalName ?? "").Trim();
-        p.ProfessionalRut                  = (p.ProfessionalRut ?? "").Trim();
-        p.ProfessionalRole                 = (p.ProfessionalRole ?? "").Trim();
-        p.ProfessionalRegistroSec          = (p.ProfessionalRegistroSec ?? "").Trim();
-        p.ProfessionalSignatureImagePath   = (p.ProfessionalSignatureImagePath ?? "").Trim();
+        p.LetterheadRut = (p.LetterheadRut ?? "").Trim();
+        p.LetterheadAddress = (p.LetterheadAddress ?? "").Trim();
+        p.LetterheadPhone = (p.LetterheadPhone ?? "").Trim();
+        p.LetterheadEmail = (p.LetterheadEmail ?? "").Trim();
+        p.LetterheadWebsite = (p.LetterheadWebsite ?? "").Trim();
+        p.LetterheadLogoPath = (p.LetterheadLogoPath ?? "").Trim();
+        p.ProfessionalName = (p.ProfessionalName ?? "").Trim();
+        p.ProfessionalRut = (p.ProfessionalRut ?? "").Trim();
+        p.ProfessionalRole = (p.ProfessionalRole ?? "").Trim();
+        p.ProfessionalRegistroSec = (p.ProfessionalRegistroSec ?? "").Trim();
+        p.ProfessionalSignatureImagePath = (p.ProfessionalSignatureImagePath ?? "").Trim();
+        p.ProfessionalPhone = (p.ProfessionalPhone ?? "").Trim();
+        p.ProfessionalEmail = (p.ProfessionalEmail ?? "").Trim();
+        p.ProfessionalSecClass = (p.ProfessionalSecClass ?? "").Trim();
+        p.LetterheadClientLogoPath = (p.LetterheadClientLogoPath ?? "").Trim();
+        if (p.ProfessionalSignatureWidthMm < 0) p.ProfessionalSignatureWidthMm = 0;
+        if (p.ProfessionalSignatureHeightMm < 0) p.ProfessionalSignatureHeightMm = 0;
 
         // Listas nulas (archivo generado con versión anterior)
-        p.RecentFiles             ??= new();
-        p.SidebarGroupsExpanded   ??= new();
-        p.GridColumnWidths        ??= new();
-        p.GridHiddenColumns       ??= new();
-        p.GridColumnDisplayIndexes ??= new();
-        p.CorporateTheme          ??= new CorporateThemePreferences();
-        p.DashboardWidgetLayout   ??= new DashboardWidgetLayoutPreferences();
-        p.ReportTemplate          ??= new ReportTemplatePreferences();
+        p.RecentFiles ??= new();
+        p.SidebarGroupsExpanded ??= new();
+        p.CorporateTheme ??= new CorporateThemePreferences();
+        p.DashboardWidgetLayout ??= new DashboardWidgetLayoutPreferences();
+        p.ReportTemplate ??= new ReportTemplatePreferences();
         p.DashboardWidgetLayout.WidgetOrder ??= new List<string> { "Alertas", "KPIs", "TopPartidas", "MaterialesCriticos", "Areas", "Revision", "Sensibilidad" };
         p.DashboardWidgetLayout.WidgetHeights ??= new Dictionary<string, int>();
         p.ReportTemplate.OrderedFields ??= new List<string> { "Logo", "Proyecto", "Cliente", "Resumen UF", "Itemizado", "Condiciones", "Firma" };

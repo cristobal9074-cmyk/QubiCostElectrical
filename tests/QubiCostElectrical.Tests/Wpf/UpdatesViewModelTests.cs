@@ -506,7 +506,18 @@ public sealed class UpdatesViewModelTests
             if (DateTime.UtcNow - start > timeout)
                 break;
 
-            System.Windows.Application.Current?.Dispatcher?.Invoke(() => { }, DispatcherPriority.Background);
+            // Invoke síncrono: si Application.Current fue creado por otro test en un hilo que ya
+            // no bombea el Dispatcher (entorno headless), el hilo actual se bloquea para siempre
+            // y toda la colección WpfHost queda colgada. En el mismo hilo se bombea; en otro se
+            // encola sin esperar.
+            var dispatcher = System.Windows.Application.Current?.Dispatcher;
+            if (dispatcher is { HasShutdownStarted: false })
+            {
+                if (dispatcher.CheckAccess())
+                    dispatcher.Invoke(() => { }, DispatcherPriority.Background);
+                else
+                    _ = dispatcher.BeginInvoke(() => { }, DispatcherPriority.Background);
+            }
 
             await Task.Delay(25);
         }

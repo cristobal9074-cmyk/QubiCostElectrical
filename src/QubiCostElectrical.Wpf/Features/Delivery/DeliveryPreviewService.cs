@@ -36,6 +36,7 @@ public sealed class DeliveryPreviewService
     private readonly ICubicacionReportExcelExporter cubReportExcel;
     private readonly ICubicacionReportPdfExporter cubReportPdf;
     private readonly ICubicacionSCReportExcelExporter cubScReportExcel;
+    private readonly IOfferLetterPdfExporter offerLetterExporter;
 
     public DeliveryPreviewService(
         IFileOpenService fileOpener,
@@ -44,7 +45,8 @@ public sealed class DeliveryPreviewService
         IPresentationLetterDocxExporter wordLetterExporter,
         ICubicacionReportExcelExporter cubReportExcel,
         ICubicacionReportPdfExporter cubReportPdf,
-        ICubicacionSCReportExcelExporter cubScReportExcel)
+        ICubicacionSCReportExcelExporter cubScReportExcel,
+        IOfferLetterPdfExporter offerLetterExporter)
     {
         this.fileOpener = fileOpener ?? throw new ArgumentNullException(nameof(fileOpener));
         this.pdfExporter = pdfExporter;
@@ -53,25 +55,31 @@ public sealed class DeliveryPreviewService
         this.cubReportExcel = cubReportExcel;
         this.cubReportPdf = cubReportPdf;
         this.cubScReportExcel = cubScReportExcel;
+        this.offerLetterExporter = offerLetterExporter;
     }
 
-    public async Task<DeliveryExportResult> GeneratePreviewAsync(ExportProjectContext ctx, bool openExternally = true)
+    public async Task<DeliveryExportResult> GeneratePreviewAsync(ExportProjectContext ctx, string documentId = "OfferLetter", bool openExternally = false)
     {
         CleanupOldPreviews();
 
         string tempRoot = Path.Combine(Path.GetTempPath(), "QubiCostElectrical", "Preview", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(tempRoot);
 
-        string previewPath = Path.Combine(tempRoot, "Preview-Oferta.pdf");
-        await Task.Run(() => pdfExporter.Export(ctx, previewPath));
+        string fileName = documentId == "OfferPdf" ? "Preview-Oferta.pdf" : "Preview-Carta-Oferta.pdf";
+        string previewPath = Path.Combine(tempRoot, fileName);
+        await Task.Run(() =>
+        {
+            if (documentId == "OfferPdf") pdfExporter.Export(ctx, previewPath);
+            else offerLetterExporter.Export(ctx, previewPath);
+        });
 
         if (File.Exists(previewPath))
         {
             var openResult = openExternally ? fileOpener.OpenFile(previewPath) : FileOpenResult.Success;
-            return new DeliveryExportResult("OfferPdf", true, previewPath, openResult: openResult);
+            return new DeliveryExportResult(documentId, true, previewPath, openResult: openResult);
         }
 
-        return new DeliveryExportResult("OfferPdf", false, errorMessage: "El archivo no se generó.");
+        return new DeliveryExportResult(documentId, false, errorMessage: "El archivo no se generó.");
     }
 
     public async Task<IReadOnlyList<DeliveryExportResult>> ExportAllAsync(ExportProjectContext ctx, string targetFolder, string[] selectedDocumentIds, string baseName)
@@ -95,6 +103,8 @@ public sealed class DeliveryPreviewService
             {
                 "OfferPdf" => await ExportFileAsync(ctx, targetFolder, $"{baseName}-Oferta.pdf",
                     (c, p) => pdfExporter.Export(c, p)),
+                "OfferLetter" => await ExportFileAsync(ctx, targetFolder, $"{baseName}-Carta-Oferta.pdf",
+                    (c, p) => offerLetterExporter.Export(c, p)),
                 "ControlExcel" => await ExportFileAsync(ctx, targetFolder, $"{baseName}-Control.xlsx",
                     (c, p) => excelExporter.Export(c, p)),
                 "LetterDocx" => await ExportFileAsync(ctx, targetFolder, $"{baseName}-Carta.docx",

@@ -13,7 +13,11 @@ namespace QubiCostElectrical.Wpf.Shell;
 
 partial class ShellViewModel
 {
-    public async Task NewProjectAsync()
+    public Task NewProjectAsync() => CreateNewProjectInternalAsync(null, null);
+
+    public Task NewProjectWithTemplateAsync(string templateId) => CreateNewProjectInternalAsync(templateId, null);
+
+    private async Task CreateNewProjectInternalAsync(string? templateId, string? suggestedName)
     {
         if (IsBusy) return;
         IsBusy = true;
@@ -33,7 +37,7 @@ partial class ShellViewModel
                 pending.TryDiscardChanges();
             }
 
-            var dialog = new NewProjectDialog();
+            var dialog = new NewProjectDialog(templateId, suggestedName);
             dialog.Owner = Application.Current?.MainWindow;
             if (dialog.ShowDialog() != true)
                 return;
@@ -110,6 +114,9 @@ partial class ShellViewModel
 
             if (session.IsDirty && !session.IsReadOnly)
             {
+                // El evento "Cerrar" se registra ANTES de persistir: la auditoría vive en
+                // el buffer del proyecto y grabarla después lo borra NewProject().
+                projectLifecycle.RecordCloseBeforePersist();
                 try
                 {
                     await projectLifecycle.PersistOpenProjectAsync();
@@ -123,7 +130,7 @@ partial class ShellViewModel
             }
         }
 
-        projectLifecycle.TearDownOpenProject("Cerrar");
+        projectLifecycle.TearDownOpenProject();
         SyncReadOnlyFromSession();
 
         PostCloseNavigate();
@@ -249,6 +256,7 @@ partial class ShellViewModel
     public async Task OpenRecentProjectAsync(string path)
     {
         if (IsBusy) return;
+        BusyMessage = "Abriendo proyecto…";
         IsBusy = true;
         try
         {
@@ -350,13 +358,15 @@ partial class ShellViewModel
             await TryOfferAutoSaveRestoreAsync(path);
             recentProjects.AddProject(session.CurrentProjectPath);
             RefreshRecentProjects();
+
+            // Notificar HasOpenProject/IsLandingScreen ANTES de navegar, para que el shell
+            // actualice su layout (cabecera, nav, status bar) antes de que CurrentView cambie.
             RefreshChrome();
-            RefreshCurrentPage();
+
             var nextRoute = routeBeforeOpen == ShellRoute.Dashboard && session.Itemizado.Count > 0
                 ? ShellRoute.Itemized
                 : routeBeforeOpen;
             RequestNavigate(nextRoute, force: true);
-            OnPropertyChanged(nameof(HasOpenProject));
         }
         catch (Exception ex)
         {
@@ -382,15 +392,15 @@ partial class ShellViewModel
             : "fecha desconocida";
 
         if (!WpfDialogService.Confirm(
-                "Recuperar autoguardado",
-                $"Hay un autoguardado más reciente que el archivo del proyecto ({when}).\n\n¿Desea restaurar esos cambios en la sesión?",
+                "Recuperar copia",
+                $"Hay una copia .bak más reciente que el archivo del proyecto ({when}).\n\n¿Desea restaurar esos cambios?",
                 isWarning: true))
             return;
 
         var data = AutoSaveService.TryLoadAutoSave(path);
         if (data == null)
         {
-            WpfDialogService.Warning("Autoguardado", "No se pudo leer el archivo de autoguardado.");
+            WpfDialogService.Warning("Recuperar copia", "No se pudo leer el archivo .bak.");
             return;
         }
 
@@ -401,7 +411,7 @@ partial class ShellViewModel
 
         if (WpfDialogService.Confirm(
                 "Guardar recuperación",
-                "Los cambios del autoguardado están en memoria. ¿Desea guardarlos ahora en el archivo del proyecto?"))
+                "Los cambios de la copia .bak están en memoria. ¿Desea guardarlos ahora en el archivo del proyecto?"))
         {
             try
             {

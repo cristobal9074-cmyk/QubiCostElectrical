@@ -9,6 +9,8 @@ using QubiCostElectrical.Wpf.Navigation;
 using ApuFeature = QubiCostElectrical.Wpf.Features.Apu;
 using CubicacionFeature = QubiCostElectrical.Wpf.Features.Cubicacion;
 using ContractsFeature = QubiCostElectrical.Wpf.Features.Contracts;
+using ItemizadoFeature = QubiCostElectrical.Wpf.Features.Itemizado;
+using CubicacionScFeature = QubiCostElectrical.Wpf.Features.CubicacionSc;
 
 namespace QubiCostElectrical.Wpf.Shell;
 
@@ -74,6 +76,9 @@ internal sealed class ShellNavigationCoordinator
         WorkspaceNavigationContext? context,
         bool force)
     {
+        if (route == ShellRoute.Currency)
+            route = ShellRoute.Project;
+
         if (!force && !TryLeaveCurrentPage(currentPageVm))
             return false;
 
@@ -82,9 +87,9 @@ internal sealed class ShellNavigationCoordinator
 
         if (route == currentRoute && currentView != null)
         {
-            ApplyNavigationContext(context, currentView);
-            if (currentPageVm is IRefreshablePage refreshableOnSameRoute)
+            if (context == null && currentPageVm is IRefreshablePage refreshableOnSameRoute)
                 refreshableOnSameRoute.Refresh();
+            ApplyNavigationContext(context, currentView);
             return true;
         }
 
@@ -162,7 +167,20 @@ internal sealed class ShellNavigationCoordinator
                     var target = vm.Partidas.FirstOrDefault(p =>
                         string.Equals(p.Id, takeoffCtx.ItemId, StringComparison.OrdinalIgnoreCase));
                     if (target != null)
+                    {
                         vm.SelectPartida(target);
+                        if (!string.IsNullOrWhiteSpace(takeoffCtx.TargetRowId) || !string.IsNullOrWhiteSpace(takeoffCtx.TargetCode))
+                        {
+                            var row = vm.Rows.FirstOrDefault(r =>
+                                (!string.IsNullOrWhiteSpace(takeoffCtx.TargetRowId) && string.Equals(r.Id, takeoffCtx.TargetRowId, StringComparison.OrdinalIgnoreCase)) ||
+                                (!string.IsNullOrWhiteSpace(takeoffCtx.TargetCode) && string.Equals(r.Codigo, takeoffCtx.TargetCode, StringComparison.OrdinalIgnoreCase)));
+                            if (row != null)
+                            {
+                                vm.SelectedRow = row;
+                                takeoffView.SelectAndScrollToRow(row);
+                            }
+                        }
+                    }
                 }
                 break;
             case ContractsFeature.ContractEditorNavContext contractEditorCtx when view is ContractsFeature.ContractEditorView contractEditorView:
@@ -170,6 +188,12 @@ internal sealed class ShellNavigationCoordinator
                 break;
             case ContractsFeature.ContractVersionsNavContext contractVersionsCtx when view is ContractsFeature.ContractVersionsView contractVersionsView:
                 contractVersionsView.ApplyNavContext(contractVersionsCtx);
+                break;
+            case ItemizadoNavigationContext itemCtx when view is ItemizadoFeature.ItemizadoView itemizadoView:
+                itemizadoView.ApplyNavContext(itemCtx);
+                break;
+            case CubicacionScNavigationContext scCtx when view is CubicacionScFeature.CubicacionScView scView:
+                scView.ApplyNavContext(scCtx);
                 break;
         }
     }

@@ -5,7 +5,7 @@ using Xunit;
 namespace QubiCostElectrical.Tests.Domain;
 
 /// <summary>
-/// Paridad hoja Excel -=COSTOS=- (BudgetTotalsCalculator.BuildExcelCostos):
+/// Paridad estándar de costos (BudgetTotalsCalculator.BuildExcelCostos):
 ///   · GG% y utilidad ADITIVA sobre Mat+MO+GO (NO equipos).
 ///   · VA% solo sobre equipos.
 ///   · costo proyecto = ejecución + riesgo + GG + utilidad aditiva + VA.

@@ -28,14 +28,20 @@ public static class PriceBankSeeder
         "UN",
         "Precio CLP",
         "Familia",
-        "MO"
+        "MO",
+        "M.O. por %",
+        "Porcentaje M.O.",
+        "Rendimiento"
     ];
 
     public static string ImportFormatHelpMessage =>
         "Formato Qubi (fila 1, en este orden):\n" +
-        "Código | Descripción | UN | Precio CLP | Familia | MO\n\n" +
+        "Código | Descripción | UN | Precio CLP | Familia | MO | M.O. por % | Porcentaje M.O. | Rendimiento\n\n" +
         "Descargue la plantilla desde Banco de precios, copie sus precios ahí e importe de nuevo.\n" +
-        "Los precios van en pesos chilenos (CLP).";
+        "Los precios van en pesos chilenos (CLP). Rendimiento (u/D-H) es opcional;\n" +
+        "déjelo vacío si no usa el modo M.O. por rendimiento.\n" +
+        "Para materiales sin M.O. propia use M.O. por % (Sí) + Porcentaje M.O. (2,5 = 2,5%):\n" +
+        "la M.O. resultante es Precio × % × Índice FA (62,80 por defecto, editable en Costo).";
 
     /// <summary>
     /// Escribe plantilla Excel (.xlsx) o CSV según extensión, con cabeceras oficiales + 2 filas de ejemplo.
@@ -63,6 +69,9 @@ public static class PriceBankSeeder
         ws.Cell(2, 4).Value = 1250;
         ws.Cell(2, 5).Value = "Conductores";
         ws.Cell(2, 6).Value = 350;
+        ws.Cell(2, 7).Value = "";
+        ws.Cell(2, 8).Value = "";
+        ws.Cell(2, 9).Value = 100;
 
         ws.Cell(3, 1).Value = "TPRPE20";
         ws.Cell(3, 2).Value = "Tubería PVC rígido 20 mm";
@@ -70,6 +79,9 @@ public static class PriceBankSeeder
         ws.Cell(3, 4).Value = 890;
         ws.Cell(3, 5).Value = "Canalización";
         ws.Cell(3, 6).Value = 120;
+        ws.Cell(3, 7).Value = "";
+        ws.Cell(3, 8).Value = "";
+        ws.Cell(3, 9).Value = 40;
 
         ws.Row(1).Style.Font.Bold = true;
         ws.Columns().AdjustToContents();
@@ -80,8 +92,8 @@ public static class PriceBankSeeder
     {
         var sb = new StringBuilder();
         sb.AppendLine(string.Join(';', ImportTemplateHeaders));
-        sb.AppendLine("H07Z1-K;Cable Cu libre de halógenos 1×2,5 mm²;ml;1250;Conductores;350");
-        sb.AppendLine("TPRPE20;Tubería PVC rígido 20 mm;ml;890;Canalización;120");
+        sb.AppendLine("H07Z1-K;Cable Cu libre de halógenos 1×2,5 mm²;ml;1250;Conductores;350;;;100");
+        sb.AppendLine("TPRPE20;Tubería PVC rígido 20 mm;ml;890;Canalización;120;;;40");
         File.WriteAllText(path, sb.ToString(), new UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
     }
 
@@ -213,6 +225,11 @@ public static class PriceBankSeeder
             MoClp = ParseDecimal(Get(
                 "mo", "moclp", "manoobra", "manodeobra",
                 "mouf", "costomo")),
+            RendimientoDh = ParseDecimal(Get(
+                "rendimiento", "rend", "renddh", "rendimientoudh",
+                "udiapordh", "udiadh")),
+            DiaXPareja = ParseDecimal(Get(
+                "diapareja", "diaxpareja", "diasxpareja", "pareja")),
             MonedaPrecio = "CLP",
             Proveedor = Get("proveedor", "supplier", "vendor") ?? "",
             Marca = Get("marca", "brand") ?? "",
@@ -221,7 +238,36 @@ public static class PriceBankSeeder
             ProyectoOrigen = "",
             ActualizadoEn = DateTime.Now
         };
+
+        // Fórmula M.O. por % (paridad "=+E*0.025" de LISTA-PR): "M.O. por %" (Sí/No) y/o
+        // "Porcentaje M.O." (2,5 = 2,5%). Un porcentaje > 0 en la columna activa la fórmula.
+        // Los candidatos van en forma NORMALIZADA (sin puntos ni espacios): "PORCENTAJE M.O."
+        // → "porcentajemo" y "M.O. por %" → "mopor" (ver NormalizeHeader).
+        string? pctRaw = Get("porcentajemo", "porcentajematerial", "porcentmo", "pctmo", "mopct");
+        if (!string.IsNullOrWhiteSpace(pctRaw))
+        {
+            decimal pct = ParseDecimal(pctRaw);
+            if (pct > 0m)
+            {
+                entry.MoPorcentajeMaterial = pct;
+                entry.MoFormulaTipo = MaterialMoResolver.MoFormulaPorcentaje;
+            }
+        }
+
+        string? formulaRaw = Get("mopor", "moporcentaje", "moporcent", "formulamo", "modomo");
+        if (!string.IsNullOrWhiteSpace(formulaRaw))
+        {
+            bool activo = IsTruthy(formulaRaw);
+            entry.MoFormulaTipo = activo ? MaterialMoResolver.MoFormulaPorcentaje : "";
+        }
+
         return entry;
+    }
+
+    private static bool IsTruthy(string value)
+    {
+        string n = NormalizeHeader(value);
+        return n is "si" or "s" or "1" or "true" or "x" or "porcentaje" or "activo";
     }
 
     private static char DetectSeparator(string header)

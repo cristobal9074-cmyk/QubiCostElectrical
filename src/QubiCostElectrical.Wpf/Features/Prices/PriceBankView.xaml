@@ -35,10 +35,10 @@
                                  Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" />
     <ctrl:EmptyStateControl Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}}"
                             Title="Banco vacío"
-                            Description="Importe una lista con columnas Código · Descripción · UN · Precio CLP · Familia · MO. Descargue la plantilla si su Excel tiene otro formato.">
+                            Description="Importe una lista con columnas Código · Descripción · UN · Precio CLP · Familia · MO. Descargue la plantilla si su archivo tiene otro formato.">
       <ctrl:EmptyStateControl.Actions>
         <WrapPanel HorizontalAlignment="Center">
-          <Button Style="{StaticResource Button.Primary}" Content="Importar Excel" Command="{Binding ImportFileCommand}" Margin="4" MinWidth="140" />
+          <Button Style="{StaticResource Button.Primary}" Content="Importar lista" Command="{Binding ImportFileCommand}" Margin="4" MinWidth="140" />
           <Button Style="{StaticResource Button.Secondary}" Content="Descargar plantilla" Command="{Binding DownloadTemplateCommand}" Margin="4" MinWidth="140" />
           <Button Style="{StaticResource Button.Secondary}" Content="Importar proyecto" Command="{Binding ImportProjectCommand}" Margin="4" MinWidth="140" />
           <Button Style="{StaticResource Button.Secondary}" Content="Nuevo precio" Command="{Binding NewEntryCommand}" Margin="4" MinWidth="140" />
@@ -76,9 +76,9 @@
           </StackPanel>
 
           <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top">
-            <Button Style="{StaticResource Button.Secondary}" Content="Importar Excel" Command="{Binding ImportFileCommand}" Margin="0,0,6,0" />
+            <Button Style="{StaticResource Button.Secondary}" Content="Importar lista" Command="{Binding ImportFileCommand}" Margin="0,0,6,0" />
             <Button Style="{StaticResource Button.Secondary}" Content="Descargar plantilla" Command="{Binding DownloadTemplateCommand}" Margin="0,0,6,0"
-                    ToolTip="Excel/CSV con columnas: Código · Descripción · UN · Precio CLP · Familia · MO" />
+                    ToolTip="Plantilla .xlsx/.csv: Código · Descripción · UN · Precio CLP · Familia · MO" />
             <Button Style="{StaticResource Button.Secondary}" Content="Importar proyecto" Command="{Binding ImportProjectCommand}" Margin="0,0,6,0" />
             <Button Style="{StaticResource Button.Primary}" Content="Aplicar al proyecto" Command="{Binding ApplyProjectPricesCommand}" Margin="0,0,6,0" />
             <Button Style="{StaticResource Button.Secondary}" Content="Nuevo" Command="{Binding NewEntryCommand}" Margin="0,0,6,0" />
@@ -140,7 +140,7 @@
               </StackPanel>
             </Border>
             <TextBlock Grid.Column="3" Text="{Binding StatusMessage}" VerticalAlignment="Center"
-                       FontWeight="SemiBold" Foreground="{DynamicResource Brush.Navy}" TextWrapping="Wrap" />
+                       FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink}" TextWrapping="Wrap" />
           </Grid>
         </Border>
 
@@ -166,15 +166,29 @@
             <DataGrid.Columns>
               <!-- Orden fijo del modelo de costos: Código/Descripción/UN/Precio CLP/Familia/MO/Fecha/Vigente.
                    El precio se ingresa SIEMPRE en pesos chilenos (Precio CLP / MO); la UF se
-                   deriva automáticamente con el valor de UF del proyecto (ver PriceBankEntryVm). -->
-              <DataGridTextColumn Header="Código" Binding="{Binding Codigo, UpdateSourceTrigger=PropertyChanged}" Width="130">
-                <DataGridTextColumn.ElementStyle>
-                  <Style TargetType="TextBlock">
-                    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
-                    <Setter Property="ToolTip" Value="{Binding Codigo}" />
-                  </Style>
-                </DataGridTextColumn.ElementStyle>
-              </DataGridTextColumn>
+                   deriva automáticamente con el valor de UF del proyecto (ver PriceBankEntryVm).
+                   M.O. por % / % M.O.: fórmula Material × % × FA para materiales sin M.O. propia. -->
+              <DataGridTemplateColumn Header="Código" Width="130" SortMemberPath="Codigo">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                      <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.AmberRisk}"
+                               Margin="0,0,5,0" VerticalAlignment="Center"
+                               ToolTip="Modificado (cambios sin guardar)"
+                               Visibility="{Binding HasChanges, Converter={StaticResource BoolToVisibility}}" />
+                      <TextBlock Text="{Binding Codigo}" FontFamily="{StaticResource Font.Mono}"
+                                 FontSize="{StaticResource Font.Size.sm}" VerticalAlignment="Center"
+                                 TextTrimming="CharacterEllipsis" ToolTip="{Binding Codigo}" />
+                    </StackPanel>
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+                <DataGridTemplateColumn.CellEditingTemplate>
+                  <DataTemplate>
+                    <TextBox Text="{Binding Codigo, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" />
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellEditingTemplate>
+              </DataGridTemplateColumn>
               <DataGridTextColumn Header="Descripción" Binding="{Binding Descripcion, UpdateSourceTrigger=PropertyChanged}" Width="*" MinWidth="220">
                 <DataGridTextColumn.ElementStyle>
                   <Style TargetType="TextBlock">
@@ -183,26 +197,35 @@
                   </Style>
                 </DataGridTextColumn.ElementStyle>
               </DataGridTextColumn>
-              <DataGridTextColumn Header="UN" Binding="{Binding Unidad, UpdateSourceTrigger=PropertyChanged}" Width="60">
+              <DataGridTextColumn Header="UN" Binding="{Binding Unidad, UpdateSourceTrigger=PropertyChanged}" Width="52">
                 <DataGridTextColumn.ElementStyle>
                   <Style TargetType="TextBlock">
+                    <Setter Property="TextAlignment" Value="Center" />
+                    <Setter Property="HorizontalAlignment" Value="Center" />
+                    <Setter Property="VerticalAlignment" Value="Center" />
                     <Setter Property="TextTrimming" Value="CharacterEllipsis" />
                   </Style>
                 </DataGridTextColumn.ElementStyle>
               </DataGridTextColumn>
-              <DataGridTextColumn Header="Precio CLP" Binding="{Binding PrecioClp, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:N0}}" Width="95">
+              <DataGridTextColumn Header="Precio CLP" Binding="{Binding PrecioClp, UpdateSourceTrigger=LostFocus, StringFormat={}{0:N0}}" Width="95"
+                                  HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}">
                 <DataGridTextColumn.ElementStyle>
                   <Style TargetType="TextBlock">
                     <Setter Property="HorizontalAlignment" Value="Right" />
+                    <Setter Property="VerticalAlignment" Value="Center" />
+                    <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
                     <Setter Property="Margin" Value="0,0,8,0" />
                     <Setter Property="TextTrimming" Value="CharacterEllipsis" />
                   </Style>
                 </DataGridTextColumn.ElementStyle>
               </DataGridTextColumn>
-              <DataGridTextColumn Header="Precio UF" Binding="{Binding PrecioUfCalculado, StringFormat={}{0:N4}}" Width="85" IsReadOnly="True">
+              <DataGridTextColumn Header="Precio UF" Binding="{Binding PrecioUfCalculado, StringFormat={}{0:N4}}" Width="85" IsReadOnly="True"
+                                  HeaderStyle="{StaticResource DataGridColumnHeader.Formula}">
                 <DataGridTextColumn.ElementStyle>
                   <Style TargetType="TextBlock">
                     <Setter Property="HorizontalAlignment" Value="Right" />
+                    <Setter Property="VerticalAlignment" Value="Center" />
+                    <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
                     <Setter Property="Margin" Value="0,0,8,0" />
                     <Setter Property="TextTrimming" Value="CharacterEllipsis" />
                     <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
@@ -217,19 +240,73 @@
                   </Style>
                 </DataGridTextColumn.ElementStyle>
               </DataGridTextColumn>
-              <DataGridTextColumn Header="MO CLP" Binding="{Binding MoClp, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:N0}}" Width="90">
+              <DataGridTextColumn Header="MO CLP" Binding="{Binding MoClp, UpdateSourceTrigger=LostFocus, StringFormat={}{0:N0}}" Width="90"
+                                  HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}">
                 <DataGridTextColumn.ElementStyle>
                   <Style TargetType="TextBlock">
                     <Setter Property="HorizontalAlignment" Value="Right" />
+                    <Setter Property="VerticalAlignment" Value="Center" />
+                    <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
                     <Setter Property="Margin" Value="0,0,8,0" />
                     <Setter Property="TextTrimming" Value="CharacterEllipsis" />
                   </Style>
                 </DataGridTextColumn.ElementStyle>
               </DataGridTextColumn>
-              <DataGridTextColumn Header="MO UF" Binding="{Binding MoUfCalculado, StringFormat={}{0:N4}}" Width="80" IsReadOnly="True">
+              <DataGridTextColumn Header="MO UF" Binding="{Binding MoUfCalculado, StringFormat={}{0:N4}}" Width="80" IsReadOnly="True"
+                                  HeaderStyle="{StaticResource DataGridColumnHeader.Formula}">
                 <DataGridTextColumn.ElementStyle>
                   <Style TargetType="TextBlock">
                     <Setter Property="HorizontalAlignment" Value="Right" />
+                    <Setter Property="VerticalAlignment" Value="Center" />
+                    <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
+                    <Setter Property="Margin" Value="0,0,8,0" />
+                    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
+                  </Style>
+                </DataGridTextColumn.ElementStyle>
+              </DataGridTextColumn>
+              <DataGridCheckBoxColumn Header="M.O. por %" Width="72"
+                                      Binding="{Binding MoEsPorcentaje, UpdateSourceTrigger=PropertyChanged}">
+                <DataGridCheckBoxColumn.ElementStyle>
+                  <Style TargetType="CheckBox">
+                    <Setter Property="VerticalAlignment" Value="Center" />
+                    <Setter Property="HorizontalAlignment" Value="Center" />
+                    <Setter Property="ToolTip" Value="M.O. = Precio × % M.O. × Índice FA — para materiales sin M.O. propia (fórmula del planilla estándar)." />
+                  </Style>
+                </DataGridCheckBoxColumn.ElementStyle>
+              </DataGridCheckBoxColumn>
+              <DataGridTextColumn Header="% M.O." Binding="{Binding MoPorcentajeMaterial, UpdateSourceTrigger=LostFocus, StringFormat={}{0:N2}}" Width="65"
+                                  HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}">
+                <DataGridTextColumn.ElementStyle>
+                  <Style TargetType="TextBlock">
+                    <Setter Property="HorizontalAlignment" Value="Right" />
+                    <Setter Property="VerticalAlignment" Value="Center" />
+                    <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
+                    <Setter Property="Margin" Value="0,0,8,0" />
+                    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                    <Setter Property="ToolTip" Value="Porcentaje de M.O. sobre el precio del material (2,50 = 2,5%). Solo aplica con 'M.O. por %' activado." />
+                  </Style>
+                </DataGridTextColumn.ElementStyle>
+              </DataGridTextColumn>
+              <DataGridTextColumn Header="Rend. u/D-H" Binding="{Binding RendimientoDh, UpdateSourceTrigger=LostFocus, StringFormat={}{0:N0}}" Width="95"
+                                  HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}">
+                <DataGridTextColumn.ElementStyle>
+                  <Style TargetType="TextBlock">
+                    <Setter Property="HorizontalAlignment" Value="Right" />
+                    <Setter Property="VerticalAlignment" Value="Center" />
+                    <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
+                    <Setter Property="Margin" Value="0,0,8,0" />
+                    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                  </Style>
+                </DataGridTextColumn.ElementStyle>
+              </DataGridTextColumn>
+              <DataGridTextColumn Header="MO derivada" Binding="{Binding MoDerivadaClp, StringFormat={}{0:N0}}" Width="95" IsReadOnly="True"
+                                  HeaderStyle="{StaticResource DataGridColumnHeader.Formula}">
+                <DataGridTextColumn.ElementStyle>
+                  <Style TargetType="TextBlock">
+                    <Setter Property="HorizontalAlignment" Value="Right" />
+                    <Setter Property="VerticalAlignment" Value="Center" />
+                    <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
                     <Setter Property="Margin" Value="0,0,8,0" />
                     <Setter Property="TextTrimming" Value="CharacterEllipsis" />
                     <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
@@ -258,6 +335,22 @@
               </DataGridTemplateColumn>
             </DataGrid.Columns>
           </DataGrid>
+
+          <!-- Overlay cuando hay registros en el banco pero el filtro arroja 0 resultados -->
+          <Border Background="{DynamicResource Brush.Surface}" CornerRadius="{StaticResource Radius.Sm}"
+                  BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+                  HorizontalAlignment="Center" VerticalAlignment="Center" Padding="24,18"
+                  Visibility="{Binding HasNoFilterResults, Converter={StaticResource BoolToVisibility}}">
+            <StackPanel HorizontalAlignment="Center">
+              <TextBlock Text="🔍" FontSize="20" HorizontalAlignment="Center" Margin="0,0,0,6" />
+              <TextBlock Text="No se encontraron insumos con este filtro" FontWeight="SemiBold"
+                         FontSize="13" Foreground="{DynamicResource Brush.Ink}" HorizontalAlignment="Center" />
+              <TextBlock Text="Intente con otro término o categoría" FontSize="11"
+                         Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Center" Margin="0,2,0,10" />
+              <Button Style="{StaticResource Button.Secondary}" Content="Limpiar filtros"
+                      Command="{Binding ClearFiltersCommand}" HorizontalAlignment="Center" Padding="12,4" />
+            </StackPanel>
+          </Border>
         </Grid>
 
         <TextBlock Grid.Row="4" Text="Edite directamente la grilla, guarde la fila seleccionada y aplique precios confirmados solo cuando el proyecto activo lo permita."
@@ -277,7 +370,7 @@
                 <StackPanel>
                   <TextBlock Text="{Binding SelectedEntry.Codigo, TargetNullValue='Sin selección'}" FontWeight="Bold" FontSize="15" />
                   <TextBlock Text="{Binding SelectedEntry.Descripcion}" TextWrapping="Wrap" Foreground="{DynamicResource Brush.Muted}" Margin="0,4,0,0" />
-                  <TextBlock Text="{Binding SelectedEntry.EstadoLabel}" Foreground="{DynamicResource Brush.Navy}" FontWeight="SemiBold" Margin="0,6,0,0" />
+                  <TextBlock Text="{Binding SelectedEntry.EstadoLabel}" Foreground="{DynamicResource Brush.Ink}" FontWeight="SemiBold" Margin="0,6,0,0" />
                 </StackPanel>
               </Border>
 
@@ -374,33 +467,53 @@
                       </Style>
                     </DataGridTextColumn.ElementStyle>
                   </DataGridTextColumn>
-                  <DataGridTextColumn Header="Mat CLP" Binding="{Binding MatClpAnterior, StringFormat=N0}" Width="80">
+                  <DataGridTextColumn Header="Mat CLP" Binding="{Binding MatClpAnterior, StringFormat=N0}" Width="80"
+                                      HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}">
                     <DataGridTextColumn.ElementStyle>
                       <Style TargetType="TextBlock">
                         <Setter Property="HorizontalAlignment" Value="Right" />
+                        <Setter Property="VerticalAlignment" Value="Center" />
+                        <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
                         <Setter Property="Margin" Value="0,0,8,0" />
                         <Setter Property="TextTrimming" Value="CharacterEllipsis" />
                       </Style>
                     </DataGridTextColumn.ElementStyle>
                   </DataGridTextColumn>
-                  <DataGridTextColumn Header="Nuevo" Binding="{Binding MatClpNuevo, StringFormat=N0}" Width="80">
+                  <DataGridTextColumn Header="Nuevo" Binding="{Binding MatClpNuevo, StringFormat=N0}" Width="80"
+                                      HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}">
                     <DataGridTextColumn.ElementStyle>
                       <Style TargetType="TextBlock">
                         <Setter Property="HorizontalAlignment" Value="Right" />
+                        <Setter Property="VerticalAlignment" Value="Center" />
+                        <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
                         <Setter Property="Margin" Value="0,0,8,0" />
                         <Setter Property="TextTrimming" Value="CharacterEllipsis" />
                       </Style>
                     </DataGridTextColumn.ElementStyle>
                   </DataGridTextColumn>
-                  <DataGridTextColumn Header="Δ" Binding="{Binding MatClpDelta, StringFormat=N0}" Width="70">
-                    <DataGridTextColumn.ElementStyle>
-                      <Style TargetType="TextBlock">
-                        <Setter Property="HorizontalAlignment" Value="Right" />
-                        <Setter Property="Margin" Value="0,0,8,0" />
-                        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
-                      </Style>
-                    </DataGridTextColumn.ElementStyle>
-                  </DataGridTextColumn>
+                  <DataGridTemplateColumn Header="Δ CLP" Width="80" HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}">
+                    <DataGridTemplateColumn.CellTemplate>
+                      <DataTemplate>
+                        <TextBlock Text="{Binding FormattedDelta}" HorizontalAlignment="Right"
+                                   VerticalAlignment="Center" Margin="0,0,8,0"
+                                   FontFamily="{StaticResource Font.Mono}" FontWeight="SemiBold">
+                          <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                              <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
+                              <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsDeltaPositive}" Value="True">
+                                  <Setter Property="Foreground" Value="{DynamicResource Brush.Danger}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding IsDeltaNegative}" Value="True">
+                                  <Setter Property="Foreground" Value="{DynamicResource Brush.Success}" />
+                                </DataTrigger>
+                              </Style.Triggers>
+                            </Style>
+                          </TextBlock.Style>
+                        </TextBlock>
+                      </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                  </DataGridTemplateColumn>
                 </DataGrid.Columns>
               </DataGrid>
             </StackPanel>

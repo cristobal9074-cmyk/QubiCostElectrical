@@ -10,28 +10,30 @@ public sealed class ExportViewModelWizardTests
     public ExportViewModelWizardTests() => WpfTestHost.EnsureInitialized();
 
     [Fact]
-    public void Wizard_DefaultStep_IsReview()
+    public void Wizard_DefaultStep_IsConfigure()
     {
         var vm = new ExportViewModel(WpfAppHost.Current);
 
         Assert.True(vm.IsStep1Active);
         Assert.False(vm.IsStep1Completed);
-        Assert.Equal("1. Validar oferta", vm.WizardStepTitle);
+        Assert.Equal("1. Configurar oferta", vm.WizardStepTitle);
+        Assert.True(vm.IsConfigureStep);
     }
 
     [Fact]
-    public void Wizard_GoToConfigure_UpdatesStepFlags()
+    public void Wizard_GoToPreview_UpdatesStepFlags()
     {
         WpfTestHost.EnsureInitialized();
         var host = WpfAppHost.Current;
         host.Session.NewProject("wizard-step");
 
         var vm = new ExportViewModel(host);
-        vm.GoToConfigureStepCommand.Execute(null);
+        vm.GoToPreviewStepCommand.Execute(null);
 
         Assert.True(vm.IsStep2Active);
         Assert.True(vm.IsStep1Completed);
-        Assert.Equal("2. Configurar oferta", vm.WizardStepTitle);
+        Assert.Equal("2. Vista previa", vm.WizardStepTitle);
+        Assert.True(vm.IsPreviewStep);
     }
 
     [Fact]

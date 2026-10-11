@@ -99,12 +99,21 @@ public sealed class ItemizadoViewModelTests
 
         host.Session.SetRoleReadOnly(true, "Prueba solo lectura");
 
-        var vm = new ItemizadoViewModel(new FakeShell(), host);
-        vm.Refresh();
+        try
+        {
+            var vm = new ItemizadoViewModel(new FakeShell(), host);
+            vm.Refresh();
 
-        Assert.True(vm.IsReadOnly);
-        Assert.False(vm.AddPartidaCommand.CanExecute(null));
-        Assert.False(vm.AddTitleCommand.CanExecute(null));
+            Assert.True(vm.IsReadOnly);
+            Assert.False(vm.AddPartidaCommand.CanExecute(null));
+            Assert.False(vm.AddTitleCommand.CanExecute(null));
+        }
+        finally
+        {
+            // La sesión es compartida (WpfAppHost.Current): sin este reset el read-only
+            // se filtra al resto de la colección WpfHost.
+            host.Session.SetRoleReadOnly(false);
+        }
     }
 
     [Fact]

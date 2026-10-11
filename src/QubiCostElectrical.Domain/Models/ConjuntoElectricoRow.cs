@@ -41,6 +41,20 @@ public sealed class ConjuntoRecursoRow
     public TipoCalculoParametrico TipoCalculo { get; set; } = TipoCalculoParametrico.Factor;
     /// <summary>Metros entre repeticiones cuando TipoCalculo = Espaciamiento (ej. 1.5 -> soporte cada 1.5 m).</summary>
     public decimal Espaciamiento { get; set; } = 1m;
+    /// <summary>
+    /// Id de la fila maestro de la que deriva esta (vacio = la fila es maestro / independiente).
+    /// Un esclavo usa la cantidad calculada de su maestro como base en lugar de la cantidad de la partida.
+    /// Solo puede apuntar a una fila maestro de la misma plantilla (sin cadenas ni ciclos).
+    /// </summary>
+    public string MaestroId { get; set; } = "";
+    /// <summary>
+    /// Fórmula libre de la fila (rol Operación): combina cantidades de otras filas de la
+    /// misma plantilla por su código, ej. "PAZ * 2 + TEEG500". Vacío = fila normal
+    /// (Factor / Espaciamiento / Esclavo). Múltiples operadores: +, -, *, /, ^ y paréntesis
+    /// (QuantityFormulaService). Se copia a CubicacionRow.Operacion al expandir y se
+    /// recalcula en vivo en la hoja de cubicación.
+    /// </summary>
+    public string Operacion { get; set; } = "";
     public decimal PrecioUf { get; set; }
     public decimal ValorHHUf { get; set; }
     public decimal MermaPct { get; set; }

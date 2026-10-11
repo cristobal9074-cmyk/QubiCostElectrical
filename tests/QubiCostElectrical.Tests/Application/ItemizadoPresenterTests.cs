@@ -30,15 +30,35 @@ public sealed class ItemizadoPresenterTests
     }
 
     [Fact]
-    public void ValidateCubicacionNavigation_rejects_title_rows()
+    public void ValidateCubicacionNavigation_rejects_title_rows_with_children()
     {
         var session = new BudgetProjectSession();
         session.NewProject("test", "Tester");
         session.Itemizado.Add(new ItemizadoRow { Id = "1.0", Item = "1", Descripcion = "Capítulo", EsTitulo = true });
+        session.Itemizado.Add(new ItemizadoRow { Id = "1.1", Item = "1.1", Descripcion = "Partida Hija", ParentId = "1.0" });
 
         var presenter = CreatePresenter(session);
         Assert.NotNull(presenter.ValidateCubicacionNavigation("1.0"));
         Assert.Null(presenter.TryBuildCubicacionNavigation("1.0"));
+    }
+
+    [Fact]
+    public void ValidateCubicacionNavigation_allows_leaf_item_without_children()
+    {
+        var session = new BudgetProjectSession();
+        session.NewProject("test", "Tester");
+        var leafRow = new ItemizadoRow { Id = "15.0", Item = "15.0", Descripcion = "SISTEMA KNX INTEGRADOR", EsTitulo = true };
+        session.Itemizado.Add(leafRow);
+
+        var presenter = CreatePresenter(session);
+        Assert.Null(presenter.ValidateCubicacionNavigation("15.0"));
+
+        var nav = presenter.TryBuildCubicacionNavigation("15.0");
+        Assert.NotNull(nav);
+        Assert.Equal("15.0", nav.ItemId);
+        Assert.False(leafRow.EsTitulo);
+        Assert.Equal(1m, leafRow.Cantidad);
+        Assert.Equal("GL", leafRow.Unidad);
     }
 
     [Fact]

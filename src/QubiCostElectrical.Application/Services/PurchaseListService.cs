@@ -111,6 +111,53 @@ public sealed class PurchaseListService : IPurchaseListService
         return true;
     }
 
+    public IReadOnlyList<MaterialUsageBreakdown> GetMaterialUsage(
+        string codigo,
+        IEnumerable<CubicacionRow> cubicacion,
+        IEnumerable<ItemizadoRow> itemizado)
+    {
+        if (string.IsNullOrWhiteSpace(codigo))
+            return Array.Empty<MaterialUsageBreakdown>();
+
+        string target = NormalizeCode(codigo);
+        var matchingRows = (cubicacion ?? Enumerable.Empty<CubicacionRow>())
+            .Where(IsPurchasableMaterial)
+            .Where(x => string.Equals(NormalizeCode(x.Codigo), target, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        if (matchingRows.Count == 0)
+            return Array.Empty<MaterialUsageBreakdown>();
+
+        decimal totalCantidad = matchingRows.Sum(x => x.Cantidad);
+
+        var itemById = (itemizado ?? Enumerable.Empty<ItemizadoRow>())
+            .Where(x => !string.IsNullOrWhiteSpace(x.Id))
+            .GroupBy(x => x.Id.Trim(), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+
+        return matchingRows
+            .GroupBy(x => (ItemId: (x.ItemId ?? "").Trim(), Area: string.IsNullOrWhiteSpace(x.Area) ? "General" : x.Area.Trim()))
+            .Select(g =>
+            {
+                itemById.TryGetValue(g.Key.ItemId, out var item);
+                decimal sum = g.Sum(x => x.Cantidad);
+                decimal pct = totalCantidad > 0m ? Math.Round((sum / totalCantidad) * 100m, 1) : 0m;
+                var first = g.First();
+                return new MaterialUsageBreakdown(
+                    g.Key.ItemId,
+                    item?.Item ?? "—",
+                    item?.Descripcion ?? "Partida sin descripción",
+                    g.Key.Area,
+                    sum,
+                    pct,
+                    first.Codigo,
+                    first.Descripcion);
+            })
+            .OrderByDescending(x => x.Cantidad)
+            .ThenBy(x => x.ItemNumber, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
     private static string NormalizeCode(string value)
     {
         return (value ?? "").Trim().ToUpperInvariant();

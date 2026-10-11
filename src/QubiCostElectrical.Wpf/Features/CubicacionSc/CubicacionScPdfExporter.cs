@@ -69,32 +69,32 @@ public static class CubicacionScPdfExporter
                     {
                         c.Item().Row(r =>
                         {
-                            r.RelativeItem(1.2f).Text(t => 
-                            { 
-                                t.DefaultTextStyle(x => x.FontSize(8.5f)); 
-                                t.Span("Proyecto: ").Bold(); 
-                                t.Span(projName); 
+                            r.RelativeItem(1.2f).Text(t =>
+                            {
+                                t.DefaultTextStyle(x => x.FontSize(8.5f));
+                                t.Span("Proyecto: ").Bold();
+                                t.Span(projName);
                             });
-                            r.RelativeItem(0.8f).Text(t => 
-                            { 
-                                t.DefaultTextStyle(x => x.FontSize(8.5f)); 
-                                t.Span("Cliente: ").Bold(); 
-                                t.Span(clientName); 
+                            r.RelativeItem(0.8f).Text(t =>
+                            {
+                                t.DefaultTextStyle(x => x.FontSize(8.5f));
+                                t.Span("Cliente: ").Bold();
+                                t.Span(clientName);
                             });
                         });
                         c.Item().PaddingTop(4).Row(r =>
                         {
-                            r.RelativeItem(1.2f).Text(t => 
-                            { 
-                                t.DefaultTextStyle(x => x.FontSize(8.5f)); 
-                                t.Span("Estimador: ").Bold(); 
-                                t.Span(estimador); 
+                            r.RelativeItem(1.2f).Text(t =>
+                            {
+                                t.DefaultTextStyle(x => x.FontSize(8.5f));
+                                t.Span("Estimador: ").Bold();
+                                t.Span(estimador);
                             });
-                            r.RelativeItem(0.8f).Text(t => 
-                            { 
-                                t.DefaultTextStyle(x => x.FontSize(8.5f)); 
-                                t.Span("Tableros: ").Bold(); 
-                                t.Span(cuadros.Count.ToString()); 
+                            r.RelativeItem(0.8f).Text(t =>
+                            {
+                                t.DefaultTextStyle(x => x.FontSize(8.5f));
+                                t.Span("Tableros: ").Bold();
+                                t.Span(cuadros.Count.ToString());
                             });
                         });
                     });
@@ -144,7 +144,7 @@ public static class CubicacionScPdfExporter
 
                         column.Item().PaddingTop(8).Text(tabGroup.Nombre.ToUpper()).FontSize(9.5f).Bold().FontColor("#19376D");
                         column.Item().Text($"Detalle: {tabGroup.Detalle} (Canalización: {tabGroup.TuberiaMl:N1} m, Conductor: {tabGroup.ConductorMl:N1} m)").FontSize(8).Italic().FontColor(Colors.Grey.Darken2);
-                        
+
                         column.Item().PaddingTop(4).Table(table =>
                         {
                             table.ColumnsDefinition(columns =>

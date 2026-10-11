@@ -301,15 +301,34 @@ public partial class PreferencesView : UserControl
         vm.ResetShortcut(row);
     }
 
+    private void OnSelectShortcutCategoryClick(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is not PreferencesViewModel vm) return;
+        if (sender is not FrameworkElement { Tag: ShortcutCategoryItemVm cat }) return;
+        vm.SelectedShortcutCategory = cat;
+    }
+
+    private void OnResetCurrentCategoryShortcutsClick(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is not PreferencesViewModel vm) return;
+        var catName = vm.SelectedShortcutCategory?.Title ?? "esta pestaña";
+        if (!WpfDialogService.Confirm(
+                "Restaurar atajos",
+                $"¿Restaurar los atajos de «{catName}» a sus valores predeterminados?",
+                isWarning: true))
+            return;
+        vm.ResetCurrentCategoryShortcuts();
+    }
+
     private void OnResetAllShortcutsClick(object sender, RoutedEventArgs e)
     {
         if (DataContext is not PreferencesViewModel vm) return;
         if (!WpfDialogService.Confirm(
                 "Restaurar atajos",
-                "¿Restaurar todos los atajos de Cubicación a los valores predeterminados?",
+                "¿Restaurar TODOS los atajos de teclado del sistema a los valores predeterminados de fábrica?",
                 isWarning: true))
             return;
-        vm.ResetAllCubicacionShortcuts();
+        vm.ResetAllShortcuts();
     }
 
     private void OnResetAllShellShortcutsClick(object sender, RoutedEventArgs e)

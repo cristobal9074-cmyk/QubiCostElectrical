@@ -34,6 +34,13 @@ public sealed partial class CubicacionRowVm : ViewModelBase, IGridCellValidation
 
     internal Action<CubicacionRowVm, int, string>? SectorExpressionChanged { get; set; }
     internal Action<CubicacionRowVm, HashSet<int>>? SectorBatchExpressionChanged { get; set; }
+    // Propagación maestro→esclavo: se dispara cuando cambia la CANTIDAD (columna CANT) de una
+    // fila maestro. Cableado en CubicacionSectorService.InitializeSectorRow.
+    internal Action<CubicacionRowVm>? CantidadChanged { get; set; }
+    // Suprime CantidadChanged durante los recálculos internos de una fila con zonas
+    // (ApplySectorExpression / ApplyBatchSectorExpressions): ahí la propagación la hace el
+    // camino de zona con el valor por casilla, no el total.
+    internal bool SuppressCantidadPropagation;
 
     private bool _isBatchUpdating;
     private HashSet<int>? _batchUpdatedSlots;
@@ -197,6 +204,8 @@ public sealed partial class CubicacionRowVm : ViewModelBase, IGridCellValidation
             if (SetProperty(ref cantidad, value))
             {
                 Source.Cantidad = value;
+                if (!SuppressCantidadPropagation)
+                    CantidadChanged?.Invoke(this);
                 OnPropertyChanged(nameof(UfTotal));
                 OnPropertyChanged(nameof(CantidadDisplay));
                 OnPropertyChanged(nameof(SubtotalClp));
@@ -363,9 +372,13 @@ public sealed partial class CubicacionRowVm : ViewModelBase, IGridCellValidation
     public decimal UfUnit => Source.UfUnit;
     public decimal UfTotal => Source.UfTotal;
 
+    // Incluye la Operación (fórmula libre por fila, rol Operación de la plantilla): su
+    // cantidad también está calculada, así que no debe alertar "Cantidad es cero" ni
+    // propagarse como si fuera una fila normal.
     public bool HasFormula =>
         (Source.QtyExpressions != null && Source.QtyExpressions.Any(x => !string.IsNullOrWhiteSpace(x)))
-        || !string.IsNullOrWhiteSpace(Source.TotalExpression);
+        || !string.IsNullOrWhiteSpace(Source.TotalExpression)
+        || !string.IsNullOrWhiteSpace(Source.Operacion);
 
     public bool HasContent => !string.IsNullOrWhiteSpace(codigo) || cantidad != 0m;
 
@@ -534,10 +547,15 @@ public sealed partial class CubicacionRowVm : ViewModelBase, IGridCellValidation
                 var material = session.Materiales.FirstOrDefault(m => CodeHelper.Match(m.Codigo, Codigo));
                 if (material != null)
                 {
-                    if (material.MatClp != MatClp || material.MoClp != MoClp)
+                    // En modo rendimiento o con fórmula porcentaje, el MO de la fila es
+                    // EFECTIVO (derivado); no se propaga al catálogo para no pisar el M.O.
+                    // directo del material.
+                    bool moDirecto = !MaterialMoResolver.DebeUsarRendimiento(material, session.ProjectInfo)
+                                  && !MaterialMoResolver.DebeUsarPorcentaje(material);
+                    if (material.MatClp != MatClp || (moDirecto && material.MoClp != MoClp))
                     {
                         material.MatClp = MatClp;
-                        material.MoClp = MoClp;
+                        if (moDirecto) material.MoClp = MoClp;
                         material.RecalcularUf(valorUfClp);
                         session.MarkDirty(ProjectDirtyScope.Materiales);
                     }

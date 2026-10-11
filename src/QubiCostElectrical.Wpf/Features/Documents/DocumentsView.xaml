@@ -4,7 +4,7 @@
              xmlns:ctrl="clr-namespace:QubiCostElectrical.Wpf.Controls"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="1920" d:DesignHeight="900">
+             mc:Ignorable="d" d:DesignWidth="1920" d:DesignHeight="950">
   <UserControl.Resources>
     <Style x:Key="DocumentsCard" TargetType="Border">
       <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
@@ -12,54 +12,767 @@
       <Setter Property="BorderThickness" Value="1" />
       <Setter Property="CornerRadius" Value="12" />
     </Style>
+
+    <Style x:Key="DocumentsHero" TargetType="Border">
+      <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="12" />
+    </Style>
+
     <Style x:Key="DocumentsRailButton" TargetType="Button">
-      <Setter Property="Background" Value="Transparent" /><Setter Property="BorderThickness" Value="0" />
-      <Setter Property="Padding" Value="12,10" /><Setter Property="Margin" Value="7,1" />
-      <Setter Property="HorizontalContentAlignment" Value="Stretch" /><Setter Property="Cursor" Value="Hand" />
-      <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button"><Border x:Name="Root" Background="{TemplateBinding Background}" CornerRadius="8" Padding="{TemplateBinding Padding}"><ContentPresenter/></Border><ControlTemplate.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Root" Property="Background" Value="{DynamicResource Brush.Line2}" /></Trigger></ControlTemplate.Triggers></ControlTemplate></Setter.Value></Setter>
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Padding" Value="12,9" />
+      <Setter Property="Margin" Value="4,1" />
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="Root" Background="{TemplateBinding Background}" CornerRadius="8" Padding="{TemplateBinding Padding}">
+              <ContentPresenter/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Root" Property="Background" Value="{DynamicResource Brush.Line2}" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
     </Style>
+
     <Style x:Key="DocumentsListItem" TargetType="ListBoxItem">
-      <Setter Property="HorizontalContentAlignment" Value="Stretch" /><Setter Property="Padding" Value="0" /><Setter Property="Background" Value="Transparent" /><Setter Property="BorderThickness" Value="0" />
-      <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListBoxItem"><Border x:Name="Root" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1" Background="{DynamicResource Brush.Surface}" Padding="15,13"><ContentPresenter/></Border><ControlTemplate.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Root" Property="Background" Value="{DynamicResource Brush.BlueFaint}" /></Trigger><Trigger Property="IsSelected" Value="True"><Setter TargetName="Root" Property="Background" Value="{DynamicResource Brush.BlueFaint}" /><Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource Brush.Blue}" /></Trigger></ControlTemplate.Triggers></ControlTemplate></Setter.Value></Setter>
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ListBoxItem">
+            <Border x:Name="Root" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1" Background="{DynamicResource Brush.Surface}" Padding="14,11">
+              <ContentPresenter/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Root" Property="Background" Value="{DynamicResource Brush.RowHover}" />
+              </Trigger>
+              <Trigger Property="IsSelected" Value="True">
+                <Setter TargetName="Root" Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+                <Setter TargetName="Root" Property="BorderThickness" Value="3,0,0,1" />
+                <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
     </Style>
-    <Style x:Key="MetaLabel" TargetType="TextBlock" BasedOn="{StaticResource Form.Label}"><Setter Property="FontSize" Value="10" /><Setter Property="FontWeight" Value="Bold" /><Setter Property="Foreground" Value="{DynamicResource Brush.Ink4}" /><Setter Property="Margin" Value="0,0,0,4" /></Style>
+
+    <Style x:Key="MetaLabel" TargetType="TextBlock" BasedOn="{StaticResource Form.Label}">
+      <Setter Property="FontSize" Value="9.5" />
+      <Setter Property="FontWeight" Value="Bold" />
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Ink4}" />
+      <Setter Property="Margin" Value="0,0,0,4" />
+      <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
+    </Style>
   </UserControl.Resources>
 
   <Grid Background="{DynamicResource Brush.Canvas}">
-    <ctrl:SkeletonOverlayControl Panel.ZIndex="20" Message="Cargando antecedentes…"
+    <ctrl:SkeletonOverlayControl Panel.ZIndex="20" Message="Cargando antecedentes técnicos…"
                                  Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibility}}" />
-    <ctrl:EmptyStateControl Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}}" Title="Sin proyecto abierto" Description="Abra un proyecto para gestionar antecedentes t&#233;cnicos, planos, addendas y consultas.">
-      <ctrl:EmptyStateControl.Actions><Button Style="{StaticResource Button.Primary}" Content="Abrir proyecto..." Command="{Binding OpenProjectCommand}" MinWidth="180" /></ctrl:EmptyStateControl.Actions>
+    <ctrl:EmptyStateControl Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}}" Title="Sin proyecto abierto" Description="Abra un proyecto para gestionar antecedentes técnicos, planos, addendas y consultas.">
+      <ctrl:EmptyStateControl.Actions>
+        <Button Style="{StaticResource Button.Primary}" Content="Abrir proyecto..." Command="{Binding OpenProjectCommand}" MinWidth="180" />
+      </ctrl:EmptyStateControl.Actions>
     </ctrl:EmptyStateControl>
 
-    <ScrollViewer Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-      <StackPanel Margin="26,24,26,20">
-        <!-- Cabecera: replica el bloque de control documental del HTML. -->
-        <Grid Margin="0,0,0,18"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-          <StackPanel><TextBlock Text="PROYECTO / CONTROL DOCUMENTAL" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}"/><TextBlock Text="Antecedentes t&#233;cnicos" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" Margin="0,5,0,0"/><TextBlock Text="Fuente trazable para el alcance, la cubicaci&#243;n y la oferta." FontSize="13.5" Foreground="{DynamicResource Brush.Ink3}" Margin="0,3,0,0"/></StackPanel>
-          <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
-            <Button Style="{StaticResource Button.Secondary}" Content="Exportar matriz" Command="{Binding ExportPdfCommand}" Margin="0,0,8,0" Padding="13,9"/>
-            <Button Style="{StaticResource Button.Primary}" Content="+ Incorporar antecedente" Command="{Binding AddAntecedenteCommand}" Padding="13,9"
-                    Visibility="{Binding CanEdit, Converter={StaticResource BoolToVisibility}}"/>
+    <Grid Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}" Margin="20,12,20,12">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" /> <!-- Row 0: Hero Header (Fijo) -->
+        <RowDefinition Height="Auto" /> <!-- Row 1: KPI Strip (Fijo) -->
+        <RowDefinition Height="*" />    <!-- Row 2: Workstation 3-Column (Lista e Inspector desplazables) -->
+        <RowDefinition Height="Auto" /> <!-- Row 3: Bottom Status Bar (Fija) -->
+      </Grid.RowDefinitions>
+
+      <!-- ========================================== -->
+      <!-- EXECUTIVE HERO HEADER (COMPACT ROW 0)      -->
+      <!-- ========================================== -->
+      <Border Grid.Row="0" Style="{StaticResource DocumentsHero}" Padding="14,7" Margin="0,0,0,7">
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+
+          <!-- Title & Context Area -->
+          <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <Border Width="28" Height="28" CornerRadius="6" Background="{DynamicResource Brush.BlueSoft}" BorderBrush="{DynamicResource Brush.Blue}" BorderThickness="1" Margin="0,0,10,0">
+              <TextBlock Text="📐" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+            <TextBlock Text="Expediente Técnico de Licitación" FontSize="15" FontWeight="ExtraBold" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" />
+            <Border CornerRadius="4" Background="{DynamicResource Brush.SuccessBg}" BorderBrush="{DynamicResource Brush.SuccessBorder}" BorderThickness="1" Padding="6,2" Margin="10,0,0,0" VerticalAlignment="Center">
+              <StackPanel Orientation="Horizontal">
+                <Ellipse Width="5" Height="5" Fill="{DynamicResource Brush.Success}" Margin="0,0,5,0" VerticalAlignment="Center" />
+                <TextBlock Text="Base Técnica Congelada (R3)" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Success}" VerticalAlignment="Center" />
+              </StackPanel>
+            </Border>
+          </StackPanel>
+
+          <!-- Top Actions -->
+          <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+            <Button Style="{StaticResource Button.Secondary}" Command="{Binding SyncPlanosCommand}" ToolTip="{Binding SyncPlanosHelp}" Margin="0,0,8,0" Padding="10,5" FontSize="11">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="⚡" Margin="0,0,5,0" Foreground="{DynamicResource Brush.BlueFocus}" />
+                <TextBlock Text="Sincronizar con Oferta" Foreground="{DynamicResource Brush.Ink}" />
+              </StackPanel>
+            </Button>
+            <Button Style="{StaticResource Button.Secondary}" Content="📑 Exportar Matriz PDF" Command="{Binding ExportPdfCommand}" Margin="0,0,8,0" Padding="10,5" FontSize="11" />
+            <Button Style="{StaticResource Button.Primary}" Content="+ Incorporar Planos / Archivos" Command="{Binding AddAntecedenteCommand}" Padding="12,5" FontSize="11"
+                    Visibility="{Binding CanEdit, Converter={StaticResource BoolToVisibility}}" />
           </StackPanel>
         </Grid>
+      </Border>
 
-        <!-- Indicadores ejecutivos -->
-        <Grid Margin="0,0,0,14"><Grid.ColumnDefinitions><ColumnDefinition Width="1.5*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-          <Border Style="{StaticResource Card.Kpi}" Padding="14,12" Margin="0,0,12,0"><StackPanel Orientation="Horizontal"><Grid Width="53" Height="53" Margin="0,0,14,0"><Ellipse Fill="{DynamicResource Brush.Success}"/><Ellipse Fill="{DynamicResource Brush.Surface}" Margin="7"/><TextBlock Text="{Binding KpiReadinessPercent}" FontFamily="{StaticResource Font.Mono}" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" HorizontalAlignment="Center" VerticalAlignment="Center"/></Grid><StackPanel VerticalAlignment="Center"><TextBlock Text="Expediente listo para ofertar" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}"/><TextBlock Text="{Binding KpiReadinessLabel}" FontSize="11" Foreground="{DynamicResource Brush.Ink3}" Margin="0,3,0,0"/></StackPanel></StackPanel></Border>
-          <Border Grid.Column="1" Style="{StaticResource Card.Kpi}" Padding="14,12" Margin="0,0,12,0"><StackPanel><TextBlock Text="DOCUMENTOS VIGENTES" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}"/><TextBlock FontFamily="{StaticResource Font.Mono}" FontWeight="Bold" FontSize="20" Foreground="{DynamicResource Brush.Ink}" Margin="0,4,0,0"><Run Text="{Binding KpiVigentesCount, Mode=OneWay}"/><Run Text=" / "/><Run Text="{Binding KpiTotalCount, Mode=OneWay}"/></TextBlock><TextBlock Text="Base documental consistente" FontSize="10.5" Foreground="{DynamicResource Brush.Success}" Margin="0,3,0,0"/></StackPanel></Border>
-          <Border Grid.Column="2" Style="{StaticResource Card.Kpi}" Padding="14,12" Margin="0,0,12,0"><StackPanel><TextBlock Text="CAMBIOS DE ALCANCE" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}"/><TextBlock Text="{Binding KpiAddendasCount}" FontFamily="{StaticResource Font.Mono}" FontWeight="Bold" FontSize="20" Foreground="{DynamicResource Brush.Ink}" Margin="0,4,0,0"/><TextBlock Text="Addendas y aclaraciones" FontSize="10.5" Foreground="{DynamicResource Brush.Amber}" Margin="0,3,0,0"/></StackPanel></Border>
-          <Border Grid.Column="3" Style="{StaticResource Card.Kpi}" Padding="14,12"><StackPanel><TextBlock Text="ULTIMA REVISION" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}"/><TextBlock Text="{Binding KpiLastReviewLabel}" FontFamily="{StaticResource Font.Mono}" FontWeight="Bold" FontSize="20" Foreground="{DynamicResource Brush.Ink}" Margin="0,4,0,0"/><TextBlock Text="{Binding KpiLastReviewResponsible}" FontSize="10.5" Foreground="{DynamicResource Brush.Success}" Margin="0,3,0,0"/></StackPanel></Border>
+      <!-- ========================================== -->
+      <!-- EXECUTIVE KPI STRIP (COMPACT ROW 1)        -->
+      <!-- ========================================== -->
+      <Grid Grid.Row="1" Margin="0,0,0,8">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Card 1: Expediente Consolidado -->
+        <Border Style="{StaticResource DocumentsCard}" Padding="12,6" Margin="0,0,8,0">
+          <DockPanel LastChildFill="True">
+            <Border DockPanel.Dock="Left" Width="28" Height="28" CornerRadius="6" Background="{DynamicResource Brush.BlueSoft}" BorderBrush="{DynamicResource Brush.Blue}" BorderThickness="1" Margin="0,0,10,0" VerticalAlignment="Center">
+              <TextBlock Text="📁" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+            <TextBlock DockPanel.Dock="Right" Text="{Binding KpiExpedienteSubtext}" FontSize="10" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="6,0,0,0" />
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="EXPEDIENTE CONSOLIDADO" FontSize="8.5" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink4}" />
+              <TextBlock FontFamily="{StaticResource Font.Mono}" FontWeight="Bold" FontSize="14" Foreground="{DynamicResource Brush.Ink}">
+                <Run Text="{Binding KpiTotalCount, Mode=OneWay}" />
+                <Run Text=" Documentos" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink3}" />
+              </TextBlock>
+            </StackPanel>
+          </DockPanel>
+        </Border>
+
+        <!-- Card 2: Estado de Vigencia -->
+        <Border Grid.Column="1" Style="{StaticResource DocumentsCard}" Padding="12,6" Margin="0,0,8,0">
+          <DockPanel LastChildFill="True">
+            <Border DockPanel.Dock="Left" Width="28" Height="28" CornerRadius="6" Background="{DynamicResource Brush.SuccessBg}" BorderBrush="{DynamicResource Brush.SuccessBorder}" BorderThickness="1" Margin="0,0,10,0" VerticalAlignment="Center">
+              <TextBlock Text="✔" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource Brush.Success}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+            <TextBlock DockPanel.Dock="Right" Text="{Binding KpiVigenciaSubtext}" FontSize="10" Foreground="{DynamicResource Brush.Success}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="6,0,0,0" />
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="ESTADO DE VIGENCIA" FontSize="8.5" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink4}" />
+              <TextBlock Text="{Binding KpiVigentesRatioText}" FontFamily="{StaticResource Font.Mono}" FontWeight="Bold" FontSize="14" Foreground="{DynamicResource Brush.Success}" />
+            </StackPanel>
+          </DockPanel>
+        </Border>
+
+        <!-- Card 3: Última Revisión Oficial -->
+        <Border Grid.Column="2" Style="{StaticResource DocumentsCard}" Padding="12,6">
+          <DockPanel LastChildFill="True">
+            <Border DockPanel.Dock="Left" Width="28" Height="28" CornerRadius="6" Background="{DynamicResource Brush.Line2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" Margin="0,0,10,0" VerticalAlignment="Center">
+              <TextBlock Text="🕒" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+            <TextBlock DockPanel.Dock="Right" Text="{Binding KpiLastReviewResponsible}" FontSize="10" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="6,0,0,0" />
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="ÚLTIMA REVISIÓN" FontSize="8.5" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink4}" />
+              <TextBlock Text="{Binding KpiLastReviewLabel}" FontFamily="{StaticResource Font.Mono}" FontWeight="Bold" FontSize="13" Foreground="{DynamicResource Brush.Ink}" />
+            </StackPanel>
+          </DockPanel>
+        </Border>
+      </Grid>
+
+        <!-- ========================================== -->
+        <!-- WORKSTATION 3-COLUMN WORKSPACE (ROW 2)     -->
+        <!-- ========================================== -->
+        <Grid Grid.Row="2">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="220" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="420" />
+          </Grid.ColumnDefinitions>
+
+          <!-- COLUMN 1: SMART RAIL EXPLORER -->
+          <Border Style="{StaticResource DocumentsCard}" Margin="0,0,14,0" Padding="10,14">
+            <DockPanel LastChildFill="True">
+              <StackPanel DockPanel.Dock="Top">
+                <TextBlock Text="ESPECIALIDADES DEL EXPEDIENTE" FontSize="10" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink4}" Margin="12,4,12,10" />
+
+                <!-- Category Buttons -->
+                <Button Command="{Binding SelectNavFilterCommand}" CommandParameter="Todos">
+                  <Grid>
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="📁" Margin="0,0,8,0" />
+                      <TextBlock Text="Todo el Expediente" />
+                    </StackPanel>
+                    <Border HorizontalAlignment="Right" Background="{DynamicResource Brush.Line2}" CornerRadius="5" Padding="6,2">
+                      <TextBlock Text="{Binding KpiTotalCount}" FontFamily="{StaticResource Font.Mono}" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}" />
+                    </Border>
+                  </Grid>
+                  <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource DocumentsRailButton}">
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsNavTodos}" Value="True">
+                          <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+                          <Setter Property="Foreground" Value="{DynamicResource Brush.BlueFocus}" />
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </Button.Style>
+                </Button>
+
+                <!-- Planos: Todos -->
+                <Button Command="{Binding SelectNavFilterCommand}" CommandParameter="Planos_Todos">
+                  <Grid>
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="📐" Margin="0,0,8,0" />
+                      <TextBlock Text="Todos los Planos" FontWeight="SemiBold" />
+                    </StackPanel>
+                    <Border HorizontalAlignment="Right" Background="{DynamicResource Brush.Line2}" CornerRadius="5" Padding="6,2">
+                      <TextBlock Text="{Binding KpiPlanosCount}" FontFamily="{StaticResource Font.Mono}" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}" />
+                    </Border>
+                  </Grid>
+                  <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource DocumentsRailButton}">
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsNavPlanosTodos}" Value="True">
+                          <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+                          <Setter Property="Foreground" Value="{DynamicResource Brush.BlueFocus}" />
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </Button.Style>
+                </Button>
+
+                <!-- Especialidades Dinámicas de Planos Cargados -->
+                <ItemsControl ItemsSource="{Binding EspecialidadesPlanos}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <Button Command="{Binding SelectCommand}" Margin="16,1,4,1">
+                        <Grid>
+                          <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding Icon}" Margin="0,0,7,0" FontSize="11" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding DisplayName}" FontSize="11.5" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                          </StackPanel>
+                          <Border HorizontalAlignment="Right" Background="{DynamicResource Brush.Line2}" CornerRadius="5" Padding="5,1">
+                            <TextBlock Text="{Binding Count}" FontFamily="{StaticResource Font.Mono}" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}" />
+                          </Border>
+                        </Grid>
+                        <Button.Style>
+                          <Style TargetType="Button" BasedOn="{StaticResource DocumentsRailButton}">
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+                                <Setter Property="Foreground" Value="{DynamicResource Brush.BlueFocus}" />
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </Button.Style>
+                      </Button>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <Button Command="{Binding SelectNavFilterCommand}" CommandParameter="Especificación">
+                  <Grid>
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="📄" Margin="0,0,8,0" />
+                      <TextBlock Text="Especificaciones EETT" />
+                    </StackPanel>
+                    <Border HorizontalAlignment="Right" Background="{DynamicResource Brush.Line2}" CornerRadius="5" Padding="6,2">
+                      <TextBlock Text="{Binding KpiEspecCount}" FontFamily="{StaticResource Font.Mono}" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}" />
+                    </Border>
+                  </Grid>
+                  <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource DocumentsRailButton}">
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsNavEspec}" Value="True">
+                          <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+                          <Setter Property="Foreground" Value="{DynamicResource Brush.BlueFocus}" />
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </Button.Style>
+                </Button>
+
+                <Button Command="{Binding SelectNavFilterCommand}" CommandParameter="Addenda">
+                  <Grid>
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="📑" Margin="0,0,8,0" />
+                      <TextBlock Text="Addendas y Cambios" />
+                    </StackPanel>
+                    <Border HorizontalAlignment="Right" Background="{DynamicResource Brush.Line2}" CornerRadius="5" Padding="6,2">
+                      <TextBlock Text="{Binding KpiAddendasCount}" FontFamily="{StaticResource Font.Mono}" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}" />
+                    </Border>
+                  </Grid>
+                  <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource DocumentsRailButton}">
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsNavAddenda}" Value="True">
+                          <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+                          <Setter Property="Foreground" Value="{DynamicResource Brush.BlueFocus}" />
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </Button.Style>
+                </Button>
+
+                <Button Command="{Binding SelectNavFilterCommand}" CommandParameter="Consulta">
+                  <Grid>
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="❓" Margin="0,0,8,0" />
+                      <TextBlock Text="Consultas RFI" />
+                    </StackPanel>
+                    <Border HorizontalAlignment="Right" Background="{DynamicResource Brush.Line2}" CornerRadius="5" Padding="6,2">
+                      <TextBlock Text="{Binding KpiConsultasCount}" FontFamily="{StaticResource Font.Mono}" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}" />
+                    </Border>
+                  </Grid>
+                  <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource DocumentsRailButton}">
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsNavConsulta}" Value="True">
+                          <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+                          <Setter Property="Foreground" Value="{DynamicResource Brush.BlueFocus}" />
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </Button.Style>
+                </Button>
+
+                <!-- Inspection Filters (Interactive) -->
+                <TextBlock Text="FILTROS DE INSPECCIÓN" FontSize="10" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink4}" Margin="12,18,12,6" />
+                <Button Command="{Binding ToggleInspectionFilterCommand}" CommandParameter="SoloVigentes">
+                  <Grid>
+                    <StackPanel Orientation="Horizontal">
+                      <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.Success}" Margin="0,0,8,0" VerticalAlignment="Center" />
+                      <TextBlock Text="Solo Vigentes" FontSize="11.5" />
+                    </StackPanel>
+                    <Border HorizontalAlignment="Right" Background="{DynamicResource Brush.Line2}" CornerRadius="5" Padding="5,1">
+                      <TextBlock Text="{Binding KpiVigentesCount}" HorizontalAlignment="Right" FontFamily="{StaticResource Font.Mono}" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Success}" />
+                    </Border>
+                  </Grid>
+                  <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource DocumentsRailButton}">
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsFilterSoloVigentes}" Value="True">
+                          <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+                          <Setter Property="Foreground" Value="{DynamicResource Brush.BlueFocus}" />
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </Button.Style>
+                </Button>
+
+                <Button Command="{Binding ToggleInspectionFilterCommand}" CommandParameter="ConArchivo">
+                  <Grid>
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="💾" FontSize="11" Margin="0,0,8,0" VerticalAlignment="Center" />
+                      <TextBlock Text="Con Archivo" FontSize="11.5" />
+                    </StackPanel>
+                    <Border HorizontalAlignment="Right" Background="{DynamicResource Brush.Line2}" CornerRadius="5" Padding="5,1">
+                      <TextBlock Text="{Binding KpiConArchivoCount}" HorizontalAlignment="Right" FontFamily="{StaticResource Font.Mono}" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.BlueFocus}" />
+                    </Border>
+                  </Grid>
+                  <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource DocumentsRailButton}">
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsFilterConArchivo}" Value="True">
+                          <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+                          <Setter Property="Foreground" Value="{DynamicResource Brush.BlueFocus}" />
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </Button.Style>
+                </Button>
+              </StackPanel>
+            </DockPanel>
+          </Border>
+
+          <!-- COLUMN 2: MASTER DOCUMENT LIST -->
+          <Border Grid.Column="1" Style="{StaticResource DocumentsCard}" Margin="0,0,14,0">
+            <Grid>
+              <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+              </Grid.RowDefinitions>
+
+              <!-- List Search Toolbar -->
+              <Grid Grid.Row="0" Margin="14,12">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Border BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="7" Padding="10,6" Background="{DynamicResource Brush.Canvas}">
+                  <Grid>
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="Auto" />
+                      <ColumnDefinition Width="*" />
+                      <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="🔍" FontSize="11" Foreground="{DynamicResource Brush.Ink4}" Margin="0,0,8,0" VerticalAlignment="Center" />
+                    <TextBox Grid.Column="1" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" BorderThickness="0" Background="Transparent" FontSize="12" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" ToolTip="Buscar por código, descripción, disciplina o revisión" />
+                    <Border Grid.Column="2" Background="{DynamicResource Brush.Line2}" CornerRadius="4" Padding="5,1" VerticalAlignment="Center">
+                      <TextBlock Text="Ctrl K" FontFamily="{StaticResource Font.Mono}" FontSize="9" Foreground="{DynamicResource Brush.Ink4}" />
+                    </Border>
+                  </Grid>
+                </Border>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="10,0,0,0">
+                  <Button Style="{StaticResource Button.Secondary}" Content="Todos" Command="{Binding SelectTipoFilterCommand}" CommandParameter="Todos" Margin="0,0,6,0" Padding="10,6" />
+                  <Button Style="{StaticResource Button.Secondary}" Content="Planos" Command="{Binding SelectTipoFilterCommand}" CommandParameter="Plano" Padding="10,6" />
+                </StackPanel>
+              </Grid>
+
+              <!-- List Table Header -->
+              <Border Grid.Row="1" Background="{DynamicResource Brush.Canvas}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,1,0,1" Padding="14,8">
+                <Grid>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="44" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="130" />
+                    <ColumnDefinition Width="100" />
+                    <ColumnDefinition Width="90" />
+                    <ColumnDefinition Width="36" />
+                  </Grid.ColumnDefinitions>
+                  <TextBlock Text="TIPO" FontSize="9.5" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink4}" />
+                  <TextBlock Grid.Column="1" Text="CÓDIGO &amp; NOMBRE DEL ANTECEDENTE" FontSize="9.5" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink4}" Margin="6,0,0,0" />
+                  <TextBlock Grid.Column="2" Text="DISCIPLINA" FontSize="9.5" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink4}" />
+                  <TextBlock Grid.Column="3" Text="ESTADO" FontSize="9.5" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink4}" />
+                  <TextBlock Grid.Column="4" Text="FECHA" FontSize="9.5" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink4}" />
+                  <TextBlock Grid.Column="5" Text="VER" FontSize="9.5" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink4}" HorizontalAlignment="Center" />
+                </Grid>
+              </Border>
+
+              <!-- Rows List (Desplazable independientemente) -->
+              <ListBox Grid.Row="2" ItemsSource="{Binding FilteredRows}" SelectedItem="{Binding SelectedRow}"
+                       BorderThickness="0" Background="Transparent"
+                       ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                       ScrollViewer.VerticalScrollBarVisibility="Auto"
+                       ScrollViewer.CanContentScroll="True"
+                       VirtualizingStackPanel.IsVirtualizing="True"
+                       VirtualizingStackPanel.VirtualizationMode="Recycling"
+                       ItemContainerStyle="{StaticResource DocumentsListItem}">
+                <ListBox.ItemTemplate>
+                  <DataTemplate>
+                    <Grid>
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="44" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="130" />
+                        <ColumnDefinition Width="100" />
+                        <ColumnDefinition Width="90" />
+                        <ColumnDefinition Width="36" />
+                      </Grid.ColumnDefinitions>
+
+                      <!-- Format Badge -->
+                      <Border Width="34" Height="30" CornerRadius="6" VerticalAlignment="Center" HorizontalAlignment="Left">
+                        <Border.Style>
+                          <Style TargetType="Border">
+                            <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding IsFormatPdf}" Value="True">
+                                <Setter Property="Background" Value="#2A1414" />
+                              </DataTrigger>
+                              <DataTrigger Binding="{Binding IsFormatDwg}" Value="True">
+                                <Setter Property="Background" Value="#12273D" />
+                              </DataTrigger>
+                              <DataTrigger Binding="{Binding IsFormatXlsx}" Value="True">
+                                <Setter Property="Background" Value="#14281A" />
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </Border.Style>
+                        <TextBlock Text="{Binding FormatBadge}" FontFamily="{StaticResource Font.Mono}" FontSize="9.5" FontWeight="ExtraBold" HorizontalAlignment="Center" VerticalAlignment="Center">
+                          <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                              <Setter Property="Foreground" Value="{DynamicResource Brush.BlueFocus}" />
+                              <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsFormatPdf}" Value="True">
+                                  <Setter Property="Foreground" Value="#F87171" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding IsFormatDwg}" Value="True">
+                                  <Setter Property="Foreground" Value="#38BDF8" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding IsFormatXlsx}" Value="True">
+                                  <Setter Property="Foreground" Value="#34D399" />
+                                </DataTrigger>
+                              </Style.Triggers>
+                            </Style>
+                          </TextBlock.Style>
+                        </TextBlock>
+                      </Border>
+
+                      <!-- Document Title & Details -->
+                      <StackPanel Grid.Column="1" Margin="6,0,10,0" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Descripcion}" FontSize="12.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" TextTrimming="CharacterEllipsis" />
+                        <TextBlock FontSize="10.5" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink3}" Margin="0,2,0,0" TextTrimming="CharacterEllipsis">
+                          <Run Text="{Binding Codigo, Mode=OneWay}" FontWeight="SemiBold" />
+                          <Run Text=" · Rev. " />
+                          <Run Text="{Binding Revision, Mode=OneWay}" FontWeight="SemiBold" />
+                          <Run Text=" · " />
+                          <Run Text="{Binding RutaArchivoNombre, Mode=OneWay, FallbackValue='Sin archivo'}" />
+                        </TextBlock>
+                      </StackPanel>
+
+                      <!-- Disciplina -->
+                      <TextBlock Grid.Column="2" Text="{Binding Disciplina}" FontSize="11" Foreground="{DynamicResource Brush.Ink2}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,8,0" />
+
+                      <!-- Estado Pill -->
+                      <Border Grid.Column="3" CornerRadius="5" Padding="7,3" VerticalAlignment="Center" HorizontalAlignment="Left">
+                        <Border.Style>
+                          <Style TargetType="Border">
+                            <Setter Property="Background" Value="{DynamicResource Brush.Line2}" />
+                            <Setter Property="BorderThickness" Value="1" />
+                            <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding IsEstadoVigente}" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource Brush.SuccessBg}" />
+                                <Setter Property="BorderBrush" Value="{DynamicResource Brush.SuccessBorder}" />
+                              </DataTrigger>
+                              <DataTrigger Binding="{Binding IsTipoAddenda}" Value="True">
+                                <Setter Property="Background" Value="#14223A" />
+                                <Setter Property="BorderBrush" Value="#254370" />
+                              </DataTrigger>
+                              <DataTrigger Binding="{Binding IsEstadoPendiente}" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource Brush.AmberSoft}" />
+                                <Setter Property="BorderBrush" Value="#5A4515" />
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </Border.Style>
+                        <TextBlock Text="{Binding EstadoLabel}" FontSize="9.5" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}">
+                          <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                              <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
+                              <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsEstadoVigente}" Value="True">
+                                  <Setter Property="Foreground" Value="{DynamicResource Brush.Success}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding IsTipoAddenda}" Value="True">
+                                  <Setter Property="Foreground" Value="{DynamicResource Brush.BlueFocus}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding IsEstadoPendiente}" Value="True">
+                                  <Setter Property="Foreground" Value="{DynamicResource Brush.Amber}" />
+                                </DataTrigger>
+                              </Style.Triggers>
+                            </Style>
+                          </TextBlock.Style>
+                        </TextBlock>
+                      </Border>
+
+                      <!-- Fecha -->
+                      <TextBlock Grid.Column="4" Text="{Binding FechaDocumentoText}" FontSize="11" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" />
+
+                      <!-- Ver Action -->
+                      <StackPanel Grid.Column="5" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <TextBlock Text="⚠" Foreground="{DynamicResource Brush.Amber}" FontSize="12" Margin="0,0,4,0" VerticalAlignment="Center"
+                                   ToolTip="El archivo no existe en la ruta especificada"
+                                   Visibility="{Binding IsBrokenLink, Converter={StaticResource BoolToVisibility}}" />
+                        <Button Content="↗" Command="{Binding DataContext.OpenAttachedFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                CommandParameter="{Binding}" Width="26" Height="26" Style="{StaticResource Button.Secondary}" Padding="0" VerticalAlignment="Center" ToolTip="Abrir archivo en visor nativo" />
+                      </StackPanel>
+                    </Grid>
+                  </DataTemplate>
+                </ListBox.ItemTemplate>
+              </ListBox>
+            </Grid>
+          </Border>
+
+          <!-- COLUMN 3: BLUEPRINT INSPECTOR & LIVE CANVAS -->
+          <Border Grid.Column="2" Style="{StaticResource DocumentsCard}" Padding="16" ClipToBounds="True">
+            <Grid>
+              <!-- Empty Selection State -->
+              <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="{Binding HasSelectedRow, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
+                <TextBlock Text="📐" FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,8" />
+                <TextBlock Text="Seleccione un antecedente" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" HorizontalAlignment="Center" />
+                <TextBlock Text="para inspeccionar el plano, metadatos y visor técnico." FontSize="11.5" Foreground="{DynamicResource Brush.Ink3}" Margin="0,4,0,0" HorizontalAlignment="Center" />
+              </StackPanel>
+
+              <!-- Selected Row Inspector -->
+              <ScrollViewer Visibility="{Binding HasSelectedRow, Converter={StaticResource BoolToVisibility}}" VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                  <!-- Header Information -->
+                  <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="*" />
+                      <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                      <TextBlock Text="{Binding SelectedRow.Disciplina, FallbackValue='DISCIPLINA TÉCNICA'}" FontSize="10" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.BlueFocus}" />
+                      <TextBlock FontSize="15" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" Margin="0,2,0,0">
+                        <Run Text="{Binding SelectedRow.Codigo, Mode=OneWay}" />
+                        <Run Text=" (Rev. " />
+                        <Run Text="{Binding SelectedRow.Revision, Mode=OneWay}" />
+                        <Run Text=")" />
+                      </TextBlock>
+                    </StackPanel>
+                    <Border Grid.Column="1" CornerRadius="5" Padding="8,4" VerticalAlignment="Top">
+                      <Border.Style>
+                        <Style TargetType="Border">
+                          <Setter Property="Background" Value="{DynamicResource Brush.Line2}" />
+                          <Style.Triggers>
+                            <DataTrigger Binding="{Binding SelectedRow.IsEstadoVigente}" Value="True">
+                              <Setter Property="Background" Value="{DynamicResource Brush.SuccessBg}" />
+                            </DataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </Border.Style>
+                      <TextBlock Text="{Binding SelectedRow.EstadoLabel}" FontSize="10" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}">
+                        <TextBlock.Style>
+                          <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding SelectedRow.IsEstadoVigente}" Value="True">
+                                <Setter Property="Foreground" Value="{DynamicResource Brush.Success}" />
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </TextBlock.Style>
+                      </TextBlock>
+                    </Border>
+                  </Grid>
+
+                  <!-- Blueprint / Document Live Preview -->
+                  <Border Background="{DynamicResource Brush.Canvas}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="8" Margin="0,0,0,12" Padding="8"
+                          Visibility="{Binding HasPreviewImage, Converter={StaticResource BoolToVisibility}}">
+                    <StackPanel>
+                      <Border MaxHeight="220" ClipToBounds="True" CornerRadius="6" Background="{DynamicResource Brush.Surface}">
+                        <Image Source="{Binding PreviewImage}" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                      </Border>
+                      <DockPanel Margin="0,8,0,0" Visibility="{Binding IsPdfMultiPage, Converter={StaticResource BoolToVisibility}}">
+                        <Button DockPanel.Dock="Left" Content="◀" Command="{Binding PreviousPreviewPageCommand}" Width="26" Height="24" Style="{StaticResource Button.Secondary}" Padding="0" />
+                        <Button DockPanel.Dock="Right" Content="▶" Command="{Binding NextPreviewPageCommand}" Width="26" Height="24" Style="{StaticResource Button.Secondary}" Padding="0" />
+                        <TextBlock Text="{Binding PreviewPageIndicator}" FontFamily="{StaticResource Font.Mono}" FontSize="10" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource Brush.Ink3}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                      </DockPanel>
+                    </StackPanel>
+                  </Border>
+
+                  <!-- Technical Metadata Grid (2 Columns, 3 Rows) -->
+                  <Grid Margin="0,8,0,0">
+                    <Grid.RowDefinitions>
+                      <RowDefinition Height="Auto" />
+                      <RowDefinition Height="Auto" />
+                      <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="*" />
+                      <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Row 0: Disciplina & Proyectista -->
+                    <Border Style="{StaticResource DocumentsCard}" Padding="9,7" Margin="0,0,5,6">
+                      <StackPanel>
+                        <TextBlock Text="DISCIPLINA" Style="{StaticResource MetaLabel}" />
+                        <TextBox Text="{Binding SelectedRow.Disciplina, UpdateSourceTrigger=LostFocus}" Style="{StaticResource Form.TextBox}" FontSize="11" />
+                      </StackPanel>
+                    </Border>
+                    <Border Grid.Column="1" Style="{StaticResource DocumentsCard}" Padding="9,7" Margin="5,0,0,6">
+                      <StackPanel>
+                        <TextBlock Text="PROYECTISTA / RESPONSABLE" Style="{StaticResource MetaLabel}" />
+                        <TextBox Text="{Binding SelectedRow.ResponsableRevision, UpdateSourceTrigger=LostFocus}" Style="{StaticResource Form.TextBox}" FontSize="11" />
+                      </StackPanel>
+                    </Border>
+
+                    <!-- Row 1: Código & Revisión -->
+                    <Border Grid.Row="1" Style="{StaticResource DocumentsCard}" Padding="9,7" Margin="0,0,5,6">
+                      <StackPanel>
+                        <TextBlock Text="CÓDIGO TÉCNICO" Style="{StaticResource MetaLabel}" />
+                        <TextBox Text="{Binding SelectedRow.Codigo, UpdateSourceTrigger=LostFocus}" Style="{StaticResource Form.TextBox}" FontSize="11" FontFamily="{StaticResource Font.Mono}" />
+                      </StackPanel>
+                    </Border>
+                    <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource DocumentsCard}" Padding="9,7" Margin="5,0,0,6">
+                      <StackPanel>
+                        <TextBlock Text="REVISIÓN ACTIVA" Style="{StaticResource MetaLabel}" />
+                        <TextBox Text="{Binding SelectedRow.Revision, UpdateSourceTrigger=LostFocus}" Style="{StaticResource Form.TextBox}" FontSize="11" FontFamily="{StaticResource Font.Mono}" />
+                      </StackPanel>
+                    </Border>
+
+                    <!-- Row 2: Fecha & Formato/Peso -->
+                    <Border Grid.Row="2" Style="{StaticResource DocumentsCard}" Padding="9,7" Margin="0,0,5,0">
+                      <StackPanel>
+                        <TextBlock Text="FECHA OFICIAL" Style="{StaticResource MetaLabel}" />
+                        <TextBox Text="{Binding SelectedRow.FechaDocumentoText, UpdateSourceTrigger=LostFocus}" Style="{StaticResource Form.TextBox}" FontSize="11" FontFamily="{StaticResource Font.Mono}" />
+                      </StackPanel>
+                    </Border>
+                    <Border Grid.Row="2" Grid.Column="1" Style="{StaticResource DocumentsCard}" Padding="9,7" Margin="5,0,0,0">
+                      <StackPanel>
+                        <TextBlock Text="FORMATO &amp; TAMAÑO" Style="{StaticResource MetaLabel}" />
+                        <TextBlock Text="{Binding SelectedFileSizeText, FallbackValue='Sin archivo vinculado'}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink}" TextTrimming="CharacterEllipsis" Margin="0,4,0,0" />
+                      </StackPanel>
+                    </Border>
+                  </Grid>
+
+                  <!-- Physical File Path Box -->
+                  <Border Background="{DynamicResource Brush.Canvas}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,12,0,0">
+                    <Grid>
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                      </Grid.ColumnDefinitions>
+                      <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="RUTA EN DISCO" Style="{StaticResource MetaLabel}" Margin="0,0,0,2" />
+                        <TextBlock Text="{Binding SelectedRow.RutaArchivo, FallbackValue='Sin ruta configurada'}" FontFamily="{StaticResource Font.Mono}" FontSize="10.5" Foreground="{DynamicResource Brush.Ink3}" TextTrimming="CharacterEllipsis" />
+                      </StackPanel>
+                      <Button Grid.Column="1" Style="{StaticResource Button.Secondary}" Content="Adjuntar / Cambiar" Command="{Binding AttachFileCommand}" Margin="10,0,0,0" Padding="10,6" VerticalAlignment="Center" />
+                    </Grid>
+                  </Border>
+
+                  <!-- Internal Notes -->
+                  <TextBlock Text="NOTAS INTERNAS Y ALCANCE" Style="{StaticResource MetaLabel}" Margin="0,12,0,4" />
+                  <TextBox Text="{Binding SelectedRow.Notas, UpdateSourceTrigger=LostFocus}" Style="{StaticResource Form.TextBox}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="50" VerticalScrollBarVisibility="Auto" />
+
+                  <!-- Inspector Action Buttons -->
+                  <Grid Margin="0,14,0,0">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="*" />
+                      <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Button Grid.Column="0" Style="{StaticResource Button.Secondary}" Command="{Binding OpenAttachedFileCommand}" Margin="0,0,6,0" Padding="12,9">
+                      <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <TextBlock Text="↗" Margin="0,0,6,0" />
+                        <TextBlock Text="Abrir archivo" />
+                      </StackPanel>
+                    </Button>
+                    <Button Grid.Column="1" Style="{StaticResource Button.Secondary}" Command="{Binding OpenContainingFolderCommand}" Margin="6,0,0,0" Padding="12,9">
+                      <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <TextBlock Text="📁" Margin="0,0,6,0" />
+                        <TextBlock Text="Abrir carpeta" />
+                      </StackPanel>
+                    </Button>
+                  </Grid>
+                  <Button Style="{StaticResource Button.Primary}" Command="{Binding MarkVigenteCommand}" Content="✔ Marcar Vigente en Expediente" Margin="0,8,0,0" Padding="12,9" />
+
+                </StackPanel>
+              </ScrollViewer>
+            </Grid>
+          </Border>
         </Grid>
 
-        <!-- Biblioteca documental: explorador, lista y ficha de decision -->
-        <Grid MinHeight="520"><Grid.ColumnDefinitions><ColumnDefinition Width="220"/><ColumnDefinition Width="*"/><ColumnDefinition Width="350"/></Grid.ColumnDefinitions>
-          <Border Style="{StaticResource DocumentsCard}" Margin="0,0,13,0"><DockPanel LastChildFill="True"><StackPanel DockPanel.Dock="Top"><TextBlock Text="EXPLORAR EXPEDIENTE" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}" Margin="15,15,15,9"/><Border BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="7" Padding="9,8" Margin="12,0,12,7"><TextBlock Text="Buscar código o documento" FontSize="10.5" Foreground="{DynamicResource Brush.Ink4}"/></Border></StackPanel><StackPanel><Button Command="{Binding SelectTipoFilterCommand}" CommandParameter="Todos"><Grid><TextBlock Text="Todo el expediente"/><TextBlock Text="{Binding KpiTotalCount}" HorizontalAlignment="Right" Foreground="{DynamicResource Brush.Ink4}"/></Grid><Button.Style><Style TargetType="Button" BasedOn="{StaticResource DocumentsRailButton}"><Style.Triggers><DataTrigger Binding="{Binding IsTipoTodos}" Value="True"><Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}"/><Setter Property="Foreground" Value="{DynamicResource Brush.Blue}"/></DataTrigger></Style.Triggers></Style></Button.Style></Button><Button Command="{Binding SelectTipoFilterCommand}" CommandParameter="Plano" Style="{StaticResource DocumentsRailButton}"><Grid><TextBlock Text="Planos"/><TextBlock Text="{Binding KpiPlanosCount}" HorizontalAlignment="Right"/></Grid></Button><Button Command="{Binding SelectTipoFilterCommand}" CommandParameter="Especificaci&#243;n" Style="{StaticResource DocumentsRailButton}"><Grid><TextBlock Text="Especificaciones"/><TextBlock Text="{Binding KpiEspecCount}" HorizontalAlignment="Right"/></Grid></Button><Button Command="{Binding SelectTipoFilterCommand}" CommandParameter="Addenda" Style="{StaticResource DocumentsRailButton}"><Grid><TextBlock Text="Addendas y aclaraciones"/><TextBlock Text="{Binding KpiAddendasCount}" HorizontalAlignment="Right"/></Grid></Button><Button Command="{Binding SelectTipoFilterCommand}" CommandParameter="Consulta" Style="{StaticResource DocumentsRailButton}"><Grid><TextBlock Text="Consultas RFI"/><TextBlock Text="{Binding KpiConsultasCount}" HorizontalAlignment="Right"/></Grid></Button><TextBlock Text="VISTAS DE CONTROL" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}" Margin="15,22,15,8"/><TextBlock Margin="20,5" FontSize="11" Foreground="{DynamicResource Brush.Ink3}"><Run Text="Pendientes del mandante "/><Run Text="{Binding KpiPendientesMandanteCount, Mode=OneWay}" FontWeight="Bold"/></TextBlock><TextBlock Margin="20,5" FontSize="11" Foreground="{DynamicResource Brush.Ink3}"><Run Text="Cambios de alcance "/><Run Text="{Binding KpiAddendasCount, Mode=OneWay}" FontWeight="Bold"/></TextBlock></StackPanel></DockPanel></Border>
-          <Border Grid.Column="1" Style="{StaticResource DocumentsCard}" Margin="0,0,13,0"><Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions><Grid Margin="14,13" Grid.Row="0"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><Border BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="7" Padding="10,8"><TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" BorderThickness="0" Background="Transparent" FontSize="11" ToolTip="Buscar por código, disciplina, revisión o texto"/></Border><Button Grid.Column="1" Style="{StaticResource Button.Secondary}" Content="Vigentes" Margin="8,0,0,0"/><Button Grid.Column="2" Style="{StaticResource Button.Secondary}" Content="Ordenar: impacto" Margin="8,0,0,0"/></Grid><ListBox Grid.Row="1" ItemsSource="{Binding FilteredRows}" SelectedItem="{Binding SelectedRow}" BorderThickness="0" Background="Transparent" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto" ItemContainerStyle="{StaticResource DocumentsListItem}"><ListBox.ItemTemplate><DataTemplate><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="36"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><Border Width="31" Height="31" CornerRadius="8" Background="{DynamicResource Brush.BlueSoft}" VerticalAlignment="Top"><TextBlock Text="{Binding Tipo}" FontSize="8" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" TextTrimming="CharacterEllipsis" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="27"/></Border><StackPanel Grid.Column="1" Margin="10,0,10,0"><TextBlock Text="{Binding Descripcion}" FontSize="12.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" TextTrimming="CharacterEllipsis"/><TextBlock FontSize="10.5" Foreground="{DynamicResource Brush.Ink3}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis"><Run Text="{Binding Codigo, Mode=OneWay}"/><Run Text=" - Rev. "/><Run Text="{Binding Revision, Mode=OneWay}"/><Run Text=" - "/><Run Text="{Binding Disciplina, Mode=OneWay}"/></TextBlock></StackPanel><Border Grid.Column="2" CornerRadius="99" Padding="7,4" VerticalAlignment="Top"><Border.Style><Style TargetType="Border"><Setter Property="Background" Value="{DynamicResource Brush.Line2}"/><Style.Triggers><DataTrigger Binding="{Binding IsEstadoVigente}" Value="True"><Setter Property="Background" Value="{DynamicResource Brush.SuccessBg}"/></DataTrigger><DataTrigger Binding="{Binding IsEstadoPendiente}" Value="True"><Setter Property="Background" Value="{DynamicResource Brush.AmberSoft}"/></DataTrigger></Style.Triggers></Style></Border.Style><TextBlock Text="{Binding EstadoLabel}" FontSize="9" FontWeight="Bold"><TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}"/><Style.Triggers><DataTrigger Binding="{Binding IsEstadoVigente}" Value="True"><Setter Property="Foreground" Value="{DynamicResource Brush.Success}"/></DataTrigger><DataTrigger Binding="{Binding IsEstadoPendiente}" Value="True"><Setter Property="Foreground" Value="{DynamicResource Brush.Amber}"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock></Border></Grid></DataTemplate></ListBox.ItemTemplate></ListBox></Grid></Border>
-          <Border Grid.Column="2" Style="{StaticResource DocumentsCard}" Padding="17"><Grid><StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="{Binding HasSelectedRow, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}"><TextBlock Text="Seleccione un antecedente" FontSize="13" FontWeight="SemiBold" HorizontalAlignment="Center"/><TextBlock Text="para revisar su trazabilidad e impacto." FontSize="11" Foreground="{DynamicResource Brush.Ink3}" Margin="0,4,0,0"/></StackPanel><ScrollViewer Visibility="{Binding HasSelectedRow, Converter={StaticResource BoolToVisibility}}" VerticalScrollBarVisibility="Auto" IsEnabled="{Binding CanEdit}"><StackPanel><TextBox Text="{Binding SelectedRow.Descripcion, UpdateSourceTrigger=LostFocus}" FontSize="14" FontWeight="Bold" BorderThickness="0" Background="Transparent" Padding="0" TextWrapping="Wrap"/><TextBlock FontSize="11" Foreground="{DynamicResource Brush.Ink3}" Margin="0,4,0,0"><Run Text="{Binding SelectedRow.Tipo, Mode=OneWay}"/><Run Text=" - Rev. "/><Run Text="{Binding SelectedRow.Revision, Mode=OneWay}"/><Run Text=" - "/><Run Text="{Binding SelectedRow.FechaDocumentoText, Mode=OneWay}"/></TextBlock><Grid Margin="0,15,0,0"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><Border Style="{StaticResource DocumentsCard}" Padding="9" Margin="0,0,8,8"><StackPanel><TextBlock Text="DISCIPLINA" Style="{StaticResource MetaLabel}"/><TextBox Text="{Binding SelectedRow.Disciplina, UpdateSourceTrigger=LostFocus}" Style="{StaticResource Form.TextBox}"/></StackPanel></Border><Border Grid.Column="1" Style="{StaticResource DocumentsCard}" Padding="9" Margin="0,0,0,8"><StackPanel><TextBlock Text="RESPONSABLE" Style="{StaticResource MetaLabel}"/><TextBox Text="{Binding SelectedRow.ResponsableRevision, UpdateSourceTrigger=LostFocus}" Style="{StaticResource Form.TextBox}"/></StackPanel></Border><Border Grid.Row="1" Style="{StaticResource DocumentsCard}" Padding="9" Margin="0,0,8,0"><StackPanel><TextBlock Text="CODIGO" Style="{StaticResource MetaLabel}"/><TextBox Text="{Binding SelectedRow.Codigo, UpdateSourceTrigger=LostFocus}" Style="{StaticResource Form.TextBox}"/></StackPanel></Border><Border Grid.Row="1" Grid.Column="1" Style="{StaticResource DocumentsCard}" Padding="9"><StackPanel><TextBlock Text="ARCHIVO" Style="{StaticResource MetaLabel}"/><TextBlock Text="{Binding SelectedRow.RutaArchivoNombre}" FontSize="11" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/></StackPanel></Border></Grid><Border Background="{DynamicResource Brush.AmberSoft}" BorderBrush="#F1D9AD" BorderThickness="1" CornerRadius="9" Padding="12" Margin="0,15,0,0"><StackPanel><TextBlock Text="Impacto comercial detectado" FontWeight="Bold" FontSize="11" Foreground="{DynamicResource Brush.Amber}"/><TextBlock Text="Revise el alcance, las notas y los antecedentes vinculados antes de emitir la oferta." FontSize="10.5" Foreground="{DynamicResource Brush.Ink3}" TextWrapping="Wrap" Margin="0,4,0,0"/></StackPanel></Border><StackPanel Margin="0,15,0,0"><TextBlock Text="TRAZABILIDAD" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}"/><TextBlock FontSize="10.5" Foreground="{DynamicResource Brush.Ink3}" Margin="0,8,0,0"><Run Text="Documento: "/><Run Text="{Binding SelectedRow.FechaDocumentoText, Mode=OneWay}"/></TextBlock><TextBlock FontSize="10.5" Foreground="{DynamicResource Brush.Ink3}" Margin="0,6,0,0"><Run Text="Estado: "/><Run Text="{Binding SelectedRow.EstadoLabel, Mode=OneWay}"/></TextBlock></StackPanel><WrapPanel Margin="0,15,0,0"><Button Style="{StaticResource Button.Secondary}" Content="Adjuntar" Command="{Binding AttachFileCommand}" Margin="0,0,8,8"/><Button Style="{StaticResource Button.Secondary}" Content="Abrir" Command="{Binding OpenAttachedFileCommand}" Margin="0,0,8,8"/><Button Style="{StaticResource Button.Primary}" Content="Marcar vigente" Command="{Binding MarkVigenteCommand}" Margin="0,0,8,8"/></WrapPanel><TextBlock Text="NOTAS INTERNAS" Style="{StaticResource MetaLabel}" Margin="0,8,0,4"/><TextBox Text="{Binding SelectedRow.Notas, UpdateSourceTrigger=LostFocus}" Style="{StaticResource Form.TextBox}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="72" VerticalScrollBarVisibility="Auto"/></StackPanel></ScrollViewer></Grid></Border>
-        </Grid>
-        <Border Style="{StaticResource DocumentsCard}" Padding="13" Margin="0,14,0,0"><DockPanel><StackPanel DockPanel.Dock="Right" Orientation="Horizontal"><Button Style="{StaticResource Button.Secondary}" Content="Cancelar" Command="{Binding CancelCommand}" Margin="0,0,8,0"/><Button Style="{StaticResource Button.Primary}" Content="Guardar antecedentes" Command="{Binding SaveCommand}"/></StackPanel><TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center" FontSize="11.5" Foreground="{DynamicResource Brush.Ink3}" TextTrimming="CharacterEllipsis" Margin="0,0,14,0"/></DockPanel></Border>
-      </StackPanel>
-    </ScrollViewer>
+        <!-- ========================================== -->
+        <!-- BOTTOM STATUS & PERSISTENCE BAR (ROW 3 - FIJA) -->
+        <!-- ========================================== -->
+        <Border Grid.Row="3" Style="{StaticResource DocumentsCard}" Padding="14,10" Margin="0,10,0,0">
+          <DockPanel>
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+              <Button Style="{StaticResource Button.Secondary}" Content="Cancelar cambios" Command="{Binding CancelCommand}" Margin="0,0,8,0" Padding="14,8" />
+              <Button Style="{StaticResource Button.Primary}" Content="Guardar antecedentes" Command="{Binding SaveCommand}" Padding="16,8" />
+            </StackPanel>
+            <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center" FontSize="11.5" Foreground="{DynamicResource Brush.Ink3}" TextTrimming="CharacterEllipsis" Margin="0,0,14,0" />
+          </DockPanel>
+        </Border>
+
+    </Grid>
   </Grid>
 </UserControl>

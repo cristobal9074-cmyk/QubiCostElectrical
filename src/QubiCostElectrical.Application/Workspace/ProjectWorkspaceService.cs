@@ -265,7 +265,7 @@ public sealed class ProjectWorkspaceService : IProjectWorkspaceService
         // eliminamos los archivos desincronizados del formato legacy:
         // 1. El JSON legacy original (sourcePath)
         // 2. El sidecar legacy original (sourcePath + ".db")
-        
+
         // Liberar todos los pools de conexiones de SQLite para desbloquear los archivos físicos en disco
         repository.ClearSQLitePools();
 
@@ -275,7 +275,7 @@ public sealed class ProjectWorkspaceService : IProjectWorkspaceService
             {
                 if (File.Exists(sourcePath))
                     File.Delete(sourcePath);
-                
+
                 string sidecarPath = sourcePath + ProjectFileTypes.SqliteSuffix;
                 if (File.Exists(sidecarPath))
                     File.Delete(sidecarPath);
@@ -285,7 +285,7 @@ public sealed class ProjectWorkspaceService : IProjectWorkspaceService
                     if (File.Exists(alternativePath) && !PathsEqual(alternativePath, sourcePath))
                         File.Delete(alternativePath);
                 }
-                
+
                 AppLog.Info("ProjectWorkspace", $"Archivos legacy eliminados tras migración exitosa: '{sourcePath}' y su base de datos sidecar.");
             }
             catch (Exception ex)

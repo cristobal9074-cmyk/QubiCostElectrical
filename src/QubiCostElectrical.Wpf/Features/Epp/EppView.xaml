@@ -63,8 +63,8 @@
                 </Border>
                 <Border CornerRadius="{StaticResource Radius.Chip}" Padding="10,5" Margin="0,0,8,6" Background="{DynamicResource Brush.AmberSoft}">
                   <TextBlock FontSize="{StaticResource Font.Size.md}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Amber}">
-                    <Run Text="Directa " /><Run Text="{Binding MesesDirecta, Mode=OneWay}" /><Run Text=" m · Indirecta " />
-                    <Run Text="{Binding MesesIndirecta, Mode=OneWay}" /><Run Text=" m" />
+                    <Run Text="Obra " /><Run Text="{Binding MesesObra, Mode=OneWay}" /><Run Text=" m · ciclos " />
+                    <Run Text="{Binding MesesDirecta, Mode=OneWay}" /><Run Text="/" /><Run Text="{Binding MesesIndirecta, Mode=OneWay}" /><Run Text=" m" />
                   </TextBlock>
                 </Border>
                 <Border CornerRadius="{StaticResource Radius.Chip}" Padding="10,5" Margin="0,0,8,6" Background="{DynamicResource Brush.PurpleSoft}">
@@ -138,17 +138,22 @@
 
               <!-- Params -->
               <Border Background="{DynamicResource Brush.BlueFaint}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1" Padding="16,12">
-                <UniformGrid Columns="4">
+                <StackPanel>
+                <UniformGrid Columns="5">
                   <StackPanel Margin="0,0,12,0" IsEnabled="{Binding CanEdit}">
-                    <TextBlock Text="MESES M.O. DIRECTA" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}" Margin="0,0,0,5" />
+                    <TextBlock Text="MESES DE OBRA" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}" Margin="0,0,0,5" />
+                    <TextBox Style="{StaticResource EppCellBox}" Text="{Binding MesesObra, UpdateSourceTrigger=PropertyChanged}" />
+                  </StackPanel>
+                  <StackPanel Margin="0,0,12,0" IsEnabled="{Binding CanEdit}">
+                    <TextBlock Text="CICLO DIRECTA" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}" Margin="0,0,0,5" />
                     <TextBox Style="{StaticResource EppCellBox}" Text="{Binding MesesDirecta, UpdateSourceTrigger=PropertyChanged}" />
                   </StackPanel>
                   <StackPanel Margin="0,0,12,0" IsEnabled="{Binding CanEdit}">
-                    <TextBlock Text="MESES M.O. INDIRECTA" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}" Margin="0,0,0,5" />
+                    <TextBlock Text="CICLO INDIRECTA" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}" Margin="0,0,0,5" />
                     <TextBox Style="{StaticResource EppCellBox}" Text="{Binding MesesIndirecta, UpdateSourceTrigger=PropertyChanged}" />
                   </StackPanel>
                   <StackPanel Margin="0,0,12,0" IsEnabled="{Binding CanEdit}">
-                    <TextBlock Text="DOTACIÓN DIRECTA" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}" Margin="0,0,0,5" />
+                    <TextBlock Text="PROMEDIO DIRECTO" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}" Margin="0,0,0,5" />
                     <TextBox Style="{StaticResource EppCellBox}" Text="{Binding DotacionDirecta, UpdateSourceTrigger=PropertyChanged}" />
                   </StackPanel>
                   <StackPanel IsEnabled="{Binding CanEdit}">
@@ -156,6 +161,9 @@
                     <TextBox Style="{StaticResource EppCellBox}" Text="{Binding DotacionIndirecta, UpdateSourceTrigger=PropertyChanged}" />
                   </StackPanel>
                 </UniformGrid>
+                <TextBlock Margin="0,8,0,0" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink4}" TextWrapping="Wrap"
+                           Text="Cantidad = meses de obra ÷ ciclo × dotación. Directa usa el promedio mensual de trabajadores. Indirecta usa su dotación. Los accesorios opcionales siguen la hoja EPP: fono, mascarilla y filtros cada 6 meses; cubrenuca cada 3; arnés y cabo de vida, 2 por trabajador; bloqueador solar, meses ÷ 2." />
+                </StackPanel>
               </Border>
 
               <Grid>

@@ -1,8 +1,10 @@
+using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using QubiCostElectrical;
+using QubiCostElectrical.Wpf.Features.CubicacionSc;
 using QubiCostElectrical.Wpf.Infrastructure;
 
 namespace QubiCostElectrical.Wpf.Features.Cubicacion;
@@ -22,27 +24,97 @@ public partial class PrecioListaResumenDialog : Window
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
+        FocusMainGrid();
+    }
+
+    private void FocusMainGrid()
+    {
         if (MainGrid.Items.Count == 0) return;
         MainGrid.Focus();
-        if (MainGrid.Columns.Count > 3)
+
+        var column = MainGrid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible) ?? MainGrid.Columns[0];
+        var item = (MainGrid.CurrentCell.IsValid && MainGrid.CurrentCell.Item != null)
+            ? MainGrid.CurrentCell.Item
+            : MainGrid.Items[0];
+
+        if (item == null) return;
+
+        if (MainGrid.SelectionUnit == DataGridSelectionUnit.FullRow)
         {
-            MainGrid.CurrentCell = new DataGridCellInfo(MainGrid.Items[0], MainGrid.Columns[3]);
-            MainGrid.BeginEdit();
+            MainGrid.SelectedItem = item;
         }
+        else
+        {
+            MainGrid.SelectedCells.Clear();
+            MainGrid.SelectedCells.Add(new DataGridCellInfo(item, column));
+        }
+
+        MainGrid.CurrentCell = new DataGridCellInfo(item, column);
+        MainGrid.ScrollIntoView(item);
     }
 
     private void OnPreviewKeyDown(object sender, KeyEventArgs e)
     {
-        if (e.Key != Key.Enter) return;
-        if (vm.AutocompleteVisible)
+        var key = e.Key == Key.System ? e.SystemKey : e.Key;
+
+        // Escape: cerrar sugerencias, o limpiar buscador, o cerrar ventana
+        if (key == Key.Escape)
+        {
+            if (vm.AutocompleteVisible)
+            {
+                vm.AutocompleteVisible = false;
+                e.Handled = true;
+                return;
+            }
+
+            if (SearchBox.IsKeyboardFocusWithin && !string.IsNullOrEmpty(SearchBox.Text))
+            {
+                SearchBox.Text = string.Empty;
+                FocusMainGrid();
+                e.Handled = true;
+                return;
+            }
+
+            Close();
+            e.Handled = true;
+            return;
+        }
+
+        // Ctrl+B o Ctrl+F: activar buscador
+        if (Keyboard.Modifiers == ModifierKeys.Control && (key == Key.B || key == Key.F))
+        {
+            SearchBox.Focus();
+            SearchBox.SelectAll();
+            e.Handled = true;
+            return;
+        }
+
+        if (key == Key.Enter && vm.AutocompleteVisible)
         {
             vm.AutocompleteVisible = false;
             e.Handled = true;
             return;
         }
+    }
 
-        Close();
-        e.Handled = true;
+    private void OnSearchBoxPreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        var key = e.Key == Key.System ? e.SystemKey : e.Key;
+
+        if (key == Key.Down || key == Key.Enter)
+        {
+            FocusMainGrid();
+            e.Handled = true;
+        }
+    }
+
+    private void OnFilterChipClick(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is FrameworkElement { DataContext: FilterChipVm chip })
+        {
+            vm.ActiveFilter = chip.Nombre;
+            FocusMainGrid();
+        }
     }
 
     private void OnGridPreparingCellForEdit(object? sender, DataGridPreparingCellForEditEventArgs e)
@@ -134,6 +206,11 @@ public partial class PrecioListaResumenDialog : Window
         if (!WpfDialogService.Confirm("Eliminar material", $"¿Eliminar '{row.Codigo}' · {row.Descripcion} de la lista de precios?"))
             return;
         vm.EliminarMaterial(row);
+    }
+
+    private void OnCerrarClick(object sender, RoutedEventArgs e)
+    {
+        Close();
     }
 
     private void OnCellEditEnding(object? sender, DataGridCellEditEndingEventArgs e)

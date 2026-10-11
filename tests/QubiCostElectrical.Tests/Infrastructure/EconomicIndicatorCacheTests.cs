@@ -25,17 +25,17 @@ public sealed class EconomicIndicatorCacheTests
         string path = EconomicIndicatorCache.CachePath;
         try
         {
-            decimal uf  = 37500.50m;
+            decimal uf = 37500.50m;
             decimal usd = 945.25m;
-            var at  = new DateTime(2026, 6, 20, 10, 0, 0, DateTimeKind.Utc);
+            var at = new DateTime(2026, 6, 20, 10, 0, 0, DateTimeKind.Utc);
 
             EconomicIndicatorCache.Write(uf, usd, at);
             var result = EconomicIndicatorCache.TryRead();
 
             Assert.NotNull(result);
-            Assert.Equal(uf,  result!.UfClp);
+            Assert.Equal(uf, result!.UfClp);
             Assert.Equal(usd, result.UsdClp);
-            Assert.Equal(at,  result.FetchedAt.ToUniversalTime());
+            Assert.Equal(at, result.FetchedAt.ToUniversalTime());
         }
         finally
         {

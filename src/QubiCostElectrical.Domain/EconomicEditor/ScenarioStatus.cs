@@ -2,8 +2,8 @@ namespace QubiCostElectrical;
 
 public enum ScenarioStatus
 {
-	Draft,
-	Calculated,
-	Applied,
-	Archived
+    Draft,
+    Calculated,
+    Applied,
+    Archived
 }

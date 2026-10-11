@@ -16,7 +16,7 @@ public sealed class AutoSaveServiceTests
     [Fact]
     public void Intervals_MatchProfessionalFluidSaveDefaults()
     {
-        Assert.Equal(TimeSpan.FromSeconds(15), AutoSaveService.SidecarInterval);
+        Assert.Equal(TimeSpan.FromSeconds(60), AutoSaveService.SidecarInterval);
         Assert.Equal(TimeSpan.FromMilliseconds(2500), AutoSaveService.PersistDebounceInterval);
     }
 
@@ -24,14 +24,14 @@ public sealed class AutoSaveServiceTests
     public void GetAutoSavePath_QceProject_ReturnsQceAutosave()
     {
         var path = AutoSaveService.GetAutoSavePath(@"C:\proyecto.qce");
-        Assert.Equal(@"C:\proyecto.qce.autosave", path);
+        Assert.Equal(@"C:\proyecto.qce.bak", path);
     }
 
     [Fact]
     public void GetAutoSavePath_PeproProject_ReturnsPeproAutosave()
     {
         var path = AutoSaveService.GetAutoSavePath(@"C:\proyecto.pepro");
-        Assert.Equal(@"C:\proyecto.pepro.autosave", path);
+        Assert.Equal(@"C:\proyecto.pepro.bak", path);
     }
 
     [Fact]
@@ -39,7 +39,7 @@ public sealed class AutoSaveServiceTests
     {
         var path = AutoSaveService.GetAutoSavePath("");
         Assert.Contains("QubiCostElectrical", path);
-        Assert.EndsWith(".autosave", path);
+        Assert.EndsWith(".bak", path);
         Assert.Contains(ProjectFileTypes.CurrentExtension, path);
     }
 

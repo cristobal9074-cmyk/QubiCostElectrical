@@ -41,6 +41,7 @@ public sealed class ProjectTemplate
     public string Icono { get; init; } = "📋";
     public bool EsEnBlanco { get; init; }
     public IReadOnlyList<ProjectTemplateItemRow> Filas { get; init; } = Array.Empty<ProjectTemplateItemRow>();
+    public int PartidasCount => Filas?.Count ?? 0;
 
     /// <summary>
     /// Genera una lista de filas vivas de ItemizadoRow con GUIDs nuevos y códigos normalizados.

@@ -28,16 +28,18 @@ public interface ICubicacionService
     CubicacionRow GetOrCreateVisualRow(List<CubicacionRow> cubicacion, string itemId, int visualIndex);
     void ClearRow(CubicacionRow row);
     void RemoveEmptyRowsForItem(List<CubicacionRow> cubicacion, string itemId);
-    void ApplyMaterial(CubicacionRow row, MaterialRow material, decimal valorUfClp = 0m);
+    void ApplyMaterial(CubicacionRow row, MaterialRow material, decimal valorUfClp = 0m, ProjectInfoRow? project = null);
     /// <summary>Resincroniza MAT/MO de todas las filas cuyo código coincide con el catálogo del
     /// proyecto — se usa cuando cambia un precio en Materiales (p. ej. al aplicar el Banco de
-    /// Precios) para que las líneas ya cubicadas reflejen el precio nuevo automáticamente.</summary>
-    int SyncPricesFromCatalog(IEnumerable<CubicacionRow> cubicacion, IEnumerable<MaterialRow> materiales, decimal valorUfClp);
+    /// Precios) para que las líneas ya cubicadas reflejen el precio nuevo automáticamente.
+    /// Con <paramref name="project"/> el MO se resuelve por rendimiento si el proyecto lo pide.</summary>
+    int SyncPricesFromCatalog(IEnumerable<CubicacionRow> cubicacion, IEnumerable<MaterialRow> materiales, decimal valorUfClp, ProjectInfoRow? project = null);
     int SyncPricesFromCatalog(
         IEnumerable<CubicacionRow> cubicacion,
         IEnumerable<MaterialRow> materiales,
         decimal valorUfClp,
-        IList<CubicacionValorizacionRow>? valorizaciones);
+        IList<CubicacionValorizacionRow>? valorizaciones,
+        ProjectInfoRow? project = null);
     CubicacionRow CloneRowForItem(CubicacionRow source, string targetItemId);
     CubicacionCloneResult CloneItemCubicacion(
         List<CubicacionRow> cubicacion,
@@ -108,6 +110,22 @@ public interface IVersionComparisonService
         BudgetVersionData current,
         string baselineLabel,
         string currentLabel);
+
+    BudgetVersionComparisonSummary CompareWithIncomingItemizado(
+        IReadOnlyList<ItemizadoRow> incomingItems,
+        ProjectFileData currentProject,
+        string incomingLabel = "Aclaración / Addenda",
+        string currentLabel = "Presupuesto Actual");
+}
+
+public interface IBudgetRevisionDiffPdfExporter
+{
+    void Export(BudgetVersionComparisonSummary summary, string outputPath);
+}
+
+public interface IBudgetRevisionDiffExcelExporter
+{
+    void Export(BudgetVersionComparisonSummary summary, string outputPath);
 }
 
 public interface IPriceBankRepository
@@ -147,6 +165,19 @@ public interface IApuTemplateStore
     void Delete(string id);
 }
 
+/// <summary>
+/// Biblioteca global de conjuntos eléctricos (plantillas de takeoff), guardada fuera del
+/// .qce para que todas las sesiones/proyectos nuevos la vean sin volver a crearla.
+/// </summary>
+public interface IConjuntoTemplateStore
+{
+    IReadOnlyList<ConjuntoElectricoRow> GetAll();
+    /// <summary>Upsert de un conjunto sin tocar los demás.</summary>
+    void Save(ConjuntoElectricoRow conjunto);
+    /// <summary>Reemplaza la colección completa (upsert + elimina los que ya no están).</summary>
+    void SaveAll(IReadOnlyList<ConjuntoElectricoRow> conjuntos);
+}
+
 public interface IPartidaCompletionService
 {
     PartidaCompletionSummary Build(IEnumerable<ItemizadoRow>? itemizado, IEnumerable<CubicacionRow>? cubicacion);
@@ -181,16 +212,6 @@ public interface IMaterialSearchService
     IReadOnlyList<MaterialCatalogQuickFilter> BuildQuickFilters(IEnumerable<MaterialRow> matches, int max = 8);
 }
 
-public interface IBudgetKpiService
-{
-    IReadOnlyList<DashboardKpiViewModel> BuildDashboardKpis(decimal totalVentaUf, decimal materialesUf, decimal manoObraUf, decimal ufM2, bool metrosCuadradosConfigurados);
-    string FormatKpiUf(decimal uf);
-    string FormatKpiDelta(decimal pct);
-    (decimal Pct, string Code)? GetDelta(string metricKey, decimal currentValue, IEnumerable<BudgetVersionRow> versions);
-    List<decimal> GetHistoryValues(string metricKey, decimal currentValue, IEnumerable<BudgetVersionRow> versions);
-    decimal GetMetricValue(string metricKey, BudgetVersionData snapshot);
-}
-
 public interface ICurrencyConversionService
 {
     string NormalizeCurrency(string? currency);
@@ -207,55 +228,20 @@ public interface ICurrencyConversionService
     string FormatMoneyFromClp(decimal clp, string? currency, decimal valorUfClp, decimal tipoCambioUsdClp);
 }
 
-public interface ICubicacionViewModelService
-{
-    CubicacionViewModel Build(IEnumerable<CubicacionRow> cubicacion, string itemId = "", decimal gastosGeneralesPct = 0m, decimal utilidadPct = 0m, decimal metrosCuadrados = 0m, BudgetSettings? settings = null);
-    CubicacionLineViewModel ToLine(CubicacionRow row);
-
-    /// <summary>Resumen de costos de un conjunto de líneas. Si <paramref name="settings"/> es
-    /// <c>null</c> se arma un <see cref="BudgetSettings"/> mínimo (GG%/Utilidad%/m²) y la venta
-    /// resultante es SIEMPRE Costo+Markup, sin política de cierre ni factores por familia — no
-    /// coincide con Costo/Exportación cuando el proyecto usa otra política. Los llamadores con
-    /// acceso al proyecto deben pasar un settings ya enriquecido vía
-    /// <see cref="ExcelCostosBridge.EnrichFromProjectData"/> para que el panel cuadre.</summary>
-    CostSummaryViewModel BuildSummary(IEnumerable<CubicacionLineViewModel> rows, decimal gastosGeneralesPct, decimal utilidadPct, decimal metrosCuadrados, BudgetSettings? settings = null);
-}
-
-public interface IProyectoViewModelService
-{
-    ProyectoViewModel Build(string nombre, string cliente, string ubicacion, string usuarioNombre, string usuarioRol, string moneda, string EstadoPresupuesto, DateTime fechaCreacion, DateTime fechaModificacion, decimal valorUfClp, decimal tipoCambioUsdClp, decimal gastosGeneralesPct, decimal utilidadPct, decimal metrosCuadrados, IEnumerable<ItemizadoRow> itemizado, IEnumerable<MaterialRow> materiales, IEnumerable<CubicacionRow> cubicacion);
-}
-
-
-
-public interface ITemplateService
-{
-    TemplateExpansionResult BuildCubicacionRowsFromTemplate(TemplateRow template, ItemizadoRow partida, IEnumerable<TemplateRow> plantillas, IEnumerable<MaterialRow> materiales);
-    List<CubicacionRow> MergeTemplateRows(IEnumerable<CubicacionRow> rows);
-}
-
 public interface IPurchaseListService
 {
     IReadOnlyList<CompraMaterialViewModel> Build(IEnumerable<CubicacionRow> cubicacion, IEnumerable<MaterialRow> materiales, decimal toleranciaPct);
+    IReadOnlyList<MaterialUsageBreakdown> GetMaterialUsage(string codigo, IEnumerable<CubicacionRow> cubicacion, IEnumerable<ItemizadoRow> itemizado);
 }
 
 public interface IApuService
 {
     ApuRow CrearDesdeItem(ItemizadoRow item);
-    ApuRow MigrarDesde(CubicacionRow cub, string descripcionItem, string unidadItem);
-    (decimal MatUf, decimal MoUf) GetPreciosParaCubicacion(ApuRow apu);
-    List<ApuResumenRow> GetResumenProyecto(IEnumerable<ApuRow> apus, IEnumerable<ItemizadoRow> itemizado);
-    (decimal Mat, decimal Mo, decimal Equipo, decimal Sc, decimal Herramientas, decimal Imprevistos, decimal Total) GetTotalesProyecto(IEnumerable<ApuRow> apus, IEnumerable<ItemizadoRow> itemizado);
     List<string> Validar(ApuRow apu);
 }
 
-public interface IApuViewModelService
-{
-    ApuViewModel BuildFromItem(ItemizadoRow? item, IEnumerable<CubicacionRow> cubicacion, decimal gastosGeneralesPct, decimal utilidadPct);
-}
 public interface IValidationService
 {
     BudgetValidationResult ValidateProject(ProjectFileData project);
     BudgetValidationResult ValidateBudget(ProjectInfoRow proyecto, IEnumerable<ItemizadoRow> itemizado, IEnumerable<MaterialRow> materiales, IEnumerable<CubicacionRow> cubicacion, IEnumerable<TemplateRow> plantillas);
-    BudgetValidationResult ValidateApu(ApuViewModel apu);
 }

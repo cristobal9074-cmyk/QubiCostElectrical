@@ -15,8 +15,16 @@ public sealed class RelayCommand : ICommand
 
     public event EventHandler? CanExecuteChanged
     {
-        add => inner.CanExecuteChanged += value;
-        remove => inner.CanExecuteChanged -= value;
+        add
+        {
+            inner.CanExecuteChanged += value;
+            CommandManager.RequerySuggested += value;
+        }
+        remove
+        {
+            inner.CanExecuteChanged -= value;
+            CommandManager.RequerySuggested -= value;
+        }
     }
 
     public bool CanExecute(object? parameter) => inner.CanExecute(parameter);
@@ -37,8 +45,16 @@ public sealed class RelayCommand<T> : ICommand
 
     public event EventHandler? CanExecuteChanged
     {
-        add => inner.CanExecuteChanged += value;
-        remove => inner.CanExecuteChanged -= value;
+        add
+        {
+            inner.CanExecuteChanged += value;
+            CommandManager.RequerySuggested += value;
+        }
+        remove
+        {
+            inner.CanExecuteChanged -= value;
+            CommandManager.RequerySuggested -= value;
+        }
     }
 
     public bool CanExecute(object? parameter) => inner.CanExecute(parameter);

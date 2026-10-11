@@ -14,9 +14,9 @@ public sealed class CurrencyViewModelTests
         var host = WpfAppHost.Current;
         host.Session.NewProject("currency-test");
         host.Session.CurrentProjectPath = "currency-test.qce";
-        host.Session.ProjectInfo.ValorUfClp       = 37_500m;
+        host.Session.ProjectInfo.ValorUfClp = 37_500m;
         host.Session.ProjectInfo.TipoCambioUsdClp = 920m;
-        host.Session.ProjectInfo.FechaTipoCambio  = new DateTime(2026, 1, 15);
+        host.Session.ProjectInfo.FechaTipoCambio = new DateTime(2026, 1, 15);
         host.Session.ProjectInfo.MonedaPresupuesto = "UF";
         host.Session.ProjectInfo.HistorialTasas.Clear();
     }
@@ -45,9 +45,9 @@ public sealed class CurrencyViewModelTests
     public void TryApplyChanges_InvalidUf_SetsValidationError()
     {
         var vm = new CurrencyViewModel(WpfAppHost.Current);
-        vm.EditUfClp  = "no-es-numero";
+        vm.EditUfClp = "no-es-numero";
         vm.EditUsdClp = "920";
-        vm.EditFecha  = "15/01/2026";
+        vm.EditFecha = "15/01/2026";
         vm.TryApplyChanges();
 
         Assert.NotNull(vm.ValidationError);
@@ -58,17 +58,17 @@ public sealed class CurrencyViewModelTests
     public void TryApplyChanges_ValidFields_UpdatesSession()
     {
         var host = WpfAppHost.Current;
-        host.Session.ProjectInfo.ValorUfClp       = 0;
+        host.Session.ProjectInfo.ValorUfClp = 0;
         host.Session.ProjectInfo.TipoCambioUsdClp = 0;
         var vm = new CurrencyViewModel(host);
 
-        vm.EditUfClp  = "38000";
+        vm.EditUfClp = "38000";
         vm.EditUsdClp = "950";
-        vm.EditFecha  = "20/01/2026";
+        vm.EditFecha = "20/01/2026";
         vm.TryApplyChanges();
 
         Assert.Equal(38_000m, host.Session.ProjectInfo.ValorUfClp);
-        Assert.Equal(950m,    host.Session.ProjectInfo.TipoCambioUsdClp);
+        Assert.Equal(950m, host.Session.ProjectInfo.TipoCambioUsdClp);
         Assert.False(vm.HasPendingChanges);
         Assert.True(string.IsNullOrEmpty(vm.ValidationError));
     }
@@ -77,14 +77,14 @@ public sealed class CurrencyViewModelTests
     public void TryApplyChanges_AddsHistorialEntry()
     {
         var host = WpfAppHost.Current;
-        host.Session.ProjectInfo.ValorUfClp       = 0;
+        host.Session.ProjectInfo.ValorUfClp = 0;
         host.Session.ProjectInfo.TipoCambioUsdClp = 0;
         host.Session.ProjectInfo.HistorialTasas.Clear();
         var vm = new CurrencyViewModel(host);
 
-        vm.EditUfClp  = "38500";
+        vm.EditUfClp = "38500";
         vm.EditUsdClp = "960";
-        vm.EditFecha  = "21/01/2026";
+        vm.EditFecha = "21/01/2026";
         vm.TryApplyChanges();
 
         Assert.Single(host.Session.ProjectInfo.HistorialTasas);
@@ -111,7 +111,10 @@ public sealed class CurrencyViewModelTests
         host.Session.ProjectInfo.HistorialTasas.Clear();
         host.Session.ProjectInfo.HistorialTasas.Add(new TasaCambioHistorialRow
         {
-            UfClp = 37_000m, UsdClp = 900m, Activa = true, Fecha = new DateTime(2026, 1, 1)
+            UfClp = 37_000m,
+            UsdClp = 900m,
+            Activa = true,
+            Fecha = new DateTime(2026, 1, 1)
         });
         var vm = new CurrencyViewModel(host);
 
@@ -164,14 +167,14 @@ public sealed class CurrencyViewModelTests
     public void TryApplyChanges_UpdatesMonedaPresupuesto()
     {
         var host = WpfAppHost.Current;
-        host.Session.ProjectInfo.ValorUfClp       = 0;
+        host.Session.ProjectInfo.ValorUfClp = 0;
         host.Session.ProjectInfo.TipoCambioUsdClp = 0;
         var vm = new CurrencyViewModel(host);
 
         vm.MonedaSeleccionada = "CLP";
-        vm.EditUfClp  = "38000";
+        vm.EditUfClp = "38000";
         vm.EditUsdClp = "950";
-        vm.EditFecha  = "20/01/2026";
+        vm.EditFecha = "20/01/2026";
         vm.TryApplyChanges();
 
         Assert.Equal("CLP", host.Session.ProjectInfo.MonedaPresupuesto);
@@ -181,14 +184,14 @@ public sealed class CurrencyViewModelTests
     public void TryApplyChanges_ClpSinUf_SetsValidationError()
     {
         var host = WpfAppHost.Current;
-        host.Session.ProjectInfo.ValorUfClp       = 0;
+        host.Session.ProjectInfo.ValorUfClp = 0;
         host.Session.ProjectInfo.TipoCambioUsdClp = 0;
         var vm = new CurrencyViewModel(host);
 
         vm.MonedaSeleccionada = "CLP";
-        vm.EditUfClp  = "";      // sin UF
+        vm.EditUfClp = "";      // sin UF
         vm.EditUsdClp = "";
-        vm.EditFecha  = "20/01/2026";
+        vm.EditFecha = "20/01/2026";
         var result = vm.TryApplyChanges();
 
         Assert.True(result);
@@ -199,14 +202,14 @@ public sealed class CurrencyViewModelTests
     public void TryApplyChanges_UsdSinTasas_SetsValidationError()
     {
         var host = WpfAppHost.Current;
-        host.Session.ProjectInfo.ValorUfClp       = 0;
+        host.Session.ProjectInfo.ValorUfClp = 0;
         host.Session.ProjectInfo.TipoCambioUsdClp = 0;
         var vm = new CurrencyViewModel(host);
 
         vm.MonedaSeleccionada = "USD";
-        vm.EditUfClp  = "";      // sin UF ni USD
+        vm.EditUfClp = "";      // sin UF ni USD
         vm.EditUsdClp = "";
-        vm.EditFecha  = "20/01/2026";
+        vm.EditFecha = "20/01/2026";
         var result = vm.TryApplyChanges();
 
         Assert.False(result);
@@ -219,7 +222,7 @@ public sealed class CurrencyViewModelTests
         var host = WpfAppHost.Current;
         host.Session.ProjectInfo.HistorialTasas.Clear();
         host.Session.ProjectInfo.HistorialTasas.Add(new TasaCambioHistorialRow { Fecha = new DateTime(2026, 1, 1), UfClp = 36_000m, UsdClp = 900m, Activa = false });
-        host.Session.ProjectInfo.HistorialTasas.Add(new TasaCambioHistorialRow { Fecha = new DateTime(2026, 3, 1), UfClp = 38_000m, UsdClp = 950m, Activa = true  });
+        host.Session.ProjectInfo.HistorialTasas.Add(new TasaCambioHistorialRow { Fecha = new DateTime(2026, 3, 1), UfClp = 38_000m, UsdClp = 950m, Activa = true });
         host.Session.ProjectInfo.HistorialTasas.Add(new TasaCambioHistorialRow { Fecha = new DateTime(2026, 2, 1), UfClp = 37_000m, UsdClp = 930m, Activa = false });
         var vm = new CurrencyViewModel(host);
 
@@ -243,15 +246,15 @@ public sealed class CurrencyViewModelTests
     public void TryApplyChanges_PreviousHistorial_MarkedInactive()
     {
         var host = WpfAppHost.Current;
-        host.Session.ProjectInfo.ValorUfClp       = 0;
+        host.Session.ProjectInfo.ValorUfClp = 0;
         host.Session.ProjectInfo.TipoCambioUsdClp = 0;
         host.Session.ProjectInfo.HistorialTasas.Clear();
         host.Session.ProjectInfo.HistorialTasas.Add(new TasaCambioHistorialRow { Fecha = new DateTime(2026, 1, 1), UfClp = 36_000m, UsdClp = 900m, Activa = true });
         var vm = new CurrencyViewModel(host);
 
-        vm.EditUfClp  = "38500";
+        vm.EditUfClp = "38500";
         vm.EditUsdClp = "960";
-        vm.EditFecha  = "21/01/2026";
+        vm.EditFecha = "21/01/2026";
         vm.TryApplyChanges();
 
         var previo = host.Session.ProjectInfo.HistorialTasas.First(h => h.UfClp == 36_000m);
@@ -276,9 +279,9 @@ public sealed class CurrencyViewModelTests
         var countBefore = host.Session.ProjectInfo.HistorialTasas.Count;
 
         // Aplicar exactamente las mismas tasas → no hay cambio → no agrega historial
-        vm.EditUfClp  = "37500";
+        vm.EditUfClp = "37500";
         vm.EditUsdClp = "920";
-        vm.EditFecha  = "15/01/2026";
+        vm.EditFecha = "15/01/2026";
         vm.TryApplyChanges();
 
         Assert.Equal(countBefore, host.Session.ProjectInfo.HistorialTasas.Count);

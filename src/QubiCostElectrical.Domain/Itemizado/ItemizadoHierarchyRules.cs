@@ -38,7 +38,7 @@ public static class ItemizadoHierarchyRules
         return id.Trim();
     }
 
-  /// <summary>Padre jerárquico del Id interno (no del Item visible).</summary>
+    /// <summary>Padre jerárquico del Id interno (no del Item visible).</summary>
     public static string ParentIdOf(string? id, IReadOnlyList<ItemizadoRow>? rows = null)
     {
         if (string.IsNullOrWhiteSpace(id))

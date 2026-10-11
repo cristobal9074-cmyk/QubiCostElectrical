@@ -246,4 +246,74 @@ public sealed class PegarItemizadoUseCaseTests
     {
         Assert.Equal(expected, PegarItemizadoUseCase.IsLikelyTitle(desc));
     }
+
+    // ─── Tolerancia a formatos chilenos y códigos con punto ───────────────
+
+    [Fact]
+    public void Execute_WithDotTerminatedItemCodes_RecognizedAsTitleAndPartidas()
+    {
+        string text =
+            "1.\tTABLERO GENERAL\t\n" +
+            "1.1.\tInterruptor termomagnético 10A\tUN\t12\n" +
+            "1.2.\tCable eva 2.5 mm2\tm\t1.500\n";
+
+        var result = _sut.Execute(text);
+
+        Assert.Equal(3, result.Rows.Count);
+        Assert.True(result.Rows[0].EsTitulo);
+        Assert.Equal("1.0", result.Rows[0].Id);
+        Assert.False(result.Rows[1].EsTitulo);
+        Assert.Equal(12m, result.Rows[1].CantidadOriginal);
+        Assert.False(result.Rows[2].EsTitulo);
+        Assert.Equal(1500m, result.Rows[2].CantidadOriginal);
+    }
+
+    [Fact]
+    public void Execute_WithRomanNumerals_RecognizedAsTitle()
+    {
+        string text =
+            "I.\tOBRAS ELECTRICAS\t\n" +
+            "1.1\tCanalización subterránea\tml\t350,5\n";
+
+        var result = _sut.Execute(text);
+
+        Assert.Equal(2, result.Rows.Count);
+        Assert.True(result.Rows[0].EsTitulo);
+        Assert.False(result.Rows[1].EsTitulo);
+        Assert.Equal(350.5m, result.Rows[1].CantidadOriginal);
+    }
+
+    [Theory]
+    [InlineData("1.250,50", true)]
+    [InlineData("$ 12.500", true)]
+    [InlineData("12.500 CLP", true)]
+    [InlineData("UF 2,5", true)]
+    [InlineData("0", true)]
+    [InlineData("0,00", true)]
+    [InlineData("UN", false)]
+    [InlineData("TABLERO", false)]
+    [InlineData("-", false)]
+    public void IsNumericCell_ChileanAndCurrencyFormats_EvaluatedAccurately(string text, bool expected)
+    {
+        Assert.Equal(expected, PegarItemizadoUseCase.IsNumericCell(text));
+    }
+
+    [Fact]
+    public void Execute_WithoutHeaders_ChileanNumbersAndUnits_DetectsColumnsAccurately()
+    {
+        string text =
+            "1\tTablero alumbrado\t\n" +
+            "1.1\tCentro de luz LED\tPTO\t1.250,50\n" +
+            "1.2\tEnchufe doble 10/16A\tPTO\t850\n";
+
+        var result = _sut.Execute(text);
+
+        Assert.Equal(3, result.Rows.Count);
+        Assert.True(result.Rows[0].EsTitulo);
+        Assert.False(result.Rows[1].EsTitulo);
+        Assert.Equal("PTO", result.Rows[1].Unidad);
+        Assert.Equal(1250.50m, result.Rows[1].CantidadOriginal);
+        Assert.Equal("PTO", result.Rows[2].Unidad);
+        Assert.Equal(850m, result.Rows[2].CantidadOriginal);
+    }
 }

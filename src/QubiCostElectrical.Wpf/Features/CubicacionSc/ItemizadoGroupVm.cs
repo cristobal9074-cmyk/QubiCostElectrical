@@ -5,5 +5,5 @@ namespace QubiCostElectrical.Wpf.Features.CubicacionSc;
 
 public sealed class ItemizadoGroupVm : ViewModelBase
 {
-	public string Nombre { get; init; } = "";
+    public string Nombre { get; init; } = "";
 }

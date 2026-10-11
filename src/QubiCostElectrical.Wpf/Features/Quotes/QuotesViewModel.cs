@@ -106,8 +106,10 @@ public sealed partial class QuotesViewModel : SessionAwareViewModelBase, IRefres
     private readonly RelayCommand<QuoteComparisonRowVm> applyPriceCommand;
     private readonly RelayCommand applyAllBestPricesCommand;
     private readonly RelayCommand applySelectionToBankCommand;
+    private readonly System.Windows.Threading.DispatcherTimer searchDebounceTimer;
 
     private string searchText = "";
+    private string cachedNormalizedSearch = "";
     private string selectedCategory = "Todas";
     private QuoteProviderSummaryVm? selectedProvider;
     private QuoteComparisonRowVm? selectedComparisonRow;

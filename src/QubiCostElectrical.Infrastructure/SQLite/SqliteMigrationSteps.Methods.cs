@@ -741,4 +741,22 @@ internal static partial class SqliteMigrationSteps
             CREATE INDEX IF NOT EXISTS ix_contract_audit_contract_id ON contract_audit(contract_id);
             """);
     }
+
+    // Estados de pago (fase Ejecución): filas mensuales del cronograma de cobros + fila de
+    // configuración (id='config') en la misma tabla. La tabla legacy "estados_pago"
+    // (Migration014, feature retirada sin datos activos) queda intacta por separado.
+    internal static void Migration033_EstadosPago(SqliteConnection connection, SqliteTransaction transaction)
+    {
+        SqliteMigratorHelpers.Execute(connection, transaction, """
+            CREATE TABLE IF NOT EXISTS estados_pago_mes (
+                id          TEXT NOT NULL PRIMARY KEY,
+                sort_order  INTEGER NOT NULL DEFAULT 0,
+                anio        INTEGER NOT NULL DEFAULT 0,
+                mes         INTEGER NOT NULL DEFAULT 0,
+                estado      TEXT NOT NULL DEFAULT '',
+                json        TEXT NOT NULL,
+                updated_at  TEXT NOT NULL
+            );
+            """);
+    }
 }

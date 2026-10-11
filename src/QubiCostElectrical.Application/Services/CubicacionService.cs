@@ -64,6 +64,7 @@ public sealed class CubicacionService : ICubicacionService
         row.Area = "General";
         row.QtyExpressions = Array.Empty<string>();
         row.TotalExpression = "";
+        row.Operacion = "";
         row.MermaPctOverride = -1m;
         row.HerramientasPctOverride = -1m;
         row.RedondeoMultiplo = 0m;
@@ -75,26 +76,27 @@ public sealed class CubicacionService : ICubicacionService
         cubicacion.RemoveAll(x =>
             string.Equals(x.ItemId, itemId ?? "", StringComparison.OrdinalIgnoreCase) &&
             string.IsNullOrWhiteSpace(x.Codigo) &&
+            string.IsNullOrWhiteSpace(x.Operacion) &&
             x.Cantidad == 0m &&
             (x.QtyExpressions == null || !x.QtyExpressions.Any(v => !string.IsNullOrWhiteSpace(v))));
     }
 
-    public void ApplyMaterial(CubicacionRow row, MaterialRow material, decimal valorUfClp = 0m)
+    public void ApplyMaterial(CubicacionRow row, MaterialRow material, decimal valorUfClp = 0m, ProjectInfoRow? project = null)
     {
         row.Codigo = CodeHelper.Normalize(material.Codigo);
         row.Descripcion = material.Descripcion;
         row.Unidad = material.Unidad;
         row.Categoria = material.Categoria;
         row.MatClp = material.MatClp;
-        row.MoClp = material.MoClp;
+        row.MoClp = MaterialMoResolver.MoClpEfectiva(material, project);
         // El UF se deriva siempre del CLP con el valor UF vigente del proyecto, nunca se
         // copia el UF del material (puede venir en 0 o calculado con otro valor UF).
         row.RecalcularUf(valorUfClp);
         row.Tipo = string.Equals(material.Categoria, "Equipo", StringComparison.OrdinalIgnoreCase) ? "EQ" : "MAT";
     }
 
-    public int SyncPricesFromCatalog(IEnumerable<CubicacionRow> cubicacion, IEnumerable<MaterialRow> materiales, decimal valorUfClp)
-        => SyncPricesFromCatalog(cubicacion, materiales, valorUfClp, valorizaciones: null);
+    public int SyncPricesFromCatalog(IEnumerable<CubicacionRow> cubicacion, IEnumerable<MaterialRow> materiales, decimal valorUfClp, ProjectInfoRow? project = null)
+        => SyncPricesFromCatalog(cubicacion, materiales, valorUfClp, valorizaciones: null, project);
 
     /// <summary>
     /// Igual que <see cref="SyncPricesFromCatalog(IEnumerable{CubicacionRow}, IEnumerable{MaterialRow}, decimal)"/>
@@ -104,7 +106,8 @@ public sealed class CubicacionService : ICubicacionService
         IEnumerable<CubicacionRow> cubicacion,
         IEnumerable<MaterialRow> materiales,
         decimal valorUfClp,
-        IList<CubicacionValorizacionRow>? valorizaciones)
+        IList<CubicacionValorizacionRow>? valorizaciones,
+        ProjectInfoRow? project = null)
     {
         var byCode = (materiales ?? Enumerable.Empty<MaterialRow>())
             .Where(m => !string.IsNullOrWhiteSpace(m.Codigo))
@@ -135,7 +138,8 @@ public sealed class CubicacionService : ICubicacionService
                 isCategoryUpdated = true;
             }
 
-            if (row.MatClp == material.MatClp && row.MoClp == material.MoClp)
+            decimal moEfectiva = MaterialMoResolver.MoClpEfectiva(material, project);
+            if (row.MatClp == material.MatClp && row.MoClp == moEfectiva)
             {
                 if (isCategoryUpdated)
                 {
@@ -145,14 +149,14 @@ public sealed class CubicacionService : ICubicacionService
             }
 
             row.MatClp = material.MatClp;
-            row.MoClp = material.MoClp;
+            row.MoClp = moEfectiva;
             row.RecalcularUf(valorUfClp);
 
             if (valorizacionByRecurso != null &&
                 valorizacionByRecurso.TryGetValue(row.Id, out var valorizacion))
             {
                 valorizacion.MatClp = material.MatClp;
-                valorizacion.MoClp = material.MoClp;
+                valorizacion.MoClp = moEfectiva;
                 valorizacion.MatUf = row.MatUf;
                 valorizacion.MoUf = row.MoUf;
                 valorizacion.FuentePrecio = "Lista de precios";
@@ -189,7 +193,9 @@ public sealed class CubicacionService : ICubicacionService
             RedondeoMultiplo = source.RedondeoMultiplo,
             RedondeoModo = source.RedondeoModo,
             NotaInterna = source.NotaInterna,
-            GgUtFactor = source.GgUtFactor
+            GgUtFactor = source.GgUtFactor,
+            Operacion = source.Operacion ?? "",
+            Esclavo = source.Esclavo?.Clone()
         };
     }
 
@@ -311,6 +317,7 @@ public sealed class CubicacionService : ICubicacionService
         if (row == null) return false;
         return !string.IsNullOrWhiteSpace(row.Codigo) ||
                !string.IsNullOrWhiteSpace(row.Descripcion) ||
+               !string.IsNullOrWhiteSpace(row.Operacion) ||
                row.Cantidad != 0m ||
                (row.QtyExpressions != null && row.QtyExpressions.Any(v => !string.IsNullOrWhiteSpace(v)));
     }

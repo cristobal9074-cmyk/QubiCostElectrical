@@ -27,7 +27,7 @@ Write-Host "Versión: $version" -ForegroundColor Yellow
 # ── 2. Limpiar publicación anterior ──────────────────────────────────────────
 if (Test-Path $publishDir) {
     Write-Host "`nLimpiando publicación anterior..." -ForegroundColor Yellow
-    Remove-Item -LiteralPath $publishDir -Recurse -Force
+    Get-ChildItem -LiteralPath $publishDir -Force | Remove-Item -Recurse -Force
 }
 
 # ── 3. Publish self-contained ────────────────────────────────────────────────

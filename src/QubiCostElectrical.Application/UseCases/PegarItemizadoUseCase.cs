@@ -40,10 +40,10 @@ public sealed class PegarItemizadoUseCase
             var h = table[headerRow];
             // Cuando hay 2 filas de encabezado, las columnas de unidad/cant pueden estar en la siguiente
             var extra = extraHeaderRow >= 0 ? table[extraHeaderRow] : null;
-            cItem   = ItemizadoImportParser.FindColumn(h, extra, "ITEM", "ÍTEM", "NITEM", "NUMEROITEM", "PARTIDA", "N°", "NUM");
-            cDesc   = ItemizadoImportParser.FindColumn(h, extra, "DESCRIPCION", "DESCRIPCIÓN", "DETALLE", "NOMBRE", "PARTIDADESCRIPCION", "PARTIDA");
+            cItem = ItemizadoImportParser.FindColumn(h, extra, "ITEM", "ÍTEM", "NITEM", "NUMEROITEM", "PARTIDA", "N°", "NUM");
+            cDesc = ItemizadoImportParser.FindColumn(h, extra, "DESCRIPCION", "DESCRIPCIÓN", "DETALLE", "NOMBRE", "PARTIDADESCRIPCION", "PARTIDA");
             cUnidad = ItemizadoImportParser.FindColumn(h, extra, "UNIDAD", "UD", "UN", "UND", "UNIT", "UNID", "UNIDADES");
-            cCant   = ItemizadoImportParser.FindColumn(h, extra, "CANTIDAD", "CANT", "QTY", "CANTIDADITEM", "CANTIDADES", "NUEVASCANTIDADES");
+            cCant = ItemizadoImportParser.FindColumn(h, extra, "CANTIDAD", "CANT", "QTY", "CANTIDADITEM", "CANTIDADES", "NUEVASCANTIDADES");
             int lastHeader = extraHeaderRow >= 0 ? extraHeaderRow : headerRow;
             dataStart = lastHeader + 1;
             columnMap = BuildColumnMap(cItem, cDesc, cUnidad, cCant, table[headerRow]);
@@ -90,7 +90,7 @@ public sealed class PegarItemizadoUseCase
     private static (int cItem, int cDesc, int cUnidad, int cCant) DetectColumnsHeuristic(
         List<List<string>> table)
     {
-        var sample = table.Take(10).ToList();
+        var sample = table.Take(Math.Min(table.Count, 30)).ToList();
         if (sample.Count == 0) return (-1, 0, -1, -1);
 
         int colCount = sample.Max(r => r.Count);
@@ -99,9 +99,9 @@ public sealed class PegarItemizadoUseCase
         // Columna única: todo es descripción
         if (colCount == 1) return (-1, 0, -1, -1);
 
-        var avgLen    = new double[colCount];
+        var avgLen = new double[colCount];
         var unitScore = new int[colCount];
-        var numScore  = new int[colCount];
+        var numScore = new int[colCount];
         var codeScore = new int[colCount];
 
         for (int c = 0; c < colCount; c++)
@@ -116,9 +116,9 @@ public sealed class PegarItemizadoUseCase
 
             foreach (string v in vals)
             {
-                if (IsKnownUnit(v))   unitScore[c]++;
+                if (IsKnownUnit(v)) unitScore[c]++;
                 if (IsNumericCell(v)) numScore[c]++;
-                if (IsCodeLike(v))    codeScore[c]++;
+                if (IsCodeLike(v)) codeScore[c]++;
             }
         }
 
@@ -174,8 +174,8 @@ public sealed class PegarItemizadoUseCase
         {
             var row = table[i];
             string itemCode = ItemizadoImportParser.GetCell(row, cItem).Trim();
-            string desc     = ItemizadoImportParser.GetCell(row, cDesc).Trim();
-            string unidad   = ItemizadoImportParser.GetCell(row, cUnidad).Trim();
+            string desc = ItemizadoImportParser.GetCell(row, cDesc).Trim();
+            string unidad = ItemizadoImportParser.GetCell(row, cUnidad).Trim();
             string cantText = ItemizadoImportParser.GetCell(row, cCant).Trim();
 
             if (string.IsNullOrWhiteSpace(itemCode) && string.IsNullOrWhiteSpace(desc))
@@ -192,13 +192,18 @@ public sealed class PegarItemizadoUseCase
             // No inventar unidad: respetar el valor del Excel exactamente.
             // Si está vacía, se deja vacía para que el usuario la complete.
 
-            bool esTitulo = ItemizadoImportParser.IsImportedTitleCode(itemCode)
-                || (string.IsNullOrWhiteSpace(itemCode) && IsLikelyTitle(desc));
-
             // Cantidad vacía = 0 (no 1m); se respeta el valor exacto del Excel
             decimal cant = string.IsNullOrWhiteSpace(cantText)
                 ? 0m
                 : ItemizadoImportParser.ParseDecimal(cantText);
+
+            bool isTitleCode = ItemizadoImportParser.IsImportedTitleCode(itemCode);
+            bool hasQuantityOrUnit = cant > 0m || !string.IsNullOrWhiteSpace(unidad);
+            bool hasSubItems = isTitleCode && ItemizadoImportParser.HasSubItemsInTable(table, i, cItem, cDesc, itemCode);
+
+            bool esTitulo = (isTitleCode && (!hasQuantityOrUnit || hasSubItems))
+                || (string.IsNullOrWhiteSpace(itemCode) && !hasQuantityOrUnit && IsLikelyTitle(desc));
+
             if (!esTitulo)
                 cant = ItemizadoHierarchyRules.NormalizePartidaQuantity(cant);
 
@@ -224,20 +229,36 @@ public sealed class PegarItemizadoUseCase
         string u = v.Trim().ToUpperInvariant();
         return u is "M" or "M2" or "M3" or "ML" or "ML." or "GL" or "UN" or "UND" or "UNI"
             or "KG" or "TON" or "HR" or "HH" or "DÍA" or "DIA" or "MES" or "PT"
-            or "KVA" or "KW" or "VA" or "A" or "PZA" or "PZ" or "JGO" or "SET";
+            or "KVA" or "KW" or "VA" or "A" or "PZA" or "PZ" or "JGO" or "SET"
+            or "PTO" or "PTOS" or "PUNTO" or "PUNTOS" or "UNID" or "UNIDADES"
+            or "ROLLO" or "ROLLOS" or "TIRA" or "TIRAS" or "BARRA" or "BARRAS"
+            or "BOB" or "BOBINA" or "PAR" or "PARES" or "GLOBAL" or "LOTE";
     }
 
-    private static bool IsNumericCell(string v)
+    public static bool IsNumericCell(string v)
     {
-        string s = v.Trim().Replace(",", ".").Replace(" ", "");
-        return decimal.TryParse(s, System.Globalization.NumberStyles.Any,
-            System.Globalization.CultureInfo.InvariantCulture, out _);
+        if (string.IsNullOrWhiteSpace(v)) return false;
+        string s = v.Trim();
+
+        // Limpiar símbolos de moneda comunes y sufijos/prefijos de divisa
+        string clean = Regex.Replace(s, @"[\$€£]|(?i)\b(CLP|UF|USD)\b", "").Trim();
+        if (string.IsNullOrWhiteSpace(clean)) return false;
+
+        // Si aún contiene letras (ej. descripciones o unidades), no es celda numérica
+        if (clean.Any(char.IsLetter)) return false;
+
+        // Intentar parseo con el parser robusto de ItemizadoImportParser
+        decimal val = ItemizadoImportParser.ParseDecimal(clean);
+        if (val != 0m) return true;
+
+        // Si es 0 o formato con dígitos ceros
+        return Regex.IsMatch(clean, @"^[0,\.\-\s]+$") && clean.Any(char.IsDigit);
     }
 
-    private static bool IsCodeLike(string v)
+    public static bool IsCodeLike(string v)
     {
         string s = v.Trim();
-        return Regex.IsMatch(s, @"^[\d,\.]+$") && s.Length <= 10;
+        return Regex.IsMatch(s, @"^([a-zA-Z]{1,3}\.)?[\d,\.]+$") && s.Length <= 12;
     }
 
     /// <summary>

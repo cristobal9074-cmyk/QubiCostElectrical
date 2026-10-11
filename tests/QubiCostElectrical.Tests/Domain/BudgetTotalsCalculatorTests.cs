@@ -252,11 +252,11 @@ public class BudgetTotalsCalculatorTests
     }
 
     /// <summary>
-    /// Regresión numérica contra PEL029A2026 hoja -=COSTOS=- (CLP, tolerancia 1).
+    /// Regresión numérica de paridad estándar de costos (CLP, tolerancia 1).
     /// Fuente: docs/analisis-factores-presentacion-PEL029A2026.md
     /// </summary>
     [Fact]
-    public void Build_ExcelCostos_Pel029_RegressionTotals()
+    public void Build_ExcelCostos_Estandar_RegressionTotals()
     {
         const decimal mat = 292_927_299m;
         const decimal eq = 167_929_393m;

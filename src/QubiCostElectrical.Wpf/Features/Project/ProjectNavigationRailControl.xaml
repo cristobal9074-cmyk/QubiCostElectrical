@@ -11,19 +11,16 @@
     <StackPanel>
       <TextBlock Text="SECCIONES" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold"
                  Foreground="{DynamicResource Brush.Ink4}" Margin="10,4,10,10" />
-      <Button AutomationProperties.Name="Sección Identidad" Content="1  Identidad"
-              Command="{Binding SelectSectionCommand}" CommandParameter="identidad"
+      <Button AutomationProperties.Name="Sección Proyecto y Finanzas" Content="1  Proyecto &amp; Finanzas"
+              Command="{Binding SelectSectionCommand}" CommandParameter="proyectofinanzas"
               Style="{StaticResource ProjectRailItem}" />
-      <Button AutomationProperties.Name="Sección Comercial" Content="2  Comercial"
-              Command="{Binding SelectSectionCommand}" CommandParameter="comercial"
-              Style="{StaticResource ProjectRailItem}" />
-      <Button AutomationProperties.Name="Sección Responsable" Content="3  Responsable"
+      <Button AutomationProperties.Name="Sección Responsable" Content="2  Responsable"
               Command="{Binding SelectSectionCommand}" CommandParameter="equipo"
               Style="{StaticResource ProjectRailItem}" />
-      <Button AutomationProperties.Name="Sección Alcance" Content="4  Alcance"
+      <Button AutomationProperties.Name="Sección Alcance" Content="3  Alcance"
               Command="{Binding SelectSectionCommand}" CommandParameter="alcance"
               Style="{StaticResource ProjectRailItem}" />
-      <Button AutomationProperties.Name="Sección Auditoría" Content="5  Auditoría"
+      <Button AutomationProperties.Name="Sección Auditoría" Content="4  Auditoría"
               Command="{Binding SelectSectionCommand}" CommandParameter="auditoria"
               Style="{StaticResource ProjectRailItem}" />
     </StackPanel>

@@ -11,7 +11,7 @@ public partial class ChangeOrderEditorDialog : Window
     public ChangeOrderEditorDialog(ChangeOrderRow draft)
     {
         _draft = draft;
-        _vm    = new ChangeOrderEditorViewModel();
+        _vm = new ChangeOrderEditorViewModel();
         _vm.LoadFrom(draft);
         InitializeComponent();
         DataContext = _vm;

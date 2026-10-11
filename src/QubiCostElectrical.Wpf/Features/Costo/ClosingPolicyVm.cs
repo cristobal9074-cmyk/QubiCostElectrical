@@ -55,6 +55,12 @@ public sealed class ClosingPolicySectionVm : ViewModelBase
     private bool hasStampNote;
     private string policyWarning = "";
     private bool hasPolicyWarning;
+    private string viabilidadText = "";
+    private bool viabilidadIsSuccess;
+    private bool viabilidadIsWarning;
+    private bool viabilidadIsDanger;
+    private string gainshareSimulacionText = "";
+    private bool hasGainshareSimulacion;
 
     public ClosingPolicySectionVm(Action<ClosingPolicyType> onPolicyCommit, Action<string, decimal> onParamCommit)
     {
@@ -97,6 +103,12 @@ public sealed class ClosingPolicySectionVm : ViewModelBase
     public bool HasStampNote { get => hasStampNote; set => SetProperty(ref hasStampNote, value); }
     public string PolicyWarning { get => policyWarning; set => SetProperty(ref policyWarning, value); }
     public bool HasPolicyWarning { get => hasPolicyWarning; set => SetProperty(ref hasPolicyWarning, value); }
+    public string ViabilidadText { get => viabilidadText; set => SetProperty(ref viabilidadText, value); }
+    public bool ViabilidadIsSuccess { get => viabilidadIsSuccess; set => SetProperty(ref viabilidadIsSuccess, value); }
+    public bool ViabilidadIsWarning { get => viabilidadIsWarning; set => SetProperty(ref viabilidadIsWarning, value); }
+    public bool ViabilidadIsDanger { get => viabilidadIsDanger; set => SetProperty(ref viabilidadIsDanger, value); }
+    public string GainshareSimulacionText { get => gainshareSimulacionText; set => SetProperty(ref gainshareSimulacionText, value); }
+    public bool HasGainshareSimulacion { get => hasGainshareSimulacion; set => SetProperty(ref hasGainshareSimulacion, value); }
 
     /// <summary>Actualiza los avisos de salvaguarda: parámetro obsoleto y política que ignora factores.</summary>
     public void SetSafeguards(ClosingPolicySelection selection, decimal currentCostoEjecucionUf)
@@ -238,5 +250,41 @@ public sealed class ClosingPolicySectionVm : ViewModelBase
         foreach (var w in result.Advertencias)
             Advertencias.Add(w);
         HasAdvertencias = Advertencias.Count > 0;
+
+        if (result.MargenClp < 0m)
+        {
+            ViabilidadText = "Pérdida operativa";
+            ViabilidadIsDanger = true;
+            ViabilidadIsWarning = false;
+            ViabilidadIsSuccess = false;
+        }
+        else if (result.CostoProyectoClp > 0m && result.VentaFinalClp < result.CostoProyectoClp)
+        {
+            ViabilidadText = "Margen reducido";
+            ViabilidadIsDanger = false;
+            ViabilidadIsWarning = true;
+            ViabilidadIsSuccess = false;
+        }
+        else
+        {
+            ViabilidadText = "Margen saludable";
+            ViabilidadIsDanger = false;
+            ViabilidadIsWarning = false;
+            ViabilidadIsSuccess = true;
+        }
+
+        if (result.Policy == ClosingPolicyType.GainsharePainshare && TryParseDecimal(targetCostClpText, out var tc) && tc > 0m)
+        {
+            TryParseDecimal(gainsharePctText, out var gPct);
+            if (gPct <= 0m) gPct = 50m;
+            decimal ahorro10 = tc * 0.10m * (gPct / 100m);
+            GainshareSimulacionText = $"Simulación: Ahorro 10% aportaría +$ {ahorro10:N0} bono · Sobrecosto 10% penalizaría -$ {ahorro10:N0}";
+            HasGainshareSimulacion = true;
+        }
+        else
+        {
+            GainshareSimulacionText = "";
+            HasGainshareSimulacion = false;
+        }
     }
 }

@@ -21,13 +21,8 @@ public static class ApplicationServiceCollectionExtensions
         services.AddSingleton<IBudgetCalculationService, BudgetCalculationService>();
         services.AddSingleton<IMaterialSearchService, MaterialSearchService>();
         services.AddSingleton<ICurrencyConversionService, CurrencyConversionService>();
-        services.AddSingleton<ICubicacionViewModelService, CubicacionViewModelService>();
-        services.AddSingleton<IProyectoViewModelService, ProyectoViewModelService>();
-        services.AddSingleton<IApuViewModelService, ApuViewModelService>();
         services.AddSingleton<IApuService, ApuService>();
-        services.AddSingleton<IBudgetKpiService, BudgetKpiService>();
         services.AddSingleton<IPurchaseListService, PurchaseListService>();
-        services.AddSingleton<ITemplateService, TemplateService>();
         services.AddSingleton<IValidationService, ValidationService>();
         services.AddSingleton<ICubicacionService, CubicacionService>();
         services.AddSingleton<ICubicacionTakeoffQueryService, CubicacionTakeoffQueryService>();
@@ -37,9 +32,6 @@ public static class ApplicationServiceCollectionExtensions
         services.AddSingleton<IPriceTraceabilityService, PriceTraceabilityService>();
         services.AddSingleton<IVersionComparisonService, BudgetVersionComparisonService>();
         services.AddSingleton<IEconomicCalculationService, EconomicCalculationService>();
-        services.AddSingleton<IApuCatalogService, ApuCatalogService>();
-        services.AddSingleton<IBenchmarkService, BenchmarkService>();
-        services.AddSingleton<BudgetVarianceService>();
         services.AddSingleton<DashboardExecutiveService>();
         services.AddSingleton<CubicacionCompositionService>();
         services.AddSingleton<PriceBankApplicationService>();

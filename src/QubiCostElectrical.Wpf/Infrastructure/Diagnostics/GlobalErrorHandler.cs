@@ -131,9 +131,11 @@ public static class GlobalErrorHandler
 
     private static bool IsRecoverable(Exception ex)
     {
-        return ex is IOException
-            or UnauthorizedAccessException
-            or OperationCanceledException;
+        // Excepciones verdaderamente fatales a nivel de runtime CLR que corrompen el estado del proceso
+        if (ex is OutOfMemoryException or StackOverflowException or AccessViolationException)
+            return false;
+
+        return true;
     }
 
     private static void TrySaveAs(Exception? ex)

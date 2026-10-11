@@ -5,6 +5,13 @@ using QubiCostElectrical;
 
 namespace QubiCostElectrical.Wpf.Features.Cubicacion;
 
+public enum CubicacionStatusFilterMode
+{
+    Todos,
+    Listas,
+    Pendientes
+}
+
 /// <summary>
 /// Carga de partidas/filas desde la sesión y filtro del panel izquierdo — extraído de
 /// CubicacionViewModel.Loading.cs (ver plan en ~/.claude/plans/glittery-stargazing-hippo.md).
@@ -68,32 +75,131 @@ internal sealed class CubicacionLoadingService
                 issuesByItemId.Add(r.ItemId);
         }
 
+        var titleIdsWithChildren = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var item in session.Itemizado)
         {
-            if (item.EsTitulo)
+            if (!item.EsTitulo)
             {
-                parent.Partidas.Add(new PartidaListItemVm(item, 0));
-                continue;
-            }
+                if (!string.IsNullOrWhiteSpace(item.ParentId))
+                    titleIdsWithChildren.Add(item.ParentId);
 
+                string calcParent = ItemizadoHierarchyRules.ParentIdOf(item.Id, session.Itemizado);
+                if (!string.IsNullOrWhiteSpace(calcParent))
+                    titleIdsWithChildren.Add(calcParent);
+            }
+        }
+
+        foreach (var item in session.Itemizado)
+        {
             int count = countByItemId.GetValueOrDefault(item.Id ?? "", 0);
             bool hasIssues = issuesByItemId.Contains(item.Id ?? "");
-            parent.Partidas.Add(new PartidaListItemVm(item, count, hasIssues));
+
+            bool isPureSectionTitle = item.EsTitulo
+                && titleIdsWithChildren.Contains(item.Id ?? "")
+                && count == 0;
+
+            parent.Partidas.Add(new PartidaListItemVm(item, count, hasIssues, isPureSectionTitle));
         }
         ApplyFilter();
     }
 
     public void ApplyFilter()
     {
+        parent.UpdateFilterCounts();
         parent.FilteredPartidas.Clear();
         string f = (parent.PartidaFilter ?? "").Trim().ToLowerInvariant();
+        var statusFilter = parent.PartidaStatusFilter;
+
+        var matchingPartidas = new HashSet<PartidaListItemVm>();
         foreach (var p in parent.Partidas)
         {
-            bool match = string.IsNullOrEmpty(f)
+            if (!p.EsPartida) continue;
+
+            bool searchMatch = string.IsNullOrEmpty(f)
                 || p.Descripcion.Contains(f, StringComparison.OrdinalIgnoreCase)
                 || p.Codigo.Contains(f, StringComparison.OrdinalIgnoreCase);
-            if (match) parent.FilteredPartidas.Add(p);
+            if (!searchMatch) continue;
+
+            bool isLista = p.ExcluidoCubicacion || (p.TieneCubicacion && !p.HasIssues);
+            bool statusMatch = statusFilter switch
+            {
+                CubicacionStatusFilterMode.Todos => true,
+                CubicacionStatusFilterMode.Listas => isLista,
+                CubicacionStatusFilterMode.Pendientes => !isLista,
+                _ => true
+            };
+
+            if (statusMatch)
+                matchingPartidas.Add(p);
         }
+
+        for (int i = 0; i < parent.Partidas.Count; i++)
+        {
+            var item = parent.Partidas[i];
+            if (item.EsPartida)
+            {
+                if (matchingPartidas.Contains(item))
+                    parent.FilteredPartidas.Add(item);
+            }
+            else
+            {
+                if (statusFilter == CubicacionStatusFilterMode.Todos && string.IsNullOrEmpty(f))
+                {
+                    parent.FilteredPartidas.Add(item);
+                    continue;
+                }
+
+                bool titleSearchMatch = !string.IsNullOrEmpty(f) && (
+                    item.Descripcion.Contains(f, StringComparison.OrdinalIgnoreCase)
+                    || item.Codigo.Contains(f, StringComparison.OrdinalIgnoreCase));
+
+                int itemLevel = GetWbsLevel(item.Codigo);
+                bool hasMatchingChild = false;
+                for (int j = i + 1; j < parent.Partidas.Count; j++)
+                {
+                    var next = parent.Partidas[j];
+                    if (!next.EsPartida)
+                    {
+                        int nextLevel = GetWbsLevel(next.Codigo);
+                        if (nextLevel <= itemLevel)
+                            break;
+                    }
+                    else if (matchingPartidas.Contains(next))
+                    {
+                        hasMatchingChild = true;
+                        break;
+                    }
+                }
+
+                if (titleSearchMatch || hasMatchingChild)
+                    parent.FilteredPartidas.Add(item);
+            }
+        }
+
+        if (parent.SelectedPartida == null || !parent.FilteredPartidas.Contains(parent.SelectedPartida))
+        {
+            var first = parent.FilteredPartidas.FirstOrDefault(p => p.EsPartida && !p.ExcluidoCubicacion)
+                ?? parent.FilteredPartidas.FirstOrDefault(p => p.EsPartida);
+            if (first != null)
+                parent.SelectPartida(first);
+        }
+    }
+
+    public void UpdateFilterCounts()
+    {
+        int total = parent.Partidas.Count(p => p.EsPartida);
+        int listas = parent.Partidas.Count(p => p.EsPartida && (p.ExcluidoCubicacion || (p.TieneCubicacion && !p.HasIssues)));
+        int pendientes = Math.Max(0, total - listas);
+        parent.TotalPartidasCount = total;
+        parent.ListasPartidasCount = listas;
+        parent.PendientesPartidasCount = pendientes;
+        parent.NotifyFilterCountsChanged();
+    }
+
+    private static int GetWbsLevel(string? codigo)
+    {
+        if (string.IsNullOrWhiteSpace(codigo)) return 1;
+        return codigo.Count(c => c == '.') + 1;
     }
 
     public void SelectFirstPartida()

@@ -25,9 +25,15 @@ public sealed class EppSeccionRow
 /// </summary>
 public sealed class EppBudgetData
 {
+    /// <summary>Duración de la obra en meses (Excel MANO DE OBRA!B17).</summary>
+    public int MesesObra { get; set; }
+    /// <summary>Ciclo de reposición de la MO directa. En el Excel es 3.</summary>
     public int MesesDirecta { get; set; } = 3;
+    /// <summary>Ciclo de reposición de la MO indirecta. En el Excel es 6.</summary>
     public int MesesIndirecta { get; set; } = 6;
+    /// <summary>Promedio mensual de trabajadores directos, redondeado hacia arriba (Excel Q46).</summary>
     public int DotacionDirecta { get; set; }
+    /// <summary>Dotación indirecta usada en el EPP. En el Excel de referencia es 5.</summary>
     public int DotacionIndirecta { get; set; }
     public bool OpcionalesIncluidos { get; set; } = true;
     public List<EppSeccionRow> MoDirecta { get; set; } = new();
@@ -40,13 +46,14 @@ public sealed class EppBudgetData
     public static EppBudgetData Default() => new();
 
     /// <summary>Plantilla EPP limpia; cantidades derivadas de la dotación MO (0 si no hay gente).</summary>
-    public static EppBudgetData CreateSeed(int dotacionDirecta = 0, int dotacionIndirecta = 0)
+    public static EppBudgetData CreateSeed(int mesesObra = 0, int promedioDirecto = 0, int dotacionIndirecta = 0)
     {
         var data = new EppBudgetData
         {
+            MesesObra = Math.Max(0, mesesObra),
             MesesDirecta = 3,
             MesesIndirecta = 6,
-            DotacionDirecta = Math.Max(0, dotacionDirecta),
+            DotacionDirecta = Math.Max(0, promedioDirecto),
             DotacionIndirecta = Math.Max(0, dotacionIndirecta),
             OpcionalesIncluidos = true
         };
@@ -91,30 +98,109 @@ public sealed class EppBudgetData
         return data;
     }
 
-    /// <summary>Cantidad EPP MO directa: dotación / ciclo de reposición (meses).</summary>
-    public static decimal ComputeCantidadDirecta(int dotacion, int mesesCiclo)
+    /// <summary>
+    /// Vestimenta y accesorios de MO directa: (meses de obra / ciclo) × promedio de trabajadores.
+    /// Excel: (B17/3)*Q46.
+    /// </summary>
+    public static decimal ComputeCantidadDirecta(int mesesObra, int cicloMeses, int promedioDirecto)
     {
-        if (dotacion <= 0 || mesesCiclo <= 0)
+        if (mesesObra <= 0 || cicloMeses <= 0 || promedioDirecto <= 0)
             return 0m;
-        return Math.Round(dotacion / (decimal)mesesCiclo, 2);
+        return mesesObra / (decimal)cicloMeses * promedioDirecto;
     }
 
-    /// <summary>Cantidad EPP MO indirecta: roles × (meses/12) × 1.5.</summary>
-    public static decimal ComputeCantidadIndirecta(int dotacion, int mesesCiclo)
+    /// <summary>
+    /// Vestimenta y accesorios de MO indirecta: (meses de obra / ciclo) × dotación indirecta.
+    /// Excel: (B17/6)*5.
+    /// </summary>
+    public static decimal ComputeCantidadIndirecta(int mesesObra, int cicloMeses, int dotacionIndirecta)
     {
-        if (dotacion <= 0)
+        if (mesesObra <= 0 || dotacionIndirecta <= 0)
             return 0m;
-        var meses = mesesCiclo > 0 ? mesesCiclo : 6;
-        return Math.Round(dotacion * meses / 12m * 1.5m, 2);
+        var ciclo = cicloMeses > 0 ? cicloMeses : 6;
+        return mesesObra / (decimal)ciclo * dotacionIndirecta;
     }
 
-    public static (int Dir, int Ind) ReadMoDotacion(ProjectFileData? data)
+    /// <summary>Accesorios opcionales, cada uno con la fórmula de la hoja EPP.</summary>
+    public static decimal ComputeCantidadOpcional(string? concepto, int mesesObra, int cicloDirecta, int cicloIndirecta, int promedioDirecto)
+    {
+        if (mesesObra <= 0 && promedioDirecto <= 0)
+            return 0m;
+        var name = concepto ?? "";
+        if (name.Contains("Cubrenuca", StringComparison.OrdinalIgnoreCase))
+            return ComputeCantidadDirecta(mesesObra, cicloDirecta, promedioDirecto);
+        if (name.Contains("Bloqueador", StringComparison.OrdinalIgnoreCase)
+            || name.Contains("Solar", StringComparison.OrdinalIgnoreCase))
+            return mesesObra / 2m;
+        if (name.Contains("Arnés", StringComparison.OrdinalIgnoreCase)
+            || name.Contains("Arnes", StringComparison.OrdinalIgnoreCase)
+            || name.Contains("Cabo", StringComparison.OrdinalIgnoreCase))
+            return promedioDirecto * 2m;
+        if (name.Contains("Fono", StringComparison.OrdinalIgnoreCase)
+            || name.Contains("Masprot", StringComparison.OrdinalIgnoreCase)
+            || name.Contains("Filtro", StringComparison.OrdinalIgnoreCase))
+            return ComputeCantidadIndirecta(mesesObra, cicloIndirecta, promedioDirecto);
+        return ComputeCantidadDirecta(mesesObra, cicloDirecta, promedioDirecto);
+    }
+
+    public readonly record struct EppMoDrivers(int MesesObra, int PromedioDirecto, int DotacionIndirecta);
+
+    /// <summary>
+    /// Lee los tres datos que usa la hoja EPP: meses de obra, promedio de trabajadores directos
+    /// y dotación indirecta.
+    /// </summary>
+    public static EppMoDrivers ReadMoDrivers(ProjectFileData? data)
     {
         if (data == null)
-            return (0, 0);
-        var dir = data.MoDirecta?.Sum(r => Math.Max(0, r.Dotacion)) ?? 0;
-        var ind = data.MoIndirecta?.Sum(r => Math.Max(0, r.Dotacion)) ?? 0;
-        return (dir, ind);
+            return new EppMoDrivers(0, 0, 0);
+
+        int meses = data.Proyecto?.MoDuracionMeses ?? 0;
+        if (meses <= 0)
+            meses = ReadMoMeses(data);
+
+        int promedio = RoundUpAverage(MonthlyTotals(
+            data.MoDirecta?.Select(r => (Math.Max(0, r.Dotacion), r.DotacionMensual)),
+            meses));
+        if (promedio <= 0)
+            promedio = data.MoDirecta?.Sum(r => Math.Max(0, r.Dotacion)) ?? 0;
+
+        int indirecta = data.MoIndirecta?.Sum(r => Math.Max(0, r.Dotacion)) ?? 0;
+        if (indirecta <= 0)
+            indirecta = RoundUpAverage(MonthlyTotals(
+                data.MoIndirecta?.Select(r => (Math.Max(0, r.Dotacion), r.DotacionMensual)),
+                meses));
+
+        return new EppMoDrivers(Math.Max(0, meses), Math.Max(0, promedio), Math.Max(0, indirecta));
+    }
+
+    private static IReadOnlyList<int> MonthlyTotals(IEnumerable<(int Dotacion, List<int> Mensual)>? rows, int meses)
+    {
+        var list = rows?.ToList() ?? new List<(int, List<int>?)>();
+        if (meses <= 0 || list.Count == 0 || list.All(r => r.Mensual is not { Count: > 0 }))
+            return Array.Empty<int>();
+
+        var totals = new int[meses];
+        for (var i = 0; i < meses; i++)
+        {
+            var head = 0;
+            foreach (var row in list)
+            {
+                if (row.Mensual != null && i < row.Mensual.Count)
+                    head += Math.Max(0, row.Mensual[i]);
+            }
+            totals[i] = head;
+        }
+        return totals;
+    }
+
+    private static int RoundUpAverage(IReadOnlyList<int> months)
+    {
+        if (months.Count == 0)
+            return 0;
+        var avg = months.Sum(x => (decimal)x) / months.Count;
+        if (avg <= 0m)
+            return 0;
+        return (int)Math.Ceiling(avg);
     }
 
     public static int ReadMoMeses(ProjectFileData? data)
@@ -128,55 +214,26 @@ public sealed class EppBudgetData
     }
 
     /// <summary>Actualiza dotaciones y recalcula cantidades de ítems desde MO.</summary>
-    public void ApplyMoDotacion(int dotacionDirecta, int dotacionIndirecta)
+    public void ApplyMoDotacion(int mesesObra, int promedioDirecto, int dotacionIndirecta)
     {
-        DotacionDirecta = Math.Max(0, dotacionDirecta);
+        MesesObra = Math.Max(0, mesesObra);
+        DotacionDirecta = Math.Max(0, promedioDirecto);
         DotacionIndirecta = Math.Max(0, dotacionIndirecta);
         SyncQuantitiesFromDotacion();
     }
 
     public void SyncQuantitiesFromDotacion()
     {
-        var cantDir = ComputeCantidadDirecta(DotacionDirecta, MesesDirecta);
-        var cantInd = ComputeCantidadIndirecta(DotacionIndirecta, MesesIndirecta);
+        var cantDir = ComputeCantidadDirecta(MesesObra, MesesDirecta, DotacionDirecta);
+        var cantInd = ComputeCantidadIndirecta(MesesObra, MesesIndirecta, DotacionIndirecta);
 
         foreach (var item in MoDirecta.SelectMany(s => s.Items))
             item.Cantidad = cantDir;
         foreach (var item in MoIndirecta.SelectMany(s => s.Items))
             item.Cantidad = cantInd;
 
-        // Opcionales: se escalan con la dotación directa (Cubrenuca = cantDir;
-        // resto proporcional al pico directo cuando hay gente; 0 si no hay MO).
-        var hasMo = DotacionDirecta > 0 || DotacionIndirecta > 0;
         foreach (var item in AccesoriosOpcionales.SelectMany(s => s.Items))
-        {
-            if (item.Concepto.Contains("Cubrenuca", StringComparison.OrdinalIgnoreCase))
-            {
-                item.Cantidad = cantDir;
-                continue;
-            }
-
-            if (!hasMo)
-            {
-                item.Cantidad = 0;
-                continue;
-            }
-
-            // Heurística estable vs plantilla histórica (154 directa → factores demo).
-            var factor = DotacionDirecta > 0 ? DotacionDirecta / 154m : DotacionIndirecta / 6m;
-            item.Cantidad = Math.Round(BaseOpcionalCantidad(item.Concepto) * factor, 2);
-        }
-    }
-
-    private static decimal BaseOpcionalCantidad(string concepto)
-    {
-        if (concepto.Contains("Fono", StringComparison.OrdinalIgnoreCase)) return 25.67m;
-        if (concepto.Contains("Masprot", StringComparison.OrdinalIgnoreCase)) return 26.00m;
-        if (concepto.Contains("Filtros", StringComparison.OrdinalIgnoreCase)) return 25.67m;
-        if (concepto.Contains("Arnés", StringComparison.OrdinalIgnoreCase)) return 28.00m;
-        if (concepto.Contains("Cabos", StringComparison.OrdinalIgnoreCase)) return 28.00m;
-        if (concepto.Contains("Bloqueador", StringComparison.OrdinalIgnoreCase)) return 5.50m;
-        return 1m;
+            item.Cantidad = ComputeCantidadOpcional(item.Concepto, MesesObra, MesesDirecta, MesesIndirecta, DotacionDirecta);
     }
 
     /// <summary>Líneas resumen para GO categoría 3.5 (Costos por EPP).</summary>
@@ -220,16 +277,16 @@ public sealed class EppBudgetData
         if (data == null)
             return false;
 
-        var (dotDir, dotInd) = ReadMoDotacion(data);
+        var mo = ReadMoDrivers(data);
         var epp = data.Epp;
         if (epp == null || !epp.HasContent)
         {
-            epp = CreateSeed(dotDir, dotInd);
+            epp = CreateSeed(mo.MesesObra, mo.PromedioDirecto, mo.DotacionIndirecta);
             data.Epp = epp;
         }
         else
         {
-            epp.ApplyMoDotacion(dotDir, dotInd);
+            epp.ApplyMoDotacion(mo.MesesObra, mo.PromedioDirecto, mo.DotacionIndirecta);
         }
 
         return PushToGoCategory(data, epp);

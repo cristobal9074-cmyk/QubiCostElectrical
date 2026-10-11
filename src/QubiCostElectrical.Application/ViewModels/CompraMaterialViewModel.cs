@@ -25,3 +25,16 @@ public sealed record CompraMaterialViewModel(
             ? Proveedor.Trim()
             : string.IsNullOrWhiteSpace(Categoria) ? "Sin categoría" : Categoria.Trim();
 }
+
+/// <summary>
+/// Desglose de trazabilidad viva: en qué partida y área participa un material comprado.
+/// </summary>
+public sealed record MaterialUsageBreakdown(
+    string ItemId,
+    string ItemNumber,
+    string PartidaDescripcion,
+    string Area,
+    decimal Cantidad,
+    decimal PorcentajeDelTotal,
+    string Codigo,
+    string Descripcion);

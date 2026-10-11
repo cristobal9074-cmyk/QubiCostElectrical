@@ -107,4 +107,32 @@ public sealed class PurchaseListServiceTests
         var result = _service.Build(new List<CubicacionRow>(), Enumerable.Empty<MaterialRow>(), 0m);
         Assert.Empty(result);
     }
+
+    [Fact]
+    public void GetMaterialUsage_ReturnsPartidasAndPercentages()
+    {
+        var cub = new List<CubicacionRow>
+        {
+            new() { Codigo = "PVC20", Descripcion = "Tubo PVC 20mm", Cantidad = 60m, ItemId = "item-1", Area = "Piso 1" },
+            new() { Codigo = "PVC20", Descripcion = "Tubo PVC 20mm", Cantidad = 40m, ItemId = "item-2", Area = "Piso 2" },
+            new() { Codigo = "CABLE25", Descripcion = "Cable 2.5", Cantidad = 200m, ItemId = "item-1", Area = "Piso 1" }
+        };
+        var itemizado = new List<ItemizadoRow>
+        {
+            new() { Id = "item-1", Item = "1.1", Descripcion = "Alumbrado" },
+            new() { Id = "item-2", Item = "1.2", Descripcion = "Fuerza" }
+        };
+
+        var usages = _service.GetMaterialUsage("PVC20", cub, itemizado);
+
+        Assert.Equal(2, usages.Count);
+        Assert.Equal("1.1", usages[0].ItemNumber);
+        Assert.Equal("Alumbrado", usages[0].PartidaDescripcion);
+        Assert.Equal(60m, usages[0].Cantidad);
+        Assert.Equal(60m, usages[0].PorcentajeDelTotal);
+        Assert.Equal("1.2", usages[1].ItemNumber);
+        Assert.Equal("Fuerza", usages[1].PartidaDescripcion);
+        Assert.Equal(40m, usages[1].Cantidad);
+        Assert.Equal(40m, usages[1].PorcentajeDelTotal);
+    }
 }

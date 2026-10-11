@@ -31,27 +31,27 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddSingleton<IPriceBankStore>(sp => new PriceBankStore(Path(sp)));
         services.AddSingleton<IPriceBankRepository, PriceBankRepository>();
 
-        // Catálogo APU y benchmark: hoy viven en la BD del banco de precios (catálogo compartido).
+        // Catálogo APU: vive en la BD del banco de precios (catálogo compartido).
         services.AddSingleton<IApuCatalogRepository>(sp => new SqliteApuCatalogRepository(Path(sp)));
         services.AddSingleton<IApuVersionRepository>(sp => new SqliteApuVersionRepository(Path(sp)));
-        services.AddSingleton<IApuSnapshotRepository>(sp => new SqliteApuSnapshotRepository(Path(sp)));
-        services.AddSingleton<IProjectBenchmarkRepository>(sp => new SqliteProjectBenchmarkRepository(Path(sp)));
 
         // Planillas.
         services.AddSingleton<IItemizadoSpreadsheetReader, ItemizadoSpreadsheetReader>();
-        services.AddSingleton<IMaterialSpreadsheetImporter, MaterialSpreadsheetImporter>();
-        services.AddSingleton<ITemplateSpreadsheetService, TemplateSpreadsheetService>();
         services.AddSingleton<IPurchaseListExcelExporter, PurchaseListExcelExporter>();
-        services.AddSingleton<ICubicacionSCExcelExporter, CubicacionSCExcelExporter>();
 
         // Exportadores pesados (QuestPDF / ClosedXML / OpenXml). Registro normal = construcción
         // perezosa: nadie los instancia hasta el primer GetRequiredService.
         services.AddSingleton<IExcelProjectExporter, ExcelExportInfrastructure>();
         services.AddSingleton<IPdfProjectExporter, QuestPdfProjectExporter>();
+        services.AddSingleton<IOfferLetterPdfExporter, QuestPdfOfferLetterExporter>();
         services.AddSingleton<IPresentationLetterDocxExporter, PresentationLetterDocxExporter>();
         services.AddSingleton<ICubicacionReportExcelExporter, CubicacionReportExcelExporter>();
         services.AddSingleton<ICubicacionReportPdfExporter, QuestPdfCubicacionReportExporter>();
         services.AddSingleton<ICubicacionSCReportExcelExporter, CubicacionSCTechnicalReportExcelExporter>();
+        services.AddSingleton<IBudgetRevisionDiffPdfExporter, BudgetRevisionDiffPdfExporter>();
+        services.AddSingleton<IBudgetRevisionDiffExcelExporter, BudgetRevisionDiffExcelExporter>();
+        services.AddSingleton<IEstadoPagoExcelExporter, EstadoPagoExcelExporter>();
+        services.AddSingleton<IEstadoPagoPdfExporter, EstadoPagoPdfExporter>();
 
         // Servicios ligados a la BD del proyecto abierto (contratos). Reemplaza el
         // RewireContractsIfProjectChanged manual de WpfAppHostBuilder.

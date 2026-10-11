@@ -9,24 +9,43 @@ namespace QubiCostElectrical.Wpf;
 public partial class SplashWindow : Window
 {
     private readonly Action _onInitialized;
+    private bool _started;
 
     public SplashWindow(Action onInitialized)
     {
         InitializeComponent();
         _onInitialized = onInitialized;
-        Loaded += OnLoaded;
+        Loaded += (_, _) => Start();
+        ContentRendered += (_, _) => Start();
     }
 
-    private async void OnLoaded(object sender, RoutedEventArgs e)
+    public void Start()
     {
-        await AnimateProgress();
-        _onInitialized();
+        if (_started) return;
+        _started = true;
+        _ = RunAsync();
+    }
+
+    private async Task RunAsync()
+    {
+        try
+        {
+            await AnimateProgress();
+        }
+        catch (Exception ex)
+        {
+            WpfAppHost.Logger?.Warning("Splash", "Error en animación de splash.", ex);
+        }
+        finally
+        {
+            _onInitialized();
+        }
     }
 
     private async Task AnimateProgress()
     {
         var container = (FrameworkElement)ProgressBar.Parent;
-        var targetWidth = container.ActualWidth;
+        var targetWidth = container.ActualWidth > 0 ? container.ActualWidth : 440.0;
         var statusMessages = new[]
         {
             (0.0, "Inicializando aplicación..."),
@@ -41,6 +60,9 @@ public partial class SplashWindow : Window
         while (sw.ElapsedMilliseconds < totalDuration)
         {
             var t = sw.ElapsedMilliseconds / totalDuration;
+            if (targetWidth <= 0 && container.ActualWidth > 0)
+                targetWidth = container.ActualWidth;
+
             ProgressBar.Width = targetWidth * t;
 
             for (int i = statusMessages.Length - 1; i >= 0; i--)
@@ -55,8 +77,8 @@ public partial class SplashWindow : Window
             await Task.Delay(16);
         }
 
-        ProgressBar.Width = targetWidth;
+        ProgressBar.Width = targetWidth > 0 ? targetWidth : 440;
         StatusText.Text = "Listo.";
-        await Task.Delay(200);
+        await Task.Delay(150);
     }
 }

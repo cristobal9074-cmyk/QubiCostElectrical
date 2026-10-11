@@ -32,6 +32,8 @@ public static class ProjectSnapshotIntegrity
         value.Epp.MoDirecta ??= new List<EppSeccionRow>();
         value.Epp.MoIndirecta ??= new List<EppSeccionRow>();
         value.Epp.AccesoriosOpcionales ??= new List<EppSeccionRow>();
+        value.EstadoPagoMeses ??= new List<EstadoPagoMesRow>();
+        value.EstadoPagoConfig ??= EstadoPagoConfig.Default();
         value.ActiveVersionId ??= "";
 
         EnsureProjectInfo(value.Proyecto);
@@ -155,6 +157,15 @@ public static class ProjectSnapshotIntegrity
             if (!config.Sistemas.Any(s => string.Equals(s.Nombre, def.Nombre, StringComparison.OrdinalIgnoreCase)))
                 config.Sistemas.Add(new SistemaSC { Nombre = def.Nombre, NumConductores = def.NumConductores, MermaPct = def.MermaPct });
         }
+
+        config.SistemasCircuito ??= new List<SistemaCircuitoSC>();
+        if (config.SistemasCircuito.Count == 0)
+        {
+            foreach (var def in CubicacionScConfig.Default().SistemasCircuito)
+            {
+                config.SistemasCircuito.Add(new SistemaCircuitoSC { Codigo = def.Codigo, Nombre = def.Nombre });
+            }
+        }
     }
 
     // Migra circuitos SC de proyectos anteriores a los dos tramos independientes: si tienen el
@@ -187,6 +198,7 @@ public static class ProjectSnapshotIntegrity
         project.AntecedentesTecnicos ??= new List<AntecedenteTecnicoRow>();
         project.LaborDaySettings ??= new LaborDaySettingsRow();
         project.Variables ??= new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
+        project.FamiliasPrecioAsignadas ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         project.OfertaPdf ??= new OfferPdfSettings();
         project.HistorialEstados ??= new List<BudgetStatusHistoryRow>();
         project.CubicacionCellComments ??= new List<CubicacionCellCommentRow>();
@@ -210,6 +222,19 @@ public static class ProjectSnapshotIntegrity
     private static void EnsureConjuntos(IEnumerable<ConjuntoElectricoRow> conjuntos)
     {
         foreach (var conjunto in conjuntos)
+        {
             conjunto.Recursos ??= new List<ConjuntoRecursoRow>();
+            // Ids unicos y no vacios: las referencias MaestroId (esclavo -> maestro) dependen de ellos.
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var recurso in conjunto.Recursos)
+            {
+                recurso.MaestroId ??= "";
+                if (string.IsNullOrWhiteSpace(recurso.Id) || !seen.Add(recurso.Id))
+                {
+                    recurso.Id = Guid.NewGuid().ToString("N");
+                    seen.Add(recurso.Id);
+                }
+            }
+        }
     }
 }

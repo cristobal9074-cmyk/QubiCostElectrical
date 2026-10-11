@@ -455,21 +455,28 @@ public sealed class BudgetEngineTests
                     Descripcion = $"Material {p}-{r}",
                     Unidad = "UN",
                     Cantidad = 1m,
-                    MatClp = 0.5m, MatUf = 0.5m,
-                    MoClp = 0.1m, MoUf = 0.1m,
+                    MatClp = 0.5m,
+                    MatUf = 0.5m,
+                    MoClp = 0.1m,
+                    MoUf = 0.1m,
                     Area = r == 0 ? $"Área {p}" : ""
                 });
             }
             // Cada 3ra partida también tiene APU, para ejercitar GetItemQuantity/InferArea.
             if (p % 3 == 0)
             {
-                apus.Add(new ApuRow { ItemId = itemId, Descripcion = $"APU {p}", Recursos = new List<ApuRecursoRow>
+                apus.Add(new ApuRow
+                {
+                    ItemId = itemId,
+                    Descripcion = $"APU {p}",
+                    Recursos = new List<ApuRecursoRow>
                 {
                     new() { CodigoMaterial = $"APUMAT{p}", Descripcion = "Material APU", PrecioUf = 2m, Rendimiento = 1m, Tipo = ApuTipoRecurso.MAT },
                     // Recurso complementario real (equipo) para que el APU aporte algo en modo
                     // complementario y su origen exista (C1: un APU solo-MAT ya no genera origen).
                     new() { CodigoMaterial = $"APUEQ{p}", Descripcion = "Equipo APU", PrecioUf = 1m, Rendimiento = 1m, Tipo = ApuTipoRecurso.EQ }
-                }});
+                }
+                });
             }
         }
 
@@ -492,4 +499,38 @@ public sealed class BudgetEngineTests
         var apuOriginForP0 = incremental.Origenes.Single(o => o.Origen == BudgetCostOrigin.Apu && o.ItemId == "P0");
         Assert.Equal("Área 0", apuOriginForP0.Area);
     }
+
+    [Fact]
+    public void Calculate_IncludesApprovedChangeOrders_WithBothAprobadoAndAprobada()
+    {
+        var engine = new BudgetEngine();
+        var rows = new[]
+        {
+            new CubicacionRow { ItemId = "1", Codigo = "PVC20", Descripcion = "PVC 20", Unidad = "ML", Cantidad = 10m, MatClp = 1m, MatUf = 10m }
+        };
+        var settings = BudgetSettings.FromValues(gastosGeneralesPct: 0m, utilidadPct: 0m, metrosCuadrados: 1m);
+        var changeOrders = new List<ChangeOrderRow>
+        {
+            new() { Numero = "OC-001", Titulo = "Adicional Tablero", Estado = "Aprobado", DeltaCostoUf = 5m },
+            new() { Numero = "OC-002", Titulo = "Canalización Extra", Estado = "Aprobada", DeltaCostoUf = 3m },
+            new() { Numero = "OC-003", Titulo = "Alimentador pendiente", Estado = "En revisión", DeltaCostoUf = 10m },
+            new() { Numero = "OC-004", Titulo = "Idea descartada", Estado = "Rechazado", DeltaCostoUf = 20m },
+            new() { Numero = "OC-005", Titulo = "Borrador inicial", Estado = "Borrador", DeltaCostoUf = 15m }
+        };
+
+        var result = engine.Calculate(rows, settings, null, null, changeOrders);
+
+        // Base cubicacion: 10 UF
+        // OC-001 (Aprobado): 5 UF
+        // OC-002 (Aprobada): 3 UF
+        // Total direct cost = 10 + 5 + 3 = 18 UF
+        Assert.Equal(18m, result.CostoDirectoUf);
+        Assert.Equal(8m, result.OrdenesCambioUf);
+
+        var ocOrigins = result.Origenes.Where(x => x.Origen == BudgetCostOrigin.OrdenCambio).ToList();
+        Assert.Equal(2, ocOrigins.Count);
+        Assert.Contains(ocOrigins, x => x.Codigo == "OC-001" && x.OrdenesCambioUf == 5m);
+        Assert.Contains(ocOrigins, x => x.Codigo == "OC-002" && x.OrdenesCambioUf == 3m);
+    }
 }
+

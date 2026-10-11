@@ -63,7 +63,7 @@ public sealed class CurrencyConversionService : ICurrencyConversionService
         {
             CurrencyClp => clp,
             CurrencyUsd => tipoCambioUsdClp > 0m ? Math.Round(clp / tipoCambioUsdClp, 2, MidpointRounding.AwayFromZero) : clp,
-            CurrencyUf  => PriceConversion.ClpToUf(clp, valorUfClp),
+            CurrencyUf => PriceConversion.ClpToUf(clp, valorUfClp),
             _ => clp
         };
     }
@@ -102,7 +102,7 @@ public sealed class CurrencyConversionService : ICurrencyConversionService
         {
             CurrencyClp => $"$ {value:N0}",
             CurrencyUsd => $"US$ {value:N2}",
-            CurrencyUf  => $"{value:N3} UF",
+            CurrencyUf => $"{value:N3} UF",
             _ => $"$ {value:N0}"
         };
     }

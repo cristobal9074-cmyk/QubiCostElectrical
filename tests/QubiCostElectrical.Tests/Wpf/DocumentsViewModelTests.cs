@@ -57,6 +57,22 @@ public sealed class DocumentsViewModelTests
     }
 
     [Fact]
+    public void AddFiles_WithDisciplina_PrefixesCodigoAndSetsDisciplina()
+    {
+        var host = WpfAppHost.Current;
+        host.Session.NewProject("docs-disciplina");
+        host.Session.CurrentProjectPath = "docs-disciplina.qce";
+        var vm = new DocumentsViewModel(new FakeShell(), host);
+        vm.Load();
+
+        vm.AddFiles(AntecedenteTecnicoTipo.Plano, new[] { "C:\\Planos\\PE-01.pdf" }, AntecedenteDisciplina.Electricidad);
+
+        Assert.Single(vm.FilteredRows);
+        Assert.Equal("ELE-PE-01", vm.FilteredRows[0].Codigo);
+        Assert.Equal(AntecedenteDisciplina.Electricidad, vm.FilteredRows[0].Disciplina);
+    }
+
+    [Fact]
     public void AddFiles_DuplicateCodigoAcrossCalls_SkipsAndReportsCount()
     {
         var host = WpfAppHost.Current;
@@ -99,5 +115,87 @@ public sealed class DocumentsViewModelTests
             Assert.Single(vm.FilteredRows);
             Assert.False(vm.HasPendingChanges);
         }
+    }
+
+    [Fact]
+    public void EspecialidadesPlanos_GeneratesDynamicFiltersByLoadedBlueprintDisciplines()
+    {
+        var host = WpfAppHost.Current;
+        host.Session.NewProject("docs-disciplinas-dinamicas");
+        host.Session.CurrentProjectPath = "docs-disciplinas-dinamicas.qce";
+        var vm = new DocumentsViewModel(new FakeShell(), host);
+        vm.Load();
+
+        // 1. Agregar planos de Electricidad
+        vm.AddFiles(AntecedenteTecnicoTipo.Plano, new[] { "C:\\Planos\\E-01.pdf", "C:\\Planos\\E-02.pdf" }, AntecedenteDisciplina.Electricidad);
+        // 2. Agregar planos de Corrientes débiles
+        vm.AddFiles(AntecedenteTecnicoTipo.Plano, new[] { "C:\\Planos\\CD-01.pdf", "C:\\Planos\\CD-02.pdf", "C:\\Planos\\CD-03.pdf" }, AntecedenteDisciplina.CorrientesDebiles);
+        // 3. Agregar una especificación técnica
+        vm.AddFiles(AntecedenteTecnicoTipo.Especificacion, new[] { "C:\\EETT\\ET-01.pdf" });
+
+        // Debe haber 2 especialidades en EspecialidadesPlanos: Electricidad (2) y Corrientes débiles (3)
+        Assert.Equal(2, vm.EspecialidadesPlanos.Count);
+        var espElec = vm.EspecialidadesPlanos.FirstOrDefault(x => x.Disciplina == AntecedenteDisciplina.Electricidad);
+        var espCcdd = vm.EspecialidadesPlanos.FirstOrDefault(x => x.Disciplina == AntecedenteDisciplina.CorrientesDebiles);
+
+        Assert.NotNull(espElec);
+        Assert.Equal(2, espElec.Count);
+        Assert.Equal("⚡", espElec.Icon);
+
+        Assert.NotNull(espCcdd);
+        Assert.Equal(3, espCcdd.Count);
+        Assert.Equal("📡", espCcdd.Icon);
+
+        // Al seleccionar la especialidad de Corrientes débiles:
+        vm.SelectNavFilter($"Plano_Esp:{AntecedenteDisciplina.CorrientesDebiles}");
+        Assert.Equal(3, vm.FilteredRows.Count);
+        Assert.All(vm.FilteredRows, r => Assert.Equal(AntecedenteDisciplina.CorrientesDebiles, r.Disciplina));
+        Assert.True(espCcdd.IsSelected);
+        Assert.False(espElec.IsSelected);
+
+        // Al seleccionar la especialidad de Electricidad:
+        vm.SelectNavFilter($"Plano_Esp:{AntecedenteDisciplina.Electricidad}");
+        Assert.Equal(2, vm.FilteredRows.Count);
+        Assert.All(vm.FilteredRows, r => Assert.Equal(AntecedenteDisciplina.Electricidad, r.Disciplina));
+        Assert.True(espElec.IsSelected);
+        Assert.False(espCcdd.IsSelected);
+
+        // Al seleccionar "Todos los Planos":
+        vm.SelectNavFilter("Planos_Todos");
+        Assert.Equal(5, vm.FilteredRows.Count);
+        Assert.All(vm.FilteredRows, r => Assert.True(r.IsTipoPlano));
+        Assert.True(vm.IsNavPlanosTodos);
+
+        // Al seleccionar "Todo el Expediente":
+        vm.SelectNavFilter("Todos");
+        Assert.Equal(6, vm.FilteredRows.Count);
+        Assert.True(vm.IsNavTodos);
+    }
+
+    [Fact]
+    public void ToggleInspectionFilter_FiltersByVigenteAndAttachedFile()
+    {
+        var host = WpfAppHost.Current;
+        host.Session.NewProject("docs-inspection-filters");
+        host.Session.CurrentProjectPath = "docs-inspection-filters.qce";
+        var vm = new DocumentsViewModel(new FakeShell(), host);
+        vm.Load();
+
+        vm.AddFiles(AntecedenteTecnicoTipo.Plano, new[] { "C:\\Planos\\E-01.pdf" });
+        vm.AddFiles(AntecedenteTecnicoTipo.Plano, new[] { "C:\\Planos\\E-02.pdf" });
+
+        // Marcar uno como no vigente
+        vm.FilteredRows[0].EsVigente = false;
+
+        // Toggle SoloVigentes
+        vm.ToggleInspectionFilter("SoloVigentes");
+        Assert.True(vm.IsFilterSoloVigentes);
+        Assert.Single(vm.FilteredRows);
+        Assert.True(vm.FilteredRows[0].EsVigente);
+
+        // Desactivar toggle
+        vm.ToggleInspectionFilter("SoloVigentes");
+        Assert.False(vm.IsFilterSoloVigentes);
+        Assert.Equal(2, vm.FilteredRows.Count);
     }
 }

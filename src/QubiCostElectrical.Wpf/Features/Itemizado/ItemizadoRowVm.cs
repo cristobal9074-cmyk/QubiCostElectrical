@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Text.RegularExpressions;
 using QubiCostElectrical;
 using QubiCostElectrical.Wpf.Infrastructure;
 
@@ -8,6 +9,8 @@ namespace QubiCostElectrical.Wpf.Features.Itemizado;
 
 public sealed class ItemizadoRowVm : ViewModelBase, IGridCellValidationSource
 {
+    private static readonly Regex ChapterRegex = new(@"^\d+(\.0)?$", RegexOptions.Compiled);
+
     private ItemizadoRow model;
     private int rowNumber;
     private PartidaCompletionState completionState;
@@ -20,11 +23,32 @@ public sealed class ItemizadoRowVm : ViewModelBase, IGridCellValidationSource
     private bool isTitleRow;
     private string? itemEditSnapshot;
     private readonly Func<bool>? canEdit;
+    private bool isBatchUpdating;
+
+    public void BeginBatchUpdate()
+    {
+        isBatchUpdating = true;
+    }
+
+    public void EndBatchUpdate()
+    {
+        isBatchUpdating = false;
+        OnPropertyChanged(nameof(Item));
+        OnPropertyChanged(nameof(Descripcion));
+        OnPropertyChanged(nameof(Unidad));
+        OnPropertyChanged(nameof(Cantidad));
+        OnPropertyChanged(nameof(CantidadText));
+        OnPropertyChanged(nameof(WbsLevel));
+        OnPropertyChanged(nameof(IndentMargin));
+        OnPropertyChanged(nameof(IsChapterLevelItem));
+        OnPropertyChanged(nameof(IsChapterStyle));
+    }
 
     public ItemizadoRowVm(ItemizadoRow model, Func<bool>? canEdit = null)
     {
         this.model = model;
         this.canEdit = canEdit;
+        this.isTitleRow = model?.EsTitulo ?? false;
     }
 
     private bool AllowEdit => canEdit?.Invoke() ?? true;
@@ -32,9 +56,11 @@ public sealed class ItemizadoRowVm : ViewModelBase, IGridCellValidationSource
     public void UpdateModel(ItemizadoRow newModel)
     {
         model = newModel ?? throw new ArgumentNullException(nameof(newModel));
+        isTitleRow = model.EsTitulo;
         OnPropertyChanged(string.Empty);
     }
 
+    public event Action<ItemizadoRowVm, string>? BeforeFieldChanging;
     public event Action<ItemizadoRowVm, string>? FieldCommitted;
 
     public Func<IReadOnlyList<ItemizadoRow>>? PeersProvider { get; set; }
@@ -58,7 +84,38 @@ public sealed class ItemizadoRowVm : ViewModelBase, IGridCellValidationSource
             if (string.Equals(model.Item, normalized, StringComparison.Ordinal))
                 return;
             model.Item = normalized;
+            if (isBatchUpdating) return;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(WbsLevel));
+            OnPropertyChanged(nameof(IndentMargin));
+            OnPropertyChanged(nameof(IsChapterLevelItem));
+            OnPropertyChanged(nameof(IsChapterStyle));
+        }
+    }
+
+    public int WbsLevel
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(Item))
+                return isTitleRow ? 0 : 1;
+
+            var trimmed = Item.Trim().TrimEnd('.', ',');
+            var separators = 0;
+            foreach (var ch in trimmed)
+            {
+                if (ch == '.' || ch == ',') separators++;
+            }
+            return Math.Min(separators, 4);
+        }
+    }
+
+    public System.Windows.Thickness IndentMargin
+    {
+        get
+        {
+            int left = Math.Max(0, WbsLevel * 16);
+            return new System.Windows.Thickness(left, 0, 0, 0);
         }
     }
 
@@ -69,6 +126,7 @@ public sealed class ItemizadoRowVm : ViewModelBase, IGridCellValidationSource
         {
             if (!AllowEdit) return;
             model.Descripcion = value;
+            if (isBatchUpdating) return;
             OnPropertyChanged();
         }
     }
@@ -80,9 +138,31 @@ public sealed class ItemizadoRowVm : ViewModelBase, IGridCellValidationSource
         {
             if (!AllowEdit) return;
             model.Unidad = value;
+            if (isBatchUpdating) return;
             OnPropertyChanged();
         }
     }
+
+    public string Observaciones
+    {
+        get => model.Observaciones ?? "";
+        set
+        {
+            if (!AllowEdit) return;
+            string val = value ?? "";
+            if (string.Equals(model.Observaciones, val, StringComparison.Ordinal))
+                return;
+            model.Observaciones = val;
+            if (isBatchUpdating) return;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(HasObservaciones));
+            OnPropertyChanged(nameof(ObservacionesToolTip));
+        }
+    }
+
+    public bool HasObservaciones => !string.IsNullOrWhiteSpace(model.Observaciones);
+
+    public string? ObservacionesToolTip => HasObservaciones ? model.Observaciones : null;
 
     public decimal Cantidad
     {
@@ -91,6 +171,7 @@ public sealed class ItemizadoRowVm : ViewModelBase, IGridCellValidationSource
         {
             if (!AllowEdit) return;
             model.Cantidad = value;
+            if (isBatchUpdating) return;
             OnPropertyChanged();
             OnPropertyChanged(nameof(CantidadText));
         }
@@ -101,8 +182,39 @@ public sealed class ItemizadoRowVm : ViewModelBase, IGridCellValidationSource
         get => model.Cantidad.ToString("N2", CultureInfo.CurrentCulture);
         set
         {
-            if (decimal.TryParse(value, NumberStyles.Number, CultureInfo.CurrentCulture, out var parsed))
-                Cantidad = parsed;
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                Cantidad = 0m;
+                OnPropertyChanged();
+                return;
+            }
+            string s = value.Trim();
+            bool hasComma = s.Contains(',');
+            bool hasDot = s.Contains('.');
+
+            decimal parsed;
+            if (hasComma && hasDot)
+            {
+                int commaIdx = s.IndexOf(',');
+                int dotIdx = s.IndexOf('.');
+                if (dotIdx < commaIdx)
+                    s = s.Replace(".", "").Replace(',', '.');
+                else
+                    s = s.Replace(",", "");
+
+                if (decimal.TryParse(s, NumberStyles.Number, CultureInfo.InvariantCulture, out parsed))
+                    Cantidad = parsed;
+            }
+            else if (hasComma)
+            {
+                if (decimal.TryParse(s.Replace(',', '.'), NumberStyles.Number, CultureInfo.InvariantCulture, out parsed))
+                    Cantidad = parsed;
+            }
+            else
+            {
+                if (decimal.TryParse(s, NumberStyles.Number, CultureInfo.InvariantCulture, out parsed))
+                    Cantidad = parsed;
+            }
             OnPropertyChanged();
         }
     }
@@ -115,6 +227,7 @@ public sealed class ItemizadoRowVm : ViewModelBase, IGridCellValidationSource
             if (!AllowEdit) return;
             if (model.EsTitulo == value)
                 return;
+            BeforeFieldChanging?.Invoke(this, "EsTitulo");
             model.EsTitulo = value;
             IsTitleRow = value;
             OnPropertyChanged();
@@ -124,10 +237,44 @@ public sealed class ItemizadoRowVm : ViewModelBase, IGridCellValidationSource
         }
     }
 
+    private bool? isChapterLevelCustom;
+
+    /// <summary>
+    /// Indica si la fila tiene la apariencia visual de subtítulo/capítulo (fondo destacado, borde, badge WBS y texto en negrita),
+    /// ya sea porque es un título agrupador o una partida valorizable de nivel principal (ej. "15.0", "16.0").
+    /// </summary>
+    public bool IsChapterStyle => isTitleRow || IsChapterLevelItem;
+
+    public bool IsChapterLevelItem
+    {
+        get
+        {
+            if (isChapterLevelCustom.HasValue)
+                return isChapterLevelCustom.Value;
+            if (isTitleRow) return true;
+            string raw = (Item ?? "").Trim().Replace(",", ".");
+            return ChapterRegex.IsMatch(raw) || raw == "*";
+        }
+        set
+        {
+            if (isChapterLevelCustom == value) return;
+            isChapterLevelCustom = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsChapterStyle));
+        }
+    }
+
     public bool IsTitleRow
     {
         get => isTitleRow;
-        set => SetProperty(ref isTitleRow, value);
+        set
+        {
+            if (SetProperty(ref isTitleRow, value))
+            {
+                OnPropertyChanged(nameof(IsChapterStyle));
+                OnPropertyChanged(nameof(IsChapterLevelItem));
+            }
+        }
     }
 
     public bool IsPartidaEditable => !model.EsTitulo;
@@ -136,6 +283,13 @@ public sealed class ItemizadoRowVm : ViewModelBase, IGridCellValidationSource
     {
         get => isSelected;
         set => SetProperty(ref isSelected, value);
+    }
+
+    private bool isSearchMatch;
+    public bool IsSearchMatch
+    {
+        get => isSearchMatch;
+        set => SetProperty(ref isSearchMatch, value);
     }
 
     public PartidaCompletionState CompletionState
@@ -162,20 +316,214 @@ public sealed class ItemizadoRowVm : ViewModelBase, IGridCellValidationSource
         set { SetProperty(ref totalUf, value); OnPropertyChanged(nameof(TotalText)); }
     }
 
-    public string UnitPriceText => UnitPriceUf > 0m ? UnitPriceUf.ToString("N3", CultureInfo.CurrentCulture) : "—";
-    public string TotalText => TotalUf > 0m ? TotalUf.ToString("N2", CultureInfo.CurrentCulture) : "—";
+    private CurrencyPresentationContext? currencyContext;
+
+    public void ApplyCurrencyContext(CurrencyPresentationContext ctx)
+    {
+        currencyContext = ctx;
+        OnPropertyChanged(nameof(UnitPriceText));
+        OnPropertyChanged(nameof(TotalText));
+        OnPropertyChanged(nameof(ChapterTotalDisplay));
+    }
+
+    public string UnitPriceText
+    {
+        get
+        {
+            if (UnitPriceUf <= 0m) return "—";
+            if (currencyContext == null || currencyContext.Currency == Moneda.UF)
+                return UnitPriceUf.ToString("N3", CultureInfo.CurrentCulture);
+
+            decimal unitPriceClp = UnitPriceUf * currencyContext.ValorUfClp;
+            decimal converted = ItemizadoCurrencyCoordinator.ConvertClpToDelivery(unitPriceClp, currencyContext);
+            return ItemizadoCurrencyCoordinator.FormatUnitPrice(converted, currencyContext);
+        }
+    }
+
+    public string TotalText
+    {
+        get
+        {
+            if (TotalUf <= 0m) return "—";
+            if (currencyContext == null || currencyContext.Currency == Moneda.UF)
+                return TotalUf.ToString("N2", CultureInfo.CurrentCulture);
+
+            decimal totalClp = TotalUf * currencyContext.ValorUfClp;
+            decimal converted = ItemizadoCurrencyCoordinator.ConvertClpToDelivery(totalClp, currencyContext);
+            return ItemizadoCurrencyCoordinator.FormatTotal(converted, currencyContext);
+        }
+    }
+
+    private CommercialCostingModel commercialModel = CommercialCostingModel.ApuDirectCostWithCommercialFactors;
+    private bool usesCommercialOverride;
+    public CommercialCostingModel CommercialModel
+    {
+        get => commercialModel;
+        set
+        {
+            if (SetProperty(ref commercialModel, value))
+            {
+                OnPropertyChanged(nameof(CommercialModelLabel));
+                OnPropertyChanged(nameof(CommercialModelShortLabel));
+                OnPropertyChanged(nameof(HasCustomCommercialModel));
+            }
+        }
+    }
+
+    public string CommercialModelLabel => isTitleRow ? "" : commercialModel switch
+    {
+        CommercialCostingModel.UnitPrice => "P.U. Fijo",
+        CommercialCostingModel.LumpSum => "Suma Alzada",
+        CommercialCostingModel.TimeAndMaterials => "T & M",
+        _ => "APU"
+    };
+
+    public string CommercialModelShortLabel => isTitleRow ? "" : commercialModel switch
+    {
+        CommercialCostingModel.UnitPrice => "P.U.",
+        CommercialCostingModel.LumpSum => "S.A.",
+        CommercialCostingModel.TimeAndMaterials => "T&M",
+        _ => "APU"
+    };
+
+    public bool HasCustomCommercialModel => !isTitleRow && commercialModel != CommercialCostingModel.ApuDirectCostWithCommercialFactors;
+    public bool UsesCommercialOverride
+    {
+        get => usesCommercialOverride;
+        set
+        {
+            if (SetProperty(ref usesCommercialOverride, value))
+                OnPropertyChanged(nameof(CommercialOriginLabel));
+        }
+    }
+    public string CommercialOriginLabel => isTitleRow ? "" : usesCommercialOverride ? "Excepción" : "Proyecto";
+
+    private bool isCollapsed;
+    public bool IsCollapsed
+    {
+        get => isCollapsed;
+        set
+        {
+            if (SetProperty(ref isCollapsed, value))
+            {
+                OnPropertyChanged(nameof(CollapseIcon));
+            }
+        }
+    }
+
+    public string CollapseIcon => isCollapsed ? "▶" : "▼";
+
+    private bool isHiddenByParentCollapse;
+    public bool IsHiddenByParentCollapse
+    {
+        get => isHiddenByParentCollapse;
+        set => SetProperty(ref isHiddenByParentCollapse, value);
+    }
+
+    public string ChapterTotalDisplay
+    {
+        get
+        {
+            if (TotalUf <= 0m) return "";
+            if (currencyContext == null || currencyContext.Currency == Moneda.UF)
+                return $"{TotalUf:N2} UF";
+
+            decimal totalClp = TotalUf * currencyContext.ValorUfClp;
+            decimal converted = ItemizadoCurrencyCoordinator.ConvertClpToDelivery(totalClp, currencyContext);
+            string formatted = ItemizadoCurrencyCoordinator.FormatTotal(converted, currencyContext);
+            return currencyContext.Currency switch
+            {
+                Moneda.CLP => $"$ {formatted}",
+                Moneda.USD => $"US$ {formatted}",
+                Moneda.EUR => $"€ {formatted}",
+                _ => $"{formatted} UF"
+            };
+        }
+    }
+
+    private int chapterPartidasCount;
+    private int chapterCompletedCount;
+
+    public void SetChapterStats(int totalPartidas, int completedPartidas)
+    {
+        chapterPartidasCount = totalPartidas;
+        chapterCompletedCount = completedPartidas;
+        OnPropertyChanged(nameof(ChapterPartidasBadgeText));
+        OnPropertyChanged(nameof(ChapterTrazabilidadText));
+        OnPropertyChanged(nameof(ChapterTrazabilidadKind));
+        OnPropertyChanged(nameof(TrazabilidadText));
+        OnPropertyChanged(nameof(TrazabilidadKind));
+    }
+
+    public string ChapterPartidasBadgeText => isTitleRow
+        ? $"({chapterPartidasCount} {(chapterPartidasCount == 1 ? "partida" : "partidas")})"
+        : "";
+
+    public string ChapterTrazabilidadText
+    {
+        get
+        {
+            if (!isTitleRow) return "";
+            if (chapterPartidasCount == 0) return "0 partidas";
+            if (chapterCompletedCount >= chapterPartidasCount)
+                return $"{chapterPartidasCount}/{chapterPartidasCount} Listas";
+            int pending = chapterPartidasCount - chapterCompletedCount;
+            return $"{pending} {(pending == 1 ? "Pendiente" : "Pendientes")}";
+        }
+    }
+
+    public string ChapterTrazabilidadKind => (!isTitleRow || chapterPartidasCount == 0 || chapterCompletedCount >= chapterPartidasCount) ? "ok" : "warn";
+
+    public string TrazabilidadText => isTitleRow ? ChapterTrazabilidadText : model.ExcluidoCubicacion ? "Excluida" : statusKind switch
+    {
+        "ok" => "Completa",
+        "warn" => "Incompleta",
+        "bad" => "Sin precio",
+        _ => "Pendiente"
+    };
+
+    public string TrazabilidadKind => isTitleRow ? ChapterTrazabilidadKind : statusKind;
 
     public string StatusLabel
     {
         get => statusLabel;
-        set => SetProperty(ref statusLabel, value);
+        set
+        {
+            if (SetProperty(ref statusLabel, value))
+            {
+                OnPropertyChanged(nameof(StatusShortLabel));
+            }
+        }
     }
 
     public string StatusKind
     {
         get => statusKind;
-        set => SetProperty(ref statusKind, value);
+        set
+        {
+            if (SetProperty(ref statusKind, value))
+            {
+                OnPropertyChanged(nameof(StatusShortLabel));
+                OnPropertyChanged(nameof(StatusDotBrushKey));
+            }
+        }
     }
+
+    public string StatusShortLabel => isTitleRow ? "" : model.ExcluidoCubicacion ? "Excluida" : statusKind switch
+    {
+        "ok" => "Lista",
+        "warn" => "Incompleta",
+        "bad" => "Sin precio",
+        _ => "Pendiente"
+    };
+
+    public string StatusDotBrushKey => isTitleRow ? "Brush.Muted" : statusKind switch
+    {
+        "ok" => "Brush.Success",
+        "warn" => "Brush.Amber",
+        "bad" => "Brush.Red",
+        _ => "Brush.Line2"
+    };
 
     public bool ExcluidoCubicacion
     {
@@ -185,6 +533,7 @@ public sealed class ItemizadoRowVm : ViewModelBase, IGridCellValidationSource
             if (!AllowEdit) return;
             if (model.ExcluidoCubicacion == value)
                 return;
+            BeforeFieldChanging?.Invoke(this, "Excl. cubic.");
             model.ExcluidoCubicacion = value;
             OnPropertyChanged();
             OnPropertyChanged(nameof(MotivoNoCubicarHint));
@@ -202,6 +551,7 @@ public sealed class ItemizadoRowVm : ViewModelBase, IGridCellValidationSource
             string clean = value ?? "";
             if (string.Equals(model.MotivoNoCubicar, clean, StringComparison.Ordinal))
                 return;
+            BeforeFieldChanging?.Invoke(this, "Motivo no cubicar");
             model.MotivoNoCubicar = clean;
             OnPropertyChanged();
             OnPropertyChanged(nameof(MotivoNoCubicarHint));
@@ -306,10 +656,26 @@ public sealed class ItemizadoRowVm : ViewModelBase, IGridCellValidationSource
         OnPropertyChanged(nameof(MotivoNoCubicar));
         OnPropertyChanged(nameof(MotivoNoCubicarHint));
         OnPropertyChanged(nameof(Item));
+        OnPropertyChanged(nameof(WbsLevel));
+        OnPropertyChanged(nameof(IndentMargin));
         OnPropertyChanged(nameof(Descripcion));
         OnPropertyChanged(nameof(Unidad));
         OnPropertyChanged(nameof(CantidadText));
         OnPropertyChanged(nameof(IsPartidaEditable));
         OnPropertyChanged(nameof(EsTitulo));
+        OnPropertyChanged(nameof(CommercialModelLabel));
+        OnPropertyChanged(nameof(CommercialModelShortLabel));
+        OnPropertyChanged(nameof(HasCustomCommercialModel));
+        OnPropertyChanged(nameof(ChapterTotalDisplay));
+        OnPropertyChanged(nameof(StatusShortLabel));
+        OnPropertyChanged(nameof(StatusDotBrushKey));
+        OnPropertyChanged(nameof(CollapseIcon));
+        OnPropertyChanged(nameof(TrazabilidadText));
+        OnPropertyChanged(nameof(TrazabilidadKind));
+        OnPropertyChanged(nameof(ChapterPartidasBadgeText));
+        OnPropertyChanged(nameof(ChapterTrazabilidadText));
+        OnPropertyChanged(nameof(Observaciones));
+        OnPropertyChanged(nameof(HasObservaciones));
+        OnPropertyChanged(nameof(ObservacionesToolTip));
     }
 }

@@ -19,8 +19,11 @@ public sealed partial class ExportViewModel
         private set => SetProperty(ref isLivePreviewUpdating, value);
     }
 
+    public PreviewDocumentSwitch PreviewSwitch { get; private set; } = null!;
+
     partial void HookLivePreview()
     {
+        PreviewSwitch = new PreviewDocumentSwitch(ScheduleLivePreview);
         OfferSettings.PropertyChanged += OnOfferSettingsChanged;
     }
 
@@ -59,7 +62,7 @@ public sealed partial class ExportViewModel
                 return;
 
             var ctx = BuildPreviewContext();
-            var result = await previewService.GeneratePreviewAsync(ctx, openExternally: false);
+            var result = await previewService.GeneratePreviewAsync(ctx, PreviewSwitch.SelectedId, openExternally: false);
 
             if (token.IsCancellationRequested || generation != livePreviewGeneration)
                 return;

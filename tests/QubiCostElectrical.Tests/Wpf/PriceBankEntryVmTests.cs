@@ -57,4 +57,94 @@ public sealed class PriceBankEntryVmTests
         Assert.Equal("Revisar", vm.VigenciaKind);
         Assert.Equal("REVISAR", vm.VigenciaLabel);
     }
+
+    // ── M.O. derivada: precedencia rendimiento > porcentaje > directa ────────
+
+    [Fact]
+    public void MoDerivadaClp_SinFormula_RetornaMoDirecto()
+    {
+        var vm = new PriceBankEntryVm(new PriceBankEntry { Codigo = "A", MoClp = 350m });
+        Assert.Equal(350m, vm.MoDerivadaClp);
+    }
+
+    [Fact]
+    public void MoDerivadaClp_ModoRendimiento_UsaTarifaSobreRendimiento()
+    {
+        var entry = new PriceBankEntry { Codigo = "A", MoClp = 100m, RendimientoDh = 464m };
+        var vm = new PriceBankEntryVm(entry, modoRendimiento: true, tarifaDhClp: 42955m);
+        Assert.Equal(92.58m, vm.MoDerivadaClp);
+    }
+
+    [Fact]
+    public void MoDerivadaClp_FormulaPorcentaje_MultiplicaPrecioPctFaDefault()
+    {
+        var entry = new PriceBankEntry
+        {
+            Codigo = "A",
+            MatClp = 1000m,
+            MoClp = 123m,
+            MoFormulaTipo = MaterialMoResolver.MoFormulaPorcentaje,
+            MoPorcentajeMaterial = 2.5m
+        };
+        var vm = new PriceBankEntryVm(entry); // FA default 62,80
+        Assert.Equal(1570m, vm.MoDerivadaClp);
+    }
+
+    [Fact]
+    public void MoDerivadaClp_FormulaPorcentaje_FaPersonalizado()
+    {
+        var entry = new PriceBankEntry
+        {
+            Codigo = "A",
+            MatClp = 1000m,
+            MoFormulaTipo = MaterialMoResolver.MoFormulaPorcentaje,
+            MoPorcentajeMaterial = 2.5m
+        };
+        var vm = new PriceBankEntryVm(entry, indiceMoFa: 50m);
+        Assert.Equal(1250m, vm.MoDerivadaClp);
+    }
+
+    [Fact]
+    public void MoDerivadaClp_ModoRendimientoYPorcentaje_PriorizaRendimiento()
+    {
+        var entry = new PriceBankEntry
+        {
+            Codigo = "A",
+            MatClp = 1000m,
+            MoClp = 123m,
+            RendimientoDh = 464m,
+            MoFormulaTipo = MaterialMoResolver.MoFormulaPorcentaje,
+            MoPorcentajeMaterial = 2.5m
+        };
+        var vm = new PriceBankEntryVm(entry, modoRendimiento: true, tarifaDhClp: 42955m);
+        Assert.Equal(92.58m, vm.MoDerivadaClp);
+    }
+
+    [Fact]
+    public void MoEsPorcentaje_AlAlternar_MarcaCambioYActualizaFormula()
+    {
+        var vm = new PriceBankEntryVm(new PriceBankEntry { Codigo = "A" });
+
+        vm.MoEsPorcentaje = true;
+
+        Assert.Equal(MaterialMoResolver.MoFormulaPorcentaje, vm.Source.MoFormulaTipo);
+        Assert.True(vm.HasChanges);
+
+        vm.MoEsPorcentaje = false;
+        Assert.Equal("", vm.Source.MoFormulaTipo);
+    }
+
+    [Fact]
+    public void MoEsPorcentaje_SetterBloqueado_WhenReadOnly()
+    {
+        var entry = new PriceBankEntry { Codigo = "A" };
+        var vm = new PriceBankEntryVm(entry, valorUfClp: 0m, canEdit: () => false);
+
+        vm.MoEsPorcentaje = true;
+        vm.MoPorcentajeMaterial = 9m;
+
+        Assert.Equal("", entry.MoFormulaTipo);
+        Assert.Equal(2.5m, entry.MoPorcentajeMaterial);
+        Assert.False(vm.HasChanges);
+    }
 }

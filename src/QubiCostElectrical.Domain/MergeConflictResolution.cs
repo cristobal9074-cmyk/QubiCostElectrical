@@ -2,9 +2,9 @@ namespace QubiCostElectrical;
 
 public enum MergeConflictResolution
 {
-	UseLeft,
-	UseRight,
-	UseNewer,
-	UseOlder,
-	Manual
+    UseLeft,
+    UseRight,
+    UseNewer,
+    UseOlder,
+    Manual
 }

@@ -88,7 +88,7 @@ public sealed class CubicacionSCBudgetServiceTests
     [Fact]
     public void Apply_CreatesPartidaWhenNotExists()
     {
-        var totals    = Totals(("TUBERIA PVC 20mm", 10m, "ML"));
+        var totals = Totals(("TUBERIA PVC 20mm", 10m, "ML"));
         var itemizado = new List<ItemizadoRow>();
         var cubicacion = new List<CubicacionRow>();
         var mats = Array.Empty<MaterialRow>();
@@ -104,8 +104,8 @@ public sealed class CubicacionSCBudgetServiceTests
     public void Apply_ReusesExistingPartida()
     {
         var existingId = Guid.NewGuid().ToString("N");
-        var totals     = Totals(("TUBERIA PVC 20mm", 10m, "ML"));
-        var itemizado  = new List<ItemizadoRow>
+        var totals = Totals(("TUBERIA PVC 20mm", 10m, "ML"));
+        var itemizado = new List<ItemizadoRow>
         {
             new() { Id = existingId, Item = "C.SC", Descripcion = "CUBICACION SERVICIOS COMUNES (C.SC)", Unidad = "GL", Cantidad = 1 }
         };
@@ -123,8 +123,8 @@ public sealed class CubicacionSCBudgetServiceTests
     public void Apply_ReplacesExistingRows()
     {
         var existingId = Guid.NewGuid().ToString("N");
-        var totals     = Totals(("TUBERIA PVC 20mm", 10m, "ML"), ("CONDUCTOR H07V-U 1.5mm2", 50m, "ML"));
-        var itemizado  = new List<ItemizadoRow>
+        var totals = Totals(("TUBERIA PVC 20mm", 10m, "ML"), ("CONDUCTOR H07V-U 1.5mm2", 50m, "ML"));
+        var itemizado = new List<ItemizadoRow>
         {
             new() { Id = existingId, Item = "C.SC", Descripcion = "CUBICACION SERVICIOS COMUNES (C.SC)", Unidad = "GL", Cantidad = 1 }
         };
@@ -143,8 +143,8 @@ public sealed class CubicacionSCBudgetServiceTests
     public void Apply_UsesMatFromCatalogo_WhenFound()
     {
         var existingId = Guid.NewGuid().ToString("N");
-        var totals     = Totals(("TUBERIA PVC 20mm", 10m, "ML"));
-        var itemizado  = new List<ItemizadoRow>
+        var totals = Totals(("TUBERIA PVC 20mm", 10m, "ML"));
+        var itemizado = new List<ItemizadoRow>
         {
             new() { Id = existingId, Item = "C.SC", Descripcion = "CUBICACION SERVICIOS COMUNES (C.SC)", Unidad = "GL", Cantidad = 1 }
         };

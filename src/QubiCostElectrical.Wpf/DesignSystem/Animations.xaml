@@ -50,4 +50,13 @@
                      Duration="0:0:1.2" AutoReverse="True" />
   </Storyboard>
 
+  <!-- ═══ Value Recalculated Feedback (Microinteracción reactiva tipo Excel) ═══ -->
+  <Storyboard x:Key="Anim.ValueRecalculated">
+    <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0.45" To="1.0" Duration="{StaticResource Anim.Fast}">
+      <DoubleAnimation.EasingFunction>
+        <QuadraticEase EasingMode="EaseOut" />
+      </DoubleAnimation.EasingFunction>
+    </DoubleAnimation>
+  </Storyboard>
+
 </ResourceDictionary>

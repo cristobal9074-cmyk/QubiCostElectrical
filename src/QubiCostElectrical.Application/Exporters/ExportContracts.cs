@@ -33,7 +33,19 @@ public interface ICubicacionReportPdfExporter
 public interface ICubicacionSCReportExcelExporter
 {
     void Export(ExportProjectContext context, string path);
+    void ExportCuadroCargasSec(ExportProjectContext context, string path);
 }
+
+/// <summary>
+/// Genera la Carta de Oferta PDF en formato carta formal (formato carta formal):
+/// encabezado con logo, tabla de planos, alcances, condiciones comerciales, valor destacado y firma.
+/// Es un documento independiente de la oferta completa (QuestPdfProjectExporter).
+/// </summary>
+public interface IOfferLetterPdfExporter
+{
+    void Export(ExportProjectContext context, string path);
+}
+
 
 public sealed class ExportCorporateThemeSettings
 {
@@ -59,6 +71,8 @@ public sealed class ExportReportTemplateSettings
     public bool ShowCubicacionDetail { get; set; } = false;
     public bool ShowPriceValidity { get; set; } = true;
     public bool ShowTermsAndConditions { get; set; } = true;
+    public bool ShowNormativeAssumptions { get; set; } = true;
+    public bool ShowChapterDistributionChart { get; set; } = true;
     public bool ShowCoverTraceability { get; set; } = true;
     public List<string> OrderedFields { get; set; } = new()
     {

@@ -64,15 +64,40 @@ public sealed partial class ItemizadoViewModel
         }
     }
 
+    private void ClearSearch()
+    {
+        searchText = "";
+        debouncedSearchText = "";
+        searchDebounceTimer?.Stop();
+        UpdateSearchMatchHighlights();
+        SafeRefreshView();
+        UpdateFilterCounts();
+        OnPropertyChanged(nameof(SearchText));
+        OnPropertyChanged(nameof(IsSearchActive));
+    }
+
     private void OnSearchDebounceTick(object? sender, EventArgs e)
     {
         searchDebounceTimer?.Stop();
         if (debouncedSearchText == searchText)
             return;
         debouncedSearchText = searchText;
+        UpdateSearchMatchHighlights();
         SafeRefreshView();
         EnsureSelectionVisible();
         UpdateFilterCounts();
+        OnPropertyChanged(nameof(IsSearchActive));
+    }
+
+    private void UpdateSearchMatchHighlights()
+    {
+        bool hasSearch = !string.IsNullOrWhiteSpace(debouncedSearchText);
+        foreach (var row in allRows)
+        {
+            row.IsSearchMatch = hasSearch && (
+                row.Item.Contains(debouncedSearchText, StringComparison.OrdinalIgnoreCase) ||
+                row.Descripcion.Contains(debouncedSearchText, StringComparison.OrdinalIgnoreCase));
+        }
     }
 
     protected override void OnSessionChanged(object? sender, ProjectSessionChangedEventArgs e) =>
@@ -116,6 +141,9 @@ public sealed partial class ItemizadoViewModel
             UpdateHeader(state);
             UpdateSaveState();
             RestoreSelection();
+            breadcrumbCoordinator.UpdateBreadcrumb(selectedRow, rowsById, allRows);
+            OnPropertyChanged(nameof(HasBreadcrumb));
+            UpdateSearchMatchHighlights();
             hasPendingUndoForEdit = false;
             OnPropertyChanged(nameof(IsReadOnly));
         }
@@ -159,8 +187,15 @@ public sealed partial class ItemizadoViewModel
             }
         }
 
+        var rules = session.ProjectInfo.CommercialPartidaRules;
+        var defaultModel = session.ProjectInfo.CommercialModel;
         foreach (var vm in allRows)
+        {
+            var rule = rules?.FirstOrDefault(r => r.PartidaId == vm.Model.PartidaId);
+            vm.CommercialModel = (rule != null && !rule.UseProjectModel) ? rule.Model : defaultModel;
+            vm.UsesCommercialOverride = rule != null && !rule.UseProjectModel;
             WireRowVm(vm);
+        }
 
         SafeRefreshView();
     }
@@ -172,6 +207,7 @@ public sealed partial class ItemizadoViewModel
             return;
 
         vm.PropertyChanged += OnRowVmPropertyChanged;
+        vm.BeforeFieldChanging += OnRowBeforeFieldChanging;
         vm.FieldCommitted += OnRowFieldCommitted;
     }
 
@@ -181,6 +217,7 @@ public sealed partial class ItemizadoViewModel
             return;
 
         vm.PropertyChanged -= OnRowVmPropertyChanged;
+        vm.BeforeFieldChanging -= OnRowBeforeFieldChanging;
         vm.FieldCommitted -= OnRowFieldCommitted;
     }
 
@@ -190,16 +227,20 @@ public sealed partial class ItemizadoViewModel
             OnPropertyChanged(nameof(CubicarButtonLabel));
     }
 
-    private void OnRowFieldCommitted(ItemizadoRowVm row, string field)
+    private void OnRowBeforeFieldChanging(ItemizadoRowVm row, string field)
     {
         if (session.IsReadOnly)
             return;
 
-        if (!hasPendingUndoForEdit)
-        {
-            undo.PushUndoPoint(session, "Editar itemizado");
-            hasPendingUndoForEdit = true;
-        }
+        string detail = !string.IsNullOrWhiteSpace(row.Item) ? $" {field} en Partida {row.Item}" : " itemizado";
+        undo.PushUndoPoint(session, $"Modificar{detail}");
+        hasPendingUndoForEdit = false;
+    }
+
+    private void OnRowFieldCommitted(ItemizadoRowVm row, string field)
+    {
+        if (session.IsReadOnly)
+            return;
 
         session.MarkDirty(ProjectDirtyScope.Itemizado);
         UpdateSaveState();
@@ -257,11 +298,23 @@ public sealed partial class ItemizadoViewModel
 
     private void ApplyPresentation(ItemizadoPageState state, bool includeCosts, bool refreshView = false)
     {
+        var rules = session.ProjectInfo.CommercialPartidaRules;
+        var defaultModel = session.ProjectInfo.CommercialModel;
+        var currencyCtx = ItemizadoCurrencyCoordinator.CreateContext(
+            selectedDeliveryCurrency,
+            session.ValorUfClp,
+            session.ProjectInfo.TipoCambioUsdClp,
+            session.ProjectInfo.TipoCambioEurClp);
+
         foreach (var presentation in state.Rows)
         {
             if (rowsById.TryGetValue(presentation.Id, out var vm))
             {
+                var rule = rules?.FirstOrDefault(r => r.PartidaId == vm.Model.PartidaId);
+                vm.CommercialModel = (rule != null && !rule.UseProjectModel) ? rule.Model : defaultModel;
+                vm.UsesCommercialOverride = rule != null && !rule.UseProjectModel;
                 vm.ApplyPresentation(presentation);
+                vm.ApplyCurrencyContext(currencyCtx);
                 vm.ValidateEditableCells();
             }
         }
@@ -282,6 +335,7 @@ public sealed partial class ItemizadoViewModel
         SummaryStripText =
             $"{state.Summary.TotalPartidas:N0} partidas · {state.Summary.Completas:N0} completas · {pct}% listo";
         UpdateHudState((double)state.Summary.CompletedPct);
+        ItemizadoCollapseCoordinator.UpdateHierarchy(allRows);
         InvalidateFilterPresentationCache();
         if (refreshView)
             SafeRefreshView();
@@ -313,9 +367,22 @@ public sealed partial class ItemizadoViewModel
         shell.RefreshChrome();
     }
 
+    public void ToggleChapterCollapse(ItemizadoRowVm? chapterRow)
+    {
+        if (chapterRow == null || !chapterRow.EsTitulo)
+            return;
+
+        ItemizadoCollapseCoordinator.ToggleChapter(chapterRow, allRows);
+        SafeRefreshView();
+        UpdateFilterCounts();
+    }
+
     private bool FilterRow(object obj)
     {
         if (obj is not ItemizadoRowVm row)
+            return false;
+
+        if (row.IsHiddenByParentCollapse)
             return false;
 
         var presentation = row.FilterPresentation;
@@ -342,15 +409,49 @@ public sealed partial class ItemizadoViewModel
         if (ShowEmptyState || ShowEmptyItemizado)
         {
             FilteredCountLabel = "";
+            TotalPartidasCount = 0; ListasPartidasCount = 0; PendientesPartidasCount = 0;
+            OnPropertyChanged(nameof(TotalFilterLabel)); OnPropertyChanged(nameof(ListasFilterLabel)); OnPropertyChanged(nameof(PendientesFilterLabel));
             return;
         }
 
         int total = allRows.Count(r => !r.EsTitulo);
+        int listas = allRows.Count(r => !r.EsTitulo && (r.FilterPresentation?.CompletionState == PartidaCompletionState.Completed || r.FilterPresentation?.ExcluidoCubicacion == true));
+        int pendientes = Math.Max(0, total - listas);
+        TotalPartidasCount = total; ListasPartidasCount = listas; PendientesPartidasCount = pendientes;
+        OnPropertyChanged(nameof(TotalFilterLabel)); OnPropertyChanged(nameof(ListasFilterLabel)); OnPropertyChanged(nameof(PendientesFilterLabel));
+
         int visible = allRows.Count(r => !r.EsTitulo && FilterRow(r));
         bool filtered = FilterMode != ItemizadoFilterMode.Todos || !string.IsNullOrWhiteSpace(debouncedSearchText);
         FilteredCountLabel = filtered
             ? $"{visible:N0} de {total:N0} partidas"
             : $"{total:N0} partidas";
+
+        UpdateTotals();
+    }
+
+    private void UpdateTotals()
+    {
+        var visible = rowsView != null ? rowsView.Cast<ItemizadoRowVm>() : Rows;
+        var currencyCtx = ItemizadoCurrencyCoordinator.CreateContext(
+            selectedDeliveryCurrency,
+            session.ValorUfClp,
+            session.ProjectInfo.TipoCambioUsdClp,
+            session.ProjectInfo.TipoCambioEurClp);
+
+        totalsSnapshot = ItemizadoTotalsCoordinator.Calculate(
+            allRows,
+            visible,
+            currencyCtx,
+            FilterMode != ItemizadoFilterMode.Todos,
+            debouncedSearchText);
+
+        OnPropertyChanged(nameof(TotalPresupuestoUfText));
+        OnPropertyChanged(nameof(TotalPresupuestoClpText));
+        OnPropertyChanged(nameof(FooterPartidasText));
+        OnPropertyChanged(nameof(FooterTotalUfText));
+        OnPropertyChanged(nameof(FooterTotalClpText));
+        OnPropertyChanged(nameof(UfRateCaption));
+        OnPropertyChanged(nameof(HasActiveFilter));
     }
 
     private void RestoreSelection()

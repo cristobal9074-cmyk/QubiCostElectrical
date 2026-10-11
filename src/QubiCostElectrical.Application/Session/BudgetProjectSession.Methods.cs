@@ -54,6 +54,8 @@ public sealed partial class BudgetProjectSession
     public List<MeasurementLineRow> Mediciones => Data.Mediciones;
     public List<HojaCubicacionItem> HojaCubicacion => Data.HojaCubicacion;
     public List<SolicitudItemRow> Solicitudes => Data.Solicitudes;
+    public List<EstadoPagoMesRow> EstadoPagoMeses => Data.EstadoPagoMeses ??= new List<EstadoPagoMesRow>();
+    public EstadoPagoConfig EstadoPagoConfig => Data.EstadoPagoConfig ??= EstadoPagoConfig.Default();
     public List<BudgetStatusHistoryRow> BudgetStatusHistory => ProjectInfo.HistorialEstados;
     public List<CubicacionCellCommentRow> CubicacionCellComments => ProjectInfo.CubicacionCellComments;
     public List<TechnicalValidationRuleRow> TechnicalValidationRules => ProjectInfo.TechnicalValidationRules;
@@ -287,7 +289,7 @@ public sealed partial class BudgetProjectSession
 
     public decimal GetFamilyMarkup(string familyName)
     {
-        var norm = NormalizeFamilyName(familyName);
+        var norm = FamilyPresentationDefaults.FollowAssignment(ProjectInfo.FamiliasPrecioAsignadas, familyName);
         string key = $"MarkupFactor_{norm}";
         if (ProjectInfo.Variables.TryGetValue(key, out decimal val))
             return val;
@@ -296,24 +298,25 @@ public sealed partial class BudgetProjectSession
         return FamilyPresentationDefaults.DefaultMarkup(norm);
     }
 
-    public void SetFamilyMarkup(string familyName, decimal value)
+    public void SetFamilyMarkup(string familyName, decimal value, bool syncTakeoff = true)
     {
         EnsureWritable("modificar markup de familia");
         var norm = NormalizeFamilyName(familyName);
         string key = $"MarkupFactor_{norm}";
         ProjectInfo.Variables[key] = value;
         MarkDirty(ProjectDirtyScope.ProjectInfo);
-        SyncCubicacionGgUtFactorsFromVariables();
+        if (syncTakeoff)
+            SyncCubicacionGgUtFactorsFromVariables();
     }
 
     public decimal GetFamilyDiscountPct(string familyName)
     {
-        var norm = NormalizeFamilyName(familyName);
+        var norm = FamilyPresentationDefaults.FollowAssignment(ProjectInfo.FamiliasPrecioAsignadas, familyName);
         string key = $"MarkupDiscount_{norm}";
         return ProjectInfo.Variables.TryGetValue(key, out decimal val) ? MarkupPolicy.ClampPct(val) : 0m;
     }
 
-    public void SetFamilyDiscountPct(string familyName, decimal pct)
+    public void SetFamilyDiscountPct(string familyName, decimal pct, bool syncTakeoff = true)
     {
         EnsureWritable("modificar descuento de familia");
         var norm = NormalizeFamilyName(familyName);
@@ -324,7 +327,8 @@ public sealed partial class BudgetProjectSession
         else
             ProjectInfo.Variables[key] = pct;
         MarkDirty(ProjectDirtyScope.ProjectInfo);
-        SyncCubicacionGgUtFactorsFromVariables();
+        if (syncTakeoff)
+            SyncCubicacionGgUtFactorsFromVariables();
     }
 
     /// <summary>Factor × efectivo en cubicación: markup × (1 − descuento%).</summary>
@@ -412,7 +416,8 @@ public sealed partial class BudgetProjectSession
             Cubicacion,
             Materiales,
             ProjectInfo.ValorUfClp,
-            CubicacionValorizaciones);
+            CubicacionValorizaciones,
+            ProjectInfo);
     }
 
     public void ApplyCubicacionMedicionesForPartida(string itemId)

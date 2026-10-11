@@ -71,7 +71,10 @@ public sealed class ResumenScTomarViewModel : ViewModelBase
     public ICommand CerrarCommand { get; }
     public Action<MaterialConZonasVm>? OnTomar { get; set; }
     public Action? OnCerrar { get; set; }
-    public string MaterialCountText => $"{allMaterials.Count} material(es)";
+    public int TotalMaterialesCount => allMaterials.Count;
+    public int CategoriasCount => allGroups.Count;
+    public int ZonasCount => zonas.Count;
+    public string MaterialCountText => $"{allMaterials.Count} materiales disponibles";
     public string SidebarFooterText => $"{Categorias.Count} categorías · {allMaterials.Count} materiales";
     public IReadOnlyList<ZonaProyecto> Zonas => zonas;
 

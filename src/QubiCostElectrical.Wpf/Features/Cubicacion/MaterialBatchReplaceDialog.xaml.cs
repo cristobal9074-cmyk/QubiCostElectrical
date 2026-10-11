@@ -22,16 +22,18 @@ public partial class MaterialBatchReplaceDialog : Window
     private readonly List<MaterialRow> usedMaterials;
     private MaterialRow? selectedSourceMaterial;
     private MaterialRow? selectedTargetMaterial;
+    private bool isInitialized;
 
     public MaterialBatchReplaceResult? Result { get; private set; }
 
     public MaterialBatchReplaceDialog(BudgetProjectSession session, IPriceBankStore priceBankStore, WpfUndoService undo)
     {
-        InitializeComponent();
         this.session = session;
         this.priceBankStore = priceBankStore;
         this.undo = undo;
         this.batchService = new MaterialBatchReplaceService();
+
+        InitializeComponent();
 
         usedMaterials = batchService.GetUsedMaterials(session).ToList();
 
@@ -41,8 +43,12 @@ public partial class MaterialBatchReplaceDialog : Window
         )).ToList();
 
         SourceMaterialCombo.ItemsSource = comboItems;
+        isInitialized = true;
+
         if (comboItems.Count > 0)
             SourceMaterialCombo.SelectedIndex = 0;
+        else
+            RefreshPreview();
     }
 
     public static MaterialBatchReplaceResult? Execute(Window? owner, BudgetProjectSession session, IPriceBankStore priceBankStore, WpfUndoService undo)
@@ -56,11 +62,21 @@ public partial class MaterialBatchReplaceDialog : Window
 
     private void OnSourceMaterialSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
+        if (!isInitialized) return;
+
         if (SourceMaterialCombo.SelectedItem is MaterialComboItem item)
         {
             selectedSourceMaterial = item.Material;
             SourceDetailsText.Text = $"Precio actual: $ {selectedSourceMaterial.MatClp:N0} CLP ({selectedSourceMaterial.Unidad})";
             RefreshPreview();
+        }
+    }
+
+    private void OnTargetIncludeBankCheckChanged(object sender, RoutedEventArgs e)
+    {
+        if (TargetMaterialSearchBox.Text?.Trim().Length >= 2)
+        {
+            OnTargetSearchTextChanged(TargetMaterialSearchBox, null!);
         }
     }
 
@@ -74,57 +90,81 @@ public partial class MaterialBatchReplaceDialog : Window
         }
 
         var suggestions = new List<TargetSuggestionItem>();
+        var seenCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        // 1. Buscar en Banco de Precios
-        try
+        // 1. Buscar en Materiales de la Cubicación del proyecto (prioridad estricta)
+        var cubMatches = session.Cubicacion
+            .Where(c => !string.IsNullOrWhiteSpace(c.Codigo) || !string.IsNullOrWhiteSpace(c.Descripcion))
+            .Where(c => (c.Codigo?.Contains(query, StringComparison.OrdinalIgnoreCase) == true) ||
+                        (c.Descripcion?.Contains(query, StringComparison.OrdinalIgnoreCase) == true))
+            .GroupBy(c => !string.IsNullOrWhiteSpace(c.Codigo) ? c.Codigo.Trim() : c.Descripcion.Trim(), StringComparer.OrdinalIgnoreCase)
+            .Select(g => g.First())
+            .Take(20);
+
+        foreach (var c in cubMatches)
         {
-            var bankMatches = priceBankStore.Search(query).Take(15);
-            foreach (var b in bankMatches)
+            string code = c.Codigo ?? "";
+            seenCodes.Add(code);
+            var row = new MaterialRow
             {
-                decimal valorUf = session.ProjectInfo?.ValorUfClp ?? PriceConversion.DefaultValorUfClp;
-                if (valorUf <= 0m) valorUf = PriceConversion.DefaultValorUfClp;
-                decimal clp = b.MatClp > 0m ? b.MatClp : b.MatUf * valorUf;
+                Codigo = code,
+                Descripcion = c.Descripcion ?? "",
+                Unidad = c.Unidad ?? "",
+                Categoria = c.Categoria ?? "",
+                MatClp = c.PrecioUnitClp,
+                MatUf = c.MatUf,
+                MoClp = c.MoClp,
+                MoUf = c.MoUf,
+                Proveedor = ""
+            };
 
-                var row = new MaterialRow
-                {
-                    Codigo = b.Codigo,
-                    Descripcion = b.Descripcion,
-                    Unidad = b.Unidad,
-                    Categoria = b.Categoria,
-                    MatClp = clp,
-                    MoClp = b.MoClp,
-                    MatUf = b.MatUf,
-                    MoUf = b.MoUf,
-                    Proveedor = b.Proveedor
-                };
-
-                suggestions.Add(new TargetSuggestionItem(
-                    b.Codigo,
-                    b.Descripcion,
-                    $"$ {clp:N0} ({b.Unidad})",
-                    row
-                ));
-            }
+            suggestions.Add(new TargetSuggestionItem(
+                code,
+                c.Descripcion ?? "",
+                $"$ {c.PrecioUnitClp:N0} ({c.Unidad}) [Cubicación]",
+                row
+            ));
         }
-        catch { }
 
-        // 2. Buscar en Materiales del Proyecto
-        var projectMatches = session.Materiales
-            .Where(m => (m.Codigo?.Contains(query, StringComparison.OrdinalIgnoreCase) == true) ||
-                        (m.Descripcion?.Contains(query, StringComparison.OrdinalIgnoreCase) == true))
-            .Take(10);
-
-        foreach (var m in projectMatches)
+        // 2. Si el usuario activó "Buscar en Banco", buscar en el banco de precios central
+        if (TargetIncludeBankCheck?.IsChecked == true)
         {
-            if (!suggestions.Any(s => string.Equals(s.Codigo, m.Codigo, StringComparison.OrdinalIgnoreCase)))
+            try
             {
-                suggestions.Add(new TargetSuggestionItem(
-                    m.Codigo,
-                    m.Descripcion,
-                    $"$ {m.MatClp:N0} ({m.Unidad})",
-                    m
-                ));
+                var bankMatches = priceBankStore.Search(query);
+                foreach (var b in bankMatches)
+                {
+                    if (seenCodes.Contains(b.Codigo)) continue;
+                    seenCodes.Add(b.Codigo);
+
+                    decimal valorUf = session.ProjectInfo?.ValorUfClp ?? PriceConversion.DefaultValorUfClp;
+                    if (valorUf <= 0m) valorUf = PriceConversion.DefaultValorUfClp;
+                    decimal clp = b.MatClp > 0m ? b.MatClp : b.MatUf * valorUf;
+
+                    var row = new MaterialRow
+                    {
+                        Codigo = b.Codigo,
+                        Descripcion = b.Descripcion,
+                        Unidad = b.Unidad,
+                        Categoria = b.Categoria,
+                        MatClp = clp,
+                        MoClp = b.MoClp,
+                        MatUf = b.MatUf,
+                        MoUf = b.MoUf,
+                        Proveedor = b.Proveedor
+                    };
+
+                    suggestions.Add(new TargetSuggestionItem(
+                        b.Codigo,
+                        b.Descripcion,
+                        $"$ {clp:N0} ({b.Unidad}) [Banco]",
+                        row
+                    ));
+
+                    if (suggestions.Count >= 25) break;
+                }
             }
+            catch { }
         }
 
         TargetSuggestionsList.ItemsSource = suggestions;
@@ -145,11 +185,16 @@ public partial class MaterialBatchReplaceDialog : Window
 
     private void OnOptionChanged(object sender, RoutedEventArgs e)
     {
+        if (!isInitialized) return;
         RefreshPreview();
     }
 
     private void RefreshPreview()
     {
+        if (!isInitialized || PreviewGrid == null || ExecuteButton == null ||
+            SummaryPartidasCountText == null || SummaryTotalDeltaText == null)
+            return;
+
         if (selectedSourceMaterial == null || selectedTargetMaterial == null)
         {
             PreviewGrid.ItemsSource = null;

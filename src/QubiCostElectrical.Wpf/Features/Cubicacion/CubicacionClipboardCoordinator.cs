@@ -132,14 +132,15 @@ internal sealed class CubicacionClipboardCoordinator
         if (lines.Length == 0)
             return false;
 
-        string header = grid.CurrentCell.Column?.Header?.ToString() ?? "";
-        int startColumn = CubicacionViewModel.ResolveAnchoredPasteColumn(header);
+        int startColumn = CubicacionViewModel.ResolveAnchoredPasteColumn(grid.CurrentCell.Column);
         if (startColumn < 0)
             return false;
 
         int startRow = grid.Items.IndexOf(row);
         if (startRow < 0)
             return false;
+
+        int maxColumn = CubicacionViewModel.FixedPasteColumnCount + CubicacionViewModel.MaximumSectorCount - 1;
 
         undo.PushUndoPoint(session, "Pegar cubicación");
         // Evita que OnRowEdited() empuje undo points adicionales por cada celda tocada
@@ -148,8 +149,9 @@ internal sealed class CubicacionClipboardCoordinator
 
         if (lines.Length == 1 && !lines[0].Contains('\t'))
         {
-            ApplyPastedValue(row, startColumn, lines[0].Trim());
-            parent.OnRowEdited(row);
+            ApplyPastedCells(row, startColumn, new[] { lines[0].Trim() }, maxColumn);
+            if (startColumn < CubicacionViewModel.FixedPasteColumnCount)
+                parent.OnRowEdited(row);
             parent.HasPendingUndoForEdit = false;
             return true;
         }
@@ -180,14 +182,7 @@ internal sealed class CubicacionClipboardCoordinator
                 parent.Rows.Add(targetRow);
             }
 
-            for (int c = 0; c < cells.Length; c++)
-            {
-                int columnIndex = startColumn + c;
-                if (columnIndex > 3)
-                    break;
-                ApplyPastedValue(targetRow, columnIndex, cells[c].Trim());
-            }
-
+            ApplyPastedCells(targetRow, startColumn, cells, maxColumn);
             parent.EnsureRowInSession(targetRow);
             parent.TryAutoResolveFromPriceBank(targetRow);
             targetRow.RefreshDisplayProperties();
@@ -211,10 +206,64 @@ internal sealed class CubicacionClipboardCoordinator
 
         ShellNotificationService.Instance.ShowSuccess(
             "Pegado",
-            $"{imported} fila(s) actualizada(s) desde Excel.",
+            $"{imported} fila(s) actualizada(s) desde el portapapeles.",
             actionLabel: "Deshacer",
             action: UndoToastAction);
         return true;
+    }
+
+    private void ApplyPastedCells(CubicacionRowVm row, int startColumn, string[] cells, int maxColumn)
+    {
+        row.BeginBatchUpdate();
+        try
+        {
+            for (int c = 0; c < cells.Length; c++)
+            {
+                int columnIndex = startColumn + c;
+                if (columnIndex > maxColumn)
+                    break;
+                ApplyPastedValue(row, columnIndex, cells[c].Trim());
+            }
+        }
+        finally
+        {
+            row.EndBatchUpdate();
+        }
+    }
+
+    private static void ApplyPastedValue(CubicacionRowVm row, int columnIndex, string value)
+    {
+        if (columnIndex >= CubicacionViewModel.FixedPasteColumnCount)
+        {
+            int slot = columnIndex - CubicacionViewModel.FixedPasteColumnCount;
+            if (slot >= 0 && slot < CubicacionViewModel.MaximumSectorCount)
+                row.SectorValues[slot] = value;
+            return;
+        }
+
+        switch (columnIndex)
+        {
+            case 0:
+                row.Codigo = value;
+                break;
+            case 1:
+                row.Descripcion = value;
+                break;
+            case 2:
+                row.Unidad = value;
+                break;
+            case 3:
+                if (QuantityFormulaService.IsFormulaLike(value))
+                {
+                    row.Source.TotalExpression = value;
+                    row.Source.QtyExpressions = Array.Empty<string>();
+                }
+                else if (decimal.TryParse(value.Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out var qty))
+                    row.Cantidad = qty;
+                else if (string.IsNullOrWhiteSpace(value))
+                    row.Cantidad = 0m;
+                break;
+        }
     }
 
     public void PasteClipboardDirect(string text, bool showPreviewDialog)
@@ -268,33 +317,6 @@ internal sealed class CubicacionClipboardCoordinator
         parent.ValidateRows();
     }
 
-    private static void ApplyPastedValue(CubicacionRowVm row, int columnIndex, string value)
-    {
-        switch (columnIndex)
-        {
-            case 0:
-                row.Codigo = value;
-                break;
-            case 1:
-                row.Descripcion = value;
-                break;
-            case 2:
-                row.Unidad = value;
-                break;
-            case 3:
-                if (QuantityFormulaService.IsFormulaLike(value))
-                {
-                    row.Source.TotalExpression = value;
-                    row.Source.QtyExpressions = Array.Empty<string>();
-                }
-                else if (decimal.TryParse(value.Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out var qty))
-                    row.Cantidad = qty;
-                else if (string.IsNullOrWhiteSpace(value))
-                    row.Cantidad = 0m;
-                break;
-        }
-    }
-
     public void ApplyClipboardRows(IEnumerable<CubicacionClipboardRow> rows)
     {
         var selectedPartida = parent.SelectedPartida;
@@ -322,10 +344,33 @@ internal sealed class CubicacionClipboardCoordinator
                 row.TotalExpression = cr.CantidadRaw;
                 row.Cantidad = querySvc.EvaluateStoredExpressions(session, row);
             }
+            else if (cr.SectorValues.Count > 0 && cr.SectorValues.Any(v => !string.IsNullOrWhiteSpace(v)))
+            {
+                var expressions = new string[cr.SectorValues.Count];
+                for (int i = 0; i < cr.SectorValues.Count; i++)
+                    expressions[i] = cr.SectorValues[i] ?? "";
+                row.QtyExpressions = expressions;
+                row.TotalExpression = string.Empty;
+                row.Cantidad = querySvc.EvaluateStoredExpressions(session, row);
+            }
 
             session.Cubicacion.Add(row);
             var vm = parent.CreateRowVm(row);
             parent.InitializeSectorRow(vm);
+            if (cr.SectorValues.Count > 0)
+            {
+                vm.BeginBatchUpdate();
+                try
+                {
+                    int limit = Math.Min(cr.SectorValues.Count, CubicacionViewModel.MaximumSectorCount);
+                    for (int i = 0; i < limit; i++)
+                        vm.SectorValues[i] = cr.SectorValues[i] ?? "";
+                }
+                finally
+                {
+                    vm.EndBatchUpdate();
+                }
+            }
             parent.Rows.Add(vm);
             // Este camino de pegado (vista previa) no pasaba por OnRowEdited, así que a
             // diferencia del pegado directo/anclado nunca completaba Descripción/MAT UF/MO

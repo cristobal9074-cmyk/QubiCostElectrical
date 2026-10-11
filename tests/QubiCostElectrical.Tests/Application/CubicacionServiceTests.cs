@@ -11,8 +11,15 @@ public sealed class CubicacionServiceTests
     private readonly CubicacionService _service = new();
 
     private static CubicacionRow Row(string itemId, string codigo, decimal cantidad, decimal matUf = 1m)
-        => new() { Id = Guid.NewGuid().ToString("N"), ItemId = itemId, Codigo = codigo,
-            Descripcion = codigo, Cantidad = cantidad, MatUf = matUf };
+        => new()
+        {
+            Id = Guid.NewGuid().ToString("N"),
+            ItemId = itemId,
+            Codigo = codigo,
+            Descripcion = codigo,
+            Cantidad = cantidad,
+            MatUf = matUf
+        };
 
     [Fact]
     public void GetRowsForItem_ReturnsMatching()
@@ -139,6 +146,28 @@ public sealed class CubicacionServiceTests
     }
 
     [Fact]
+    public void CloneRowForItem_CopiaVinculoEsclavoIndependiente()
+    {
+        var source = Row("P1", "ABR", 0m);
+        source.Esclavo = new CubicacionEsclavoVinculo
+        {
+            MaestroCodigo = "TUBO20",
+            TipoCalculo = TipoCalculoParametrico.Espaciamiento,
+            Espaciamiento = 1.5m,
+            Minimo = 3m
+        };
+
+        var clone = _service.CloneRowForItem(source, "P2");
+
+        Assert.NotNull(clone.Esclavo);
+        Assert.Equal("TUBO20", clone.Esclavo!.MaestroCodigo);
+        Assert.Equal(TipoCalculoParametrico.Espaciamiento, clone.Esclavo.TipoCalculo);
+        Assert.Equal(1.5m, clone.Esclavo.Espaciamiento);
+        Assert.Equal(3m, clone.Esclavo.Minimo);
+        Assert.NotSame(source.Esclavo, clone.Esclavo); // copia, no referencia compartida
+    }
+
+    [Fact]
     public void SyncPricesFromCatalog_UpdatesRowAndValorizacionClp()
     {
         var row = new CubicacionRow
@@ -253,5 +282,117 @@ public sealed class CubicacionServiceTests
     {
         var defaults = new[] { "Zona 1", "Zona 2" };
         Assert.True(_service.AllQtyHeadersAreDefaults(defaults, 2));
+    }
+
+    // ── M.O. por rendimiento (MaterialMoResolver) ─────────────────────────────
+
+    private static MaterialRow MaterialConRendimiento(decimal moClp, decimal rendimiento) => new()
+    {
+        Codigo = "CBL12",
+        Descripcion = "Cable 12",
+        Unidad = "ML",
+        MoClp = moClp,
+        RendimientoDh = rendimiento
+    };
+
+    private static ProjectInfoRow ProyectoModoRendimiento(decimal tarifaDh) => new()
+    {
+        ModoMoInstalacion = MaterialMoResolver.ModoRendimiento,
+        TarifaDhClp = tarifaDh
+    };
+
+    [Fact]
+    public void ApplyMaterial_ModoRendimiento_EscribeMoEfectiva()
+    {
+        var row = new CubicacionRow();
+        var material = MaterialConRendimiento(moClp: 100m, rendimiento: 464m);
+        _service.ApplyMaterial(row, material, 0m, ProyectoModoRendimiento(42955m));
+        Assert.Equal(92.58m, row.MoClp);
+        Assert.Equal(100m, material.MoClp);
+    }
+
+    [Fact]
+    public void ApplyMaterial_SinProyectoConservado_MoDirecta()
+    {
+        var row = new CubicacionRow();
+        var material = MaterialConRendimiento(moClp: 100m, rendimiento: 464m);
+        _service.ApplyMaterial(row, material);
+        Assert.Equal(100m, row.MoClp);
+    }
+
+    [Fact]
+    public void SyncPricesFromCatalog_ModoRendimiento_PusheaMoEfectiva()
+    {
+        var row = new CubicacionRow { Codigo = "CBL12", MatClp = 1m, MoClp = 100m };
+        var material = MaterialConRendimiento(moClp: 100m, rendimiento: 464m);
+        int updated = _service.SyncPricesFromCatalog(
+            new[] { row }, new[] { material }, 0m, valorizaciones: null, ProyectoModoRendimiento(42955m));
+        Assert.Equal(1, updated);
+        Assert.Equal(92.58m, row.MoClp);
+    }
+
+    [Fact]
+    public void SyncPricesFromCatalog_ModoRendimiento_MoEfectivaYaAplicada_NoCuenta()
+    {
+        var row = new CubicacionRow { Codigo = "CBL12", MatClp = 1m, MoClp = 92.58m };
+        var material = MaterialConRendimiento(moClp: 100m, rendimiento: 464m);
+        material.MatClp = 1m;
+        int updated = _service.SyncPricesFromCatalog(
+            new[] { row }, new[] { material }, 0m, valorizaciones: null, ProyectoModoRendimiento(42955m));
+        Assert.Equal(0, updated);
+        Assert.Equal(92.58m, row.MoClp);
+    }
+
+    [Fact]
+    public void SyncPricesFromCatalog_SinProyecto_UsaMoDirecta()
+    {
+        var row = new CubicacionRow { Codigo = "CBL12", MatClp = 1m, MoClp = 50m };
+        var material = MaterialConRendimiento(moClp: 100m, rendimiento: 464m);
+        _service.SyncPricesFromCatalog(new[] { row }, new[] { material }, 0m);
+        Assert.Equal(100m, row.MoClp);
+    }
+
+    // ── M.O. por % del material (Material × % × FA) ─────────────────────────
+
+    private static MaterialRow MaterialPorcentaje(decimal matClp) => new()
+    {
+        Codigo = "CBL12",
+        Descripcion = "Cable 12",
+        Unidad = "ML",
+        MatClp = matClp,
+        MoClp = 999m, // fija "basura": la fórmula porcentaje debe ignorarla
+        MoFormulaTipo = MaterialMoResolver.MoFormulaPorcentaje,
+        MoPorcentajeMaterial = 2.5m
+    };
+
+    [Fact]
+    public void ApplyMaterial_MaterialPorcentaje_EscribeMoEfectiva()
+    {
+        var row = new CubicacionRow();
+        var material = MaterialPorcentaje(2000m);
+        _service.ApplyMaterial(row, material, 0m, new ProjectInfoRow());
+        // 2000 × 2,5% × 62,80 = 3140
+        Assert.Equal(3140m, row.MoClp);
+        Assert.Equal(999m, material.MoClp); // el catálogo conserva su M.O. fija
+    }
+
+    [Fact]
+    public void SyncPricesFromCatalog_MaterialPorcentaje_PusheaMoEfectiva()
+    {
+        var row = new CubicacionRow { Codigo = "CBL12", MatClp = 2000m, MoClp = 1m };
+        var material = MaterialPorcentaje(2000m);
+        int updated = _service.SyncPricesFromCatalog(
+            new[] { row }, new[] { material }, 0m, valorizaciones: null, new ProjectInfoRow());
+        Assert.Equal(1, updated);
+        Assert.Equal(3140m, row.MoClp);
+    }
+
+    [Fact]
+    public void SyncPricesFromCatalog_MaterialPorcentaje_SinProyecto_UsaFaDefault()
+    {
+        var row = new CubicacionRow { Codigo = "CBL12", MatClp = 2000m, MoClp = 1m };
+        var material = MaterialPorcentaje(2000m);
+        _service.SyncPricesFromCatalog(new[] { row }, new[] { material }, 0m);
+        Assert.Equal(3140m, row.MoClp);
     }
 }

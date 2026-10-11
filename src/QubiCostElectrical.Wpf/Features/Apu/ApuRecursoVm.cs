@@ -140,8 +140,27 @@ public sealed class ApuRecursoVm : ViewModelBase
     public decimal CostoUnitUf => Source.CostoUnitUf;
 
     // ─── Auditoría ────────────────────────────────────────────────────────────
-    public string FuentePrecio => Source.FuentePrecio;
-    public DateTime FechaPrecio => Source.FechaPrecio;
+    public string FuentePrecio
+    {
+        get => Source.FuentePrecio;
+        set
+        {
+            if (!AllowEdit) return;
+            Source.FuentePrecio = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public DateTime FechaPrecio
+    {
+        get => Source.FechaPrecio;
+        set
+        {
+            if (!AllowEdit) return;
+            Source.FechaPrecio = value;
+            OnPropertyChanged();
+        }
+    }
     public string Estado => Source.Estado;
     public string Nota
     {
@@ -165,9 +184,16 @@ public sealed class ApuRecursoVm : ViewModelBase
 
     // Tras migración CLP: PrecioBaseUf y CostoUnitUf contienen CLP (nombre legado)
     public string PrecioFormatted => $"$ {Source.PrecioBaseUf:N0}";
-    public string CostoFormatted  => $"$ {Source.CostoUnitUf:N0}";
+    public string CostoFormatted => $"$ {Source.CostoUnitUf:N0}";
 
     public bool EsManodeObra => Source.Tipo is ApuTipoRecurso.MO or ApuTipoRecurso.HH;
+    public bool HasIssue => Rendimiento <= 0m || PrecioUf <= 0m || string.IsNullOrWhiteSpace(CodigoMaterial);
+    public bool RendimientoZero => Rendimiento <= 0m;
+    public string IssueTooltip => Rendimiento <= 0m
+        ? "⚠️ Rendimiento unitario en 0. Requiere indicar consumo."
+        : (PrecioUf <= 0m
+            ? "⚠️ Sin precio unitario ($0)."
+            : (string.IsNullOrWhiteSpace(CodigoMaterial) ? "ℹ️ Recurso sin código normalizado." : "Recurso válido y costea correctamente."));
 
     public void RefreshCalculated()
     {
@@ -177,5 +203,8 @@ public sealed class ApuRecursoVm : ViewModelBase
         OnPropertyChanged(nameof(PrecioFormatted));
         OnPropertyChanged(nameof(CostoFormatted));
         OnPropertyChanged(nameof(HasPrecio));
+        OnPropertyChanged(nameof(HasIssue));
+        OnPropertyChanged(nameof(RendimientoZero));
+        OnPropertyChanged(nameof(IssueTooltip));
     }
 }

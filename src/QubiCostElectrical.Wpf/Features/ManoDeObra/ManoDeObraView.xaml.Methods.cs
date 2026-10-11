@@ -1,21 +1,61 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Globalization;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 using QubiCostElectrical.Wpf.Infrastructure;
 
 namespace QubiCostElectrical.Wpf.Features.ManoDeObra;
 
 public partial class ManoDeObraView : UserControl
 {
+    private readonly DispatcherTimer heatFlushTimer;
+    private readonly Dictionary<(string Cargo, int Month), TextBox> heatCells = new();
+    private readonly List<string> heatRowOrder = new();
+    private string? heatFocusCargo;
+    private int heatFocusMonth = -1;
+    private bool heatHadFocus;
+    private bool heatSyncing;
+    private int heatMonths;
+
     public ManoDeObraView()
     {
         InitializeComponent();
+        heatFlushTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(240) };
+        heatFlushTimer.Tick += (_, _) =>
+        {
+            heatFlushTimer.Stop();
+            if (DataContext is ManoDeObraViewModel vm)
+                vm.FlushStaffingEdits();
+        };
+        Unloaded += (_, _) =>
+        {
+            heatFlushTimer.Stop();
+            if (DataContext is ManoDeObraViewModel vm)
+                vm.FlushStaffingEdits();
+        };
         Loaded += OnLoaded;
         DataContextChanged += OnDataContextChanged;
+        CargoWheelZone.AddHandler(UIElement.MouseWheelEvent, new MouseWheelEventHandler(ForwardPageWheel));
+        CostWheelZone.AddHandler(UIElement.MouseWheelEvent, new MouseWheelEventHandler(ForwardPageWheel));
+        ChartWheelZone.AddHandler(UIElement.MouseWheelEvent, new MouseWheelEventHandler(ForwardPageWheel));
+    }
+
+    private void ForwardPageWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (PageScroll is null)
+            return;
+        e.Handled = true;
+        var forward = new MouseWheelEventArgs(e.MouseDevice, e.Timestamp, e.Delta)
+        {
+            RoutedEvent = UIElement.MouseWheelEvent,
+        };
+        PageScroll.RaiseEvent(forward);
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
@@ -52,7 +92,9 @@ public partial class ManoDeObraView : UserControl
             or nameof(ManoDeObraViewModel.DotacionRows)
             or nameof(ManoDeObraViewModel.CostRows))
         {
+            RememberHeatFocus();
             BuildTables(vm);
+            RestoreHeatFocus();
         }
     }
 
@@ -85,14 +127,18 @@ public partial class ManoDeObraView : UserControl
 
     private void BuildCargoTable(ManoDeObraViewModel vm)
     {
+        heatCells.Clear();
+        heatRowOrder.Clear();
         var rows = vm.DotacionRows;
         var n = vm.TotalMonths;
+        heatMonths = n;
         var grid = CargoTableGrid;
         var peakSet = vm.Meses.Where(m => m.EsPeak).Select(m => m.Numero).ToHashSet();
 
         AddCol(grid, ColCargo);
         AddCol(grid, ColDotPico);
         AddCol(grid, ColBase);
+        AddCol(grid, ColFraccion);
         AddCol(grid, ColLeyes);
         AddCol(grid, ColTotalMes);
         for (var i = 0; i < n; i++) AddCol(grid, ColMonth);
@@ -112,15 +158,16 @@ public partial class ManoDeObraView : UserControl
         AddCell(grid, r, 0, "Cargo", bold: true, color: c, bg: b);
         AddCell(grid, r, 1, "Dot.", bold: true, TextAlignment.Right, color: c, bg: b);
         AddCell(grid, r, 2, "Sueldo base", bold: true, TextAlignment.Right, color: Blue, bg: BlueFaint);
-        AddCell(grid, r, 3, "Leyes", bold: true, TextAlignment.Right, color: Purple, bg: PurpleSoft);
-        AddCell(grid, r, 4, "Total mens.", bold: true, TextAlignment.Right, color: Blue, bg: BlueFaint);
+        AddCell(grid, r, 3, "Fracc.", bold: true, TextAlignment.Center, color: Amber, bg: b);
+        AddCell(grid, r, 4, "Leyes", bold: true, TextAlignment.Right, color: Purple, bg: PurpleSoft);
+        AddCell(grid, r, 5, "Total mens.", bold: true, TextAlignment.Right, color: Blue, bg: BlueFaint);
         for (var i = 0; i < n; i++)
         {
             var peak = peakSet.Contains(i + 1);
-            AddCell(grid, r, 5 + i, $"M{i + 1}", bold: true, TextAlignment.Center,
+            AddCell(grid, r, 6 + i, $"M{i + 1}", bold: true, TextAlignment.Center,
                 color: peak ? Green : c, bg: peak ? Color.FromRgb(0xF0, 0xFA, 0xF4) : b);
         }
-        AddCell(grid, r, 5 + n, "Total", bold: true, TextAlignment.Right, color: c, bg: b);
+        AddCell(grid, r, 6 + n, "Total", bold: true, TextAlignment.Right, color: c, bg: b);
     }
 
     private void AddCargoDataRow(Grid grid, int r, MoTableRow row, int n, ManoDeObraViewModel vm, System.Collections.Generic.HashSet<int> peakSet)
@@ -175,7 +222,7 @@ public partial class ManoDeObraView : UserControl
             };
             Grid.SetRow(rem, r);
             Grid.SetColumn(rem, 0);
-            Grid.SetColumnSpan(rem, 6 + n);
+            Grid.SetColumnSpan(rem, 7 + n);
             grid.Children.Add(rem);
             return;
         }
@@ -228,16 +275,22 @@ public partial class ManoDeObraView : UserControl
         grid.Children.Add(nameBorder);
 
         var noColor = (Color?)null;
-        AddCell(grid, r, 1, row.DotPico.ToString(), bold: isDir || isTotal, TextAlignment.Right, mono: true,
-            color: row.IsGrandTotal ? Colors.White : (isDir ? noColor : Muted),
-            bg: row.IsGrandTotal ? Navy2 : (isTotal ? Surface2 : null), h: RowH);
+        if (!isDir && !isTotal)
+            AddDotPicoCell(grid, r, row, vm);
+        else
+            AddCell(grid, r, 1, row.DotPico.ToString(), bold: isDir || isTotal, TextAlignment.Right, mono: true,
+                color: row.IsGrandTotal ? Colors.White : (isDir ? noColor : Muted),
+                bg: row.IsGrandTotal ? Navy2 : (isTotal ? Surface2 : null), h: RowH);
         AddCell(grid, r, 2, row.SueldoBaseStr, bold: isDir || isTotal, TextAlignment.Right, mono: true,
             color: row.IsGrandTotal ? Colors.White : noColor,
             bg: row.IsGrandTotal ? Navy2 : BlueFaint, h: RowH);
-        AddCell(grid, r, 3, row.LeyesStr, bold: isDir || isTotal, TextAlignment.Right, mono: true,
+        AddCell(grid, r, 3, row.FraccionStr, bold: false, TextAlignment.Center, mono: true,
+            color: row.IsGrandTotal ? Colors.White : (isDir ? noColor : Amber),
+            bg: row.IsGrandTotal ? Navy2 : (isTotal ? Surface2 : null), h: RowH);
+        AddCell(grid, r, 4, row.LeyesStr, bold: isDir || isTotal, TextAlignment.Right, mono: true,
             color: row.IsGrandTotal ? Color.FromRgb(0x93, 0xC5, 0xFD) : Purple,
             bg: row.IsGrandTotal ? Navy2 : null, h: RowH);
-        AddCell(grid, r, 4, row.TotalMensualStr, bold: true, TextAlignment.Right, mono: true,
+        AddCell(grid, r, 5, row.TotalMensualStr, bold: true, TextAlignment.Right, mono: true,
             color: row.IsGrandTotal ? Colors.White : (isDir ? Blue : Ink),
             bg: row.IsGrandTotal ? Navy2 : BlueFaint, h: RowH);
 
@@ -247,7 +300,7 @@ public partial class ManoDeObraView : UserControl
         {
             for (var i = 0; i < n; i++)
             {
-                AddCell(grid, r, 5 + i, row.Dotaciones[i].ToString(), bold: true, TextAlignment.Center, mono: true,
+                AddCell(grid, r, 6 + i, row.Dotaciones[i].ToString(), bold: true, TextAlignment.Center, mono: true,
                     color: row.IsGrandTotal ? Colors.White : noColor,
                     bg: row.IsGrandTotal ? Navy2 : (peakSet.Contains(i + 1) ? PeakBg : Surface2), h: RowH);
             }
@@ -255,12 +308,126 @@ public partial class ManoDeObraView : UserControl
         else
         {
             for (var i = 0; i < n; i++)
-                AddHeatCell(grid, r, 5 + i, row.Dotaciones[i], maxDot, row.Tag, i, vm, peakSet.Contains(i + 1), !row.EsDirecta);
+                AddHeatCell(grid, r, 6 + i, row.Dotaciones[i], maxDot, row.Tag, i, vm, peakSet.Contains(i + 1), !row.EsDirecta);
         }
 
         var totalColor = row.IsGrandTotal ? Colors.White : (isDir ? Green2 : Amber);
-        AddCell(grid, r, 5 + n, row.TotalStr, bold: true, TextAlignment.Right, mono: true,
+        AddCell(grid, r, 6 + n, row.TotalStr, bold: true, TextAlignment.Right, mono: true,
             color: totalColor, bg: row.IsGrandTotal ? Navy2 : (isTotal ? Surface2 : null), h: RowH);
+    }
+
+    /// <summary>
+    /// Celda editable de la columna Dot. para roles indirectos: fija la dotación de todos los meses
+    /// (Month = -1 en la clave de heatCells; se registra aparte de los overrides mes a mes).
+    /// </summary>
+    private void AddDotPicoCell(Grid grid, int rowIdx, MoTableRow row, ManoDeObraViewModel vm)
+    {
+        var cargoId = row.Tag;
+        var tag = new HeatCellTag
+        {
+            CargoId = cargoId,
+            Month = -1,
+            ValueOnFocus = row.DotPico,
+        };
+        var box = new TextBox
+        {
+            Text = row.DotPico.ToString(CultureInfo.InvariantCulture),
+            FontFamily = MonoFont,
+            FontSize = CellSz,
+            FontWeight = FontWeights.SemiBold,
+            Foreground = new SolidColorBrush(Amber),
+            CaretBrush = new SolidColorBrush(Amber),
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+            TextAlignment = TextAlignment.Center,
+            VerticalContentAlignment = VerticalAlignment.Center,
+            Padding = new Thickness(0),
+            IsReadOnly = !vm.CanEdit,
+            Tag = tag,
+            ToolTip = "Dotación fija todos los meses. Editarla limpia las ediciones mes a mes de este rol.",
+        };
+
+        var border = new Border
+        {
+            Child = box,
+            Height = RowH,
+            Background = new SolidColorBrush(Color.FromRgb(0xFB, 0xF1, 0xDD)),
+            BorderBrush = new SolidColorBrush(Line2),
+            BorderThickness = new Thickness(0, 0, 0, 1),
+            Cursor = Cursors.IBeam,
+            Margin = new Thickness(1, 2, 1, 2),
+            CornerRadius = new CornerRadius(4),
+        };
+
+        box.GotFocus += (_, _) =>
+        {
+            tag.ValueOnFocus = int.TryParse(box.Text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var n) ? n : row.DotPico;
+            border.BorderBrush = new SolidColorBrush(Blue2);
+            border.BorderThickness = new Thickness(1.5);
+            box.SelectAll();
+        };
+        box.LostFocus += (_, _) =>
+        {
+            border.BorderBrush = new SolidColorBrush(Line2);
+            border.BorderThickness = new Thickness(0, 0, 0, 1);
+        };
+        box.PreviewMouseLeftButtonDown += (_, e) =>
+        {
+            if (!vm.CanEdit || box.IsKeyboardFocusWithin)
+                return;
+            box.Focus();
+            box.SelectAll();
+            e.Handled = true;
+        };
+        box.TextChanged += (_, _) => OnDotPicoTextChanged(box, tag, vm);
+        box.PreviewKeyDown += (_, e) => OnHeatKeyDown(box, e);
+        box.PreviewTextInput += (_, e) =>
+        {
+            if (e.Text.Length == 0 || !char.IsDigit(e.Text[0]))
+            {
+                e.Handled = true;
+                return;
+            }
+            if (box.SelectionLength == box.Text.Length)
+            {
+                heatSyncing = true;
+                box.Clear();
+                heatSyncing = false;
+            }
+        };
+        DataObject.AddPastingHandler(box, (_, e) =>
+        {
+            var pasted = e.DataObject.GetData(DataFormats.Text) as string;
+            if (pasted != null && int.TryParse(pasted, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed) && parsed >= 0)
+                return;
+            e.CancelCommand();
+        });
+
+        heatCells[(cargoId, -1)] = box;
+        Grid.SetRow(border, rowIdx);
+        Grid.SetColumn(border, 1);
+        grid.Children.Add(border);
+    }
+
+    private void OnDotPicoTextChanged(TextBox box, HeatCellTag tag, ManoDeObraViewModel vm)
+    {
+        if (heatSyncing || !vm.CanEdit)
+            return;
+        var raw = (box.Text ?? "").Trim();
+        if (raw.Length == 0)
+        {
+            heatSyncing = true;
+            box.Text = tag.ValueOnFocus.ToString(CultureInfo.InvariantCulture);
+            heatSyncing = false;
+            return;
+        }
+
+        if (!int.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out var n)
+            && !int.TryParse(raw, NumberStyles.Integer, CultureInfo.GetCultureInfo("es-CL"), out n))
+            return;
+
+        vm.StageIndirectDotPico(tag.CargoId, n);
+        ScheduleHeatFlush();
     }
 
     private void BuildCostTable(ManoDeObraViewModel vm)
@@ -331,145 +498,270 @@ public partial class ManoDeObraView : UserControl
     private void AddHeatCell(Grid grid, int rowIdx, int colIdx, int value, int max, string cargoId, int monthIdx,
         ManoDeObraViewModel vm, bool isPeakCol, bool isFixed)
     {
+        if (monthIdx == 0)
+            heatRowOrder.Add(cargoId);
+
         var (bg, fg) = HeatColors(value, max, isFixed);
-        var tb = new TextBlock
+        var hasOverride = vm.HasOverride(cargoId, monthIdx);
+        var tag = new HeatCellTag
         {
-            Text = value.ToString(),
+            CargoId = cargoId,
+            Month = monthIdx,
+            ValueOnFocus = value,
+            HadOverride = hasOverride,
+        };
+        var box = new TextBox
+        {
+            Text = value.ToString(CultureInfo.InvariantCulture),
             FontFamily = MonoFont,
             FontSize = CellSz,
             FontWeight = FontWeights.SemiBold,
-            VerticalAlignment = VerticalAlignment.Center,
-            TextAlignment = TextAlignment.Center,
             Foreground = new SolidColorBrush(fg),
-            IsHitTestVisible = false,
+            CaretBrush = new SolidColorBrush(fg),
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+            TextAlignment = TextAlignment.Center,
+            VerticalContentAlignment = VerticalAlignment.Center,
+            Padding = new Thickness(0),
+            IsReadOnly = !vm.CanEdit,
+            Tag = tag,
         };
 
         var border = new Border
         {
-            Child = tb,
+            Child = box,
             Height = RowH,
             Background = new SolidColorBrush(isPeakCol && value == 0 ? PeakBg : bg),
-            BorderBrush = new SolidColorBrush(Line2),
-            BorderThickness = new Thickness(0, 0, 0, 1),
-            Cursor = System.Windows.Input.Cursors.IBeam,
-            Margin = new Thickness(2, 3, 2, 3),
+            BorderBrush = new SolidColorBrush(hasOverride ? Amber : Line2),
+            BorderThickness = hasOverride ? new Thickness(1.5) : new Thickness(0, 0, 0, 1),
+            Cursor = Cursors.IBeam,
+            Margin = new Thickness(1, 2, 1, 2),
             CornerRadius = new CornerRadius(4),
-            Padding = new Thickness(2, 0, 2, 0),
-            ToolTip = "Clic para editar · Enter confirma · Esc cancela",
         };
 
-        if (vm.HasOverride(cargoId, monthIdx))
+        box.GotFocus += (_, _) =>
         {
-            border.BorderBrush = new SolidColorBrush(Amber);
+            tag.ValueOnFocus = int.TryParse(box.Text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var n) ? n : value;
+            tag.HadOverride = vm.HasOverride(cargoId, monthIdx);
+            border.BorderBrush = new SolidColorBrush(Blue2);
             border.BorderThickness = new Thickness(1.5);
-        }
-
-        border.PreviewMouseLeftButtonDown += (_, e) =>
-        {
-            if (!vm.CanEdit)
-                return;
-
-            // Evita reiniciar el editor si ya está editando (clic dentro del TextBox).
-            if (border.Child is TextBox)
-                return;
-
-            e.Handled = true;
-            BeginCellEdit(border, tb, value, cargoId, monthIdx, vm);
+            box.SelectAll();
         };
+        box.LostFocus += (_, _) =>
+        {
+            var still = vm.HasOverride(cargoId, monthIdx);
+            border.BorderBrush = new SolidColorBrush(still ? Amber : Line2);
+            border.BorderThickness = still ? new Thickness(1.5) : new Thickness(0, 0, 0, 1);
+        };
+        box.PreviewMouseLeftButtonDown += (_, e) =>
+        {
+            if (!vm.CanEdit || box.IsKeyboardFocusWithin)
+                return;
+            box.Focus();
+            box.SelectAll();
+            e.Handled = true;
+        };
+        box.PreviewTextInput += (_, e) =>
+        {
+            if (e.Text.Length == 0 || !char.IsDigit(e.Text[0]))
+            {
+                e.Handled = true;
+                return;
+            }
+            if (box.SelectionLength == box.Text.Length)
+            {
+                heatSyncing = true;
+                box.Clear();
+                heatSyncing = false;
+            }
+        };
+        DataObject.AddPastingHandler(box, (_, e) =>
+        {
+            var pasted = e.DataObject.GetData(DataFormats.Text) as string;
+            if (pasted != null && int.TryParse(pasted, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed) && parsed >= 0)
+                return;
+            e.CancelCommand();
+        });
+        box.TextChanged += (_, _) => OnHeatTextChanged(box, border, vm);
+        box.PreviewKeyDown += (_, e) => OnHeatKeyDown(box, e);
 
+        heatCells[(cargoId, monthIdx)] = box;
         Grid.SetRow(border, rowIdx);
         Grid.SetColumn(border, colIdx);
         grid.Children.Add(border);
     }
 
-    private static void BeginCellEdit(Border border, TextBlock display, int value, string cargoId, int monthIdx,
-        ManoDeObraViewModel vm)
+    private void OnHeatTextChanged(TextBox box, Border border, ManoDeObraViewModel vm)
     {
-        var textBox = new TextBox
+        if (heatSyncing || box.Tag is not HeatCellTag tag || !vm.CanEdit)
+            return;
+        var raw = (box.Text ?? "").Trim();
+        if (raw.Length == 0)
         {
-            Text = value.ToString(),
-            MinWidth = 36,
-            Width = double.NaN,
-            Height = 22,
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            TextAlignment = TextAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center,
-            VerticalContentAlignment = VerticalAlignment.Center,
-            FontFamily = MonoFont,
-            FontSize = CellSz,
-            FontWeight = FontWeights.SemiBold,
-            BorderThickness = new Thickness(1),
-            BorderBrush = new SolidColorBrush(Blue2),
-            Padding = new Thickness(2, 0, 2, 0),
-        };
-
-        var committed = false;
-
-        void RestoreDisplay()
-        {
-            if (border.Child == textBox)
-                border.Child = display;
+            if (!vm.StageClearOverride(tag.CargoId, tag.Month))
+            {
+                heatSyncing = true;
+                box.Text = tag.ValueOnFocus.ToString(CultureInfo.InvariantCulture);
+                heatSyncing = false;
+                return;
+            }
         }
+        else if (int.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out var n)
+                 || int.TryParse(raw, NumberStyles.Integer, CultureInfo.GetCultureInfo("es-CL"), out n))
+            vm.StageOverride(tag.CargoId, tag.Month, n);
+        else
+            return;
 
-        void CommitValue()
+        var has = vm.HasOverride(tag.CargoId, tag.Month);
+        border.BorderBrush = new SolidColorBrush(has ? Amber : Blue2);
+        border.BorderThickness = new Thickness(has ? 1.5 : 1);
+        ScheduleHeatFlush();
+    }
+
+    private void OnHeatKeyDown(TextBox box, KeyEventArgs e)
+    {
+        if (box.Tag is not HeatCellTag tag)
+            return;
+
+        switch (e.Key)
         {
-            if (committed)
-                return;
-            committed = true;
+            case Key.Up:
+                MoveHeat(tag, -1, 0);
+                e.Handled = true;
+                break;
+            case Key.Down:
+            case Key.Enter:
+                MoveHeat(tag, 1, 0);
+                e.Handled = true;
+                break;
+            case Key.Left:
+                MoveHeat(tag, 0, -1, wrap: true);
+                e.Handled = true;
+                break;
+            case Key.Right:
+                MoveHeat(tag, 0, 1, wrap: true);
+                e.Handled = true;
+                break;
+            case Key.Tab:
+                MoveHeat(tag, 0, Keyboard.Modifiers.HasFlag(ModifierKeys.Shift) ? -1 : 1, wrap: true);
+                e.Handled = true;
+                break;
+            case Key.Delete:
+            case Key.Back:
+                if (!box.IsReadOnly && DataContext is ManoDeObraViewModel vm)
+                {
+                    if (vm.StageClearOverride(tag.CargoId, tag.Month))
+                    {
+                        heatSyncing = true;
+                        box.Clear();
+                        heatSyncing = false;
+                        ScheduleHeatFlush();
+                    }
+                    else
+                    {
+                        box.SelectAll();
+                    }
+                }
+                e.Handled = true;
+                break;
+            case Key.Escape:
+                RevertHeat(box, tag);
+                e.Handled = true;
+                break;
+        }
+    }
 
-            var raw = (textBox.Text ?? "").Trim();
-            if (string.IsNullOrEmpty(raw))
+    private void MoveHeat(HeatCellTag tag, int dRow, int dCol, bool wrap = false)
+    {
+        var row = heatRowOrder.IndexOf(tag.CargoId);
+        if (row < 0 || heatMonths <= 0)
+            return;
+        var col = tag.Month + dCol;
+        var nextRow = row + dRow;
+        if (wrap && dCol != 0)
+        {
+            if (col < 0 && col >= -1 && dRow == 0 && heatCells.ContainsKey((tag.CargoId, -1)))
             {
-                // Vacío = quitar override y volver a la curva
-                vm.ClearOverride(cargoId, monthIdx);
-                return;
+                // Izquierda desde M1 → columna Dot. de la misma fila (solo indirecta).
+                col = -1;
+                nextRow = row;
             }
+            else if (col >= heatMonths)
+            {
+                col = 0;
+                nextRow++;
+            }
+            else if (col < 0)
+            {
+                col = heatMonths - 1;
+                nextRow--;
+            }
+        }
+        if (nextRow < 0 || nextRow >= heatRowOrder.Count)
+            return;
+        var key = (heatRowOrder[nextRow], col);
+        if (col < 0 && (col != -1 || !heatCells.ContainsKey(key)))
+            return;
+        if (!heatCells.TryGetValue(key, out var next))
+            return;
+        next.Focus();
+        next.SelectAll();
+        next.BringIntoView();
+    }
 
-            if (int.TryParse(raw, System.Globalization.NumberStyles.Integer,
-                    System.Globalization.CultureInfo.InvariantCulture, out var newVal)
-                || int.TryParse(raw, System.Globalization.NumberStyles.Integer,
-                    System.Globalization.CultureInfo.GetCultureInfo("es-CL"), out newVal))
-            {
-                vm.SetOverride(cargoId, monthIdx, newVal);
-            }
+    private void RevertHeat(TextBox box, HeatCellTag tag)
+    {
+        if (DataContext is ManoDeObraViewModel vm)
+        {
+            if (tag.Month < 0)
+                vm.StageClearDotPico(tag.CargoId);
+            else if (tag.HadOverride)
+                vm.StageOverride(tag.CargoId, tag.Month, tag.ValueOnFocus);
             else
-            {
-                RestoreDisplay();
-            }
+                vm.StageClearOverride(tag.CargoId, tag.Month);
+            ScheduleHeatFlush();
         }
 
-        void CancelEdit()
-        {
-            if (committed)
-                return;
-            committed = true;
-            RestoreDisplay();
-        }
+        heatSyncing = true;
+        box.Text = tag.ValueOnFocus.ToString(CultureInfo.InvariantCulture);
+        heatSyncing = false;
+        box.SelectAll();
+    }
 
-        border.Child = textBox;
-        textBox.Loaded += (_, _) =>
-        {
-            textBox.Focus();
-            textBox.SelectAll();
-        };
+    private void ScheduleHeatFlush()
+    {
+        heatFlushTimer.Stop();
+        heatFlushTimer.Start();
+    }
 
-        textBox.LostFocus += (_, _) => CommitValue();
+    private void RememberHeatFocus()
+    {
+        heatHadFocus = false;
+        if (Keyboard.FocusedElement is not TextBox box || box.Tag is not HeatCellTag tag)
+            return;
+        heatHadFocus = true;
+        heatFocusCargo = tag.CargoId;
+        heatFocusMonth = tag.Month;
+    }
 
-        textBox.PreviewKeyDown += (_, ke) =>
-        {
-            if (ke.Key == Key.Enter)
-            {
-                ke.Handled = true;
-                CommitValue();
-                Keyboard.ClearFocus();
-            }
-            else if (ke.Key == Key.Escape)
-            {
-                ke.Handled = true;
-                CancelEdit();
-                Keyboard.ClearFocus();
-            }
-        };
+    private void RestoreHeatFocus()
+    {
+        if (!heatHadFocus || heatFocusCargo == null)
+            return;
+        if (!heatCells.TryGetValue((heatFocusCargo, heatFocusMonth), out var box))
+            return;
+        heatSyncing = true;
+        box.Focus();
+        box.SelectAll();
+        heatSyncing = false;
+    }
+
+    private sealed class HeatCellTag
+    {
+        public string CargoId { get; init; } = "";
+        public int Month { get; init; }
+        public int ValueOnFocus { get; set; }
+        public bool HadOverride { get; set; }
     }
 
     private static (Color bg, Color fg) HeatColors(int value, int max, bool fixedRole)

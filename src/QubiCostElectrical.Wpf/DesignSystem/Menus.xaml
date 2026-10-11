@@ -30,7 +30,14 @@
                            FontSize="{TemplateBinding FontSize}"
                            FontWeight="{TemplateBinding FontWeight}"
                            VerticalAlignment="Center" />
-                <TextBlock Text="▼" FontSize="9" Margin="6,0,0,0" Foreground="{DynamicResource Brush.HeaderNav}" />
+                <Path Data="M 0 0 L 3.5 3.5 L 7 0"
+                      Stroke="{Binding Foreground, RelativeSource={RelativeSource TemplatedParent}}"
+                      StrokeThickness="1.2"
+                      StrokeStartLineCap="Round"
+                      StrokeEndLineCap="Round"
+                      StrokeLineJoin="Round"
+                      VerticalAlignment="Center"
+                      Margin="6,1,0,0" />
               </StackPanel>
               <Border x:Name="ActiveLine" Height="2" VerticalAlignment="Bottom" Margin="10,0"
                       Background="{DynamicResource Brush.HeaderNavActive}" Visibility="Collapsed" />

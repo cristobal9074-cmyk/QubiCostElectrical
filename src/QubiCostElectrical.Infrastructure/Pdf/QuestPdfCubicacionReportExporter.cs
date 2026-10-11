@@ -7,15 +7,15 @@ namespace QubiCostElectrical;
 
 public sealed class QuestPdfCubicacionReportExporter : ICubicacionReportPdfExporter
 {
-    private const string CNavy   = "#0B2442";
-    private const string CBlue   = "#1565C0";
-    private const string CLight  = "#E8F0FE";
-    private const string CText   = "#1A2332";
-    private const string CMuted  = "#5A6472";
-    private const string CLine   = "#C8D8E8";
+    private const string CNavy = "#0B2442";
+    private const string CBlue = "#1565C0";
+    private const string CLight = "#E8F0FE";
+    private const string CText = "#1A2332";
+    private const string CMuted = "#5A6472";
+    private const string CLine = "#C8D8E8";
     private const string CRowAlt = "#F7F9FC";
-    private const string CHead   = "#F0F5FB";
-    private const string CWhite  = "#FFFFFF";
+    private const string CHead = "#F0F5FB";
+    private const string CWhite = "#FFFFFF";
 
     private readonly ICurrencyConversionService currencyConversion;
 
@@ -33,11 +33,11 @@ public sealed class QuestPdfCubicacionReportExporter : ICubicacionReportPdfExpor
         QuestPdfBootstrap.EnsureCommunityLicense();
 
         var cultureES = CultureInfo.GetCultureInfo("es-CL");
-        string UF(decimal v)  => v.ToString("#,##0.000", cultureES);
-        string N(decimal v)   => v.ToString("#,##0.###", cultureES);
+        string UF(decimal v) => v.ToString("#,##0.000", cultureES);
+        string N(decimal v) => v.ToString("#,##0.###", cultureES);
         string Money(decimal uf) => currencyConversion.FormatMoneyFromUf(
             uf, ctx.CurrencyLabel, ctx.Project.ValorUfClp, ctx.Project.TipoCambioUsdClp);
-        string S(string? s)   => string.IsNullOrWhiteSpace(s) ? "-" : s.Trim();
+        string S(string? s) => string.IsNullOrWhiteSpace(s) ? "-" : s.Trim();
 
         var rowsByItem = ctx.Cubicacion
             .Where(x => !string.IsNullOrWhiteSpace(x.ItemId) && (!string.IsNullOrWhiteSpace(x.Codigo) || x.Cantidad != 0m))

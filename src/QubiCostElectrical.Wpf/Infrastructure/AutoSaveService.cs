@@ -8,13 +8,13 @@ using QubiCostElectrical.Wpf.Infrastructure.Diagnostics;
 namespace QubiCostElectrical.Wpf.Infrastructure;
 
 /// <summary>
-/// Autoguardado en dos capas: sidecar JSON (.autosave) periódico para recuperación ante crash,
-/// y persistencia silenciosa debounced al archivo .qce real cuando la sesión está dirty.
+/// Copia de recuperación .bak periódica (no escribe el .qce) y, si el usuario lo activa,
+/// persistencia silenciosa debounced al archivo .qce cuando la sesión está dirty.
 /// </summary>
 public sealed class AutoSaveService : INotifyPropertyChanged, IDisposable
 {
-    /// <summary>Intervalo del sidecar de recuperación (.autosave).</summary>
-    public static readonly TimeSpan SidecarInterval = TimeSpan.FromSeconds(15);
+    /// <summary>Intervalo de la copia de recuperación (.bak). No escribe el .qce.</summary>
+    public static readonly TimeSpan SidecarInterval = TimeSpan.FromSeconds(60);
 
     /// <summary>Espera tras el último cambio antes de persistir al .qce.</summary>
     public static readonly TimeSpan PersistDebounceInterval = TimeSpan.FromMilliseconds(2500);
@@ -82,7 +82,7 @@ public sealed class AutoSaveService : INotifyPropertyChanged, IDisposable
     {
         if (disposed) return;
         Stop();
-        StatusText = "Auto-guardado activo";
+        StatusText = AutosaveToProjectEnabled() ? "Auto-guardado activo" : "Sin autoguardado";
         SubscribeSession();
         sidecarTimer = new Timer(async _ => await OnSidecarTimerAsync().ConfigureAwait(false), null, SidecarInterval, SidecarInterval);
     }
@@ -111,6 +111,7 @@ public sealed class AutoSaveService : INotifyPropertyChanged, IDisposable
     public void RequestPersistSoon()
     {
         if (disposed) return;
+        if (!AutosaveToProjectEnabled()) return;
         if (!CanPersistToProject()) return;
         ArmPersistDebounce();
     }
@@ -154,14 +155,32 @@ public sealed class AutoSaveService : INotifyPropertyChanged, IDisposable
         => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 
     public static string GetAutoSavePath(string projectPath)
+        => RecoveryPath(projectPath, ".bak");
+
+    public static string GetLegacyAutoSavePath(string projectPath)
+        => RecoveryPath(projectPath, ".autosave");
+
+    private static string RecoveryPath(string projectPath, string suffix)
     {
         if (!string.IsNullOrWhiteSpace(projectPath))
-            return projectPath + ".autosave";
+            return projectPath + suffix;
 
         return Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "QubiCostElectrical", "Autosave",
-            Guid.NewGuid().ToString("N") + ProjectFileTypes.CurrentExtension + ProjectFileTypes.AutoSaveSuffix);
+            GetAutoSaveRecoveryDir(),
+            Guid.NewGuid().ToString("N") + ProjectFileTypes.CurrentExtension + suffix);
+    }
+
+    private static bool AutosaveToProjectEnabled()
+    {
+        try
+        {
+            return UserPreferencesStore.Load().AutosaveEnabled;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[AutoSave] No se pudieron leer las preferencias: {ex.Message}");
+            return false;
+        }
     }
 
     public static string GetAutoSaveRecoveryDir()
@@ -188,6 +207,7 @@ public sealed class AutoSaveService : INotifyPropertyChanged, IDisposable
     private void OnSessionChanged(object? sender, ProjectSessionChangedEventArgs e)
     {
         if (disposed) return;
+        if (!AutosaveToProjectEnabled()) return;
         if (!CanPersistToProject()) return;
         ArmPersistDebounce();
     }
@@ -265,6 +285,12 @@ public sealed class AutoSaveService : INotifyPropertyChanged, IDisposable
             logger?.Warning("AutoSave", ex.Message);
             // No borrar .autosave: el trabajo local sigue recuperable.
         }
+        catch (InvalidOperationException ex) when (ex.Message.Contains("Collection was modified", StringComparison.OrdinalIgnoreCase))
+        {
+            // Mutación concurrente en UI durante persistencia: rearmar debounce silenciosamente
+            if (CanPersistToProject())
+                ArmPersistDebounce();
+        }
         catch (Exception ex)
         {
             if (!disposed)
@@ -296,7 +322,16 @@ public sealed class AutoSaveService : INotifyPropertyChanged, IDisposable
         isWritingSidecar = true;
         try
         {
-            var snapshot = session.CreateSnapshot();
+            ProjectFileData snapshot;
+            try
+            {
+                snapshot = session.CreateSnapshot();
+            }
+            catch (InvalidOperationException)
+            {
+                // Concurrencia transitoria con mutación activa en UI: reintentar en siguiente ciclo
+                return;
+            }
             var path = session.CurrentProjectPath;
 
             var autoSavePath = GetAutoSavePath(path);
@@ -311,10 +346,11 @@ public sealed class AutoSaveService : INotifyPropertyChanged, IDisposable
 
             if (result.IsSuccess)
             {
-                LastAutoSaveAt = DateTime.UtcNow;
+                if (AutosaveToProjectEnabled())
+                    LastAutoSaveAt = DateTime.UtcNow;
                 if (session.IsReadOnly)
-                    StatusText = "Copia local (.autosave) — bloqueo perdido";
-                Debug.WriteLine($"[AutoSave] Sidecar .autosave completado: {autoSavePath}");
+                    StatusText = "Copia local (.bak) — bloqueo perdido";
+                Debug.WriteLine($"[AutoSave] Copia .bak completada: {autoSavePath}");
             }
             else
             {
@@ -336,54 +372,73 @@ public sealed class AutoSaveService : INotifyPropertyChanged, IDisposable
 
     public static DateTime? GetAutoSaveTimestamp(string projectPath)
     {
-        var path = GetAutoSavePath(projectPath);
-        if (!File.Exists(path)) return null;
+        var path = NewestRecoveryPath(projectPath);
+        if (path == null) return null;
         return File.GetLastWriteTimeUtc(path);
     }
 
     public static bool IsAutoSaveNewer(string projectPath)
     {
-        var autoPath = GetAutoSavePath(projectPath);
-        if (!File.Exists(autoPath)) return false;
-
-        var projectFile = projectPath;
-        if (!File.Exists(projectFile)) return false;
-
-        return File.GetLastWriteTimeUtc(autoPath) > File.GetLastWriteTimeUtc(projectFile);
+        var recovery = NewestRecoveryPath(projectPath);
+        if (recovery == null || !File.Exists(projectPath))
+            return false;
+        return File.GetLastWriteTimeUtc(recovery) > File.GetLastWriteTimeUtc(projectPath);
     }
 
     /// <summary>
-    /// Lee el sidecar JSON de autoguardado si existe. Devuelve null si no hay archivo o es inválido.
+    /// Lee la copia .bak (o un .autosave anterior) si existe. Devuelve null si no hay archivo o es inválido.
     /// </summary>
     public static ProjectFileData? TryLoadAutoSave(string projectPath)
     {
+        var path = NewestRecoveryPath(projectPath);
+        if (path == null)
+            return null;
         try
         {
-            var autoPath = GetAutoSavePath(projectPath);
-            if (!File.Exists(autoPath))
-                return null;
-
-            var json = File.ReadAllText(autoPath);
+            var json = File.ReadAllText(path);
             return System.Text.Json.JsonSerializer.Deserialize<ProjectFileData>(json, ProjectJsonSerializer.Options);
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[AutoSave] No se pudo leer autosave: {ex.Message}");
+            Debug.WriteLine($"[AutoSave] No se pudo leer la copia de recuperación: {ex.Message}");
             return null;
         }
     }
 
     public static void DeleteAutoSave(string projectPath)
     {
+        TryDelete(GetAutoSavePath(projectPath));
+        TryDelete(GetLegacyAutoSavePath(projectPath));
+    }
+
+    private static string? NewestRecoveryPath(string projectPath)
+    {
+        string? best = null;
+        DateTime bestTime = DateTime.MinValue;
+        foreach (var candidate in new[] { GetAutoSavePath(projectPath), GetLegacyAutoSavePath(projectPath) })
+        {
+            if (string.IsNullOrWhiteSpace(candidate) || !File.Exists(candidate))
+                continue;
+            var time = File.GetLastWriteTimeUtc(candidate);
+            if (best == null || time > bestTime)
+            {
+                best = candidate;
+                bestTime = time;
+            }
+        }
+        return best;
+    }
+
+    private static void TryDelete(string path)
+    {
         try
         {
-            var path = GetAutoSavePath(projectPath);
-            if (File.Exists(path))
+            if (!string.IsNullOrWhiteSpace(path) && File.Exists(path))
                 File.Delete(path);
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[AutoSave] No se pudo eliminar autosave: {ex.Message}");
+            Debug.WriteLine($"[AutoSave] No se pudo eliminar la copia de recuperación: {ex.Message}");
         }
     }
 }

@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:infra="clr-namespace:QubiCostElectrical.Wpf.Infrastructure"
         Style="{StaticResource Dialog.Window}"
-        Title="Previsualizar pegado desde Excel"
+        Title="Previsualizar pegado"
         Width="720" Height="500" MinWidth="640" MinHeight="420">
   <Border Style="{StaticResource Dialog.Chrome}" Margin="16">
   <Grid>
@@ -16,7 +16,7 @@
 
     <!-- Encabezado -->
     <StackPanel Grid.Row="0" Margin="0,0,0,12">
-      <TextBlock Text="Previsualizar pegado desde Excel" Style="{StaticResource Dialog.HeaderTitle}" />
+      <TextBlock Text="Previsualizar pegado" Style="{StaticResource Dialog.HeaderTitle}" />
       <TextBlock x:Name="HeaderText" Style="{StaticResource Dialog.HeaderSubtitle}" Margin="0,0,0,0" />
       <ItemsControl x:Name="WarningsList" Margin="0,6,0,0"
                     Visibility="{Binding HasWarnings, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibility}}">

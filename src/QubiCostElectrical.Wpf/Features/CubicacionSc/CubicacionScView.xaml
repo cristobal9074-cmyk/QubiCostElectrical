@@ -7,6 +7,13 @@
              xmlns:infra="clr-namespace:QubiCostElectrical.Wpf.Infrastructure"
              mc:Ignorable="d"
              d:DesignHeight="720" d:DesignWidth="1280">
+    <UserControl.CommandBindings>
+        <CommandBinding Command="ApplicationCommands.Find" Executed="OnFindExecuted" />
+    </UserControl.CommandBindings>
+    <UserControl.InputBindings>
+        <KeyBinding Key="B" Modifiers="Control" Command="ApplicationCommands.Find" />
+        <KeyBinding Key="F" Modifiers="Control" Command="ApplicationCommands.Find" />
+    </UserControl.InputBindings>
     <UserControl.Resources>
         <!-- Chip de estado de circuito (verde=activo, ámbar=reserva) -->
         <Style x:Key="EstadoChipBorder" TargetType="Border">
@@ -46,7 +53,7 @@
         <!-- Chip de sistema (tipo de uso del circuito) -->
         <Style x:Key="SistemaChipBorder" TargetType="Border">
             <Setter Property="CornerRadius" Value="4" />
-            <Setter Property="Padding" Value="6,3" />
+            <Setter Property="Padding" Value="4,1.5" />
             <Setter Property="HorizontalAlignment" Value="Center" />
             <Setter Property="VerticalAlignment" Value="Center" />
             <Setter Property="Background" Value="{DynamicResource Brush.ChipBg}" />
@@ -63,13 +70,18 @@
                 <DataTrigger Binding="{Binding Tipo}" Value="C">
                     <Setter Property="Background" Value="{DynamicResource Brush.SuccessBg}" />
                 </DataTrigger>
+                <DataTrigger Binding="{Binding Tipo}" Value="CO">
+                    <Setter Property="Background" Value="{DynamicResource Brush.SuccessBg}" />
+                </DataTrigger>
                 <DataTrigger Binding="{Binding Tipo}" Value="F">
-                    <Setter Property="Background" Value="{DynamicResource Brush.WarningSoft}" />
+                    <Setter Property="Background" Value="{DynamicResource Brush.DangerBg}" />
+                    <Setter Property="BorderBrush" Value="{DynamicResource Brush.DangerBorder}" />
+                    <Setter Property="BorderThickness" Value="1" />
                 </DataTrigger>
             </Style.Triggers>
         </Style>
         <Style x:Key="SistemaChipText" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="{StaticResource Font.Size.xs}" />
+            <Setter Property="FontSize" Value="{StaticResource Font.Size.2xs}" />
             <Setter Property="FontWeight" Value="Bold" />
             <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
             <Style.Triggers>
@@ -85,16 +97,19 @@
                 <DataTrigger Binding="{Binding Tipo}" Value="C">
                     <Setter Property="Foreground" Value="{DynamicResource Brush.Success}" />
                 </DataTrigger>
+                <DataTrigger Binding="{Binding Tipo}" Value="CO">
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Success}" />
+                </DataTrigger>
                 <DataTrigger Binding="{Binding Tipo}" Value="F">
-                    <Setter Property="Foreground" Value="{DynamicResource Brush.Amber}" />
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Danger}" />
                 </DataTrigger>
             </Style.Triggers>
         </Style>
 
-        <!-- Chip de Fase/Alimentación -->
+        <!-- Chip de Fase/Alimentación con código trifásico R-S-T normativo -->
         <Style x:Key="FaseChipBorder" TargetType="Border">
             <Setter Property="CornerRadius" Value="4" />
-            <Setter Property="Padding" Value="6,3" />
+            <Setter Property="Padding" Value="4,1.5" />
             <Setter Property="HorizontalAlignment" Value="Center" />
             <Setter Property="VerticalAlignment" Value="Center" />
             <Setter Property="Background" Value="{DynamicResource Brush.ChipBg}" />
@@ -104,6 +119,12 @@
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Fase}" Value="T">
                     <Setter Property="Background" Value="{DynamicResource Brush.DangerBg}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Fase}" Value="R">
+                    <Setter Property="Background" Value="{DynamicResource Brush.DangerBg}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Fase}" Value="S">
+                    <Setter Property="Background" Value="{DynamicResource Brush.WarningSoft}" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Fase}" Value="EM">
                     <Setter Property="Background" Value="{DynamicResource Brush.DangerBg}" />
@@ -113,7 +134,7 @@
             </Style.Triggers>
         </Style>
         <Style x:Key="FaseChipText" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="{StaticResource Font.Size.xs}" />
+            <Setter Property="FontSize" Value="{StaticResource Font.Size.2xs}" />
             <Setter Property="FontWeight" Value="Bold" />
             <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
             <Style.Triggers>
@@ -122,6 +143,12 @@
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Fase}" Value="T">
                     <Setter Property="Foreground" Value="{DynamicResource Brush.Danger}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Fase}" Value="R">
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Danger}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Fase}" Value="S">
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Amber}" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Fase}" Value="EM">
                     <Setter Property="Foreground" Value="{DynamicResource Brush.Danger}" />
@@ -154,74 +181,163 @@
                    d:Visibility="Visible"
                    Margin="20,14,20,14">
 
-            <!-- Header -->
-            <Grid DockPanel.Dock="Top" Margin="0,0,0,10">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <StackPanel Grid.Column="0">
-                    <TextBlock Text="Cubicación de Servicios Comunes (C.SC)" Style="{StaticResource Text.PageTitle}" VerticalAlignment="Center" />
-                </StackPanel>
-
-                <Button Grid.Column="1" Style="{StaticResource Button.Secondary}" Content="Exportar PDF"
-                        Command="{Binding ExportPdfCommand}" VerticalAlignment="Center" Padding="12,6" />
-            </Grid>
-
-            <!-- Resumen compacto -->
-            <Border DockPanel.Dock="Top" Style="{StaticResource Card.Summary}" Margin="0,0,0,10" Padding="12,6">
-                <DockPanel LastChildFill="False">
-                    <StackPanel Orientation="Horizontal" Margin="0,0,18,0" VerticalAlignment="Center">
-                        <TextBlock Text="Canalización" Style="{StaticResource Text.Helper}" Margin="0,0,6,0" VerticalAlignment="Center" />
-                        <TextBlock Text="{Binding KpiCanalizacionText}" Style="{StaticResource Text.KpiInline}" Foreground="{DynamicResource Brush.Blue}" VerticalAlignment="Center" />
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,18,0" VerticalAlignment="Center">
-                        <TextBlock Text="Tableros" Style="{StaticResource Text.Helper}" Margin="0,0,6,0" VerticalAlignment="Center" />
-                        <TextBlock Text="{Binding KpiTablerosCount}" Style="{StaticResource Text.KpiInline}" VerticalAlignment="Center" />
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,18,0" VerticalAlignment="Center">
-                        <TextBlock Text="Circuitos" Style="{StaticResource Text.Helper}" Margin="0,0,6,0" VerticalAlignment="Center" />
-                        <TextBlock Text="{Binding KpiCircuitosCount}" Style="{StaticResource Text.KpiInline}" Foreground="{DynamicResource Brush.Success}" VerticalAlignment="Center" />
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="Cajas / term." Style="{StaticResource Text.Helper}" Margin="0,0,6,0" VerticalAlignment="Center" />
-                        <TextBlock Text="{Binding KpiCajasTerminalesText}" Style="{StaticResource Text.KpiInline}" VerticalAlignment="Center" />
-                    </StackPanel>
-                </DockPanel>
-            </Border>
-
-            <!-- Control Panel / Actions Toolbar -->
-            <Border DockPanel.Dock="Top" Style="{StaticResource Card.Surface}" Padding="12,8" Margin="0,0,0,12">
+            <!-- ── Unified Modern Executive Top Bar ──────────────────────── -->
+            <Border DockPanel.Dock="Top" Style="{StaticResource Card.Surface}" Padding="10,6" Margin="0,0,0,10">
                 <DockPanel LastChildFill="True">
                     <!-- Right side: Actions -->
                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                        <Button Style="{StaticResource Button.Toolbar}" Content="{Binding AdvancedModeLabel}" Command="{Binding ToggleAdvancedModeCommand}" ToolTip="Alterna entre modo de entrada (columnas esenciales) y modo avanzado (todas las columnas)" />
-                        <Button Style="{StaticResource Button.Toolbar}" Content="Catálogo" Command="{Binding OpenCatalogoCommand}" />
-                        <Button Style="{StaticResource Button.Toolbar}" Content="Resumen" Command="{Binding OpenResumenCommand}" />
-                        <Button Style="{StaticResource Button.ToolbarPrimary}" Content="+ Agregar tablero" Command="{Binding AddCuadroCommand}" />
-                        <Button Style="{StaticResource Button.Toolbar}" Content="+ Agregar circuito" Command="{Binding AddCircuitoCommand}" />
-                        <Button Style="{StaticResource Button.Toolbar}" Content="Duplicar" Command="{Binding DuplicateCircuitoCommand}" />
-                        <Button Style="{StaticResource Button.Toolbar}" Content="Quitar" Command="{Binding RemoveCircuitoCommand}" Foreground="{DynamicResource Brush.Danger}" />
+                        <!-- Botón principal destacado: circuito -->
+                        <Button Style="{StaticResource Button.ToolbarPrimary}" Content="+ Circuito" Command="{Binding AddCircuitoCommand}"
+                                ToolTip="Agregar nuevo circuito repitiendo parámetros (Ctrl+)" Height="28" Padding="10,0" Margin="0,0,5,0" />
+                        <Button Style="{StaticResource Button.Toolbar}" Content="Duplicar" Command="{Binding DuplicateCircuitoCommand}"
+                                ToolTip="Duplicar el circuito seleccionado (Ctrl+D)" Height="28" Padding="8,0" Margin="0,0,5,0" />
+                        <Button Style="{StaticResource Button.Toolbar}" Content="Quitar Circuito" Command="{Binding RemoveCircuitoCommand}"
+                                ToolTip="Eliminar circuito seleccionado (Ctrl-)"
+                                Foreground="{DynamicResource Brush.Danger}" Height="28" Padding="8,0" Margin="0,0,5,0" />
+
+                        <Rectangle Width="1" Height="16" Fill="{DynamicResource Brush.Border}" Margin="2,0,6,0" VerticalAlignment="Center" />
+
+                        <!-- Acciones de tablero -->
+                        <Button Style="{StaticResource Button.Toolbar}" Content="+ Tablero" Command="{Binding AddCuadroCommand}"
+                                ToolTip="Crear nuevo tablero" Height="28" Padding="8,0" Margin="0,0,5,0" />
+                        <Button Style="{StaticResource Button.Toolbar}" Content="Eliminar Tablero" Command="{Binding RemoveCuadroCommand}"
+                                ToolTip="Eliminar tablero seleccionado"
+                                Foreground="{DynamicResource Brush.Danger}" Height="28" Padding="8,0" Margin="0,0,5,0" />
 
                         <!-- More dropdown button -->
-                        <Button x:Name="MoreActionsButton" Style="{StaticResource Button.Ghost}" Content="⋯" Padding="12,4" VerticalAlignment="Center" Click="OnMoreActionsClick">
+                        <Button x:Name="MoreActionsButton" Style="{StaticResource Button.Ghost}" Content="⋯" Height="28" Width="28" Padding="0" VerticalAlignment="Center" Click="OnMoreActionsClick" Margin="0,0,6,0">
                             <Button.ContextMenu>
                                 <ContextMenu>
                                     <MenuItem Header="Copiar circuito" Command="{Binding CopyCircuitoCommand}" />
                                     <MenuItem Header="Pegar circuito" Command="{Binding PasteCircuitoCommand}" />
+                                    <MenuItem Header="Duplicar circuito (Ctrl+D)" Command="{Binding DuplicateCircuitoCommand}" />
+                                    <MenuItem Header="Eliminar circuito" Command="{Binding RemoveCircuitoCommand}" />
+                                    <Separator />
+                                    <MenuItem Header="Mover tablero a otra vista (Generales / Deptos)" Command="{Binding MoveCuadroPerspectiveCommand}" />
                                     <Separator />
                                     <MenuItem Header="Eliminar tablero activo" Command="{Binding RemoveCuadroCommand}" />
                                 </ContextMenu>
                             </Button.ContextMenu>
                         </Button>
+
+                        <Rectangle Width="1" Height="16" Fill="{DynamicResource Brush.Border}" Margin="2,0,8,0" VerticalAlignment="Center" />
+
+                        <Button Style="{StaticResource Button.Toolbar}" Content="Exportar PDF"
+                                Command="{Binding ExportPdfCommand}" ToolTip="Exportar planilla y cuadro de cargas a PDF"
+                                Height="28" Padding="10,0" VerticalAlignment="Center" />
                     </StackPanel>
 
-                    <!-- Left side: búsqueda de tableros / circuitos -->
-                    <TextBox Style="{StaticResource Form.SearchBox}"
-                             Width="260"
-                             Tag="Buscar tablero o circuito…"
-                             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                             VerticalAlignment="Center" />
+                    <!-- Left side: Selector de perspectiva (CTOS GENERALES / DEPTOS) + Búsqueda integrada y herramientas -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <!-- Switch segmentado de perspectivas: CTOS GENERALES y DEPTOS -->
+                        <Border Background="{DynamicResource Brush.SurfaceAlt}"
+                                BorderBrush="{DynamicResource Brush.Border}"
+                                BorderThickness="1"
+                                CornerRadius="6"
+                                Padding="2"
+                                Height="28"
+                                VerticalAlignment="Center"
+                                Margin="0,0,10,0">
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="CTOS GENERALES"
+                                        Command="{Binding SelectPerspectiveCommand}"
+                                        CommandParameter="Generales"
+                                        Cursor="Hand"
+                                        Height="22"
+                                        Padding="10,0"
+                                        FontSize="11"
+                                        VerticalAlignment="Center">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Background" Value="Transparent" />
+                                            <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
+                                            <Setter Property="BorderThickness" Value="0" />
+                                            <Setter Property="FontWeight" Value="SemiBold" />
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <Border x:Name="bdr" Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                        </Border>
+                                                        <ControlTemplate.Triggers>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter TargetName="bdr" Property="Background" Value="{DynamicResource Brush.RowHover}" />
+                                                                <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+                                                            </Trigger>
+                                                        </ControlTemplate.Triggers>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsPerspectiveGenerales}" Value="True">
+                                                    <Setter Property="Background" Value="{DynamicResource Brush.Canvas}" />
+                                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
+                                                    <Setter Property="FontWeight" Value="Bold" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+
+                                <Button Content="DEPTOS"
+                                        Command="{Binding SelectPerspectiveCommand}"
+                                        CommandParameter="Deptos"
+                                        Cursor="Hand"
+                                        Height="22"
+                                        Padding="10,0"
+                                        FontSize="11"
+                                        VerticalAlignment="Center"
+                                        Margin="2,0,0,0">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Background" Value="Transparent" />
+                                            <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
+                                            <Setter Property="BorderThickness" Value="0" />
+                                            <Setter Property="FontWeight" Value="SemiBold" />
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <Border x:Name="bdr" Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                        </Border>
+                                                        <ControlTemplate.Triggers>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter TargetName="bdr" Property="Background" Value="{DynamicResource Brush.RowHover}" />
+                                                                <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+                                                            </Trigger>
+                                                        </ControlTemplate.Triggers>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsPerspectiveDeptos}" Value="True">
+                                                    <Setter Property="Background" Value="{DynamicResource Brush.Canvas}" />
+                                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
+                                                    <Setter Property="FontWeight" Value="Bold" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                            </StackPanel>
+                        </Border>
+
+                        <Rectangle Width="1" Height="16" Fill="{DynamicResource Brush.Border}" Margin="0,0,10,0" VerticalAlignment="Center" />
+
+                        <TextBox Style="{StaticResource Form.SearchBox}"
+                                 Width="190" Height="28"
+                                 Tag="Buscar tablero o circuito…"
+                                 ToolTip="Filtra tableros y circuitos. En la grilla, Ctrl+F abre el buscador."
+                                 Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                 VerticalAlignment="Center"
+                                 Margin="0,0,8,0" />
+
+                        <Rectangle Width="1" Height="16" Fill="{DynamicResource Brush.Border}" Margin="2,0,8,0" VerticalAlignment="Center" />
+
+                        <!-- Herramientas -->
+                        <Button Style="{StaticResource Button.Toolbar}" Content="Resumen" Command="{Binding OpenResumenCommand}" Height="28" Padding="9,0" Margin="0,0,4,0" />
+                        <Button Style="{StaticResource Button.Toolbar}" Content="Catálogo" Command="{Binding OpenCatalogoCommand}" Height="28" Padding="9,0" />
+                    </StackPanel>
                 </DockPanel>
             </Border>
 
@@ -232,221 +348,541 @@
             <!-- ── Cuerpo: sidebar + planilla ────────────────────────────── -->
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="155" />
+                    <ColumnDefinition x:Name="TablerosColumn" Width="170" MinWidth="46" MaxWidth="300" />
+                    <ColumnDefinition Width="6" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
                 <!-- ── 1 · Tableros SC (Sidebar) ──────────────────────────── -->
-                <Border Grid.Column="0"
-                Background="{DynamicResource Brush.SurfaceAlt}"
-                BorderBrush="{DynamicResource Brush.Border}"
-                BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,12,0">
-                    <DockPanel>
-                        <TextBlock DockPanel.Dock="Top"
-                        Text="1 · TABLEROS SC"
-                        FontSize="{StaticResource Font.Size.sm}" FontWeight="Bold"
-                        Foreground="{DynamicResource Brush.Muted}"
-                        Margin="0,0,0,5" />
-                        <ListBox ItemsSource="{Binding CuadrosFiltrados}"
-                     SelectedItem="{Binding SelectedCuadro, Mode=TwoWay}"
-                     BorderThickness="0" Background="Transparent"
-                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                            <ListBox.ItemContainerStyle>
-                                <Style TargetType="ListBoxItem">
-                                    <Setter Property="Padding" Value="9,8" />
-                                    <Setter Property="Margin" Value="0,3" />
-                                    <Setter Property="Background" Value="Transparent" />
-                                    <!-- Doble clic sobre un tablero permite renombrarlo inline. -->
-                                    <EventSetter Event="MouseDoubleClick" Handler="TableroItem_DoubleClick" />
-                                    <Setter Property="Template">
-                                        <Setter.Value>
-                                            <ControlTemplate TargetType="ListBoxItem">
-                                                <Border Background="{TemplateBinding Background}"
-                                CornerRadius="6" Padding="{TemplateBinding Padding}">
-                                                    <ContentPresenter />
-                                                </Border>
-                                                <ControlTemplate.Triggers>
-                                                    <Trigger Property="IsSelected" Value="True">
-                                                        <Setter Property="Background" Value="Transparent" />
-                                                    </Trigger>
-                                                    <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter Property="Background" Value="{DynamicResource Brush.NavyDeep}" />
-                                                    </Trigger>
-                                                </ControlTemplate.Triggers>
-                                            </ControlTemplate>
-                                        </Setter.Value>
-                                    </Setter>
-                                </Style>
-                            </ListBox.ItemContainerStyle>
-                            <ListBox.ItemTemplate>
-                                <DataTemplate>
-                                    <StackPanel>
-                                        <Grid>
+                <Grid Grid.Column="0">
+                    <Border x:Name="TablerosSidebarBorder"
+                            Background="{DynamicResource Brush.SurfaceAlt}"
+                            BorderBrush="{DynamicResource Brush.Border}"
+                            BorderThickness="1" CornerRadius="8" Padding="6,8" Margin="0,0,0,0">
+                        <DockPanel>
+                            <!-- Header en Modo Expandido -->
+                            <DockPanel x:Name="TablerosHeaderExpanded" DockPanel.Dock="Top" Margin="2,0,4,8" LastChildFill="False">
+                                <TextBlock Text="{Binding SidebarHeaderTitle, FallbackValue='TABLEROS'}"
+                                           FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold"
+                                           Foreground="{DynamicResource Brush.Muted}"
+                                           VerticalAlignment="Center" />
+                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Border Background="{DynamicResource Brush.Canvas}" CornerRadius="10" Padding="5,1" Margin="0,0,4,0">
+                                        <TextBlock Text="{Binding CuadrosFiltradosCount, Mode=OneWay, StringFormat='{}{0}'}"
+                                                   FontSize="{StaticResource Font.Size.2xs}" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource Brush.Ink3}" />
+                                    </Border>
+                                    <Button Content="+"
+                                            ToolTip="Crear nuevo tablero"
+                                            Command="{Binding AddCuadroCommand}"
+                                            Style="{StaticResource Button.Ghost}"
+                                            FontSize="{StaticResource Font.Size.sm}" FontWeight="Bold"
+                                            Padding="4,0" Height="20" MinWidth="20" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </DockPanel>
+
+                            <!-- Header en Modo Colapsado -->
+                            <Border x:Name="TablerosHeaderCollapsed" DockPanel.Dock="Top" Visibility="Collapsed" Margin="0,0,0,8"
+                                    HorizontalAlignment="Center" ToolTip="{Binding SidebarHeaderTitle, FallbackValue='Tableros'}">
+                                <TextBlock Text="TAB" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" />
+                            </Border>
+
+                            <!-- ListBox en Modo Expandido -->
+                            <ListBox x:Name="TablerosListExpanded"
+                                     ItemsSource="{Binding CuadrosFiltrados}"
+                                     SelectedItem="{Binding SelectedCuadro, Mode=TwoWay}"
+                                     BorderThickness="0" Background="Transparent"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                <ListBox.ItemContainerStyle>
+                                    <Style TargetType="ListBoxItem">
+                                        <Setter Property="Padding" Value="6,4" />
+                                        <Setter Property="Margin" Value="0,2" />
+                                        <Setter Property="Background" Value="Transparent" />
+                                        <!-- Doble clic sobre un tablero permite renombrarlo inline. -->
+                                        <EventSetter Event="MouseDoubleClick" Handler="TableroItem_DoubleClick" />
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="ListBoxItem">
+                                                    <Border x:Name="ItemBorder"
+                                                            Background="{TemplateBinding Background}"
+                                                            BorderBrush="Transparent"
+                                                            BorderThickness="1"
+                                                            CornerRadius="6"
+                                                            Padding="{TemplateBinding Padding}">
+                                                        <Border.ContextMenu>
+                                                            <ContextMenu>
+                                                                <MenuItem Header="Mover a otra vista (Generales / Deptos)"
+                                                                          Command="{Binding DataContext.MoveCuadroPerspectiveCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                          CommandParameter="{Binding}" />
+                                                                <MenuItem Header="Eliminar tablero"
+                                                                          Command="{Binding DataContext.RemoveCuadroCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                          CommandParameter="{Binding}" />
+                                                            </ContextMenu>
+                                                        </Border.ContextMenu>
+                                                        <ContentPresenter />
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsSelected" Value="True">
+                                                            <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource Brush.BlueSelected}" />
+                                                            <Setter TargetName="ItemBorder" Property="BorderBrush" Value="{DynamicResource Brush.HighlightBorder}" />
+                                                        </Trigger>
+                                                        <MultiTrigger>
+                                                            <MultiTrigger.Conditions>
+                                                                <Condition Property="IsMouseOver" Value="True" />
+                                                                <Condition Property="IsSelected" Value="False" />
+                                                            </MultiTrigger.Conditions>
+                                                            <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource Brush.BlueHover}" />
+                                                        </MultiTrigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,1">
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="Auto" />
+                                            </Grid.RowDefinitions>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
+
                                             <!-- Nombre en modo lectura -->
-                                            <TextBlock Grid.Column="0" Text="{Binding Nombre}"
-                                 FontSize="{StaticResource Font.Size.md}" FontWeight="SemiBold"
-                                 TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
-                                 Foreground="{DynamicResource Brush.Ink}"
-                                 ToolTip="Doble clic para renombrar"
-                                 Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}" />
+                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding Nombre}"
+                                                       FontSize="{StaticResource Font.Size.md}" FontWeight="SemiBold"
+                                                       TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                                       Foreground="{DynamicResource Brush.Ink}"
+                                                       ToolTip="Doble clic para renombrar"
+                                                       Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}" />
+
                                             <!-- Nombre en modo edición -->
-                                            <TextBox Grid.Column="0" Grid.ColumnSpan="2"
-                               Text="{Binding Nombre, UpdateSourceTrigger=LostFocus}"
-                               FontSize="{StaticResource Font.Size.md}" FontWeight="SemiBold" Padding="2,0" MaxLength="60"
-                               Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}"
-                               IsVisibleChanged="TableroNombre_VisibleChanged"
-                               LostFocus="TableroNombre_LostFocus"
-                               KeyDown="TableroNombre_KeyDown" />
-                                            <!-- Botón lápiz: renombra sin doble clic (oculto en Visor / solo lectura) -->
-                                            <Button Grid.Column="1" Content="Renombrar" FontSize="{StaticResource Font.Size.sm}" Padding="4,0" Margin="4,0,0,0"
-                              ToolTip="Renombrar tablero"
-                              Click="TableroEdit_Click">
-                                                <Button.Style>
-                                                    <Style TargetType="Button" BasedOn="{StaticResource Button.Ghost}">
-                                                        <Setter Property="Visibility" Value="Visible" />
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding IsEditing}" Value="True">
-                                                                <Setter Property="Visibility" Value="Collapsed" />
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="False">
-                                                                <Setter Property="Visibility" Value="Collapsed" />
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </Button.Style>
-                                            </Button>
+                                            <TextBox Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"
+                                                     Text="{Binding Nombre, UpdateSourceTrigger=LostFocus}"
+                                                     FontSize="{StaticResource Font.Size.md}" FontWeight="SemiBold"
+                                                     Padding="4,2" MaxLength="60"
+                                                     Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}"
+                                                     IsVisibleChanged="TableroNombre_VisibleChanged"
+                                                     LostFocus="TableroNombre_LostFocus"
+                                                     KeyDown="TableroNombre_KeyDown" />
+
+                                            <!-- Botones de acción del tablero: renombrar ✏ y eliminar 🗑 -->
+                                            <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Button Content="✏"
+                                                        FontSize="{StaticResource Font.Size.xs}"
+                                                        Padding="3,1" Margin="2,0,1,0"
+                                                        ToolTip="Renombrar tablero"
+                                                        Click="TableroEdit_Click">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button" BasedOn="{StaticResource Button.Ghost}">
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                            <Setter Property="Opacity" Value="0.6" />
+                                                            <Style.Triggers>
+                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                    <Setter Property="Opacity" Value="1.0" />
+                                                                </Trigger>
+                                                                <DataTrigger Binding="{Binding IsEditing}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="False">
+                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                </Button>
+                                                <Button Content="🗑"
+                                                        FontSize="{StaticResource Font.Size.xs}"
+                                                        Foreground="{DynamicResource Brush.Danger}"
+                                                        Padding="3,1" Margin="1,0,0,0"
+                                                        ToolTip="Eliminar este tablero"
+                                                        Command="{Binding DataContext.RemoveCuadroCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button" BasedOn="{StaticResource Button.Ghost}">
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                            <Setter Property="Opacity" Value="0.6" />
+                                                            <Style.Triggers>
+                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                    <Setter Property="Opacity" Value="1.0" />
+                                                                </Trigger>
+                                                                <DataTrigger Binding="{Binding IsEditing}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="False">
+                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                </Button>
+                                            </StackPanel>
+
+                                            <!-- Subtítulo / Métricas de circuitos -->
+                                            <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                                                       FontSize="{StaticResource Font.Size.xs}"
+                                                       Foreground="{DynamicResource Brush.Muted}"
+                                                       Margin="0,3,0,0">
+                                                <Run Text="{Binding CircuitosActivos, Mode=OneWay}" /><Run Text=" / " /><Run Text="{Binding CircuitosProyectados, Mode=OneWay}" /><Run Text=" circ" />
+                                            </TextBlock>
                                         </Grid>
-                                        <TextBlock FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.Muted}" Margin="0,2,0,0">
-                      <Run Text="{Binding CircuitosActivos, Mode=OneWay}" /><Run Text=" / " /><Run Text="{Binding CircuitosProyectados, Mode=OneWay}" /><Run Text=" circuitos" />
-                                        </TextBlock>
-                                    </StackPanel>
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
-                    </DockPanel>
-                </Border>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
 
-                <!-- ── 2 · Planilla de Circuitos ──────────────────────────── -->
-                <Border Grid.Column="1"
-                Background="{DynamicResource Brush.Surface}"
-                BorderBrush="{DynamicResource Brush.Border}"
-                BorderThickness="1" CornerRadius="8" Padding="16">
-                    <DockPanel>
-
-                        <!-- Cabecera de la planilla -->
-                        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,10" LastChildFill="False">
-                            <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center"
-                         FontSize="{StaticResource Font.Size.md}" FontWeight="Bold"
-                         Foreground="{DynamicResource Brush.Accent}">
-                <Run Text="2 · PLANILLA DE CIRCUITOS (" /><Run Text="{Binding SelectedCuadro.Nombre, FallbackValue='—'}" /><Run Text=")" />
-                            </TextBlock>
+                            <!-- ListBox en Modo Colapsado (Chips pequeños con ToolTip completo) -->
+                            <ListBox x:Name="TablerosListCollapsed"
+                                     Visibility="Collapsed"
+                                     ItemsSource="{Binding CuadrosFiltrados}"
+                                     SelectedItem="{Binding SelectedCuadro, Mode=TwoWay}"
+                                     BorderThickness="0" Background="Transparent"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                <ListBox.ItemContainerStyle>
+                                    <Style TargetType="ListBoxItem">
+                                        <Setter Property="Padding" Value="0" />
+                                        <Setter Property="Margin" Value="0,2" />
+                                        <Setter Property="HorizontalContentAlignment" Value="Center" />
+                                        <Setter Property="Background" Value="Transparent" />
+                                        <Setter Property="Cursor" Value="Hand" />
+                                        <EventSetter Event="MouseDoubleClick" Handler="TablerosListCollapsed_MouseDoubleClick" />
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="ListBoxItem">
+                                                    <Border x:Name="CompactBorder"
+                                                            Width="34" Height="28"
+                                                            Background="{DynamicResource Brush.Canvas}"
+                                                            BorderBrush="{DynamicResource Brush.Border}"
+                                                            BorderThickness="1"
+                                                            CornerRadius="6"
+                                                            ToolTip="{Binding NombreCompletoTooltip}">
+                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsSelected" Value="True">
+                                                            <Setter TargetName="CompactBorder" Property="Background" Value="{DynamicResource Brush.BlueSelected}" />
+                                                            <Setter TargetName="CompactBorder" Property="BorderBrush" Value="{DynamicResource Brush.HighlightBorder}" />
+                                                        </Trigger>
+                                                        <MultiTrigger>
+                                                            <MultiTrigger.Conditions>
+                                                                <Condition Property="IsMouseOver" Value="True" />
+                                                                <Condition Property="IsSelected" Value="False" />
+                                                            </MultiTrigger.Conditions>
+                                                            <Setter TargetName="CompactBorder" Property="Background" Value="{DynamicResource Brush.BlueHover}" />
+                                                        </MultiTrigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding NombreCorto}"
+                                                   FontSize="10" FontWeight="Bold"
+                                                   Foreground="{DynamicResource Brush.Ink}"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
                         </DockPanel>
+                    </Border>
 
-                        <!-- Banda de categorías sobre la cabecera de columnas: agrupa visualmente los
-                 tramos de canalización (Medidas entrada / Tramo bandeja / Tramo PVC / Cajas /
-                 Terminal flexible) para ubicarse más rápido en una tabla con muchas columnas.
-                 Mismo fondo/borde que DataGridColumnHeader.Prototype (Brush.Surface2 /
-                 Brush.Line) para leerse como una sola cabecera de dos filas, con un subrayado
-                 fino de color por categoría en vez de bloques sólidos saturados. Los anchos de
-                 cada celda deben calzar con la suma de Width de las DataGridColumn que agrupan
-                 (ver comentario junto a cada columna más abajo); si se cambia el ancho de una
-                 columna, actualizar también aquí. -->
-                        <Grid DockPanel.Dock="Top">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="35" />
-                                <!-- N° -->
-                                <ColumnDefinition Width="50" />
-                                <!-- Sist. -->
-                                <ColumnDefinition Width="50" />
-                                <!-- Alim. -->
-                                <ColumnDefinition Width="80" />
-                                <!-- Ubicación / Pisos -->
-                                <ColumnDefinition Width="110" />
-                                <!-- Medidas entrada: L.Band 55 + L.PVC 55 -->
-                                <ColumnDefinition Width="200" />
-                                <!-- Tramo bandeja: Conductor 75 + Sección 70 + Total 55 -->
-                                <ColumnDefinition Width="300" />
-                                <!-- Tramo PVC: Tipo 55 + Ducto 45 + Conductor 75 + Sección 70 + Total 55 -->
-                                <ColumnDefinition Width="52" />
-                                <!-- Montaje -->
-                                <ColumnDefinition Width="156" />
-                                <!-- Cajas: 5/8" 52 + 100x100 52 + 100x65 52 -->
-                                <ColumnDefinition Width="105" />
-                                <!-- Terminal flexible: Cant. 50 + Medida 55 -->
-                                <ColumnDefinition Width="165" />
-                                <!-- Artefactos × zona: botón 165 -->
-                            </Grid.ColumnDefinitions>
-                            <Grid.Resources>
-                                <Style x:Key="GroupBandCell" TargetType="Border">
-                                    <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
-                                    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
-                                    <Setter Property="BorderThickness" Value="0,1,1,0" />
-                                </Style>
-                                <Style x:Key="GroupBandLabel" TargetType="TextBlock">
-                                    <Setter Property="FontSize" Value="{StaticResource Font.Size.2xs}" />
-                                    <Setter Property="FontWeight" Value="Bold" />
-                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
-                                    <Setter Property="HorizontalAlignment" Value="Center" />
-                                    <Setter Property="VerticalAlignment" Value="Center" />
-                                    <Setter Property="Margin" Value="4,6,4,4" />
-                                </Style>
-                            </Grid.Resources>
+                    <!-- ── Mueca / Pestaña handle en el borde lateral derecho ── -->
+                    <Border x:Name="SidebarMuecaContainer"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Top"
+                            Margin="0,8,-10,0"
+                            Panel.ZIndex="50"
+                            Width="18" Height="30"
+                            Background="{DynamicResource Brush.Surface}"
+                            BorderBrush="{DynamicResource Brush.Border}"
+                            BorderThickness="1"
+                            CornerRadius="0,6,6,0">
+                        <Button x:Name="SidebarMuecaButton"
+                                Style="{StaticResource Button.Ghost}"
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Stretch"
+                                Padding="0"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Cursor="Hand"
+                                Click="SidebarToggle_Click"
+                                ToolTip="Colapsar panel de tableros">
+                            <TextBlock x:Name="SidebarMuecaIcon" Text="◂" FontSize="10" FontWeight="Bold"
+                                       Foreground="{DynamicResource Brush.Ink2}"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-1,0,0" />
+                        </Button>
+                    </Border>
+                </Grid>
 
-                            <!-- Columnas sin categoría (N°, Sist., Alim., Ubicación, Montaje): mismo fondo/
-                   borde para que la franja se vea continua, sin etiqueta. -->
-                            <Border Grid.Column="0" Style="{StaticResource GroupBandCell}" />
-                            <Border Grid.Column="1" Style="{StaticResource GroupBandCell}" />
-                            <Border Grid.Column="2" Style="{StaticResource GroupBandCell}" />
-                            <Border Grid.Column="3" Style="{StaticResource GroupBandCell}" />
-                            <Border Grid.Column="7" Style="{StaticResource GroupBandCell}" />
+                <!-- GridSplitter para redimensionar el ancho de la lista de tableros -->
+                <GridSplitter x:Name="SidebarSplitter" Grid.Column="1" HorizontalAlignment="Stretch" Focusable="False"
+                              Background="Transparent" Cursor="SizeWE" Margin="1,0,1,0" />
 
-                            <Border Grid.Column="4" Style="{StaticResource GroupBandCell}">
-                                <DockPanel>
-                                    <Rectangle DockPanel.Dock="Bottom" Height="3" Fill="{DynamicResource Brush.Blue}" />
-                                    <TextBlock Text="MEDIDAS ENTRADA (M)" Style="{StaticResource GroupBandLabel}" />
-                                </DockPanel>
-                            </Border>
-                            <Border Grid.Column="5" Style="{StaticResource GroupBandCell}">
-                                <DockPanel>
-                                    <Rectangle DockPanel.Dock="Bottom" Height="2" Fill="{DynamicResource Brush.Pink}" />
-                                    <TextBlock Text="TRAMO BANDEJA" Style="{StaticResource GroupBandLabel}" />
-                                </DockPanel>
-                            </Border>
-                            <Border Grid.Column="6" Style="{StaticResource GroupBandCell}">
-                                <DockPanel>
-                                    <Rectangle DockPanel.Dock="Bottom" Height="2" Fill="{DynamicResource Brush.Success}" />
-                                    <TextBlock Text="TRAMO PVC (CONDUIT)" Style="{StaticResource GroupBandLabel}" />
-                                </DockPanel>
-                            </Border>
-                            <Border Grid.Column="8" Style="{StaticResource GroupBandCell}">
-                                <DockPanel>
-                                    <Rectangle DockPanel.Dock="Bottom" Height="2" Fill="{DynamicResource Brush.Cyan}" />
-                                    <TextBlock Text="CAJAS" Style="{StaticResource GroupBandLabel}" />
-                                </DockPanel>
-                            </Border>
-                            <Border Grid.Column="9" Style="{StaticResource GroupBandCell}">
-                                <DockPanel>
-                                    <Rectangle DockPanel.Dock="Bottom" Height="2" Fill="{DynamicResource Brush.Amber}" />
-                                    <TextBlock Text="TERMINAL FLEXIBLE" Style="{StaticResource GroupBandLabel}" />
-                                </DockPanel>
-                            </Border>
-                            <Border Grid.Column="10" Style="{StaticResource GroupBandCell}">
-                                <DockPanel>
-                                    <Rectangle DockPanel.Dock="Bottom" Height="2" Fill="{DynamicResource Brush.Blue}" />
-                                    <TextBlock Text="ARTEFACTOS × ZONA" Style="{StaticResource GroupBandLabel}" />
-                                </DockPanel>
-                            </Border>
-                        </Grid>
+
+
+                <!-- ── Planilla de Circuitos ──────────────────────────── -->
+
+                <Border Grid.Column="2"
+
+                        Background="{DynamicResource Brush.Surface}"
+
+                        BorderBrush="{DynamicResource Brush.Border}"
+
+                        BorderThickness="1" CornerRadius="8" Padding="10,12">
+
+                    <Grid>
+
+                        <!-- Estado vacío cuando no hay tablero seleccionado -->
+
+                        <ctrl:EmptyStateControl
+
+                            Visibility="{Binding HasSelectedCuadro, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}"
+
+                            HorizontalAlignment="Center" VerticalAlignment="Center"
+
+                            Title="Sin tablero seleccionado"
+
+                            Description="Seleccione un tablero en la lista lateral o agregue uno nuevo para configurar circuitos, protecciones y canalizaciones.">
+
+                            <ctrl:EmptyStateControl.Actions>
+
+                                <Button Style="{StaticResource Button.Primary}" Content="+ Agregar tablero" Command="{Binding AddCuadroCommand}" MinWidth="160" />
+
+                            </ctrl:EmptyStateControl.Actions>
+
+                        </ctrl:EmptyStateControl>
+
+
+
+                        <DockPanel Visibility="{Binding HasSelectedCuadro, Converter={StaticResource BoolToVisibility}}">
+
+
+
+                        <!-- Cabecera de la planilla (Diseño ejecutivo y limpio) -->
+
+                        <Border DockPanel.Dock="Top" Margin="0,0,0,12" Padding="0,0,0,10" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1">
+
+                            <DockPanel LastChildFill="True">
+
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+
+                                    <TextBlock Text="{Binding PlanillaTitle, FallbackValue='CUBICACIÓN DE CIRCUITOS'}"
+
+                                               FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold"
+
+                                               Foreground="{DynamicResource Brush.Muted}" Margin="0,0,8,0" VerticalAlignment="Center" />
+
+                                    <TextBlock Text="{Binding SelectedCuadro.Nombre, FallbackValue='—'}"
+
+                                               FontSize="{StaticResource Font.Size.md}" FontWeight="Bold"
+
+                                               Foreground="{DynamicResource Brush.Ink}" Margin="0,0,12,0" VerticalAlignment="Center" />
+
+                                    <Border Background="{DynamicResource Brush.BlueSoft}" CornerRadius="10" Padding="8,2" VerticalAlignment="Center">
+
+                                        <TextBlock FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}">
+
+                                            <Run Text="{Binding SelectedCuadro.CircuitosActivos, Mode=OneWay}" /><Run Text=" circuitos activos" />
+
+                                        </TextBlock>
+
+                                    </Border>
+
+                                </StackPanel>
+
+                            </DockPanel>
+
+                        </Border>
+
+
+
+                        <!-- Banda de categorías sobre la cabecera de columnas: sincronizada con ScrollViewer -->
+
+                        <ScrollViewer x:Name="BandScrollViewer"
+
+                                      DockPanel.Dock="Top"
+
+                                      HorizontalScrollBarVisibility="Hidden"
+
+                                      VerticalScrollBarVisibility="Disabled"
+
+                                      Focusable="False">
+
+                            <Grid x:Name="BandGrid">
+
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition x:Name="BandColNumero" Width="Auto" MinWidth="0" />
+                                    <!-- 0: N° -->
+                                    <ColumnDefinition x:Name="BandColSist" Width="Auto" MinWidth="0" />
+                                    <!-- 1: Sist. -->
+                                    <ColumnDefinition x:Name="BandColAlim" Width="Auto" MinWidth="0" />
+                                    <!-- 2: Alim. -->
+                                    <ColumnDefinition x:Name="BandColUbicacion" Width="Auto" MinWidth="0" />
+                                    <!-- 3: Ubicación / Pisos -->
+                                    <ColumnDefinition x:Name="BandColMedidasEntrada" Width="Auto" MinWidth="0" />
+                                    <!-- 4: Medidas entrada (50+50) -->
+                                    <ColumnDefinition x:Name="BandColTramoBandeja" Width="Auto" MinWidth="0" />
+                                    <!-- 5: Tramo bandeja (80+70+58) -->
+                                    <ColumnDefinition x:Name="BandColTramoPvc" Width="Auto" MinWidth="0" />
+                                    <!-- 6: Tramo PVC (60+54+78+66+58) -->
+                                    <ColumnDefinition x:Name="BandColMontaje" Width="Auto" MinWidth="0" />
+                                    <!-- 7: Montaje (54) -->
+                                    <ColumnDefinition x:Name="BandColCajas" Width="Auto" MinWidth="0" />
+                                    <!-- 8: Cajas (42+42+42) -->
+                                    <ColumnDefinition x:Name="BandColTmf" Width="Auto" MinWidth="0" />
+                                    <!-- 9: Terminal flexible (40+50) -->
+                                    <ColumnDefinition x:Name="BandColArtefactos" Width="Auto" MinWidth="0" />
+                                    <!-- 10: Artefactos (105) -->
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <Grid.Resources>
+
+                                    <Style x:Key="GroupBandCell" TargetType="Border">
+
+                                        <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+
+                                        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
+
+                                        <Setter Property="BorderThickness" Value="0,1,1,0" />
+
+                                    </Style>
+
+                                    <Style x:Key="GroupBandLabel" TargetType="TextBlock">
+
+                                        <Setter Property="FontSize" Value="{StaticResource Font.Size.2xs}" />
+
+                                        <Setter Property="FontWeight" Value="Bold" />
+
+                                        <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
+
+                                        <Setter Property="HorizontalAlignment" Value="Center" />
+
+                                        <Setter Property="VerticalAlignment" Value="Center" />
+
+                                        <Setter Property="Margin" Value="2,3,2,2" />
+
+                                        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+
+                                    </Style>
+
+                                </Grid.Resources>
+
+
+
+                                <!-- Columnas sin categoría general (N°, Sist., Alim., Ubicación) -->
+
+                                <Border Grid.Column="0" Style="{StaticResource GroupBandCell}" />
+
+                                <Border Grid.Column="1" Style="{StaticResource GroupBandCell}" />
+
+                                <Border Grid.Column="2" Style="{StaticResource GroupBandCell}" />
+
+                                <Border x:Name="BandBorderUbicacion" Grid.Column="3" Style="{StaticResource GroupBandCell}" />
+
+
+
+                                <Border x:Name="BandBorderMedidasEntrada" Grid.Column="4" Style="{StaticResource GroupBandCell}">
+
+                                    <DockPanel>
+
+                                        <Rectangle DockPanel.Dock="Bottom" Height="3" Fill="{DynamicResource Brush.Blue}" />
+
+                                        <TextBlock x:Name="BandLabelMedidasEntrada" Text="MEDIDAS ENTRADA" Style="{StaticResource GroupBandLabel}" />
+
+                                    </DockPanel>
+
+                                </Border>
+
+                                <Border x:Name="BandBorderTramoBandeja" Grid.Column="5" Style="{StaticResource GroupBandCell}">
+
+                                    <DockPanel>
+
+                                        <Rectangle DockPanel.Dock="Bottom" Height="2" Fill="{DynamicResource Brush.Pink}" />
+
+                                        <TextBlock Text="TRAMO BANDEJA" Style="{StaticResource GroupBandLabel}" />
+
+                                    </DockPanel>
+
+                                </Border>
+
+                                <Border Grid.Column="6" Style="{StaticResource GroupBandCell}">
+
+                                    <DockPanel>
+
+                                        <Rectangle DockPanel.Dock="Bottom" Height="2" Fill="{DynamicResource Brush.Success}" />
+
+                                        <TextBlock Text="TRAMO PVC (CONDUIT)" Style="{StaticResource GroupBandLabel}" />
+
+                                    </DockPanel>
+
+                                </Border>
+
+                                <Border Grid.Column="7" Style="{StaticResource GroupBandCell}">
+
+                                    <DockPanel>
+
+                                        <Rectangle DockPanel.Dock="Bottom" Height="2" Fill="{DynamicResource Brush.Slate}" />
+
+                                        <TextBlock Text="MONTAJE" Style="{StaticResource GroupBandLabel}" />
+
+                                    </DockPanel>
+
+                                </Border>
+
+                                <Border Grid.Column="8" Style="{StaticResource GroupBandCell}">
+
+                                    <DockPanel>
+
+                                        <Rectangle DockPanel.Dock="Bottom" Height="2" Fill="{DynamicResource Brush.Cyan}" />
+
+                                        <TextBlock Text="CAJAS" Style="{StaticResource GroupBandLabel}" />
+
+                                    </DockPanel>
+
+                                </Border>
+
+                                <Border x:Name="BandBorderTmf" Grid.Column="9" Style="{StaticResource GroupBandCell}">
+
+                                    <DockPanel>
+
+                                        <Rectangle DockPanel.Dock="Bottom" Height="2" Fill="{DynamicResource Brush.Amber}" />
+
+                                        <TextBlock Text="TERM. FLEXIBLE" Style="{StaticResource GroupBandLabel}" />
+
+                                    </DockPanel>
+
+                                </Border>
+
+                                <Border Grid.Column="10" Style="{StaticResource GroupBandCell}">
+
+                                    <DockPanel>
+
+                                        <Rectangle DockPanel.Dock="Bottom" Height="2" Fill="{DynamicResource Brush.Blue}" />
+
+                                        <TextBlock Text="ARTEFACTOS" Style="{StaticResource GroupBandLabel}" />
+
+                                    </DockPanel>
+
+                                </Border>
+
+                                <Border Grid.Column="11" Style="{StaticResource GroupBandCell}" />
+
+                            </Grid>
+
+                        </ScrollViewer>
+
 
                         <!-- DataGrid de circuitos — SelectionUnit=Cell (estilo Excel): solo se marcan las
                  celdas elegidas, no la fila entera al escribir. SelectedCircuito se sincroniza
                  desde CurrentCell (code-behind), sin SelectedItem: ese binding + CellOrRowHeader
                  pintaba toda la fila de azul al editar REC/conductor. Clic en N° selecciona la
                  fila completa para Ctrl+C de circuito. -->
+                        <Grid>
                         <DataGrid x:Name="CircuitosGrid"
                       ItemsSource="{Binding CircuitosFiltrados}"
                       Style="{StaticResource DataGrid.Workspace.Excel}"
@@ -458,23 +894,32 @@
                       GridLinesVisibility="All"
                       HeadersVisibility="Column"
                       RowHeaderWidth="0"
-                      FontSize="{StaticResource Font.Size.sm}"
+                      RowHeight="27"
+                      FontSize="{StaticResource Font.Size.xs}"
                       CurrentCellChanged="CircuitosGrid_CurrentCellChanged"
                       PreviewMouseLeftButtonDown="CircuitosGrid_PreviewMouseLeftButtonDown"
                       PreviewKeyDown="CircuitosGrid_PreviewKeyDown"
                       PreviewTextInput="CircuitosGrid_PreviewTextInput"
-                      EnableRowVirtualization="True"
-                      VirtualizingPanel.IsVirtualizing="True"
-                      VirtualizingPanel.VirtualizationMode="Recycling"
-                      VirtualizingPanel.ScrollUnit="Pixel"
+                      EnableRowVirtualization="False"
+                      VirtualizingPanel.IsVirtualizing="False"
+                      VirtualizingPanel.VirtualizationMode="Standard"
+                      VirtualizingPanel.ScrollUnit="Item"
                       ScrollViewer.CanContentScroll="True"
-                      ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                       ScrollViewer.VerticalScrollBarVisibility="Auto">
 
-                            <DataGrid.Columns>
+                                                    <DataGrid.ColumnHeaderStyle>
+                            <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource DataGridColumnHeader.Prototype}">
+                                <Setter Property="HorizontalContentAlignment" Value="Center" />
+                                <Setter Property="Padding" Value="2,4" />
+                                <Setter Property="FontSize" Value="{StaticResource Font.Size.2xs}" />
+                            </Style>
+                        </DataGrid.ColumnHeaderStyle>
+
+                        <DataGrid.Columns>
 
                                 <!-- N°: clic = seleccionar todo el circuito (para Ctrl+C de fila completa) -->
-                                <DataGridTextColumn x:Name="NumeroColumn" Header="N°" Binding="{Binding Numero}" Width="35" IsReadOnly="True">
+                                <DataGridTextColumn x:Name="NumeroColumn" Header="N°" Binding="{Binding Numero}" Width="34*" MinWidth="34" CanUserResize="False" IsReadOnly="True">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="HorizontalAlignment" Value="Center" />
@@ -486,35 +931,30 @@
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
 
-                                <!-- SIST. (Chip coloreado). Edición por texto libre (no ComboBox): escribir
-                     "e" + Tab lo normaliza a "E" (Enchufe) en CircuitoScRowVm.Tipo — un combo
-                     obliga a abrir el menú o usar flechas, mucho más lento para cargar varios
-                     circuitos seguidos a pura tecla. Binding OneWay + commit explícito en
-                     LostFocus (code-behind): un DataGridTemplateColumn no confirma de forma
-                     confiable un binding TwoWay con UpdateSourceTrigger=LostFocus al cerrar la
-                     celda vía Tab/Enter (limitación conocida de WPF) — con TwoWay el valor
-                     tecleado simplemente no llegaba nunca al ViewModel. -->
-                                <DataGridTemplateColumn Header="SIST." Width="50" CanUserResize="False">
+                                <!-- SIST (Chip coloreado) -->
+                                <DataGridTemplateColumn x:Name="ColSist" Header="SIST" Width="38*" MinWidth="38" CanUserResize="False"
+                                                        ClipboardContentBinding="{Binding Tipo}">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <Border Style="{StaticResource SistemaChipBorder}" HorizontalAlignment="Center">
+                                            <Border Style="{StaticResource SistemaChipBorder}" HorizontalAlignment="Center"
+                                                    ToolTip="{Binding TipoNombre, Mode=OneWay, StringFormat='{}{0} (SIST)'}">
                                                 <TextBlock Text="{Binding Tipo}" Style="{StaticResource SistemaChipText}" />
                                             </Border>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                     <DataGridTemplateColumn.CellEditingTemplate>
                                         <DataTemplate>
-                                            <TextBox Text="{Binding Tipo, Mode=OneWay}"
+                                            <TextBox Text="{Binding Tipo, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
                                Style="{StaticResource DataGrid.CellEditTextBox}"
-                               FontSize="{StaticResource Font.Size.sm}" HorizontalContentAlignment="Center"
+                               FontSize="{StaticResource Font.Size.xs}" HorizontalContentAlignment="Center"
                                LostFocus="TipoEditor_LostFocus" />
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellEditingTemplate>
                                 </DataGridTemplateColumn>
 
-                                <!-- ALIM. / Fase (Chip coloreado). Mismo criterio: texto libre, "t" + Tab
-                     normaliza a "T" (Trifásico) en CircuitoScRowVm.Fase. -->
-                                <DataGridTemplateColumn Header="ALIM." Width="50" CanUserResize="False">
+                                <!-- ALIM (Chip coloreado) -->
+                                <DataGridTemplateColumn x:Name="ColAlim" Header="ALIM" Width="38*" MinWidth="38" CanUserResize="False"
+                                                        ClipboardContentBinding="{Binding Fase}">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <Border Style="{StaticResource FaseChipBorder}" HorizontalAlignment="Center">
@@ -524,51 +964,33 @@
                                     </DataGridTemplateColumn.CellTemplate>
                                     <DataGridTemplateColumn.CellEditingTemplate>
                                         <DataTemplate>
-                                            <TextBox Text="{Binding Fase, Mode=OneWay}"
+                                            <TextBox Text="{Binding Fase, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
                                Style="{StaticResource DataGrid.CellEditTextBox}"
-                               FontSize="{StaticResource Font.Size.sm}" HorizontalContentAlignment="Center"
+                               FontSize="{StaticResource Font.Size.xs}" HorizontalContentAlignment="Center"
                                LostFocus="FaseEditor_LostFocus" />
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellEditingTemplate>
                                 </DataGridTemplateColumn>
 
-                                <!-- Ubicación / Pisos: la celda ES un campo de texto libre (un solo piso, ej. "1",
-                     "-2", "Azotea") — se escribe directo, sin abrir nada. El botón de pisos de la
-                     esquina (solo visible al pasar el mouse o enfocar la celda) abre un flyout
-                     anclado, estilo panel ejecutivo, con las zonas del proyecto (Cubicación) para
-                     cuando el circuito pasa por varios pisos; cada zona lleva su propio L.Band/
-                     L.PVC y se activa sola al escribirle un largo (sin checkbox). Navegación 100%
-                     teclado dentro del flyout: ↑↓ cambia de zona, ←→ cambia de columna (Band/PVC),
-                     Tab recorre todo en orden, Esc cierra y confirma (ver
-                     PisosPopupInput_PreviewKeyDown en el code-behind). Mientras el circuito tenga
-                     zonas activas, el texto queda de solo lectura mostrando el resumen (Ubicacion
-                     en modo TienePisos, ver CircuitoScRowVm). -->
-                                <DataGridTemplateColumn Header="UBICACION" Width="80">
+                                <!-- Ubicación / Pisos -->
+                                <DataGridTemplateColumn x:Name="ColUbicacion" Header="UBICACIÓN" Width="90*" MinWidth="64" CanUserResize="False"
+                                                        ClipboardContentBinding="{Binding Ubicacion}"
+                                                        Visibility="{Binding DataContext.ShowColUbicacion, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <Grid x:Name="UbicCellRoot">
                                                 <Border x:Name="UbicHost" Background="Transparent" CornerRadius="5" Margin="1">
-                                                    <TextBox Text="{Binding Ubicacion, UpdateSourceTrigger=LostFocus}"
-                                   BorderThickness="0" Background="Transparent"
-                                   FontSize="{StaticResource Font.Size.sm}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Blue}"
-                                   TextAlignment="Left" VerticalContentAlignment="Center"
-                                   Padding="6,0,18,0">
-                                                        <!-- CellTemplate no hereda DataGrid.IsReadOnly: combinar Visor + TienePisos -->
-                                                        <TextBox.IsReadOnly>
-                                                            <MultiBinding Converter="{StaticResource BoolOr}">
-                                                                <Binding Path="TienePisos" />
-                                                                <Binding Path="DataContext.IsGridReadOnly"
-                                                                         RelativeSource="{RelativeSource AncestorType=DataGrid}" />
-                                                            </MultiBinding>
-                                                        </TextBox.IsReadOnly>
-                                                    </TextBox>
+                                                    <TextBlock Text="{Binding Ubicacion}"
+                                                               FontSize="{StaticResource Font.Size.xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Blue}"
+                                                               TextAlignment="Left" VerticalAlignment="Center"
+                                                               Padding="4,0,16,0" TextTrimming="CharacterEllipsis" />
                                                 </Border>
-                                                <Button x:Name="PisosBtn" Padding="0"
-                                Width="16" Height="16"
+                                                <Button x:Name="PisosBtn" Padding="0" Focusable="False" IsTabStop="False"
+                                Width="10" Height="16"
                                 HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,2,0"
                                 Background="Transparent" BorderThickness="0" Cursor="Hand"
                                 Foreground="{DynamicResource Brush.Muted}"
-                                ToolTip="Varios pisos (zonas del proyecto)"
+                                ToolTip="Varios pisos (Alt+P · Esc para cerrar)"
                                 Click="PisosBtn_Click" Opacity="0"
                                 IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                 IsHitTestVisible="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=DataGrid}}">
@@ -609,7 +1031,8 @@
                                                     <Border Width="288" Background="{DynamicResource Brush.Surface}"
                                   BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
                                   CornerRadius="10" Padding="0"
-                                  LostKeyboardFocus="PisosFlyout_LostKeyboardFocus">
+                                  LostKeyboardFocus="PisosFlyout_LostKeyboardFocus"
+                                  PreviewKeyDown="PisosFlyout_PreviewKeyDown">
                                                         <Border.Effect>
                                                             <DropShadowEffect Color="#1A2338" Opacity="0.16" BlurRadius="20" ShadowDepth="6" Direction="270" />
                                                         </Border.Effect>
@@ -762,12 +1185,33 @@
                                             </DataTemplate.Triggers>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
+                                    <DataGridTemplateColumn.CellEditingTemplate>
+                                        <DataTemplate>
+                                            <TextBox Text="{Binding Ubicacion, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                                     Style="{StaticResource DataGrid.CellEditTextBox}"
+                                                     FontSize="{StaticResource Font.Size.xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Blue}"
+                                                     HorizontalContentAlignment="Left"
+                                                     Padding="4,0,16,0"
+                                                     Loaded="UbicacionEditor_Loaded"
+                                                     LostFocus="UbicacionEditor_LostFocus"
+                                                     PreviewKeyDown="UbicacionEditor_PreviewKeyDown">
+                                                <TextBox.IsReadOnly>
+                                                    <MultiBinding Converter="{StaticResource BoolOr}">
+                                                        <Binding Path="TienePisos" />
+                                                        <Binding Path="DataContext.IsGridReadOnly"
+                                                                 RelativeSource="{RelativeSource AncestorType=DataGrid}" />
+                                                    </MultiBinding>
+                                                </TextBox.IsReadOnly>
+                                            </TextBox>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellEditingTemplate>
                                 </DataGridTemplateColumn>
 
                                 <!-- L. Band (M) — color rosa -->
-                                <DataGridTextColumn Header="REC. B"
+                                <DataGridTextColumn x:Name="ColLBand" Header="L. BAND"
                                     Binding="{Binding LargoBandeja, UpdateSourceTrigger=LostFocus, StringFormat=N0}"
-                                    Width="55" CanUserResize="False"
+                                    Width="50*" MinWidth="48" CanUserResize="False"
+                                    Visibility="{Binding DataContext.ShowColLBand, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}"
                                     EditingElementStyle="{StaticResource DataGrid.CellEditTextBox}">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="TextBlock">
@@ -775,15 +1219,15 @@
                                             <Setter Property="VerticalAlignment" Value="Center" />
                                             <Setter Property="Foreground" Value="{DynamicResource Brush.Pink}" />
                                             <Setter Property="FontWeight" Value="SemiBold" />
-                                            <Setter Property="Margin" Value="0,0,6,0" />
+                                            <Setter Property="Margin" Value="0,0,4,0" />
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
 
                                 <!-- L. PVC (M) — color verde -->
-                                <DataGridTextColumn Header="REC. D"
+                                <DataGridTextColumn x:Name="ColLPvc" Header="L.PVC"
                                     Binding="{Binding LargoTuberia, UpdateSourceTrigger=LostFocus, StringFormat=N0}"
-                                    Width="55" CanUserResize="False"
+                                    Width="50*" MinWidth="48" CanUserResize="False"
                                     EditingElementStyle="{StaticResource DataGrid.CellEditTextBox}">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="TextBlock">
@@ -791,23 +1235,19 @@
                                             <Setter Property="VerticalAlignment" Value="Center" />
                                             <Setter Property="Foreground" Value="{DynamicResource Brush.SuccessBright}" />
                                             <Setter Property="FontWeight" Value="SemiBold" />
-                                            <Setter Property="Margin" Value="0,0,6,0" />
+                                            <Setter Property="Margin" Value="0,0,4,0" />
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
 
-                                <!-- Conductor Bandeja: lista desplegable con filtro (catálogo TiposConductor) —
-                     escribir filtra las opciones que contienen lo tecleado, elegir de la lista
-                     o seguir escribiendo un valor libre. Mismo commit manual en LostFocus que
-                     Sist./Alim./Ducto Ø (ver comentario ahí: un binding TwoWay no confirma de
-                     forma confiable en un DataGridTemplateColumn). -->
-                                <DataGridTemplateColumn Header="COND&#x0a;BAND." Width="75"
+                                <!-- Conductor Bandeja: lista desplegable con filtro (catálogo TiposConductor) -->
+                                <DataGridTemplateColumn x:Name="ColCondBand" Header="CONDUCTOR" Width="80*" MinWidth="76" CanUserResize="False"
                                         ClipboardContentBinding="{Binding ConductorDistribucion}"
-                                        Visibility="{Binding DataContext.IsAdvancedMode, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}">
+                                        Visibility="{Binding DataContext.ShowColBandejaAdvanced, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <TextBlock Text="{Binding ConductorDistribucion}"
-                                 HorizontalAlignment="Center" VerticalAlignment="Center" Margin="4,0" />
+                                  HorizontalAlignment="Center" VerticalAlignment="Center" Margin="2,0" />
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                      <DataGridTemplateColumn.CellEditingTemplate>
@@ -815,8 +1255,8 @@
                                             <ComboBox Style="{StaticResource DataGrid.CellEditCombo}"
                                 Tag="ConductorDistribucion"
                                 ItemsSource="{Binding DataContext.TiposConductor, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                Text="{Binding ConductorDistribucion, Mode=OneWay}"
-                                FontSize="{StaticResource Font.Size.sm}"
+                                Text="{Binding ConductorDistribucion, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                FontSize="{StaticResource Font.Size.xs}"
                                 Loaded="FilterableCombo_Loaded"
                                 TextBoxBase.TextChanged="FilterableCombo_TextChanged"
                                 LostFocus="ConductorBandEditor_LostFocus" />
@@ -825,13 +1265,13 @@
                                 </DataGridTemplateColumn>
 
                                 <!-- Sección Bandeja: catálogo SeccionesConductor -->
-                                <DataGridTemplateColumn Header="SEC POR&#x0a;BAND." Width="70"
+                                <DataGridTemplateColumn x:Name="ColSeccBand" Header="SECCIÓN" Width="70*" MinWidth="66" CanUserResize="False"
                                         ClipboardContentBinding="{Binding SeccionDistribucion}"
-                                        Visibility="{Binding DataContext.IsAdvancedMode, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}">
+                                        Visibility="{Binding DataContext.ShowColBandejaAdvanced, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <TextBlock Text="{Binding SeccionDistribucion}"
-                                 HorizontalAlignment="Center" VerticalAlignment="Center" Margin="4,0" />
+                                  HorizontalAlignment="Center" VerticalAlignment="Center" Margin="2,0" />
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                     <DataGridTemplateColumn.CellEditingTemplate>
@@ -839,8 +1279,8 @@
                                             <ComboBox Style="{StaticResource DataGrid.CellEditCombo}"
                                 Tag="SeccionDistribucion"
                                 ItemsSource="{Binding DataContext.SeccionesConductor, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                Text="{Binding SeccionDistribucion, Mode=OneWay}"
-                                FontSize="{StaticResource Font.Size.sm}"
+                                Text="{Binding SeccionDistribucion, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                FontSize="{StaticResource Font.Size.xs}"
                                 Loaded="FilterableCombo_Loaded"
                                 TextBoxBase.TextChanged="FilterableCombo_TextChanged"
                                 LostFocus="SeccionBandEditor_LostFocus" />
@@ -849,31 +1289,29 @@
                                 </DataGridTemplateColumn>
 
                                 <!-- Total Band (M) — calculado rosa -->
-                                <DataGridTextColumn Header="TOTAL&#x0a;BAND."
+                                <DataGridTextColumn x:Name="ColTotBand" Header="TOTAL (M)"
                                     Binding="{Binding LargoDistribucion, StringFormat=N0}"
-                                    Width="55" IsReadOnly="True">
+                                    Width="58*" MinWidth="56" CanUserResize="False" IsReadOnly="True"
+                                    Visibility="{Binding DataContext.ShowColBandeja, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="HorizontalAlignment" Value="Right" />
                                             <Setter Property="VerticalAlignment" Value="Center" />
                                             <Setter Property="Foreground" Value="{DynamicResource Brush.Pink}" />
                                             <Setter Property="FontWeight" Value="SemiBold" />
-                                            <Setter Property="Margin" Value="0,0,6,0" />
+                                            <Setter Property="Margin" Value="0,0,4,0" />
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
 
-                                <!-- Tipo tubería / canalización: catálogo TiposTuberia (PVC, EMT, CAÑERIA, PVCLH…).
-                     Antes el tipo existía en el modelo pero no se podía elegir desde la grilla —
-                     quedaba fijo en el valor por defecto. Ahora es editable con la misma lista
-                     filtrada y commit manual en LostFocus que el resto del tramo. -->
-                                <DataGridTemplateColumn Header="TIPO&#x0a;DUCTO" Width="55"
+                                <!-- Tipo tubería / canalización: catálogo TiposTuberia -->
+                                <DataGridTemplateColumn x:Name="ColTipoPvc" Header="TIPO" Width="60*" MinWidth="56" CanUserResize="False"
                                         Visibility="{Binding DataContext.IsAdvancedMode, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}"
                                         ClipboardContentBinding="{Binding TipoTuberia}">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <TextBlock Text="{Binding TipoTuberia}"
-                                 HorizontalAlignment="Center" VerticalAlignment="Center" Margin="4,0" />
+                                  HorizontalAlignment="Center" VerticalAlignment="Center" Margin="2,0" />
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                     <DataGridTemplateColumn.CellEditingTemplate>
@@ -881,8 +1319,8 @@
                                             <ComboBox Style="{StaticResource DataGrid.CellEditCombo}"
                                 Tag="TipoTuberia"
                                 ItemsSource="{Binding DataContext.TiposTuberia, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                Text="{Binding TipoTuberia, Mode=OneWay}"
-                                FontSize="{StaticResource Font.Size.sm}"
+                                Text="{Binding TipoTuberia, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                FontSize="{StaticResource Font.Size.xs}"
                                 Loaded="FilterableCombo_Loaded"
                                 TextBoxBase.TextChanged="FilterableCombo_TextChanged"
                                 LostFocus="TipoTuberiaEditor_LostFocus" />
@@ -890,16 +1328,14 @@
                                     </DataGridTemplateColumn.CellEditingTemplate>
                                 </DataGridTemplateColumn>
 
-                                <!-- Ducto Ø: lista desplegable con filtro (catálogo DiametrosTuberia). Escribir
-                     "32" filtra a "32mm" en la lista; Tab/Enter normaliza igual que antes
-                     (CircuitoScRowVm.SeccionTuberia agrega "mm" si falta). -->
-                                <DataGridTemplateColumn Header="DUCTO Ø" Width="45"
+                                <!-- Ducto Ø: lista desplegable con filtro (catálogo DiametrosTuberia) -->
+                                <DataGridTemplateColumn x:Name="ColDuctoPvc" Header="DIAM  Ø" Width="54*" MinWidth="52" CanUserResize="False"
                                         ClipboardContentBinding="{Binding SeccionTuberia}"
                                         Visibility="{Binding DataContext.IsAdvancedMode, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <TextBlock Text="{Binding SeccionTuberia}"
-                                 HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                  HorizontalAlignment="Center" VerticalAlignment="Center" />
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                     <DataGridTemplateColumn.CellEditingTemplate>
@@ -907,8 +1343,8 @@
                                             <ComboBox Style="{StaticResource DataGrid.CellEditCombo}"
                                 Tag="SeccionTuberia"
                                 ItemsSource="{Binding DataContext.DiametrosTuberia, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                Text="{Binding SeccionTuberia, Mode=OneWay}"
-                                FontSize="{StaticResource Font.Size.sm}"
+                                Text="{Binding SeccionTuberia, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                FontSize="{StaticResource Font.Size.xs}"
                                 Loaded="FilterableCombo_Loaded"
                                 TextBoxBase.TextChanged="FilterableCombo_TextChanged"
                                 LostFocus="SeccionTuberiaEditor_LostFocus" />
@@ -917,13 +1353,13 @@
                                 </DataGridTemplateColumn>
 
                                 <!-- Conductor PVC: catálogo TiposConductor -->
-                                <DataGridTemplateColumn Header="COND&#x0a;DUCTO" Width="75"
+                                <DataGridTemplateColumn x:Name="ColCondPvc" Header="CONDUCTOR" Width="78*" MinWidth="72" CanUserResize="False"
                                         ClipboardContentBinding="{Binding ConductorDerivacion}"
                                         Visibility="{Binding DataContext.IsAdvancedMode, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <TextBlock Text="{Binding ConductorDerivacion}"
-                                 HorizontalAlignment="Center" VerticalAlignment="Center" Margin="4,0" />
+                                  HorizontalAlignment="Center" VerticalAlignment="Center" Margin="2,0" />
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                     <DataGridTemplateColumn.CellEditingTemplate>
@@ -931,8 +1367,8 @@
                                             <ComboBox Style="{StaticResource DataGrid.CellEditCombo}"
                                 Tag="ConductorDerivacion"
                                 ItemsSource="{Binding DataContext.TiposConductor, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                Text="{Binding ConductorDerivacion, Mode=OneWay}"
-                                FontSize="{StaticResource Font.Size.sm}"
+                                Text="{Binding ConductorDerivacion, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                FontSize="{StaticResource Font.Size.xs}"
                                 Loaded="FilterableCombo_Loaded"
                                 TextBoxBase.TextChanged="FilterableCombo_TextChanged"
                                 LostFocus="ConductorPvcEditor_LostFocus" />
@@ -941,13 +1377,13 @@
                                 </DataGridTemplateColumn>
 
                                 <!-- Sección PVC: catálogo SeccionesConductor -->
-                                <DataGridTemplateColumn Header="SEC&#x0a;DUCTO" Width="70"
+                                <DataGridTemplateColumn x:Name="ColSeccPvc" Header="SECCION" Width="66*" MinWidth="60" CanUserResize="False"
                                         ClipboardContentBinding="{Binding SeccionDerivacion}"
                                         Visibility="{Binding DataContext.IsAdvancedMode, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <TextBlock Text="{Binding SeccionDerivacion}"
-                                 HorizontalAlignment="Center" VerticalAlignment="Center" Margin="4,0" />
+                                  HorizontalAlignment="Center" VerticalAlignment="Center" Margin="2,0" />
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                     <DataGridTemplateColumn.CellEditingTemplate>
@@ -955,8 +1391,8 @@
                                             <ComboBox Style="{StaticResource DataGrid.CellEditCombo}"
                                 Tag="SeccionDerivacion"
                                 ItemsSource="{Binding DataContext.SeccionesConductor, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                Text="{Binding SeccionDerivacion, Mode=OneWay}"
-                                FontSize="{StaticResource Font.Size.sm}"
+                                Text="{Binding SeccionDerivacion, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                FontSize="{StaticResource Font.Size.xs}"
                                 Loaded="FilterableCombo_Loaded"
                                 TextBoxBase.TextChanged="FilterableCombo_TextChanged"
                                 LostFocus="SeccionPvcEditor_LostFocus" />
@@ -965,78 +1401,85 @@
                                 </DataGridTemplateColumn>
 
                                 <!-- Total PVC (M) — calculado verde -->
-                                <DataGridTextColumn Header="TOTAL M&#x0a;DUCTO"
+                                <DataGridTextColumn x:Name="ColTotPvc" Header="TOTAL (M)"
                                     Binding="{Binding LargoDerivacion, StringFormat=N0}"
-                                    Width="55" IsReadOnly="True">
+                                    Width="58*" MinWidth="56" CanUserResize="False" IsReadOnly="True">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="HorizontalAlignment" Value="Right" />
                                             <Setter Property="VerticalAlignment" Value="Center" />
                                             <Setter Property="Foreground" Value="{DynamicResource Brush.SuccessBright}" />
                                             <Setter Property="FontWeight" Value="SemiBold" />
-                                            <Setter Property="Margin" Value="0,0,6,0" />
+                                            <Setter Property="Margin" Value="0,0,4,0" />
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
 
                                 <!-- Montaje -->
-                                <DataGridTextColumn Header="MONT&#x0a;LUM"
+                                <DataGridTextColumn x:Name="ColLuminaria" Header="LUMIN."
                                     Binding="{Binding MontajesAlumbrado, UpdateSourceTrigger=LostFocus}"
-                                    Width="52"
+                                    Width="54*" MinWidth="52" CanUserResize="False"
                                     Visibility="{Binding DataContext.IsAdvancedMode, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}"
                                     EditingElementStyle="{StaticResource DataGrid.CellEditTextBox}">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="HorizontalAlignment" Value="Center" />
                                             <Setter Property="VerticalAlignment" Value="Center" />
+                                            <Setter Property="ToolTip" Value="Luminaria / Montaje" />
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
 
                                 <!-- Caja 5/8" -->
-                                <DataGridTextColumn Header='CAJA&#x0a;5/8"'
+                                <DataGridTextColumn x:Name="ColCaja58" Header='5/8"'
                                     Binding="{Binding Cajas58, UpdateSourceTrigger=LostFocus}"
-                                    Width="52"
+                                    Width="42*" MinWidth="40" CanUserResize="False"
                                     Visibility="{Binding DataContext.IsAdvancedMode, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}"
                                     EditingElementStyle="{StaticResource DataGrid.CellEditTextBox}">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="HorizontalAlignment" Value="Center" />
                                             <Setter Property="VerticalAlignment" Value="Center" />
+                                            <Setter Property="ToolTip" Value="Caja octogonal 5/8&quot;" />
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
 
-                                <!-- Caja 100x100 -->
-                                <DataGridTextColumn Header="CAJA&#x0a;A11"
+                                <!-- Caja A11 (100×100) -->
+                                <DataGridTextColumn x:Name="ColCaja100" Header="A11"
                                     Binding="{Binding Cajas100x100, UpdateSourceTrigger=LostFocus}"
-                                    Width="52"
+                                    Width="42*" MinWidth="40" CanUserResize="False"
+                                    Visibility="{Binding DataContext.IsAdvancedMode, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}"
                                     EditingElementStyle="{StaticResource DataGrid.CellEditTextBox}">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="HorizontalAlignment" Value="Center" />
                                             <Setter Property="VerticalAlignment" Value="Center" />
+                                            <Setter Property="ToolTip" Value="Caja de distribución A11 (100×100)" />
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
 
-                                <!-- Caja 100x65 -->
-                                <DataGridTextColumn Header="CAJA&#x0a;A01"
+                                <!-- Caja A01 (100×65) -->
+                                <DataGridTextColumn x:Name="ColCaja65" Header="A01"
                                     Binding="{Binding Cajas100x65, UpdateSourceTrigger=LostFocus}"
-                                    Width="52"
+                                    Width="42*" MinWidth="40" CanUserResize="False"
+                                    Visibility="{Binding DataContext.IsAdvancedMode, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}"
                                     EditingElementStyle="{StaticResource DataGrid.CellEditTextBox}">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="HorizontalAlignment" Value="Center" />
                                             <Setter Property="VerticalAlignment" Value="Center" />
+                                            <Setter Property="ToolTip" Value="Cantidad de cajas A01 (100×65). En departamentos se edita; un circuito nuevo parte en 0." />
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
 
                                 <!-- TMF Cant. — dorado, solo lectura, calculado automáticamente -->
-                                <DataGridTextColumn Header="TMF&#x0a;CANT."
+                                <DataGridTextColumn x:Name="ColTmfCant" Header="CANT"
                                     Binding="{Binding TmfCantidad}"
-                                    Width="50" IsReadOnly="True">
+                                    Width="40*" MinWidth="38" CanUserResize="False" IsReadOnly="True"
+                                    Visibility="{Binding DataContext.ShowColTmf, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="HorizontalAlignment" Value="Center" />
@@ -1048,9 +1491,10 @@
                                 </DataGridTextColumn>
 
                                 <!-- TMF Medida — dorado, solo lectura, calculado automáticamente -->
-                                <DataGridTextColumn Header="TMF&#x0a;MEDIDA"
+                                <DataGridTextColumn x:Name="ColTmfMed" Header="DIAM  Ø"
                                     Binding="{Binding TmfMedida}"
-                                    Width="55" IsReadOnly="True">
+                                    Width="50*" MinWidth="48" CanUserResize="False" IsReadOnly="True"
+                                    Visibility="{Binding DataContext.ShowColTmf, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="HorizontalAlignment" Value="Center" />
@@ -1061,14 +1505,12 @@
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
 
-                                <!-- ARTEFACTOS × ZONA: botón que abre el diálogo de agregado rápido por zona.
-                     El texto (ArtefactosResumen) muestra unidades totales y en cuántas zonas
-                     del proyecto están, para el control de costo por piso. -->
-                                <DataGridTemplateColumn Header="ARTEFACTOS&#x0a;× ZONA" Width="165" CanUserResize="False">
+                                <!-- ARTEFACTOS: botón que abre el diálogo de agregado rápido por zona -->
+                                <DataGridTemplateColumn x:Name="ColArtefactos" Header="ARTEFACTOS" Width="105*" MinWidth="88" CanUserResize="False">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <Button Style="{StaticResource Button.Secondary}"
-                              Margin="4,2" Padding="6,3" FontSize="{StaticResource Font.Size.sm}"
+                              Margin="2,1" Padding="4,1" FontSize="{StaticResource Font.Size.2xs}"
                               HorizontalAlignment="Stretch"
                               Content="{Binding ArtefactosResumen}"
                               Command="{Binding DataContext.OpenArtefactosCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
@@ -1081,13 +1523,22 @@
                             </DataGrid.Columns>
                         </DataGrid>
 
+                        <ctrl:DataGridSearchOverlay x:Name="CircuitosSearchOverlay"
+                                                    TargetGrid="{Binding ElementName=CircuitosGrid}"
+                                                    HorizontalAlignment="Right"
+                                                    VerticalAlignment="Top"
+                                                    Margin="0,8,18,0"
+                                                    Panel.ZIndex="100" />
+                        </Grid>
+
                     </DockPanel>
+                    </Grid>
                 </Border>
 
             </Grid>
         </DockPanel>
 
-        <ctrl:SkeletonOverlayControl Panel.ZIndex="20" Message="Cargando cubicación SC…"
+        <ctrl:SkeletonOverlayControl Panel.ZIndex="20" Message="Cargando cubicación de circuitos…"
                                      Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibility}}" />
     </Grid>
 </UserControl>

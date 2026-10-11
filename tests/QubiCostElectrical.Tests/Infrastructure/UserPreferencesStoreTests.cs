@@ -26,7 +26,7 @@ public sealed class UserPreferencesStoreTests
                 ThemeName = "Dark",
                 SidebarCompactMode = false,
                 MaterialsPageSize = 500,
-                LastPage = "Dashboard",
+                AutosaveEnabled = true,
                 PriceFeedUrls = { "https://example.com/feed.json" },
                 LetterheadCompanyName = "Empresa Test SpA"
             };
@@ -39,7 +39,7 @@ public sealed class UserPreferencesStoreTests
             Assert.Equal("Dark", loaded.ThemeName);
             Assert.False(loaded.SidebarCompactMode);
             Assert.Equal(500, loaded.MaterialsPageSize);
-            Assert.Equal("Dashboard", loaded.LastPage);
+            Assert.True(loaded.AutosaveEnabled);
             Assert.Contains("https://example.com/feed.json", loaded.PriceFeedUrls);
             Assert.Equal("Empresa Test SpA", loaded.LetterheadCompanyName);
         }

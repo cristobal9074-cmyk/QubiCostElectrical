@@ -35,6 +35,7 @@ public sealed class ProjectDirtyScope : IEquatable<ProjectDirtyScope>
     public static ProjectDirtyScope GastosOperacionales { get; } = new("gastos_operacionales", ProjectSessionChangeKind.Unknown);
     public static ProjectDirtyScope NegotiatedDiscounts { get; } = new("negotiated_discounts", ProjectSessionChangeKind.Unknown);
     public static ProjectDirtyScope StaffingPlan { get; } = new("staffing_plan", ProjectSessionChangeKind.Unknown);
+    public static ProjectDirtyScope EstadosPago { get; } = new("estados_pago", ProjectSessionChangeKind.Unknown);
     public static ProjectDirtyScope Saved { get; } = new("saved", ProjectSessionChangeKind.Saved, tracksDirty: false);
     public static ProjectDirtyScope Reset { get; } = new("reset", ProjectSessionChangeKind.Reset, tracksDirty: false);
 
@@ -59,6 +60,7 @@ public sealed class ProjectDirtyScope : IEquatable<ProjectDirtyScope>
             [GastosOperacionales.Key] = GastosOperacionales,
             [NegotiatedDiscounts.Key] = NegotiatedDiscounts,
             [StaffingPlan.Key] = StaffingPlan,
+            [EstadosPago.Key] = EstadosPago,
             [Saved.Key] = Saved,
             [Reset.Key] = Reset,
         };
@@ -92,6 +94,7 @@ public sealed class ProjectDirtyScope : IEquatable<ProjectDirtyScope>
             "gastos_operacionales" or "go" => "gastos_operacionales",
             "negotiated_discounts" or "descuentos" => "negotiated_discounts",
             "staffing_plan" or "staffing" => "staffing_plan",
+            "estados_pago" or "estados de pago" => "estados_pago",
             _ => trimmed
         };
 

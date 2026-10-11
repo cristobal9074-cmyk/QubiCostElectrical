@@ -2,8 +2,8 @@ namespace QubiCostElectrical;
 
 public enum DiffType
 {
-	Added,
-	Removed,
-	Modified,
-	Unchanged
+    Added,
+    Removed,
+    Modified,
+    Unchanged
 }

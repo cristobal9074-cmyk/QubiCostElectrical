@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -34,32 +35,50 @@ public partial class ResumenScTomarDialog : Window
     {
         MaterialGrid.Columns.Clear();
 
+        // 1. Columna Material
+        var materialStyle = new Style(typeof(TextBlock));
+        materialStyle.Setters.Add(new Setter(TextBlock.VerticalAlignmentProperty, VerticalAlignment.Center));
+        materialStyle.Setters.Add(new Setter(TextBlock.FontSizeProperty, 12.0));
+        materialStyle.Setters.Add(new Setter(TextBlock.TextTrimmingProperty, TextTrimming.CharacterEllipsis));
+        materialStyle.Setters.Add(new Setter(FrameworkElement.MarginProperty, new Thickness(10, 0, 6, 0)));
+
         MaterialGrid.Columns.Add(new DataGridTextColumn
         {
-            Header = "Material",
-            Width = 260,
-            MinWidth = 180,
+            Header = "MATERIAL",
+            Width = 280,
+            MinWidth = 200,
             Binding = new Binding(nameof(MaterialConZonasVm.CodigoDisplay)) { Mode = BindingMode.OneWay },
-            IsReadOnly = true
+            IsReadOnly = true,
+            ElementStyle = materialStyle
         });
+
+        // 2. Columna Unidad (UD)
+        var udStyle = new Style(typeof(TextBlock));
+        udStyle.Setters.Add(new Setter(TextBlock.HorizontalAlignmentProperty, HorizontalAlignment.Center));
+        udStyle.Setters.Add(new Setter(TextBlock.VerticalAlignmentProperty, VerticalAlignment.Center));
+        udStyle.Setters.Add(new Setter(TextBlock.FontSizeProperty, 11.0));
+        udStyle.Setters.Add(new Setter(TextBlock.FontWeightProperty, FontWeights.SemiBold));
+        udStyle.Setters.Add(new Setter(TextBlock.ForegroundProperty, FindResource("Brush.Muted")));
 
         MaterialGrid.Columns.Add(new DataGridTextColumn
         {
             Header = "UD",
-            Width = 40,
+            Width = 50,
             Binding = new Binding(nameof(MaterialConZonasVm.Unidad)) { Mode = BindingMode.OneWay },
-            IsReadOnly = true
+            IsReadOnly = true,
+            ElementStyle = udStyle
         });
 
+        // 3. Columnas Dinámicas por Zona
         for (var i = 0; i < zonasProyecto.Count; i++)
         {
             var index = i;
             var zona = zonasProyecto[i];
             var column = new DataGridTemplateColumn
             {
-                Header = zona.Nombre,
-                Width = 72,
-                MinWidth = 56
+                Header = zona.Nombre.ToUpperInvariant(),
+                Width = 80,
+                MinWidth = 65
             };
 
             var displayFactory = new FrameworkElementFactory(typeof(TextBlock));
@@ -70,6 +89,9 @@ public partial class ResumenScTomarDialog : Window
                 FallbackValue = ""
             });
             displayFactory.SetValue(TextBlock.TextAlignmentProperty, TextAlignment.Right);
+            displayFactory.SetValue(TextBlock.VerticalAlignmentProperty, VerticalAlignment.Center);
+            displayFactory.SetValue(TextBlock.FontFamilyProperty, new FontFamily("Consolas, Segoe UI Mono, monospace"));
+            displayFactory.SetValue(TextBlock.FontSizeProperty, 11.5);
             displayFactory.SetValue(FrameworkElement.MarginProperty, new Thickness(0, 0, 8, 0));
             column.CellTemplate = new DataTemplate { VisualTree = displayFactory };
 
@@ -80,6 +102,8 @@ public partial class ResumenScTomarDialog : Window
                 UpdateSourceTrigger = UpdateSourceTrigger.LostFocus,
                 FallbackValue = "0"
             });
+            editFactory.SetValue(TextBox.TextAlignmentProperty, TextAlignment.Right);
+            editFactory.SetValue(TextBox.FontFamilyProperty, new FontFamily("Consolas, Segoe UI Mono, monospace"));
             editFactory.AddHandler(TextBoxBase.TextChangedEvent, new TextChangedEventHandler(OnZoneTextChanged));
             editFactory.AddHandler(UIElement.PreviewKeyDownEvent, new KeyEventHandler(OnZoneKeyDown));
             column.CellEditingTemplate = new DataTemplate { VisualTree = editFactory };
@@ -87,21 +111,36 @@ public partial class ResumenScTomarDialog : Window
             MaterialGrid.Columns.Add(column);
         }
 
+        // 4. Columna Total
+        var totalStyle = new Style(typeof(TextBlock));
+        totalStyle.Setters.Add(new Setter(TextBlock.HorizontalAlignmentProperty, HorizontalAlignment.Right));
+        totalStyle.Setters.Add(new Setter(TextBlock.VerticalAlignmentProperty, VerticalAlignment.Center));
+        totalStyle.Setters.Add(new Setter(TextBlock.FontFamilyProperty, new FontFamily("Consolas, Segoe UI Mono, monospace")));
+        totalStyle.Setters.Add(new Setter(TextBlock.FontWeightProperty, FontWeights.Bold));
+        totalStyle.Setters.Add(new Setter(TextBlock.FontSizeProperty, 11.5));
+        totalStyle.Setters.Add(new Setter(TextBlock.ForegroundProperty, FindResource("Brush.Ink")));
+        totalStyle.Setters.Add(new Setter(FrameworkElement.MarginProperty, new Thickness(0, 0, 10, 0)));
+
         MaterialGrid.Columns.Add(new DataGridTextColumn
         {
-            Header = "Total",
-            Width = 72,
+            Header = "TOTAL",
+            Width = 85,
             Binding = new Binding(nameof(MaterialConZonasVm.TotalDisplay)) { Mode = BindingMode.OneWay },
-            IsReadOnly = true
+            IsReadOnly = true,
+            ElementStyle = totalStyle
         });
 
-        var tomarColumn = new DataGridTemplateColumn { Header = "", Width = 68, MinWidth = 68 };
-        var btnFactory = new FrameworkElementFactory(typeof(Button));
-        btnFactory.SetValue(ContentControl.ContentProperty, "Tomar");
-        btnFactory.SetValue(FrameworkElement.MarginProperty, new Thickness(2));
-        btnFactory.AddHandler(ButtonBase.ClickEvent, new RoutedEventHandler(OnTomarClick));
-        tomarColumn.CellTemplate = new DataTemplate { VisualTree = btnFactory };
-        MaterialGrid.Columns.Add(tomarColumn);
+        // 5. Columna Acción (Tomar)
+        if (Resources["TomarButtonTemplate"] is DataTemplate tomarTemplate)
+        {
+            MaterialGrid.Columns.Add(new DataGridTemplateColumn
+            {
+                Header = "",
+                Width = 85,
+                MinWidth = 75,
+                CellTemplate = tomarTemplate
+            });
+        }
 
         MaterialGrid.PreparingCellForEdit += (_, e) =>
         {
@@ -119,14 +158,89 @@ public partial class ResumenScTomarDialog : Window
         MaterialGrid.Focus();
         var first = MaterialGrid.Items.Cast<object>().FirstOrDefault(i => i is MaterialConZonasVm);
         if (first != null)
+        {
             MaterialGrid.SelectedItem = first;
+            MaterialGrid.ScrollIntoView(first);
+        }
     }
 
-    private void OnWindowKeyDown(object sender, KeyEventArgs e)
+    private void ConfirmSelection()
     {
-        if (e.Key == Key.Enter)
+        if (vm.SelectedRow is MaterialConZonasVm material)
         {
+            TakeMaterial(material);
+            return;
+        }
+
+        if (vm.SelectedRow is GroupHeaderRowVm groupHeader)
+        {
+            var child = vm.FlatRows.SkipWhile(r => r != groupHeader).Skip(1).OfType<MaterialConZonasVm>().FirstOrDefault();
+            if (child != null)
+            {
+                vm.SelectedRow = child;
+                MaterialGrid.SelectedItem = child;
+                MaterialGrid.ScrollIntoView(child);
+            }
+        }
+    }
+
+    private void OnWindowPreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        var key = e.Key == Key.System ? e.SystemKey : e.Key;
+
+        // Escape: limpiar búsqueda o cerrar diálogo
+        if (key == Key.Escape)
+        {
+            if (SearchBox.IsKeyboardFocusWithin && !string.IsNullOrEmpty(SearchBox.Text))
+            {
+                SearchBox.Text = string.Empty;
+                FocusMaterialGrid();
+                e.Handled = true;
+                return;
+            }
+
             DialogResult = false;
+            e.Handled = true;
+            return;
+        }
+
+        // Ctrl+B o Ctrl+F: enfocar barra de búsqueda
+        if (Keyboard.Modifiers == ModifierKeys.Control && (key == Key.B || key == Key.F))
+        {
+            SearchBox.Focus();
+            SearchBox.SelectAll();
+            e.Handled = true;
+            return;
+        }
+
+        // Enter: confirmar selección si no se está editando una celda
+        if (key == Key.Enter)
+        {
+            if (SearchBox.IsKeyboardFocusWithin)
+            {
+                FocusMaterialGrid();
+                e.Handled = true;
+                return;
+            }
+
+            // Si está enfocado en una caja de texto dentro de una celda, dejar que OnZoneKeyDown actúe
+            if (Keyboard.FocusedElement is TextBox)
+            {
+                return;
+            }
+
+            ConfirmSelection();
+            e.Handled = true;
+        }
+    }
+
+    private void OnSearchBoxPreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        var key = e.Key == Key.System ? e.SystemKey : e.Key;
+
+        if (key == Key.Down || key == Key.Enter)
+        {
+            FocusMaterialGrid();
             e.Handled = true;
         }
     }
@@ -134,7 +248,15 @@ public partial class ResumenScTomarDialog : Window
     private void OnSidebarCategoriaClick(object sender, MouseButtonEventArgs e)
     {
         if (sender is FrameworkElement { DataContext: CategoriaChipVm chip })
+        {
             vm.ActiveCategoria = chip.Nombre;
+            FocusMaterialGrid();
+        }
+    }
+
+    private void OnRowDoubleClick(object sender, MouseButtonEventArgs e)
+    {
+        ConfirmSelection();
     }
 
     private void OnZoneTextChanged(object sender, TextChangedEventArgs e)
@@ -163,7 +285,7 @@ public partial class ResumenScTomarDialog : Window
 
     private void OnTomarClick(object sender, RoutedEventArgs e)
     {
-        if (sender is Button { DataContext: MaterialConZonasVm row })
+        if (sender is FrameworkElement { DataContext: MaterialConZonasVm row })
             TakeMaterial(row);
     }
 

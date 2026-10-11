@@ -104,4 +104,52 @@ public sealed class QuestPdfOfferTotalsTests : IDisposable
         Assert.Null(ex);
         Assert.True(new FileInfo(outputPath).Length > 1000);
     }
+
+    [Fact]
+    public void Export_FullExecutiveDossier_GeneratesCompletePdf()
+    {
+        var ctx = MinimalContext();
+        ctx.ReportTemplate.ShowCover = true;
+        ctx.ReportTemplate.ShowExecutiveSummary = true;
+        ctx.ReportTemplate.ShowChapterDistributionChart = true;
+        ctx.ReportTemplate.ShowTermsAndConditions = true;
+        ctx.ReportTemplate.ShowNormativeAssumptions = true;
+        ctx.ReportTemplate.ShowItemizedDetail = true;
+
+        ctx.Data.Proyecto.OfertaPdf = new OfferPdfSettings
+        {
+            CompanyName = "Electro Ingenieros SpA",
+            CompanyRut = "76.123.456-7",
+            CompanyAddress = "Av. Providencia 1234, Of. 601",
+            CompanyPhone = "+56 9 8765 4321",
+            CompanyEmail = "contacto@electroingenieros.cl",
+            RecipientName = "Ing. Roberto Muñoz",
+            RecipientCompany = "Constructora del Valle SA",
+            OfferNumber = "OFE-2026-0042",
+            RevisionTag = "Rev 0",
+            ProjectDuration = "120 días corridos",
+            ValidityDays = 30,
+            IncludePresentationLetter = true,
+            PresentationLetterTitle = "CARTA FORMAL DE PRESENTACIÓN",
+            PresentationLetterText = "Estimados señores: Presentamos nuestra mejor oferta técnica y económica para las instalaciones eléctricas.",
+            NormativeAssumptionsText = "La oferta cumple con el DS N° 8/2019 y los Pliegos Técnicos Normativos RIC (01 al 19) de la SEC. Se incluye tramitación TE1.",
+            ScopeText = "Canalizaciones, alimentadores, conductores y tableros.",
+            ExclusionsText = "Obras civiles, derechos municipales y transformador.",
+            CommercialConditionsText = "30% anticipo, estados de pago mensuales y 5% de retención.",
+            SignatureName = "Carlos Contreras Silva",
+            SignatureRole = "Gerente de Operaciones",
+            SignatureSecClass = "Clase A",
+            SignatureRegistroSec = "SEC-84920"
+        };
+
+        var exporter = new QuestPdfProjectExporter(
+            new BudgetCalculationService(),
+            new CurrencyConversionService());
+
+        exporter.Export(ctx, outputPath);
+
+        Assert.True(File.Exists(outputPath));
+        var fileInfo = new FileInfo(outputPath);
+        Assert.True(fileInfo.Length > 5000, "El dossier ejecutivo PDF debe contener páginas estructuradas completas.");
+    }
 }

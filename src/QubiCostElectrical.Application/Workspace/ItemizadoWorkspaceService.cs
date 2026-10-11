@@ -96,6 +96,32 @@ public sealed class ItemizadoWorkspaceService : IItemizadoWorkspaceService
             });
         }
 
+        for (int i = 0; i < rows.Count; i++)
+        {
+            var row = rows[i];
+            if (!row.EsTitulo)
+                continue;
+
+            decimal chapterTotalUf = 0m;
+            for (int j = i + 1; j < rows.Count; j++)
+            {
+                var next = rows[j];
+                if (next.EsTitulo)
+                    break;
+                chapterTotalUf += next.TotalUf;
+            }
+
+            if (chapterTotalUf == 0m)
+            {
+                chapterTotalUf = rows
+                    .Where(child => !child.EsTitulo && IsDescendantOf(child, row, rows))
+                    .Sum(child => child.TotalUf);
+            }
+
+            row.TotalUf = chapterTotalUf;
+            row.HasPrice = chapterTotalUf > 0m;
+        }
+
         return new ItemizadoPageState(rows, BuildSummary(grid.Completion, totalsByItem, session, grid.Rows), grid.Completion);
     }
 
@@ -144,23 +170,97 @@ public sealed class ItemizadoWorkspaceService : IItemizadoWorkspaceService
 
             return allRows.Any(child =>
                 !child.EsTitulo
-                && IsDescendantOf(child, row)
+                && IsDescendantOf(child, row, allRows)
                 && MatchesFilter(child, filter)
                 && MatchesSearch(child, searchText));
+        }
+
+        if (!string.IsNullOrWhiteSpace(searchText?.Trim()) && MatchesFilter(row, filter))
+        {
+            if (MatchesSearch(row, searchText))
+                return true;
+
+            if (allRows.Any(p => p.EsTitulo && IsDescendantOf(row, p, allRows) && MatchesSearch(p, searchText)))
+                return true;
+
+            return false;
         }
 
         return MatchesFilter(row, filter) && MatchesSearch(row, searchText);
     }
 
-    private static bool IsDescendantOf(ItemizadoRowPresentation partida, ItemizadoRowPresentation chapter)
+    public static bool IsDescendantOf(
+        ItemizadoRowPresentation partida,
+        ItemizadoRowPresentation chapter,
+        IReadOnlyList<ItemizadoRowPresentation>? allRows = null)
     {
-        if (string.IsNullOrWhiteSpace(chapter.Id))
+        if (chapter == null || partida == null)
             return false;
 
-        if (string.Equals(partida.ParentId, chapter.Id, StringComparison.OrdinalIgnoreCase))
-            return true;
+        if (!string.IsNullOrWhiteSpace(partida.ParentId))
+        {
+            if (string.Equals(partida.ParentId, chapter.Id, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(partida.ParentId, chapter.Item, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
 
-        return (partida.Id ?? "").StartsWith(chapter.Id + ".", StringComparison.OrdinalIgnoreCase);
+        if (!string.IsNullOrWhiteSpace(chapter.Id) && !string.IsNullOrWhiteSpace(partida.Id))
+        {
+            if (partida.Id.StartsWith(chapter.Id + ".", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            string chapterId = chapter.Id.Trim();
+            if (chapterId.EndsWith(".0", StringComparison.Ordinal))
+            {
+                string prefix = chapterId[..^2];
+                string pId = partida.Id.Trim();
+                if (pId.StartsWith(prefix + ".", StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+        }
+
+        string cItem = ItemizadoHierarchyRules.NormalizeIdFromItem(chapter.Item);
+        string pItem = ItemizadoHierarchyRules.NormalizeIdFromItem(partida.Item);
+        if (!string.IsNullOrWhiteSpace(cItem) && !string.IsNullOrWhiteSpace(pItem))
+        {
+            if (cItem.EndsWith(".0", StringComparison.Ordinal))
+                cItem = cItem[..^2];
+
+            if (pItem.StartsWith(cItem + ".", StringComparison.OrdinalIgnoreCase)
+                || pItem.StartsWith(cItem + ",", StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+
+        if (allRows != null && chapter.SourceIndex >= 0 && partida.SourceIndex > chapter.SourceIndex)
+        {
+            int nextBoundaryIndex = allRows.Count;
+            string basePrefix = !string.IsNullOrWhiteSpace(cItem) ? cItem : "";
+
+            for (int k = chapter.SourceIndex + 1; k < allRows.Count; k++)
+            {
+                var candidate = allRows[k];
+                if (candidate.EsTitulo)
+                {
+                    string candItem = ItemizadoHierarchyRules.NormalizeIdFromItem(candidate.Item);
+                    if (candItem.EndsWith(".0", StringComparison.Ordinal))
+                        candItem = candItem[..^2];
+
+                    bool isSubChapter = !string.IsNullOrWhiteSpace(basePrefix)
+                        && candItem.StartsWith(basePrefix + ".", StringComparison.OrdinalIgnoreCase);
+
+                    if (!isSubChapter)
+                    {
+                        nextBoundaryIndex = k;
+                        break;
+                    }
+                }
+            }
+
+            if (partida.SourceIndex < nextBoundaryIndex)
+                return true;
+        }
+
+        return false;
     }
 
     public int CountDeleteAffectedRows(ItemizadoPresenter presenter, int sourceIndex)

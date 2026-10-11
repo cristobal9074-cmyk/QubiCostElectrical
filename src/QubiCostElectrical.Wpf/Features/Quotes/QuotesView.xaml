@@ -2,6 +2,15 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ctrl="clr-namespace:QubiCostElectrical.Wpf.Controls">
+  <UserControl.Resources>
+    <Style x:Key="QuotesNumericCell" TargetType="TextBlock">
+      <Setter Property="HorizontalAlignment" Value="Right" />
+      <Setter Property="TextAlignment" Value="Right" />
+      <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="Margin" Value="0,0,10,0" />
+    </Style>
+  </UserControl.Resources>
   <Grid Background="{DynamicResource Brush.Canvas}" Margin="20,14,20,14">
     <ctrl:SkeletonOverlayControl Panel.ZIndex="20" Message="Cargando cotizaciones…"
                                  Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibility}}" />
@@ -30,55 +39,12 @@
       </StackPanel>
     </DockPanel>
 
-    <!-- Provider summary cards -->
-    <Border DockPanel.Dock="Top" Margin="0,0,0,12">
-      <ItemsControl ItemsSource="{Binding FilteredProviderSummaries}">
-        <ItemsControl.ItemsPanel>
-          <ItemsPanelTemplate>
-            <UniformGrid Rows="1" />
-          </ItemsPanelTemplate>
-        </ItemsControl.ItemsPanel>
-        <ItemsControl.ItemTemplate>
-          <DataTemplate>
-            <Border Style="{StaticResource Card.Section}" Margin="0,0,8,0" Padding="14">
-              <StackPanel>
-                <DockPanel LastChildFill="False" Margin="0,0,0,8">
-                  <TextBlock DockPanel.Dock="Left" Text="{Binding Proveedor}" FontWeight="Bold" FontSize="13" Foreground="{DynamicResource Brush.Ink}" />
-                </DockPanel>
-                <Grid>
-                  <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                  </Grid.ColumnDefinitions>
-                  <StackPanel>
-                    <TextBlock Text="Materiales" Style="{StaticResource Text.Caption}" />
-                    <TextBlock Text="{Binding Materiales}" FontWeight="SemiBold" FontSize="12" />
-                  </StackPanel>
-                  <StackPanel Grid.Column="1">
-                    <TextBlock Text="Categorías" Style="{StaticResource Text.Caption}" />
-                    <TextBlock Text="{Binding Categorias}" FontWeight="SemiBold" FontSize="12" />
-                  </StackPanel>
-                  <StackPanel Grid.Column="2">
-                    <TextBlock Text="Precio prom." Style="{StaticResource Text.Caption}" />
-                    <TextBlock Text="{Binding PrecioPromedioUf, StringFormat={}{0:N3} UF}" FontWeight="SemiBold" FontSize="12" />
-                  </StackPanel>
-                </Grid>
-              </StackPanel>
-            </Border>
-          </DataTemplate>
-        </ItemsControl.ItemTemplate>
-      </ItemsControl>
-    </Border>
-
-    <!-- Main 3-panel layout -->
+    <!-- Main 2-col layout: proveedores | detalle -->
     <Grid>
     <Grid.ColumnDefinitions>
       <ColumnDefinition Width="280" MinWidth="240" />
       <ColumnDefinition Width="12" />
       <ColumnDefinition Width="*" MinWidth="520" />
-      <ColumnDefinition Width="12" />
-      <ColumnDefinition Width="260" />
     </Grid.ColumnDefinitions>
 
     <Border Grid.Column="0" Background="{DynamicResource Brush.Surface}"
@@ -114,7 +80,9 @@
               <DataGridTextColumn Header="Proveedor" Binding="{Binding Proveedor}" Width="*" />
               <DataGridTextColumn Header="Mat." Binding="{Binding Materiales}" Width="58" />
               <DataGridTextColumn Header="Cat." Binding="{Binding Categorias}" Width="58" />
-              <DataGridTextColumn Header="Prom." Binding="{Binding PrecioPromedioUf, StringFormat={}{0:N3}}" Width="80" />
+              <DataGridTextColumn Header="Prom." Binding="{Binding PrecioPromedioUf, StringFormat={}{0:N3}}" Width="80"
+                                  HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}"
+                                  ElementStyle="{StaticResource QuotesNumericCell}" />
             </DataGrid.Columns>
           </DataGrid>
         </Border>
@@ -127,62 +95,29 @@
       <Grid>
         <Grid.RowDefinitions>
           <RowDefinition Height="Auto" />
-          <RowDefinition Height="Auto" />
           <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
         <DockPanel Grid.Row="0" LastChildFill="True" Margin="0,0,0,10">
-          <StackPanel DockPanel.Dock="Left">
-            <TextBlock Text="{Binding SelectedProvider.Proveedor, TargetNullValue='Cotizaciones de proveedores'}" Style="{StaticResource Text.ViewTitle}" />
-            <TextBlock Text="{Binding ProjectSummary}" Style="{StaticResource Text.Body}" Foreground="{DynamicResource Brush.Muted}" Margin="0,4,0,0" />
-          </StackPanel>
           <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top">
+            <Button Style="{StaticResource Button.Secondary}" Content="Aplicar mejor precio"
+                    Command="{Binding ApplyPriceCommand}"
+                    CommandParameter="{Binding SelectedComparisonRow}"
+                    Margin="0,0,6,0"
+                    ToolTip="Aplicar el mejor precio de la fila de comparación seleccionada al proyecto" />
             <Button Style="{StaticResource Button.Secondary}" Content="Actualizar" Command="{Binding RefreshCommand}" Margin="0,0,6,0" />
             <Button Style="{StaticResource Button.Ghost}" Content="Limpiar filtros" Command="{Binding ClearFiltersCommand}" />
           </StackPanel>
+          <StackPanel>
+            <TextBlock Text="{Binding SelectedProvider.Proveedor, TargetNullValue='Cotizaciones de proveedores'}" Style="{StaticResource Text.ViewTitle}" />
+            <TextBlock Text="{Binding ProjectSummary}" Style="{StaticResource Text.Body}" Foreground="{DynamicResource Brush.Muted}" Margin="0,4,0,0" />
+            <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Muted}"
+                       Margin="0,4,0,0" TextWrapping="Wrap"
+                       Visibility="{Binding StatusMessage, Converter={StaticResource StringNotEmptyToVisibility}}" />
+          </StackPanel>
         </DockPanel>
 
-        <Border Grid.Row="1" Background="{DynamicResource Brush.BlueSoft}" CornerRadius="{StaticResource Radius.Sm}" Padding="10" Margin="0,0,0,10">
-          <Grid>
-            <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="Auto" />
-              <ColumnDefinition Width="Auto" />
-              <ColumnDefinition Width="Auto" />
-              <ColumnDefinition Width="Auto" />
-              <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-
-            <Border Style="{StaticResource Card.StatPill}" Margin="0,0,10,0">
-              <StackPanel>
-                <TextBlock Text="Materiales" Style="{StaticResource Text.Caption}" />
-                <TextBlock Text="{Binding SummaryText}" FontWeight="SemiBold" />
-              </StackPanel>
-            </Border>
-            <Border Grid.Column="1" Style="{StaticResource Card.StatPill}" Margin="0,0,10,0">
-              <StackPanel>
-                <TextBlock Text="Estado" Style="{StaticResource Text.Caption}" />
-                <TextBlock Text="{Binding StatusMessage}" FontWeight="SemiBold" TextWrapping="Wrap" />
-              </StackPanel>
-            </Border>
-            <Border Grid.Column="2" Style="{StaticResource Card.StatPill}" Margin="0,0,10,0">
-              <StackPanel>
-                <TextBlock Text="Proveedor activo" Style="{StaticResource Text.Caption}" />
-                <TextBlock Text="{Binding SelectedProvider.Proveedor, TargetNullValue='—'}" FontWeight="SemiBold" />
-              </StackPanel>
-            </Border>
-            <Border Grid.Column="3" Style="{StaticResource Card.StatPill}" Margin="0,0,10,0">
-              <StackPanel>
-                <TextBlock Text="Precio prom." Style="{StaticResource Text.Caption}" />
-                <TextBlock Text="{Binding SelectedProvider.PrecioPromedioUf, StringFormat={}{0:N3} UF, TargetNullValue='—'}" FontWeight="SemiBold" />
-              </StackPanel>
-            </Border>
-            <TextBlock Grid.Column="4" Text="Comparación por código contra el mejor precio disponible del banco."
-                       Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Muted}"
-                       VerticalAlignment="Center" TextWrapping="Wrap" />
-          </Grid>
-        </Border>
-
-        <Grid Grid.Row="2">
+        <Grid Grid.Row="1">
           <Grid.RowDefinitions>
             <RowDefinition Height="2*" />
             <RowDefinition Height="16" />
@@ -217,8 +152,12 @@
                   <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" Width="120" />
                   <DataGridTextColumn Header="Descripción" Binding="{Binding Descripcion}" Width="*" MinWidth="260" />
                   <DataGridTextColumn Header="Cat." Binding="{Binding Categoria}" Width="100" />
-                  <DataGridTextColumn Header="Precio CLP" Binding="{Binding PrecioClp, StringFormat={}$ {0:N0}}" Width="95" />
-                  <DataGridTextColumn Header="Precio UF" Binding="{Binding PrecioUf, StringFormat={}{0:N4}}" Width="85" />
+                  <DataGridTextColumn Header="Precio CLP" Binding="{Binding PrecioClp, StringFormat={}$ {0:N0}}" Width="95"
+                                      HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}"
+                                      ElementStyle="{StaticResource QuotesNumericCell}" />
+                  <DataGridTextColumn Header="Precio UF" Binding="{Binding PrecioUf, StringFormat={}{0:N4}}" Width="85"
+                                      HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}"
+                                      ElementStyle="{StaticResource QuotesNumericCell}" />
                   <DataGridTextColumn Header="Proveedor" Binding="{Binding Proveedor}" Width="130" />
                   <DataGridTextColumn Header="Marca" Binding="{Binding Marca}" Width="110" />
                   <DataGridTextColumn Header="Fecha" Binding="{Binding FechaPrecio, StringFormat={}{0:dd/MM/yyyy}}" Width="90" />
@@ -233,65 +172,43 @@
                       AutoGenerateColumns="False"
                       CanUserAddRows="False"
                       CanUserDeleteRows="False"
+                      IsReadOnly="True"
                       HeadersVisibility="Column"
                       SelectionMode="Single"
                       SelectionUnit="FullRow"
+                      EnableRowVirtualization="True"
+                      VirtualizingPanel.IsVirtualizing="True"
+                      VirtualizingPanel.VirtualizationMode="Recycling"
+                      VirtualizingPanel.ScrollUnit="Pixel"
+                      ScrollViewer.CanContentScroll="True"
                       Style="{StaticResource DataGrid.Workspace}">
               <DataGrid.Columns>
                 <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" Width="110" />
                 <DataGridTextColumn Header="Proveedor" Binding="{Binding ProveedorSeleccionado}" Width="130" />
-                <DataGridTextColumn Header="Precio UF" Binding="{Binding PrecioSeleccionado, StringFormat={}{0:N3}}" Width="82" />
-                <DataGridTextColumn Header="Precio CLP" Binding="{Binding PrecioSeleccionadoClp, StringFormat={}$ {0:N0}}" Width="90" />
+                <DataGridTextColumn Header="Precio UF" Binding="{Binding PrecioSeleccionado, StringFormat={}{0:N3}}" Width="82"
+                                    HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}"
+                                    ElementStyle="{StaticResource QuotesNumericCell}" />
+                <DataGridTextColumn Header="Precio CLP" Binding="{Binding PrecioSeleccionadoClp, StringFormat={}$ {0:N0}}" Width="90"
+                                    HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}"
+                                    ElementStyle="{StaticResource QuotesNumericCell}" />
                 <DataGridTextColumn Header="Mejor" Binding="{Binding ProveedorMejor}" Width="130" />
-                <DataGridTextColumn Header="Mejor UF" Binding="{Binding PrecioMejor, StringFormat={}{0:N3}}" Width="82" />
-                <DataGridTextColumn Header="Mejor CLP" Binding="{Binding PrecioMejorClp, StringFormat={}$ {0:N0}}" Width="90" />
-                <DataGridTextColumn Header="Delta UF" Binding="{Binding DeltaUf, StringFormat={}{0:N3}}" Width="82" />
-                <DataGridTextColumn Header="% Delta" Binding="{Binding DeltaPct, StringFormat={}{0:N1}%}" Width="72" />
+                <DataGridTextColumn Header="Mejor UF" Binding="{Binding PrecioMejor, StringFormat={}{0:N3}}" Width="82"
+                                    HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}"
+                                    ElementStyle="{StaticResource QuotesNumericCell}" />
+                <DataGridTextColumn Header="Mejor CLP" Binding="{Binding PrecioMejorClp, StringFormat={}$ {0:N0}}" Width="90"
+                                    HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}"
+                                    ElementStyle="{StaticResource QuotesNumericCell}" />
+                <DataGridTextColumn Header="Delta UF" Binding="{Binding DeltaUf, StringFormat={}{0:N3}}" Width="82"
+                                    HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}"
+                                    ElementStyle="{StaticResource QuotesNumericCell}" />
+                <DataGridTextColumn Header="% Delta" Binding="{Binding DeltaPct, StringFormat={}{0:N1}%}" Width="72"
+                                    HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}"
+                                    ElementStyle="{StaticResource QuotesNumericCell}" />
               </DataGrid.Columns>
             </DataGrid>
           </Border>
         </Grid>
       </Grid>
-    </Border>
-
-    <Border Grid.Column="4" Visibility="Visible" Background="{DynamicResource Brush.Surface}"
-            BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
-            CornerRadius="{StaticResource Radius.Lg}" Padding="14">
-      <StackPanel>
-        <TextBlock Text="Resumen operativo" Style="{StaticResource Text.SectionLabel}" />
-        <TextBlock Text="{Binding StatusMessage}" TextWrapping="Wrap" Foreground="{DynamicResource Brush.Muted}" Margin="0,6,0,14" />
-
-        <Border Background="{DynamicResource Brush.BlueSoft}" CornerRadius="{StaticResource Radius.Sm}" Padding="12" Margin="0,0,0,10">
-          <StackPanel>
-            <TextBlock Text="Catálogo" Style="{StaticResource Text.Caption}" />
-            <TextBlock Text="{Binding SummaryText}" FontWeight="SemiBold" Margin="0,4,0,0" />
-          </StackPanel>
-        </Border>
-
-        <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="{StaticResource Radius.Sm}" Padding="12" Margin="0,0,0,10">
-          <StackPanel>
-            <TextBlock Text="Criterio" Style="{StaticResource Text.Caption}" />
-            <TextBlock Text="La comparación usa el mejor precio por código dentro del banco. Si un código aparece en varios proveedores, el delta muestra la diferencia contra el más competitivo."
-                       TextWrapping="Wrap" Margin="0,4,0,0" />
-          </StackPanel>
-        </Border>
-
-        <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="{StaticResource Radius.Sm}" Padding="12">
-          <StackPanel>
-            <TextBlock Text="Acciones" Style="{StaticResource Text.Caption}" />
-            <Button Style="{StaticResource Button.Primary}" Content="Aplicar selección al banco"
-                    Command="{Binding ApplySelectionToBankCommand}" Margin="0,8,0,6" />
-            <Button Style="{StaticResource Button.Secondary}" Content="Aplicar mejor precio al proyecto"
-                    Command="{Binding ApplyPriceCommand}"
-                    CommandParameter="{Binding SelectedComparisonRow}"
-                    Margin="0,0,0,6" />
-            <Button Style="{StaticResource Button.Secondary}" Content="Aplicar todos los mejores precios"
-                    Command="{Binding ApplyAllBestPricesCommand}" Margin="0,0,0,6" />
-            <Button Style="{StaticResource Button.Secondary}" Content="Actualizar" Command="{Binding RefreshCommand}" Margin="0,0,0,6" />
-            <Button Style="{StaticResource Button.Secondary}" Content="Limpiar filtros" Command="{Binding ClearFiltersCommand}" />
-          </StackPanel>
-        </Border>
-      </StackPanel>
     </Border>
     </Grid>
   </DockPanel>

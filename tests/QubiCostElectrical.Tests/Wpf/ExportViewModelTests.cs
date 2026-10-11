@@ -1,5 +1,6 @@
 using System;
 using QubiCostElectrical;
+using QubiCostElectrical.Wpf.Features.Delivery;
 using QubiCostElectrical.Wpf.Features.Export;
 using QubiCostElectrical.Wpf.Infrastructure;
 using QubiCostElectrical.Wpf.Navigation;
@@ -80,12 +81,12 @@ public sealed class ExportViewModelTests
         Assert.Equal(8, vm.Actions.Count);
     }
 
-    // 6. PackageItems tiene exactamente 7 entradas
+    // 6. DocumentSelector tiene exactamente 7 documentos
     [Fact]
-    public void PackageItems_HasSevenEntries()
+    public void DocumentSelector_HasSevenEntries()
     {
         var vm = new ExportViewModel(WpfAppHost.Current);
-        Assert.Equal(7, vm.PackageItems.Count);
+        Assert.Equal(7, vm.DocumentSelector.Documents.Count);
     }
 
     // 7. ScopeModes tiene exactamente 3 modos
@@ -271,14 +272,17 @@ public sealed class ExportViewModelTests
         Assert.Equal("ZIP", zip.IconText);
     }
 
-    // 22. ExportPackageItemVm ? propiedades expuestas correctamente
+    // 22. DeliveryDocumentItemVm - propiedades expuestas correctamente
     [Fact]
-    public void ExportPackageItemVm_ExposesProperties()
+    public void DeliveryDocumentItemVm_ExposesProperties()
     {
-        var item = new ExportPackageItemVm("PDF de oferta", "Documento principal");
+        var item = new DeliveryDocumentItemVm("OfferPdf", "PDF de oferta", "Documento principal", "PDF");
 
+        Assert.Equal("OfferPdf", item.Id);
         Assert.Equal("PDF de oferta", item.Title);
         Assert.Equal("Documento principal", item.Description);
+        Assert.Equal("PDF", item.FormatHint);
+        Assert.True(item.IsSelected);
     }
 
     // 23. Refresh es idempotente ? no lanza excepci?n

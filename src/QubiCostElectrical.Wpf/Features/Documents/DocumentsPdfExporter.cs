@@ -58,32 +58,32 @@ public static class DocumentsPdfExporter
                     {
                         c.Item().Row(r =>
                         {
-                            r.RelativeItem(1.2f).Text(t => 
-                            { 
-                                t.DefaultTextStyle(x => x.FontSize(8.5f)); 
-                                t.Span("Proyecto: ").Bold(); 
-                                t.Span(projName); 
+                            r.RelativeItem(1.2f).Text(t =>
+                            {
+                                t.DefaultTextStyle(x => x.FontSize(8.5f));
+                                t.Span("Proyecto: ").Bold();
+                                t.Span(projName);
                             });
-                            r.RelativeItem(0.8f).Text(t => 
-                            { 
-                                t.DefaultTextStyle(x => x.FontSize(8.5f)); 
-                                t.Span("Cliente: ").Bold(); 
-                                t.Span(clientName); 
+                            r.RelativeItem(0.8f).Text(t =>
+                            {
+                                t.DefaultTextStyle(x => x.FontSize(8.5f));
+                                t.Span("Cliente: ").Bold();
+                                t.Span(clientName);
                             });
                         });
                         c.Item().PaddingTop(4).Row(r =>
                         {
-                            r.RelativeItem(1.2f).Text(t => 
-                            { 
-                                t.DefaultTextStyle(x => x.FontSize(8.5f)); 
-                                t.Span("Estimador: ").Bold(); 
-                                t.Span(estimador); 
+                            r.RelativeItem(1.2f).Text(t =>
+                            {
+                                t.DefaultTextStyle(x => x.FontSize(8.5f));
+                                t.Span("Estimador: ").Bold();
+                                t.Span(estimador);
                             });
-                            r.RelativeItem(0.8f).Text(t => 
-                            { 
-                                t.DefaultTextStyle(x => x.FontSize(8.5f)); 
-                                t.Span("Registros totales: ").Bold(); 
-                                t.Span(rows.Count.ToString()); 
+                            r.RelativeItem(0.8f).Text(t =>
+                            {
+                                t.DefaultTextStyle(x => x.FontSize(8.5f));
+                                t.Span("Registros totales: ").Bold();
+                                t.Span(rows.Count.ToString());
                             });
                         });
                     });
@@ -126,7 +126,7 @@ public static class DocumentsPdfExporter
                             table.Cell().Background(bg).Padding(4).Text(row.Revision).AlignCenter().FontSize(8.5f);
                             table.Cell().Background(bg).Padding(4).Text(row.Descripcion).FontSize(8.5f);
                             table.Cell().Background(bg).Padding(4).Text(row.Disciplina ?? "—").FontSize(8.5f);
-                            
+
                             var statusText = row.EstadoLabel;
                             var statusColor = "#1E293B";
                             if (statusText.Equals("Vigente", StringComparison.OrdinalIgnoreCase))

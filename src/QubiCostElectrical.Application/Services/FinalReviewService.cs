@@ -29,8 +29,9 @@ public enum FinalReviewCategory
     AntecedentePendienteMandante,
     MedicionSinRegistroPlano,
     FechaCorteAntecedentesNoDefinida
-    ,CommercialModelIncomplete
-    ,EngineInconsistency
+    , CommercialModelIncomplete
+    , EngineInconsistency
+    , FormulaSyntaxError
 }
 
 public sealed record FinalReviewIssue(
@@ -73,6 +74,7 @@ public sealed record FinalReviewIssue(
         FinalReviewCategory.FechaCorteAntecedentesNoDefinida => "Fecha de corte no definida",
         FinalReviewCategory.CommercialModelIncomplete => "Modelo comercial incompleto",
         FinalReviewCategory.EngineInconsistency => "Inconsistencia de cálculo",
+        FinalReviewCategory.FormulaSyntaxError => "Error en fórmula",
         _ => "Revisión"
     };
 }
@@ -85,10 +87,13 @@ public sealed class FinalReviewSummary
     public int CriticalCount => Issues.Count(x => x.Severity == FinalReviewSeverity.Critical);
     public int WarningCount => Issues.Count(x => x.Severity == FinalReviewSeverity.Warning);
     public int InfoCount => Issues.Count(x => x.Severity == FinalReviewSeverity.Info);
-    public int EmptyPartidas => Issues.Count(x => x.Category == FinalReviewCategory.EmptyPartida);
+    public int EmptyPartidas => Issues
+        .Where(x => x.Category == FinalReviewCategory.EmptyPartida)
+        .Sum(x => x.Id == "EMPTY|SUMMARY" ? x.Count : 1);
     public int MaterialsWithoutPrice => Issues.Count(x => x.Category == FinalReviewCategory.MaterialWithoutPrice);
     public int AreasNotAssigned => Issues.Count(x => x.Category == FinalReviewCategory.AreaNotAssigned);
     public int MissingApus => Issues.Count(x => x.Category == FinalReviewCategory.MissingApu || x.Category == FinalReviewCategory.ApuIncomplete);
+    public int FormulaErrors => Issues.Count(x => x.Category == FinalReviewCategory.FormulaSyntaxError);
     public bool ReadyToExport => BlockingCount == 0;
 
     public decimal ConfidencePct
@@ -161,6 +166,7 @@ public sealed partial class FinalReviewService : IFinalReviewService
         AddMissingOrIncompleteApus(issues, itemList, cubList, apuList, settings, overriddenItemIds);
         AddFinancialGuards(issues, proyecto, settings, cubList, apuList, itemList, changeOrders, overriddenItemIds);
         AddPriceTraceabilityWarnings(issues, apuList);
+        AddFormulaSyntaxErrors(issues, cubList, itemById);
         AddAntecedentesTecnicosWarnings(issues, proyecto, antecedentes ?? proyecto?.AntecedentesTecnicos, mediciones);
 
         return new FinalReviewSummary

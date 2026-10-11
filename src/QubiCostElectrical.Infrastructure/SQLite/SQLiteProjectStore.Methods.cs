@@ -136,6 +136,13 @@ public static partial class SQLiteProjectStore
 
             SqliteClosingPolicyStore.Save(connection, transaction, data.ClosingPolicy ?? ClosingPolicySelection.Default(), now);
 
+            SqliteEstadoPagoStore.Save(
+                connection,
+                transaction,
+                data.EstadoPagoMeses ?? new List<EstadoPagoMesRow>(),
+                data.EstadoPagoConfig ?? EstadoPagoConfig.Default(),
+                now);
+
             transaction.Commit();
         }
         catch (Exception ex)
@@ -355,6 +362,16 @@ public static partial class SQLiteProjectStore
                 SqliteClosingPolicyStore.Save(connection, transaction, data.ClosingPolicy ?? ClosingPolicySelection.Default(), now);
             }
 
+            if (scopes.Contains("estados_pago"))
+            {
+                SqliteEstadoPagoStore.Save(
+                    connection,
+                    transaction,
+                    data.EstadoPagoMeses ?? new List<EstadoPagoMesRow>(),
+                    data.EstadoPagoConfig ?? EstadoPagoConfig.Default(),
+                    now);
+            }
+
             if (scopes.Contains("cubicacion_sc"))
             {
                 var rows = data.CubicacionSC ?? new List<CuadroCargaSCRow>();
@@ -388,34 +405,36 @@ public static partial class SQLiteProjectStore
         var data = new ProjectFileData
         {
             Proyecto = proyecto,
-            Itemizado              = SqliteStoreHelpers.ReadJsonRows<ItemizadoRow>(connection, "SELECT json FROM itemizado ORDER BY sort_order, id;"),
-            Materiales             = SqliteStoreHelpers.ReadJsonRows<MaterialRow>(connection, "SELECT json FROM materiales ORDER BY sort_order, codigo;"),
-            Cubicacion             = SqliteStoreHelpers.ReadJsonRows<CubicacionRow>(connection, "SELECT json FROM cubicacion ORDER BY sort_order, id;"),
-            Plantillas             = SqliteStoreHelpers.ReadJsonRows<TemplateRow>(connection, "SELECT json FROM plantillas ORDER BY sort_order, nombre;"),
-            ConjuntosElectricos    = SqliteStoreHelpers.ReadJsonRows<ConjuntoElectricoRow>(connection, "SELECT json FROM conjuntos_electricos ORDER BY sort_order, codigo;"),
-            CubicacionRecursos     = SqliteStoreHelpers.ReadJsonRows<CubicacionRecursoRow>(connection, "SELECT json FROM cubicacion_recursos ORDER BY sort_order, id;"),
+            Itemizado = SqliteStoreHelpers.ReadJsonRows<ItemizadoRow>(connection, "SELECT json FROM itemizado ORDER BY sort_order, id;"),
+            Materiales = SqliteStoreHelpers.ReadJsonRows<MaterialRow>(connection, "SELECT json FROM materiales ORDER BY sort_order, codigo;"),
+            Cubicacion = SqliteStoreHelpers.ReadJsonRows<CubicacionRow>(connection, "SELECT json FROM cubicacion ORDER BY sort_order, id;"),
+            Plantillas = SqliteStoreHelpers.ReadJsonRows<TemplateRow>(connection, "SELECT json FROM plantillas ORDER BY sort_order, nombre;"),
+            ConjuntosElectricos = SqliteStoreHelpers.ReadJsonRows<ConjuntoElectricoRow>(connection, "SELECT json FROM conjuntos_electricos ORDER BY sort_order, codigo;"),
+            CubicacionRecursos = SqliteStoreHelpers.ReadJsonRows<CubicacionRecursoRow>(connection, "SELECT json FROM cubicacion_recursos ORDER BY sort_order, id;"),
             CubicacionZonaCantidades = SqliteStoreHelpers.ReadJsonRows<CubicacionZonaCantidadRow>(connection, "SELECT json FROM cubicacion_zona_cantidades ORDER BY sort_order, id;"),
             CubicacionValorizaciones = SqliteStoreHelpers.ReadJsonRows<CubicacionValorizacionRow>(connection, "SELECT json FROM cubicacion_valorizaciones ORDER BY recurso_id, id;"),
-            PartidaApuVinculos     = SqliteStoreHelpers.ReadJsonRows<PartidaApuVinculoRow>(connection, "SELECT json FROM partida_apu_vinculos ORDER BY item_id;"),
-            Versiones              = SqliteStoreHelpers.ReadJsonRows<BudgetVersionRow>(connection, "SELECT json FROM versiones ORDER BY sort_order, id;"),
-            Apus                   = SqliteStoreHelpers.ReadJsonRows<ApuRow>(connection, "SELECT json FROM apu ORDER BY sort_order, id;"),
-            OrdenesCambio          = SqliteStoreHelpers.ReadJsonRows<ChangeOrderRow>(connection, "SELECT json FROM ordenes_cambio ORDER BY sort_order, numero;"),
-            QtyHeadersByItem       = SqliteCubicacionStore.LoadQtyHeaders(connection),
-            Zonas                  = SqliteStoreHelpers.ReadJsonRows<ZonaProyecto>(connection, "SELECT json FROM zonas ORDER BY sort_order, id;"),
-            Mediciones             = SqliteStoreHelpers.ReadJsonRows<MeasurementLineRow>(connection, "SELECT json FROM mediciones ORDER BY sort_order, id;"),
-            HojaCubicacion         = SqliteStoreHelpers.ReadJsonRows<HojaCubicacionItem>(connection, "SELECT json FROM hoja_cubicacion ORDER BY sort_order, id;"),
-            Solicitudes            = SqliteStoreHelpers.ReadJsonRows<SolicitudItemRow>(connection, "SELECT json FROM solicitudes ORDER BY sort_order, id;"),
-            CubicacionSC           = SqliteStoreHelpers.ReadJsonRows<CuadroCargaSCRow>(connection, "SELECT json FROM cubicacion_sc ORDER BY sort_order, id;"),
-            CubicacionScConfig     = SqliteCubicacionStore.LoadScConfig(connection),
-            MoDirecta              = SqliteStoreHelpers.ReadJsonRows<MoDirectaRow>(connection, "SELECT json FROM mo_directa ORDER BY sort_order, id;"),
-            MoIndirecta            = SqliteStoreHelpers.ReadJsonRows<MoIndirectaRow>(connection, "SELECT json FROM mo_indirecta ORDER BY sort_order, id;"),
-            GastosOperacionales    = SqliteStoreHelpers.ReadJsonRows<GastoOperacionalRow>(connection, "SELECT json FROM gastos_operacionales ORDER BY sort_order, id;"),
-            MoProjectionTasks      = SqliteStoreHelpers.ReadJsonRows<MoProjectionTaskRow>(connection, "SELECT json FROM mo_projection_tasks ORDER BY sort_order, id;"),
-            Epp                    = SqliteEppStore.Load(connection),
-            NegotiatedDiscounts    = SqliteStoreHelpers.ReadJsonRows<NegotiatedDiscountRow>(connection, "SELECT json FROM negotiated_discounts ORDER BY sort_order, id;"),
-            StaffingPlan           = SqliteStoreHelpers.ReadJsonRows<StaffingRoleRow>(connection, "SELECT json FROM staffing_plan ORDER BY sort_order, id;"),
-            ClosingPolicy          = SqliteClosingPolicyStore.Load(connection),
-            ActiveVersionId        = SqliteStoreHelpers.ReadMeta(connection, "active_version_id") ?? ""
+            PartidaApuVinculos = SqliteStoreHelpers.ReadJsonRows<PartidaApuVinculoRow>(connection, "SELECT json FROM partida_apu_vinculos ORDER BY item_id;"),
+            Versiones = SqliteStoreHelpers.ReadJsonRows<BudgetVersionRow>(connection, "SELECT json FROM versiones ORDER BY sort_order, id;"),
+            Apus = SqliteStoreHelpers.ReadJsonRows<ApuRow>(connection, "SELECT json FROM apu ORDER BY sort_order, id;"),
+            OrdenesCambio = SqliteStoreHelpers.ReadJsonRows<ChangeOrderRow>(connection, "SELECT json FROM ordenes_cambio ORDER BY sort_order, numero;"),
+            QtyHeadersByItem = SqliteCubicacionStore.LoadQtyHeaders(connection),
+            Zonas = SqliteStoreHelpers.ReadJsonRows<ZonaProyecto>(connection, "SELECT json FROM zonas ORDER BY sort_order, id;"),
+            Mediciones = SqliteStoreHelpers.ReadJsonRows<MeasurementLineRow>(connection, "SELECT json FROM mediciones ORDER BY sort_order, id;"),
+            HojaCubicacion = SqliteStoreHelpers.ReadJsonRows<HojaCubicacionItem>(connection, "SELECT json FROM hoja_cubicacion ORDER BY sort_order, id;"),
+            Solicitudes = SqliteStoreHelpers.ReadJsonRows<SolicitudItemRow>(connection, "SELECT json FROM solicitudes ORDER BY sort_order, id;"),
+            CubicacionSC = SqliteStoreHelpers.ReadJsonRows<CuadroCargaSCRow>(connection, "SELECT json FROM cubicacion_sc ORDER BY sort_order, id;"),
+            CubicacionScConfig = SqliteCubicacionStore.LoadScConfig(connection),
+            MoDirecta = SqliteStoreHelpers.ReadJsonRows<MoDirectaRow>(connection, "SELECT json FROM mo_directa ORDER BY sort_order, id;"),
+            MoIndirecta = SqliteStoreHelpers.ReadJsonRows<MoIndirectaRow>(connection, "SELECT json FROM mo_indirecta ORDER BY sort_order, id;"),
+            GastosOperacionales = SqliteStoreHelpers.ReadJsonRows<GastoOperacionalRow>(connection, "SELECT json FROM gastos_operacionales ORDER BY sort_order, id;"),
+            MoProjectionTasks = SqliteStoreHelpers.ReadJsonRows<MoProjectionTaskRow>(connection, "SELECT json FROM mo_projection_tasks ORDER BY sort_order, id;"),
+            Epp = SqliteEppStore.Load(connection),
+            NegotiatedDiscounts = SqliteStoreHelpers.ReadJsonRows<NegotiatedDiscountRow>(connection, "SELECT json FROM negotiated_discounts ORDER BY sort_order, id;"),
+            StaffingPlan = SqliteStoreHelpers.ReadJsonRows<StaffingRoleRow>(connection, "SELECT json FROM staffing_plan ORDER BY sort_order, id;"),
+            ClosingPolicy = SqliteClosingPolicyStore.Load(connection),
+            EstadoPagoMeses = SqliteEstadoPagoStore.Load(connection),
+            EstadoPagoConfig = SqliteEstadoPagoStore.LoadConfig(connection),
+            ActiveVersionId = SqliteStoreHelpers.ReadMeta(connection, "active_version_id") ?? ""
         };
 #pragma warning restore CS0618
 

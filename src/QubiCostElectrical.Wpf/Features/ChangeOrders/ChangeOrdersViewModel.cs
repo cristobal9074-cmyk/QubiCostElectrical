@@ -41,25 +41,25 @@ public sealed partial class ChangeOrdersViewModel : ObservableObject, IDisposabl
 
     partial void OnSearchTextChanged(string value) => ApplyFilter();
 
-    public bool CanEdit           => Selected != null && !ChangeOrderStateMachine.IsLocked(Selected.Estado) && !_session.IsReadOnly;
-    public bool CanDelete         => Selected != null && !ChangeOrderStateMachine.IsLocked(Selected.Estado) && !_session.IsReadOnly;
+    public bool CanEdit => Selected != null && !ChangeOrderStateMachine.IsLocked(Selected.Estado) && !_session.IsReadOnly;
+    public bool CanDelete => Selected != null && !ChangeOrderStateMachine.IsLocked(Selected.Estado) && !_session.IsReadOnly;
     public bool CanEnviarRevision => Selected != null && ChangeOrderStateMachine.IsTransitionAllowed(Selected.Estado, "En revisión") && !_session.IsReadOnly;
-    public bool CanAprobar        => Selected != null && ChangeOrderStateMachine.IsTransitionAllowed(Selected.Estado, "Aprobado") && !_session.IsReadOnly;
-    public bool CanRechazar       => Selected != null && ChangeOrderStateMachine.IsTransitionAllowed(Selected.Estado, "Rechazado") && !_session.IsReadOnly;
-    public bool CanReabrir        => Selected != null && ChangeOrderStateMachine.IsTransitionAllowed(Selected.Estado, "Borrador") && Selected.Estado == "Rechazado" && !_session.IsReadOnly;
+    public bool CanAprobar => Selected != null && ChangeOrderStateMachine.IsTransitionAllowed(Selected.Estado, "Aprobado") && !_session.IsReadOnly;
+    public bool CanRechazar => Selected != null && ChangeOrderStateMachine.IsTransitionAllowed(Selected.Estado, "Rechazado") && !_session.IsReadOnly;
+    public bool CanReabrir => Selected != null && ChangeOrderStateMachine.IsTransitionAllowed(Selected.Estado, "Borrador") && Selected.Estado == "Rechazado" && !_session.IsReadOnly;
 
-    public int     TotalOrdenes    => _session.OrdenesCambio.Count;
-    public int     TotalBorrador   => Count("Borrador");
-    public int     TotalEnRevision => Count("En revisión");
-    public int     TotalAprobado   => Count("Aprobado");
-    public int     TotalRechazado  => Count("Rechazado");
-    public decimal MontoAprobado   => _session.OrdenesCambio
+    public int TotalOrdenes => _session.OrdenesCambio.Count;
+    public int TotalBorrador => Count("Borrador");
+    public int TotalEnRevision => Count("En revisión");
+    public int TotalAprobado => Count("Aprobado");
+    public int TotalRechazado => Count("Rechazado");
+    public decimal MontoAprobado => _session.OrdenesCambio
                                           .Where(x => x.Estado == "Aprobado")
                                           .Sum(x => x.DeltaVentaUf);
-    public decimal MontoPendiente  => _session.OrdenesCambio
+    public decimal MontoPendiente => _session.OrdenesCambio
                                           .Where(x => x.Estado is "Borrador" or "En revisión")
                                           .Sum(x => x.DeltaVentaUf);
-    public string  ImpactoNetoDisplay => $"{MontoAprobado:+0.###;-0.###;0} UF";
+    public string ImpactoNetoDisplay => $"{MontoAprobado:+0.###;-0.###;0} UF";
 
     private bool HasProject => !string.IsNullOrEmpty(_session.CurrentProjectPath);
     public ChangeOrdersViewModel(WpfAppHost host) : this(host.Session, host.UndoService) { }
@@ -81,12 +81,12 @@ public sealed partial class ChangeOrdersViewModel : ObservableObject, IDisposabl
         if (!HasProject || _session.IsReadOnly) return;
         var oc = new ChangeOrderRow
         {
-            Numero             = NextNumero(),
-            Titulo             = "Nueva orden de cambio",
-            Estado             = "Borrador",
-            CreadoPor          = _session.ProjectInfo.UsuarioNombre,
+            Numero = NextNumero(),
+            Titulo = "Nueva orden de cambio",
+            Estado = "Borrador",
+            CreadoPor = _session.ProjectInfo.UsuarioNombre,
             GastosGeneralesPct = _session.ProjectInfo.GastosGeneralesPct,
-            UtilidadPct        = _session.ProjectInfo.UtilidadPct,
+            UtilidadPct = _session.ProjectInfo.UtilidadPct,
         };
 
         var before = _session.CreateSnapshot();
@@ -275,33 +275,33 @@ public sealed class ChangeOrderRowVm
     public ChangeOrderRowVm(ChangeOrderRow row, int seq)
     {
         _row = row;
-        Seq  = seq;
+        Seq = seq;
     }
 
-    public string   Id               => _row.Id;
-    public int      Seq              { get; }
-    public string   Numero           => _row.Numero;
-    public string   Titulo           => _row.Titulo;
-    public string   Estado           => _row.Estado;
-    public string   CreadoPor        => _row.CreadoPor;
-    public DateTime FechaCreacion    => _row.FechaCreacion;
+    public string Id => _row.Id;
+    public int Seq { get; }
+    public string Numero => _row.Numero;
+    public string Titulo => _row.Titulo;
+    public string Estado => _row.Estado;
+    public string CreadoPor => _row.CreadoPor;
+    public DateTime FechaCreacion => _row.FechaCreacion;
     public DateTime FechaModificacion => _row.FechaModificacion;
-    public decimal  DeltaVentaUf     => _row.DeltaVentaUf;
-    public decimal  DeltaCostoUf     => _row.DeltaCostoUf;
-    public string   Nota             => _row.Nota;
+    public decimal DeltaVentaUf => _row.DeltaVentaUf;
+    public decimal DeltaCostoUf => _row.DeltaCostoUf;
+    public string Nota => _row.Nota;
 
     public string EstadoDisplay => Estado switch
     {
-        "Aprobado"    => "✓ Aprobado",
-        "Rechazado"   => "✗ Rechazado",
+        "Aprobado" => "✓ Aprobado",
+        "Rechazado" => "✗ Rechazado",
         "En revisión" => "◷ En revisión",
-        _             => "○ Borrador"
+        _ => "○ Borrador"
     };
 
-    public string FechaDisplay      => FechaCreacion.ToString("dd/MM/yyyy");
+    public string FechaDisplay => FechaCreacion.ToString("dd/MM/yyyy");
     public string ModificadoDisplay => FechaModificacion.ToString("dd/MM/yyyy");
-    public string DeltaDisplay      => $"{DeltaVentaUf:+0.###;-0.###;0} UF";
-    public string DeltaKind         => DeltaVentaUf > 0 ? "Aumenta" : DeltaVentaUf < 0 ? "Reduce" : "Neutro";
-    public bool   EsBorrador        => Estado == "Borrador";
-    public bool   EsAprobado        => Estado == "Aprobado";
+    public string DeltaDisplay => $"{DeltaVentaUf:+0.###;-0.###;0} UF";
+    public string DeltaKind => DeltaVentaUf > 0 ? "Aumenta" : DeltaVentaUf < 0 ? "Reduce" : "Neutro";
+    public bool EsBorrador => Estado == "Borrador";
+    public bool EsAprobado => Estado == "Aprobado";
 }

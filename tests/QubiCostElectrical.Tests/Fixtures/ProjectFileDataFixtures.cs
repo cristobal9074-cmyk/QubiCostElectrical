@@ -170,6 +170,55 @@ internal static class ProjectFileDataFixtures
             {
                 ["P1"] = new[] { "Piso 1", "Piso 2" }
             },
+            EstadoPagoMeses = new List<EstadoPagoMesRow>
+            {
+                new()
+                {
+                    Id = "2026-01",
+                    Anio = 2026,
+                    Mes = 1,
+                    Estado = EstadoPagoEst.Pago,
+                    Folio = "EP-2026-01",
+                    FechaEmision = new DateTime(2026, 1, 31),
+                    AprobadoPor = "Admin Test",
+                    FechaAprobacion = new DateTime(2026, 2, 3),
+                    AvancesPorItem = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase)
+                    {
+                        ["P1"] = 8.33m,
+                        ["P2"] = 4.17m
+                    }
+                },
+                new()
+                {
+                    Id = "2026-02",
+                    Anio = 2026,
+                    Mes = 2,
+                    Estado = EstadoPagoEst.Revision,
+                    Folio = "EP-2026-02",
+                    FechaEmision = new DateTime(2026, 2, 28),
+                    AvancesPorItem = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase)
+                    {
+                        ["P1"] = 8.34m
+                    }
+                },
+                new()
+                {
+                    Id = "2026-03",
+                    Anio = 2026,
+                    Mes = 3,
+                    Estado = EstadoPagoEst.Borrador,
+                    Folio = "EP-2026-03",
+                    FechaEmision = new DateTime(2026, 3, 31)
+                }
+            },
+            EstadoPagoConfig = new EstadoPagoConfig
+            {
+                Anio = 2026,
+                CantMeses = 12,
+                AnticipoPct = 10m,
+                RetencionPct = 5m,
+                IvaPct = 19m
+            },
             ActiveVersionId = "V1"
         };
     }
@@ -224,6 +273,24 @@ internal static class ProjectFileDataFixtures
         data.CubicacionSC[0].CircuitosProyectados = 52;
         data.QtyHeadersByItem["P1"] = new[] { "Piso 1", "Piso 2", "Piso 3" };
         data.ActiveVersionId = "V1";
+
+        data.EstadoPagoMeses[1].Estado = EstadoPagoEst.Pago;
+        data.EstadoPagoMeses[1].AprobadoPor = "Admin Modificado";
+        data.EstadoPagoMeses[1].FechaAprobacion = new DateTime(2026, 3, 5);
+        data.EstadoPagoMeses.Add(new EstadoPagoMesRow
+        {
+            Id = "2026-04",
+            Anio = 2026,
+            Mes = 4,
+            Estado = EstadoPagoEst.Borrador,
+            Folio = "EP-2026-04",
+            FechaEmision = new DateTime(2026, 4, 30),
+            AvancesPorItem = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["P3"] = 12.5m
+            }
+        });
+        data.EstadoPagoConfig.AnticipoPct = 15m;
 
         return data;
     }

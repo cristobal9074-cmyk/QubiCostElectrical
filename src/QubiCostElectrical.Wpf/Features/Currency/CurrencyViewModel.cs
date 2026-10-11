@@ -131,12 +131,58 @@ public sealed class CurrencyViewModel : ViewModelBase, IPageWithPendingChanges, 
         private set => SetProperty(ref _cacheStale, value);
     }
 
+    private bool _showSuccessFeedback;
+    public bool ShowSuccessFeedback
+    {
+        get => _showSuccessFeedback;
+        set => SetProperty(ref _showSuccessFeedback, value);
+    }
+
+    private bool _hasValidCache;
+    public bool HasValidCache
+    {
+        get => _hasValidCache;
+        private set => SetProperty(ref _hasValidCache, value);
+    }
+
+    private decimal _cachedUfValue;
+    public decimal CachedUfValue
+    {
+        get => _cachedUfValue;
+        private set => SetProperty(ref _cachedUfValue, value);
+    }
+
+    private decimal _cachedUsdValue;
+    public decimal CachedUsdValue
+    {
+        get => _cachedUsdValue;
+        private set => SetProperty(ref _cachedUsdValue, value);
+    }
+
+    private string _cachedUfPrompt = "";
+    public string CachedUfPrompt
+    {
+        get => _cachedUfPrompt;
+        private set => SetProperty(ref _cachedUfPrompt, value);
+    }
+
+    public void ApplyCachedRates()
+    {
+        if (!HasValidCache) return;
+        EditUfClp = CachedUfValue.ToString("N2");
+        if (CachedUsdValue > 0)
+            EditUsdClp = CachedUsdValue.ToString("N2");
+        EditFecha = DateTime.Today.ToString("dd/MM/yyyy");
+        HasPendingChanges = true;
+        ShowSuccessFeedback = false;
+    }
+
     public bool CanEdit => !_session.IsReadOnly;
 
     // ─── Presentación calculada ─────────────────────────────────────────────
 
     public string ResumenClp => ValorUfClp > 0
-        ? $"1 UF = $ {ValorUfClp:N0} CLP"
+        ? $"1 UF = $ {ValorUfClp:N2} CLP"
         : "Sin tasa UF configurada";
 
     public string ResumenUsd => TipoCambioUsdClp > 0
@@ -174,6 +220,10 @@ public sealed class CurrencyViewModel : ViewModelBase, IPageWithPendingChanges, 
 
         var cache = EconomicIndicatorCache.TryRead();
         CacheStale = cache == null || EconomicIndicatorCache.IsStale(cache.FetchedAt);
+        HasValidCache = cache != null && !CacheStale && cache.UfClp > 0;
+        CachedUfValue = cache?.UfClp ?? 0;
+        CachedUsdValue = cache?.UsdClp ?? 0;
+        CachedUfPrompt = HasValidCache ? $"Cargar valor sugerido del Banco Central ($ {CachedUfValue:N2})" : "";
 
         RefreshHistorial(info);
     }
@@ -248,6 +298,7 @@ public sealed class CurrencyViewModel : ViewModelBase, IPageWithPendingChanges, 
         _undo.PushSnapshot(beforeEdit, "Actualizar tasas de cambio");
         _session.MarkDirty();
         LoadFromSession();
+        ShowSuccessFeedback = true;
         return true;
     }
 
@@ -255,6 +306,7 @@ public sealed class CurrencyViewModel : ViewModelBase, IPageWithPendingChanges, 
     {
         if (!CanEdit) return true;
         LoadFromSession();
+        ShowSuccessFeedback = false;
         return true;
     }
 
@@ -301,7 +353,7 @@ public sealed record CurrencyHistoryEntry(
     bool Activa)
 {
     public string FechaDisplay => Fecha.ToString("dd/MM/yyyy");
-    public string UfDisplay => $"$ {UfClp:N0}";
+    public string UfDisplay => $"$ {UfClp:N2}";
     public string UsdDisplay => $"$ {UsdClp:N0}";
     public string EstadoDisplay => Activa ? "Activa" : "Histórica";
 }

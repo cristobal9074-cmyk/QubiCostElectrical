@@ -5,12 +5,11 @@ using System.Linq;
 namespace QubiCostElectrical;
 
 /// <summary>
-/// Totales de gastos operacionales y MO de dotación para el puente Excel COSTOS.
+/// Totales de gastos operacionales y MO de dotación para el puente de costos.
 /// Incluye duración de obra y leyes sociales cuando están en el proyecto.
 /// </summary>
 public static class ExcelCostosBridge
 {
-    public const string PresetPel029 = "PEL029";
     public const string PresetTipicos = "Tipicos";
 
     public static decimal SumGastosOperacionalesClp(IEnumerable<GastoOperacionalRow>? rows)
@@ -88,17 +87,18 @@ public static class ExcelCostosBridge
             months = Math.Max(0, fallbackMonths);
 
         if (months <= 0)
-            return list.Sum(r => Math.Max(0, r.Dotacion) * Math.Max(0m, r.SueldoMensualClp));
+            return list.Sum(r => Math.Max(0, r.Dotacion) * Math.Max(0m, r.SueldoMensualClp) * r.FraccionEfectiva);
 
         decimal total = 0m;
         foreach (var r in list)
         {
+            var fracc = r.FraccionEfectiva;
             for (int i = 0; i < months; i++)
             {
                 int d = Math.Max(0, r.Dotacion);
                 if (r.DotacionMensual != null && i < r.DotacionMensual.Count && r.DotacionMensual[i] >= 0)
                     d = r.DotacionMensual[i];
-                total += d * Math.Max(0m, r.SueldoMensualClp);
+                total += d * Math.Max(0m, r.SueldoMensualClp) * fracc;
             }
         }
 
@@ -127,8 +127,8 @@ public static class ExcelCostosBridge
         return settings;
     }
 
-    /// <summary>Factores de presentación del Excel PEL029A2026 (E194–E202).</summary>
-    public static IReadOnlyDictionary<string, decimal> PresetFactoresPel029 { get; } =
+    /// <summary>Factores de presentación estándar.</summary>
+    public static IReadOnlyDictionary<string, decimal> PresetFactoresEstandar { get; } =
         new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase)
         {
             ["Conductores"] = 1.57m,
@@ -142,7 +142,7 @@ public static class ExcelCostosBridge
             ["Puesta a tierra"] = 1.30m,
         };
 
-    /// <summary>Típicos genéricos PEL (promedio histórico de varios proyectos).</summary>
+    /// <summary>Típicos genéricos (promedio histórico de varios proyectos).</summary>
     public static IReadOnlyDictionary<string, decimal> PresetFactoresTipicos { get; } =
         new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase)
         {
@@ -157,7 +157,7 @@ public static class ExcelCostosBridge
             ["Puesta a tierra"] = 1.20m,
         };
 
-    public static void ApplyPoliticaExcelPel029(ProjectInfoRow project)
+    public static void ApplyPoliticaEstandar(ProjectInfoRow project)
     {
         project ??= new ProjectInfoRow();
         project.GastosGeneralesPct = 5m;

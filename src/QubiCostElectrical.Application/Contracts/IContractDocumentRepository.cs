@@ -7,9 +7,9 @@ namespace QubiCostElectrical;
 
 public interface IContractDocumentRepository
 {
-	Task SaveAsync(ContractDocument document, CancellationToken ct = default(CancellationToken));
+    Task SaveAsync(ContractDocument document, CancellationToken ct = default(CancellationToken));
 
-	Task<List<ContractDocument>> GetByContractAsync(ContractId contractId, CancellationToken ct = default(CancellationToken));
+    Task<List<ContractDocument>> GetByContractAsync(ContractId contractId, CancellationToken ct = default(CancellationToken));
 
-	Task DeleteAsync(string documentId, CancellationToken ct = default(CancellationToken));
+    Task DeleteAsync(string documentId, CancellationToken ct = default(CancellationToken));
 }

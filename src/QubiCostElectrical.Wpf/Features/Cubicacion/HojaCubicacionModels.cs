@@ -93,13 +93,13 @@ public sealed class HojaCubicacionFilaVm : INotifyPropertyChanged
     public decimal Suma
     {
         get => suma;
-        private set { suma = value; Raise(nameof(Suma)); }
+        internal set { suma = value; Raise(nameof(Suma)); }
     }
 
     public string SumaDisplay
     {
         get => sumaDisplay;
-        private set { sumaDisplay = value; Raise(nameof(SumaDisplay)); }
+        internal set { sumaDisplay = value; Raise(nameof(SumaDisplay)); }
     }
 
     /// <summary>Agrega una columna nueva a esta fila (Valores Y ValoresDisplay a la vez, para que
@@ -117,57 +117,21 @@ public sealed class HojaCubicacionFilaVm : INotifyPropertyChanged
     /// porque una fórmula puede depender de una celda vecina recién editada.</summary>
     internal void RefreshDisplay()
     {
-        // La fila de nombres de columna es texto libre (ej. "Depto 1"): se muestra tal cual, sin
-        // intentar evaluarla como número o fórmula, y no aporta a ninguna suma.
-        if (IsLabelRow)
+        if (Owner != null)
         {
-            for (int i = 0; i < Valores.Count && i < ValoresDisplay.Count; i++)
-                ValoresDisplay[i] = Valores[i] ?? "";
-            Suma = 0m;
-            SumaDisplay = "";
+            Owner.RefreshAllDisplays();
             return;
         }
 
-        // Variables disponibles para las fórmulas: solo columnas con un número literal (no otra
-        // fórmula) — evita tener que resolver dependencias encadenadas entre celdas.
-        var literales = new Dictionary<string, decimal>(System.StringComparer.OrdinalIgnoreCase);
-        for (int j = 0; j < Valores.Count; j++)
+        var rowResult = HojaCubicacionFormulaEngine.EvaluateRow(Valores);
+        for (int i = 0; i < rowResult.Cells.Count && i < ValoresDisplay.Count; i++)
         {
-            if (TryParseLiteral(Valores[j], out decimal literal))
-                literales[HojaCubicacionColumns.DataColumnLetter(j)] = literal;
+            ValoresDisplay[i] = rowResult.Cells[i].DisplayText;
         }
 
-        decimal total = 0m;
-        for (int i = 0; i < Valores.Count; i++)
-        {
-            string raw = (Valores[i] ?? "").Trim();
-            if (raw.Length == 0)
-            {
-                if (i < ValoresDisplay.Count) ValoresDisplay[i] = "";
-                continue;
-            }
-
-            var result = QuantityFormulaService.Evaluate(raw, literales);
-            decimal cellValue = result.Success ? result.Value : 0m;
-            total += cellValue;
-
-            if (i < ValoresDisplay.Count)
-                ValoresDisplay[i] = result.Success ? FormatDecimal(cellValue) : "¡ERROR!";
-        }
-
-        Suma = total;
-        SumaDisplay = total == 0m ? "" : FormatDecimal(total);
+        Suma = rowResult.Suma;
+        SumaDisplay = rowResult.SumaDisplay;
     }
-
-    private static bool TryParseLiteral(string? raw, out decimal value)
-    {
-        value = 0m;
-        string text = (raw ?? "").Trim();
-        if (text.Length == 0) return false;
-        return decimal.TryParse(text.Replace(',', '.'), NumberStyles.Number, CultureInfo.InvariantCulture, out value);
-    }
-
-    private static string FormatDecimal(decimal value) => value.ToString("0.####", CultureInfo.CurrentCulture);
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -328,6 +292,37 @@ public sealed class HojaCubicacionItemVm : INotifyPropertyChanged
             fila.AddColumnSlot();
         }
         Raise(nameof(ColumnCount));
+    }
+
+    private bool isRefreshing;
+
+    internal void RefreshAllDisplays()
+    {
+        if (isRefreshing) return;
+        try
+        {
+            isRefreshing = true;
+            var rawGrid = Filas.Select(f => (IReadOnlyList<string?>)f.Valores).ToList();
+            var gridResult = HojaCubicacionFormulaEngine.EvaluateGrid(rawGrid);
+
+            for (int r = 0; r < Filas.Count && r < gridResult.Rows.Count; r++)
+            {
+                var fila = Filas[r];
+                var rowRes = gridResult.Rows[r];
+                for (int c = 0; c < rowRes.Cells.Count && c < fila.ValoresDisplay.Count; c++)
+                {
+                    fila.ValoresDisplay[c] = rowRes.Cells[c].DisplayText;
+                }
+                fila.Suma = rowRes.Suma;
+                fila.SumaDisplay = rowRes.SumaDisplay;
+            }
+
+            Raise(nameof(Subtotal));
+        }
+        finally
+        {
+            isRefreshing = false;
+        }
     }
 
     private void OnFilaPropertyChanged(object? sender, PropertyChangedEventArgs e)

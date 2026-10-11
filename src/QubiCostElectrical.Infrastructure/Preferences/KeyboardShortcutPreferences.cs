@@ -11,7 +11,8 @@ public static class KeyboardShortcutPreferences
             return custom.Trim();
         }
 
-        return CubicacionShortcutCatalog.Find(actionId)?.DefaultGesture
+        return KeyboardShortcutCatalogRegistry.Find(actionId)?.DefaultGesture
+            ?? CubicacionShortcutCatalog.Find(actionId)?.DefaultGesture
             ?? ShellShortcutCatalog.Find(actionId)?.DefaultGesture
             ?? "";
     }
@@ -19,9 +20,7 @@ public static class KeyboardShortcutPreferences
     public static Dictionary<string, string> BuildEffectiveMap(UserPreferences prefs)
     {
         var map = new Dictionary<string, string>(StringComparer.Ordinal);
-        foreach (var def in CubicacionShortcutCatalog.All)
-            map[def.Id] = GetEffective(def.Id, prefs);
-        foreach (var def in ShellShortcutCatalog.All)
+        foreach (var def in KeyboardShortcutCatalogRegistry.All)
             map[def.Id] = GetEffective(def.Id, prefs);
         return map;
     }
@@ -33,7 +32,7 @@ public static class KeyboardShortcutPreferences
         var cleaned = new Dictionary<string, string>(StringComparer.Ordinal);
         foreach (var (actionId, gestureText) in prefs.KeyboardShortcuts)
         {
-            if (!CubicacionShortcutCatalog.IsKnown(actionId) && !ShellShortcutCatalog.IsKnown(actionId))
+            if (!KeyboardShortcutCatalogRegistry.IsKnown(actionId))
                 continue;
             if (string.IsNullOrWhiteSpace(gestureText))
                 continue;

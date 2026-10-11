@@ -32,6 +32,9 @@
     <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True" />
     <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling" />
     <Setter Property="VirtualizingPanel.ScrollUnit" Value="Pixel" />
+    <Setter Property="VirtualizingPanel.CacheLength" Value="20,20" />
+    <Setter Property="VirtualizingPanel.CacheLengthUnit" Value="Item" />
+    <Setter Property="ScrollViewer.CanContentScroll" Value="True" />
     <Setter Property="FocusVisualStyle" Value="{x:Null}" />
     <Setter Property="KeyboardNavigation.DirectionalNavigation" Value="Contained" />
   </Style>
@@ -44,6 +47,20 @@
     <Setter Property="Padding" Value="11,9" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
     <Setter Property="BorderThickness" Value="0,0,1,1" />
+  </Style>
+
+  <Style x:Key="DataGridColumnHeader.Numeric" TargetType="DataGridColumnHeader" BasedOn="{StaticResource DataGridColumnHeader.Prototype}">
+    <Setter Property="HorizontalContentAlignment" Value="Right" />
+    <Setter Property="Padding" Value="8,9,14,9" />
+  </Style>
+
+  <!-- Encabezado distintivo de fórmulas calculadas (fx) -->
+  <Style x:Key="DataGridColumnHeader.Formula" TargetType="DataGridColumnHeader" BasedOn="{StaticResource DataGridColumnHeader.Prototype}">
+    <Setter Property="HorizontalContentAlignment" Value="Right" />
+    <Setter Property="Padding" Value="8,9,14,9" />
+    <Setter Property="Background" Value="{DynamicResource Brush.CellFormulaBg}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.FormulaBadge}" />
+    <Setter Property="ToolTip" Value="Columna calculada automáticamente mediante fórmulas matemáticas" />
   </Style>
 
   <!-- Encabezado "delgado": sin texto (Header queda en blanco desde code-behind) y una franja
@@ -63,6 +80,32 @@
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line2}" />
     <Setter Property="FocusVisualStyle" Value="{x:Null}" />
     <Style.Triggers>
+      <!-- Base por tipo de celda: Editable vs Fórmula -->
+      <Trigger Property="IsReadOnly" Value="True">
+        <Setter Property="Background" Value="{DynamicResource Brush.CellFormulaBg}" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.CellFormulaInk}" />
+      </Trigger>
+      <Trigger Property="IsReadOnly" Value="False">
+        <Setter Property="Background" Value="{DynamicResource Brush.CellEditableBg}" />
+      </Trigger>
+
+      <!-- Resalte visual de capítulos / títulos WBS para que la celda adopte el fondo del capítulo -->
+      <DataTrigger Binding="{Binding IsTitleRow}" Value="True">
+        <Setter Property="Background" Value="{DynamicResource Brush.ChapterRowBg}" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+      </DataTrigger>
+
+      <!-- Hover interactivo solo en celdas editables para guiar al usuario -->
+      <MultiTrigger>
+        <MultiTrigger.Conditions>
+          <Condition Property="IsReadOnly" Value="False" />
+          <Condition Property="IsMouseOver" Value="True" />
+          <Condition Property="IsSelected" Value="False" />
+        </MultiTrigger.Conditions>
+        <Setter Property="Background" Value="{DynamicResource Brush.CellEditableHoverBg}" />
+      </MultiTrigger>
+
       <Trigger Property="IsSelected" Value="True">
         <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
         <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
@@ -95,6 +138,25 @@
     <Setter Property="BorderBrush" Value="Transparent" />
     <Setter Property="FocusVisualStyle" Value="{x:Null}" />
     <Style.Triggers>
+      <!-- Base por tipo de celda: Editable vs Fórmula -->
+      <Trigger Property="IsReadOnly" Value="True">
+        <Setter Property="Background" Value="{DynamicResource Brush.CellFormulaBg}" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.CellFormulaInk}" />
+      </Trigger>
+      <Trigger Property="IsReadOnly" Value="False">
+        <Setter Property="Background" Value="{DynamicResource Brush.CellEditableBg}" />
+      </Trigger>
+
+      <!-- Hover interactivo en celdas editables -->
+      <MultiTrigger>
+        <MultiTrigger.Conditions>
+          <Condition Property="IsReadOnly" Value="False" />
+          <Condition Property="IsMouseOver" Value="True" />
+          <Condition Property="IsSelected" Value="False" />
+        </MultiTrigger.Conditions>
+        <Setter Property="Background" Value="{DynamicResource Brush.CellEditableHoverBg}" />
+      </MultiTrigger>
+
       <Trigger Property="IsSelected" Value="True">
         <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
@@ -108,6 +170,10 @@
       </Trigger>
       <Trigger Property="IsKeyboardFocusWithin" Value="True">
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
+      </Trigger>
+      <Trigger Property="IsFocused" Value="True">
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
+        <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
       </Trigger>
     </Style.Triggers>
   </Style>

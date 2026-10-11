@@ -48,12 +48,16 @@ public sealed class WpfUndoService : INotifyPropertyChanged
         NotifyCanChanged();
     }
 
-    public bool Undo(BudgetProjectSession session)
+    public bool Undo(BudgetProjectSession session) => Undo(session, out _);
+
+    public bool Undo(BudgetProjectSession session, out string actionDescription)
     {
+        actionDescription = "";
         if (_undo.Count == 0) return false;
 
-        _redo.Push((session.CreateSnapshot(), ""));
-        var (previous, _) = _undo.Pop();
+        var (previous, desc) = _undo.Pop();
+        actionDescription = desc;
+        _redo.Push((session.CreateSnapshot(), desc));
 
         bool isDirty = _savedDepth < 0 || _undo.Count != _savedDepth;
         session.ApplySnapshot(previous, markDirty: isDirty);
@@ -62,12 +66,16 @@ public sealed class WpfUndoService : INotifyPropertyChanged
         return true;
     }
 
-    public bool Redo(BudgetProjectSession session)
+    public bool Redo(BudgetProjectSession session) => Redo(session, out _);
+
+    public bool Redo(BudgetProjectSession session, out string actionDescription)
     {
+        actionDescription = "";
         if (_redo.Count == 0) return false;
 
-        _undo.Push((session.CreateSnapshot(), ""));
-        var (next, _) = _redo.Pop();
+        var (next, desc) = _redo.Pop();
+        actionDescription = desc;
+        _undo.Push((session.CreateSnapshot(), desc));
 
         bool isDirty = _savedDepth < 0 || _undo.Count != _savedDepth;
         session.ApplySnapshot(next, markDirty: isDirty);

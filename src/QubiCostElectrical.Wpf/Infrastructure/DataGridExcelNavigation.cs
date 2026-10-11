@@ -22,10 +22,7 @@ public static partial class DataGridExcelNavigation
     // desde un punto fijo (como Excel), en vez de mover solo la celda activa.
     private static readonly ConditionalWeakTable<DataGrid, AnchorBox> _anchors = new();
 
-    private sealed class AnchorBox
-    {
-        public DataGridCellInfo Anchor;
-    }
+    private sealed class AnchorBox { public DataGridCellInfo Anchor; }
 
     // Alcance de columnas seleccionables por grilla (opcional) — usado por Cubicación para que
     // "seleccionar todo"/extender con Shift DESDE una casilla de sector no arrastre también
@@ -34,8 +31,5 @@ public static partial class DataGridExcelNavigation
     // columna fuera de él (ej. Código), la selección sigue siendo libre como siempre.
     private static readonly ConditionalWeakTable<DataGrid, ColumnScopeBox> _columnScopes = new();
 
-    private sealed class ColumnScopeBox
-    {
-        public Func<DataGridColumn, bool>? Predicate;
-    }
+    private sealed class ColumnScopeBox { public Func<DataGridColumn, bool>? Predicate; }
 }

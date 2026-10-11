@@ -5,7 +5,7 @@
         Title="Nuevo proyecto"
         Width="520" Height="680"
         ShowInTaskbar="False">
-  <Border Style="{StaticResource Dialog.Chrome}" Margin="16">
+  <Border Style="{StaticResource Dialog.Chrome}">
   <Grid>
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto" />

@@ -7,51 +7,52 @@
   </ResourceDictionary.MergedDictionaries>
 
   <Style x:Key="Dialog.Window" TargetType="Window">
-    <Setter Property="Background" Value="{DynamicResource Brush.Canvas}" />
-    <Setter Property="FontSize" Value="12" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+    <Setter Property="FontFamily" Value="{StaticResource Font.Ui}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.md}" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
     <Setter Property="ResizeMode" Value="CanResizeWithGrip" />
+    <Setter Property="SnapsToDevicePixels" Value="True" />
   </Style>
 
   <Style x:Key="Dialog.Banner.Error" TargetType="Border">
     <Setter Property="Background" Value="{DynamicResource Brush.RedSoft}" />
-    <Setter Property="CornerRadius" Value="6" />
-    <Setter Property="Padding" Value="10,6" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.DangerBorder}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="7" />
+    <Setter Property="Padding" Value="12,8" />
     <Setter Property="Margin" Value="0,10,0,0" />
   </Style>
 
   <Style x:Key="Dialog.Banner.Warning" TargetType="Border">
     <Setter Property="Background" Value="{DynamicResource Brush.AmberSoft}" />
-    <Setter Property="CornerRadius" Value="6" />
-    <Setter Property="Padding" Value="10,6" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.AmberRisk}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="7" />
+    <Setter Property="Padding" Value="12,8" />
     <Setter Property="Margin" Value="0,10,0,0" />
   </Style>
 
   <Style x:Key="Dialog.Banner.Text" TargetType="TextBlock">
-    <Setter Property="FontSize" Value="12" />
+    <Setter Property="FontFamily" Value="{StaticResource Font.Ui}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.sm}" />
     <Setter Property="TextWrapping" Value="Wrap" />
   </Style>
 
   <Style x:Key="Dialog.Footer" TargetType="DockPanel">
-    <Setter Property="Margin" Value="0,14,0,0" />
+    <Setter Property="Margin" Value="0,18,0,0" />
   </Style>
 
   <Style x:Key="Dialog.Chrome" TargetType="Border">
     <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="14" />
-    <Setter Property="Padding" Value="20" />
-    <Setter Property="Effect">
-      <Setter.Value>
-        <DropShadowEffect BlurRadius="24" ShadowDepth="8" Direction="270"
-                          Color="{DynamicResource Color.Shadow}" Opacity="0.22" />
-      </Setter.Value>
-    </Setter>
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="0" />
+    <Setter Property="Padding" Value="24,20,24,24" />
+    <Setter Property="SnapsToDevicePixels" Value="True" />
   </Style>
 
   <Style x:Key="Dialog.HeaderTitle" TargetType="TextBlock" BasedOn="{StaticResource Text.ViewTitle}">
-    <Setter Property="Margin" Value="0,0,0,4" />
+    <Setter Property="Margin" Value="0,0,0,6" />
   </Style>
 
   <Style x:Key="Dialog.HeaderSubtitle" TargetType="TextBlock" BasedOn="{StaticResource Text.Body}">
@@ -64,8 +65,8 @@
     <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
     <Setter Property="BorderThickness" Value="0,1,0,0" />
-    <Setter Property="Padding" Value="16,12" />
-    <Setter Property="Margin" Value="-20,-20,-20,-20" />
+    <Setter Property="Padding" Value="20,14" />
+    <Setter Property="Margin" Value="-24,16,-24,-24" />
   </Style>
 
 </ResourceDictionary>

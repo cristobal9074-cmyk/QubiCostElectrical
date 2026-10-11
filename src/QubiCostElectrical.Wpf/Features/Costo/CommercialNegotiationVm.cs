@@ -127,17 +127,41 @@ public sealed class CommercialNegotiationVm : ViewModelBase
 
     public Brush RiskBrush => RiskLevel switch
     {
-        NegotiationRiskLevel.Healthy => new SolidColorBrush(Color.FromRgb(34, 197, 94)),   // Verde #22C55E
-        NegotiationRiskLevel.Warning => new SolidColorBrush(Color.FromRgb(245, 158, 11)),  // Ámbar #F59E0B
-        _ => new SolidColorBrush(Color.FromRgb(239, 68, 68))                               // Rojo #EF4444
+        NegotiationRiskLevel.Healthy => ThemeOrFallback("Brush.SuccessBright", "#22C55E"),
+        NegotiationRiskLevel.Warning => ThemeOrFallback("Brush.AmberRisk", "#F59E0B"),
+        _ => ThemeOrFallback("Brush.Danger2", "#EF4444")
     };
 
     public Brush RiskBackgroundBrush => RiskLevel switch
     {
-        NegotiationRiskLevel.Healthy => new SolidColorBrush(Color.FromArgb(30, 34, 197, 94)),
-        NegotiationRiskLevel.Warning => new SolidColorBrush(Color.FromArgb(30, 245, 158, 11)),
-        _ => new SolidColorBrush(Color.FromArgb(30, 239, 68, 68))
+        NegotiationRiskLevel.Healthy => ThemeOrFallback("Brush.SuccessSoft",
+            () => new SolidColorBrush(Color.FromArgb(30, 34, 197, 94))),
+        NegotiationRiskLevel.Warning => ThemeOrFallback("Brush.WarningSoft",
+            () => new SolidColorBrush(Color.FromArgb(30, 245, 158, 11))),
+        _ => ThemeOrFallback("Brush.RedSoft",
+            () => new SolidColorBrush(Color.FromArgb(30, 239, 68, 68)))
     };
+
+    private static Brush ThemeOrFallback(string resourceKey, string fallbackHex)
+    {
+        if (System.Windows.Application.Current?.TryFindResource(resourceKey) is Brush themeBrush)
+            return themeBrush;
+
+        var brush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(fallbackHex));
+        brush.Freeze();
+        return brush;
+    }
+
+    private static Brush ThemeOrFallback(string resourceKey, Func<SolidColorBrush> fallbackFactory)
+    {
+        if (System.Windows.Application.Current?.TryFindResource(resourceKey) is Brush themeBrush)
+            return themeBrush;
+
+        var brush = fallbackFactory();
+        if (brush.CanFreeze)
+            brush.Freeze();
+        return brush;
+    }
 
     public void UpdateBase(decimal directCostClp, decimal saleClp, decimal currentUf)
     {

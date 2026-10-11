@@ -18,7 +18,7 @@ public sealed class ToastMessage
 {
     private readonly Action dismiss;
 
-    public ToastMessage(string title, string message, ToastLevel level, Action dismiss, string? actionLabel = null, Action? action = null)
+    public ToastMessage(string title, string message, ToastLevel level, Action dismiss, string? actionLabel = null, Action? action = null, string? customGlyph = null)
     {
         Id = Guid.NewGuid();
         Title = title;
@@ -28,6 +28,7 @@ public sealed class ToastMessage
         this.dismiss = dismiss;
         ActionLabel = actionLabel;
         Action = action;
+        CustomGlyph = customGlyph;
     }
 
     public Guid Id { get; }
@@ -38,8 +39,9 @@ public sealed class ToastMessage
     public string? ActionLabel { get; }
     public Action? Action { get; }
     public bool HasAction => !string.IsNullOrWhiteSpace(ActionLabel) && Action != null;
+    public string? CustomGlyph { get; }
 
-    public string IconGlyph => Level switch
+    public string IconGlyph => CustomGlyph ?? Level switch
     {
         ToastLevel.Success => "✓",
         ToastLevel.Warning => "!",
@@ -54,6 +56,7 @@ public sealed class ShellNotificationService
 {
     public static ShellNotificationService Instance { get; } = new();
     public static Action? RequestUndo { get; set; }
+    public static Action? RequestRedo { get; set; }
 
     private readonly Dictionary<Guid, DispatcherTimer> timers = new();
 
@@ -71,12 +74,26 @@ public sealed class ShellNotificationService
     public void ShowError(string title, string message) => Enqueue(title, message, ToastLevel.Error);
     public void ShowError(string title, string message, string? actionLabel = null, Action? action = null) => Enqueue(title, message, ToastLevel.Error, actionLabel, action);
 
+    public void ShowUndo(string description)
+    {
+        string desc = string.IsNullOrWhiteSpace(description) ? "Edición" : description;
+        Enqueue("↩ Deshecho", desc, ToastLevel.Info, customGlyph: "↩", durationSeconds: 3.5);
+    }
+
+    public void ShowRedo(string description)
+    {
+        string desc = string.IsNullOrWhiteSpace(description) ? "Edición" : description;
+        Enqueue("↪ Rehecho", desc, ToastLevel.Info, customGlyph: "↪", durationSeconds: 3.5);
+    }
+
     public void Dismiss(ToastMessage toast)
     {
         var dispatcher = Application.Current?.Dispatcher;
         if (dispatcher == null)
         {
-            AppLog.Warning("Notificaciones", "Toast no descartado: dispatcher de aplicación no disponible.");
+            if (timers.Remove(toast.Id, out var orphan))
+                orphan.Stop();
+            Active.Remove(toast);
             return;
         }
 
@@ -96,39 +113,45 @@ public sealed class ShellNotificationService
         timer.IsEnabled = !paused;
     }
 
-    private void Enqueue(string title, string message, ToastLevel level, string? actionLabel = null, Action? action = null)
+    private void Enqueue(string title, string message, ToastLevel level, string? actionLabel = null, Action? action = null, string? customGlyph = null, double durationSeconds = 0)
     {
         var dispatcher = Application.Current?.Dispatcher;
         if (dispatcher == null)
         {
-            AppLog.Warning("Notificaciones", $"Toast descartado (sin dispatcher): {title} — {message}");
+            AddToast(title, message, level, actionLabel, action, customGlyph, durationSeconds, startTimer: false);
             return;
         }
 
-        dispatcher.Invoke(() =>
+        dispatcher.Invoke(() => AddToast(title, message, level, actionLabel, action, customGlyph, durationSeconds, startTimer: true));
+    }
+
+    private void AddToast(string title, string message, ToastLevel level, string? actionLabel, Action? action, string? customGlyph, double durationSeconds, bool startTimer)
+    {
+        ToastMessage? toast = null;
+        toast = new ToastMessage(title, message, level, () =>
         {
-            ToastMessage? toast = null;
-            toast = new ToastMessage(title, message, level, () =>
-            {
-                if (toast != null)
-                    Dismiss(toast);
-            }, actionLabel, action);
-
-            Active.Add(toast);
-            while (Active.Count > 4)
-            {
-                var oldest = Active[0];
-                Dismiss(oldest);
-            }
-
-            var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(toast.HasAction ? 8 : 4) };
-            timer.Tick += (_, _) =>
-            {
-                timer.Stop();
+            if (toast != null)
                 Dismiss(toast);
-            };
-            timers[toast.Id] = timer;
-            timer.Start();
-        });
+        }, actionLabel, action, customGlyph);
+
+        Active.Add(toast);
+        while (Active.Count > 4)
+        {
+            var oldest = Active[0];
+            Dismiss(oldest);
+        }
+
+        if (!startTimer)
+            return;
+
+        double seconds = durationSeconds > 0 ? durationSeconds : (toast.HasAction ? 8 : 4);
+        var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(seconds) };
+        timer.Tick += (_, _) =>
+        {
+            timer.Stop();
+            Dismiss(toast);
+        };
+        timers[toast.Id] = timer;
+        timer.Start();
     }
 }

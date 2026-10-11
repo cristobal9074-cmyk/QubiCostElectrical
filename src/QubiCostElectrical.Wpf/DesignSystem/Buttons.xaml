@@ -24,7 +24,8 @@
                   BorderBrush="{TemplateBinding BorderBrush}"
                   BorderThickness="{TemplateBinding BorderThickness}"
                   CornerRadius="9"
-                  Padding="{TemplateBinding Padding}">
+                  Padding="{TemplateBinding Padding}"
+                  RenderTransformOrigin="0.5,0.5">
             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
                               RecognizesAccessKey="True"
                               TextElement.Foreground="{Binding Foreground, RelativeSource={RelativeSource TemplatedParent}}" />
@@ -35,6 +36,11 @@
             </Trigger>
             <Trigger Property="IsPressed" Value="True">
               <Setter TargetName="Bd" Property="Opacity" Value="0.82" />
+              <Setter TargetName="Bd" Property="RenderTransform">
+                <Setter.Value>
+                  <ScaleTransform ScaleX="0.98" ScaleY="0.98" />
+                </Setter.Value>
+              </Setter>
             </Trigger>
             <Trigger Property="IsKeyboardFocused" Value="True">
               <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Brush.BlueFocus}" />
@@ -58,6 +64,12 @@
     <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}" />
     <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
+    <Style.Triggers>
+      <Trigger Property="IsMouseOver" Value="True">
+        <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.InputHoverBorder}" />
+      </Trigger>
+    </Style.Triggers>
   </Style>
 
   <!-- Variantes compactas para barras de acciones adosadas a un panel/tabla (Bar.Formula).
@@ -105,7 +117,8 @@
                   Background="{TemplateBinding Background}"
                   BorderBrush="{TemplateBinding BorderBrush}"
                   BorderThickness="1"
-                  CornerRadius="9">
+                  CornerRadius="9"
+                  RenderTransformOrigin="0.5,0.5">
             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
                               TextElement.Foreground="{Binding Foreground, RelativeSource={RelativeSource TemplatedParent}}" />
           </Border>
@@ -113,6 +126,18 @@
             <Trigger Property="IsMouseOver" Value="True">
               <Setter TargetName="Bd" Property="Background" Value="#1AFFFFFF" />
               <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+              <Setter TargetName="Bd" Property="Background" Value="#2AFFFFFF" />
+              <Setter TargetName="Bd" Property="RenderTransform">
+                <Setter.Value>
+                  <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
+                </Setter.Value>
+              </Setter>
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+              <Setter TargetName="Bd" Property="Opacity" Value="0.30" />
+              <Setter Property="Cursor" Value="Arrow" />
             </Trigger>
           </ControlTemplate.Triggers>
         </ControlTemplate>
@@ -162,6 +187,37 @@
     </Setter>
   </Style>
 
+  <Style x:Key="Button.PhasePill" TargetType="Button">
+    <Setter Property="Height" Value="28" />
+    <Setter Property="Padding" Value="10,0" />
+    <Setter Property="FontFamily" Value="{StaticResource Font.Ui}" />
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.HeaderDim}" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <Border x:Name="Bd" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}" CornerRadius="6">
+            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.White9}" />
+              <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
+            </Trigger>
+            <DataTrigger Binding="{Binding Path=(shell:NavigationVisuals.IsActive), RelativeSource={RelativeSource Self}}" Value="True">
+              <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
+              <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.White18}" />
+            </DataTrigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
   <Style x:Key="Button.ModeTab" TargetType="Button" BasedOn="{StaticResource Button.Secondary}">
     <Setter Property="Height" Value="28" />
     <Setter Property="Padding" Value="10,4" />
@@ -176,6 +232,65 @@
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
         <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
       </DataTrigger>
+    </Style.Triggers>
+  </Style>
+
+  <!-- Segmented Filter Chips (Itemizado, Cubicación, etc.) -->
+  <Style x:Key="FilterChip.Base" TargetType="RadioButton">
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Padding" Value="9,3" />
+    <Setter Property="Margin" Value="1,0" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="RadioButton">
+          <Border x:Name="Bd"
+                  Background="Transparent"
+                  BorderBrush="Transparent"
+                  BorderThickness="1"
+                  CornerRadius="5"
+                  Padding="{TemplateBinding Padding}">
+            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                              TextElement.Foreground="{Binding Foreground, RelativeSource={RelativeSource TemplatedParent}}" />
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.Surface2}" />
+            </Trigger>
+            <Trigger Property="IsChecked" Value="True">
+              <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.Surface}" />
+              <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
+              <Setter Property="FontWeight" Value="Bold" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+    <Style.Triggers>
+      <Trigger Property="IsMouseOver" Value="True">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+      </Trigger>
+      <Trigger Property="IsChecked" Value="True">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+      </Trigger>
+    </Style.Triggers>
+  </Style>
+
+  <Style x:Key="FilterChip.Success" TargetType="RadioButton" BasedOn="{StaticResource FilterChip.Base}">
+    <Style.Triggers>
+      <Trigger Property="IsChecked" Value="True">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.SuccessDark}" />
+      </Trigger>
+    </Style.Triggers>
+  </Style>
+
+  <Style x:Key="FilterChip.Warning" TargetType="RadioButton" BasedOn="{StaticResource FilterChip.Base}">
+    <Style.Triggers>
+      <Trigger Property="IsChecked" Value="True">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.AmberRisk}" />
+      </Trigger>
     </Style.Triggers>
   </Style>
 

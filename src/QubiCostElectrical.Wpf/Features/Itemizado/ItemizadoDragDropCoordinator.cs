@@ -175,7 +175,7 @@ public sealed class ItemizadoDragDropCoordinator
         {
             if (current is T parent)
                 return parent;
-            current = VisualTreeHelper.GetParent(current);
+            current = QubiCostElectrical.Wpf.Infrastructure.VisualTreeHelperSafe.GetParentSafe(current);
         }
         return null;
     }

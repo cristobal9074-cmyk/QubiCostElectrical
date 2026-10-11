@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using QubiCostElectrical;
 using QubiCostElectrical.Wpf.Infrastructure;
 
@@ -58,11 +59,36 @@ public sealed class GastoOpItemVm : ViewModelBase
             if (!AllowEdit) return;
             if (SetProperty(ref cantidad, Math.Max(0, value)))
             {
+                OnPropertyChanged(nameof(CantidadTexto));
                 OnPropertyChanged(nameof(Total));
                 OnPropertyChanged(nameof(TotalLabel));
                 OnPropertyChanged(nameof(IsZeroTotal));
                 onChanged?.Invoke();
             }
+        }
+    }
+
+    public string CantidadTexto
+    {
+        get => cantidad == decimal.Truncate(cantidad)
+            ? cantidad.ToString("N0", CultureInfo.CurrentCulture)
+            : cantidad.ToString("0.##", CultureInfo.CurrentCulture);
+        set
+        {
+            if (!AllowEdit)
+            {
+                OnPropertyChanged();
+                return;
+            }
+
+            if (!TryParseCantidad(value, out var v))
+            {
+                OnPropertyChanged();
+                return;
+            }
+
+            Cantidad = v;
+            OnPropertyChanged();
         }
     }
 
@@ -74,11 +100,34 @@ public sealed class GastoOpItemVm : ViewModelBase
             if (!AllowEdit) return;
             if (SetProperty(ref precioUnitarioClp, Math.Max(0, value)))
             {
+                OnPropertyChanged(nameof(PrecioTexto));
                 OnPropertyChanged(nameof(Total));
                 OnPropertyChanged(nameof(TotalLabel));
                 OnPropertyChanged(nameof(IsZeroTotal));
                 onChanged?.Invoke();
             }
+        }
+    }
+
+    public string PrecioTexto
+    {
+        get => precioUnitarioClp.ToString("N0", CultureInfo.CurrentCulture);
+        set
+        {
+            if (!AllowEdit)
+            {
+                OnPropertyChanged();
+                return;
+            }
+
+            if (!TryParseClp(value, out var v))
+            {
+                OnPropertyChanged();
+                return;
+            }
+
+            PrecioUnitarioClp = decimal.Round(v, 0, MidpointRounding.AwayFromZero);
+            OnPropertyChanged();
         }
     }
 
@@ -94,4 +143,43 @@ public sealed class GastoOpItemVm : ViewModelBase
         Cantidad = Cantidad,
         PrecioUnitarioClp = PrecioUnitarioClp,
     };
+
+    private static bool TryParseCantidad(string? text, out decimal value)
+    {
+        value = 0m;
+        var s = (text ?? "").Trim().Replace(" ", "");
+        if (s.Length == 0)
+            return true;
+        var dots = 0;
+        foreach (var ch in s)
+        {
+            if (ch == '.')
+                dots++;
+        }
+
+        if (dots > 1)
+            s = s.Replace(".", "");
+        s = s.Replace(',', '.');
+        return decimal.TryParse(s, NumberStyles.Number, CultureInfo.InvariantCulture, out value);
+    }
+
+    private static bool TryParseClp(string? text, out decimal value)
+    {
+        value = 0m;
+        var raw = (text ?? "").Trim();
+        if (raw.Length == 0)
+            return true;
+
+        var digits = new char[raw.Length];
+        var n = 0;
+        foreach (var ch in raw)
+        {
+            if (char.IsDigit(ch))
+                digits[n++] = ch;
+        }
+
+        if (n == 0)
+            return false;
+        return decimal.TryParse(new string(digits, 0, n), NumberStyles.None, CultureInfo.InvariantCulture, out value);
+    }
 }

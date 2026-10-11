@@ -13,6 +13,7 @@ public sealed class OfferClienteRow
     public decimal TotalUf { get; set; }
     public bool EsTitulo { get; set; }
     public string Observaciones { get; set; } = "";
+    public decimal PrecioUnitarioUf => Cantidad > 0m ? Money.Round(TotalUf / Cantidad) : 0m;
 }
 
 /// <summary>

@@ -59,6 +59,8 @@ public sealed class BudgetSettings
     public decimal MetrosCuadrados { get; set; }
     public decimal HerramientasPct { get; set; } = 0m;
     public decimal MermasPct { get; set; } = 0m;
+    public bool FerreteriaActiva { get; set; }
+    public decimal FerreteriaPct { get; set; } = 5m;
     public CommercialCostingModel CommercialModel { get; set; } = CommercialCostingModel.ApuDirectCostWithCommercialFactors;
     public bool AllowPartidaCommercialOverrides { get; set; } = true;
     public List<CommercialPartidaRule> CommercialPartidaRules { get; set; } = new();
@@ -79,10 +81,12 @@ public sealed class BudgetSettings
     public decimal ManoObraDotacionClp { get; set; }
 
     /// <summary>
-    /// Define cómo se integran Cubicación y APU cuando ambos existen para una misma partida.
-    /// - CubicacionManda: mantiene compatibilidad histórica; el APU solo entra cuando no hay cubicación valorizada.
-    /// - ApuManda: el APU es la fuente técnica del precio unitario; la cubicación solo entra en partidas sin APU.
-    /// - CubicacionMasApuComplementarios: la cubicación aporta materiales/MO y el APU suma equipos, subcontratos, HH, herramientas e imprevistos.
+    /// El APU no es obligatorio y no forma parte del presupuesto por sí mismo.
+    /// Es una herramienta secundaria, o una lista de precios cuando el modo toma el precio del APU.
+    /// No tener APU nunca bloquea la revisión ni la exportación.
+    /// - CubicacionManda: el presupuesto sale de la cubicación y la lista de materiales.
+    /// - ApuManda: si existe un APU, su precio unitario alimenta la partida. No es una exigencia.
+    /// - CubicacionMasApuComplementarios: la cubicación es el presupuesto; un APU existente puede sumar recursos complementarios.
     /// - Manual: usa los valores manuales de esta configuración.
     /// </summary>
     public BudgetApuMode ApuMode { get; set; } = BudgetApuMode.CubicacionMasApuComplementarios;
@@ -103,6 +107,8 @@ public sealed class BudgetSettings
             MetrosCuadrados = project.MetrosCuadrados,
             HerramientasPct = MarkupPolicy.ClampPct(project.HerramientasPct),
             MermasPct = MarkupPolicy.ClampPct(project.MermasPct),
+            FerreteriaActiva = project.FerreteriaActiva,
+            FerreteriaPct = MarkupPolicy.ClampPct(project.FerreteriaPct),
             CommercialModel = project.CommercialModel,
             AllowPartidaCommercialOverrides = project.AllowPartidaCommercialOverrides,
             CommercialPartidaRules = (project.CommercialPartidaRules ?? new List<CommercialPartidaRule>()).Select(x => x.Clone()).ToList(),
@@ -144,6 +150,23 @@ public sealed class BudgetSettings
                     settings.PresentationFactorsByFamily[fam] = FamilyPresentationDefaults.ResolveFactor(vars, fam);
                 }
             }
+            var assigned = project.FamiliasPrecioAsignadas;
+            if (assigned != null)
+            {
+                foreach (var pair in assigned)
+                {
+                    if (string.IsNullOrWhiteSpace(pair.Key) || string.IsNullOrWhiteSpace(pair.Value))
+                        continue;
+                    var source = FamilyPresentationDefaults.Normalize(pair.Key);
+                    if (FamilyPresentationDefaults.IsCanonical(source))
+                        continue;
+                    var target = FamilyPresentationDefaults.Normalize(pair.Value);
+                    if (!FamilyPresentationDefaults.IsCanonical(target))
+                        continue;
+                    settings.PresentationFactorsByFamily[source] = FamilyPresentationDefaults.ResolveFactor(vars, target);
+                }
+            }
+
             // Familia general ("" → default 1.14 × (1 − disc)): factor por defecto del proyecto.
             settings.DefaultPresentationFactor = FamilyPresentationDefaults.ResolveFactor(vars, "");
         }

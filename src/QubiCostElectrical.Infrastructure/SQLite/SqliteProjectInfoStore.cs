@@ -69,14 +69,14 @@ internal static class SqliteProjectInfoStore
 
     internal static void SaveCollections(SqliteConnection connection, SqliteTransaction transaction, ProjectInfoRow row, string now)
     {
-        UpsertCollection(connection, transaction, "cubicacion_cell_comments",   "id",      row.CubicacionCellComments,   x => x.Id,     now);
-        UpsertCollection(connection, transaction, "technical_validation_rules", "id",      row.TechnicalValidationRules, x => x.Id,     now);
-        UpsertCollection(connection, transaction, "real_costs",                 "id",      row.RealCosts,                x => x.Id,     now);
-        UpsertCollection(connection, transaction, "partida_workflow",           "item_id", row.PartidaWorkflow,          x => x.ItemId, now);
-        UpsertCollection(connection, transaction, "partida_timeline",           "id",      row.PartidaTimeline,          x => x.Id,     now);
-        UpsertCollection(connection, transaction, "project_audit_log",          "id",      row.AuditLog,                 x => x.Id,     now);
-        UpsertCollection(connection, transaction, "proactive_alert_rules",      "id",      row.ProactiveAlertRules,      x => x.Id,     now);
-        UpsertCollection(connection, transaction, "antecedentes_tecnicos",      "id",      row.AntecedentesTecnicos,     x => x.Id,     now);
+        UpsertCollection(connection, transaction, "cubicacion_cell_comments", "id", row.CubicacionCellComments, x => x.Id, now);
+        UpsertCollection(connection, transaction, "technical_validation_rules", "id", row.TechnicalValidationRules, x => x.Id, now);
+        UpsertCollection(connection, transaction, "real_costs", "id", row.RealCosts, x => x.Id, now);
+        UpsertCollection(connection, transaction, "partida_workflow", "item_id", row.PartidaWorkflow, x => x.ItemId, now);
+        UpsertCollection(connection, transaction, "partida_timeline", "id", row.PartidaTimeline, x => x.Id, now);
+        UpsertCollection(connection, transaction, "project_audit_log", "id", row.AuditLog, x => x.Id, now);
+        UpsertCollection(connection, transaction, "proactive_alert_rules", "id", row.ProactiveAlertRules, x => x.Id, now);
+        UpsertCollection(connection, transaction, "antecedentes_tecnicos", "id", row.AntecedentesTecnicos, x => x.Id, now);
     }
 
     private static void UpsertCollection<T>(
@@ -128,15 +128,15 @@ internal static class SqliteProjectInfoStore
 
     internal static void LoadCollections(SqliteConnection connection, ProjectInfoRow row)
     {
-        row.CubicacionCellComments   = SqliteStoreHelpers.ReadJsonRows<CubicacionCellCommentRow>(connection, "SELECT json FROM cubicacion_cell_comments;");
+        row.CubicacionCellComments = SqliteStoreHelpers.ReadJsonRows<CubicacionCellCommentRow>(connection, "SELECT json FROM cubicacion_cell_comments;");
         row.TechnicalValidationRules = SqliteStoreHelpers.ReadJsonRows<TechnicalValidationRuleRow>(connection, "SELECT json FROM technical_validation_rules;");
-        row.RealCosts                = SqliteStoreHelpers.ReadJsonRows<RealCostRow>(connection, "SELECT json FROM real_costs;");
-        row.PartidaWorkflow          = SqliteStoreHelpers.ReadJsonRows<PartidaWorkflowRow>(connection, "SELECT json FROM partida_workflow;");
-        row.PartidaTimeline          = SqliteStoreHelpers.ReadJsonRows<PartidaChangeTimelineRow>(connection, "SELECT json FROM partida_timeline;");
-        row.AuditLog                 = SqliteStoreHelpers.ReadJsonRows<ProjectAuditEntryRow>(connection, "SELECT json FROM project_audit_log;");
+        row.RealCosts = SqliteStoreHelpers.ReadJsonRows<RealCostRow>(connection, "SELECT json FROM real_costs;");
+        row.PartidaWorkflow = SqliteStoreHelpers.ReadJsonRows<PartidaWorkflowRow>(connection, "SELECT json FROM partida_workflow;");
+        row.PartidaTimeline = SqliteStoreHelpers.ReadJsonRows<PartidaChangeTimelineRow>(connection, "SELECT json FROM partida_timeline;");
+        row.AuditLog = SqliteStoreHelpers.ReadJsonRows<ProjectAuditEntryRow>(connection, "SELECT json FROM project_audit_log;");
         if (row.AuditLog.Count > 1)
             row.AuditLog = row.AuditLog.OrderBy(x => x.OccurredAt).ToList();
-        row.ProactiveAlertRules      = SqliteStoreHelpers.ReadJsonRows<ProactiveAlertRuleRow>(connection, "SELECT json FROM proactive_alert_rules;");
-        row.AntecedentesTecnicos     = SqliteStoreHelpers.ReadJsonRows<AntecedenteTecnicoRow>(connection, "SELECT json FROM antecedentes_tecnicos;");
+        row.ProactiveAlertRules = SqliteStoreHelpers.ReadJsonRows<ProactiveAlertRuleRow>(connection, "SELECT json FROM proactive_alert_rules;");
+        row.AntecedentesTecnicos = SqliteStoreHelpers.ReadJsonRows<AntecedenteTecnicoRow>(connection, "SELECT json FROM antecedentes_tecnicos;");
     }
 }

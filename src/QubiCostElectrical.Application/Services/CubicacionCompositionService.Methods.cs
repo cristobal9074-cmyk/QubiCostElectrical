@@ -49,61 +49,63 @@ public sealed partial class CubicacionCompositionService
         if (data == null) return;
         EnsureLists(data);
 
-        // Antes se armaba con ToDictionary(x => x.Id), que lanza si dos filas legacy terminan con
-        // el mismo Id (visto en producción: un ArgumentException acá tumbaba toda la app, incluso
-        // en medio de una acción tan común como aplicar un material). Puede pasar por datos viejos
-        // corruptos o una carrera de eventos que duplicó una fila — de cualquier forma, no debe
-        // ser fatal: se conserva la PRIMERA fila con cada Id (la que Cubicación sigue mostrando) y
-        // el resto se descarta silenciosamente de este índice, sin perder ninguna otra fila real.
-        var legacyById = new Dictionary<string, CubicacionRow>(StringComparer.OrdinalIgnoreCase);
-        foreach (var row in data.Cubicacion)
+        try
         {
-            if (!legacyById.ContainsKey(row.Id))
-                legacyById[row.Id] = row;
-        }
+            var legacyRows = data.Cubicacion.ToArray();
+            var valorizaciones = data.CubicacionValorizaciones.ToArray();
+            var zonaCantidades = data.CubicacionZonaCantidades.ToArray();
+            var recursos = data.CubicacionRecursos.ToArray();
 
-        // Índices por RecursoId construidos UNA vez: antes, ComposeLegacyRow escaneaba
-        // linealmente CubicacionValorizaciones y CubicacionZonaCantidades por CADA recurso,
-        // volviendo esto O(N²) — con miles de recursos eso eran varios SEGUNDOS por llamada
-        // (crítico porque se ejecuta en cada snapshot de Undo/Redo). Con los índices queda O(N).
-        var valorizacionByRecursoId = new Dictionary<string, CubicacionValorizacionRow>(StringComparer.OrdinalIgnoreCase);
-        foreach (var v in data.CubicacionValorizaciones)
-        {
-            if (!string.IsNullOrWhiteSpace(v.RecursoId) && !valorizacionByRecursoId.ContainsKey(v.RecursoId))
-                valorizacionByRecursoId[v.RecursoId] = v;
-        }
-
-        var zonasByRecursoId = new Dictionary<string, List<CubicacionZonaCantidadRow>>(StringComparer.OrdinalIgnoreCase);
-        foreach (var z in data.CubicacionZonaCantidades)
-        {
-            if (string.IsNullOrWhiteSpace(z.RecursoId)) continue;
-            if (!zonasByRecursoId.TryGetValue(z.RecursoId, out var list))
-                zonasByRecursoId[z.RecursoId] = list = new List<CubicacionZonaCantidadRow>();
-            list.Add(z);
-        }
-
-        foreach (var recurso in data.CubicacionRecursos.OrderBy(r => r.Orden).ThenBy(r => r.Codigo, StringComparer.OrdinalIgnoreCase))
-        {
-            if (!legacyById.TryGetValue(recurso.Id, out var row))
+            var legacyById = new Dictionary<string, CubicacionRow>(StringComparer.OrdinalIgnoreCase);
+            foreach (var row in legacyRows)
             {
-                row = new CubicacionRow { Id = recurso.Id };
-                data.Cubicacion.Add(row);
-                legacyById[recurso.Id] = row;
+                if (!legacyById.ContainsKey(row.Id))
+                    legacyById[row.Id] = row;
             }
 
-            valorizacionByRecursoId.TryGetValue(recurso.Id, out var valorizacion);
-            zonasByRecursoId.TryGetValue(recurso.Id, out var zonasForRecurso);
-            ComposeLegacyRow(recurso, row, valorizacion, zonasForRecurso, data.Proyecto.ValorUfClp);
-            if (row.MatClp == 0m && row.MoClp == 0m && !string.IsNullOrWhiteSpace(recurso.Codigo))
+            var valorizacionByRecursoId = new Dictionary<string, CubicacionValorizacionRow>(StringComparer.OrdinalIgnoreCase);
+            foreach (var v in valorizaciones)
             {
-                var material = data.Materiales.FirstOrDefault(m => string.Equals(m.Codigo, recurso.Codigo, StringComparison.OrdinalIgnoreCase));
-                if (material != null && (material.MatClp > 0m || material.MoClp > 0m))
+                if (!string.IsNullOrWhiteSpace(v.RecursoId) && !valorizacionByRecursoId.ContainsKey(v.RecursoId))
+                    valorizacionByRecursoId[v.RecursoId] = v;
+            }
+
+            var zonasByRecursoId = new Dictionary<string, List<CubicacionZonaCantidadRow>>(StringComparer.OrdinalIgnoreCase);
+            foreach (var z in zonaCantidades)
+            {
+                if (string.IsNullOrWhiteSpace(z.RecursoId)) continue;
+                if (!zonasByRecursoId.TryGetValue(z.RecursoId, out var list))
+                    zonasByRecursoId[z.RecursoId] = list = new List<CubicacionZonaCantidadRow>();
+                list.Add(z);
+            }
+
+            foreach (var recurso in recursos.OrderBy(r => r.Orden).ThenBy(r => r.Codigo, StringComparer.OrdinalIgnoreCase))
+            {
+                if (!legacyById.TryGetValue(recurso.Id, out var row))
                 {
-                    row.MatClp = material.MatClp;
-                    row.MoClp = material.MoClp;
-                    row.RecalcularUf(data.Proyecto.ValorUfClp);
+                    row = new CubicacionRow { Id = recurso.Id };
+                    data.Cubicacion.Add(row);
+                    legacyById[recurso.Id] = row;
+                }
+
+                valorizacionByRecursoId.TryGetValue(recurso.Id, out var valorizacion);
+                zonasByRecursoId.TryGetValue(recurso.Id, out var zonasForRecurso);
+                ComposeLegacyRow(recurso, row, valorizacion, zonasForRecurso, data.Proyecto.ValorUfClp);
+                if (row.MatClp == 0m && row.MoClp == 0m && !string.IsNullOrWhiteSpace(recurso.Codigo))
+                {
+                    var material = data.Materiales.FirstOrDefault(m => string.Equals(m.Codigo, recurso.Codigo, StringComparison.OrdinalIgnoreCase));
+                    if (material != null && (material.MatClp > 0m || material.MoClp > 0m))
+                    {
+                        row.MatClp = material.MatClp;
+                        row.MoClp = MaterialMoResolver.MoClpEfectiva(material, data.Proyecto);
+                        row.RecalcularUf(data.Proyecto.ValorUfClp);
+                    }
                 }
             }
+        }
+        catch (InvalidOperationException)
+        {
+            // Tolerancia a mutación concurrente en UI durante snapshot en segundo plano
         }
     }
 
@@ -112,7 +114,7 @@ public sealed partial class CubicacionCompositionService
         if (data == null || row == null || material == null) return;
 
         decimal matClp = Math.Round(material.MatClp, 0, MidpointRounding.AwayFromZero);
-        decimal moClp = Math.Round(material.MoClp, 0, MidpointRounding.AwayFromZero);
+        decimal moClp = Math.Round(MaterialMoResolver.MoClpEfectiva(material, data.Proyecto), 0, MidpointRounding.AwayFromZero);
         PrecioCongeladoRow? snapshot = null;
         string fuente = "Lista de precios";
         DateTime fecha = DateTime.Today;
@@ -133,7 +135,7 @@ public sealed partial class CubicacionCompositionService
         row.MatClp = matClp;
         row.MoClp = moClp;
         row.RecalcularUf(data.Proyecto.ValorUfClp);
-        
+
         row.Tipo = string.Equals(material.Categoria, "Equipo", StringComparison.OrdinalIgnoreCase) ? "EQ" : "MAT";
         if (!string.IsNullOrWhiteSpace(material.Categoria))
             row.Area = material.Categoria;

@@ -664,6 +664,26 @@ public sealed partial class BudgetEngine
                 IsGlobalAutoCharge = true
             });
         }
+
+        if (settings.FerreteriaActiva && settings.FerreteriaPct > 0m)
+        {
+            decimal baseMateriales = result.Origenes
+                .Where(x => !x.IsGlobalAutoCharge)
+                .Sum(x => x.MaterialesUf);
+            decimal ferreteria = baseMateriales * MarkupPolicy.ClampPct(settings.FerreteriaPct) / 100m;
+            if (ferreteria != 0m)
+            {
+                AddOrigin(result, new CostOriginBreakdown
+                {
+                    Origen = BudgetCostOrigin.Manual,
+                    Descripcion = $"Ferretería {settings.FerreteriaPct:0.##}% sobre materiales",
+                    MaterialesUf = ferreteria,
+                    VentaClp = ferreteria * ventaFactor,
+                    HasRowLevelMarkup = usaFactoresFamilia,
+                    IsGlobalAutoCharge = true
+                });
+            }
+        }
     }
 
     private static void AddApprovedChangeOrders(DirectCostResult result, IEnumerable<ChangeOrderRow>? changeOrders, BudgetSettings settings)
@@ -672,7 +692,10 @@ public sealed partial class BudgetEngine
         decimal factorPresentacion = usaFactoresFamilia ? settings.DefaultPresentationFactor : 1m;
         foreach (var oc in changeOrders ?? Enumerable.Empty<ChangeOrderRow>())
         {
-            if (!string.Equals(NormalizeStatus(oc.Estado), "APROBADA", StringComparison.OrdinalIgnoreCase)) continue;
+            var st = NormalizeStatus(oc.Estado);
+            if (!string.Equals(st, "APROBADA", StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(st, "APROBADO", StringComparison.OrdinalIgnoreCase))
+                continue;
             if (oc.DeltaCostoUf == 0m) continue;
             AddOrigin(result, new CostOriginBreakdown
             {

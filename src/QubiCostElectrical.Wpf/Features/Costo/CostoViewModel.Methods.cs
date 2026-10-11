@@ -14,10 +14,12 @@ namespace QubiCostElectrical.Wpf.Features.Costo;
 
 public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefreshablePage
 {
-    public CostoViewModel(IShellNavigationHost shell, WpfAppHost host)
-        : this(shell, host.Session, host.ProjectWorkspace, host.Dashboard, host.Services.CurrencyConversion, host.Audit) { }
+    private readonly IPriceBankStore? priceBank;
 
-    public CostoViewModel(IShellNavigationHost shell, BudgetProjectSession session, IProjectWorkspaceService workspace, DashboardPresenter dashboard, ICurrencyConversionService currencySvc, ProjectAuditRecorder? audit = null) : base(session)
+    public CostoViewModel(IShellNavigationHost shell, WpfAppHost host)
+        : this(shell, host.Session, host.ProjectWorkspace, host.Dashboard, host.Services.CurrencyConversion, host.Audit, host.PriceBankStore) { }
+
+    public CostoViewModel(IShellNavigationHost shell, BudgetProjectSession session, IProjectWorkspaceService workspace, DashboardPresenter dashboard, ICurrencyConversionService currencySvc, ProjectAuditRecorder? audit = null, IPriceBankStore? priceBank = null) : base(session)
     {
         this.shell = shell;
         this.session = session;
@@ -25,6 +27,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         this.dashboard = dashboard;
         this.currencySvc = currencySvc;
         this.audit = audit;
+        this.priceBank = priceBank;
         OpenProjectCommand = new RelayCommand(() => _ = shell.OpenProjectAsync());
         goToTakeoffCommand = new RelayCommand(() => shell.RequestNavigate(ShellRoute.Takeoff), () => !ShowEmptyState);
         goToItemizedCommand = new RelayCommand(() => shell.RequestNavigate(ShellRoute.Itemized), () => !ShowEmptyState);
@@ -37,9 +40,17 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         RemoveGoCategoriaCommand = new RelayCommand<GastoOpCategoriaVm>(RemoveGoCategoria, _ => CanEdit);
         ResetGoPlantillaCommand = new RelayCommand(ResetGoPlantilla, () => CanEdit);
         ToggleGoCategoriaCommand = new RelayCommand<GastoOpCategoriaVm>(ToggleGoCategoria);
+        ToggleCostGroupCommand = new RelayCommand<CostoGrupoVm>(ToggleCostGroup);
+        ToggleAnalisisCommand = new RelayCommand(ToggleAnalisis);
+        ToggleFerreteriaDetalleCommand = new RelayCommand(ToggleFerreteriaDetalle);
+        AbrirCatalogoFamiliasCommand = new RelayCommand<CoefFactorVm>(AbrirCatalogoFamilias);
+        ElegirFamiliaPrecioCommand = new RelayCommand<PrecioFamiliaPickVm>(ElegirFamiliaPrecio);
         OpenViaticosCommand = new RelayCommand<GastoOpCategoriaVm>(OpenViaticos, c => CanEdit && c is { IsViaticosCategory: true });
+        OpenViaticosBarCommand = new RelayCommand(
+            () => OpenViaticos(GastosOperacionales.FirstOrDefault(c => c.IsViaticosCategory)),
+            () => CanEdit);
         ResetCoeficientesCommand = new RelayCommand(ResetCoeficientes, () => CanEdit);
-        LoadPelCoeficientesCommand = new RelayCommand(LoadPel029Coeficientes, () => CanEdit);
+        LoadCoeficientesEstandarCommand = new RelayCommand(LoadCoeficientesEstandar, () => CanEdit);
         LoadTipicosCoeficientesCommand = new RelayCommand(LoadTipicosCoeficientes, () => CanEdit);
         SaveCostosPresetCommand = new RelayCommand(SaveCostosPreset, () => CanEdit);
         RestoreCostosPresetCommand = new RelayCommand(RestoreCostosPreset, () => CanEdit && HasCostosPreset);
@@ -48,6 +59,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         RemoveNegotiatedDiscountCommand = new RelayCommand<NegotiatedDiscountVm>(RemoveNegotiatedDiscount, _ => CanEdit);
         AddStaffingRoleCommand = new RelayCommand(AddStaffingRole, () => CanEdit);
         RemoveStaffingRoleCommand = new RelayCommand<StaffingRoleVm>(RemoveStaffingRole, _ => CanEdit);
+        MoInstalacion = new(session, () => CanEdit, () => MoDirectaRows, RunSuppressed, RefreshCostOnly);
         ClosingPolicySection = new ClosingPolicySectionVm(CommitClosingPolicyType, CommitClosingPolicyParam);
         NegotiationSimulator = new CommercialNegotiationVm(ApplyNegotiatedTargetPrice, () => CanEdit);
         EnsureCoefFactors();
@@ -100,6 +112,12 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
     public string UfM2Label { get => ufM2Label; private set => SetProperty(ref ufM2Label, value); }
     public string UfM2SubLabel { get => ufM2SubLabel; private set => SetProperty(ref ufM2SubLabel, value); }
     public string ResumenFooterText { get => resumenFooterText; private set => SetProperty(ref resumenFooterText, value); }
+    public string ValorUfDiaLabel { get => valorUfDiaLabel; private set => SetProperty(ref valorUfDiaLabel, value); }
+    public string FamCostoLabel { get => famCostoLabel; private set => SetProperty(ref famCostoLabel, value); }
+    public string FamVentaLabel { get => famVentaLabel; private set => SetProperty(ref famVentaLabel, value); }
+    public string FamDeltaLabel { get => famDeltaLabel; private set => SetProperty(ref famDeltaLabel, value); }
+    public string ChainIvaLabel { get => chainIvaLabel; private set => SetProperty(ref chainIvaLabel, value); }
+    public string ChainTotalLabel { get => chainTotalLabel; private set => SetProperty(ref chainTotalLabel, value); }
     public string Currency { get => currency; private set => SetProperty(ref currency, value); }
     public string CurrencyColumnHeader { get => currencyColumnHeader; private set => SetProperty(ref currencyColumnHeader, value); }
 
@@ -132,8 +150,9 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
                 RemoveGoCategoriaCommand.RaiseCanExecuteChanged();
                 ResetGoPlantillaCommand.RaiseCanExecuteChanged();
                 OpenViaticosCommand.RaiseCanExecuteChanged();
+                (OpenViaticosBarCommand as RelayCommand)?.RaiseCanExecuteChanged();
                 ResetCoeficientesCommand.RaiseCanExecuteChanged();
-                LoadPelCoeficientesCommand.RaiseCanExecuteChanged();
+                LoadCoeficientesEstandarCommand.RaiseCanExecuteChanged();
                 LoadTipicosCoeficientesCommand.RaiseCanExecuteChanged();
                 SaveCostosPresetCommand.RaiseCanExecuteChanged();
                 RestoreCostosPresetCommand.RaiseCanExecuteChanged();
@@ -215,6 +234,43 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         }
     }
 
+    public bool FerreteriaActiva
+    {
+        get => ferreteriaActiva;
+        set
+        {
+            if (!SetProperty(ref ferreteriaActiva, value))
+                return;
+            if (!CanEdit)
+                return;
+            session.ProjectInfo.FerreteriaActiva = value;
+            if (value && session.ProjectInfo.FerreteriaPct <= 0m)
+            {
+                session.ProjectInfo.FerreteriaPct = 5m;
+                ferreteriaPctText = 5m.ToString("N1", CultureInfo.CurrentCulture);
+                OnPropertyChanged(nameof(FerreteriaPctText));
+            }
+            session.MarkDirty(ProjectDirtyScope.ProjectInfo);
+            RefreshCostOnly();
+        }
+    }
+
+    public string FerreteriaPctText
+    {
+        get => ferreteriaPctText;
+        set
+        {
+            if (!SetProperty(ref ferreteriaPctText, value ?? ""))
+                return;
+            if (!CanEdit || !TryParsePct(value, out var pct))
+                return;
+            session.ProjectInfo.FerreteriaPct = pct;
+            session.MarkDirty(ProjectDirtyScope.ProjectInfo);
+            if (session.ProjectInfo.FerreteriaActiva)
+                RefreshCostOnly();
+        }
+    }
+
     public string UtilidadPolicyLabel
     {
         get => utilidadPolicyLabel;
@@ -251,7 +307,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
             {
                 session.ProjectInfo.PoliticaCostosExcel = value;
                 session.MarkDirty(ProjectDirtyScope.ProjectInfo);
-                UtilidadPolicyLabel = value ? "Utilidades (aditiva Excel)" : "Margen s/ venta";
+                UtilidadPolicyLabel = value ? "Utilidades (aditiva)" : "Margen s/ venta";
                 RefreshCostOnly();
             }
             finally
@@ -263,7 +319,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
 
     /// <summary>
     /// C3: fuerza la venta línea a línea por factores de presentación por familia. La política
-    /// Excel COSTOS ya lo implica; este switch permite activarlo también con markup global.
+    /// La política nativa ya lo implica; este switch permite activarlo también con markup global.
     /// </summary>
     public bool UsarFactoresPresentacionFamilia
     {
@@ -287,7 +343,58 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
     }
     private bool usarFactoresPresentacionFamilia;
 
+    /// <summary>Seccion M.O. de instalacion (modo rendimiento / tarifa D-H). Logica en MoInstalacionSectionVm.</summary>
+    public MoInstalacionSectionVm MoInstalacion { get; }
+
+    private void RunSuppressed(Action action)
+    {
+        suppressCoefRefresh = true;
+        try { action(); }
+        finally { suppressCoefRefresh = false; }
+    }
+
+
+
     public ObservableCollection<CostoRowVm> CostRows { get; } = new();
+    public ObservableCollection<CostoRowVm> OrigenesDirectos { get; } = new();
+    public ObservableCollection<CostoGrupoVm> CostGroups { get; } = new();
+    public CostoRowVm? VentaCierre
+    {
+        get => ventaCierre;
+        private set
+        {
+            if (SetProperty(ref ventaCierre, value))
+                OnPropertyChanged(nameof(HasVentaCierre));
+        }
+    }
+    public bool HasVentaCierre => VentaCierre != null;
+    public CostoRowVm? UfMetroCierre
+    {
+        get => ufMetroCierre;
+        private set
+        {
+            if (SetProperty(ref ufMetroCierre, value))
+                OnPropertyChanged(nameof(HasUfMetroCierre));
+        }
+    }
+    public bool HasUfMetroCierre => UfMetroCierre != null;
+    public ObservableCollection<CostoRowVm> CierreAjustes { get; } = new();
+    public RelayCommand<CostoGrupoVm> ToggleCostGroupCommand { get; }
+    public RelayCommand ToggleAnalisisCommand { get; }
+    public RelayCommand ToggleFerreteriaDetalleCommand { get; }
+    public RelayCommand<CoefFactorVm> AbrirCatalogoFamiliasCommand { get; }
+    public RelayCommand<PrecioFamiliaPickVm> ElegirFamiliaPrecioCommand { get; }
+    private bool analisisAbierto;
+    public bool AnalisisAbierto
+    {
+        get => analisisAbierto;
+        private set
+        {
+            if (SetProperty(ref analisisAbierto, value))
+                OnPropertyChanged(nameof(AnalisisChevron));
+        }
+    }
+    public string AnalisisChevron => analisisAbierto ? "\u25BE" : "\u25B8";
     public ObservableCollection<CostoOrigenVm> Origenes { get; } = new();
     public ObservableCollection<CostoFamiliaVm> Familias { get; } = new();
     public ObservableCollection<MoDirectaRowVm> MoDirectaRows { get; } = new();
@@ -296,6 +403,8 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
     public ObservableCollection<GoComposeSegmentVm> GoComposeSegments { get; } = new();
     public ObservableCollection<GoComposeLegendVm> GoComposeLegend { get; } = new();
     public ObservableCollection<CoefFactorVm> CoefFactors { get; } = new();
+    public ObservableCollection<PrecioFamiliaChipVm> PrecioFamiliasLibres { get; } = new();
+    public bool HasPrecioFamiliasLibres => PrecioFamiliasLibres.Count > 0;
     public ObservableCollection<NegotiatedDiscountVm> NegotiatedDiscounts { get; } = new();
     public ObservableCollection<StaffingRoleVm> StaffingPlan { get; } = new();
 
@@ -312,8 +421,9 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
     public RelayCommand ResetGoPlantillaCommand { get; }
     public RelayCommand<GastoOpCategoriaVm> ToggleGoCategoriaCommand { get; }
     public RelayCommand<GastoOpCategoriaVm> OpenViaticosCommand { get; }
+    public RelayCommand OpenViaticosBarCommand { get; }
     public RelayCommand ResetCoeficientesCommand { get; }
-    public RelayCommand LoadPelCoeficientesCommand { get; }
+    public RelayCommand LoadCoeficientesEstandarCommand { get; }
     public RelayCommand LoadTipicosCoeficientesCommand { get; }
     public RelayCommand SaveCostosPresetCommand { get; }
     public RelayCommand RestoreCostosPresetCommand { get; }
@@ -358,7 +468,12 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
             || string.Equals(e.Scope, "negotiated_discounts", StringComparison.OrdinalIgnoreCase)
             || string.Equals(e.Scope, "staffing_plan", StringComparison.OrdinalIgnoreCase))
             return;
-        System.Windows.Application.Current?.Dispatcher.InvokeAsync(Refresh);
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        {
+            if (CoefFactors.Any(f => f.SuspendPush))
+                return;
+            Refresh();
+        });
     }
 
     public void Refresh()
@@ -366,97 +481,120 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         IsLoading = true;
         try
         {
-        ShowEmptyState = !workspace.HasOpenProject;
-        CanEdit = !ShowEmptyState && !session.IsReadOnly;
-        goToTakeoffCommand.RaiseCanExecuteChanged();
-        goToItemizedCommand.RaiseCanExecuteChanged();
-        goToManoDeObraCommand.RaiseCanExecuteChanged();
-        goToEppCommand.RaiseCanExecuteChanged();
-        goToReviewCommand.RaiseCanExecuteChanged();
-        AddNegotiatedDiscountCommand.RaiseCanExecuteChanged();
-        RemoveNegotiatedDiscountCommand.RaiseCanExecuteChanged();
-        AddStaffingRoleCommand.RaiseCanExecuteChanged();
-        RemoveStaffingRoleCommand.RaiseCanExecuteChanged();
-        if (ShowEmptyState) return;
+            ShowEmptyState = !workspace.HasOpenProject;
+            CanEdit = !ShowEmptyState && !session.IsReadOnly;
+            goToTakeoffCommand.RaiseCanExecuteChanged();
+            goToItemizedCommand.RaiseCanExecuteChanged();
+            goToManoDeObraCommand.RaiseCanExecuteChanged();
+            goToEppCommand.RaiseCanExecuteChanged();
+            goToReviewCommand.RaiseCanExecuteChanged();
+            AddNegotiatedDiscountCommand.RaiseCanExecuteChanged();
+            RemoveNegotiatedDiscountCommand.RaiseCanExecuteChanged();
+            AddStaffingRoleCommand.RaiseCanExecuteChanged();
+            RemoveStaffingRoleCommand.RaiseCanExecuteChanged();
+            if (ShowEmptyState) return;
 
-        var project = session.ProjectInfo;
-        var data = session.Data;
+            var project = session.ProjectInfo;
+            var data = session.Data;
 
-        var cost = dashboard.BuildCost(data);
-        var svc = currencySvc;
-        var moneda = svc.NormalizeCurrency(project.MonedaPresupuesto);
-        var valorUf = project.ValorUfClp > 0 ? project.ValorUfClp : session.ValorUfClp;
-        if (valorUf <= 0) valorUf = PriceConversion.DefaultValorUfClp;
-        currentValorUf = valorUf;
-        var tipoCambio = project.TipoCambioUsdClp;
+            var cost = dashboard.BuildCost(data);
+            var svc = currencySvc;
+            var moneda = svc.NormalizeCurrency(project.MonedaPresupuesto);
+            var valorUf = project.ValorUfClp > 0 ? project.ValorUfClp : session.ValorUfClp;
+            if (valorUf <= 0) valorUf = PriceConversion.DefaultValorUfClp;
+            currentValorUf = valorUf;
+            var tipoCambio = project.TipoCambioUsdClp;
 
-        Currency = moneda;
-        CurrencyColumnHeader = $"Valor ({moneda})";
+            Currency = moneda;
+            CurrencyColumnHeader = moneda;
 
-        // ─── Familias (desde catálogo de materiales) ────────────────────────
-        var familias = Familias;
-        familias.Clear();
-        var cubicacion = data.Cubicacion ?? Enumerable.Empty<CubicacionRow>();
-        var materiales = data.Materiales ?? Enumerable.Empty<MaterialRow>();
-        var cubicacionByCode = cubicacion
-            .Where(r => !string.IsNullOrWhiteSpace(r.Codigo))
-            .ToLookup(r => r.Codigo, StringComparer.OrdinalIgnoreCase);
-        var familiaGroups = materiales
-            .Where(m => !string.IsNullOrWhiteSpace(m.Categoria) && !string.IsNullOrWhiteSpace(m.Codigo))
-            .GroupBy(m => m.Categoria, StringComparer.OrdinalIgnoreCase);
-        foreach (var grupo in familiaGroups)
-        {
-            var codesInFamily = grupo.Select(m => m.Codigo).ToHashSet(StringComparer.OrdinalIgnoreCase);
-            var cubRows = codesInFamily.SelectMany(c => cubicacionByCode[c]);
-            var totalClp = cubRows.Sum(r => r.MatClp * r.Cantidad + r.MoClp * r.Cantidad);
-            var totalUf = cubRows.Sum(r => r.UfTotal);
-            var cantTotal = cubRows.Sum(r => Math.Abs(r.Cantidad));
-            familias.Add(new CostoFamiliaVm
+            // ─── Familias (desde catálogo de materiales) ────────────────────────
+            var familias = Familias;
+            familias.Clear();
+            var cubicacion = data.Cubicacion ?? Enumerable.Empty<CubicacionRow>();
+            var materiales = data.Materiales ?? Enumerable.Empty<MaterialRow>();
+            var cubicacionByCode = cubicacion
+                .Where(r => !string.IsNullOrWhiteSpace(r.Codigo))
+                .ToLookup(r => r.Codigo, StringComparer.OrdinalIgnoreCase);
+            var familiaGroups = materiales
+                .Where(m => !string.IsNullOrWhiteSpace(m.Categoria) && !string.IsNullOrWhiteSpace(m.Codigo))
+                .GroupBy(m => m.Categoria, StringComparer.OrdinalIgnoreCase);
+            var familiaBuilt = new List<(string Key, int Count, decimal Clp, decimal Uf, decimal Cant, string Unidad)>();
+            foreach (var grupo in familiaGroups)
             {
-                Familia = grupo.Key,
-                MaterialesCount = codesInFamily.Count,
-                TotalClp = totalClp,
-                TotalUf = totalUf,
-                TotalLabel = CurrencyFormat.Clp(totalClp),
-                TotalMonedaLabel = $"{totalUf:N2} UF",
-                CountLabel = $"{cantTotal:N2} {grupo.First().Unidad ?? ""}"
-            });
-        }
-        ShowFamilias = familias.Count > 0;
+                var codesInFamily = grupo.Select(m => m.Codigo).ToHashSet(StringComparer.OrdinalIgnoreCase);
+                var cubRows = codesInFamily.SelectMany(c => cubicacionByCode[c]);
+                familiaBuilt.Add((
+                    grupo.Key,
+                    codesInFamily.Count,
+                    cubRows.Sum(r => r.MatClp * r.Cantidad + r.MoClp * r.Cantidad),
+                    cubRows.Sum(r => r.UfTotal),
+                    cubRows.Sum(r => Math.Abs(r.Cantidad)),
+                    grupo.First().Unidad ?? ""));
+            }
 
-        // ─── MO Dotación (desde datos del proyecto o seed) ──────────────────
-        RefreshMoSection(data, valorUf);
-
-        // ─── Gastos Operacionales (editable) ────────────────────────────────
-        RefreshGoSection(data, valorUf);
-
-        // ─── Coeficientes de sobreventa ─────────────────────────────────────
-        RefreshCoeficientesSection(project);
-
-        // ─── Descuentos negociados y dotación indirecta ─────────────────────
-        RefreshNegotiatedDiscountsSection(data);
-        RefreshStaffingPlanSection(data);
-
-        UpdateSummaryKpis(cost, project, valorUf);
-
-        FillCostRows(CostRows, cost, project, moneda, valorUf, tipoCambio);
-        RefreshClosingPolicySection(cost, moneda, valorUf, tipoCambio);
-
-        // Orígenes
-        var origenes = Origenes;
-        origenes.Clear();
-        foreach (var o in cost.OrigenesResumen.OrderByDescending(o => o.TotalUf))
-            origenes.Add(new CostoOrigenVm
+            familiaBuilt.Sort((a, b) => b.Clp.CompareTo(a.Clp));
+            decimal familiaSum = 0m;
+            foreach (var row in familiaBuilt)
+                familiaSum += row.Clp;
+            const double familiaTrack = 252d;
+            foreach (var row in familiaBuilt)
             {
-                Origen = o.Origen,
-                Descripcion = DescribeOrigen(o.Origen),
-                MaterialesUf = o.MaterialesUf,
-                ManoObraUf = o.ManoObraUf,
-                EquiposUf = o.EquiposUf,
-                TotalUf = o.TotalUf
-            });
+                var share = familiaSum > 0m ? row.Clp / familiaSum : 0m;
+                var width = row.Clp > 0m && familiaSum > 0m
+                    ? Math.Max(4d, (double)(share * (decimal)familiaTrack))
+                    : 0d;
+                familias.Add(new CostoFamiliaVm
+                {
+                    Familia = row.Key,
+                    MaterialesCount = row.Count,
+                    TotalClp = row.Clp,
+                    TotalUf = row.Uf,
+                    TotalLabel = CurrencyFormat.Clp(row.Clp),
+                    TotalMonedaLabel = $"{row.Uf:N2} UF",
+                    CountLabel = $"{row.Cant:N2} {row.Unidad}".Trim(),
+                    ShareLabel = (share * 100m).ToString("0", CultureInfo.CurrentCulture) + "%",
+                    Share = (double)share,
+                    BarWidth = width
+                });
+            }
+            ShowFamilias = familias.Count > 0;
 
-        ShowOrigenes = origenes.Count > 0;
+            // ─── MO Dotación (desde datos del proyecto o seed) ──────────────────
+            RefreshMoSection(data, valorUf);
+
+            // ─── Gastos Operacionales (editable) ────────────────────────────────
+            RefreshGoSection(data, valorUf);
+
+            // ─── Coeficientes de sobreventa ─────────────────────────────────────
+            RefreshCoeficientesSection(project);
+
+            // ─── Descuentos negociados y dotación indirecta ─────────────────────
+            RefreshNegotiatedDiscountsSection(data);
+            RefreshStaffingPlanSection(data);
+
+            UpdateSummaryKpis(cost, project, valorUf);
+            RefreshFerreteriaFamilias(cost, data, project, valorUf);
+
+            FillCostRows(CostRows, cost, project, moneda, valorUf, tipoCambio);
+            RefreshClosingPolicySection(cost, moneda, valorUf, tipoCambio);
+            AttachCoefPresentation();
+
+            // Orígenes
+            var origenes = Origenes;
+            origenes.Clear();
+            foreach (var o in cost.OrigenesResumen.OrderByDescending(o => o.TotalUf))
+                origenes.Add(new CostoOrigenVm
+                {
+                    Origen = o.Origen,
+                    Descripcion = DescribeOrigen(o.Origen),
+                    MaterialesUf = o.MaterialesUf,
+                    ManoObraUf = o.ManoObraUf,
+                    EquiposUf = o.EquiposUf,
+                    TotalUf = o.TotalUf
+                });
+
+            ShowOrigenes = origenes.Count > 0;
         }
         finally
         {
@@ -490,6 +628,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
                 Cargo = line.Cargo,
                 Dotacion = line.Dotacion,
                 SueldoMensualClp = line.SueldoMensualClp,
+                FraccionObra = line.FraccionObra,
                 Pct = line.Pct
             });
         }
@@ -510,6 +649,10 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
 
     private void RefreshGoSection(ProjectFileData data, decimal valorUf)
     {
+        var open = GastosOperacionales
+            .Where(c => c.IsExpanded)
+            .Select(c => c.Codigo)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
         GastosOperacionales.Clear();
 
         // Repara proyectos donde el sync EPP dejó solo 3.5 (u otras categorías faltantes).
@@ -519,11 +662,10 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         var seededFresh = source == null || source.Count == 0;
         var rows = seededFresh ? GastoOperacionalPlantilla.CreateClean() : source!;
 
-        var first = true;
         foreach (var r in rows)
         {
-            GastosOperacionales.Add(new GastoOpCategoriaVm(r, valorUf, OnGoChanged, expanded: first, canEdit: () => CanEdit));
-            first = false;
+            var expanded = open.Contains(r.Codigo ?? "");
+            GastosOperacionales.Add(new GastoOpCategoriaVm(r, valorUf, OnGoChanged, expanded: expanded, canEdit: () => CanEdit));
         }
 
         var ensuredBus = EnsureTrasladoBusItem();
@@ -543,8 +685,8 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
             return false;
 
         // Asegura que las cantidades EPP reflejen la MO actual antes de pintar GO.
-        var (dotDir, dotInd) = EppBudgetData.ReadMoDotacion(data);
-        epp.ApplyMoDotacion(dotDir, dotInd);
+        var mo = EppBudgetData.ReadMoDrivers(data);
+        epp.ApplyMoDotacion(mo.MesesObra, mo.PromedioDirecto, mo.DotacionIndirecta);
         data.Epp = epp;
         EppBudgetData.PushToGoCategory(data, epp);
 
@@ -607,7 +749,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
 
         TotalGoLabel = CurrencyFormat.Clp(totalGoClp);
         TotalGoUfLabel = $"{totalGoUf:N2} UF";
-        TotalGoUfSubLabel = $"{totalGoUf:N2} UF · UF $ {currentValorUf:N0}";
+        TotalGoUfSubLabel = $"{totalGoUf:N2} UF";
         GoCategoriaCountLabel = $"{GastosOperacionales.Count} categorías";
         GoItemCountLabel = GastosOperacionales.Sum(c => c.Items.Count).ToString();
         GoComposeHint = totalGoClp > 0 ? "por categoría" : "sin montos aún";
@@ -632,7 +774,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         {
             GoComposeSegments.Add(new GoComposeSegmentVm
             {
-                Fill = ParseBrush(GoPalette[seg.PaletteIndex % GoPalette.Length], seg.FillOpacity),
+                Fill = CostoUiBrushes.Parse(GoPalette[seg.PaletteIndex % GoPalette.Length], seg.FillOpacity),
                 WidthUnits = seg.WidthUnits,
             });
         }
@@ -641,21 +783,11 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         {
             GoComposeLegend.Add(new GoComposeLegendVm
             {
-                Fill = ParseBrush(GoPalette[item.PaletteIndex % GoPalette.Length]),
+                Fill = CostoUiBrushes.Parse(GoPalette[item.PaletteIndex % GoPalette.Length]),
                 Codigo = item.Codigo,
                 PctLabel = item.PctLabel,
             });
         }
-    }
-
-    private static System.Windows.Media.Brush ParseBrush(string hex, double opacity = 1)
-    {
-        var c = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(hex)!;
-        if (opacity < 1)
-            c.A = (byte)Math.Clamp((int)(opacity * 255), 0, 255);
-        var brush = new System.Windows.Media.SolidColorBrush(c);
-        brush.Freeze();
-        return brush;
     }
 
     private void PersistGo(bool markDirty)
@@ -753,7 +885,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
                 new GastoOperacionalItemRow { Concepto = "Nuevo ítem", Unidad = "un", Cantidad = 0, PrecioUnitarioClp = 0 }
             ],
         };
-        var vm = new GastoOpCategoriaVm(row, currentValorUf, OnGoChanged, expanded: true, canEdit: () => CanEdit);
+        var vm = new GastoOpCategoriaVm(row, currentValorUf, OnGoChanged, canEdit: () => CanEdit);
         GastosOperacionales.Add(vm);
         OnGoChanged();
     }
@@ -772,31 +904,93 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         if (!CanEdit)
             return;
         GastosOperacionales.Clear();
-        var first = true;
         foreach (var r in GastoOperacionalPlantilla.CreateClean())
-        {
-            GastosOperacionales.Add(new GastoOpCategoriaVm(r, currentValorUf, OnGoChanged, expanded: first, canEdit: () => CanEdit));
-            first = false;
-        }
+            GastosOperacionales.Add(new GastoOpCategoriaVm(r, currentValorUf, OnGoChanged, canEdit: () => CanEdit));
         OnGoChanged();
     }
 
-    private void AddRow(ObservableCollection<CostoRowVm> rows, string label, decimal clp, string explanation,
-        string moneda, decimal valorUf, decimal tipoCambio, string kind = "regular")
+    private void ToggleAnalisis() => AnalisisAbierto = !AnalisisAbierto;
+
+    private bool ferreteriaDetalleAbierto;
+
+    public bool FerreteriaDetalleAbierto
     {
-        var svc = currencySvc;
+        get => ferreteriaDetalleAbierto;
+        set
+        {
+            if (SetProperty(ref ferreteriaDetalleAbierto, value))
+                OnPropertyChanged(nameof(FerreteriaDetalleMarca));
+        }
+    }
+
+    public string FerreteriaDetalleMarca => FerreteriaDetalleAbierto ? "−" : "+";
+
+    public ObservableCollection<FerreteriaFamiliaVm> FerreteriaFamilias { get; } = new();
+
+    private string ferreteriaPopupTitulo = "Ferretería";
+    public string FerreteriaPopupTitulo
+    {
+        get => ferreteriaPopupTitulo;
+        private set => SetProperty(ref ferreteriaPopupTitulo, value);
+    }
+
+    private string ferreteriaPopupNota = "";
+    public string FerreteriaPopupNota
+    {
+        get => ferreteriaPopupNota;
+        private set => SetProperty(ref ferreteriaPopupNota, value);
+    }
+
+    private void ToggleFerreteriaDetalle() => FerreteriaDetalleAbierto = !FerreteriaDetalleAbierto;
+
+    private void ToggleCostGroup(CostoGrupoVm? grupo)
+    {
+        if (grupo == null)
+            return;
+        grupo.IsExpanded = !grupo.IsExpanded;
+    }
+
+    private CostoRowVm CreateCostRow(string label, decimal clp, string explanation, decimal valorUf, string kind, string participacion = "", bool enInforme = true, bool tieneOrigen = false, string origenTexto = "")
+    {
         decimal uf = PriceConversion.ClpToUf(clp, valorUf);
-        rows.Add(new CostoRowVm
+        return new CostoRowVm
         {
             Concepto = label,
             ValorUf = uf,
             ValorMoneda = clp,
             Explicacion = explanation,
             Kind = kind,
-            ValorMonedaLabel = clp != 0m
-                ? svc.FormatMoneyFromClp(clp, moneda, valorUf, tipoCambio)
-                : "$ 0"
-        });
+            ParticipacionLabel = participacion,
+            IsEnInforme = enInforme,
+            TieneOrigen = tieneOrigen,
+            OrigenTexto = origenTexto,
+            ValorMonedaLabel = clp == 0m
+                ? "$ 0"
+                : $"$ {decimal.Round(clp, 0, MidpointRounding.AwayFromZero):N0}"
+        };
+    }
+
+    private void AddRow(ObservableCollection<CostoRowVm> rows, string label, decimal clp, string explanation,
+        string moneda, decimal valorUf, decimal tipoCambio, string kind = "regular")
+    {
+        _ = moneda;
+        _ = tipoCambio;
+        rows.Add(CreateCostRow(label, clp, explanation, valorUf, kind));
+    }
+
+    private void PushCostGroup(string titulo, CostoRowVm header, IReadOnlyList<CostoRowVm> children, bool firstLoad, HashSet<string> openTitles, bool expandOnFirst)
+    {
+        var grupo = new CostoGrupoVm
+        {
+            Titulo = titulo,
+            ClpLabel = header.ValorMonedaLabel,
+            UfLabel = header.UfFigura,
+            Explicacion = header.Explicacion,
+            IsExpanded = firstLoad ? expandOnFirst : openTitles.Contains(titulo)
+        };
+        foreach (var child in children)
+            grupo.Lineas.Add(child);
+        CostGroups.Add(grupo);
     }
 
     private void EnsureCoefFactors()
@@ -804,15 +998,15 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         if (CoefFactors.Count > 0)
             return;
 
-        CoefFactors.Add(new CoefFactorVm("Conductores", "Materiales", "→ Conductores", "Excel 1,50×", 1.50m, CommitFamilyMarkup, CommitFamilyDiscount));
-        CoefFactors.Add(new CoefFactorVm("Canalización", "PVC / EPC", "→ Canalización", "Excel 1,44×", 1.44m, CommitFamilyMarkup, CommitFamilyDiscount));
-        CoefFactors.Add(new CoefFactorVm("Tableros", "Tableros", "→ Tableros", "Excel 1,10×", 1.10m, CommitFamilyMarkup, CommitFamilyDiscount));
-        CoefFactors.Add(new CoefFactorVm("Iluminación", "Luminarias", "→ Iluminación", "Excel 1,17×", 1.17m, CommitFamilyMarkup, CommitFamilyDiscount));
-        CoefFactors.Add(new CoefFactorVm("Equipos", "Equipos", "→ Equipos", "Excel 1,12×", 1.12m, CommitFamilyMarkup, CommitFamilyDiscount));
-        CoefFactors.Add(new CoefFactorVm("Accesorios", "Varios", "→ Accesorios", "Excel 1,14×", 1.14m, CommitFamilyMarkup, CommitFamilyDiscount));
-        CoefFactors.Add(new CoefFactorVm("Enchufes y tomacorrientes", "Artefactos", "→ Enchufes", "Excel 1,05×", 1.05m, CommitFamilyMarkup, CommitFamilyDiscount));
-        CoefFactors.Add(new CoefFactorVm("Protecciones", "Protecciones", "→ Protecciones", "App 1,12×", 1.12m, CommitFamilyMarkup, CommitFamilyDiscount));
-        CoefFactors.Add(new CoefFactorVm("Puesta a tierra", "Puesta a tierra", "→ PAT", "App 1,20×", 1.20m, CommitFamilyMarkup, CommitFamilyDiscount));
+        CoefFactors.Add(new CoefFactorVm("Conductores", "Materiales", "Conductores", 1.50m, CommitFamilyMarkup, CommitFamilyDiscount));
+        CoefFactors.Add(new CoefFactorVm("Canalización", "PVC / EPC", "Canalización", 1.44m, CommitFamilyMarkup, CommitFamilyDiscount));
+        CoefFactors.Add(new CoefFactorVm("Tableros", "Tableros", "Tableros", 1.10m, CommitFamilyMarkup, CommitFamilyDiscount));
+        CoefFactors.Add(new CoefFactorVm("Iluminación", "Luminarias", "Iluminación", 1.17m, CommitFamilyMarkup, CommitFamilyDiscount));
+        CoefFactors.Add(new CoefFactorVm("Equipos", "Equipos", "Equipos", 1.12m, CommitFamilyMarkup, CommitFamilyDiscount));
+        CoefFactors.Add(new CoefFactorVm("Accesorios", "Varios", "Accesorios", 1.14m, CommitFamilyMarkup, CommitFamilyDiscount));
+        CoefFactors.Add(new CoefFactorVm("Enchufes y tomacorrientes", "Artefactos", "Enchufes", 1.05m, CommitFamilyMarkup, CommitFamilyDiscount));
+        CoefFactors.Add(new CoefFactorVm("Protecciones", "Protecciones", "Protecciones", 1.12m, CommitFamilyMarkup, CommitFamilyDiscount));
+        CoefFactors.Add(new CoefFactorVm("Puesta a tierra", "Puesta a tierra", "PAT", 1.20m, CommitFamilyMarkup, CommitFamilyDiscount));
     }
 
     private void RefreshCoefEffectiveLabels()
@@ -861,12 +1055,16 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         OnPropertyChanged(nameof(UtilidadText));
         valorAgregadoEquiposText = project.ValorAgregadoEquiposPct.ToString("N1", CultureInfo.CurrentCulture);
         OnPropertyChanged(nameof(ValorAgregadoEquiposText));
+        ferreteriaActiva = project.FerreteriaActiva;
+        OnPropertyChanged(nameof(FerreteriaActiva));
+        ferreteriaPctText = project.FerreteriaPct.ToString("N1", CultureInfo.CurrentCulture);
+        OnPropertyChanged(nameof(FerreteriaPctText));
 
         UtilidadPolicyLabel = string.Equals(project.MarkupMethod, "SobreVenta", StringComparison.OrdinalIgnoreCase)
             && !project.PoliticaCostosExcel
             ? "Margen s/ venta"
             : project.PoliticaCostosExcel
-                ? "Utilidades (aditiva Excel)"
+                ? "Utilidades (aditiva)"
                 : "Utilidades";
 
         politicaCostosExcel = project.PoliticaCostosExcel;
@@ -875,7 +1073,169 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         usarFactoresPresentacionFamilia = project.UsarFactoresPresentacionFamilia;
         OnPropertyChanged(nameof(UsarFactoresPresentacionFamilia));
 
+        MoInstalacion.Load(project);
+
         UpdateCoefChips();
+        RebuildPrecioFamiliaChips();
+    }
+
+    public void MovePrecioFamilia(PrecioFamiliaChipVm? chip, string? targetFamilyKey)
+    {
+        if (!CanEdit || chip == null)
+            return;
+
+        var target = CoefFactors.FirstOrDefault(f =>
+            string.Equals(f.FamilyKey, targetFamilyKey, StringComparison.OrdinalIgnoreCase));
+
+        PrecioFamiliasLibres.Remove(chip);
+        foreach (var row in CoefFactors)
+            row.FamiliasPrecio.Remove(chip);
+
+        if (target == null)
+            PrecioFamiliasLibres.Add(chip);
+        else
+            target.FamiliasPrecio.Add(chip);
+
+        OnPropertyChanged(nameof(HasPrecioFamiliasLibres));
+
+        session.ProjectInfo.FamiliasPrecioAsignadas ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        session.ProjectInfo.FamiliasPrecioAsignadas[chip.Clave] = target?.FamilyKey ?? "";
+
+        suppressCoefRefresh = true;
+        try
+        {
+            session.MarkDirty(ProjectDirtyScope.ProjectInfo);
+            session.SyncCubicacionGgUtFactorsFromVariables();
+            RefreshCostOnly();
+        }
+        finally
+        {
+            suppressCoefRefresh = false;
+        }
+    }
+
+    private void RebuildPrecioFamiliaChips()
+    {
+        foreach (var row in CoefFactors)
+            row.FamiliasPrecio.Clear();
+        PrecioFamiliasLibres.Clear();
+
+        var map = session.ProjectInfo.FamiliasPrecioAsignadas;
+        foreach (var nombre in EnumerarFamiliasPrecio())
+        {
+            var clave = FamilyPresentationDefaults.Normalize(nombre);
+            var chip = new PrecioFamiliaChipVm(nombre, clave);
+            var row = FilaDeFamiliaPrecio(clave, map);
+            if (row == null)
+                PrecioFamiliasLibres.Add(chip);
+            else
+                row.FamiliasPrecio.Add(chip);
+        }
+
+        OnPropertyChanged(nameof(HasPrecioFamiliasLibres));
+        foreach (var row in CoefFactors)
+            row.RefrescarResumenFamilias();
+    }
+
+    private void AbrirCatalogoFamilias(CoefFactorVm? fila)
+    {
+        if (fila == null || !IsFactoresFamiliaEditable)
+            return;
+
+        var abrir = !fila.CatalogoAbierto;
+        foreach (var row in CoefFactors)
+            row.CatalogoAbierto = false;
+        if (!abrir)
+            return;
+
+        LlenarCatalogoFamilias(fila);
+        fila.CatalogoAbierto = true;
+    }
+
+    private void ElegirFamiliaPrecio(PrecioFamiliaPickVm? pick)
+    {
+        if (pick == null || pick.Bloqueada || !IsFactoresFamiliaEditable)
+            return;
+
+        var fila = CoefFactors.FirstOrDefault(f => f.CatalogoAbierto);
+        if (fila == null)
+            return;
+
+        var chip = PrecioFamiliasLibres.FirstOrDefault(c => MismaFamilia(c, pick))
+            ?? CoefFactors.SelectMany(r => r.FamiliasPrecio).FirstOrDefault(c => MismaFamilia(c, pick))
+            ?? new PrecioFamiliaChipVm(pick.Nombre, pick.Clave);
+        MovePrecioFamilia(chip, pick.EnEstaFila ? null : fila.FamilyKey);
+        if (fila.CatalogoAbierto)
+            LlenarCatalogoFamilias(fila);
+    }
+
+    private void LlenarCatalogoFamilias(CoefFactorVm fila)
+    {
+        fila.Catalogo.Clear();
+        foreach (var nombre in EnumerarFamiliasPrecio())
+        {
+            var clave = FamilyPresentationDefaults.Normalize(nombre);
+            CoefFactorVm? duena = null;
+            foreach (var row in CoefFactors)
+            {
+                if (row.FamiliasPrecio.Any(c => string.Equals(c.Clave, clave, StringComparison.OrdinalIgnoreCase)))
+                {
+                    duena = row;
+                    break;
+                }
+            }
+
+            var enEsta = ReferenceEquals(duena, fila);
+            fila.Catalogo.Add(new PrecioFamiliaPickVm(
+                nombre,
+                clave,
+                enEsta,
+                duena != null && !enEsta,
+                duena?.Name ?? ""));
+        }
+    }
+
+    private static bool MismaFamilia(PrecioFamiliaChipVm chip, PrecioFamiliaPickVm pick)
+        => string.Equals(chip.Clave, pick.Clave, StringComparison.OrdinalIgnoreCase);
+
+    private CoefFactorVm? FilaDeFamiliaPrecio(string clave, Dictionary<string, string>? map)
+    {
+        if (map != null && map.TryGetValue(clave, out var assigned))
+        {
+            if (string.IsNullOrWhiteSpace(assigned))
+                return null;
+            return CoefFactors.FirstOrDefault(f =>
+                string.Equals(f.FamilyKey, assigned, StringComparison.OrdinalIgnoreCase));
+        }
+
+        return CoefFactors.FirstOrDefault(f =>
+            string.Equals(FamilyPresentationDefaults.Normalize(f.FamilyKey), clave, StringComparison.Ordinal));
+    }
+
+    private List<string> EnumerarFamiliasPrecio()
+    {
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var names = new List<string>();
+        void Add(string? name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                return;
+            var trimmed = name.Trim();
+            if (seen.Add(trimmed))
+                names.Add(trimmed);
+        }
+
+        if (priceBank != null)
+        {
+            foreach (var entry in priceBank.GetAll())
+                Add(entry.Categoria);
+        }
+
+        foreach (var material in session.Data.Materiales ?? Enumerable.Empty<MaterialRow>())
+            Add(material.Categoria);
+
+        names.Sort(StringComparer.CurrentCultureIgnoreCase);
+        return names;
     }
 
     private void UpdateCoefChips()
@@ -903,14 +1263,15 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
 
     private void CommitFamilyMarkup(string familyKey, decimal value)
     {
-        if (!CanEdit)
+        if (!CanEdit || session.GetFamilyMarkup(familyKey) == value)
             return;
         suppressCoefRefresh = true;
         try
         {
-            session.SetFamilyMarkup(familyKey, value);
+            session.SetFamilyMarkup(familyKey, value, syncTakeoff: false);
             RefreshCoefEffectiveLabels();
             UpdateCoefChips();
+            session.SyncCubicacionGgUtFactorsFromVariables();
             RefreshCostOnly();
         }
         finally
@@ -921,14 +1282,15 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
 
     private void CommitFamilyDiscount(string familyKey, decimal pct)
     {
-        if (!CanEdit)
+        if (!CanEdit || session.GetFamilyDiscountPct(familyKey) == pct)
             return;
         suppressCoefRefresh = true;
         try
         {
-            session.SetFamilyDiscountPct(familyKey, pct);
+            session.SetFamilyDiscountPct(familyKey, pct, syncTakeoff: false);
             RefreshCoefEffectiveLabels();
             UpdateCoefChips();
+            session.SyncCubicacionGgUtFactorsFromVariables();
             RefreshCostOnly();
         }
         finally
@@ -1108,7 +1470,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
             OnPropertyChanged(nameof(ValorAgregadoEquiposText));
             politicaCostosExcel = preset.PoliticaCostosExcel;
             OnPropertyChanged(nameof(PoliticaCostosExcel));
-            UtilidadPolicyLabel = preset.PoliticaCostosExcel ? "Utilidades (aditiva Excel)" : "Utilidades";
+            UtilidadPolicyLabel = preset.PoliticaCostosExcel ? "Utilidades (aditiva)" : "Utilidades";
 
             RefreshCoefEffectiveLabels();
             UpdateCoefChips();
@@ -1135,8 +1497,16 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         var tipoCambio = project.TipoCambioUsdClp;
 
         UpdateSummaryKpis(cost, project, valorUf);
+        RefreshFerreteriaFamilias(cost, data, project, valorUf);
         FillCostRows(CostRows, cost, project, moneda, valorUf, tipoCambio);
         RefreshClosingPolicySection(cost, moneda, valorUf, tipoCambio);
+        OnPropertyChanged(nameof(CurrentPolicy));
+        OnPropertyChanged(nameof(IsGastosGeneralesEditable));
+        OnPropertyChanged(nameof(IsUtilidadEditable));
+        OnPropertyChanged(nameof(IsFactoresFamiliaEditable));
+        OnPropertyChanged(nameof(GastosGeneralesPolicyHint));
+        OnPropertyChanged(nameof(UtilidadPolicyHint));
+        AttachCoefPresentation();
     }
 
     private void UpdateSummaryKpis(CostBreakdown cost, ProjectInfoRow project, decimal valorUf)
@@ -1152,10 +1522,109 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         TotalVentaLabel = $"$ {ventaClp:N0}";
         TotalVentaSubLabel = $"{ventaUf:N2} UF";
         MargenLabel = $"{cost.MargenRealPct:N1} %";
+        ValorUfDiaLabel = valorUf.ToString("N0", CultureInfo.CurrentCulture);
         UfM2Label = $"{PriceConversion.ClpToUf(m2Clp, valorUf):N2} UF/m²";
-        UfM2SubLabel = project.MetrosCuadrados > 0 ? $"{project.MetrosCuadrados:N0} m² · $ {m2Clp:N0} / m²" : "Sin m² configurados";
+        UfM2SubLabel = project.MetrosCuadrados > 0 ? $"$ {m2Clp:N0}/m²" : "Sin m²";
         ResumenFooterText = $"Costo ejecución $ {directoClp:N0} ({directoUf:N2} UF) · Total venta $ {ventaClp:N0} ({ventaUf:N2} UF) · Margen {cost.MargenRealPct:N1}%";
         NegotiationSimulator.UpdateBase(directoClp, ventaClp, valorUf);
+    }
+
+    private static string Clp(decimal value)
+        => $"$ {decimal.Round(value, 0, MidpointRounding.AwayFromZero):N0}";
+
+    private void RefreshFerreteriaFamilias(CostBreakdown cost, ProjectFileData data, ProjectInfoRow project, decimal valorUf)
+    {
+        decimal pct = project.FerreteriaPct;
+        decimal baseEngine = cost.MaterialesUf - cost.FerreteriaUf;
+        var codeToFamily = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var material in data.Materiales ?? Enumerable.Empty<MaterialRow>())
+        {
+            if (string.IsNullOrWhiteSpace(material.Codigo) || codeToFamily.ContainsKey(material.Codigo))
+                continue;
+            codeToFamily[material.Codigo] = string.IsNullOrWhiteSpace(material.Categoria)
+                ? "Sin familia"
+                : material.Categoria.Trim();
+        }
+
+        var byFamily = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
+        decimal summed = 0m;
+        foreach (var row in data.Cubicacion ?? Enumerable.Empty<CubicacionRow>())
+        {
+            decimal mat = row.Cantidad * row.MatClpConFallback;
+            if (mat == 0m)
+                continue;
+            var familia = !string.IsNullOrWhiteSpace(row.Codigo) && codeToFamily.TryGetValue(row.Codigo, out var name)
+                ? name
+                : "Sin familia";
+            byFamily[familia] = byFamily.GetValueOrDefault(familia) + mat;
+            summed += mat;
+        }
+
+        decimal gap = baseEngine - summed;
+        if (Math.Abs(gap) >= 1m)
+            byFamily["Otros materiales"] = byFamily.GetValueOrDefault("Otros materiales") + gap;
+
+        FerreteriaFamilias.Clear();
+        decimal totalMat = 0m;
+        decimal totalFerr = 0m;
+        foreach (var pair in byFamily.Where(p => p.Value != 0m).OrderByDescending(p => p.Value))
+        {
+            decimal ferr = pair.Value * pct / 100m;
+            totalMat += pair.Value;
+            totalFerr += ferr;
+            FerreteriaFamilias.Add(LineaFerreteria(pair.Key, pair.Value, ferr, valorUf, total: false));
+        }
+
+        if (FerreteriaFamilias.Count > 0)
+            FerreteriaFamilias.Add(LineaFerreteria("Total", totalMat, totalFerr, valorUf, total: true));
+
+        FerreteriaPopupTitulo = $"Ferretería {pct:N1} %";
+        FerreteriaPopupNota = project.FerreteriaActiva
+            ? "Porcentaje sobre los materiales de cada familia. Este monto ya está en el costo."
+            : "Porcentaje sobre los materiales de cada familia. Está apagada: todavía no suma al costo.";
+    }
+
+    private static FerreteriaFamiliaVm LineaFerreteria(string familia, decimal materiales, decimal ferreteria, decimal valorUf, bool total)
+        => new()
+        {
+            Familia = familia,
+            MaterialesLabel = Clp(materiales),
+            MaterialesUfLabel = $"{PriceConversion.ClpToUf(materiales, valorUf):N2} UF",
+            FerreteriaLabel = Clp(ferreteria),
+            FerreteriaUfLabel = $"{PriceConversion.ClpToUf(ferreteria, valorUf):N2} UF",
+            IsTotal = total
+        };
+
+    private void AttachCoefPresentation()
+    {
+        decimal costo = 0m;
+        decimal venta = 0m;
+        foreach (var factor in CoefFactors)
+        {
+            var hit = Familias.FirstOrDefault(f =>
+                string.Equals(f.Familia, factor.FamilyKey, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(f.Familia, factor.Name, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(f.Familia, factor.Map, StringComparison.OrdinalIgnoreCase));
+            var costoUf = hit?.TotalUf ?? 0m;
+            var markup = ParseCoef(factor.ValueText, 1m);
+            var discount = ParseCoef(factor.DiscountText, 0m);
+            var ventaUf = costoUf * ExcelCostosBridge.PresentationFactor(markup, discount);
+            factor.SetPresentation(costoUf, ventaUf, hit?.Share ?? 0d);
+            costo += costoUf;
+            venta += ventaUf;
+        }
+
+        FamCostoLabel = costo > 0m ? costo.ToString("N2", CultureInfo.CurrentCulture) + " UF" : "—";
+        FamVentaLabel = venta > 0m ? venta.ToString("N2", CultureInfo.CurrentCulture) + " UF" : "—";
+        FamDeltaLabel = costo > 0m
+            ? (venta - costo).ToString("+0.00;-0.00;0.00", CultureInfo.CurrentCulture) + " UF"
+            : "—";
+    }
+
+    private static decimal ParseCoef(string? text, decimal fallback)
+    {
+        var s = (text ?? "").Trim().TrimEnd('%').Replace(',', '.');
+        return decimal.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out var v) ? v : fallback;
     }
 
     private void RefreshClosingPolicySection(CostBreakdown cost, string moneda, decimal valorUf, decimal tipoCambio)
@@ -1220,10 +1689,109 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         decimal valorUf,
         decimal tipoCambio)
     {
+        _ = moneda;
+        _ = tipoCambio;
         rows.Clear();
+        OrigenesDirectos.Clear();
+        var openTitles = CostGroups.Where(g => g.IsExpanded).Select(g => g.Titulo).ToHashSet(StringComparer.Ordinal);
+        var firstLoad = CostGroups.Count == 0;
+        CostGroups.Clear();
+        CierreAjustes.Clear();
+
+        var pending = new List<CostoRowVm>();
+        CostoRowVm? venta = null;
+        CostoRowVm? metro = null;
+        var sawCost = false;
+        var sawRecargos = false;
+        var openedComp = false;
+        var openedCierre = false;
+        var ventaBase = cost.TotalVentaUf;
+
         foreach (var line in CostoBreakdownLineBuilder.BuildLines(cost, project))
-            AddRow(rows, line.Label, line.AmountUf, line.Explanation, moneda, valorUf, tipoCambio, line.Kind);
+        {
+            var enInforme = !line.Label.StartsWith("UF / m", StringComparison.Ordinal);
+            if (!sawCost && !openedComp && line.Kind == "regular" && line.AmountUf != 0m)
+            {
+                rows.Add(InformeSection("Composición del costo de ejecución"));
+                openedComp = true;
+            }
+
+            if (sawCost && !openedCierre && enInforme && line.Kind != "grand")
+            {
+                rows.Add(InformeSection("Recargos, margen y cierre"));
+                openedCierre = true;
+            }
+
+            var share = enInforme && ventaBase != 0m
+                ? $"{line.AmountUf / ventaBase * 100m:N1} %"
+                : "";
+            var esFerreteria = line.Label.StartsWith("Ferretería", StringComparison.Ordinal);
+            var row = CreateCostRow(line.Label, line.AmountUf, line.Explanation, valorUf, line.Kind, share, enInforme, esFerreteria);
+            rows.Add(row);
+            if (!sawCost && line.Kind == "regular" && !row.IsQuiet)
+                OrigenesDirectos.Add(row);
+
+            if (line.Kind == "grand")
+            {
+                venta = row;
+                continue;
+            }
+
+            if (line.Label.StartsWith("UF / m", StringComparison.Ordinal))
+            {
+                metro = row;
+                continue;
+            }
+
+            if (line.Kind == "total" && !sawCost)
+            {
+                PushCostGroup(line.Label, row, pending, firstLoad, openTitles, expandOnFirst: true);
+                pending.Clear();
+                sawCost = true;
+                continue;
+            }
+
+            if (line.Kind == "subtotal" && sawCost && !sawRecargos)
+            {
+                PushCostGroup(line.Label, row, pending, firstLoad, openTitles, expandOnFirst: false);
+                pending.Clear();
+                sawRecargos = true;
+                continue;
+            }
+
+            pending.Add(row);
+        }
+
+        if (pending.Count > 0)
+        {
+            var header = pending.LastOrDefault(r => r.Kind == "subtotal");
+            if (header != null)
+            {
+                var index = pending.IndexOf(header);
+                PushCostGroup(header.Concepto, header, pending.Take(index).ToList(), firstLoad, openTitles, expandOnFirst: false);
+                foreach (var extra in pending.Skip(index + 1))
+                    CierreAjustes.Add(extra);
+            }
+            else
+            {
+                foreach (var extra in pending)
+                    CierreAjustes.Add(extra);
+            }
+        }
+
+        VentaCierre = venta;
+        UfMetroCierre = metro;
+        ChainIvaLabel = rows.FirstOrDefault(r => r.Concepto == "IVA")?.ValorUfLabel ?? "—";
+        ChainTotalLabel = venta?.ValorMonedaLabel is { Length: > 0 } clp ? clp : "—";
     }
+
+    private static CostoRowVm InformeSection(string title) => new()
+    {
+        Concepto = title,
+        Kind = "section",
+        Explicacion = "",
+        ValorMonedaLabel = ""
+    };
 
     private void ResetCoeficientes()
     {
@@ -1249,8 +1817,8 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         }
     }
 
-    private void LoadPel029Coeficientes() =>
-        ApplyCoefPreset(ExcelCostosBridge.PresetFactoresPel029, fallback: 1.30m);
+    private void LoadCoeficientesEstandar() =>
+        ApplyCoefPreset(ExcelCostosBridge.PresetFactoresEstandar, fallback: 1.30m);
 
     private void LoadTipicosCoeficientes() =>
         ApplyCoefPreset(ExcelCostosBridge.PresetFactoresTipicos, fallback: 1.14m);
@@ -1269,7 +1837,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
                 f.SetValueSilent(v);
             }
 
-            ExcelCostosBridge.ApplyPoliticaExcelPel029(session.ProjectInfo);
+            ExcelCostosBridge.ApplyPoliticaEstandar(session.ProjectInfo);
             session.MarkDirty(ProjectDirtyScope.ProjectInfo);
 
             gastosGeneralesText = "5,0";
@@ -1280,7 +1848,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
             OnPropertyChanged(nameof(ValorAgregadoEquiposText));
             politicaCostosExcel = true;
             OnPropertyChanged(nameof(PoliticaCostosExcel));
-            UtilidadPolicyLabel = "Utilidades (aditiva Excel)";
+            UtilidadPolicyLabel = "Utilidades (aditiva)";
             RefreshCoefEffectiveLabels();
             UpdateCoefChips();
             RefreshCostOnly();
@@ -1299,7 +1867,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
             session.MarkDirty(ProjectDirtyScope.ProjectInfo);
             politicaCostosExcel = true;
             OnPropertyChanged(nameof(PoliticaCostosExcel));
-            UtilidadPolicyLabel = "Utilidades (aditiva Excel)";
+            UtilidadPolicyLabel = "Utilidades (aditiva)";
         }
 
         RefreshCostOnly();

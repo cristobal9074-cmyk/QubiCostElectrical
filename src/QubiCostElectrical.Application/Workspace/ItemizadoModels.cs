@@ -32,8 +32,8 @@ public sealed class ItemizadoRowPresentation
     public required PartidaCompletionState CompletionState { get; init; }
     public required decimal CompletionPct { get; init; }
     public required decimal UnitPriceUf { get; init; }
-    public required decimal TotalUf { get; init; }
-    public required bool HasPrice { get; init; }
+    public decimal TotalUf { get; set; }
+    public bool HasPrice { get; set; }
     public required string StatusLabel { get; init; }
     public required string StatusKind { get; init; }
 }

@@ -29,11 +29,13 @@ public sealed partial class CubicacionViewModel
                 return;
 
             OnPropertyChanged(nameof(IsDetailMode));
+            OnPropertyChanged(nameof(IsDetailHeaderVisible));
             OnPropertyChanged(nameof(SectorModeDescription));
         }
     }
 
     public bool IsDetailMode => !IsSectorMatrixMode;
+    public bool IsDetailHeaderVisible => IsDetailMode && HasPartida;
 
     public string SectorModeDescription => IsSectorMatrixMode
         ? "300 casillas · desplazate con las flechas o el scroll horizontal"

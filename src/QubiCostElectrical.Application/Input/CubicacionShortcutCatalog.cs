@@ -24,6 +24,7 @@ public static class CubicacionShortcutCatalog
     public const string AddPartida = "cubicacion.partida.add";
     public const string DeletePartida = "cubicacion.partida.delete";
     public const string BatchReplace = "cubicacion.batchReplace";
+    public const string FamilyBatchReplace = "cubicacion.familyBatchReplace";
 
     public static IReadOnlyList<KeyboardShortcutDefinition> All { get; } =
     [
@@ -52,7 +53,9 @@ public static class CubicacionShortcutCatalog
         new(RepeatMeasurement, Scope, "Repetir última medición", "F4",
             "Inserta y aplica la última medición/fórmula ingresada en la celda activa."),
         new(BatchReplace, Scope, "Buscar y reemplazar material", "Ctrl+H",
-            "Busca y reemplaza un material en todas las partidas del proyecto preservando metrajes y fórmulas.")
+            "Busca y reemplaza un material en todas las partidas del proyecto preservando metrajes y fórmulas."),
+        new(FamilyBatchReplace, Scope, "Cambio de línea o familia masivo", "Ctrl+Shift+H",
+            "Reemplaza masivamente familias o líneas completas de materiales (Ingeniería de Valor) con auto-mapeo del banco de precios.")
     ];
 
     public static bool IsKnown(string actionId) =>
@@ -67,4 +70,5 @@ public sealed record KeyboardShortcutDefinition(
     string Scope,
     string Label,
     string DefaultGesture,
-    string? Description = null);
+    string? Description = null,
+    bool IsConfigurable = true);

@@ -160,6 +160,7 @@ public sealed partial class EppViewModel : SessionAwareViewModelBase, IRefreshab
     private bool canEdit;
     private bool suppressDirty;
     private bool suppressSessionReload;
+    private int mesesObra;
     private int mesesDirecta = 3;
     private int mesesIndirecta = 6;
     private int dotacionDirecta;

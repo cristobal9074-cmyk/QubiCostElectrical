@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
 using QubiCostElectrical;
 using QubiCostElectrical.Wpf.Infrastructure;
 
@@ -11,50 +11,227 @@ namespace QubiCostElectrical.Wpf.Features.Cubicacion;
 
 public partial class ZonasProyectoDialog : Window
 {
-    private readonly ObservableCollection<ZonaEditRow> rows = new();
+    public ZonasProyectoViewModel ViewModel { get; }
 
     public ZonasProyectoDialog(IEnumerable<ZonaProyecto> zonas)
     {
         InitializeComponent();
 
-        foreach (var zona in zonas.OrderBy(z => z.Orden))
-            rows.Add(new ZonaEditRow(zona.Id, zona.Nombre, zona.Activa));
+        ViewModel = new ZonasProyectoViewModel();
+        ViewModel.CargarZonas(zonas);
+        DataContext = ViewModel;
 
-        rows.CollectionChanged += (_, _) => RefreshNumeros();
-        ZonasGrid.ItemsSource = rows;
-        RefreshNumeros();
+        Loaded += OnWindowLoaded;
     }
 
     /// <summary>Zonas resultantes; solo válido cuando DialogResult es true.</summary>
     public List<ZonaProyecto> Zonas { get; } = new();
 
-    private void RefreshNumeros()
+    private void OnWindowLoaded(object sender, RoutedEventArgs e)
     {
-        for (int i = 0; i < rows.Count; i++)
-            rows[i].Numero = i + 1;
+        if (ViewModel.Rows.Count > 0)
+        {
+            ZonasGrid.SelectedIndex = 0;
+            ZonasGrid.Focus();
+        }
+        else
+        {
+            SearchBox.Focus();
+        }
+    }
 
-        int activas = rows.Count(r => r.Activa);
-        ResumenText.Text = rows.Count == 0
-            ? "Sin zonas definidas: se usan sectores genéricos."
-            : $"{rows.Count} zonas · {activas} activas";
+    private void OnWindowPreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        // Ctrl+B o Ctrl+F: Enfocar buscador Spotlight
+        if ((e.Key == Key.B || e.Key == Key.F) && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+        {
+            SearchBox.Focus();
+            SearchBox.SelectAll();
+            e.Handled = true;
+            return;
+        }
+
+        // Alt+P: Catálogo de Presets de Industria
+        if (e.Key == Key.P && (Keyboard.Modifiers & ModifierKeys.Alt) == ModifierKeys.Alt)
+        {
+            OnPresetsIndustriaClick(sender, e);
+            e.Handled = true;
+            return;
+        }
+
+        // Alt+A: Asistente de Edificio
+        if (e.Key == Key.A && (Keyboard.Modifiers & ModifierKeys.Alt) == ModifierKeys.Alt)
+        {
+            OnAsistenteClick(sender, e);
+            e.Handled = true;
+            return;
+        }
+
+        // Ctrl+S: Guardar como Preset
+        if (e.Key == Key.S && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control && !IsEditingCell())
+        {
+            OnGuardarComoPresetClick(sender, e);
+            e.Handled = true;
+            return;
+        }
+
+        // Insert o Ctrl+N: Nueva zona
+        if (e.Key == Key.Insert || (e.Key == Key.N && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control))
+        {
+            if (!IsEditingCell())
+            {
+                OnAgregarClick(sender, e);
+                e.Handled = true;
+                return;
+            }
+        }
+
+        // Reordenar con Alt+Up / Alt+Down o Ctrl+Up / Ctrl+Down
+        if ((Keyboard.Modifiers & (ModifierKeys.Alt | ModifierKeys.Control)) != ModifierKeys.None)
+        {
+            if (e.Key == Key.Up && ViewModel.CanMoveUp)
+            {
+                ViewModel.MoveSelected(-1);
+                ZonasGrid.ScrollIntoView(ViewModel.SelectedRow);
+                e.Handled = true;
+                return;
+            }
+            if (e.Key == Key.Down && ViewModel.CanMoveDown)
+            {
+                ViewModel.MoveSelected(1);
+                ZonasGrid.ScrollIntoView(ViewModel.SelectedRow);
+                e.Handled = true;
+                return;
+            }
+        }
+
+        // Supr / Delete: Quitar zona si no se está editando celda
+        if (e.Key == Key.Delete && !IsEditingCell() && SearchBox.IsFocused == false)
+        {
+            if (ViewModel.SelectedRow != null)
+            {
+                ViewModel.QuitarZona();
+                e.Handled = true;
+                return;
+            }
+        }
+
+        // Escape: Si hay búsqueda, limpiar búsqueda y enfocar grid; si no, cerrar diálogo
+        if (e.Key == Key.Escape)
+        {
+            if (!string.IsNullOrEmpty(ViewModel.SearchText))
+            {
+                ViewModel.SearchText = string.Empty;
+                ZonasGrid.Focus();
+                e.Handled = true;
+                return;
+            }
+        }
+    }
+
+    private bool IsEditingCell()
+    {
+        var cell = ZonasGrid.CurrentCell;
+        if (!cell.IsValid) return false;
+        var row = ZonasGrid.ItemContainerGenerator.ContainerFromItem(cell.Item) as DataGridRow;
+        return row?.IsEditing == true;
     }
 
     private void OnAgregarClick(object sender, RoutedEventArgs e)
     {
-        var row = new ZonaEditRow(Guid.NewGuid().ToString("N"), "", true);
-        rows.Add(row);
+        var row = ViewModel.AgregarZona(string.Empty);
         ZonasGrid.SelectedItem = row;
         ZonasGrid.ScrollIntoView(row);
-        ZonasGrid.CurrentCell = new System.Windows.Controls.DataGridCellInfo(row, ZonasGrid.Columns[1]);
-        ZonasGrid.BeginEdit();
+        Dispatcher.InvokeAsync(() =>
+        {
+            if (ZonasGrid.Columns.Count > 1)
+            {
+                ZonasGrid.CurrentCell = new DataGridCellInfo(row, ZonasGrid.Columns[1]);
+                ZonasGrid.BeginEdit();
+            }
+        }, System.Windows.Threading.DispatcherPriority.Background);
+    }
+
+    private void OnPresetsIndustriaClick(object sender, RoutedEventArgs e)
+    {
+        ZonasGrid.CancelEdit(DataGridEditingUnit.Cell);
+        ZonasGrid.CancelEdit(DataGridEditingUnit.Row);
+
+        var dialog = new PresetsZonasDialog
+        {
+            Owner = this
+        };
+
+        if (dialog.ShowDialog() == true && dialog.ZonasSeleccionadas.Count > 0)
+        {
+            if (dialog.ModoReemplazar)
+            {
+                ViewModel.Rows.Clear();
+            }
+
+            foreach (var nombreZona in dialog.ZonasSeleccionadas)
+            {
+                ViewModel.AgregarZona(nombreZona);
+            }
+
+            if (ViewModel.Rows.Count > 0)
+            {
+                ZonasGrid.SelectedIndex = 0;
+                ZonasGrid.Focus();
+            }
+        }
+    }
+
+    private void OnGuardarComoPresetClick(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel.Rows.Count == 0)
+        {
+            WpfDialogService.Info("Sin zonas", "No hay zonas en la lista para guardar como preset.");
+            return;
+        }
+
+        string? nombre = WpfDialogService.PromptText("Guardar Estructura como Preset",
+            "Ingrese el nombre identificador para esta plantilla de zonas:\n(Ej: Estándar Faena Cordillera, Galpón Frío 5000m2)", "");
+        if (string.IsNullOrWhiteSpace(nombre))
+            return;
+
+        string? categoria = WpfDialogService.PromptText("Categoría de Industria",
+            "Ingrese la categoría de la plantilla:\n(Minería, Solar, Industrial, Edificación, Hospitalario, Personalizado)", "Personalizado");
+        if (string.IsNullOrWhiteSpace(categoria))
+            categoria = "Personalizado";
+
+        var zonasNombres = ViewModel.Rows
+            .Where(r => !string.IsNullOrWhiteSpace(r.Nombre))
+            .Select(r => r.Nombre.Trim())
+            .ToList();
+
+        if (zonasNombres.Count == 0)
+        {
+            WpfDialogService.Info("Sin zonas válidas", "Complete el nombre de al menos una zona antes de guardar.");
+            return;
+        }
+
+        var store = new ZonaStructurePresetStore();
+        var preset = new ZonaStructurePreset
+        {
+            Name = nombre.Trim(),
+            Category = categoria.Trim(),
+            Icon = "⭐",
+            Description = $"Preset personalizado con {zonasNombres.Count} zonas guardado desde el proyecto.",
+            Zonas = zonasNombres,
+            IsFactory = false
+        };
+
+        store.SavePreset(preset);
+
+        WpfDialogService.Info("Preset Guardado",
+            $"La estructura \"{nombre}\" ({zonasNombres.Count} zonas) ha sido guardada en la memoria local de la aplicación y estará disponible en todos sus proyectos.");
     }
 
     private void OnAsistenteClick(object sender, RoutedEventArgs e)
     {
-        // Cancelar cualquier edición activa o pendiente en el DataGrid para evitar que
-        // WPF commitee valores residuales vacíos sobre el primer elemento de la nueva lista.
-        ZonasGrid.CancelEdit(System.Windows.Controls.DataGridEditingUnit.Cell);
-        ZonasGrid.CancelEdit(System.Windows.Controls.DataGridEditingUnit.Row);
+        ZonasGrid.CancelEdit(DataGridEditingUnit.Cell);
+        ZonasGrid.CancelEdit(DataGridEditingUnit.Row);
 
         var assistant = new AsistenteEdificioDialog
         {
@@ -63,52 +240,97 @@ public partial class ZonasProyectoDialog : Window
 
         if (assistant.ShowDialog() == true)
         {
-            bool replace = WpfDialogService.Confirm(
+            bool replace = ViewModel.Rows.Count == 0 || WpfDialogService.Confirm(
                 "Estructura de Edificio Generada",
                 "¿Desea reemplazar todas las zonas actuales por las nuevas generadas?\n\nSi presiona 'No', las zonas se añadirán al final de la lista actual.");
 
             if (replace)
             {
-                rows.Clear();
+                ViewModel.Rows.Clear();
             }
 
             foreach (var nombreZona in assistant.ZonasGeneradas)
             {
-                rows.Add(new ZonaEditRow(Guid.NewGuid().ToString("N"), nombreZona, true));
+                ViewModel.AgregarZona(nombreZona);
+            }
+
+            if (ViewModel.Rows.Count > 0)
+            {
+                ZonasGrid.SelectedIndex = 0;
+                ZonasGrid.Focus();
             }
         }
     }
 
     private void OnQuitarClick(object sender, RoutedEventArgs e)
     {
-        if (ZonasGrid.SelectedItem is ZonaEditRow row)
-            rows.Remove(row);
+        if (ViewModel.SelectedRow != null)
+            ViewModel.QuitarZona();
     }
 
-    private void OnSubirClick(object sender, RoutedEventArgs e) => MoveSelected(-1);
-
-    private void OnBajarClick(object sender, RoutedEventArgs e) => MoveSelected(1);
-
-    private void MoveSelected(int delta)
+    private void OnSubirClick(object sender, RoutedEventArgs e)
     {
-        if (ZonasGrid.SelectedItem is not ZonaEditRow row)
-            return;
-
-        int index = rows.IndexOf(row);
-        int target = index + delta;
-        if (index < 0 || target < 0 || target >= rows.Count)
-            return;
-
-        rows.Move(index, target);
-        ZonasGrid.SelectedItem = row;
-        ZonasGrid.ScrollIntoView(row);
+        if (ViewModel.CanMoveUp)
+        {
+            ViewModel.MoveSelected(-1);
+            if (ViewModel.SelectedRow != null)
+                ZonasGrid.ScrollIntoView(ViewModel.SelectedRow);
+        }
     }
+
+    private void OnBajarClick(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel.CanMoveDown)
+        {
+            ViewModel.MoveSelected(1);
+            if (ViewModel.SelectedRow != null)
+                ZonasGrid.ScrollIntoView(ViewModel.SelectedRow);
+        }
+    }
+
+    private void OnToggleActivaClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement fe && fe.DataContext is ZonaEditRowVm row)
+        {
+            row.ToggleActiva();
+        }
+    }
+
+    private void OnRowSubirClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement fe && fe.DataContext is ZonaEditRowVm row)
+        {
+            ViewModel.MoveZona(row, -1);
+            ZonasGrid.ScrollIntoView(row);
+        }
+    }
+
+    private void OnRowBajarClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement fe && fe.DataContext is ZonaEditRowVm row)
+        {
+            ViewModel.MoveZona(row, 1);
+            ZonasGrid.ScrollIntoView(row);
+        }
+    }
+
+    private void OnRowQuitarClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement fe && fe.DataContext is ZonaEditRowVm row)
+        {
+            ViewModel.QuitarZona(row);
+        }
+    }
+
+    private void OnActivarTodasClick(object sender, RoutedEventArgs e) => ViewModel.SetActivasTodas(true);
+
+    private void OnDesactivarTodasClick(object sender, RoutedEventArgs e) => ViewModel.SetActivasTodas(false);
 
     private void OnAcceptClick(object sender, RoutedEventArgs e)
     {
-        ZonasGrid.CommitEdit(System.Windows.Controls.DataGridEditingUnit.Row, true);
+        ZonasGrid.CommitEdit(DataGridEditingUnit.Row, true);
 
-        var vacias = rows.Any(r => string.IsNullOrWhiteSpace(r.Nombre));
+        var vacias = ViewModel.Rows.Any(r => string.IsNullOrWhiteSpace(r.Nombre));
         if (vacias)
         {
             WpfDialogService.Info("Zonas sin nombre",
@@ -116,7 +338,7 @@ public partial class ZonasProyectoDialog : Window
             return;
         }
 
-        var duplicada = rows
+        var duplicada = ViewModel.Rows
             .GroupBy(r => r.Nombre.Trim(), StringComparer.OrdinalIgnoreCase)
             .FirstOrDefault(g => g.Count() > 1);
         if (duplicada != null)
@@ -127,55 +349,7 @@ public partial class ZonasProyectoDialog : Window
         }
 
         Zonas.Clear();
-        for (int i = 0; i < rows.Count; i++)
-        {
-            Zonas.Add(new ZonaProyecto
-            {
-                Id = rows[i].Id,
-                Nombre = rows[i].Nombre.Trim(),
-                Orden = i,
-                Activa = rows[i].Activa
-            });
-        }
-
+        Zonas.AddRange(ViewModel.ObtenerZonasResultantes());
         DialogResult = true;
-    }
-
-    private sealed class ZonaEditRow : INotifyPropertyChanged
-    {
-        private int numero;
-        private string nombre;
-        private bool activa;
-
-        public ZonaEditRow(string id, string nombre, bool activa)
-        {
-            Id = id;
-            this.nombre = nombre;
-            this.activa = activa;
-        }
-
-        public string Id { get; }
-
-        public int Numero
-        {
-            get => numero;
-            set { numero = value; Raise(nameof(Numero)); }
-        }
-
-        public string Nombre
-        {
-            get => nombre;
-            set { nombre = value ?? ""; Raise(nameof(Nombre)); }
-        }
-
-        public bool Activa
-        {
-            get => activa;
-            set { activa = value; Raise(nameof(Activa)); }
-        }
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        private void Raise(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 }

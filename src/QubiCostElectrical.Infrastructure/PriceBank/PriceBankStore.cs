@@ -14,7 +14,7 @@ namespace QubiCostElectrical;
 /// </summary>
 public sealed partial class PriceBankStore : IPriceBankStore
 {
-    private const int LatestSchemaVersion = 3;
+    private const int LatestSchemaVersion = 5;
     private readonly string databasePath;
     private List<PriceBankEntry>? allEntriesCache;
 }

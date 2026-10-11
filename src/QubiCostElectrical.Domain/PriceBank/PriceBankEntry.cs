@@ -41,6 +41,18 @@ public sealed class PriceBankEntry
     /// <summary>Marca de tiempo del último upsert en el banco (metadato de persistencia).</summary>
     public DateTime ActualizadoEn { get; set; } = AppClock.Now;
 
+    /// <summary>Rendimiento de instalación en unidades por día-hombre (columna REND). 0 = sin rendimiento.</summary>
+    public decimal RendimientoDh { get; set; }
+
+    /// <summary>Rendimiento por día-pareja (columna DIA x PAREJA). Informativo; 0 = no aplica.</summary>
+    public decimal DiaXPareja { get; set; }
+
+    /// <summary>Fórmula de M.O.: vacío = M.O. fija (MoClp); <see cref="MaterialMoResolver.MoFormulaPorcentaje"/> = Material × MoPorcentajeMaterial × FA.</summary>
+    public string MoFormulaTipo { get; set; } = "";
+
+    /// <summary>Porcentaje de M.O. sobre el material como número (2.5 = 2,5%). Solo aplica con fórmula "Porcentaje".</summary>
+    public decimal MoPorcentajeMaterial { get; set; } = 2.5m;
+
     public PriceBankEntry Clone() => (PriceBankEntry)MemberwiseClone();
 
     /// <summary>Recalcula MatUf/MoUf desde MatClp/MoClp con el valor de UF vigente.</summary>

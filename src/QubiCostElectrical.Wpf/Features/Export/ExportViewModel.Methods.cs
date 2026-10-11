@@ -19,9 +19,10 @@ public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefres
     public ExportViewModel(WpfAppHost host, IShellNavigationHost? shell = null)
         : this(host.Session, host.ProjectWorkspace, host.Permissions, host.Dashboard, host.Export, host.Audit,
                host.FileDialog, host.FileOpener,
-               host.Services.PdfExporter, host.Services.ExcelExporter, host.Services.WordLetterExporter,
+               host.Services.PdfExporter, host.Services.OfferLetterPdfExporter, host.Services.ExcelExporter, host.Services.WordLetterExporter,
                host.Services.CubicacionReportExcelExporter, host.Services.CubicacionReportPdfExporter,
-               host.Services.CubicacionSCReportExcelExporter, host.Services.ProjectRepository, shell) { }
+               host.Services.CubicacionSCReportExcelExporter, host.Services.ProjectRepository, shell)
+    { }
 
     public ExportViewModel(
         BudgetProjectSession session,
@@ -33,6 +34,7 @@ public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefres
         IFileDialogService fileDialog,
         IFileOpenService fileOpener,
         IPdfProjectExporter pdfExporter,
+        IOfferLetterPdfExporter offerLetterExporter,
         IExcelProjectExporter excelExporter,
         IPresentationLetterDocxExporter wordLetterExporter,
         ICubicacionReportExcelExporter cubReportExcel,
@@ -50,6 +52,7 @@ public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefres
         this.fileDialog = fileDialog;
         this.fileOpener = fileOpener;
         this.pdfExporter = pdfExporter;
+        this.offerLetterExporter = offerLetterExporter;
         this.excelExporter = excelExporter;
         this.wordLetterExporter = wordLetterExporter;
         this.cubReportExcel = cubReportExcel;
@@ -67,7 +70,7 @@ public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefres
         exportJsonCommand = new RelayCommand(async () => await ExportJsonAsync(), CanExport);
         exportPackageCommand = new RelayCommand(async () => await ExportPackageAsync(), CanExport);
         previewOfferCommand = new RelayCommand(async () => await PreviewOfferAsync(), CanPreview);
-        previewService = new DeliveryPreviewService(fileOpener, pdfExporter, excelExporter, wordLetterExporter, cubReportExcel, cubReportPdf, cubScReportExcel);
+        previewService = new DeliveryPreviewService(fileOpener, pdfExporter, excelExporter, wordLetterExporter, cubReportExcel, cubReportPdf, cubScReportExcel, offerLetterExporter);
         InitializeOfferWizard();
         OpenProjectCommand = shell != null
             ? new RelayCommand(() => _ = shell.OpenProjectAsync())
@@ -86,7 +89,6 @@ public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefres
     public PdfPreviewViewModel PdfPreview => pdfPreview;
 
     public ObservableCollection<ExportActionVm> Actions => actions;
-    public ObservableCollection<ExportPackageItemVm> PackageItems => packageItems;
     public ObservableCollection<string> ScopeModes => scopeModes;
     public ObservableCollection<ExportPartidaOptionVm> PartidaOptions => partidaOptions;
     public ObservableCollection<string> AreaOptions => areaOptions;
@@ -216,6 +218,12 @@ public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefres
         private set => SetProperty(ref totalUf, value);
     }
 
+    public decimal TotalClp
+    {
+        get => totalClp;
+        private set => SetProperty(ref totalClp, value);
+    }
+
     public decimal ConfidencePct
     {
         get => confidencePct;
@@ -225,7 +233,12 @@ public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefres
     public int Blockers
     {
         get => blockers;
-        private set => SetProperty(ref blockers, value);
+        private set
+        {
+            if (!SetProperty(ref blockers, value))
+                return;
+            OnPropertyChanged(nameof(HasBlockers));
+        }
     }
 
     public int Warnings
@@ -244,8 +257,18 @@ public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefres
         ? $"Congelados el {session.ProjectInfo.FechaCongelamientoPrecios:dd-MM-yyyy} · los cambios del banco de precios no afectan esta oferta."
         : "Los cambios del banco de precios todavía afectan esta oferta. Al exportar se ofrecerá congelarlos.";
 
-    // TotalUf contiene CLP desde la migración (nombre legado)
-    public string TotalOfertaDisplay => $"$ {TotalUf:N0} CLP";
+    public string TotalOfertaDisplay => $"$ {TotalClp:N0} CLP ({TotalUf:N3} UF)";
+
+    public string TotalOfertaPillHeader =>
+        string.Equals(session.ProjectInfo.MonedaPresupuesto, "CLP", StringComparison.OrdinalIgnoreCase)
+            ? "Total CLP" : "Total UF";
+
+    public string TotalOfertaPillText =>
+        string.Equals(session.ProjectInfo.MonedaPresupuesto, "CLP", StringComparison.OrdinalIgnoreCase)
+            ? $"$ {TotalClp:N0}" : $"{TotalUf:N3} UF";
+
+    public string TotalOfertaSecondaryTooltip =>
+        $"Neto: $ {TotalClp:N0} CLP · {TotalUf:N3} UF (Tasa UF: $ {(session.ProjectInfo.ValorUfClp > 0 ? session.ProjectInfo.ValorUfClp : PriceConversion.DefaultValorUfClp):N0})";
 
     public ICommand RefreshCommand => refreshCommand;
     public ICommand ExportOfferPdfCommand => exportOfferPdfCommand;
@@ -258,6 +281,26 @@ public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefres
     public ICommand ExportPackageCommand => exportPackageCommand;
     public ICommand PreviewOfferCommand => previewOfferCommand;
     public ICommand OpenProjectCommand { get; }
+
+    private string documentsSelectionText = "0 de 0";
+    public string DocumentsSelectionText { get => documentsSelectionText; private set => SetProperty(ref documentsSelectionText, value); }
+    public string DocumentsSelectionShortText => DocumentsSelectionText.Replace(" de ", " / ");
+    public ICommand SelectAllDocumentsCommand => selectAllDocumentsCommand;
+
+    private void OnDocumentSelectionChanged()
+    {
+        DocumentsSelectionText = $"{DocumentSelector.Documents.Count(d => d.IsSelected)} de {DocumentSelector.Documents.Count}";
+        OnPropertyChanged(nameof(DocumentsSelectionShortText));
+        UpdateDeliverySummary();
+        ScheduleLivePreview();
+    }
+
+    private void SelectAllDocuments()
+    {
+        var toggle = !DocumentSelector.Documents.All(d => d.IsSelected);
+        foreach (var doc in DocumentSelector.Documents) doc.IsSelected = toggle;
+        OnDocumentSelectionChanged();
+    }
 
     public bool ShowEmptyState
     {
@@ -288,84 +331,86 @@ public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefres
             var areaOptionsSnapshot = exportPresenter.BuildAreaOptions(snapshot);
 
             ProjectTitle = session.ProjectInfo.Nombre;
-        ClientName = session.ProjectInfo.Cliente;
-        StateText = string.IsNullOrWhiteSpace(session.ProjectInfo.EstadoPresupuesto) ? "Borrador" : session.ProjectInfo.EstadoPresupuesto;
-        VersionText = session.ProjectInfo.OfertaPdf?.RevisionTag ?? "Rev 0";
-        TotalUf = dashboardState.Cost.TotalVentaUf;
-        OnPropertyChanged(nameof(PreciosCongelados));
-        OnPropertyChanged(nameof(FreezeBannerTitle));
-        OnPropertyChanged(nameof(FreezeBannerDetail));
-        OnPropertyChanged(nameof(TotalOfertaDisplay));
-        ConfidencePct = dashboardState.Alerts.ConfidencePct;
-        Blockers = dashboardState.Alerts.BlockingCount;
-        Warnings = dashboardState.Alerts.WarningCount;
-        ExportReadinessText = dashboardState.Alerts.ReadyToExport ? "Listo para exportar" : "Revisar antes de exportar";
-        DeliveryPackageText = "PDF de oferta, Excel interno, carta DOCX, memorias de cubicación y respaldo JSON.";
-        if (!projectWorkspace.HasOpenProject)
-            ResetPreviewState();
-        SummaryText = projectWorkspace.HasOpenProject
-            ? $"$ {dashboardState.Cost.TotalVentaUf:N0} CLP · {dashboardState.Alerts.TotalIssues:N0} alertas · {dashboardState.Alerts.WarningCount:N0} advertencias"
-            : "Sin proyecto abierto.";
-        LoadScopeOptions(partidaOptionsSnapshot, areaOptionsSnapshot);
-        StatusMessage = projectWorkspace.HasOpenProject
-            ? $"Usa las acciones de exportación para generar documentos finales sin salir del shell. {ExportScopeSummaryText}"
-            : "Abre un proyecto para habilitar exportaciones.";
+            ClientName = session.ProjectInfo.Cliente;
+            StateText = string.IsNullOrWhiteSpace(session.ProjectInfo.EstadoPresupuesto) ? "Borrador" : session.ProjectInfo.EstadoPresupuesto;
+            VersionText = session.ProjectInfo.OfertaPdf?.RevisionTag ?? "Rev 0";
+            decimal valorUf = session.ProjectInfo.ValorUfClp > 0m ? session.ProjectInfo.ValorUfClp : PriceConversion.DefaultValorUfClp;
+            decimal totalVentaClp = dashboardState.Cost.TotalVentaUf;
+            TotalClp = totalVentaClp;
+            TotalUf = PriceConversion.ClpToUf(totalVentaClp, valorUf);
+            OnPropertyChanged(nameof(TotalClp));
+            OnPropertyChanged(nameof(TotalUf));
+            OnPropertyChanged(nameof(TotalOfertaDisplay));
+            OnPropertyChanged(nameof(TotalOfertaPillHeader));
+            OnPropertyChanged(nameof(TotalOfertaPillText));
+            OnPropertyChanged(nameof(TotalOfertaSecondaryTooltip));
+            OnPropertyChanged(nameof(PreciosCongelados));
+            OnPropertyChanged(nameof(FreezeBannerTitle));
+            OnPropertyChanged(nameof(FreezeBannerDetail));
+            ConfidencePct = dashboardState.Alerts.ConfidencePct;
+            Blockers = dashboardState.Alerts.BlockingCount;
+            Warnings = dashboardState.Alerts.WarningCount;
+            ExportReadinessText = dashboardState.Alerts.ReadyToExport ? "Listo para exportar" : "Revisar antes de exportar";
+            DeliveryPackageText = "PDF de oferta, Excel interno, carta DOCX, memorias de cubicación y respaldo JSON.";
+            if (!projectWorkspace.HasOpenProject)
+                ResetPreviewState();
+            var commercialIssues = dashboardState.Alerts.Issues.Count(x => x.Category == FinalReviewCategory.CommercialModelIncomplete);
+            SummaryText = projectWorkspace.HasOpenProject
+                ? $"$ {dashboardState.Cost.TotalVentaUf:N0} CLP · {dashboardState.Alerts.TotalIssues:N0} alertas · Modelo: {session.ProjectInfo.CommercialModel.DisplayName()}"
+                : "Sin proyecto abierto.";
+            LoadScopeOptions(partidaOptionsSnapshot, areaOptionsSnapshot);
+            StatusMessage = projectWorkspace.HasOpenProject
+                ? (commercialIssues > 0
+                    ? $"La exportación está bloqueada: {commercialIssues:N0} excepción(es) comercial(es) requiere(n) datos. Corrígelas en Itemizado → Modelo comercial de la partida."
+                    : $"Modelo comercial activo: {session.ProjectInfo.CommercialModel.DisplayName()}. Las excepciones están completas. {ExportScopeSummaryText}")
+                : "Abre un proyecto para habilitar exportaciones.";
 
-        actions.Clear();
-        actions.Add(new ExportActionVm("Oferta comercial", "Genera el PDF de oferta con portada, totales y condiciones.", "Exportar PDF", ExportOfferPdfCommand, true));
-        actions.Add(new ExportActionVm("Excel interno", "Exporta el libro de control y trazabilidad para uso interno.", "Exportar Excel", ExportExcelCommand));
-        actions.Add(new ExportActionVm("Carta de presentación", "Crea la carta DOCX para acompañar la oferta.", "Exportar DOCX", ExportLetterCommand));
-        actions.Add(new ExportActionVm("Memoria cubicación", "Exporta la memoria técnica de cubicación en Excel.", "Excel memoria", ExportMemoriaExcelCommand));
-        actions.Add(new ExportActionVm("Memoria PDF", "Exporta la memoria técnica de cubicación en PDF.", "PDF memoria", ExportMemoriaPdfCommand));
-        actions.Add(new ExportActionVm("Reporte tecnico C.SEC", "Detalle tecnico de tableros, circuitos, parametros y materiales.", "Excel C.SEC", ExportScTechnicalReportCommand));
-        actions.Add(new ExportActionVm("Paquete JSON", "Guarda el snapshot actual como archivo JSON de respaldo.", "Exportar JSON", ExportJsonCommand));
-        actions.Add(new ExportActionVm("Paquete final", "Agrupa la oferta y respaldos en un ZIP de exportación.", "Crear ZIP", ExportPackageCommand));
+            actions.Clear();
+            actions.Add(new ExportActionVm("Oferta comercial", "Genera el PDF de oferta con portada, totales y condiciones.", "Exportar PDF", ExportOfferPdfCommand, true));
+            actions.Add(new ExportActionVm("Excel interno", "Exporta el libro de control y trazabilidad para uso interno.", "Exportar Excel", ExportExcelCommand));
+            actions.Add(new ExportActionVm("Carta de presentación", "Crea la carta DOCX para acompañar la oferta.", "Exportar DOCX", ExportLetterCommand));
+            actions.Add(new ExportActionVm("Memoria cubicación", "Exporta la memoria técnica de cubicación en Excel.", "Excel memoria", ExportMemoriaExcelCommand));
+            actions.Add(new ExportActionVm("Memoria PDF", "Exporta la memoria técnica de cubicación en PDF.", "PDF memoria", ExportMemoriaPdfCommand));
+            actions.Add(new ExportActionVm("Reporte tecnico C.SEC", "Detalle tecnico de tableros, circuitos, parametros y materiales.", "Excel C.SEC", ExportScTechnicalReportCommand));
+            actions.Add(new ExportActionVm("Paquete JSON", "Guarda el snapshot actual como archivo JSON de respaldo.", "Exportar JSON", ExportJsonCommand));
+            actions.Add(new ExportActionVm("Paquete final", "Agrupa la oferta y respaldos en un ZIP de exportación.", "Crear ZIP", ExportPackageCommand));
 
-        packageItems.Clear();
-        packageItems.Add(new ExportPackageItemVm("PDF de oferta", "Documento principal para el cliente, con portada, totales y condiciones."));
-        packageItems.Add(new ExportPackageItemVm("Excel interno", "Libro de control con trazabilidad completa y hojas técnicas."));
-        packageItems.Add(new ExportPackageItemVm("Carta DOCX", "Carta de presentación para envío formal."));
-        packageItems.Add(new ExportPackageItemVm("Memoria de cubicación", "Detalle técnico para respaldo interno o revisión."));
-        packageItems.Add(new ExportPackageItemVm("Reporte tecnico C.SEC", "Memoria tecnica de tableros, circuitos y parametros de servicios comunes."));
-        packageItems.Add(new ExportPackageItemVm("Respaldo JSON", "Snapshot exportable del estado actual del proyecto."));
-        packageItems.Add(new ExportPackageItemVm("ZIP final", "Paquete consolidado de exportación listo para compartir."));
+            _corporateTheme = new ExportCorporateThemeSettings
+            {
+                Enabled = prefs.CorporateTheme.Enabled,
+                Name = prefs.CorporateTheme.Name,
+                CompanyName = prefs.CorporateTheme.CompanyName,
+                LogoPath = prefs.CorporateTheme.LogoPath,
+                PrimaryHex = prefs.CorporateTheme.PrimaryHex,
+                AccentHex = prefs.CorporateTheme.AccentHex,
+                BackgroundHex = prefs.CorporateTheme.BackgroundHex,
+                FontFamily = prefs.CorporateTheme.FontFamily
+            };
+            _reportTemplate = new ExportReportTemplateSettings
+            {
+                TemplateName = prefs.ReportTemplate.TemplateName,
+                CoverTitle = prefs.ReportTemplate.CoverTitle,
+                CoverSubtitle = prefs.ReportTemplate.CoverSubtitle,
+                ShowDraftWatermark = prefs.ReportTemplate.ShowDraftWatermark,
+                ShowCover = prefs.ReportTemplate.ShowCover,
+                ShowExecutiveSummary = prefs.ReportTemplate.ShowExecutiveSummary,
+                ShowItemizedDetail = prefs.ReportTemplate.ShowItemizedDetail,
+                ShowCubicacionDetail = prefs.ReportTemplate.ShowCubicacionDetail,
+                ShowPriceValidity = prefs.ReportTemplate.ShowPriceValidity,
+                ShowTermsAndConditions = prefs.ReportTemplate.ShowTermsAndConditions,
+                ShowCoverTraceability = prefs.ReportTemplate.ShowCoverTraceability,
+                OrderedFields = prefs.ReportTemplate.OrderedFields?.ToList() ?? new()
+            };
+            CorporateThemeText = string.IsNullOrWhiteSpace(prefs.CorporateTheme.CompanyName)
+                ? $"Tema corporativo: {prefs.CorporateTheme.Name}"
+                : $"Tema corporativo: {prefs.CorporateTheme.Name} · {prefs.CorporateTheme.CompanyName}";
+            ReportTemplateText = string.IsNullOrWhiteSpace(prefs.ReportTemplate.TemplateName)
+                ? "Plantilla de informe: Oferta profesional"
+                : $"Plantilla de informe: {prefs.ReportTemplate.TemplateName}";
 
-        _corporateTheme = new ExportCorporateThemeSettings
-        {
-            Enabled = prefs.CorporateTheme.Enabled,
-            Name = prefs.CorporateTheme.Name,
-            CompanyName = prefs.CorporateTheme.CompanyName,
-            LogoPath = prefs.CorporateTheme.LogoPath,
-            PrimaryHex = prefs.CorporateTheme.PrimaryHex,
-            AccentHex = prefs.CorporateTheme.AccentHex,
-            BackgroundHex = prefs.CorporateTheme.BackgroundHex,
-            FontFamily = prefs.CorporateTheme.FontFamily
-        };
-        _reportTemplate = new ExportReportTemplateSettings
-        {
-            TemplateName = prefs.ReportTemplate.TemplateName,
-            CoverTitle = prefs.ReportTemplate.CoverTitle,
-            CoverSubtitle = prefs.ReportTemplate.CoverSubtitle,
-            ShowDraftWatermark = prefs.ReportTemplate.ShowDraftWatermark,
-            ShowCover = prefs.ReportTemplate.ShowCover,
-            ShowExecutiveSummary = prefs.ReportTemplate.ShowExecutiveSummary,
-            ShowItemizedDetail = prefs.ReportTemplate.ShowItemizedDetail,
-            ShowCubicacionDetail = prefs.ReportTemplate.ShowCubicacionDetail,
-            ShowPriceValidity = prefs.ReportTemplate.ShowPriceValidity,
-            ShowTermsAndConditions = prefs.ReportTemplate.ShowTermsAndConditions,
-            ShowCoverTraceability = prefs.ReportTemplate.ShowCoverTraceability,
-            OrderedFields = prefs.ReportTemplate.OrderedFields?.ToList() ?? new()
-        };
-        CorporateThemeText = string.IsNullOrWhiteSpace(prefs.CorporateTheme.CompanyName)
-            ? $"Tema corporativo: {prefs.CorporateTheme.Name}"
-            : $"Tema corporativo: {prefs.CorporateTheme.Name} · {prefs.CorporateTheme.CompanyName}";
-        ReportTemplateText = string.IsNullOrWhiteSpace(prefs.ReportTemplate.TemplateName)
-            ? "Plantilla de informe: Oferta profesional"
-            : $"Plantilla de informe: {prefs.ReportTemplate.TemplateName}";
-
-        UpdateScopeSummary();
-        RefreshOfferWizard();
-        RaiseCanExecuteChanged();
+            UpdateScopeSummary();
+            RefreshOfferWizard();
+            RaiseCanExecuteChanged();
         }
         finally
         {
@@ -432,9 +477,15 @@ public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefres
         exportPackageCommand.RaiseCanExecuteChanged();
         deliverPackageCommand.RaiseCanExecuteChanged();
         applyOfferPresetCommand.RaiseCanExecuteChanged();
+        selectAllDocumentsCommand.RaiseCanExecuteChanged();
         saveOfferSettingsCommand.RaiseCanExecuteChanged();
         pickLogoCommand.RaiseCanExecuteChanged();
+        pickClientLogoCommand.RaiseCanExecuteChanged();
         pickSignatureCommand.RaiseCanExecuteChanged();
+        goToFinalReviewCommand.RaiseCanExecuteChanged();
+        goToConfigureStepCommand.RaiseCanExecuteChanged();
+        goToPreviewStepCommand.RaiseCanExecuteChanged();
+        goToExportStepCommand.RaiseCanExecuteChanged();
     }
 
     private ExportProjectContext BuildContext()
@@ -505,16 +556,16 @@ public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefres
                 return;
 
             PreviewStatusText = "Generando vista previa temporal de la oferta...";
-            var result = await previewService.GeneratePreviewAsync(BuildContext());
+            var result = await previewService.GeneratePreviewAsync(BuildContext(), PreviewSwitch.SelectedId, openExternally: false);
 
             if (result.IsSuccess)
             {
                 PreviewFileText = string.IsNullOrWhiteSpace(result.FilePath)
                     ? "Vista previa generada."
                     : $"Archivo temporal: {Path.GetFileName(result.FilePath)}";
-                PreviewStatusText = result.OpenResult == FileOpenResult.Success
-                    ? "Vista previa abierta correctamente."
-                    : "Vista previa generada; el visor externo no respondió como se esperaba.";
+                PreviewStatusText = "Vista previa actualizada en el panel.";
+                if (!string.IsNullOrWhiteSpace(result.FilePath))
+                    await pdfPreview.LoadAsync(result.FilePath);
             }
             else
             {
@@ -691,7 +742,8 @@ public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefres
                     $"Cliente: {ClientName}{Environment.NewLine}" +
                     $"Estado: {StateText}{Environment.NewLine}" +
                     $"Revisión: {VersionText}{Environment.NewLine}" +
-                    $"Total CLP: $ {TotalUf:N0}{Environment.NewLine}" +
+                    $"Total CLP: $ {TotalClp:N0}{Environment.NewLine}" +
+                    $"Total UF: {TotalUf:N3} UF{Environment.NewLine}" +
                     $"Exportado: {AppClock.Now:yyyy-MM-dd HH:mm:ss}",
                     System.Text.Encoding.UTF8);
 
@@ -750,6 +802,3 @@ public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefres
         PreviewFileText = "Sin vista previa generada.";
     }
 }
-
-
-

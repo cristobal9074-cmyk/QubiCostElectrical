@@ -3,9 +3,9 @@ namespace QubiCostElectrical;
 
 public enum LicenseStatus
 {
-	NotActivated,
-	Valid,
-	GracePeriod,
-	Expired,
-	Invalid
+    NotActivated,
+    Valid,
+    GracePeriod,
+    Expired,
+    Invalid
 }

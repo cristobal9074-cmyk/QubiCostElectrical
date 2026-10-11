@@ -79,14 +79,28 @@ internal sealed class ShellProjectLifecycle
         addRecent?.Invoke();
     }
 
-    public void TearDownOpenProject(string lifecycleReason)
+    /// <summary>
+    /// Registra el evento de cierre en la auditoría ANTES de persistir el .qce.
+    /// Debe llamarse justo antes de <see cref="PersistOpenProjectAsync"/>: la entrada
+    /// se añade al buffer en memoria del proyecto y se escribe con el snapshot.
+    /// </summary>
+    public void RecordCloseBeforePersist()
+        => audit.RecordLifecycle("Cerrar", session.CurrentProjectPath);
+
+    /// <summary>
+    /// Limpia la sesión en memoria tras haber persistido el cierre. Ya no registra
+    /// eventos de auditoría: lo que se grabe aquí se descarta con <c>NewProject()</c>.
+    /// </summary>
+    public void TearDownOpenProject()
     {
         autoSave.Stop();
-        audit.RecordLifecycle(lifecycleReason, session.CurrentProjectPath);
         audit.Disable();
         projectLock.ReleaseLock();
         session.SetLockReadOnly(false);
         undo.Clear();
+        // La caché incremental de cálculos vive en memoria entre proyectos: sin este
+        // reset el primer recálculo del proyecto siguiente servía resultados del anterior.
+        budgetCalculation.ResetIncrementalCache();
         clearPageCache();
         session.NewProject(Environment.UserName);
         projectEdit.Discard();

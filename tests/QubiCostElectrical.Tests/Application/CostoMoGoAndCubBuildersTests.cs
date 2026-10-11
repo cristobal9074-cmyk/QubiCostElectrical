@@ -28,6 +28,42 @@ public sealed class CostoMoLaborProjectionBuilderTests
         Assert.Equal(100m, proj.Totals.DirectaPct);
         Assert.Equal(0m, proj.Totals.IndirectaPct);
     }
+
+    [Fact]
+    public void Build_Indirecta_AppliesFraccionObra_ToTotalsAndPct()
+    {
+        var indirecta = new List<MoIndirectaRow>
+        {
+            new() { Cargo = "Admin", Dotacion = 1, SueldoMensualClp = 1_000_000m, FraccionObra = 0.3m },
+            new() { Cargo = "Supervisor", Dotacion = 1, SueldoMensualClp = 1_000_000m },
+        };
+
+        var proj = CostoMoLaborProjectionBuilder.Build([], indirecta);
+
+        // 0,3 × 1M + 1 × 1M = 1_300_000
+        Assert.Equal(1_300_000m, proj.Totals.IndirectaClp);
+        Assert.Equal(1_300_000m, proj.Indirecta.Sum(l => l.Dotacion * l.SueldoMensualClp * l.FraccionObra));
+        Assert.Equal(0.3m, proj.Indirecta[0].FraccionObra);
+        Assert.Equal(1m, proj.Indirecta[1].FraccionObra);
+        Assert.Equal(100m, proj.Totals.IndirectaPct);
+    }
+
+    [Fact]
+    public void Indirecta_Parity_BridgeAndBuilder_SameMontoWithFraccion()
+    {
+        var indirecta = new List<MoIndirectaRow>
+        {
+            new() { Cargo = "Admin", Dotacion = 2, SueldoMensualClp = 1_200_000m, FraccionObra = 0.5m },
+            new() { Cargo = "Prev.", Dotacion = 1, SueldoMensualClp = 640_000m, FraccionObra = 0.25m },
+        };
+
+        // Ambos módulos deben cobrar lo mismo por mes: (2×1,2M×0,5) + (1×640k×0,25) = 1_360_000
+        var bridge = ExcelCostosBridge.SumMoIndirecta(indirecta, fallbackMonths: 1);
+        var builder = CostoMoLaborProjectionBuilder.Build([], indirecta).Totals.IndirectaClp;
+
+        Assert.Equal(1_360_000m, bridge);
+        Assert.Equal(bridge, builder);
+    }
 }
 
 public sealed class CostoGoComposeProjectionBuilderTests

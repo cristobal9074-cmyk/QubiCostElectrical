@@ -27,12 +27,16 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
     private readonly IPurchaseListExcelExporter purchaseListExcel;
     private readonly ObservableCollection<CompraMaterialViewModel> rows = new();
     private readonly ObservableCollection<string> categoryOptions = new();
+    private readonly ObservableCollection<MaterialUsageBreakdown> materialUsages = new();
     private readonly ICollectionView rowsView;
     private readonly RelayCommand refreshCommand;
     private readonly RelayCommand exportExcelCommand;
+    private readonly RelayCommand exportRfqCommand;
     private readonly RelayCommand clearFiltersCommand;
     private readonly RelayCommand goToOriginCommand;
+    private readonly RelayCommand goToUsageCommand;
     private readonly RelayCommand groupByProviderCommand;
+    private readonly System.Windows.Threading.DispatcherTimer searchDebounceTimer;
 
     private string searchText = "";
     private string selectedCategory = "Todas";
@@ -43,6 +47,7 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
     private bool showEmptyState = true;
     private bool isGroupedByProvider;
     private CompraMaterialViewModel? selectedRow;
+    private MaterialUsageBreakdown? selectedUsage;
 
     public PurchaseListViewModel(IShellNavigationHost shell, WpfAppHost host)
         : this(shell, host.Session, host.ProjectWorkspace, host.Permissions, host.Services.MaterialSearch, host.Services.PurchaseList, host.Services.PurchaseListExcel) { }
@@ -59,8 +64,10 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
 
         refreshCommand = new RelayCommand(Refresh);
         exportExcelCommand = new RelayCommand(ExportExcel, CanExportExcel);
+        exportRfqCommand = new RelayCommand(ExportRfq, CanExportExcel);
         clearFiltersCommand = new RelayCommand(ClearFilters);
         goToOriginCommand = new RelayCommand(GoToOrigin, () => selectedRow != null);
+        goToUsageCommand = new RelayCommand(GoToSelectedUsage, () => SelectedUsage != null || selectedRow != null);
         groupByProviderCommand = new RelayCommand(ToggleGroupByProvider);
         OpenProjectCommand = new RelayCommand(() => _ = shell.OpenProjectAsync());
 
@@ -68,6 +75,17 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
         rowsView.Filter = FilterRow;
         rowsView.SortDescriptions.Add(new SortDescription(nameof(CompraMaterialViewModel.TotalCompraUf), ListSortDirection.Descending));
         rowsView.SortDescriptions.Add(new SortDescription(nameof(CompraMaterialViewModel.Codigo), ListSortDirection.Ascending));
+
+        searchDebounceTimer = new System.Windows.Threading.DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(200)
+        };
+        searchDebounceTimer.Tick += (_, _) =>
+        {
+            searchDebounceTimer.Stop();
+            rowsView.Refresh();
+            UpdateSummary();
+        };
 
         Refresh();
     }
@@ -87,8 +105,16 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
         {
             if (!SetProperty(ref searchText, value))
                 return;
-            rowsView.Refresh();
-            UpdateSummary();
+            if (System.Windows.Application.Current == null)
+            {
+                rowsView.Refresh();
+                UpdateSummary();
+            }
+            else
+            {
+                searchDebounceTimer.Stop();
+                searchDebounceTimer.Start();
+            }
         }
     }
 
@@ -147,6 +173,23 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
         private set => SetProperty(ref isGroupedByProvider, value);
     }
 
+    public ObservableCollection<MaterialUsageBreakdown> MaterialUsages => materialUsages;
+
+    public MaterialUsageBreakdown? SelectedUsage
+    {
+        get => selectedUsage;
+        set
+        {
+            if (!SetProperty(ref selectedUsage, value))
+                return;
+            goToUsageCommand.RaiseCanExecuteChanged();
+        }
+    }
+
+    public bool HasSelectedUsage => materialUsages.Count > 0;
+    public string SelectedMaterialHeader => selectedRow == null ? "Seleccione un material" : $"{selectedRow.Codigo} · {selectedRow.Descripcion}";
+    public string SelectedMaterialTotalText => selectedRow == null ? "" : $"{selectedRow.CantidadCompra:N2} {selectedRow.Unidad} (en {materialUsages.Count:N0} partida/área)";
+
     public CompraMaterialViewModel? SelectedRow
     {
         get => selectedRow;
@@ -155,13 +198,17 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
             if (!SetProperty(ref selectedRow, value))
                 return;
             goToOriginCommand.RaiseCanExecuteChanged();
+            goToUsageCommand.RaiseCanExecuteChanged();
+            UpdateMaterialUsages();
         }
     }
 
     public ICommand RefreshCommand => refreshCommand;
     public ICommand ExportExcelCommand => exportExcelCommand;
+    public ICommand ExportRfqCommand => exportRfqCommand;
     public ICommand ClearFiltersCommand => clearFiltersCommand;
     public ICommand GoToOriginCommand => goToOriginCommand;
+    public ICommand GoToUsageCommand => goToUsageCommand;
     public ICommand GroupByProviderCommand => groupByProviderCommand;
     public ICommand OpenProjectCommand { get; }
 
@@ -193,6 +240,7 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
                 ? "No hay recursos comprables en la cubicación actual."
                 : $"Lista consolidada con {rows.Count:N0} materiales.";
         exportExcelCommand.RaiseCanExecuteChanged();
+        exportRfqCommand.RaiseCanExecuteChanged();
     }
 
     private void BuildCategoryOptions()
@@ -246,6 +294,7 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
             SummaryText = "Sin proyecto abierto";
             StatusMessage = "Abre o crea un proyecto para consolidar la lista de compra.";
             exportExcelCommand.RaiseCanExecuteChanged();
+            exportRfqCommand.RaiseCanExecuteChanged();
             return;
         }
 
@@ -261,6 +310,7 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
             ? "No hay recursos comprables en la cubicación actual."
             : $"Lista consolidada: {totalNeto:N2} UF ($ {totalNetoClp:N0}) neto · {totalCompra:N2} UF ($ {totalCompraClp:N0}) compra.";
         exportExcelCommand.RaiseCanExecuteChanged();
+        exportRfqCommand.RaiseCanExecuteChanged();
     }
 
     private void UpdateProjectSummary()
@@ -301,10 +351,66 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
         }
     }
 
+    private void ExportRfq()
+    {
+        if (!CanExportExcel())
+            return;
+
+        try
+        {
+            string defaultName = string.IsNullOrWhiteSpace(session.ProjectInfo.Nombre)
+                ? "RFQ_Cotizacion_Materiales.xlsx"
+                : $"RFQ_{SanitizeFilename(session.ProjectInfo.Nombre)}.xlsx";
+
+            var dialog = new SaveFileDialog
+            {
+                Title = "Exportar Solicitud de Cotización para Distribuidores (RFQ)",
+                Filter = "Excel (*.xlsx)|*.xlsx",
+                FileName = defaultName,
+                OverwritePrompt = true
+            };
+
+            if (dialog.ShowDialog() != true)
+                return;
+
+            var snapshot = rows.ToList();
+            string company = !string.IsNullOrWhiteSpace(session.ProjectInfo.OfertaPdf?.CompanyName)
+                ? session.ProjectInfo.OfertaPdf.CompanyName
+                : (!string.IsNullOrWhiteSpace(session.ProjectInfo.Cliente)
+                    ? session.ProjectInfo.Cliente
+                    : session.ProjectInfo.Nombre);
+
+            purchaseListExcel.ExportRfq(dialog.FileName, new PurchaseListRfqRequest(
+                session.ProjectInfo.Nombre,
+                company,
+                ToleranciaPct,
+                snapshot));
+
+            StatusMessage = $"Solicitud RFQ exportada: {Path.GetFileName(dialog.FileName)}";
+            WpfDialogService.Info("Solicitud de Cotización (RFQ)", "La plantilla para distribuidores se exportó correctamente lista para enviar por email.");
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error("Purchases", "Falló exportar solicitud RFQ", ex);
+            var userMessage = OperationFailureMessages.ToUserMessage(ex);
+            StatusMessage = userMessage;
+            WpfDialogService.Error("Exportar Solicitud RFQ", userMessage);
+        }
+    }
+
+    private static string SanitizeFilename(string name)
+    {
+        var invalid = Path.GetInvalidFileNameChars();
+        return string.Concat(name.Where(c => !invalid.Contains(c))).Replace(' ', '_');
+    }
+
     private void ClearFilters()
     {
-        SearchText = "";
-        SelectedCategory = "Todas";
+        searchDebounceTimer.Stop();
+        searchText = "";
+        OnPropertyChanged(nameof(SearchText));
+        selectedCategory = "Todas";
+        OnPropertyChanged(nameof(SelectedCategory));
         rowsView.Refresh();
         UpdateSummary();
     }
@@ -320,6 +426,21 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
         }
 
         rowsView.Refresh();
+    }
+
+    private void UpdateMaterialUsages()
+    {
+        materialUsages.Clear();
+        if (selectedRow != null && HasProject)
+        {
+            foreach (var usage in purchaseList.GetMaterialUsage(selectedRow.Codigo, session.Cubicacion, session.Itemizado))
+                materialUsages.Add(usage);
+        }
+
+        SelectedUsage = materialUsages.FirstOrDefault();
+        OnPropertyChanged(nameof(HasSelectedUsage));
+        OnPropertyChanged(nameof(SelectedMaterialHeader));
+        OnPropertyChanged(nameof(SelectedMaterialTotalText));
     }
 
     private void GoToOrigin()
@@ -341,6 +462,20 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
         shell.RequestNavigate(
             ShellRoute.Takeoff,
             new TakeoffNavigationContext(itemId, selectedRow.Codigo, selectedRow.Descripcion));
+    }
+
+    private void GoToSelectedUsage()
+    {
+        var target = SelectedUsage;
+        if (target != null && !string.IsNullOrWhiteSpace(target.ItemId))
+        {
+            shell.RequestNavigate(
+                ShellRoute.Takeoff,
+                new TakeoffNavigationContext(target.ItemId, target.Codigo, target.Descripcion));
+            return;
+        }
+
+        GoToOrigin();
     }
 
     private static string? PromptSaveFile()

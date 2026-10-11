@@ -18,18 +18,33 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
         PropertyNameCaseInsensitive = true,
     };
 
-    public CubicacionScViewModel(IShellNavigationHost shell, WpfAppHost host)
-        : this(shell, host.Session, host.ProjectWorkspace, host.UndoService) { }
+    public event Action<string>? CircuitoAdded;
+    public event Action<CircuitoScRowVm>? CircuitoRemoving;
+    /// <summary>
+    /// Disparado antes de recargar la grilla (cambio de tablero o perspectiva).
+    /// El code-behind debe confirmar la celda en edición para evitar que el valor
+    /// pendiente de commit se pierda cuando Circuitos.Clear() destruya las filas.
+    /// </summary>
+    public event Action? RequestCommitGridEdit;
 
-    public CubicacionScViewModel(IShellNavigationHost shell, BudgetProjectSession session, IProjectWorkspaceService workspace, WpfUndoService undo) : base(session)
+    public CubicacionScViewModel(IShellNavigationHost shell, WpfAppHost host)
+        : this(shell, host.Session, host.ProjectWorkspace, host.UndoService, host.Services.CubicacionSCReportExcelExporter) { }
+
+    public CubicacionScViewModel(
+        IShellNavigationHost shell,
+        BudgetProjectSession session,
+        IProjectWorkspaceService workspace,
+        WpfUndoService undo,
+        ICubicacionSCReportExcelExporter? cubScExcel = null) : base(session)
     {
         this.shell = shell;
         this.workspace = workspace;
         this.undo = undo;
         this.session = session;
+        this.cubScExcel = cubScExcel ?? new CubicacionSCTechnicalReportExcelExporter();
 
         AddCuadroCommand = new RelayCommand(AddCuadro, () => !showEmptyState && CanEdit);
-        RemoveCuadroCommand = new RelayCommand(RemoveCuadro, () => selectedCuadro != null && CanEdit);
+        RemoveCuadroCommand = new RelayCommand<object>(RemoveCuadro, param => CanEdit && (param is CuadroScRowVm || selectedCuadro != null));
         AddCircuitoCommand = new RelayCommand(AddCircuito, () => selectedCuadro != null && CanEdit);
         RemoveCircuitoCommand = new RelayCommand(RemoveCircuito, () => selectedCircuito != null && CanEdit);
         CopyCircuitoCommand = new RelayCommand(CopyCircuito, () => selectedCircuito != null && CanEdit);
@@ -43,6 +58,10 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
         OpenArtefactosCommand = new RelayCommand<CircuitoScRowVm>(AbrirArtefactos, c => c != null && CanEdit);
         OpenResumenCommand = new RelayCommand(AbrirResumen, () => !showEmptyState);
         ExportPdfCommand = new RelayCommand(ExportPdf, () => !showEmptyState);
+        BalancearFasesCommand = new RelayCommand(BalancearFases, () => selectedCuadro != null && CanEdit);
+        ExportarCuadroSecCommand = new RelayCommand(ExportarCuadroSec, () => !showEmptyState);
+        SelectPerspectiveCommand = new RelayCommand<string>(SelectPerspective);
+        MoveCuadroPerspectiveCommand = new RelayCommand<CuadroScRowVm>(MoveCuadroToOtherPerspective, _ => CanEdit);
         ToggleAdvancedModeCommand = new RelayCommand(() =>
         {
             isAdvancedMode = !isAdvancedMode;
@@ -54,6 +73,68 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
     }
 
     public ICommand ToggleAdvancedModeCommand { get; }
+    public ICommand SelectPerspectiveCommand { get; }
+    public ICommand MoveCuadroPerspectiveCommand { get; }
+
+    public bool IsPerspectiveGenerales => currentPerspective == CubScPerspective.Generales;
+    public bool IsPerspectiveDeptos => currentPerspective == CubScPerspective.Deptos;
+    public string SidebarHeaderTitle => IsPerspectiveDeptos ? "TABLEROS DEPTOS" : "TABLEROS GENERALES";
+    public string PlanillaTitle => IsPerspectiveDeptos ? "CUBICACIÓN DE CIRCUITOS · DEPARTAMENTOS" : "CUBICACIÓN DE CIRCUITOS · CTOS GENERALES";
+    public int CuadrosFiltradosCount => CuadrosFiltrados.Count();
+
+    public bool ShowColUbicacion => IsPerspectiveGenerales;
+    public bool ShowColLBand => IsPerspectiveGenerales;
+    public bool ShowColBandeja => IsPerspectiveGenerales;
+    public bool ShowColBandejaAdvanced => IsPerspectiveGenerales && isAdvancedMode;
+    public bool ShowColTmf => IsPerspectiveGenerales;
+
+    public void SelectPerspective(string? perspective)
+    {
+        var target = string.Equals(perspective, "Deptos", StringComparison.OrdinalIgnoreCase)
+            ? CubScPerspective.Deptos
+            : CubScPerspective.Generales;
+
+        if (currentPerspective == target) return;
+        currentPerspective = target;
+
+        OnPropertyChanged(nameof(IsPerspectiveGenerales));
+        OnPropertyChanged(nameof(IsPerspectiveDeptos));
+        OnPropertyChanged(nameof(SidebarHeaderTitle));
+        OnPropertyChanged(nameof(PlanillaTitle));
+        OnPropertyChanged(nameof(CuadrosFiltrados));
+        OnPropertyChanged(nameof(CuadrosFiltradosCount));
+        OnPropertyChanged(nameof(ShowColUbicacion));
+        OnPropertyChanged(nameof(ShowColLBand));
+        OnPropertyChanged(nameof(ShowColBandeja));
+        OnPropertyChanged(nameof(ShowColBandejaAdvanced));
+        OnPropertyChanged(nameof(ShowColTmf));
+
+        if (selectedCuadro == null || (currentPerspective == CubScPerspective.Deptos ? !selectedCuadro.IsDepto : selectedCuadro.IsDepto))
+        {
+            SelectedCuadro = CuadrosFiltrados.FirstOrDefault();
+        }
+        UpdateStatusMessage();
+    }
+
+    public void MoveCuadroToOtherPerspective(CuadroScRowVm? target = null)
+    {
+        var cuadro = target ?? selectedCuadro;
+        if (cuadro == null || !CanEdit) return;
+
+        undo.PushUndoPoint(session, "Mover tablero de menú");
+        pendingUndoForEdit = true;
+
+        cuadro.Categoria = cuadro.IsDepto ? "Generales" : "Deptos";
+
+        OnPropertyChanged(nameof(CuadrosFiltrados));
+        OnPropertyChanged(nameof(CuadrosFiltradosCount));
+
+        if (selectedCuadro == cuadro)
+        {
+            SelectedCuadro = CuadrosFiltrados.FirstOrDefault();
+        }
+        MarkDirty();
+    }
 
     /// <summary>Modo avanzado: muestra todas las columnas de la planilla de circuitos.
     /// En modo entrada (false) solo se muestran las columnas esenciales: N°, Sist., Alim., Ubicación, Recorridos y Totales.</summary>
@@ -66,6 +147,7 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
             isAdvancedMode = value;
             OnPropertyChanged();
             OnPropertyChanged(nameof(AdvancedModeLabel));
+            OnPropertyChanged(nameof(ShowColBandejaAdvanced));
         }
     }
 
@@ -75,6 +157,16 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
     {
         if (suppressSessionReload)
             return;
+
+        // El guardado sustituye la sesión por un clon. La grilla sigue en los circuitos
+        // anteriores: si Alt+A confirmó artefactos ahí, hay que pasarlos al clon que
+        // lee el resumen y el próximo autoguardado.
+        if (e.Kind == ProjectSessionChangeKind.Saved)
+        {
+            if (SincronizarGrillaConSesion())
+                MarkDirty();
+            return;
+        }
 
         // Edición propia ya mutó session + UI; no recargar (borraría HasPendingChanges).
         if (HasPendingChanges &&
@@ -113,8 +205,12 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
 
     private void RefreshCatalogCollections()
     {
-        // Abreviaturas solicitadas: Alumbrado (A), Enchufe (E), Clima (CL), Computación (C), Fuerza (F)
-        ReplaceContents(tipos, new List<string> { "A", "E", "CL", "C", "F" });
+        // Códigos de sistemas de circuito desde el catálogo del proyecto (A, E, CL, CO...)
+        var sistemasCircuito = Config.SistemasCircuito;
+        if (sistemasCircuito == null || sistemasCircuito.Count == 0)
+            sistemasCircuito = CubicacionScConfig.Default().SistemasCircuito;
+
+        ReplaceContents(tipos, sistemasCircuito.Select(s => s.Codigo).Where(c => !string.IsNullOrWhiteSpace(c)).Distinct(StringComparer.OrdinalIgnoreCase));
         // Fases abreviadas: Monofásico (M), Trifásico (T), Emergencia (EM)
         ReplaceContents(fases, new List<string> { "M", "T", "EM" });
         ReplaceContents(tiposRecorrido, Config.TiposRecorrido);
@@ -169,18 +265,32 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
     public ObservableCollection<CuadroScRowVm> Cuadros { get; } = new();
     public ObservableCollection<CircuitoScRowVm> Circuitos { get; } = new();
 
+    public event Action? RequestClearGridSelection;
+
     public CuadroScRowVm? SelectedCuadro
     {
         get => selectedCuadro;
         set
         {
+            if (selectedCuadro == value) return;
+            RequestClearGridSelection?.Invoke();
+            RequestCommitGridEdit?.Invoke();
             if (!SetProperty(ref selectedCuadro, value))
                 return;
             LoadCircuitos();
+            OnPropertyChanged(nameof(HasSelectedCuadro));
             OnPropertyChanged(nameof(HasPendingChanges));
             OnPropertyChanged(nameof(CircuitosFiltrados));
+            OnPropertyChanged(nameof(KpiPotenciaText));
+            OnPropertyChanged(nameof(KpiDesbalanceText));
+            OnPropertyChanged(nameof(IsDesbalanceConformeSec));
+            ((RelayCommand)BalancearFasesCommand).RaiseCanExecuteChanged();
+            ((RelayCommand<object>)RemoveCuadroCommand).RaiseCanExecuteChanged();
+            ((RelayCommand)AddCircuitoCommand).RaiseCanExecuteChanged();
         }
     }
+
+    public bool HasSelectedCuadro => SelectedCuadro != null;
 
     public CircuitoScRowVm? SelectedCircuito
     {
@@ -219,6 +329,7 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
         {
             if (!SetProperty(ref searchText, value)) return;
             OnPropertyChanged(nameof(CuadrosFiltrados));
+            OnPropertyChanged(nameof(CuadrosFiltradosCount));
             OnPropertyChanged(nameof(CircuitosFiltrados));
         }
     }
@@ -238,9 +349,10 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
         get
         {
             var q = searchText?.Trim() ?? "";
+            var items = Cuadros.Where(c => IsPerspectiveDeptos ? c.IsDepto : !c.IsDepto);
             if (string.IsNullOrEmpty(q))
-                return Cuadros;
-            return Cuadros.Where(c =>
+                return items;
+            return items.Where(c =>
                 c.Nombre.Contains(q, StringComparison.OrdinalIgnoreCase));
         }
     }
@@ -290,8 +402,8 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
 
         var pisos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var c in Circuitos)
-        foreach (var p in CircuitoPisos(c))
-            pisos.Add(p);
+            foreach (var p in CircuitoPisos(c))
+                pisos.Add(p);
 
         // Zonas del proyecto primero, en su orden; luego cualquier piso escrito a mano que no
         // coincida con una zona, alfabético.
@@ -335,40 +447,56 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
     public ICommand OpenArtefactosCommand { get; }
     public ICommand OpenResumenCommand { get; }
     public ICommand ExportPdfCommand { get; }
+    public ICommand BalancearFasesCommand { get; }
+    public ICommand ExportarCuadroSecCommand { get; }
 
     public void Refresh()
     {
         IsLoading = true;
         try
         {
-        RefreshCatalogCollections();
-        ShowEmptyState = !workspace.HasOpenProject;
-        if (ShowEmptyState)
-        {
+            RefreshCatalogCollections();
+            ShowEmptyState = !workspace.HasOpenProject;
+            if (ShowEmptyState)
+            {
+                Cuadros.Clear();
+                Circuitos.Clear();
+                SelectedCuadro = null;
+                StatusMessage = "";
+                HasPendingChanges = false;
+                baselineCuadros = null;
+                baselineConfig = null;
+                return;
+            }
+
+            var previousCuadroId = selectedCuadro?.Id;
+            var previousCircuitoId = selectedCircuito?.Id;
+
             Cuadros.Clear();
-            Circuitos.Clear();
-            SelectedCuadro = null;
-            StatusMessage = "";
+            foreach (var cuadro in session.CubicacionSC)
+                Cuadros.Add(new CuadroScRowVm(cuadro, MarkDirty, () => CanEdit));
+
+            if (Cuadros.Count == 0)
+                EnsureDefaultCuadro();
+
+            SelectedCuadro = CuadrosFiltrados.FirstOrDefault(c => string.Equals(c.Id, previousCuadroId, StringComparison.Ordinal))
+                          ?? CuadrosFiltrados.FirstOrDefault();
+
+            if (previousCircuitoId != null && SelectedCuadro != null)
+            {
+                var matchCircuito = Circuitos.FirstOrDefault(c => string.Equals(c.Id, previousCircuitoId, StringComparison.Ordinal));
+                if (matchCircuito != null)
+                {
+                    SelectedCircuito = matchCircuito;
+                }
+            }
+            UpdateStatusMessage();
             HasPendingChanges = false;
-            baselineCuadros = null;
-            baselineConfig = null;
-            return;
-        }
-
-        Cuadros.Clear();
-        foreach (var cuadro in session.CubicacionSC)
-            Cuadros.Add(new CuadroScRowVm(cuadro, MarkDirty, () => CanEdit));
-
-        if (Cuadros.Count == 0)
-            EnsureDefaultCuadro();
-
-        SelectedCuadro = Cuadros.FirstOrDefault();
-        StatusMessage = $"{Cuadros.Count} tablero(s) SC · {session.CubicacionSC.Sum(c => c.Circuitos.Count)} circuitos";
-        HasPendingChanges = false;
-        CaptureBaseline();
-        NotifyKpiProperties();
-        OnPropertyChanged(nameof(CuadrosFiltrados));
-        OnPropertyChanged(nameof(CircuitosFiltrados));
+            CaptureBaseline();
+            NotifyKpiProperties();
+            OnPropertyChanged(nameof(CuadrosFiltrados));
+            OnPropertyChanged(nameof(CuadrosFiltradosCount));
+            OnPropertyChanged(nameof(CircuitosFiltrados));
         }
         finally
         {
@@ -389,6 +517,10 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
 
     public bool TryApplyChanges()
     {
+        // Confirma la celda activa del DataGrid (si existe) antes de persistir el estado.
+        // Esto garantiza que el valor escrito en un TextBox de edición no se pierda cuando
+        // el usuario navega a otra pestaña del shell mientras la celda sigue en edición.
+        RequestCommitGridEdit?.Invoke();
         ApplyChanges();
         return !HasPendingChanges;
     }
@@ -407,6 +539,7 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
 
     private void LoadCircuitos()
     {
+        RequestClearGridSelection?.Invoke();
         Circuitos.Clear();
         SelectedCircuito = null;
         if (selectedCuadro == null)
@@ -437,30 +570,63 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
 
     private void AddCuadro()
     {
-        undo.PushUndoPoint(session, "Agregar tablero SC");
+        var undoName = IsPerspectiveDeptos ? "Agregar tablero Deptos" : "Agregar tablero SC";
+        undo.PushUndoPoint(session, undoName);
         pendingUndoForEdit = true;
-        var cuadro = new CuadroCargaSCRow { Nombre = $"TDA SC {Cuadros.Count + 1}" };
+        var prefix = IsPerspectiveDeptos ? "TDA DEPTO" : "TDA SC";
+        var countInPerspective = Cuadros.Count(c => IsPerspectiveDeptos ? c.IsDepto : !c.IsDepto);
+        var cuadro = new CuadroCargaSCRow
+        {
+            Nombre = $"{prefix} {countInPerspective + 1}",
+            Categoria = IsPerspectiveDeptos ? "Deptos" : "Generales"
+        };
         session.CubicacionSC.Add(cuadro);
         var vm = new CuadroScRowVm(cuadro, MarkDirty, () => CanEdit);
         Cuadros.Add(vm);
+        OnPropertyChanged(nameof(CuadrosFiltrados));
+        OnPropertyChanged(nameof(CuadrosFiltradosCount));
         SelectedCuadro = vm;
         MarkDirty();
+        UpdateStatusMessage();
+        ((RelayCommand<object>)RemoveCuadroCommand).RaiseCanExecuteChanged();
     }
 
-    private void RemoveCuadro()
+    private void RemoveCuadro(object? parameter = null)
     {
-        if (selectedCuadro == null)
+        var target = parameter as CuadroScRowVm ?? selectedCuadro;
+        if (target == null || !CanEdit)
             return;
 
-        undo.PushUndoPoint(session, "Eliminar tablero SC");
+        var undoName = IsPerspectiveDeptos ? "Eliminar tablero Deptos" : "Eliminar tablero SC";
+        undo.PushUndoPoint(session, undoName);
         pendingUndoForEdit = true;
-        var cuadro = session.CubicacionSC.FirstOrDefault(c => c.Id == selectedCuadro.Id);
+        var cuadro = session.CubicacionSC.FirstOrDefault(c => c.Id == target.Id);
         if (cuadro != null)
             session.CubicacionSC.Remove(cuadro);
 
-        Cuadros.Remove(selectedCuadro);
-        SelectedCuadro = Cuadros.FirstOrDefault();
+        Cuadros.Remove(target);
+        OnPropertyChanged(nameof(CuadrosFiltrados));
+        OnPropertyChanged(nameof(CuadrosFiltradosCount));
+
+        if (selectedCuadro == target || selectedCuadro == null)
+        {
+            SelectedCuadro = CuadrosFiltrados.FirstOrDefault();
+            if (SelectedCuadro == null)
+            {
+                RequestClearGridSelection?.Invoke();
+                Circuitos.Clear();
+                SelectedCircuito = null;
+                NotifyKpiProperties();
+            }
+        }
+        else
+        {
+            NotifyKpiProperties();
+        }
+
         MarkDirty();
+        UpdateStatusMessage();
+        ((RelayCommand<object>)RemoveCuadroCommand).RaiseCanExecuteChanged();
     }
 
     private void AddCircuito()
@@ -484,6 +650,20 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
         if (selectedCircuito != null)
             ApplyCanalizacionTemplate(selectedCircuito.Source, circuito);
 
+        if (cuadro.EsDepto)
+        {
+            circuito.MetrosBandeja = 0;
+            circuito.TipoRecorrido = "Tubería";
+            circuito.TipoBandeja = "";
+            circuito.AnchoBandeja = 0;
+            circuito.ConductorDistribucion = "";
+            circuito.SeccionDistribucion = "";
+            // A01 (caja 100×65) no queda fija en 1. En departamentos el estimador
+            // escribe la cantidad en la grilla. Duplicar sí copia el valor ya cargado.
+            // En tableros generales se mantiene el 1 automático.
+            circuito.Cajas100x65 = 0;
+        }
+
         InsertCircuitoVm(cuadro, circuito);
     }
 
@@ -491,8 +671,10 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
     {
         to.Tipo = from.Tipo;
         to.Sistema = from.Sistema;
+        to.FaseRst = from.FaseRst;
         to.NumConductores = from.NumConductores;
         to.MermaPct = from.MermaPct;
+        to.Ubicacion = from.Ubicacion;
         to.TipoRecorrido = from.TipoRecorrido;
         to.TipoTuberia = from.TipoTuberia;
         to.SeccionTuberia = from.SeccionTuberia;
@@ -502,6 +684,23 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
         to.SeccionDistribucion = from.SeccionDistribucion;
         to.ConductorDerivacion = from.ConductorDerivacion;
         to.SeccionDerivacion = from.SeccionDerivacion;
+        to.MontajesAlumbrado = from.MontajesAlumbrado;
+        to.Cajas58 = from.Cajas58;
+        to.Cajas100x100 = from.Cajas100x100;
+        to.Cajas100x65 = from.Cajas100x65;
+        to.SensoresMovimiento = from.SensoresMovimiento;
+        to.Senaleticas = from.Senaleticas;
+        to.CintaLedMts = from.CintaLedMts;
+        if (from.PisosTramos != null && from.PisosTramos.Count > 0)
+        {
+            to.PisosTramos = from.PisosTramos.Select(t => new CircuitoPisoTramo
+            {
+                ZonaId = t.ZonaId,
+                ZonaNombre = t.ZonaNombre,
+                MetrosBandeja = 0,
+                MetrosTuberia = 0
+            }).ToList();
+        }
     }
 
     /// <summary>Marca dirty tras pegar/rellenar celdas desde la grilla (Ctrl+V / Ctrl+D fill).</summary>
@@ -578,6 +777,7 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
         SelectedCircuito = vm;
         selectedCuadro.NotifyCircuitosActivosChanged();
         MarkDirty();
+        CircuitoAdded?.Invoke(circuito.Id);
     }
 
     private void AddArtefacto()
@@ -621,8 +821,19 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
         if (circuito != null)
             cuadro!.Circuitos.Remove(circuito);
 
-        Circuitos.Remove(selectedCircuito);
-        SelectedCircuito = Circuitos.FirstOrDefault();
+        var aRemover = selectedCircuito;
+        CircuitoRemoving?.Invoke(aRemover);
+
+        int index = Circuitos.IndexOf(aRemover);
+        Circuitos.Remove(aRemover);
+
+        CircuitoScRowVm? next = null;
+        if (Circuitos.Count > 0)
+        {
+            int nextIndex = Math.Clamp(index, 0, Circuitos.Count - 1);
+            next = Circuitos[nextIndex];
+        }
+        SelectedCircuito = next;
         selectedCuadro.NotifyCircuitosActivosChanged();
         MarkDirty();
         pendingUndoForEdit = false;
@@ -648,10 +859,8 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
         StatusMessage = "Catálogo actualizado. Use Guardar en la barra superior para persistir el archivo.";
     }
 
-    // Botón "Artefactos" en cada fila de circuito: abre el diálogo de agregado rápido por zona.
-    // Las zonas salen de las zonas del proyecto (ZonaProyecto, definidas en Cubicación); el
-    // catálogo de artefactos y los "frecuentes" salen de CubicacionScConfig. El diálogo muta
-    // los artefactos del circuito directamente; al aceptar se recarga la fila y se marca sucio.
+    // Alt+A / botón Artefactos: diálogo del circuito. Si la ubicación tiene varios pisos,
+    // solo muestra esos pisos. Elegir un artefacto pregunta la cantidad antes de guardarla.
     private void AbrirArtefactos(CircuitoScRowVm? vm)
     {
         if (vm == null || !CanEdit)
@@ -668,8 +877,75 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
             ResolveCategoriaYRegistrar(nombre);
 
         vm.ReloadArtefactos();
+        SincronizarGrillaConSesion();
         MarkDirty();
         StatusMessage = "Artefactos por zona actualizados. Use Guardar en la barra superior para persistir el archivo.";
+    }
+
+    /// <summary>
+    /// Copia artefactos y cantidades de la grilla al circuito de la sesión cuando el
+    /// autoguardado ya reemplazó el objeto. El resumen y el .qce leen la sesión:
+    /// sin esto, 5/8, A11 y A01 quedan en la grilla y el total de cajas sale en 0.
+    /// </summary>
+    internal bool SincronizarGrillaConSesion()
+    {
+        var changed = false;
+        foreach (var vm in Circuitos)
+        {
+            var live = session.CubicacionSC
+                .SelectMany(c => c.Circuitos)
+                .FirstOrDefault(c => string.Equals(c.Id, vm.Id, StringComparison.Ordinal));
+            if (live == null || ReferenceEquals(live, vm.Source))
+                continue;
+
+            var from = vm.Source;
+            if (!MismaListaArtefactos(live.Artefactos, from.Artefactos))
+            {
+                live.Artefactos = from.Artefactos.Select(a => new ArtefactoSCRow
+                {
+                    Nombre = a.Nombre,
+                    Categoria = a.Categoria,
+                    Cantidad = a.Cantidad,
+                    ZonaId = a.ZonaId,
+                }).ToList();
+                changed = true;
+            }
+
+            changed |= CopiarSiDifiere(live.Cajas58, from.Cajas58, v => live.Cajas58 = v);
+            changed |= CopiarSiDifiere(live.Cajas100x100, from.Cajas100x100, v => live.Cajas100x100 = v);
+            changed |= CopiarSiDifiere(live.Cajas100x65, from.Cajas100x65, v => live.Cajas100x65 = v);
+            changed |= CopiarSiDifiere(live.MontajesAlumbrado, from.MontajesAlumbrado, v => live.MontajesAlumbrado = v);
+            changed |= CopiarSiDifiere(live.SensoresMovimiento, from.SensoresMovimiento, v => live.SensoresMovimiento = v);
+            changed |= CopiarSiDifiere(live.Senaleticas, from.Senaleticas, v => live.Senaleticas = v);
+            changed |= CopiarSiDifiere(live.CintaLedMts, from.CintaLedMts, v => live.CintaLedMts = v);
+        }
+        return changed;
+    }
+
+    private static bool CopiarSiDifiere(decimal actual, decimal visible, Action<decimal> asignar)
+    {
+        if (actual == visible)
+            return false;
+        asignar(visible);
+        return true;
+    }
+
+    private static bool MismaListaArtefactos(IReadOnlyList<ArtefactoSCRow> left, IReadOnlyList<ArtefactoSCRow> right)
+    {
+        if (left.Count != right.Count)
+            return false;
+        for (var i = 0; i < left.Count; i++)
+        {
+            if (!string.Equals(left[i].Nombre, right[i].Nombre, StringComparison.OrdinalIgnoreCase))
+                return false;
+            if (!string.Equals(left[i].Categoria, right[i].Categoria, StringComparison.OrdinalIgnoreCase))
+                return false;
+            if (left[i].Cantidad != right[i].Cantidad)
+                return false;
+            if (!string.Equals(left[i].ZonaId ?? "", right[i].ZonaId ?? "", StringComparison.Ordinal))
+                return false;
+        }
+        return true;
     }
 
     // Invocado por cada CircuitoScRowVm (callback onPisosChanged) al confirmar el flyout de zonas
@@ -680,14 +956,25 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
         RefreshPisosDisponibles();
     }
 
+    private void UpdateStatusMessage()
+    {
+        if (showEmptyState) { StatusMessage = ""; return; }
+        var inPersp = Cuadros.Where(c => IsPerspectiveDeptos ? c.IsDepto : !c.IsDepto).ToList();
+        var circsCount = inPersp.Sum(c => c.Source.Circuitos.Count);
+        var label = IsPerspectiveDeptos ? "Deptos" : "Generales";
+        StatusMessage = $"{inPersp.Count} tablero(s) {label} · {circsCount} circuitos";
+    }
+
     // Botón "Resumen" de la barra: abre el resumen del proyecto con sub-pestañas (total, por
     // tablero, por piso y artefactos por piso). Solo lectura.
     private void AbrirResumen()
     {
         if (showEmptyState) return;
+        if (SincronizarGrillaConSesion())
+            MarkDirty();
         var owner = System.Windows.Application.Current?.Windows.OfType<System.Windows.Window>()
             .FirstOrDefault(w => w.IsActive);
-        new CubicacionScResumenDialog(session.CubicacionSC, session.ZonasProyecto, Config) { Owner = owner }.ShowDialog();
+        new CubicacionScResumenDialog(session.CubicacionSC, session.ZonasProyecto, Config, IsPerspectiveDeptos) { Owner = owner }.ShowDialog();
     }
 
     private void ApplyChanges()
@@ -812,28 +1099,116 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
         }
     }
 
+    public string KpiPotenciaText
+    {
+        get
+        {
+            if (showEmptyState) return "0.0 kW";
+            var activeCircs = session.CubicacionSC.SelectMany(cuadro => cuadro.Circuitos).Where(c => c.EsActivo || c.EsReservaEquipada).ToList();
+            if (activeCircs.Count == 0) return "0.0 kW";
+            decimal totalW = activeCircs.Sum(CuadroCargasSecEngine.EstimateCircuitPowerW);
+            decimal kw = Math.Round(totalW / 1000m, 1);
+            return $"{kw:N1} kW";
+        }
+    }
+
+    public string KpiDesbalanceText
+    {
+        get
+        {
+            if (showEmptyState || selectedCuadro == null) return "0.0% SEC";
+            var summary = CuadroCargasSecEngine.CalculateTableroSummary(selectedCuadro.Source);
+            return $"{summary.PorcentajeDesbalance:N1}% {(summary.ConformeSec ? "✓ SEC" : "⚠ Desbalance")}";
+        }
+    }
+
+    public bool IsDesbalanceConformeSec
+    {
+        get
+        {
+            if (showEmptyState || selectedCuadro == null) return true;
+            var summary = CuadroCargasSecEngine.CalculateTableroSummary(selectedCuadro.Source);
+            return summary.ConformeSec;
+        }
+    }
+
     private void NotifyKpiProperties()
     {
         OnPropertyChanged(nameof(KpiCanalizacionText));
         OnPropertyChanged(nameof(KpiTablerosCount));
         OnPropertyChanged(nameof(KpiCircuitosCount));
         OnPropertyChanged(nameof(KpiCajasTerminalesText));
+        OnPropertyChanged(nameof(KpiPotenciaText));
+        OnPropertyChanged(nameof(KpiDesbalanceText));
+        OnPropertyChanged(nameof(IsDesbalanceConformeSec));
+    }
+
+    private void BalancearFases()
+    {
+        if (selectedCuadro == null || !CanEdit) return;
+
+        undo.PushUndoPoint(session, "Auto-balancear fases SEC");
+        CuadroCargasSecEngine.AutoBalancearFases(selectedCuadro.Source);
+        LoadCircuitos();
+        NotifyKpiProperties();
+        MarkDirty();
+
+        var summary = CuadroCargasSecEngine.CalculateTableroSummary(selectedCuadro.Source);
+        string status = summary.ConformeSec
+            ? $"Fases auto-balanceadas: Desbalance {summary.PorcentajeDesbalance:N1}% (Conforme SEC RIC N°02 ≤ 10%)."
+            : $"Fases auto-balanceadas: Desbalance {summary.PorcentajeDesbalance:N1}%.";
+
+        StatusMessage = status;
+        ShellNotificationService.Instance.ShowSuccess("Balanceo de Fases SEC", status);
+    }
+
+    private void ExportarCuadroSec()
+    {
+        try
+        {
+            var sfd = new Microsoft.Win32.SaveFileDialog
+            {
+                Filter = "Planilla Excel (*.xlsx)|*.xlsx",
+                FileName = $"Cuadro_Cargas_SEC_{session.ProjectInfo.Nombre ?? "Proyecto"}.xlsx"
+            };
+
+            if (sfd.ShowDialog() == true)
+            {
+                var exportContext = new ExportProjectContext
+                {
+                    Data = session.Data,
+                    CurrentProjectPath = session.CurrentProjectPath,
+                    ExportedBy = session.CurrentUserName,
+                    ExportedAt = AppClock.Now
+                };
+
+                cubScExcel.ExportCuadroCargasSec(exportContext, sfd.FileName);
+                ShellNotificationService.Instance.ShowSuccess("Cuadro SEC Exportado", $"Cuadro de cargas guardado en {System.IO.Path.GetFileName(sfd.FileName)}.");
+            }
+        }
+        catch (Exception ex)
+        {
+            ShellNotificationService.Instance.ShowError("Error al exportar Cuadro SEC", ex.Message);
+        }
     }
 
     private void ExportPdf()
     {
         try
         {
+            var isDepto = IsPerspectiveDeptos;
+            var subTitle = isDepto ? "Deptos" : "Generales";
             var sfd = new Microsoft.Win32.SaveFileDialog
             {
                 Filter = "Archivo PDF (*.pdf)|*.pdf",
-                FileName = $"Cubicacion_SC_{session.ProjectInfo.Nombre ?? "Proyecto"}.pdf"
+                FileName = $"Cubicacion_{subTitle}_{session.ProjectInfo.Nombre ?? "Proyecto"}.pdf"
             };
 
             if (sfd.ShowDialog() == true)
             {
-                CubicacionScPdfExporter.Export(session.ProjectInfo, session.CubicacionSC, session.ZonasProyecto, Config, sfd.FileName);
-                ShellNotificationService.Instance.ShowSuccess("PDF exportado", $"Registro C.SC guardado en {System.IO.Path.GetFileName(sfd.FileName)}.");
+                var cuadrosFiltrados = session.CubicacionSC.Where(c => isDepto ? c.EsDepto : !c.EsDepto).ToList();
+                CubicacionScPdfExporter.Export(session.ProjectInfo, cuadrosFiltrados, session.ZonasProyecto, Config, sfd.FileName);
+                ShellNotificationService.Instance.ShowSuccess("PDF exportado", $"Registro C.SC ({subTitle}) guardado en {System.IO.Path.GetFileName(sfd.FileName)}.");
             }
         }
         catch (Exception ex)

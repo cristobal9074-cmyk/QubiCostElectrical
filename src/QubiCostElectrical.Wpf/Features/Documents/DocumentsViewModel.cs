@@ -67,10 +67,18 @@ public sealed class AntecedenteRowVm : ViewModelBase
         }
     }
 
-    public string RutaArchivoNombre => string.IsNullOrWhiteSpace(row.RutaArchivo) ? "" : System.IO.Path.GetFileName(row.RutaArchivo);
+    public string RutaArchivoNombre
+    {
+        get => string.IsNullOrWhiteSpace(row.RutaArchivo) ? "" : System.IO.Path.GetFileName(row.RutaArchivo);
+        set { }
+    }
     public bool HasFile => !string.IsNullOrWhiteSpace(RutaArchivoNombre);
 
-    public string EstadoLabel => EsPendienteMandante ? "Pendiente mandante" : (EsVigente ? "Vigente" : "Histórico");
+    public string EstadoLabel
+    {
+        get => EsPendienteMandante ? "Pendiente mandante" : (EsVigente ? "Vigente" : "Histórico");
+        set { }
+    }
     public bool IsEstadoVigente => EsVigente && !EsPendienteMandante;
     public bool IsEstadoPendiente => EsPendienteMandante;
     public bool IsEstadoHistorico => !EsVigente && !EsPendienteMandante;
@@ -82,12 +90,44 @@ public sealed class AntecedenteRowVm : ViewModelBase
         string.Equals(Tipo, AntecedenteTecnicoTipo.Aclaracion, StringComparison.OrdinalIgnoreCase);
     public bool IsTipoConsulta => string.Equals(Tipo, AntecedenteTecnicoTipo.Consulta, StringComparison.OrdinalIgnoreCase);
 
+    public string FormatBadge
+    {
+        get
+        {
+            if (!string.IsNullOrWhiteSpace(row.RutaArchivo))
+            {
+                var ext = System.IO.Path.GetExtension(row.RutaArchivo).TrimStart('.').ToUpperInvariant();
+                if (!string.IsNullOrWhiteSpace(ext))
+                    return ext.Length > 4 ? ext.Substring(0, 4) : ext;
+            }
+            if (IsTipoPlano) return "DWG";
+            if (IsTipoEspec) return "PDF";
+            if (IsTipoAddenda) return "ADD";
+            if (IsTipoConsulta) return "RFI";
+            return "DOC";
+        }
+        set { }
+    }
+
+    public bool IsFormatPdf => string.Equals(FormatBadge, "PDF", StringComparison.OrdinalIgnoreCase);
+    public bool IsFormatDwg => string.Equals(FormatBadge, "DWG", StringComparison.OrdinalIgnoreCase) || string.Equals(FormatBadge, "DXF", StringComparison.OrdinalIgnoreCase);
+    public bool IsFormatXlsx => string.Equals(FormatBadge, "XLSX", StringComparison.OrdinalIgnoreCase) || string.Equals(FormatBadge, "XLS", StringComparison.OrdinalIgnoreCase);
+
+    public bool FileExistsOnDisk => !string.IsNullOrWhiteSpace(row.RutaArchivo) && System.IO.File.Exists(row.RutaArchivo);
+    public bool IsBrokenLink => !string.IsNullOrWhiteSpace(row.RutaArchivo) && !FileExistsOnDisk;
+
     public void RefreshEstado()
     {
         OnPropertyChanged(nameof(EstadoLabel));
         OnPropertyChanged(nameof(IsEstadoVigente));
         OnPropertyChanged(nameof(IsEstadoPendiente));
         OnPropertyChanged(nameof(IsEstadoHistorico));
+        OnPropertyChanged(nameof(FormatBadge));
+        OnPropertyChanged(nameof(IsFormatPdf));
+        OnPropertyChanged(nameof(IsFormatDwg));
+        OnPropertyChanged(nameof(IsFormatXlsx));
+        OnPropertyChanged(nameof(FileExistsOnDisk));
+        OnPropertyChanged(nameof(IsBrokenLink));
     }
 }
 
@@ -108,4 +148,32 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
     private string statusMessage = "";
     private bool showEmptyState = true;
     private bool isDirty;
+    private string selectedNavFilter = "Todos";
+    private string? selectedPlanoDisciplina;
+    private string inspectionFilter = "Todos";
 }
+
+public sealed class PlanoEspecialidadFilterItem : ViewModelBase
+{
+    private bool isSelected;
+    private int count;
+
+    public string Disciplina { get; init; } = "";
+    public string DisplayName { get; init; } = "";
+    public string Icon { get; init; } = "📐";
+
+    public int Count
+    {
+        get => count;
+        set => SetProperty(ref count, value);
+    }
+
+    public bool IsSelected
+    {
+        get => isSelected;
+        set => SetProperty(ref isSelected, value);
+    }
+
+    public ICommand SelectCommand { get; init; } = null!;
+}
+

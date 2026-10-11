@@ -24,12 +24,11 @@ public enum ShellRoute
     Costo,
     Epp,
     ManoDeObra,
-    ApuCatalog,
-    ApuMerge,
     EconomicEditor,
     ContractWorkspace,
     ContractEditor,
-    ContractVersions
+    ContractVersions,
+    EstadosPagos
 }
 
 public sealed record ShellRouteInfo(
@@ -40,38 +39,37 @@ public sealed record ShellRouteInfo(
 
 public static class ShellRouteCatalog
 {
-  private static readonly IReadOnlyDictionary<ShellRoute, ShellRouteInfo> Routes =
-      new Dictionary<ShellRoute, ShellRouteInfo>
-      {
-          [ShellRoute.Dashboard] = new(ShellRoute.Dashboard, "Proyecto", "Resumen"),
-          [ShellRoute.Project] = new(ShellRoute.Project, "Proyecto", "Datos del proyecto"),
-          [ShellRoute.Documents] = new(ShellRoute.Documents, "Proyecto", "Antecedentes y planos"),
-          [ShellRoute.Itemized] = new(ShellRoute.Itemized, "Presupuesto", "Itemizado"),
-          [ShellRoute.Takeoff] = new(ShellRoute.Takeoff, "Cubicación", "Cubicación"),
-          [ShellRoute.CubicacionSc] = new(ShellRoute.CubicacionSc, "Cubicación", "Cubicación SC"),
-          [ShellRoute.Apu] = new(ShellRoute.Apu, "Presupuesto", "APU"),
-          [ShellRoute.Templates] = new(ShellRoute.Templates, "Más", "Plantillas"),
-          [ShellRoute.Prices] = new(ShellRoute.Prices, "Precios", "Banco de precios"),
-          [ShellRoute.Quotes] = new(ShellRoute.Quotes, "Precios", "Cotizaciones"),
-          [ShellRoute.Purchases] = new(ShellRoute.Purchases, "Precios", "Lista de compra"),
-          [ShellRoute.Review] = new(ShellRoute.Review, "Cierre", "Revisión final"),
-          [ShellRoute.Versions] = new(ShellRoute.Versions, "Cierre", "Versiones"),
-          [ShellRoute.OfferDocuments] = new(ShellRoute.OfferDocuments, "Cierre", "Oferta y exportación"),
-          [ShellRoute.Currency] = new(ShellRoute.Currency, "Proyecto", "Monedas e indicadores"),
-          [ShellRoute.Preferences] = new(ShellRoute.Preferences, "Configuración", "Preferencias globales"),
-          [ShellRoute.ChangeOrders] = new(ShellRoute.ChangeOrders, "Cierre", "Órdenes de cambio"),
-          [ShellRoute.FloorSummary] = new(ShellRoute.FloorSummary, "Más", "Resumen por piso"),
-          [ShellRoute.Solicitudes] = new(ShellRoute.Solicitudes, "Precios", "Solicitudes"),
-          [ShellRoute.Costo] = new(ShellRoute.Costo, "Costos", "Desglose de costos"),
-          [ShellRoute.Epp] = new(ShellRoute.Epp, "Costos", "EPP"),
-          [ShellRoute.ManoDeObra] = new(ShellRoute.ManoDeObra, "Costos", "Mano de obra"),
-          [ShellRoute.ApuCatalog] = new(ShellRoute.ApuCatalog, "Presupuesto", "Catálogo APU"),
-          [ShellRoute.ApuMerge] = new(ShellRoute.ApuMerge, "Presupuesto", "Fusión de versiones APU"),
-          [ShellRoute.EconomicEditor] = new(ShellRoute.EconomicEditor, "Costos", "Editor económico"),
-          [ShellRoute.ContractWorkspace] = new(ShellRoute.ContractWorkspace, "Cierre", "Contratos"),
-          [ShellRoute.ContractEditor] = new(ShellRoute.ContractEditor, "Cierre", "Editor de contrato"),
-          [ShellRoute.ContractVersions] = new(ShellRoute.ContractVersions, "Cierre", "Versiones de contrato")
-};
+    private static readonly IReadOnlyDictionary<ShellRoute, ShellRouteInfo> Routes =
+        new Dictionary<ShellRoute, ShellRouteInfo>
+        {
+            [ShellRoute.Dashboard] = new(ShellRoute.Dashboard, "Proyecto", "Resumen"),
+            [ShellRoute.Project] = new(ShellRoute.Project, "Proyecto", "Datos del proyecto"),
+            [ShellRoute.Documents] = new(ShellRoute.Documents, "Proyecto", "Antecedentes y planos"),
+            [ShellRoute.Itemized] = new(ShellRoute.Itemized, "Presupuesto", "Itemizado"),
+            [ShellRoute.Takeoff] = new(ShellRoute.Takeoff, "Cubicación", "Cubicación"),
+            [ShellRoute.CubicacionSc] = new(ShellRoute.CubicacionSc, "Cubicación", "Cubicación de Circuitos"),
+            [ShellRoute.Apu] = new(ShellRoute.Apu, "Presupuesto", "Herramienta APU"),
+            [ShellRoute.Templates] = new(ShellRoute.Templates, "Más", "Plantillas"),
+            [ShellRoute.Prices] = new(ShellRoute.Prices, "Precios", "Banco de precios"),
+            [ShellRoute.Quotes] = new(ShellRoute.Quotes, "Precios", "Cotizaciones"),
+            [ShellRoute.Purchases] = new(ShellRoute.Purchases, "Precios", "Lista de compra"),
+            [ShellRoute.Review] = new(ShellRoute.Review, "Cierre", "Revisión final"),
+            [ShellRoute.Versions] = new(ShellRoute.Versions, "Cierre", "Versiones"),
+            [ShellRoute.OfferDocuments] = new(ShellRoute.OfferDocuments, "Cierre", "Oferta y exportación"),
+            [ShellRoute.Currency] = new(ShellRoute.Currency, "Proyecto", "Datos del proyecto"),
+            [ShellRoute.Preferences] = new(ShellRoute.Preferences, "Configuración", "Preferencias globales"),
+            [ShellRoute.ChangeOrders] = new(ShellRoute.ChangeOrders, "Cierre", "Órdenes de cambio"),
+            [ShellRoute.FloorSummary] = new(ShellRoute.FloorSummary, "Más", "Resumen por piso"),
+            [ShellRoute.Solicitudes] = new(ShellRoute.Solicitudes, "Precios", "Solicitudes"),
+            [ShellRoute.Costo] = new(ShellRoute.Costo, "Costos", "Desglose de costos"),
+            [ShellRoute.Epp] = new(ShellRoute.Epp, "Costos", "EPP"),
+            [ShellRoute.ManoDeObra] = new(ShellRoute.ManoDeObra, "Costos", "Mano de obra"),
+            [ShellRoute.EconomicEditor] = new(ShellRoute.EconomicEditor, "Costos", "Editor económico"),
+            [ShellRoute.ContractWorkspace] = new(ShellRoute.ContractWorkspace, "Cierre", "Contratos"),
+            [ShellRoute.ContractEditor] = new(ShellRoute.ContractEditor, "Cierre", "Editor de contrato"),
+            [ShellRoute.ContractVersions] = new(ShellRoute.ContractVersions, "Cierre", "Versiones de contrato"),
+            [ShellRoute.EstadosPagos] = new(ShellRoute.EstadosPagos, "Ejecución", "Estados de pago")
+        };
 
-  public static ShellRouteInfo Get(ShellRoute route) => Routes[route];
+    public static ShellRouteInfo Get(ShellRoute route) => Routes[route];
 }

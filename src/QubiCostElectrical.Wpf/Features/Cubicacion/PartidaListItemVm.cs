@@ -11,13 +11,13 @@ public sealed class PartidaListItemVm : ViewModelBase
     private bool excluidoCubicacion;
     private string motivoNoCubicar;
 
-    public PartidaListItemVm(ItemizadoRow row, int recursoCount = 0, bool hasIssues = false)
+    public PartidaListItemVm(ItemizadoRow row, int recursoCount = 0, bool hasIssues = false, bool isPureSectionTitle = false)
     {
         Id = row.Id;
         codigo = row.Item ?? "";
         descripcion = row.Descripcion ?? "";
         unidad = row.Unidad ?? "";
-        EsPartida = !row.EsTitulo;
+        EsPartida = !isPureSectionTitle;
         excluidoCubicacion = row.ExcluidoCubicacion;
         motivoNoCubicar = row.MotivoNoCubicar ?? "";
         RecursoCount = recursoCount;

@@ -5,6 +5,7 @@ public sealed class TasaCambioHistorialRow
     public DateTime Fecha { get; set; } = AppClock.Now;
     public decimal UfClp { get; set; }
     public decimal UsdClp { get; set; }
+    public decimal EurClp { get; set; }
     public bool Activa { get; set; }
     public string Nota { get; set; } = "";
 }
@@ -36,6 +37,7 @@ public sealed class ProjectInfoRow
     public decimal ValorUfClp { get; set; }
     public string MonedaPresupuesto { get; set; } = "CLP";
     public decimal TipoCambioUsdClp { get; set; }
+    public decimal TipoCambioEurClp { get; set; } = 1050m;
     public DateTime FechaTipoCambio { get; set; } = DateTime.MinValue;
     public List<TasaCambioHistorialRow> HistorialTasas { get; set; } = new();
     public bool AutoActualizarIndicadores { get; set; } = true;
@@ -44,9 +46,9 @@ public sealed class ProjectInfoRow
     public string MarkupMethod { get; set; } = "SobreVenta";
     public decimal GastosGeneralesPct { get; set; } = 14m;
     public decimal UtilidadPct { get; set; } = 18m;
-    /// <summary>Valor agregado sobre equipos (Excel COSTOS). Persistido en JSON de project_info.</summary>
+    /// <summary>Valor agregado sobre equipos (paridad estándar). Persistido en JSON de project_info.</summary>
     public decimal ValorAgregadoEquiposPct { get; set; } = 0m;
-    /// <summary>Si true, motor usa bases GG/UT estilo Excel -=COSTOS=-.</summary>
+    /// <summary>Si true, motor usa bases GG/UT de paridad estándar.</summary>
     public bool PoliticaCostosExcel { get; set; }
     /// <summary>
     /// Fuerza la venta línea a línea con el factor de presentación por familia
@@ -65,8 +67,32 @@ public sealed class ProjectInfoRow
     /// Si &gt; 0, el puente Excel lo usa en lugar de recomputar desde filas.
     /// </summary>
     public decimal MoTotalClp { get; set; }
+    /// <summary>
+    /// Modo del precio de M.O. de instalación por material. <see cref="MaterialMoResolver.ModoDirecto"/>
+    /// usa el M.O. directo del catálogo/banco; <see cref="MaterialMoResolver.ModoRendimiento"/> deriva
+    /// el precio como TarifaDhClp ÷ RendimientoDh (con fallback automático al directo cuando falta
+    /// rendimiento o tarifa). Vacío = Directo (proyectos antiguos sin el campo).
+    /// </summary>
+    public string ModoMoInstalacion { get; set; } = "";
+    /// <summary>Tarifa por día-hombre en CLP usada en ModoRendimiento. 0 = sin tarifa (fallback al directo).</summary>
+    public decimal TarifaDhClp { get; set; }
+    /// <summary>Si true, la tarifa derivada desde el plan de M.O. multiplica (1 + LeyesSocialesMoPct/100).</summary>
+    public bool TarifaDhConLeyes { get; set; }
+    /// <summary>
+    /// Índice global de M.O. "FA" (COSTOS!E192 del Excel, 62,80). Solo multiplica dentro de la
+    /// fórmula de material "Porcentaje" (Material × % × FA); las M.O. fijas y el modo rendimiento
+    /// no se afectan. Editable en la pantalla Costo.
+    /// </summary>
+    public decimal IndiceMoFa { get; set; } = MaterialMoResolver.IndiceMoFaDefault;
     public decimal HerramientasPct { get; set; } = 0m;
     public decimal MermasPct { get; set; } = 0m;
+    /// <summary>
+    /// Estimación de ferretería de paridad estándar: porcentaje sobre el costo de materiales
+    /// (G30 × E34 / 100). Apagada por defecto para no alterar presupuestos ya calculados.
+    /// </summary>
+    public bool FerreteriaActiva { get; set; }
+    /// <summary>Porcentaje editable de la estimación de ferretería. En el Excel de referencia es 5.</summary>
+    public decimal FerreteriaPct { get; set; } = 5m;
     public string ApuCostingMode { get; set; } = "CubicacionMasApuComplementarios";
     public decimal RiesgoPct { get; set; } = 0m;
     public decimal DescuentoPct { get; set; } = 0m;
@@ -80,6 +106,12 @@ public sealed class ProjectInfoRow
     public List<CommercialPartidaRule> CommercialPartidaRules { get; set; } = new();
     public decimal MetrosCuadrados { get; set; }
     public Dictionary<string, decimal> Variables { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Familia de la lista de precios (clave normalizada) → fila de factor (Conductores, Canalización…).
+    /// Vacío = queda sin asignar. Se guarda en el JSON del proyecto, sin cambio de esquema.
+    /// </summary>
+    public Dictionary<string, string> FamiliasPrecioAsignadas { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     public OfferPdfSettings OfertaPdf { get; set; } = new();
     public List<CubicacionCellCommentRow> CubicacionCellComments { get; set; } = new();
     public DateTime LastSQLiteSavedAt { get; set; } = DateTime.MinValue;

@@ -47,6 +47,7 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
 
     private PriceBankEntryVm? selectedEntry;
     private string searchText = "";
+    private string cachedNormalizedSearch = "";
     private string selectedCategory = "Todos";
     private string selectedProvider = "Todos";
     private string selectedCurrency = "Todas";
@@ -56,5 +57,6 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
     private string projectSummary = "Sin proyecto abierto.";
     private bool isBusy;
     private bool showEmptyState = true;
+    private bool hasNoFilterResults;
     private System.Windows.Threading.DispatcherTimer? searchDebounceTimer;
 }

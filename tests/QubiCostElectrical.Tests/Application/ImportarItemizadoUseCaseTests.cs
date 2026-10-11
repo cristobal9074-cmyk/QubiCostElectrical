@@ -358,5 +358,47 @@ public sealed class ImportarItemizadoUseCaseTests
         Assert.Equal("ml", partidas[0].Unidad);
         Assert.Equal("ml", partidas[1].Unidad);
     }
+
+    [Fact]
+    public void Execute_RowsWithChapterCodeFormat_WithoutSubItemsAndWithQuantityOrUnit_AreTreatedAsPartidas()
+    {
+        var table = new List<List<string>>
+        {
+            new() { "ITEM", "DESCRIPCION", "UNIDAD", "CANTIDAD" },
+            new() { "15.0", "SISTEMA KNX INTEGRADOR", "GL", "1" },
+            new() { "16.0", "SISTEMA KNX INSTALADOR ELECTRICO", "GL", "1" },
+            new() { "17.0", "PRUEBAS Y PROTOCOLO ELECTRICO", "GL", "1" },
+            new() { "20.0", "OTROS ITEMS NO INDICADOS", "", "" },
+            new() { "20.1", "Canalizaciones", "ML", "100" },
+            new() { "20.2", "Cable EVA", "ML", "50" }
+        };
+
+        var result = _sut.Execute(table);
+
+        Assert.Empty(result.Error);
+        Assert.Equal(6, result.Rows.Count);
+
+        // 15.0, 16.0, 17.0 no tienen sub-partidas y tienen unidad/cantidad => deben ser partidas valorizables
+        Assert.False(result.Rows[0].EsTitulo);
+        Assert.Equal("15.0", result.Rows[0].Item);
+        Assert.Equal("GL", result.Rows[0].Unidad);
+        Assert.Equal(1m, result.Rows[0].CantidadOriginal);
+
+        Assert.False(result.Rows[1].EsTitulo);
+        Assert.Equal("16.0", result.Rows[1].Item);
+        Assert.Equal("GL", result.Rows[1].Unidad);
+
+        Assert.False(result.Rows[2].EsTitulo);
+        Assert.Equal("17.0", result.Rows[2].Item);
+        Assert.Equal("GL", result.Rows[2].Unidad);
+
+        // 20.0 agrupa a 20.1 y 20.2 => debe ser título de capítulo
+        Assert.True(result.Rows[3].EsTitulo);
+        Assert.Equal("20.0", result.Rows[3].Item);
+
+        // 20.1 y 20.2 son partidas
+        Assert.False(result.Rows[4].EsTitulo);
+        Assert.False(result.Rows[5].EsTitulo);
+    }
 }
 

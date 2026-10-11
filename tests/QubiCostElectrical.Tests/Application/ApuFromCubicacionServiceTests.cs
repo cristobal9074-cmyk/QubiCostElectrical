@@ -12,30 +12,42 @@ public sealed class ApuFromCubicacionServiceTests
 
     private static ItemizadoRow Item(string id = "ID1", decimal cantidad = 10m) => new()
     {
-        Id = id, Item = "1.1", Descripcion = "Instalación", Unidad = "GL", Cantidad = cantidad, EsTitulo = false
+        Id = id,
+        Item = "1.1",
+        Descripcion = "Instalación",
+        Unidad = "GL",
+        Cantidad = cantidad,
+        EsTitulo = false
     };
 
     private static CubicacionRow Cub(string itemId, decimal qty, decimal mat, decimal mo = 0m, string codigo = "TUB-001") => new()
     {
-        ItemId = itemId, Codigo = codigo, Descripcion = "Tubería PVC 20mm", Unidad = "ML",
-        Cantidad = qty, MatUf = mat, MoUf = mo
+        ItemId = itemId,
+        Codigo = codigo,
+        Descripcion = "Tubería PVC 20mm",
+        Unidad = "ML",
+        Cantidad = qty,
+        MatUf = mat,
+        MoUf = mo
     };
 
     private static MaterialRow Mat(string codigo, decimal matUf, decimal moUf = 0m) => new()
     {
-        Codigo = codigo, Descripcion = "desc", MatUf = matUf, MoUf = moUf, FechaPrecio = DateTime.Today
+        Codigo = codigo,
+        Descripcion = "desc",
+        MatUf = matUf,
+        MoUf = moUf,
+        FechaPrecio = DateTime.Today
     };
 
     private sealed class FakeApuService : IApuService
     {
         public ApuRow CrearDesdeItem(ItemizadoRow item) => new()
         {
-            ItemId = item.Id, Descripcion = item.Descripcion, Unidad = item.Unidad
+            ItemId = item.Id,
+            Descripcion = item.Descripcion,
+            Unidad = item.Unidad
         };
-        public ApuRow MigrarDesde(CubicacionRow cub, string descripcionItem, string unidadItem) => new();
-        public (decimal MatUf, decimal MoUf) GetPreciosParaCubicacion(ApuRow apu) => (0m, 0m);
-        public List<ApuResumenRow> GetResumenProyecto(IEnumerable<ApuRow> apus, IEnumerable<ItemizadoRow> itemizado) => new();
-        public (decimal Mat, decimal Mo, decimal Equipo, decimal Sc, decimal Herramientas, decimal Imprevistos, decimal Total) GetTotalesProyecto(IEnumerable<ApuRow> apus, IEnumerable<ItemizadoRow> itemizado) => (0, 0, 0, 0, 0, 0, 0);
         public List<string> Validar(ApuRow apu) => new();
     }
 

@@ -659,4 +659,21 @@ public sealed class VersionsViewModelTests
         Assert.Equal("Cierre", info.Group);
         Assert.Equal("Versiones", info.Title);
     }
+
+    [Fact]
+    public void Versions_AddendaCommands_ExposedAndStateTracked()
+    {
+        var vm = new VersionsViewModel(new FakeShellHost(), WpfAppHost.Current);
+
+        Assert.NotNull(vm.CompareWithExcelCommand);
+        Assert.NotNull(vm.ApplyAddendaQuantitiesCommand);
+        Assert.NotNull(vm.SaveAddendaAsVersionCommand);
+
+        Assert.False(vm.IsAddendaComparison);
+        Assert.Empty(vm.AddendaFileName);
+
+        // Sin proyecto abierto no debe poder aplicar cantidades ni guardar addenda
+        Assert.False(vm.ApplyAddendaQuantitiesCommand.CanExecute(null));
+        Assert.False(vm.SaveAddendaAsVersionCommand.CanExecute(null));
+    }
 }

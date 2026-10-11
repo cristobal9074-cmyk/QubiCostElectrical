@@ -12,5 +12,10 @@
   <infra:StringNotEmptyToVisibilityConverter x:Key="StringToVisibility" />
   <infra:RowIndexConverter x:Key="RowIndexConverter" />
   <infra:EmptyToPlaceholderConverter x:Key="EmptyToPlaceholder" />
+  <infra:PrefixTrimConverter x:Key="PrefixTrim" />
+  <infra:PathFileNameConverter x:Key="PathFileName" />
+  <infra:StringEqualsConverter x:Key="StringEquals" />
+  <infra:StringEqualsToVisibilityConverter x:Key="StringEqualsToVisibility" />
+  <infra:StringEmptyToVisibilityConverter x:Key="StringEmptyToVisibility" />
 
 </ResourceDictionary>

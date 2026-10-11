@@ -94,7 +94,14 @@
     <Color x:Key="Color.ChipBg">#F1F4F8</Color>
     <Color x:Key="Color.ChapterRowBg">#F4F7FB</Color>
     <Color x:Key="Color.ActiveRowBg">#EEF3FA</Color>
+    <Color x:Key="Color.CellFormulaBg">#F1F4F9</Color>
+    <Color x:Key="Color.CellEditableBg">#FFFFFF</Color>
+    <Color x:Key="Color.CellEditableHover">#F0F5FF</Color>
+    <Color x:Key="Color.CellFormulaInk">#334155</Color>
+    <Color x:Key="Color.FormulaBadge">#64748B</Color>
+    <Color x:Key="Color.FormulaBadgeBg">#E9EFF6</Color>
     <Color x:Key="Color.White">#FFFFFF</Color>
+    <Color x:Key="Color.InputHoverBorder">#BAC7D5</Color>
 
     <!-- ── Borders / lines ───────────────────────────────────────────────── -->
     <Color x:Key="Color.Line">#DDE3EA</Color>
@@ -190,6 +197,7 @@
     <SolidColorBrush x:Key="Brush.PanelHeader"  Color="{StaticResource Color.PanelHeader}" />
     <SolidColorBrush x:Key="Brush.PanelSidebar" Color="{StaticResource Color.PanelSidebar}" />
     <SolidColorBrush x:Key="Brush.InputBorder"  Color="{StaticResource Color.InputBorder}" />
+    <SolidColorBrush x:Key="Brush.InputHoverBorder" Color="{StaticResource Color.InputHoverBorder}" />
     <SolidColorBrush x:Key="Brush.DropdownHover" Color="{StaticResource Color.DropdownHover}" />
     <SolidColorBrush x:Key="Brush.White"        Color="{StaticResource Color.White}" />
     <SolidColorBrush x:Key="Brush.Line"         Color="{StaticResource Color.Line}" />
@@ -227,6 +235,14 @@
     <SolidColorBrush x:Key="Brush.TrackSoft"    Color="{StaticResource Color.Line2}" />
     <SolidColorBrush x:Key="Brush.HighlightSoft" Color="{StaticResource Color.BlueFaint}" />
     <SolidColorBrush x:Key="Brush.HighlightBorder" Color="{StaticResource Color.BlueSoft}" />
+
+    <!-- ── Celdas editables vs fórmulas (Estilo Excel Profesional) ──────────── -->
+    <SolidColorBrush x:Key="Brush.CellFormulaBg"       Color="{StaticResource Color.CellFormulaBg}" />
+    <SolidColorBrush x:Key="Brush.CellEditableBg"      Color="{StaticResource Color.CellEditableBg}" />
+    <SolidColorBrush x:Key="Brush.CellEditableHoverBg" Color="{StaticResource Color.CellEditableHover}" />
+    <SolidColorBrush x:Key="Brush.CellFormulaInk"      Color="{StaticResource Color.CellFormulaInk}" />
+    <SolidColorBrush x:Key="Brush.FormulaBadge"        Color="{StaticResource Color.FormulaBadge}" />
+    <SolidColorBrush x:Key="Brush.FormulaBadgeBg"      Color="{StaticResource Color.FormulaBadgeBg}" />
 
     <!-- Aliases usados por Cubicación SC, Itemizado y diálogos legacy -->
     <SolidColorBrush x:Key="Brush.SurfaceAlt"  Color="{StaticResource Color.Surface2}" />

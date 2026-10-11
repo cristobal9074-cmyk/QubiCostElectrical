@@ -8,11 +8,11 @@ namespace QubiCostElectrical.Tests.Wpf;
 public sealed class ExportDeliverySupportTests
 {
     [Fact]
-    public void DocumentSelector_HasSixDocuments_AllSelectedByDefault()
+    public void DocumentSelector_HasSevenDocuments_AllSelectedByDefault()
     {
         var selector = new DeliveryDocumentSelectorVm(WpfAppHost.Current.Dashboard);
 
-        Assert.Equal(6, selector.Documents.Count);
+        Assert.Equal(7, selector.Documents.Count);
         Assert.All(selector.Documents, d => Assert.True(d.IsSelected));
     }
 
@@ -21,14 +21,14 @@ public sealed class ExportDeliverySupportTests
     {
         var selector = new DeliveryDocumentSelectorVm(WpfAppHost.Current.Dashboard);
 
-        selector.Documents[1].IsSelected = false;
-        selector.Documents[3].IsSelected = false;
+        selector.Documents[1].IsSelected = false; // OfferLetter
+        selector.Documents[3].IsSelected = false; // LetterDocx
 
         var ids = selector.GetSelectedDocumentIds();
 
-        Assert.Equal(4, ids.Length);
+        Assert.Equal(5, ids.Length);
         Assert.Contains("OfferPdf", ids);
-        Assert.Contains("LetterDocx", ids);
+        Assert.Contains("ControlExcel", ids);
         Assert.Contains("MemoriaPdf", ids);
         Assert.Contains("ReporteCSEC", ids);
     }

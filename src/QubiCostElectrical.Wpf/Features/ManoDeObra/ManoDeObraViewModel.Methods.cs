@@ -116,6 +116,7 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
         ApplyCommand = new RelayCommand(ExecuteApply, () => CanEdit);
         ResetParamsCommand = new RelayCommand(ExecuteResetParams, () => CanEdit);
         ResetSueldosCommand = new RelayCommand(ExecuteResetSueldos, () => CanEdit);
+        TakeProjectionCommand = new RelayCommand(ExecuteTakeProjection, () => CanEdit);
         SetCurrencyClpCommand = new RelayCommand(() => SetCurrency(false));
         SetCurrencyUfCommand = new RelayCommand(() => SetCurrency(true));
     }
@@ -124,6 +125,7 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
     public ICommand ApplyCommand { get; }
     public ICommand ResetParamsCommand { get; }
     public ICommand ResetSueldosCommand { get; }
+    public ICommand TakeProjectionCommand { get; }
     public ICommand SetCurrencyClpCommand { get; }
     public ICommand SetCurrencyUfCommand { get; }
 
@@ -140,6 +142,7 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
                 (ApplyCommand as RelayCommand)?.RaiseCanExecuteChanged();
                 (ResetParamsCommand as RelayCommand)?.RaiseCanExecuteChanged();
                 (ResetSueldosCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                (TakeProjectionCommand as RelayCommand)?.RaiseCanExecuteChanged();
             }
         }
     }
@@ -154,6 +157,7 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
             value = Math.Clamp(value, 1, 120);
             if (SetProperty(ref totalMeses, value))
             {
+                FitProjectionMonths();
                 Recalcular();
                 OnPropertyChanged(nameof(TotalMonths));
                 PersistToSession();
@@ -263,28 +267,33 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
         IsLoading = true;
         try
         {
-        ShowEmptyState = !workspace.HasOpenProject;
-        CanEdit = !ShowEmptyState && !session.IsReadOnly;
-        if (ShowEmptyState)
-            return;
+            ShowEmptyState = !workspace.HasOpenProject;
+            CanEdit = !ShowEmptyState && !session.IsReadOnly;
+            if (ShowEmptyState)
+                return;
 
-        ValorUF = session.ValorUfClp > 0 ? session.ValorUfClp : PriceConversion.DefaultValorUfClp;
+            var syncProjection = false;
 
-        if (!hasLoaded)
-        {
-            hasLoaded = true;
-            var project = session.ProjectInfo;
-            if (project.MoDuracionMeses > 0)
-                totalMeses = Math.Clamp(project.MoDuracionMeses, 1, 120);
-            leyesSocialesPct = Math.Clamp(project.LeyesSocialesMoPct, 0m, 100m);
-            OnPropertyChanged(nameof(TotalMeses));
-            OnPropertyChanged(nameof(TotalMonths));
-            OnPropertyChanged(nameof(LeyesSocialesPct));
-            SeedCargos();
-            LoadProjectionTasks();
-        }
+            ValorUF = session.ValorUfClp > 0 ? session.ValorUfClp : PriceConversion.DefaultValorUfClp;
 
-        Recalcular();
+            if (!hasLoaded)
+            {
+                hasLoaded = true;
+                var project = session.ProjectInfo;
+                if (project.MoDuracionMeses > 0)
+                    totalMeses = Math.Clamp(project.MoDuracionMeses, 1, 120);
+                leyesSocialesPct = Math.Clamp(project.LeyesSocialesMoPct, 0m, 100m);
+                OnPropertyChanged(nameof(TotalMeses));
+                OnPropertyChanged(nameof(TotalMonths));
+                OnPropertyChanged(nameof(LeyesSocialesPct));
+                SeedCargos();
+                LoadProjectionTasks();
+                syncProjection = ApplySavedProjectionToDirecta();
+            }
+
+            Recalcular();
+            if (syncProjection)
+                PersistToSession();
         }
         finally
         {
@@ -315,19 +324,270 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
             }
         }
 
-        if (projectionTasks.Count == 0)
-            AddProjectionTaskCore("Losero");
+        if (projectionTasks.Count == 0 || IsPlaceholderProjection(projectionTasks))
+        {
+            projectionTasks.Clear();
+            foreach (var name in DefaultProjectionPartidas)
+                AddProjectionTaskCore(name);
+            PersistProjectionTasks();
+        }
 
         OnPropertyChanged(nameof(ProjectionTasks));
     }
 
-    public void AddProjectionTask()
+    private static readonly string[] DefaultProjectionPartidas =
+    [
+        "Loseros",
+        "Destapadores",
+        "Enlauchadores",
+        "Tablereros",
+        "Cableado",
+        "Cabl C. Escala",
+        "Artefactos",
+        "Fierros",
+        "Revisión Final",
+    ];
+
+    private static bool IsPlaceholderProjection(List<MoProjectionTaskVm> tasks)
+    {
+        if (tasks.Count != 1)
+            return false;
+        var only = tasks[0];
+        var name = only.Nombre.Trim();
+        var placeholder = name.Equals("Losero", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("Nueva tarea", StringComparison.OrdinalIgnoreCase);
+        return placeholder && only.Cantidades.All(v => v == 0);
+    }
+
+    private void FitProjectionMonths()
+    {
+        var changed = false;
+        foreach (var task in projectionTasks)
+        {
+            if (task.Cantidades.Length == totalMeses)
+                continue;
+            var next = new int[totalMeses];
+            Array.Copy(task.Cantidades, next, Math.Min(task.Cantidades.Length, totalMeses));
+            task.Cantidades = next;
+            changed = true;
+        }
+
+        if (changed)
+        {
+            OnPropertyChanged(nameof(ProjectionTasks));
+            PersistProjectionTasks();
+        }
+    }
+
+    public void AddProjectionTask(string? name = null)
     {
         if (!CanEdit)
             return;
-        AddProjectionTaskCore($"Tarea {projectionTasks.Count + 1}");
+        var label = string.IsNullOrWhiteSpace(name)
+            ? $"Partida {projectionTasks.Count + 1}"
+            : name.Trim();
+        AddProjectionTaskCore(label);
         PersistProjectionTasks();
     }
+
+    public void RemoveProjectionTask(string id)
+    {
+        if (!CanEdit || string.IsNullOrWhiteSpace(id))
+            return;
+        FlushProjectionEdits();
+        var before = MonthlyProjectionTotals();
+        if (projectionTasks.RemoveAll(t => t.Id == id) == 0)
+            return;
+        OnPropertyChanged(nameof(ProjectionTasks));
+        PersistProjectionTasks();
+        PushChangedProjectionMonths(before);
+    }
+
+    public void RenameProjectionTask(string id, string name)
+    {
+        if (!CanEdit)
+            return;
+        var task = projectionTasks.FirstOrDefault(t => t.Id == id);
+        if (task == null)
+            return;
+        var label = string.IsNullOrWhiteSpace(name) ? "Partida" : name.Trim();
+        if (task.Nombre == label)
+            return;
+        task.Nombre = label;
+        OnPropertyChanged(nameof(ProjectionTasks));
+        PersistProjectionTasks();
+    }
+
+    public bool SetProjectionQuantity(string id, int monthIndex, int value)
+    {
+        if (!CanEdit)
+            return false;
+        var task = projectionTasks.FirstOrDefault(t => t.Id == id);
+        if (task == null || monthIndex < 0 || monthIndex >= task.Cantidades.Length)
+            return false;
+        value = Math.Max(0, value);
+        if (task.Cantidades[monthIndex] == value)
+            return false;
+        task.Cantidades[monthIndex] = value;
+        pendingProjectionMonths.Add(monthIndex);
+        projectionPersistPending = true;
+        return true;
+    }
+
+    private readonly HashSet<int> pendingProjectionMonths = new();
+    private bool projectionPersistPending;
+
+    /// <summary>
+    /// Escribe en la dotación y guarda una sola vez, cuando ya se dejó de escribir.
+    /// </summary>
+    public void FlushProjectionEdits()
+    {
+        if (!projectionPersistPending && pendingProjectionMonths.Count == 0)
+            return;
+
+        var months = pendingProjectionMonths.Count == 0
+            ? Array.Empty<int>()
+            : new int[pendingProjectionMonths.Count];
+        if (months.Length > 0)
+            pendingProjectionMonths.CopyTo(months);
+        pendingProjectionMonths.Clear();
+        var persistTasks = projectionPersistPending;
+        projectionPersistPending = false;
+
+        if (persistTasks)
+            PersistProjectionTasks();
+        if (months.Length > 0)
+            PushProjectionMonths(months);
+    }
+
+    /// <summary>True mientras el total de la proyección se escribe en los meses de MO directa.</summary>
+    public bool IsApplyingProjection { get; private set; }
+
+    private int[] MonthlyProjectionTotals()
+    {
+        var totals = new int[totalMeses];
+        for (var i = 0; i < totalMeses; i++)
+            totals[i] = ProjectionMonthTotal(i);
+        return totals;
+    }
+
+    private bool ApplySavedProjectionToDirecta()
+    {
+        var months = new List<int>();
+        for (var i = 0; i < totalMeses; i++)
+        {
+            if (ProjectionMonthTotal(i) > 0)
+                months.Add(i);
+        }
+        return months.Count > 0 && WriteProjectionMonths(months);
+    }
+
+    private void PushChangedProjectionMonths(int[] before)
+    {
+        var months = new List<int>();
+        for (var i = 0; i < totalMeses && i < before.Length; i++)
+        {
+            if (ProjectionMonthTotal(i) != before[i])
+                months.Add(i);
+        }
+        PushProjectionMonths(months);
+    }
+
+    private void PushProjectionMonths(IReadOnlyList<int> months)
+    {
+        if (months.Count == 0 || !WriteProjectionMonths(months))
+            return;
+        IsApplyingProjection = true;
+        try
+        {
+            Recalcular();
+            PersistToSession();
+        }
+        finally
+        {
+            IsApplyingProjection = false;
+        }
+    }
+
+    /// <summary>
+    /// El total de trabajadores del mes se reparte entre los cargos de MO directa
+    /// según su dotación pico, y queda como edición de esa columna.
+    /// </summary>
+    private bool WriteProjectionMonths(IReadOnlyList<int> months)
+    {
+        var directa = CargosDef.Where(c => c.EsDirecta).ToArray();
+        if (directa.Length == 0)
+            return false;
+
+        var weights = directa.Select(c => Math.Max(0, c.DotPico)).ToArray();
+        var changed = false;
+        foreach (var monthIndex in months)
+        {
+            if (monthIndex < 0 || monthIndex >= totalMeses)
+                continue;
+            var shares = SplitByWeight(ProjectionMonthTotal(monthIndex), weights);
+            for (var i = 0; i < directa.Length; i++)
+            {
+                var key = $"{directa[i].Id}_{monthIndex}";
+                if (cellOverrides.TryGetValue(key, out var current) && current == shares[i])
+                    continue;
+                cellOverrides[key] = shares[i];
+                changed = true;
+            }
+        }
+        return changed;
+    }
+
+    private static int[] SplitByWeight(int total, int[] weights)
+    {
+        var count = weights.Length;
+        var result = new int[count];
+        if (count == 0 || total <= 0)
+            return result;
+
+        var weightSum = weights.Sum();
+        if (weightSum <= 0)
+        {
+            var each = total / count;
+            var extra = total % count;
+            for (var i = 0; i < count; i++)
+                result[i] = each + (i < extra ? 1 : 0);
+            return result;
+        }
+
+        var exact = new double[count];
+        var assigned = 0;
+        for (var i = 0; i < count; i++)
+        {
+            exact[i] = total * (weights[i] / (double)weightSum);
+            result[i] = (int)Math.Floor(exact[i]);
+            assigned += result[i];
+        }
+
+        var left = total - assigned;
+        var order = Enumerable.Range(0, count)
+            .OrderByDescending(i => exact[i] - result[i])
+            .ToArray();
+        for (var k = 0; k < left; k++)
+            result[order[k]]++;
+        return result;
+    }
+
+    public int ProjectionMonthTotal(int monthIndex)
+        => projectionTasks.Sum(t => monthIndex >= 0 && monthIndex < t.Cantidades.Length ? t.Cantidades[monthIndex] : 0);
+
+    public double ProjectionMonthlyAverage()
+    {
+        if (totalMeses <= 0)
+            return 0;
+        double sum = 0;
+        for (var i = 0; i < totalMeses; i++)
+            sum += ProjectionMonthTotal(i);
+        return sum / totalMeses;
+    }
+
+    public bool ProjectionMonthIsPeak(int monthIndex)
+        => monthIndex >= 0 && monthIndex < Meses.Length && Meses[monthIndex].EsPeak;
 
     private void AddProjectionTaskCore(string name)
     {
@@ -405,6 +665,27 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
         PersistToSession();
     }
 
+    private void ExecuteTakeProjection()
+    {
+        if (!CanEdit)
+            return;
+        FlushProjectionEdits();
+        if (!projectionTasks.Any(t => t.Cantidades.Any(c => c > 0)))
+        {
+            ShellNotificationService.Instance.ShowWarning(
+                "Proyección MO",
+                "La proyección no tiene trabajadores asignados: carga los meses en el botón Proyección MO.");
+            return;
+        }
+
+        ApplySavedProjectionToDirecta();
+        Recalcular();
+        PersistToSession();
+        ShellNotificationService.Instance.ShowSuccess(
+            "Proyección MO",
+            "Dotación directa actualizada con los totales de la proyección.");
+    }
+
     private void SetCurrency(bool uf) => ViewInUf = uf;
 
     public bool HasOverride(string cargoId, int monthIdx)
@@ -429,7 +710,115 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
         PersistToSession();
     }
 
-    private void OnEditorSalaryChanged()
+    private bool staffingEditsPending;
+
+    /// <summary>Deja el número en memoria. La grilla se recalcula una sola vez al dejar de escribir.</summary>
+    public void StageOverride(string cargoId, int monthIdx, int count)
+    {
+        if (!CanEdit || string.IsNullOrWhiteSpace(cargoId) || monthIdx < 0)
+            return;
+        var key = $"{cargoId}_{monthIdx}";
+        count = Math.Max(0, count);
+        if (cellOverrides.TryGetValue(key, out var current) && current == count)
+            return;
+        cellOverrides[key] = count;
+        staffingEditsPending = true;
+    }
+
+    public bool StageClearOverride(string cargoId, int monthIdx)
+    {
+        if (!CanEdit || string.IsNullOrWhiteSpace(cargoId) || monthIdx < 0)
+            return false;
+        if (!cellOverrides.Remove($"{cargoId}_{monthIdx}"))
+            return false;
+        staffingEditsPending = true;
+        return true;
+    }
+
+    public void FlushStaffingEdits()
+    {
+        if (!staffingEditsPending)
+            return;
+        staffingEditsPending = false;
+        ApplyStagedDotPico();
+        Recalcular();
+        PersistToSession();
+    }
+
+    private bool dotPicoPending;
+    private string? pendingDotCargo;
+    private int pendingDotPico;
+
+    /// <summary>Deja la dotación pico de un rol indirecto en memoria; se aplica al dejar de escribir.</summary>
+    public void StageIndirectDotPico(string cargoId, int value)
+    {
+        if (!CanEdit || string.IsNullOrWhiteSpace(cargoId))
+            return;
+        pendingDotCargo = cargoId;
+        pendingDotPico = Math.Max(0, value);
+        dotPicoPending = true;
+        staffingEditsPending = true;
+    }
+
+    /// <summary>Cancela la dotación staged para ese rol (Escape). Devuelve false si no había nada staged.</summary>
+    public bool StageClearDotPico(string cargoId)
+    {
+        if (!dotPicoPending || !string.Equals(pendingDotCargo, cargoId, StringComparison.Ordinal))
+            return false;
+        dotPicoPending = false;
+        pendingDotCargo = null;
+        return true;
+    }
+
+    /// <summary>
+    /// Fija la dotación de un rol indirecto en todos los meses: deja de usar la curva/overrides
+    /// y limpia las ediciones mes a mes de ese cargo.
+    /// </summary>
+    public void SetIndirectDotPico(string cargoId, int value)
+    {
+        if (!TrySetIndirectDotPico(cargoId, value))
+            return;
+        Recalcular();
+        PersistToSession();
+    }
+
+    private void ApplyStagedDotPico()
+    {
+        if (!dotPicoPending)
+            return;
+        dotPicoPending = false;
+        var cargoId = pendingDotCargo;
+        pendingDotCargo = null;
+        TrySetIndirectDotPico(cargoId, pendingDotPico);
+    }
+
+    private bool TrySetIndirectDotPico(string? cargoId, int value)
+    {
+        if (string.IsNullOrWhiteSpace(cargoId))
+            return false;
+        var cargo = CargosDef.FirstOrDefault(c => c.Id == cargoId && !c.EsDirecta);
+        if (cargo == null)
+            return false;
+        value = Math.Max(0, value);
+        if (cargo.DotPico == value)
+            return false;
+        cargo.DotPico = value;
+        ClearMonthlyOverrides(cargoId);
+        return true;
+    }
+
+    private void ClearMonthlyOverrides(string cargoId)
+    {
+        var prefix = cargoId + "_";
+        foreach (var key in cellOverrides.Keys.Where(k => k.StartsWith(prefix, StringComparison.Ordinal)).ToList())
+        {
+            var mes = key.Substring(prefix.Length);
+            if (mes.Length > 0 && mes.All(char.IsDigit))
+                cellOverrides.Remove(key);
+        }
+    }
+
+    private void OnEditorChanged()
     {
         if (suppressSalaryLoop)
             return;
@@ -443,10 +832,19 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
         foreach (var editor in DirectaEditors.Concat(IndirectaEditors))
         {
             var cargo = CargosDef.FirstOrDefault(c => c.Id == editor.Id);
-            if (cargo != null)
-                cargo.SueldoBase = editor.SueldoBase;
+            if (cargo == null)
+                continue;
+            cargo.SueldoBase = editor.SueldoBase;
+            if (!cargo.EsDirecta)
+                cargo.FraccionObra = ClampFraccion(editor.FraccionObra);
         }
     }
+
+    private static decimal ClampFraccion(decimal n)
+        => Math.Clamp(n, 0m, 1m);
+
+    private static string FraccionStr(decimal n)
+        => n.ToString("N2", CultureInfo.GetCultureInfo("es-CL"));
 
     private void PersistToSession()
     {
@@ -471,6 +869,7 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
             Cargo = c.Nombre,
             Dotacion = c.DotPico,
             SueldoMensualClp = c.SueldoBase,
+            FraccionObra = ClampFraccion(c.FraccionObra),
             DotacionMensual = BuildMensualList(c.Id, n),
         }).ToList();
 
@@ -526,22 +925,26 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
     {
         var data = session.Data;
         var list = new List<MoCargoDef>();
+        var renamedCargoNames = false;
 
         if (data.MoDirecta is { Count: > 0 })
         {
             var i = 0;
             foreach (var r in data.MoDirecta)
             {
-                var tag = GuessTag(r.Cargo, true, i++);
+                var tag = GuessTag(r.Cargo, true, i);
+                var nombre = MoCargoNameNormalizer.ResolveDirectaNombre(r.Cargo, i);
+                if (MoCargoNameNormalizer.IsGuidLike(r.Cargo)) renamedCargoNames = true;
                 list.Add(new MoCargoDef
                 {
                     Id = string.IsNullOrWhiteSpace(r.Id) ? tag : r.Id,
-                    Nombre = string.IsNullOrWhiteSpace(r.Cargo) ? tag : r.Cargo,
+                    Nombre = string.IsNullOrWhiteSpace(nombre) ? tag : nombre,
                     Tag = tag,
                     EsDirecta = true,
                     DotPico = Math.Max(0, r.Dotacion),
                     SueldoBase = r.SueldoMensualClp > 0 ? r.SueldoMensualClp : DefaultSueldos.GetValueOrDefault(tag, 700000m),
                 });
+                i++;
             }
         }
         else
@@ -565,6 +968,7 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
                     EsDirecta = false,
                     DotPico = Math.Max(0, r.Dotacion),
                     SueldoBase = r.SueldoMensualClp > 0 ? r.SueldoMensualClp : DefaultSueldos.GetValueOrDefault(tag, 800000m),
+                    FraccionObra = r.FraccionEfectiva,
                 });
             }
         }
@@ -614,6 +1018,8 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
         {
             PersistToSession();
         }
+        else if (renamedCargoNames)
+            PersistToSession();
 
         RebuildEditors();
         OnPropertyChanged(nameof(CargosDef));
@@ -637,14 +1043,14 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
 
         foreach (var c in CargosDef.Where(x => x.EsDirecta))
         {
-            var ed = new MoCargoEditorVm(c, "Dotación variable según etapa", OnEditorSalaryChanged);
+            var ed = new MoCargoEditorVm(c, "Dotación variable según etapa", OnEditorChanged);
             ed.UpdateConLeyes(leyes);
             DirectaEditors.Add(ed);
         }
 
         foreach (var c in CargosDef.Where(x => !x.EsDirecta))
         {
-            var ed = new MoCargoEditorVm(c, "Dotación fija todos los meses", OnEditorSalaryChanged);
+            var ed = new MoCargoEditorVm(c, "Dotación fija todos los meses", OnEditorChanged);
             ed.UpdateConLeyes(leyes);
             IndirectaEditors.Add(ed);
         }
@@ -738,7 +1144,7 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
             }
 
             decimal baseDirMes = directa.Sum(c => c.SueldoBase * dotacionPorCargo[c.Id][i]);
-            decimal baseIndMes = indirecta.Sum(c => c.SueldoBase * dotacionPorCargo[c.Id][i]);
+            decimal baseIndMes = indirecta.Sum(c => c.SueldoBase * c.FraccionObra * dotacionPorCargo[c.Id][i]);
             var leyesDirMes = baseDirMes * leyes;
             var leyesIndMes = baseIndMes * leyes;
             var baseMes = baseDirMes + baseIndMes;
@@ -790,6 +1196,7 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
                 EsDirecta = true,
                 DotPico = c.DotPico,
                 SueldoBaseStr = Fmt(c.SueldoBase),
+                FraccionStr = "—",
                 LeyesStr = Fmt(c.SueldoBase * leyes),
                 TotalMensualStr = Fmt(c.SueldoBase * (1 + leyes)),
                 Dotaciones = dots,
@@ -813,6 +1220,7 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
             Nombre = "Subtotal MO Directa",
             DotPico = picoDir,
             SueldoBaseStr = Fmt(directa.Sum(c => c.SueldoBase)),
+            FraccionStr = "—",
             LeyesStr = Fmt(directa.Sum(c => c.SueldoBase) * leyes),
             TotalMensualStr = Fmt(directa.Sum(c => c.SueldoBase) * (1 + leyes)),
             Dotaciones = subDirDots,
@@ -831,9 +1239,10 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
         foreach (var c in indirecta)
         {
             var dots = dotacionPorCargo[c.Id];
+            var baseCobrada = c.SueldoBase * c.FraccionObra;
             decimal totalCargo = 0;
             for (var i = 0; i < n; i++)
-                totalCargo += c.SueldoBase * dots[i] * (1 + leyes);
+                totalCargo += baseCobrada * dots[i] * (1 + leyes);
 
             dotRows.Add(new MoTableRow
             {
@@ -841,9 +1250,10 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
                 Nombre = c.Nombre,
                 EsDirecta = false,
                 DotPico = c.DotPico,
-                SueldoBaseStr = Fmt(c.SueldoBase),
-                LeyesStr = Fmt(c.SueldoBase * leyes),
-                TotalMensualStr = Fmt(c.SueldoBase * (1 + leyes)),
+                SueldoBaseStr = Fmt(baseCobrada),
+                FraccionStr = FraccionStr(c.FraccionObra),
+                LeyesStr = Fmt(baseCobrada * leyes),
+                TotalMensualStr = Fmt(baseCobrada * (1 + leyes)),
                 Dotaciones = dots,
                 TotalStr = Fmt(totalCargo),
             });
@@ -854,7 +1264,7 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
         for (var i = 0; i < n; i++)
         {
             subIndDots[i] = indirecta.Sum(c => dotacionPorCargo[c.Id][i]);
-            subIndTotal += indirecta.Sum(c => dotacionPorCargo[c.Id][i] * c.SueldoBase * (1 + leyes));
+            subIndTotal += indirecta.Sum(c => dotacionPorCargo[c.Id][i] * c.SueldoBase * c.FraccionObra * (1 + leyes));
         }
 
         dotRows.Add(new MoTableRow
@@ -864,9 +1274,10 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
             Tag = "",
             Nombre = "Subtotal MO Indirecta",
             DotPico = picoInd,
-            SueldoBaseStr = Fmt(indirecta.Sum(c => c.SueldoBase)),
-            LeyesStr = Fmt(indirecta.Sum(c => c.SueldoBase) * leyes),
-            TotalMensualStr = Fmt(indirecta.Sum(c => c.SueldoBase) * (1 + leyes)),
+            SueldoBaseStr = Fmt(indirecta.Sum(c => c.SueldoBase * c.FraccionObra)),
+            FraccionStr = "—",
+            LeyesStr = Fmt(indirecta.Sum(c => c.SueldoBase * c.FraccionObra) * leyes),
+            TotalMensualStr = Fmt(indirecta.Sum(c => c.SueldoBase * c.FraccionObra) * (1 + leyes)),
             Dotaciones = subIndDots,
             TotalStr = Fmt(subIndTotal),
         });
@@ -876,7 +1287,7 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
             grandDots[i] = subDirDots[i] + subIndDots[i];
 
         var basePorMesDir = directa.Sum(c => c.SueldoBase);
-        var basePorMesInd = indirecta.Sum(c => c.SueldoBase);
+        var basePorMesInd = indirecta.Sum(c => c.SueldoBase * c.FraccionObra);
         dotRows.Add(new MoTableRow
         {
             IsGrandTotal = true,
@@ -884,6 +1295,7 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
             Nombre = "Total dotación",
             DotPico = grandDots.Length > 0 ? grandDots.Max() : 0,
             SueldoBaseStr = Fmt(basePorMesDir + basePorMesInd),
+            FraccionStr = "—",
             LeyesStr = Fmt((basePorMesDir + basePorMesInd) * leyes),
             TotalMensualStr = Fmt((basePorMesDir + basePorMesInd) * (1 + leyes)),
             Dotaciones = grandDots,
@@ -912,7 +1324,7 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
                 BaseStr = Fmt(basePorMesInd),
                 LeyesStr = Fmt(basePorMesInd * leyes),
                 TotalStr = Fmt(basePorMesInd * (1 + leyes)),
-                CostosStr = meses.Select((_, i) => Fmt(indirecta.Sum(c => dotacionPorCargo[c.Id][i] * c.SueldoBase * (1 + leyes)))).ToArray(),
+                CostosStr = meses.Select((_, i) => Fmt(indirecta.Sum(c => dotacionPorCargo[c.Id][i] * c.SueldoBase * c.FraccionObra * (1 + leyes)))).ToArray(),
                 TotalFinalStr = Fmt(totalInd),
             },
             new()
@@ -926,7 +1338,7 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
                 CostosStr = meses.Select((_, i) =>
                 {
                     var b = directa.Sum(c => dotacionPorCargo[c.Id][i] * c.SueldoBase)
-                          + indirecta.Sum(c => dotacionPorCargo[c.Id][i] * c.SueldoBase);
+                          + indirecta.Sum(c => dotacionPorCargo[c.Id][i] * c.SueldoBase * c.FraccionObra);
                     return Fmt(b);
                 }).ToArray(),
                 TotalFinalStr = Fmt(totalBase),
@@ -942,7 +1354,7 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
                 CostosStr = meses.Select((_, i) =>
                 {
                     var b = directa.Sum(c => dotacionPorCargo[c.Id][i] * c.SueldoBase)
-                          + indirecta.Sum(c => dotacionPorCargo[c.Id][i] * c.SueldoBase);
+                          + indirecta.Sum(c => dotacionPorCargo[c.Id][i] * c.SueldoBase * c.FraccionObra);
                     return Fmt(b * leyes);
                 }).ToArray(),
                 TotalFinalStr = Fmt(totalLeyes),
@@ -967,7 +1379,7 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
         var pctInd = totalMo > 0 ? totalInd / totalMo * 100 : 0;
         var mesProm = n > 0 ? totalMo / n : 0;
         var promSueldoDir = directa.Length > 0 ? directa.Average(c => c.SueldoBase) : 0;
-        var promSueldoInd = indirecta.Length > 0 ? indirecta.Average(c => c.SueldoBase) : 0;
+        var promSueldoInd = indirecta.Length > 0 ? indirecta.Average(c => c.SueldoBase * c.FraccionObra) : 0;
         var picoDotDir = subDirDots.Length > 0 ? subDirDots.Max() : 0;
 
         KpiTotalMo = Fmt(totalMo);

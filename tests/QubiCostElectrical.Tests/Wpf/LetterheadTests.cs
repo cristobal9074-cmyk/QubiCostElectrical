@@ -150,11 +150,11 @@ public sealed class LetterheadTests
         vm.TrySave();
 
         var loaded = UserPreferencesStore.Load();
-        Assert.Equal("Constructora XYZ",       loaded.LetterheadCompanyName);
-        Assert.Equal("77.000.001-1",           loaded.LetterheadRut);
-        Assert.Equal("Carlos Gómez",           loaded.ProfessionalName);
-        Assert.Equal("Ingeniero Eléctrico",    loaded.ProfessionalRole);
-        Assert.Equal("SEC-9876",               loaded.ProfessionalRegistroSec);
+        Assert.Equal("Constructora XYZ", loaded.LetterheadCompanyName);
+        Assert.Equal("77.000.001-1", loaded.LetterheadRut);
+        Assert.Equal("Carlos Gómez", loaded.ProfessionalName);
+        Assert.Equal("Ingeniero Eléctrico", loaded.ProfessionalRole);
+        Assert.Equal("SEC-9876", loaded.ProfessionalRegistroSec);
     }
 
     // ─── 7. Reabrir recupera identidad ───────────────────────────────────
@@ -381,32 +381,52 @@ public sealed class LetterheadTests
         Assert.Equal("Empresa del Proyecto", host.Session.OfferPdfSettings.CompanyName);
     }
 
-    // ─── 21. Precedencia: proyecto/oferta sobre global (todos los campos) ──
+    // ─── 21. Precedencia: global (Preferencias) sobre proyecto/oferta ─────
 
     [Fact]
-    public void LetterheadApplicator_ProjectValuesWinOverGlobal()
+    public void LetterheadApplicator_GlobalValuesWinOverProject()
     {
         var prefs = new UserPreferences
         {
-            ProfessionalName      = "Global Ing.",
+            ProfessionalName = "Global Ing.",
             LetterheadCompanyName = "Empresa Global",
-            LetterheadRut         = "11.111.111-1",
-            LetterheadLogoPath    = "/global/logo.png"
+            LetterheadRut = "11.111.111-1",
+            LetterheadLogoPath = "/global/logo.png"
         };
         var offer = new OfferPdfSettings
         {
             SignatureName = "Ing. Proyecto",
-            CompanyName   = "Empresa del Proyecto",
-            CompanyRut    = "22.222.222-2",
-            LogoPath      = "/proyecto/logo_proj.png"
+            CompanyName = "Empresa del Proyecto",
+            CompanyRut = "22.222.222-2",
+            LogoPath = "/proyecto/logo_proj.png"
         };
 
         LetterheadApplicator.Apply(prefs, offer);
 
-        // Proyecto gana: no deben cambiar
-        Assert.Equal("Ing. Proyecto",           offer.SignatureName);
-        Assert.Equal("Empresa del Proyecto",    offer.CompanyName);
-        Assert.Equal("22.222.222-2",            offer.CompanyRut);
+        // Global gana: la identidad de Preferencias es la misma en todos los proyectos
+        Assert.Equal("Global Ing.", offer.SignatureName);
+        Assert.Equal("Empresa Global", offer.CompanyName);
+        Assert.Equal("11.111.111-1", offer.CompanyRut);
+        Assert.Equal("/global/logo.png", offer.LogoPath);
+    }
+
+    [Fact]
+    public void LetterheadApplicator_EmptyGlobalKeepsProjectValues()
+    {
+        var prefs = new UserPreferences
+        {
+            LetterheadCompanyName = "  ",
+            LetterheadLogoPath = ""
+        };
+        var offer = new OfferPdfSettings
+        {
+            CompanyName = "Empresa del Proyecto",
+            LogoPath = "/proyecto/logo_proj.png"
+        };
+
+        LetterheadApplicator.Apply(prefs, offer);
+
+        Assert.Equal("Empresa del Proyecto", offer.CompanyName);
         Assert.Equal("/proyecto/logo_proj.png", offer.LogoPath);
     }
 
@@ -540,15 +560,15 @@ public sealed class LetterheadTests
             !r.Name.Contains("Composition"));
     }
 
-    // ─── PRECEDENCIA CORREGIDA ────────────────────────────────────────────
+    // ─── PRECEDENCIA: GLOBAL (PREFERENCIAS) MANDA ─────────────────────────
 
     [Fact]
-    public void LetterheadApplicator_ProjectCompanyWinsOverGlobal()
+    public void LetterheadApplicator_GlobalCompanyWinsOverProject()
     {
         var prefs = new UserPreferences { LetterheadCompanyName = "Global SA" };
         var offer = new OfferPdfSettings { CompanyName = "Proyecto Ltda." };
         LetterheadApplicator.Apply(prefs, offer);
-        Assert.Equal("Proyecto Ltda.", offer.CompanyName);
+        Assert.Equal("Global SA", offer.CompanyName);
     }
 
     [Fact]
@@ -561,12 +581,12 @@ public sealed class LetterheadTests
     }
 
     [Fact]
-    public void LetterheadApplicator_ProjectLogoWinsOverGlobal()
+    public void LetterheadApplicator_GlobalLogoWinsOverProject()
     {
         var prefs = new UserPreferences { LetterheadLogoPath = "/global/logo.png" };
         var offer = new OfferPdfSettings { LogoPath = "/proyecto/logo_proj.png" };
         LetterheadApplicator.Apply(prefs, offer);
-        Assert.Equal("/proyecto/logo_proj.png", offer.LogoPath);
+        Assert.Equal("/global/logo.png", offer.LogoPath);
     }
 
     [Fact]
@@ -673,5 +693,92 @@ public sealed class LetterheadTests
         vm.LogoPath = CreateSmallPng();
 
         Assert.False(host.Session.IsDirty);
+    }
+
+    // ─── Nuevos: teléfono/email/logo mandante/tamaño de firma ────────────
+
+    [Fact]
+    public void LetterheadApplicator_GlobalFillsPhoneEmailAndClientLogo()
+    {
+        var prefs = new UserPreferences
+        {
+            ProfessionalPhone = "9 1234 5678",
+            ProfessionalEmail = "firma@empresa.cl",
+            LetterheadClientLogoPath = "/global/mandante.png"
+        };
+        var offer = new OfferPdfSettings();
+
+        LetterheadApplicator.Apply(prefs, offer);
+
+        Assert.Equal("9 1234 5678", offer.SignaturePhone);
+        Assert.Equal("firma@empresa.cl", offer.SignatureEmail);
+        Assert.Equal("/global/mandante.png", offer.ClientLogoPath);
+    }
+
+    [Fact]
+    public void LetterheadApplicator_GlobalPhoneAndClientLogoWinOverProject()
+    {
+        var prefs = new UserPreferences
+        {
+            ProfessionalPhone = "Global",
+            LetterheadClientLogoPath = "/global/logo.png"
+        };
+        var offer = new OfferPdfSettings
+        {
+            SignaturePhone = "Proyecto",
+            ClientLogoPath = "/proyecto/logo.png"
+        };
+
+        LetterheadApplicator.Apply(prefs, offer);
+
+        Assert.Equal("Global", offer.SignaturePhone);
+        Assert.Equal("/global/logo.png", offer.ClientLogoPath);
+    }
+
+    [Fact]
+    public void LetterheadApplicator_EmptyPhoneKeepsProjectValue()
+    {
+        var prefs = new UserPreferences { ProfessionalPhone = "" };
+        var offer = new OfferPdfSettings { SignaturePhone = "Proyecto" };
+
+        LetterheadApplicator.Apply(prefs, offer);
+
+        Assert.Equal("Proyecto", offer.SignaturePhone);
+    }
+
+    [Fact]
+    public void LetterheadApplicator_GlobalFillsSignatureSize_WhenProjectUnset()
+    {
+        var prefs = new UserPreferences { ProfessionalSignatureWidthMm = 70, ProfessionalSignatureHeightMm = 25 };
+        var offer = new OfferPdfSettings { SignatureWidthMm = 0, SignatureHeightMm = 0 };
+
+        LetterheadApplicator.Apply(prefs, offer);
+
+        Assert.Equal(70, offer.SignatureWidthMm);
+        Assert.Equal(25, offer.SignatureHeightMm);
+    }
+
+    [Fact]
+    public void LetterheadApplicator_GlobalSignatureSizeWinsOverProject()
+    {
+        var prefs = new UserPreferences { ProfessionalSignatureWidthMm = 70, ProfessionalSignatureHeightMm = 25 };
+        var offer = new OfferPdfSettings { SignatureWidthMm = 50, SignatureHeightMm = 20 };
+
+        LetterheadApplicator.Apply(prefs, offer);
+
+        Assert.Equal(70, offer.SignatureWidthMm);
+        Assert.Equal(25, offer.SignatureHeightMm);
+    }
+
+    [Fact]
+    public void LetterheadApplicator_EmptySignatureSizeKeepsProjectValue()
+    {
+        var prefs = new UserPreferences { ProfessionalSignatureWidthMm = 0, ProfessionalSignatureHeightMm = 0 };
+        var offer = new OfferPdfSettings { SignatureWidthMm = 50, SignatureHeightMm = 20 };
+
+        LetterheadApplicator.Apply(prefs, offer);
+
+        Assert.Equal(50, offer.SignatureWidthMm);
+        Assert.Equal(20, offer.SignatureHeightMm);
     }
 }

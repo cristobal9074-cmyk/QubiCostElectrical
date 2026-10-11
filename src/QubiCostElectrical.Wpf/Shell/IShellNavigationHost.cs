@@ -6,17 +6,19 @@ namespace QubiCostElectrical.Wpf.Shell;
 
 public interface IShellNavigationHost
 {
-  WpfAppHost Host { get; }
-  ShellRoute CurrentRoute { get; }
-  string ActiveProjectLabel { get; }
-  bool RequestNavigate(ShellRoute route, bool force = false);
-  bool RequestNavigate(ShellRoute route, WorkspaceNavigationContext? context, bool force = false);
-  Task NewProjectAsync();
-  Task OpenProjectAsync();
-  Task<bool> CloseProjectAsync();
-  Task OpenRecentProjectAsync(string path);
-  void RemoveRecentProject(string path);
-  Task SaveProjectAsync();
-  Task SaveProjectAsAsync();
-  void RefreshChrome();
+    WpfAppHost Host { get; }
+    ShellRoute CurrentRoute { get; }
+    string ActiveProjectLabel { get; }
+    bool RequestNavigate(ShellRoute route, bool force = false);
+    bool RequestNavigate(ShellRoute route, WorkspaceNavigationContext? context, bool force = false);
+    Task NewProjectAsync();
+    Task NewProjectWithTemplateAsync(string templateId) => Task.CompletedTask;
+    Task OpenProjectAsync();
+    Task<bool> CloseProjectAsync();
+    Task OpenRecentProjectAsync(string path);
+    void RemoveRecentProject(string path);
+    Task SaveProjectAsync();
+    Task SaveProjectAsAsync();
+    void RefreshChrome();
+    void RefreshCurrentPage() { }
 }

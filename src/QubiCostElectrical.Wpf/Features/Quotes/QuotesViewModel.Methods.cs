@@ -38,6 +38,18 @@ public sealed partial class QuotesViewModel : SessionAwareViewModelBase, IRefres
         providerSummaryView.SortDescriptions.Add(new SortDescription(nameof(QuoteProviderSummaryVm.Materiales), ListSortDirection.Descending));
         providerSummaryView.SortDescriptions.Add(new SortDescription(nameof(QuoteProviderSummaryVm.Proveedor), ListSortDirection.Ascending));
 
+        searchDebounceTimer = new System.Windows.Threading.DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(200)
+        };
+        searchDebounceTimer.Tick += (_, _) =>
+        {
+            searchDebounceTimer.Stop();
+            providerSummaryView.Refresh();
+            RefreshSelectedProvider();
+            UpdateSummary();
+        };
+
         Refresh();
     }
 
@@ -58,9 +70,18 @@ public sealed partial class QuotesViewModel : SessionAwareViewModelBase, IRefres
         {
             if (!SetProperty(ref searchText, value))
                 return;
-            providerSummaryView.Refresh();
-            RefreshSelectedProvider();
-            UpdateSummary();
+            cachedNormalizedSearch = materialSearch.Normalize(value ?? "");
+            if (System.Windows.Application.Current == null)
+            {
+                providerSummaryView.Refresh();
+                RefreshSelectedProvider();
+                UpdateSummary();
+            }
+            else
+            {
+                searchDebounceTimer.Stop();
+                searchDebounceTimer.Start();
+            }
         }
     }
 
@@ -131,13 +152,13 @@ public sealed partial class QuotesViewModel : SessionAwareViewModelBase, IRefres
 
     public bool IsLoading { get; private set; }
 
-    public void Refresh()
+    public async void Refresh()
     {
         IsLoading = true;
         OnPropertyChanged(nameof(IsLoading));
         try
         {
-            BuildProviderSummaries();
+            await BuildProviderSummariesAsync();
             UpdateProjectSummary();
 
             if (SelectedProvider == null)
@@ -156,11 +177,21 @@ public sealed partial class QuotesViewModel : SessionAwareViewModelBase, IRefres
         }
     }
 
-    private void BuildProviderSummaries()
+    private async Task BuildProviderSummariesAsync()
     {
         try
         {
-            allEntries = store.GetAll()
+            IReadOnlyList<PriceBankEntry> raw;
+            if (System.Windows.Application.Current?.Dispatcher != null)
+            {
+                raw = await Task.Run(() => store.GetAll());
+            }
+            else
+            {
+                raw = store.GetAll();
+            }
+
+            allEntries = raw
                 .Where(x => !string.IsNullOrWhiteSpace(x.Proveedor))
                 .ToList();
         }
@@ -191,13 +222,26 @@ public sealed partial class QuotesViewModel : SessionAwareViewModelBase, IRefres
             .ThenBy(x => x.Proveedor, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
-        providerSummaries.Clear();
-        foreach (var item in summaries)
-            providerSummaries.Add(item);
+        Action apply = () =>
+        {
+            providerSummaries.Clear();
+            foreach (var item in summaries)
+                providerSummaries.Add(item);
 
-        BuildCategoryOptions(allEntries);
-        RebuildProvidersInSelectedCategory();
-        providerSummaryView.Refresh();
+            BuildCategoryOptions(allEntries);
+            RebuildProvidersInSelectedCategory();
+            providerSummaryView.Refresh();
+        };
+
+        if (System.Windows.Application.Current?.Dispatcher is { } dispatcher && !dispatcher.CheckAccess())
+        {
+            dispatcher.Invoke(apply);
+        }
+        else
+        {
+            apply();
+        }
+
         ShowEmptyState = providerSummaries.Count == 0;
     }
 
@@ -237,18 +281,18 @@ public sealed partial class QuotesViewModel : SessionAwareViewModelBase, IRefres
         if (obj is not QuoteProviderSummaryVm provider)
             return false;
 
-        string query = materialSearch.Normalize(SearchText);
-        if (!string.IsNullOrWhiteSpace(query))
+        if (!string.IsNullOrWhiteSpace(cachedNormalizedSearch))
         {
-            string searchable = materialSearch.Normalize(string.Join(' ', new[]
-            {
-                provider.Proveedor,
-                provider.Materiales.ToString(),
-                provider.Categorias.ToString()
-            }));
+            bool match = (provider.Proveedor != null && provider.Proveedor.Contains(cachedNormalizedSearch, StringComparison.OrdinalIgnoreCase))
+                || provider.Materiales.ToString().Contains(cachedNormalizedSearch, StringComparison.OrdinalIgnoreCase)
+                || provider.Categorias.ToString().Contains(cachedNormalizedSearch, StringComparison.OrdinalIgnoreCase);
 
-            if (!searchable.Contains(query, StringComparison.OrdinalIgnoreCase))
-                return false;
+            if (!match)
+            {
+                string normProv = materialSearch.Normalize(provider.Proveedor ?? "");
+                if (!normProv.Contains(cachedNormalizedSearch, StringComparison.OrdinalIgnoreCase))
+                    return false;
+            }
         }
 
         if (!string.Equals(SelectedCategory, "Todas", StringComparison.OrdinalIgnoreCase))
@@ -292,20 +336,20 @@ public sealed partial class QuotesViewModel : SessionAwareViewModelBase, IRefres
 
     private bool FilterEntry(PriceBankEntry entry)
     {
-        if (!string.IsNullOrWhiteSpace(SearchText))
+        if (!string.IsNullOrWhiteSpace(cachedNormalizedSearch))
         {
-            string query = materialSearch.Normalize(SearchText);
-            string searchable = materialSearch.Normalize(string.Join(' ', new[]
-            {
-                entry.Codigo,
-                entry.Descripcion,
-                entry.Categoria,
-                entry.Marca,
-                entry.OrigenPrecio
-            }));
+            bool match = (entry.Codigo != null && entry.Codigo.Contains(cachedNormalizedSearch, StringComparison.OrdinalIgnoreCase))
+                || (entry.Descripcion != null && entry.Descripcion.Contains(cachedNormalizedSearch, StringComparison.OrdinalIgnoreCase))
+                || (entry.Categoria != null && entry.Categoria.Contains(cachedNormalizedSearch, StringComparison.OrdinalIgnoreCase))
+                || (entry.Marca != null && entry.Marca.Contains(cachedNormalizedSearch, StringComparison.OrdinalIgnoreCase))
+                || (entry.OrigenPrecio != null && entry.OrigenPrecio.Contains(cachedNormalizedSearch, StringComparison.OrdinalIgnoreCase));
 
-            if (!searchable.Contains(query, StringComparison.OrdinalIgnoreCase))
-                return false;
+            if (!match)
+            {
+                string normDesc = materialSearch.Normalize(entry.Descripcion ?? "");
+                if (!normDesc.Contains(cachedNormalizedSearch, StringComparison.OrdinalIgnoreCase))
+                    return false;
+            }
         }
 
         if (!string.Equals(SelectedCategory, "Todas", StringComparison.OrdinalIgnoreCase) &&
@@ -393,8 +437,13 @@ public sealed partial class QuotesViewModel : SessionAwareViewModelBase, IRefres
 
     private void ClearFilters()
     {
-        SearchText = "";
-        SelectedCategory = "Todas";
+        searchDebounceTimer.Stop();
+        searchText = "";
+        cachedNormalizedSearch = "";
+        OnPropertyChanged(nameof(SearchText));
+        selectedCategory = "Todas";
+        OnPropertyChanged(nameof(SelectedCategory));
+        RebuildProvidersInSelectedCategory();
         providerSummaryView.Refresh();
         RefreshSelectedProvider();
         UpdateSummary();
@@ -517,6 +566,13 @@ public sealed partial class QuotesViewModel : SessionAwareViewModelBase, IRefres
 
         decimal valorUf = session.ProjectInfo.ValorUfClp > 0m ? session.ProjectInfo.ValorUfClp : PriceConversion.DefaultValorUfClp;
         material.MatClp = row.PrecioMejorClp > 0m ? row.PrecioMejorClp : row.PrecioMejor * valorUf;
+        if (!string.IsNullOrWhiteSpace(row.ProveedorMejor))
+        {
+            material.Proveedor = row.ProveedorMejor.Trim();
+            material.OrigenPrecio = $"Cotización {row.ProveedorMejor.Trim()}";
+        }
+        material.FechaPrecio = DateTime.Today;
+        material.UsuarioPrecio = session.CurrentUserName;
         material.RecalcularUf(valorUf);
         session.SyncCubicacionPricesFromMateriales();
         session.MarkDirty(ProjectDirtyScope.Materiales, ProjectDirtyScope.Cubicacion);

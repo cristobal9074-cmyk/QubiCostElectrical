@@ -100,6 +100,7 @@ internal static class BudgetTotalsCalculator
             TransporteUf = direct.TransporteUf,
             MermasUf = direct.MermasUf,
             OrdenesCambioUf = direct.OrdenesCambioUf,
+            FerreteriaUf = FerreteriaOf(direct),
             CostoDirectoUf = direct.TotalUf,
             RiesgoUf = riesgo,
             BaseCostoUf = baseCosto,
@@ -207,7 +208,7 @@ internal static class BudgetTotalsCalculator
     }
 
     /// <summary>
-    /// Paridad Excel -=COSTOS=-:
+    /// Paridad estándar de costos:
     /// GG/UT sobre Mat+MO+GO; VA sobre equipos; utilidad aditiva;
     /// venta con factores; diferencia por factores = venta − costo proyecto.
     /// </summary>
@@ -284,6 +285,7 @@ internal static class BudgetTotalsCalculator
             TransporteUf = direct.TransporteUf,
             MermasUf = direct.MermasUf,
             OrdenesCambioUf = direct.OrdenesCambioUf,
+            FerreteriaUf = FerreteriaOf(direct),
             GastosOperacionalesUf = go,
             CostoDirectoUf = ejecucion,
             RiesgoUf = riesgo,
@@ -356,6 +358,11 @@ internal static class BudgetTotalsCalculator
             .Take(20)
             .ToList();
     }
+
+    private static decimal FerreteriaOf(DirectCostResult direct)
+        => direct.Origenes
+            .Where(x => x.IsGlobalAutoCharge && (x.Descripcion ?? "").StartsWith("Ferretería", StringComparison.Ordinal))
+            .Sum(x => x.MaterialesUf);
 
     private static List<BudgetInconsistencia> BuildInconsistencias(
         IEnumerable<BudgetInconsistencia> engineErrors,

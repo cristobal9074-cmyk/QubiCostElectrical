@@ -97,49 +97,6 @@ public sealed class ValidationService : IValidationService
         return result;
     }
 
-    public BudgetValidationResult ValidateApu(ApuViewModel apu)
-    {
-        var result = new BudgetValidationResult();
-        if (apu == null)
-        {
-            result.Add(BudgetValidationSeverity.Error, "APU", "VAL-APU-000", "El APU no puede ser nulo.");
-            return result;
-        }
-
-        if (string.IsNullOrWhiteSpace(apu.ItemId))
-            result.Add(BudgetValidationSeverity.Warning, "APU", "VAL-APU-001", "APU sin partida asociada.");
-
-        if (apu.CantidadItem < 0m)
-            result.Add(BudgetValidationSeverity.Error, "APU", "VAL-APU-002", "La cantidad de la partida no puede ser negativa.", apu.ItemId);
-
-        if (apu.Recursos.Count == 0)
-            result.Add(BudgetValidationSeverity.Error, "APU", "VAL-APU-003", "APU sin recursos.", apu.ItemId);
-
-        if (apu.Summary.MaterialUf <= 0m)
-            result.Add(BudgetValidationSeverity.Warning, "APU", "VAL-APU-004", "APU sin materiales valorizados.", apu.ItemId);
-
-        if (apu.Summary.ManoObraUf <= 0m)
-            result.Add(BudgetValidationSeverity.Warning, "APU", "VAL-APU-005", "APU sin mano de obra valorizada.", apu.ItemId);
-
-        if (apu.PrecioUnitarioVentaUf < 0m)
-            result.Add(BudgetValidationSeverity.Error, "APU", "VAL-APU-006", "Precio unitario de venta negativo.", apu.ItemId);
-
-        foreach (var recurso in apu.Recursos)
-        {
-            if (string.IsNullOrWhiteSpace(recurso.Codigo))
-                result.Add(BudgetValidationSeverity.Error, "APU", "VAL-APU-RES-001", "Recurso APU sin código.", apu.ItemId);
-
-            if (recurso.CantidadUnitaria < 0m)
-                result.Add(BudgetValidationSeverity.Warning, "APU", "VAL-APU-RES-002", $"Recurso {recurso.Codigo} tiene cantidad unitaria negativa.", apu.ItemId);
-
-            if (recurso.TotalUf < 0m)
-                result.Add(BudgetValidationSeverity.Error, "APU", "VAL-APU-RES-003", $"Recurso {recurso.Codigo} tiene total negativo.", apu.ItemId);
-        }
-
-        return result;
-    }
-
-
     private static void ValidateApus(IEnumerable<ApuRow> apus, IEnumerable<ItemizadoRow> itemizado, BudgetValidationResult result)
     {
         var apuList = (apus ?? Enumerable.Empty<ApuRow>()).ToList();

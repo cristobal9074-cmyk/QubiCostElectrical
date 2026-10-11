@@ -22,6 +22,7 @@ public sealed partial class FinalReviewService : IFinalReviewService
             .GroupBy(x => S(x.ItemId), StringComparer.OrdinalIgnoreCase)
             .ToDictionary(g => g.Key, g => (IReadOnlyList<CubicacionRow>)g.ToList(), StringComparer.OrdinalIgnoreCase);
 
+        var sinCubicar = new List<ItemizadoRow>();
         foreach (var item in itemList.Where(x => !x.EsTitulo))
         {
             if (item.ExcluidoCubicacion) continue;
@@ -32,13 +33,27 @@ public sealed partial class FinalReviewService : IFinalReviewService
             bool hasIncompleteLine = rows.Any(IsIncompleteCubicacionLine);
 
             if (!hasAnyInput)
-            {
-                issues.Add(new FinalReviewIssue($"EMPTY|{S(item.Id)}", FinalReviewSeverity.Blocker, FinalReviewCategory.EmptyPartida, S(item.Id), S(item.Item), S(item.Descripcion), "", S(item.Descripcion), 1, "La partida no tiene cubicación.", "Abrir la partida y agregar materiales/cantidades antes de exportar. Si no se cubicará (fuera de alcance), márquela «No cubicar» en Itemizado."));
-            }
+                sinCubicar.Add(item);
             else if (!hasCompletedLine || hasIncompleteLine)
             {
-                issues.Add(new FinalReviewIssue($"INCOMPLETE|{S(item.Id)}", FinalReviewSeverity.Blocker, FinalReviewCategory.EmptyPartida, S(item.Id), S(item.Item), S(item.Descripcion), "", S(item.Descripcion), Math.Max(1, rows.Count(IsIncompleteCubicacionLine)), "La partida tiene cubicación incompleta.", "Revisar código, descripción y cantidades; al menos una línea debe tener código y cantidad mayor que cero."));
+                issues.Add(new FinalReviewIssue($"INCOMPLETE|{S(item.Id)}", FinalReviewSeverity.Warning, FinalReviewCategory.EmptyPartida, S(item.Id), S(item.Item), S(item.Descripcion), "", S(item.Descripcion), 1, "La partida tiene cubicación incompleta.", "Revisar código, descripción y cantidades; al menos una línea debe tener código y cantidad mayor que cero."));
             }
+        }
+
+        if (sinCubicar.Count > 0)
+        {
+            issues.Add(new FinalReviewIssue(
+                "EMPTY|SUMMARY",
+                FinalReviewSeverity.Warning,
+                FinalReviewCategory.EmptyPartida,
+                "",
+                "",
+                "Itemizado",
+                "",
+                "Partidas sin cubicación",
+                sinCubicar.Count,
+                $"{sinCubicar.Count:N0} partidas del ítemizado todavía no tienen cubicación. Es el avance normal del presupuesto y no impide seguir trabajando.",
+                "Cubique las que entren en la oferta. Si una queda fuera de alcance, márquela «No cubicar» en Itemizado."));
         }
     }
 
@@ -99,43 +114,31 @@ public sealed partial class FinalReviewService : IFinalReviewService
             .GroupBy(x => x.ItemId, StringComparer.OrdinalIgnoreCase)
             .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
 
-        // Igual que en AddEmptyOrIncompletePartidas: índice por ItemId en vez de escanear
-        // cubList completo por cada partida dentro del loop.
-        var hasValuedCubicacionByItem = new HashSet<string>(
-            cubList.Where(x => !string.IsNullOrWhiteSpace(x.Codigo) && x.Cantidad > 0m).Select(x => S(x.ItemId)),
-            StringComparer.OrdinalIgnoreCase);
+        _ = cubList;
+        _ = settings;
 
-        bool apuPolicyRequiresApu = settings != null && settings.ApuMode == BudgetApuMode.ApuManda;
         foreach (var item in itemList.Where(x => !x.EsTitulo))
         {
             if (item.ExcluidoCubicacion) continue;
             if (overriddenItemIds.Contains(S(item.Id))) continue;
             apuByItem.TryGetValue(S(item.Id), out var apu);
+            // El APU no forma parte obligatoria del presupuesto. Es una herramienta
+            // o una lista de precios: no tenerlo no bloquea ni advierte.
             if (apu == null || apu.Recursos == null || apu.Recursos.Count == 0)
-            {
-                if (apuPolicyRequiresApu)
-                {
-                    var severity = hasValuedCubicacionByItem.Contains(S(item.Id))
-                        ? FinalReviewSeverity.Blocker
-                        : FinalReviewSeverity.Critical;
-                    issues.Add(new FinalReviewIssue($"APU|{S(item.Id)}", severity, FinalReviewCategory.MissingApu, S(item.Id), S(item.Item), S(item.Descripcion), "", S(item.Descripcion), 1, "La partida no tiene APU requerido por la política del proyecto.", "Crear APU o cambiar el modo del proyecto a Cubicación Directa."));
-                }
-                else
-                {
-                    // En modo estándar o complementario, no tener APU no bloquea la oferta
-                    issues.Add(new FinalReviewIssue($"APU|{S(item.Id)}", FinalReviewSeverity.Info, FinalReviewCategory.MissingApu, S(item.Id), S(item.Item), S(item.Descripcion), "", S(item.Descripcion), 1, "Partida presupuestada por cubicación directa (sin APU complementario).", "Opcional: Crear APU si el cliente solicita análisis detallado."));
-                }
                 continue;
-            }
 
             int missingPrice = apu.Recursos.Count(r => r.PrecioBaseUf <= 0m);
             int badRend = apu.Recursos.Count(r => r.Rendimiento <= 0m || ((r.Tipo == ApuTipoRecurso.MO || r.Tipo == ApuTipoRecurso.HH) && r.HHUnitarias <= 0m));
             if (missingPrice > 0 || badRend > 0)
             {
-                var severity = apuPolicyRequiresApu || !hasValuedCubicacionByItem.Contains(S(item.Id))
-                    ? FinalReviewSeverity.Blocker
-                    : FinalReviewSeverity.Warning;
-                issues.Add(new FinalReviewIssue($"APU_INCOMPLETE|{S(item.Id)}", severity, FinalReviewCategory.ApuIncomplete, S(item.Id), S(item.Item), S(item.Descripcion), "", S(item.Descripcion), missingPrice + badRend, "El APU tiene recursos sin precio o rendimiento/HH inválido.", "Abrir APU profesional y corregir precio, cuadrilla, rendimiento y HH unitarias."));
+                issues.Add(new FinalReviewIssue(
+                    $"APU_INCOMPLETE|{S(item.Id)}",
+                    FinalReviewSeverity.Warning,
+                    FinalReviewCategory.ApuIncomplete,
+                    S(item.Id), S(item.Item), S(item.Descripcion), "", S(item.Descripcion),
+                    missingPrice + badRend,
+                    "El APU tiene recursos sin precio o rendimiento. No frena el presupuesto.",
+                    "Si usa el APU como lista de precios, complete precio y rendimiento. Si no lo usa, puede ignorar este aviso."));
             }
         }
     }
@@ -206,6 +209,63 @@ public sealed partial class FinalReviewService : IFinalReviewService
                 "Revisar la política de cierre comercial y sus parámetros antes de exportar."));
         }
 
+        // Validaciones comerciales específicas por política de cierre
+        var closingPolicy = settings.ClosingPolicy ?? ClosingPolicySelection.Default();
+        switch (closingPolicy.Policy)
+        {
+            case ClosingPolicyType.TargetPrice:
+                if (closingPolicy.TargetPriceClp <= 0m)
+                {
+                    issues.Add(new FinalReviewIssue(
+                        "CLOSING|TARGET_ZERO", FinalReviewSeverity.Blocker, FinalReviewCategory.EngineInconsistency,
+                        "", "", "Política de cierre", "Precio Objetivo", "Precio Objetivo en cero", 1,
+                        "El proyecto tiene política de Precio Objetivo pero no se ha definido el monto contractual en CLP.",
+                        "Ingresar el Precio Objetivo contractual en la pantalla de Costo/Cierre."));
+                }
+                break;
+
+            case ClosingPolicyType.CostPlusFee:
+                if (closingPolicy.FeeClp <= 0m && closingPolicy.FeePct <= 0m)
+                {
+                    issues.Add(new FinalReviewIssue(
+                        "CLOSING|FEE_ZERO", FinalReviewSeverity.Blocker, FinalReviewCategory.EngineInconsistency,
+                        "", "", "Política de cierre", "Costo + Fee", "Honorario en cero", 1,
+                        "El proyecto tiene política de Costo + Fee pero no se ha definido el Fee en CLP ni el porcentaje de Fee.",
+                        "Configurar el Fee fijo o el % de Fee en la pantalla de Costo/Cierre."));
+                }
+                if (proyecto.GastosGeneralesPct > 0m)
+                {
+                    issues.Add(new FinalReviewIssue(
+                        "CLOSING|FEE_GG_INVALID", FinalReviewSeverity.Warning, FinalReviewCategory.EngineInconsistency,
+                        "", "", "Política de cierre", "Gastos Generales", "GG en contrato reembolsable", 1,
+                        $"El proyecto tiene política Costo + Fee pero mantiene Gastos Generales en {proyecto.GastosGeneralesPct:0.#}%. En contratos reembolsables no se carga GG sobre el costo.",
+                        "Ajustar Gastos Generales a 0% o incluirlos dentro del Fee de administración."));
+                }
+                break;
+
+            case ClosingPolicyType.LumpSumEpc:
+                if (closingPolicy.LumpSumMinRiskPct < 5m)
+                {
+                    issues.Add(new FinalReviewIssue(
+                        "CLOSING|LUMPSUM_RISK_LOW", FinalReviewSeverity.Blocker, FinalReviewCategory.EngineInconsistency,
+                        "", "", "Política de cierre", "Suma Alzada", "Contingencia insuficiente", 1,
+                        $"La contingencia para Suma Alzada ({closingPolicy.LumpSumMinRiskPct:0.#}%) es menor al 5% mínimo de seguridad contractual.",
+                        "Aumentar la contingencia de riesgo de Suma Alzada al menos al 10% o 15% para absorber imprevistos."));
+                }
+                break;
+
+            case ClosingPolicyType.GainsharePainshare:
+                if (closingPolicy.TargetCostClp <= 0m)
+                {
+                    issues.Add(new FinalReviewIssue(
+                        "CLOSING|GAINSHARE_TARGET_ZERO", FinalReviewSeverity.Blocker, FinalReviewCategory.EngineInconsistency,
+                        "", "", "Política de cierre", "Gainshare / Painshare", "Costo objetivo no definido", 1,
+                        "El contrato colaborativo requiere definir el Costo Objetivo pactado con el mandante.",
+                        "Ingresar el Costo Objetivo pactado en la pantalla de Costo/Cierre."));
+                }
+                break;
+        }
+
         if (cost.TotalVentaUf <= 0m)
             issues.Add(new FinalReviewIssue("TOTAL|ZERO", FinalReviewSeverity.Blocker, FinalReviewCategory.ZeroTotalSale, "", "", "Presupuesto", "", "Total venta", 1, "El total de venta es cero.", "Revisar cubicación, APU, precios y políticas de recargo antes de exportar."));
         if (cost.TotalVentaUf > 0m && cost.MargenRealPct < 0m)
@@ -274,6 +334,64 @@ public sealed partial class FinalReviewService : IFinalReviewService
         }
     }
 
+    private static void AddFormulaSyntaxErrors(
+        List<FinalReviewIssue> issues,
+        IReadOnlyList<CubicacionRow> cubList,
+        IReadOnlyDictionary<string, ItemizadoRow> itemById)
+    {
+        foreach (var row in cubList)
+        {
+            if (!string.IsNullOrWhiteSpace(row.TotalExpression) && QuantityFormulaService.IsFormulaLike(row.TotalExpression))
+            {
+                var res = QuantityFormulaService.Evaluate(row.TotalExpression);
+                if (!res.Success)
+                {
+                    itemById.TryGetValue(S(row.ItemId), out var item);
+                    issues.Add(new FinalReviewIssue(
+                        $"FORMULA|TOT|{S(row.ItemId)}|{S(row.Id)}",
+                        FinalReviewSeverity.Blocker,
+                        FinalReviewCategory.FormulaSyntaxError,
+                        S(row.ItemId),
+                        item?.Item ?? "",
+                        item?.Descripcion ?? "Partida no encontrada",
+                        S(row.Codigo),
+                        $"Fórmula total: {row.TotalExpression}",
+                        1,
+                        $"Error en fórmula de total '{row.TotalExpression}': {res.Error}",
+                        "Corregir la expresión en la barra de fórmulas de la partida (ej. verificar paréntesis, división por cero o sintaxis)."));
+                }
+            }
+
+            if (row.QtyExpressions != null && row.QtyExpressions.Length > 0)
+            {
+                for (int i = 0; i < row.QtyExpressions.Length; i++)
+                {
+                    string expr = row.QtyExpressions[i];
+                    if (!string.IsNullOrWhiteSpace(expr) && QuantityFormulaService.IsFormulaLike(expr))
+                    {
+                        var res = QuantityFormulaService.Evaluate(expr);
+                        if (!res.Success)
+                        {
+                            itemById.TryGetValue(S(row.ItemId), out var item);
+                            issues.Add(new FinalReviewIssue(
+                                $"FORMULA|QTY|{S(row.ItemId)}|{S(row.Id)}|{i}",
+                                FinalReviewSeverity.Blocker,
+                                FinalReviewCategory.FormulaSyntaxError,
+                                S(row.ItemId),
+                                item?.Item ?? "",
+                                item?.Descripcion ?? "Partida no encontrada",
+                                S(row.Codigo),
+                                $"Casilla #{i + 1}: {expr}",
+                                1,
+                                $"Error en casilla #{i + 1} '{expr}': {res.Error}",
+                                "Corregir la expresión matemática en la casilla de cubicación."));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     private static bool IsRowWithoutPrice(CubicacionRow row, IReadOnlyDictionary<string, MaterialRow> materialByCode)
     {
         bool rowHasPrice = row.MatUf > 0m || row.MoUf > 0m;
@@ -305,17 +423,18 @@ public sealed partial class FinalReviewService : IFinalReviewService
 
     private static int CategorySort(FinalReviewCategory category) => category switch
     {
-        FinalReviewCategory.EmptyPartida => 0,
-        FinalReviewCategory.ZeroQuantity => 1,
-        FinalReviewCategory.MaterialWithoutPrice => 2,
-        FinalReviewCategory.MissingCurrencyUf => 3,
-        FinalReviewCategory.ZeroTotalSale => 4,
-        FinalReviewCategory.NegativeMargin => 5,
-        FinalReviewCategory.IvaInconsistent => 6,
-        FinalReviewCategory.ApuIncomplete => 7,
-        FinalReviewCategory.MissingApu => 8,
-        FinalReviewCategory.AreaNotAssigned => 9,
-        FinalReviewCategory.MarkupInvalid => 10,
+        FinalReviewCategory.FormulaSyntaxError => 0,
+        FinalReviewCategory.EmptyPartida => 1,
+        FinalReviewCategory.ZeroQuantity => 2,
+        FinalReviewCategory.MaterialWithoutPrice => 3,
+        FinalReviewCategory.MissingCurrencyUf => 4,
+        FinalReviewCategory.ZeroTotalSale => 5,
+        FinalReviewCategory.NegativeMargin => 6,
+        FinalReviewCategory.IvaInconsistent => 7,
+        FinalReviewCategory.ApuIncomplete => 8,
+        FinalReviewCategory.MissingApu => 9,
+        FinalReviewCategory.AreaNotAssigned => 10,
+        FinalReviewCategory.MarkupInvalid => 11,
         _ => 20
     };
 

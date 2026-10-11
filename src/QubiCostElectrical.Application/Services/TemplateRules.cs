@@ -28,7 +28,7 @@ public static class TemplateRules
     {
         ArgumentNullException.ThrowIfNull(plantillas);
         string parent = (parentTemplateName ?? "").Trim();
-        string child  = (childTemplateName  ?? "").Trim();
+        string child = (childTemplateName ?? "").Trim();
         if (string.IsNullOrWhiteSpace(parent) || string.IsNullOrWhiteSpace(child)) return false;
         if (string.Equals(parent, child, StringComparison.OrdinalIgnoreCase)) return true;
 
@@ -74,10 +74,10 @@ public static class TemplateRules
         return rows
             .GroupBy(x => new
             {
-                Codigo  = (x.Codigo  ?? "").Trim().ToUpperInvariant(),
-                Tipo    = (x.Tipo    ?? "").Trim().ToUpperInvariant(),
-                Unidad  = (x.Unidad  ?? "").Trim().ToUpperInvariant(),
-                Area    = (x.Area    ?? "").Trim().ToUpperInvariant(),
+                Codigo = (x.Codigo ?? "").Trim().ToUpperInvariant(),
+                Tipo = (x.Tipo ?? "").Trim().ToUpperInvariant(),
+                Unidad = (x.Unidad ?? "").Trim().ToUpperInvariant(),
+                Area = (x.Area ?? "").Trim().ToUpperInvariant(),
                 x.MatUf,
                 x.MoUf
             })
@@ -86,15 +86,15 @@ public static class TemplateRules
                 var first = g.First();
                 return new CubicacionRow
                 {
-                    ItemId      = first.ItemId,
-                    Tipo        = first.Tipo,
-                    Codigo      = first.Codigo,
+                    ItemId = first.ItemId,
+                    Tipo = first.Tipo,
+                    Codigo = first.Codigo,
                     Descripcion = first.Descripcion,
-                    Unidad      = first.Unidad,
-                    Cantidad    = g.Sum(x => x.Cantidad),
-                    MatUf       = first.MatUf,
-                    MoUf        = first.MoUf,
-                    Area        = first.Area
+                    Unidad = first.Unidad,
+                    Cantidad = g.Sum(x => x.Cantidad),
+                    MatUf = first.MatUf,
+                    MoUf = first.MoUf,
+                    Area = first.Area
                 };
             })
             .OrderBy(x => x.Tipo)

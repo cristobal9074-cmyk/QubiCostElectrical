@@ -46,4 +46,57 @@ public sealed class KeyboardShortcutGestureTests
         Assert.False(prefs.KeyboardShortcuts.ContainsKey("unknown.action"));
         Assert.False(prefs.KeyboardShortcuts.ContainsKey(CubicacionShortcutCatalog.Itemizado));
     }
+
+    [Fact]
+    public void CatalogRegistry_ContainsAllScopesAndUniqueActionIds()
+    {
+        var all = KeyboardShortcutCatalogRegistry.All;
+        Assert.NotEmpty(all);
+
+        // Sin IDs duplicados
+        var duplicateIds = all.GroupBy(d => d.Id).Where(g => g.Count() > 1).Select(g => g.Key).ToList();
+        Assert.Empty(duplicateIds);
+
+        // Contiene todos los módulos
+        var scopes = all.Select(d => d.Scope).Distinct().ToHashSet();
+        Assert.Contains(ShellShortcutCatalog.Scope, scopes);
+        Assert.Contains(ItemizadoShortcutCatalog.Scope, scopes);
+        Assert.Contains(CubicacionShortcutCatalog.Scope, scopes);
+        Assert.Contains(CubicacionScShortcutCatalog.Scope, scopes);
+        Assert.Contains(ApuShortcutCatalog.Scope, scopes);
+        Assert.Contains(PricesShortcutCatalog.Scope, scopes);
+
+        // Verificamos etiquetas e iconos de cada módulo
+        foreach (var scope in scopes)
+        {
+            var label = KeyboardShortcutCatalogRegistry.GetScopeLabel(scope);
+            var icon = KeyboardShortcutCatalogRegistry.GetScopeIcon(scope);
+            Assert.False(string.IsNullOrWhiteSpace(label));
+            Assert.False(string.IsNullOrWhiteSpace(icon));
+        }
+    }
+
+    [Fact]
+    public void Preferences_SanitizePreservesNewCatalogActions()
+    {
+        var prefs = new UserPreferences
+        {
+            KeyboardShortcuts =
+            {
+                [ItemizadoShortcutCatalog.AddPartida] = "Insert",
+                [ApuShortcutCatalog.AddMaterial] = "Ctrl+M",
+                [CubicacionScShortcutCatalog.AddTablero] = "Ctrl+T",
+                [PricesShortcutCatalog.Search] = "Ctrl+F",
+                ["invalid.shortcut.id"] = "Ctrl+Shift+X"
+            }
+        };
+
+        KeyboardShortcutPreferences.Sanitize(prefs);
+
+        Assert.Equal("Insert", prefs.KeyboardShortcuts[ItemizadoShortcutCatalog.AddPartida]);
+        Assert.Equal("Ctrl+M", prefs.KeyboardShortcuts[ApuShortcutCatalog.AddMaterial]);
+        Assert.Equal("Ctrl+T", prefs.KeyboardShortcuts[CubicacionScShortcutCatalog.AddTablero]);
+        Assert.Equal("Ctrl+F", prefs.KeyboardShortcuts[PricesShortcutCatalog.Search]);
+        Assert.False(prefs.KeyboardShortcuts.ContainsKey("invalid.shortcut.id"));
+    }
 }

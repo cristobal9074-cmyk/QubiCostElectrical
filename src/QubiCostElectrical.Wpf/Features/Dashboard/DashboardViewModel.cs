@@ -15,13 +15,6 @@ using QubiCostElectrical.Wpf.Features.Project;
 
 namespace QubiCostElectrical.Wpf.Features.Dashboard;
 
-public enum DashboardProjectStateKind
-{
-    Draft,
-    InProgress,
-    Complete,
-    Unknown
-}
 
 public sealed class DashboardKpiCardVm
 {
@@ -33,10 +26,19 @@ public sealed class DashboardKpiCardVm
 
     public Brush AccentBrush { get; init; } = DashboardKpiBrushes.Blue;
     public Brush AccentSoftBrush { get; init; } = DashboardKpiBrushes.BlueSoft;
+
+    public string ChipLabel { get; init; } = "";
+    public string ChipKind { get; init; } = "mute";
+    public string IconKind { get; init; } = "riesgo";
+    public bool ShowUfUpdateButton { get; init; }
+    public double GaugePercent { get; init; }
+    public GridLength GaugeFillWidth { get; init; } = new(0.001, GridUnitType.Star);
+    public GridLength GaugeRemainWidth { get; init; } = new(99.999, GridUnitType.Star);
 }
 
 public sealed class DashboardWorkflowStepVm
 {
+    public int Index { get; init; }
     public string Title { get; init; } = "";
     public string Detail { get; init; } = "";
     public bool IsComplete { get; init; }
@@ -56,41 +58,25 @@ public sealed class DashboardAlertVm
 
 public sealed class DashboardPartidaVm
 {
+    public int Rank { get; init; }
+    public string ItemId { get; init; } = "";
     public string Item { get; init; } = "";
     public string Partida { get; init; } = "";
     public string TotalLabel { get; init; } = "";
     public string TotalClpLabel { get; init; } = "";
     public string TotalUfLabel { get; init; } = "";
     public double SharePct { get; init; }
+    public double AccumPct { get; init; }
+    public bool IsPareto80 => AccumPct <= 80.5;
+    public string ParetoClass => AccumPct <= 80.5 ? "A" : (AccumPct <= 95.0 ? "B" : "C");
+    public string ParetoClassBadge => $"Tipo {ParetoClass}";
     public string PercentLabel => $"{SharePct:N1}%";
+    public string AccumPercentLabel => $"{AccumPct:N1}%";
     public GridLength FillWidth => new(Math.Max(0.001, SharePct), GridUnitType.Star);
     public GridLength RemainderWidth => new(Math.Max(0.001, 100 - SharePct), GridUnitType.Star);
     public string Category { get; init; } = "Otros";
 }
 
-public sealed class DashboardMetricVm
-{
-    public string Title { get; init; } = "";
-    public string Value { get; init; } = "";
-    public string Caption { get; init; } = "";
-    public Brush AccentBrush { get; init; } = DashboardKpiBrushes.Blue;
-    public Brush AccentSoftBrush { get; init; } = DashboardKpiBrushes.BlueSoft;
-}
-
-public sealed class DashboardRecentProjectVm
-{
-    public string Name { get; init; } = "";
-    public string Path { get; init; } = "";
-    public string DisplayPath => Path;
-    public string StatusText { get; init; } = "";
-    public string StatusCaption { get; init; } = "";
-    public string DisplayDate { get; init; } = "";
-    public bool IsMissing { get; init; }
-    public DashboardProjectStateKind StateKind { get; init; }
-    public Brush AccentBrush { get; init; } = DashboardKpiBrushes.Blue;
-    public Brush AccentSoftBrush { get; init; } = DashboardKpiBrushes.BlueSoft;
-    public Brush StatusForeground { get; init; } = DashboardKpiBrushes.Blue;
-}
 
 public sealed class DashboardCostShareVm
 {
@@ -109,6 +95,7 @@ public sealed class DashboardOfferReadinessItemVm
     public bool IsComplete { get; init; }
     public bool IsWarning { get; init; }
     public Brush StatusBrush { get; init; } = DashboardKpiBrushes.Green;
+    public ICommand? NavigateCommand { get; init; }
 }
 
 public sealed class DashboardNavItemVm
@@ -119,44 +106,40 @@ public sealed class DashboardNavItemVm
 
 internal static class DashboardKpiBrushes
 {
-    public static Brush Blue       => ThemeOrFallback("Brush.Blue", "#2563EB");
-    public static Brush BlueDark   => ThemeOrFallback("Brush.BlueDark", "#1D4ED8");
-    public static Brush Amber      => ThemeOrFallback("Brush.Amber", "#B45309");
+    public static Brush Blue => ThemeOrFallback("Brush.Blue", "#2563EB");
+    public static Brush BlueDark => ThemeOrFallback("Brush.BlueDark", "#1D4ED8");
+    public static Brush Amber => ThemeOrFallback("Brush.Amber", "#B45309");
     public static Brush DangerDark => ThemeOrFallback("Brush.DangerDark", "#B91C1C");
-    public static Brush AmberRisk  => ThemeOrFallback("Brush.AmberRisk", "#D97706");
-    public static Brush Green      => ThemeOrFallback("Brush.Green", "#15803D");
-    public static Brush BlueSoft   => ThemeOrFallback("Brush.BlueSoft", "#EAF1FF");
-    public static Brush AmberSoft  => ThemeOrFallback("Brush.AmberSoft", "#FFF5DD");
-    public static Brush RedSoft    => ThemeOrFallback("Brush.RedSoft", "#FFF0F0");
-    public static Brush GreenSoft  => ThemeOrFallback("Brush.GreenSoft", "#EAF8EF");
+    public static Brush AmberRisk => ThemeOrFallback("Brush.AmberRisk", "#D97706");
+    public static Brush Green => ThemeOrFallback("Brush.Green", "#15803D");
+    public static Brush BlueSoft => ThemeOrFallback("Brush.BlueSoft", "#EAF1FF");
+    public static Brush AmberSoft => ThemeOrFallback("Brush.AmberSoft", "#FFF5DD");
+    public static Brush RedSoft => ThemeOrFallback("Brush.RedSoft", "#FFF0F0");
+    public static Brush GreenSoft => ThemeOrFallback("Brush.GreenSoft", "#EAF8EF");
 
     public static Brush ForAccent(DashboardExecutiveKpiAccent accent) => accent switch
     {
-        DashboardExecutiveKpiAccent.Primary    => Blue,
-        DashboardExecutiveKpiAccent.Blue       => BlueDark,
-        DashboardExecutiveKpiAccent.Orange     => Amber,
-        DashboardExecutiveKpiAccent.RiskHigh   => DangerDark,
+        DashboardExecutiveKpiAccent.Primary => Blue,
+        DashboardExecutiveKpiAccent.Blue => BlueDark,
+        DashboardExecutiveKpiAccent.Orange => Amber,
+        DashboardExecutiveKpiAccent.RiskHigh => DangerDark,
         DashboardExecutiveKpiAccent.RiskMedium => AmberRisk,
-        DashboardExecutiveKpiAccent.RiskLow    => Green,
-        _                                      => Blue
+        DashboardExecutiveKpiAccent.RiskLow => Green,
+        _ => Blue
     };
 
     public static Brush ForAccentSoft(DashboardExecutiveKpiAccent accent) => accent switch
     {
-        DashboardExecutiveKpiAccent.Primary    => BlueSoft,
-        DashboardExecutiveKpiAccent.Blue       => BlueSoft,
-        DashboardExecutiveKpiAccent.Orange     => AmberSoft,
-        DashboardExecutiveKpiAccent.RiskHigh   => RedSoft,
-        DashboardExecutiveKpiAccent.RiskMedium => AmberSoft,
-        DashboardExecutiveKpiAccent.RiskLow    => GreenSoft,
-        _                                      => BlueSoft
+        DashboardExecutiveKpiAccent.RiskHigh => RedSoft,
+        DashboardExecutiveKpiAccent.RiskMedium or DashboardExecutiveKpiAccent.Orange => AmberSoft,
+        DashboardExecutiveKpiAccent.RiskLow => GreenSoft,
+        _ => BlueSoft
     };
 
     private static Brush ThemeOrFallback(string resourceKey, string fallbackHex)
     {
         if (Application.Current?.TryFindResource(resourceKey) is Brush themeBrush)
             return themeBrush;
-
         var brush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(fallbackHex));
         brush.Freeze();
         return brush;
@@ -191,6 +174,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
     private readonly RelayCommand primaryCtaCommand;
     private readonly RelayCommand goToProjectCommand;
     private readonly RelayCommand goToReviewCommand;
+    private readonly RelayCommand goToOfferDocumentsCommand;
     private readonly RelayCommand goToItemizadoCommand;
     private readonly RelayCommand toggleDetailCommand;
     private double gastosGeneralesSimulatedPct;
@@ -229,5 +213,50 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
     private double versionDirectCostDeltaPercent;
     private bool hasVersionComparison;
     private double offerReadinessRingPercent;
+    private string materialImpact10PctLabel = "+10% → —";
+    private double paretoAxisMaxPct = 10;
     private readonly RelayCommand goToVersionsCommand;
+
+    private string closingPolicyLabel = "Costo + Markup";
+    public string ClosingPolicyLabel { get => closingPolicyLabel; private set => SetProperty(ref closingPolicyLabel, value); }
+    private string projectClient = "";
+    public string ProjectClient { get => projectClient; private set => SetProperty(ref projectClient, value); }
+    private string projectTitle = "";
+    public string ProjectTitle { get => projectTitle; private set => SetProperty(ref projectTitle, value); }
+    private string costGo = "—";
+    public string CostGo { get => costGo; private set => SetProperty(ref costGo, value); }
+    private string costMargin = "—";
+    public string CostMargin { get => costMargin; private set => SetProperty(ref costMargin, value); }
+    private string margenRealPctLabel = "—";
+    public string MargenRealPctLabel { get => margenRealPctLabel; private set => SetProperty(ref margenRealPctLabel, value); }
+    private GridLength goShareWidth = new(0);
+    public GridLength GoShareWidth { get => goShareWidth; private set => SetProperty(ref goShareWidth, value); }
+    private GridLength marginShareWidth = new(0);
+    public GridLength MarginShareWidth { get => marginShareWidth; private set => SetProperty(ref marginShareWidth, value); }
+    private DashboardParetoSummary paretoSummary = DashboardParetoSummary.Empty;
+    public DashboardParetoSummary ParetoSummary { get => paretoSummary; private set => SetProperty(ref paretoSummary, value); }
+
+    private string? selectedParetoFilter;
+    public string? SelectedParetoFilter
+    {
+        get => selectedParetoFilter;
+        set
+        {
+            if (SetProperty(ref selectedParetoFilter, value))
+            {
+                OnPropertyChanged(nameof(FilteredTopPartidas));
+                OnPropertyChanged(nameof(IsParetoFilterAll));
+                OnPropertyChanged(nameof(IsParetoFilterA));
+                OnPropertyChanged(nameof(IsParetoFilterB));
+                OnPropertyChanged(nameof(IsParetoFilterC));
+            }
+        }
+    }
+    public bool IsParetoFilterAll => string.IsNullOrEmpty(selectedParetoFilter);
+    public bool IsParetoFilterA => selectedParetoFilter == "A";
+    public bool IsParetoFilterB => selectedParetoFilter == "B";
+    public bool IsParetoFilterC => selectedParetoFilter == "C";
+    public ICommand GoToPartidaCommand { get; }
+    public ICommand GoToApuPartidaCommand { get; }
+    public ICommand SetParetoFilterCommand { get; }
 }

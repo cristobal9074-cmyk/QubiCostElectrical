@@ -40,50 +40,62 @@ public partial class App : Application
 
         SplashWindow splash = null!;
         var host = Infrastructure.WpfAppHost.Initialize();
+        GlobalErrorHandler.Initialize(host);
         WpfAppHost.Logger?.Info("Inicio", $"Servicios inicializados en {startupStopwatch.ElapsedMilliseconds} ms.");
         QubiCostElectrical.Wpf.DesignSystem.ThemeManager.Initialize();
         splash = new SplashWindow(() =>
         {
             splash.Dispatcher.Invoke(() =>
             {
-                splash.Close();
-                ShowAuthFlow(host);
+                ShowAuthFlow(host, splash);
             });
         });
         splash.Show();
+        splash.Start();
 
         base.OnStartup(e);
     }
 
     // async void es el patrón estándar para un handler de nivel superior que no tiene un
     // caller que espere su finalización (se invoca desde el callback de cierre de SplashWindow).
-    private async void ShowAuthFlow(WpfAppHost host)
+    private async void ShowAuthFlow(WpfAppHost host, SplashWindow splash)
     {
-        GlobalErrorHandler.Initialize(host);
-        _authService = host.Auth;
-
-        // Antes bloqueaba el hilo de UI con GetAwaiter().GetResult() durante el I/O de
-        // sesión/credenciales al arrancar — la app parecía congelada un instante antes de
-        // mostrar login o el shell.
-        var session = await _authService.TryRestoreSessionAsync();
-        WpfAppHost.Logger?.Info("Inicio", $"Sesión restaurada en {startupStopwatch.ElapsedMilliseconds} ms.");
-
-        if (session != null)
+        try
         {
-            SessionManager.SetSession(session);
-            ShowShellWindow(host);
-            return;
+            _authService = host.Auth;
+
+            // Antes bloqueaba el hilo de UI con GetAwaiter().GetResult() durante el I/O de
+            // sesión/credenciales al arrancar — la app parecía congelada un instante antes de
+            // mostrar login o el shell.
+            var session = await _authService.TryRestoreSessionAsync();
+            WpfAppHost.Logger?.Info("Inicio", $"Sesión restaurada en {startupStopwatch.ElapsedMilliseconds} ms.");
+
+            if (session != null)
+            {
+                SessionManager.SetSession(session);
+                ShowShellWindow(host);
+                splash.Close();
+                return;
+            }
+
+            splash.Close();
+
+            var login = new LoginWindow(_authService);
+            login.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+
+            if (login.ShowDialog() == true)
+            {
+                ShowShellWindow(host);
+            }
+            else
+            {
+                Shutdown();
+            }
         }
-
-        var login = new LoginWindow(_authService);
-        login.WindowStartupLocation = WindowStartupLocation.CenterScreen;
-
-        if (login.ShowDialog() == true)
+        catch (Exception ex)
         {
-            ShowShellWindow(host);
-        }
-        else
-        {
+            WpfAppHost.Logger?.Critical("Inicio", "Fallo fatal en ShowAuthFlow.", ex);
+            splash?.Close();
             Shutdown();
         }
     }

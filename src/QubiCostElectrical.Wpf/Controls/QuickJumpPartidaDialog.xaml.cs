@@ -79,7 +79,7 @@ public partial class QuickJumpPartidaDialog : Window, INotifyPropertyChanged
                 FilteredItems.Add(item);
         }
 
-        CountLabel.Text = $"{FilteredItems.Count(x => !x.EsTitulo)} partidas";
+        CountLabel.Text = $"{FilteredItems.Count(x => x.IsSelectable)} elemento(s)";
 
         if (SelectedItem == null || !FilteredItems.Contains(SelectedItem))
         {
@@ -89,7 +89,7 @@ public partial class QuickJumpPartidaDialog : Window, INotifyPropertyChanged
 
     private void SelectFirstValidItem()
     {
-        SelectedItem = FilteredItems.FirstOrDefault(x => !x.EsTitulo);
+        SelectedItem = FilteredItems.FirstOrDefault(x => x.IsSelectable);
         if (SelectedItem != null)
             ResultsList.ScrollIntoView(SelectedItem);
     }
@@ -114,12 +114,14 @@ public partial class QuickJumpPartidaDialog : Window, INotifyPropertyChanged
         string normCode = Normalize(item.Codigo);
         string normDesc = Normalize(item.Descripcion);
         string normCap = Normalize(item.Capitulo ?? "");
+        string normKind = Normalize(item.CategoryBadgeText);
 
         foreach (var token in tokens)
         {
             bool match = normCode.Contains(token, StringComparison.OrdinalIgnoreCase)
                          || normDesc.Contains(token, StringComparison.OrdinalIgnoreCase)
-                         || normCap.Contains(token, StringComparison.OrdinalIgnoreCase);
+                         || normCap.Contains(token, StringComparison.OrdinalIgnoreCase)
+                         || normKind.Contains(token, StringComparison.OrdinalIgnoreCase);
 
             if (!match)
                 return false;
@@ -189,7 +191,7 @@ public partial class QuickJumpPartidaDialog : Window, INotifyPropertyChanged
     {
         if (FilteredItems.Count == 0) return;
 
-        var validItems = FilteredItems.Where(x => !x.EsTitulo).ToList();
+        var validItems = FilteredItems.Where(x => x.IsSelectable).ToList();
         if (validItems.Count == 0) return;
 
         int currentIndex = selectedItem != null ? validItems.IndexOf(selectedItem) : -1;
@@ -204,14 +206,14 @@ public partial class QuickJumpPartidaDialog : Window, INotifyPropertyChanged
 
     private void ConfirmSelection()
     {
-        if (SelectedItem == null || SelectedItem.EsTitulo) return;
+        if (SelectedItem == null || !SelectedItem.IsSelectable) return;
         DialogResult = true;
         Close();
     }
 
     private void OnResultsListMouseDoubleClick(object sender, MouseButtonEventArgs e)
     {
-        if (SelectedItem != null && !SelectedItem.EsTitulo)
+        if (SelectedItem != null && SelectedItem.IsSelectable)
         {
             DialogResult = true;
             Close();
@@ -220,9 +222,8 @@ public partial class QuickJumpPartidaDialog : Window, INotifyPropertyChanged
 
     private void OnResultsListSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (SelectedItem != null && SelectedItem.EsTitulo)
+        if (SelectedItem != null && !SelectedItem.IsSelectable)
         {
-            // Títulos no son seleccionables
             SelectFirstValidItem();
         }
     }

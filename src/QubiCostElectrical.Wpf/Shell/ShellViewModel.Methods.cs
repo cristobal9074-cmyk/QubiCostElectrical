@@ -11,7 +11,9 @@ using QubiCostElectrical;
 using QubiCostElectrical.Wpf.Auth;
 using QubiCostElectrical.Wpf.Infrastructure;
 using QubiCostElectrical.Wpf.Navigation;
+using QubiCostElectrical.Wpf.Controls;
 using QubiCostElectrical.Wpf.Features.Apu;
+using QubiCostElectrical.Wpf.Features.CommandPalette;
 using QubiCostElectrical.Wpf.Features.Dashboard;
 using QubiCostElectrical.Wpf.Features.Itemizado;
 
@@ -50,6 +52,10 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
     private string statusChip = "—";
     private string versionChip = "—";
     private string currencyChip = "—";
+    private string tickerCostoDirecto = "—";
+    private string tickerMargen = "—";
+    private string tickerTotalOfertaUf = "—";
+    private string tickerTotalOfertaClp = "";
     private string searchText = "";
     private bool isSearchPaletteOpen;
     private bool isProjectPickerOpen;
@@ -231,7 +237,14 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
             OnPropertyChanged(nameof(CanRedo));
             OnPropertyChanged(nameof(CanSaveProject));
             OnPropertyChanged(nameof(CanSaveProjectAs));
-            CommandManager.InvalidateRequerySuggested();
+            try
+            {
+                CommandManager.InvalidateRequerySuggested();
+            }
+            catch
+            {
+                // Entornos de prueba / headless sin message pump
+            }
         }
     }
 
@@ -270,8 +283,18 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
             // termina de abrirse un proyecto (IsBusy true→false): quedaba gris para siempre.
             OnPropertyChanged(nameof(CanSaveProject));
             OnPropertyChanged(nameof(CanSaveProjectAs));
+            if (!value) BusyMessage = string.Empty;
         }
     }
+
+    private string busyMessage = string.Empty;
+    public string BusyMessage
+    {
+        get => busyMessage;
+        internal set => SetProperty(ref busyMessage, value);
+    }
+
+
 
     public bool CanExecuteActions => !isBusy;
     public bool CanSaveProject => !isBusy && HasOpenProject && !IsReadOnly;
@@ -293,6 +316,20 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
                 return "Sin proyecto abierto";
             var name = session.ProjectInfo.Nombre;
             return string.IsNullOrWhiteSpace(name) ? "Proyecto sin nombre" : name;
+        }
+    }
+
+    public bool HasUnsavedChanges => projectWorkspace.HasOpenProject && session.IsDirty;
+
+    public string WindowTitleText
+    {
+        get
+        {
+            if (!projectWorkspace.HasOpenProject)
+                return "QUBI COST Electrical";
+            return HasUnsavedChanges
+                ? $"● {ActiveProjectLabel} — QUBI COST Electrical"
+                : $"{ActiveProjectLabel} — QUBI COST Electrical";
         }
     }
 
@@ -414,9 +451,20 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
         {
             if (!SetProperty(ref searchText, value))
                 return;
+            OnPropertyChanged(nameof(HasSearchText));
             RefreshQuickSearchResults();
             IsSearchPaletteOpen = true;
         }
+    }
+
+    public bool HasSearchText => !string.IsNullOrWhiteSpace(searchText);
+    public bool HasQuickSearchResults => quickSearchResults.Count > 0;
+    public string ResultCountLabel => quickSearchResults.Count == 1 ? "1 coincidencia" : $"{quickSearchResults.Count} coincidencias";
+
+    [RelayCommand]
+    private void ClearSearch()
+    {
+        SearchText = string.Empty;
     }
 
     public bool IsSearchPaletteOpen
@@ -450,20 +498,28 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
         ShellRoute.Takeoff => "Alt+↑↓ mover filas · Ctrl+V pegar · Tab/Enter navegar celdas · Ctrl+Izq/Der sectores",
         ShellRoute.Apu => "Enter editar · Supr quitar recurso · Generar APU desde cubicación",
         ShellRoute.Review => "Clic en alerta para ir al módulo · Actualizar recalcula revisión",
-        ShellRoute.OfferDocuments => "Paso a paso: validar → configurar → vista previa → exportar",
-        _ => "Ctrl+K búsqueda · Ctrl+S guardar · F1 atajos"
+        ShellRoute.OfferDocuments => "Paso a paso: configurar → vista previa → exportar",
+        _ => "Ctrl+P / Ctrl+K búsqueda · Ctrl+S guardar · F1 atajos"
     };
 
     public void Undo()
     {
-        if (undo.Undo(session))
+        if (undo.Undo(session, out var desc))
+        {
             RefreshCurrentPage();
+            string label = string.IsNullOrWhiteSpace(desc) ? "Edición" : desc;
+            UndoRedoHudCoordinator.Instance.NotifyUndo(label, () => Redo());
+        }
     }
 
     public void Redo()
     {
-        if (undo.Redo(session))
+        if (undo.Redo(session, out var desc))
+        {
             RefreshCurrentPage();
+            string label = string.IsNullOrWhiteSpace(desc) ? "Edición" : desc;
+            UndoRedoHudCoordinator.Instance.NotifyRedo(label, () => Undo());
+        }
     }
 
     private void RefreshUndoRedo()
@@ -472,6 +528,7 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
         OnPropertyChanged(nameof(CanRedo));
         OnPropertyChanged(nameof(UndoToolTip));
         OnPropertyChanged(nameof(RedoToolTip));
+        System.Windows.Input.CommandManager.InvalidateRequerySuggested();
     }
 
     public ObservableCollection<QuickSearchItemVm> QuickSearchResults => quickSearchResults;
@@ -534,6 +591,11 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
         private set => SetProperty(ref pageTitle, value);
     }
 
+    public string TickerCostoDirecto { get => tickerCostoDirecto; private set => SetProperty(ref tickerCostoDirecto, value); }
+    public string TickerMargen { get => tickerMargen; private set => SetProperty(ref tickerMargen, value); }
+    public string TickerTotalOfertaUf { get => tickerTotalOfertaUf; private set => SetProperty(ref tickerTotalOfertaUf, value); }
+    public string TickerTotalOfertaClp { get => tickerTotalOfertaClp; private set => SetProperty(ref tickerTotalOfertaClp, value); }
+
     public bool IsDashboardActive => CurrentRoute == ShellRoute.Dashboard;
     public bool IsOfferDocumentsActive => CurrentRoute == ShellRoute.OfferDocuments;
     public bool IsLandingScreen => CurrentRoute == ShellRoute.Dashboard && !HasOpenProject;
@@ -593,6 +655,8 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
         OnPropertyChanged(nameof(IsWorkstationMode));
         OnPropertyChanged(nameof(ShowContextBar));
         OnPropertyChanged(nameof(ShowWorkflowStepper));
+        OnPropertyChanged(nameof(HasUnsavedChanges));
+        OnPropertyChanged(nameof(WindowTitleText));
         RefreshUserContext();
         RefreshQuickSearchResults();
 
@@ -604,14 +668,18 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
             StatusChip = "—";
             VersionChip = "—";
             CurrencyChip = "—";
+            TickerCostoDirecto = "—";
+            TickerMargen = "—";
+            TickerTotalOfertaUf = "—";
+            TickerTotalOfertaClp = "";
             RefreshWorkflowSteps();
             return;
         }
 
         string autoState = autoSave.StatusText;
-        SaveStateText = string.IsNullOrWhiteSpace(autoState)
-            ? (session.IsDirty ? "Sin guardar" : "Guardado")
-            : autoState;
+        SaveStateText = session.IsDirty
+            ? "Sin guardar"
+            : (string.IsNullOrWhiteSpace(autoState) ? "Guardado" : autoState);
         // No CreateSnapshot/BuildAlerts aquí: Session.Changed dispara RefreshChrome con alta frecuencia.
         // Usar el último total cacheado por Dashboard/Revisión; si aún no hay cache, "—".
         AlertCount = dashboard.LastAlertTotalIssues?.ToString() ?? "—";
@@ -627,6 +695,33 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
             ? $"{moneda} (UF={session.ProjectInfo.ValorUfClp:N0})"
             : moneda;
         RefreshContext();
+        UpdateFinancialTicker();
+    }
+
+    private void UpdateFinancialTicker()
+    {
+        if (!projectWorkspace.HasOpenProject)
+        {
+            TickerCostoDirecto = "—"; TickerMargen = "—"; TickerTotalOfertaUf = "—"; TickerTotalOfertaClp = "";
+            return;
+        }
+        try
+        {
+            var cost = dashboard.BuildCost(session.Data);
+            var project = session.ProjectInfo;
+            decimal valorUf = project.ValorUfClp > 0 ? project.ValorUfClp : session.ValorUfClp;
+            if (valorUf <= 0) valorUf = PriceConversion.DefaultValorUfClp;
+            decimal cdUf = PriceConversion.ClpToUf(cost.CostoDirectoClp, valorUf);
+            decimal ventaUf = PriceConversion.ClpToUf(cost.TotalVentaClp, valorUf);
+            TickerCostoDirecto = $"{cdUf:N0} UF";
+            TickerMargen = $"{project.UtilidadPct:N1}%";
+            TickerTotalOfertaUf = $"{ventaUf:N0} UF";
+            TickerTotalOfertaClp = $"(${cost.TotalVentaClp:N0})";
+        }
+        catch
+        {
+            TickerCostoDirecto = "—"; TickerMargen = $"{session.ProjectInfo.UtilidadPct:N1}%"; TickerTotalOfertaUf = "—"; TickerTotalOfertaClp = "";
+        }
     }
 
     private void RefreshContext()
@@ -656,7 +751,7 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
         OnPropertyChanged(nameof(PriceBankSyncLabel));
     }
 
-    private void RefreshCurrentPage()
+    public void RefreshCurrentPage()
     {
         if (currentPageVm is IRefreshablePage refreshable)
             refreshable.Refresh();
@@ -672,25 +767,48 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
         return true;
     }
 
+    private CommandPaletteCategory selectedPaletteCategory = CommandPaletteCategory.All;
+    public CommandPaletteCategory SelectedPaletteCategory
+    {
+        get => selectedPaletteCategory;
+        set
+        {
+            if (SetProperty(ref selectedPaletteCategory, value))
+                RefreshQuickSearchResults();
+        }
+    }
+
+    [RelayCommand]
+    public void SetPaletteCategory(object? param)
+    {
+        if (param is CommandPaletteCategory cat)
+            SelectedPaletteCategory = cat;
+        else if (param is string str && Enum.TryParse<CommandPaletteCategory>(str, true, out var parsed))
+            SelectedPaletteCategory = parsed;
+    }
+
+    private CommandPaletteEngine? commandPaletteEngine;
+    private CommandPaletteEngine PaletteEngine => commandPaletteEngine ??= new CommandPaletteEngine(
+        session,
+        this,
+        priceBankStore,
+        projectWorkspace,
+        undo);
+
     private void RefreshQuickSearchResults()
     {
-        var query = Normalize(SearchText);
+        var query = SearchText ?? string.Empty;
         var previousSelection = SelectedQuickSearchItem;
 
         quickSearchResults.Clear();
-        foreach (var item in BuildQuickSearchResults())
+        var results = PaletteEngine.Search(query, SelectedPaletteCategory, msg => ShellNotificationService.Instance.ShowSuccess("Comando ejecutado", msg));
+        foreach (var item in results)
         {
-            if (!MatchesQuery(item, query))
-                continue;
-
-            quickSearchResults.Add(item);
+            quickSearchResults.Add(new QuickSearchItemVm(item));
         }
 
-        if (!string.IsNullOrWhiteSpace(query))
-        {
-            foreach (var item in BuildBusinessSearchResults(query))
-                quickSearchResults.Add(item);
-        }
+        OnPropertyChanged(nameof(HasQuickSearchResults));
+        OnPropertyChanged(nameof(ResultCountLabel));
 
         if (quickSearchResults.Count == 0)
         {
@@ -700,7 +818,7 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
 
         if (previousSelection != null)
         {
-            var match = quickSearchResults.FirstOrDefault(item => ReferenceEquals(item, previousSelection));
+            var match = quickSearchResults.FirstOrDefault(item => item.Title == previousSelection.Title);
             if (match != null)
             {
                 SelectedQuickSearchItem = match;
@@ -710,194 +828,6 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
 
         SelectedQuickSearchItem = quickSearchResults[0];
     }
-
-    private IReadOnlyList<QuickSearchItemVm> BuildQuickSearchResults()
-    {
-        var items = new List<QuickSearchItemVm>
-        {
-            new QuickSearchItemVm("Resumen", "Ir al panel principal del proyecto", "Alt+1", () => NavigateAsync(ShellRoute.Dashboard)),
-            new QuickSearchItemVm("Proyecto", "Datos generales y documentos", "Alt+P", () => NavigateAsync(ShellRoute.Project)),
-            new QuickSearchItemVm("Itemizado", "Importar y editar partidas", "Alt+2", () => NavigateAsync(ShellRoute.Itemized)),
-            new QuickSearchItemVm("Cubicación", "Desarrollar materiales y cantidades", "Alt+3", () => NavigateAsync(ShellRoute.Takeoff)),
-            new QuickSearchItemVm("Cubicación SC", "Tableros y circuitos de servicios comunes", "Alt+Shift+3", () => NavigateAsync(ShellRoute.CubicacionSc)),
-            new QuickSearchItemVm("APU", "Analizar precios unitarios", "Alt+4", () => NavigateAsync(ShellRoute.Apu)),
-            new QuickSearchItemVm("Plantillas", "Aplicar plantillas de cubicación", "Alt+5", () => NavigateAsync(ShellRoute.Templates)),
-            new QuickSearchItemVm("Banco de precios", "Buscar y mantener precios", "Alt+6", () => NavigateAsync(ShellRoute.Prices)),
-            new QuickSearchItemVm("Cotizaciones", "Comparar proveedores y ofertas", "Alt+7", () => NavigateAsync(ShellRoute.Quotes)),
-            new QuickSearchItemVm("Lista de compra", "Consolidar materiales por comprar", "Alt+8", () => NavigateAsync(ShellRoute.Purchases)),
-            new QuickSearchItemVm("Revisión", "Validar pendientes y alertas", "Alt+9", () => NavigateAsync(ShellRoute.Review)),
-            new QuickSearchItemVm("Versiones", "Administrar versiones del presupuesto", "Alt+0", () => NavigateAsync(ShellRoute.Versions)),
-            new QuickSearchItemVm("Oferta y exportación", "Validar, configurar, previsualizar y exportar", "Alt+O", () => NavigateAsync(ShellRoute.OfferDocuments)),
-            new QuickSearchItemVm("Abrir proyecto", "Abrir un presupuesto existente", "Ctrl+O", OpenProjectAsync),
-            new QuickSearchItemVm("Cerrar proyecto", "Cerrar el proyecto activo", "Ctrl+W", () => CloseProjectAsync()),
-            new QuickSearchItemVm("Ir a revisión", "Abrir la vista de revisión", "F8", () => NavigateAsync(ShellRoute.Review)),
-            new QuickSearchItemVm("Monedas", "Ver y editar tasas UF y dólar", "Alt+M", () => NavigateAsync(ShellRoute.Currency)),
-            new QuickSearchItemVm("Preferencias", "Configuración global de la aplicación", "Alt+,", () => NavigateAsync(ShellRoute.Preferences)),
-            new QuickSearchItemVm("Órdenes de cambio", "Administrar órdenes de cambio del proyecto", "Alt+C", () => NavigateAsync(ShellRoute.ChangeOrders)),
-        };
-
-        // Visor / bloqueo: omitir mutaciones (nuevo, guardar, undo/redo). Navegación y Preferencias se mantienen.
-        if (!session.IsReadOnly)
-        {
-            items.Add(new QuickSearchItemVm("Nuevo proyecto", "Crear un nuevo presupuesto", "Ctrl+N", NewProjectAsync));
-            items.Add(new QuickSearchItemVm("Guardar proyecto", "Guardar los cambios actuales", "Ctrl+S", SaveProjectAsync));
-            items.Add(new QuickSearchItemVm("Guardar como", "Crear una copia con nuevo nombre", "Ctrl+Shift+S", SaveProjectAsAsync));
-            items.Add(new QuickSearchItemVm("Deshacer", "Deshacer la última acción", "Ctrl+Z", () => { Undo(); return Task.CompletedTask; }));
-            items.Add(new QuickSearchItemVm("Rehacer", "Rehacer la última acción deshecha", "Ctrl+Y", () => { Redo(); return Task.CompletedTask; }));
-        }
-
-        return items;
-    }
-
-    private IReadOnlyList<QuickSearchItemVm> BuildBusinessSearchResults(string query)
-    {
-        var results = new List<QuickSearchItemVm>();
-
-        if (!projectWorkspace.HasOpenProject)
-            return results;
-
-        const int maxPerCategory = 5;
-
-        AddActionSuggestions(query, results);
-
-        var partidaHits = 0;
-        foreach (var row in session.Itemizado)
-        {
-            if (partidaHits >= maxPerCategory) break;
-            if (row.EsTitulo) continue;
-
-            var code = Normalize(row.Item);
-            var desc = Normalize(row.Descripcion);
-            if (!code.Contains(query) && !desc.Contains(query))
-                continue;
-
-            partidaHits++;
-            var label = !string.IsNullOrWhiteSpace(row.Item)
-                ? $"{row.Item} — {row.Descripcion}"
-                : row.Descripcion;
-            var itemId = row.Id;
-            var itemCode = row.Item;
-            var itemDesc = row.Descripcion;
-            results.Add(new QuickSearchItemVm(
-                label, "Ir a cubicación", "",
-                () => { session.PendingTakeoffNavigation = new TakeoffNavigationContext(itemId, itemCode, itemDesc); RequestNavigate(ShellRoute.Takeoff); return Task.CompletedTask; }));
-        }
-
-        var apuHits = 0;
-        foreach (var apu in session.Apus)
-        {
-            if (apuHits >= maxPerCategory) break;
-            if (apu.Recursos == null) continue;
-
-            foreach (var recurso in apu.Recursos)
-            {
-                if (apuHits >= maxPerCategory) break;
-
-                var codigo = Normalize(recurso.CodigoMaterial);
-                var descN = Normalize(recurso.Descripcion);
-                if (!codigo.Contains(query) && !descN.Contains(query))
-                    continue;
-
-                apuHits++;
-                var label = !string.IsNullOrWhiteSpace(recurso.CodigoMaterial)
-                    ? $"{recurso.CodigoMaterial} — {recurso.Descripcion}"
-                    : recurso.Descripcion;
-                var aItemId = apu.ItemId;
-                var aCodigo = recurso.CodigoMaterial;
-                var aDesc = recurso.Descripcion;
-                results.Add(new QuickSearchItemVm(
-                    label, "APU", "",
-                    () => { RequestNavigate(ShellRoute.Apu, new ApuNavContext(aItemId, aCodigo ?? "", aDesc ?? "")); return Task.CompletedTask; }));
-            }
-        }
-
-        var bankHits = 0;
-        foreach (var entry in priceBankStore.GetAll())
-        {
-            if (bankHits >= maxPerCategory) break;
-
-            var codigo = Normalize(entry.Codigo);
-            var desc = Normalize(entry.Descripcion);
-            if (!codigo.Contains(query) && !desc.Contains(query))
-                continue;
-
-            bankHits++;
-            var label = !string.IsNullOrWhiteSpace(entry.Codigo)
-                ? $"{entry.Codigo} — {entry.Descripcion}"
-                : entry.Descripcion;
-            var bankCode = entry.Codigo ?? "";
-            results.Add(new QuickSearchItemVm(
-                label, "Banco de precios", "",
-                () => { RequestNavigate(ShellRoute.Prices, new PriceBankNavigationContext(bankCode)); return Task.CompletedTask; }));
-        }
-
-        return results;
-    }
-
-    private void AddActionSuggestions(string query, List<QuickSearchItemVm> results)
-    {
-        var q = Normalize(query);
-        var canMutate = !session.IsReadOnly;
-
-        if (canMutate && ContainsAny(q, ["NUEV", "CRE", "AGREG"]))
-        {
-            results.Add(new QuickSearchItemVm("Crear nueva partida", "Itemizado → agregar partida", "",
-                () =>
-                {
-                    session.PendingItemizadoAction = ItemizadoPendingAction.AddPartida;
-                    if (currentRoute == ShellRoute.Itemized && currentPageVm is ItemizadoViewModel itemizadoVm)
-                    {
-                        itemizadoVm.ProcessPendingShellAction();
-                        return Task.CompletedTask;
-                    }
-
-                    RequestNavigate(ShellRoute.Itemized);
-                    return Task.CompletedTask;
-                }));
-        }
-
-        if (ContainsAny(q, ["REVIS", "ALERT", "ERROR", "PENDIENT"]))
-        {
-            results.Add(new QuickSearchItemVm("Ir a revisión de alertas", "Validar pendientes y problemas", "",
-                () => { RequestNavigate(ShellRoute.Review); return Task.CompletedTask; }));
-        }
-
-        if (canMutate && ContainsAny(q, ["VERS", "VERSION"]))
-        {
-            results.Add(new QuickSearchItemVm("Nueva versión del presupuesto", "Crear versionado del proyecto", "",
-                () => { RequestNavigate(ShellRoute.Versions); return Task.CompletedTask; }));
-        }
-
-        if (ContainsAny(q, ["EXCEL", "EXPORT", "PDF", "DOCX", "XLSX"]))
-        {
-            results.Add(new QuickSearchItemVm("Oferta y exportación", "Validar, configurar y exportar documentos de oferta", "",
-                () => { RequestNavigate(ShellRoute.OfferDocuments); return Task.CompletedTask; }));
-        }
-
-        if (ContainsAny(q, ["COMPR", "PURCH", "MATERIAL"]))
-        {
-            results.Add(new QuickSearchItemVm("Ir a lista de compra", "Materiales por adquirir del proyecto", "",
-                () => { RequestNavigate(ShellRoute.Purchases); return Task.CompletedTask; }));
-        }
-    }
-
-    private static bool ContainsAny(string text, string[] candidates)
-        => candidates.Any(c => text.Contains(c));
-
-    private static bool MatchesQuery(QuickSearchItemVm item, string query)
-    {
-        if (string.IsNullOrWhiteSpace(query))
-            return true;
-
-        return Normalize(item.Title).Contains(query)
-            || Normalize(item.Subtitle).Contains(query)
-            || Normalize(item.Shortcut).Contains(query);
-    }
-
-    private static string Normalize(string? value)
-        => string.IsNullOrWhiteSpace(value)
-            ? string.Empty
-            : value.Trim().ToUpperInvariant();
 
     [RelayCommand(CanExecute = nameof(CanExecuteQuickSearchItem))]
     private Task ExecuteQuickSearchItemAsync(QuickSearchItemVm? item)
@@ -919,5 +849,132 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
         if (parts.Length == 1)
             return parts[0].Length >= 2 ? parts[0][..2].ToUpperInvariant() : parts[0].ToUpperInvariant();
         return $"{char.ToUpperInvariant(parts[0][0])}{char.ToUpperInvariant(parts[^1][0])}";
+    }
+
+    [RelayCommand]
+    public void OpenGlobalQuickJump()
+    {
+        var hasPartidas = session.Itemizado.Count > 0;
+        var hasSc = session.CubicacionSC.Count > 0;
+
+        if (!hasPartidas && !hasSc)
+        {
+            ShellNotificationService.Instance.ShowInfo("Quick Jump", "No hay partidas ni tableros en el proyecto activo.");
+            return;
+        }
+
+        var items = new List<QuickJumpPartidaItem>();
+
+        // 1. Partidas y Capítulos del Itemizado
+        string currentCapitulo = "";
+        foreach (var p in session.Itemizado)
+        {
+            if (p.EsTitulo)
+            {
+                currentCapitulo = p.Descripcion;
+                items.Add(new QuickJumpPartidaItem
+                {
+                    Id = p.Id ?? "",
+                    Codigo = p.Item ?? "",
+                    Descripcion = p.Descripcion,
+                    EsTitulo = true,
+                    IsSelectable = true,
+                    Kind = QuickJumpItemKind.Capitulo,
+                    Capitulo = "Capítulo / Título WBS"
+                });
+            }
+            else
+            {
+                items.Add(new QuickJumpPartidaItem
+                {
+                    Id = p.Id ?? "",
+                    Codigo = p.Item ?? "",
+                    Descripcion = p.Descripcion,
+                    Unidad = p.Unidad ?? "",
+                    Cantidad = p.Cantidad,
+                    EsTitulo = false,
+                    IsSelectable = true,
+                    Kind = QuickJumpItemKind.Partida,
+                    Capitulo = currentCapitulo,
+                    BadgeText = p.ExcluidoCubicacion ? "Excluida" : null
+                });
+            }
+        }
+
+        // 2. Tableros y Circuitos de Servicios Comunes (SC)
+        foreach (var cuadro in session.CubicacionSC)
+        {
+            items.Add(new QuickJumpPartidaItem
+            {
+                Id = cuadro.Id,
+                Codigo = cuadro.Nombre,
+                Descripcion = string.IsNullOrWhiteSpace(cuadro.Descripcion)
+                    ? $"Tablero SC · {cuadro.Circuitos.Count} circuito(s)"
+                    : cuadro.Descripcion,
+                EsTitulo = false,
+                IsSelectable = true,
+                Kind = QuickJumpItemKind.TableroSc,
+                BadgeText = $"{cuadro.Circuitos.Count} ctos",
+                Capitulo = "Servicios Comunes"
+            });
+
+            foreach (var cto in cuadro.Circuitos)
+            {
+                items.Add(new QuickJumpPartidaItem
+                {
+                    Id = cuadro.Id,
+                    SecondaryId = cto.Id,
+                    Codigo = $"C{cto.Numero}",
+                    Descripcion = string.IsNullOrWhiteSpace(cto.Ubicacion)
+                        ? cto.Descripcion
+                        : $"{cto.Descripcion} · {cto.Ubicacion}",
+                    EsTitulo = false,
+                    IsSelectable = true,
+                    Kind = QuickJumpItemKind.CircuitoSc,
+                    Capitulo = $"Tablero {cuadro.Nombre}"
+                });
+            }
+        }
+
+        var owner = Application.Current?.MainWindow;
+        var dialog = new QuickJumpPartidaDialog(items) { Owner = owner };
+
+        if (dialog.ShowDialog() == true && dialog.SelectedItem != null)
+        {
+            var selected = dialog.SelectedItem;
+            switch (selected.Kind)
+            {
+                case QuickJumpItemKind.Capitulo:
+                    RequestNavigate(ShellRoute.Itemized, new ItemizadoNavigationContext(TargetRowId: selected.Id, TargetCode: selected.Codigo));
+                    break;
+
+                case QuickJumpItemKind.Partida:
+                    if (CurrentRoute == ShellRoute.Takeoff)
+                    {
+                        RequestNavigate(ShellRoute.Takeoff, new TakeoffNavigationContext(selected.Id, selected.Codigo, selected.Descripcion));
+                    }
+                    else if (CurrentRoute == ShellRoute.Apu)
+                    {
+                        RequestNavigate(ShellRoute.Apu, new ApuNavContext(selected.Id, selected.Codigo, selected.Descripcion));
+                    }
+                    else if (CurrentRoute == ShellRoute.Itemized)
+                    {
+                        RequestNavigate(ShellRoute.Itemized, new ItemizadoNavigationContext(TargetRowId: selected.Id, TargetCode: selected.Codigo));
+                    }
+                    else
+                    {
+                        RequestNavigate(ShellRoute.Takeoff, new TakeoffNavigationContext(selected.Id, selected.Codigo, selected.Descripcion));
+                    }
+                    break;
+
+                case QuickJumpItemKind.TableroSc:
+                    RequestNavigate(ShellRoute.CubicacionSc, new CubicacionScNavigationContext(CuadroId: selected.Id, CuadroNombre: selected.Codigo));
+                    break;
+
+                case QuickJumpItemKind.CircuitoSc:
+                    RequestNavigate(ShellRoute.CubicacionSc, new CubicacionScNavigationContext(CuadroId: selected.Id, CircuitoId: selected.SecondaryId));
+                    break;
+            }
+        }
     }
 }

@@ -18,4 +18,10 @@ public partial class CurrencyView : UserControl
         if (DataContext is CurrencyViewModel vm)
             vm.TryDiscardChanges();
     }
+
+    private void OnApplyCacheClick(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is CurrencyViewModel vm)
+            vm.ApplyCachedRates();
+    }
 }

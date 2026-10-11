@@ -28,13 +28,13 @@ public sealed class ItemizadoImportCoordinator
     {
         var (plan, error) = await Task.Run(() => presenter.TryBuildImportPlan(filePath));
         if (!string.IsNullOrWhiteSpace(error))
-            return new ItemizadoImportOutcome(false, false, Array.Empty<ItemizadoRow>(), null, null, "Importar Excel", error);
+            return new ItemizadoImportOutcome(false, false, Array.Empty<ItemizadoRow>(), null, null, "Importar tabla", error);
 
         if (plan == null)
             return new ItemizadoImportOutcome(false, false, Array.Empty<ItemizadoRow>(), null,
                 "El archivo no produjo ningún plan de importación.",
-                "Importar Excel",
-                "El archivo no produjo ningún plan de importación. Verifica que sea un Excel con filas de itemizado.");
+                "Importar tabla",
+                "El archivo no produjo ningún plan de importación. Verifica que tenga filas de itemizado.");
 
         return ResolveImportPlan(plan);
     }

@@ -44,7 +44,14 @@
                         </Style.Triggers>
                       </Style>
                     </Button.Style>
-                    <TextBlock Text="{Binding Label, Mode=OneWay}" Foreground="{DynamicResource Brush.Ink7}" />
+                    <DockPanel LastChildFill="True">
+                      <Border DockPanel.Dock="Right" Background="{DynamicResource Brush.BlueSoft}" CornerRadius="4" Padding="5,1" Margin="8,0,0,0"
+                              VerticalAlignment="Center"
+                              Visibility="{Binding Badge, Converter={StaticResource StringToVisibility}}">
+                        <TextBlock Text="{Binding Badge}" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" />
+                      </Border>
+                      <TextBlock Text="{Binding Label, Mode=OneWay}" Foreground="{DynamicResource Brush.Ink7}" VerticalAlignment="Center" />
+                    </DockPanel>
                   </Button>
                 </Grid>
               </DataTemplate>

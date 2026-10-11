@@ -105,6 +105,25 @@ public sealed class BudgetEngineCostTests
     }
 
     [Fact]
+    public void Calculate_Ferreteria_IsOptionalPercentOfMaterials()
+    {
+        var engine = new BudgetEngine();
+        var off = BudgetSettings.FromValues(0m, 0m, 0m);
+        off.FerreteriaPct = 5m;
+        var sin = engine.Calculate(new[] { Mat(10m, 2m) }, off);
+        Assert.Equal(0m, sin.FerreteriaUf);
+        Assert.Equal(20m, sin.MaterialesUf);
+
+        var on = BudgetSettings.FromValues(0m, 0m, 0m);
+        on.FerreteriaActiva = true;
+        on.FerreteriaPct = 5m;
+        var r = engine.Calculate(new[] { Mat(10m, 2m) }, on);
+        Assert.Equal(1m, r.FerreteriaUf);       // 20 * 5%
+        Assert.Equal(21m, r.MaterialesUf);      // materiales + ferretería
+        Assert.Equal(21m, r.CostoDirectoUf);
+    }
+
+    [Fact]
     public void Calculate_GlobalHerramientas_AppliesOverLabourOnly()
     {
         var engine = new BudgetEngine();

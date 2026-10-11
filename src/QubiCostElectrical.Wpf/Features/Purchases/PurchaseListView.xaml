@@ -21,7 +21,9 @@
 
     <Grid Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
     <Grid.ColumnDefinitions>
-      <ColumnDefinition Width="*" MinWidth="640" />
+      <ColumnDefinition Width="*" MinWidth="540" />
+      <ColumnDefinition Width="14" />
+      <ColumnDefinition Width="360" MinWidth="300" MaxWidth="480" />
     </Grid.ColumnDefinitions>
 
     <Border Grid.Column="0" Background="{DynamicResource Brush.Surface}"
@@ -46,6 +48,8 @@
                     Command="{Binding GroupByProviderCommand}" Margin="0,0,6,0"
                     ToolTip="Agrupa por proveedor; si no hay proveedor, usa categoría." />
             <Button Style="{StaticResource Button.Secondary}" Content="Actualizar" Command="{Binding RefreshCommand}" Margin="0,0,6,0" />
+            <Button Style="{StaticResource Button.Secondary}" Content="Solicitud RFQ (.xlsx)" Command="{Binding ExportRfqCommand}" Margin="0,0,6,0"
+                    ToolTip="Exportar planilla de cotización para enviar por email a distribuidores (sin costos internos)." />
             <Button Style="{StaticResource Button.Primary}" Content="Exportar Excel" Command="{Binding ExportExcelCommand}" />
           </StackPanel>
         </DockPanel>
@@ -107,7 +111,7 @@
               </StackPanel>
             </Border>
 
-            <TextBlock Grid.Column="4" Text="La lista excluye mano de obra, equipos y herramientas. Se consolida por código/material y se actualiza desde la cubicación."
+            <TextBlock Grid.Column="4" Text="La lista consolida compras desde la cubicación viva. Seleccione un material para ver sus partidas de origen."
                        Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Muted}"
                        VerticalAlignment="Center" TextWrapping="Wrap" />
           </Grid>
@@ -120,9 +124,15 @@
                   AutoGenerateColumns="False"
                   CanUserAddRows="False"
                   CanUserDeleteRows="False"
+                  IsReadOnly="True"
                   HeadersVisibility="Column"
                   SelectionMode="Single"
                   SelectionUnit="FullRow"
+                  EnableRowVirtualization="True"
+                  VirtualizingPanel.IsVirtualizing="True"
+                  VirtualizingPanel.IsVirtualizingWhenGrouping="True"
+                  VirtualizingPanel.VirtualizationMode="Recycling"
+                  VirtualizingPanel.ScrollUnit="Pixel"
                   ScrollViewer.CanContentScroll="True">
           <DataGrid.GroupStyle>
             <GroupStyle>
@@ -135,25 +145,114 @@
             </GroupStyle>
           </DataGrid.GroupStyle>
           <DataGrid.Columns>
-            <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" Width="120" />
-            <DataGridTextColumn Header="Descripción" Binding="{Binding Descripcion}" Width="*" MinWidth="260" />
-            <DataGridTextColumn Header="Ud." Binding="{Binding Unidad}" Width="60" />
-            <DataGridTextColumn Header="Categoría" Binding="{Binding Categoria}" Width="140" />
-            <DataGridTextColumn Header="Proveedor" Binding="{Binding Proveedor}" Width="140" />
-            <DataGridTextColumn Header="Cant. neta" Binding="{Binding CantidadNeta, StringFormat={}{0:N2}}" Width="95" />
-            <DataGridTextColumn Header="Tol. %" Binding="{Binding ToleranciaPct, StringFormat={}{0:N1}}" Width="80" />
-            <DataGridTextColumn Header="Cant. compra" Binding="{Binding CantidadCompra, StringFormat={}{0:N2}}" Width="100" />
-            <DataGridTextColumn Header="Precio UF" Binding="{Binding MatUfUnitario, StringFormat={}{0:N4}}" Width="95" />
-            <DataGridTextColumn Header="P. Unit CLP" Binding="{Binding MatClpUnitario, StringFormat={}$ {0:N0}}" Width="95" />
-            <DataGridTextColumn Header="Neto UF" Binding="{Binding TotalNetoUf, StringFormat={}{0:N3}}" Width="100" />
-            <DataGridTextColumn Header="Compra UF" Binding="{Binding TotalCompraUf, StringFormat={}{0:N3}}" Width="100" />
-            <DataGridTextColumn Header="Total CLP" Binding="{Binding TotalCompraClp, StringFormat={}$ {0:N0}}" Width="105" />
-            <DataGridTextColumn Header="Líneas" Binding="{Binding Lineas}" Width="70" />
+            <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" Width="110" />
+            <DataGridTextColumn Header="Descripción" Binding="{Binding Descripcion}" Width="*" MinWidth="220" />
+            <DataGridTextColumn Header="Ud." Binding="{Binding Unidad}" Width="50" />
+            <DataGridTextColumn Header="Categoría" Binding="{Binding Categoria}" Width="120" />
+            <DataGridTextColumn Header="Proveedor" Binding="{Binding Proveedor}" Width="120" />
+            <DataGridTextColumn Header="Cant. neta" Binding="{Binding CantidadNeta, StringFormat={}{0:N2}}" Width="85"
+                                HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}" />
+            <DataGridTextColumn Header="Tol. %" Binding="{Binding ToleranciaPct, StringFormat={}{0:N1}}" Width="70"
+                                HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}" />
+            <DataGridTextColumn Header="Cant. compra" Binding="{Binding CantidadCompra, StringFormat={}{0:N2}}" Width="95"
+                                HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}" />
+            <DataGridTextColumn Header="Precio UF" Binding="{Binding MatUfUnitario, StringFormat={}{0:N4}}" Width="85"
+                                HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}" />
+            <DataGridTextColumn Header="P. Unit CLP" Binding="{Binding MatClpUnitario, StringFormat={}$ {0:N0}}" Width="90"
+                                HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}" />
+            <DataGridTextColumn Header="Neto UF" Binding="{Binding TotalNetoUf, StringFormat={}{0:N3}}" Width="90"
+                                HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}" />
+            <DataGridTextColumn Header="Compra UF" Binding="{Binding TotalCompraUf, StringFormat={}{0:N3}}" Width="90"
+                                HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}" />
+            <DataGridTextColumn Header="Total CLP" Binding="{Binding TotalCompraClp, StringFormat={}$ {0:N0}}" Width="95"
+                                HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}" />
+            <DataGridTextColumn Header="Líneas" Binding="{Binding Lineas}" Width="60"
+                                HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}" />
           </DataGrid.Columns>
         </DataGrid>
 
-        <TextBlock Grid.Row="4" Text="Use esta pantalla para consolidar recursos comprables y exportar la lista final sin abandonar el shell principal."
+        <TextBlock Grid.Row="4" Text="Haga clic en un material para ver su trazabilidad exacta en las partidas del presupuesto a la derecha."
                    Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Muted}" Margin="0,10,0,0" />
+      </Grid>
+    </Border>
+
+    <!-- Panel Lateral: Trazabilidad viva ("¿Dónde se usa este material?") -->
+    <Border Grid.Column="2" Background="{DynamicResource Brush.Surface}"
+            BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+            CornerRadius="{StaticResource Radius.Lg}" Padding="16">
+      <Grid>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="*" />
+          <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Margin="0,0,0,10">
+          <TextBlock Text="Trazabilidad en obra" Style="{StaticResource Text.SectionLabel}" />
+          <TextBlock Text="¿Dónde se usa este material?" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" Margin="0,2,0,0" />
+          <TextBlock Text="{Binding SelectedMaterialHeader}" Style="{StaticResource Text.Body}" Foreground="{DynamicResource Brush.Muted}" Margin="0,4,0,0" TextWrapping="Wrap" />
+          <TextBlock Text="{Binding SelectedMaterialTotalText}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Blue}" Margin="0,2,0,0"
+                     Visibility="{Binding HasSelectedUsage, Converter={StaticResource BoolToVisibility}}" />
+        </StackPanel>
+
+        <!-- Estado sin selección -->
+        <Border Grid.Row="2" Background="{DynamicResource Brush.Surface2}" CornerRadius="{StaticResource Radius.Sm}" Padding="16"
+                VerticalAlignment="Center" HorizontalAlignment="Stretch"
+                Visibility="{Binding HasSelectedUsage, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
+          <StackPanel HorizontalAlignment="Center">
+            <TextBlock Text="🔍" FontSize="28" HorizontalAlignment="Center" Margin="0,0,0,8" />
+            <TextBlock Text="Seleccione un material" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource Brush.Ink}" HorizontalAlignment="Center" Margin="0,0,0,4" />
+            <TextBlock Text="Haga clic en cualquier fila de la lista para ver el desglose de partidas y áreas donde se utiliza."
+                       Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" TextAlignment="Center" />
+          </StackPanel>
+        </Border>
+
+        <!-- Lista de usos en partidas -->
+        <DataGrid Grid.Row="2"
+                  ItemsSource="{Binding MaterialUsages}"
+                  SelectedItem="{Binding SelectedUsage, Mode=TwoWay}"
+                  Style="{StaticResource DataGrid.Workspace}"
+                  AutoGenerateColumns="False"
+                  CanUserAddRows="False"
+                  CanUserDeleteRows="False"
+                  HeadersVisibility="Column"
+                  SelectionMode="Single"
+                  SelectionUnit="FullRow"
+                  Visibility="{Binding HasSelectedUsage, Converter={StaticResource BoolToVisibility}}">
+          <DataGrid.InputBindings>
+            <MouseBinding Gesture="LeftDoubleClick" Command="{Binding GoToUsageCommand}" />
+          </DataGrid.InputBindings>
+          <DataGrid.Columns>
+            <DataGridTextColumn Header="Ítem" Binding="{Binding ItemNumber}" Width="55" />
+            <DataGridTextColumn Header="Partida" Binding="{Binding PartidaDescripcion}" Width="*" MinWidth="130">
+              <DataGridTextColumn.ElementStyle>
+                <Style TargetType="TextBlock">
+                  <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                  <Setter Property="ToolTip" Value="{Binding PartidaDescripcion}" />
+                </Style>
+              </DataGridTextColumn.ElementStyle>
+            </DataGridTextColumn>
+            <DataGridTextColumn Header="Área" Binding="{Binding Area}" Width="90">
+              <DataGridTextColumn.ElementStyle>
+                <Style TargetType="TextBlock">
+                  <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                  <Setter Property="ToolTip" Value="{Binding Area}" />
+                </Style>
+              </DataGridTextColumn.ElementStyle>
+            </DataGridTextColumn>
+            <DataGridTextColumn Header="Cant." Binding="{Binding Cantidad, StringFormat={}{0:N1}}" Width="60" />
+            <DataGridTextColumn Header="% Total" Binding="{Binding PorcentajeDelTotal, StringFormat={}{0:N1}%}" Width="65" />
+          </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- Acción de navegación directa -->
+        <DockPanel Grid.Row="3" Margin="0,12,0,0" LastChildFill="True"
+                   Visibility="{Binding HasSelectedUsage, Converter={StaticResource BoolToVisibility}}">
+          <Button DockPanel.Dock="Right" Style="{StaticResource Button.Primary}" Content="Ir a cubicación →"
+                  Command="{Binding GoToUsageCommand}" />
+          <TextBlock Text="Doble clic para editar partida" Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
+        </DockPanel>
       </Grid>
     </Border>
     </Grid>

@@ -14,14 +14,21 @@ public sealed class ApuCompatibilityTests
 {
     private static ApuRecursoRow MakeMatRow(decimal rend, decimal precio, decimal merma = 0m) => new()
     {
-        Tipo = ApuTipoRecurso.MAT, Rendimiento = rend, PrecioUf = precio, MermaPct = merma,
-        Descripcion = "Material", Unidad = "UN",
+        Tipo = ApuTipoRecurso.MAT,
+        Rendimiento = rend,
+        PrecioUf = precio,
+        MermaPct = merma,
+        Descripcion = "Material",
+        Unidad = "UN",
     };
 
     private static ApuRecursoRow MakeMoRow(decimal rend, decimal valorHH) => new()
     {
-        Tipo = ApuTipoRecurso.MO, Rendimiento = rend, ValorHHUf = valorHH,
-        Descripcion = "Mano de obra", Unidad = "HH",
+        Tipo = ApuTipoRecurso.MO,
+        Rendimiento = rend,
+        ValorHHUf = valorHH,
+        Descripcion = "Mano de obra",
+        Unidad = "HH",
     };
 
     private static ApuRow BuildApu(params ApuRecursoRow[] recursos) => new()
@@ -143,7 +150,9 @@ public sealed class ApuCompatibilityTests
         var svc = new ConjuntoElectricoService();
         var conjunto = new ConjuntoElectricoRow
         {
-            Codigo = "CE-01", Nombre = "Test", Unidad = Unidades.UN,
+            Codigo = "CE-01",
+            Nombre = "Test",
+            Unidad = Unidades.UN,
             TipoConjunto = ConjuntoTipo.PuntoEnchufe,
             Recursos = new List<ConjuntoRecursoRow>
             {
@@ -164,7 +173,9 @@ public sealed class ApuCompatibilityTests
         var svc = new ConjuntoElectricoService();
         var conjunto = new ConjuntoElectricoRow
         {
-            Codigo = "CE-01", Nombre = "Test", Unidad = Unidades.UN,
+            Codigo = "CE-01",
+            Nombre = "Test",
+            Unidad = Unidades.UN,
             TipoConjunto = ConjuntoTipo.General,
             Recursos = new List<ConjuntoRecursoRow>
             {

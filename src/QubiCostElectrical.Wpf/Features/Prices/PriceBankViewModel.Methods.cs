@@ -89,6 +89,7 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
         {
             if (!SetProperty(ref searchText, value))
                 return;
+            cachedNormalizedSearch = materialSearch.Normalize(value ?? "");
             ScheduleSearchRefresh();
         }
     }
@@ -163,6 +164,7 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
     public bool CanEdit => !IsReadOnly;
 
     public bool ShowEmptyState { get => showEmptyState; private set => SetProperty(ref showEmptyState, value); }
+    public bool HasNoFilterResults { get => hasNoFilterResults; private set => SetProperty(ref hasNoFilterResults, value); }
 
     public bool HasProject => projectWorkspace.HasOpenProject;
 
@@ -179,7 +181,7 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
     public ICommand ApplyProjectPricesCommand => applyProjectPricesCommand;
     public ICommand ClearFiltersCommand => clearFiltersCommand;
 
-    public void Refresh()
+    public async void Refresh()
     {
         if (entries.Any(x => x.HasChanges) &&
             !WpfDialogService.Confirm("Cambios sin guardar",
@@ -194,23 +196,45 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
             SelectedEntry = null;
             entries.Clear();
             decimal valorUf = HasProject ? session.ProjectInfo.ValorUfClp : 0m;
-            foreach (var item in store.GetAll().Select(x => new PriceBankEntryVm(x, valorUf, () => CanEdit)))
-                entries.Add(item);
+            IReadOnlyList<PriceBankEntry> loaded;
+            if (System.Windows.Application.Current?.Dispatcher != null)
+            {
+                loaded = await Task.Run(() => store.GetAll());
+            }
+            else
+            {
+                loaded = store.GetAll();
+            }
 
-            BuildFilterOptions();
-            entriesView.Refresh();
-            SelectByCode(selectedCode);
-            ReloadProjectPreview();
-            RecomputeEntryStats();
-            UpdateSummary();
-            UpdateProjectSummary();
-            OnPropertyChanged(nameof(IsReadOnly));
-            OnPropertyChanged(nameof(CanEdit));
-            StatusMessage = entries.Count == 0
-                ? "El banco de precios está vacío."
-                : $"Banco cargado con {entries.Count} registros.";
-            ShowEmptyState = entries.Count == 0;
-            deleteAllCommand.RaiseCanExecuteChanged();
+            Action apply = () =>
+            {
+                foreach (var item in loaded.Select(x => new PriceBankEntryVm(x, valorUf, () => CanEdit, ModoRendimientoActivo, TarifaDhActiva, IndiceMoFaActiva)))
+                    entries.Add(item);
+
+                BuildFilterOptions();
+                entriesView.Refresh();
+                SelectByCode(selectedCode);
+                ReloadProjectPreview();
+                RecomputeEntryStats();
+                UpdateSummary();
+                UpdateProjectSummary();
+                OnPropertyChanged(nameof(IsReadOnly));
+                OnPropertyChanged(nameof(CanEdit));
+                StatusMessage = entries.Count == 0
+                    ? "El banco de precios está vacío."
+                    : $"Banco cargado con {entries.Count} registros.";
+                ShowEmptyState = entries.Count == 0;
+                deleteAllCommand.RaiseCanExecuteChanged();
+            };
+
+            if (System.Windows.Application.Current?.Dispatcher is { } dispatcher && !dispatcher.CheckAccess())
+            {
+                dispatcher.Invoke(apply);
+            }
+            else
+            {
+                apply();
+            }
         }
         catch (Exception ex)
         {
@@ -319,20 +343,20 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
         if (obj is not PriceBankEntryVm entry)
             return false;
 
-        string query = materialSearch.Normalize(SearchText);
-        if (!string.IsNullOrWhiteSpace(query))
+        if (!string.IsNullOrWhiteSpace(cachedNormalizedSearch))
         {
-            string searchable = materialSearch.Normalize(string.Join(' ', new[]
-            {
-                entry.Codigo,
-                entry.Descripcion,
-                entry.Categoria,
-                entry.Proveedor,
-                entry.Marca
-            }));
+            bool match = (entry.Codigo != null && entry.Codigo.Contains(cachedNormalizedSearch, StringComparison.OrdinalIgnoreCase))
+                || (entry.Descripcion != null && entry.Descripcion.Contains(cachedNormalizedSearch, StringComparison.OrdinalIgnoreCase))
+                || (entry.Categoria != null && entry.Categoria.Contains(cachedNormalizedSearch, StringComparison.OrdinalIgnoreCase))
+                || (entry.Proveedor != null && entry.Proveedor.Contains(cachedNormalizedSearch, StringComparison.OrdinalIgnoreCase))
+                || (entry.Marca != null && entry.Marca.Contains(cachedNormalizedSearch, StringComparison.OrdinalIgnoreCase));
 
-            if (!searchable.Contains(query, StringComparison.OrdinalIgnoreCase))
-                return false;
+            if (!match)
+            {
+                string normDesc = materialSearch.Normalize(entry.Descripcion ?? "");
+                if (!normDesc.Contains(cachedNormalizedSearch, StringComparison.OrdinalIgnoreCase))
+                    return false;
+            }
         }
 
         // El único filtro (además del buscador) es Familia — Proveedor/Marca ya no se muestran
@@ -363,6 +387,7 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
     {
         int filtered = entriesView.Cast<object>().Count();
         SummaryText = $"{filtered:N0} visibles · {entries.Count:N0} total · {cachedCategoryCount:N0} categorías · {cachedProviderCount:N0} proveedores";
+        HasNoFilterResults = entries.Count > 0 && filtered == 0;
     }
 
     private void UpdateProjectSummary()
@@ -411,7 +436,7 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
             ProyectoOrigen = HasProject ? session.ProjectInfo.Nombre : ""
         };
 
-        var vm = new PriceBankEntryVm(entry, HasProject ? session.ProjectInfo.ValorUfClp : 0m, () => CanEdit);
+        var vm = new PriceBankEntryVm(entry, HasProject ? session.ProjectInfo.ValorUfClp : 0m, () => CanEdit, ModoRendimientoActivo, TarifaDhActiva, IndiceMoFaActiva);
         entries.Insert(0, vm);
         entriesView.Refresh();
         SelectedEntry = vm;
@@ -449,7 +474,7 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
         {
             var codeToFind = renamed ? originalCode : savedCode;
             var projectMat = session.Materiales.FirstOrDefault(m => CodeHelper.Match(m.Codigo, codeToFind));
-            
+
             if (projectMat == null)
             {
                 bool isUsedInCubicacion = session.Cubicacion.Any(r => CodeHelper.Match(r.Codigo, codeToFind));
@@ -466,6 +491,10 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
                     projectMat.Codigo = savedCode;
                 projectMat.MatClp = SelectedEntry.PrecioClp;
                 projectMat.MoClp = SelectedEntry.MoClp;
+                projectMat.RendimientoDh = SelectedEntry.RendimientoDh;
+                projectMat.DiaXPareja = SelectedEntry.DiaXPareja;
+                projectMat.MoFormulaTipo = SelectedEntry.MoFormulaTipo;
+                projectMat.MoPorcentajeMaterial = SelectedEntry.MoPorcentajeMaterial;
                 projectMat.Descripcion = SelectedEntry.Descripcion;
                 projectMat.Unidad = SelectedEntry.Unidad;
                 projectMat.FechaPrecio = SelectedEntry.FechaPrecio;
@@ -567,7 +596,7 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
             WpfDialogService.Info(
                 "Plantilla lista",
                 "Plantilla guardada con las columnas:\nCódigo | Descripción | UN | Precio CLP | Familia | MO\n\n" +
-                "Complete sus precios (CLP) e importe el archivo con «Importar Excel».");
+                "Complete sus precios (CLP) e importe el archivo con «Importar lista».");
         }
         catch (Exception ex)
         {
@@ -734,6 +763,19 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
             importLog.RemoveAt(importLog.Count - 1);
     }
 
+    /// <summary>Modo rendimiento del proyecto activo (para mostrar la MO derivada en la grilla).</summary>
+    private bool ModoRendimientoActivo =>
+        HasProject && string.Equals(
+            session.ProjectInfo.ModoMoInstalacion, MaterialMoResolver.ModoRendimiento, StringComparison.OrdinalIgnoreCase);
+
+    private decimal TarifaDhActiva => HasProject ? session.ProjectInfo.TarifaDhClp : 0m;
+
+    /// <summary>Índice global M.O. (FA) del proyecto activo, con default si el proyecto no trae valor.</summary>
+    private decimal IndiceMoFaActiva =>
+        HasProject && session.ProjectInfo.IndiceMoFa > 0m
+            ? session.ProjectInfo.IndiceMoFa
+            : MaterialMoResolver.IndiceMoFaDefault;
+
     private static MaterialRow MapEntryToMaterial(PriceBankEntry entry) => new()
     {
         Codigo = entry.Codigo ?? "",
@@ -742,6 +784,10 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
         Categoria = entry.Categoria ?? "",
         MatClp = entry.MatClp,
         MoClp = entry.MoClp,
+        RendimientoDh = entry.RendimientoDh,
+        DiaXPareja = entry.DiaXPareja,
+        MoFormulaTipo = entry.MoFormulaTipo,
+        MoPorcentajeMaterial = entry.MoPorcentajeMaterial,
         MonedaPrecio = string.IsNullOrWhiteSpace(entry.MonedaPrecio) ? Moneda.CLP : entry.MonedaPrecio,
         Proveedor = entry.Proveedor ?? "",
         Marca = entry.Marca ?? "",

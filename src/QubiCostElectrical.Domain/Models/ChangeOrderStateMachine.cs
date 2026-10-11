@@ -18,11 +18,11 @@ public static class ChangeOrderStateMachine
 {
     public static bool IsTransitionAllowed(string from, string to) => (from, to) switch
     {
-        ("Borrador",      "En revisión") => true,
-        ("En revisión",   "Aprobado")    => true,
-        ("En revisión",   "Rechazado")   => true,
-        ("Rechazado",     "Borrador")    => true,
-        _                                => false
+        ("Borrador", "En revisión") => true,
+        ("En revisión", "Aprobado") => true,
+        ("En revisión", "Rechazado") => true,
+        ("Rechazado", "Borrador") => true,
+        _ => false
     };
 
     /// <summary>

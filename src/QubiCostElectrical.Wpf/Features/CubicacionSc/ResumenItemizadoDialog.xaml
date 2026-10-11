@@ -3,77 +3,408 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:infra="clr-namespace:QubiCostElectrical.Wpf.Infrastructure"
         Style="{StaticResource Dialog.Window}"
-        Title="Navegar itemizado"
-        Width="900" Height="620" MinWidth="760" MinHeight="480"
+        Title="Navegador de Partidas (Alt+S)"
+        Width="980" Height="680" MinWidth="840" MinHeight="520"
         WindowStartupLocation="CenterOwner"
+        FocusManager.FocusedElement="{Binding ElementName=PartidaGrid}"
         PreviewKeyDown="OnWindowPreviewKeyDown">
-  <Border Style="{StaticResource Dialog.Chrome}" Margin="16">
-  <Grid>
-    <Grid.RowDefinitions>
-      <RowDefinition Height="Auto" />
-      <RowDefinition Height="Auto" />
-      <RowDefinition Height="*" />
-      <RowDefinition Height="Auto" />
-    </Grid.RowDefinitions>
 
-    <StackPanel Margin="0,0,0,12">
-      <TextBlock Text="Partidas del itemizado" Style="{StaticResource Dialog.HeaderTitle}" />
-      <TextBlock Text="{Binding SummaryText}" Style="{StaticResource Dialog.HeaderSubtitle}" Margin="0,0,0,0" />
-    </StackPanel>
+  <Window.Resources>
+    <Style x:Key="KbdBadge" TargetType="Border">
+      <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="4" />
+      <Setter Property="Padding" Value="5,2" />
+      <Setter Property="Margin" Value="0,0,4,0" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style x:Key="KbdText" TargetType="TextBlock">
+      <Setter Property="FontFamily" Value="Consolas, Segoe UI Mono, monospace" />
+      <Setter Property="FontSize" Value="10" />
+      <Setter Property="FontWeight" Value="Bold" />
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}" />
+    </Style>
+  </Window.Resources>
 
-    <StackPanel Grid.Row="1" Margin="0,0,0,10">
-      <TextBox Style="{StaticResource Form.SearchBox}" Margin="0,0,0,8"
-               Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Tag="Buscar partida…" />
-      <ItemsControl ItemsSource="{Binding Filters}">
-        <ItemsControl.ItemsPanel>
-          <ItemsPanelTemplate>
-            <WrapPanel />
-          </ItemsPanelTemplate>
-        </ItemsControl.ItemsPanel>
-        <ItemsControl.ItemTemplate>
-          <DataTemplate>
-            <Border Margin="0,0,8,0" Padding="10,6" CornerRadius="14" Cursor="Hand"
-                    Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
-                    MouseLeftButtonDown="OnFilterChipClick">
-              <StackPanel Orientation="Horizontal">
-                <TextBlock Text="{Binding Nombre}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink2}" />
-                <TextBlock Text="{Binding Count, StringFormat=' ({0})'}" Foreground="{DynamicResource Brush.Muted}" Margin="4,0,0,0" />
+  <Border Style="{StaticResource Dialog.Chrome}" Margin="16" Padding="18">
+    <Grid>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="*" />
+        <RowDefinition Height="Auto" />
+      </Grid.RowDefinitions>
+
+      <!-- ── CABECERA EJECUTIVA COCKPIT ──────────────────────────────────── -->
+      <DockPanel Grid.Row="0" Margin="0,0,0,14" LastChildFill="True">
+        <!-- Métricas ejecutivas a la derecha -->
+        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+          <!-- Tarjeta 1: Partidas -->
+          <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+                  CornerRadius="8" Padding="12,6" Margin="0,0,8,0">
+            <StackPanel HorizontalAlignment="Center">
+              <TextBlock Text="PARTIDAS" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" />
+              <TextBlock Text="{Binding TotalPartidasCount}" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" Margin="0,1,0,0" />
+            </StackPanel>
+          </Border>
+
+          <!-- Tarjeta 2: Avance Cubicación -->
+          <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+                  CornerRadius="8" Padding="12,6" Margin="0,0,8,0">
+            <StackPanel HorizontalAlignment="Center">
+              <TextBlock Text="AVANCE" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" />
+              <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,1,0,0">
+                <Ellipse Width="6" Height="6" Fill="#10B981" Margin="0,0,5,0" />
+                <TextBlock Text="{Binding AvancePorcentajeText}" FontSize="13" FontWeight="Bold" Foreground="#047857" />
               </StackPanel>
-            </Border>
-          </DataTemplate>
-        </ItemsControl.ItemTemplate>
-      </ItemsControl>
-    </StackPanel>
+            </StackPanel>
+          </Border>
 
-    <Border Grid.Row="2" Style="{StaticResource Card.Surface}" Padding="0">
-      <DataGrid x:Name="PartidaGrid"
-                infra:DataGridExcelNavigation.Enable="True"
-                ItemsSource="{Binding FlatRows}"
-                SelectedItem="{Binding SelectedRow, Mode=TwoWay}"
-                AutoGenerateColumns="False"
-                CanUserAddRows="False"
-                CanUserDeleteRows="False"
-                IsReadOnly="True"
-                SelectionMode="Single"
-                MouseDoubleClick="OnRowDoubleClick">
-        <DataGrid.Columns>
-          <DataGridTextColumn Header="Código" Binding="{Binding ItemCode}" Width="90" />
-          <DataGridTextColumn Header="Descripción" Binding="{Binding Descripcion}" Width="*" MinWidth="220" />
-          <DataGridTextColumn Header="Ud" Binding="{Binding Unidad}" Width="44" />
-          <DataGridTextColumn Header="Cant" Binding="{Binding CantidadDisplay}" Width="70" />
-          <DataGridTextColumn Header="Material" Binding="{Binding MaterialDisplay}" Width="100" />
-          <DataGridTextColumn Header="MO" Binding="{Binding ManoObraDisplay}" Width="100" />
-          <DataGridTextColumn Header="Costo dir." Binding="{Binding CostoDirectoDisplay}" Width="110" />
-        </DataGrid.Columns>
-      </DataGrid>
-    </Border>
+          <!-- Tarjeta 3: Total Costo Directo -->
+          <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+                  CornerRadius="8" Padding="12,6">
+            <StackPanel HorizontalAlignment="Center">
+              <TextBlock Text="TOTAL DIRECTO" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" />
+              <TextBlock Text="{Binding TotalCostoDirectoText}" FontFamily="Consolas, Segoe UI Mono, monospace" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource Brush.BlueDark}" Margin="0,1,0,0" />
+            </StackPanel>
+          </Border>
+        </StackPanel>
 
-    <DockPanel Grid.Row="3" Style="{StaticResource Dialog.Footer}" Margin="0,14,0,0" LastChildFill="False">
-      <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center" Foreground="{DynamicResource Brush.Muted}"
-                 Text="Enter: ir · Ctrl+Shift+N: agregar recurso · Ctrl+Shift+Del: limpiar cubicación de la partida" TextWrapping="Wrap" />
-      <Button DockPanel.Dock="Right" Content="Cerrar" Style="{StaticResource Button.Secondary}"
-              MinWidth="100" IsCancel="True" Command="{Binding CerrarCommand}" />
-    </DockPanel>
-  </Grid>
+        <!-- Título y subtítulo con icono a la izquierda -->
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+          <Border Width="40" Height="40" CornerRadius="10" Background="#EFF6FF" BorderBrush="#DBEAFE" BorderThickness="1" Margin="0,0,12,0" VerticalAlignment="Center">
+            <TextBlock Text="📐" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Border>
+          <StackPanel VerticalAlignment="Center">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <TextBlock Text="Navegador de Partidas del Itemizado" Style="{StaticResource Dialog.HeaderTitle}" FontSize="16" />
+              <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="5" Padding="6,2" Margin="10,0,0,0" VerticalAlignment="Center">
+                <TextBlock Text="Alt + S" FontFamily="Consolas, Segoe UI Mono, monospace" FontWeight="Bold" FontSize="10.5" Foreground="{DynamicResource Brush.BlueDark}" />
+              </Border>
+            </StackPanel>
+            <TextBlock Text="Selección instantánea, trazabilidad de cubicación y costos directos en tiempo real."
+                       FontSize="11.5" Foreground="{DynamicResource Brush.Muted}" Margin="0,2,0,0" />
+          </StackPanel>
+        </StackPanel>
+      </DockPanel>
+
+      <!-- ── BUSCADOR SPOTLIGHT Y SEGMENTOS DE FILTRO ───────────────────── -->
+      <StackPanel Grid.Row="1" Margin="0,0,0,12">
+        <!-- Input de búsqueda moderno tipo Command Palette -->
+        <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+                CornerRadius="8" Padding="10,6" Margin="0,0,0,10">
+          <DockPanel LastChildFill="True">
+            <TextBlock DockPanel.Dock="Left" Text="🔍" FontSize="12" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" Margin="0,0,8,0" />
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
+              <Border Background="{DynamicResource Brush.Surface2}" CornerRadius="4" Padding="5,2" Margin="0,0,4,0">
+                <TextBlock Text="Ctrl+B buscar" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.BlueDark}" />
+              </Border>
+              <Border Background="{DynamicResource Brush.Surface2}" CornerRadius="4" Padding="5,2">
+                <TextBlock Text="ESC cerrar" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" />
+              </Border>
+            </StackPanel>
+            <TextBox x:Name="SearchBox"
+                     BorderThickness="0"
+                     Background="Transparent"
+                     FontSize="12.5"
+                     Foreground="{DynamicResource Brush.Ink}"
+                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                     Tag="Buscar por código WBS (ej. 01.1), descripción o material… (Ctrl+B)"
+                     PreviewKeyDown="OnSearchBoxPreviewKeyDown" />
+          </DockPanel>
+        </Border>
+
+        <!-- Chips de Filtro Estilo Segmented Control -->
+        <ItemsControl ItemsSource="{Binding Filters}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <WrapPanel />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <Border Margin="0,0,8,0" Padding="12,5" CornerRadius="14" Cursor="Hand"
+                      MouseLeftButtonDown="OnFilterChipClick">
+                <Border.Style>
+                  <Style TargetType="Border">
+                    <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+                    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
+                    <Setter Property="BorderThickness" Value="1" />
+                    <Style.Triggers>
+                      <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+                      </Trigger>
+                      <DataTrigger Binding="{Binding IsActive}" Value="True">
+                        <Setter Property="Background" Value="#0F172A" />
+                        <Setter Property="BorderBrush" Value="#0F172A" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </Border.Style>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                  <TextBlock Text="{Binding Nombre}" FontSize="11" FontWeight="SemiBold">
+                    <TextBlock.Style>
+                      <Style TargetType="TextBlock">
+                        <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}" />
+                        <Style.Triggers>
+                          <DataTrigger Binding="{Binding IsActive}" Value="True">
+                            <Setter Property="Foreground" Value="#FFFFFF" />
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </TextBlock.Style>
+                  </TextBlock>
+                  <Border CornerRadius="8" Padding="5,1" Margin="6,0,0,0">
+                    <Border.Style>
+                      <Style TargetType="Border">
+                        <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+                        <Style.Triggers>
+                          <DataTrigger Binding="{Binding IsActive}" Value="True">
+                            <Setter Property="Background" Value="#1E293B" />
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </Border.Style>
+                    <TextBlock Text="{Binding Count}" FontSize="10" FontWeight="Bold">
+                      <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                          <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
+                          <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsActive}" Value="True">
+                              <Setter Property="Foreground" Value="#94A3B8" />
+                            </DataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </TextBlock.Style>
+                    </TextBlock>
+                  </Border>
+                </StackPanel>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+
+      <!-- ── TABLA ENTERPRISE DE PARTIDAS ──────────────────────────────── -->
+      <Border Grid.Row="2" CornerRadius="8" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" Background="{DynamicResource Brush.Surface}" Padding="0">
+        <DataGrid x:Name="PartidaGrid"
+                  Style="{StaticResource DataGrid.Workspace}"
+                  ItemsSource="{Binding FlatRows}"
+                  SelectedItem="{Binding SelectedRow, Mode=TwoWay}"
+                  AutoGenerateColumns="False"
+                  CanUserAddRows="False"
+                  CanUserDeleteRows="False"
+                  IsReadOnly="True"
+                  SelectionMode="Single"
+                  SelectionUnit="FullRow"
+                  GridLinesVisibility="Horizontal"
+                  HorizontalGridLinesBrush="#F1F5F9"
+                  RowHeight="34"
+                  MouseDoubleClick="OnRowDoubleClick"
+                  EnableRowVirtualization="True"
+                  VirtualizingPanel.IsVirtualizing="True"
+                  VirtualizingPanel.VirtualizationMode="Recycling">
+          <DataGrid.RowStyle>
+            <Style TargetType="DataGridRow" BasedOn="{StaticResource DataGridRow.Prototype}">
+              <Setter Property="Background" Value="Transparent" />
+              <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                  <Setter Property="Background" Value="#F8FAFC" />
+                </Trigger>
+                <DataTrigger Binding="{Binding EsSeccion}" Value="True">
+                  <Setter Property="Background" Value="#F8FAFC" />
+                  <Setter Property="FontWeight" Value="Bold" />
+                </DataTrigger>
+                <Trigger Property="IsSelected" Value="True">
+                  <Setter Property="Background" Value="#EFF6FF" />
+                  <Setter Property="BorderBrush" Value="#BFDBFE" />
+                </Trigger>
+              </Style.Triggers>
+            </Style>
+          </DataGrid.RowStyle>
+          <DataGrid.CellStyle>
+            <Style TargetType="DataGridCell" BasedOn="{StaticResource DataGridCell.Prototype}">
+              <Setter Property="Background" Value="Transparent" />
+              <Setter Property="BorderThickness" Value="0,0,0,1" />
+              <Setter Property="BorderBrush" Value="#F1F5F9" />
+              <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                  <Setter Property="Background" Value="#EFF6FF" />
+                  <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+                </Trigger>
+              </Style.Triggers>
+            </Style>
+          </DataGrid.CellStyle>
+          <DataGrid.Columns>
+            <!-- Columna WBS -->
+            <DataGridTemplateColumn Header="CÓDIGO" Width="95">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <Grid VerticalAlignment="Center" Margin="6,0">
+                    <Border Visibility="{Binding EsSeccion, Converter={StaticResource BoolToVisibility}}"
+                            Background="#EEF2F6" BorderBrush="#E2E8F0" BorderThickness="1"
+                            CornerRadius="4" Padding="6,2" HorizontalAlignment="Left">
+                      <TextBlock Text="{Binding ItemCode}" FontFamily="Consolas, Segoe UI Mono, monospace"
+                                 FontSize="11" FontWeight="Bold" Foreground="#0F172A" />
+                    </Border>
+                    <TextBlock Visibility="{Binding EsSeccion, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}"
+                               Text="{Binding ItemCode}" FontFamily="Consolas, Segoe UI Mono, monospace"
+                               FontSize="11" Foreground="{DynamicResource Brush.Muted}" />
+                  </Grid>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+
+            <!-- Columna Descripción -->
+            <DataGridTemplateColumn Header="DESCRIPCIÓN" Width="*" MinWidth="220">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <TextBlock Text="{Binding Descripcion}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="4,0">
+                    <TextBlock.Style>
+                      <Style TargetType="TextBlock">
+                        <Setter Property="FontSize" Value="11.5" />
+                        <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+                        <Style.Triggers>
+                          <DataTrigger Binding="{Binding EsSeccion}" Value="True">
+                            <Setter Property="FontWeight" Value="Bold" />
+                            <Setter Property="FontSize" Value="12" />
+                            <Setter Property="Foreground" Value="#0F172A" />
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </TextBlock.Style>
+                  </TextBlock>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+
+            <!-- Columna Estado / Trazabilidad -->
+            <DataGridTemplateColumn Header="ESTADO" Width="105">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <Border Background="{Binding EstadoBadgeBackground}"
+                          BorderBrush="{Binding EstadoBadgeBorder}"
+                          BorderThickness="1"
+                          CornerRadius="10"
+                          Padding="7,2"
+                          Margin="2,0"
+                          HorizontalAlignment="Left"
+                          VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                      <Ellipse Width="5.5" Height="5.5" Fill="{Binding EstadoBadgeDot}" Margin="0,0,5,0" />
+                      <TextBlock Text="{Binding EstadoBadgeText}"
+                                 FontSize="10"
+                                 FontWeight="SemiBold"
+                                 Foreground="{Binding EstadoBadgeForeground}" />
+                    </StackPanel>
+                  </Border>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+
+            <!-- Columna Unidad -->
+            <DataGridTextColumn Header="UD" Binding="{Binding Unidad}" Width="50">
+              <DataGridTextColumn.ElementStyle>
+                <Style TargetType="TextBlock">
+                  <Setter Property="HorizontalAlignment" Value="Center" />
+                  <Setter Property="VerticalAlignment" Value="Center" />
+                  <Setter Property="FontFamily" Value="Consolas, Segoe UI Mono, monospace" />
+                  <Setter Property="FontSize" Value="11" />
+                  <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
+                </Style>
+              </DataGridTextColumn.ElementStyle>
+            </DataGridTextColumn>
+
+            <!-- Columna Cantidad -->
+            <DataGridTextColumn Header="CANTIDAD" Binding="{Binding CantidadDisplay}" Width="75">
+              <DataGridTextColumn.ElementStyle>
+                <Style TargetType="TextBlock">
+                  <Setter Property="HorizontalAlignment" Value="Right" />
+                  <Setter Property="VerticalAlignment" Value="Center" />
+                  <Setter Property="FontFamily" Value="Consolas, Segoe UI Mono, monospace" />
+                  <Setter Property="FontSize" Value="11" />
+                  <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}" />
+                  <Setter Property="Margin" Value="0,0,8,0" />
+                </Style>
+              </DataGridTextColumn.ElementStyle>
+            </DataGridTextColumn>
+
+            <!-- Columna Material -->
+            <DataGridTextColumn Header="MATERIAL" Binding="{Binding MaterialDisplay}" Width="100">
+              <DataGridTextColumn.ElementStyle>
+                <Style TargetType="TextBlock">
+                  <Setter Property="HorizontalAlignment" Value="Right" />
+                  <Setter Property="VerticalAlignment" Value="Center" />
+                  <Setter Property="FontFamily" Value="Consolas, Segoe UI Mono, monospace" />
+                  <Setter Property="FontSize" Value="11" />
+                  <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
+                  <Setter Property="Margin" Value="0,0,8,0" />
+                </Style>
+              </DataGridTextColumn.ElementStyle>
+            </DataGridTextColumn>
+
+            <!-- Columna Mano de Obra -->
+            <DataGridTextColumn Header="M. OBRA" Binding="{Binding ManoObraDisplay}" Width="100">
+              <DataGridTextColumn.ElementStyle>
+                <Style TargetType="TextBlock">
+                  <Setter Property="HorizontalAlignment" Value="Right" />
+                  <Setter Property="VerticalAlignment" Value="Center" />
+                  <Setter Property="FontFamily" Value="Consolas, Segoe UI Mono, monospace" />
+                  <Setter Property="FontSize" Value="11" />
+                  <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
+                  <Setter Property="Margin" Value="0,0,8,0" />
+                </Style>
+              </DataGridTextColumn.ElementStyle>
+            </DataGridTextColumn>
+
+            <!-- Columna Costo Directo -->
+            <DataGridTextColumn Header="COSTO DIRECTO" Binding="{Binding CostoDirectoDisplay}" Width="115">
+              <DataGridTextColumn.ElementStyle>
+                <Style TargetType="TextBlock">
+                  <Setter Property="HorizontalAlignment" Value="Right" />
+                  <Setter Property="VerticalAlignment" Value="Center" />
+                  <Setter Property="FontFamily" Value="Consolas, Segoe UI Mono, monospace" />
+                  <Setter Property="FontWeight" Value="SemiBold" />
+                  <Setter Property="FontSize" Value="11.5" />
+                  <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+                  <Setter Property="Margin" Value="0,0,8,0" />
+                </Style>
+              </DataGridTextColumn.ElementStyle>
+            </DataGridTextColumn>
+          </DataGrid.Columns>
+        </DataGrid>
+      </Border>
+
+      <!-- ── FOOTER RAYCAST / LINEAR COMMAND BAR ───────────────────────── -->
+      <DockPanel Grid.Row="3" Margin="0,14,0,0" LastChildFill="False">
+        <!-- Atajos de teclado en badges KBD -->
+        <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
+          <Border Style="{StaticResource KbdBadge}"><TextBlock Text="↵ Enter" Style="{StaticResource KbdText}" /></Border>
+          <TextBlock Text="Ir a partida" FontSize="11" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" Margin="0,0,12,0" />
+
+          <Border Style="{StaticResource KbdBadge}"><TextBlock Text="Ctrl+B" Style="{StaticResource KbdText}" /></Border>
+          <TextBlock Text="Buscar" FontSize="11" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" Margin="0,0,12,0" />
+
+          <Border Style="{StaticResource KbdBadge}"><TextBlock Text="↑" Style="{StaticResource KbdText}" /></Border>
+          <Border Style="{StaticResource KbdBadge}"><TextBlock Text="↓" Style="{StaticResource KbdText}" /></Border>
+          <TextBlock Text="Navegar" FontSize="11" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" Margin="0,0,12,0" />
+
+          <Border Style="{StaticResource KbdBadge}"><TextBlock Text="RePág" Style="{StaticResource KbdText}" /></Border>
+          <Border Style="{StaticResource KbdBadge}"><TextBlock Text="AvPág" Style="{StaticResource KbdText}" /></Border>
+          <TextBlock Text="±10 filas" FontSize="11" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" Margin="0,0,12,0" />
+
+          <Border Style="{StaticResource KbdBadge}"><TextBlock Text="Ctrl+Shift+N" Style="{StaticResource KbdText}" /></Border>
+          <TextBlock Text="+ Recurso" FontSize="11" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" Margin="0,0,12,0" />
+
+          <Border Style="{StaticResource KbdBadge}"><TextBlock Text="Ctrl+Shift+Del" Style="{StaticResource KbdText}" /></Border>
+          <TextBlock Text="Limpiar" FontSize="11" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" Margin="0,0,12,0" />
+        </StackPanel>
+
+        <!-- Botón de cierre a la derecha -->
+        <Button DockPanel.Dock="Right" Content="Cerrar (Esc)" Style="{StaticResource Button.Secondary}"
+                MinWidth="100" IsCancel="True" Command="{Binding CerrarCommand}" />
+      </DockPanel>
+    </Grid>
   </Border>
 </Window>

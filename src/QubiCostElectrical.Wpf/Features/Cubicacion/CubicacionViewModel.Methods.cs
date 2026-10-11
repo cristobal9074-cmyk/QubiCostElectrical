@@ -49,10 +49,14 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
     // Panel contextual
     public CubicacionRightPanelVm RightPanel { get; }
 
+    public event Action<string>? RowAdded;
+    internal void NotifyRowAdded(string rowId) => RowAdded?.Invoke(rowId);
+
     public CubicacionViewModel(IShellNavigationHost shell, WpfAppHost host)
         : this(shell, host.Session, host.ProjectWorkspace, host.Cubicacion, host.Itemizado, host.UndoService,
                host.Services.Cubicacion, host.Services.CubicacionTakeoffQuery, host.Services.ProjectRepository,
-               host.Services.MaterialSearch, host.Services.PriceBankStore) { }
+               host.Services.MaterialSearch, host.Services.PriceBankStore)
+    { }
 
     public CubicacionViewModel(
         IShellNavigationHost shell,
@@ -118,6 +122,7 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
         AplicarConjuntoCommand = new RelayCommand(AplicarConjunto, () => !session.IsReadOnly);
         RefreshPricesCommand = new RelayCommand(() => rowMutationService.RefreshPricesForSelectedRows(), () => CanEdit && (Rows.Any(r => r.IsSelected) || SelectedRow != null));
         OpenProjectCommand = new RelayCommand(() => _ = shell.OpenProjectAsync());
+        NavigateToApuCommand = new RelayCommand(NavigateToApu, () => SelectedPartida?.EsPartida == true);
 
         InitializeSectorMatrix();
         InitializeShortcutCommands();
@@ -135,7 +140,10 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
             {
                 var target = Partidas.FirstOrDefault(p => string.Equals(p.Id, nav.ItemId, StringComparison.OrdinalIgnoreCase));
                 if (target != null)
+                {
                     SelectPartida(target);
+                    SelectRowByTarget(nav.TargetRowId, nav.TargetCode);
+                }
                 else
                     SelectFirstPartida();
                 session.PendingTakeoffNavigation = null;
@@ -182,6 +190,18 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
 
         SelectPartida(target);
         PromptTakeoffQueueContinuation();
+    }
+
+    public void SelectRowByTarget(string? rowId, string? code)
+    {
+        if (Rows.Count == 0) return;
+        var match = Rows.FirstOrDefault(r =>
+            (!string.IsNullOrWhiteSpace(rowId) && string.Equals(r.Id, rowId, StringComparison.OrdinalIgnoreCase)) ||
+            (!string.IsNullOrWhiteSpace(code) && string.Equals(r.Codigo, code, StringComparison.OrdinalIgnoreCase)));
+        if (match != null)
+        {
+            SelectedRow = match;
+        }
     }
 
     partial void InitializeSessionHandlers();
@@ -233,22 +253,12 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
             if (selectedPartida != null) selectedPartida.IsActiva = false;
             selectedPartida = value;
             if (selectedPartida != null) selectedPartida.IsActiva = true;
-            OnPropertyChanged(nameof(SelectedPartida));
-            OnPropertyChanged(nameof(PartidaCodigo));
-            OnPropertyChanged(nameof(PartidaDescripcion));
-            OnPropertyChanged(nameof(PartidaUnidad));
-            OnPropertyChanged(nameof(PartidaUnidadText));
-            OnPropertyChanged(nameof(PartidaPositionText));
-            OnPropertyChanged(nameof(PartidaCantidadText));
-            OnPropertyChanged(nameof(PartidaObservacionesText));
-            OnPropertyChanged(nameof(ExcluidoCubicacion));
-            OnPropertyChanged(nameof(MotivoNoCubicarText));
-            OnPropertyChanged(nameof(HasPartidaNote));
-            OnPropertyChanged(nameof(PartidaNoteLabel));
-            OnPropertyChanged(nameof(IsEmpty));
-            OnPropertyChanged(nameof(HasPartida));
-            OnPropertyChanged(nameof(IsReadOnly));
-            OnPropertyChanged(nameof(PartidaEstadoText));
+            OnPropertyChanged(nameof(SelectedPartida)); OnPropertyChanged(nameof(PartidaCodigo)); OnPropertyChanged(nameof(PartidaDescripcion));
+            OnPropertyChanged(nameof(PartidaUnidad)); OnPropertyChanged(nameof(PartidaUnidadText)); OnPropertyChanged(nameof(PartidaPositionText));
+            OnPropertyChanged(nameof(PartidaCantidadText)); OnPropertyChanged(nameof(PartidaObservacionesText)); OnPropertyChanged(nameof(ExcluidoCubicacion));
+            OnPropertyChanged(nameof(MotivoNoCubicarText)); OnPropertyChanged(nameof(HasPartidaNote)); OnPropertyChanged(nameof(PartidaNoteLabel));
+            OnPropertyChanged(nameof(IsEmpty)); OnPropertyChanged(nameof(HasPartida)); OnPropertyChanged(nameof(IsDetailHeaderVisible));
+            OnPropertyChanged(nameof(IsReadOnly)); OnPropertyChanged(nameof(PartidaEstadoText));
             NotifyCubicacionSummaryChanged();
             LoadCubicacionRows();
             ((RelayCommand)AplicarConjuntoCommand).RaiseCanExecuteChanged();
@@ -272,33 +282,40 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
         }
     }
 
-    public string PartidaFilter
-    {
-        get => partidaFilter;
-        set
-        {
-            if (SetProperty(ref partidaFilter, value))
-                SchedulePartidaFilter();
-        }
-    }
+    public string PartidaFilter { get => partidaFilter; set { if (SetProperty(ref partidaFilter, value)) SchedulePartidaFilter(); } }
 
     private void SchedulePartidaFilter()
     {
-        partidaFilterDebounceTimer ??= new System.Windows.Threading.DispatcherTimer
-        {
-            Interval = TimeSpan.FromMilliseconds(200)
-        };
+        partidaFilterDebounceTimer ??= new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(200) };
         partidaFilterDebounceTimer.Stop();
         partidaFilterDebounceTimer.Tick -= OnPartidaFilterDebounceTick;
         partidaFilterDebounceTimer.Tick += OnPartidaFilterDebounceTick;
         partidaFilterDebounceTimer.Start();
     }
 
-    private void OnPartidaFilterDebounceTick(object? sender, EventArgs e)
+    private void OnPartidaFilterDebounceTick(object? sender, EventArgs e) { partidaFilterDebounceTimer?.Stop(); ApplyFilter(); }
+
+    private CubicacionStatusFilterMode partidaStatusFilter = CubicacionStatusFilterMode.Todos;
+    public CubicacionStatusFilterMode PartidaStatusFilter
     {
-        partidaFilterDebounceTimer?.Stop();
-        ApplyFilter();
+        get => partidaStatusFilter;
+        set { if (SetProperty(ref partidaStatusFilter, value)) { OnPropertyChanged(nameof(IsPartidaFilterTodos)); OnPropertyChanged(nameof(IsPartidaFilterListas)); OnPropertyChanged(nameof(IsPartidaFilterPendientes)); ApplyFilter(); } }
     }
+
+    public bool IsPartidaFilterTodos { get => partidaStatusFilter == CubicacionStatusFilterMode.Todos; set { if (value) PartidaStatusFilter = CubicacionStatusFilterMode.Todos; } }
+    public bool IsPartidaFilterListas { get => partidaStatusFilter == CubicacionStatusFilterMode.Listas; set { if (value) PartidaStatusFilter = CubicacionStatusFilterMode.Listas; } }
+    public bool IsPartidaFilterPendientes { get => partidaStatusFilter == CubicacionStatusFilterMode.Pendientes; set { if (value) PartidaStatusFilter = CubicacionStatusFilterMode.Pendientes; } }
+
+    private int totalPartidasCount, listasPartidasCount, pendientesPartidasCount;
+    public int TotalPartidasCount { get => totalPartidasCount; set => SetProperty(ref totalPartidasCount, value); }
+    public int ListasPartidasCount { get => listasPartidasCount; set => SetProperty(ref listasPartidasCount, value); }
+    public int PendientesPartidasCount { get => pendientesPartidasCount; set => SetProperty(ref pendientesPartidasCount, value); }
+    public string TotalFilterLabel => $"Todas ({totalPartidasCount})";
+    public string ListasFilterLabel => $"✓ Listas ({listasPartidasCount})";
+    public string PendientesFilterLabel => $"⚠️ Pendientes ({pendientesPartidasCount})";
+
+    public void NotifyFilterCountsChanged() { OnPropertyChanged(nameof(TotalFilterLabel)); OnPropertyChanged(nameof(ListasFilterLabel)); OnPropertyChanged(nameof(PendientesFilterLabel)); }
+    internal void UpdateFilterCounts() => loadingService.UpdateFilterCounts();
 
     private string resourceSearchText = "";
 
@@ -598,7 +615,7 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
             {
                 if (selectedPartida.Cantidad != parsed)
                 {
-                    undo.PushUndoPoint(session, $"Cambiar cantidad partida {selectedPartida.Codigo}");
+                    undo.PushUndoPoint(session, $"Modificar cantidad en Partida {selectedPartida.Codigo} ({selectedPartida.Cantidad:G29} → {parsed:G29})");
 
                     var item = session.Itemizado.FirstOrDefault(x => string.Equals(x.Id, selectedPartida.Id, StringComparison.OrdinalIgnoreCase));
                     if (item != null)
@@ -687,6 +704,16 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
     public ICommand AplicarConjuntoCommand { get; }
     public ICommand RefreshPricesCommand { get; private set; } = null!;
     public ICommand OpenProjectCommand { get; }
+    public ICommand NavigateToApuCommand { get; }
+
+    private void NavigateToApu()
+    {
+        if (SelectedPartida != null && !string.IsNullOrWhiteSpace(SelectedPartida.Id))
+        {
+            session.PendingItemizadoSelectionId = SelectedPartida.Id;
+        }
+        shell.RequestNavigate(QubiCostElectrical.Wpf.Navigation.ShellRoute.Apu);
+    }
 
     public bool ShowEmptyState
     {
@@ -696,6 +723,8 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
 
     internal void UpdateEmptyState() =>
         ShowEmptyState = !projectWorkspace.HasOpenProject;
+
+    public ProjectFileData? CaptureSnapshot() => session.IsReadOnly ? null : session.CreateSnapshot();
 
     // IRefreshablePage
     public void Refresh()

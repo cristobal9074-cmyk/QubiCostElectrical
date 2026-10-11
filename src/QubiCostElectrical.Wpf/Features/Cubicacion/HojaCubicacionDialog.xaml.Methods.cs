@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -53,7 +54,7 @@ public partial class HojaCubicacionDialog : Window
 
     private void ApplyPickModeChrome()
     {
-        Title = "Hoja de Cubicación — elegir cantidad";
+        Title = "Hoja de Cubicación — Elegir cantidad para presupuesto";
         PickModeBanner.Visibility = Visibility.Visible;
     }
 
@@ -70,10 +71,7 @@ public partial class HojaCubicacionDialog : Window
         itemGrids.Remove(item);
     }
 
-    // Los ítems se conservan en memoria y se le pasan al PRÓXIMO diálogo que se abra (ver
-    // CubicacionViewModel.OpenHojaCubicacion) — sin desuscribirse acá, cada reapertura sumaría
-    // otro OnItemPropertyChanged de esta instancia ya cerrada, acumulando manejadores muertos.
-    private void OnDialogClosed(object? sender, System.EventArgs e)
+    private void OnDialogClosed(object? sender, EventArgs e)
     {
         foreach (var item in items)
             item.PropertyChanged -= OnItemPropertyChanged;
@@ -94,7 +92,10 @@ public partial class HojaCubicacionDialog : Window
         decimal total = 0m;
         foreach (var item in items)
             total += item.Subtotal;
-        GrandTotalRun.Text = total.ToString("N2");
+        string fmt = total.ToString("N2", CultureInfo.CurrentCulture);
+        GrandTotalRun.Text = fmt;
+        if (HeaderGrandTotalRun != null)
+            HeaderGrandTotalRun.Text = fmt;
     }
 
     private void OnItemGridLoaded(object sender, RoutedEventArgs e)
@@ -104,47 +105,404 @@ public partial class HojaCubicacionDialog : Window
 
         itemGrids[item] = grid;
 
-        // Loaded puede dispararse más de una vez para la misma grilla (ej. al colapsar/expandir
-        // el ítem). Reconstruir las columnas de nuevo en ese caso deja las filas ya generadas
-        // (sobre todo la primera) con celdas apuntando a columnas viejas — de ahí que solo se
-        // vuelva a intentar escribir ahí y no funcione. Por eso BuildColumns solo corre una vez
-        // por instancia de grilla; los cambios reales de cantidad de columnas (+Agregar columna)
-        // se reconstruyen aparte, vía OnItemPropertyChanged.
         if (loadedGrids.Add(grid))
             BuildColumns(grid, item);
 
         grid.PreviewKeyDown -= OnItemGridPreviewKeyDown;
         grid.PreviewKeyDown += OnItemGridPreviewKeyDown;
+        grid.PreviewTextInput -= OnItemGridPreviewTextInput;
+        grid.PreviewTextInput += OnItemGridPreviewTextInput;
         grid.CurrentCellChanged -= OnItemGridCurrentCellChanged;
         grid.CurrentCellChanged += OnItemGridCurrentCellChanged;
 
-        // Shift+clic para seleccionar un rango: clic en la primera celda (selección normal),
-        // mantener Shift y clic en la última celda del rango. Se prefiere sobre "clic y arrastrar"
-        // porque no depende de rastrear MouseMove durante la captura del mouse (frágil de
-        // depurar) — es un solo evento, determinístico, y es un gesto igualmente válido en Excel.
         grid.PreviewMouseLeftButtonDown -= OnItemGridPreviewMouseLeftButtonDown;
         grid.PreviewMouseLeftButtonDown += OnItemGridPreviewMouseLeftButtonDown;
 
-        // Deja el foco de teclado listo en la primera celda de datos apenas se abre el ítem —
-        // sin esto, hasta el primer clic del usuario la grilla puede no tener foco real
-        // (solo selección visual por mouse), y las teclas no llegan a ninguna celda.
-        Dispatcher.BeginInvoke(new System.Action(() =>
+        Dispatcher.BeginInvoke(new Action(() =>
         {
             if (grid.Items.Count > 0 && grid.Columns.Count > 2)
                 DataGridExcelNavigation.FocusCell(grid, 0, grid.Columns[2]);
         }), System.Windows.Threading.DispatcherPriority.Loaded);
     }
 
+    private sealed class FormulaPointModeState
+    {
+        public DataGrid Grid { get; set; } = null!;
+        public HojaCubicacionItemVm Item { get; set; } = null!;
+        public TextBox Editor { get; set; } = null!;
+        public int EditRowIndex { get; set; }
+        public int EditColIndex { get; set; }
+        public int TargetRowIndex { get; set; }
+        public int TargetColIndex { get; set; }
+        public int PrefixLength { get; set; }
+        public bool IsActive { get; set; }
+        public bool IsFormulaBar { get; set; }
+    }
+
+    private FormulaPointModeState? _pointMode;
+
+    private void HandlePointModeArrowKey(
+        DataGrid grid,
+        HojaCubicacionItemVm item,
+        TextBox editor,
+        Key key,
+        ModifierKeys modifiers)
+    {
+        if (_pointMode == null || !_pointMode.IsActive || _pointMode.Grid != grid || _pointMode.Editor != editor)
+        {
+            var cell = FindAncestor<DataGridCell>(editor);
+            var row = FindAncestor<DataGridRow>(editor);
+            int originRow = row != null ? grid.Items.IndexOf(row.Item) : grid.SelectedIndex;
+            int originCol = cell != null ? grid.Columns.IndexOf(cell.Column) : -1;
+
+            if (originRow < 0) originRow = grid.SelectedIndex >= 0 ? grid.SelectedIndex : 0;
+            if (originCol < 2)
+            {
+                if (grid.CurrentCell.IsValid && grid.CurrentCell.Column != null)
+                    originCol = grid.Columns.IndexOf(grid.CurrentCell.Column);
+                if (originCol < 2) originCol = 2; // Por defecto columna C
+            }
+
+            _pointMode = new FormulaPointModeState
+            {
+                Grid = grid,
+                Item = item,
+                Editor = editor,
+                EditRowIndex = originRow,
+                EditColIndex = originCol,
+                TargetRowIndex = originRow,
+                TargetColIndex = originCol,
+                PrefixLength = editor.Text.Length,
+                IsActive = true,
+                IsFormulaBar = editor.Name == "FormulaBarInput"
+            };
+        }
+
+        int targetRow = _pointMode.TargetRowIndex;
+        int targetCol = _pointMode.TargetColIndex;
+
+        switch (key)
+        {
+            case Key.Left:
+                targetCol--;
+                break;
+            case Key.Right:
+                targetCol++;
+                break;
+            case Key.Up:
+                targetRow--;
+                break;
+            case Key.Down:
+                targetRow++;
+                break;
+        }
+
+        if (targetCol < 2) targetCol = 2;
+
+        int maxDataColIndex = grid.Columns.Count - 2;
+        if (targetCol > maxDataColIndex)
+        {
+            item.AddColumn();
+            BuildColumns(grid, item);
+            grid.UpdateLayout();
+            maxDataColIndex = grid.Columns.Count - 2;
+        }
+
+        if (targetRow < 0) targetRow = 0;
+        if (targetRow >= grid.Items.Count)
+        {
+            item.AddFila();
+            grid.UpdateLayout();
+        }
+
+        _pointMode.TargetRowIndex = targetRow;
+        _pointMode.TargetColIndex = targetCol;
+
+        string colHeader = grid.Columns[targetCol].Header?.ToString() ?? "";
+        if (string.IsNullOrEmpty(colHeader) || colHeader == "Descripción" || colHeader == "Suma")
+        {
+            colHeader = HojaCubicacionColumns.DataColumnLetter(targetCol - 2);
+        }
+
+        int rowNum = targetRow + 1;
+        string cellRef = $"{colHeader}{rowNum}";
+
+        string prefix = _pointMode.Editor.Text.Length >= _pointMode.PrefixLength
+            ? _pointMode.Editor.Text.Substring(0, _pointMode.PrefixLength)
+            : _pointMode.Editor.Text;
+
+        _pointMode.Editor.Text = prefix + cellRef;
+        _pointMode.Editor.CaretIndex = _pointMode.Editor.Text.Length;
+
+        if (targetRow >= 0 && targetRow < grid.Items.Count && targetCol >= 0 && targetCol < grid.Columns.Count)
+        {
+            var rowItem = grid.Items[targetRow];
+            var colObj = grid.Columns[targetCol];
+            grid.ScrollIntoView(rowItem, colObj);
+            grid.SelectedCells.Clear();
+            grid.SelectedCells.Add(new DataGridCellInfo(rowItem, colObj));
+        }
+
+        _pointMode.Editor.Focus();
+
+        var itemRoot = FindAncestor<Border>(grid);
+        if (itemRoot != null)
+        {
+            var previewBlock = FindDescendantByName<TextBlock>(itemRoot, "FormulaBarPreview");
+            UpdateFormulaPreview(previewBlock, _pointMode.Editor.Text);
+
+            if (!_pointMode.IsFormulaBar)
+            {
+                var formulaInput = FindDescendantByName<TextBox>(itemRoot, "FormulaBarInput");
+                if (formulaInput != null)
+                {
+                    formulaInput.Text = _pointMode.Editor.Text;
+                }
+            }
+        }
+    }
+
+    private void OnItemGridPreviewTextInput(object sender, TextCompositionEventArgs e)
+    {
+        if (sender is not DataGrid grid) return;
+        if (string.IsNullOrEmpty(e.Text)) return;
+
+        // Si estamos en Point Mode activo y el usuario escribe un operador o carácter:
+        if (_pointMode != null && _pointMode.IsActive && _pointMode.Grid == grid)
+        {
+            char ch = e.Text[0];
+            bool isOp = ch is '+' or '-' or '*' or '/' or '^' or '%' or '(' or ')' or ',' or ';' or ':';
+
+            if (isOp || char.IsLetterOrDigit(ch))
+            {
+                _pointMode.IsActive = false;
+
+                var ed = _pointMode.Editor;
+                int pos = ed.CaretIndex >= 0 ? ed.CaretIndex : ed.Text.Length;
+                ed.Text = ed.Text.Insert(pos, e.Text);
+                ed.CaretIndex = pos + e.Text.Length;
+
+                var itemRoot = FindAncestor<Border>(grid);
+                if (itemRoot != null)
+                {
+                    var previewBlock = FindDescendantByName<TextBlock>(itemRoot, "FormulaBarPreview");
+                    UpdateFormulaPreview(previewBlock, ed.Text);
+                    if (!_pointMode.IsFormulaBar)
+                    {
+                        var formulaInput = FindDescendantByName<TextBox>(itemRoot, "FormulaBarInput");
+                        if (formulaInput != null) formulaInput.Text = ed.Text;
+                    }
+                }
+
+                e.Handled = true;
+                return;
+            }
+        }
+
+        if (char.IsControl(e.Text[0])) return;
+        if (DataGridExcelNavigation.IsEditing(grid)) return;
+
+        var col = grid.CurrentCell.Column;
+        if (col == null || col.IsReadOnly || grid.IsReadOnly) return;
+
+        if (grid.BeginEdit())
+        {
+            var cell = DataGridExcelNavigation.GetCurrentCell(grid);
+            cell?.UpdateLayout();
+            var textBox = cell != null ? DataGridExcelNavigation.FindVisualChild<TextBox>(cell) : null;
+            if (textBox != null)
+            {
+                textBox.Focus();
+                textBox.Text = e.Text;
+                textBox.CaretIndex = textBox.Text.Length;
+                e.Handled = true;
+            }
+        }
+    }
+
     private void OnItemGridPreviewKeyDown(object sender, KeyEventArgs e)
     {
         if (sender is not DataGrid grid || grid.DataContext is not HojaCubicacionItemVm item) return;
 
-        // Agregar/quitar fila SOLO con Ctrl+Plus / Ctrl+Minus (o el botón "+ Agregar fila") —
-        // Enter ya NO agrega filas automáticamente: eso hacía que cualquier Enter normal (para
-        // confirmar una celda y bajar a la de abajo) terminara creando filas de sobra sin que el
-        // usuario lo pidiera.
-        bool editingTextForRows = Keyboard.FocusedElement is TextBoxBase;
-        if (!editingTextForRows && Keyboard.Modifiers == ModifierKeys.Control &&
+        TextBox? editor = Keyboard.FocusedElement as TextBox;
+
+        // Escape mientras se edita celda o en Point Mode
+        if (e.Key == Key.Escape)
+        {
+            if (_pointMode != null && _pointMode.IsActive && _pointMode.Grid == grid)
+            {
+                var ed = _pointMode.Editor;
+                if (ed.Text.Length >= _pointMode.PrefixLength)
+                {
+                    ed.Text = ed.Text.Substring(0, _pointMode.PrefixLength);
+                    ed.CaretIndex = ed.Text.Length;
+                }
+                _pointMode.IsActive = false;
+                e.Handled = true;
+                return;
+            }
+
+            if (DataGridExcelNavigation.IsEditing(grid))
+            {
+                _pointMode = null;
+                grid.CancelEdit();
+                e.Handled = true;
+                return;
+            }
+        }
+
+        // Backspace mientras se está en Point Mode activo: revertir a la posición previa
+        if (e.Key == Key.Back && _pointMode != null && _pointMode.IsActive && _pointMode.Grid == grid)
+        {
+            var ed = _pointMode.Editor;
+            if (ed.Text.Length >= _pointMode.PrefixLength)
+            {
+                ed.Text = ed.Text.Substring(0, _pointMode.PrefixLength);
+                ed.CaretIndex = ed.Text.Length;
+            }
+            _pointMode.IsActive = false;
+            e.Handled = true;
+            return;
+        }
+
+        // F2: Activar edición in-situ
+        if (editor == null && e.Key == Key.F2)
+        {
+            if (grid.CurrentCell.Column != null && !grid.CurrentCell.Column.IsReadOnly)
+            {
+                grid.BeginEdit();
+                e.Handled = true;
+                return;
+            }
+        }
+
+        // Flechas del teclado en edición (Point Mode tipo Excel)
+        if (e.Key is Key.Left or Key.Right or Key.Up or Key.Down && editor != null)
+        {
+            bool isPointActive = _pointMode != null && _pointMode.IsActive && _pointMode.Grid == grid;
+            bool isOpenFormula = IsFormulaOpenForCellReference(editor.Text);
+
+            if (isPointActive || isOpenFormula)
+            {
+                HandlePointModeArrowKey(grid, item, editor, e.Key, Keyboard.Modifiers);
+                e.Handled = true;
+                return;
+            }
+        }
+
+        // Delete / Backspace cuando no se edita texto: borrar celdas seleccionadas
+        if (editor == null && e.Key is Key.Delete or Key.Back)
+        {
+            if (grid.SelectedCells.Any(c => c.IsValid && c.Column != null && !c.Column.IsReadOnly))
+            {
+                DataGridExcelNavigation.ClearSelection(grid);
+                e.Handled = true;
+                return;
+            }
+        }
+
+        // Enter / Shift+Enter: confirmar y mover arriba/abajo
+        if (e.Key is Key.Enter or Key.Return)
+        {
+            if (_pointMode != null && _pointMode.Grid == grid)
+            {
+                _pointMode.IsActive = false;
+                _pointMode = null;
+            }
+
+            if (DataGridExcelNavigation.IsEditing(grid))
+            {
+                grid.CommitEdit(DataGridEditingUnit.Cell, true);
+                grid.CommitEdit(DataGridEditingUnit.Row, true);
+                item.RefreshAllDisplays();
+                RefreshGrandTotal();
+
+                var currentColumn = grid.CurrentCell.Column
+                    ?? grid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible && !c.IsReadOnly)
+                    ?? grid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible);
+                object? currentItem = grid.CurrentCell.Item ?? grid.SelectedItem;
+
+                if (currentColumn != null && currentItem != null)
+                {
+                    int offset = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift ? -1 : 1;
+                    grid.Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        DataGridExcelNavigation.MoveToRowOffset(grid, currentColumn, offset, currentItem);
+                    }), System.Windows.Threading.DispatcherPriority.Input);
+                }
+                e.Handled = true;
+                return;
+            }
+
+            if (editor == null)
+            {
+                var currentColumn = grid.CurrentCell.Column
+                    ?? grid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible && !c.IsReadOnly)
+                    ?? grid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible);
+                object? currentItem = grid.CurrentCell.Item ?? grid.SelectedItem;
+
+                if (currentColumn != null && currentItem != null)
+                {
+                    int offset = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift ? -1 : 1;
+                    DataGridExcelNavigation.MoveToRowOffset(grid, currentColumn, offset, currentItem);
+                    e.Handled = true;
+                    return;
+                }
+            }
+        }
+
+        // Tab / Shift+Tab: avanzar / retroceder columna
+        if (e.Key == Key.Tab)
+        {
+            if (_pointMode != null && _pointMode.Grid == grid)
+            {
+                _pointMode.IsActive = false;
+                _pointMode = null;
+            }
+
+            if (DataGridExcelNavigation.IsEditing(grid))
+            {
+                grid.CommitEdit(DataGridEditingUnit.Cell, true);
+                grid.CommitEdit(DataGridEditingUnit.Row, true);
+                item.RefreshAllDisplays();
+                RefreshGrandTotal();
+
+                var currentColumn = grid.CurrentCell.Column
+                    ?? grid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible && !c.IsReadOnly)
+                    ?? grid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible);
+                object? currentItem = grid.CurrentCell.Item ?? grid.SelectedItem;
+
+                if (currentColumn != null && currentItem != null)
+                {
+                    int offset = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift ? -1 : 1;
+                    grid.Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        DataGridExcelNavigation.MoveToColumnOffset(grid, currentColumn, offset, wrapRows: true, currentItem);
+                    }), System.Windows.Threading.DispatcherPriority.Input);
+                }
+                e.Handled = true;
+                return;
+            }
+
+            if (editor == null)
+            {
+                var currentColumn = grid.CurrentCell.Column
+                    ?? grid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible && !c.IsReadOnly)
+                    ?? grid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible);
+                object? currentItem = grid.CurrentCell.Item ?? grid.SelectedItem;
+
+                if (currentColumn != null && currentItem != null)
+                {
+                    int offset = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift ? -1 : 1;
+                    DataGridExcelNavigation.MoveToColumnOffset(grid, currentColumn, offset, wrapRows: true, currentItem);
+                    e.Handled = true;
+                    return;
+                }
+            }
+        }
+
+        // Agregar/quitar fila con Ctrl+Plus / Ctrl+Minus
+        if (editor == null && Keyboard.Modifiers == ModifierKeys.Control &&
             e.Key is Key.Add or Key.OemPlus)
         {
             item.AddFila();
@@ -152,7 +510,7 @@ public partial class HojaCubicacionDialog : Window
             return;
         }
 
-        if (!editingTextForRows && Keyboard.Modifiers == ModifierKeys.Control &&
+        if (editor == null && Keyboard.Modifiers == ModifierKeys.Control &&
             e.Key is Key.Subtract or Key.OemMinus &&
             grid.CurrentItem is HojaCubicacionFilaVm filaActual)
         {
@@ -161,16 +519,10 @@ public partial class HojaCubicacionDialog : Window
             return;
         }
 
-        // Ctrl+C / Ctrl+X / Ctrl+V solo cuando NO se está escribiendo dentro de una celda —
-        // si el foco está en el TextBox de edición, se deja el copiar/pegar nativo del TextBox.
-        bool editingText = Keyboard.FocusedElement is TextBoxBase;
-        if (!editingText && Keyboard.Modifiers == ModifierKeys.Control && e.Key is Key.C or Key.X)
+        // Ctrl+C / Ctrl+X / Ctrl+V
+        if (editor == null && Keyboard.Modifiers == ModifierKeys.Control && e.Key is Key.C or Key.X)
         {
             DataGridExcelNavigation.CopySelectionToClipboard(grid);
-            // El marco punteado animado de "esto se copió" se calcula para una grilla fija de
-            // una sola tabla; acá hay varias grillas apiladas (una por ítem) con su propio
-            // scroll y layout, así que termina posicionado mal — se saca de inmediato, el
-            // copiado al portapapeles ya funcionó sin necesidad de esa marca visual.
             DataGridExcelNavigation.ClearCopyMarker(grid);
             if (e.Key == Key.X)
                 DataGridExcelNavigation.ClearSelection(grid);
@@ -178,7 +530,7 @@ public partial class HojaCubicacionDialog : Window
             return;
         }
 
-        if (!editingText && Keyboard.Modifiers == ModifierKeys.Control && e.Key == Key.V)
+        if (editor == null && Keyboard.Modifiers == ModifierKeys.Control && e.Key == Key.V)
         {
             string text = Clipboard.ContainsText() ? Clipboard.GetText() : "";
             if (!string.IsNullOrEmpty(text))
@@ -188,9 +540,7 @@ public partial class HojaCubicacionDialog : Window
         }
     }
 
-    // ── Barra de fórmulas: muestra "celda actual" (ej. "C4") y su contenido crudo, editable
-    // desde ahí igual que en Excel — sirve además como "fila de entrada de datos" siempre
-    // visible, sin depender de encontrar la celda exacta entre 300 columnas.
+    // ── Barra de fórmulas conectada en tiempo real ──
     private void OnItemGridCurrentCellChanged(object? sender, EventArgs e)
     {
         if (sender is not DataGrid grid) return;
@@ -199,6 +549,7 @@ public partial class HojaCubicacionDialog : Window
 
         var refText = FindDescendantByName<TextBlock>(itemRoot, "FormulaBarRef");
         var inputBox = FindDescendantByName<TextBox>(itemRoot, "FormulaBarInput");
+        var previewBlock = FindDescendantByName<TextBlock>(itemRoot, "FormulaBarPreview");
         if (refText == null || inputBox == null) return;
 
         var cellInfo = grid.CurrentCell;
@@ -208,6 +559,7 @@ public partial class HojaCubicacionDialog : Window
             inputBox.Text = "";
             inputBox.Tag = null;
             inputBox.IsEnabled = false;
+            if (previewBlock != null) previewBlock.Text = "";
             return;
         }
 
@@ -215,7 +567,51 @@ public partial class HojaCubicacionDialog : Window
         refText.Text = $"{cellInfo.Column.Header}{rowNumber}";
         inputBox.Tag = cellInfo;
         inputBox.IsEnabled = !cellInfo.Column.IsReadOnly;
-        inputBox.Text = DataGridExcelNavigation.GetCellText(cellInfo.Item, cellInfo.Column);
+        string cellText = DataGridExcelNavigation.GetCellText(cellInfo.Item, cellInfo.Column);
+        inputBox.Text = cellText;
+
+        UpdateFormulaPreview(previewBlock, cellText);
+    }
+
+    private void OnFormulaBarTextChanged(object sender, TextChangedEventArgs e)
+    {
+        var box = (TextBox)sender;
+        var itemRoot = FindAncestor<Border>(box);
+        if (itemRoot == null) return;
+        var previewBlock = FindDescendantByName<TextBlock>(itemRoot, "FormulaBarPreview");
+        UpdateFormulaPreview(previewBlock, box.Text);
+    }
+
+    private static void UpdateFormulaPreview(TextBlock? previewBlock, string raw)
+    {
+        if (previewBlock == null) return;
+        string text = (raw ?? "").Trim();
+        if (string.IsNullOrEmpty(text))
+        {
+            previewBlock.Text = "";
+            return;
+        }
+
+        try
+        {
+            var singleRow = new List<string> { text };
+            var eval = HojaCubicacionFormulaEngine.EvaluateRow(singleRow);
+            if (eval.Cells.Count > 0 && eval.Cells[0].Success)
+            {
+                previewBlock.Text = $"= {eval.Cells[0].DisplayText}";
+                previewBlock.Foreground = (Brush)Application.Current.FindResource("Brush.Green");
+            }
+            else if (eval.Cells.Count > 0)
+            {
+                previewBlock.Text = eval.Cells[0].DisplayText;
+                previewBlock.Foreground = (Brush)Application.Current.FindResource("Brush.Red");
+            }
+        }
+        catch
+        {
+            previewBlock.Text = "¡ERROR!";
+            previewBlock.Foreground = (Brush)Application.Current.FindResource("Brush.Red");
+        }
     }
 
     private void OnFormulaBarKeyDown(object sender, KeyEventArgs e)
@@ -223,9 +619,47 @@ public partial class HojaCubicacionDialog : Window
         if (e.Key != Key.Enter && e.Key != Key.Escape) return;
         var box = (TextBox)sender;
         if (e.Key == Key.Enter)
+        {
             CommitFormulaBar(box);
+            if (box.Tag is DataGridCellInfo cellInfo && cellInfo.IsValid)
+            {
+                var itemRoot = FindAncestor<Border>(box);
+                var grid = itemRoot != null ? FindDescendantByName<DataGrid>(itemRoot, null) : null;
+                if (grid != null && cellInfo.Column != null)
+                {
+                    DataGridExcelNavigation.MoveToRowOffset(grid, cellInfo.Column, 1, cellInfo.Item);
+                }
+            }
+        }
+        else if (e.Key == Key.Escape)
+        {
+            // Restaurar valor original
+            if (box.Tag is DataGridCellInfo cellInfo && cellInfo.IsValid && cellInfo.Column != null)
+                box.Text = DataGridExcelNavigation.GetCellText(cellInfo.Item, cellInfo.Column);
+        }
+
         e.Handled = true;
         Keyboard.ClearFocus();
+    }
+
+    private void OnFormulaBarPreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (sender is not TextBox box) return;
+        if (e.Key is not (Key.Left or Key.Right or Key.Up or Key.Down)) return;
+
+        var itemRoot = FindAncestor<Border>(box);
+        if (itemRoot == null) return;
+        var grid = FindDescendantByName<DataGrid>(itemRoot, null);
+        if (grid == null || grid.DataContext is not HojaCubicacionItemVm item) return;
+
+        bool isPointActive = _pointMode != null && _pointMode.IsActive && _pointMode.Editor == box;
+        bool isOpenFormula = IsFormulaOpenForCellReference(box.Text);
+
+        if (isPointActive || isOpenFormula)
+        {
+            HandlePointModeArrowKey(grid, item, box, e.Key, Keyboard.Modifiers);
+            e.Handled = true;
+        }
     }
 
     private void OnFormulaBarLostFocus(object sender, RoutedEventArgs e) => CommitFormulaBar((TextBox)sender);
@@ -235,20 +669,59 @@ public partial class HojaCubicacionDialog : Window
         if (box.Tag is not DataGridCellInfo cellInfo || !cellInfo.IsValid || cellInfo.Column == null)
             return;
         DataGridExcelNavigation.SetCellText(cellInfo.Item, cellInfo.Column, box.Text);
+        var itemRoot = FindAncestor<Border>(box);
+        var grid = itemRoot != null ? FindDescendantByName<DataGrid>(itemRoot, null) : null;
+        if (grid?.DataContext is HojaCubicacionItemVm item)
+        {
+            item.RefreshAllDisplays();
+            RefreshGrandTotal();
+        }
     }
 
-    // ── Shift+clic: selecciona el rectángulo de celdas entre la celda activa y la clickeada ──
+    private void OnFxButtonClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button btn) return;
+        var itemRoot = FindAncestor<Border>(btn);
+        if (itemRoot == null) return;
+        var inputBox = FindDescendantByName<TextBox>(itemRoot, "FormulaBarInput");
+        if (inputBox == null || !inputBox.IsEnabled) return;
+
+        var menu = new ContextMenu();
+
+        void AddMenuItem(string header, string template, int cursorOffset)
+        {
+            var mi = new MenuItem { Header = header };
+            mi.Click += (_, _) =>
+            {
+                inputBox.Focus();
+                inputBox.Text = template;
+                inputBox.CaretIndex = cursorOffset;
+            };
+            menu.Items.Add(mi);
+        }
+
+        AddMenuItem("SUMA(rango) — Sumar serie o rango continuo", "=SUMA(C:E)", 6);
+        AddMenuItem("PROMEDIO(rango) — Promedio de celdas", "=PROMEDIO(C:E)", 10);
+        AddMenuItem("MIN(rango) — Valor mínimo", "=MIN(C:E)", 5);
+        AddMenuItem("MAX(rango) — Valor máximo", "=MAX(C:E)", 5);
+        AddMenuItem("REDONDEAR(celda; dec) — Redondeo con decimales", "=REDONDEAR(C; 2)", 11);
+        AddMenuItem("PORCENTAJE (%) — ej. C*15%", "* 15%", 0);
+        AddMenuItem("CONTAR(rango) — Contar celdas con datos", "=CONTAR(C:E)", 8);
+
+        menu.PlacementTarget = btn;
+        menu.Placement = PlacementMode.Bottom;
+        menu.IsOpen = true;
+    }
+
+    // ── Shift+clic: selección rectangular ──
     private void OnItemGridPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         var grid = (DataGrid)sender;
 
-        // Modo selección: un clic normal (sin modificadores) sobre la columna Suma (B), en una
-        // fila de datos con total, entrega ese valor a quien abrió el diálogo. Se revisa ANTES
-        // que el resto para no competir con Shift+clic (rango) ni con el clic normal nativo.
         if (IsPickMode && Keyboard.Modifiers == ModifierKeys.None)
         {
             var hitCell = HitTestCell(grid, e.GetPosition(grid));
-            if (hitCell?.Item is HojaCubicacionFilaVm fila && !fila.IsLabelRow &&
+            if (hitCell?.Item is HojaCubicacionFilaVm fila &&
                 hitCell.Value.Column?.Header is string header && header == "Suma" &&
                 !string.IsNullOrWhiteSpace(fila.SumaDisplay) &&
                 decimal.TryParse(fila.SumaDisplay.Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal picked))
@@ -261,7 +734,85 @@ public partial class HojaCubicacionDialog : Window
             }
         }
 
-        if (Keyboard.Modifiers != ModifierKeys.Shift) return; // clic normal: que lo maneje el DataGrid nativo
+        // Point-and-Click estilo Excel (con Mouse o Teclado): Si se está editando una fórmula abierta en la celda o en la barra fx,
+        // hacer clic en otra celda inserta su dirección (ej. D1 o H2) en vez de perder la fórmula.
+        TextBox? targetEditor = Keyboard.FocusedElement as TextBox;
+        if (targetEditor == null)
+        {
+            var itemRootNode = FindAncestor<Border>(grid);
+            targetEditor = itemRootNode != null ? FindDescendantByName<TextBox>(itemRootNode, "FormulaBarInput") : null;
+        }
+
+        if (targetEditor != null && targetEditor.IsEnabled && Keyboard.Modifiers == ModifierKeys.None)
+        {
+            string currentFormula = targetEditor.Text;
+            bool isOpen = IsFormulaOpenForCellReference(currentFormula) || (_pointMode != null && _pointMode.IsActive && _pointMode.Editor == targetEditor);
+            if (isOpen)
+            {
+                var hit = HitTestCell(grid, e.GetPosition(grid));
+                if (hit != null && hit.Value.Column != null && hit.Value.Item != null)
+                {
+                    string colH = hit.Value.Column.Header?.ToString() ?? "";
+                    if (!string.IsNullOrEmpty(colH) && colH != "Descripción" && colH != "Suma")
+                    {
+                        int rNum = grid.Items.IndexOf(hit.Value.Item) + 1;
+                        int cIdx = grid.Columns.IndexOf(hit.Value.Column);
+                        int rIdx = grid.Items.IndexOf(hit.Value.Item);
+                        string cellRef = $"{colH}{rNum}";
+
+                        if (_pointMode == null || !_pointMode.IsActive || _pointMode.Editor != targetEditor)
+                        {
+                            _pointMode = new FormulaPointModeState
+                            {
+                                Grid = grid,
+                                Item = (HojaCubicacionItemVm)grid.DataContext,
+                                Editor = targetEditor,
+                                EditRowIndex = rIdx,
+                                EditColIndex = cIdx,
+                                TargetRowIndex = rIdx,
+                                TargetColIndex = cIdx,
+                                PrefixLength = targetEditor.Text.Length,
+                                IsActive = true,
+                                IsFormulaBar = targetEditor.Name == "FormulaBarInput"
+                            };
+                        }
+                        else
+                        {
+                            _pointMode.TargetRowIndex = rIdx;
+                            _pointMode.TargetColIndex = cIdx;
+                        }
+
+                        string prefix = targetEditor.Text.Length >= _pointMode.PrefixLength
+                            ? targetEditor.Text.Substring(0, _pointMode.PrefixLength)
+                            : targetEditor.Text;
+
+                        targetEditor.Text = prefix + cellRef;
+                        targetEditor.CaretIndex = targetEditor.Text.Length;
+                        targetEditor.Focus();
+
+                        grid.SelectedCells.Clear();
+                        grid.SelectedCells.Add(new DataGridCellInfo(hit.Value.Item, hit.Value.Column));
+
+                        var itemRoot = FindAncestor<Border>(grid);
+                        if (itemRoot != null)
+                        {
+                            var previewBlock = FindDescendantByName<TextBlock>(itemRoot, "FormulaBarPreview");
+                            UpdateFormulaPreview(previewBlock, targetEditor.Text);
+                            if (!_pointMode.IsFormulaBar)
+                            {
+                                var formulaInput = FindDescendantByName<TextBox>(itemRoot, "FormulaBarInput");
+                                if (formulaInput != null) formulaInput.Text = targetEditor.Text;
+                            }
+                        }
+
+                        e.Handled = true;
+                        return;
+                    }
+                }
+            }
+        }
+
+        if (Keyboard.Modifiers != ModifierKeys.Shift) return;
 
         var anchor = grid.CurrentCell;
         if (!anchor.IsValid) return;
@@ -296,10 +847,10 @@ public partial class HojaCubicacionDialog : Window
         int currentCol = columns.IndexOf(current.Column);
         if (anchorRow < 0 || currentRow < 0 || anchorCol < 0 || currentCol < 0) return;
 
-        int rowMin = System.Math.Min(anchorRow, currentRow);
-        int rowMax = System.Math.Max(anchorRow, currentRow);
-        int colMin = System.Math.Min(anchorCol, currentCol);
-        int colMax = System.Math.Max(anchorCol, currentCol);
+        int rowMin = Math.Min(anchorRow, currentRow);
+        int rowMax = Math.Max(anchorRow, currentRow);
+        int colMin = Math.Min(anchorCol, currentCol);
+        int colMax = Math.Max(anchorCol, currentCol);
 
         grid.SelectedCells.Clear();
         for (int r = rowMin; r <= rowMax; r++)
@@ -314,22 +865,16 @@ public partial class HojaCubicacionDialog : Window
 
     private static T? FindAncestor<T>(DependencyObject child) where T : DependencyObject
     {
-        var current = VisualTreeHelper.GetParent(child);
-        while (current != null)
-        {
-            if (current is T match) return match;
-            current = VisualTreeHelper.GetParent(current);
-        }
-        return null;
+        return QubiCostElectrical.Wpf.Infrastructure.VisualTreeHelperSafe.FindAncestor<T>(child);
     }
 
-    private static T? FindDescendantByName<T>(DependencyObject root, string name) where T : FrameworkElement
+    private static T? FindDescendantByName<T>(DependencyObject root, string? name) where T : FrameworkElement
     {
         int count = VisualTreeHelper.GetChildrenCount(root);
         for (int i = 0; i < count; i++)
         {
             var child = VisualTreeHelper.GetChild(root, i);
-            if (child is T match && match.Name == name)
+            if (child is T match && (name == null || match.Name == name))
                 return match;
             var found = FindDescendantByName<T>(child, name);
             if (found != null) return found;
@@ -341,24 +886,15 @@ public partial class HojaCubicacionDialog : Window
     {
         grid.Columns.Clear();
 
-        // Estilo de celda "hit-testeable": DataGridCell.Excel no fija un Background por defecto
-        // (solo lo hace vía el trigger IsSelected), así que en el estado normal la celda queda
-        // con Background=null — y en WPF una celda sin Background explícito NO recibe hit-test
-        // de mouse en sus zonas vacías, solo donde hay texto dibujado. Eso rompía por completo el
-        // arrastre para seleccionar un rango: la mayoría de los puntos del mouse no "tocaban"
-        // ninguna celda. Con un Background transparente pero explícito, toda el área de la celda
-        // vuelve a ser detectable, sin cambiar cómo se ve.
         var hitTestableCellStyle = new Style(typeof(DataGridCell), (Style)Application.Current.FindResource("DataGridCell.Excel"));
         hitTestableCellStyle.Setters.Add(new Setter(Control.BackgroundProperty, Brushes.Transparent));
 
-        // Placeholder ("Nombra las columnas aquí →") en cursiva/atenuado, solo visible cuando la
-        // fila de nombres está vacía — para no confundirlo con una descripción real ya escrita.
         var descripcionElementStyle = new Style(typeof(TextBlock));
         var placeholderTrigger = new MultiDataTrigger();
         placeholderTrigger.Conditions.Add(new Condition(new Binding(nameof(HojaCubicacionFilaVm.IsLabelRow)), true));
-        placeholderTrigger.Conditions.Add(new Condition(new Binding(nameof(HojaCubicacionFilaVm.Descripcion)) { Converter = new QubiCostElectrical.Wpf.Infrastructure.StringNotEmptyToBoolConverter() }, false));
+        placeholderTrigger.Conditions.Add(new Condition(new Binding(nameof(HojaCubicacionFilaVm.Descripcion)) { Converter = new StringNotEmptyToBoolConverter() }, false));
         placeholderTrigger.Setters.Add(new Setter(TextBlock.FontStyleProperty, FontStyles.Italic));
-        placeholderTrigger.Setters.Add(new Setter(TextBlock.ForegroundProperty, (System.Windows.Media.Brush)Application.Current.FindResource("Brush.Muted")));
+        placeholderTrigger.Setters.Add(new Setter(TextBlock.ForegroundProperty, (Brush)Application.Current.FindResource("Brush.Muted")));
         descripcionElementStyle.Triggers.Add(placeholderTrigger);
 
         grid.Columns.Add(new DisplayBindingTextColumn
@@ -366,7 +902,7 @@ public partial class HojaCubicacionDialog : Window
             Header = "Descripción",
             Binding = new Binding(nameof(HojaCubicacionFilaVm.Descripcion)) { UpdateSourceTrigger = UpdateSourceTrigger.LostFocus },
             DisplayBinding = new Binding(nameof(HojaCubicacionFilaVm.DescripcionDisplay)),
-            Width = 220,
+            Width = 180,
             CellStyle = hitTestableCellStyle,
             ElementStyle = descripcionElementStyle
         });
@@ -375,42 +911,31 @@ public partial class HojaCubicacionDialog : Window
         {
             Header = "Suma",
             Binding = new Binding(nameof(HojaCubicacionFilaVm.SumaDisplay)),
-            Width = 90,
+            Width = 76,
             IsReadOnly = true
         };
         var sumaCellStyle = new Style(typeof(DataGridCell), (Style)Application.Current.FindResource("DataGridCell.Excel"));
-        sumaCellStyle.Setters.Add(new Setter(Control.BackgroundProperty, (System.Windows.Media.Brush)Application.Current.FindResource("Brush.GreenSoft")));
-        sumaCellStyle.Setters.Add(new Setter(Control.ForegroundProperty, (System.Windows.Media.Brush)Application.Current.FindResource("Brush.Green")));
+        sumaCellStyle.Setters.Add(new Setter(Control.BackgroundProperty, (Brush)Application.Current.FindResource("Brush.GreenSoft")));
+        sumaCellStyle.Setters.Add(new Setter(Control.ForegroundProperty, (Brush)Application.Current.FindResource("Brush.Green")));
         sumaCellStyle.Setters.Add(new Setter(Control.FontWeightProperty, FontWeights.Bold));
-        // La fila de nombres de columna no tiene suma (es texto libre, no cubica nada) — se
-        // apaga el verde ahí para no insinuar que hay un total calculado en esa fila.
+
         var noSumaForLabelRow = new DataTrigger { Binding = new Binding(nameof(HojaCubicacionFilaVm.IsLabelRow)), Value = true };
         noSumaForLabelRow.Setters.Add(new Setter(Control.BackgroundProperty, Brushes.Transparent));
         noSumaForLabelRow.Setters.Add(new Setter(Control.ForegroundProperty, Brushes.Transparent));
         sumaCellStyle.Triggers.Add(noSumaForLabelRow);
+
         if (IsPickMode)
         {
-            // Afordancia visual de "esto es clickeable" — cursor de mano y resalte al pasar el
-            // mouse, solo en modo selección (en el uso normal la columna Suma es de solo lectura).
             sumaCellStyle.Setters.Add(new Setter(FrameworkElement.CursorProperty, Cursors.Hand));
-            sumaCellStyle.Setters.Add(new Setter(FrameworkElement.ToolTipProperty, "Clic para usar este valor"));
+            sumaCellStyle.Setters.Add(new Setter(FrameworkElement.ToolTipProperty, "Clic para usar este valor en presupuesto"));
             var hover = new Trigger { Property = UIElement.IsMouseOverProperty, Value = true };
-            hover.Setters.Add(new Setter(Control.BackgroundProperty, (System.Windows.Media.Brush)Application.Current.FindResource("Brush.Green")));
+            hover.Setters.Add(new Setter(Control.BackgroundProperty, (Brush)Application.Current.FindResource("Brush.Green")));
             hover.Setters.Add(new Setter(Control.ForegroundProperty, Brushes.White));
             sumaCellStyle.Triggers.Add(hover);
         }
         sumaColumn.CellStyle = sumaCellStyle;
         grid.Columns.Add(sumaColumn);
 
-        // Igual que una hoja de Excel real: A = Descripción, B = Suma, C en adelante = datos.
-        // Los encabezados usan letras reales de columna (C, D... Z, AA...). Nombrar cada columna
-        // (ej. "Depto 1") se hace en la PRIMERA FILA de la grilla (fila de nombres, ver
-        // HojaCubicacionFilaVm.IsLabelRow) — una fila real, no un control aparte en el
-        // encabezado, para que tenga automáticamente las mismas funciones que cualquier otra
-        // celda: selección, navegación con teclado, copiar/pegar, Ctrl+D/R para correlativos.
-        // El texto en edición (Valores[i]) es el crudo escrito por el usuario — número o fórmula
-        // — y el mostrado (ValoresDisplay[i]) es el resultado ya calculado, o vacío si la celda
-        // no tiene datos (nunca "0" de relleno).
         int columnCount = item.ColumnCount;
         for (int i = 0; i < columnCount; i++)
         {
@@ -419,19 +944,20 @@ public partial class HojaCubicacionDialog : Window
                 Header = HojaCubicacionColumns.DataColumnLetter(i),
                 Binding = new Binding($"Valores[{i}]") { UpdateSourceTrigger = UpdateSourceTrigger.LostFocus },
                 DisplayBinding = new Binding($"ValoresDisplay[{i}]"),
-                Width = 40,
+                Width = 42,
                 CellStyle = hitTestableCellStyle
             });
         }
 
-        var deleteColumn = new DataGridTemplateColumn { Header = "", Width = 36 };
-        var factory = new System.Windows.FrameworkElementFactory(typeof(Button));
+        var deleteColumn = new DataGridTemplateColumn { Header = "", Width = 26 };
+        var factory = new FrameworkElementFactory(typeof(Button));
         factory.SetValue(Button.ContentProperty, "✕");
         factory.SetValue(Button.PaddingProperty, new Thickness(0));
+        factory.SetValue(Button.FontSizeProperty, 10.0);
         factory.SetValue(Button.ToolTipProperty, "Quitar fila");
 
-        // La fila de nombres de columna no se puede quitar — se oculta el botón ahí.
-        var deleteButtonStyle = new Style(typeof(Button), (Style)Application.Current.FindResource("Button.Secondary"));
+        var deleteButtonStyle = new Style(typeof(Button), (Style)Application.Current.FindResource("Button.Ghost"));
+        deleteButtonStyle.Setters.Add(new Setter(Control.ForegroundProperty, (Brush)Application.Current.FindResource("Brush.Muted")));
         var hideForLabelRow = new DataTrigger { Binding = new Binding(nameof(HojaCubicacionFilaVm.IsLabelRow)), Value = true };
         hideForLabelRow.Setters.Add(new Setter(UIElement.VisibilityProperty, Visibility.Collapsed));
         deleteButtonStyle.Triggers.Add(hideForLabelRow);
@@ -466,6 +992,16 @@ public partial class HojaCubicacionDialog : Window
             item.IsCollapsed = !item.IsCollapsed;
     }
 
+    private void OnExpandAllClick(object sender, RoutedEventArgs e)
+    {
+        foreach (var item in items) item.IsCollapsed = false;
+    }
+
+    private void OnCollapseAllClick(object sender, RoutedEventArgs e)
+    {
+        foreach (var item in items) item.IsCollapsed = true;
+    }
+
     private void OnAddRowClick(object sender, RoutedEventArgs e)
     {
         if (((FrameworkElement)sender).Tag is HojaCubicacionItemVm item)
@@ -482,6 +1018,43 @@ public partial class HojaCubicacionDialog : Window
     {
         if (((FrameworkElement)sender).DataContext is not HojaCubicacionFilaVm fila) return;
         fila.Owner?.RemoveFila(fila);
+    }
+
+    private void OnToggleHelpClick(object sender, RoutedEventArgs e)
+    {
+        HelpPopup.IsOpen = !HelpPopup.IsOpen;
+    }
+
+    private void OnWindowKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape && Keyboard.FocusedElement is not TextBoxBase)
+        {
+            if (HelpPopup.IsOpen)
+            {
+                HelpPopup.IsOpen = false;
+                e.Handled = true;
+                return;
+            }
+            DialogResult = true;
+        }
+    }
+
+    private static bool IsFormulaOpenForCellReference(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return false;
+        string t = text.Trim();
+        if (!t.StartsWith("=") && !t.StartsWith("+"))
+        {
+            if (t.Length > 0)
+            {
+                char lastCh = t[^1];
+                return lastCh is '+' or '-' or '*' or '/' or '^' or '(' or ',' or ';' or ':';
+            }
+            return false;
+        }
+        if (t.Length == 1) return true;
+        char last = t[^1];
+        return last is '=' or '+' or '-' or '*' or '/' or '^' or '%' or '(' or ',' or ';' or ':';
     }
 
     private void OnCloseClick(object sender, RoutedEventArgs e)

@@ -32,7 +32,7 @@ public static class ProjectTemplateCatalog
             Id = "blank",
             Nombre = "Presupuesto en Blanco",
             Subtitulo = "Sin partidas preconfiguradas",
-            Descripcion = "Inicia un proyecto limpio desde cero para importar desde Excel o crear partidas manualmente.",
+            Descripcion = "Inicia un proyecto limpio desde cero para importar una tabla o crear partidas manualmente.",
             NormaSec = "General",
             Icono = "📄",
             EsEnBlanco = true,

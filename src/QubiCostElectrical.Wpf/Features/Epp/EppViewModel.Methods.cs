@@ -100,6 +100,20 @@ public sealed partial class EppViewModel : SessionAwareViewModelBase, IRefreshab
         }
     }
 
+    public int MesesObra
+    {
+        get => mesesObra;
+        set
+        {
+            if (SetProperty(ref mesesObra, Math.Clamp(value, 0, 120)))
+            {
+                if (!suppressDirty)
+                    ApplyQuantityFormulaToUi();
+                MarkDirty();
+            }
+        }
+    }
+
     public int MesesDirecta
     {
         get => mesesDirecta;
@@ -291,11 +305,11 @@ public sealed partial class EppViewModel : SessionAwareViewModelBase, IRefreshab
         AddBlankItem(AccOpcionalesSecciones.FirstOrDefault());
     }
 
-    private decimal DefaultCantidad(string side) => side switch
+    private decimal DefaultCantidad(string side, string? concepto = null) => side switch
     {
-        "dir" => EppBudgetData.ComputeCantidadDirecta(DotacionDirecta, MesesDirecta),
-        "ind" => EppBudgetData.ComputeCantidadIndirecta(DotacionIndirecta, MesesIndirecta),
-        _ => DotacionDirecta > 0 ? EppBudgetData.ComputeCantidadDirecta(DotacionDirecta, MesesDirecta) : 0m
+        "dir" => EppBudgetData.ComputeCantidadDirecta(MesesObra, MesesDirecta, DotacionDirecta),
+        "ind" => EppBudgetData.ComputeCantidadIndirecta(MesesObra, MesesIndirecta, DotacionIndirecta),
+        _ => EppBudgetData.ComputeCantidadOpcional(concepto, MesesObra, MesesDirecta, MesesIndirecta, DotacionDirecta)
     };
 
     private void LoadFromSession()
@@ -311,12 +325,12 @@ public sealed partial class EppViewModel : SessionAwareViewModelBase, IRefreshab
         {
             var data = session.Data;
             ProjectSnapshotIntegrity.Ensure(data);
-            var (dotDir, dotInd) = EppBudgetData.ReadMoDotacion(data);
+            var mo = EppBudgetData.ReadMoDrivers(data);
 
             var epp = data.Epp;
             if (epp == null || !epp.HasContent)
             {
-                epp = EppBudgetData.CreateSeed(dotDir, dotInd);
+                epp = EppBudgetData.CreateSeed(mo.MesesObra, mo.PromedioDirecto, mo.DotacionIndirecta);
                 data.Epp = epp;
                 if (CanEdit)
                 {
@@ -329,7 +343,7 @@ public sealed partial class EppViewModel : SessionAwareViewModelBase, IRefreshab
             else
             {
                 // Siempre alinear dotación con MO al abrir (cantidades se recalculan).
-                epp.ApplyMoDotacion(dotDir, dotInd);
+                epp.ApplyMoDotacion(mo.MesesObra, mo.PromedioDirecto, mo.DotacionIndirecta);
                 data.Epp = epp;
                 if (CanEdit)
                     EppBudgetData.PushToGoCategory(data, epp);
@@ -337,9 +351,9 @@ public sealed partial class EppViewModel : SessionAwareViewModelBase, IRefreshab
 
             ApplyEppToUi(epp);
             HasPendingChanges = false;
-            StatusMessage = dotDir + dotInd > 0
-                ? $"Sincronizado con MO · {dotDir} dir. · {dotInd} ind."
-                : "MO en 0 — EPP listo para cuando cargues dotación";
+            StatusMessage = mo.MesesObra > 0 && mo.PromedioDirecto + mo.DotacionIndirecta > 0
+                ? $"Sincronizado con MO · {mo.MesesObra} meses · promedio {mo.PromedioDirecto} dir. · {mo.DotacionIndirecta} ind."
+                : "MO en 0 — EPP listo para cuando cargues la dotación";
         }
         finally
         {
@@ -365,6 +379,7 @@ public sealed partial class EppViewModel : SessionAwareViewModelBase, IRefreshab
 
     private void ApplyEppToUi(EppBudgetData epp)
     {
+        MesesObra = Math.Max(0, epp.MesesObra);
         MesesDirecta = epp.MesesDirecta > 0 ? epp.MesesDirecta : 3;
         MesesIndirecta = epp.MesesIndirecta > 0 ? epp.MesesIndirecta : 6;
         DotacionDirecta = epp.DotacionDirecta;
@@ -392,30 +407,23 @@ public sealed partial class EppViewModel : SessionAwareViewModelBase, IRefreshab
 
     private void ApplyQuantityFormulaToUi()
     {
-        var cantDir = EppBudgetData.ComputeCantidadDirecta(DotacionDirecta, MesesDirecta);
-        var cantInd = EppBudgetData.ComputeCantidadIndirecta(DotacionIndirecta, MesesIndirecta);
+        var cantDir = EppBudgetData.ComputeCantidadDirecta(MesesObra, MesesDirecta, DotacionDirecta);
+        var cantInd = EppBudgetData.ComputeCantidadIndirecta(MesesObra, MesesIndirecta, DotacionIndirecta);
         foreach (var item in MoDirectaSecciones.SelectMany(s => s.Items))
             item.Cantidad = cantDir;
         foreach (var item in MoIndirectaSecciones.SelectMany(s => s.Items))
             item.Cantidad = cantInd;
-
-        var hasMo = DotacionDirecta > 0 || DotacionIndirecta > 0;
         foreach (var item in AccOpcionalesSecciones.SelectMany(s => s.Items))
-        {
-            if (item.Concepto.Contains("Cubrenuca", StringComparison.OrdinalIgnoreCase))
-                item.Cantidad = cantDir;
-            else if (!hasMo)
-                item.Cantidad = 0;
-        }
+            item.Cantidad = EppBudgetData.ComputeCantidadOpcional(item.Concepto, MesesObra, MesesDirecta, MesesIndirecta, DotacionDirecta);
 
         RecalcTotals();
     }
 
     private void UpdateMoSyncLabel()
     {
-        MoSyncLabel = DotacionDirecta + DotacionIndirecta > 0
-            ? $"MO · {DotacionDirecta} dir · {DotacionIndirecta} ind"
-            : "MO · sin dotación";
+        MoSyncLabel = MesesObra > 0
+            ? $"MO · {MesesObra} meses · promedio {DotacionDirecta} · ind. {DotacionIndirecta}"
+            : "MO · sin meses de obra";
     }
 
     private void RecalcTotals()
@@ -435,7 +443,7 @@ public sealed partial class EppViewModel : SessionAwareViewModelBase, IRefreshab
             : $"{opcItems} ítems · Excluido";
         IndumentariaTotalLabel = $"Valor indumentaria: $ {(TotalMoDirecta + TotalMoIndirecta):N0}";
         ItemsCountLabel = $"{dirItems + indItems + opcItems}";
-        FooterText = $"M.O. Directa ({MesesDirecta}m): {TotalMoDirectaLabel} · M.O. Indirecta ({MesesIndirecta}m): {TotalMoIndirectaLabel} · Acc. Opcionales: {(OpcionalesIncluidos ? TotalAccOpcionalesLabel : "$ 0")} · GO 3.5 ← {TotalEppLabel}";
+        FooterText = $"Obra {MesesObra} meses · Directa (ciclo {MesesDirecta} m): {TotalMoDirectaLabel} · Indirecta (ciclo {MesesIndirecta} m): {TotalMoIndirectaLabel} · Acc. opcionales: {(OpcionalesIncluidos ? TotalAccOpcionalesLabel : "$ 0")} · GO 3.5 ← {TotalEppLabel}";
 
         OnPropertyChanged(nameof(TotalEppLabel));
         OnPropertyChanged(nameof(TotalMoDirectaLabel));
@@ -477,6 +485,7 @@ public sealed partial class EppViewModel : SessionAwareViewModelBase, IRefreshab
 
     private EppBudgetData BuildData() => new()
     {
+        MesesObra = MesesObra,
         MesesDirecta = MesesDirecta,
         MesesIndirecta = MesesIndirecta,
         DotacionDirecta = DotacionDirecta,
@@ -508,13 +517,14 @@ public sealed partial class EppViewModel : SessionAwareViewModelBase, IRefreshab
     {
         if (!CanEdit) return;
         var data = session.Data;
-        var (dotDir, dotInd) = EppBudgetData.ReadMoDotacion(data);
+        var mo = EppBudgetData.ReadMoDrivers(data);
 
         suppressDirty = true;
         try
         {
-            DotacionDirecta = dotDir;
-            DotacionIndirecta = dotInd;
+            MesesObra = mo.MesesObra;
+            DotacionDirecta = mo.PromedioDirecto;
+            DotacionIndirecta = mo.DotacionIndirecta;
             ApplyQuantityFormulaToUi();
 
             // También sincroniza opcionales con la misma regla de dominio.
@@ -532,13 +542,12 @@ public sealed partial class EppViewModel : SessionAwareViewModelBase, IRefreshab
         {
             PersistEppAndGo();
             HasPendingChanges = false;
-            StatusMessage = $"Sync MO → EPP → GO 3.5 · {dotDir} dir. · {dotInd} ind.";
+            StatusMessage = $"Sync MO → EPP → GO 3.5 · {mo.MesesObra} meses · promedio {mo.PromedioDirecto} · ind. {mo.DotacionIndirecta}.";
         }
         else
         {
-            // Persistencia ya hecha desde Mano de obra; solo UI.
             HasPendingChanges = false;
-            StatusMessage = $"Cantidades alineadas con MO · {dotDir} dir. · {dotInd} ind.";
+            StatusMessage = $"Cantidades alineadas con MO · {mo.MesesObra} meses · promedio {mo.PromedioDirecto} · ind. {mo.DotacionIndirecta}.";
         }
 
         OnPropertyChanged(nameof(StatusMessage));
@@ -550,8 +559,8 @@ public sealed partial class EppViewModel : SessionAwareViewModelBase, IRefreshab
         suppressDirty = true;
         try
         {
-            var (dotDir, dotInd) = EppBudgetData.ReadMoDotacion(session.Data);
-            var seed = EppBudgetData.CreateSeed(dotDir, dotInd);
+            var mo = EppBudgetData.ReadMoDrivers(session.Data);
+            var seed = EppBudgetData.CreateSeed(mo.MesesObra, mo.PromedioDirecto, mo.DotacionIndirecta);
             ApplyEppToUi(seed);
         }
         finally
@@ -588,7 +597,7 @@ public sealed partial class EppViewModel : SessionAwareViewModelBase, IRefreshab
         }
         if (sec == null) return;
 
-        sec.AddItem(entry.Concepto, DefaultCantidad(catalogTargetSide), entry.Precio);
+        sec.AddItem(entry.Concepto, DefaultCantidad(catalogTargetSide, entry.Concepto), entry.Precio);
     }
 
     private string GuessSide(EppSeccionVm? sec)

@@ -208,6 +208,73 @@ public sealed class ExcelExportTests : IDisposable
         Assert.Equal("contenido previo válido", File.ReadAllText(_outputPath));
     }
 
+    [Fact]
+    public void Export_ItemizadoCliente_ContieneFormulasVivas()
+    {
+        var ctx = MinimalContext();
+        var exporter = new ExcelExportInfrastructure();
+        exporter.Export(ctx, _outputPath);
+
+        using var wb = new XLWorkbook(_outputPath);
+        var ws = wb.Worksheet("02_ITEMIZADO_CLIENTE");
+
+        // Fila 2 contiene parámetro dinámico de Valor UF en B2
+        Assert.Equal(37000m, ReadDecimal(ws.Cell(2, 2)));
+
+        // Fila 4 es el título del capítulo 1 y contiene fórmula de subtotal SUM(F5:F5)
+        Assert.True(ws.Cell(4, 6).HasFormula);
+        Assert.Equal("SUM(F5:F5)", ws.Cell(4, 6).FormulaA1);
+        Assert.True(ws.Cell(4, 8).HasFormula);
+        Assert.Equal("SUM(H5:H5)", ws.Cell(4, 8).FormulaA1);
+
+        // Fila 5 es la partida 1.1 y contiene fórmulas activas
+        Assert.True(ws.Cell(5, 6).HasFormula, "Total UF debe ser fórmula.");
+        Assert.Equal("D5*E5", ws.Cell(5, 6).FormulaA1);
+
+        Assert.True(ws.Cell(5, 7).HasFormula, "P.U. CLP debe ser fórmula referenciando B2.");
+        Assert.Equal("E5*$B$2", ws.Cell(5, 7).FormulaA1);
+
+        Assert.True(ws.Cell(5, 8).HasFormula, "Total CLP debe ser fórmula.");
+        Assert.Equal("D5*G5", ws.Cell(5, 8).FormulaA1);
+
+        // Fila 6 es Total Neto Presupuesto
+        Assert.True(ws.Cell(6, 6).HasFormula);
+        Assert.Equal("F4", ws.Cell(6, 6).FormulaA1);
+
+        // Fila 7 es IVA 19%
+        Assert.True(ws.Cell(7, 6).HasFormula);
+        Assert.Equal("F6*0.19", ws.Cell(7, 6).FormulaA1);
+
+        // Fila 8 es Total General Con IVA
+        Assert.True(ws.Cell(8, 6).HasFormula);
+        Assert.Equal("F6+F7", ws.Cell(8, 6).FormulaA1);
+    }
+
+    [Fact]
+    public void Export_HojaCosto_ContieneFormulasVivasYReferenciaUf()
+    {
+        var ctx = MinimalContext();
+        var exporter = new ExcelExportInfrastructure();
+        exporter.Export(ctx, _outputPath);
+
+        using var wb = new XLWorkbook(_outputPath);
+        var ws = wb.Worksheet("06_HOJA_COSTO");
+
+        // Fila 2 contiene parámetro B2
+        Assert.Equal(37000m, ReadDecimal(ws.Cell(2, 2)));
+
+        // Costo directo en fila 11 tiene fórmula viva SUM(B4:B10)
+        Assert.True(ws.Cell(11, 2).HasFormula);
+        Assert.Equal("SUM(B4:B10)", ws.Cell(11, 2).FormulaA1);
+
+        // Columna 3 (CLP) tiene fórmulas vivas referenciando B2
+        Assert.True(ws.Cell(4, 3).HasFormula);
+        Assert.Equal("B4*$B$2", ws.Cell(4, 3).FormulaA1);
+
+        Assert.True(ws.Cell(11, 3).HasFormula);
+        Assert.Equal("B11*$B$2", ws.Cell(11, 3).FormulaA1);
+    }
+
     private sealed class ThrowingBudgetCalculationService : IBudgetCalculationService
     {
         public void MarkDirtyItem(string? itemId) { }

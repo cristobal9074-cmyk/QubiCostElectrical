@@ -38,10 +38,24 @@
       <Setter Property="BorderThickness" Value="1" />
       <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
     </Style>
+
+    <Style x:Key="Mo.FraccionInput" TargetType="TextBox">
+      <Setter Property="Width" Value="62" />
+      <Setter Property="Height" Value="30" />
+      <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
+      <Setter Property="FontSize" Value="{StaticResource Font.Size.base}" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="TextAlignment" Value="Right" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+      <Setter Property="Padding" Value="6,0" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+    </Style>
   </UserControl.Resources>
 
   <Grid>
-    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+    <ScrollViewer x:Name="PageScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
                   Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
       <StackPanel Margin="0,0,24,24">
 
@@ -155,8 +169,6 @@
             </StackPanel>
 
             <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center" Margin="12,0,4,0">
-              <Button Name="ProjectionButton" Content="Proyección" Style="{StaticResource Button.Secondary}" Click="OnOpenProjection" Margin="0,0,8,0" MinWidth="100"
-                      IsEnabled="{Binding CanEdit}" />
               <Button Content="Restablecer" Style="{StaticResource Button.Secondary}" Command="{Binding ResetParamsCommand}" Margin="0,0,8,0" MinWidth="100" />
               <Button Content="Aplicar" Style="{StaticResource Button.Primary}" Command="{Binding ApplyCommand}" MinWidth="90" />
             </StackPanel>
@@ -215,29 +227,31 @@
                 </DockPanel>
               </Border>
               <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Padding="12,10">
-                <ItemsControl ItemsSource="{Binding ChartBars}">
-                  <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                      <StackPanel Orientation="Horizontal" />
-                    </ItemsPanelTemplate>
-                  </ItemsControl.ItemsPanel>
-                  <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                      <StackPanel Width="28" Margin="1,0" ToolTip="{Binding Tip}">
-                        <Border Height="120" VerticalAlignment="Bottom">
-                          <DockPanel LastChildFill="False" VerticalAlignment="Bottom">
-                            <Border DockPanel.Dock="Bottom" Height="{Binding DirPct}" MinHeight="1"
-                                    Background="{DynamicResource Brush.Blue2}" CornerRadius="2,2,0,0" Opacity="0.9" />
-                            <Border DockPanel.Dock="Bottom" Height="{Binding IndPct}" MinHeight="0"
-                                    Background="{DynamicResource Brush.AmberRisk}" CornerRadius="2,2,0,0" Opacity="0.85" Margin="0,0,0,0" />
-                          </DockPanel>
-                        </Border>
-                        <TextBlock Text="{Binding Label}" FontSize="{StaticResource Font.Size.micro}" FontFamily="{StaticResource Font.Mono}"
-                                   Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Center" Margin="0,4,0,0" />
-                      </StackPanel>
-                    </DataTemplate>
-                  </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                <Border x:Name="ChartWheelZone" Background="Transparent">
+                  <ItemsControl ItemsSource="{Binding ChartBars}">
+                    <ItemsControl.ItemsPanel>
+                      <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal" />
+                      </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <StackPanel Width="28" Margin="1,0" ToolTip="{Binding Tip}">
+                          <Border Height="120" VerticalAlignment="Bottom">
+                            <DockPanel LastChildFill="False" VerticalAlignment="Bottom">
+                              <Border DockPanel.Dock="Bottom" Height="{Binding DirPct}" MinHeight="1"
+                                      Background="{DynamicResource Brush.Blue2}" CornerRadius="2,2,0,0" Opacity="0.9" />
+                              <Border DockPanel.Dock="Bottom" Height="{Binding IndPct}" MinHeight="0"
+                                      Background="{DynamicResource Brush.AmberRisk}" CornerRadius="2,2,0,0" Opacity="0.85" Margin="0,0,0,0" />
+                            </DockPanel>
+                          </Border>
+                          <TextBlock Text="{Binding Label}" FontSize="{StaticResource Font.Size.micro}" FontFamily="{StaticResource Font.Mono}"
+                                     Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Center" Margin="0,4,0,0" />
+                        </StackPanel>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </Border>
               </ScrollViewer>
             </DockPanel>
           </Border>
@@ -393,6 +407,7 @@
                               <ColumnDefinition Width="40" />
                               <ColumnDefinition Width="*" />
                               <ColumnDefinition Width="Auto" />
+                              <ColumnDefinition Width="Auto" />
                               <ColumnDefinition Width="100" />
                             </Grid.ColumnDefinitions>
                             <Border Grid.Column="0" CornerRadius="4" Padding="4,2" Background="{DynamicResource Brush.AmberSoft}"
@@ -411,7 +426,17 @@
                                        Text="{Binding SueldoEditText, UpdateSourceTrigger=LostFocus}"
                                        LostFocus="OnSalaryLostFocus" />
                             </StackPanel>
-                            <StackPanel Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Right">
+                            <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0"
+                                        ToolTip="Fracción del sueldo cobrada en esta obra (0 a 1). Ej.: 0,30 = 30% del sueldo">
+                              <StackPanel Margin="0,0,6,0" VerticalAlignment="Center">
+                                <TextBlock Text="FRACCIÓN" FontSize="{StaticResource Font.Size.2xs}" Foreground="{DynamicResource Brush.Muted}" />
+                                <TextBlock Text="obra" FontSize="{StaticResource Font.Size.2xs}" Foreground="{DynamicResource Brush.Muted}" />
+                              </StackPanel>
+                              <TextBox Style="{StaticResource Mo.FraccionInput}"
+                                       Text="{Binding FraccionEditText, UpdateSourceTrigger=LostFocus}"
+                                       LostFocus="OnSalaryLostFocus" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="4" VerticalAlignment="Center" HorizontalAlignment="Right">
                               <TextBlock Text="c/ leyes" FontSize="{StaticResource Font.Size.2xs}" Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Right" />
                               <TextBlock Text="{Binding ConLeyesLabel}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.md}" FontWeight="SemiBold"
                                          Foreground="{DynamicResource Brush.Ink2}" HorizontalAlignment="Right" />
@@ -431,14 +456,24 @@
         <Border Style="{StaticResource Card.Section}" Padding="0" Margin="20,14,20,0">
           <StackPanel>
             <Border BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1" Padding="16,12" Background="{DynamicResource Brush.Surface2}">
-              <DockPanel>
-                <TextBlock Text="Dotación mensual por cargo" Style="{StaticResource Text.SectionTitle}" />
-                <TextBlock DockPanel.Dock="Right" Text="Celdas con color = carga relativa al pico · clic para editar"
-                           FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+              <DockPanel LastChildFill="True">
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                  <TextBlock Text="Celdas con color = carga relativa al pico · flechas/Tab mueven · vacío vuelve a la curva"
+                             FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}"
+                             VerticalAlignment="Center" Margin="0,0,12,0" />
+                  <Button Content="Tomar proyección MO" Style="{StaticResource Button.Secondary}"
+                          Command="{Binding TakeProjectionCommand}" MinWidth="150" Margin="0,0,8,0"
+                          ToolTip="Aplica los totales mensuales de la Proyección MO a la dotación directa de la tabla (reparto por dotación pico) y recalcula costos" />
+                  <Button Name="ProjectionButton" Content="Proyección MO" Style="{StaticResource Button.Secondary}"
+                          Click="OnOpenProjection" MinWidth="120" />
+                </StackPanel>
+                <TextBlock Text="Dotación mensual por cargo" Style="{StaticResource Text.SectionTitle}" VerticalAlignment="Center" />
               </DockPanel>
             </Border>
             <ScrollViewer x:Name="CargoTableScroll" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Hidden">
-              <Grid x:Name="CargoTableGrid" />
+              <Border x:Name="CargoWheelZone" Background="Transparent">
+                <Grid x:Name="CargoTableGrid" />
+              </Border>
             </ScrollViewer>
           </StackPanel>
         </Border>
@@ -454,7 +489,9 @@
               </DockPanel>
             </Border>
             <ScrollViewer x:Name="CostTableScroll" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Hidden">
-              <Grid x:Name="CostTableGrid" />
+              <Border x:Name="CostWheelZone" Background="Transparent">
+                <Grid x:Name="CostTableGrid" />
+              </Border>
             </ScrollViewer>
           </StackPanel>
         </Border>
@@ -522,29 +559,6 @@
         <Button Style="{StaticResource Button.Primary}" Content="Abrir proyecto…" Command="{Binding OpenProjectCommand}" MinWidth="180" />
       </ctrl:EmptyStateControl.Actions>
     </ctrl:EmptyStateControl>
-
-    <Popup Name="ProjectionPopup" PlacementTarget="{Binding ElementName=ProjectionButton}" Placement="Bottom" StaysOpen="False"
-           AllowsTransparency="True" PopupAnimation="Fade">
-      <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
-              CornerRadius="10" Padding="16" MaxWidth="900" MaxHeight="520">
-        <Border.Effect>
-          <DropShadowEffect BlurRadius="18" ShadowDepth="4" Opacity="0.18" Color="Black" />
-        </Border.Effect>
-        <DockPanel LastChildFill="True">
-          <DockPanel DockPanel.Dock="Top" LastChildFill="True" Margin="0,0,0,10">
-            <TextBlock Text="Proyección de mano de obra" FontSize="{StaticResource Font.Size.lg}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" />
-            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
-              <Button Content="+ Agregar tarea" Style="{StaticResource Button.Secondary}" Click="OnAddProjectionTask" Margin="0,0,8,0"
-                      IsEnabled="{Binding CanEdit}" />
-              <Button Content="Cerrar" Style="{StaticResource Button.Secondary}" Click="OnCloseProjection" />
-            </StackPanel>
-          </DockPanel>
-          <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-            <Grid Name="ProjectionTableGrid" />
-          </ScrollViewer>
-        </DockPanel>
-      </Border>
-    </Popup>
 
     <ctrl:SkeletonOverlayControl Panel.ZIndex="20" Message="Cargando mano de obra…"
                                  Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibility}}" />

@@ -190,7 +190,6 @@ public sealed class GastoOpCategoriaVm : ViewModelBase
 
         OnPropertyChanged(nameof(HasItems));
         OnPropertyChanged(nameof(ItemsCountLabel));
-        IsExpanded = true;
         RecalcFromItems();
     }
 

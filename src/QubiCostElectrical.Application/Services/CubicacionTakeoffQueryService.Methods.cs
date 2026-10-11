@@ -312,7 +312,7 @@ public sealed partial class CubicacionTakeoffQueryService : ICubicacionTakeoffQu
             return DefaultHeaders300;
 
         var defaults = new string[count];
-        for (int i = 0; i < count; i++) 
+        for (int i = 0; i < count; i++)
             defaults[i] = i < DefaultHeaders300.Length ? DefaultHeaders300[i] : $"Zona {i + 1}";
         return defaults;
     }

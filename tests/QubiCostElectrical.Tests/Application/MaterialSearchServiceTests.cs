@@ -11,8 +11,17 @@ public sealed class MaterialSearchServiceTests
 
     private static MaterialRow Mat(string codigo, string desc, string categoria = "", string subcategoria = "",
         string tipoInstalacion = "", string unidad = "UN", string marca = "")
-        => new() { Codigo = codigo, Descripcion = desc, Categoria = categoria, Subcategoria = subcategoria,
-            TipoInstalacion = tipoInstalacion, Unidad = unidad, Marca = marca, MatUf = 1m };
+        => new()
+        {
+            Codigo = codigo,
+            Descripcion = desc,
+            Categoria = categoria,
+            Subcategoria = subcategoria,
+            TipoInstalacion = tipoInstalacion,
+            Unidad = unidad,
+            Marca = marca,
+            MatUf = 1m
+        };
 
     [Fact]
     public void Normalize_RemovesDiacritics()

@@ -41,6 +41,7 @@ public sealed partial class CubicacionSCTechnicalReportExcelExporter : ICubicaci
         BuildCircuitSheet(wb, tableros);
         BuildMaterialsSheet(wb, context, materials, catalog);
         BuildConfigSheet(wb, config);
+        BuildCuadroCargasSecSheet(wb, context, tableros);
 
         wb.SaveAs(path);
     }
@@ -198,31 +199,31 @@ public sealed partial class CubicacionSCTechnicalReportExcelExporter : ICubicaci
 
         int row = 5;
         foreach (var board in tableros.OrderBy(x => x.Nombre, StringComparer.OrdinalIgnoreCase))
-        foreach (var circuit in board.Circuitos.OrderBy(x => x.Numero))
-        {
-            ws.Cell(row, 1).Value = board.Nombre;
-            ws.Cell(row, 2).Value = circuit.Numero;
-            ws.Cell(row, 3).Value = circuit.Tipo;
-            ws.Cell(row, 4).Value = circuit.Estado;
-            ws.Cell(row, 5).Value = circuit.Descripcion;
-            ws.Cell(row, 6).Value = circuit.DistanciaTablero;
-            ws.Cell(row, 7).Value = circuit.LargoTotal;
-            ws.Cell(row, 8).Value = circuit.TipoTuberia;
-            ws.Cell(row, 9).Value = circuit.SeccionTuberia;
-            ws.Cell(row, 10).Value = circuit.ConductorDerivacion;
-            ws.Cell(row, 11).Value = circuit.SeccionDerivacion;
-            ws.Cell(row, 12).Value = circuit.ConductorDistribucion;
-            ws.Cell(row, 13).Value = circuit.SeccionDistribucion;
-            ws.Cell(row, 14).Value = circuit.NumConductores;
-            ws.Cell(row, 15).Value = circuit.LargoDerivacion;
-            ws.Cell(row, 16).Value = circuit.LargoDistribucion;
-            ws.Cell(row, 17).Value = circuit.LargoTuberia;
-            ws.Cell(row, 18).Value = circuit.TotalCajas;
-            ws.Cell(row, 19).Value = circuit.Artefactos.Count == 0
-                ? "-"
-                : string.Join(", ", circuit.Artefactos.Select(a => a.Nombre));
-            row++;
-        }
+            foreach (var circuit in board.Circuitos.OrderBy(x => x.Numero))
+            {
+                ws.Cell(row, 1).Value = board.Nombre;
+                ws.Cell(row, 2).Value = circuit.Numero;
+                ws.Cell(row, 3).Value = circuit.Tipo;
+                ws.Cell(row, 4).Value = circuit.Estado;
+                ws.Cell(row, 5).Value = circuit.Descripcion;
+                ws.Cell(row, 6).Value = circuit.DistanciaTablero;
+                ws.Cell(row, 7).Value = circuit.LargoTotal;
+                ws.Cell(row, 8).Value = circuit.TipoTuberia;
+                ws.Cell(row, 9).Value = circuit.SeccionTuberia;
+                ws.Cell(row, 10).Value = circuit.ConductorDerivacion;
+                ws.Cell(row, 11).Value = circuit.SeccionDerivacion;
+                ws.Cell(row, 12).Value = circuit.ConductorDistribucion;
+                ws.Cell(row, 13).Value = circuit.SeccionDistribucion;
+                ws.Cell(row, 14).Value = circuit.NumConductores;
+                ws.Cell(row, 15).Value = circuit.LargoDerivacion;
+                ws.Cell(row, 16).Value = circuit.LargoDistribucion;
+                ws.Cell(row, 17).Value = circuit.LargoTuberia;
+                ws.Cell(row, 18).Value = circuit.TotalCajas;
+                ws.Cell(row, 19).Value = circuit.Artefactos.Count == 0
+                    ? "-"
+                    : string.Join(", ", circuit.Artefactos.Select(a => a.Nombre));
+                row++;
+            }
 
         ApplyTableFormat(ws, 4, row - 1, 19);
         if (row > 5)
@@ -432,5 +433,126 @@ public sealed partial class CubicacionSCTechnicalReportExcelExporter : ICubicaci
         if (name.StartsWith("CONDUCTOR") || name.StartsWith("CINTA LED")) return ("Conductores", 1);
         if (name.StartsWith("INT") || name.StartsWith("ENCH") || name.StartsWith("SENSOR") || name.StartsWith("SEÑAL") || name.StartsWith("MONTAJE")) return ("Artefactos", 2);
         return ("Cajas", 3);
+    }
+
+    public void ExportCuadroCargasSec(ExportProjectContext context, string path)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        if (string.IsNullOrWhiteSpace(path))
+            throw new ArgumentException("Ruta de exportacion requerida.", nameof(path));
+
+        Directory.CreateDirectory(Path.GetDirectoryName(path) ?? ".");
+
+        using var wb = new XLWorkbook();
+        var tableros = context.Data.CubicacionSC ?? new List<CuadroCargaSCRow>();
+        BuildCuadroCargasSecSheet(wb, context, tableros);
+        wb.SaveAs(path);
+    }
+
+    private static void BuildCuadroCargasSecSheet(XLWorkbook wb, ExportProjectContext ctx, IReadOnlyList<CuadroCargaSCRow> tableros)
+    {
+        var ws = wb.Worksheets.Add("05_CUADRO_CARGAS_SEC");
+        ApplyBaseStyle(ws);
+
+        WriteTitle(ws, "CUADRO DE CARGAS SEC (RIC N°02 / RIC N°03)");
+        WriteProjectHeader(ws, ctx, 2);
+
+        int row = 5;
+        foreach (var board in tableros.OrderBy(x => x.Nombre, StringComparer.OrdinalIgnoreCase))
+        {
+            var summary = CuadroCargasSecEngine.CalculateTableroSummary(board);
+
+            var cardHeader = ws.Range(row, 1, row, 12);
+            cardHeader.Merge();
+            cardHeader.Value = $"TABLERO: {summary.TableroNombre} - {summary.Descripcion}";
+            cardHeader.Style.Font.Bold = true;
+            cardHeader.Style.Font.FontSize = 11;
+            cardHeader.Style.Fill.BackgroundColor = XLColor.FromHtml("#1E293B");
+            cardHeader.Style.Font.FontColor = XLColor.White;
+            row++;
+
+            ws.Cell(row, 1).Value = "P. Instalada:";
+            ws.Cell(row, 2).Value = $"{summary.PotenciaTotalInstaladaKw:N2} kW";
+            ws.Cell(row, 3).Value = "F. Simultaneidad:";
+            ws.Cell(row, 4).Value = $"{summary.FactorSimultaneidad:P0}";
+            ws.Cell(row, 5).Value = "P. Demanda:";
+            ws.Cell(row, 6).Value = $"{summary.PotenciaTotalDemandaKw:N2} kW";
+            ws.Cell(row, 7).Value = "Fase R / S / T (kW):";
+            ws.Cell(row, 8).Value = $"R={summary.PotenciaFaseRKw:N2} | S={summary.PotenciaFaseSKw:N2} | T={summary.PotenciaFaseTKw:N2}";
+            ws.Cell(row, 9).Value = "% Desbalance:";
+            ws.Cell(row, 10).Value = $"{summary.PorcentajeDesbalance:N1}%";
+            ws.Cell(row, 11).Value = "Estado SEC:";
+            ws.Cell(row, 12).Value = summary.ConformeSec ? "CONFORME (≤ 10%)" : "ALERTA DESBALANCE (> 10%)";
+
+            var secStatusCell = ws.Cell(row, 12);
+            secStatusCell.Style.Font.Bold = true;
+            secStatusCell.Style.Font.FontColor = summary.ConformeSec ? XLColor.FromHtml("#15803D") : XLColor.FromHtml("#DC2626");
+
+            var metricRange = ws.Range(row, 1, row, 12);
+            metricRange.Style.Fill.BackgroundColor = XLColor.FromHtml("#F8FAFC");
+            metricRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+            metricRange.Style.Border.OutsideBorderColor = XLColor.FromHtml("#CBD5E1");
+            row++;
+
+            ws.Cell(row, 1).Value = "Disyuntor General:";
+            ws.Cell(row, 2).Value = summary.DisyuntorGeneralSugerido;
+            ws.Cell(row, 4).Value = "Diferencial General:";
+            ws.Cell(row, 5).Value = summary.DiferencialGeneralSugerido;
+            ws.Cell(row, 7).Value = "Alimentador Sugerido:";
+            ws.Cell(row, 8).Value = summary.AlimentadorSugerido;
+            ws.Cell(row, 10).Value = "Canalización:";
+            ws.Cell(row, 11).Value = summary.DuctoAlimentadorSugerido;
+            var techRange = ws.Range(row, 1, row, 12);
+            techRange.Style.Font.Italic = true;
+            techRange.Style.Fill.BackgroundColor = XLColor.FromHtml("#F1F5F9");
+            row += 2;
+
+            int headerRow = row;
+            WriteHeader(ws, row, new[]
+            {
+                "N°", "Descripción", "Tipo", "Sistema", "Fase", "Potencia W", "Potencia kW", "Corriente A",
+                "Disyuntor", "Diferencial", "Conductor", "Canalización"
+            });
+            row++;
+
+            foreach (var c in summary.Circuitos)
+            {
+                ws.Cell(row, 1).Value = c.Numero;
+                ws.Cell(row, 2).Value = c.Descripcion;
+                ws.Cell(row, 3).Value = c.Tipo;
+                ws.Cell(row, 4).Value = c.Sistema;
+                ws.Cell(row, 5).Value = c.Fase;
+                ws.Cell(row, 6).Value = c.PotenciaW;
+                ws.Cell(row, 7).Value = c.PotenciaKw;
+                ws.Cell(row, 8).Value = c.CorrienteA;
+                ws.Cell(row, 9).Value = c.Disyuntor;
+                ws.Cell(row, 10).Value = c.Diferencial;
+                ws.Cell(row, 11).Value = c.Conductor;
+                ws.Cell(row, 12).Value = c.Canalizacion;
+                row++;
+            }
+
+            ApplyTableFormat(ws, headerRow, row - 1, 12);
+            if (row > headerRow + 1)
+            {
+                ws.Range(headerRow + 1, 6, row - 1, 6).Style.NumberFormat.Format = "#,##0";
+                ws.Range(headerRow + 1, 7, row - 1, 7).Style.NumberFormat.Format = "#,##0.00";
+                ws.Range(headerRow + 1, 8, row - 1, 8).Style.NumberFormat.Format = "#,##0.0";
+            }
+            row += 2;
+        }
+
+        ws.Column(1).Width = 8;
+        ws.Column(2).Width = 26;
+        ws.Column(3).Width = 10;
+        ws.Column(4).Width = 10;
+        ws.Column(5).Width = 8;
+        ws.Column(6).Width = 14;
+        ws.Column(7).Width = 14;
+        ws.Column(8).Width = 14;
+        ws.Column(9).Width = 18;
+        ws.Column(10).Width = 18;
+        ws.Column(11).Width = 24;
+        ws.Column(12).Width = 24;
     }
 }

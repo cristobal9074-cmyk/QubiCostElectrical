@@ -53,6 +53,8 @@ public sealed class CircuitoSCRow
     // CubicacionScConfig.Sistemas y CubicacionSCEngine.ApplySistema, que ya usa este campo
     // para derivar NumConductores/MermaPct automáticamente al elegir la fase.
     public string Sistema { get; set; } = "M";
+    public string FaseRst { get; set; } = "";
+    public decimal PotenciaW { get; set; } = 0m;
     public decimal MermaPct { get; set; } = 0m;
     public List<ArtefactoSCRow> Artefactos { get; set; } = new();
     public decimal SensoresMovimiento { get; set; }
@@ -61,6 +63,8 @@ public sealed class CircuitoSCRow
     public decimal MontajesAlumbrado { get; set; }
     public decimal Cajas58 { get; set; }
     public decimal Cajas100x100 { get; set; }
+    // 1 automático en tableros generales (una caja por circuito). En departamentos,
+    // AddCircuito lo deja en 0 para que la cantidad A01 se edite en la grilla.
     public decimal Cajas100x65 { get; set; } = 1;
     public bool EsPorBandeja => string.Equals(TipoRecorrido, "Bandeja", StringComparison.OrdinalIgnoreCase);
     public bool EsActivo => string.Equals(Estado, "Activo", StringComparison.OrdinalIgnoreCase);
@@ -112,6 +116,8 @@ public sealed class CircuitoSCRow
         SeccionDistribucion = SeccionDistribucion,
         NumConductores = NumConductores,
         Sistema = Sistema,
+        FaseRst = FaseRst,
+        PotenciaW = PotenciaW,
         MermaPct = MermaPct,
         Artefactos = Artefactos.Select(a => new ArtefactoSCRow
         {
@@ -163,6 +169,13 @@ public sealed class CuadroCargaSCRow
     public string Descripcion { get; set; } = "";
     public int CircuitosProyectados { get; set; } = 40;
     public List<CircuitoSCRow> Circuitos { get; set; } = new();
+    public string Categoria { get; set; } = "Generales";
+
+    public bool EsDepto =>
+        string.Equals(Categoria, "Deptos", StringComparison.OrdinalIgnoreCase) ||
+        (Nombre?.Contains("DEPTO", StringComparison.OrdinalIgnoreCase) ?? false) ||
+        (Nombre?.Contains("DEPARTAMENTO", StringComparison.OrdinalIgnoreCase) ?? false) ||
+        (Id?.Contains("DEPTO", StringComparison.OrdinalIgnoreCase) ?? false);
 }
 
 public sealed class SistemaSC
@@ -230,8 +243,15 @@ public sealed class ArtefactoCatalogoItemJsonConverter : System.Text.Json.Serial
     }
 }
 
+public sealed class SistemaCircuitoSC
+{
+    public string Codigo { get; set; } = "";
+    public string Nombre { get; set; } = "";
+}
+
 public sealed class CubicacionScConfig
 {
+    public List<SistemaCircuitoSC> SistemasCircuito { get; set; } = new();
     public List<string> Tipos { get; set; } = new();
     public List<string> TiposRecorrido { get; set; } = new();
     public List<string> TiposBandeja { get; set; } = new();
@@ -246,6 +266,15 @@ public sealed class CubicacionScConfig
 
     public static CubicacionScConfig Default() => new()
     {
+        SistemasCircuito = new()
+        {
+            new SistemaCircuitoSC { Codigo = "A", Nombre = "Alumbrado" },
+            new SistemaCircuitoSC { Codigo = "E", Nombre = "Enchufe" },
+            new SistemaCircuitoSC { Codigo = "CL", Nombre = "Clima" },
+            new SistemaCircuitoSC { Codigo = "CO", Nombre = "Computación" },
+            new SistemaCircuitoSC { Codigo = "C", Nombre = "Computación" },
+            new SistemaCircuitoSC { Codigo = "F", Nombre = "Fuerza" },
+        },
         Tipos = new() { "Alumbrado", "Enchufe", "Clima", "Computación", "Emergencia" },
         TiposRecorrido = new() { "Tubería", "Bandeja" },
         TiposBandeja = new() { "Bandeja perforada", "Bandeja tipo escalerilla", "Bandeja lisa" },

@@ -18,11 +18,14 @@ public sealed class MoIndirectaRowVm
     public string Tag { get; init; } = "Ind";
     public int Dotacion { get; init; }
     public decimal SueldoMensualClp { get; init; }
-    public decimal TotalAnualClp => Dotacion * SueldoMensualClp;
+    /// <summary>Fracción del sueldo cobrada en la obra (0..1). Default 1 = 100%.</summary>
+    public decimal FraccionObra { get; init; } = 1m;
+    public decimal TotalAnualClp => Dotacion * SueldoMensualClp * FraccionObra;
     public decimal Pct { get; init; }
 
     public string DotacionLabel => Dotacion.ToString();
     public string SueldoLabel => CurrencyFormat.Clp(SueldoMensualClp);
     public string TotalLabel => CurrencyFormat.Clp(TotalAnualClp);
+    public string FraccionLabel => $"{FraccionObra:N2}";
     public string PctLabel => $"{Pct:N1}";
 }

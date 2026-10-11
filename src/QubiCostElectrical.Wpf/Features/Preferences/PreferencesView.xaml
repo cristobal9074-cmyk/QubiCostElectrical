@@ -70,37 +70,37 @@
           <TextBlock Text="EMPRESA" Style="{StaticResource Text.SectionLabel}" Margin="0,0,0,10"/>
 
           <Grid Margin="0,0,0,8">
-            <Grid.ColumnDefinitions><ColumnDefinition Width="160"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+            <Grid.ColumnDefinitions><ColumnDefinition Width="180"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
             <TextBlock Grid.Column="0" Text="Razón social" Style="{StaticResource Form.Label}" VerticalAlignment="Center" Margin="0"/>
             <TextBox Grid.Column="1" Text="{Binding CompanyName, UpdateSourceTrigger=PropertyChanged}"
                      Style="{StaticResource Form.TextBox}" Height="34" MaxLength="140"/>
           </Grid>
           <Grid Margin="0,0,0,8">
-            <Grid.ColumnDefinitions><ColumnDefinition Width="160"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+            <Grid.ColumnDefinitions><ColumnDefinition Width="180"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
             <TextBlock Grid.Column="0" Text="RUT" Style="{StaticResource Form.Label}" VerticalAlignment="Center" Margin="0"/>
             <TextBox Grid.Column="1" Text="{Binding Rut, UpdateSourceTrigger=PropertyChanged}"
                      Style="{StaticResource Form.TextBox}" Height="34" MaxLength="30"/>
           </Grid>
           <Grid Margin="0,0,0,8">
-            <Grid.ColumnDefinitions><ColumnDefinition Width="160"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+            <Grid.ColumnDefinitions><ColumnDefinition Width="180"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
             <TextBlock Grid.Column="0" Text="Dirección" Style="{StaticResource Form.Label}" VerticalAlignment="Center" Margin="0"/>
             <TextBox Grid.Column="1" Text="{Binding Address, UpdateSourceTrigger=PropertyChanged}"
                      Style="{StaticResource Form.TextBox}" Height="34" MaxLength="180"/>
           </Grid>
           <Grid Margin="0,0,0,8">
-            <Grid.ColumnDefinitions><ColumnDefinition Width="160"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+            <Grid.ColumnDefinitions><ColumnDefinition Width="180"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
             <TextBlock Grid.Column="0" Text="Teléfono" Style="{StaticResource Form.Label}" VerticalAlignment="Center" Margin="0"/>
             <TextBox Grid.Column="1" Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}"
                      Style="{StaticResource Form.TextBox}" Height="34" MaxLength="80"/>
           </Grid>
           <Grid Margin="0,0,0,8">
-            <Grid.ColumnDefinitions><ColumnDefinition Width="160"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+            <Grid.ColumnDefinitions><ColumnDefinition Width="180"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
             <TextBlock Grid.Column="0" Text="Correo" Style="{StaticResource Form.Label}" VerticalAlignment="Center" Margin="0"/>
             <TextBox Grid.Column="1" Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}"
                      Style="{StaticResource Form.TextBox}" Height="34" MaxLength="110"/>
           </Grid>
           <Grid Margin="0,0,0,8">
-            <Grid.ColumnDefinitions><ColumnDefinition Width="160"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+            <Grid.ColumnDefinitions><ColumnDefinition Width="180"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
             <TextBlock Grid.Column="0" Text="Sitio web" Style="{StaticResource Form.Label}" VerticalAlignment="Center" Margin="0"/>
             <TextBox Grid.Column="1" Text="{Binding Website, UpdateSourceTrigger=PropertyChanged}"
                      Style="{StaticResource Form.TextBox}" Height="34" MaxLength="110"/>
@@ -109,7 +109,7 @@
           <!-- Logo -->
           <Grid Margin="0,0,0,4">
             <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="160"/>
+              <ColumnDefinition Width="180"/>
               <ColumnDefinition Width="*"/>
               <ColumnDefinition Width="4"/>
               <ColumnDefinition Width="Auto"/>
@@ -126,32 +126,32 @@
                     Click="OnClearLogoClick"/>
           </Grid>
           <TextBlock Text="PNG o JPG, fondo blanco o transparente, máximo 5 MB. Recomendado: horizontal."
-                     Style="{StaticResource Text.Caption}" Margin="160,0,0,12"/>
+                     Style="{StaticResource Text.Caption}" Margin="180,0,0,12"/>
 
           <!-- ── Profesional firmante ── -->
           <Separator Margin="0,4,0,12" Background="{DynamicResource Brush.Line}"/>
           <TextBlock Text="PROFESIONAL FIRMANTE" Style="{StaticResource Text.SectionLabel}" Margin="0,0,0,10"/>
 
           <Grid Margin="0,0,0,8">
-            <Grid.ColumnDefinitions><ColumnDefinition Width="160"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+            <Grid.ColumnDefinitions><ColumnDefinition Width="180"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
             <TextBlock Grid.Column="0" Text="Nombre" Style="{StaticResource Form.Label}" VerticalAlignment="Center" Margin="0"/>
             <TextBox Grid.Column="1" Text="{Binding ProfessionalName, UpdateSourceTrigger=PropertyChanged}"
                      Style="{StaticResource Form.TextBox}" Height="34" MaxLength="140"/>
           </Grid>
           <Grid Margin="0,0,0,8">
-            <Grid.ColumnDefinitions><ColumnDefinition Width="160"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+            <Grid.ColumnDefinitions><ColumnDefinition Width="180"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
             <TextBlock Grid.Column="0" Text="RUT" Style="{StaticResource Form.Label}" VerticalAlignment="Center" Margin="0"/>
             <TextBox Grid.Column="1" Text="{Binding ProfessionalRut, UpdateSourceTrigger=PropertyChanged}"
                      Style="{StaticResource Form.TextBox}" Height="34" MaxLength="30"/>
           </Grid>
           <Grid Margin="0,0,0,8">
-            <Grid.ColumnDefinitions><ColumnDefinition Width="160"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+            <Grid.ColumnDefinitions><ColumnDefinition Width="180"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
             <TextBlock Grid.Column="0" Text="Cargo" Style="{StaticResource Form.Label}" VerticalAlignment="Center" Margin="0"/>
             <TextBox Grid.Column="1" Text="{Binding ProfessionalRole, UpdateSourceTrigger=PropertyChanged}"
                      Style="{StaticResource Form.TextBox}" Height="34" MaxLength="100"/>
           </Grid>
           <Grid Margin="0,0,0,8">
-            <Grid.ColumnDefinitions><ColumnDefinition Width="160"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+            <Grid.ColumnDefinitions><ColumnDefinition Width="180"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
             <TextBlock Grid.Column="0" Text="N° Registro SEC" Style="{StaticResource Form.Label}" VerticalAlignment="Center" Margin="0"/>
             <TextBox Grid.Column="1" Text="{Binding ProfessionalRegistroSec, UpdateSourceTrigger=PropertyChanged}"
                      Style="{StaticResource Form.TextBox}" Height="34" MaxLength="60"/>
@@ -160,7 +160,7 @@
           <!-- Firma -->
           <Grid Margin="0,0,0,4">
             <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="160"/>
+              <ColumnDefinition Width="180"/>
               <ColumnDefinition Width="*"/>
               <ColumnDefinition Width="4"/>
               <ColumnDefinition Width="Auto"/>
@@ -177,7 +177,7 @@
                     Click="OnClearSignatureClick"/>
           </Grid>
           <TextBlock Text="Firma escaneada PNG o JPG. Solo se aplica en PDF cuando el proyecto no tiene una propia."
-                     Style="{StaticResource Text.Caption}" Margin="160,0,0,0"/>
+                     Style="{StaticResource Text.Caption}" Margin="180,0,0,0"/>
 
         </StackPanel>
       </Border>
@@ -274,6 +274,12 @@
           </StackPanel>
 
           <StackPanel Margin="0,16,0,0">
+            <CheckBox IsChecked="{Binding AutosaveEnabled}" Content="Autoguardar el proyecto mientras trabajo" FontSize="12"/>
+            <TextBlock Text="Desactivado, Guardar escribe el archivo. Si la aplicación se cierra de golpe, al volver a abrirlo se ofrece recuperar la copia .bak."
+                       Style="{StaticResource Text.Caption}" Margin="22,4,0,0" TextWrapping="Wrap"/>
+          </StackPanel>
+
+          <StackPanel Margin="0,16,0,0">
             <TextBlock Text="Archivo del banco de precios" Style="{StaticResource Form.Label}" Margin="0,0,0,4"/>
             <Grid>
               <Grid.ColumnDefinitions>
@@ -354,7 +360,7 @@
           <!-- Versión instalada y canal -->
           <Grid Margin="0,0,0,8">
             <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="200"/>
+              <ColumnDefinition Width="180"/>
               <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             <TextBlock Grid.Column="0" Text="Versión instalada" Style="{StaticResource Form.Label}" VerticalAlignment="Center" Margin="0"/>
@@ -363,7 +369,7 @@
           </Grid>
           <Grid Margin="0,0,0,12">
             <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="200"/>
+              <ColumnDefinition Width="180"/>
               <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             <TextBlock Grid.Column="0" Text="Canal" Style="{StaticResource Form.Label}" VerticalAlignment="Center" Margin="0"/>
@@ -412,7 +418,7 @@
           <Grid Margin="0,0,0,12"
                 Visibility="{Binding LastCheckedAt, Converter={StaticResource NullToVisibility}, ConverterParameter=Inverse}">
             <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="200"/>
+              <ColumnDefinition Width="180"/>
               <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             <TextBlock Grid.Column="0" Text="Última comprobación" Style="{StaticResource Form.Label}" VerticalAlignment="Center" Margin="0"/>
@@ -456,7 +462,7 @@
 
           <Grid Margin="0,0,0,12">
             <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="200"/>
+              <ColumnDefinition Width="180"/>
               <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             <TextBlock Grid.Column="0" Text="Versión de la aplicación" Style="{StaticResource Form.Label}" VerticalAlignment="Center" Margin="0"/>
@@ -466,7 +472,7 @@
 
           <Grid Margin="0,0,0,12">
             <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="200"/>
+              <ColumnDefinition Width="180"/>
               <ColumnDefinition Width="*"/>
               <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
@@ -479,7 +485,7 @@
 
           <Grid>
             <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="200"/>
+              <ColumnDefinition Width="180"/>
               <ColumnDefinition Width="*"/>
               <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
@@ -550,8 +556,56 @@
               <TextBlock Text="PIN máximo" Style="{StaticResource Form.Label}" Margin="0,0,0,4"/>
               <TextBox Text="{Binding PinMaxLength, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" Height="34"/>
             </StackPanel>
-            <CheckBox Grid.Column="4" Content="Bloquear secuencias" IsChecked="{Binding PinBlockSequences}" VerticalAlignment="Bottom" Margin="0,0,0,6"/>
-            <CheckBox Grid.Column="6" Content="Bloquear repeticiones" IsChecked="{Binding PinBlockRepeats}" VerticalAlignment="Bottom" Margin="0,0,0,6"/>
+            <StackPanel Grid.Column="4" VerticalAlignment="Center">
+              <TextBlock Text="Bloquear secuencias" Style="{StaticResource Form.Label}" Margin="0,0,0,4"/>
+              <ToggleButton IsChecked="{Binding PinBlockSequences}" Height="24" Width="44" HorizontalAlignment="Left"
+                            AutomationProperties.Name="Bloquear secuencias de PIN">
+                <ToggleButton.Style>
+                  <Style TargetType="ToggleButton">
+                    <Setter Property="Template">
+                      <Setter.Value>
+                        <ControlTemplate TargetType="ToggleButton">
+                          <Border x:Name="Bg" Width="44" Height="24" CornerRadius="12" Background="{DynamicResource Brush.Slate3}">
+                            <Ellipse x:Name="Knob" Width="20" Height="20" Fill="White" HorizontalAlignment="Left" Margin="2" />
+                          </Border>
+                          <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                              <Setter TargetName="Bg" Property="Background" Value="{DynamicResource Brush.Blue2}" />
+                              <Setter TargetName="Knob" Property="HorizontalAlignment" Value="Right" />
+                            </Trigger>
+                          </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                      </Setter.Value>
+                    </Setter>
+                  </Style>
+                </ToggleButton.Style>
+              </ToggleButton>
+            </StackPanel>
+            <StackPanel Grid.Column="6" VerticalAlignment="Center">
+              <TextBlock Text="Bloquear repeticiones" Style="{StaticResource Form.Label}" Margin="0,0,0,4"/>
+              <ToggleButton IsChecked="{Binding PinBlockRepeats}" Height="24" Width="44" HorizontalAlignment="Left"
+                            AutomationProperties.Name="Bloquear repeticiones de PIN">
+                <ToggleButton.Style>
+                  <Style TargetType="ToggleButton">
+                    <Setter Property="Template">
+                      <Setter.Value>
+                        <ControlTemplate TargetType="ToggleButton">
+                          <Border x:Name="Bg" Width="44" Height="24" CornerRadius="12" Background="{DynamicResource Brush.Slate3}">
+                            <Ellipse x:Name="Knob" Width="20" Height="20" Fill="White" HorizontalAlignment="Left" Margin="2" />
+                          </Border>
+                          <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                              <Setter TargetName="Bg" Property="Background" Value="{DynamicResource Brush.Blue2}" />
+                              <Setter TargetName="Knob" Property="HorizontalAlignment" Value="Right" />
+                            </Trigger>
+                          </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                      </Setter.Value>
+                    </Setter>
+                  </Style>
+                </ToggleButton.Style>
+              </ToggleButton>
+            </StackPanel>
           </Grid>
 
           <DataGrid x:Name="UsersGrid" Style="{StaticResource DataGrid.Workspace}" ItemsSource="{Binding Users}" SelectedItem="{Binding SelectedUser}"
@@ -614,15 +668,103 @@
         </StackPanel>
       </Border>
 
-      <!-- ─── Atajos de teclado (Cubicación) ───────────────────────────────── -->
+      <!-- ─── Atajos de teclado por módulo / pestaña ──────────────────────── -->
       <Border Style="{StaticResource Card.FormSection}" Margin="0,0,0,16"
               Visibility="{Binding IsShortcutsSection, Converter={StaticResource BoolToVisibility}}">
         <StackPanel>
-          <TextBlock Text="ATAJOS DE TECLADO · CUBICACIÓN" Style="{StaticResource Text.SectionLabel}" Margin="0,0,0,2"/>
-          <TextBlock Text="Personalice los atajos de la pantalla Cubicación. Los cambios se aplican al guardar preferencias."
-                     Style="{StaticResource Text.Helper}" Margin="0,0,0,12" TextWrapping="Wrap"/>
+          <TextBlock Text="ATAJOS DE TECLADO POR PESTAÑA Y MÓDULO" Style="{StaticResource Text.SectionLabel}" Margin="0,0,0,2"/>
+          <TextBlock Text="Explore y configure los atajos de teclado organizados por cada pantalla de la aplicación. Seleccione una pestaña o utilice el buscador en tiempo real."
+                     Style="{StaticResource Text.Helper}" Margin="0,0,0,14" TextWrapping="Wrap"/>
 
-          <DataGrid ItemsSource="{Binding CubicacionShortcuts}"
+          <!-- Barra de Búsqueda Rápida y Acciones de Restauración -->
+          <Grid Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBox Grid.Column="0"
+                     Text="{Binding ShortcutSearchFilter, UpdateSourceTrigger=PropertyChanged}"
+                     Style="{StaticResource Form.SearchBox}"
+                     Tag="Buscar atajo por acción, tecla o descripción (ej: Ctrl+M, Excel, Tablero, Partida)..."
+                     Height="32" Margin="0,0,12,0" />
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+              <Button Content="Restaurar pestaña actual" Padding="10,4" Margin="0,0,8,0" Style="{StaticResource Button.Secondary}"
+                      Click="OnResetCurrentCategoryShortcutsClick" ToolTip="Restaura los atajos de la pestaña seleccionada a sus valores predeterminados."/>
+              <Button Content="Restaurar todos" Padding="10,4" Style="{StaticResource Button.Secondary}"
+                      Click="OnResetAllShortcutsClick" ToolTip="Restaura todos los atajos de teclado de la aplicación a los valores de fábrica."/>
+            </StackPanel>
+          </Grid>
+
+          <!-- Selector de Sub-Pestañas / Módulos (Pill Tabs) -->
+          <ItemsControl ItemsSource="{Binding ShortcutCategories}" Margin="0,0,0,14">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <WrapPanel Orientation="Horizontal" />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Button Style="{StaticResource Button.Secondary}"
+                        Margin="0,0,8,8"
+                        Padding="12,5"
+                        Height="32"
+                        Tag="{Binding}"
+                        Click="OnSelectShortcutCategoryClick">
+                  <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                      <Border x:Name="Bd"
+                              Background="{TemplateBinding Background}"
+                              BorderBrush="{TemplateBinding BorderBrush}"
+                              BorderThickness="1"
+                              CornerRadius="8"
+                              Padding="{TemplateBinding Padding}">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                          <TextBlock Text="{Binding Icon}" Margin="0,0,6,0" FontSize="13" VerticalAlignment="Center"/>
+                          <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="11.5" VerticalAlignment="Center"
+                                     Foreground="{Binding Foreground, RelativeSource={RelativeSource TemplatedParent}}"/>
+                          <Border CornerRadius="99" Margin="6,0,0,0" Padding="6,1" VerticalAlignment="Center"
+                                  Background="{DynamicResource Brush.Surface2}">
+                            <TextBlock Text="{Binding Count}" FontSize="10.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}"/>
+                          </Border>
+                        </StackPanel>
+                      </Border>
+                      <ControlTemplate.Triggers>
+                        <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                          <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.BlueSoft}"/>
+                          <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Brush.Blue}"/>
+                          <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding IsSelected}" Value="False">
+                          <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.Surface}"/>
+                          <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Brush.Line}"/>
+                          <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}"/>
+                        </DataTrigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                          <Setter TargetName="Bd" Property="Opacity" Value="0.88"/>
+                        </Trigger>
+                      </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                  </Button.Template>
+                </Button>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+
+          <!-- Banner de captura activa -->
+          <Border Background="{DynamicResource Brush.BlueSoft}" BorderBrush="{DynamicResource Brush.Blue}" BorderThickness="1"
+                  CornerRadius="8" Padding="12,8" Margin="0,0,0,12"
+                  Visibility="{Binding IsShortcutCaptureActive, Converter={StaticResource BoolToVisibility}}">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <TextBlock Text="⌨️" Margin="0,0,8,0" FontSize="14" VerticalAlignment="Center"/>
+              <TextBlock Text="{Binding ShortcutCaptureMessage}" FontWeight="SemiBold"
+                         Foreground="{DynamicResource Brush.BlueDark}" VerticalAlignment="Center" TextWrapping="Wrap"/>
+            </StackPanel>
+          </Border>
+
+          <!-- Grilla de Atajos Filtrados -->
+          <DataGrid ItemsSource="{Binding FilteredShortcuts}"
                     Style="{StaticResource DataGrid.Workspace}"
                     AutoGenerateColumns="False"
                     CanUserAddRows="False"
@@ -630,69 +772,119 @@
                     HeadersVisibility="Column"
                     IsReadOnly="True"
                     SelectionMode="Single"
-                    GridLinesVisibility="Horizontal">
+                    GridLinesVisibility="Horizontal"
+                    MinHeight="250"
+                    MaxHeight="480"
+                    ScrollViewer.VerticalScrollBarVisibility="Auto">
             <DataGrid.Columns>
-              <DataGridTextColumn Header="Acción" Binding="{Binding Label}" Width="200" />
-              <DataGridTextColumn Header="Atajo" Binding="{Binding GestureDisplay}" Width="160" />
-              <DataGridTextColumn Header="Descripción" Binding="{Binding Description}" Width="*" MinWidth="180" />
-              <DataGridTemplateColumn Header="" Width="170">
+              <!-- Módulo -->
+              <DataGridTemplateColumn Header="Módulo" Width="145">
                 <DataGridTemplateColumn.CellTemplate>
                   <DataTemplate>
-                    <StackPanel Orientation="Horizontal">
+                    <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}"
+                            BorderThickness="1" CornerRadius="6" Padding="6,2" HorizontalAlignment="Left" VerticalAlignment="Center">
+                      <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding ScopeIcon}" Margin="0,0,4,0" FontSize="11" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding ScopeLabel}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink2}" VerticalAlignment="Center"/>
+                      </StackPanel>
+                    </Border>
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
+
+              <!-- Acción -->
+              <DataGridTemplateColumn Header="Acción" Width="210">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <TextBlock Text="{Binding Label}" FontWeight="SemiBold" FontSize="12" Foreground="{DynamicResource Brush.Ink}"
+                               VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
+
+              <!-- Atajo Keycap -->
+              <DataGridTemplateColumn Header="Atajo de teclado" Width="160">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.InputBorder}"
+                            BorderThickness="1" CornerRadius="5" Padding="7,3" HorizontalAlignment="Left" VerticalAlignment="Center">
+                      <TextBlock Text="{Binding GestureDisplay}" FontFamily="Consolas, Cascadia Code, Courier New"
+                                 FontSize="11.5" FontWeight="Bold" Foreground="{DynamicResource Brush.BlueDark}"
+                                 VerticalAlignment="Center"/>
+                    </Border>
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
+
+              <!-- Descripción -->
+              <DataGridTextColumn Header="Descripción" Binding="{Binding Description}" Width="*" MinWidth="180" />
+
+              <!-- Tipo / Estado -->
+              <DataGridTemplateColumn Header="Tipo" Width="105">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <Border CornerRadius="6" Padding="6,2" HorizontalAlignment="Left" VerticalAlignment="Center">
+                      <Border.Style>
+                        <Style TargetType="Border">
+                          <Setter Property="Background" Value="{DynamicResource Brush.Surface2}"/>
+                          <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsCustomized}" Value="True">
+                              <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}"/>
+                            </DataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </Border.Style>
+                      <TextBlock Text="{Binding StatusBadge}" FontSize="10.5" FontWeight="SemiBold">
+                        <TextBlock.Style>
+                          <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}"/>
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding IsCustomized}" Value="True">
+                                <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}"/>
+                              </DataTrigger>
+                              <DataTrigger Binding="{Binding IsConfigurable}" Value="False">
+                                <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}"/>
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </TextBlock.Style>
+                      </TextBlock>
+                    </Border>
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
+
+              <!-- Acciones -->
+              <DataGridTemplateColumn Header="" Width="175">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                       <Button Content="Cambiar" Padding="8,2" Margin="0,0,6,0" Style="{StaticResource Button.Secondary}"
-                              Tag="{Binding}" Click="OnChangeShortcutClick" />
+                              Tag="{Binding}" Click="OnChangeShortcutClick"
+                              Visibility="{Binding IsConfigurable, Converter={StaticResource BoolToVisibility}}" />
                       <Button Content="Restaurar" Padding="8,2" Style="{StaticResource Button.Secondary}"
                               Tag="{Binding}" Click="OnResetShortcutClick"
-                              IsEnabled="{Binding IsCustomized}" />
+                              IsEnabled="{Binding IsCustomized}"
+                              Visibility="{Binding IsConfigurable, Converter={StaticResource BoolToVisibility}}" />
+                      <TextBlock Text="Nativo del sistema" FontSize="11" Foreground="{DynamicResource Brush.Muted}" FontStyle="Italic"
+                                 VerticalAlignment="Center">
+                        <TextBlock.Style>
+                          <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding IsConfigurable}" Value="False">
+                                <Setter Property="Visibility" Value="Visible"/>
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </TextBlock.Style>
+                      </TextBlock>
                     </StackPanel>
                   </DataTemplate>
                 </DataGridTemplateColumn.CellTemplate>
               </DataGridTemplateColumn>
             </DataGrid.Columns>
           </DataGrid>
-
-          <TextBlock Text="{Binding ShortcutCaptureMessage}" Style="{StaticResource Text.Helper}" Foreground="{DynamicResource Brush.Accent}"
-                     Margin="0,8,0,0" TextWrapping="Wrap"
-                     Visibility="{Binding IsShortcutCaptureActive, Converter={StaticResource BoolToVisibility}}" />
-
-          <Button Content="Restaurar todos los atajos de cubicación" Margin="0,10,0,0" HorizontalAlignment="Left"
-                  Click="OnResetAllShortcutsClick" Style="{StaticResource Button.Secondary}" />
-
-          <TextBlock Text="ATAJOS DE TECLADO · SHELL / ITEMIZADO" Style="{StaticResource Text.SectionLabel}" Margin="0,18,0,2"/>
-          <TextBlock Text="Guardar, deshacer y Cubicar. Los cambios se aplican al guardar preferencias."
-                     Style="{StaticResource Text.Helper}" Margin="0,0,0,12" TextWrapping="Wrap"/>
-
-          <DataGrid ItemsSource="{Binding ShellShortcuts}"
-                    Style="{StaticResource DataGrid.Workspace}"
-                    AutoGenerateColumns="False"
-                    CanUserAddRows="False"
-                    CanUserDeleteRows="False"
-                    HeadersVisibility="Column"
-                    IsReadOnly="True"
-                    SelectionMode="Single"
-                    GridLinesVisibility="Horizontal">
-            <DataGrid.Columns>
-              <DataGridTextColumn Header="Acción" Binding="{Binding Label}" Width="200" />
-              <DataGridTextColumn Header="Atajo" Binding="{Binding GestureDisplay}" Width="160" />
-              <DataGridTextColumn Header="Descripción" Binding="{Binding Description}" Width="*" MinWidth="180" />
-              <DataGridTemplateColumn Header="" Width="170">
-                <DataGridTemplateColumn.CellTemplate>
-                  <DataTemplate>
-                    <StackPanel Orientation="Horizontal">
-                      <Button Content="Cambiar" Padding="8,2" Margin="0,0,6,0" Style="{StaticResource Button.Secondary}"
-                              Tag="{Binding}" Click="OnChangeShortcutClick" />
-                      <Button Content="Restaurar" Padding="8,2" Style="{StaticResource Button.Secondary}"
-                              Tag="{Binding}" Click="OnResetShortcutClick"
-                              IsEnabled="{Binding IsCustomized}" />
-                    </StackPanel>
-                  </DataTemplate>
-                </DataGridTemplateColumn.CellTemplate>
-              </DataGridTemplateColumn>
-            </DataGrid.Columns>
-          </DataGrid>
-
-          <Button Content="Restaurar atajos de shell / itemizado" Margin="0,10,0,0" HorizontalAlignment="Left"
-                  Click="OnResetAllShellShortcutsClick" Style="{StaticResource Button.Secondary}" />
         </StackPanel>
       </Border>
 

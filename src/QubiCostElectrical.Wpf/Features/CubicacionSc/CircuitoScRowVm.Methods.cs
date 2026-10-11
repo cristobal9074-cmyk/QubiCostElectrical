@@ -64,7 +64,7 @@ public sealed partial class CircuitoScRowVm : ViewModelBase
     // normaliza a "E" sin necesitar abrir un combo, para cargar varios circuitos rápido a
     // pura tecla. Si lo tecleado no calza con ningún código válido, se descarta y la celda
     // vuelve a mostrar el valor anterior (OnPropertyChanged fuerza el refresco visual).
-    private static readonly string[] TiposValidos = { "A", "E", "CL", "C", "F" };
+    private static readonly string[] TiposFallback = { "A", "E", "CL", "CO", "C", "F" };
 
     public string Tipo
     {
@@ -76,14 +76,63 @@ public sealed partial class CircuitoScRowVm : ViewModelBase
                 OnPropertyChanged();
                 return;
             }
-            var normalizado = NormalizeCode(value, TiposValidos);
+            var normalizado = NormalizeSistemaCode(value);
             if (normalizado != null && !string.Equals(row.Tipo, normalizado, StringComparison.Ordinal))
             {
                 row.Tipo = normalizado;
                 NotifyModelChanged();
             }
             OnPropertyChanged();
+            OnPropertyChanged(nameof(TipoNombre));
         }
+    }
+
+    public string TipoNombre
+    {
+        get
+        {
+            var match = config.SistemasCircuito?.FirstOrDefault(s => string.Equals(s.Codigo, row.Tipo, StringComparison.OrdinalIgnoreCase));
+            if (match != null && !string.IsNullOrWhiteSpace(match.Nombre))
+                return match.Nombre;
+
+            return row.Tipo switch
+            {
+                "A" => "Alumbrado",
+                "E" => "Enchufe",
+                "CL" => "Clima",
+                "CO" => "Computación",
+                "C" => "Computación",
+                "F" => "Fuerza",
+                _ => row.Tipo
+            };
+        }
+    }
+
+    private string? NormalizeSistemaCode(string? input)
+    {
+        if (string.IsNullOrWhiteSpace(input)) return null;
+        var trimmed = input.Trim();
+
+        var lista = config.SistemasCircuito;
+        if (lista != null && lista.Count > 0)
+        {
+            var byCode = lista.FirstOrDefault(s => string.Equals(s.Codigo, trimmed, StringComparison.OrdinalIgnoreCase));
+            if (byCode != null) return byCode.Codigo;
+
+            var byName = lista.FirstOrDefault(s => string.Equals(s.Nombre, trimmed, StringComparison.OrdinalIgnoreCase));
+            if (byName != null) return byName.Codigo;
+        }
+
+        var fallback = TiposFallback.FirstOrDefault(c => string.Equals(c, trimmed, StringComparison.OrdinalIgnoreCase));
+        if (fallback != null) return fallback;
+
+        if (string.Equals(trimmed, "Alumbrado", StringComparison.OrdinalIgnoreCase)) return "A";
+        if (string.Equals(trimmed, "Enchufe", StringComparison.OrdinalIgnoreCase)) return "E";
+        if (string.Equals(trimmed, "Clima", StringComparison.OrdinalIgnoreCase)) return "CL";
+        if (string.Equals(trimmed, "Computacion", StringComparison.OrdinalIgnoreCase) || string.Equals(trimmed, "Computación", StringComparison.OrdinalIgnoreCase)) return "CO";
+        if (string.Equals(trimmed, "Fuerza", StringComparison.OrdinalIgnoreCase)) return "F";
+
+        return null;
     }
 
     private static string? NormalizeCode(string? input, IReadOnlyList<string> validCodes)
@@ -371,6 +420,43 @@ public sealed partial class CircuitoScRowVm : ViewModelBase
             OnPropertyChanged();
         }
     }
+
+    public string FaseRst
+    {
+        get => string.IsNullOrWhiteSpace(row.FaseRst) ? CuadroCargasSecEngine.ResolveCircuitPhase(row, row.Numero - 1) : row.FaseRst;
+        set
+        {
+            if (!AllowEdit) return;
+            string upper = (value ?? "").Trim().ToUpperInvariant();
+            if (upper is "R" or "S" or "T" or "R-S-T" or "")
+            {
+                if (row.FaseRst != upper)
+                {
+                    row.FaseRst = upper;
+                    OnPropertyChanged();
+                    NotifyModelChanged();
+                }
+            }
+        }
+    }
+
+    public decimal PotenciaW
+    {
+        get => row.PotenciaW;
+        set
+        {
+            if (!AllowEdit) return;
+            if (row.PotenciaW == value) return;
+            row.PotenciaW = Math.Max(0m, value);
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(PotenciaEstimadaW));
+            OnPropertyChanged(nameof(PotenciaEstimadaKw));
+            NotifyModelChanged();
+        }
+    }
+
+    public decimal PotenciaEstimadaW => CuadroCargasSecEngine.EstimateCircuitPowerW(row);
+    public decimal PotenciaEstimadaKw => Math.Round(PotenciaEstimadaW / 1000m, 2);
 
     public string TipoRecorrido
     {
@@ -663,8 +749,8 @@ public sealed partial class CircuitoScRowVm : ViewModelBase
 
     // Texto del botón de la columna ARTEFACTOS × ZONA.
     public string ArtefactosResumen => TieneArtefactos
-        ? $"{ArtefactosCantidadTotal} u · {ArtefactosZonasConteo} zona{(ArtefactosZonasConteo == 1 ? "" : "s")}"
-        : "+ Agregar artefactos";
+        ? $"{ArtefactosCantidadTotal} u · {ArtefactosZonasConteo} z"
+        : "+ Artefactos";
 
     public void AddArtefacto(string nombre, string categoria, decimal cantidad)
     {

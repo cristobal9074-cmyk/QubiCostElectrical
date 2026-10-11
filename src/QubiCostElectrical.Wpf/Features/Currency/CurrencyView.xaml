@@ -27,7 +27,7 @@
         <Border Style="{StaticResource Card.Kpi}" Padding="14,12" Margin="0,0,14,0">
           <StackPanel>
             <TextBlock Text="VALOR UF EN CLP" Style="{StaticResource Text.SectionLabel}" FontSize="10" Margin="0,0,0,6" />
-            <TextBlock Text="{Binding ValorUfClp, StringFormat='$ {0:N0}'}" Style="{StaticResource Text.KpiValue}" />
+            <TextBlock Text="{Binding ValorUfClp, StringFormat='$ {0:N2}'}" Style="{StaticResource Text.KpiValue}" />
             <TextBlock Text="{Binding FechaVigenciaDisplay, StringFormat='Vigente al {0}'}" Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Success}" Margin="0,6,0,0" />
           </StackPanel>
         </Border>
@@ -41,11 +41,29 @@
         </Border>
       </UniformGrid>
 
+      <!-- ─── Feedback de guardado exitoso ─────────────────────────────── -->
+      <Border Background="{DynamicResource Brush.SuccessBg}" BorderBrush="{DynamicResource Brush.SuccessBorder}" BorderThickness="1" CornerRadius="10"
+              Padding="14,10" Margin="0,0,0,16"
+              Visibility="{Binding ShowSuccessFeedback, Converter={StaticResource BoolToVisibility}}">
+        <StackPanel Orientation="Horizontal">
+          <TextBlock Text="✔ " FontWeight="Bold" Foreground="{DynamicResource Brush.Success}"/>
+          <TextBlock Text="Tasas de cambio actualizadas correctamente en el proyecto."
+                     FontWeight="SemiBold" FontSize="11" Foreground="{DynamicResource Brush.Success}"/>
+        </StackPanel>
+      </Border>
+
       <!-- ─── Editar tasas ───────────────────────────────────────────────── -->
       <Border Style="{StaticResource Card.Section}" Padding="20" Margin="0,0,0,16"
               IsEnabled="{Binding CanEdit}">
         <StackPanel>
           <TextBlock Text="Actualizar tasas" Style="{StaticResource Text.PageTitle}" FontSize="13" Margin="0,0,0,14"/>
+
+          <!-- Acción rápida de Banco Central si la caché es válida -->
+          <Button Style="{StaticResource Button.Secondary}"
+                  Content="{Binding CachedUfPrompt}"
+                  Visibility="{Binding HasValidCache, Converter={StaticResource BoolToVisibility}}"
+                  Click="OnApplyCacheClick"
+                  Margin="0,0,0,14" HorizontalAlignment="Left" />
 
           <!-- Selector de moneda del proyecto -->
           <Grid Margin="0,0,0,14">

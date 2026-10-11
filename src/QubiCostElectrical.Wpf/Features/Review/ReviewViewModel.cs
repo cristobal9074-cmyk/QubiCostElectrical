@@ -20,6 +20,7 @@ internal static class FinalReviewIssueExtensions
 {
     public static string CategoryTextFor(FinalReviewCategory category) => category switch
     {
+        FinalReviewCategory.FormulaSyntaxError => "Error en f\u00f3rmula",
         FinalReviewCategory.EmptyPartida => "Partida vac\u00eda",
         FinalReviewCategory.MaterialWithoutPrice => "Material sin precio",
         FinalReviewCategory.AreaNotAssigned => "\u00c1rea no asignada",
@@ -30,6 +31,7 @@ internal static class FinalReviewIssueExtensions
         FinalReviewCategory.ZeroTotalSale => "Total venta cero",
         FinalReviewCategory.IvaInconsistent => "IVA inconsistente",
         FinalReviewCategory.ApuIncomplete => "APU incompleto",
+        FinalReviewCategory.CommercialModelIncomplete => "Modelo comercial incompleto",
         FinalReviewCategory.PriceTraceability => "Trazabilidad de precio",
         FinalReviewCategory.MarkupInvalid => "Markup inv\u00e1lido",
         FinalReviewCategory.AntecedentePendienteMandante => "Pendiente del mandante",
@@ -58,6 +60,10 @@ public sealed class ReviewIssueVm
     public string Problem => Source.Problem;
     public string Recommendation => Source.Recommendation;
     public FinalReviewSeverity Severity => Source.Severity;
+    public bool IsBlocker => Severity == FinalReviewSeverity.Blocker;
+    public bool IsCritical => Severity == FinalReviewSeverity.Critical;
+    public bool IsWarning => Severity == FinalReviewSeverity.Warning;
+    public bool IsInfo => Severity == FinalReviewSeverity.Info;
 }
 
 public sealed class ChecklistItemVm

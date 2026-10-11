@@ -92,15 +92,15 @@ public static class CubicacionSCBudgetService
             var mat = ResolveMaterial(kv.Key, catalogoByDescripcion, catalogoByCodigo);
             cubicacion.Add(new CubicacionRow
             {
-                ItemId  = partida.Id,
-                Tipo    = "MAT",
-                Codigo  = mat?.Codigo ?? $"CSC-{codigoSeq:000}",
+                ItemId = partida.Id,
+                Tipo = "MAT",
+                Codigo = mat?.Codigo ?? $"CSC-{codigoSeq:000}",
                 Descripcion = kv.Key,
-                Unidad  = mat?.Unidad is { Length: > 0 } u ? u : kv.Value.Unidad,
+                Unidad = mat?.Unidad is { Length: > 0 } u ? u : kv.Value.Unidad,
                 Cantidad = Math.Round(kv.Value.Cantidad, 2),
-                MatUf   = mat?.MatUf ?? 0m,
-                MoUf    = mat?.MoUf  ?? 0m,
-                Area    = "C.SC"
+                MatUf = mat?.MatUf ?? 0m,
+                MoUf = mat?.MoUf ?? 0m,
+                Area = "C.SC"
             });
             if (mat != null) conPrecio++;
             codigoSeq++;

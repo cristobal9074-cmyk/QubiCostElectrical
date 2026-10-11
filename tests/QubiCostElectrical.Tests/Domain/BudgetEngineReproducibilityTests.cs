@@ -389,7 +389,10 @@ public sealed class BudgetEngineReproducibilityTests
             Markup = new MarkupPolicy
             {
                 FactoresPresentacionPorFamilia = true,
-                GastosGeneralesPct = 13m, UtilidadPct = 16m, IvaPct = 19m, IncluirIvaEnTotal = true,
+                GastosGeneralesPct = 13m,
+                UtilidadPct = 16m,
+                IvaPct = 19m,
+                IncluirIvaEnTotal = true,
             },
         };
         var cost = new BudgetEngine().Calculate(cub, settings, apus, itemizado, null);
@@ -438,7 +441,10 @@ public sealed class BudgetEngineReproducibilityTests
             Markup = new MarkupPolicy
             {
                 FactoresPresentacionPorFamilia = true,
-                GastosGeneralesPct = 13m, UtilidadPct = 16m, IvaPct = 19m, IncluirIvaEnTotal = true,
+                GastosGeneralesPct = 13m,
+                UtilidadPct = 16m,
+                IvaPct = 19m,
+                IncluirIvaEnTotal = true,
             },
         };
         var cost = new BudgetEngine().Calculate(cub, settings, apus, itemizado, null);
@@ -475,7 +481,12 @@ public sealed class BudgetEngineReproducibilityTests
         // Un material con merma propia (3%) + APU con merma (10%): la merma NO se compone.
         var apu = new ApuRow
         {
-            ItemId = "P1", Descripcion = "APU tierra", MermaPct = 10m, HerramientasPct = 0m, ImprevistosAlzaPct = 0m, TransportePct = 0m,
+            ItemId = "P1",
+            Descripcion = "APU tierra",
+            MermaPct = 10m,
+            HerramientasPct = 0m,
+            ImprevistosAlzaPct = 0m,
+            TransportePct = 0m,
             Recursos =
             {
                 new() { Tipo = ApuTipoRecurso.MAT, CodigoMaterial = "A", Descripcion = "con merma propia", Rendimiento = 10m, PrecioUf = 100m, MermaPct = 3m },
@@ -522,18 +533,93 @@ public sealed class BudgetEngineReproducibilityTests
     private static readonly IReadOnlyDictionary<string, Dictionary<string, decimal>> Baseline =
         new Dictionary<string, Dictionary<string, decimal>>
         {
-            ["CubicacionManda|plain"] = new() {
-                ["MaterialesUf"] = 3169040m, ["ManoObraUf"] = 906000m, ["EquiposUf"] = 0m, ["SubcontratosUf"] = 0m, ["HerramientasUf"] = 28554m, ["TransporteUf"] = 7520m, ["MermasUf"] = 136524m, ["OrdenesCambioUf"] = 3250000m, ["CostoDirectoUf"] = 7497638m, ["RiesgoUf"] = 149953m, ["BaseCostoUf"] = 7647591m, ["GastosGeneralesUf"] = 994187m, ["ValorAgregadoEquiposUf"] = 0m, ["BaseGgUtUf"] = 7647591m, ["UtilidadAditivaUf"] = 0m, ["CostoProyectoUf"] = 10287831m, ["SubtotalUf"] = 8641778m, ["UtilidadUf"] = 1646053m, ["DescuentoUf"] = 154317m, ["TotalVentaNetoUf"] = 10133513m, ["IvaUf"] = 1925367m, ["TotalVentaConIvaUf"] = 12058881m, ["TotalVentaUf"] = 12058881m, ["UfM2"] = 5025m, ["MargenRealPct"] = 26m,
+            ["CubicacionManda|plain"] = new()
+            {
+                ["MaterialesUf"] = 3169040m,
+                ["ManoObraUf"] = 906000m,
+                ["EquiposUf"] = 0m,
+                ["SubcontratosUf"] = 0m,
+                ["HerramientasUf"] = 28554m,
+                ["TransporteUf"] = 7520m,
+                ["MermasUf"] = 136524m,
+                ["OrdenesCambioUf"] = 3250000m,
+                ["CostoDirectoUf"] = 7497638m,
+                ["RiesgoUf"] = 149953m,
+                ["BaseCostoUf"] = 7647591m,
+                ["GastosGeneralesUf"] = 994187m,
+                ["ValorAgregadoEquiposUf"] = 0m,
+                ["BaseGgUtUf"] = 7647591m,
+                ["UtilidadAditivaUf"] = 0m,
+                ["CostoProyectoUf"] = 10287831m,
+                ["SubtotalUf"] = 8641778m,
+                ["UtilidadUf"] = 1646053m,
+                ["DescuentoUf"] = 154317m,
+                ["TotalVentaNetoUf"] = 10133513m,
+                ["IvaUf"] = 1925367m,
+                ["TotalVentaConIvaUf"] = 12058881m,
+                ["TotalVentaUf"] = 12058881m,
+                ["UfM2"] = 5025m,
+                ["MargenRealPct"] = 26m,
             },
-            ["ApuManda|plain"] = new() {
-                ["MaterialesUf"] = 2029040m, ["ManoObraUf"] = 894000m, ["EquiposUf"] = 24000m, ["SubcontratosUf"] = 180000m, ["HerramientasUf"] = 35094m, ["TransporteUf"] = 7760m, ["MermasUf"] = 111106m, ["OrdenesCambioUf"] = 3250000m, ["CostoDirectoUf"] = 6531000m, ["RiesgoUf"] = 130620m, ["BaseCostoUf"] = 6661620m, ["GastosGeneralesUf"] = 866011m, ["ValorAgregadoEquiposUf"] = 720m, ["BaseGgUtUf"] = 6661620m, ["UtilidadAditivaUf"] = 0m, ["CostoProyectoUf"] = 8962322m, ["SubtotalUf"] = 7528350m, ["UtilidadUf"] = 1433971m, ["DescuentoUf"] = 134435m, ["TotalVentaNetoUf"] = 8827887m, ["IvaUf"] = 1677299m, ["TotalVentaConIvaUf"] = 10505185m, ["TotalVentaUf"] = 10505185m, ["UfM2"] = 4377m, ["MargenRealPct"] = 26m,
+            ["ApuManda|plain"] = new()
+            {
+                ["MaterialesUf"] = 2029040m,
+                ["ManoObraUf"] = 894000m,
+                ["EquiposUf"] = 24000m,
+                ["SubcontratosUf"] = 180000m,
+                ["HerramientasUf"] = 35094m,
+                ["TransporteUf"] = 7760m,
+                ["MermasUf"] = 111106m,
+                ["OrdenesCambioUf"] = 3250000m,
+                ["CostoDirectoUf"] = 6531000m,
+                ["RiesgoUf"] = 130620m,
+                ["BaseCostoUf"] = 6661620m,
+                ["GastosGeneralesUf"] = 866011m,
+                ["ValorAgregadoEquiposUf"] = 720m,
+                ["BaseGgUtUf"] = 6661620m,
+                ["UtilidadAditivaUf"] = 0m,
+                ["CostoProyectoUf"] = 8962322m,
+                ["SubtotalUf"] = 7528350m,
+                ["UtilidadUf"] = 1433971m,
+                ["DescuentoUf"] = 134435m,
+                ["TotalVentaNetoUf"] = 8827887m,
+                ["IvaUf"] = 1677299m,
+                ["TotalVentaConIvaUf"] = 10505185m,
+                ["TotalVentaUf"] = 10505185m,
+                ["UfM2"] = 4377m,
+                ["MargenRealPct"] = 26m,
             },
             // C1 (2026-08-27): en complementario, el APU de P3 ya no suma herramientas/transporte/
             // merma calculadas sobre el material+MO del tablero (que aporta la cubicación); solo
             // suma sus recursos reales (EQ 24.000, SC 180.000) + imprevistos de alza sobre esa base.
             // Herr 35394→28554, Transp 7914→7674, Mermas 146084→141383, Costo directo -11.782.
-            ["CubicacionMasApuComplementarios|plain"] = new() {
-                ["MaterialesUf"] = 3169040m, ["ManoObraUf"] = 906000m, ["EquiposUf"] = 24000m, ["SubcontratosUf"] = 180000m, ["HerramientasUf"] = 28554m, ["TransporteUf"] = 7520m, ["MermasUf"] = 140604m, ["OrdenesCambioUf"] = 3250000m, ["CostoDirectoUf"] = 7705718m, ["RiesgoUf"] = 154114m, ["BaseCostoUf"] = 7859832m, ["GastosGeneralesUf"] = 1021778m, ["ValorAgregadoEquiposUf"] = 720m, ["BaseGgUtUf"] = 7859832m, ["UtilidadAditivaUf"] = 0m, ["CostoProyectoUf"] = 10574203m, ["SubtotalUf"] = 8882331m, ["UtilidadUf"] = 1691873m, ["DescuentoUf"] = 158613m, ["TotalVentaNetoUf"] = 10415590m, ["IvaUf"] = 1978962m, ["TotalVentaConIvaUf"] = 12394552m, ["TotalVentaUf"] = 12394552m, ["UfM2"] = 5164m, ["MargenRealPct"] = 26m,
+            ["CubicacionMasApuComplementarios|plain"] = new()
+            {
+                ["MaterialesUf"] = 3169040m,
+                ["ManoObraUf"] = 906000m,
+                ["EquiposUf"] = 24000m,
+                ["SubcontratosUf"] = 180000m,
+                ["HerramientasUf"] = 28554m,
+                ["TransporteUf"] = 7520m,
+                ["MermasUf"] = 140604m,
+                ["OrdenesCambioUf"] = 3250000m,
+                ["CostoDirectoUf"] = 7705718m,
+                ["RiesgoUf"] = 154114m,
+                ["BaseCostoUf"] = 7859832m,
+                ["GastosGeneralesUf"] = 1021778m,
+                ["ValorAgregadoEquiposUf"] = 720m,
+                ["BaseGgUtUf"] = 7859832m,
+                ["UtilidadAditivaUf"] = 0m,
+                ["CostoProyectoUf"] = 10574203m,
+                ["SubtotalUf"] = 8882331m,
+                ["UtilidadUf"] = 1691873m,
+                ["DescuentoUf"] = 158613m,
+                ["TotalVentaNetoUf"] = 10415590m,
+                ["IvaUf"] = 1978962m,
+                ["TotalVentaConIvaUf"] = 12394552m,
+                ["TotalVentaUf"] = 12394552m,
+                ["UfM2"] = 5164m,
+                ["MargenRealPct"] = 26m,
             },
         };
 }

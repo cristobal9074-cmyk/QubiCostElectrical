@@ -4,7 +4,7 @@
         xmlns:shell="clr-namespace:QubiCostElectrical.Wpf.Shell"
         xmlns:nav="clr-namespace:QubiCostElectrical.Wpf.Navigation"
         xmlns:ctrl="clr-namespace:QubiCostElectrical.Wpf.Controls"
-        Title="QUBI COST Electrical"
+        Title="{Binding WindowTitleText, Mode=OneWay, FallbackValue='QUBI COST Electrical'}"
         Icon="pack://application:,,,/Assets/QubiCostElectrical.ico"
         MinWidth="{StaticResource Layout.MinWindowWidth}"
         MinHeight="{StaticResource Layout.MinWindowHeight}"
@@ -33,7 +33,6 @@
       <RowDefinition Height="Auto" />
       <RowDefinition Height="Auto" />
       <RowDefinition Height="Auto" />
-      <RowDefinition Height="Auto" />
       <RowDefinition Height="*" />
       <RowDefinition Height="Auto" />
     </Grid.RowDefinitions>
@@ -43,7 +42,281 @@
             MouseLeftButtonDown="OnHeaderMouseLeftButtonDown"
             Visibility="{Binding IsLandingScreen, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
       <StackPanel>
-        <DockPanel Height="{StaticResource Layout.TopBarHeight}" Margin="20,0" LastChildFill="False">
+        <DockPanel Height="{StaticResource Layout.TopBarHeight}" Margin="20,0,8,0" LastChildFill="False">
+          <!-- 1. Controles de ventana (Minimizar, Maximizar/Restaurar, Cerrar) - SIEMPRE fijados a la extrema derecha -->
+          <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="8,0,0,0" VerticalAlignment="Center" WindowChrome.IsHitTestVisibleInChrome="True">
+            <Button x:Name="MinimizeButton" Width="34" Height="34"
+                    Background="Transparent" BorderThickness="0"
+                    Click="OnMinimizeClick" ToolTip="Minimizar"
+                    WindowChrome.IsHitTestVisibleInChrome="True">
+              <Button.Style>
+                <Style TargetType="Button">
+                  <Setter Property="Foreground" Value="{DynamicResource Brush.HeaderControl}" />
+                  <Setter Property="Template">
+                    <Setter.Value>
+                      <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="Transparent" CornerRadius="6">
+                          <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                          <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.White25}" />
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
+                          </Trigger>
+                        </ControlTemplate.Triggers>
+                      </ControlTemplate>
+                    </Setter.Value>
+                  </Setter>
+                </Style>
+              </Button.Style>
+              <TextBlock Text="&#xE921;" FontFamily="Segoe MDL2 Assets" FontSize="10" />
+            </Button>
+            <Button x:Name="MaxRestoreButton" Width="34" Height="34"
+                    Background="Transparent" BorderThickness="0"
+                    Click="OnMaxRestoreClick" ToolTip="Maximizar"
+                    WindowChrome.IsHitTestVisibleInChrome="True">
+              <Button.Style>
+                <Style TargetType="Button">
+                  <Setter Property="Foreground" Value="{DynamicResource Brush.HeaderControl}" />
+                  <Setter Property="Template">
+                    <Setter.Value>
+                      <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="Transparent" CornerRadius="6">
+                          <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                          <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.White25}" />
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
+                          </Trigger>
+                        </ControlTemplate.Triggers>
+                      </ControlTemplate>
+                    </Setter.Value>
+                  </Setter>
+                </Style>
+              </Button.Style>
+              <TextBlock x:Name="MaxRestoreIcon" Text="&#xE922;" FontFamily="Segoe MDL2 Assets" FontSize="10" />
+            </Button>
+            <Button x:Name="CloseButton" Width="34" Height="34"
+                    Background="Transparent" BorderThickness="0"
+                    Click="OnCloseClick" ToolTip="Cerrar"
+                    WindowChrome.IsHitTestVisibleInChrome="True">
+              <Button.Style>
+                <Style TargetType="Button">
+                  <Setter Property="Foreground" Value="{DynamicResource Brush.HeaderControl}" />
+                  <Setter Property="Template">
+                    <Setter.Value>
+                      <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="Transparent" CornerRadius="6">
+                          <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                          <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.Danger}" />
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
+                          </Trigger>
+                        </ControlTemplate.Triggers>
+                      </ControlTemplate>
+                    </Setter.Value>
+                  </Setter>
+                </Style>
+              </Button.Style>
+              <TextBlock Text="&#xE8BB;" FontFamily="Segoe MDL2 Assets" FontSize="10" />
+            </Button>
+          </StackPanel>
+
+          <!-- 2. Acciones principales y Usuario - anclados a la derecha antes de los controles de ventana -->
+          <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" WindowChrome.IsHitTestVisibleInChrome="True">
+            <!-- Píldora reactiva de Guardado y Sincronización -->
+            <Border Margin="0,0,10,0" Padding="8,3" CornerRadius="11" VerticalAlignment="Center"
+                    Visibility="{Binding HasOpenProject, Converter={StaticResource BoolToVisibility}}">
+              <Border.Style>
+                <Style TargetType="Border">
+                  <Setter Property="Background" Value="{DynamicResource Brush.White8}" />
+                  <Setter Property="BorderBrush" Value="{DynamicResource Brush.White18}" />
+                  <Setter Property="BorderThickness" Value="1" />
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding HasUnsavedChanges}" Value="True">
+                      <Setter Property="Background" Value="#33F59E0B" />
+                      <Setter Property="BorderBrush" Value="#80F59E0B" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding IsReadOnly}" Value="True">
+                      <Setter Property="Background" Value="#333B82F6" />
+                      <Setter Property="BorderBrush" Value="#803B82F6" />
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </Border.Style>
+              <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Grid Width="12" Height="12" Margin="0,0,5,0" VerticalAlignment="Center">
+                  <!-- Guardado: punto verde suave -->
+                  <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.SuccessBright}" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Ellipse.Style>
+                      <Style TargetType="Ellipse">
+                        <Setter Property="Visibility" Value="Visible" />
+                        <Style.Triggers>
+                          <DataTrigger Binding="{Binding HasUnsavedChanges}" Value="True">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                          </DataTrigger>
+                          <DataTrigger Binding="{Binding IsReadOnly}" Value="True">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </Ellipse.Style>
+                  </Ellipse>
+                  <!-- Sin guardar: punto ámbar -->
+                  <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.AmberRisk}" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Ellipse.Style>
+                      <Style TargetType="Ellipse">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                          <DataTrigger Binding="{Binding HasUnsavedChanges}" Value="True">
+                            <Setter Property="Visibility" Value="Visible" />
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </Ellipse.Style>
+                  </Ellipse>
+                  <!-- Solo lectura: candado MDL2 -->
+                  <TextBlock Text="&#xE72E;" FontFamily="Segoe MDL2 Assets" FontSize="9"
+                             Foreground="{DynamicResource Brush.HeaderControl}"
+                             HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <TextBlock.Style>
+                      <Style TargetType="TextBlock">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                          <DataTrigger Binding="{Binding IsReadOnly}" Value="True">
+                            <Setter Property="Visibility" Value="Visible" />
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </TextBlock.Style>
+                  </TextBlock>
+                </Grid>
+                <TextBlock Text="{Binding SaveStateText, Mode=OneWay}" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center">
+                  <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                      <Setter Property="Foreground" Value="{DynamicResource Brush.HeaderStatus}" />
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding HasUnsavedChanges}" Value="True">
+                          <Setter Property="Foreground" Value="{DynamicResource Brush.AmberRisk}" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding IsReadOnly}" Value="True">
+                          <Setter Property="Foreground" Value="{DynamicResource Brush.BrandStroke2}" />
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </TextBlock.Style>
+                </TextBlock>
+              </StackPanel>
+            </Border>
+            <Button x:Name="UndoButton" Style="{StaticResource Button.HeaderIcon}" Margin="0,0,2,0"
+                    ToolTip="{Binding UndoToolTip, Mode=OneWay}" Click="OnUndoClick"
+                    IsEnabled="{Binding CanUndo, Mode=OneWay}"
+                    AutomationProperties.Name="Deshacer">
+              <TextBlock Text="&#xE7A7;" FontFamily="Segoe MDL2 Assets" FontSize="13" Foreground="{DynamicResource Brush.HeaderControl}" />
+            </Button>
+            <Button x:Name="RedoButton" Style="{StaticResource Button.HeaderIcon}" Margin="0,0,8,0"
+                    ToolTip="{Binding RedoToolTip, Mode=OneWay}" Click="OnRedoClick"
+                    IsEnabled="{Binding CanRedo, Mode=OneWay}"
+                    AutomationProperties.Name="Rehacer">
+              <TextBlock Text="&#xE7A6;" FontFamily="Segoe MDL2 Assets" FontSize="13" Foreground="{DynamicResource Brush.HeaderControl}" />
+            </Button>
+            <Button Content="Guardar" Margin="0,0,6,0"
+                    Click="OnSaveClick"
+                    IsEnabled="{Binding CanSaveProject, Mode=OneWay}"
+                    ToolTip="Guardar el proyecto (Ctrl+S). Deshabilitado en solo lectura (Visor o bloqueo)."
+                    AutomationProperties.Name="Guardar"
+                    AutomationProperties.HelpText="Disponible solo con proyecto abierto y modo edición">
+              <Button.Style>
+                <Style TargetType="Button" BasedOn="{StaticResource Button.Secondary}">
+                  <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
+                  <Setter Property="Background" Value="{DynamicResource Brush.White12}" />
+                  <Setter Property="BorderBrush" Value="{DynamicResource Brush.White18}" />
+                  <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                      <Setter Property="Background" Value="{DynamicResource Brush.White25}" />
+                      <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
+                    </Trigger>
+                    <DataTrigger Binding="{Binding HasUnsavedChanges}" Value="True">
+                      <Setter Property="Background" Value="#332563EB" />
+                      <Setter Property="BorderBrush" Value="#803B82F6" />
+                      <Setter Property="FontWeight" Value="SemiBold" />
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </Button.Style>
+            </Button>
+            <Button Style="{StaticResource Button.Primary}" Margin="0,0,6,0" Click="OnReviewClick">
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Cerrar oferta" VerticalAlignment="Center" />
+                <Border Grid.Column="1"
+                        MinWidth="16"
+                        Height="16"
+                        Margin="8,0,0,0"
+                        Padding="3,0"
+                        CornerRadius="8"
+                        Background="{DynamicResource Brush.DangerDark}"
+                        VerticalAlignment="Center"
+                        Visibility="{Binding HasAlerts, Converter={StaticResource BoolToVisibility}}">
+                  <TextBlock Text="{Binding AlertCount, Mode=OneWay}"
+                             FontSize="10"
+                             FontWeight="Bold"
+                             Foreground="{DynamicResource Brush.White}"
+                             HorizontalAlignment="Center"
+                             VerticalAlignment="Center" />
+                </Border>
+              </Grid>
+            </Button>
+            <Border x:Name="UserAvatar" Width="30" Height="30" CornerRadius="{StaticResource Radius.Sm}" Background="{DynamicResource Brush.AvatarBg}" Cursor="Hand" ToolTip="{Binding UserDisplayName, Mode=OneWay}" MouseDown="OnUserAvatarClick">
+              <TextBlock Text="{Binding UserInitials, Mode=OneWay}" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderInk}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+            <Popup x:Name="UserMenuPopup"
+                   PlacementTarget="{Binding ElementName=UserAvatar}"
+                   Placement="Bottom"
+                   HorizontalOffset="0"
+                   VerticalOffset="6"
+                   AllowsTransparency="True"
+                   PopupAnimation="Fade"
+                   StaysOpen="False"
+                   Closed="OnUserMenuPopupClosed">
+              <Border Width="200"
+                      Background="{DynamicResource Brush.Surface}"
+                      BorderBrush="{DynamicResource Brush.Line}"
+                      BorderThickness="1"
+                      CornerRadius="12"
+                      Padding="6"
+                      SnapsToDevicePixels="True">
+                <Border.Effect>
+                  <DropShadowEffect BlurRadius="16" ShadowDepth="6" Direction="270" Color="{DynamicResource Color.Shadow}" Opacity="0.28" />
+                </Border.Effect>
+                <StackPanel>
+                  <TextBlock Text="{Binding UserDisplayName, Mode=OneWay}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink2}" Margin="10,8,10,2" />
+                  <TextBlock Text="{Binding UserEmail, Mode=OneWay}" FontSize="9" Foreground="{DynamicResource Brush.HeaderDim}" Margin="10,0,10,8" />
+                  <Border Height="1" Background="{DynamicResource Brush.Line}" Margin="4,0" />
+                  <Button Command="{Binding LogoutCommand}"
+                          Background="Transparent"
+                          BorderThickness="0"
+                          Padding="10,8"
+                          Margin="0,4,0,0"
+                          Cursor="Hand"
+                          HorizontalContentAlignment="Stretch">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="&#xE7E8;" FontFamily="Segoe MDL2 Assets" FontSize="11" Foreground="{DynamicResource Brush.Slate}" Margin="0,0,8,0" />
+                      <TextBlock Text="Cerrar sesión" FontSize="10" Foreground="{DynamicResource Brush.Slate}" />
+                    </StackPanel>
+                  </Button>
+                </StackPanel>
+              </Border>
+            </Popup>
+          </StackPanel>
+
+          <!-- 3. Logo y Marca -->
           <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
             <Border Width="34" Height="34" CornerRadius="{StaticResource Radius.Brand}" Background="{DynamicResource Brush.BrandMark}" Margin="0,0,9,0">
               <Viewbox Width="22" Height="22">
@@ -60,7 +333,8 @@
             </StackPanel>
           </StackPanel>
 
-          <Button x:Name="ProjectPickerButton" WindowChrome.IsHitTestVisibleInChrome="True" DockPanel.Dock="Left" Margin="14,0,0,0" Height="36" MinWidth="240" Cursor="Hand" Background="{DynamicResource Brush.White8}" BorderBrush="{DynamicResource Brush.White18}" BorderThickness="1" Padding="11,0" Click="OnProjectPickerClick" AutomationProperties.Name="Selector de proyectos" AutomationProperties.HelpText="{Binding ActiveProjectLabel, Mode=OneWay}">
+          <!-- 4. Selector de proyectos con ancho acotado y elipsis para nombres largos -->
+          <Button x:Name="ProjectPickerButton" WindowChrome.IsHitTestVisibleInChrome="True" DockPanel.Dock="Left" Margin="14,0,0,0" Height="36" MinWidth="180" MaxWidth="300" Cursor="Hand" Background="{DynamicResource Brush.White8}" BorderBrush="{DynamicResource Brush.White18}" BorderThickness="1" Padding="11,0" Click="OnProjectPickerClick" AutomationProperties.Name="Selector de proyectos" AutomationProperties.HelpText="{Binding ActiveProjectLabel, Mode=OneWay}">
             <StackPanel Orientation="Horizontal">
               <Border Width="22" Height="22" CornerRadius="6" Background="{DynamicResource Brush.HeaderIconBlue}" Margin="0,0,8,0">
                 <Viewbox Width="14" Height="14">
@@ -70,23 +344,83 @@
                   </Canvas>
                 </Viewbox>
               </Border>
-              <StackPanel VerticalAlignment="Center">
+              <StackPanel VerticalAlignment="Center" MaxWidth="210">
                 <TextBlock Text="PROYECTO ACTIVO" FontSize="10" Foreground="{DynamicResource Brush.HeaderLabel}" />
-                <TextBlock Text="{Binding ActiveProjectLabel, Mode=OneWay}" FontSize="10" Foreground="{DynamicResource Brush.White}" FontWeight="SemiBold" />
+                <TextBlock Text="{Binding ActiveProjectLabel, Mode=OneWay}" 
+                           FontSize="10" 
+                           Foreground="{DynamicResource Brush.White}" 
+                           FontWeight="SemiBold"
+                           TextTrimming="CharacterEllipsis"
+                           ToolTip="{Binding ActiveProjectLabel, Mode=OneWay}" />
               </StackPanel>
               <TextBlock Text="&#xE70D;" FontFamily="Segoe MDL2 Assets" Margin="8,0,0,0" FontSize="10" Foreground="{DynamicResource Brush.HeaderNav}" VerticalAlignment="Center" />
             </StackPanel>
           </Button>
 
-          <Border x:Name="SearchShell" WindowChrome.IsHitTestVisibleInChrome="True" DockPanel.Dock="Left" Margin="14,0,0,0" Height="36" Width="380" Background="{DynamicResource Brush.NavyDeep}" BorderBrush="{DynamicResource Brush.NavyBorder}" BorderThickness="1" CornerRadius="11" VerticalAlignment="Center">
+          <!-- 5. Barra de búsqueda en la cabecera (Siempre visible y de alto contraste) -->
+          <Border x:Name="SearchShell"
+                  WindowChrome.IsHitTestVisibleInChrome="True"
+                  DockPanel.Dock="Left"
+                  Margin="14,0,0,0"
+                  Height="36"
+                  Width="260"
+                  MaxWidth="340"
+                  Background="{DynamicResource Brush.NavyDeep}"
+                  BorderBrush="{DynamicResource Brush.NavyBorder}"
+                  BorderThickness="1"
+                  CornerRadius="11"
+                  VerticalAlignment="Center">
+            <Border.Resources>
+              <Style x:Key="HeaderSearchBox" TargetType="TextBox">
+                <Setter Property="FontFamily" Value="{StaticResource Font.Ui}" />
+                <Setter Property="FontSize" Value="11.5" />
+                <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
+                <Setter Property="CaretBrush" Value="{DynamicResource Brush.BrandStroke2}" />
+                <Setter Property="SelectionBrush" Value="{DynamicResource Brush.Blue2}" />
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Padding" Value="0,2" />
+                <Setter Property="Template">
+                  <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                      <Grid>
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}">
+                          <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" />
+                        </Border>
+                        <TextBlock x:Name="Watermark"
+                                   Text="{TemplateBinding Tag}"
+                                   Margin="{TemplateBinding Padding}"
+                                   VerticalAlignment="Center"
+                                   IsHitTestVisible="False"
+                                   Foreground="{DynamicResource Brush.HeaderMuted}"
+                                   FontFamily="{TemplateBinding FontFamily}"
+                                   FontSize="{TemplateBinding FontSize}"
+                                   Visibility="Collapsed" />
+                      </Grid>
+                      <ControlTemplate.Triggers>
+                        <MultiTrigger>
+                          <MultiTrigger.Conditions>
+                            <Condition Property="Text" Value="" />
+                            <Condition Property="IsKeyboardFocused" Value="False" />
+                          </MultiTrigger.Conditions>
+                          <Setter TargetName="Watermark" Property="Visibility" Value="Visible" />
+                        </MultiTrigger>
+                      </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                  </Setter.Value>
+                </Setter>
+              </Style>
+            </Border.Resources>
             <DockPanel Margin="10,0">
-              <TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource Brush.Ink5}" VerticalAlignment="Center" Margin="0,0,8,0" FontSize="13" />
+              <TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource Brush.BrandStroke2}" VerticalAlignment="Center" Margin="0,0,8,0" FontSize="13" />
               <Border DockPanel.Dock="Right" BorderBrush="{DynamicResource Brush.NavyBorder2}" BorderThickness="1" CornerRadius="5" Padding="6,1" Margin="8,0,0,0" VerticalAlignment="Center" Background="{DynamicResource Brush.NavyDeep2}">
-                <TextBlock Text="Ctrl+K" FontSize="9" Foreground="{DynamicResource Brush.Slate3}" FontWeight="SemiBold" />
+                <TextBlock Text="Ctrl+P / Ctrl+K" FontSize="9" Foreground="{DynamicResource Brush.Slate3}" FontWeight="SemiBold" />
               </Border>
               <TextBox x:Name="TopSearchBox"
-                       Style="{StaticResource Form.SearchBox}"
-                       Tag="Buscar módulo o comando…"
+                       Style="{StaticResource HeaderSearchBox}"
+                       Tag="Buscar en todo el proyecto…"
                        Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
                        VerticalAlignment="Center"
                        VerticalContentAlignment="Center"
@@ -98,95 +432,475 @@
           <Popup x:Name="QuickSearchPopup"
                  PlacementTarget="{Binding ElementName=SearchShell}"
                  Placement="Bottom"
-                 HorizontalOffset="0"
+                 HorizontalOffset="-100"
                  VerticalOffset="8"
                  AllowsTransparency="True"
-                 PopupAnimation="None"
+                 PopupAnimation="Fade"
                  StaysOpen="False"
                  Opened="OnPopupSlideInOpened"
                  Closed="OnQuickSearchPopupClosed">
-            <Border Width="480"
+            <Popup.Resources>
+              <Style x:Key="SpotlightSearchBoxStyle" TargetType="TextBox">
+                <Setter Property="FontFamily" Value="{StaticResource Font.Ui}" />
+                <Setter Property="FontSize" Value="13.5" />
+                <Setter Property="FontWeight" Value="Medium" />
+                <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Padding" Value="0,2" />
+                <Setter Property="CaretBrush" Value="{DynamicResource Brush.Blue}" />
+                <Setter Property="SelectionBrush" Value="{DynamicResource Brush.BlueSoft}" />
+                <Setter Property="Template">
+                  <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                      <Grid VerticalAlignment="Center">
+                        <ScrollViewer x:Name="PART_ContentHost"
+                                      VerticalAlignment="Center"
+                                      Padding="{TemplateBinding Padding}" />
+                        <TextBlock x:Name="Watermark"
+                                   Text="{TemplateBinding Tag}"
+                                   Padding="{TemplateBinding Padding}"
+                                   VerticalAlignment="Center"
+                                   IsHitTestVisible="False"
+                                   Visibility="Collapsed"
+                                   Foreground="{DynamicResource Brush.Ink4}"
+                                   FontFamily="{TemplateBinding FontFamily}"
+                                   FontSize="{TemplateBinding FontSize}" />
+                      </Grid>
+                      <ControlTemplate.Triggers>
+                        <Trigger Property="Text" Value="">
+                          <Setter TargetName="Watermark" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="Text" Value="{x:Null}">
+                          <Setter TargetName="Watermark" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="Tag" Value="{x:Null}">
+                          <Setter TargetName="Watermark" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="Tag" Value="">
+                          <Setter TargetName="Watermark" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                      </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                  </Setter.Value>
+                </Setter>
+              </Style>
+
+              <Style x:Key="SpotlightItemButtonStyle" TargetType="Button">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Padding" Value="10,7" />
+                <Setter Property="Margin" Value="0" />
+                <Setter Property="HorizontalAlignment" Value="Stretch" />
+                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                <Setter Property="Cursor" Value="Hand" />
+                <Setter Property="Template">
+                  <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                      <Border Background="{TemplateBinding Background}"
+                              Padding="{TemplateBinding Padding}"
+                              HorizontalAlignment="Stretch"
+                              SnapsToDevicePixels="True">
+                        <ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Center" />
+                      </Border>
+                    </ControlTemplate>
+                  </Setter.Value>
+                </Setter>
+              </Style>
+
+              <Style x:Key="SpotlightFilterChip" TargetType="Button">
+                <Setter Property="Height" Value="26" />
+                <Setter Property="Padding" Value="10,0" />
+                <Setter Property="Margin" Value="0,0,5,0" />
+                <Setter Property="FontSize" Value="10.5" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="Cursor" Value="Hand" />
+                <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
+                <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="Template">
+                  <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                      <Border x:Name="Bd"
+                              Background="{TemplateBinding Background}"
+                              BorderBrush="{TemplateBinding BorderBrush}"
+                              BorderThickness="{TemplateBinding BorderThickness}"
+                              CornerRadius="6"
+                              Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                          TextElement.Foreground="{TemplateBinding Foreground}"
+                                          TextElement.FontWeight="{TemplateBinding FontWeight}" />
+                      </Border>
+                      <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                          <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.BlueHover}" />
+                          <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Brush.BlueFocus}" />
+                          <Setter Property="Foreground" Value="{DynamicResource Brush.BlueDark}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                          <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+                        </Trigger>
+                      </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                  </Setter.Value>
+                </Setter>
+              </Style>
+            </Popup.Resources>
+            <Border Width="720"
                     Background="{DynamicResource Brush.Surface}"
                     BorderBrush="{DynamicResource Brush.Line}"
                     BorderThickness="1"
                     CornerRadius="16"
-                    Padding="14"
                     SnapsToDevicePixels="True">
               <Border.Effect>
-                <DropShadowEffect BlurRadius="20" ShadowDepth="6" Direction="270" Color="{DynamicResource Color.Shadow}" Opacity="0.28" />
+                <DropShadowEffect BlurRadius="28" ShadowDepth="8" Direction="270" Color="{DynamicResource Color.Shadow}" Opacity="0.25" />
               </Border.Effect>
               <StackPanel>
-                <Grid Margin="2,0,2,12">
-                  <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                  </Grid.ColumnDefinitions>
-                  <TextBlock Text="Comandos rápidos" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink2}" />
-                  <TextBlock Grid.Column="1" Text="Enter abre · Esc cierra" FontSize="9" Foreground="{DynamicResource Brush.HeaderDim}" VerticalAlignment="Center" />
-                </Grid>
-                <ListBox ItemsSource="{Binding QuickSearchResults}"
-                         x:Name="QuickSearchList"
-                         Background="Transparent"
-                         BorderThickness="0"
-                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                         ScrollViewer.VerticalScrollBarVisibility="Auto"
-                         SelectionChanged="OnQuickSearchSelectionChanged"
-                         MaxHeight="320">
-                  <ListBox.ItemContainerStyle>
-                    <Style TargetType="ListBoxItem">
-                      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                      <Setter Property="Padding" Value="0" />
-                      <Setter Property="Margin" Value="0,0,0,6" />
-                      <Setter Property="Template">
-                        <Setter.Value>
-                          <ControlTemplate TargetType="ListBoxItem">
-                            <Border x:Name="ItemBorder"
-                                    Background="Transparent"
-                                    BorderBrush="Transparent"
+                <!-- 1. BARRA DE BÚSQUEDA INTEGRADA EN EL MODAL -->
+                <Border Background="{DynamicResource Brush.Surface2}"
+                        BorderBrush="{DynamicResource Brush.Line}"
+                        BorderThickness="0,0,0,1"
+                        Padding="14,10"
+                        CornerRadius="16,16,0,0">
+                  <DockPanel>
+                    <!-- Ícono de Lupa Azul de la App -->
+                    <Border Width="30" Height="30" CornerRadius="8" Background="{DynamicResource Brush.BlueSoft}" Margin="0,0,10,0" VerticalAlignment="Center">
+                      <TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+
+                    <!-- Botón Limpiar [✕] -->
+                    <Button DockPanel.Dock="Right"
+                            Command="{Binding ClearSearchCommand}"
+                            Visibility="{Binding HasSearchText, Converter={StaticResource BoolToVisibility}}"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Padding="4,2"
+                            Margin="6,0,0,0"
+                            Cursor="Hand"
+                            ToolTip="Borrar texto (Esc)">
+                      <Border Background="{DynamicResource Brush.ChipBg}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="10" Width="22" Height="22">
+                        <TextBlock Text="✕" FontSize="10" Foreground="{DynamicResource Brush.Ink4}" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                      </Border>
+                    </Button>
+
+                    <!-- Contador de Resultados / Badge Atajo -->
+                    <Border DockPanel.Dock="Right"
+                            Background="{DynamicResource Brush.BlueFaint}"
+                            BorderBrush="{DynamicResource Brush.Line}"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="8,3"
+                            Margin="8,0,0,0"
+                            VerticalAlignment="Center">
+                      <TextBlock Text="{Binding ResultCountLabel, FallbackValue='0 resultados'}"
+                                 FontSize="10"
+                                 FontWeight="SemiBold"
+                                 Foreground="{DynamicResource Brush.BlueDark}" />
+                    </Border>
+
+                    <!-- Campo de Texto Principal (Grande, Nítido, Alto Contraste) -->
+                    <TextBox x:Name="PopupSearchBox"
+                             Style="{StaticResource SpotlightSearchBoxStyle}"
+                             Tag="Escribe para buscar partidas, cubicación, APU, insumos o comandos…"
+                             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                             VerticalAlignment="Center"
+                             GotKeyboardFocus="OnSearchBoxGotKeyboardFocus"
+                             PreviewKeyDown="OnSearchBoxPreviewKeyDown" />
+                  </DockPanel>
+                </Border>
+
+                <!-- 2. SELECTOR DE CATEGORÍAS SEGMENTADO (ESTILO CHIP DE LA APP) -->
+                <Border Background="{DynamicResource Brush.Surface}"
+                        BorderBrush="{DynamicResource Brush.Line2}"
+                        BorderThickness="0,0,0,1"
+                        Padding="14,8">
+                  <DockPanel LastChildFill="False">
+                    <TextBlock DockPanel.Dock="Right" Text="Tab para alternar filtro" FontSize="9.5" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center" Margin="6,0,0,0" />
+                    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                      <StackPanel Orientation="Horizontal">
+                        <Button Content="Todos" Command="{Binding SetPaletteCategoryCommand}" CommandParameter="All">
+                          <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource SpotlightFilterChip}">
+                              <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedPaletteCategory}" Value="All">
+                                  <Setter Property="Background" Value="{DynamicResource Brush.Blue}" />
+                                  <Setter Property="BorderBrush" Value="{DynamicResource Brush.BlueDark}" />
+                                  <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
+                                </DataTrigger>
+                              </Style.Triggers>
+                            </Style>
+                          </Button.Style>
+                        </Button>
+                        <Button Content="📋 Partidas" Command="{Binding SetPaletteCategoryCommand}" CommandParameter="Partidas">
+                          <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource SpotlightFilterChip}">
+                              <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedPaletteCategory}" Value="Partidas">
+                                  <Setter Property="Background" Value="{DynamicResource Brush.Blue}" />
+                                  <Setter Property="BorderBrush" Value="{DynamicResource Brush.BlueDark}" />
+                                  <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
+                                </DataTrigger>
+                              </Style.Triggers>
+                            </Style>
+                          </Button.Style>
+                        </Button>
+                        <Button Content="📐 Cubicación" Command="{Binding SetPaletteCategoryCommand}" CommandParameter="Cubicacion">
+                          <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource SpotlightFilterChip}">
+                              <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedPaletteCategory}" Value="Cubicacion">
+                                  <Setter Property="Background" Value="{DynamicResource Brush.Blue}" />
+                                  <Setter Property="BorderBrush" Value="{DynamicResource Brush.BlueDark}" />
+                                  <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
+                                </DataTrigger>
+                              </Style.Triggers>
+                            </Style>
+                          </Button.Style>
+                        </Button>
+                        <Button Content="📊 APU" Command="{Binding SetPaletteCategoryCommand}" CommandParameter="Apu">
+                          <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource SpotlightFilterChip}">
+                              <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedPaletteCategory}" Value="Apu">
+                                  <Setter Property="Background" Value="{DynamicResource Brush.Blue}" />
+                                  <Setter Property="BorderBrush" Value="{DynamicResource Brush.BlueDark}" />
+                                  <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
+                                </DataTrigger>
+                              </Style.Triggers>
+                            </Style>
+                          </Button.Style>
+                        </Button>
+                        <Button Content="🏛️ Banco Precios" Command="{Binding SetPaletteCategoryCommand}" CommandParameter="Materiales">
+                          <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource SpotlightFilterChip}">
+                              <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedPaletteCategory}" Value="Materiales">
+                                  <Setter Property="Background" Value="{DynamicResource Brush.Blue}" />
+                                  <Setter Property="BorderBrush" Value="{DynamicResource Brush.BlueDark}" />
+                                  <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
+                                </DataTrigger>
+                              </Style.Triggers>
+                            </Style>
+                          </Button.Style>
+                        </Button>
+                        <Button Content="⚡ Tableros SC" Command="{Binding SetPaletteCategoryCommand}" CommandParameter="TablerosSc">
+                          <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource SpotlightFilterChip}">
+                              <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedPaletteCategory}" Value="TablerosSc">
+                                  <Setter Property="Background" Value="{DynamicResource Brush.Blue}" />
+                                  <Setter Property="BorderBrush" Value="{DynamicResource Brush.BlueDark}" />
+                                  <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
+                                </DataTrigger>
+                              </Style.Triggers>
+                            </Style>
+                          </Button.Style>
+                        </Button>
+                        <Button Content="🧭 Módulos" Command="{Binding SetPaletteCategoryCommand}" CommandParameter="Navigation">
+                          <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource SpotlightFilterChip}">
+                              <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedPaletteCategory}" Value="Navigation">
+                                  <Setter Property="Background" Value="{DynamicResource Brush.Blue}" />
+                                  <Setter Property="BorderBrush" Value="{DynamicResource Brush.BlueDark}" />
+                                  <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
+                                </DataTrigger>
+                              </Style.Triggers>
+                            </Style>
+                          </Button.Style>
+                        </Button>
+                        <Button Content="⚙️ Acciones" Command="{Binding SetPaletteCategoryCommand}" CommandParameter="Actions">
+                          <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource SpotlightFilterChip}">
+                              <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedPaletteCategory}" Value="Actions">
+                                  <Setter Property="Background" Value="{DynamicResource Brush.Blue}" />
+                                  <Setter Property="BorderBrush" Value="{DynamicResource Brush.BlueDark}" />
+                                  <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
+                                </DataTrigger>
+                              </Style.Triggers>
+                            </Style>
+                          </Button.Style>
+                        </Button>
+                      </StackPanel>
+                    </ScrollViewer>
+                  </DockPanel>
+                </Border>
+
+                <!-- 3. LISTA DE RESULTADOS / ESTADO VACÍO -->
+                <Grid MinHeight="160" MaxHeight="380">
+                  <!-- Estado Vacío cuando no hay resultados -->
+                  <StackPanel Visibility="{Binding HasQuickSearchResults, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center"
+                              Margin="24">
+                    <Border Width="42" Height="42" CornerRadius="12" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" HorizontalAlignment="Center" Margin="0,0,0,10">
+                      <TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="18" Foreground="{DynamicResource Brush.Ink4}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <TextBlock Text="No se encontraron coincidencias" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink2}" HorizontalAlignment="Center" />
+                    <TextBlock Text="Prueba con otro término o selecciona 'Todos' para buscar en todo el proyecto" FontSize="10.5" Foreground="{DynamicResource Brush.Ink4}" HorizontalAlignment="Center" Margin="0,4,0,0" />
+                  </StackPanel>
+
+                  <!-- Lista con resultados -->
+                  <ListBox ItemsSource="{Binding QuickSearchResults}"
+                           SelectedItem="{Binding SelectedQuickSearchItem, Mode=TwoWay}"
+                           x:Name="QuickSearchList"
+                           Background="Transparent"
+                           BorderThickness="0"
+                           HorizontalContentAlignment="Stretch"
+                           ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                           ScrollViewer.VerticalScrollBarVisibility="Auto"
+                           SelectionChanged="OnQuickSearchSelectionChanged"
+                           Padding="8,6"
+                           Visibility="{Binding HasQuickSearchResults, Converter={StaticResource BoolToVisibility}}">
+                    <ListBox.ItemContainerStyle>
+                      <Style TargetType="ListBoxItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        <Setter Property="Padding" Value="0" />
+                        <Setter Property="Margin" Value="0,0,0,2" />
+                        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                        <Setter Property="Template">
+                          <Setter.Value>
+                            <ControlTemplate TargetType="ListBoxItem">
+                              <Border x:Name="ItemBorder"
+                                      Background="Transparent"
+                                      BorderBrush="Transparent"
+                                      BorderThickness="1"
+                                      CornerRadius="8"
+                                      Padding="0"
+                                      SnapsToDevicePixels="True">
+                                <ContentPresenter HorizontalAlignment="Stretch"
+                                                  VerticalAlignment="Center" />
+                              </Border>
+                              <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                  <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource Brush.RowHover}" />
+                                  <Setter TargetName="ItemBorder" Property="BorderBrush" Value="{DynamicResource Brush.Line2}" />
+                                </Trigger>
+                                <Trigger Property="IsSelected" Value="True">
+                                  <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource Brush.BlueSelected}" />
+                                  <Setter TargetName="ItemBorder" Property="BorderBrush" Value="{DynamicResource Brush.BlueFocus}" />
+                                </Trigger>
+                              </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                          </Setter.Value>
+                        </Setter>
+                      </Style>
+                    </ListBox.ItemContainerStyle>
+                    <ListBox.ItemTemplate>
+                      <DataTemplate>
+                        <Button Style="{StaticResource SpotlightItemButtonStyle}"
+                                Click="OnQuickSearchItemClick">
+                          <Grid HorizontalAlignment="Stretch">
+                            <Grid.ColumnDefinitions>
+                              <!-- Col 0: Ancho fijo para badges para que todos los títulos inicien alineados -->
+                              <ColumnDefinition Width="116" />
+                              <!-- Col 1: Título y subtítulo expandiéndose -->
+                              <ColumnDefinition Width="*" />
+                              <!-- Col 2: Atajo anclado al extremo derecho -->
+                              <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Badge e Icono de Categoría (Pill alineado a la izquierda) -->
+                            <Border Grid.Column="0"
+                                    Background="{Binding CategoryBadgeBrush}"
+                                    BorderBrush="{Binding CategoryBadgeForeground}"
                                     BorderThickness="1"
-                                    CornerRadius="12"
-                                    Padding="0">
-                              <ContentPresenter />
+                                    CornerRadius="6"
+                                    Padding="7,3"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Center">
+                              <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding Icon}"
+                                           FontFamily="Segoe MDL2 Assets"
+                                           FontSize="10.5"
+                                           Foreground="{Binding CategoryBadgeForeground}"
+                                           VerticalAlignment="Center"
+                                           Margin="0,0,5,0" />
+                                <TextBlock Text="{Binding CategoryLabel}"
+                                           FontSize="9.5"
+                                           FontWeight="Bold"
+                                           Foreground="{Binding CategoryBadgeForeground}"
+                                           VerticalAlignment="Center" />
+                              </StackPanel>
                             </Border>
-                            <ControlTemplate.Triggers>
-                              <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource Brush.Surface2}" />
-                                <Setter TargetName="ItemBorder" Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
-                              </Trigger>
-                              <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource Brush.BlueSelected}" />
-                                <Setter TargetName="ItemBorder" Property="BorderBrush" Value="{DynamicResource Brush.BlueIconBg2}" />
-                              </Trigger>
-                            </ControlTemplate.Triggers>
-                          </ControlTemplate>
-                        </Setter.Value>
-                      </Setter>
-                    </Style>
-                  </ListBox.ItemContainerStyle>
-                  <ListBox.ItemTemplate>
-                    <DataTemplate>
-                      <Button Background="Transparent"
-                              BorderThickness="0"
-                              Padding="0"
-                              Click="OnQuickSearchItemClick"
-                              Cursor="Hand">
-                        <Grid Margin="12,11">
-                          <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                          </Grid.ColumnDefinitions>
-                          <StackPanel>
-                            <TextBlock Text="{Binding Title}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink2}" />
-                            <TextBlock Text="{Binding Subtitle}" Margin="0,2,0,0" FontSize="9" Foreground="{DynamicResource Brush.Ink4}" TextTrimming="CharacterEllipsis" />
-                          </StackPanel>
-                          <Border Grid.Column="1" Margin="10,0,0,0" Padding="7,2" VerticalAlignment="Center" CornerRadius="6" Background="{DynamicResource Brush.BlueFaint}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1">
-                            <TextBlock Text="{Binding Shortcut}" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink6}" />
-                          </Border>
-                        </Grid>
-                      </Button>
-                    </DataTemplate>
-                  </ListBox.ItemTemplate>
-                </ListBox>
+
+                            <!-- Textos Principales: Título y Subtítulo -->
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="10,0,12,0">
+                              <TextBlock Text="{Binding Title}"
+                                         FontSize="12.5"
+                                         FontWeight="SemiBold"
+                                         Foreground="{DynamicResource Brush.Ink}"
+                                         TextTrimming="CharacterEllipsis" />
+                              <TextBlock Text="{Binding Subtitle}"
+                                         Margin="0,2,0,0"
+                                         FontSize="10.5"
+                                         Foreground="{DynamicResource Brush.Ink3}"
+                                         TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+
+                            <!-- Atajo o Ubicación (Pill anclado a la derecha) -->
+                            <Border Grid.Column="2"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Center"
+                                    Padding="8,3"
+                                    CornerRadius="5"
+                                    Background="{DynamicResource Brush.Surface2}"
+                                    BorderBrush="{DynamicResource Brush.Line}"
+                                    BorderThickness="1">
+                              <TextBlock Text="{Binding Shortcut}"
+                                         FontSize="9.5"
+                                         FontWeight="SemiBold"
+                                         Foreground="{DynamicResource Brush.Ink3}" />
+                            </Border>
+                          </Grid>
+                        </Button>
+                      </DataTemplate>
+                    </ListBox.ItemTemplate>
+                  </ListBox>
+                </Grid>
+
+                <!-- 4. FOOTER CON GUÍA DE ERGONOMÍA -->
+                <Border Background="{DynamicResource Brush.Surface2}"
+                        BorderBrush="{DynamicResource Brush.Line}"
+                        BorderThickness="0,1,0,0"
+                        Padding="14,9"
+                        CornerRadius="0,0,16,16">
+                  <DockPanel LastChildFill="False">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                      <!-- Tecla Enter -->
+                      <Border Background="{DynamicResource Brush.ChipBg}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Padding="5,1.5" Margin="0,0,5,0">
+                        <TextBlock Text="↵ Enter" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}" />
+                      </Border>
+                      <TextBlock Text="Ejecutar / Ir" FontSize="10" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center" Margin="0,0,14,0" />
+
+                      <!-- Teclas ↑ ↓ -->
+                      <Border Background="{DynamicResource Brush.ChipBg}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Padding="5,1.5" Margin="0,0,5,0">
+                        <TextBlock Text="↑ ↓" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}" />
+                      </Border>
+                      <TextBlock Text="Navegar" FontSize="10" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center" Margin="0,0,14,0" />
+
+                      <!-- Tecla Tab -->
+                      <Border Background="{DynamicResource Brush.ChipBg}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Padding="5,1.5" Margin="0,0,5,0">
+                        <TextBlock Text="Tab" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}" />
+                      </Border>
+                      <TextBlock Text="Alternar categoría" FontSize="10" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center" Margin="0,0,14,0" />
+
+                      <!-- Tecla Esc -->
+                      <Border Background="{DynamicResource Brush.ChipBg}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Padding="5,1.5" Margin="0,0,5,0">
+                        <TextBlock Text="Esc" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}" />
+                      </Border>
+                      <TextBlock Text="Cerrar" FontSize="10" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center" />
+                    </StackPanel>
+
+                    <!-- Identidad de Marca -->
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                      <TextBlock Text="⚡ Qubi Cost Spotlight" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Blue}" />
+                    </StackPanel>
+                  </DockPanel>
+                </Border>
               </StackPanel>
             </Border>
           </Popup>
@@ -485,204 +1199,127 @@
               </StackPanel>
             </Border>
           </Popup>
-
-<StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" WindowChrome.IsHitTestVisibleInChrome="True">
-            <StackPanel Orientation="Horizontal" Margin="0,0,10,0" VerticalAlignment="Center">
-              <Ellipse Width="5" Height="5" Fill="{DynamicResource Brush.SaveDot}" Margin="0,0,5,0" />
-              <TextBlock Text="{Binding SaveStateText, Mode=OneWay}" FontSize="10" Foreground="{DynamicResource Brush.HeaderStatus}" />
-            </StackPanel>
-            <Button x:Name="UndoButton" Style="{StaticResource Button.HeaderIcon}" Margin="0,0,2,0"
-                    ToolTip="{Binding UndoToolTip, Mode=OneWay}" Click="OnUndoClick"
-                    IsEnabled="{Binding CanUndo, Mode=OneWay}"
-                    AutomationProperties.Name="Deshacer">
-              <TextBlock Text="&#xE7A7;" FontFamily="Segoe MDL2 Assets" FontSize="13" Foreground="{DynamicResource Brush.HeaderControl}" />
-            </Button>
-            <Button x:Name="RedoButton" Style="{StaticResource Button.HeaderIcon}" Margin="0,0,8,0"
-                    ToolTip="{Binding RedoToolTip, Mode=OneWay}" Click="OnRedoClick"
-                    IsEnabled="{Binding CanRedo, Mode=OneWay}"
-                    AutomationProperties.Name="Rehacer">
-              <TextBlock Text="&#xE7A6;" FontFamily="Segoe MDL2 Assets" FontSize="13" Foreground="{DynamicResource Brush.HeaderControl}" />
-            </Button>
-            <Button Style="{StaticResource Button.Secondary}" Content="Guardar" Margin="0,0,6,0"
-                    Foreground="{DynamicResource Brush.White}" Background="{DynamicResource Brush.White12}" BorderBrush="{DynamicResource Brush.White18}"
-                    Click="OnSaveClick"
-                    IsEnabled="{Binding CanSaveProject, Mode=OneWay}"
-                    ToolTip="Guardar el proyecto (Ctrl+S). Deshabilitado en solo lectura (Visor o bloqueo)."
-                    AutomationProperties.Name="Guardar"
-                    AutomationProperties.HelpText="Disponible solo con proyecto abierto y modo edición" />
-            <Button Style="{StaticResource Button.Primary}" Margin="0,0,6,0" Click="OnReviewClick">
-              <Grid>
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="Auto" />
-                  <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <TextBlock Text="Revisar" VerticalAlignment="Center" />
-                <Border Grid.Column="1"
-                        MinWidth="16"
-                        Height="16"
-                        Margin="8,0,0,0"
-                        Padding="3,0"
-                        CornerRadius="8"
-                        Background="{DynamicResource Brush.DangerDark}"
-                        VerticalAlignment="Center"
-                        Visibility="{Binding HasAlerts, Converter={StaticResource BoolToVisibility}}">
-                  <TextBlock Text="{Binding AlertCount, Mode=OneWay}"
-                             FontSize="10"
-                             FontWeight="Bold"
-                             Foreground="{DynamicResource Brush.White}"
-                             HorizontalAlignment="Center"
-                             VerticalAlignment="Center" />
-                </Border>
-              </Grid>
-            </Button>
-            <Border x:Name="UserAvatar" Width="30" Height="30" CornerRadius="{StaticResource Radius.Sm}" Background="{DynamicResource Brush.AvatarBg}" Cursor="Hand" ToolTip="{Binding UserDisplayName, Mode=OneWay}" MouseDown="OnUserAvatarClick">
-              <TextBlock Text="{Binding UserInitials, Mode=OneWay}" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderInk}" HorizontalAlignment="Center" VerticalAlignment="Center" />
-            </Border>
-            <Popup x:Name="UserMenuPopup"
-                   PlacementTarget="{Binding ElementName=UserAvatar}"
-                   Placement="Bottom"
-                   HorizontalOffset="0"
-                   VerticalOffset="6"
-                   AllowsTransparency="True"
-                   PopupAnimation="Fade"
-                   StaysOpen="False"
-                   Closed="OnUserMenuPopupClosed">
-              <Border Width="200"
-                      Background="{DynamicResource Brush.Surface}"
-                      BorderBrush="{DynamicResource Brush.Line}"
-                      BorderThickness="1"
-                      CornerRadius="12"
-                      Padding="6"
-                      SnapsToDevicePixels="True">
-                <Border.Effect>
-                  <DropShadowEffect BlurRadius="16" ShadowDepth="6" Direction="270" Color="{DynamicResource Color.Shadow}" Opacity="0.28" />
-                </Border.Effect>
-                <StackPanel>
-                  <TextBlock Text="{Binding UserDisplayName, Mode=OneWay}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink2}" Margin="10,8,10,2" />
-                  <TextBlock Text="{Binding UserEmail, Mode=OneWay}" FontSize="9" Foreground="{DynamicResource Brush.HeaderDim}" Margin="10,0,10,8" />
-                  <Border Height="1" Background="{DynamicResource Brush.Line}" Margin="4,0" />
-                  <Button Command="{Binding LogoutCommand}"
-                          Background="Transparent"
-                          BorderThickness="0"
-                          Padding="10,8"
-                          Margin="0,4,0,0"
-                          Cursor="Hand"
-                          HorizontalContentAlignment="Stretch">
-                    <StackPanel Orientation="Horizontal">
-                      <TextBlock Text="&#xE7E8;" FontFamily="Segoe MDL2 Assets" FontSize="11" Foreground="{DynamicResource Brush.Slate}" Margin="0,0,8,0" />
-                      <TextBlock Text="Cerrar sesión" FontSize="10" Foreground="{DynamicResource Brush.Slate}" />
-                    </StackPanel>
-                  </Button>
-                </StackPanel>
-              </Border>
-            </Popup>
-
-            <!-- Controles de ventana -->
-            <StackPanel Orientation="Horizontal" Margin="10,0,0,0" VerticalAlignment="Center">
-              <Button x:Name="MinimizeButton" Width="34" Height="34"
-                      Background="Transparent" BorderThickness="0"
-                      Click="OnMinimizeClick" ToolTip="Minimizar"
-                      WindowChrome.IsHitTestVisibleInChrome="True">
-                <Button.Style>
-                  <Style TargetType="Button">
-                    <Setter Property="Template">
-                      <Setter.Value>
-                        <ControlTemplate TargetType="Button">
-                          <Border x:Name="Bd" Background="Transparent" CornerRadius="6">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                          </Border>
-                          <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                              <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.White25}" />
-                            </Trigger>
-                          </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                      </Setter.Value>
-                    </Setter>
-                  </Style>
-                </Button.Style>
-                <TextBlock Text="&#xE921;" FontFamily="Segoe MDL2 Assets" FontSize="10" Foreground="{DynamicResource Brush.HeaderControl}" />
-              </Button>
-              <Button x:Name="MaxRestoreButton" Width="34" Height="34"
-                      Background="Transparent" BorderThickness="0"
-                      Click="OnMaxRestoreClick" ToolTip="Maximizar"
-                      WindowChrome.IsHitTestVisibleInChrome="True">
-                <Button.Style>
-                  <Style TargetType="Button">
-                    <Setter Property="Template">
-                      <Setter.Value>
-                        <ControlTemplate TargetType="Button">
-                          <Border x:Name="Bd" Background="Transparent" CornerRadius="6">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                          </Border>
-                          <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                              <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.White25}" />
-                            </Trigger>
-                          </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                      </Setter.Value>
-                    </Setter>
-                  </Style>
-                </Button.Style>
-                <TextBlock x:Name="MaxRestoreIcon" Text="&#xE922;" FontFamily="Segoe MDL2 Assets" FontSize="10" Foreground="{DynamicResource Brush.HeaderControl}" />
-              </Button>
-              <Button x:Name="CloseButton" Width="34" Height="34"
-                      Background="Transparent" BorderThickness="0"
-                      Click="OnCloseClick" ToolTip="Cerrar"
-                      WindowChrome.IsHitTestVisibleInChrome="True">
-                <Button.Style>
-                  <Style TargetType="Button">
-                    <Setter Property="Template">
-                      <Setter.Value>
-                        <ControlTemplate TargetType="Button">
-                          <Border x:Name="Bd" Background="Transparent" CornerRadius="6">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                          </Border>
-                          <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                              <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.Danger}" />
-                            </Trigger>
-                          </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                      </Setter.Value>
-                    </Setter>
-                  </Style>
-                </Button.Style>
-                <TextBlock Text="&#xE8BB;" FontFamily="Segoe MDL2 Assets" FontSize="10" Foreground="{DynamicResource Brush.HeaderControl}" />
-              </Button>
-            </StackPanel>
-          </StackPanel>
         </DockPanel>
 
         <Border Height="1" Background="{DynamicResource Brush.White12}" />
 
-        <DockPanel x:Name="MainNavPanel" Height="{StaticResource Layout.NavBarHeight}" Margin="20,0" LastChildFill="True">
-          <Button x:Name="DashboardButton" Style="{StaticResource Button.NavHome}" Content="Resumen" Click="OnDashboardClick" />
-          <shell:NavDropdownGroup x:Name="NavProjectGroup" GroupTitle="Proyecto" SectionLabel="Preparación del proyecto" Margin="3,0,0,0" />
-          <StackPanel x:Name="BudgetNavTabs" Orientation="Horizontal" Margin="3,0,0,0">
-            <Button x:Name="NavItemizadoTab" Style="{StaticResource Button.NavHome}" Content="Itemizado"
-                    Tag="{x:Static nav:ShellRoute.Itemized}" Click="OnBudgetTabClick" />
-            <shell:NavDropdownGroup x:Name="NavCubicacionGroup" GroupTitle="Cubicación" SectionLabel="Toma de cantidades" Margin="1,0,0,0" />
+        <DockPanel x:Name="MainNavPanel" Height="{StaticResource Layout.NavBarHeight}" Margin="20,0" LastChildFill="False">
+          <!-- Historial de Navegación Atrás / Adelante -->
+          <StackPanel Orientation="Horizontal" Margin="0,0,10,0" VerticalAlignment="Center">
+            <Button Command="{Binding NavigateBackCommand}"
+                    ToolTip="Volver a la vista anterior (Alt+←)"
+                    Style="{StaticResource Button.HeaderIcon}"
+                    Width="28" Height="28" Margin="0,0,3,0"
+                    AutomationProperties.Name="Atrás"
+                    AutomationProperties.HelpText="Navegar a la vista anterior (Alt+←)">
+              <TextBlock Text="&#xE72B;" FontFamily="Segoe MDL2 Assets" FontSize="11" />
+            </Button>
+            <Button Command="{Binding NavigateForwardCommand}"
+                    ToolTip="Avanzar a la vista siguiente (Alt+→)"
+                    Style="{StaticResource Button.HeaderIcon}"
+                    Width="28" Height="28"
+                    AutomationProperties.Name="Adelante"
+                    AutomationProperties.HelpText="Navegar a la vista siguiente (Alt+→)">
+              <TextBlock Text="&#xE72A;" FontFamily="Segoe MDL2 Assets" FontSize="11" />
+            </Button>
           </StackPanel>
-          <shell:NavDropdownGroup x:Name="NavPricesGroup" GroupTitle="Precios" SectionLabel="Costos y abastecimiento" Margin="3,0,0,0" />
-          <shell:NavDropdownGroup x:Name="NavCostosGroup" GroupTitle="Costos" SectionLabel="Indirectos y estructura" Margin="3,0,0,0" />
-          <shell:NavDropdownGroup x:Name="NavCloseGroup" GroupTitle="Cierre" SectionLabel="Control, versiones y exportación" Margin="3,0,0,0" />
+
+          <!-- Breadcrumb de Orientación Activa en Cabecera -->
+          <Border DockPanel.Dock="Right"
+                  Background="{DynamicResource Brush.White8}"
+                  BorderBrush="{DynamicResource Brush.White12}"
+                  BorderThickness="1" CornerRadius="8" Padding="10,4"
+                  VerticalAlignment="Center" Margin="10,0,0,0"
+                  Visibility="{Binding HasOpenProject, Converter={StaticResource BoolToVisibility}}">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <TextBlock Text="{Binding BreadcrumbGroup}" FontSize="10.5" Foreground="{DynamicResource Brush.HeaderNav}" VerticalAlignment="Center" />
+              <TextBlock Text=" › " FontSize="10.5" Foreground="{DynamicResource Brush.HeaderDim}" VerticalAlignment="Center" Margin="4,0" />
+              <TextBlock Text="{Binding PageTitle}" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.White}" VerticalAlignment="Center" />
+            </StackPanel>
+          </Border>
+
+          <!-- Selector de ciclo de vida: Presupuesto | Planificación | Ejecución -->
+          <Border Margin="0,0,8,0" Padding="2" CornerRadius="8" Background="{DynamicResource Brush.White8}" BorderBrush="{DynamicResource Brush.White12}" BorderThickness="1" VerticalAlignment="Center">
+            <StackPanel Orientation="Horizontal">
+              <Button x:Name="PhasePresupuestoButton"
+                      Style="{StaticResource Button.PhasePill}"
+                      Click="OnPhasePresupuestoClick"
+                      ToolTip="Fase 1: Estudio, Cubicación y Cierre de Oferta">
+                <TextBlock Text="Presupuesto" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" />
+              </Button>
+              <Button x:Name="PhasePlanificacionButton"
+                      Style="{StaticResource Button.PhasePill}"
+                      Click="OnPhasePlanificacionClick"
+                      Margin="2,0,0,0"
+                      ToolTip="Fase 2: Abastecimiento, Sectorización y Línea Base">
+                <TextBlock Text="Planificación" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" />
+              </Button>
+              <Button x:Name="PhaseEjecucionButton"
+                      Style="{StaticResource Button.PhasePill}"
+                      Click="OnPhaseEjecucionClick"
+                      Margin="2,0,0,0"
+                      ToolTip="Fase 3: Control en Terreno, Adicionales y Cambios">
+                <TextBlock Text="Ejecución" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" />
+              </Button>
+            </StackPanel>
+          </Border>
+
+          <Border Width="1" Height="20" Background="{DynamicResource Brush.White18}" Margin="0,0,8,0" VerticalAlignment="Center" />
+
+          <!-- Botón Resumen (Dashboard) universal -->
+          <Button x:Name="DashboardButton" Style="{StaticResource Button.NavHome}" Content="Resumen" Click="OnDashboardClick" />
+
+          <!-- Sub-pestañas según fase activa -->
+          <StackPanel x:Name="PhasePresupuestoPanel" Orientation="Horizontal" Margin="2,0,0,0">
+            <shell:NavDropdownGroup x:Name="NavProjectGroup" GroupTitle="Proyecto" SectionLabel="Preparación del proyecto" Margin="2,0,0,0" />
+            <StackPanel x:Name="BudgetNavTabs" Orientation="Horizontal">
+              <Button x:Name="NavItemizadoTab" Style="{StaticResource Button.NavHome}" Content="Itemizado"
+                      Tag="{x:Static nav:ShellRoute.Itemized}" Click="OnBudgetTabClick" Margin="2,0,0,0" />
+              <shell:NavDropdownGroup x:Name="NavCubicacionGroup" GroupTitle="Cubicación" SectionLabel="Toma de cantidades y APU" Margin="2,0,0,0" />
+            </StackPanel>
+            <shell:NavDropdownGroup x:Name="NavPricesGroup" GroupTitle="Precios" SectionLabel="Costos y abastecimiento" Margin="2,0,0,0" />
+            <shell:NavDropdownGroup x:Name="NavCloseGroup" GroupTitle="Cierre y Costos" SectionLabel="Costos, control y oferta" Margin="2,0,0,0" />
+          </StackPanel>
+
+          <StackPanel x:Name="PhasePlanificacionPanel" Orientation="Horizontal" Margin="2,0,0,0" Visibility="Collapsed">
+            <Button x:Name="NavPurchasesTab" Style="{StaticResource Button.NavHome}" Content="Lista de compra"
+                    Tag="{x:Static nav:ShellRoute.Purchases}" Click="OnBudgetTabClick" Margin="2,0,0,0" />
+            <Button x:Name="NavFloorSummaryTab" Style="{StaticResource Button.NavHome}" Content="Sectorización pisos"
+                    Tag="{x:Static nav:ShellRoute.FloorSummary}" Click="OnBudgetTabClick" Margin="2,0,0,0" />
+            <Button x:Name="NavPlanosTab" Style="{StaticResource Button.NavHome}" Content="Planos y antecedentes"
+                    Tag="{x:Static nav:ShellRoute.Documents}" Click="OnBudgetTabClick" Margin="2,0,0,0" />
+          </StackPanel>
+
+          <StackPanel x:Name="PhaseEjecucionPanel" Orientation="Horizontal" Margin="2,0,0,0" Visibility="Collapsed">
+            <Button x:Name="NavQuotesTab" Style="{StaticResource Button.NavHome}" Content="Cotizaciones"
+                    Tag="{x:Static nav:ShellRoute.Quotes}" Click="OnBudgetTabClick" Margin="2,0,0,0" />
+            <Button x:Name="NavChangeOrdersTab" Style="{StaticResource Button.NavHome}" Content="Órdenes de cambio"
+                    Tag="{x:Static nav:ShellRoute.ChangeOrders}" Click="OnBudgetTabClick" Margin="2,0,0,0" />
+            <Button x:Name="NavSolicitudesTab" Style="{StaticResource Button.NavHome}" Content="Solicitudes faena"
+                    Tag="{x:Static nav:ShellRoute.Solicitudes}" Click="OnBudgetTabClick" Margin="2,0,0,0" />
+            <Button x:Name="NavCostosExecTab" Style="{StaticResource Button.NavHome}" Content="Control de costos"
+                    Tag="{x:Static nav:ShellRoute.Costo}" Click="OnBudgetTabClick" Margin="2,0,0,0" />
+            <Button x:Name="NavEstadosPagosTab" Style="{StaticResource Button.NavHome}" Content="Estados de pago"
+                    Tag="{x:Static nav:ShellRoute.EstadosPagos}" Click="OnBudgetTabClick" Margin="2,0,0,0" />
+          </StackPanel>
+
+          <!-- Herramientas auxiliares universales -->
           <shell:NavDropdownGroup x:Name="NavMoreGroup" GroupTitle="Más" SectionLabel="Herramientas auxiliares" Margin="3,0,0,0" />
         </DockPanel>
       </StackPanel>
     </Border>
 
-    <Border Grid.Row="2"
+    <!-- Barra de stepper de flujo de trabajo retirada a petición del usuario -->
+    <Border Grid.Row="1"
             Background="{DynamicResource Brush.Surface}"
             BorderBrush="{DynamicResource Brush.Line}"
             BorderThickness="0,0,0,1"
             Padding="{StaticResource Padding.WorkflowStepper}"
-            Visibility="{Binding ShowWorkflowStepper, Converter={StaticResource BoolToVisibility}}">
-      <shell:ShellWorkflowStepper VerticalAlignment="Center" />
+            Visibility="Collapsed">
+      <!-- shell:ShellWorkflowStepper ShowWorkflowStepper retirado -->
     </Border>
 
-    <Border Grid.Row="3"
+    <Border Grid.Row="2"
             Background="{DynamicResource Brush.AmberSoft}"
             BorderBrush="{DynamicResource Brush.Amber2}"
             BorderThickness="0,0,0,1"
@@ -698,34 +1335,75 @@
       </Grid>
     </Border>
 
-    <Border Grid.Row="4">
-      <Border.Style>
-        <Style TargetType="Border">
-          <Setter Property="Padding" Value="{StaticResource Padding.Page}" />
-          <Style.Triggers>
-            <DataTrigger Binding="{Binding IsLandingScreen}" Value="True">
-              <Setter Property="Padding" Value="0" />
-            </DataTrigger>
-            <DataTrigger Binding="{Binding UseCompactPagePadding}" Value="True">
-              <Setter Property="Padding" Value="0" />
-            </DataTrigger>
-          </Style.Triggers>
-        </Style>
-      </Border.Style>
-      <ContentControl x:Name="PageContent" Content="{Binding CurrentView, Mode=OneWay, NotifyOnTargetUpdated=True}" HorizontalAlignment="Stretch">
-        <ContentControl.Style>
-          <Style TargetType="ContentControl">
+    <Grid Grid.Row="3">
+      <Border HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Border.Style>
+          <Style TargetType="Border">
+            <Setter Property="Padding" Value="{StaticResource Padding.Page}" />
             <Style.Triggers>
-              <EventTrigger RoutedEvent="Binding.TargetUpdated">
-                <BeginStoryboard Storyboard="{StaticResource Anim.FadeIn}" />
-              </EventTrigger>
+              <DataTrigger Binding="{Binding IsLandingScreen}" Value="True">
+                <Setter Property="Padding" Value="0" />
+              </DataTrigger>
+              <DataTrigger Binding="{Binding UseCompactPagePadding}" Value="True">
+                <Setter Property="Padding" Value="0" />
+              </DataTrigger>
             </Style.Triggers>
           </Style>
-        </ContentControl.Style>
-      </ContentControl>
-    </Border>
+        </Border.Style>
+        <ContentControl x:Name="PageContent" Content="{Binding CurrentView, Mode=OneWay, NotifyOnTargetUpdated=True}"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Stretch"
+                        HorizontalContentAlignment="Stretch"
+                        VerticalContentAlignment="Stretch">
+          <ContentControl.Style>
+            <Style TargetType="ContentControl">
+              <Style.Triggers>
+                <EventTrigger RoutedEvent="Binding.TargetUpdated">
+                  <BeginStoryboard Storyboard="{StaticResource Anim.FadeIn}" />
+                </EventTrigger>
+              </Style.Triggers>
+            </Style>
+          </ContentControl.Style>
+        </ContentControl>
+      </Border>
 
-    <Border Grid.Row="5" Style="{StaticResource Shell.StatusBar}"
+      <!-- Overlay de carga: cubre el contenido mientras IsBusy=true para evitar
+           el flash de layout incompleto al abrir/cerrar proyectos. -->
+      <Border x:Name="BusyOverlay"
+              Background="{DynamicResource Brush.Canvas}"
+              Panel.ZIndex="10"
+              IsHitTestVisible="True">
+        <Border.Style>
+          <Style TargetType="Border">
+            <Setter Property="Visibility" Value="Collapsed" />
+            <Style.Triggers>
+              <DataTrigger Binding="{Binding IsBusy}" Value="True">
+                <Setter Property="Visibility" Value="Visible" />
+              </DataTrigger>
+            </Style.Triggers>
+          </Style>
+        </Border.Style>
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+          <Border Width="52" Height="52" CornerRadius="12"
+                  Background="{DynamicResource Brush.BlueFaint}"
+                  HorizontalAlignment="Center" Margin="0,0,0,14">
+            <TextBlock Text="&#xE9F9;" FontFamily="Segoe MDL2 Assets" FontSize="24"
+                       Foreground="{DynamicResource Brush.Blue}"
+                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Border>
+          <TextBlock Text="{Binding BusyMessage, FallbackValue='Procesando…'}"
+                     FontSize="13" FontWeight="SemiBold"
+                     Foreground="{DynamicResource Brush.Ink2}"
+                     HorizontalAlignment="Center" Margin="0,0,0,4" />
+          <TextBlock Text="Por favor espere un momento"
+                     FontSize="11"
+                     Foreground="{DynamicResource Brush.Muted}"
+                     HorizontalAlignment="Center" />
+        </StackPanel>
+      </Border>
+    </Grid>
+
+    <Border Grid.Row="4" Style="{StaticResource Shell.StatusBar}"
             Visibility="{Binding IsLandingScreen, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
       <DockPanel LastChildFill="True">
         <TextBlock DockPanel.Dock="Right"
@@ -843,6 +1521,9 @@
     </Border>
 
     <ctrl:ToastHost Panel.ZIndex="1000" VerticalAlignment="Bottom" HorizontalAlignment="Right" />
+
+    <!-- HUD flotante de Undo/Redo (Pill no invasivo con reversión en 1 clic) -->
+    <ctrl:UndoRedoHudHost Panel.ZIndex="2500" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,0,0,32" />
 
     <!-- Overlay visual de Drag and Drop -->
     <Border x:Name="DragDropOverlay" Panel.ZIndex="3000"

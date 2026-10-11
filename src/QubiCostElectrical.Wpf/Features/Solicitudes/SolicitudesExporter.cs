@@ -192,12 +192,12 @@ public static class SolicitudesExcelExporter
         var wsMat = wb.Worksheets.Add("Materiales e Insumos");
         ClosedXmlExportStyler.PrepareClosedXmlSheet(wsMat);
         ClosedXmlExportStyler.AddSheetTitle(wsMat, $"PEDIDO INTERNO - MATERIALES Y HERRAMIENTAS ({correlativo})", 6);
-        
+
         wsMat.Cell(2, 1).Value = "Código Solicitud";
         wsMat.Cell(2, 2).Value = correlativo;
         wsMat.Cell(2, 4).Value = "Obra / Proyecto";
         wsMat.Cell(2, 5).Value = obra;
-        
+
         wsMat.Cell(3, 1).Value = "Solicitado por";
         wsMat.Cell(3, 2).Value = solicitadoPor;
         wsMat.Cell(3, 4).Value = "Fecha de Solicitud";
@@ -234,12 +234,12 @@ public static class SolicitudesExcelExporter
         var wsEpp = wb.Worksheets.Add("EPP");
         ClosedXmlExportStyler.PrepareClosedXmlSheet(wsEpp);
         ClosedXmlExportStyler.AddSheetTitle(wsEpp, $"PEDIDO INTERNO - ELEMENTOS DE PROTECCIÓN PERSONAL ({correlativo})", 6);
-        
+
         wsEpp.Cell(2, 1).Value = "Código Solicitud";
         wsEpp.Cell(2, 2).Value = correlativo;
         wsEpp.Cell(2, 4).Value = "Obra / Proyecto";
         wsEpp.Cell(2, 5).Value = obra;
-        
+
         wsEpp.Cell(3, 1).Value = "Solicitado por";
         wsEpp.Cell(3, 2).Value = solicitadoPor;
         wsEpp.Cell(3, 4).Value = "Fecha de Solicitud";

@@ -30,40 +30,73 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
         var project = ctx.Project;
         decimal valorUf = project.ValorUfClp > 0m ? project.ValorUfClp : PriceConversion.DefaultValorUfClp;
         decimal netClp = ctx.OfferNetAmountUf > 0m ? ctx.OfferNetAmountUf
-                      : cost.TotalVentaNetoUf  > 0m ? cost.TotalVentaNetoUf
+                      : cost.TotalVentaNetoUf > 0m ? cost.TotalVentaNetoUf
                       : cost.TotalVentaUf;
         decimal netUf = PriceConversion.ClpToUf(netClp, valorUf);
 
-        var offer   = ctx.OfferSettings;
+        var offer = ctx.OfferSettings;
         var template = ctx.ReportTemplate;
-        var date    = offer.OfferDate == default ? DateTime.Today : offer.OfferDate;
-        var valid   = date.AddDays(Math.Max(1, offer.ValidityDays));
+        var date = offer.OfferDate == default ? DateTime.Today : offer.OfferDate;
+        var valid = date.AddDays(Math.Max(1, offer.ValidityDays));
         var fechaMaxima = ctx.Materiales.Where(m => m.FechaPrecio != default).Select(m => m.FechaPrecio).DefaultIfEmpty(date).Max();
         string folio = BuildFolio(ctx, date);
-        string hash  = BuildHash(ctx, cost, netUf, folio);
+        string hash = BuildHash(ctx, cost, netUf, folio);
 
         var cultureES = CultureInfo.GetCultureInfo("es-CL");
-        string UF(decimal v)  => v.ToString("#,##0.000", cultureES);
-        string N(decimal v)   => v.ToString("N0", cultureES);
+        string UF(decimal v) => v.ToString("#,##0.000", cultureES);
+        string N(decimal v) => v.ToString("N0", cultureES);
         string MoneyFromClp(decimal clp) => currencyConversion.FormatMoneyFromClp(
             clp, ctx.CurrencyLabel, valorUf, project.TipoCambioUsdClp);
-        string S(string? s)   => string.IsNullOrWhiteSpace(s) ? "—" : s.Trim();
+        string S(string? s) => string.IsNullOrWhiteSpace(s) ? "—" : s.Trim();
         string DateLong(DateTime d) => d.ToString("d 'de' MMMM 'de' yyyy", cultureES);
 
         var offerRows = BuildOfferRows(ctx, cost, netClp);
-        var areas     = budgetCalculation.GetAreaTotals(ctx.Cubicacion).ToList();
+        var areas = budgetCalculation.GetAreaTotals(ctx.Cubicacion).ToList();
+
+        var theme = ctx.CorporateTheme;
+        bool themeEnabled = theme?.Enabled == true;
+        string CNavy = themeEnabled && !string.IsNullOrWhiteSpace(theme!.PrimaryHex)
+            ? theme.PrimaryHex.Trim()
+            : FallbackNavy;
+        string CBlue = themeEnabled && !string.IsNullOrWhiteSpace(theme!.AccentHex)
+            ? theme.AccentHex.Trim()
+            : FallbackBlue;
+        string CAccent = CBlue;
+        string CHead = themeEnabled && !string.IsNullOrWhiteSpace(theme!.BackgroundHex)
+            ? theme.BackgroundHex.Trim()
+            : FallbackHead;
+
+        string companyName = !string.IsNullOrWhiteSpace(offer.CompanyName)
+            ? offer.CompanyName
+            : (themeEnabled && !string.IsNullOrWhiteSpace(theme!.CompanyName)
+                ? theme.CompanyName
+                : "Qubi Cost Electrical");
 
         byte[]? logoBytes = null;
-        if (!string.IsNullOrWhiteSpace(offer.LogoPath) && File.Exists(offer.LogoPath))
+        string? logoPath = !string.IsNullOrWhiteSpace(offer.LogoPath)
+            ? offer.LogoPath
+            : (themeEnabled && !string.IsNullOrWhiteSpace(theme!.LogoPath) ? theme.LogoPath : null);
+
+        if (!string.IsNullOrWhiteSpace(logoPath) && File.Exists(logoPath))
         {
-            try { logoBytes = File.ReadAllBytes(offer.LogoPath); }
+            try { logoBytes = File.ReadAllBytes(logoPath); }
             catch (Exception ex)
             {
-                // El archivo existe (ya se filtró con File.Exists) pero no se pudo leer — bloqueado,
-                // corrupto, permisos, etc. Antes esto se tragaba en silencio y el PDF salía sin
-                // logo sin ningún aviso; ahora al menos queda en el log para poder diagnosticarlo.
-                AppLog.Warning("Pdf", $"No se pudo leer el logo '{offer.LogoPath}' para la oferta", ex);
+                // El archivo existe pero no se pudo leer — bloqueado, corrupto, permisos, etc.
+                AppLog.Warning("Pdf", $"No se pudo leer el logo '{logoPath}' para la oferta", ex);
                 logoBytes = null;
+            }
+        }
+
+        byte[]? clientLogoBytes = null;
+        string? clientLogoPath = offer.ClientLogoPath;
+        if (!string.IsNullOrWhiteSpace(clientLogoPath) && File.Exists(clientLogoPath))
+        {
+            try { clientLogoBytes = File.ReadAllBytes(clientLogoPath); }
+            catch (Exception ex)
+            {
+                AppLog.Warning("Pdf", $"No se pudo leer el logo del cliente '{clientLogoPath}' para la oferta", ex);
+                clientLogoBytes = null;
             }
         }
 
@@ -124,9 +157,7 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
                     if (logoBytes != null)
                         e.Height(22).Image(logoBytes).FitHeight();
                     else
-                        e.Text(t => t.Span(string.IsNullOrWhiteSpace(offer.CompanyName)
-                            ? "Qubi Cost Electrical"
-                            : S(offer.CompanyName)).FontSize(8).FontColor(CWhite));
+                        e.Text(t => t.Span(companyName).FontSize(8).FontColor(CWhite));
                 });
                 row.RelativeItem().PaddingRight(40).AlignMiddle().AlignRight()
                     .Text(t => t.Span($"{ctx.ProjectTitle}  ·  {ctx.ClientName}")
@@ -148,7 +179,7 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
             });
         }
 
-        static void PageTitle(ColumnDescriptor col, string title)
+        void PageTitle(ColumnDescriptor col, string title)
         {
             col.Item().Text(t =>
                 t.Span(title.ToUpperInvariant()).FontSize(14).Bold().FontColor(CNavy));
@@ -172,16 +203,16 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
                 {
                     page.Size(PageSizes.A4);
                     page.Margin(0);
-                    RenderCover(page.Content(), ctx, offer, template, logoBytes, coverTitle, coverSubtitle, netUf, folio, hash, date, valid, cultureES, signatureBytes, coverLayout);
+                    RenderCover(page.Content(), ctx, offer, template, logoBytes, clientLogoBytes, coverTitle, coverSubtitle, netUf, folio, hash, date, valid, cultureES, signatureBytes, coverLayout, CNavy, CBlue);
                 });
             }
 
             if (offer.IncludePresentationLetter && !string.IsNullOrWhiteSpace(offer.PresentationLetterText))
             {
                 var letterTitle = string.IsNullOrWhiteSpace(offer.PresentationLetterTitle)
-                    ? "Carta de Presentación"
+                    ? "CARTA DE PRESENTACIÓN DE LA OFERTA"
                     : offer.PresentationLetterTitle.Trim();
-                var letterText  = offer.PresentationLetterText!;
+                var letterText = offer.PresentationLetterText!;
 
                 composer.Page(page =>
                 {
@@ -189,8 +220,99 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
                     page.Content().PaddingTop(16).Column(col =>
                     {
                         PageTitle(col, letterTitle);
-                        col.Item().PaddingTop(14).Text(t =>
+
+                        // Membrete formal de la carta
+                        col.Item().PaddingTop(12).Row(r =>
+                        {
+                            r.RelativeItem().Column(c =>
+                            {
+                                c.Item().Text(t => t.Span($"Fecha: {DateLong(date)}").FontSize(8.5f).FontColor(CMuted));
+                                c.Item().PaddingTop(6).Text(t => t.Span("SEÑORES:").FontSize(8).Bold().FontColor(CNavy));
+                                c.Item().Text(t => t.Span(ctx.ClientName).FontSize(10.5f).Bold().FontColor(CText));
+                                if (!string.IsNullOrWhiteSpace(offer.RecipientCompany) && !string.Equals(offer.RecipientCompany, ctx.ClientName, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    c.Item().Text(t => t.Span(offer.RecipientCompany).FontSize(8.5f).FontColor(CMuted));
+                                }
+                                if (!string.IsNullOrWhiteSpace(offer.RecipientName))
+                                {
+                                    c.Item().Text(t => t.Span($"Atención: {offer.RecipientName}").FontSize(8.5f).FontColor(CText).Italic());
+                                }
+                                c.Item().PaddingTop(2).Text(t => t.Span($"Proyecto: {ctx.ProjectTitle}").FontSize(8.5f).FontColor(CMuted));
+                            });
+
+                            r.ConstantItem(180).AlignRight().Column(c =>
+                            {
+                                if (!string.IsNullOrWhiteSpace(offer.OfferNumber))
+                                    c.Item().Text(t => t.Span($"Oferta N°: {offer.OfferNumber} · {offer.RevisionTag}").FontSize(9).Bold().FontColor(CNavy));
+                                if (!string.IsNullOrWhiteSpace(offer.Reference))
+                                    c.Item().PaddingTop(2).Text(t => t.Span($"Ref.: {offer.Reference}").FontSize(8).FontColor(CMuted));
+                                c.Item().PaddingTop(2).Text(t => t.Span($"Validez: {offer.ValidityDays} días corridos").FontSize(8).FontColor(CMuted));
+                            });
+                        });
+
+                        col.Item().PaddingTop(10).LineHorizontal(0.5f).LineColor(CLine);
+
+                        // Cuerpo de la carta
+                        col.Item().PaddingTop(12).Text(t =>
                             t.Span(letterText).FontSize(9.5f).FontColor(CText).LineHeight(1.6f));
+
+                        // Tarjeta ejecutiva de síntesis económica
+                        col.Item().PaddingTop(14).Background(CHead).Border(1).BorderColor(CLine).Padding(10).Column(card =>
+                        {
+                            card.Item().Text(t => t.Span("SÍNTESIS DE LA PROPUESTA ECONÓMICA").FontSize(8.5f).Bold().FontColor(CNavy));
+                            card.Item().PaddingTop(6).Row(cr =>
+                            {
+                                cr.RelativeItem().Column(cc =>
+                                {
+                                    cc.Item().Text(t => t.Span("Monto Neto Ofertado:").FontSize(7.5f).FontColor(CMuted));
+                                    cc.Item().Text(t => t.Span($"UF {netUf:N3}  ·  $ {netClp:N0} CLP").FontSize(9.5f).Bold().FontColor(CNavy));
+                                    if (offer.IncludeIvaNote)
+                                        cc.Item().Text(t => t.Span("Valores netos · agregar 19% IVA").FontSize(7).Italic().FontColor(CMuted));
+                                });
+                                cr.RelativeItem().Column(cc =>
+                                {
+                                    cc.Item().Text(t => t.Span("Plazo de Ejecución:").FontSize(7.5f).FontColor(CMuted));
+                                    cc.Item().Text(t => t.Span(SafeText(offer.ProjectDuration)).FontSize(9).Bold().FontColor(CText));
+                                    cc.Item().PaddingTop(2).Text(t => t.Span("Modalidad de Contrato:").FontSize(7.5f).FontColor(CMuted));
+                                    cc.Item().Text(t => t.Span(cost.ClosingPolicy.ToString()).FontSize(8).FontColor(CText));
+                                });
+                            });
+                        });
+
+                        // Cierre formal y bloque de firma
+                        col.Item().PaddingTop(14).Text(t =>
+                            t.Span("Sin otro particular y a su entera disposición para cualquier aclaración técnica o comercial, saluda atentamente a ustedes,")
+                             .FontSize(9).FontColor(CText).Italic());
+
+                        col.Item().PaddingTop(16).Row(fr =>
+                        {
+                            fr.RelativeItem(3).Column(sc =>
+                            {
+                                if (signatureBytes != null)
+                                {
+                                    sc.Item().Height(OfferSignatureSizing.HeightPt(offer)).AlignLeft().Image(signatureBytes).FitHeight();
+                                }
+                                sc.Item().BorderBottom(1f).BorderColor(CLine).Height(1);
+                                sc.Item().PaddingTop(6).Text(t =>
+                                    t.Span(S(offer.SignatureName)).FontSize(9.5f).Bold().FontColor(CNavy));
+                                if (!string.IsNullOrWhiteSpace(offer.SignatureRole))
+                                    sc.Item().Text(t => t.Span(offer.SignatureRole).FontSize(8).FontColor(CMuted));
+                                if (!string.IsNullOrWhiteSpace(offer.SignatureRegistroSec) || !string.IsNullOrWhiteSpace(offer.SignatureSecClass))
+                                {
+                                    string secText = $"Instalador Autorizado SEC {S(offer.SignatureSecClass)}";
+                                    if (!string.IsNullOrWhiteSpace(offer.SignatureRegistroSec))
+                                        secText += $" · Reg. N° {offer.SignatureRegistroSec}";
+                                    sc.Item().Text(t => t.Span(secText).FontSize(8).Bold().FontColor(CBlue));
+                                }
+                                sc.Item().Text(t => t.Span(S(companyName)).FontSize(8).FontColor(CMuted));
+                                var contact = string.Join("  ·  ",
+                                    new[] { offer.SignaturePhone, offer.SignatureEmail }
+                                        .Where(x => !string.IsNullOrWhiteSpace(x)));
+                                if (!string.IsNullOrWhiteSpace(contact))
+                                    sc.Item().Text(t => t.Span(contact).FontSize(7.5f).FontColor(CMuted));
+                            });
+                            fr.RelativeItem(2); // espacio derecho
+                        });
                     });
                 });
             }
@@ -210,19 +332,19 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
                         {
                             row.RelativeItem().Column(c =>
                             {
-                                SummaryField(c, "Proyecto",   ctx.ProjectTitle);
-                                SummaryField(c, "Cliente",    ctx.ClientName);
+                                SummaryField(c, "Proyecto", ctx.ProjectTitle);
+                                SummaryField(c, "Cliente", ctx.ClientName);
                                 SummaryField(c, "Referencia", S(offer.Reference));
-                                SummaryField(c, "N° Oferta",  $"{S(offer.OfferNumber)} · {S(offer.RevisionTag)}");
+                                SummaryField(c, "N° Oferta", $"{S(offer.OfferNumber)} · {S(offer.RevisionTag)}");
                             });
                             row.ConstantItem(24);
                             row.RelativeItem().Column(c =>
                             {
-                                SummaryField(c, "Fecha",          DateLong(date));
+                                SummaryField(c, "Fecha", DateLong(date));
                                 if (template.ShowPriceValidity)
-                                    SummaryField(c, "Validez",    $"{offer.ValidityDays} días · hasta {valid:dd/MM/yyyy}");
-                                SummaryField(c, "Plazo ejec.",    S(offer.ProjectDuration));
-                                SummaryField(c, "Estado",         ctx.BudgetStatus);
+                                    SummaryField(c, "Validez", $"{offer.ValidityDays} días · hasta {valid:dd/MM/yyyy}");
+                                SummaryField(c, "Plazo ejec.", S(offer.ProjectDuration));
+                                SummaryField(c, "Estado", ctx.BudgetStatus);
                             });
                         });
 
@@ -240,7 +362,7 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
                             table.Header(h =>
                             {
                                 TH(h.Cell().Background(CNavy).Padding(5), "Concepto");
-                                TH(h.Cell().Background(CNavy).Padding(5), "UF",             right: true);
+                                TH(h.Cell().Background(CNavy).Padding(5), "UF", right: true);
                                 TH(h.Cell().Background(CNavy).Padding(5), ctx.CurrencyLabel, right: true);
                             });
 
@@ -248,20 +370,57 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
                             {
                                 string bg = highlight ? CLight : (alt ? CRowAlt : CWhite);
                                 decimal uf = PriceConversion.ClpToUf(clp, valorUf);
-                                TD(table.Cell().Background(bg).PaddingHorizontal(6).PaddingVertical(4), label,      bold: bold);
-                                TD(table.Cell().Background(bg).PaddingHorizontal(6).PaddingVertical(4), UF(uf),     right: true, bold: bold);
-                                TD(table.Cell().Background(bg).PaddingHorizontal(6).PaddingVertical(4), MoneyFromClp(clp),  right: true, bold: bold);
+                                TD(table.Cell().Background(bg).PaddingHorizontal(6).PaddingVertical(4), label, bold: bold);
+                                TD(table.Cell().Background(bg).PaddingHorizontal(6).PaddingVertical(4), UF(uf), right: true, bold: bold);
+                                TD(table.Cell().Background(bg).PaddingHorizontal(6).PaddingVertical(4), MoneyFromClp(clp), right: true, bold: bold);
                             }
 
-                            CostRow("Materiales",        cost.MaterialesUf,       false);
-                            CostRow("Mano de obra",      cost.ManoObraUf,         true);
-                            CostRow("Equipos",           cost.EquiposUf,          false);
-                            CostRow("Subcontratos",      cost.SubcontratosUf,     true);
+                            var pol = cost.ClosingPolicy;
+                            CostRow("Materiales", cost.MaterialesUf, false);
+                            CostRow("Mano de obra", cost.ManoObraUf, true);
+                            CostRow("Equipos", cost.EquiposUf, false);
+                            CostRow("Subcontratos", cost.SubcontratosUf, true);
                             CostRow("Herramientas/mermas", cost.HerramientasUf + cost.MermasUf, false);
-                            CostRow("Costo directo",     cost.CostoDirectoUf,     true,  bold: true);
-                            CostRow("Gastos generales",  cost.GastosGeneralesUf,  false);
-                            CostRow("Utilidad",          cost.UtilidadUf,         true);
-                            CostRow("TOTAL NETO OFERTA", netClp,                   false, bold: true, highlight: true);
+                            CostRow("Costo directo de ejecución", cost.CostoDirectoUf, true, bold: true);
+
+                            switch (pol)
+                            {
+                                case ClosingPolicyType.CostPlusFee:
+                                    decimal feeClp = cost.ClosingPolicyResult?.MargenClp ?? (netClp - cost.CostoDirectoUf);
+                                    CostRow("Honorario de administración (Fee)", feeClp, false, bold: true);
+                                    CostRow("TOTAL REEMBOLSABLE + FEE (NETO)", netClp, true, bold: true, highlight: true);
+                                    break;
+
+                                case ClosingPolicyType.LumpSumEpc:
+                                    CostRow("Gastos generales y utilidad", cost.GastosGeneralesUf + cost.UtilidadUf, false);
+                                    decimal contingenciaEpc = netClp - (cost.CostoProyectoUf > 0m ? cost.CostoProyectoUf : cost.CostoDirectoUf);
+                                    if (contingenciaEpc > 0m)
+                                        CostRow("Contingencia e imprevistos Suma Alzada", contingenciaEpc, true);
+                                    CostRow("PRECIO CERRADO SUMA ALZADA (NETO)", netClp, false, bold: true, highlight: true);
+                                    break;
+
+                                case ClosingPolicyType.TargetPrice:
+                                    decimal margenTarget = netClp - cost.CostoDirectoUf;
+                                    CostRow("Margen comercial disponible", margenTarget, false);
+                                    CostRow("PRECIO OBJETIVO OFERTADO (NETO)", netClp, true, bold: true, highlight: true);
+                                    break;
+
+                                case ClosingPolicyType.UnitPricePure:
+                                    CostRow("Margen embebido en precios unitarios", cost.GastosGeneralesUf + cost.UtilidadUf, false);
+                                    CostRow("TOTAL SERIE PRECIOS UNITARIOS (NETO)", netClp, true, bold: true, highlight: true);
+                                    break;
+
+                                case ClosingPolicyType.GainsharePainshare:
+                                    CostRow("Gastos generales y utilidad base", cost.GastosGeneralesUf + cost.UtilidadUf, false);
+                                    CostRow("TOTAL OFERTA BASE (TARGET COST CONTRACT)", netClp, true, bold: true, highlight: true);
+                                    break;
+
+                                default:
+                                    CostRow("Gastos generales", cost.GastosGeneralesUf, false);
+                                    CostRow("Utilidad", cost.UtilidadUf, true);
+                                    CostRow("TOTAL NETO OFERTA", netClp, false, bold: true, highlight: true);
+                                    break;
+                            }
                         });
 
                         decimal clpM2 = cost.UfM2;
@@ -271,121 +430,418 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
                                 t.Span($"UF/m² referencial: {ufM2:N3}  ·  $ {clpM2:N0} CLP/m²")
                                  .FontSize(8).FontColor(CMuted).Italic());
 
+                        string explicacionNota = cost.ClosingPolicy switch
+                        {
+                            ClosingPolicyType.CostPlusFee => "Modalidad Costo + Fee: los costos directos se reembolsan 1:1 previa comprobación de facturas y planillas. El honorario retribuye la administración y dirección técnica.",
+                            ClosingPolicyType.LumpSumEpc => "Modalidad Suma Alzada / EPC: el precio ofertado es cerrado e inamovible, e incluye toda contingencia e imprevisto dentro de las especificaciones técnicas licitadas.",
+                            ClosingPolicyType.UnitPricePure => "Modalidad Precios Unitarios: el pago se liquidará mensualmente según las cantidades efectivamente ejecutadas multiplicadas por los P.U. contractuales.",
+                            ClosingPolicyType.GainsharePainshare => "Modalidad Costo Objetivo Compartido: se pacta un Costo Objetivo con el mandante. Las desviaciones en la liquidación final se compartirán según el porcentaje acordado.",
+                            _ => "Este resumen corresponde a la valorización comercial del alcance indicado. El detalle de cubicación y APU queda como respaldo interno."
+                        };
+
                         col.Item().PaddingTop(16)
                             .Background(CHead).BorderLeft(3).BorderColor(CNavy).Padding(12)
-                            .Text(t => t.Span("Este resumen corresponde a la valorización comercial del alcance indicado. El detalle de cubicación y APU queda como respaldo interno.")
+                            .Text(t => t.Span(explicacionNota)
                                  .FontSize(8).FontColor(CMuted).LineHeight(1.4f));
+
+                        if (offer.ShowCostComponentDistribution)
+                        {
+                            col.Item().PaddingTop(14).Column(costDistCol =>
+                            {
+                                costDistCol.Item().Row(hdr =>
+                                {
+                                    hdr.RelativeItem().Text(t => t.Span("DISTRIBUCIÓN ESTRUCTURAL DEL COSTO").FontSize(9.5f).Bold().FontColor(CNavy));
+                                    hdr.ConstantItem(180).AlignRight().Text(t => t.Span("Incidencia en Venta Neta").FontSize(8).FontColor(CMuted));
+                                });
+
+                                decimal totalVenta = netClp > 0m ? netClp : (cost.TotalVentaNetoUf > 0m ? cost.TotalVentaNetoUf : 1m);
+                                decimal matClp = cost.MaterialesUf;
+                                decimal moClp = cost.ManoObraUf;
+                                decimal eqClp = cost.EquiposUf + cost.HerramientasUf + cost.MermasUf;
+                                decimal scClp = cost.SubcontratosUf;
+                                decimal indClp = Math.Max(0m, totalVenta - (matClp + moClp + eqClp + scClp));
+
+                                var components = new (string Label, decimal Clp, string HexColor)[]
+                                {
+                                    ("Materiales e Insumos", matClp, "#1E40AF"),
+                                    ("Mano de Obra Especializada", moClp, "#D97706"),
+                                    ("Equipos y Herramientas", eqClp, "#7C3AED"),
+                                    ("Subcontratos y Especialidades", scClp, "#059669"),
+                                    ("Gastos Generales, Riesgo y Margen", indClp, "#2563EB")
+                                };
+
+                                costDistCol.Item().PaddingTop(6).Height(9).Row(segBar =>
+                                {
+                                    foreach (var cmp in components)
+                                    {
+                                        if (cmp.Clp <= 0m) continue;
+                                        float weight = (float)Math.Clamp((cmp.Clp / totalVenta) * 100m, 1m, 100m);
+                                        segBar.RelativeItem(weight).Background(cmp.HexColor);
+                                    }
+                                });
+
+                                costDistCol.Item().PaddingTop(8).Column(detCol =>
+                                {
+                                    foreach (var cmp in components)
+                                    {
+                                        decimal cmpPct = Math.Round((cmp.Clp / totalVenta) * 100m, 1);
+                                        decimal cmpUf = PriceConversion.ClpToUf(cmp.Clp, valorUf);
+
+                                        detCol.Item().PaddingBottom(4).Row(r =>
+                                        {
+                                            r.ConstantItem(10).PaddingTop(2).Height(6).Width(6).Background(cmp.HexColor);
+                                            r.RelativeItem().PaddingLeft(6).Text(t =>
+                                            {
+                                                t.Span(cmp.Label).FontSize(8).Bold().FontColor(CText);
+                                                t.Span($"  ·  UF {cmpUf:N3}  ·  $ {cmp.Clp:N0}").FontSize(7.5f).FontColor(CMuted);
+                                            });
+                                            r.ConstantItem(60).AlignRight().Text(t =>
+                                                t.Span($"{cmpPct:N1}%").FontSize(8).Bold().FontColor(CNavy));
+                                        });
+                                    }
+                                });
+                            });
+                        }
                     });
                 });
             }
-            // Text pages
-            if (template.ShowTermsAndConditions)
+
+            // Chapter distribution chart & breakdown
+            var chapters = new List<(string Name, decimal Clp, decimal Uf, decimal Pct, int Count)>();
+            string curChapName = "1. INSTALACIONES GENERALES";
+            decimal curChapClp = 0m;
+            int curChapItems = 0;
+
+            foreach (var r in offerRows)
             {
-            foreach (var section in new[]
+                if (r.EsTitulo)
+                {
+                    if (curChapItems > 0 || curChapClp > 0m)
+                    {
+                        decimal cUf = PriceConversion.ClpToUf(curChapClp, valorUf);
+                        decimal pct = netClp > 0m ? (curChapClp / netClp) * 100m : 0m;
+                        chapters.Add((curChapName, curChapClp, cUf, pct, curChapItems));
+                    }
+                    curChapName = r.Descripcion;
+                    curChapClp = 0m;
+                    curChapItems = 0;
+                }
+                else
+                {
+                    curChapClp += r.TotalUf;
+                    curChapItems++;
+                }
+            }
+            if (curChapItems > 0 || curChapClp > 0m)
             {
-                (Title: "Alcance Incluido",         Text: offer.ScopeText),
-                (Title: "Exclusiones",              Text: offer.ExclusionsText),
-                (Title: "Condiciones Comerciales",  Text: offer.CommercialConditionsText),
-                (Title: "Observaciones",            Text: offer.ObservationsText)
-            })
+                decimal cUf = PriceConversion.ClpToUf(curChapClp, valorUf);
+                decimal pct = netClp > 0m ? (curChapClp / netClp) * 100m : 0m;
+                chapters.Add((curChapName, curChapClp, cUf, pct, curChapItems));
+            }
+
+            if (template.ShowChapterDistributionChart && chapters.Count > 0)
             {
-                if (string.IsNullOrWhiteSpace(section.Text)) continue;
-                var sTitle = section.Title;
-                var sText  = section.Text;
                 composer.Page(page =>
                 {
                     SetupPage(page);
                     page.Content().PaddingTop(16).Column(col =>
                     {
-                        PageTitle(col, sTitle);
-                        col.Item().PaddingTop(14).Text(t =>
-                            t.Span(sText).FontSize(9.5f).FontColor(CText).LineHeight(1.6f));
+                        PageTitle(col, "Distribución y Desglose por Capítulos");
+                        col.Item().PaddingTop(4).Text(t =>
+                            t.Span("Composición presupuestaria e incidencia porcentual por especialidad técnica.")
+                             .FontSize(8.5f).FontColor(CMuted).Italic());
+
+                        // Gráfico de barras horizontales limpias
+                        col.Item().PaddingTop(16).Column(barsCol =>
+                        {
+                            foreach (var ch in chapters)
+                            {
+                                barsCol.Item().PaddingBottom(10).Column(bc =>
+                                {
+                                    bc.Item().Row(r =>
+                                    {
+                                        r.RelativeItem().Text(t =>
+                                        {
+                                            t.Span(ch.Name).FontSize(9).Bold().FontColor(CNavy);
+                                            t.Span($"  ({ch.Count} {(ch.Count == 1 ? "partida" : "partidas")})").FontSize(7.5f).FontColor(CMuted);
+                                        });
+                                        r.ConstantItem(220).AlignRight().Text(t =>
+                                        {
+                                            t.Span($"UF {ch.Uf:N3}").FontSize(8.5f).Bold().FontColor(CNavy);
+                                            t.Span($"  ·  $ {ch.Clp:N0}  ·  ").FontSize(8).FontColor(CMuted);
+                                            t.Span($"{ch.Pct:N1}%").FontSize(8.5f).Bold().FontColor(CBlue);
+                                        });
+                                    });
+
+                                    // Barra proporcional limpia
+                                    bc.Item().PaddingTop(3).Height(7).Background("#E2E8F0").Row(br =>
+                                    {
+                                        float filled = (float)Math.Clamp(ch.Pct, 0.5m, 100m);
+                                        br.RelativeItem(filled).Background(CNavy);
+                                        if (filled < 99.5f)
+                                        {
+                                            br.RelativeItem(100f - filled).Background("#E2E8F0");
+                                        }
+                                    });
+                                });
+                            }
+                        });
+
+                        // Tabla resumen de capítulos
+                        col.Item().PaddingTop(12).Table(tbl =>
+                        {
+                            tbl.ColumnsDefinition(c =>
+                            {
+                                c.RelativeColumn(4);   // Capítulo
+                                c.ConstantColumn(42);  // Partidas
+                                c.ConstantColumn(70);  // UF
+                                c.ConstantColumn(85);  // CLP
+                                c.ConstantColumn(55);  // %
+                            });
+                            tbl.Header(h =>
+                            {
+                                TH(h.Cell().Background(CNavy).Padding(5), "Capítulo / Especialidad");
+                                TH(h.Cell().Background(CNavy).Padding(5), "Partidas", right: true);
+                                TH(h.Cell().Background(CNavy).Padding(5), "Subtotal UF", right: true);
+                                TH(h.Cell().Background(CNavy).Padding(5), ctx.CurrencyLabel, right: true);
+                                TH(h.Cell().Background(CNavy).Padding(5), "Incidencia", right: true);
+                            });
+
+                            bool alt = false;
+                            foreach (var ch in chapters)
+                            {
+                                string bg = alt ? CRowAlt : CWhite;
+                                TD(tbl.Cell().Background(bg).PaddingHorizontal(5).PaddingVertical(3), ch.Name);
+                                TD(tbl.Cell().Background(bg).PaddingHorizontal(5).PaddingVertical(3), ch.Count.ToString(), right: true);
+                                TD(tbl.Cell().Background(bg).PaddingHorizontal(5).PaddingVertical(3), UF(ch.Uf), right: true);
+                                TD(tbl.Cell().Background(bg).PaddingHorizontal(5).PaddingVertical(3), MoneyFromClp(ch.Clp), right: true);
+                                TD(tbl.Cell().Background(bg).PaddingHorizontal(5).PaddingVertical(3), $"{ch.Pct:N1}%", right: true, bold: true);
+                                alt = !alt;
+                            }
+
+                            // Total
+                            tbl.Cell().ColumnSpan(2).Background(CNavy).PaddingVertical(5).PaddingHorizontal(5)
+                                .Text(t => t.Span("TOTAL GENERAL PRESUPUESTO").FontSize(8).Bold().FontColor(CWhite));
+                            TDNavy(tbl.Cell().Background(CNavy).PaddingHorizontal(5).PaddingVertical(5), $"UF {UF(netUf)}", right: true);
+                            TDNavy(tbl.Cell().Background(CNavy).PaddingHorizontal(5).PaddingVertical(5), MoneyFromClp(netClp), right: true);
+                            TDNavy(tbl.Cell().Background(CNavy).PaddingHorizontal(5).PaddingVertical(5), "100.0%", right: true);
+                        });
+
+                        // Nota de especialidad técnica
+                        var maxChap = chapters.OrderByDescending(c => c.Clp).FirstOrDefault();
+                        if (!string.IsNullOrWhiteSpace(maxChap.Name))
+                        {
+                            col.Item().PaddingTop(14)
+                                .Background(CHead).BorderLeft(3).BorderColor(CBlue).Padding(10)
+                                .Text(t =>
+                                {
+                                    t.Span("Análisis de Incidencia: ").FontSize(8).Bold().FontColor(CNavy);
+                                    t.Span($"El capítulo de mayor peso técnico y presupuestario corresponde a '{maxChap.Name}', representando el {maxChap.Pct:N1}% del total neto ofertado.")
+                                     .FontSize(8).FontColor(CText);
+                                });
+                        }
                     });
                 });
             }
 
+            // Text pages: Scope, Exclusions, Commercial Terms & SEC Normative Assumptions
+            if (template.ShowTermsAndConditions)
+            {
+                var textSections = new List<(string Title, string? Text, string Icon, bool IsNormative)>();
+
+                if (!string.IsNullOrWhiteSpace(offer.ScopeText))
+                    textSections.Add(("Alcance Incluido", offer.ScopeText, "ALCANCE", false));
+
+                if (!string.IsNullOrWhiteSpace(offer.ExclusionsText))
+                    textSections.Add(("Exclusiones de la Oferta", offer.ExclusionsText, "EXCLUSIONES", false));
+
+                if (!string.IsNullOrWhiteSpace(offer.CommercialConditionsText))
+                    textSections.Add(("Condiciones Comerciales y de Pago", offer.CommercialConditionsText, "COMERCIAL", false));
+
+                if (template.ShowNormativeAssumptions && !string.IsNullOrWhiteSpace(offer.NormativeAssumptionsText))
+                    textSections.Add(("Supuestos Normativos y Regulatorios SEC", offer.NormativeAssumptionsText, "NORMATIVA SEC", true));
+
+                if (!string.IsNullOrWhiteSpace(offer.ObservationsText))
+                    textSections.Add(("Observaciones y Notas Técnicas", offer.ObservationsText, "OBSERVACIONES", false));
+
+                foreach (var sec in textSections)
+                {
+                    composer.Page(page =>
+                    {
+                        SetupPage(page);
+                        page.Content().PaddingTop(16).Column(col =>
+                        {
+                            PageTitle(col, sec.Title);
+
+                            if (sec.IsNormative)
+                            {
+                                // Encabezado de cumplimiento SEC
+                                col.Item().PaddingTop(8)
+                                    .Background(CHead).Border(1).BorderColor(CNavy).Padding(10).Column(nc =>
+                                    {
+                                        nc.Item().Row(nr =>
+                                        {
+                                            nr.RelativeItem().Column(nl =>
+                                            {
+                                                nl.Item().Text(t =>
+                                                    t.Span("MARCO REGULATORIO ELÉCTRICO NACIONAL · SUPERINTENDENCIA DE ELECTRICIDAD Y COMBUSTIBLES (SEC)")
+                                                     .FontSize(8).Bold().FontColor(CNavy));
+                                                nl.Item().PaddingTop(2).Text(t =>
+                                                    t.Span("Decreto Supremo N° 8/2019 · Pliegos Técnicos Normativos RIC (RIC N° 01 al RIC N° 19)")
+                                                     .FontSize(7.5f).FontColor(CMuted));
+                                            });
+                                            if (!string.IsNullOrWhiteSpace(offer.SignatureSecClass))
+                                            {
+                                                nr.ConstantItem(120).AlignRight().Background(CNavy).Padding(4).AlignCenter()
+                                                    .Text(t => t.Span($"SEC {offer.SignatureSecClass.ToUpperInvariant()}").FontSize(8).Bold().FontColor(CWhite));
+                                            }
+                                        });
+                                    });
+                            }
+                            else if (sec.Title.Contains("Comerciales", StringComparison.OrdinalIgnoreCase))
+                            {
+                                // Resumen de parámetros comerciales
+                                col.Item().PaddingTop(8)
+                                    .Background(CHead).Border(1).BorderColor(CLine).Padding(8).Row(pr =>
+                                    {
+                                        pr.RelativeItem().Column(pc =>
+                                        {
+                                            pc.Item().Text(t => t.Span("VALOR UF REF:").FontSize(7).Bold().FontColor(CMuted));
+                                            pc.Item().Text(t => t.Span($"$ {valorUf:N2} CLP").FontSize(8.5f).Bold().FontColor(CNavy));
+                                        });
+                                        pr.RelativeItem().Column(pc =>
+                                        {
+                                            pc.Item().Text(t => t.Span("VALIDEZ OFERTA:").FontSize(7).Bold().FontColor(CMuted));
+                                            pc.Item().Text(t => t.Span($"{offer.ValidityDays} días corridos").FontSize(8.5f).Bold().FontColor(CText));
+                                        });
+                                        pr.RelativeItem().Column(pc =>
+                                        {
+                                            pc.Item().Text(t => t.Span("PLAZO EJECUCIÓN:").FontSize(7).Bold().FontColor(CMuted));
+                                            pc.Item().Text(t => t.Span(SafeText(offer.ProjectDuration)).FontSize(8.5f).Bold().FontColor(CText));
+                                        });
+                                        pr.RelativeItem().Column(pc =>
+                                        {
+                                            pc.Item().Text(t => t.Span("MONEDA BASE:").FontSize(7).Bold().FontColor(CMuted));
+                                            pc.Item().Text(t => t.Span(ctx.CurrencyLabel).FontSize(8.5f).Bold().FontColor(CText));
+                                        });
+                                    });
+                            }
+
+                            // Párrafos y viñetas
+                            col.Item().PaddingTop(12).Column(tc =>
+                            {
+                                var lines = (sec.Text ?? "").Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+                                foreach (var rawLine in lines)
+                                {
+                                    string line = rawLine.Trim();
+                                    if (string.IsNullOrWhiteSpace(line)) continue;
+
+                                    tc.Item().PaddingBottom(6).Row(lr =>
+                                    {
+                                        lr.ConstantItem(14).Text(t => t.Span("•").FontSize(10).Bold().FontColor(CBlue));
+                                        lr.RelativeItem().Text(t =>
+                                            t.Span(line).FontSize(9.2f).FontColor(CText).LineHeight(1.5f));
+                                    });
+                                }
+                            });
+                        });
+                    });
+                }
             }
             // Itemized table
             if (template.ShowItemizedDetail)
             {
-            composer.Page(page =>
-            {
-                SetupPage(page);
-                page.Content().PaddingTop(16).Column(col =>
+                composer.Page(page =>
                 {
-                    PageTitle(col, "Tabla de Partidas");
-                    col.Item().PaddingTop(12).Table(table =>
+                    SetupPage(page);
+                    page.Content().PaddingTop(16).Column(col =>
                     {
-                        table.ColumnsDefinition(c =>
-                        {
-                            c.ConstantColumn(38);    // Ítem
-                            c.RelativeColumn(4);     // Descripción
-                            c.ConstantColumn(28);    // UD
-                            c.ConstantColumn(42);    // Cant.
-                            c.ConstantColumn(60);    // UF
-                            c.ConstantColumn(72);    // CLP
-                        });
-                        table.Header(h =>
-                        {
-                            TH(h.Cell().Background(CNavy).Padding(5), "Ítem");
-                            TH(h.Cell().Background(CNavy).Padding(5), "Descripción");
-                            TH(h.Cell().Background(CNavy).Padding(5), "UD");
-                            TH(h.Cell().Background(CNavy).Padding(5), "Cant.",          right: true);
-                            TH(h.Cell().Background(CNavy).Padding(5), "UF",             right: true);
-                            TH(h.Cell().Background(CNavy).Padding(5), ctx.CurrencyLabel, right: true);
-                        });
+                        PageTitle(col, "Tabla de Partidas");
+                        bool showPu = offer.ShowUnitPricesInItemizado;
+                        int totalCols = showPu ? 7 : 6;
+                        int totalSpan = showPu ? 5 : 4;
 
-                        bool alt = false;
-                        foreach (var r in offerRows)
+                        col.Item().PaddingTop(12).Table(table =>
                         {
-                            if (r.EsTitulo)
+                            table.ColumnsDefinition(c =>
                             {
-                                table.Cell().ColumnSpan(6)
-                                    .Background(CHead).BorderLeft(3).BorderColor(CAccent)
-                                    .PaddingLeft(8).PaddingRight(5).PaddingVertical(7)
-                                    .Text(t => t.Span(r.Descripcion).FontSize(9).Bold().FontColor(CNavy));
-                                alt = false;
-                            }
-                            else
+                                c.ConstantColumn(36);    // Ítem
+                                c.RelativeColumn(showPu ? 4 : 4.6f); // Descripción
+                                c.ConstantColumn(26);    // UD
+                                c.ConstantColumn(38);    // Cant.
+                                if (showPu)
+                                    c.ConstantColumn(52); // P.U. UF
+                                c.ConstantColumn(58);    // Total UF
+                                c.ConstantColumn(72);    // CLP
+                            });
+                            table.Header(h =>
                             {
-                                string bg = alt ? CRowAlt : CWhite;
-                                TD(table.Cell().Background(bg).PaddingHorizontal(5).PaddingVertical(3), r.Item);
-                                var descCell = table.Cell().Background(bg).PaddingHorizontal(5).PaddingVertical(3);
-                                if (string.IsNullOrWhiteSpace(r.Observaciones))
+                                TH(h.Cell().Background(CNavy).Padding(5), "Ítem");
+                                TH(h.Cell().Background(CNavy).Padding(5), "Descripción");
+                                TH(h.Cell().Background(CNavy).Padding(5), "UD");
+                                TH(h.Cell().Background(CNavy).Padding(5), "Cant.", right: true);
+                                if (showPu)
+                                    TH(h.Cell().Background(CNavy).Padding(5), "P.U. UF", right: true);
+                                TH(h.Cell().Background(CNavy).Padding(5), "Total UF", right: true);
+                                TH(h.Cell().Background(CNavy).Padding(5), ctx.CurrencyLabel, right: true);
+                            });
+
+                            bool alt = false;
+                            foreach (var r in offerRows)
+                            {
+                                if (r.EsTitulo)
                                 {
-                                    descCell.Text(t => t.Span(r.Descripcion).FontSize(8).FontColor(CText));
+                                    table.Cell().ColumnSpan((uint)totalCols)
+                                        .Background(CHead).BorderLeft(3).BorderColor(CAccent)
+                                        .PaddingLeft(8).PaddingRight(5).PaddingVertical(7)
+                                        .Text(t => t.Span(r.Descripcion).FontSize(9).Bold().FontColor(CNavy));
+                                    alt = false;
                                 }
                                 else
                                 {
-                                    descCell.Column(dc =>
+                                    string bg = alt ? CRowAlt : CWhite;
+                                    TD(table.Cell().Background(bg).PaddingHorizontal(5).PaddingVertical(3), r.Item);
+                                    var descCell = table.Cell().Background(bg).PaddingHorizontal(5).PaddingVertical(3);
+                                    if (string.IsNullOrWhiteSpace(r.Observaciones))
                                     {
-                                        dc.Item().Text(t => t.Span(r.Descripcion).FontSize(8).FontColor(CText));
-                                        dc.Item().Text(t => t.Span("Obs: " + r.Observaciones).FontSize(7).Italic().FontColor(CMuted));
-                                    });
+                                        descCell.Text(t => t.Span(r.Descripcion).FontSize(8).FontColor(CText));
+                                    }
+                                    else
+                                    {
+                                        descCell.Column(dc =>
+                                        {
+                                            dc.Item().Text(t => t.Span(r.Descripcion).FontSize(8).FontColor(CText));
+                                            dc.Item().Text(t => t.Span("Obs: " + r.Observaciones).FontSize(7).Italic().FontColor(CMuted));
+                                        });
+                                    }
+                                    TD(table.Cell().Background(bg).PaddingHorizontal(5).PaddingVertical(3), r.Unidad);
+                                    TD(table.Cell().Background(bg).PaddingHorizontal(5).PaddingVertical(3), N(r.Cantidad), right: true);
+                                    decimal rowClp = r.TotalUf;
+                                    decimal rowUf = PriceConversion.ClpToUf(rowClp, valorUf);
+                                    if (showPu)
+                                    {
+                                        decimal puUf = r.Cantidad > 0m ? rowUf / r.Cantidad : 0m;
+                                        TD(table.Cell().Background(bg).PaddingHorizontal(5).PaddingVertical(3), r.Cantidad > 0m ? UF(puUf) : "", right: true);
+                                    }
+                                    TD(table.Cell().Background(bg).PaddingHorizontal(5).PaddingVertical(3), rowClp > 0m ? UF(rowUf) : "", right: true);
+                                    TD(table.Cell().Background(bg).PaddingHorizontal(5).PaddingVertical(3), rowClp > 0m ? MoneyFromClp(rowClp) : "", right: true);
+                                    alt = !alt;
                                 }
-                                TD(table.Cell().Background(bg).PaddingHorizontal(5).PaddingVertical(3), r.Unidad);
-                                TD(table.Cell().Background(bg).PaddingHorizontal(5).PaddingVertical(3), N(r.Cantidad), right: true);
-                                decimal rowClp = r.TotalUf;
-                                decimal rowUf = PriceConversion.ClpToUf(rowClp, valorUf);
-                                TD(table.Cell().Background(bg).PaddingHorizontal(5).PaddingVertical(3), rowClp > 0m ? UF(rowUf) : "",   right: true);
-                                TD(table.Cell().Background(bg).PaddingHorizontal(5).PaddingVertical(3), rowClp > 0m ? MoneyFromClp(rowClp) : "", right: true);
-                                alt = !alt;
                             }
-                        }
 
-                        // Fila de total
-                        table.Cell().ColumnSpan(4).Background(CNavy).PaddingVertical(6)
-                            .Text(t => t.Span("TOTAL NETO").FontSize(8).Bold().FontColor(CWhite));
-                        TDNavy(table.Cell().Background(CNavy).PaddingHorizontal(5).PaddingVertical(6), $"UF {UF(netUf)}", right: true);
-                        TDNavy(table.Cell().Background(CNavy).PaddingHorizontal(5).PaddingVertical(6), MoneyFromClp(netClp),      right: true);
+                            // Fila de total
+                            table.Cell().ColumnSpan((uint)totalSpan).Background(CNavy).PaddingVertical(6).PaddingHorizontal(6)
+                                .Text(t => t.Span("TOTAL NETO").FontSize(8).Bold().FontColor(CWhite));
+                            TDNavy(table.Cell().Background(CNavy).PaddingHorizontal(5).PaddingVertical(6), $"UF {UF(netUf)}", right: true);
+                            TDNavy(table.Cell().Background(CNavy).PaddingHorizontal(5).PaddingVertical(6), MoneyFromClp(netClp), right: true);
+                        });
+
+                        if (offer.IncludeIvaNote)
+                            col.Item().PaddingTop(6).Text(t =>
+                                t.Span("Valores netos · agregar IVA cuando corresponda.")
+                                 .FontSize(7.5f).FontColor(CMuted).Italic());
                     });
-
-                    if (offer.IncludeIvaNote)
-                        col.Item().PaddingTop(6).Text(t =>
-                            t.Span("Valores netos · agregar IVA cuando corresponda.")
-                             .FontSize(7.5f).FontColor(CMuted).Italic());
                 });
-            });
 
             }
             // Annex A - areas summary
@@ -408,7 +864,7 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
                             table.Header(h =>
                             {
                                 TH(h.Cell().Background(CNavy).Padding(5), "Área");
-                                TH(h.Cell().Background(CNavy).Padding(5), "UF",             right: true);
+                                TH(h.Cell().Background(CNavy).Padding(5), "UF", right: true);
                                 TH(h.Cell().Background(CNavy).Padding(5), ctx.CurrencyLabel, right: true);
                             });
                             bool alt = false;
@@ -417,7 +873,7 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
                                 string bg = alt ? CRowAlt : CWhite;
                                 TD(table.Cell().Background(bg).PaddingHorizontal(6).PaddingVertical(4), a.Area);
                                 decimal areaUf = PriceConversion.ClpToUf(a.Total, valorUf);
-                                TD(table.Cell().Background(bg).PaddingHorizontal(6).PaddingVertical(4), UF(areaUf),    right: true);
+                                TD(table.Cell().Background(bg).PaddingHorizontal(6).PaddingVertical(4), UF(areaUf), right: true);
                                 TD(table.Cell().Background(bg).PaddingHorizontal(6).PaddingVertical(4), MoneyFromClp(a.Total), right: true);
                                 alt = !alt;
                             }
@@ -519,7 +975,7 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
                         row.RelativeItem().Column(c =>
                         {
                             if (signatureBytes != null)
-                                c.Item().Height(50).AlignLeft()
+                                c.Item().Height(OfferSignatureSizing.HeightPt(offer)).AlignLeft()
                                     .Image(signatureBytes).FitHeight();
                             c.Item().BorderBottom(1f).BorderColor(CLine).Height(1);
                             c.Item().PaddingTop(8).Text(t =>
@@ -533,7 +989,7 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
                                 c.Item().PaddingTop(2).Text(t =>
                                     t.Span($"N° SEC: {offer.SignatureRegistroSec}").FontSize(8).FontColor(CMuted));
                             c.Item().PaddingTop(2).Text(t =>
-                                t.Span(S(offer.CompanyName)).FontSize(8).FontColor(CMuted));
+                                t.Span(S(companyName)).FontSize(8).FontColor(CMuted));
                             var contact = string.Join("  ·  ",
                                 new[] { offer.SignaturePhone, offer.SignatureEmail }
                                     .Where(x => !string.IsNullOrWhiteSpace(x)));
@@ -596,6 +1052,7 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
         OfferPdfSettings offer,
         ExportReportTemplateSettings template,
         byte[]? logoBytes,
+        byte[]? clientLogoBytes,
         string coverTitle,
         string coverSubtitle,
         decimal netUf,
@@ -605,41 +1062,83 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
         DateTime valid,
         CultureInfo cultureES,
         byte[]? signatureBytes,
-        ReportTemplateCoverLayout layout)
+        ReportTemplateCoverLayout layout,
+        string primaryColor,
+        string accentColor)
     {
+        string compName = !string.IsNullOrWhiteSpace(offer.CompanyName)
+            ? offer.CompanyName
+            : (ctx.CorporateTheme?.Enabled == true && !string.IsNullOrWhiteSpace(ctx.CorporateTheme.CompanyName)
+                ? ctx.CorporateTheme.CompanyName
+                : "Qubi Cost Electrical");
+
         content.Column(col =>
         {
-            col.Item().Height(180).Background(CNavy)
-                .PaddingLeft(40).PaddingRight(40).PaddingTop(28).Column(header =>
+            col.Item().Height(185).Background(primaryColor)
+                .PaddingHorizontal(40).PaddingTop(24).PaddingBottom(16).Row(headerRow =>
                 {
-                    if (layout.ShowLogo && logoBytes != null)
+                    // Lado izquierdo: Contratista / Empresa oferente
+                    headerRow.RelativeItem(3).Column(headerLeft =>
                     {
-                        header.Item().Height(56).AlignLeft().Image(logoBytes).FitHeight();
-                    }
-                    else
-                    {
-                        header.Item().Text(t =>
-                            t.Span(SafeText(offer.CompanyName)).FontSize(18).Bold().FontColor(CWhite));
-                    }
+                        if (layout.ShowLogo && logoBytes != null)
+                        {
+                            headerLeft.Item().Height(46).AlignLeft().Image(logoBytes).FitHeight();
+                        }
+                        else
+                        {
+                            headerLeft.Item().Text(t =>
+                                t.Span(SafeText(compName)).FontSize(16).Bold().FontColor(CWhite));
+                        }
 
-                    header.Item().PaddingTop(10).Text(t =>
-                        t.Span(SafeText(offer.CompanyName)).FontSize(11).FontColor("#8AADCC"));
-                    header.Item().PaddingTop(8).Text(t =>
-                        t.Span($"{SafeText(offer.CompanyRut)}  ·  {SafeText(offer.CompanyAddress)}")
-                         .FontSize(9).FontColor("#8AADCC"));
-                    header.Item().PaddingTop(3).Text(t =>
-                        t.Span($"{SafeText(offer.CompanyPhone)}  ·  {SafeText(offer.CompanyEmail)}")
-                         .FontSize(9).FontColor("#8AADCC"));
-                    if (!string.IsNullOrWhiteSpace(offer.CompanyWebsite))
-                        header.Item().PaddingTop(3).Text(t =>
-                            t.Span(offer.CompanyWebsite!).FontSize(9).FontColor("#8AADCC"));
+                        headerLeft.Item().PaddingTop(6).Text(t =>
+                            t.Span(SafeText(compName)).FontSize(10).Bold().FontColor("#8AADCC"));
+                        headerLeft.Item().PaddingTop(4).Text(t =>
+                            t.Span($"{SafeText(offer.CompanyRut)}  ·  {SafeText(offer.CompanyAddress)}")
+                             .FontSize(8).FontColor("#8AADCC"));
+                        headerLeft.Item().PaddingTop(2).Text(t =>
+                            t.Span($"{SafeText(offer.CompanyPhone)}  ·  {SafeText(offer.CompanyEmail)}")
+                             .FontSize(8).FontColor("#8AADCC"));
+                        if (!string.IsNullOrWhiteSpace(offer.CompanyWebsite))
+                            headerLeft.Item().PaddingTop(2).Text(t =>
+                                t.Span(offer.CompanyWebsite!).FontSize(8).FontColor("#8AADCC"));
+                    });
+
+                    // Lado derecho: Mandante / Cliente
+                    headerRow.RelativeItem(2).AlignRight().Column(headerRight =>
+                    {
+                        headerRight.Item().Text(t =>
+                            t.Span("PREPARADO PARA:").FontSize(7.5f).Bold().FontColor("#8AADCC"));
+
+                        if (clientLogoBytes != null)
+                        {
+                            headerRight.Item().PaddingTop(4).Height(42).AlignRight().Image(clientLogoBytes).FitHeight();
+                        }
+
+                        headerRight.Item().PaddingTop(4).Text(t =>
+                            t.Span(SafeText(ctx.ClientName)).FontSize(11).Bold().FontColor(CWhite));
+
+                        if (!string.IsNullOrWhiteSpace(offer.RecipientCompany) && !string.Equals(offer.RecipientCompany, ctx.ClientName, StringComparison.OrdinalIgnoreCase))
+                        {
+                            headerRight.Item().PaddingTop(2).Text(t =>
+                                t.Span(SafeText(offer.RecipientCompany)).FontSize(8).FontColor("#8AADCC"));
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(offer.RecipientName))
+                        {
+                            headerRight.Item().PaddingTop(2).Text(t =>
+                                t.Span($"Att: {SafeText(offer.RecipientName)}").FontSize(8).FontColor("#8AADCC").Italic());
+                        }
+
+                        headerRight.Item().PaddingTop(2).Text(t =>
+                            t.Span($"Obra: {SafeText(ctx.Location)}").FontSize(8).FontColor("#8AADCC"));
+                    });
                 });
 
-            col.Item().PaddingHorizontal(40).PaddingTop(40).Column(body =>
+            col.Item().PaddingHorizontal(40).PaddingTop(36).Column(body =>
             {
                 body.Item().Text(t =>
                     t.Span(SafeText(coverTitle).ToUpperInvariant())
-                     .FontSize(22).Bold().FontColor(CNavy));
+                     .FontSize(22).Bold().FontColor(primaryColor));
                 if (!string.IsNullOrWhiteSpace(coverSubtitle))
                 {
                     body.Item().PaddingTop(4).Text(t =>
@@ -655,7 +1154,7 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
                              .FontSize(10).Bold().FontColor(CWhite));
                 }
 
-                RenderCoverSections(body, ctx, offer, template, netUf, folio, hash, date, valid, cultureES, signatureBytes, layout);
+                RenderCoverSections(body, ctx, offer, template, netUf, folio, hash, date, valid, cultureES, signatureBytes, layout, primaryColor, accentColor);
             });
         });
     }
@@ -672,7 +1171,9 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
         DateTime valid,
         CultureInfo cultureES,
         byte[]? signatureBytes,
-        ReportTemplateCoverLayout layout)
+        ReportTemplateCoverLayout layout,
+        string primaryColor,
+        string accentColor)
     {
         var sections = layout.Sections.Count == 0 ? ReportTemplateCoverLayout.DefaultSections : layout.Sections;
         var index = 0;
@@ -684,13 +1185,13 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
             col.Item().PaddingTop(index == 0 ? 18 : 14).Row(row =>
             {
                 row.RelativeItem().Element(c =>
-                    RenderCoverSectionCard(c, left, ctx, offer, template, netUf, folio, hash, date, valid, cultureES, signatureBytes));
+                    RenderCoverSectionCard(c, left, ctx, offer, template, netUf, folio, hash, date, valid, cultureES, signatureBytes, primaryColor, accentColor));
 
                 if (right.HasValue)
                 {
                     row.ConstantItem(18);
                     row.RelativeItem().Element(c =>
-                        RenderCoverSectionCard(c, right.Value, ctx, offer, template, netUf, folio, hash, date, valid, cultureES, signatureBytes));
+                        RenderCoverSectionCard(c, right.Value, ctx, offer, template, netUf, folio, hash, date, valid, cultureES, signatureBytes, primaryColor, accentColor));
                 }
             });
 
@@ -710,12 +1211,14 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
         DateTime date,
         DateTime valid,
         CultureInfo cultureES,
-        byte[]? signatureBytes)
+        byte[]? signatureBytes,
+        string primaryColor,
+        string accentColor)
     {
         container.Background(CWhite).Border(1).BorderColor(CLine).Padding(14).Column(card =>
         {
             card.Item().Text(t =>
-                t.Span(CoverSectionTitle(section)).FontSize(10).Bold().FontColor(CNavy));
+                t.Span(CoverSectionTitle(section)).FontSize(10).Bold().FontColor(primaryColor));
 
             switch (section)
             {
@@ -729,17 +1232,20 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
                 case ReportCoverSectionKind.Client:
                     CoverField(card, "Cliente", ctx.ClientName);
                     CoverField(card, "Destinatario", SafeText(offer.RecipientName));
-                    CoverField(card, "Empresa", SafeText(offer.CompanyName));
+                    string clientCompany = !string.IsNullOrWhiteSpace(offer.RecipientCompany)
+                        ? offer.RecipientCompany
+                        : ctx.ClientName;
+                    CoverField(card, "Empresa", SafeText(clientCompany));
                     CoverField(card, "Referencia", SafeText(offer.Reference));
                     break;
 
                 case ReportCoverSectionKind.Summary:
                     card.Item().PaddingTop(6).Text(t =>
-                        t.Span($"UF {netUf.ToString("#,##0.000", cultureES)}").FontSize(24).Bold().FontColor(CNavy));
+                        t.Span($"UF {netUf.ToString("#,##0.000", cultureES)}").FontSize(24).Bold().FontColor(primaryColor));
                     decimal valorUfCover = ctx.Project.ValorUfClp > 0m ? ctx.Project.ValorUfClp : PriceConversion.DefaultValorUfClp;
                     card.Item().PaddingTop(2).Text(t =>
                         t.Span(currencyConversion.FormatMoneyFromUf(netUf, ctx.CurrencyLabel, valorUfCover, ctx.Project.TipoCambioUsdClp))
-                         .FontSize(12).FontColor(CBlue));
+                         .FontSize(12).FontColor(accentColor));
                     if (offer.IncludeIvaNote)
                     {
                         card.Item().PaddingTop(8).Text(t =>
@@ -773,7 +1279,7 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
 
                     if (signatureBytes != null)
                     {
-                        card.Item().PaddingTop(10).Height(42).Image(signatureBytes).FitHeight();
+                        card.Item().PaddingTop(10).Height(OfferSignatureSizing.HeightPt(offer)).Image(signatureBytes).FitHeight();
                     }
                     else if (!string.IsNullOrWhiteSpace(offer.SignatureName))
                     {
@@ -871,12 +1377,12 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
 
     private sealed class OfferRow
     {
-        public string  Item        { get; set; } = "";
-        public string  Descripcion { get; set; } = "";
-        public string  Unidad      { get; set; } = "";
-        public decimal Cantidad    { get; set; }
-        public decimal TotalUf     { get; set; }
-        public bool    EsTitulo    { get; set; }
-        public string  Observaciones { get; set; } = "";
+        public string Item { get; set; } = "";
+        public string Descripcion { get; set; } = "";
+        public string Unidad { get; set; } = "";
+        public decimal Cantidad { get; set; }
+        public decimal TotalUf { get; set; }
+        public bool EsTitulo { get; set; }
+        public string Observaciones { get; set; } = "";
     }
 }

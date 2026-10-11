@@ -247,4 +247,49 @@ public sealed class RecentProjectsServiceTests : IDisposable
         var list = svc.GetProjects();
         Assert.Single(list);
     }
+
+    [Fact]
+    public void TogglePin_PinsAndUnpinsProject()
+    {
+        svc.AddProject(@"C:\test\pinned.pepro");
+        Assert.False(svc.IsPinned(@"C:\test\pinned.pepro"));
+
+        bool pinned = svc.TogglePin(@"C:\test\pinned.pepro");
+        Assert.True(pinned);
+        Assert.True(svc.IsPinned(@"C:\test\pinned.pepro"));
+
+        bool unpinned = svc.TogglePin(@"C:\test\pinned.pepro");
+        Assert.False(unpinned);
+        Assert.False(svc.IsPinned(@"C:\test\pinned.pepro"));
+    }
+
+    [Fact]
+    public void GetProjects_PinnedProjectsAppearFirst()
+    {
+        svc.AddProject(@"C:\test\first.pepro");
+        svc.AddProject(@"C:\test\second.pepro");
+        svc.AddProject(@"C:\test\third.pepro");
+
+        // Normal MRU order: third, second, first
+        // Pin 'first'
+        svc.TogglePin(@"C:\test\first.pepro");
+
+        var list = svc.GetProjects();
+        Assert.Equal(3, list.Count);
+        Assert.Equal(@"C:\test\first.pepro", list[0].Path);
+        Assert.True(list[0].IsPinned);
+        Assert.False(list[1].IsPinned);
+        Assert.False(list[2].IsPinned);
+    }
+
+    [Fact]
+    public void RemoveProject_CleansPinnedState()
+    {
+        svc.AddProject(@"C:\test\pinned.pepro");
+        svc.TogglePin(@"C:\test\pinned.pepro");
+        Assert.True(svc.IsPinned(@"C:\test\pinned.pepro"));
+
+        svc.RemoveProject(@"C:\test\pinned.pepro");
+        Assert.False(svc.IsPinned(@"C:\test\pinned.pepro"));
+    }
 }

@@ -6,7 +6,7 @@
         WindowStartupLocation="CenterOwner"
         ResizeMode="CanResizeWithGrip"
         Style="{StaticResource Dialog.Window}">
-    <Border Style="{StaticResource Dialog.Chrome}" Margin="16">
+    <Border Style="{StaticResource Dialog.Chrome}">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
@@ -54,13 +54,16 @@
 
                     <!-- Columna Derecha: Destino -->
                     <StackPanel Grid.Column="2">
-                        <TextBlock Text="2. NUEVO MATERIAL DE REEMPLAZO (DESTINO)" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" Margin="0,0,0,4" />
+                        <DockPanel LastChildFill="True" Margin="0,0,0,4">
+                            <TextBlock Text="2. NUEVO MATERIAL (DESTINO)" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" VerticalAlignment="Center" />
+                            <CheckBox x:Name="TargetIncludeBankCheck" DockPanel.Dock="Right" Content="Buscar en Banco" FontSize="11" VerticalAlignment="Center" Click="OnTargetIncludeBankCheckChanged" ToolTip="Por defecto solo busca en la Cubicación del proyecto" />
+                        </DockPanel>
                         <TextBox x:Name="TargetMaterialSearchBox"
                                  Height="32"
                                  VerticalContentAlignment="Center"
                                  Padding="8,4"
                                  TextChanged="OnTargetSearchTextChanged"
-                                 ToolTip="Tipee para buscar en el Banco de Precios (ej. H07Z1-K 2.5 o Schneider)" />
+                                 ToolTip="Tipee para buscar material en Cubicación (ej. s17, 9/12)" />
                         <Popup x:Name="TargetSearchPopup" PlacementTarget="{Binding ElementName=TargetMaterialSearchBox}" Placement="Bottom" StaysOpen="False" AllowsTransparency="True" MinWidth="400" MaxHeight="220">
                             <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Padding="4">
                                 <ListBox x:Name="TargetSuggestionsList" SelectionChanged="OnTargetSuggestionSelected" MaxHeight="200" BorderThickness="0">
@@ -68,8 +71,8 @@
                                         <DataTemplate>
                                             <Border Padding="4,2">
                                                 <DockPanel LastChildFill="True">
-                                                    <TextBlock Text="{Binding Codigo}" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" Width="90" DockPanel.Dock="Left" />
-                                                    <TextBlock Text="{Binding PrecioDisplay}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Navy}" DockPanel.Dock="Right" Margin="8,0,0,0" />
+                                                    <TextBlock Text="{Binding Codigo}" FontFamily="{StaticResource Font.Mono}" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" Width="90" DockPanel.Dock="Left" />
+                                                    <TextBlock Text="{Binding PrecioDisplay}" FontFamily="{StaticResource Font.Mono}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink}" DockPanel.Dock="Right" Margin="8,0,0,0" />
                                                     <TextBlock Text="{Binding Descripcion}" TextTrimming="CharacterEllipsis" />
                                                 </DockPanel>
                                             </Border>
@@ -78,7 +81,7 @@
                                 </ListBox>
                             </Border>
                         </Popup>
-                        <TextBlock x:Name="TargetDetailsText" Text="" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Navy}" FontWeight="SemiBold" Margin="2,4,0,0" />
+                        <TextBlock x:Name="TargetDetailsText" Text="" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink}" FontWeight="SemiBold" Margin="2,4,0,0" />
                     </StackPanel>
                 </Grid>
             </Border>

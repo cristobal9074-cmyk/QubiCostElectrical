@@ -34,6 +34,8 @@ public sealed partial class CubicacionViewModel
             Categoria = entry.Categoria,
             MatClp = entry.MatClp,
             MoClp = entry.MoClp,
+            MoFormulaTipo = entry.MoFormulaTipo,
+            MoPorcentajeMaterial = entry.MoPorcentajeMaterial,
             MonedaPrecio = string.IsNullOrWhiteSpace(entry.MonedaPrecio) ? Moneda.CLP : entry.MonedaPrecio,
             Proveedor = entry.Proveedor,
             Marca = entry.Marca,

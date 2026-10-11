@@ -98,6 +98,7 @@ internal sealed class CubicacionSectorService
     {
         row.SectorExpressionChanged = OnSectorExpressionChanged;
         row.SectorBatchExpressionChanged = OnSectorBatchExpressionChanged;
+        row.CantidadChanged = OnCantidadChanged;
         row.LoadSectorWindow(0);
         RefreshSectorDisplayValues(row);
     }
@@ -155,6 +156,133 @@ internal sealed class CubicacionSectorService
     private void OnSectorBatchExpressionChanged(CubicacionRowVm row, HashSet<int> slots)
         => ApplyBatchSectorExpressions(row, slots);
 
+    // ── Propagación maestro→esclavo (fila con Esclavo heredado de la plantilla) ────────────
+    // Cuando cambia la CANTIDAD (columna CANT) de una fila maestro, cada esclavo de la misma
+    // partida recalcula su cantidad con ConjuntoElectricoService.ComputeEsclavoValue usando
+    // los parámetros guardados en CubicacionRow.Esclavo. Solo los maestros propagan (un nivel,
+    // sin cadenas); las ediciones de zona las propaga ApplySectorExpression por casilla.
+    private void OnCantidadChanged(CubicacionRowVm row)
+    {
+        if (session.IsReadOnly) return;
+        bool esOperacion = !string.IsNullOrWhiteSpace(row.Source.Operacion);
+        if (row.Source.Esclavo != null) return;
+        // Filas con fórmula de zona: quien propaga es el camino de zona, no el total. Las
+        // filas Operación sí propagan (su total es su fórmula, no tiene zonas propias).
+        if (row.HasFormula && !esOperacion) return;
+        PropagarEsclavos(row, -1, null);
+        // Siempre (la fórmula manda): una edición manual sobre una fila Operación se revierte
+        // al valor de su fórmula en el mismo evento; el guard evita bucles durante una tanda.
+        RecalcularOperaciones(row.Source.ItemId);
+    }
+
+    // ── Recálculo en vivo de filas Operación (fórmula libre por fila) ──────────────────────
+    // Cada edición de cantidad o zona de la partida reevalúa las filas con CubicacionRow.Operacion
+    // (ej. "PAZ * 2 + TEEG500") contra las cantidades vigentes de las demás filas, en orden
+    // topológico con exclusiones por ciclo (OperacionFilaService). El guard evita reentrada:
+    // setear la cantidad de una operación vuelve a entrar por OnCantidadChanged solo para
+    // propagar a SUS esclavos, nunca para reevaluar la misma tanda.
+    private bool recalculandoOperaciones;
+
+    private void RecalcularOperaciones(string? itemId)
+    {
+        if (session.IsReadOnly || recalculandoOperaciones) return;
+        if (string.IsNullOrWhiteSpace(itemId)) return;
+
+        var todasVm = parent.Rows
+            .Where(r => string.Equals(r.Source.ItemId ?? "", itemId, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        var filasVm = todasVm
+            .Where(r => !string.IsNullOrWhiteSpace(r.Source.Operacion))
+            .ToList();
+        if (filasVm.Count == 0) return;
+
+        recalculandoOperaciones = true;
+        try
+        {
+            // Se pasa toda la partida (no solo las operaciones): las filas normales aportan
+            // sus cantidades como variables de fórmula; Resolver solo modifica filas Operación.
+            var cambiadas = OperacionFilaService.Resolver(todasVm.Select(r => r.Source).ToList());
+            if (cambiadas.Count == 0) return;
+
+            foreach (var vm in filasVm)
+            {
+                if (!cambiadas.Contains(vm.Source)) continue;
+                // Resolver ya seteó Source.Cantidad; el setter del VM sincroniza el cache,
+                // notifica la UI y dispara CantidadChanged → PropagarEsclavos de ESTA fila.
+                vm.Cantidad = vm.Source.Cantidad;
+                vm.RefreshDisplayProperties();
+                parent.ValidateRow(vm);
+                session.SyncCubicacionRowComposition(vm.Source);
+            }
+
+            parent.ScheduleRefreshTotals();
+            parent.NotifyCubicacionSummaryChanged();
+            parent.MarkDirty();
+        }
+        finally
+        {
+            recalculandoOperaciones = false;
+        }
+    }
+
+    /// <summary>
+    /// Escribe el resultado de la fórmula maestro→esclavo en los esclavos de <paramref name="maestro"/>.
+    /// offset &gt;= 0: edición de una casilla de zona (solo ese offset se refleja en los esclavos
+    /// con zonas; los esclavos sin zonas siguen el total). offset == -1: edición de la columna CANT.
+    /// </summary>
+    private void PropagarEsclavos(CubicacionRowVm maestro, int offset, decimal? zoneValue)
+    {
+        if (maestro.Source.Esclavo != null) return; // solo los maestros propagan (sin cadenas)
+        string maestroCodigo = maestro.Source.Codigo ?? "";
+        if (string.IsNullOrWhiteSpace(maestroCodigo)) return;
+
+        bool any = false;
+        foreach (var slaveVm in parent.Rows)
+        {
+            if (ReferenceEquals(slaveVm, maestro)) continue;
+            var vinculo = slaveVm.Source.Esclavo;
+            if (vinculo == null) continue;
+            if (!string.Equals(slaveVm.Source.ItemId ?? "", maestro.Source.ItemId ?? "", StringComparison.OrdinalIgnoreCase))
+                continue;
+            if (!CodeHelper.Match(vinculo.MaestroCodigo, maestroCodigo)) continue;
+
+            if (slaveVm.HasFormula)
+            {
+                // Esclavo con zonas: recibe el valor de la casilla editada (o la cantidad
+                // total del maestro en la casilla 0, cuando se editó la columna CANT).
+                string text;
+                if (offset < 0)
+                    text = FormatExpression(ConjuntoElectricoService.ComputeEsclavoValue(maestro.Cantidad, vinculo));
+                else if (zoneValue == null)
+                    text = string.Empty;
+                else
+                    text = FormatExpression(ConjuntoElectricoService.ComputeEsclavoValue(zoneValue.Value, vinculo));
+                // SetSectorExpressionDirect ya recalcula, revalida, sincroniza composición y
+                // marca la sesión como modificada para el esclavo.
+                SetSectorExpressionDirect(slaveVm, offset < 0 ? 0 : offset, text);
+            }
+            else
+            {
+                // Esclavo sin zonas: su CANTIDAD refleja el total vigente del maestro.
+                decimal computed = ConjuntoElectricoService.ComputeEsclavoValue(maestro.Cantidad, vinculo);
+                if (slaveVm.Cantidad == computed) continue;
+                slaveVm.Cantidad = computed;
+                slaveVm.RefreshDisplayProperties();
+                parent.ValidateRow(slaveVm);
+                session.SyncCubicacionRowComposition(slaveVm.Source);
+            }
+            any = true;
+        }
+
+        if (!any) return;
+        parent.ScheduleRefreshTotals();
+        parent.NotifyCubicacionSummaryChanged();
+        parent.MarkDirty();
+    }
+
+    private static string FormatExpression(decimal value)
+        => value.ToString("0.####", System.Globalization.CultureInfo.InvariantCulture);
+
     public void ApplyBatchSectorExpressions(CubicacionRowVm row, HashSet<int> slots)
     {
         if (session.IsReadOnly || slots == null || slots.Count == 0)
@@ -181,17 +309,40 @@ internal sealed class CubicacionSectorService
         row.Source.QtyExpressions = compactedExpressions;
         row.Source.TotalExpression = string.Empty;
 
-        row.Cantidad = querySvc.EvaluateStoredExpressions(session, row.Source, CubicacionViewModel.MaximumSectorCount, (zoneOffset, zoneValue) =>
-            row.SetSectorDisplayValue(zoneOffset, CubicacionRowVm.FormatDecimal(zoneValue)));
-        
-        decimal calculatedQuantity = row.Cantidad;
-        row.RefreshDisplayProperties();
+        // Valores por casilla (para propagar a esclavos) + supresión del eco por CANTIDAD:
+        // en filas con zonas quien propaga es el camino de zona, no el total.
+        var zoneValues = new Dictionary<int, decimal>();
+        row.SuppressCantidadPropagation = true;
+        try
+        {
+            row.Cantidad = querySvc.EvaluateStoredExpressions(session, row.Source, CubicacionViewModel.MaximumSectorCount, (zoneOffset, zoneValue) =>
+            {
+                row.SetSectorDisplayValue(zoneOffset, CubicacionRowVm.FormatDecimal(zoneValue));
+                zoneValues[zoneOffset] = zoneValue;
+            });
 
-        cubicacionPresenter.AfterRowEdited(row.Source);
+            decimal calculatedQuantity = row.Cantidad;
+            row.RefreshDisplayProperties();
 
-        row.Source.QtyExpressions = compactedExpressions;
-        row.Cantidad = calculatedQuantity;
-        session.SyncCubicacionRowComposition(row.Source);
+            cubicacionPresenter.AfterRowEdited(row.Source);
+
+            row.Source.QtyExpressions = compactedExpressions;
+            row.Cantidad = calculatedQuantity;
+            session.SyncCubicacionRowComposition(row.Source);
+        }
+        finally
+        {
+            row.SuppressCantidadPropagation = false;
+        }
+
+        foreach (int offset in slots)
+        {
+            if (offset < 0 || offset >= CubicacionViewModel.MaximumSectorCount)
+                continue;
+            PropagarEsclavos(row, offset, zoneValues.TryGetValue(offset, out var v) ? v : null);
+        }
+
+        RecalcularOperaciones(row.Source.ItemId);
     }
 
     public void SetSectorExpressionDirect(CubicacionRowVm row, int offset, string expression)
@@ -232,26 +383,53 @@ internal sealed class CubicacionSectorService
         // valor calculado anterior si no se limpia acá.
         if (string.IsNullOrWhiteSpace(expressions[offset]))
             row.SetSectorDisplayValue(offset, string.Empty);
-        row.Cantidad = querySvc.EvaluateStoredExpressions(session, row.Source, CubicacionViewModel.MaximumSectorCount, (zoneOffset, zoneValue) =>
-            row.SetSectorDisplayValue(zoneOffset, CubicacionRowVm.FormatDecimal(zoneValue)));
-        decimal calculatedQuantity = row.Cantidad;
-        row.RefreshDisplayProperties();
+        // Valor de la casilla editada para la propagación maestro→esclavo (null = celda vacía)
+        // + supresión del eco por CANTIDAD: en filas con zonas quien propaga es esta ruta.
+        decimal? zoneEditValue = null;
+        row.SuppressCantidadPropagation = true;
+        try
+        {
+            row.Cantidad = querySvc.EvaluateStoredExpressions(session, row.Source, CubicacionViewModel.MaximumSectorCount, (zoneOffset, zoneValue) =>
+            {
+                row.SetSectorDisplayValue(zoneOffset, CubicacionRowVm.FormatDecimal(zoneValue));
+                if (zoneOffset == offset) zoneEditValue = zoneValue;
+            });
+            decimal calculatedQuantity = row.Cantidad;
+            row.RefreshDisplayProperties();
 
-        if (syncSectorValuesSlot)
-            row.SectorValues[offset] = expression ?? string.Empty;
+            if (syncSectorValuesSlot)
+                row.SectorValues[offset] = expression ?? string.Empty;
 
-        cubicacionPresenter.AfterRowEdited(row.Source);
-        parent.ScheduleRefreshTotals();
-        parent.ValidateRow(row);
-        parent.UpdatePartidaCount(parent.SelectedPartida);
-        parent.NotifyCubicacionSummaryChanged();
-        parent.MarkDirty();
-        // Los observadores de sesión pueden recomponer la fila legacy al publicar el cambio.
-        // Se consolida al final para conservar sectores vacíos intermedios y el sector 300.
-        row.Source.QtyExpressions = compactedExpressions;
-        row.Cantidad = calculatedQuantity;
-        session.SyncCubicacionRowComposition(row.Source);
-        if (ReferenceEquals(parent.SelectedRow, row))
-            parent.RightPanel.LoadRow(row);
+            cubicacionPresenter.AfterRowEdited(row.Source);
+            parent.ScheduleRefreshTotals();
+            parent.ValidateRow(row);
+            parent.UpdatePartidaCount(parent.SelectedPartida);
+            parent.NotifyCubicacionSummaryChanged();
+            parent.MarkDirty();
+            // Los observadores de sesión pueden recomponer la fila legacy al publicar el cambio.
+            // Se consolida al final para conservar sectores vacíos intermedios y el sector 300.
+            row.Source.QtyExpressions = compactedExpressions;
+            row.Cantidad = calculatedQuantity;
+            session.SyncCubicacionRowComposition(row.Source);
+        }
+        finally
+        {
+            row.SuppressCantidadPropagation = false;
+        }
+
+        // Propagación a esclavos solo en la ruta sin syncSectorValuesSlot: las rutas que
+        // escriben SectorValues (grid y panel derecho) vuelven a entrar por
+        // OnSectorExpressionChanged con sync=false, y así cada edición propaga exactamente una vez.
+        if (!syncSectorValuesSlot)
+        {
+            PropagarEsclavos(row, offset, zoneEditValue);
+            if (ReferenceEquals(parent.SelectedRow, row))
+                parent.RightPanel.LoadRow(row);
+            parent.HasPendingUndoForEdit = false;
+        }
+
+        // Operaciones de la partida: la fila editada pudo cambiar de cantidad y las filas con
+        // Operación que la referencian por código deben reevaluarse (en vivo).
+        RecalcularOperaciones(row.Source.ItemId);
     }
 }

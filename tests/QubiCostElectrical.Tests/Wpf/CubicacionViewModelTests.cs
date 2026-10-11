@@ -84,10 +84,19 @@ public sealed class CubicacionViewModelTests
         await host.ProjectWorkspace.SaveAsAsync(path);
         host.Session.SetRoleReadOnly(true, "Prueba solo lectura");
 
-        var vm = new CubicacionPageVm(new FakeShell(), host);
+        try
+        {
+            var vm = new CubicacionPageVm(new FakeShell(), host);
 
-        Assert.False(vm.AddRowCommand.CanExecute(null));
-        Assert.False(vm.SaveCommand.CanExecute(null));
+            Assert.False(vm.AddRowCommand.CanExecute(null));
+            Assert.False(vm.SaveCommand.CanExecute(null));
+        }
+        finally
+        {
+            // La sesión es compartida (WpfAppHost.Current): sin este reset el read-only
+            // se filtra al resto de la colección WpfHost.
+            host.Session.SetRoleReadOnly(false);
+        }
     }
 
     [Fact]
@@ -573,6 +582,14 @@ public sealed class CubicacionViewModelTests
     }
 
     [Fact]
+    public void ResolveAnchoredPasteColumn_MapsSectorColumnSlot()
+    {
+        var col = new QubiCostElectrical.Wpf.Controls.DisplayBindingTextColumn { Header = "P1", SectorSlot = 2 };
+        Assert.Equal(CubicacionPageVm.FixedPasteColumnCount + 2, CubicacionPageVm.ResolveAnchoredPasteColumn(col));
+        Assert.False(CubicacionPageVm.IsFixedPasteColumn(col));
+    }
+
+    [Fact]
     public void ExcludedWithoutNote_LocksGrid_DoesNotShowNoteBanner()
     {
         var host = WpfAppHost.Current;
@@ -887,9 +904,17 @@ public sealed class CubicacionViewModelTests
         vm.SelectPartida(vm.Partidas.Single(p => p.Id == "P1"));
         host.Session.SetRoleReadOnly(true, "Prueba solo lectura");
 
-        vm.PasteClipboardDirect("PVC20\tTubo PVC 20mm\tML\t15");
+        try
+        {
+            vm.PasteClipboardDirect("PVC20\tTubo PVC 20mm\tML\t15");
 
-        Assert.Empty(host.Session.Cubicacion);
+            Assert.Empty(host.Session.Cubicacion);
+        }
+        finally
+        {
+            // Restaurar: la sesión es compartida por toda la colección WpfHost.
+            host.Session.SetRoleReadOnly(false);
+        }
     }
 
     [Fact]
@@ -1075,28 +1100,28 @@ public sealed class CubicacionViewModelTests
                 var host = WpfAppHost.Current;
                 host.Session.NewProject("try-paste-anchored");
                 host.Session.Itemizado.Add(new ItemizadoRow { Id = "P1", Item = "1.1", Descripcion = "Partida", Unidad = "GL", Cantidad = 1m });
-                
+
                 var vm = new CubicacionPageVm(new FakeShell(), host);
                 vm.SelectPartida(vm.Partidas.Single(p => p.Id == "P1"));
                 var row = vm.Rows.First();
-                
+
                 // Simular pegado de 2 filas
                 var text = "COD1\tDesc1\tUN\t15\nCOD2\tDesc2\tUN\t25";
-                
+
                 // Simular el foco de la grilla en la celda del primer elemento (CodigoColumn)
                 vm.SelectedRow = row;
-                
+
                 // Creamos un DataGrid de prueba en WPF para pasar el parámetro
                 var grid = new System.Windows.Controls.DataGrid();
                 grid.ItemsSource = vm.Rows;
                 grid.SelectedItem = row;
-                
+
                 var col = new System.Windows.Controls.DataGridTextColumn { Header = "CÓDIGO" };
                 grid.Columns.Add(col);
                 grid.CurrentCell = new System.Windows.Controls.DataGridCellInfo(row, col);
-                
+
                 bool success = vm.TryPasteAnchored(grid, text);
-                
+
                 Assert.True(success);
                 Assert.Equal(8, vm.Rows.Count); // El tamaño mínimo de la partida sigue siendo MinVisibleRows (8)
                 Assert.Equal("COD1", vm.Rows[0].Codigo);
@@ -1109,15 +1134,113 @@ public sealed class CubicacionViewModelTests
                 threadEx = ex;
             }
         });
-        
+
         thread.SetApartmentState(System.Threading.ApartmentState.STA);
         thread.Start();
         thread.Join();
-        
+
         if (threadEx != null)
         {
             System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(threadEx).Throw();
         }
+    }
+
+    [Fact]
+    public void TryPasteAnchored_FromCodigo_WritesFollowingColumnsIntoSectors()
+    {
+        Exception? threadEx = null;
+        var thread = new System.Threading.Thread(() =>
+        {
+            try
+            {
+                var host = WpfAppHost.Current;
+                host.Session.NewProject("try-paste-sectors");
+                host.Session.Itemizado.Add(new ItemizadoRow { Id = "P1", Item = "1.1", Descripcion = "Partida", Unidad = "GL", Cantidad = 1m });
+
+                var vm = new CubicacionPageVm(new FakeShell(), host);
+                vm.SelectPartida(vm.Partidas.Single(p => p.Id == "P1"));
+                var row = vm.Rows.First();
+                vm.SelectedRow = row;
+
+                var grid = new System.Windows.Controls.DataGrid { ItemsSource = vm.Rows, SelectedItem = row };
+                var col = new System.Windows.Controls.DataGridTextColumn { Header = "CÓDIGO" };
+                grid.Columns.Add(col);
+                grid.CurrentCell = new System.Windows.Controls.DataGridCellInfo(row, col);
+
+                // Código + Desc + UD + Cant + 3 casillas
+                bool success = vm.TryPasteAnchored(grid, "PVC20\tTubo\tML\t0\t10\t20\t30");
+
+                Assert.True(success);
+                Assert.Equal("PVC20", vm.Rows[0].Codigo);
+                Assert.Equal("10", vm.Rows[0].SectorValues[0]);
+                Assert.Equal("20", vm.Rows[0].SectorValues[1]);
+                Assert.Equal("30", vm.Rows[0].SectorValues[2]);
+                Assert.Equal(60m, vm.Rows[0].Cantidad);
+                Assert.NotNull(vm.Rows[0].Source.QtyExpressions);
+                Assert.Equal("10", vm.Rows[0].Source.QtyExpressions![0]);
+                Assert.Equal("20", vm.Rows[0].Source.QtyExpressions[1]);
+                Assert.Equal("30", vm.Rows[0].Source.QtyExpressions[2]);
+            }
+            catch (Exception ex)
+            {
+                threadEx = ex;
+            }
+        });
+
+        thread.SetApartmentState(System.Threading.ApartmentState.STA);
+        thread.Start();
+        thread.Join();
+
+        if (threadEx != null)
+            System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(threadEx).Throw();
+    }
+
+    [Fact]
+    public void TryPasteAnchored_FromSectorColumn_PastesBlockIntoCasillas()
+    {
+        Exception? threadEx = null;
+        var thread = new System.Threading.Thread(() =>
+        {
+            try
+            {
+                var host = WpfAppHost.Current;
+                host.Session.NewProject("try-paste-sector-anchor");
+                host.Session.Itemizado.Add(new ItemizadoRow { Id = "P1", Item = "1.1", Descripcion = "Partida", Unidad = "GL", Cantidad = 1m });
+
+                var vm = new CubicacionPageVm(new FakeShell(), host);
+                vm.SelectPartida(vm.Partidas.Single(p => p.Id == "P1"));
+                var row = vm.Rows.First();
+                vm.SelectedRow = row;
+
+                var grid = new System.Windows.Controls.DataGrid { ItemsSource = vm.Rows, SelectedItem = row };
+                var sectorCol = new QubiCostElectrical.Wpf.Controls.DisplayBindingTextColumn { Header = "S1", SectorSlot = 0 };
+                grid.Columns.Add(sectorCol);
+                grid.CurrentCell = new System.Windows.Controls.DataGridCellInfo(row, sectorCol);
+
+                bool success = vm.TryPasteAnchored(grid, "5\t6\t7\n8\t9\t10");
+
+                Assert.True(success);
+                Assert.Equal("5", vm.Rows[0].SectorValues[0]);
+                Assert.Equal("6", vm.Rows[0].SectorValues[1]);
+                Assert.Equal("7", vm.Rows[0].SectorValues[2]);
+                Assert.Equal("8", vm.Rows[1].SectorValues[0]);
+                Assert.Equal("9", vm.Rows[1].SectorValues[1]);
+                Assert.Equal("10", vm.Rows[1].SectorValues[2]);
+                Assert.Equal(18m, vm.Rows[0].Cantidad);
+                Assert.Equal(27m, vm.Rows[1].Cantidad);
+            }
+            catch (Exception ex)
+            {
+                threadEx = ex;
+            }
+        });
+
+        thread.SetApartmentState(System.Threading.ApartmentState.STA);
+        thread.Start();
+        thread.Join();
+
+        if (threadEx != null)
+            System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(threadEx).Throw();
     }
 
     [Fact]
@@ -1131,10 +1254,10 @@ public sealed class CubicacionViewModelTests
             ItemId = "P1",
             TotalExpression = ""
         };
-        
+
         var svc = new CubicacionTakeoffQueryService();
         var result = svc.EvaluateStoredExpressions(session, row, 300);
-        
+
         Assert.Equal(0m, result);
     }
 
@@ -1144,17 +1267,17 @@ public sealed class CubicacionViewModelTests
         var session = new BudgetProjectSession();
         session.NewProject("formula-basic", "Tester");
         session.ProjectVariables["ancho"] = 5m;
-        
+
         var row = new CubicacionRow
         {
             Id = "R1",
             ItemId = "P1",
             TotalExpression = "ancho * 3"
         };
-        
+
         var svc = new CubicacionTakeoffQueryService();
         var result = svc.EvaluateStoredExpressions(session, row, 300);
-        
+
         Assert.Equal(15m, result);
     }
 
@@ -1163,7 +1286,7 @@ public sealed class CubicacionViewModelTests
     {
         var session = new BudgetProjectSession();
         session.NewProject("zonas-total-test", "Tester");
-        
+
         var row = new CubicacionRow
         {
             Id = "R1",
@@ -1171,10 +1294,10 @@ public sealed class CubicacionViewModelTests
             QtyExpressions = new[] { "10", "20", "30" },
             TotalExpression = "zonas_total * 2"
         };
-        
+
         var svc = new CubicacionTakeoffQueryService();
         var result = svc.EvaluateStoredExpressions(session, row, 300);
-        
+
         // Sum(10, 20, 30) = 60; 60 * 2 = 120
         Assert.Equal(120m, result);
     }
@@ -1185,10 +1308,10 @@ public sealed class CubicacionViewModelTests
         var host = WpfAppHost.Current;
         host.Session.NewProject("cancellation-test");
         var vm = new CubicacionPageVm(new FakeShell(), host);
-        
+
         vm.AutocompleteVisible = true;
         Assert.True(vm.AutocompleteVisible);
-        
+
         vm.AutocompleteVisible = false;
         Assert.False(vm.AutocompleteVisible);
     }
@@ -1199,15 +1322,15 @@ public sealed class CubicacionViewModelTests
         var host = WpfAppHost.Current;
         host.Session.NewProject("sync-selection-test");
         host.Session.Itemizado.Add(new ItemizadoRow { Id = "P1", Item = "1.1", Descripcion = "Partida", Unidad = "GL", Cantidad = 1m });
-        
+
         var vm = new CubicacionPageVm(new FakeShell(), host);
         vm.SelectPartida(vm.Partidas.Single(p => p.Id == "P1"));
-        
+
         var r1 = vm.Rows[0];
         var r2 = vm.Rows[1];
-        
+
         vm.SyncGridRowSelection(new[] { r1 });
-        
+
         Assert.True(r1.IsSelected);
         Assert.False(r2.IsSelected);
     }
@@ -1225,16 +1348,16 @@ public sealed class CubicacionViewModelTests
         // Agregar material al catálogo
         var mat = new MaterialRow { Codigo = "M1", Descripcion = "Catalogo Desc", Unidad = "UD", MatClp = 10m };
         host.Session.Materiales.Add(mat);
-        
+
         var vm = new CubicacionPageVm(new FakeShell(), host);
         vm.SelectPartida(vm.Partidas.Single(p => p.Id == "P1"));
         var row = vm.Rows[0];
         row.Codigo = "M1";
         row.Descripcion = "Manual Desc"; // Ya tiene descripción manual
-        
+
         // Ejecutamos la resolución automática
         vm.OnRowEdited(row);
-        
+
         Assert.Equal("Manual Desc", row.Descripcion); // No debe pisarse
         Assert.Equal(10m, row.MatUf); // Se rellena el precio UF que era 0
     }
@@ -1248,9 +1371,9 @@ public sealed class CubicacionViewModelTests
             RedondeoModo = "ARRIBA"
         };
         var svc = new CubicacionTakeoffQueryService();
-        
+
         var val = svc.ApplyRounding(row, 12.3m);
-        
+
         Assert.Equal(15m, val);
     }
 
@@ -1263,9 +1386,9 @@ public sealed class CubicacionViewModelTests
             RedondeoModo = "ABAJO"
         };
         var svc = new CubicacionTakeoffQueryService();
-        
+
         var val = svc.ApplyRounding(row, 12.3m);
-        
+
         Assert.Equal(10m, val);
     }
 
@@ -1278,10 +1401,10 @@ public sealed class CubicacionViewModelTests
             RedondeoModo = "CERCANO"
         };
         var svc = new CubicacionTakeoffQueryService();
-        
+
         var val = svc.ApplyRounding(row, 12.3m); // 12.3 / 5 = 2.46 -> Round to 2 -> 10
         var val2 = svc.ApplyRounding(row, 12.7m); // 12.7 / 5 = 2.54 -> Round to 3 -> 15
-        
+
         Assert.Equal(10m, val);
         Assert.Equal(15m, val2);
     }
@@ -1291,7 +1414,7 @@ public sealed class CubicacionViewModelTests
     {
         var host = WpfAppHost.Current;
         host.Session.NewProject("cubicacion-insert");
-        
+
         var itemId = "P1";
         host.Session.Itemizado.Add(new ItemizadoRow
         {
@@ -1317,11 +1440,11 @@ public sealed class CubicacionViewModelTests
         vm.InsertRowCommand.Execute(null);
 
         Assert.Equal(3, host.Session.Cubicacion.Count(x => x.ItemId == itemId));
-        
+
         var firstRow = vm.Rows[0];
         Assert.NotEqual("R1", firstRow.Id);
         Assert.NotEqual("R2", firstRow.Id);
-        
+
         Assert.Equal("R1", vm.Rows[1].Id);
         Assert.Equal("R2", vm.Rows[2].Id);
     }
@@ -1345,7 +1468,7 @@ public sealed class CubicacionViewModelTests
 
         var rowVm = new QubiCostElectrical.Wpf.Features.Cubicacion.CubicacionRowVm(row, true);
         rowVm.ValorUfClp = 40000m;
-        
+
         Assert.Equal(1m, rowVm.UfUnitCalculado);
         Assert.Equal(5m, rowVm.UfSubtotalCalculado);
 

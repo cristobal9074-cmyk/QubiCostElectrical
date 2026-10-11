@@ -424,4 +424,32 @@ public sealed class QuotesViewModelTests
         Assert.NotNull(vm.SummaryText);
         Assert.NotEmpty(vm.SummaryText);
     }
+
+    // 29. ApplyPriceCommand actualiza precio y preserva trazabilidad (proveedor, origen, fecha)
+    [Fact]
+    public void ApplyPriceCommand_UpdatesMaterialAndPreservesTraceability()
+    {
+        var host = WpfAppHost.Current;
+        host.Session.NewProject("quotes-trace-test");
+        var mat = new MaterialRow
+        {
+            Codigo = "MAT-01",
+            Descripcion = "Cable THHN 2.5",
+            MatClp = 1000m,
+            Proveedor = "Antiguo Proveedor"
+        };
+        host.Session.Materiales.Add(mat);
+
+        var vm = new QuotesViewModel(new FakeShellHost(), host);
+        var row = new QuoteComparisonRowVm("MAT-01", "Cable THHN 2.5", "Antiguo Proveedor", 1m, "ElectroChile", 0.75m, "Cables", 1000m, 750m);
+        vm.SelectedComparisonRow = row;
+
+        vm.ApplyPriceCommand.Execute(row);
+
+        var updated = host.Session.Materiales.First(m => m.Codigo == "MAT-01");
+        Assert.Equal(750m, updated.MatClp);
+        Assert.Equal("ElectroChile", updated.Proveedor);
+        Assert.Equal("Cotización ElectroChile", updated.OrigenPrecio);
+        Assert.Equal(DateTime.Today, updated.FechaPrecio.Date);
+    }
 }

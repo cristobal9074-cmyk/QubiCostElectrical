@@ -531,6 +531,25 @@ public sealed class WpfUndoServiceTests
         Assert.Equal("after", ReadTag(host.Session));
     }
 
+    [Fact]
+    public void Undo_ReturnsActionDescription_AndRedoPreservesIt()
+    {
+        var host = SetupHost("desc-test");
+        MutateSession(host.Session, "v1");
+        host.UndoService.PushUndoPoint(host.Session, "Modificar cantidad en Partida 2.1 (15 → 10)");
+        MutateSession(host.Session, "v2");
+
+        bool undoSuccess = host.UndoService.Undo(host.Session, out string undoDesc);
+        Assert.True(undoSuccess);
+        Assert.Equal("Modificar cantidad en Partida 2.1 (15 → 10)", undoDesc);
+        Assert.Equal("v1", ReadTag(host.Session));
+
+        bool redoSuccess = host.UndoService.Redo(host.Session, out string redoDesc);
+        Assert.True(redoSuccess);
+        Assert.Equal("Modificar cantidad en Partida 2.1 (15 → 10)", redoDesc);
+        Assert.Equal("v2", ReadTag(host.Session));
+    }
+
     // ════════════════════════════════════════════════════════════════════════════
     // 30. TextBox conserva su Undo local (verificación arquitectural)
     // ════════════════════════════════════════════════════════════════════════════
@@ -664,5 +683,73 @@ public sealed class WpfUndoServiceTests
 
         // En el estado más antiguo (no hay saved), IsDirty es true
         Assert.True(host.Session.IsDirty);
+    }
+
+    // ════════════════════════════════════════════════════════════════════════════
+    // 36. Snapshot pre-capturado para edición de celda restaura valor anterior
+    // ════════════════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void PreCapturedSnapshot_CellEditSimulation_RestoresBeforeState()
+    {
+        var host = SetupHost("pre-captured-cell-edit");
+        MutateSession(host.Session, "InitialValue");
+
+        // Simula BeginningEdit: se captura snapshot ANTES de que el usuario escriba
+        var preEditSnapshot = host.Session.CreateSnapshot();
+
+        // El usuario tipea en la celda y confirma (mutación ocurre en la sesión)
+        MutateSession(host.Session, "EditedValue");
+
+        // En CellEditEnding, se registra el snapshot pre-capturado
+        host.UndoService.PushSnapshot(preEditSnapshot, "Editar celda");
+
+        Assert.Equal("EditedValue", ReadTag(host.Session));
+        Assert.True(host.UndoService.CanUndo);
+
+        // Ctrl+Z: debe restaurar el valor original
+        bool undid = host.UndoService.Undo(host.Session);
+        Assert.True(undid);
+        Assert.Equal("InitialValue", ReadTag(host.Session));
+
+        // Ctrl+Y: debe restaurar el valor editado
+        bool redid = host.UndoService.Redo(host.Session);
+        Assert.True(redid);
+        Assert.Equal("EditedValue", ReadTag(host.Session));
+    }
+
+    // ════════════════════════════════════════════════════════════════════════════
+    // 37. Múltiples ediciones secuenciales de celda se deshacen paso a paso
+    // ════════════════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void SequentialCellEdits_UndoStepByStep()
+    {
+        var host = SetupHost("seq-cell-edits");
+        MutateSession(host.Session, "Step0");
+
+        for (int i = 1; i <= 3; i++)
+        {
+            var snap = host.Session.CreateSnapshot();
+            MutateSession(host.Session, $"Step{i}");
+            host.UndoService.PushSnapshot(snap, $"Edit-{i}");
+        }
+
+        Assert.Equal("Step3", ReadTag(host.Session));
+
+        host.UndoService.Undo(host.Session);
+        Assert.Equal("Step2", ReadTag(host.Session));
+
+        host.UndoService.Undo(host.Session);
+        Assert.Equal("Step1", ReadTag(host.Session));
+
+        host.UndoService.Undo(host.Session);
+        Assert.Equal("Step0", ReadTag(host.Session));
+
+        Assert.False(host.UndoService.CanUndo);
+        Assert.True(host.UndoService.CanRedo);
+
+        host.UndoService.Redo(host.Session);
+        Assert.Equal("Step1", ReadTag(host.Session));
     }
 }

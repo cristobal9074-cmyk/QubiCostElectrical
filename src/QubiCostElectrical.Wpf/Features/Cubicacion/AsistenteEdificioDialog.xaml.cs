@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using QubiCostElectrical.Wpf.Infrastructure;
@@ -16,34 +17,24 @@ public partial class AsistenteEdificioDialog : Window
     {
         InitializeComponent();
         ItemsTorres.ItemsSource = torreConfigs;
-        // Inicializar con la primera torre por defecto
         ActualizarTorres(1);
+        Loaded += (_, _) => Refresh3DModel();
     }
 
     public List<string> ZonasGeneradas { get; } = new();
 
     private void OnComboTorresSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (ComboTorres == null || GridPrefijo == null || GridSubComun == null || GridPisosComunes == null)
+        if (ComboTorres == null || PanelTorresMultiples == null)
             return;
 
         var selectedItem = (ComboBoxItem)ComboTorres.SelectedItem;
         int torres = int.Parse(selectedItem.Tag.ToString()!);
 
-        if (torres > 1)
-        {
-            GridPrefijo.Visibility = Visibility.Visible;
-            GridSubComun.Visibility = Visibility.Visible;
-            GridPisosComunes.Visibility = Visibility.Visible;
-        }
-        else
-        {
-            GridPrefijo.Visibility = Visibility.Collapsed;
-            GridSubComun.Visibility = Visibility.Collapsed;
-            GridPisosComunes.Visibility = Visibility.Collapsed;
-        }
+        PanelTorresMultiples.Visibility = torres > 1 ? Visibility.Visible : Visibility.Collapsed;
 
         ActualizarTorres(torres);
+        Refresh3DModel();
     }
 
     private void OnComboPrefijoSelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -52,6 +43,7 @@ public partial class AsistenteEdificioDialog : Window
         var selectedItem = (ComboBoxItem)ComboTorres.SelectedItem;
         int torres = int.Parse(selectedItem.Tag.ToString()!);
         ActualizarTorres(torres);
+        Refresh3DModel();
     }
 
     private void ActualizarTorres(int count)
@@ -60,10 +52,10 @@ public partial class AsistenteEdificioDialog : Window
             ? ((ComboBoxItem)ComboPrefijo.SelectedItem).Tag.ToString()!
             : "LETRAS";
 
-        // Guardar valores ingresados previamente para no sobreescribirlos si el usuario sube/baja de torres
         var prevValues = new Dictionary<string, (string Pisos, string Cubiertas)>();
         foreach (var t in torreConfigs)
         {
+            t.PropertyChanged -= OnTorrePropertyChanged;
             prevValues[t.Key] = (t.Pisos, t.Cubiertas);
         }
 
@@ -82,8 +74,122 @@ public partial class AsistenteEdificioDialog : Window
                 defaultCubiertas = prev.Cubiertas;
             }
 
-            torreConfigs.Add(new TorreConfigVm(key, nombre, defaultPisos, defaultCubiertas));
+            var vm = new TorreConfigVm(key, nombre, defaultPisos, defaultCubiertas);
+            vm.PropertyChanged += OnTorrePropertyChanged;
+            torreConfigs.Add(vm);
         }
+    }
+
+    private void OnTorrePropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (ChkCompartirTodosPisos?.IsChecked == true)
+        {
+            SyncPisosComunesWithMax();
+        }
+        Refresh3DModel();
+    }
+
+    private void OnCompartirTodosPisosChanged(object sender, RoutedEventArgs e)
+    {
+        bool allShared = ChkCompartirTodosPisos?.IsChecked == true;
+        if (TxtPisosComunes != null)
+        {
+            TxtPisosComunes.IsEnabled = !allShared;
+        }
+
+        if (allShared)
+        {
+            SyncPisosComunesWithMax();
+        }
+        Refresh3DModel();
+    }
+
+    private void SyncPisosComunesWithMax()
+    {
+        int maxP = 0;
+        foreach (var t in torreConfigs)
+        {
+            if (int.TryParse(t.Pisos, out int p) && p > maxP)
+                maxP = p;
+        }
+        if (maxP > 0 && TxtPisosComunes != null)
+        {
+            TxtPisosComunes.Text = maxP.ToString();
+        }
+    }
+
+    private void OnSubterraneosMinusClick(object sender, RoutedEventArgs e)
+    {
+        if (int.TryParse(TxtSubterraneos.Text, out int val) && val > 0)
+        {
+            TxtSubterraneos.Text = (val - 1).ToString();
+        }
+    }
+
+    private void OnSubterraneosPlusClick(object sender, RoutedEventArgs e)
+    {
+        if (int.TryParse(TxtSubterraneos.Text, out int val) && val < BuildingZoneGenerator.MaxSubterraneos)
+        {
+            TxtSubterraneos.Text = (val + 1).ToString();
+        }
+    }
+
+    private void OnPisosComunesMinusClick(object sender, RoutedEventArgs e)
+    {
+        if (int.TryParse(TxtPisosComunes.Text, out int val) && val > 0)
+        {
+            TxtPisosComunes.Text = (val - 1).ToString();
+        }
+    }
+
+    private void OnPisosComunesPlusClick(object sender, RoutedEventArgs e)
+    {
+        if (int.TryParse(TxtPisosComunes.Text, out int val) && val < BuildingZoneGenerator.MaxPisosComunes)
+        {
+            TxtPisosComunes.Text = (val + 1).ToString();
+        }
+    }
+
+    private void OnSubterraneosTextChanged(object sender, TextChangedEventArgs e) => Refresh3DModel();
+
+    private void OnPisosComunesTextChanged(object sender, TextChangedEventArgs e) => Refresh3DModel();
+
+    private void OnSubComunChanged(object sender, RoutedEventArgs e) => Refresh3DModel();
+
+    private void Refresh3DModel()
+    {
+        if (Viewport3D == null || ComboTorres == null)
+            return;
+
+        int.TryParse(TxtSubterraneos.Text, out int subterraneos);
+        int torresCount = int.Parse(((ComboBoxItem)ComboTorres.SelectedItem).Tag.ToString()!);
+        int.TryParse(TxtPisosComunes?.Text ?? "0", out int pisosComunes);
+        bool subComun = ChkSubComun?.IsChecked == true;
+
+        var torresConfig = new List<TorreZonaConfig>();
+        foreach (var t in torreConfigs)
+        {
+            int.TryParse(t.Pisos, out int p);
+            int.TryParse(t.Cubiertas, out int c);
+            torresConfig.Add(new TorreZonaConfig { Nombre = t.Nombre, Pisos = p, Cubiertas = c });
+        }
+
+        string prefijoTipo = ComboPrefijo?.SelectedItem != null
+            ? ((ComboBoxItem)ComboPrefijo.SelectedItem).Tag.ToString()!
+            : "LETRAS";
+
+        int totalZonas = 0;
+        try
+        {
+            var simulatedZones = BuildingZoneGenerator.GenerateZones(subterraneos, torresCount, pisosComunes, subComun, prefijoTipo, torresConfig);
+            totalZonas = simulatedZones.Count;
+        }
+        catch
+        {
+            // Ignorar errores parciales mientras el usuario tipea
+        }
+
+        Viewport3D.UpdateModel(subterraneos, torresCount, pisosComunes, subComun, torresConfig, totalZonas);
     }
 
     private void OnGenerarClick(object sender, RoutedEventArgs e)
@@ -127,7 +233,9 @@ public partial class AsistenteEdificioDialog : Window
         }
 
         bool subComun = ChkSubComun.IsChecked == true;
-        string prefijoTipo = ((ComboBoxItem)ComboPrefijo.SelectedItem).Tag.ToString()!;
+        string prefijoTipo = ComboPrefijo?.SelectedItem != null
+            ? ((ComboBoxItem)ComboPrefijo.SelectedItem).Tag.ToString()!
+            : "LETRAS";
 
         ZonasGeneradas.Clear();
         ZonasGeneradas.AddRange(BuildingZoneGenerator.GenerateZones(subterraneos, torresCount, pisosComunes, subComun, prefijoTipo, torresConfig));

@@ -27,6 +27,7 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
     private readonly ItemizadoImportCoordinator importCoordinator;
     private readonly List<ItemizadoRowVm> allRows = new();
     private readonly Dictionary<string, ItemizadoRowVm> rowsById = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ItemizadoBreadcrumbCoordinator breadcrumbCoordinator;
     private ICollectionView? rowsView;
     private ItemizadoRowVm? selectedRow;
     private ItemizadoFilterMode filterMode = ItemizadoFilterMode.Todos;
@@ -36,22 +37,15 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
     private bool showEmptyState = true;
     private bool showEmptyItemizado;
     private bool isLoading;
-    private string headerSubtitle = "";
-    private string saveStateLabel = "";
-    private string statusMessage = "";
-    private string summaryPartidas = "0";
-    private string summaryCompletas = "0";
-    private string summaryIncompletas = "0";
-    private string summaryCapitulos = "0";
-    private string summarySinPrecio = "0";
-    private string summaryStripText = "";
-    private string filteredCountLabel = "";
+    private string headerSubtitle = "", saveStateLabel = "", statusMessage = "";
+    private string summaryPartidas = "0", summaryCompletas = "0", summaryIncompletas = "0", summaryCapitulos = "0", summarySinPrecio = "0", summaryStripText = "", filteredCountLabel = "";
     private List<ItemizadoRowPresentation>? filterPresentationCache;
     private string? pendingSelectionId;
     private readonly Dictionary<string, decimal> costTotalsByItem = new(StringComparer.OrdinalIgnoreCase);
     private bool hasPendingUndoForEdit;
     private readonly HashSet<ItemizadoRowVm> wiredRows = new();
     private EventHandler<ProjectSessionChangedEventArgs>? sessionSavedHandler;
+    private ItemizadoTotalsSnapshot totalsSnapshot = ItemizadoTotalsCoordinator.Calculate(Array.Empty<ItemizadoRowVm>(), Array.Empty<ItemizadoRowVm>(), 38_500m, false, "");
 
     // La vista se suscribe para entrar en modo edición automáticamente sobre la fila
     // recién agregada (Descripción), sin requerir F2 ni clic manual. Solo se dispara
@@ -72,6 +66,11 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
         this.presenter = presenter;
         this.workspace = workspace;
         importCoordinator = new ItemizadoImportCoordinator(presenter);
+        breadcrumbCoordinator = new ItemizadoBreadcrumbCoordinator(row =>
+        {
+            SelectedRow = row;
+            EnsureSelectionVisible();
+        });
         rowsView = CollectionViewSource.GetDefaultView(Rows);
         rowsView.Filter = FilterRow;
 
@@ -90,18 +89,27 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
         ClearAllCommand = new RelayCommand(ClearAll, () => !ShowEmptyState && !ShowEmptyItemizado && !session.IsReadOnly);
         OpenProjectCommand = new RelayCommand(() => _ = shell.OpenProjectAsync());
         SetFilterCommand = new RelayCommand<ItemizadoFilterMode>(mode => FilterMode = mode);
-        ClearSearchCommand = new RelayCommand(() => SearchText = "", () => !string.IsNullOrWhiteSpace(SearchText));
+        ClearSearchCommand = new RelayCommand(ClearSearch, () => IsSearchActive);
         ExportPdfCommand = new RelayCommand(ExportPdf, () => !ShowEmptyState);
         ConfigureCommercialModelCommand = new RelayCommand(ConfigureCommercialModel, () => HasSelection && !session.IsReadOnly && SelectedRow?.EsTitulo != true);
+        LoadStandardTemplateCommand = new RelayCommand<string>(LoadStandardTemplate, _ => !ShowEmptyState && !session.IsReadOnly);
+        ToggleChapterCollapseCommand = new RelayCommand<ItemizadoRowVm>(ToggleChapterCollapse);
+        OpenApuCommand = new RelayCommand<ItemizadoRowVm>(row =>
+        {
+            var target = row ?? SelectedRow;
+            if (target == null || (target.EsTitulo && !presenter.TryPromoteLeafTitleToPartida(target.Model))) return;
+            target.IsTitleRow = target.Model.EsTitulo;
+            shell.RequestNavigate(ShellRoute.Apu, new QubiCostElectrical.Wpf.Features.Apu.ApuNavContext(target.Id, target.Item, target.Descripcion));
+        });
+        CubicarRowCommand = new RelayCommand<ItemizadoRowVm>(row =>
+        {
+            var target = row ?? SelectedRow;
+            if (target == null || (target.EsTitulo && presenter.HasChildPartidas(target.Id))) return;
+            SelectedRow = target;
+            _ = CubicarSelectedAsync();
+        });
 
-        // Session.Saved/Changed pueden dispararse desde un hilo de fondo: ProjectWorkspaceService
-        // guarda con ConfigureAwait(false), así que su continuación final (Session.MarkSaved(),
-        // que dispara Saved sincrónicamente) puede correr en un hilo del thread pool en vez del
-        // hilo de UI. UpdateSaveState() termina tocando ObservableCollection ligadas a la UI
-        // (vía ShellViewModel.RefreshChrome), lo que lanza NotSupportedException si no se
-        // marshalla antes al Dispatcher. Se ejecuta sincrónico cuando ya se está en el hilo
-        // correcto (o no hay Application real, como en tests) para no romper ese comportamiento
-        // síncrono existente.
+        // Marshalling al Dispatcher para evitar NotSupportedException al refrescar colecciones UI
         sessionSavedHandler = (_, _) => RunOnUiThread(() =>
         {
             hasPendingUndoForEdit = false;
@@ -131,17 +139,20 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
             dispatcher.InvokeAsync(action);
     }
 
-    public string FilteredCountLabel
-    {
-        get => filteredCountLabel;
-        private set => SetProperty(ref filteredCountLabel, value);
-    }
-
+    public string FilteredCountLabel { get => filteredCountLabel; private set => SetProperty(ref filteredCountLabel, value); }
+    private int totalPartidasCount, listasPartidasCount, pendientesPartidasCount;
+    public int TotalPartidasCount { get => totalPartidasCount; set => SetProperty(ref totalPartidasCount, value); }
+    public int ListasPartidasCount { get => listasPartidasCount; set => SetProperty(ref listasPartidasCount, value); }
+    public int PendientesPartidasCount { get => pendientesPartidasCount; set => SetProperty(ref pendientesPartidasCount, value); }
+    public string TotalFilterLabel => $"Todas ({totalPartidasCount})";
+    public string ListasFilterLabel => $"✓ Listas ({listasPartidasCount})";
+    public string PendientesFilterLabel => $"⚠️ Pendientes ({pendientesPartidasCount})";
     public string CubicarButtonLabel => "Cubicar partida";
-
     public ObservableCollection<ItemizadoRowVm> Rows { get; } = new();
-
     public ICollectionView FilteredRows => rowsView ?? CollectionViewSource.GetDefaultView(Rows);
+    public ItemizadoBreadcrumbCoordinator Breadcrumb => breadcrumbCoordinator;
+    public bool HasBreadcrumb => breadcrumbCoordinator.HasNodes;
+    public bool IsSearchActive => !string.IsNullOrWhiteSpace(searchText);
 
     public ItemizadoRowVm? SelectedRow
     {
@@ -150,6 +161,8 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
         {
             if (!SetProperty(ref selectedRow, value))
                 return;
+            breadcrumbCoordinator.UpdateBreadcrumb(selectedRow, rowsById, allRows);
+            OnPropertyChanged(nameof(HasBreadcrumb));
             RaiseCommandStates();
         }
     }
@@ -166,6 +179,8 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
             OnPropertyChanged(nameof(IsFilterCompletos));
             OnPropertyChanged(nameof(IsFilterSinCubicar));
             OnPropertyChanged(nameof(IsFilterSinPrecio));
+            OnPropertyChanged(nameof(IsFilterListas));
+            OnPropertyChanged(nameof(IsFilterPendientes));
             SafeRefreshView();
             EnsureSelectionVisible();
             UpdateFilterCounts();
@@ -173,11 +188,13 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
         }
     }
 
-    public bool IsFilterTodos => FilterMode == ItemizadoFilterMode.Todos;
-    public bool IsFilterIncompletos => FilterMode == ItemizadoFilterMode.Incompletos;
-    public bool IsFilterCompletos => FilterMode == ItemizadoFilterMode.Completos;
+    public bool IsFilterTodos { get => FilterMode == ItemizadoFilterMode.Todos; set { if (value) FilterMode = ItemizadoFilterMode.Todos; } }
+    public bool IsFilterIncompletos { get => FilterMode == ItemizadoFilterMode.Incompletos; set { if (value) FilterMode = ItemizadoFilterMode.Incompletos; } }
+    public bool IsFilterCompletos { get => FilterMode == ItemizadoFilterMode.Completos; set { if (value) FilterMode = ItemizadoFilterMode.Completos; } }
     public bool IsFilterSinCubicar => FilterMode == ItemizadoFilterMode.SinCubicar;
     public bool IsFilterSinPrecio => FilterMode == ItemizadoFilterMode.SinPrecio;
+    public bool IsFilterListas { get => IsFilterCompletos; set => IsFilterCompletos = value; }
+    public bool IsFilterPendientes { get => IsFilterIncompletos; set => IsFilterIncompletos = value; }
 
     public string SearchText
     {
@@ -186,6 +203,7 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
         {
             if (!SetProperty(ref searchText, value))
                 return;
+            OnPropertyChanged(nameof(IsSearchActive));
             searchDebounceTimer?.Stop();
             searchDebounceTimer?.Start();
         }
@@ -193,57 +211,12 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
 
     public bool IsReadOnly => session.IsReadOnly;
 
-    public bool ShowEmptyState
-    {
-        get => showEmptyState;
-        private set
-        {
-            if (!SetProperty(ref showEmptyState, value))
-                return;
-            RaiseCommandStates();
-        }
-    }
-
-    public bool ShowEmptyItemizado
-    {
-        get => showEmptyItemizado;
-        private set
-        {
-            if (!SetProperty(ref showEmptyItemizado, value))
-                return;
-            RaiseCommandStates();
-        }
-    }
-
-    public bool IsLoading
-    {
-        get => isLoading;
-        private set => SetProperty(ref isLoading, value);
-    }
-
-    public string HeaderSubtitle
-    {
-        get => headerSubtitle;
-        private set => SetProperty(ref headerSubtitle, value);
-    }
-
-    public string SaveStateLabel
-    {
-        get => saveStateLabel;
-        private set => SetProperty(ref saveStateLabel, value);
-    }
-
-    public string StatusMessage
-    {
-        get => statusMessage;
-        private set
-        {
-            if (!SetProperty(ref statusMessage, value))
-                return;
-            OnPropertyChanged(nameof(HasStatusMessage));
-        }
-    }
-
+    public bool ShowEmptyState { get => showEmptyState; private set { if (SetProperty(ref showEmptyState, value)) RaiseCommandStates(); } }
+    public bool ShowEmptyItemizado { get => showEmptyItemizado; private set { if (SetProperty(ref showEmptyItemizado, value)) RaiseCommandStates(); } }
+    public bool IsLoading { get => isLoading; private set => SetProperty(ref isLoading, value); }
+    public string HeaderSubtitle { get => headerSubtitle; private set => SetProperty(ref headerSubtitle, value); }
+    public string SaveStateLabel { get => saveStateLabel; private set => SetProperty(ref saveStateLabel, value); }
+    public string StatusMessage { get => statusMessage; private set { if (SetProperty(ref statusMessage, value)) OnPropertyChanged(nameof(HasStatusMessage)); } }
     public bool HasStatusMessage => !string.IsNullOrWhiteSpace(StatusMessage);
 
     public string SummaryPartidas { get => summaryPartidas; private set => SetProperty(ref summaryPartidas, value); }
@@ -252,6 +225,13 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
     public string SummaryCapitulos { get => summaryCapitulos; private set => SetProperty(ref summaryCapitulos, value); }
     public string SummarySinPrecio { get => summarySinPrecio; private set => SetProperty(ref summarySinPrecio, value); }
     public string SummaryStripText { get => summaryStripText; private set => SetProperty(ref summaryStripText, value); }
+    public string TotalPresupuestoUfText => totalsSnapshot.TotalBudgetUfText;
+    public string TotalPresupuestoClpText => totalsSnapshot.TotalBudgetClpText;
+    public string FooterPartidasText => totalsSnapshot.FooterPartidasText;
+    public string FooterTotalUfText => totalsSnapshot.FooterTotalUfText;
+    public string FooterTotalClpText => totalsSnapshot.FooterTotalClpText;
+    public string UfRateCaption => totalsSnapshot.UfRateCaption;
+    public bool HasActiveFilter => totalsSnapshot.HasActiveFilter;
 
     public ICommand ImportExcelCommand { get; }
     public ICommand PasteExcelCommand { get; }
@@ -268,6 +248,74 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
     public ICommand ClearSearchCommand { get; }
     public ICommand ExportPdfCommand { get; }
     public ICommand ConfigureCommercialModelCommand { get; }
+    public ICommand LoadStandardTemplateCommand { get; }
+    public ICommand ToggleChapterCollapseCommand { get; }
+    public ICommand OpenApuCommand { get; }
+    public ICommand CubicarRowCommand { get; }
+
+    private bool isViewVenta = true;
+    public bool IsViewVenta
+    {
+        get => isViewVenta;
+        set
+        {
+            if (SetProperty(ref isViewVenta, value))
+            {
+                OnPropertyChanged(nameof(IsViewCosto));
+                OnPropertyChanged(nameof(ViewPerspectiveLabel));
+            }
+        }
+    }
+
+    public bool IsViewCosto
+    {
+        get => !isViewVenta;
+        set => IsViewVenta = !value;
+    }
+
+    public string ViewPerspectiveLabel => isViewVenta ? "Venta (P.V.)" : "Costo Directo";
+
+    private string selectedDeliveryCurrency = Moneda.UF;
+    public string SelectedDeliveryCurrency
+    {
+        get => selectedDeliveryCurrency;
+        set
+        {
+            string normalized = (value ?? Moneda.UF).Trim().ToUpperInvariant();
+            if (SetProperty(ref selectedDeliveryCurrency, normalized))
+            {
+                OnPropertyChanged(nameof(IsCurrencyUf));
+                OnPropertyChanged(nameof(IsCurrencyClp));
+                OnPropertyChanged(nameof(IsCurrencyUsd));
+                OnPropertyChanged(nameof(IsCurrencyEur));
+                OnPropertyChanged(nameof(HeaderUnitPriceCaption));
+                OnPropertyChanged(nameof(HeaderTotalCaption));
+                ApplyCurrencyChange();
+            }
+        }
+    }
+
+    public bool IsCurrencyUf { get => selectedDeliveryCurrency == Moneda.UF; set { if (value) SelectedDeliveryCurrency = Moneda.UF; } }
+    public bool IsCurrencyClp { get => selectedDeliveryCurrency == Moneda.CLP; set { if (value) SelectedDeliveryCurrency = Moneda.CLP; } }
+    public bool IsCurrencyUsd { get => selectedDeliveryCurrency == Moneda.USD; set { if (value) SelectedDeliveryCurrency = Moneda.USD; } }
+    public bool IsCurrencyEur { get => selectedDeliveryCurrency == Moneda.EUR; set { if (value) SelectedDeliveryCurrency = Moneda.EUR; } }
+
+    public string HeaderUnitPriceCaption => PriceConversion.GetCurrencyHeaderLabel("P.U.", selectedDeliveryCurrency);
+    public string HeaderTotalCaption => PriceConversion.GetCurrencyHeaderLabel("TOTAL", selectedDeliveryCurrency);
+
+    public void ApplyCurrencyChange()
+    {
+        var ctx = ItemizadoCurrencyCoordinator.CreateContext(
+            selectedDeliveryCurrency,
+            session.ValorUfClp,
+            session.ProjectInfo.TipoCambioUsdClp,
+            session.ProjectInfo.TipoCambioEurClp);
+
+        foreach (var r in allRows)
+            r.ApplyCurrencyContext(ctx);
+
+        UpdateTotals();
+    }
 
     private bool HasSelection => IsSelectionVisible && !ShowEmptyState;
     private bool IsSelectionVisible => SelectedRow != null && PassesCurrentFilter(SelectedRow);
@@ -290,7 +338,41 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
             AddPartida();
     }
 
-    public void OnCellEdited(string? columnHeader = null, ItemizadoRowVm? editedRow = null)
+    public ProjectFileData? CaptureSnapshot() => session.IsReadOnly ? null : session.CreateSnapshot();
+
+    public void ToggleSelectedRowEsTitulo()
+    {
+        if (session.IsReadOnly || SelectedRow is not { } row)
+            return;
+
+        pendingSelectionId = row.Id;
+        undo.PushUndoPoint(session, row.EsTitulo ? "Convertir a partida" : "Convertir a título");
+        bool newEsTitulo = !row.EsTitulo;
+
+        if (!newEsTitulo)
+        {
+            if (row.Cantidad <= 0m)
+            {
+                row.Cantidad = row.Model.CantidadOriginal > 0m
+                    ? row.Model.CantidadOriginal
+                    : 1m;
+            }
+            if (string.IsNullOrWhiteSpace(row.Unidad))
+            {
+                row.Unidad = Unidades.GL;
+            }
+        }
+        else
+        {
+            row.Cantidad = 0m;
+        }
+
+        row.EsTitulo = newEsTitulo;
+        session.MarkDirty(ProjectDirtyScope.Itemizado);
+        RefreshAfterStructureChange();
+    }
+
+    public void OnCellEdited(string? columnHeader = null, ItemizadoRowVm? editedRow = null, ProjectFileData? preEditSnapshot = null)
     {
         if (session.IsReadOnly)
             return;
@@ -309,11 +391,20 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
 
         row.ValidateEditableCells(peers);
 
-        if (!hasPendingUndoForEdit)
+        string fieldLabel = string.Equals(columnHeader, "OBSERVACIONES", StringComparison.OrdinalIgnoreCase) ? "Observaciones" : (columnHeader ?? "campo");
+        string detail = !string.IsNullOrWhiteSpace(row.Item) ? $" {fieldLabel} en Partida {row.Item}" : " itemizado";
+        string undoDesc = $"Modificar{detail}";
+        if (preEditSnapshot != null)
         {
-            undo.PushUndoPoint(session, "Editar itemizado");
+            undo.PushSnapshot(preEditSnapshot, undoDesc);
+            hasPendingUndoForEdit = false;
+        }
+        else if (!hasPendingUndoForEdit)
+        {
+            undo.PushUndoPoint(session, undoDesc);
             hasPendingUndoForEdit = true;
         }
+
         session.MarkDirty(ProjectDirtyScope.Itemizado);
         UpdateSaveState();
 
@@ -324,7 +415,9 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
         }
         else if (string.Equals(columnHeader, "Descripción", StringComparison.OrdinalIgnoreCase)
                  || string.Equals(columnHeader, "Ud.", StringComparison.OrdinalIgnoreCase)
-                 || string.Equals(columnHeader, "Ítem", StringComparison.OrdinalIgnoreCase))
+                 || string.Equals(columnHeader, "Ítem", StringComparison.OrdinalIgnoreCase)
+                 || string.Equals(columnHeader, "Observaciones", StringComparison.OrdinalIgnoreCase)
+                 || string.Equals(columnHeader, "OBSERVACIONES", StringComparison.OrdinalIgnoreCase))
         {
             RefreshPresentation(includeCosts: false);
             if (string.Equals(columnHeader, "Ítem", StringComparison.OrdinalIgnoreCase))

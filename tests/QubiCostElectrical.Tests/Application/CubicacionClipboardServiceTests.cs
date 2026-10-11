@@ -43,16 +43,17 @@ public sealed class CubicacionClipboardServiceTests
     }
 
     [Fact]
-    public void ParseExcelText_ExtraColumns_WarnsButKeepsFirstFour()
+    public void ParseExcelText_ExtraColumns_AreCapturedAsSectorValues()
     {
-        string text = "PVC20\tTubo PVC 20mm\tML\t50\tMAT\t0.35\t0.10";
+        string text = "PVC20\tTubo PVC 20mm\tML\t50\t10\t20\t30";
 
         var result = CubicacionClipboardService.ParseExcelText(text);
 
         Assert.Single(result.Rows);
         Assert.False(result.Rows[0].IsRejected);
         Assert.Equal("PVC20", result.Rows[0].Codigo);
-        Assert.Contains(result.Warnings, w => w.Contains("más allá de Código/Descripción/Unidad/Cantidad"));
+        Assert.Equal(new[] { "10", "20", "30" }, result.Rows[0].SectorValues);
+        Assert.Contains(result.Warnings, w => w.Contains("casilla/sector"));
     }
 
     [Fact]

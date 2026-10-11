@@ -16,7 +16,10 @@ public static class CostoBreakdownLineBuilder
 
         lines.Add(new("Mano de obra", cost.ManoObraUf,
             excel ? "MO efectiva (módulo o cubicación/APU)" : "Suma de mano de obra valorizada desde APU", "regular"));
-        lines.Add(new("Materiales", cost.MaterialesUf, "Suma de materiales valorizados desde cubicación", "regular"));
+        lines.Add(new("Materiales", cost.MaterialesUf - cost.FerreteriaUf, "Suma de materiales valorizados desde cubicación", "regular"));
+        if (cost.FerreteriaUf != 0m)
+            lines.Add(new($"Ferretería ({project.FerreteriaPct:N1}%)", cost.FerreteriaUf,
+                "Porcentaje sobre el costo de materiales de la cubicación. Sin mano de obra y sin equipos.", "regular"));
         lines.Add(new("Equipos", cost.EquiposUf, "Equipos desde APU / costos complementarios", "regular"));
         if (excel || cost.GastosOperacionalesUf > 0m)
             lines.Add(new("Gastos operacionales", cost.GastosOperacionalesUf, "GO 3.1–3.6 del módulo Costos", "regular"));
@@ -34,11 +37,11 @@ public static class CostoBreakdownLineBuilder
         if (excel)
         {
             lines.Add(new($"Gastos generales ({project.GastosGeneralesPct:N1}%)", cost.GastosGeneralesUf,
-                "GG sobre Mat + MO + GO (sin equipos) · Excel COSTOS", "coef"));
+                "GG sobre Mat + MO + GO (sin equipos)", "coef"));
             lines.Add(new($"Utilidades ({project.UtilidadPct:N1}%)", cost.UtilidadAditivaUf,
-                "Utilidad aditiva sobre Mat + MO + GO · Excel COSTOS", "coef"));
+                "Utilidad aditiva sobre Mat + MO + GO", "coef"));
             lines.Add(new($"VA sobre equipos ({project.ValorAgregadoEquiposPct:N1}%)", cost.ValorAgregadoEquiposUf,
-                "Valor agregado solo sobre equipos · Excel COSTOS", "coef"));
+                "Valor agregado solo sobre equipos", "coef"));
             lines.Add(new("Costo total proyecto", cost.CostoProyectoUf,
                 "Ejecución + GG + UT + VA", "subtotal"));
             lines.Add(new("Diferencia por factores", cost.DiferenciaFactoresUf,

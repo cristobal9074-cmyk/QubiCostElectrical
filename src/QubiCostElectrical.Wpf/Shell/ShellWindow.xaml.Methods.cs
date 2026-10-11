@@ -23,17 +23,21 @@ public partial class ShellWindow : Window
         _viewModel = new ShellViewModel(host);
         _dropHandler = new ShellFileDropHandler(_viewModel);
         _requestUndoAction = _viewModel.Undo;
+        _requestRedoAction = _viewModel.Redo;
         ShellNotificationService.RequestUndo = _requestUndoAction;
+        ShellNotificationService.RequestRedo = _requestRedoAction;
         Closed += (_, _) =>
         {
             if (ReferenceEquals(ShellNotificationService.RequestUndo, _requestUndoAction))
                 ShellNotificationService.RequestUndo = null;
+            if (ReferenceEquals(ShellNotificationService.RequestRedo, _requestRedoAction))
+                ShellNotificationService.RequestRedo = null;
             _viewModel.Dispose();
         };
         DataContext = _viewModel;
         _viewModel.PropertyChanged += (_, e) =>
         {
-            if (e.PropertyName is nameof(ShellViewModel.CurrentRoute))
+            if (e.PropertyName is nameof(ShellViewModel.CurrentRoute) or nameof(ShellViewModel.CurrentPhase))
                 UpdateNavVisuals();
             if (e.PropertyName is nameof(ShellViewModel.IsSearchPaletteOpen))
                 QuickSearchPopup.IsOpen = _viewModel.IsSearchPaletteOpen;
@@ -49,50 +53,39 @@ public partial class ShellWindow : Window
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         ShellNotificationService.RequestUndo = _requestUndoAction;
+        ShellNotificationService.RequestRedo = _requestRedoAction;
         NavProjectGroup.Items =
         [
             new NavDropdownItem { Label = "Datos del proyecto", Route = ShellRoute.Project },
-            new NavDropdownItem { Label = "Antecedentes", Route = ShellRoute.Documents },
-            new NavDropdownItem { Label = "Monedas e indicadores", Route = ShellRoute.Currency }
+            new NavDropdownItem { Label = "Antecedentes", Route = ShellRoute.Documents }
         ];
         NavCubicacionGroup.Items =
         [
-            new NavDropdownItem { Label = "Cubicación", Route = ShellRoute.Takeoff },
-            new NavDropdownItem { Label = "Cubicación SC", Route = ShellRoute.CubicacionSc }
+            new NavDropdownItem { Label = "Cubicación de partidas", Route = ShellRoute.Takeoff },
+            new NavDropdownItem { Label = "Cubicación de Circuitos (Tableros)", Route = ShellRoute.CubicacionSc },
+            NavDropdownItem.Separator(),
+            new NavDropdownItem { Label = "Herramienta APU de partidas", Route = ShellRoute.Apu }
         ];
         NavPricesGroup.Items =
         [
-            new NavDropdownItem { Label = "Banco de precios", Route = ShellRoute.Prices },
-            new NavDropdownItem { Label = "Cotizaciones", Route = ShellRoute.Quotes },
-            new NavDropdownItem { Label = "Lista de compra", Route = ShellRoute.Purchases },
-            new NavDropdownItem { Label = "Solicitudes", Route = ShellRoute.Solicitudes }
-        ];
-        NavCostosGroup.Items =
-        [
-            new NavDropdownItem { Label = "Desglose de costos", Route = ShellRoute.Costo },
-            new NavDropdownItem { Label = "Mano de obra", Route = ShellRoute.ManoDeObra },
-            new NavDropdownItem { Label = "EPP", Route = ShellRoute.Epp }
+            new NavDropdownItem { Label = "Banco de precios", Route = ShellRoute.Prices }
         ];
         NavCloseGroup.Items =
         [
+            new NavDropdownItem { Label = "Desglose de costos", Route = ShellRoute.Costo },
+            new NavDropdownItem { Label = "Mano de obra", Route = ShellRoute.ManoDeObra },
+            new NavDropdownItem { Label = "EPP", Route = ShellRoute.Epp },
+            NavDropdownItem.Separator(),
             new NavDropdownItem { Label = "Revisión final", Route = ShellRoute.Review },
-            new NavDropdownItem { Label = "Versiones", Route = ShellRoute.Versions },
-            new NavDropdownItem { Label = "Órdenes de cambio", Route = ShellRoute.ChangeOrders },
             new NavDropdownItem { Label = "Oferta y exportación", Route = ShellRoute.OfferDocuments },
-            new NavDropdownItem { Label = "Contratos", Route = ShellRoute.ContractWorkspace }
+            new NavDropdownItem { Label = "Versiones", Route = ShellRoute.Versions }
         ];
         NavMoreGroup.Items =
         [
-            // Herramientas complementarias
-            new NavDropdownItem { Label = "APU (Análisis unitario)", Route = ShellRoute.Apu },
             new NavDropdownItem { Label = "Plantillas", Route = ShellRoute.Templates },
             new NavDropdownItem { Label = "Preferencias", Route = ShellRoute.Preferences },
             NavDropdownItem.Separator(),
-            // Herramientas avanzadas / análisis
-            new NavDropdownItem { Label = "Editor económico", Route = ShellRoute.EconomicEditor },
-            new NavDropdownItem { Label = "Resumen por piso", Route = ShellRoute.FloorSummary },
-            new NavDropdownItem { Label = "APU · Catálogo", Route = ShellRoute.ApuCatalog },
-            new NavDropdownItem { Label = "APU · Fusión de versiones", Route = ShellRoute.ApuMerge }
+            new NavDropdownItem { Label = "Resumen por piso", Route = ShellRoute.FloorSummary }
         ];
         _viewModel.Navigate(ShellRoute.Dashboard);
         UpdateNavVisuals();
@@ -101,14 +94,91 @@ public partial class ShellWindow : Window
     private void UpdateNavVisuals()
     {
         var route = _viewModel.CurrentRoute;
+        var phase = _viewModel.CurrentPhase;
+
+        PhasePresupuestoPanel.Visibility = phase == ShellLifecyclePhase.Presupuesto
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+        PhasePlanificacionPanel.Visibility = phase == ShellLifecyclePhase.Planificacion
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+        PhaseEjecucionPanel.Visibility = phase == ShellLifecyclePhase.Ejecucion
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
+        NavigationVisuals.SetIsActive(PhasePresupuestoButton, phase == ShellLifecyclePhase.Presupuesto);
+        NavigationVisuals.SetIsActive(PhasePlanificacionButton, phase == ShellLifecyclePhase.Planificacion);
+        NavigationVisuals.SetIsActive(PhaseEjecucionButton, phase == ShellLifecyclePhase.Ejecucion);
+
         NavigationVisuals.SetIsActive(DashboardButton, route == ShellRoute.Dashboard);
         NavProjectGroup.SetActiveState(ShellRouteNavigation.IsProjectRoute(route));
         NavigationVisuals.SetIsActive(NavItemizadoTab, route == ShellRoute.Itemized);
         NavCubicacionGroup.SetActiveState(ShellRouteNavigation.IsCubicacionRoute(route));
         NavPricesGroup.SetActiveState(ShellRouteNavigation.IsPricesRoute(route));
-        NavCostosGroup.SetActiveState(ShellRouteNavigation.IsCostosRoute(route));
         NavCloseGroup.SetActiveState(ShellRouteNavigation.IsCloseRoute(route));
         NavMoreGroup.SetActiveState(ShellRouteNavigation.IsMoreRoute(route));
+
+        NavigationVisuals.SetIsActive(NavPurchasesTab, route == ShellRoute.Purchases);
+        NavigationVisuals.SetIsActive(NavFloorSummaryTab, route == ShellRoute.FloorSummary);
+        NavigationVisuals.SetIsActive(NavPlanosTab, route == ShellRoute.Documents);
+        NavigationVisuals.SetIsActive(NavQuotesTab, route == ShellRoute.Quotes);
+        NavigationVisuals.SetIsActive(NavChangeOrdersTab, route == ShellRoute.ChangeOrders);
+        NavigationVisuals.SetIsActive(NavSolicitudesTab, route == ShellRoute.Solicitudes);
+        NavigationVisuals.SetIsActive(NavCostosExecTab, route == ShellRoute.Costo);
+        NavigationVisuals.SetIsActive(NavEstadosPagosTab, route == ShellRoute.EstadosPagos);
+
+        RefreshNavBadges();
+    }
+
+    private void RefreshNavBadges()
+    {
+        var policy = _viewModel.Session?.Data?.ClosingPolicy?.Policy ?? ClosingPolicyType.CostPlusMarkup;
+        string costoBadge = policy switch
+        {
+            ClosingPolicyType.CostPlusFee => "Libro abierto",
+            ClosingPolicyType.LumpSumEpc => "Suma alzada",
+            ClosingPolicyType.TargetPrice => "Target",
+            ClosingPolicyType.UnitPricePure => "P.U.",
+            ClosingPolicyType.GainsharePainshare => "Meta",
+            _ => ""
+        };
+
+        string ofertaBadge = policy switch
+        {
+            ClosingPolicyType.CostPlusFee => "Open Book",
+            ClosingPolicyType.LumpSumEpc => "EPC",
+            ClosingPolicyType.UnitPricePure => "P.U.",
+            _ => ""
+        };
+
+        NavCloseGroup.Items =
+        [
+            new NavDropdownItem { Label = "Desglose de costos", Route = ShellRoute.Costo, Badge = costoBadge },
+            new NavDropdownItem { Label = "Mano de obra", Route = ShellRoute.ManoDeObra },
+            new NavDropdownItem { Label = "EPP", Route = ShellRoute.Epp },
+            NavDropdownItem.Separator(),
+            new NavDropdownItem { Label = "Revisión final", Route = ShellRoute.Review },
+            new NavDropdownItem { Label = "Oferta y exportación", Route = ShellRoute.OfferDocuments, Badge = ofertaBadge },
+            new NavDropdownItem { Label = "Versiones", Route = ShellRoute.Versions }
+        ];
+    }
+
+    private void OnPhasePresupuestoClick(object sender, RoutedEventArgs e)
+    {
+        _viewModel.SelectPhaseCommand.Execute(ShellLifecyclePhase.Presupuesto);
+        UpdateNavVisuals();
+    }
+
+    private void OnPhasePlanificacionClick(object sender, RoutedEventArgs e)
+    {
+        _viewModel.SelectPhaseCommand.Execute(ShellLifecyclePhase.Planificacion);
+        UpdateNavVisuals();
+    }
+
+    private void OnPhaseEjecucionClick(object sender, RoutedEventArgs e)
+    {
+        _viewModel.SelectPhaseCommand.Execute(ShellLifecyclePhase.Ejecucion);
+        UpdateNavVisuals();
     }
 
     private void OnBudgetTabClick(object sender, RoutedEventArgs e)
@@ -181,14 +251,7 @@ public partial class ShellWindow : Window
 
     private static T? FindVisualParent<T>(DependencyObject child) where T : DependencyObject
     {
-        var current = child;
-        while (current != null)
-        {
-            if (current is T match)
-                return match;
-            current = System.Windows.Media.VisualTreeHelper.GetParent(current);
-        }
-        return null;
+        return QubiCostElectrical.Wpf.Infrastructure.VisualTreeHelperSafe.FindAncestor<T>(child);
     }
 
     private async void OnShellClosing(object? sender, System.ComponentModel.CancelEventArgs e)
@@ -234,7 +297,7 @@ public partial class ShellWindow : Window
 
     private void OnDashboardClick(object sender, RoutedEventArgs e) => _viewModel.Navigate(ShellRoute.Dashboard);
     private void OnReviewClick(object sender, RoutedEventArgs e) => _viewModel.Navigate(ShellRoute.Review);
-    private void OnCurrencyChipClick(object sender, RoutedEventArgs e) => _viewModel.Navigate(ShellRoute.Currency);
+    private void OnCurrencyChipClick(object sender, RoutedEventArgs e) => _viewModel.Navigate(ShellRoute.Project);
     private void OnSaveClick(object sender, RoutedEventArgs e) => _ = _viewModel.SaveProjectAsync();
     private void OnSaveAsClick(object sender, RoutedEventArgs e) => _ = _viewModel.SaveProjectAsAsync();
     private void OnUndoClick(object sender, RoutedEventArgs e)
@@ -406,78 +469,86 @@ public partial class ShellWindow : Window
         }
     }
 
+    private void OpenQuickSearchFromKeyboard()
+    {
+        _viewModel.OpenQuickSearch();
+        TopSearchBox.Focus();
+        TopSearchBox.SelectAll();
+    }
+
     private static bool IsElementInsideDataGrid(DependencyObject element)
     {
-        DependencyObject parent = element;
-        while (parent != null)
-        {
-            if (parent is System.Windows.Controls.DataGrid)
-                return true;
-            parent = System.Windows.Media.VisualTreeHelper.GetParent(parent);
-        }
-        return false;
+        return QubiCostElectrical.Wpf.Infrastructure.VisualTreeHelperSafe.FindAncestor<System.Windows.Controls.DataGrid>(element) != null;
     }
 
     private void OnWindowKeyDown(object sender, KeyEventArgs e)
     {
         bool textBoxHasFocus = Keyboard.FocusedElement is System.Windows.Controls.TextBox or System.Windows.Controls.RichTextBox;
 
-        if (e.Key == Key.Z && Keyboard.Modifiers == ModifierKeys.Control)
+        bool isUndo = e.Key == Key.Z && Keyboard.Modifiers == ModifierKeys.Control;
+        bool isRedo = (e.Key == Key.Y && Keyboard.Modifiers == ModifierKeys.Control)
+                   || (e.Key == Key.Z && Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift));
+
+        if (isUndo)
         {
-            bool handledLocally = false;
-            if (Keyboard.FocusedElement is System.Windows.Controls.TextBox tb && !IsElementInsideDataGrid(tb))
+            if (Keyboard.FocusedElement is System.Windows.Controls.TextBox tb && tb.CanUndo)
             {
-                if (tb.CanUndo)
-                {
-                    tb.Undo();
-                    handledLocally = true;
-                }
+                tb.Undo();
+                e.Handled = true;
+                return;
             }
-            else if (Keyboard.FocusedElement is System.Windows.Controls.RichTextBox rtb && !IsElementInsideDataGrid(rtb))
+            if (Keyboard.FocusedElement is System.Windows.Controls.RichTextBox rtb && rtb.CanUndo)
             {
-                if (rtb.CanUndo)
-                {
-                    rtb.Undo();
-                    handledLocally = true;
-                }
+                rtb.Undo();
+                e.Handled = true;
+                return;
             }
 
-            if (!handledLocally)
+            if (_viewModel.CanUndo)
             {
                 CancelActiveDataGridEdit();
                 _viewModel.Undo();
                 RestoreDataGridFocus();
+                e.Handled = true;
+                return;
             }
+
             e.Handled = true;
             return;
         }
 
-        if (e.Key == Key.Y && Keyboard.Modifiers == ModifierKeys.Control)
+        if (isRedo)
         {
-            bool handledLocally = false;
-            if (Keyboard.FocusedElement is System.Windows.Controls.TextBox tb && !IsElementInsideDataGrid(tb))
+            if (Keyboard.FocusedElement is System.Windows.Controls.TextBox tb && tb.CanRedo)
             {
-                if (tb.CanRedo)
-                {
-                    tb.Redo();
-                    handledLocally = true;
-                }
+                tb.Redo();
+                e.Handled = true;
+                return;
             }
-            else if (Keyboard.FocusedElement is System.Windows.Controls.RichTextBox rtb && !IsElementInsideDataGrid(rtb))
+            if (Keyboard.FocusedElement is System.Windows.Controls.RichTextBox rtb && rtb.CanRedo)
             {
-                if (rtb.CanRedo)
-                {
-                    rtb.Redo();
-                    handledLocally = true;
-                }
+                rtb.Redo();
+                e.Handled = true;
+                return;
             }
 
-            if (!handledLocally)
+            if (_viewModel.CanRedo)
             {
                 CancelActiveDataGridEdit();
                 _viewModel.Redo();
                 RestoreDataGridFocus();
+                e.Handled = true;
+                return;
             }
+
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key == Key.S && Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift))
+        {
+            CancelActiveDataGridEdit();
+            _ = _viewModel.SaveProjectAsAsync();
             e.Handled = true;
             return;
         }
@@ -514,18 +585,81 @@ public partial class ShellWindow : Window
             return;
         }
 
-        if (e.Key == Key.K && Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
+        if ((e.Key == Key.K || e.Key == Key.P) && Keyboard.Modifiers == ModifierKeys.Control)
         {
-            _viewModel.OpenQuickSearch();
-            TopSearchBox.Focus();
-            TopSearchBox.SelectAll();
+            OpenQuickSearchFromKeyboard();
             e.Handled = true;
             return;
         }
 
+        if ((e.Key == Key.F || e.Key == Key.B) && Keyboard.Modifiers == ModifierKeys.Control)
+        {
+            if (PageContent.Content is QubiCostElectrical.Wpf.Controls.IInGridSearchable inGridSearchable)
+            {
+                inGridSearchable.OpenGridSearch();
+                e.Handled = true;
+                return;
+            }
+
+            OpenQuickSearchFromKeyboard();
+            e.Handled = true;
+            return;
+        }
+
+        if ((e.Key == Key.J || (e.Key == Key.G && !textBoxHasFocus)) && Keyboard.Modifiers == ModifierKeys.Control)
+        {
+            CancelActiveDataGridEdit();
+            _viewModel.OpenGlobalQuickJump();
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key == Key.F && Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift))
+        {
+            if (PageContent.Content is QubiCostElectrical.Wpf.Controls.IInGridSearchable searchable)
+            {
+                searchable.OpenGridSearch();
+                e.Handled = true;
+                return;
+            }
+        }
+
+        if (e.Key == Key.F3)
+        {
+            if (PageContent.Content is QubiCostElectrical.Wpf.Controls.IInGridSearchable searchable)
+            {
+                bool backward = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift;
+                searchable.StepGridSearch(backward);
+                e.Handled = true;
+                return;
+            }
+        }
+
+        if ((e.Key == Key.Left && Keyboard.Modifiers == ModifierKeys.Alt) || e.Key == Key.BrowserBack)
+        {
+            if (_viewModel.CanNavigateBack)
+            {
+                CancelActiveDataGridEdit();
+                _viewModel.NavigateBack();
+                e.Handled = true;
+                return;
+            }
+        }
+
+        if ((e.Key == Key.Right && Keyboard.Modifiers == ModifierKeys.Alt) || e.Key == Key.BrowserForward)
+        {
+            if (_viewModel.CanNavigateForward)
+            {
+                CancelActiveDataGridEdit();
+                _viewModel.NavigateForward();
+                e.Handled = true;
+                return;
+            }
+        }
+
         if (e.Key == Key.F8 && Keyboard.Modifiers == ModifierKeys.None)
         {
-            _viewModel.Navigate(ShellRoute.Review);
+            _viewModel.Navigate(ShellRoute.OfferDocuments);
             e.Handled = true;
             return;
         }
@@ -555,6 +689,13 @@ public partial class ShellWindow : Window
 
         if (e.Key == Key.Escape)
         {
+            if (PageContent.Content is QubiCostElectrical.Wpf.Controls.IInGridSearchable searchable && searchable.IsGridSearchOpen)
+            {
+                searchable.CloseGridSearch();
+                e.Handled = true;
+                return;
+            }
+
             if (_viewModel.IsProjectPickerOpen)
             {
                 _viewModel.IsProjectPickerOpen = false;
@@ -605,6 +746,16 @@ public partial class ShellWindow : Window
             return;
         }
 
+        if (e.Key == Key.Tab)
+        {
+            var values = (Features.CommandPalette.CommandPaletteCategory[])Enum.GetValues(typeof(Features.CommandPalette.CommandPaletteCategory));
+            var currentIndex = Array.IndexOf(values, _viewModel.SelectedPaletteCategory);
+            var nextIndex = (currentIndex + 1) % values.Length;
+            _viewModel.SelectedPaletteCategory = values[nextIndex];
+            e.Handled = true;
+            return;
+        }
+
         if (e.Key == Key.Escape)
         {
             _viewModel.CloseQuickSearch();
@@ -627,6 +778,10 @@ public partial class ShellWindow : Window
             return;
 
         _viewModel.SelectedQuickSearchItem = listBox.SelectedItem as ShellViewModel.QuickSearchItemVm;
+        if (listBox.SelectedItem != null)
+        {
+            listBox.ScrollIntoView(listBox.SelectedItem);
+        }
     }
 
     private void OnQuickSearchPopupClosed(object? sender, EventArgs e)
@@ -656,6 +811,16 @@ public partial class ShellWindow : Window
         root.Margin = new Thickness(0, -12, 0, 12);
         if (FindResource("Anim.SlideDownIn") is System.Windows.Media.Animation.Storyboard story)
             story.Begin(root);
+
+        if (!TopSearchBox.IsKeyboardFocused)
+        {
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                var searchBox = (root.FindName("PopupSearchBox") as TextBox) ?? TopSearchBox;
+                searchBox.Focus();
+                searchBox.Select(searchBox.Text.Length, 0);
+            }), System.Windows.Threading.DispatcherPriority.Input);
+        }
     }
 
     private void CloseAllDropdowns()
@@ -663,7 +828,6 @@ public partial class ShellWindow : Window
         NavProjectGroup.ClosePopup();
         NavCubicacionGroup.ClosePopup();
         NavPricesGroup.ClosePopup();
-        NavCostosGroup.ClosePopup();
         NavCloseGroup.ClosePopup();
         NavMoreGroup.ClosePopup();
     }
@@ -685,12 +849,12 @@ public partial class ShellWindow : Window
             Key.D6 or Key.NumPad6 => ShellRoute.Prices,
             Key.D7 or Key.NumPad7 => ShellRoute.Quotes,
             Key.D8 or Key.NumPad8 => ShellRoute.Purchases,
-            Key.D9 or Key.NumPad9 => ShellRoute.Review,
+            Key.D9 or Key.NumPad9 => ShellRoute.OfferDocuments,
             Key.D0 or Key.NumPad0 => ShellRoute.Versions,
             Key.P => ShellRoute.Project,
             Key.O => ShellRoute.OfferDocuments,
-            Key.M => ShellRoute.Currency,
-            Key.C => ShellRoute.ChangeOrders,
+            Key.M => ShellRoute.Project,
+            Key.C => ShellRoute.Costo,
             _ => null
         };
 

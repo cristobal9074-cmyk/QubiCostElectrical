@@ -1,5 +1,6 @@
 using System.IO;
 using QubiCostElectrical;
+using QubiCostElectrical.Wpf.Features.Delivery;
 using QubiCostElectrical.Wpf.Features.Export;
 using QubiCostElectrical.Wpf.Features.Review;
 using QubiCostElectrical.Wpf.Features.Versions;
@@ -212,9 +213,9 @@ public sealed class ShellReviewAndVersionsTests
         Assert.Contains("PDF de oferta", vm.DeliveryPackageText);
         Assert.Contains("Excel interno", vm.DeliveryPackageText);
         Assert.Contains("carta DOCX", vm.DeliveryPackageText);
-        Assert.Equal(7, vm.PackageItems.Count);
-        Assert.Contains(vm.PackageItems, x => x.Title == "ZIP final");
-        Assert.Contains(vm.PackageItems, x => x.Title == "Respaldo JSON");
+        Assert.Equal(7, vm.DocumentSelector.Documents.Count);
+        Assert.Contains(vm.DocumentSelector.Documents, x => x.Title == "Oferta comercial PDF");
+        Assert.Contains(vm.DocumentSelector.Documents, x => x.Title == "Reporte t\u00e9cnico C.SEC");
         Assert.Contains("Tema corporativo", vm.CorporateThemeText);
         Assert.Contains("Plantilla de informe", vm.ReportTemplateText);
         Assert.NotEmpty(vm.SummaryText);
