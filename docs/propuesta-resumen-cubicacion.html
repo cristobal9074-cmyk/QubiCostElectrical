@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Propuesta · Resumen de cubicación</title>
+<style>
+  :root {
+    --navy: #101c30;
+    --navy-2: #1c324c;
+    --blue: #2563b0;
+    --blue-soft: #eaf1ff;
+    --ink: #101a26;
+    --ink-2: #3c4a5c;
+    --muted: #7b8798;
+    --line: #e6ebf1;
+    --line-2: #d5dde6;
+    --canvas: #eef2f6;
+    --surface: #ffffff;
+    --surface-2: #f7f9fb;
+    --font: "Segoe UI", system-ui, sans-serif;
+    --mono: "Cascadia Mono", Consolas, ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    font-family: var(--font);
+    color: var(--ink);
+    background: var(--canvas);
+  }
+  .page { max-width: 1040px; margin: 0 auto; padding: 28px 20px 56px; }
+  .note { display: flex; justify-content: space-between; gap: 24px; align-items: flex-end; margin-bottom: 16px; }
+  .note h1 { margin: 0; font-size: 15px; font-weight: 650; letter-spacing: -.02em; }
+  .note p { margin: 4px 0 0; color: var(--ink-2); font-size: 13px; max-width: 68ch; line-height: 1.45; }
+  .keys { color: var(--muted); font-size: 12px; white-space: nowrap; }
+
+  .dialog {
+    background: var(--surface);
+    border: 1px solid var(--line-2);
+    border-radius: 12px;
+    box-shadow: 0 24px 60px rgba(16, 28, 48, .16);
+    overflow: hidden;
+    min-height: 720px;
+    display: flex;
+    flex-direction: column;
+  }
+  .titlebar {
+    background: var(--navy);
+    color: white;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    gap: 10px;
+    font-size: 12.5px;
+  }
+  .titlebar .mark {
+    width: 14px; height: 14px; border-radius: 3px;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    flex: none;
+  }
+  .titlebar .grow { flex: 1; }
+  .titlebar .win { opacity: .7; letter-spacing: .2em; font-size: 11px; }
+
+  .head { padding: 22px 28px 0; }
+  .head-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; }
+  .eyebrow {
+    margin: 0;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 650;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+  h2 { margin: 4px 0 0; font-size: 22px; font-weight: 650; letter-spacing: -.03em; }
+  .sub { margin: 6px 0 0; color: var(--ink-2); font-size: 13px; }
+
+  .seg {
+    display: flex;
+    border: 1px solid var(--line-2);
+    border-radius: 8px;
+    overflow: hidden;
+    flex: none;
+  }
+  .seg button {
+    border: 0;
+    background: white;
+    color: var(--ink-2);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 650;
+    letter-spacing: .04em;
+    padding: 8px 12px;
+    cursor: pointer;
+  }
+  .seg button + button { border-left: 1px solid var(--line-2); }
+  .seg button.on { background: var(--navy); color: white; }
+
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-top: 20px;
+    border-bottom: 1px solid var(--line);
+  }
+  .tabs button {
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-size: 13px;
+    padding: 10px 12px 12px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+  }
+  .tabs button.on { color: var(--ink); font-weight: 650; border-bottom-color: var(--blue); }
+
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    margin: 0 28px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .metric { padding: 14px 16px 13px; background: var(--surface); }
+  .metric + .metric { border-left: 1px solid var(--line); }
+  .metric .lbl {
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 650;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+  .metric .val {
+    margin-top: 4px;
+    font-family: var(--mono);
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: -.03em;
+    font-variant-numeric: tabular-nums;
+  }
+  .metric .unit { color: var(--muted); font-size: 12px; margin-left: 4px; font-family: var(--font); font-weight: 550; }
+
+  .body { padding: 16px 28px 8px; flex: 1; }
+  .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 12px; }
+  .search {
+    width: 240px;
+    border: 1px solid var(--line-2);
+    border-radius: 8px;
+    padding: 7px 10px;
+    font: inherit;
+    font-size: 13px;
+    color: var(--ink);
+    background: var(--surface-2);
+  }
+  .search:focus { outline: 2px solid var(--blue-soft); border-color: var(--blue); background: white; }
+  .hint { color: var(--muted); font-size: 12px; }
+
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 650;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--line);
+  }
+  th.num, td.num { text-align: right; }
+  td { padding: 9px 10px; border-bottom: 1px solid var(--line); font-size: 13.5px; }
+  td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; font-weight: 600; }
+  td .u { color: var(--muted); font-family: var(--font); font-weight: 550; font-size: 11px; margin-left: 6px; }
+  tr.group td {
+    background: var(--surface-2);
+    color: var(--ink-2);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding-top: 12px;
+    padding-bottom: 7px;
+    border-bottom-color: var(--line-2);
+  }
+  tr.sub td {
+    color: var(--ink);
+    font-weight: 650;
+    background: white;
+    border-bottom: 1px solid var(--line-2);
+  }
+  tr.item:hover td { background: #f4f7fb; }
+  tr.hidden { display: none; }
+
+  .board {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+  .board-h {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 14px;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--line);
+  }
+  .board-h strong { font-size: 14px; letter-spacing: -.01em; }
+  .board-h span { color: var(--muted); font-size: 12px; margin-left: 8px; }
+  .mini { display: flex; gap: 18px; color: var(--ink-2); font-size: 12px; }
+  .mini b { font-family: var(--mono); color: var(--ink); font-weight: 650; margin-right: 4px; }
+
+  .empty { color: var(--muted); font-size: 13px; padding: 28px 4px; }
+
+  .foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 28px 16px;
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .btn {
+    background: var(--blue);
+    color: white;
+    border: 0;
+    border-radius: 8px;
+    padding: 8px 18px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 650;
+    cursor: pointer;
+  }
+  .btn:hover { background: #1d4f96; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="note">
+    <div>
+      <h1>Propuesta · Resumen de cubicación</h1>
+      <p>Misma información que el diálogo actual, sin tarjetas de color ni la palabra “Deptos” repetida en cada pestaña. Los materiales van agrupados, con subtotal, y los cuatro totales quedan en una sola franja.</p>
+    </div>
+    <div class="keys">1–4 pestañas · G / D perspectiva</div>
+  </div>
+
+  <div class="dialog" id="dialog">
+    <div class="titlebar">
+      <div class="mark"></div>
+      <span>Resumen de cubicación de circuitos</span>
+      <span class="grow"></span>
+      <span>PEL032A2026</span>
+      <span class="win">— □ ×</span>
+    </div>
+
+    <div class="head">
+      <div class="head-row">
+        <div>
+          <p class="eyebrow" id="eyebrow">Departamentos</p>
+          <h2 id="title">Resumen de materiales</h2>
+          <p class="sub" id="sub">Cálculo independiente del de servicios comunes. 1 tablero · 4 circuitos.</p>
+        </div>
+        <div class="seg" role="tablist">
+          <button type="button" id="btnGen" onclick="setPersp('gen')">Generales</button>
+          <button type="button" id="btnDep" class="on" onclick="setPersp('dep')">Departamentos</button>
+        </div>
+      </div>
+      <div class="tabs" role="tablist">
+        <button type="button" class="on" data-tab="total" onclick="setTab('total')">Total</button>
+        <button type="button" data-tab="tablero" onclick="setTab('tablero')">Por tablero</button>
+        <button type="button" data-tab="piso" onclick="setTab('piso')">Por piso</button>
+        <button type="button" data-tab="artefactos" onclick="setTab('artefactos')">Artefactos por piso</button>
+      </div>
+    </div>
+
+    <div class="metrics" id="metrics"></div>
+    <div class="body">
+      <div class="toolbar">
+        <input class="search" id="q" placeholder="Filtrar material" oninput="render()" />
+        <div class="hint" id="hint"></div>
+      </div>
+      <div id="view"></div>
+    </div>
+    <div class="foot">
+      <span>Esc cierra · el archivo se guarda desde la barra superior</span>
+      <button class="btn" type="button">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const data = {
+  dep: {
+    eyebrow: "Departamentos",
+    sub: "Cálculo independiente del de servicios comunes. 1 tablero · 4 circuitos.",
+    metrics: [
+      ["Tubería", "10", "ML"],
+      ["Conductor", "32", "ML"],
+      ["Cajas", "300", "UN"],
+      ["Artefactos", "145", "UN"]
+    ],
+    groups: [
+      { name: "Canalización", rows: [
+        ["Tubería PVCLH 20 mm", "10", "ML"],
+        ["Conductor H07V-U 4 mm²", "32", "ML"]
+      ]},
+      { name: "Cajas", rows: [
+        ["Caja 5/8\"", "100", "UN"],
+        ["Caja A11 (100×100)", "100", "UN"],
+        ["Caja A01 (100×65)", "100", "UN"]
+      ]},
+      { name: "Artefactos y montaje", rows: [
+        ["INT 9/12", "10", "UN"],
+        ["INT 9/15", "15", "UN"],
+        ["INT 9/24", "20", "UN"],
+        ["Montaje luminaria", "100", "UN"]
+      ]}
+    ],
+    boards: [
+      { name: "TDA DEPTO 2", detail: "4 circuitos", bits: [["10", "ML tub."], ["32", "ML cond."], ["300", "cajas"], ["145", "art."]] }
+    ],
+    floors: [
+      { name: "Sin piso", detail: "el circuito no tiene ubicación", bits: [["10", "ML tub."], ["32", "ML cond."], ["300", "cajas"], ["145", "art."]] }
+    ],
+    arts: [
+      { name: "Sin zona", rows: [
+        ["INT 9/12", "Interruptor", "10"],
+        ["INT 9/15", "Interruptor", "15"],
+        ["INT 9/24", "Interruptor", "20"],
+        ["Montaje luminaria", "Montaje", "100"]
+      ]}
+    ]
+  },
+  gen: {
+    eyebrow: "Servicios comunes",
+    sub: "Cálculo independiente del de departamentos. 1 tablero · 3 circuitos.",
+    metrics: [
+      ["Tubería", "300", "ML"],
+      ["Conductor", "945", "ML"],
+      ["Cajas", "3", "UN"],
+      ["Artefactos", "0", "UN"]
+    ],
+    groups: [
+      { name: "Canalización", rows: [
+        ["Tubería PVCLH 20 mm", "300", "ML"],
+        ["Conductor H07V-U 4 mm²", "945", "ML"]
+      ]},
+      { name: "Cajas", rows: [
+        ["Caja A01 (100×65)", "3", "UN"]
+      ]},
+      { name: "Artefactos y montaje", rows: [] }
+    ],
+    boards: [
+      { name: "TDA SC 1", detail: "3 circuitos", bits: [["300", "ML tub."], ["945", "ML cond."], ["3", "cajas"], ["0", "art."]] }
+    ],
+    floors: [
+      { name: "−1", detail: "3 circuitos", bits: [["300", "ML tub."], ["945", "ML cond."], ["3", "cajas"], ["0", "art."]] }
+    ],
+    arts: []
+  }
+};
+
+let persp = "dep";
+let tab = "total";
+
+function setPersp(p) { persp = p; render(); }
+function setTab(t) { tab = t; render(); }
+
+function esc(s) {
+  return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[c]));
+}
+
+function metricsHtml(m) {
+  return m.map(([lbl, val, unit]) =>
+    `<div class="metric"><div class="lbl">${esc(lbl)}</div><div class="val">${esc(val)}<span class="unit">${esc(unit)}</span></div></div>`
+  ).join("");
+}
+
+function tableGroups(groups, q) {
+  const query = q.trim().toLowerCase();
+  let html = `<table><thead><tr><th>Material</th><th class="num">Cantidad</th></tr></thead><tbody>`;
+  let any = false;
+  for (const g of groups) {
+    const rows = g.rows.filter(r => !query || r[0].toLowerCase().includes(query));
+    if (!rows.length) continue;
+    any = true;
+    const sub = rows.reduce((s, r) => s + Number(r[1].replace(/\./g, "").replace(",", ".")), 0);
+    const unit = rows[0][2];
+    html += `<tr class="group"><td colspan="2">${esc(g.name)}</td></tr>`;
+    for (const [name, qty, u] of rows)
+      html += `<tr class="item"><td>${esc(name)}</td><td class="num">${esc(qty)}<span class="u">${esc(u)}</span></td></tr>`;
+    html += `<tr class="sub"><td>Subtotal ${esc(g.name.toLowerCase())}</td><td class="num">${sub.toLocaleString("es-CL")}<span class="u">${esc(unit)}</span></td></tr>`;
+  }
+  html += `</tbody></table>`;
+  if (!any) html = `<div class="empty">Ningún material coincide con el filtro.</div>`;
+  return html;
+}
+
+function boardsHtml(list) {
+  if (!list.length) return `<div class="empty">No hay tableros en esta vista.</div>`;
+  return list.map(b => `
+    <div class="board">
+      <div class="board-h">
+        <div><strong>${esc(b.name)}</strong><span>${esc(b.detail)}</span></div>
+        <div class="mini">${b.bits.map(([n, l]) => `<span><b>${esc(n)}</b>${esc(l)}</span>`).join("")}</div>
+      </div>
+    </div>`).join("") + `<div class="hint">El detalle de materiales es el mismo del total. Aquí solo cambia el corte.</div>`;
+}
+
+function artsHtml(list, q) {
+  if (!list.length) return `<div class="empty">No hay artefactos en esta vista.</div>`;
+  const query = q.trim().toLowerCase();
+  let html = "";
+  let any = false;
+  for (const z of list) {
+    const rows = z.rows.filter(r => !query || r[0].toLowerCase().includes(query) || r[1].toLowerCase().includes(query));
+    if (!rows.length) continue;
+    any = true;
+    const sub = rows.reduce((s, r) => s + Number(r[2]), 0);
+    html += `<table><thead><tr><th>${esc(z.name)}</th><th>Categoría</th><th class="num">Cantidad</th></tr></thead><tbody>`;
+    for (const [name, cat, qty] of rows)
+      html += `<tr class="item"><td>${esc(name)}</td><td style="color:var(--ink-2)">${esc(cat)}</td><td class="num">${esc(qty)}<span class="u">UN</span></td></tr>`;
+    html += `<tr class="sub"><td colspan="2">Subtotal</td><td class="num">${sub.toLocaleString("es-CL")}<span class="u">UN</span></td></tr></tbody></table>`;
+  }
+  return any ? html : `<div class="empty">Ningún artefacto coincide con el filtro.</div>`;
+}
+
+function render() {
+  const d = data[persp];
+  document.getElementById("btnGen").classList.toggle("on", persp === "gen");
+  document.getElementById("btnDep").classList.toggle("on", persp === "dep");
+  document.querySelectorAll(".tabs button").forEach(b => b.classList.toggle("on", b.dataset.tab === tab));
+  document.getElementById("eyebrow").textContent = d.eyebrow;
+  document.getElementById("sub").textContent = d.sub;
+  const titles = { total: "Resumen de materiales", tablero: "Corte por tablero", piso: "Corte por piso", artefactos: "Artefactos por piso" };
+  document.getElementById("title").textContent = titles[tab];
+  document.getElementById("metrics").innerHTML = metricsHtml(d.metrics);
+  const q = document.getElementById("q").value;
+  const view = document.getElementById("view");
+  if (tab === "total") view.innerHTML = tableGroups(d.groups, q);
+  else if (tab === "tablero") view.innerHTML = boardsHtml(d.boards) + tableGroups(d.groups, q);
+  else if (tab === "piso") view.innerHTML = boardsHtml(d.floors) + tableGroups(d.groups, q);
+  else view.innerHTML = artsHtml(d.arts, q);
+  const hints = {
+    total: "Agrupado por canalización, cajas y artefactos.",
+    tablero: "Un bloque por cuadro de carga.",
+    piso: "La tubería y el conductor se reparten por piso. Cajas y artefactos siguen al circuito.",
+    artefactos: "La misma cantidad del total, abierta por zona."
+  };
+  document.getElementById("hint").textContent = hints[tab];
+}
+
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") return;
+  if (e.target && e.target.id === "q") return;
+  const tabs = ["total", "tablero", "piso", "artefactos"];
+  if (e.key >= "1" && e.key <= "4") setTab(tabs[Number(e.key) - 1]);
+  if (e.key === "g" || e.key === "G") setPersp("gen");
+  if (e.key === "d" || e.key === "D") setPersp("dep");
+});
+
+render();
+</script>
+</body>
+</html>

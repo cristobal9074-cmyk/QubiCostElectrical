@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Qubi Cost Electrical · Resumen ejecutivo — Propuesta de diseño</title>
+<style>
+/* ============================================================
+   Qubi Cost Electrical — Mockup "Resumen ejecutivo" (propuesta)
+   Design system: enterprise light + navy header
+   Tokens espejo de DesignSystem/Colors.xaml
+   ============================================================ */
+:root{
+  --canvas:#EEF1F5; --surface:#FFFFFF; --surface2:#FAFBFD;
+  --line:#DDE3EA; --line2:#EEF2F6;
+  --ink:#101A26; --ink2:#3C4A5C; --ink3:#5C6A7C; --muted:#64727F;
+  --blue:#2563B0; --blue2:#3B82F6; --blue3:#4B8DF7; --blue-soft:#EAF1FF;
+  --green:#15803D; --green-soft:#EAF8EF;
+  --amber:#9A6A10; --amber-strong:#C98A1B; --amber-soft:#FBF1DD;
+  --red:#C24141; --red-soft:#FFF0F0;
+  --navy:#101C30;
+  --ui:"Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,sans-serif;
+  --mono:"Cascadia Mono","Consolas",ui-monospace,monospace;
+  --shadow:0 1px 2px rgba(16,26,38,.05),0 1px 3px rgba(16,26,38,.04);
+  --radius:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  background:var(--canvas); color:var(--ink);
+  font:400 13.5px/1.45 var(--ui);
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+}
+::selection{background:#D8E7FF}
+:focus-visible{outline:2px solid #77A5F7;outline-offset:2px;border-radius:4px}
+
+/* ---------- Shell superior (navy) ---------- */
+.app-topbar{
+  position:sticky; top:0; z-index:50;
+  height:52px; display:flex; align-items:center; gap:20px;
+  padding:0 22px; color:#C7D2E0;
+  background:linear-gradient(90deg,#0C1626 0%,#101C30 45%,#1A3B6E 100%);
+  box-shadow:0 1px 0 rgba(255,255,255,.07) inset,0 2px 8px rgba(12,22,38,.25);
+}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:13.5px;color:#fff;letter-spacing:.01em;white-space:nowrap}
+.brand-mark{
+  width:27px;height:27px;border-radius:8px;display:grid;place-items:center;
+  background:linear-gradient(135deg,#3B82F6,#2563B0);
+  color:#fff;font-weight:700;font-size:13.5px;font-family:var(--mono);
+  box-shadow:0 2px 6px rgba(37,99,176,.5);
+}
+.topnav{display:flex;gap:2px}
+.topnav a{
+  color:#9FB0C6; text-decoration:none; font-size:12.5px; font-weight:500;
+  padding:7px 11px; border-radius:7px; cursor:pointer;
+  transition:background .15s ease,color .15s ease; white-space:nowrap;
+}
+.topnav a:hover{background:rgba(255,255,255,.09);color:#fff}
+.topnav a.active{
+  background:rgba(59,130,246,.20); color:#fff;
+  box-shadow:inset 0 0 0 1px rgba(96,165,250,.40);
+}
+.top-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+.topsearch{
+  display:flex;align-items:center;gap:8px;min-width:210px;
+  background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.13);
+  border-radius:8px; padding:6px 10px; color:#8FA2BC; font-size:12px;
+  transition:border-color .15s,background .15s; cursor:pointer;
+}
+.topsearch:hover{background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.22);color:#B9C7DB}
+.topsearch kbd{
+  margin-left:auto; background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.14);
+  border-radius:5px; padding:1px 6px; font:600 10.5px var(--mono); color:#B9C7DB;
+}
+.chip-user{
+  display:flex;align-items:center;gap:8px; white-space:nowrap;
+  background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.13);
+  padding:5px 11px 5px 6px; border-radius:99px; font-size:11.5px; color:#D7E1EE;
+  cursor:pointer; transition:background .15s;
+}
+.chip-user:hover{background:rgba(255,255,255,.12)}
+.avatar{
+  width:21px;height:21px;border-radius:50%;display:grid;place-items:center;
+  background:#3B82F6;color:#fff;font-size:10.5px;font-weight:700;
+}
+
+/* ---------- Página ---------- */
+.page{display:flex;flex-direction:column;gap:16px;max-width:1560px;margin:0 auto;padding:22px 26px 34px}
+.frag{display:flex;flex-direction:column;gap:16px}
+
+/* ---------- Header de página ---------- */
+.page-hd{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.page-tags{display:flex;gap:6px;margin-bottom:9px}
+.pill{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:10.5px;font-weight:700;letter-spacing:.04em;
+  padding:3.5px 10px;border-radius:99px;border:1px solid transparent;white-space:nowrap;
+}
+.pill-blue{background:var(--blue-soft);color:var(--blue);border-color:#D3E1FF}
+.pill-green{background:var(--green-soft);color:var(--green);border-color:#CFEBDB}
+.pill-amber{background:var(--amber-soft);color:var(--amber);border-color:#F0E2C4}
+.pill-red{background:var(--red-soft);color:var(--red);border-color:#F6D9D9}
+.pill-mute{background:var(--surface2);color:var(--ink3);border-color:var(--line)}
+.h1{font-size:23px;font-weight:700;letter-spacing:-.015em;line-height:1.15}
+.page-sub{font-size:12.5px;color:var(--muted);margin-top:5px}
+.page-hd-r{display:flex;gap:10px}
+.btn{
+  display:inline-flex;align-items:center;gap:8px;
+  font:600 13px/1 var(--ui); padding:10px 16px; border-radius:8px;
+  border:1px solid transparent; cursor:pointer; white-space:nowrap;
+  transition:background .15s ease,border-color .15s ease,box-shadow .15s ease,filter .15s ease;
+}
+.btn-primary{background:linear-gradient(180deg,#3B82F6,#2563B0);color:#fff;box-shadow:0 1px 2px rgba(37,99,176,.40)}
+.btn-primary:hover{filter:brightness(1.07);box-shadow:0 3px 10px rgba(37,99,176,.40)}
+.btn-primary:active{filter:brightness(.97)}
+.btn-ghost{background:var(--surface);border-color:var(--line);color:var(--ink2)}
+.btn-ghost:hover{background:var(--surface2);border-color:#C5D0DD}
+.btn-link{
+  display:inline-flex;align-items:center;gap:5px;
+  color:var(--blue);font-size:12.5px;font-weight:600;cursor:pointer;text-decoration:none;
+  transition:color .15s ease;
+}
+.btn-link:hover{color:var(--blue2);text-decoration:underline}
+
+/* ---------- KPIs ---------- */
+.kpi-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.kpi{
+  position:relative; overflow:hidden;
+  background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+  padding:17px 18px 14px; box-shadow:var(--shadow);
+  transition:box-shadow .18s ease,transform .18s ease;
+}
+.kpi::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--blue3),var(--blue))}
+.kpi:nth-child(2)::before{background:linear-gradient(90deg,#E7B455,var(--amber-strong))}
+.kpi:nth-child(4)::before{background:linear-gradient(90deg,#E38B8B,var(--red))}
+.kpi:hover{box-shadow:0 6px 18px rgba(16,26,38,.10);transform:translateY(-1px)}
+.kpi-top{display:flex;align-items:center;gap:10px;margin-bottom:11px}
+.kpi-ico{width:30px;height:30px;border-radius:8px;background:var(--blue-soft);color:var(--blue);display:grid;place-items:center;flex-shrink:0}
+.kpi:nth-child(2) .kpi-ico{background:var(--amber-soft);color:var(--amber-strong)}
+.kpi:nth-child(4) .kpi-ico{background:var(--red-soft);color:var(--red)}
+.kpi-label{font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--muted)}
+.kpi-val{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:25px;font-weight:600;letter-spacing:-.02em;line-height:1.1;color:var(--ink)}
+.kpi-sub{font-size:12px;color:var(--ink3);margin-top:5px}
+.kpi-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:13px;min-height:26px}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:3.5px 8px;border-radius:6px;border:1px solid transparent;white-space:nowrap}
+.chip-up{background:var(--green-soft);color:var(--green);border-color:#CFEBDB}
+.chip-warn{background:var(--amber-soft);color:var(--amber);border-color:#F0E2C4}
+.chip-danger{background:var(--red-soft);color:var(--red);border-color:#F6D9D9}
+.chip-mute{background:var(--surface2);color:var(--ink3);border-color:var(--line)}
+.kpi-gauge{flex:1;max-width:118px;height:6px;background:var(--line2);border-radius:99px;overflow:hidden}
+.gauge-fill{display:block;height:100%;background:linear-gradient(90deg,var(--blue3),var(--blue));border-radius:99px}
+.spark{flex-shrink:0}
+
+/* ---------- Cards ---------- */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.card-hd{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:16px 18px 0}
+.card-title{font-size:15px;font-weight:600;letter-spacing:-.005em;color:var(--ink)}
+.card-sub{font-size:12px;color:var(--muted);margin-top:3px}
+.card-act{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.card-bd{padding:14px 18px 18px}
+
+/* ---------- Estructura de la oferta ---------- */
+.comp-bar{display:flex;height:13px;border-radius:99px;overflow:hidden;gap:2px;background:var(--line2)}
+.seg{height:100%}
+.comp-legend{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin-top:16px}
+.comp-item{
+  display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;
+  column-gap:10px;row-gap:1px;
+  background:var(--surface2);border:1px solid var(--line2);border-radius:9px;padding:10px 13px;
+  transition:border-color .15s ease,background .15s ease;
+}
+.comp-item:hover{border-color:var(--line);background:#fff}
+.dot{width:9px;height:9px;border-radius:50%;grid-column:1;grid-row:1/3}
+.ci-name{grid-column:2;grid-row:1;font-size:11.5px;color:var(--muted)}
+.ci-val{grid-column:2;grid-row:2;font-size:13.5px;font-weight:600;color:var(--ink);font-family:var(--mono);font-variant-numeric:tabular-nums}
+.ci-pct{grid-column:3;grid-row:1/3;font-size:15.5px;font-weight:600;color:var(--ink);font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* ---------- Grid principal ---------- */
+.main-grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;align-items:start}
+.col-left{display:flex;flex-direction:column;gap:16px;min-width:0}
+.side{display:flex;flex-direction:column;gap:16px}
+
+/* ---------- Charts ---------- */
+.chart-svg{display:block;width:100%;height:auto}
+.chart-svg text{font-family:var(--ui)}
+.axis-label{font-size:10px;fill:var(--muted)}
+.gridline{stroke:var(--line2);stroke-width:1}
+.legend-inline{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px}
+.lg-item{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;color:var(--ink3)}
+.lg-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+
+/* ---------- Tabla ---------- */
+.filter-pills{display:flex;gap:3px;background:var(--surface2);border:1px solid var(--line);padding:3px;border-radius:9px}
+.filter-pill{
+  font-size:11.5px;font-weight:600;color:var(--ink3);padding:4px 11px;border-radius:6px;
+  cursor:pointer;transition:background .15s ease,color .15s ease;user-select:none;
+}
+.filter-pill:hover{color:var(--ink);background:#fff}
+.filter-pill.active{background:#fff;color:var(--blue);box-shadow:0 1px 2px rgba(16,26,38,.12)}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{
+  font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);
+  font-weight:700;text-align:left;padding:9px 10px;
+  background:var(--surface2);border-bottom:1px solid var(--line);
+}
+.tbl th.num-h{text-align:right}
+.tbl td{padding:10px;border-bottom:1px solid var(--line2);color:var(--ink2);vertical-align:middle}
+.tbl tbody tr{transition:background .12s ease}
+.tbl tbody tr:hover{background:#F6FAFF}
+.tbl tbody tr:last-child td{border-bottom:none}
+.tbl td.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:12.5px;font-weight:600;color:var(--ink)}
+.code{
+  font-family:var(--mono);font-size:11.5px;font-weight:600;color:var(--ink2);
+  background:var(--surface2);border:1px solid var(--line);padding:2.5px 8px;border-radius:6px;
+}
+.mini{display:inline-block;width:74px;height:6px;background:var(--line2);border-radius:99px;overflow:hidden;vertical-align:middle;margin-right:9px}
+.mini-fill{display:block;height:100%;background:linear-gradient(90deg,var(--blue3),var(--blue));border-radius:99px}
+.cls-badge{display:inline-grid;place-items:center;width:23px;height:23px;border-radius:6px;font-size:11px;font-weight:700;font-family:var(--mono)}
+.cls-a{background:#E3EDFC;color:#1D4ED8}
+.cls-b{background:#EDF3FA;color:#3C5F8F}
+.cls-c{background:var(--surface2);color:var(--muted);border:1px solid var(--line)}
+.tbl-foot{padding-top:13px;margin-top:5px;border-top:1px solid var(--line2);text-align:center}
+
+/* ---------- Lateral ---------- */
+.ring-wrap{position:relative;width:120px;height:120px;margin:4px auto 16px}
+.ring-center{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
+.ring-val{font-family:var(--mono);font-size:25px;font-weight:700;letter-spacing:-.02em;color:var(--ink)}
+.ring-lab{font-size:11px;color:var(--muted);margin-top:2px}
+.check-list{display:flex;flex-direction:column;gap:9px}
+.check{
+  display:flex;align-items:center;gap:10px;
+  background:var(--surface2);border:1px solid var(--line2);border-radius:9px;
+  padding:9px 12px;transition:border-color .15s ease,background .15s ease;
+}
+.check:hover{border-color:var(--line);background:#fff}
+.check-ico{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;flex-shrink:0}
+.check.ok .check-ico{background:var(--green-soft);color:var(--green)}
+.check.pending .check-ico{background:var(--amber-soft);color:var(--amber-strong)}
+.check-txt{font-size:12.5px;font-weight:600;color:var(--ink)}
+.check-sub{margin-left:auto;font-family:var(--mono);font-size:11.5px;font-weight:600;color:var(--amber)}
+.steps{display:flex;flex-direction:column}
+.step{display:flex;gap:12px;padding:8px 0;position:relative}
+.step:not(:last-child)::before{content:"";position:absolute;left:13.5px;top:36px;bottom:-8px;width:2px;background:var(--line2)}
+.step.done:not(:last-child)::before{background:#CFEBDB}
+.step-dot{
+  width:28px;height:28px;border-radius:50%;display:grid;place-items:center;
+  font-size:12px;font-weight:700;flex-shrink:0;z-index:1;
+}
+.step.done .step-dot{background:var(--green-soft);color:var(--green)}
+.step.current .step-dot{background:linear-gradient(180deg,#3B82F6,#2563B0);color:#fff;box-shadow:0 0 0 4px var(--blue-soft)}
+.step.todo .step-dot{background:var(--surface2);color:var(--muted);border:1px solid var(--line)}
+.step-title{font-size:13px;font-weight:600;color:var(--ink)}
+.step.current .step-title{color:var(--blue)}
+.step.todo .step-title{color:var(--ink3)}
+.step-detail{font-size:11.5px;color:var(--muted);margin-top:1px}
+.alerts{display:flex;flex-direction:column;gap:9px;margin-bottom:13px}
+.alert{
+  border:1px solid var(--line2);border-left-width:3px;border-radius:9px;
+  padding:9px 12px;background:var(--surface2);
+  transition:transform .15s ease,box-shadow .15s ease;
+}
+.alert:hover{transform:translateY(-1px);box-shadow:0 4px 10px rgba(16,26,38,.08)}
+.alert.blocking{border-left-color:var(--red);background:#FFFBFB}
+.alert.major{border-left-color:var(--amber-strong);background:#FFFDF7}
+.sev{display:block;font-size:9.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase}
+.alert.blocking .sev{color:var(--red)}
+.alert.major .sev{color:var(--amber-strong)}
+.alert-txt{margin-top:4px}
+.alert-title{font-size:12.5px;font-weight:600;color:var(--ink)}
+.alert-detail{font-size:11.5px;color:var(--muted);margin-top:2px}
+.feed{display:flex;flex-direction:column;gap:3px}
+.feed-item{display:flex;gap:11px;padding:8px;border-radius:9px;transition:background .15s ease}
+.feed-item:hover{background:var(--surface2)}
+.feed-ico{width:31px;height:31px;border-radius:8px;background:var(--blue-soft);color:var(--blue);display:grid;place-items:center;flex-shrink:0}
+.feed-txt{font-size:12.5px;color:var(--ink2);font-weight:500}
+.feed-time{font-size:11px;color:var(--muted);margin-top:2px;font-weight:400}
+
+/* ---------- Status bar ---------- */
+.statusbar{
+  display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;
+  background:var(--surface);border:1px solid var(--line);border-radius:9px;
+  padding:9px 15px;font-size:11.5px;color:var(--muted);box-shadow:var(--shadow);
+}
+.sb-group{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.sb-dot{width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;margin-right:7px;box-shadow:0 0 0 3px var(--green-soft)}
+.statusbar b{font-weight:600;color:var(--ink3)}
+
+/* ---------- Responsive ---------- */
+@media (max-width:1280px){
+  .main-grid{grid-template-columns:1fr}
+  .topsearch{display:none}
+  .comp-legend{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:920px){
+  .kpi-row{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .topnav a:not(.active){display:none}
+}
+@media (max-width:640px){
+  .kpi-row{grid-template-columns:1fr}
+  .comp-legend{grid-template-columns:1fr}
+  .page{padding:16px 14px 26px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{transition:none!important;animation:none!important}
+}
+</style>
+</head>
+<body>
+
+<!-- ===== Shell de la app (contexto) ===== -->
+<header class="app-topbar">
+  <div class="brand"><span class="brand-mark">Q</span>Qubi Cost Electrical</div>
+  <nav class="topnav" aria-label="Navegación principal">
+    <a href="#" class="active" aria-current="page">Resumen</a>
+    <a href="#">Proyecto</a>
+    <a href="#">Itemizado</a>
+    <a href="#">Cubicación</a>
+    <a href="#">APU</a>
+    <a href="#">Precios</a>
+    <a href="#">Revisión</a>
+    <a href="#">Más ▾</a>
+  </nav>
+  <div class="top-right">
+    <div class="topsearch" role="button" tabindex="0">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      Buscar partidas, ítems…
+      <kbd>Ctrl K</kbd>
+    </div>
+    <div class="chip-user" role="button" tabindex="0"><span class="avatar">C</span>Administrador</div>
+  </div>
+</header>
+
+<main class="page">
+
+  <!-- ===== Cabecera de página ===== -->
+  <div data-block="page-hd" class="page-hd">
+    <div class="page-hd-l">
+      <div class="page-tags">
+        <span class="pill pill-blue">Costo + Markup</span>
+        <span class="pill pill-mute">Versión V2</span>
+      </div>
+      <h1 class="h1">Torre Óptica Las Condes</h1>
+      <p class="page-sub">Inmobiliaria Andes SpA · 4.280 m² · Actualizado hoy 09:41</p>
+    </div>
+    <div class="page-hd-r">
+      <button type="button" class="btn btn-ghost">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Exportar
+      </button>
+      <button type="button" class="btn btn-primary">
+        Continuar revisión
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== KPI strip ===== -->
+  <div data-block="kpi-row" class="kpi-row">
+
+    <article class="kpi">
+      <div class="kpi-top">
+        <span class="kpi-ico">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+        </span>
+        <span class="kpi-label">TOTAL VENTA</span>
+      </div>
+      <div class="kpi-val num">$ 487.350.000</div>
+      <div class="kpi-sub num">18.391 UF</div>
+      <div class="kpi-foot">
+        <span class="chip chip-up">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+          +3,2% vs V1
+        </span>
+        <svg class="spark" width="76" height="26" viewBox="0 0 76 26" fill="none" aria-hidden="true">
+          <polygon points="2,20 12.3,17.5 22.6,18.5 32.9,14.5 43.1,13.5 53.4,10 63.7,7.5 74,4 74,24 2,24" fill="#2563B0" fill-opacity="0.08"/>
+          <polyline points="2,20 12.3,17.5 22.6,18.5 32.9,14.5 43.1,13.5 53.4,10 63.7,7.5 74,4" stroke="#2563B0" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </article>
+
+    <article class="kpi">
+      <div class="kpi-top">
+        <span class="kpi-ico">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </span>
+        <span class="kpi-label">PARTIDAS LISTAS</span>
+      </div>
+      <div class="kpi-val num">37 / 42</div>
+      <div class="kpi-sub">Confianza de cierre 84%</div>
+      <div class="kpi-foot">
+        <span class="chip chip-warn">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+          5 pendientes
+        </span>
+        <div class="kpi-gauge"><i class="gauge-fill" style="width:88%"></i></div>
+      </div>
+    </article>
+
+    <article class="kpi">
+      <div class="kpi-top">
+        <span class="kpi-ico">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.41 2.41 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/><path d="m17.5 15.5 2-2"/></svg>
+        </span>
+        <span class="kpi-label">UF POR M²</span>
+      </div>
+      <div class="kpi-val num">0,70 UF/m²</div>
+      <div class="kpi-sub num">$ 18.450 / m²</div>
+      <div class="kpi-foot">
+        <span class="chip chip-mute">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/></svg>
+          4.280 m² útiles
+        </span>
+        <svg class="spark" width="76" height="26" viewBox="0 0 76 26" fill="none" aria-hidden="true">
+          <polyline points="2,17 12.3,16.5 22.6,16.8 32.9,15.8 43.1,15.6 53.4,15 63.7,14.4 74,13.2" stroke="#2563B0" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </article>
+
+    <article class="kpi">
+      <div class="kpi-top">
+        <span class="kpi-ico">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+        </span>
+        <span class="kpi-label">RIESGO OFERTA</span>
+      </div>
+      <div class="kpi-val num">2,1 pts</div>
+      <div class="kpi-sub">impacto si materiales +10%</div>
+      <div class="kpi-foot">
+        <span class="chip chip-danger">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 17 13.5 8.5 8.5 13.5 2 7"/><polyline points="16 17 22 17 22 11"/></svg>
+          Riesgo monitor
+        </span>
+        <svg class="spark" width="76" height="26" viewBox="0 0 76 26" fill="none" aria-hidden="true">
+          <polyline points="2,5.5 12.3,7 22.6,8.5 32.9,8.2 43.1,11.5 53.4,13.5 63.7,16.5 74,19.5" stroke="#C24141" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </article>
+
+  </div>
+
+  <!-- ===== Estructura de la oferta ===== -->
+  <div data-block="comp-card" class="card">
+    <div class="card-hd">
+      <div>
+        <div class="card-title">Estructura de la oferta</div>
+        <div class="card-sub">Distribución del precio de venta · CLP</div>
+      </div>
+      <div class="card-act"><span class="pill pill-mute">Costo + markup</span></div>
+    </div>
+    <div class="card-bd">
+      <div class="comp-bar">
+        <span class="seg" style="width:43.2%;background:#2563B0"></span>
+        <span class="seg" style="width:22.8%;background:#4B8DF7"></span>
+        <span class="seg" style="width:9.5%;background:#9AA7B8"></span>
+        <span class="seg" style="width:24.5%;background:#15803D"></span>
+      </div>
+      <div class="comp-legend">
+        <div class="comp-item">
+          <span class="dot" style="background:#2563B0"></span>
+          <div class="ci-name">Materiales</div>
+          <div class="ci-val num">$ 210.550.000</div>
+          <div class="ci-pct num">43,2%</div>
+        </div>
+        <div class="comp-item">
+          <span class="dot" style="background:#4B8DF7"></span>
+          <div class="ci-name">Mano de obra</div>
+          <div class="ci-val num">$ 111.100.000</div>
+          <div class="ci-pct num">22,8%</div>
+        </div>
+        <div class="comp-item">
+          <span class="dot" style="background:#9AA7B8"></span>
+          <div class="ci-name">Gastos operativos</div>
+          <div class="ci-val num">$ 46.300.000</div>
+          <div class="ci-pct num">9,5%</div>
+        </div>
+        <div class="comp-item">
+          <span class="dot" style="background:#15803D"></span>
+          <div class="ci-name">Margen bruto</div>
+          <div class="ci-val num">$ 119.400.000</div>
+          <div class="ci-pct num">24,5%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Grid: detalle + lateral ===== -->
+  <div class="main-grid">
+    <div class="col-left">
+
+      <!-- Pareto -->
+      <div data-block="pareto-card" class="card">
+        <div class="card-hd">
+          <div>
+            <div class="card-title">Concentración de costo — Pareto</div>
+            <div class="card-sub">Top 10 de 42 partidas · acumulado 75,6%</div>
+          </div>
+          <div class="card-act"><a class="btn-link" href="#">Ver itemizado →</a></div>
+        </div>
+        <div class="card-bd">
+          <svg class="chart-svg" viewBox="0 0 760 300" role="img">
+            <title>Concentración de costo — Pareto: participación de las 10 principales partidas y curva acumulada hasta 75,6%</title>
+
+            <text class="axis-label" x="45" y="14">Participación %</text>
+            <text class="axis-label" x="725" y="14" text-anchor="end">Acumulado %</text>
+
+            <line class="gridline" x1="45" y1="20" x2="725" y2="20" stroke="#EEF2F6" />
+            <line class="gridline" x1="45" y1="50" x2="725" y2="50" stroke="#EEF2F6" />
+            <line class="gridline" x1="45" y1="100" x2="725" y2="100" stroke="#EEF2F6" />
+            <line class="gridline" x1="45" y1="150" x2="725" y2="150" stroke="#EEF2F6" />
+            <line class="gridline" x1="45" y1="200" x2="725" y2="200" stroke="#EEF2F6" />
+            <line class="gridline" x1="45" y1="250" x2="725" y2="250" stroke="#EEF2F6" />
+
+            <text class="axis-label" x="40" y="253" text-anchor="end">0%</text>
+            <text class="axis-label" x="40" y="203" text-anchor="end">5%</text>
+            <text class="axis-label" x="40" y="153" text-anchor="end">10%</text>
+            <text class="axis-label" x="40" y="103" text-anchor="end">15%</text>
+            <text class="axis-label" x="40" y="53" text-anchor="end">20%</text>
+
+            <text class="axis-label" x="730" y="253">0</text>
+            <text class="axis-label" x="730" y="203">25</text>
+            <text class="axis-label" x="730" y="153">50</text>
+            <text class="axis-label" x="730" y="103">75</text>
+            <text class="axis-label" x="730" y="53">100</text>
+
+            <rect class="bar" x="57" y="81" width="44" height="169" rx="3" fill="#2563B0" />
+            <rect class="bar" x="125" y="123" width="44" height="127" rx="3" fill="#2563B0" />
+            <rect class="bar" x="193" y="153" width="44" height="97" rx="3" fill="#2563B0" />
+            <rect class="bar" x="261" y="170" width="44" height="80" rx="3" fill="#2563B0" />
+            <rect class="bar" x="329" y="182" width="44" height="68" rx="3" fill="#2563B0" />
+            <rect class="bar" x="397" y="193" width="44" height="57" rx="3" fill="#93B4E8" />
+            <rect class="bar" x="465" y="200" width="44" height="50" rx="3" fill="#93B4E8" />
+            <rect class="bar" x="533" y="209" width="44" height="41" rx="3" fill="#93B4E8" />
+            <rect class="bar" x="601" y="214" width="44" height="36" rx="3" fill="#93B4E8" />
+            <rect class="bar" x="669" y="219" width="44" height="31" rx="3" fill="#93B4E8" />
+
+            <polyline points="79,216.2 147,190.8 215,171.4 283,155.4 351,141.8 419,130.4 487,120.4 555,112.2 623,105 691,98.8" fill="none" stroke="#15803D" stroke-width="2" />
+            <circle cx="79" cy="216.2" r="3" fill="#15803D" />
+            <circle cx="147" cy="190.8" r="3" fill="#15803D" />
+            <circle cx="215" cy="171.4" r="3" fill="#15803D" />
+            <circle cx="283" cy="155.4" r="3" fill="#15803D" />
+            <circle cx="351" cy="141.8" r="3" fill="#15803D" />
+            <circle cx="419" cy="130.4" r="3" fill="#15803D" />
+            <circle cx="487" cy="120.4" r="3" fill="#15803D" />
+            <circle cx="555" cy="112.2" r="3" fill="#15803D" />
+            <circle cx="623" cy="105" r="3" fill="#15803D" />
+            <circle cx="691" cy="98.8" r="3" fill="#15803D" />
+            <text class="axis-label" x="685" y="90" text-anchor="end" style="fill:#15803D">75,6%</text>
+
+            <text class="axis-label" x="79" y="262" text-anchor="end" transform="rotate(-35 79 262)">E-120</text>
+            <text class="axis-label" x="147" y="262" text-anchor="end" transform="rotate(-35 147 262)">M-045</text>
+            <text class="axis-label" x="215" y="262" text-anchor="end" transform="rotate(-35 215 262)">E-310</text>
+            <text class="axis-label" x="283" y="262" text-anchor="end" transform="rotate(-35 283 262)">E-105</text>
+            <text class="axis-label" x="351" y="262" text-anchor="end" transform="rotate(-35 351 262)">M-012</text>
+            <text class="axis-label" x="419" y="262" text-anchor="end" transform="rotate(-35 419 262)">M-088</text>
+            <text class="axis-label" x="487" y="262" text-anchor="end" transform="rotate(-35 487 262)">E-502</text>
+            <text class="axis-label" x="555" y="262" text-anchor="end" transform="rotate(-35 555 262)">E-410</text>
+            <text class="axis-label" x="623" y="262" text-anchor="end" transform="rotate(-35 623 262)">M-210</text>
+            <text class="axis-label" x="691" y="262" text-anchor="end" transform="rotate(-35 691 262)">E-700</text>
+          </svg>
+          <div class="legend-inline">
+            <span class="lg-item"><span class="lg-dot" style="background:#2563B0"></span>Clase A · 5 · 54,1%</span>
+            <span class="lg-item"><span class="lg-dot" style="background:#93B4E8"></span>Clase B · 12 · 28,7%</span>
+            <span class="lg-item"><span class="lg-dot" style="background:#CBD5E1"></span>Clase C · 25 · 17,2%</span>
+            <span class="lg-item"><span class="lg-dot" style="background:#15803D"></span>Acumulado</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Partidas críticas -->
+      <div data-block="partidas-card" class="card">
+        <div class="card-hd">
+          <div>
+            <div class="card-title">Partidas críticas</div>
+            <div class="card-sub">Ordenadas por participación en costo</div>
+          </div>
+          <div class="card-act">
+            <div class="filter-pills">
+              <span class="filter-pill active">Todas</span>
+              <span class="filter-pill">A</span>
+              <span class="filter-pill">B</span>
+              <span class="filter-pill">C</span>
+            </div>
+          </div>
+        </div>
+        <div class="card-bd">
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">Ítem</th>
+                <th scope="col">Partida</th>
+                <th scope="col" class="num-h">Costo CLP ↓</th>
+                <th scope="col">Participación</th>
+                <th scope="col">Clase</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="num">1</td>
+                <td><span class="code">E-120</span></td>
+                <td>Cableado estructural</td>
+                <td class="num">82.400.000</td>
+                <td><div class="mini"><i class="mini-fill" style="width:84.5%"></i></div> <span class="num">16,9%</span></td>
+                <td><span class="cls-badge cls-a">A</span></td>
+              </tr>
+              <tr>
+                <td class="num">2</td>
+                <td><span class="code">M-045</span></td>
+                <td>Tableros y seccionadores</td>
+                <td class="num">61.850.000</td>
+                <td><div class="mini"><i class="mini-fill" style="width:63.5%"></i></div> <span class="num">12,7%</span></td>
+                <td><span class="cls-badge cls-a">A</span></td>
+              </tr>
+              <tr>
+                <td class="num">3</td>
+                <td><span class="code">E-310</span></td>
+                <td>Iluminación LED</td>
+                <td class="num">47.200.000</td>
+                <td><div class="mini"><i class="mini-fill" style="width:48.5%"></i></div> <span class="num">9,7%</span></td>
+                <td><span class="cls-badge cls-a">A</span></td>
+              </tr>
+              <tr>
+                <td class="num">4</td>
+                <td><span class="code">E-105</span></td>
+                <td>Canalización</td>
+                <td class="num">38.900.000</td>
+                <td><div class="mini"><i class="mini-fill" style="width:40%"></i></div> <span class="num">8,0%</span></td>
+                <td><span class="cls-badge cls-a">A</span></td>
+              </tr>
+              <tr>
+                <td class="num">5</td>
+                <td><span class="code">M-012</span></td>
+                <td>Cable de cobre ECV</td>
+                <td class="num">33.150.000</td>
+                <td><div class="mini"><i class="mini-fill" style="width:34%"></i></div> <span class="num">6,8%</span></td>
+                <td><span class="cls-badge cls-a">A</span></td>
+              </tr>
+              <tr>
+                <td class="num">6</td>
+                <td><span class="code">M-088</span></td>
+                <td>Protecciones diferenciales</td>
+                <td class="num">27.600.000</td>
+                <td><div class="mini"><i class="mini-fill" style="width:28.5%"></i></div> <span class="num">5,7%</span></td>
+                <td><span class="cls-badge cls-b">B</span></td>
+              </tr>
+              <tr>
+                <td class="num">7</td>
+                <td><span class="code">E-502</span></td>
+                <td>Puesta a tierra</td>
+                <td class="num">24.300.000</td>
+                <td><div class="mini"><i class="mini-fill" style="width:25%"></i></div> <span class="num">5,0%</span></td>
+                <td><span class="cls-badge cls-b">B</span></td>
+              </tr>
+              <tr>
+                <td class="num">8</td>
+                <td><span class="code">E-410</span></td>
+                <td>Brazos y luminarias ext.</td>
+                <td class="num">19.750.000</td>
+                <td><div class="mini"><i class="mini-fill" style="width:20.5%"></i></div> <span class="num">4,1%</span></td>
+                <td><span class="cls-badge cls-b">B</span></td>
+              </tr>
+              <tr>
+                <td class="num">9</td>
+                <td><span class="code">M-210</span></td>
+                <td>Equipos de aire acond.</td>
+                <td class="num">17.400.000</td>
+                <td><div class="mini"><i class="mini-fill" style="width:18%"></i></div> <span class="num">3,6%</span></td>
+                <td><span class="cls-badge cls-b">B</span></td>
+              </tr>
+              <tr>
+                <td class="num">10</td>
+                <td><span class="code">E-700</span></td>
+                <td>Sistemas de audio</td>
+                <td class="num">14.900.000</td>
+                <td><div class="mini"><i class="mini-fill" style="width:15.5%"></i></div> <span class="num">3,1%</span></td>
+                <td><span class="cls-badge cls-b">B</span></td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="tbl-foot">
+            <span class="btn-link">Ver las 42 partidas →</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sensibilidad -->
+      <div data-block="sens-card" class="card">
+        <div class="card-hd">
+          <div>
+            <div class="card-title">Sensibilidad de margen</div>
+            <div class="card-sub">Variación del costo de materiales vs margen bruto</div>
+          </div>
+        </div>
+        <div class="card-bd">
+          <svg class="chart-svg" viewBox="0 0 760 280" role="img">
+            <title>Curva de sensibilidad del margen ante variación del costo de materiales</title>
+
+            <line class="gridline" x1="60" y1="20" x2="730" y2="20"></line>
+            <line class="gridline" x1="60" y1="39.5" x2="730" y2="39.5"></line>
+            <line class="gridline" x1="60" y1="78.6" x2="730" y2="78.6"></line>
+            <line class="gridline" x1="60" y1="117.7" x2="730" y2="117.7"></line>
+            <line class="gridline" x1="60" y1="156.8" x2="730" y2="156.8"></line>
+            <line class="gridline" x1="60" y1="195.9" x2="730" y2="195.9"></line>
+            <line class="gridline" x1="60" y1="235" x2="730" y2="235"></line>
+
+            <path class="area" fill="#2563B0" opacity="0.08" d="M60,64.8 L171.7,86.5 L283.3,108.1 L395,129.7 L506.7,149.4 L618.3,170.8 L730,192.2 L730,235 L60,235 Z"></path>
+
+            <line x1="60" y1="108.1" x2="730" y2="108.1" stroke="#9AA7B8" stroke-width="1.5" stroke-dasharray="4 4"></line>
+            <text class="axis-label" x="726" y="103" text-anchor="end">Base 24,5%</text>
+
+            <polyline class="line-sens" fill="none" stroke="#2563B0" stroke-width="2.5" points="60,64.8 171.7,86.5 283.3,108.1 395,129.7 506.7,149.4 618.3,170.8 730,192.2"></polyline>
+
+            <circle cx="60" cy="64.8" r="3.5" fill="#FFFFFF" stroke="#2563B0" stroke-width="2"></circle>
+            <circle cx="171.7" cy="86.5" r="3.5" fill="#FFFFFF" stroke="#2563B0" stroke-width="2"></circle>
+            <circle cx="283.3" cy="108.1" r="3.5" fill="#FFFFFF" stroke="#2563B0" stroke-width="2"></circle>
+            <circle cx="395" cy="129.7" r="3.5" fill="#FFFFFF" stroke="#2563B0" stroke-width="2"></circle>
+            <circle cx="506.7" cy="149.4" r="3.5" fill="#FFFFFF" stroke="#2563B0" stroke-width="2"></circle>
+            <circle cx="618.3" cy="170.8" r="3.5" fill="#FFFFFF" stroke="#2563B0" stroke-width="2"></circle>
+            <circle cx="730" cy="192.2" r="3.5" fill="#FFFFFF" stroke="#2563B0" stroke-width="2"></circle>
+
+            <g class="annot">
+              <line x1="506.7" y1="149.4" x2="530" y2="86" stroke="#C24141" stroke-width="1.5"></line>
+              <rect x="524" y="58" width="134" height="28" rx="6" fill="#FFF0F0" stroke="#C24141" stroke-width="1"></rect>
+              <text x="591" y="76.5" text-anchor="middle" fill="#C24141" font-size="12" font-weight="600">+10% → 22,4%</text>
+            </g>
+
+            <text class="axis-label" x="50" y="43.5" text-anchor="end">28%</text>
+            <text class="axis-label" x="50" y="82.6" text-anchor="end">26%</text>
+            <text class="axis-label" x="50" y="121.7" text-anchor="end">24%</text>
+            <text class="axis-label" x="50" y="160.8" text-anchor="end">22%</text>
+            <text class="axis-label" x="50" y="199.9" text-anchor="end">20%</text>
+            <text class="axis-label" x="50" y="239" text-anchor="end">18%</text>
+
+            <text class="axis-label" x="60" y="256" text-anchor="middle">-10%</text>
+            <text class="axis-label" x="171.7" y="256" text-anchor="middle">-5%</text>
+            <text class="axis-label" x="283.3" y="256" text-anchor="middle">Base</text>
+            <text class="axis-label" x="395" y="256" text-anchor="middle">+5%</text>
+            <text class="axis-label" x="506.7" y="256" text-anchor="middle">+10%</text>
+            <text class="axis-label" x="618.3" y="256" text-anchor="middle">+15%</text>
+            <text class="axis-label" x="730" y="256" text-anchor="middle">+20%</text>
+          </svg>
+
+          <div class="legend-inline">
+            <span class="lg-item"><span class="lg-dot" style="background:#2563B0"></span>Margen proyectado</span>
+            <span class="lg-item"><span class="lg-dot" style="background:#9AA7B8"></span>Margen base</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Lateral -->
+    <aside data-block="side" class="side">
+
+      <section class="card">
+        <div class="card-hd">
+          <div>
+            <div class="card-title">Listo para ofertar</div>
+            <div class="card-sub">Estado de preparación de la oferta</div>
+          </div>
+          <div class="card-act"><span class="pill pill-amber">En curso</span></div>
+        </div>
+        <div class="card-bd">
+          <div class="ring-wrap">
+            <svg viewBox="0 0 120 120" width="120" height="120">
+              <circle cx="60" cy="60" r="52" fill="none" stroke="#EEF2F6" stroke-width="10"></circle>
+              <circle cx="60" cy="60" r="52" fill="none" stroke="#15803D" stroke-width="10"
+                      stroke-linecap="round" stroke-dasharray="327" stroke-dashoffset="39"
+                      transform="rotate(-90 60 60)"></circle>
+            </svg>
+            <div class="ring-center">
+              <div class="ring-val">88%</div>
+              <div class="ring-lab">37 de 42 listas</div>
+            </div>
+          </div>
+          <div class="check-list">
+            <div class="check ok">
+              <span class="check-ico">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              </span>
+              <span class="check-txt">Datos del proyecto</span>
+            </div>
+            <div class="check ok">
+              <span class="check-ico">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              </span>
+              <span class="check-txt">Itemizado importado</span>
+            </div>
+            <div class="check ok">
+              <span class="check-ico">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              </span>
+              <span class="check-txt">Cubicación completada</span>
+            </div>
+            <div class="check pending">
+              <span class="check-ico">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+              </span>
+              <span class="check-txt">Precios vigentes</span>
+              <span class="check-sub">48 / 52</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-hd">
+          <div>
+            <div class="card-title">Flujo de cierre</div>
+            <div class="card-sub">6 etapas hasta emitir la oferta</div>
+          </div>
+        </div>
+        <div class="card-bd">
+          <div class="steps">
+            <div class="step done">
+              <span class="step-dot">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              </span>
+              <div>
+                <div class="step-title">Datos</div>
+                <div class="step-detail">42 partidas</div>
+              </div>
+            </div>
+            <div class="step done">
+              <span class="step-dot">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              </span>
+              <div>
+                <div class="step-title">Itemizado</div>
+                <div class="step-detail">Importado 29/09</div>
+              </div>
+            </div>
+            <div class="step done">
+              <span class="step-dot">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              </span>
+              <div>
+                <div class="step-title">Cubicación</div>
+                <div class="step-detail">Completa</div>
+              </div>
+            </div>
+            <div class="step current">
+              <span class="step-dot">4</span>
+              <div>
+                <div class="step-title">Precios</div>
+                <div class="step-detail">48 / 52 vigentes</div>
+              </div>
+            </div>
+            <div class="step todo">
+              <span class="step-dot">5</span>
+              <div>
+                <div class="step-title">Revisión</div>
+                <div class="step-detail">Pendiente</div>
+              </div>
+            </div>
+            <div class="step todo">
+              <span class="step-dot">6</span>
+              <div>
+                <div class="step-title">Oferta</div>
+                <div class="step-detail">Pendiente</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-hd">
+          <div>
+            <div class="card-title">Alertas</div>
+            <div class="card-sub">Puntos que frenan la emisión</div>
+          </div>
+          <div class="card-act">
+            <span class="pill pill-red">2 bloqueantes</span>
+            <span class="pill pill-amber">5 mayores</span>
+          </div>
+        </div>
+        <div class="card-bd">
+          <div class="alerts">
+            <div class="alert blocking">
+              <span class="sev">Bloqueante</span>
+              <div class="alert-txt">
+                <div class="alert-title">2 partidas sin precio en cubicación</div>
+                <div class="alert-detail">E-520 y M-310 impiden emitir la oferta</div>
+              </div>
+            </div>
+            <div class="alert blocking">
+              <span class="sev">Bloqueante</span>
+              <div class="alert-txt">
+                <div class="alert-title">Precios UF desactualizados en 4 ítems</div>
+                <div class="alert-detail">Banco de precios vencido desde el 28/09</div>
+              </div>
+            </div>
+            <div class="alert major">
+              <span class="sev">Mayor</span>
+              <div class="alert-txt">
+                <div class="alert-title">3 cotizaciones por revalidar</div>
+                <div class="alert-detail">Materiales eléctricos · 90+ días</div>
+              </div>
+            </div>
+          </div>
+          <span class="btn-link">+ 4 alertas menores</span>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-hd">
+          <div>
+            <div class="card-title">Actividad reciente</div>
+            <div class="card-sub">Últimos cambios en el proyecto</div>
+          </div>
+        </div>
+        <div class="card-bd">
+          <div class="feed">
+            <div class="feed-item">
+              <span class="feed-ico">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg>
+              </span>
+              <div class="feed-txt">
+                <div>Guardaste cubicación</div>
+                <div class="feed-time">Ayer 18:42</div>
+              </div>
+            </div>
+            <div class="feed-item">
+              <span class="feed-ico">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+              </span>
+              <div class="feed-txt">
+                <div>Importaste itemizado (42 partidas)</div>
+                <div class="feed-time">29/09 11:20</div>
+              </div>
+            </div>
+            <div class="feed-item">
+              <span class="feed-ico">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 9 5-9 5-9-5 9-5z"/><path d="m3 12 9 5 9-5"/><path d="m3 17 9 5 9-5"/></svg>
+              </span>
+              <div class="feed-txt">
+                <div>Creaste versión V2</div>
+                <div class="feed-time">28/09 09:05</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </aside>
+  </div>
+
+  <!-- ===== Status bar ===== -->
+  <footer class="statusbar">
+    <div class="sb-group">
+      <span><span class="sb-dot"></span><b>Guardado hace 2 min</b> · Auditoría activa</span>
+      <span>Último evento: guardado de cubicación (ayer 18:42)</span>
+    </div>
+    <div class="sb-group">
+      <span>Base SQLite v21</span>
+      <span>Colaboración: 1 editor · 2 consultores</span>
+      <span><b>v1.1.1</b></span>
+    </div>
+  </footer>
+
+</main>
+
+</body>
+</html>

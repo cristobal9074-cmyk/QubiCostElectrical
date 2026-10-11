@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Medidas y Columnas Calibradas — Cubicación de Circuitos | Qubi Cost Electrical</title>
+  <style>
+    :root {
+      --bg: #0F172A;
+      --surface: #1E293B;
+      --surface-card: #141E33;
+      --surface-hover: #334155;
+      --border: #334155;
+      --border-light: #475569;
+      --text: #F8FAFC;
+      --text-muted: #94A3B8;
+      --primary: #38BDF8;
+      --blue: #3B82F6;
+      --pink: #F43F5E;
+      --green: #10B981;
+      --amber: #F59E0B;
+      --cyan: #06B6D4;
+      --slate: #64748B;
+      --purple: #A855F7;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 30px;
+    }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    header {
+      margin-bottom: 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 16px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 20px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--primary);
+      margin-bottom: 8px;
+    }
+    h1 {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: #FFF;
+    }
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-top: 4px;
+    }
+    .view-controls {
+      display: flex;
+      gap: 10px;
+      background: var(--surface);
+      padding: 4px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    .btn-toggle {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-toggle.active {
+      background: var(--blue);
+      color: #FFF;
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .stat-card::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; width: 4px; height: 100%;
+      background: var(--primary);
+    }
+    .stat-card.pink::before { background: var(--pink); }
+    .stat-card.green::before { background: var(--green); }
+    .stat-card.amber::before { background: var(--amber); }
+    .stat-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+    }
+    .stat-value {
+      font-size: 26px;
+      font-weight: 700;
+      margin-top: 4px;
+      color: #FFF;
+    }
+    .stat-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .preview-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 28px;
+      overflow-x: auto;
+    }
+    .preview-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .visual-table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #0B1120;
+    }
+    .visual-table {
+      width: 100%;
+      min-width: 1155px;
+      border-collapse: collapse;
+      font-size: 11px;
+    }
+    .visual-table th, .visual-table td {
+      border: 1px solid var(--border);
+      padding: 6px 4px;
+      text-align: center;
+      white-space: nowrap;
+    }
+    
+    .band-head {
+      font-weight: 700;
+      font-size: 10px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      padding: 7px 4px !important;
+      background: #192338;
+      border-bottom: 2px solid transparent !important;
+    }
+    .band-blue { border-bottom-color: var(--blue) !important; color: #93C5FD; }
+    .band-pink { border-bottom-color: var(--pink) !important; color: #FDA4AF; }
+    .band-green { border-bottom-color: var(--green) !important; color: #6EE7B7; }
+    .band-slate { border-bottom-color: var(--slate) !important; color: #CBD5E1; }
+    .band-cyan { border-bottom-color: var(--cyan) !important; color: #67E8F9; }
+    .band-amber { border-bottom-color: var(--amber) !important; color: #FCD34D; }
+    
+    .col-head {
+      background: #1E293B;
+      color: #E2E8F0;
+      font-weight: 600;
+      font-size: 11px;
+    }
+    .col-px {
+      display: block;
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-top: 1px;
+    }
+
+    .table-container {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 28px;
+    }
+    .detail-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: left;
+    }
+    .detail-table th {
+      background: #141E33;
+      padding: 12px 14px;
+      font-weight: 600;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .detail-table td {
+      padding: 11px 14px;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.6);
+      color: var(--text);
+    }
+    .detail-table tr:hover {
+      background: rgba(56, 189, 248, 0.04);
+    }
+    .tag {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-family: monospace;
+      font-weight: 600;
+    }
+    .tag-blue { background: rgba(59, 130, 246, 0.15); color: #60A5FA; }
+    .tag-pink { background: rgba(244, 63, 94, 0.15); color: #FB7185; }
+    .tag-green { background: rgba(16, 185, 129, 0.15); color: #34D399; }
+    .tag-amber { background: rgba(245, 158, 11, 0.15); color: #FBBF24; }
+    .tag-cyan { background: rgba(6, 182, 212, 0.15); color: #22D3EE; }
+    .tag-slate { background: rgba(100, 116, 139, 0.2); color: #94A3B8; }
+    .mode-badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      font-weight: 600;
+    }
+    .mode-always { background: rgba(16, 185, 129, 0.15); color: #34D399; }
+    .mode-advanced { background: rgba(245, 158, 11, 0.15); color: #FBBF24; }
+    
+    .hidden-mode {
+      display: none !important;
+    }
+
+    footer {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 12px;
+      margin-top: 20px;
+      padding-top: 15px;
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <span class="badge">Qubi Cost Electrical — Calibración Exacta</span>
+        <h1>Cubicación de Circuitos: Medidas y Columnas</h1>
+        <p class="subtitle">Anchos exactos calibrados al píxel (Total: 1.155 px) con bandas agrupadoras y bindings</p>
+      </div>
+      <div class="view-controls">
+        <button id="btnAvanzado" class="btn-toggle active" onclick="setMode('avanzado')">Modo Avanzado (21 cols)</button>
+        <button id="btnSimple" class="btn-toggle" onclick="setMode('simple')">Modo Simple (11 cols)</button>
+      </div>
+    </header>
+
+    <!-- Resumen de Métricas -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Ancho Total (Modo Avanzado)</div>
+        <div class="stat-value" id="kpiTotalPx">1.155 px</div>
+        <div class="stat-desc">21 columnas exactamente calibradas</div>
+      </div>
+      <div class="stat-card pink">
+        <div class="stat-label">Ancho Total (Modo Simple)</div>
+        <div class="stat-value">572 px</div>
+        <div class="stat-desc">11 columnas esenciales</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">Total Columnas</div>
+        <div class="stat-value">21 cols</div>
+        <div class="stat-desc">Mapeadas 1:1 con el modelo SEC</div>
+      </div>
+      <div class="stat-card amber">
+        <div class="stat-label">Bandas de Cabecera</div>
+        <div class="stat-value">11 bandas</div>
+        <div class="stat-desc">Sincronizadas con scroll bidireccional</div>
+      </div>
+    </div>
+
+    <!-- Previsualización Visual a Escala -->
+    <div class="preview-card">
+      <div class="preview-title">
+        <span>📐 Previsualización Esquematizada de Cabecera y Anchos Calibrados</span>
+      </div>
+      <div class="visual-table-wrap">
+        <table class="visual-table">
+          <thead>
+            <tr>
+              <th class="band-head" style="width:35px;">—</th>
+              <th class="band-head" style="width:42px;">—</th>
+              <th class="band-head" style="width:42px;">—</th>
+              <th class="band-head" style="width:61px;">—</th>
+              <th class="band-head band-blue" colspan="2" style="width:100px;">MEDIDAS ENTRADA (M) [100px]</th>
+              <th class="band-head band-pink col-adv" colspan="3" style="width:216px;">TRAMO BANDEJA [216px]</th>
+              <th class="band-head band-pink col-smp" style="width:61px; display:none;">TRAMO BANDEJA [61px]</th>
+              <th class="band-head band-green col-adv" colspan="5" style="width:311px;">TRAMO PVC (CONDUIT) [311px]</th>
+              <th class="band-head band-green col-smp" style="width:61px; display:none;">TRAMO PVC [61px]</th>
+              <th class="band-head band-slate col-adv" style="width:40px;">MONTAJE [40px]</th>
+              <th class="band-head band-cyan col-adv" colspan="3" style="width:138px;">CAJAS [138px]</th>
+              <th class="band-head band-amber" colspan="2" style="width:90px;">TERM. FLEXIBLE [90px]</th>
+              <th class="band-head band-blue" style="width:80px;">ARTEFACTOS [80px]</th>
+            </tr>
+            <tr>
+              <th class="col-head" style="width:35px;">N°<span class="col-px">35</span></th>
+              <th class="col-head" style="width:42px;">SIST<span class="col-px">42</span></th>
+              <th class="col-head" style="width:42px;">ALIM<span class="col-px">42</span></th>
+              <th class="col-head" style="width:61px;">UBICACIÓN<span class="col-px">61</span></th>
+              <th class="col-head" style="width:50px;">L. BAND<span class="col-px">50</span></th>
+              <th class="col-head" style="width:50px;">L.PVC<span class="col-px">50</span></th>
+              <th class="col-head col-adv" style="width:80px;">CONDUCTOR<span class="col-px">80</span></th>
+              <th class="col-head col-adv" style="width:75px;">SECCIÓN<span class="col-px">75</span></th>
+              <th class="col-head" style="width:61px;">TOTAL (M)<span class="col-px">61</span></th>
+              <th class="col-head col-adv" style="width:60px;">TIPO<span class="col-px">60</span></th>
+              <th class="col-head col-adv" style="width:60px;">DIAM  Ø<span class="col-px">60</span></th>
+              <th class="col-head col-adv" style="width:70px;">CONDUCTOR<span class="col-px">70</span></th>
+              <th class="col-head col-adv" style="width:60px;">SECCION<span class="col-px">60</span></th>
+              <th class="col-head" style="width:61px;">TOTAL (M)<span class="col-px">61</span></th>
+              <th class="col-head col-adv" style="width:40px;">LUMINARIA<span class="col-px">40</span></th>
+              <th class="col-head col-adv" style="width:46px;">5/8"<span class="col-px">46</span></th>
+              <th class="col-head col-adv" style="width:46px;">A11<span class="col-px">46</span></th>
+              <th class="col-head col-adv" style="width:46px;">A01<span class="col-px">46</span></th>
+              <th class="col-head" style="width:42px;">CANT<span class="col-px">42</span></th>
+              <th class="col-head" style="width:48px;">DIAM  Ø<span class="col-px">48</span></th>
+              <th class="col-head" style="width:80px;">ARTEFACTOS<span class="col-px">80</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="color:#94A3B8;">1</td>
+              <td><span style="background:#2563EB;color:#FFF;padding:1px 4px;border-radius:3px;font-weight:bold;">Alum</span></td>
+              <td><span style="background:#16A34A;color:#FFF;padding:1px 4px;border-radius:3px;font-weight:bold;">M</span></td>
+              <td style="text-align:left;padding-left:6px;color:#60A5FA;">Pasillo</td>
+              <td style="color:#FB7185;font-weight:bold;text-align:right;">12</td>
+              <td style="color:#34D399;font-weight:bold;text-align:right;">18</td>
+              <td class="col-adv">NYA</td>
+              <td class="col-adv">2.5mm2</td>
+              <td style="color:#FB7185;font-weight:bold;text-align:right;">36</td>
+              <td class="col-adv">CAÑERIA</td>
+              <td class="col-adv">20mm</td>
+              <td class="col-adv">EVA</td>
+              <td class="col-adv">1.5mm2</td>
+              <td style="color:#34D399;font-weight:bold;text-align:right;">54</td>
+              <td class="col-adv">4</td>
+              <td class="col-adv">2</td>
+              <td class="col-adv">1</td>
+              <td class="col-adv">0</td>
+              <td style="color:#FBBF24;font-weight:bold;">2</td>
+              <td style="color:#FBBF24;font-weight:bold;">20mm</td>
+              <td><button style="background:#334155;color:#E2E8F0;border:none;padding:2px 6px;border-radius:4px;font-size:10px;">Focos Led</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tabla Detallada -->
+    <div class="table-container">
+      <table class="detail-table">
+        <thead>
+          <tr>
+            <th style="width: 40px;">#</th>
+            <th>Banda Superior</th>
+            <th>Header (Texto Visible)</th>
+            <th>x:Name (XAML)</th>
+            <th>Ancho (px)</th>
+            <th>Binding (ViewModel)</th>
+            <th>Tipo de Editor</th>
+            <th>Visibilidad</th>
+          </tr>
+        </thead>
+        <tbody id="detailTableBody">
+          <tr data-mode="always">
+            <td><strong>0</strong></td>
+            <td><span class="tag tag-slate">—</span></td>
+            <td><strong>N°</strong></td>
+            <td><code>NumeroColumn</code></td>
+            <td><span class="tag tag-blue">35 px</span></td>
+            <td><code>{Binding Numero}</code></td>
+            <td>TextBlock (Selecciona fila)</td>
+            <td><span class="mode-badge mode-always">Siempre Visible</span></td>
+          </tr>
+          <tr data-mode="always">
+            <td><strong>1</strong></td>
+            <td><span class="tag tag-slate">—</span></td>
+            <td><strong>SIST</strong></td>
+            <td><code>ColSist</code></td>
+            <td><span class="tag tag-blue">42 px</span></td>
+            <td><code>{Binding Tipo}</code></td>
+            <td>Chip color + TextBox</td>
+            <td><span class="mode-badge mode-always">Siempre Visible</span></td>
+          </tr>
+          <tr data-mode="always">
+            <td><strong>2</strong></td>
+            <td><span class="tag tag-slate">—</span></td>
+            <td><strong>ALIM</strong></td>
+            <td><code>ColAlim</code></td>
+            <td><span class="tag tag-blue">42 px</span></td>
+            <td><code>{Binding Fase}</code></td>
+            <td>Chip color + TextBox</td>
+            <td><span class="mode-badge mode-always">Siempre Visible</span></td>
+          </tr>
+          <tr data-mode="always">
+            <td><strong>3</strong></td>
+            <td><span class="tag tag-slate">—</span></td>
+            <td><strong>UBICACIÓN</strong></td>
+            <td><code>ColUbicacion</code></td>
+            <td><span class="tag tag-blue">61 px</span></td>
+            <td><code>{Binding Ubicacion}</code></td>
+            <td>TextBox + Flyout Pisos (Alt+P)</td>
+            <td><span class="mode-badge mode-always">Siempre Visible</span></td>
+          </tr>
+          <tr data-mode="always">
+            <td><strong>4</strong></td>
+            <td><span class="tag tag-blue">MEDIDAS ENTRADA (M)</span></td>
+            <td><strong>L. BAND</strong></td>
+            <td><code>ColLBand</code></td>
+            <td><span class="tag tag-pink">50 px</span></td>
+            <td><code>{Binding LargoBandeja}</code></td>
+            <td>TextBox (Entrada rosa)</td>
+            <td><span class="mode-badge mode-always">Siempre Visible</span></td>
+          </tr>
+          <tr data-mode="always">
+            <td><strong>5</strong></td>
+            <td><span class="tag tag-blue">MEDIDAS ENTRADA (M)</span></td>
+            <td><strong>L.PVC</strong></td>
+            <td><code>ColLPvc</code></td>
+            <td><span class="tag tag-green">50 px</span></td>
+            <td><code>{Binding LargoTuberia}</code></td>
+            <td>TextBox (Entrada verde)</td>
+            <td><span class="mode-badge mode-always">Siempre Visible</span></td>
+          </tr>
+          <tr data-mode="advanced">
+            <td><strong>6</strong></td>
+            <td><span class="tag tag-pink">TRAMO BANDEJA</span></td>
+            <td><strong>CONDUCTOR</strong></td>
+            <td><code>ColCondBand</code></td>
+            <td><span class="tag tag-pink">80 px</span></td>
+            <td><code>{Binding ConductorDistribucion}</code></td>
+            <td>ComboBox Filtrable + Autodetect</td>
+            <td><span class="mode-badge mode-advanced">Modo Avanzado</span></td>
+          </tr>
+          <tr data-mode="advanced">
+            <td><strong>7</strong></td>
+            <td><span class="tag tag-pink">TRAMO BANDEJA</span></td>
+            <td><strong>SECCIÓN</strong></td>
+            <td><code>ColSeccBand</code></td>
+            <td><span class="tag tag-pink">75 px</span></td>
+            <td><code>{Binding SeccionDistribucion}</code></td>
+            <td>ComboBox Filtrable + Autodetect</td>
+            <td><span class="mode-badge mode-advanced">Modo Avanzado</span></td>
+          </tr>
+          <tr data-mode="always">
+            <td><strong>8</strong></td>
+            <td><span class="tag tag-pink">TRAMO BANDEJA</span></td>
+            <td><strong>TOTAL (M)</strong></td>
+            <td><code>ColTotBand</code></td>
+            <td><span class="tag tag-pink">61 px</span></td>
+            <td><code>{Binding LargoDistribucion}</code></td>
+            <td>TextBlock (Calculado rosa)</td>
+            <td><span class="mode-badge mode-always">Siempre Visible</span></td>
+          </tr>
+          <tr data-mode="advanced">
+            <td><strong>9</strong></td>
+            <td><span class="tag tag-green">TRAMO PVC (CONDUIT)</span></td>
+            <td><strong>TIPO</strong></td>
+            <td><code>ColTipoPvc</code></td>
+            <td><span class="tag tag-green">60 px</span></td>
+            <td><code>{Binding TipoTuberia}</code></td>
+            <td>ComboBox Filtrable + Autodetect</td>
+            <td><span class="mode-badge mode-advanced">Modo Avanzado</span></td>
+          </tr>
+          <tr data-mode="advanced">
+            <td><strong>10</strong></td>
+            <td><span class="tag tag-green">TRAMO PVC (CONDUIT)</span></td>
+            <td><strong>DIAM  Ø</strong></td>
+            <td><code>ColDuctoPvc</code></td>
+            <td><span class="tag tag-green">60 px</span></td>
+            <td><code>{Binding SeccionTuberia}</code></td>
+            <td>ComboBox Filtrable + Autodetect</td>
+            <td><span class="mode-badge mode-advanced">Modo Avanzado</span></td>
+          </tr>
+          <tr data-mode="advanced">
+            <td><strong>11</strong></td>
+            <td><span class="tag tag-green">TRAMO PVC (CONDUIT)</span></td>
+            <td><strong>CONDUCTOR</strong></td>
+            <td><code>ColCondPvc</code></td>
+            <td><span class="tag tag-green">70 px</span></td>
+            <td><code>{Binding ConductorDerivacion}</code></td>
+            <td>ComboBox Filtrable + Autodetect</td>
+            <td><span class="mode-badge mode-advanced">Modo Avanzado</span></td>
+          </tr>
+          <tr data-mode="advanced">
+            <td><strong>12</strong></td>
+            <td><span class="tag tag-green">TRAMO PVC (CONDUIT)</span></td>
+            <td><strong>SECCION</strong></td>
+            <td><code>ColSeccPvc</code></td>
+            <td><span class="tag tag-green">60 px</span></td>
+            <td><code>{Binding SeccionDerivacion}</code></td>
+            <td>ComboBox Filtrable + Autodetect</td>
+            <td><span class="mode-badge mode-advanced">Modo Avanzado</span></td>
+          </tr>
+          <tr data-mode="always">
+            <td><strong>13</strong></td>
+            <td><span class="tag tag-green">TRAMO PVC (CONDUIT)</span></td>
+            <td><strong>TOTAL (M)</strong></td>
+            <td><code>ColTotPvc</code></td>
+            <td><span class="tag tag-green">61 px</span></td>
+            <td><code>{Binding LargoDerivacion}</code></td>
+            <td>TextBlock (Calculado verde)</td>
+            <td><span class="mode-badge mode-always">Siempre Visible</span></td>
+          </tr>
+          <tr data-mode="advanced">
+            <td><strong>14</strong></td>
+            <td><span class="tag tag-slate">MONTAJE</span></td>
+            <td><strong>LUMINARIA</strong></td>
+            <td><code>ColLuminaria</code></td>
+            <td><span class="tag tag-slate">40 px</span></td>
+            <td><code>{Binding MontajesAlumbrado}</code></td>
+            <td>TextBox (Cantidad luminaria)</td>
+            <td><span class="mode-badge mode-advanced">Modo Avanzado</span></td>
+          </tr>
+          <tr data-mode="advanced">
+            <td><strong>15</strong></td>
+            <td><span class="tag tag-cyan">CAJAS</span></td>
+            <td><strong>5/8"</strong></td>
+            <td><code>ColCaja58</code></td>
+            <td><span class="tag tag-cyan">46 px</span></td>
+            <td><code>{Binding Cajas58}</code></td>
+            <td>TextBox</td>
+            <td><span class="mode-badge mode-advanced">Modo Avanzado</span></td>
+          </tr>
+          <tr data-mode="advanced">
+            <td><strong>16</strong></td>
+            <td><span class="tag tag-cyan">CAJAS</span></td>
+            <td><strong>A11</strong></td>
+            <td><code>ColCaja100</code></td>
+            <td><span class="tag tag-cyan">46 px</span></td>
+            <td><code>{Binding Cajas100x100}</code></td>
+            <td>TextBox (Caja 100×100)</td>
+            <td><span class="mode-badge mode-advanced">Modo Avanzado</span></td>
+          </tr>
+          <tr data-mode="advanced">
+            <td><strong>17</strong></td>
+            <td><span class="tag tag-cyan">CAJAS</span></td>
+            <td><strong>A01</strong></td>
+            <td><code>ColCaja65</code></td>
+            <td><span class="tag tag-cyan">46 px</span></td>
+            <td><code>{Binding Cajas100x65}</code></td>
+            <td>TextBox (Caja 100×65)</td>
+            <td><span class="mode-badge mode-advanced">Modo Avanzado</span></td>
+          </tr>
+          <tr data-mode="always">
+            <td><strong>18</strong></td>
+            <td><span class="tag tag-amber">TERM. FLEXIBLE</span></td>
+            <td><strong>CANT</strong></td>
+            <td><code>ColTmfCant</code></td>
+            <td><span class="tag tag-amber">42 px</span></td>
+            <td><code>{Binding TmfCantidad}</code></td>
+            <td>TextBlock (Calculado dorado)</td>
+            <td><span class="mode-badge mode-always">Siempre Visible</span></td>
+          </tr>
+          <tr data-mode="always">
+            <td><strong>19</strong></td>
+            <td><span class="tag tag-amber">TERM. FLEXIBLE</span></td>
+            <td><strong>DIAM  Ø</strong></td>
+            <td><code>ColTmfMed</code></td>
+            <td><span class="tag tag-amber">48 px</span></td>
+            <td><code>{Binding TmfMedida}</code></td>
+            <td>TextBlock (Calculado dorado)</td>
+            <td><span class="mode-badge mode-always">Siempre Visible</span></td>
+          </tr>
+          <tr data-mode="always">
+            <td><strong>20</strong></td>
+            <td><span class="tag tag-blue">ARTEFACTOS</span></td>
+            <td><strong>ARTEFACTOS</strong></td>
+            <td><code>ColArtefactos</code></td>
+            <td><span class="tag tag-blue">80 px</span></td>
+            <td><code>{Binding ArtefactosResumen}</code></td>
+            <td>Botón Modal de Asignación</td>
+            <td><span class="mode-badge mode-always">Siempre Visible</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <footer>
+      Qubi Cost Electrical · Especificación Técnica de Medidas Exactas Calibradas · 1.155 px
+    </footer>
+  </div>
+
+  <script>
+    function setMode(mode) {
+      const btnAvanzado = document.getElementById('btnAvanzado');
+      const btnSimple = document.getElementById('btnSimple');
+      const advCols = document.querySelectorAll('.col-adv');
+      const smpCols = document.querySelectorAll('.col-smp');
+      const rows = document.querySelectorAll('#detailTableBody tr');
+      const kpiTotalPx = document.getElementById('kpiTotalPx');
+
+      if (mode === 'avanzado') {
+        btnAvanzado.classList.add('active');
+        btnSimple.classList.remove('active');
+        advCols.forEach(el => el.classList.remove('hidden-mode'));
+        smpCols.forEach(el => el.style.display = 'none');
+        rows.forEach(r => r.style.display = '');
+        kpiTotalPx.textContent = '1.155 px';
+      } else {
+        btnSimple.classList.add('active');
+        btnAvanzado.classList.remove('active');
+        advCols.forEach(el => el.classList.add('hidden-mode'));
+        smpCols.forEach(el => el.style.display = '');
+        rows.forEach(r => {
+          if (r.getAttribute('data-mode') === 'advanced') {
+            r.style.display = 'none';
+          }
+        });
+        kpiTotalPx.textContent = '572 px';
+      }
+    }
+  </script>
+</body>
+</html>

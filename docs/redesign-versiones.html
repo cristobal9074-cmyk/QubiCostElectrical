@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Qubi Cost Electrical · Rediseño — Versiones y comparador</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   TOKENS — espejo exacto de DesignSystem/Colors.xaml + Colors.Dark.xaml
+   ═══════════════════════════════════════════════════════════════ */
+:root{
+  --canvas:#EEF1F5; --surface:#FFFFFF; --surface-2:#FAFBFD; --surface-3:#F8FAFC;
+  --line:#DDE3EA; --line-2:#EEF2F6; --row-hover:#F6F9FC; --row-sel:#EEF3FA;
+  --ink:#101A26; --ink-2:#3C4A5C; --ink-3:#5C6A7C;
+  --blue:#2563B0; --blue-strong:#1D4ED8; --blue-bright:#3B82F6;
+  --blue-soft:#EAF1FF; --blue-faint:#EDF3FA; --blue-line:#77A5F7;
+  --success:#1E7A4B; --success-dark:#166534; --success-bg:#E3F3EA; --success-line:#BBF7D0;
+  --danger:#B23434;  --danger-dark:#B91C1C;  --danger-bg:#FDECEC;  --danger-line:#FECACA;
+  --amber:#9A6A10;   --amber-soft:#FBF1DD;   --amber-line:#FFCE76;
+  --navy:#101C30; --navy-end:#0C1626; --navy-2:#14263C;
+  --header-ink:#EEF4FB; --header-muted:#9EB1C8;
+  --shadow-1:0 1px 2px rgba(16,26,38,.06), 0 1px 1px rgba(16,26,38,.04);
+  --shadow-2:0 8px 24px rgba(16,26,38,.10), 0 2px 6px rgba(16,26,38,.06);
+  --shadow-pop:0 12px 32px rgba(9,16,28,.18), 0 2px 8px rgba(9,16,28,.10);
+  --focus:0 0 0 3px rgba(59,130,246,.35);
+}
+[data-theme="dark"]{
+  --canvas:#14161C; --surface:#1C1F26; --surface-2:#252830; --surface-3:#1A1D24;
+  --line:#2D3038; --line-2:#323844; --row-hover:#22262E; --row-sel:#1E2D4A;
+  --ink:#E1E4E8; --ink-2:#BCC0C6; --ink-3:#8B8F96;
+  --blue:#4B8DF7; --blue-strong:#3B82F6; --blue-bright:#60A5FA;
+  --blue-soft:#1E2D4A; --blue-faint:#1C2838; --blue-line:#93BFFD;
+  --success:#22C55E; --success-dark:#86EFAC; --success-bg:#0F1F14; --success-line:#1A3D24;
+  --danger:#EF4444;  --danger-dark:#FCA5A5;  --danger-bg:#1F0F0F;  --danger-line:#3D1A1A;
+  --amber:#F59E0B;   --amber-soft:#2D2410;   --amber-line:#B8860B;
+  --navy:#0A1420; --navy-end:#080E18; --navy-2:#0F1C2E;
+  --shadow-1:0 1px 2px rgba(0,0,0,.35);
+  --shadow-2:0 8px 24px rgba(0,0,0,.45);
+  --shadow-pop:0 12px 32px rgba(0,0,0,.55);
+  --focus:0 0 0 3px rgba(96,165,250,.40);
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--canvas); color:var(--ink);
+  font-family:"Inter","Segoe UI",system-ui,-apple-system,sans-serif;
+  font-size:13px; line-height:1.45; -webkit-font-smoothing:antialiased;
+  transition:background-color .2s ease, color .2s ease;
+}
+.mono{font-family:"JetBrains Mono","Cascadia Mono",Consolas,monospace; font-variant-numeric:tabular-nums}
+button{font:inherit; color:inherit; cursor:pointer}
+:focus-visible{outline:none; box-shadow:var(--focus); border-radius:6px}
+
+/* ── Shell de contexto (barra oscura de la app, sólo referencia) ── */
+.shell{
+  background:linear-gradient(180deg,var(--navy) 0%,var(--navy-end) 100%);
+  color:var(--header-ink); padding:0 20px; height:52px;
+  display:flex; align-items:center; gap:22px; position:sticky; top:0; z-index:50;
+}
+.shell .brand{display:flex; align-items:center; gap:9px; font-weight:700; font-size:13.5px; letter-spacing:-.01em}
+.shell .brand svg{display:block}
+.shell nav{display:flex; align-items:center; gap:4px; flex:1; min-width:0; overflow:hidden}
+.shell nav .navitem{
+  background:none; border:0; padding:7px 11px; border-radius:7px;
+  color:var(--header-muted); font-size:12.5px; font-weight:500;
+  transition:background-color .16s ease, color .16s ease; white-space:nowrap;
+}
+.shell nav .navitem:hover{background:rgba(255,255,255,.07); color:var(--header-ink)}
+.shell nav .navitem[aria-current="page"]{background:rgba(91,145,255,.16); color:#8FB6FF; font-weight:600}
+.shell .div{width:1px; height:20px; background:rgba(255,255,255,.13)}
+.shell .meta{display:flex; align-items:center; gap:10px; color:var(--header-muted); font-size:11.5px}
+.dot-save{width:7px; height:7px; border-radius:50%; background:#40C77D; box-shadow:0 0 0 3px rgba(64,199,125,.18)}
+.avatar{width:26px; height:26px; border-radius:50%; background:#2E4468; color:#DCE8FF;
+  display:grid; place-items:center; font-size:10.5px; font-weight:700; border:1px solid rgba(255,255,255,.12)}
+
+/* ── Página ── */
+.page{max-width:1440px; margin:0 auto; padding:26px 28px 56px}
+
+/* ── Cabecera de página ── */
+.page-head{display:flex; align-items:flex-end; justify-content:space-between; gap:24px; margin-bottom:20px}
+.eyebrow{
+  font-size:10.5px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--blue); display:flex; align-items:center; gap:8px; margin-bottom:7px;
+}
+.eyebrow::after{content:""; height:1px; flex:1; max-width:64px; background:linear-gradient(90deg,var(--blue-line),transparent); opacity:.55}
+h1{font-size:23px; line-height:1.2; font-weight:700; letter-spacing:-.022em; margin:0 0 5px}
+.sub{color:var(--ink-3); font-size:13px; max-width:70ch; margin:0}
+.actions{display:flex; align-items:center; gap:8px; position:relative; flex-shrink:0}
+
+/* ── Botones ── */
+.btn{
+  height:34px; padding:0 13px; border-radius:8px; border:1px solid var(--line);
+  background:var(--surface); color:var(--ink-2); font-size:12.5px; font-weight:600;
+  display:inline-flex; align-items:center; gap:7px; white-space:nowrap;
+  transition:background-color .16s ease, border-color .16s ease, color .16s ease, box-shadow .16s ease;
+}
+.btn:hover{background:var(--surface-3); border-color:#BAC7D5; color:var(--ink)}
+[data-theme="dark"] .btn:hover{border-color:#3F5175; background:#222D3E}
+.btn-primary{
+  background:linear-gradient(180deg,var(--blue-bright),var(--blue)); border-color:transparent;
+  color:#fff; box-shadow:0 1px 2px rgba(29,78,216,.28);
+}
+.btn-primary:hover{background:linear-gradient(180deg,var(--blue),var(--blue-strong)); color:#fff; box-shadow:0 2px 8px rgba(29,78,216,.32)}
+.btn-icon{width:34px; padding:0; justify-content:center}
+.btn-ghost{background:transparent; border-color:transparent; color:var(--ink-3)}
+.btn-ghost:hover{background:var(--row-hover); border-color:transparent; color:var(--ink)}
+.btn svg{flex:none}
+
+/* ── Menú desplegable ── */
+.menu{
+  position:absolute; top:calc(100% + 8px); right:0; min-width:252px; z-index:60;
+  background:var(--surface); border:1px solid var(--line); border-radius:12px;
+  box-shadow:var(--shadow-pop); padding:6px; opacity:0; transform:translateY(-6px) scale(.98);
+  pointer-events:none; transition:opacity .14s ease, transform .14s ease;
+}
+.menu.open{opacity:1; transform:none; pointer-events:auto}
+.menu button{
+  width:100%; display:flex; align-items:center; gap:10px; text-align:left;
+  background:none; border:0; padding:8px 10px; border-radius:8px;
+  font-size:12.5px; color:var(--ink-2); transition:background-color .14s ease, color .14s ease;
+}
+.menu button:hover{background:var(--row-hover); color:var(--ink)}
+.menu button .k{margin-left:auto; font-size:10.5px; color:var(--ink-3); font-family:"JetBrains Mono",monospace}
+.menu .sep{height:1px; background:var(--line-2); margin:6px 4px}
+.menu .head{font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-3); padding:7px 10px 4px}
+
+/* ── Tira KPI: una sola tarjeta, 4 celdas, divisores finos ── */
+.kpi-strip{
+  display:grid; grid-template-columns:repeat(4,1fr);
+  background:var(--surface); border:1px solid var(--line); border-radius:14px;
+  box-shadow:var(--shadow-1); overflow:hidden; margin-bottom:18px;
+}
+.kpi{padding:15px 18px 14px; border-left:1px solid var(--line-2); min-width:0}
+.kpi:first-child{border-left:0}
+.kpi .lab{font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-3); display:flex; align-items:center; gap:6px}
+.kpi .val{font-family:"JetBrains Mono",monospace; font-size:23px; font-weight:600; letter-spacing:-.02em; margin-top:9px; line-height:1.1}
+.kpi .note{font-size:11.5px; color:var(--ink-3); margin-top:6px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; row-gap:5px}
+.delta{display:inline-flex; align-items:center; gap:4px; font-weight:600; font-family:"JetBrains Mono",monospace; font-size:11.5px}
+.delta.up{color:var(--success-dark)} .delta.down{color:var(--danger-dark)}
+.chip{
+  display:inline-flex; align-items:center; gap:6px; height:24px; padding:0 9px;
+  border-radius:7px; font-size:11px; font-weight:600; border:1px solid var(--line);
+  background:var(--surface-3); color:var(--ink-2); white-space:nowrap; flex:none;
+}
+.chip-blue{background:var(--blue-soft); border-color:var(--blue-line); color:var(--blue)}
+.chip-ok{background:var(--success-bg); border-color:var(--success-line); color:var(--success-dark)}
+.chip-bad{background:var(--danger-bg); border-color:var(--danger-line); color:var(--danger-dark)}
+.chip-warn{background:var(--amber-soft); border-color:var(--amber-line); color:var(--amber)}
+.chip .bead{width:6px; height:6px; border-radius:50%; background:currentColor}
+.chip.sm{height:20px; padding:0 7px; font-size:10.5px; gap:5px}
+
+/* ── Pestañas segmentadas ── */
+.tabs{
+  display:inline-flex; gap:3px; padding:4px; background:var(--surface-3);
+  border:1px solid var(--line); border-radius:11px; margin-bottom:14px;
+}
+.tab{
+  border:0; background:transparent; padding:8px 15px; border-radius:8px;
+  font-size:12.5px; font-weight:600; color:var(--ink-3); display:flex; align-items:center; gap:8px;
+  transition:background-color .16s ease, color .16s ease, box-shadow .16s ease;
+}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{background:var(--surface); color:var(--ink); box-shadow:var(--shadow-1)}
+.tab .count{
+  font-family:"JetBrains Mono",monospace; font-size:10.5px; font-weight:600;
+  background:var(--blue-soft); color:var(--blue); border-radius:5px; padding:1.5px 5px;
+}
+.tab[aria-selected="true"] .count{background:var(--blue); color:#fff}
+
+/* ── Panel / tarjeta ── */
+.card{background:var(--surface); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow-1); overflow:hidden}
+.card-bar{
+  display:flex; align-items:center; gap:10px; padding:11px 14px;
+  border-bottom:1px solid var(--line-2); background:var(--surface-2); flex-wrap:wrap;
+}
+.card-title{font-size:13.5px; font-weight:700; letter-spacing:-.01em}
+.card-hint{font-size:11.5px; color:var(--ink-3)}
+.spacer{flex:1}
+
+/* ── Búsqueda y filtros ── */
+.search{position:relative; display:flex; align-items:center}
+.search svg{position:absolute; left:10px; color:var(--ink-3); pointer-events:none}
+.search input{
+  height:32px; width:264px; padding:0 10px 0 32px; border-radius:8px;
+  border:1px solid var(--line); background:var(--surface); color:var(--ink);
+  font:inherit; font-size:12.5px; transition:border-color .16s ease, box-shadow .16s ease;
+}
+.search input::placeholder{color:var(--ink-3)}
+.search input:hover{border-color:#BAC7D5}
+.search input:focus{outline:none; border-color:var(--blue); box-shadow:var(--focus)}
+[data-theme="dark"] .search input:hover{border-color:#3F5175}
+
+.seg{display:inline-flex; gap:2px; padding:3px; background:var(--surface-3); border:1px solid var(--line); border-radius:9px}
+.seg button{
+  border:0; background:transparent; padding:5px 11px; border-radius:6px;
+  font-size:11.5px; font-weight:600; color:var(--ink-3); display:flex; align-items:center; gap:6px;
+  transition:background-color .16s ease, color .16s ease;
+}
+.seg button:hover{color:var(--ink)}
+.seg button[aria-pressed="true"]{background:var(--surface); color:var(--ink); box-shadow:var(--shadow-1)}
+.seg .bd{width:6px; height:6px; border-radius:50%}
+.seg .n{font-family:"JetBrains Mono",monospace; font-size:10.5px; opacity:.75}
+
+/* ── Tablas ── */
+.tbl-scroll{overflow-x:auto}
+table{width:100%; border-collapse:separate; border-spacing:0; font-size:12.5px}
+thead th{
+  position:sticky; top:0; z-index:2; background:var(--surface-2);
+  font-size:10.5px; font-weight:700; letter-spacing:.055em; text-transform:uppercase;
+  color:var(--ink-3); text-align:left; padding:10px 14px;
+  border-bottom:1px solid var(--line); white-space:nowrap;
+}
+thead th.r{text-align:right}
+tbody td{padding:11px 14px; border-bottom:1px solid var(--line-2); vertical-align:middle}
+tbody tr{transition:background-color .14s ease}
+tbody tr:hover{background:var(--row-hover)}
+tbody tr:last-child td{border-bottom:0}
+td.r,th.r{text-align:right}
+.num{font-family:"JetBrains Mono",monospace; font-variant-numeric:tabular-nums}
+.pos{color:var(--success-dark); font-weight:600}
+.neg{color:var(--danger-dark); font-weight:600}
+.dim{color:var(--ink-3)}
+
+/* fila activa: barra de acento izquierda + tinte, sin ruido */
+tr.is-active{background:var(--blue-faint)}
+tr.is-active:hover{background:var(--row-sel)}
+tr.is-active td:first-child{box-shadow:inset 3px 0 0 var(--blue)}
+tr.is-selected{background:var(--row-sel)}
+tr.is-selected td:first-child{box-shadow:inset 3px 0 0 var(--blue)}
+[data-theme="dark"] tr.is-active{background:#1C2838}
+
+.rev{
+  display:grid; place-items:center; width:38px; height:38px; border-radius:11px;
+  background:var(--blue-soft); color:var(--blue); border:1px solid var(--blue-line);
+  font-family:"JetBrains Mono",monospace; font-size:11.5px; font-weight:700;
+}
+.rev.on{background:linear-gradient(180deg,var(--blue-bright),var(--blue)); color:#fff; border-color:transparent}
+.cell-title{font-weight:600; color:var(--ink); letter-spacing:-.005em}
+.cell-sub{font-size:11.5px; color:var(--ink-3); margin-top:2px}
+.who{display:flex; align-items:center; gap:8px}
+.who .ini{
+  width:24px; height:24px; border-radius:50%; background:var(--surface-3); border:1px solid var(--line);
+  display:grid; place-items:center; font-size:9.5px; font-weight:700; color:var(--ink-3); flex:none;
+}
+.rowact{display:flex; gap:2px; justify-content:flex-end; opacity:.5; transition:opacity .16s ease}
+tr:hover .rowact,tr:focus-within .rowact{opacity:1}
+
+/* ── Barra de deltas del comparador ── */
+.delta-bar{display:grid; grid-template-columns:repeat(4,1fr); gap:0; border-bottom:1px solid var(--line-2)}
+.delta-cell{padding:14px 16px; border-left:1px solid var(--line-2); position:relative}
+.delta-cell:first-child{border-left:0}
+.delta-cell .lab{font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-3); display:flex; align-items:center; gap:7px}
+.delta-cell .lab .bd{width:7px; height:7px; border-radius:50%}
+.delta-cell .val{font-family:"JetBrains Mono",monospace; font-size:17.5px; font-weight:600; margin-top:7px; letter-spacing:-.01em}
+.delta-cell .note{font-size:11px; color:var(--ink-3); margin-top:4px}
+.meter{height:4px; border-radius:3px; background:var(--line-2); margin-top:10px; overflow:hidden; display:flex}
+.meter i{display:block; height:100%}
+
+/* ── Detalle / cajón de recursos ── */
+.drawer{border-top:1px solid var(--line); background:var(--surface-2); padding:0}
+.drawer-head{
+  display:flex; align-items:center; gap:12px; padding:11px 16px; width:100%;
+  background:none; border:0; text-align:left; transition:background-color .16s ease;
+}
+.drawer-head:hover{background:var(--row-hover)}
+.drawer-head .t{font-size:12.5px; font-weight:700}
+.drawer-head .s{font-size:11.5px; color:var(--ink-3)}
+.drawer-head .caret{transition:transform .2s ease; color:var(--ink-3)}
+.drawer.open .caret{transform:rotate(180deg)}
+.drawer-body{display:none; padding:0 16px 14px}
+.drawer.open .drawer-body{display:block}
+.mini{width:100%; border-collapse:collapse; font-size:11.5px; background:var(--surface);
+  border:1px solid var(--line); border-radius:10px; overflow:hidden}
+.mini th{position:static; background:var(--surface-3); padding:8px 12px; font-size:10px; border-bottom:1px solid var(--line)}
+.mini td{padding:8px 12px; border-bottom:1px solid var(--line-2)}
+.mini tr:last-child td{border-bottom:0}
+
+/* ── Pie del comparador ── */
+.foot{display:flex; align-items:center; gap:14px; padding:11px 14px; border-top:1px solid var(--line); background:var(--surface-2)}
+.foot .hint{font-size:11.5px; color:var(--ink-3)}
+
+/* ── Estados ── */
+.empty{padding:54px 24px; text-align:center}
+.empty h3{margin:14px 0 6px; font-size:15px}
+.empty p{margin:0 auto 18px; color:var(--ink-3); font-size:12.5px; max-width:44ch}
+
+.skel{padding:0}
+.skel i{display:block; height:12px; border-radius:4px; background:linear-gradient(90deg,var(--line-2),var(--line),var(--line-2));
+  background-size:200% 100%; animation:sh 1.4s ease infinite}
+@keyframes sh{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+.legend{display:flex; gap:16px; flex-wrap:wrap; font-size:11.5px; color:var(--ink-3); padding:10px 14px; border-top:1px solid var(--line-2)}
+.legend span{display:flex; align-items:center; gap:6px}
+.legend .bd{width:7px; height:7px; border-radius:50%}
+
+[hidden]{display:none !important}
+@media (max-width:1080px){
+  .kpi-strip{grid-template-columns:repeat(2,1fr)}
+  .kpi:nth-child(3){border-left:0}
+  .delta-bar{grid-template-columns:repeat(2,1fr)}
+  .delta-cell:nth-child(3){border-left:0}
+  .page-head{flex-direction:column; align-items:flex-start}
+}
+@media (max-width:640px){
+  .kpi-strip,.delta-bar{grid-template-columns:1fr}
+  .kpi{border-left:0; border-top:1px solid var(--line-2)}
+  .kpi:first-child{border-top:0}
+  .shell nav{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms !important; transition-duration:.001ms !important}
+}
+</style>
+</head>
+<body>
+
+<!-- ════ Shell de contexto (barra oscura real de la app) ════ -->
+<header class="shell">
+  <div class="brand">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 2.5 20 7v10l-8 4.5L4 17V7l8-4.5Z" stroke="#60A5FA" stroke-width="1.6" stroke-linejoin="round"/>
+      <path d="M12 7.5 16.2 10v4.6L12 17l-4.2-2.4V10L12 7.5Z" fill="#2D5FAF" stroke="#91B7FF" stroke-width="1.3" stroke-linejoin="round"/>
+    </svg>
+    Qubi Cost Electrical
+  </div>
+  <nav aria-label="Navegación principal">
+    <button class="navitem">Proyecto</button>
+    <button class="navitem">Cubicación</button>
+    <button class="navitem">Precios</button>
+    <div class="div" aria-hidden="true"></div>
+    <button class="navitem">Desglose de costos</button>
+    <button class="navitem">Revisión final</button>
+    <button class="navitem" aria-current="page">Versiones</button>
+  </nav>
+  <div class="meta">
+    <span class="dot-save" aria-hidden="true"></span>
+    <span>Guardado</span>
+    <div class="avatar" aria-hidden="true">CR</div>
+  </div>
+</header>
+
+<main class="page">
+
+  <!-- ════ Cabecera ════ -->
+  <div class="page-head">
+    <div>
+      <div class="eyebrow">Cierre y costos</div>
+      <h1>Versiones y comparador de revisiones</h1>
+      <p class="sub">Congela hitos del presupuesto, activa una revisión y compara su diff contra el estado actual antes de emitir una orden de cambio.</p>
+    </div>
+    <div class="actions">
+      <button class="btn btn-ghost btn-icon" aria-label="Actualizar" title="Actualizar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/></svg>
+      </button>
+      <button class="btn btn-icon" id="themeBtn" aria-label="Cambiar tema" title="Cambiar tema">
+        <svg id="iconSun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        <svg id="iconMoon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" hidden><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+      </button>
+      <button class="btn btn-primary" data-menu="newMenu">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        Nueva versión
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <div class="menu" id="newMenu" role="menu">
+        <div class="head">Crear</div>
+        <button role="menuitem">Versión en blanco<span class="k">Ctrl+N</span></button>
+        <button role="menuitem">Copia de la versión activa</button>
+        <button role="menuitem">Snapshot del estado actual</button>
+        <div class="sep"></div>
+        <div class="head">Gestión</div>
+        <button role="menuitem">Renombrar seleccionada</button>
+        <button role="menuitem">Activar seleccionada</button>
+        <button role="menuitem" style="color:var(--danger-dark)">Eliminar seleccionada</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ Tira KPI ════ -->
+  <section class="kpi-strip" aria-label="Indicadores de la comparación">
+    <div class="kpi">
+      <div class="lab">Variación neta vs. anterior</div>
+      <div class="val">+1.104,200 <span style="font-size:13px;font-weight:600;color:var(--ink-3)">UF</span></div>
+      <div class="note">
+        <span class="delta up">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg>
+          +4,82 %
+        </span>
+        <span>· REV-003 → REV-004</span>
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="lab">Partidas comparadas</div>
+      <div class="val">128</div>
+      <div class="note"><span class="chip chip-ok sm"><i class="bead"></i>5 adicionales</span>
+        <span class="chip chip-warn sm"><i class="bead"></i>12 modificadas</span>
+        <span class="chip chip-bad sm"><i class="bead"></i>3 deductivas</span></div>
+    </div>
+    <div class="kpi">
+      <div class="lab">Versión activa</div>
+      <div class="val" style="font-size:19px">REV-004</div>
+      <div class="note"><span class="chip chip-blue sm"><i class="bead"></i>Activa</span> Aditamento Addenda 02</div>
+    </div>
+    <div class="kpi">
+      <div class="lab">Última actualización</div>
+      <div class="val" style="font-size:19px">02/10 <span style="font-size:13px;color:var(--ink-3)">· 18:42</span></div>
+      <div class="note">por C. Rojas · Estimador</div>
+    </div>
+  </section>
+
+  <!-- ════ Pestañas ════ -->
+  <div class="tabs" role="tablist" aria-label="Vistas de versiones">
+    <button class="tab" role="tab" id="tab-v" aria-controls="panel-v" aria-selected="true">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M3 12h18M3 18h12"/></svg>
+      Versiones <span class="count">4</span>
+    </button>
+    <button class="tab" role="tab" id="tab-c" aria-controls="panel-c" aria-selected="false" tabindex="-1">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg>
+      Comparador <span class="count">20</span>
+    </button>
+  </div>
+
+  <!-- ══════════ PANEL: VERSIONES ══════════ -->
+  <section class="card" id="panel-v" role="tabpanel" aria-labelledby="tab-v">
+    <div class="card-bar">
+      <div>
+        <div class="card-title">Historial de revisiones</div>
+        <div class="card-hint">Selecciona una fila para activar, renombrar o comparar.</div>
+      </div>
+      <div class="spacer"></div>
+      <label class="search">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+        <input type="search" placeholder="Buscar por código, nombre o autor" aria-label="Buscar versiones" />
+      </label>
+      <div class="seg" role="group" aria-label="Filtrar versiones">
+        <button aria-pressed="true">Todas <span class="n">4</span></button>
+        <button aria-pressed="false">Activas <span class="n">1</span></button>
+        <button aria-pressed="false">Históricas <span class="n">3</span></button>
+      </div>
+      <button class="btn btn-icon" aria-label="Exportar a Excel" title="Exportar a Excel">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/><path d="m9.5 13 5 5m0-5-5 5"/></svg>
+      </button>
+      <button class="btn btn-icon" aria-label="Más opciones" title="Más opciones">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg>
+      </button>
+    </div>
+
+    <div class="tbl-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:74px">Rev.</th>
+            <th>Versión</th>
+            <th style="width:170px">Autor</th>
+            <th style="width:150px">Modificada</th>
+            <th class="r" style="width:130px">Venta UF</th>
+            <th class="r" style="width:120px">Δ UF</th>
+            <th style="width:52px"><span class="sr">Acciones</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="is-active" tabindex="0">
+            <td><div class="rev on">04</div></td>
+            <td>
+              <div class="cell-title">Aditamento Addenda 02</div>
+              <div class="cell-sub"><span class="chip chip-blue" style="height:19px;font-size:10.5px"><i class="bead"></i>Activa</span> &nbsp;Snapshot congelado del estado actual</div>
+            </td>
+            <td><div class="who"><span class="ini">CR</span><div><div class="cell-title" style="font-weight:500">C. Rojas</div><div class="cell-sub">Estimador</div></div></div></td>
+            <td class="num dim">02/10/2026<br><span style="font-size:11px">18:42</span></td>
+            <td class="r num" style="font-weight:600">24.318,750</td>
+            <td class="r num pos">+1.104,200</td>
+            <td>
+              <div class="rowact">
+                <button class="btn btn-ghost btn-icon" style="width:28px;height:28px" aria-label="Opciones de REV-004" title="Opciones">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+
+          <tr tabindex="0">
+            <td><div class="rev">03</div></td>
+            <td>
+              <div class="cell-title">Anteproyecto — Cliente</div>
+              <div class="cell-sub">Revisión con observaciones de ingeniería</div>
+            </td>
+            <td><div class="who"><span class="ini">MS</span><div><div class="cell-title" style="font-weight:500">M. Soto</div><div class="cell-sub">Jefe de proyecto</div></div></div></td>
+            <td class="num dim">26/09/2026<br><span style="font-size:11px">11:05</span></td>
+            <td class="r num" style="font-weight:600">23.214,550</td>
+            <td class="r num pos">+386,120</td>
+            <td><div class="rowact"><button class="btn btn-ghost btn-icon" style="width:28px;height:28px" aria-label="Opciones de REV-003" title="Opciones"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg></button></div></td>
+          </tr>
+
+          <tr tabindex="0">
+            <td><div class="rev">02</div></td>
+            <td>
+              <div class="cell-title">Cotización base</div>
+              <div class="cell-sub">Licitación pública — pliego original</div>
+            </td>
+            <td><div class="who"><span class="ini">CR</span><div><div class="cell-title" style="font-weight:500">C. Rojas</div><div class="cell-sub">Estimador</div></div></div></td>
+            <td class="num dim">12/09/2026<br><span style="font-size:11px">09:30</span></td>
+            <td class="r num" style="font-weight:600">22.828,430</td>
+            <td class="r num neg">−142,600</td>
+            <td><div class="rowact"><button class="btn btn-ghost btn-icon" style="width:28px;height:28px" aria-label="Opciones de REV-002" title="Opciones"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg></button></div></td>
+          </tr>
+
+          <tr tabindex="0">
+            <td><div class="rev">01</div></td>
+            <td>
+              <div class="cell-title">Hito inicial</div>
+              <div class="cell-sub">Carga desde plantilla de obra nueva</div>
+            </td>
+            <td><div class="who"><span class="ini">AV</span><div><div class="cell-title" style="font-weight:500">A. Vidal</div><div class="cell-sub">Administrador</div></div></div></td>
+            <td class="num dim">01/09/2026<br><span style="font-size:11px">16:12</span></td>
+            <td class="r num" style="font-weight:600">22.971,030</td>
+            <td class="r num dim">—</td>
+            <td><div class="rowact"><button class="btn btn-ghost btn-icon" style="width:28px;height:28px" aria-label="Opciones de REV-001" title="Opciones"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg></button></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="foot">
+      <span class="hint">4 versiones · Venta acumulada activa <strong class="mono">24.318,750 UF</strong></span>
+      <div class="spacer"></div>
+      <button class="btn" data-goto="c">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg>
+        Comparar con estado actual
+      </button>
+      <button class="btn btn-primary">Activar versión</button>
+    </div>
+  </section>
+
+  <!-- ══════════ PANEL: COMPARADOR ══════════ -->
+  <section class="card" id="panel-c" role="tabpanel" aria-labelledby="tab-c" hidden>
+    <div class="card-bar">
+      <label class="chip" style="height:32px;cursor:pointer">
+        <input type="checkbox" checked style="accent-color:var(--blue);margin:0" />
+        Comparar contra el estado actual
+      </label>
+      <div class="seg" role="group" aria-label="Versión de comparación">
+        <button aria-pressed="true">REV-003</button>
+        <button aria-pressed="false">REV-002</button>
+        <button aria-pressed="false">REV-001</button>
+      </div>
+      <span class="card-hint">→ estado actual · 128 partidas analizadas</span>
+      <div class="spacer"></div>
+      <button class="btn" title="Descargar informe PDF">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/><path d="M9 15h6"/></svg>
+        PDF
+      </button>
+      <button class="btn" title="Exportar a Excel">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/><path d="m9.5 13 5 5m0-5-5 5"/></svg>
+        Excel
+      </button>
+      <button class="btn btn-primary">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 1-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 0 0 5.4-5.4l-2.3 2.3-2-2 2.3-2.3Z"/></svg>
+        Orden de cambio
+      </button>
+      <button class="btn btn-icon" id="moreBtn" data-menu="moreMenu" aria-label="Más acciones del comparador" aria-haspopup="true" aria-expanded="false">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg>
+      </button>
+      <div class="menu" id="moreMenu" role="menu">
+        <div class="head">Addenda / aclaración</div>
+        <button role="menuitem">Comparar con Excel (addenda)</button>
+        <button role="menuitem">Aplicar cantidades de addenda</button>
+        <button role="menuitem">Guardar comparación como versión</button>
+        <div class="sep"></div>
+        <div class="head">Navegación</div>
+        <button role="menuitem">Ir a la partida seleccionada<span class="k">Alt+↑</span></button>
+        <button role="menuitem">Actualizar comparación<span class="k">F5</span></button>
+      </div>
+    </div>
+
+    <!-- Ribbon de deltas -->
+    <div class="delta-bar">
+      <div class="delta-cell">
+        <div class="lab"><span class="bd" style="background:var(--success)"></span>Adicionales</div>
+        <div class="val pos">+218,400 UF</div>
+        <div class="note">5 partidas nuevas o con aumento</div>
+        <div class="meter"><i style="width:64%;background:var(--success)"></i><i style="width:36%;background:var(--line-2)"></i></div>
+      </div>
+      <div class="delta-cell">
+        <div class="lab"><span class="bd" style="background:var(--amber)"></span>Modificaciones</div>
+        <div class="val" style="color:var(--amber)">±96,300 UF</div>
+        <div class="note">12 partidas con cantidad o P.U. alterado</div>
+        <div class="meter"><i style="width:41%;background:var(--amber)"></i><i style="width:59%;background:var(--line-2)"></i></div>
+      </div>
+      <div class="delta-cell">
+        <div class="lab"><span class="bd" style="background:var(--danger)"></span>Deductivos</div>
+        <div class="val neg">−146,500 UF</div>
+        <div class="note">3 partidas anuladas o reducidas</div>
+        <div class="meter"><i style="width:29%;background:var(--danger)"></i><i style="width:71%;background:var(--line-2)"></i></div>
+      </div>
+      <div class="delta-cell" style="background:var(--blue-faint)">
+        <div class="lab" style="color:var(--blue)"><span class="bd" style="background:var(--blue)"></span>Saldo neto</div>
+        <div class="val">+168,200 UF</div>
+        <div class="note">Base para orden de cambio · +0,73 %</div>
+        <div class="meter"><i style="width:73%;background:var(--blue)"></i></div>
+      </div>
+    </div>
+
+    <!-- Filtros semáforo -->
+    <div class="card-bar" style="background:var(--surface)">
+      <span class="card-hint" style="font-weight:600">Semáforo</span>
+      <div class="seg" role="group" aria-label="Filtrar por semáforo">
+        <button aria-pressed="true">Todas <span class="n">128</span></button>
+        <button aria-pressed="false"><span class="bd" style="background:var(--success)"></span>Adicionales <span class="n">5</span></button>
+        <button aria-pressed="false"><span class="bd" style="background:var(--amber)"></span>Modificadas <span class="n">12</span></button>
+        <button aria-pressed="false"><span class="bd" style="background:var(--danger)"></span>Deductivas <span class="n">3</span></button>
+        <button aria-pressed="false"><span class="bd" style="background:var(--ink-3)"></span>Sin cambios <span class="n">108</span></button>
+      </div>
+      <div class="spacer"></div>
+      <label class="search">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+        <input type="search" placeholder="Buscar partida o ítem" aria-label="Buscar partida" />
+      </label>
+    </div>
+
+    <div class="tbl-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:132px">Semáforo</th>
+            <th style="width:64px">Ítem</th>
+            <th>Partida</th>
+            <th class="r" style="width:180px">Cantidad</th>
+            <th class="r" style="width:140px">P.U. UF</th>
+            <th class="r" style="width:112px">Δ UF</th>
+            <th class="r" style="width:130px">Δ CLP</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="is-selected" tabindex="0" data-part="03.02.01 · Cable ENE 2×14 AWG">
+            <td><span class="chip chip-ok"><i class="bead"></i>Adicional</span></td>
+            <td class="num dim">03.02.01</td>
+            <td>
+              <div class="cell-title">Cable ENE 2×14 AWG — canalización nueva</div>
+              <div class="cell-sub">Incremento de metraje por addenda, tramo patio norte</div>
+            </td>
+            <td class="r num">1.240,00 → <strong>1.585,00</strong> <span class="pos" style="margin-left:6px">+345,00</span></td>
+            <td class="r num dim">0,633 → 0,633</td>
+            <td class="r num pos">+218,400</td>
+            <td class="r num pos">+256.400.000</td>
+          </tr>
+
+          <tr tabindex="0" data-part="05.01.04 · Tablero N.T. 48 módulos">
+            <td><span class="chip chip-warn"><i class="bead"></i>Modificada</span></td>
+            <td class="num dim">05.01.04</td>
+            <td>
+              <div class="cell-title">Tablero N.T. 48 módulos</div>
+              <div class="cell-sub">Cambio de protecciones MCCB por especificación del cliente</div>
+            </td>
+            <td class="r num">4,00 → 4,00 <span class="dim" style="margin-left:6px">=</span></td>
+            <td class="r num dim">1.842,100 → 1.866,175</td>
+            <td class="r num" style="color:var(--amber)">+96,300</td>
+            <td class="r num" style="color:var(--amber)">+113.000.000</td>
+          </tr>
+
+          <tr tabindex="0" data-part="07.02.10 · Luminaria exterior">
+            <td><span class="chip chip-bad"><i class="bead"></i>Deductiva</span></td>
+            <td class="num dim">07.02.10</td>
+            <td>
+              <div class="cell-title">Luminaria exterior 150 W</div>
+              <div class="cell-sub">Partida anulada — se resuelve con luminaria del contrato original</div>
+            </td>
+            <td class="r num">36,00 → <strong>18,00</strong> <span class="neg" style="margin-left:6px">−18,00</span></td>
+            <td class="r num dim">42,310 → 42,310</td>
+            <td class="r num neg">−146,500</td>
+            <td class="r num neg">−171.900.000</td>
+          </tr>
+
+          <tr tabindex="0" data-part="02.04.07 · Tendido subterráneo">
+            <td><span class="chip chip-ok"><i class="bead"></i>Adicional</span></td>
+            <td class="num dim">02.04.07</td>
+            <td>
+              <div class="cell-title">Tendido subterráneo 15 kV</div>
+              <div class="cell-sub">Ajuste de recorrido (+62 m) solicitado en terreno</div>
+            </td>
+            <td class="r num">480,00 → 542,00 <span class="pos" style="margin-left:6px">+62,00</span></td>
+            <td class="r num dim">3,180 → 3,180</td>
+            <td class="r num pos">+197,160</td>
+            <td class="r num pos">+231.300.000</td>
+          </tr>
+
+          <tr tabindex="0" data-part="09.01.02 · Puesta a tierra">
+            <td><span class="chip"><i class="bead" style="background:var(--ink-3)"></i>Sin cambios</span></td>
+            <td class="num dim">09.01.02</td>
+            <td>
+              <div class="cell-title">Sistema de puesta a tierra</div>
+              <div class="cell-sub">Idéntico a la versión base</div>
+            </td>
+            <td class="r num dim">1,00 → 1,00</td>
+            <td class="r num dim">8.940,500 → 8.940,500</td>
+            <td class="r num dim">0,000</td>
+            <td class="r num dim">0</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Cajón: desglose de recursos de la partida seleccionada -->
+    <div class="drawer open" id="drawer">
+      <button class="drawer-head" id="drawerBtn" aria-expanded="true" aria-controls="drawerBody">
+        <svg class="caret" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        <div>
+          <div class="t">Detalle de recursos · <span class="mono" id="drawerPart">03.02.01 · Cable ENE 2×14 AWG</span></div>
+          <div class="s">Materiales y mano de obra que explican la variación de la partida seleccionada</div>
+        </div>
+        <div class="spacer"></div>
+        <span class="chip chip-ok"><i class="bead"></i>+218,400 UF</span>
+      </button>
+      <div class="drawer-body" id="drawerBody">
+        <table class="mini">
+          <thead>
+            <tr>
+              <th style="width:96px">Código</th>
+              <th>Recurso</th>
+              <th style="width:52px">UD</th>
+              <th class="r" style="width:88px">Q base</th>
+              <th class="r" style="width:88px">Q actual</th>
+              <th class="r" style="width:82px">Δ Q</th>
+              <th class="r" style="width:96px">UF unit.</th>
+              <th class="r" style="width:104px">Δ UF</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td class="num dim">C-0142</td><td class="cell-title">Cable ENE 2×14 AWG THW-2</td><td class="dim">m</td><td class="r num">1.240,00</td><td class="r num">1.585,00</td><td class="r num pos">+345,00</td><td class="r num">0,412</td><td class="r num pos">+142,140</td></tr>
+            <tr><td class="num dim">T-0088</td><td class="cell-title">Termofusible 15 A</td><td class="dim">un</td><td class="r num">24,00</td><td class="r num">30,00</td><td class="r num pos">+6,00</td><td class="r num">2,180</td><td class="r num pos">+13,080</td></tr>
+            <tr><td class="num dim">A-0011</td><td class="cell-title">Canal PVC 40×40 ranurado</td><td class="dim">m</td><td class="r num">310,00</td><td class="r num">396,00</td><td class="r num pos">+86,00</td><td class="r num">1,045</td><td class="r num pos">+89,870</td></tr>
+            <tr><td class="num dim">MO-EL2</td><td class="cell-title">Electricista nivel 2</td><td class="dim">h</td><td class="r num">96,00</td><td class="r num">118,00</td><td class="r num pos">+22,00</td><td class="r num">6,450</td><td class="r num pos">+141,900</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span><i class="bd" style="background:var(--success)"></i> Adicional — incrementa el alcance</span>
+      <span><i class="bd" style="background:var(--amber)"></i> Modificada — cambia cantidad o precio unitario</span>
+      <span><i class="bd" style="background:var(--danger)"></i> Deductiva — reduce o anula el alcance</span>
+      <span><i class="bd" style="background:var(--ink-3)"></i> Sin cambios</span>
+      <div class="spacer"></div>
+      <span>Mostrando 5 de 128 partidas</span>
+    </div>
+  </section>
+
+</main>
+
+<script>
+/* ── Tema claro/oscuro ── */
+const root = document.documentElement, sun = document.getElementById('iconSun'), moon = document.getElementById('iconMoon');
+function setTheme(dark){
+  root.setAttribute('data-theme', dark ? 'dark' : 'light');
+  sun.hidden = dark; moon.hidden = !dark;
+}
+document.getElementById('themeBtn').addEventListener('click', () => {
+  setTheme(root.getAttribute('data-theme') !== 'dark');
+});
+
+/* ── Pestañas ── */
+const tabs = [document.getElementById('tab-v'), document.getElementById('tab-c')];
+const panels = [document.getElementById('panel-v'), document.getElementById('panel-c')];
+function selectTab(i){
+  tabs.forEach((t, k) => {
+    t.setAttribute('aria-selected', k === i);
+    t.tabIndex = k === i ? 0 : -1;
+    panels[k].hidden = k !== i;
+  });
+}
+tabs.forEach((t, i) => t.addEventListener('click', () => selectTab(i)));
+document.querySelectorAll('[data-goto]').forEach(b => b.addEventListener('click', () => selectTab(b.dataset.goto === 'c' ? 1 : 0)));
+tabs.forEach((t, i) => t.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+    e.preventDefault();
+    const n = (i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length;
+    selectTab(n); tabs[n].focus();
+  }
+}));
+
+/* ── Menús desplegables ── */
+const menus = [...document.querySelectorAll('.menu')];
+function closeAll(except){ menus.forEach(m => { if (m !== except) m.classList.remove('open'); }); }
+document.querySelectorAll('[data-menu]').forEach(btn => {
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    const m = document.getElementById(btn.dataset.menu);
+    const willOpen = !m.classList.contains('open');
+    closeAll(m);
+    m.classList.toggle('open', willOpen);
+    btn.setAttribute('aria-expanded', String(willOpen));
+  });
+});
+document.addEventListener('click', () => closeAll());
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAll(); });
+menus.forEach(m => m.addEventListener('click', e => e.stopPropagation()));
+
+/* ── Botones segmentados (filtros) ── */
+document.querySelectorAll('.seg').forEach(seg => {
+  seg.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    seg.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', 'false'));
+    b.setAttribute('aria-pressed', 'true');
+  }));
+});
+
+/* ── Cajón de recursos ── */
+const drawer = document.getElementById('drawer');
+document.getElementById('drawerBtn').addEventListener('click', () => {
+  const open = drawer.classList.toggle('open');
+  document.getElementById('drawerBtn').setAttribute('aria-expanded', String(open));
+});
+
+/* ── Selección de fila del comparador → actualiza el cajón ── */
+document.querySelectorAll('#panel-c tbody tr').forEach(tr => {
+  const pick = () => {
+    document.querySelectorAll('#panel-c tbody tr').forEach(x => x.classList.remove('is-selected'));
+    tr.classList.add('is-selected');
+    document.getElementById('drawerPart').textContent = tr.dataset.part;
+  };
+  tr.addEventListener('click', pick);
+  tr.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); } });
+});
+
+/* ── Deep links: #comparador · #dark (para capturas / compartir) ── */
+const hash = location.hash.replace('#', '').split(/[+,&\s]+/);
+if (hash.includes('dark')) setTheme(true);
+if (hash.includes('comparador')) selectTab(1);
+</script>
+</body>
+</html>

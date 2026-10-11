@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Cierre · Qubi Cost</title>
+<style>
+  :root {
+    --navy: #101c30;
+    --blue: #2563b0;
+    --brand: #1a3b6e;
+    --ink: #101a26;
+    --ink-2: #3c4a5c;
+    --muted: #7b8798;
+    --line: #dde3ea;
+    --line-2: #eef2f6;
+    --canvas: #e7ebf0;
+    --paper: #fff;
+    --wash: #f4f7fb;
+    --ok: #1e7a4b;
+    --font: "Segoe UI", system-ui, sans-serif;
+    --mono: "Cascadia Mono", Consolas, ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { font-family: var(--font); color: var(--ink); background: var(--navy); font-size: 13px; }
+  button, input { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  :focus { outline: none; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+  .app { height: 100%; display: flex; flex-direction: column; background: var(--canvas); }
+
+  .shell {
+    height: 46px; display: flex; align-items: center; gap: 14px;
+    padding: 0 14px; background: var(--navy); color: #eef4fb; flex: none;
+  }
+  .mark {
+    width: 22px; height: 22px; border-radius: 6px; background: var(--blue);
+    display: grid; place-items: center; font-size: 12px; font-weight: 750; color: #fff;
+  }
+  .brand { font-size: 11px; letter-spacing: .12em; font-weight: 750; }
+  .brand span { display: block; letter-spacing: .16em; color: #9eb1c8; font-weight: 650; font-size: 9px; }
+  .shell .proj { font-size: 12px; }
+  .shell .proj small { display: block; color: #9eb1c8; font-size: 9px; letter-spacing: .12em; }
+  .shell .right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+  .shell .uf { color: #9eb1c8; font-size: 12px; }
+  .shell .uf b { color: #fff; font-family: var(--mono); font-weight: 600; }
+  .shell button { height: 28px; padding: 0 11px; border-radius: 8px; font-size: 12px; font-weight: 650; }
+  .ghost { background: transparent; color: #eef4fb; border: 1px solid #244a73; }
+  .solid { background: var(--blue); color: #fff; border: 1px solid var(--blue); }
+
+  .desk {
+    flex: 1; min-height: 0; margin: 14px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    display: flex; flex-direction: column;
+    box-shadow: 0 10px 30px rgba(16, 28, 48, .06);
+  }
+
+  .tape {
+    display: flex; align-items: center; gap: 18px;
+    padding: 12px 16px; border-bottom: 1px solid var(--line-2); flex: none;
+  }
+  .tape h1 { margin: 0; font-size: 15px; font-weight: 700; letter-spacing: -.02em; }
+  .tape .sub { color: var(--muted); font-size: 12px; }
+  .figures { display: flex; gap: 16px; margin-left: 8px; }
+  .figures div { display: flex; flex-direction: column; }
+  .figures span { font-size: 10px; color: var(--muted); letter-spacing: .04em; }
+  .figures b { font-family: var(--mono); font-size: 13px; font-weight: 650; }
+  .figures .ok b { color: var(--ok); }
+  .actions { margin-left: auto; display: flex; gap: 6px; }
+  .textbtn {
+    height: 28px; padding: 0 10px; border-radius: 8px;
+    border: 1px solid transparent; background: transparent; color: var(--ink-2); font-weight: 650; font-size: 12px;
+  }
+  .textbtn:hover { background: var(--wash); }
+  .textbtn.go { background: var(--blue); color: #fff; }
+
+  .cols {
+    flex: 1; min-height: 0;
+    display: grid;
+    grid-template-columns: 232px minmax(0, 1fr) 292px;
+  }
+  .col { min-height: 0; overflow: auto; padding: 14px 16px 18px; }
+  .col + .col { border-left: 1px solid var(--line-2); }
+  .h {
+    margin: 0 0 8px;
+    font-size: 10px; font-weight: 750; letter-spacing: .11em; text-transform: uppercase; color: var(--brand);
+  }
+  .h.gap { margin-top: 18px; }
+
+  .ln {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+    min-height: 28px; font-size: 13px;
+  }
+  .ln em { font-style: normal; color: var(--ink-2); }
+  .ln b { font-family: var(--mono); font-size: 12px; font-weight: 650; }
+  .ln .ok { color: var(--ok); }
+  .ln input.bare {
+    width: 52px; border: 0; background: transparent; text-align: right;
+    font-family: var(--mono); font-size: 12px; font-weight: 650; padding: 2px 0;
+  }
+  .ln input.bare:focus { box-shadow: inset 0 -1.5px 0 var(--blue); }
+
+  .row {
+    display: grid;
+    grid-template-columns: 132px minmax(0, 1fr) 58px 42px 58px;
+    align-items: center;
+    gap: 8px;
+    min-height: 34px;
+    padding: 2px 4px;
+    border-radius: 6px;
+  }
+  .row:hover { background: var(--wash); }
+  .row.on { background: #eef4fc; }
+  .row.drop { background: #e7f0ff; }
+  .who { min-width: 0; }
+  .who strong { display: block; font-size: 13px; font-weight: 650; letter-spacing: -.01em; }
+  .who span { color: var(--muted); font-size: 11px; }
+  .chips { display: flex; gap: 4px; min-width: 0; overflow: hidden; mask-image: linear-gradient(90deg, #000 88%, transparent); }
+  .chip {
+    flex: none; height: 18px; padding: 0 6px; border-radius: 4px;
+    background: #eaf1ff; color: var(--brand); border: 1px solid #d3e2f8;
+    font-size: 10px; font-weight: 650; line-height: 16px; cursor: grab;
+  }
+  .num {
+    width: 100%; border: 0; background: transparent; text-align: right;
+    font-family: var(--mono); font-size: 12px; font-weight: 650; padding: 3px 2px; border-radius: 4px;
+  }
+  .num:hover { background: #fff; }
+  .num:focus, .num.ready { background: #fff; box-shadow: inset 0 0 0 1.5px var(--blue); }
+  .eff { text-align: right; font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--blue); }
+
+  .money {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 46px 108px;
+    align-items: center;
+    gap: 8px;
+    min-height: 26px;
+    font-size: 12px;
+  }
+  .money .n { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .share {
+    height: 4px; border-radius: 99px; background: #e6eef8; overflow: hidden;
+  }
+  .share i { display: block; height: 4px; background: var(--blue); border-radius: 99px; }
+  .money b { font-family: var(--mono); font-size: 12px; font-weight: 650; text-align: right; }
+  .go b { color: var(--ink-2); font-weight: 600; }
+
+  .puntual {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--line-2);
+    color: var(--muted); font-size: 12px;
+  }
+  .puntual input {
+    height: 24px; border: 0; border-bottom: 1px solid transparent; background: transparent; font-size: 12px;
+  }
+  .puntual input:focus { border-bottom-color: var(--blue); }
+  .puntual .code { width: 88px; font-family: var(--mono); }
+  .puntual .desc { width: 140px; }
+  .puntual .pct { width: 36px; text-align: right; font-family: var(--mono); }
+  .link {
+    border: 0; background: transparent; color: var(--blue); font-weight: 700; font-size: 12px; padding: 0;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="shell">
+    <div class="mark">Q</div>
+    <div class="brand">QUBI COST<span>ELECTRICAL</span></div>
+    <div class="proj"><small>PROYECTO</small>PEL032A2026</div>
+    <div class="right">
+      <div class="uf">UF <b>32.926</b></div>
+      <button class="ghost" type="button">Guardar</button>
+      <button class="solid" type="button">Cerrar oferta</button>
+    </div>
+  </header>
+
+  <section class="desk">
+    <div class="tape">
+      <h1>Cierre</h1>
+      <div class="sub">Presentación, costo y gastos en la misma mesa</div>
+      <div class="figures">
+        <div><span>Venta</span><b>$ 2.097.323.560</b></div>
+        <div><span>Costo</span><b>$ 1.344.991.237</b></div>
+        <div><span>Gastos op.</span><b>$ 244.594</b></div>
+        <div class="ok"><span>Margen</span><b>23,7%</b></div>
+      </div>
+      <div class="actions">
+        <button class="textbtn" type="button">Estándar</button>
+        <button class="textbtn" type="button">Típicos</button>
+        <button class="textbtn go" type="button">Aplicar</button>
+      </div>
+    </div>
+
+    <div class="cols">
+      <div class="col">
+        <p class="h">Resultado</p>
+        <div class="ln"><em>Venta</em><b>$ 2.097.323.560</b></div>
+        <div class="ln"><em>Costo directo</em><b>$ 1.344.991.237</b></div>
+        <div class="ln"><em>Gastos operacionales</em><b>$ 244.594</b></div>
+        <div class="ln"><em>Por m²</em><b>2,87 UF</b></div>
+        <div class="ln"><em>Margen</em><b class="ok">23,7%</b></div>
+        <p class="h gap">Recargo</p>
+        <div class="ln"><em>Gastos generales</em><input class="bare" value="14,0" aria-label="Gastos generales" />%</div>
+        <div class="ln"><em>Utilidad</em><input class="bare" value="18,0" aria-label="Utilidad" />%</div>
+        <div class="ln"><em>Valor agregado</em><input class="bare" value="3,0" aria-label="Valor agregado" />%</div>
+      </div>
+
+      <div class="col">
+        <p class="h">Presentación</p>
+        <div id="rows"></div>
+        <div class="puntual">
+          <span>Descuento puntual</span>
+          <input class="code" placeholder="Código" aria-label="Código" />
+          <input class="desc" placeholder="Equipo o material" aria-label="Descripción" />
+          <input class="pct" value="0" aria-label="Porcentaje" />
+          <span>%</span>
+          <button class="link" type="button" id="addP">Agregar</button>
+        </div>
+      </div>
+
+      <div class="col">
+        <p class="h">Materiales</p>
+        <div id="mats"></div>
+        <p class="h gap">Gastos operacionales</p>
+        <div id="gos"></div>
+      </div>
+    </div>
+  </section>
+</div>
+<script>
+const families = [
+  { name: "Materiales", map: "Conductores", factor: 1.2, dcto: 0, chips: ["Conductores"] },
+  { name: "PVC / EPC", map: "Canalización", factor: 5, dcto: 0, chips: ["Abrazaderas", "Artefactos Eléctricos", "Bandejas", "Canalización", "Ductos"] },
+  { name: "Tableros", map: "Tableros", factor: 2, dcto: 0, chips: ["Cajas Eléctricas", "Tableros"] },
+  { name: "Luminarias", map: "Iluminación", factor: 1.3, dcto: 0, chips: ["Iluminación", "Soportería"] },
+  { name: "Equipos", map: "Equipos", factor: 2, dcto: 0, chips: ["Tableros Eléctricos"] },
+  { name: "Varios", map: "Accesorios", factor: 1.3, dcto: 0, chips: ["Accesorios"] },
+  { name: "Artefactos", map: "Enchufes", factor: 1.3, dcto: 0, chips: ["Enchufes", "Protecciones Eléctricas"] },
+  { name: "Protecciones", map: "Protecciones", factor: 1.3, dcto: 0, chips: ["Protecciones", "Varios Eléctricos"] },
+  { name: "Puesta a tierra", map: "PAT", factor: 1.3, dcto: 0, chips: ["Mallas de Tierra", "Puesta a tierra"] }
+];
+const mats = [
+  ["Conductores", 59, "$ 139.780.874"],
+  ["Canalización y ductos", 15, "$ 34.986.786"],
+  ["Cajas eléctricas", 11, "$ 29.482.754"],
+  ["Artefactos eléctricos", 7, "$ 28.175.928"],
+  ["Bandejas", 7, "$ 19.760.813"],
+  ["Soportería", 1, "$ 3.276.872"],
+  ["Mallas de tierra", 1, "$ 1.934.085"],
+  ["Iluminación", 1, "$ 1.026.040"]
+];
+const gos = [
+  ["3.1  Oficina", "$ 82.000"],
+  ["3.2  Arriendos y herramientas", "$ 48.000"],
+  ["3.3  Movilización", "$ 36.594"],
+  ["3.4  Fletes", "$ 28.000"],
+  ["3.5  EPP", "$ 24.000"],
+  ["3.6  Trámites", "$ 26.000"]
+];
+
+const host = document.getElementById("rows");
+let editing = false;
+
+function fmt(n) {
+  return n.toLocaleString("es-CL", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function eff(r) {
+  const f = Math.min(5, Math.max(1, r.factor));
+  const d = Math.min(50, Math.max(0, r.dcto));
+  return f * (1 - d / 100);
+}
+function chip(name, from) {
+  const el = document.createElement("span");
+  el.className = "chip";
+  el.textContent = name;
+  el.draggable = true;
+  el.addEventListener("dragstart", e => {
+    e.dataTransfer.setData("text/plain", JSON.stringify({ name, from }));
+  });
+  return el;
+}
+function render() {
+  host.innerHTML = "";
+  families.forEach((row, i) => {
+    const line = document.createElement("div");
+    line.className = "row";
+    line.dataset.i = i;
+    line.innerHTML = `
+      <div class="who"><strong>${row.name}</strong><span>${row.map}</span></div>
+      <div class="chips"></div>
+      <input class="num" data-i="${i}" data-f="factor" value="${fmt(row.factor)}" aria-label="Factor ${row.name}" />
+      <input class="num" data-i="${i}" data-f="dcto" value="${Math.round(row.dcto)}" aria-label="Descuento ${row.name}" />
+      <div class="eff">${fmt(eff(row))}×</div>`;
+    const box = line.querySelector(".chips");
+    row.chips.forEach(n => box.appendChild(chip(n, i)));
+    host.appendChild(line);
+  });
+  bind();
+}
+function bind() {
+  document.querySelectorAll(".num").forEach(input => {
+    input.addEventListener("focus", () => {
+      editing = false;
+      input.classList.add("ready");
+      input.select();
+      document.querySelectorAll(".row").forEach(r => r.classList.toggle("on", r.dataset.i === input.dataset.i));
+    });
+    input.addEventListener("blur", () => { input.classList.remove("ready"); commit(input); });
+    input.addEventListener("input", () => {
+      if (!editing) {
+        const ch = input.value.slice(-1);
+        input.value = /[0-9]/.test(ch) ? ch : "";
+        editing = true;
+      }
+      paintEff(input);
+    });
+    input.addEventListener("keydown", onKey);
+  });
+  document.querySelectorAll(".row").forEach(line => {
+    line.addEventListener("dragover", e => { e.preventDefault(); line.classList.add("drop"); });
+    line.addEventListener("dragleave", () => line.classList.remove("drop"));
+    line.addEventListener("drop", e => {
+      e.preventDefault();
+      line.classList.remove("drop");
+      const data = JSON.parse(e.dataTransfer.getData("text/plain") || "{}");
+      const to = Number(line.dataset.i);
+      if (!data.name || data.from === to) return;
+      families[data.from].chips = families[data.from].chips.filter(c => c !== data.name);
+      if (!families[to].chips.includes(data.name)) families[to].chips.push(data.name);
+      render();
+    });
+  });
+}
+function paintEff(input) {
+  const i = Number(input.dataset.i);
+  const n = Number(input.value.replace(",", ".").replace(/[^\d.]/g, ""));
+  if (!Number.isFinite(n)) return;
+  if (input.dataset.f === "factor") families[i].factor = Math.min(5, Math.max(1, n));
+  else families[i].dcto = Math.min(50, Math.max(0, n));
+  input.closest(".row").querySelector(".eff").textContent = fmt(eff(families[i])) + "×";
+}
+function commit(input) {
+  paintEff(input);
+  const i = Number(input.dataset.i);
+  input.value = input.dataset.f === "factor" ? fmt(families[i].factor) : String(Math.round(families[i].dcto));
+}
+function onKey(e) {
+  const list = [...document.querySelectorAll(".num")];
+  const idx = list.indexOf(e.target);
+  const col = idx % 2;
+  let next = -1;
+  if (e.key === "F2") { editing = true; e.target.classList.remove("ready"); return; }
+  if (e.key === "ArrowDown" || e.key === "Enter") next = idx + 2;
+  else if (e.key === "ArrowUp") next = idx - 2;
+  else if (e.key === "ArrowRight" && !editing) next = idx + 1;
+  else if (e.key === "ArrowLeft" && !editing) next = idx - 1;
+  else if (e.key === "Tab") { next = e.shiftKey ? idx - 1 : idx + 1; }
+  else return;
+  e.preventDefault();
+  commit(e.target);
+  if (next >= 0 && next < list.length) list[next].focus();
+  else col;
+}
+
+document.getElementById("mats").innerHTML = mats.map(([n, p, m]) =>
+  `<div class="money"><span class="n">${n}</span><span class="share"><i style="width:${p}%"></i></span><b>${m}</b></div>`
+).join("");
+document.getElementById("gos").innerHTML = gos.map(([n, m]) =>
+  `<div class="money go"><span class="n">${n}</span><span></span><b>${m}</b></div>`
+).join("");
+
+let extra = 0;
+document.getElementById("addP").onclick = () => {
+  extra += 1;
+  const line = document.createElement("div");
+  line.className = "puntual";
+  line.innerHTML = `<span>Descuento ${extra}</span><input class="code" placeholder="Código" /><input class="desc" placeholder="Equipo o material" /><input class="pct" value="0" /><span>%</span>`;
+  document.querySelector(".puntual").after(line);
+};
+
+render();
+</script>
+</body>
+</html>
