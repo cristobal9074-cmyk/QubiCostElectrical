@@ -12,7 +12,10 @@ public sealed class ProjectAuditRecorder
     {
         this.session = session ?? throw new ArgumentNullException(nameof(session));
         session.Changed += OnSessionChanged;
-        session.Saved += OnSessionSaved;
+        // "Guardado" se registra en Saving (antes del snapshot), no en Saved (después
+        // de escribir): grabarla en Saved dejaba la entrada solo en memoria y nunca
+        // llegaba al .qce.
+        session.Saving += OnSessionSaving;
     }
 
     public void SetUser(CollaborationUserContext context)
@@ -105,7 +108,7 @@ public sealed class ProjectAuditRecorder
         });
     }
 
-    private void OnSessionSaved(object? sender, ProjectSessionChangedEventArgs e)
+    private void OnSessionSaving(object? sender, ProjectSessionChangedEventArgs e)
     {
         if (!enabled)
             return;

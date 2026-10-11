@@ -153,6 +153,17 @@ public sealed partial class BudgetProjectSession
         MarkDirty(string.IsNullOrWhiteSpace(scope) ? "project_info" : scope);
     }
 
+    /// <summary>
+    /// Anuncia que se va a persistir el proyecto. Debe invocarse ANTES de crear el snapshot:
+    /// los suscriptores (p.ej. la auditoría) escriben sobre <c>ProjectInfo</c> que aún no se ha serializado.
+    /// </summary>
+    public void NotifySaving()
+    {
+        TouchScope("saving", markDirty: false);
+        var args = new ProjectSessionChangedEventArgs(ProjectSessionChangeKind.Saving, "saving", "Proyecto por persistir", IsDirty);
+        Saving?.Invoke(this, args);
+    }
+
     public void MarkSaved()
     {
         dirtyTracker.MarkSaved();

@@ -18,6 +18,7 @@ public enum ProjectSessionChangeKind
     Versiones,
     QtyHeaders,
     Zonas,
+    Saving,
     Saved,
     Reset
 }
@@ -67,6 +68,12 @@ public sealed partial class BudgetProjectSession
     public event EventHandler<ProjectSessionChangedEventArgs>? ApuChanged;
     public event EventHandler<ProjectSessionChangedEventArgs>? VersionsChanged;
     public event EventHandler<ProjectSessionChangedEventArgs>? Saved;
+
+    /// <summary>
+    /// Se dispara justo antes de tomar el snapshot que se persiste a disco, no después.
+    /// Lo que se registre aquí entra en el archivo; lo que se registre en <see cref="Saved"/> llega tarde.
+    /// </summary>
+    public event EventHandler<ProjectSessionChangedEventArgs>? Saving;
 
     public ProjectFileData Data
     {

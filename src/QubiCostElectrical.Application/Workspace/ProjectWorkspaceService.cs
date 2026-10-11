@@ -97,6 +97,10 @@ public sealed class ProjectWorkspaceService : IProjectWorkspaceService
             collaborationLock?.TryRefreshLease(path);
         }
 
+        // Aviso previo al snapshot: los suscriptores (auditoría) añaden entradas a
+        // ProjectInfo que deben viajar al .qce. Hacerlo después de escribir se pierde.
+        Session.NotifySaving();
+
         var snapshot = Session.CreateSnapshot();
         snapshot.Proyecto.FechaModificacion = AppClock.Now;
 
