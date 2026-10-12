@@ -87,7 +87,7 @@
                 <TextBlock Text="Alt + V" FontFamily="Consolas, Segoe UI Mono, monospace" FontWeight="Bold" FontSize="10.5" Foreground="{DynamicResource Brush.BlueDark}" />
               </Border>
             </StackPanel>
-            <TextBlock Text="Precios base de materiales y mano de obra sincronizados con la cubicación y el banco general."
+            <TextBlock Text="Precios base de materiales y mano de obra sincronizados con la cubicación. Lo que crees aquí queda solo en este proyecto."
                        FontSize="11.5" Foreground="{DynamicResource Brush.Muted}" Margin="0,2,0,0" />
           </StackPanel>
         </StackPanel>
@@ -97,11 +97,26 @@
       <StackPanel Grid.Row="1" Margin="0,0,0,12">
         <DockPanel LastChildFill="True" Margin="0,0,0,10">
           <!-- Botón Agregar Material a la derecha -->
-          <Button DockPanel.Dock="Right" Style="{StaticResource Button.Primary}" Margin="10,0,0,0" Padding="14,7"
-                  Click="OnAgregarClick">
+          <Button DockPanel.Dock="Right" Style="{StaticResource Button.Secondary}" Margin="10,0,0,0" Padding="14,7"
+                  Click="OnAgregarClick"
+                  ToolTip="Formulario completo: código, proveedor y fecha.">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
               <TextBlock Text="+" FontSize="13" FontWeight="Bold" Margin="0,0,6,0" VerticalAlignment="Center" />
               <TextBlock Text="Agregar material" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" />
+            </StackPanel>
+          </Button>
+
+          <!-- Alta rápida (Ctrl++): familia + precio + M.O. por fórmula, sin escribir código -->
+          <Button DockPanel.Dock="Right" Style="{StaticResource Button.Primary}" Margin="10,0,0,0" Padding="14,7"
+                  Click="OnAltaRapidaClick"
+                  ToolTip="Alta rápida de material (Ctrl++): familia, precio y M.O. automática (Material × % × FA). El código se genera solo.">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <TextBlock Text="⚡" FontSize="13" Margin="0,0,6,0" VerticalAlignment="Center" />
+              <TextBlock Text="Alta rápida" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" />
+              <Border Background="#1E293B" CornerRadius="4" Padding="4,1" Margin="8,0,0,0" VerticalAlignment="Center">
+                <TextBlock Text="Ctrl++" FontFamily="Consolas, Segoe UI Mono, monospace" FontSize="9.5"
+                           FontWeight="Bold" Foreground="#BFDBFE" />
+              </Border>
             </StackPanel>
           </Button>
 
@@ -353,6 +368,9 @@
       <DockPanel Grid.Row="3" Margin="0,14,0,0" LastChildFill="False">
         <!-- Atajos de teclado en badges KBD -->
         <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
+          <Border Style="{StaticResource KbdBadge}"><TextBlock Text="Ctrl++" Style="{StaticResource KbdText}" /></Border>
+          <TextBlock Text="Alta rápida" FontSize="11" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" Margin="0,0,12,0" />
+
           <Border Style="{StaticResource KbdBadge}"><TextBlock Text="Ctrl+B" Style="{StaticResource KbdText}" /></Border>
           <TextBlock Text="Buscar" FontSize="11" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" Margin="0,0,12,0" />
 

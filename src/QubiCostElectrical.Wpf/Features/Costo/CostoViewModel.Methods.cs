@@ -59,7 +59,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         RemoveNegotiatedDiscountCommand = new RelayCommand<NegotiatedDiscountVm>(RemoveNegotiatedDiscount, _ => CanEdit);
         AddStaffingRoleCommand = new RelayCommand(AddStaffingRole, () => CanEdit);
         RemoveStaffingRoleCommand = new RelayCommand<StaffingRoleVm>(RemoveStaffingRole, _ => CanEdit);
-        MoInstalacion = new(session, () => CanEdit, () => MoDirectaRows, RunSuppressed, RefreshCostOnly);
+        MoInstalacion = new(session, () => CanEdit, () => MoDirectaRows, RunSuppressed, RefreshCostOnly, priceBank);
         ClosingPolicySection = new ClosingPolicySectionVm(CommitClosingPolicyType, CommitClosingPolicyParam);
         NegotiationSimulator = new CommercialNegotiationVm(ApplyNegotiatedTargetPrice, () => CanEdit);
         EnsureCoefFactors();
@@ -118,7 +118,28 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
     public string FamDeltaLabel { get => famDeltaLabel; private set => SetProperty(ref famDeltaLabel, value); }
     public string ChainIvaLabel { get => chainIvaLabel; private set => SetProperty(ref chainIvaLabel, value); }
     public string ChainTotalLabel { get => chainTotalLabel; private set => SetProperty(ref chainTotalLabel, value); }
-    public string Currency { get => currency; private set => SetProperty(ref currency, value); }
+    public string Currency
+    {
+        get => currency;
+        private set
+        {
+            if (SetProperty(ref currency, value))
+            {
+                OnPropertyChanged(nameof(ShowCurrencyColumn));
+                OnPropertyChanged(nameof(CoefCostoHeader));
+                OnPropertyChanged(nameof(CoefVentaHeader));
+            }
+        }
+    }
+
+    /// <summary>Columna de moneda extranjera del análisis: se oculta cuando el proyecto está en CLP.</summary>
+    public bool ShowCurrencyColumn => ShowsUfFigures;
+
+    /// <summary>Encabezado de la columna de costo por familia, en la moneda del proyecto.</summary>
+    public string CoefCostoHeader => $"COSTO {Currency}";
+
+    /// <summary>Encabezado de la columna de venta por familia, en la moneda del proyecto.</summary>
+    public string CoefVentaHeader => $"VENTA {Currency}";
     public string CurrencyColumnHeader { get => currencyColumnHeader; private set => SetProperty(ref currencyColumnHeader, value); }
 
     public string TotalMoDirectaLabel { get => totalMoDirectaLabel; private set => SetProperty(ref totalMoDirectaLabel, value); }
@@ -353,8 +374,6 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         finally { suppressCoefRefresh = false; }
     }
 
-
-
     public ObservableCollection<CostoRowVm> CostRows { get; } = new();
     public ObservableCollection<CostoRowVm> OrigenesDirectos { get; } = new();
     public ObservableCollection<CostoGrupoVm> CostGroups { get; } = new();
@@ -550,8 +569,8 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
                     MaterialesCount = row.Count,
                     TotalClp = row.Clp,
                     TotalUf = row.Uf,
-                    TotalLabel = CurrencyFormat.Clp(row.Clp),
-                    TotalMonedaLabel = $"{row.Uf:N2} UF",
+                    TotalLabel = MoneyPrimary(row.Clp),
+                    TotalMonedaLabel = MoneyPair(row.Clp).Secondary,
                     CountLabel = $"{row.Cant:N2} {row.Unidad}".Trim(),
                     ShareLabel = (share * 100m).ToString("0", CultureInfo.CurrentCulture) + "%",
                     Share = (double)share,
@@ -606,6 +625,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
 
     private void RefreshMoSection(ProjectFileData data, decimal valorUf)
     {
+        _ = valorUf;
         MoDirectaRows.Clear();
         MoIndirectaRows.Clear();
 
@@ -634,10 +654,10 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         }
 
         var totals = projection.Totals;
-        TotalMoDirectaLabel = CurrencyFormat.Clp(totals.DirectaClp);
-        TotalMoIndirectaLabel = CurrencyFormat.Clp(totals.IndirectaClp);
-        TotalMoLabel = CurrencyFormat.Clp(totals.TotalClp);
-        TotalMoSubLabel = valorUf > 0 ? $"{totals.TotalClp / valorUf:N2} UF" : "";
+        TotalMoDirectaLabel = MoneyPrimary(totals.DirectaClp);
+        TotalMoIndirectaLabel = MoneyPrimary(totals.IndirectaClp);
+        TotalMoLabel = MoneyPrimary(totals.TotalClp);
+        TotalMoSubLabel = MoneyPair(totals.TotalClp).Secondary;
         MoDirectaPct = totals.DirectaPct;
         MoIndirectaPct = totals.IndirectaPct;
         TotalMoDirectaDotacion = totals.DirectaDotacion;
@@ -743,13 +763,12 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
     private void UpdateGoTotals()
     {
         var totalGoClp = GastosOperacionales.Sum(r => r.MontoClp);
-        var totalGoUf = GastosOperacionales.Sum(r => r.Uf);
         foreach (var cat in GastosOperacionales)
             cat.Pct = totalGoClp > 0 ? cat.MontoClp / totalGoClp * 100m : 0m;
 
-        TotalGoLabel = CurrencyFormat.Clp(totalGoClp);
-        TotalGoUfLabel = $"{totalGoUf:N2} UF";
-        TotalGoUfSubLabel = $"{totalGoUf:N2} UF";
+        TotalGoLabel = MoneyPrimary(totalGoClp);
+        TotalGoUfLabel = MoneyPair(totalGoClp).Secondary;
+        TotalGoUfSubLabel = MoneyPair(totalGoClp).Secondary;
         GoCategoriaCountLabel = $"{GastosOperacionales.Count} categorías";
         GoItemCountLabel = GastosOperacionales.Sum(c => c.Items.Count).ToString();
         GoComposeHint = totalGoClp > 0 ? "por categoría" : "sin montos aún";
@@ -828,7 +847,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         if (mesesObra <= 0)
             mesesObra = 12;
 
-        var vm = new ViaticosProfesionalViewModel(currentValorUf, picoDir, rolesInd, mesesObra);
+        var vm = new ViaticosProfesionalViewModel(currentValorUf, picoDir, rolesInd, mesesObra, ocultarEquivalenciaUf: !ShowsUfFigures);
         vm.SyncFromMoRequested = () =>
         {
             var d = session.Data;
@@ -950,17 +969,21 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         grupo.IsExpanded = !grupo.IsExpanded;
     }
 
-    private CostoRowVm CreateCostRow(string label, decimal clp, string explanation, decimal valorUf, string kind, string participacion = "", bool enInforme = true, bool tieneOrigen = false, string origenTexto = "")
+    private CostoRowVm CreateCostRow(string label, decimal clp, string explanation, decimal valorUf, string kind, string participacion = "", bool enInforme = true, bool tieneOrigen = false, string origenTexto = "", double share = 0d, string seccion = "directo")
     {
         decimal uf = PriceConversion.ClpToUf(clp, valorUf);
         return new CostoRowVm
         {
             Concepto = label,
             ValorUf = uf,
+            CurrencyFigure = MoneyPrimary(clp),
+            ShowCurrencyColumn = ShowsUfFigures,
             ValorMoneda = clp,
             Explicacion = explanation,
             Kind = kind,
             ParticipacionLabel = participacion,
+            Share = share,
+            Seccion = seccion,
             IsEnInforme = enInforme,
             TieneOrigen = tieneOrigen,
             OrigenTexto = origenTexto,
@@ -984,7 +1007,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         {
             Titulo = titulo,
             ClpLabel = header.ValorMonedaLabel,
-            UfLabel = header.UfFigura,
+            UfLabel = header.CurrencyFigure,
             Explicacion = header.Explicacion,
             IsExpanded = firstLoad ? expandOnFirst : openTitles.Contains(titulo)
         };
@@ -1512,28 +1535,34 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
     private void UpdateSummaryKpis(CostBreakdown cost, ProjectInfoRow project, decimal valorUf)
     {
         decimal directoClp = cost.CostoDirectoClp;
-        decimal directoUf = PriceConversion.ClpToUf(directoClp, valorUf);
         decimal ventaClp = cost.TotalVentaClp;
-        decimal ventaUf = PriceConversion.ClpToUf(ventaClp, valorUf);
         decimal m2Clp = project.MetrosCuadrados > 0 ? ventaClp / project.MetrosCuadrados : 0m;
 
-        CostoDirectoLabel = $"$ {directoClp:N0}";
-        CostoDirectoSubLabel = $"{directoUf:N2} UF";
-        TotalVentaLabel = $"$ {ventaClp:N0}";
-        TotalVentaSubLabel = $"{ventaUf:N2} UF";
+        bool enClp = !ShowsUfFigures;
+        var costoPair = MoneyPair(directoClp);
+        var ventaPair = MoneyPair(ventaClp);
+        CostoDirectoSubLabel = costoPair.Primary;
+        CostoDirectoLabel = costoPair.Secondary;
+        TotalVentaSubLabel = ventaPair.Primary;
+        TotalVentaLabel = ventaPair.Secondary;
         MargenLabel = $"{cost.MargenRealPct:N1} %";
         ValorUfDiaLabel = valorUf.ToString("N0", CultureInfo.CurrentCulture);
-        UfM2Label = $"{PriceConversion.ClpToUf(m2Clp, valorUf):N2} UF/m²";
-        UfM2SubLabel = project.MetrosCuadrados > 0 ? $"$ {m2Clp:N0}/m²" : "Sin m²";
-        ResumenFooterText = $"Costo ejecución $ {directoClp:N0} ({directoUf:N2} UF) · Total venta $ {ventaClp:N0} ({ventaUf:N2} UF) · Margen {cost.MargenRealPct:N1}%";
+        UfM2Label = enClp
+            ? $"$ {m2Clp:N0}/m²"
+            : $"{PriceConversion.ClpToUf(m2Clp, valorUf):N2} UF/m²";
+        UfM2SubLabel = project.MetrosCuadrados > 0
+            ? (enClp ? "Total venta / m²" : $"$ {m2Clp:N0}/m²")
+            : "Sin m²";
+        ResumenFooterText = enClp
+            ? $"Costo ejecución $ {directoClp:N0} · Total venta $ {ventaClp:N0} · Margen {cost.MargenRealPct:N1}%"
+            : $"Costo ejecución {MoneyText(directoClp)} · Total venta {MoneyText(ventaClp)} · Margen {cost.MargenRealPct:N1}%";
         NegotiationSimulator.UpdateBase(directoClp, ventaClp, valorUf);
+        Tabs.Update(cost, project, Familias, MoneyPrimary, clp => MoneyPair(clp).Secondary);
     }
-
-    private static string Clp(decimal value)
-        => $"$ {decimal.Round(value, 0, MidpointRounding.AwayFromZero):N0}";
 
     private void RefreshFerreteriaFamilias(CostBreakdown cost, ProjectFileData data, ProjectInfoRow project, decimal valorUf)
     {
+        _ = valorUf;
         decimal pct = project.FerreteriaPct;
         decimal baseEngine = cost.MaterialesUf - cost.FerreteriaUf;
         var codeToFamily = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -1572,11 +1601,11 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
             decimal ferr = pair.Value * pct / 100m;
             totalMat += pair.Value;
             totalFerr += ferr;
-            FerreteriaFamilias.Add(LineaFerreteria(pair.Key, pair.Value, ferr, valorUf, total: false));
+            FerreteriaFamilias.Add(LineaFerreteria(pair.Key, pair.Value, ferr, total: false));
         }
 
         if (FerreteriaFamilias.Count > 0)
-            FerreteriaFamilias.Add(LineaFerreteria("Total", totalMat, totalFerr, valorUf, total: true));
+            FerreteriaFamilias.Add(LineaFerreteria("Total", totalMat, totalFerr, total: true));
 
         FerreteriaPopupTitulo = $"Ferretería {pct:N1} %";
         FerreteriaPopupNota = project.FerreteriaActiva
@@ -1584,14 +1613,14 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
             : "Porcentaje sobre los materiales de cada familia. Está apagada: todavía no suma al costo.";
     }
 
-    private static FerreteriaFamiliaVm LineaFerreteria(string familia, decimal materiales, decimal ferreteria, decimal valorUf, bool total)
+    private FerreteriaFamiliaVm LineaFerreteria(string familia, decimal materiales, decimal ferreteria, bool total)
         => new()
         {
             Familia = familia,
-            MaterialesLabel = Clp(materiales),
-            MaterialesUfLabel = $"{PriceConversion.ClpToUf(materiales, valorUf):N2} UF",
-            FerreteriaLabel = Clp(ferreteria),
-            FerreteriaUfLabel = $"{PriceConversion.ClpToUf(ferreteria, valorUf):N2} UF",
+            MaterialesLabel = MoneyPrimary(materiales),
+            MaterialesUfLabel = MoneyPair(materiales).Secondary,
+            FerreteriaLabel = MoneyPrimary(ferreteria),
+            FerreteriaUfLabel = MoneyPair(ferreteria).Secondary,
             IsTotal = total
         };
 
@@ -1609,15 +1638,24 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
             var markup = ParseCoef(factor.ValueText, 1m);
             var discount = ParseCoef(factor.DiscountText, 0m);
             var ventaUf = costoUf * ExcelCostosBridge.PresentationFactor(markup, discount);
-            factor.SetPresentation(costoUf, ventaUf, hit?.Share ?? 0d);
+            factor.SetPresentation(
+                costoUf,
+                ventaUf,
+                hit?.Share ?? 0d,
+                costoUf > 0m ? MoneyPrimary(PriceConversion.UfToClp(costoUf, currentValorUf)) : null,
+                costoUf > 0m ? MoneyPrimary(PriceConversion.UfToClp(ventaUf, currentValorUf)) : null);
             costo += costoUf;
             venta += ventaUf;
         }
 
-        FamCostoLabel = costo > 0m ? costo.ToString("N2", CultureInfo.CurrentCulture) + " UF" : "—";
-        FamVentaLabel = venta > 0m ? venta.ToString("N2", CultureInfo.CurrentCulture) + " UF" : "—";
+        var costoClp = PriceConversion.UfToClp(costo, currentValorUf);
+        var ventaClp = PriceConversion.UfToClp(venta, currentValorUf);
+        FamCostoLabel = costo > 0m ? MoneyPrimary(costoClp) : "—";
+        FamVentaLabel = venta > 0m ? MoneyPrimary(ventaClp) : "—";
+        var delta = MoneyPair(ventaClp - costoClp);
+        var deltaBase = ventaClp - costoClp >= 0m ? $"+{delta.Primary}" : delta.Primary;
         FamDeltaLabel = costo > 0m
-            ? (venta - costo).ToString("+0.00;-0.00;0.00", CultureInfo.CurrentCulture) + " UF"
+            ? (delta.Secondary.Length == 0 ? deltaBase : $"{deltaBase} ({delta.Secondary})")
             : "—";
     }
 
@@ -1634,7 +1672,12 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         // El motor ya aplicó la política sobre el breakdown; leer su resultado en vez de recalcular.
         var result = cost.ClosingPolicyResult ?? ClosingPolicyEngine.Apply(cost, selection);
         var svc = currencySvc;
-        ClosingPolicySection.SetResult(result, svc.FormatMoneyFromClp(result.VentaFinalClp, moneda, valorUf, tipoCambio));
+        var ventaPair = svc.FormatMoneyPairFromClp(result.VentaFinalClp, moneda, valorUf, tipoCambio);
+        var margenPair = svc.FormatMoneyPairFromClp(result.MargenClp, moneda, valorUf, tipoCambio);
+        var margenLabel = margenPair.Secondary.Length == 0
+            ? $"{margenPair.Primary} · {result.MargenPct:N1}%"
+            : $"{margenPair.Primary} ({margenPair.Secondary}) · {result.MargenPct:N1}%";
+        ClosingPolicySection.SetResult(result, ventaPair.Primary, ventaPair.Secondary, margenLabel);
         ClosingPolicySection.SetSafeguards(selection, cost.CostoDirectoClp);
     }
 
@@ -1709,7 +1752,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
 
         foreach (var line in CostoBreakdownLineBuilder.BuildLines(cost, project))
         {
-            var enInforme = !line.Label.StartsWith("UF / m", StringComparison.Ordinal);
+            var enInforme = !CostoBreakdownLineBuilder.IsMetroLine(line.Label);
             if (!sawCost && !openedComp && line.Kind == "regular" && line.AmountUf != 0m)
             {
                 rows.Add(InformeSection("Composición del costo de ejecución"));
@@ -1722,11 +1765,9 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
                 openedCierre = true;
             }
 
-            var share = enInforme && ventaBase != 0m
-                ? $"{line.AmountUf / ventaBase * 100m:N1} %"
-                : "";
+            var share = enInforme && ventaBase != 0m ? $"{line.AmountUf / ventaBase * 100m:N1} %" : "";
             var esFerreteria = line.Label.StartsWith("Ferretería", StringComparison.Ordinal);
-            var row = CreateCostRow(line.Label, line.AmountUf, line.Explanation, valorUf, line.Kind, share, enInforme, esFerreteria);
+            var row = CreateCostRow(line.Label, line.AmountUf, line.Explanation, valorUf, line.Kind, share, enInforme, esFerreteria, "", enInforme && ventaBase != 0m ? (double)(line.AmountUf / ventaBase) : 0d, sawCost ? "cierre" : "directo");
             rows.Add(row);
             if (!sawCost && line.Kind == "regular" && !row.IsQuiet)
                 OrigenesDirectos.Add(row);
@@ -1737,7 +1778,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
                 continue;
             }
 
-            if (line.Label.StartsWith("UF / m", StringComparison.Ordinal))
+            if (CostoBreakdownLineBuilder.IsMetroLine(line.Label))
             {
                 metro = row;
                 continue;
@@ -1781,7 +1822,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
 
         VentaCierre = venta;
         UfMetroCierre = metro;
-        ChainIvaLabel = rows.FirstOrDefault(r => r.Concepto == "IVA")?.ValorUfLabel ?? "—";
+        ChainIvaLabel = rows.FirstOrDefault(r => r.Concepto == "IVA") is { } iva ? MoneyText(iva.ValorMoneda) : "—";
         ChainTotalLabel = venta?.ValorMonedaLabel is { Length: > 0 } clp ? clp : "—";
     }
 

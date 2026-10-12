@@ -107,4 +107,30 @@ public sealed class CurrencyConversionServiceTests
         Assert.Contains("UF", result);
         Assert.DoesNotContain("CLP", result);
     }
+
+    [Fact]
+    public void FormatMoneyPairFromClp_Clp_HasNoSecondary_SoNeverShowsUf()
+    {
+        var (primary, secondary) = _service.FormatMoneyPairFromClp(1_000_000m, "CLP", 3600m, 900m);
+        Assert.StartsWith("$", primary);
+        Assert.DoesNotContain("UF", primary);
+        Assert.Equal("", secondary);
+    }
+
+    [Fact]
+    public void FormatMoneyPairFromClp_Uf_ShowsUfPrimaryAndClpSecondary()
+    {
+        var (primary, secondary) = _service.FormatMoneyPairFromClp(36_000m, "UF", 3600m, 900m);
+        Assert.Contains("UF", primary);
+        Assert.StartsWith("$", secondary);
+        Assert.DoesNotContain("UF", secondary);
+    }
+
+    [Fact]
+    public void FormatMoneyPairFromClp_Usd_ShowsUsdPrimaryAndClpSecondary()
+    {
+        var (primary, secondary) = _service.FormatMoneyPairFromClp(90_000m, "USD", 3600m, 900m);
+        Assert.StartsWith("US$", primary);
+        Assert.StartsWith("$", secondary);
+    }
 }

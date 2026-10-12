@@ -9,9 +9,12 @@ public partial class QuickAddMaterialDialog : Window
 {
     public MaterialRow? Result { get; private set; }
 
-    public QuickAddMaterialDialog(string? codigo = null, string? descripcion = null, string? unidad = null, string? contexto = null)
+    private readonly decimal valorUfClp;
+
+    public QuickAddMaterialDialog(string? codigo = null, string? descripcion = null, string? unidad = null, string? contexto = null, decimal valorUfClp = 0m)
     {
         InitializeComponent();
+        this.valorUfClp = valorUfClp > 0m ? valorUfClp : PriceConversion.DefaultValorUfClp;
         CodigoBox.Text = codigo ?? "";
         DescripcionBox.Text = descripcion ?? "";
         UnidadBox.Text = string.IsNullOrWhiteSpace(unidad) ? "UN" : unidad;
@@ -37,23 +40,27 @@ public partial class QuickAddMaterialDialog : Window
             return;
         }
 
-        if (!decimal.TryParse(MatUfBox.Text.Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out var matUf))
-            matUf = 0m;
-        if (!decimal.TryParse(MoUfBox.Text.Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out var moUf))
-            moUf = 0m;
+        if (!decimal.TryParse(MatClpBox.Text.Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal matClp))
+            matClp = 0m;
+        if (!decimal.TryParse(MoClpBox.Text.Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal moClp))
+            moClp = 0m;
 
-        Result = new MaterialRow
-        {
-            Codigo = codigo,
-            Descripcion = DescripcionBox.Text.Trim(),
-            Unidad = string.IsNullOrWhiteSpace(UnidadBox.Text) ? "UN" : UnidadBox.Text.Trim(),
-            Categoria = string.IsNullOrWhiteSpace(CategoriaBox.Text) ? "Material" : CategoriaBox.Text.Trim(),
-            MatUf = matUf,
-            MoUf = moUf,
-            FechaPrecio = DateTime.Today,
-            UltimaActualizacionPrecio = AppClock.Now
-        };
+        // El catálogo de materiales se ingresa y persiste SIEMPRE en pesos chilenos
+        // (MatClp/MoClp); MatUf/MoUf es un valor derivado con la UF vigente, igual que en el
+        // Banco de Precios. Antes este diálogo escribía directo en MatUf/MoUf y dejaba MatClp=0,
+        // por lo que el material aplicado a la cubicación quedaba con precio $0.
+        var result = new MaterialRow();
+        result.Codigo = codigo;
+        result.Descripcion = DescripcionBox.Text.Trim();
+        result.Unidad = string.IsNullOrWhiteSpace(UnidadBox.Text) ? "UN" : UnidadBox.Text.Trim();
+        result.Categoria = string.IsNullOrWhiteSpace(CategoriaBox.Text) ? "Material" : CategoriaBox.Text.Trim();
+        result.MatClp = matClp;
+        result.MoClp = moClp;
+        result.FechaPrecio = DateTime.Today;
+        result.UltimaActualizacionPrecio = AppClock.Now;
+        result.RecalcularUf(valorUfClp);
 
+        Result = result;
         DialogResult = true;
     }
 

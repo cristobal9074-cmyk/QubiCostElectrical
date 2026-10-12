@@ -52,4 +52,44 @@ public sealed class ClosingPolicySectionVmTests
 
         Assert.Equal(150_000_000m, commits.Single(c => c.Param == nameof(ClosingPolicySelection.TargetPriceClp)).Value);
     }
+
+    [Fact]
+    public void SetResult_UsesProvidedMoneyLabels_SoClpProjectNeverShowsUf()
+    {
+        var vm = Make(out _);
+        var result = new ClosingPolicyResult
+        {
+            VentaFinalClp = 12_000_000m,
+            CostoProyectoClp = 10_500_000m,
+            MargenClp = 1_500_000m,
+            MargenPct = 12.5m
+        };
+
+        // La pantalla Costo entrega las etiquetas ya formateadas según MonedaPresupuesto.
+        vm.SetResult(result, "$ 12.000.000", "", "$ 1.500.000 · 12,5%");
+
+        Assert.Equal("$ 12.000.000", vm.VentaFinalLabel);
+        Assert.Equal("", vm.VentaFinalSubLabel);
+        Assert.Equal("$ 1.500.000 · 12,5%", vm.MargenLabel);
+        Assert.DoesNotContain("UF", vm.VentaFinalLabel + vm.VentaFinalSubLabel + vm.MargenLabel, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void SetResult_UfProject_KeepsUfPrimaryAndPesoReference()
+    {
+        var vm = Make(out _);
+        var result = new ClosingPolicyResult
+        {
+            VentaFinalClp = 12_000_000m,
+            CostoProyectoClp = 10_500_000m,
+            MargenClp = 1_500_000m,
+            MargenPct = 12.5m
+        };
+
+        vm.SetResult(result, "312,50 UF", "$ 12.000.000", "39,06 UF ($ 1.500.000) · 12,5%");
+
+        Assert.Equal("312,50 UF", vm.VentaFinalLabel);
+        Assert.Equal("$ 12.000.000", vm.VentaFinalSubLabel);
+        Assert.Equal("39,06 UF ($ 1.500.000) · 12,5%", vm.MargenLabel);
+    }
 }

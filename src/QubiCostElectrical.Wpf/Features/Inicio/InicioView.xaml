@@ -308,6 +308,37 @@
                           Margin="0,2,0,0" />
                         </StackPanel>
                     </Border>
+
+                    <!-- Cifras de contexto del equipo: resumen de los proyectos listados -->
+                    <StackPanel Margin="0,22,0,0"
+                                Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}}">
+                        <DockPanel Margin="0,0,0,10">
+                            <TextBlock Text="ESTADO DE LOS PROYECTOS DE ESTE EQUIPO" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderLabel}" />
+                            <TextBlock Text="Clasificación por etapa del presupuesto" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.Ink3}" HorizontalAlignment="Right" />
+                        </DockPanel>
+
+                        <ItemsControl ItemsSource="{Binding QuickSummaryCards}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <UniformGrid Columns="4" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Style="{StaticResource LandingMetricCard}" Margin="0,0,8,0">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Title}" FontSize="{StaticResource Font.Size.xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink3}" TextTrimming="CharacterEllipsis" />
+                                            <DockPanel Margin="0,6,0,2">
+                                                <Border DockPanel.Dock="Left" Width="3" CornerRadius="2" Background="{Binding AccentBrush}" Margin="0,4,9,4" />
+                                                <TextBlock Text="{Binding Value}" FontSize="{StaticResource Font.Size.2xl}" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" />
+                                            </DockPanel>
+                                            <TextBlock Text="{Binding Caption}" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.Muted}" TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
                 </StackPanel>
 
                 <!-- Galería de Plantillas Rápidas SEC / RIC -->

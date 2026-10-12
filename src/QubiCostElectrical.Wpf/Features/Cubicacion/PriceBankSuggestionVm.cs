@@ -5,7 +5,7 @@ namespace QubiCostElectrical.Wpf.Features.Cubicacion;
 
 public sealed class PriceBankSuggestionVm
 {
-    public PriceBankEntry Source { get; }
+    public PriceBankEntry? Source { get; }
 
     public string Codigo { get; }
 
@@ -49,5 +49,18 @@ public sealed class PriceBankSuggestionVm
         Unidad = entry.Unidad ?? "";
         MatClp = entry.MatClp;
         MoClp = entry.MoClp;
+    }
+
+    /// <summary>
+    /// Sugerencia armada desde la lista en pantalla. Necesaria para los materiales que solo existen en
+    /// el proyecto: no tienen entrada en el banco de precios, así que no hay <see cref="Source"/>.
+    /// </summary>
+    public PriceBankSuggestionVm(string codigo, string descripcion, string unidad, decimal matClp, decimal moClp)
+    {
+        Codigo = codigo ?? "";
+        Descripcion = descripcion ?? "";
+        Unidad = unidad ?? "";
+        MatClp = matClp;
+        MoClp = moClp;
     }
 }

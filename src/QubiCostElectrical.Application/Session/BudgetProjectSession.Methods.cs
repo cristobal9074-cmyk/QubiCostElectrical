@@ -431,6 +431,39 @@ public sealed partial class BudgetProjectSession
             ProjectInfo);
     }
 
+    /// <summary>
+    /// Fija el índice FA del proyecto y propaga la M.O. recalibrada al catálogo de materiales, al
+    /// snapshot del banco de precios y a las filas de cubicación. Es el equivalente en la app a
+    /// reescribir COSTOS!E192 en la planilla original: las 7.210 líneas del DETALLE se movían con él.
+    /// Devuelve qué cambió para que la pantalla que lo pidió refresque solo esas filas.
+    /// </summary>
+    public IndiceMoFaAplicado AplicarIndiceMoFa(decimal indiceMoFa, IPriceBankStore? bancoPrecios = null)
+    {
+        EnsureWritable("calibrar el índice de mano de obra");
+        decimal anterior = MaterialMoResolver.IndiceFa(ProjectInfo);
+        // 0 = "sin calibrar": es un valor válido que deja la M.O. por % en Material × % (factor 1)
+        // hasta que el plan de obra permita derivar el índice. Solo los negativos son inválidos.
+        if (indiceMoFa < 0m)
+            return new IndiceMoFaAplicado(anterior, anterior, Array.Empty<MaterialMoRecalibrado>(), 0);
+
+        ProjectInfo.IndiceMoFa = indiceMoFa;
+
+        var cambios = MaterialMoRecalibrationService.Recalibrar(Materiales, ProjectInfo);
+        MarkDirty(ProjectDirtyScope.ProjectInfo);
+
+        if (cambios.Count > 0)
+        {
+            MaterialMoRecalibrationService.SincronizarBanco(cambios, bancoPrecios, ProjectInfo.ValorUfClp);
+            MarkDirty(ProjectDirtyScope.Materiales);
+        }
+
+        int sincronizadas = SyncCubicacionPricesFromMateriales();
+        if (sincronizadas > 0)
+            MarkDirty(ProjectDirtyScope.Cubicacion);
+
+        return new IndiceMoFaAplicado(anterior, indiceMoFa, cambios, sincronizadas);
+    }
+
     public void ApplyCubicacionMedicionesForPartida(string itemId)
     {
         EnsureWritable("editar mediciones de cubicación");

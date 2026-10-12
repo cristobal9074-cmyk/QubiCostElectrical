@@ -111,7 +111,11 @@ public sealed partial class ItemizadoViewModel
         if (e.Kind == ProjectSessionChangeKind.Cubicacion)
             RefreshPresentation(includeCosts: true);
         else if (e.Kind is ProjectSessionChangeKind.Itemizado or ProjectSessionChangeKind.ProjectInfo)
+        {
+            if (e.Kind == ProjectSessionChangeKind.ProjectInfo)
+                SyncCurrencyFromProject();
             RefreshPresentation(includeCosts: false);
+        }
     }
 
     private void Reload(bool syncOnly)

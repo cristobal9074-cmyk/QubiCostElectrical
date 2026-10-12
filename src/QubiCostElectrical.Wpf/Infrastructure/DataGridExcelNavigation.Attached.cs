@@ -15,6 +15,17 @@ public static partial class DataGridExcelNavigation
     private static readonly DependencyProperty HookProperty = DependencyProperty.RegisterAttached(
         "Hook", typeof(bool), typeof(DataGridExcelNavigation), new PropertyMetadata(false));
 
+    /// <summary>
+    /// Deja Ctrl+V al dueño de la grilla (código → material, fórmulas, sectores). Sin esto el
+    /// pegado genérico marca PreviewKeyDown como atendido, suprime el KeyDown que burbujea y el
+    /// pegado con lógica de negocio nunca corre.
+    /// </summary>
+    public static readonly DependencyProperty HandlePasteByHostProperty = DependencyProperty.RegisterAttached(
+        "HandlePasteByHost", typeof(bool), typeof(DataGridExcelNavigation), new PropertyMetadata(false));
+
+    public static void SetHandlePasteByHost(DataGrid grid, bool value) => grid.SetValue(HandlePasteByHostProperty, value);
+    public static bool GetHandlePasteByHost(DataGrid grid) => (bool)grid.GetValue(HandlePasteByHostProperty);
+
     private static void OnEnableChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         if (d is not DataGrid grid)

@@ -76,7 +76,7 @@ public sealed class PriceBankEntryVmTests
     }
 
     [Fact]
-    public void MoDerivadaClp_FormulaPorcentaje_MultiplicaPrecioPctFaDefault()
+    public void MoDerivadaClp_FormulaPorcentaje_ConFaDelProyecto_MultiplicaPrecioPctFa()
     {
         var entry = new PriceBankEntry
         {
@@ -86,8 +86,23 @@ public sealed class PriceBankEntryVmTests
             MoFormulaTipo = MaterialMoResolver.MoFormulaPorcentaje,
             MoPorcentajeMaterial = 2.5m
         };
-        var vm = new PriceBankEntryVm(entry); // FA default 62,80
+        var vm = new PriceBankEntryVm(entry, indiceMoFa: 62.80m); // FA de la planilla PEL039A
         Assert.Equal(1570m, vm.MoDerivadaClp);
+    }
+
+    /// <summary>Sin FA calibrado (0) la fórmula por % no aporta M.O., igual que un factor vacío en Excel.</summary>
+    [Fact]
+    public void MoDerivadaClp_FormulaPorcentaje_SinFaCalibrado_AportaCero()
+    {
+        var entry = new PriceBankEntry
+        {
+            Codigo = "A",
+            MatClp = 1000m,
+            MoFormulaTipo = MaterialMoResolver.MoFormulaPorcentaje,
+            MoPorcentajeMaterial = 2.5m
+        };
+        var vm = new PriceBankEntryVm(entry);
+        Assert.Equal(0m, vm.MoDerivadaClp);
     }
 
     [Fact]

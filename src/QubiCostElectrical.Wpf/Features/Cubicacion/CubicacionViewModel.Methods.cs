@@ -688,6 +688,24 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
     public decimal TotalPartidaUf => PriceConversion.ClpToUf(TotalPartida, ValorUfVigente);
     private decimal ValorUfVigente => session.ValorUfClp > 0m ? session.ValorUfClp : PriceConversion.DefaultValorUfClp;
 
+    /// <summary>
+    /// Regla de moneda del proyecto: con CLP no se expone ninguna cifra en UF (columnas UF UNIT y
+    /// SUBTOTAL UF, equivalentes UF de la barra de totales y equivalencia del panel derecho).
+    /// </summary>
+    public bool MuestraUf
+        => !string.Equals(session.ProjectInfo.MonedaPresupuesto, "CLP", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Notifica el cambio de política de moneda para que la vista reaplique la grilla.</summary>
+    internal void NotifyMonedaChanged()
+    {
+        OnPropertyChanged(nameof(MuestraUf));
+        OnPropertyChanged(nameof(TotalMaterialesUf));
+        OnPropertyChanged(nameof(TotalManoObraUf));
+        OnPropertyChanged(nameof(TotalCostoDirectoUf));
+        OnPropertyChanged(nameof(PrecioUnitarioUf));
+        OnPropertyChanged(nameof(TotalPartidaUf));
+    }
+
     // Comandos
     public ICommand AddRowCommand { get; }
     public ICommand QuickAddMaterialCommand { get; }

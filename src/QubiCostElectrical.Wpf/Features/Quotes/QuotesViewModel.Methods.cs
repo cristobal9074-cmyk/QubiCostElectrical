@@ -53,8 +53,11 @@ public sealed partial class QuotesViewModel : SessionAwareViewModelBase, IRefres
         Refresh();
     }
 
-    protected override void OnSessionChanged(object? sender, ProjectSessionChangedEventArgs e) =>
+    protected override void OnSessionChanged(object? sender, ProjectSessionChangedEventArgs e)
+    {
         UpdateProjectSummary();
+        NotifyMonedaChanged();
+    }
 
     public ObservableCollection<QuoteProviderSummaryVm> ProviderSummaries => providerSummaries;
     public ICollectionView FilteredProviderSummaries => providerSummaryView;

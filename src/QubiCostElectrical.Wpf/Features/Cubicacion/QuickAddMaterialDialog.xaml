@@ -51,12 +51,12 @@
           <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
         <StackPanel Grid.Column="0">
-          <TextBlock Text="Precio material (UF)" Style="{StaticResource Text.Caption}" Margin="0,0,0,4" />
-          <TextBox x:Name="MatUfBox" Style="{StaticResource Form.TextBox}" />
+          <TextBlock Text="Precio material (CLP)" Style="{StaticResource Text.Caption}" Margin="0,0,0,4" />
+          <TextBox x:Name="MatClpBox" Style="{StaticResource Form.TextBox}" />
         </StackPanel>
         <StackPanel Grid.Column="2">
-          <TextBlock Text="Mano de obra (UF)" Style="{StaticResource Text.Caption}" Margin="0,0,0,4" />
-          <TextBox x:Name="MoUfBox" Style="{StaticResource Form.TextBox}" Text="0" />
+          <TextBlock Text="Mano de obra (CLP)" Style="{StaticResource Text.Caption}" Margin="0,0,0,4" />
+          <TextBox x:Name="MoClpBox" Style="{StaticResource Form.TextBox}" Text="0" />
         </StackPanel>
       </Grid>
     </StackPanel>

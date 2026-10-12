@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace QubiCostElectrical;
 
@@ -12,6 +13,12 @@ public static class ProjectTemplateCatalog
     private static readonly Lazy<IReadOnlyList<ProjectTemplate>> TemplatesLazy = new(BuildCatalog);
 
     public static IReadOnlyList<ProjectTemplate> All => TemplatesLazy.Value;
+
+    /// <summary>
+    /// Plantilla en blanco: sin partidas. Punto de partida de un proyecto nuevo, para que el
+    /// itemizado nazca vacío y sea el archivo —no la app— el que guarde su contenido.
+    /// </summary>
+    public static ProjectTemplate Blank => All.First(t => t.EsEnBlanco);
 
     private static IReadOnlyList<ProjectTemplate> BuildCatalog()
     {

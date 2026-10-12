@@ -18,7 +18,8 @@ public sealed class ApuAutocompleteSuggestionVm
         decimal matUf,
         string proveedor,
         string matchReason,
-        string sourceBadge)
+        string sourceBadge,
+        bool muestraUf = true)
     {
         Codigo = codigo ?? "";
         Descripcion = descripcion ?? "";
@@ -28,6 +29,7 @@ public sealed class ApuAutocompleteSuggestionVm
         Proveedor = proveedor ?? "";
         MatchReason = matchReason ?? "";
         SourceBadge = sourceBadge ?? "BANCO";
+        MuestraUf = muestraUf;
     }
 
     public string Codigo { get; }
@@ -38,6 +40,9 @@ public sealed class ApuAutocompleteSuggestionVm
     public string Proveedor { get; }
     public string MatchReason { get; }
     public string SourceBadge { get; }
+
+    /// <summary>Falso cuando el proyecto está en CLP: no se muestra la equivalencia en UF.</summary>
+    public bool MuestraUf { get; }
 
     public bool HasProveedor => !string.IsNullOrWhiteSpace(Proveedor);
     public string MatClpDisplay => MatClp > 0m ? $"$ {MatClp:N0}" : (MatUf > 0m ? "—" : "$ 0");
@@ -70,6 +75,8 @@ public sealed class ApuAutocompleteEngine
 
         string query = rawQuery.Trim();
         decimal valorUf = session.ValorUfClp > 0m ? session.ValorUfClp : PriceConversion.DefaultValorUfClp;
+        // Regla de moneda: con CLP no se expone UF en las sugerencias.
+        bool muestraUf = !string.Equals(session.ProjectInfo.MonedaPresupuesto, "CLP", StringComparison.OrdinalIgnoreCase);
 
         if (materialIndex.Count == 0 && session.Materiales.Count > 0)
         {
@@ -129,7 +136,8 @@ public sealed class ApuAutocompleteEngine
                         matUf,
                         mat.Proveedor,
                         reason,
-                        "PROYECTO");
+                        "PROYECTO",
+                        muestraUf);
                 }
             }
 
@@ -155,8 +163,10 @@ public sealed class ApuAutocompleteEngine
 
                         if (match)
                         {
-                            decimal matUf = rec.PrecioUf;
-                            decimal matClp = Math.Round(matUf * valorUf, MidpointRounding.AwayFromZero);
+                            // rec.PrecioUf guarda el precio en CLP (nombre legado: ApuRow.*Uf es la
+                            // moneda base del motor tras la migración). Se deriva la equivalencia UF.
+                            decimal matClp = rec.PrecioUf;
+                            decimal matUf = PriceConversion.ClpToUf(matClp, valorUf);
 
                             resultsMap[rec.CodigoMaterial] = new ApuAutocompleteSuggestionVm(
                                 rec.CodigoMaterial,
@@ -166,7 +176,8 @@ public sealed class ApuAutocompleteEngine
                                 matUf,
                                 rec.FuentePrecio,
                                 "En presupuesto",
-                                "APU");
+                                "APU",
+                                muestraUf);
                         }
                     }
                 }
@@ -199,7 +210,8 @@ public sealed class ApuAutocompleteEngine
                             matUf,
                             string.IsNullOrWhiteSpace(entry.Marca) ? entry.Proveedor : $"{entry.Marca} · {entry.Proveedor}".TrimEnd(' ', '·'),
                             "Banco central",
-                            "BANCO");
+                            "BANCO",
+                            muestraUf);
 
                         if (resultsMap.Count >= 25) break;
                     }

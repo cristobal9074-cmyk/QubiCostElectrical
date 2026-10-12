@@ -8,10 +8,11 @@ public partial class ChangeOrderEditorDialog : Window
     private readonly ChangeOrderRow _draft;
     private readonly ChangeOrderEditorViewModel _vm;
 
-    public ChangeOrderEditorDialog(ChangeOrderRow draft)
+    public ChangeOrderEditorDialog(ChangeOrderRow draft, bool muestraUf, decimal ufRate)
     {
         _draft = draft;
         _vm = new ChangeOrderEditorViewModel();
+        _vm.ConfigureCurrency(muestraUf, ufRate);
         _vm.LoadFrom(draft);
         InitializeComponent();
         DataContext = _vm;
@@ -30,9 +31,9 @@ public partial class ChangeOrderEditorDialog : Window
             DialogResult = true;
     }
 
-    public static bool Show(ChangeOrderRow oc, bool isNew)
+    public static bool Show(ChangeOrderRow oc, bool isNew, bool muestraUf = true, decimal ufRate = 0m)
     {
-        var dlg = new ChangeOrderEditorDialog(oc);
+        var dlg = new ChangeOrderEditorDialog(oc, muestraUf, ufRate);
         dlg.Configure(isNew);
         return dlg.ShowDialog() == true;
     }

@@ -15,6 +15,12 @@ public partial class PrecioListaResumenDialog : Window
     private TextBox? _activeEditor;
     private bool _isEditingCodigo;
 
+    /// <summary>
+    /// Código del último material creado desde esta ventana (alta rápida o alta manual). Quien la abre
+    /// lo usa para encadenarlo a la cubicación: el material recién creado entra a la partida en curso.
+    /// </summary>
+    public string? MaterialCreado { get; private set; }
+
     public PrecioListaResumenDialog(BudgetProjectSession session, IPriceBankStore priceBankStore, string autoFilterCodigo = "")
     {
         InitializeComponent();
@@ -39,15 +45,7 @@ public partial class PrecioListaResumenDialog : Window
 
         if (item == null) return;
 
-        if (MainGrid.SelectionUnit == DataGridSelectionUnit.FullRow)
-        {
-            MainGrid.SelectedItem = item;
-        }
-        else
-        {
-            MainGrid.SelectedCells.Clear();
-            MainGrid.SelectedCells.Add(new DataGridCellInfo(item, column));
-        }
+        DataGridSelection.SeleccionarFila(MainGrid, item, column);
 
         MainGrid.CurrentCell = new DataGridCellInfo(item, column);
         MainGrid.ScrollIntoView(item);
@@ -56,6 +54,15 @@ public partial class PrecioListaResumenDialog : Window
     private void OnPreviewKeyDown(object sender, KeyEventArgs e)
     {
         var key = e.Key == Key.System ? e.SystemKey : e.Key;
+
+        // Ctrl++: alta rápida de material — pide familia, precio y si usa Material × % × FA, y lo
+        // ingresa al instante en la lista de precios del proyecto.
+        if (EsAltaRapida(key, Keyboard.Modifiers))
+        {
+            AbrirAltaRapida();
+            e.Handled = true;
+            return;
+        }
 
         // Escape: cerrar sugerencias, o limpiar buscador, o cerrar ventana
         if (key == Key.Escape)
@@ -198,6 +205,77 @@ public partial class PrecioListaResumenDialog : Window
     {
         var dialog = new PrecioListaEditarDialog(vm, null) { Owner = this };
         dialog.ShowDialog();
+        if (!string.IsNullOrWhiteSpace(dialog.CodigoCreado))
+            MaterialCreado = dialog.CodigoCreado;
+    }
+
+    private void OnAltaRapidaClick(object sender, RoutedEventArgs e) => AbrirAltaRapida();
+
+    /// <summary>
+    /// Gestor de teclado del alta rápida: Ctrl++ en sus tres formas reales — teclado numérico
+    /// (Add), la tecla "+/=" y las variantes desplazadas de teclados latinos (Ctrl+Shift+').
+    /// Estático y aparte del evento para poder probarlo: <c>Keyboard.Modifiers</c> no se puede
+    /// simular desde un test.
+    /// </summary>
+    internal static bool EsAltaRapida(Key key, ModifierKeys modifiers)
+    {
+        if ((modifiers & ModifierKeys.Control) != ModifierKeys.Control)
+            return false;
+        if ((modifiers & ModifierKeys.Alt) == ModifierKeys.Alt)
+            return false;
+
+        if (key is Key.Add or Key.OemPlus)
+            return true;
+
+        bool shift = (modifiers & ModifierKeys.Shift) == ModifierKeys.Shift;
+        return shift && key is Key.Oem1 or Key.OemQuestion;
+    }
+
+    /// <summary>
+    /// Alta rápida de material (Ctrl++): abre el formulario que pide familia, precio y si la M.O.
+    /// se calcula con Material × % × FA, e ingresa el material en la lista de precios del proyecto.
+    /// Al volver, deja seleccionada la fila recién creada para que se vea dónde quedó.
+    /// </summary>
+    private void AbrirAltaRapida()
+    {
+        MainGrid.CommitEdit(DataGridEditingUnit.Cell, true);
+        MainGrid.CommitEdit(DataGridEditingUnit.Row, true);
+
+        // El autocompletado de la celda en edición es un Popup: si queda abierto, captura el mouse
+        // por encima del modal y la app entera deja de responder a los clics.
+        vm.AutocompleteVisible = false;
+
+        var dialog = new PrecioListaAltaRapidaDialog(vm) { Owner = this };
+        bool creado = dialog.ShowDialog() == true;
+
+        // Primero la fila nueva y después el foco: al revés, FocusMainGrid volvería la selección al
+        // inicio y el material recién creado quedaría fuera de vista.
+        if (creado)
+        {
+            MaterialCreado = dialog.CodigoCreado;
+            SelectRowByCodigo(dialog.CodigoCreado);
+        }
+        FocusMainGrid();
+    }
+
+    /// <summary>Lleva la selección a la fila del material recién creado (y la muestra en pantalla).</summary>
+    private void SelectRowByCodigo(string? codigo)
+    {
+        if (string.IsNullOrWhiteSpace(codigo)) return;
+
+        var item = vm.Items?.OfType<PrecioListaMaterialVm>()
+            .FirstOrDefault(i => string.Equals(i.Codigo, codigo, StringComparison.OrdinalIgnoreCase));
+        if (item == null) return;
+
+        var column = MainGrid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible) ?? MainGrid.Columns[0];
+
+        // SeleccionarFila se ocupa del SelectionUnit de la grilla: esta es de celdas
+        // (DataGrid.Workspace.Excel), y marcar SelectedItem aquí reventaba con "SelectionUnit …
+        // impide seleccionar filas" al generarse el contenedor de la fila recién creada, dejando la
+        // app congelada (ver DataGridSelection.SeleccionarFila).
+        DataGridSelection.SeleccionarFila(MainGrid, item, column);
+        MainGrid.CurrentCell = new DataGridCellInfo(item, column);
+        MainGrid.ScrollIntoView(item);
     }
 
     private void OnEliminarClick(object sender, RoutedEventArgs e)

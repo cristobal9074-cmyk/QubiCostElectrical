@@ -211,6 +211,9 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
         get => viewInUf;
         set
         {
+            // Regla de moneda: si el proyecto está en CLP no se permite ver UF.
+            if (value && !MuestraUf)
+                value = false;
             if (SetProperty(ref viewInUf, value))
             {
                 OnPropertyChanged(nameof(IsClp));
@@ -222,6 +225,13 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
 
     public bool IsClp => !viewInUf;
     public bool IsUf => viewInUf;
+
+    /// <summary>
+    /// Regla de moneda del proyecto: con CLP no se expone UF (ni el conmutador CLP/UF, ni el
+    /// indicador "VALOR UF"). Con UF/USD se mantiene la equivalencia en pesos.
+    /// </summary>
+    public bool MuestraUf
+        => !string.Equals(session.ProjectInfo.MonedaPresupuesto, "CLP", StringComparison.OrdinalIgnoreCase);
 
     public string KpiTotalMo { get => kpiTotalMo; private set => SetProperty(ref kpiTotalMo, value); }
     public string KpiTotalMoSub { get => kpiTotalMoSub; private set => SetProperty(ref kpiTotalMoSub, value); }
@@ -275,6 +285,10 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
             var syncProjection = false;
 
             ValorUF = session.ValorUfClp > 0 ? session.ValorUfClp : PriceConversion.DefaultValorUfClp;
+            // Regla de moneda: en un proyecto CLP la vista de mano de obra nunca muestra UF.
+            OnPropertyChanged(nameof(MuestraUf));
+            if (!MuestraUf)
+                ViewInUf = false;
 
             if (!hasLoaded)
             {
@@ -1412,14 +1426,16 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
         TotalBarLabel = $"Costo total mano de obra · {n} meses";
         TotalBarSub = $"Directa {pctDir:N1}% · Indirecta {pctInd:N1}% · Curva {(curvePreset == "flat" ? "plana" : "campana")} · Pico M{peakInicio}–M{peakFin}";
         TotalBarValue = Fmt(totalMo);
-        TotalBarUf = viewInUf ? FmtClp(totalMo) : FmtUf(totalMo, vUf);
+        TotalBarUf = viewInUf ? FmtClp(totalMo) : (MuestraUf ? FmtUf(totalMo, vUf) : "");
 
         SumBase = Fmt(totalBase);
         SumLeyes = Fmt(totalLeyes);
         SumDirecta = Fmt(totalDir);
         SumIndirecta = Fmt(totalInd);
         SumPromMes = Fmt(mesProm);
-        SumRight = $"{FmtUf(totalMo, vUf)}  ·  {FmtClp(mesProm)}/mes";
+        SumRight = viewInUf
+            ? $"{FmtUf(totalMo, vUf)}  ·  {FmtClp(mesProm)}/mes"
+            : $"{FmtClp(totalMo)}  ·  {FmtClp(mesProm)}/mes";
 
         FootDir = $"{FmtClp(promSueldoDir)} · {FmtClp(promSueldoDir * (1 + leyes))}";
         FootInd = $"{FmtClp(promSueldoInd)} · {FmtClp(promSueldoInd * (1 + leyes))}";

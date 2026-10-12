@@ -155,7 +155,7 @@
                   <DataGridTextColumn Header="Precio CLP" Binding="{Binding PrecioClp, StringFormat={}$ {0:N0}}" Width="95"
                                       HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}"
                                       ElementStyle="{StaticResource QuotesNumericCell}" />
-                  <DataGridTextColumn Header="Precio UF" Binding="{Binding PrecioUf, StringFormat={}{0:N4}}" Width="85"
+                  <DataGridTextColumn x:Name="PrecioUfColumn" Header="Precio UF" Binding="{Binding PrecioUf, StringFormat={}{0:N4}}" Width="85"
                                       HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}"
                                       ElementStyle="{StaticResource QuotesNumericCell}" />
                   <DataGridTextColumn Header="Proveedor" Binding="{Binding Proveedor}" Width="130" />
@@ -185,20 +185,20 @@
               <DataGrid.Columns>
                 <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" Width="110" />
                 <DataGridTextColumn Header="Proveedor" Binding="{Binding ProveedorSeleccionado}" Width="130" />
-                <DataGridTextColumn Header="Precio UF" Binding="{Binding PrecioSeleccionado, StringFormat={}{0:N3}}" Width="82"
+                <DataGridTextColumn x:Name="SelectedUfColumn" Header="Precio UF" Binding="{Binding PrecioSeleccionado, StringFormat={}{0:N3}}" Width="82"
                                     HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}"
                                     ElementStyle="{StaticResource QuotesNumericCell}" />
                 <DataGridTextColumn Header="Precio CLP" Binding="{Binding PrecioSeleccionadoClp, StringFormat={}$ {0:N0}}" Width="90"
                                     HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}"
                                     ElementStyle="{StaticResource QuotesNumericCell}" />
                 <DataGridTextColumn Header="Mejor" Binding="{Binding ProveedorMejor}" Width="130" />
-                <DataGridTextColumn Header="Mejor UF" Binding="{Binding PrecioMejor, StringFormat={}{0:N3}}" Width="82"
+                <DataGridTextColumn x:Name="BestUfColumn" Header="Mejor UF" Binding="{Binding PrecioMejor, StringFormat={}{0:N3}}" Width="82"
                                     HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}"
                                     ElementStyle="{StaticResource QuotesNumericCell}" />
                 <DataGridTextColumn Header="Mejor CLP" Binding="{Binding PrecioMejorClp, StringFormat={}$ {0:N0}}" Width="90"
                                     HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}"
                                     ElementStyle="{StaticResource QuotesNumericCell}" />
-                <DataGridTextColumn Header="Delta UF" Binding="{Binding DeltaUf, StringFormat={}{0:N3}}" Width="82"
+                <DataGridTextColumn x:Name="DeltaUfColumn" Header="Delta UF" Binding="{Binding DeltaUf, StringFormat={}{0:N3}}" Width="82"
                                     HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}"
                                     ElementStyle="{StaticResource QuotesNumericCell}" />
                 <DataGridTextColumn Header="% Delta" Binding="{Binding DeltaPct, StringFormat={}{0:N1}%}" Width="72"

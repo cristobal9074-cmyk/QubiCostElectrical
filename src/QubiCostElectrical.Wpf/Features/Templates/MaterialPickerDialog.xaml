@@ -78,7 +78,7 @@
             <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" Width="130"/>
             <DataGridTextColumn Header="Descripción del Material" Binding="{Binding Descripcion}" Width="*"/>
             <DataGridTextColumn Header="Ud." Binding="{Binding Unidad}" Width="60"/>
-            <DataGridTextColumn Header="Precio UF" Binding="{Binding MatUf, StringFormat=N4}" Width="100" ElementStyle="{StaticResource RightAlignText}"/>
+            <DataGridTextColumn Header="Precio $" Binding="{Binding MatClp, StringFormat=N0}" Width="100" ElementStyle="{StaticResource RightAlignText}"/>
           </DataGrid.Columns>
         </DataGrid>
       </Border>

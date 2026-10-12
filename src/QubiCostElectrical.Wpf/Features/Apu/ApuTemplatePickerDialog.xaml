@@ -86,7 +86,7 @@
         <DataGridTextColumn Header="Descripción" Binding="{Binding Descripcion}" Width="*"/>
         <DataGridTextColumn Header="Ud." Binding="{Binding Unidad}" Width="40"/>
         <DataGridTextColumn Header="Rend." Binding="{Binding Rendimiento, StringFormat=N3}" Width="60"/>
-        <DataGridTextColumn Header="P.UF" Binding="{Binding PrecioUf, StringFormat=N4}" Width="70"/>
+        <DataGridTextColumn Header="Precio $" Binding="{Binding PrecioUf, StringFormat=N0}" Width="90"/>
       </DataGrid.Columns>
     </DataGrid>
 

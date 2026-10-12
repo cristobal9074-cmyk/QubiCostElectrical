@@ -75,6 +75,7 @@ public sealed partial class ViaticosProfesionalViewModel : ViewModelBase
     private string kpiTotal = "$ 0";
     private string footTotalLabel = "$ 0";
     private string footUfLabel = "0,00 UF";
+    private readonly bool muestraEquivalenciaUf;
     private string badgeAlim = "Viático de comida";
     private string badgeArr = "Según zona";
     private string hintArriendo = "CLP / mes-cupo";

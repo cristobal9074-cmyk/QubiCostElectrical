@@ -62,6 +62,17 @@ public sealed class BudgetVersionComparisonSummary
     public int ChangedCount { get; init; }
     public int UnchangedCount { get; init; }
     public decimal ValorUf { get; init; } = PriceConversion.DefaultValorUfClp;
+
+    /// <summary>
+    /// Moneda de presentación del proyecto comparado (CLP por defecto). Con CLP los informes de
+    /// variaciones no emiten columnas, encabezados ni el valor de la UF de referencia.
+    /// </summary>
+    public string MonedaPresupuesto { get; init; } = Moneda.CLP;
+
+    /// <summary>indica si corresponde mostrar UF y su equivalente en pesos en los informes.</summary>
+    public bool MuestraUf =>
+        !string.Equals(MonedaPresupuesto, CurrencyConversionService.CurrencyClp, StringComparison.OrdinalIgnoreCase);
+
     public decimal BaselineClp => Math.Round(BaselineUf * ValorUf, 0, MidpointRounding.AwayFromZero);
     public decimal CurrentClp => Math.Round(CurrentUf * ValorUf, 0, MidpointRounding.AwayFromZero);
     public decimal DeltaClp => CurrentClp - BaselineClp;
@@ -241,6 +252,7 @@ public sealed class BudgetVersionComparisonService : IVersionComparisonService
             ChangedCount = changed,
             UnchangedCount = unchanged,
             ValorUf = valorUf,
+            MonedaPresupuesto = NormalizarMoneda(current.Proyecto?.MonedaPresupuesto),
             TotalAdicionalesUf = totalAdicionalesUf,
             TotalDeductivosUf = totalDeductivosUf,
             ProjectTitle = projectTitle,
@@ -490,6 +502,7 @@ public sealed class BudgetVersionComparisonService : IVersionComparisonService
             ChangedCount = changed,
             UnchangedCount = unchanged,
             ValorUf = valorUf,
+            MonedaPresupuesto = NormalizarMoneda(currentProject.Proyecto?.MonedaPresupuesto),
             TotalAdicionalesUf = totalAdicionalesUf,
             TotalDeductivosUf = totalDeductivosUf,
             ProjectTitle = projectTitle,
@@ -509,6 +522,10 @@ public sealed class BudgetVersionComparisonService : IVersionComparisonService
         var chars = text.Trim().ToLowerInvariant().Where(char.IsLetterOrDigit).ToArray();
         return new string(chars);
     }
+
+    /// <summary>Moneda de presentación normalizada para los informes de variaciones (CLP por defecto).</summary>
+    private static string NormalizarMoneda(string? moneda)
+        => string.IsNullOrWhiteSpace(moneda) ? Moneda.CLP : moneda.Trim().ToUpperInvariant();
 
     private static ProjectFileData ToProjectFileData(BudgetVersionData version)
     {

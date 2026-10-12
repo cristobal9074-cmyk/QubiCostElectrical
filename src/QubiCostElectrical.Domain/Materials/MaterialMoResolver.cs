@@ -19,8 +19,19 @@ public static class MaterialMoResolver
     /// <summary>Valor de MaterialRow.MoFormulaTipo que activa la fórmula Material × % × FA. Vacío = M.O. fija.</summary>
     public const string MoFormulaPorcentaje = "Porcentaje";
 
-    /// <summary>Índice global de M.O. (FA = COSTOS!E192 del Excel, 62,80). Usado cuando el proyecto no trae valor.</summary>
-    public const decimal IndiceMoFaDefault = 62.80m;
+    /// <summary>
+    /// FA sin calibrar. El 62,80 del Excel no era un valor de la app: era el número que el estimador
+    /// escribía para SU proyecto hasta que la M.O. del itemizado cuadraba con el plan de obra. Por eso
+    /// la app arranca en 0 y el índice se deriva (modo Automático o Calcular FA) desde el costo real.
+    /// </summary>
+    public const decimal IndiceMoFaDefault = 0m;
+
+    /// <summary>
+    /// Valor heredado que todas las versiones anteriores guardaban en cada proyecto (.qce) por ser el
+    /// default de <see cref="ProjectInfoRow.IndiceMoFa"/>. Al cargar se trata como "sin calibrar":
+    /// no era una decisión del usuario, era la planilla genérica.
+    /// </summary>
+    public const decimal IndiceMoFaHeredado = 62.80m;
 
     /// <summary>Días laborales por mes usados para derivar la tarifa D/H desde el sueldo mensual.</summary>
     public const decimal DiasPorJornal = 22m;
@@ -44,6 +55,39 @@ public static class MaterialMoResolver
     }
 
     /// <summary>
+    /// FA vigente del proyecto. 0 = sin calibrar: la M.O. por % se calcula con factor neutro
+    /// (Material × %) hasta que el índice se derive del plan de obra (ver
+    /// <see cref="MoClpPorPorcentaje"/>).
+    /// </summary>
+    public static decimal IndiceFa(ProjectInfoRow? project) =>
+        project != null && project.IndiceMoFa > 0m ? project.IndiceMoFa : IndiceMoFaDefault;
+
+    /// <summary>
+    /// Normaliza el índice leído de un .qce: el 62,80 heredado entra como 0 (sin calibrar) porque era
+    /// el default de la app, no una calibración del proyecto. Negativos se aplanan a 0.
+    /// </summary>
+    public static decimal NormalizarFaGuardado(decimal indiceGuardado) =>
+        indiceGuardado == IndiceMoFaHeredado ? IndiceMoFaDefault : Math.Max(0m, indiceGuardado);
+
+    /// <summary>
+    /// M.O. por fórmula de porcentaje: Material × % × FA. Expuesto aparte para que las pantallas
+    /// que crean o editan materiales (p. ej. el alta rápida de la lista de precios) muestren en
+    /// vivo exactamente la misma cifra que luego aplica el motor.
+    ///
+    /// FA sin calibrar cuenta como 1 (factor neutro): la fórmula queda en Material × %, una M.O.
+    /// provisional visible en vez de $0, que se leía como un dato que faltó ingresar. Al mover el FA
+    /// desde Costos, <see cref="MaterialMoRecalibrationService"/> recalcula los materiales con el
+    /// índice real y la cifra definitiva reemplaza a la provisional.
+    /// </summary>
+    public static decimal MoClpPorPorcentaje(decimal matClp, decimal porcentajeMaterial, decimal indiceMoFa)
+    {
+        if (matClp <= 0m || porcentajeMaterial <= 0m)
+            return 0m;
+        decimal fa = indiceMoFa > 0m ? indiceMoFa : 1m;
+        return Math.Round(matClp * (porcentajeMaterial / 100m) * fa, 2, MidpointRounding.AwayFromZero);
+    }
+
+    /// <summary>
     /// M.O. efectiva en CLP por unidad: por rendimiento si el modo lo permite; si no, por
     /// fórmula de porcentaje (Material × % × FA) si el material la tiene activa; si no,
     /// el M.O. directo del catálogo.
@@ -54,10 +98,7 @@ public static class MaterialMoResolver
         if (DebeUsarRendimiento(material, project))
             return Math.Round(project!.TarifaDhClp / material.RendimientoDh, 2, MidpointRounding.AwayFromZero);
         if (DebeUsarPorcentaje(material))
-        {
-            decimal fa = project != null && project.IndiceMoFa > 0m ? project.IndiceMoFa : IndiceMoFaDefault;
-            return Math.Round(material.MatClp * (material.MoPorcentajeMaterial / 100m) * fa, 2, MidpointRounding.AwayFromZero);
-        }
+            return MoClpPorPorcentaje(material.MatClp, material.MoPorcentajeMaterial, IndiceFa(project));
         return material.MoClp;
     }
 

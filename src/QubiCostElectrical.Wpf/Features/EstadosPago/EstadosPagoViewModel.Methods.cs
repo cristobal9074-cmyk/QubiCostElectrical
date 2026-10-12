@@ -274,7 +274,7 @@ public sealed partial class EstadosPagoViewModel
             };
 
             if (generado && totalesPorMes.TryGetValue(m, out var totales))
-                cell.MontoLabel = EstadoPagoFormat.Uf(totales.Total);
+                cell.MontoLabel = FormatMoney(totales.Total);
 
             Meses.Add(cell);
         }
@@ -295,6 +295,13 @@ public sealed partial class EstadosPagoViewModel
         KpiSaldo = kpis.Saldo;
         KpiRetencion = kpis.RetencionAcum;
         KpiAvancePct = kpis.AvanceFisicoPct;
+
+        // El texto de los KPIs depende de la moneda del proyecto (CLP no muestra UF).
+        OnPropertyChanged(nameof(KpiContratadoText));
+        OnPropertyChanged(nameof(KpiAcumText));
+        OnPropertyChanged(nameof(KpiSaldoText));
+        OnPropertyChanged(nameof(KpiRetencionText));
+        OnPropertyChanged(nameof(PageSubtitle));
     }
 
     private void RebuildDetail()
@@ -329,7 +336,7 @@ public sealed partial class EstadosPagoViewModel
         var detalle = EstadoPagoCalculator.CalcularMes(partidas, acumAntes, currentRow.AvancesPorItem, cfg);
 
         DetalleTitulo = $"Estado {currentRow.Folio} · {EstadoPagoFormat.MesesNombres[SelectedMes - 1]} {cfg.Anio}";
-        DetalleSub = $"Emitido {currentRow.FechaEmision:dd/MM/yyyy} · Valores en UF · {partidas.Count} partidas del Itemizado";
+        DetalleSub = $"Emitido {currentRow.FechaEmision:dd/MM/yyyy} · {(MuestraUf ? "Valores en UF" : "Valores en CLP")} · {partidas.Count} partidas del Itemizado";
         var (badgeLabel, badgeKind) = EstadoPagoFormat.EstadoBadge(currentRow.Estado);
         BadgeLabel = badgeLabel;
         BadgeKind = badgeKind;
@@ -390,18 +397,17 @@ public sealed partial class EstadosPagoViewModel
         var (label, kind) = EstadoPagoFormat.EstadoBadge(rowBase?.Estado ?? "pendiente");
         ResumenBadgeLabel = label;
         ResumenBadgeKind = kind;
-        ResTotalText = EstadoPagoFormat.Uf(t.Total);
+        ResTotalText = FormatMoney(t.Total);
 
-        decimal ufRate = session.ProjectInfo.ValorUfClp > 0m
-            ? session.ProjectInfo.ValorUfClp
-            : PriceConversion.DefaultValorUfClp;
-        ResClpText = $"≈ $ {Math.Round(t.Total * ufRate):N0} CLP";
-        ResMesText = EstadoPagoFormat.Uf(t.TrabajoMes);
-        ResAcumText = EstadoPagoFormat.Uf(t.Acum);
+        ResClpText = MuestraUf
+            ? $"≈ $ {Math.Round(t.Total * UfRate):N0} CLP"
+            : "Valores en pesos chilenos (CLP)";
+        ResMesText = FormatMoney(t.TrabajoMes);
+        ResAcumText = FormatMoney(t.Acum);
         ResPctText = EstadoPagoFormat.Pct(t.PctAcum);
-        ResReteMesText = EstadoPagoFormat.Uf(t.RetencionMes);
-        ResReteAcumText = EstadoPagoFormat.Uf(t.RetencionAcum);
-        ResAntSaldoText = EstadoPagoFormat.Uf(t.AnticipoSaldo);
+        ResReteMesText = FormatMoney(t.RetencionMes);
+        ResReteAcumText = FormatMoney(t.RetencionAcum);
+        ResAntSaldoText = FormatMoney(t.AnticipoSaldo);
         ApplyAvanceTexts();
     }
 
@@ -412,26 +418,26 @@ public sealed partial class EstadosPagoViewModel
         if (fill < 0d) fill = 0d;
         if (fill > 100d) fill = 100d;
         AvFillPct = fill;
-        AvLeftText = $"Ejecutado {EstadoPagoFormat.Uf(KpiAcum)}";
-        AvRightText = $"Total {EstadoPagoFormat.Uf(KpiContratado)}";
-        AvEjecText = EstadoPagoFormat.Uf(KpiAcum);
-        AvSaldoText = EstadoPagoFormat.Uf(KpiSaldo);
+        AvLeftText = $"Ejecutado {FormatMoney(KpiAcum)}";
+        AvRightText = $"Total {FormatMoney(KpiContratado)}";
+        AvEjecText = FormatMoney(KpiAcum);
+        AvSaldoText = FormatMoney(KpiSaldo);
         AvMesesLabel = KpiPagadosLabel;
     }
 
     private void ApplyTotalesTexts(EstadoPagoMesCalc t, EstadoPagoConfig cfg)
     {
-        TotTrabajoMesText = EstadoPagoFormat.Uf(t.TrabajoMes);
-        TotAcumText = EstadoPagoFormat.Uf(t.Acum);
+        TotTrabajoMesText = FormatMoney(t.TrabajoMes);
+        TotAcumText = FormatMoney(t.Acum);
         TotRecuperoLabel = $"Recupero de anticipo ({EstadoPagoFormat.PctConfig(cfg.AnticipoPct)})";
-        TotRecuperoText = EstadoPagoFormat.Uf(t.RecuperoMes);
+        TotRecuperoText = FormatMoney(t.RecuperoMes);
         TotRetencionLabel = $"Retención garantía ({EstadoPagoFormat.PctConfig(cfg.RetencionPct)})";
-        TotRetencionText = EstadoPagoFormat.Uf(t.RetencionMes);
-        TotNetoText = EstadoPagoFormat.Uf(t.Neto);
+        TotRetencionText = FormatMoney(t.RetencionMes);
+        TotNetoText = FormatMoney(t.Neto);
         TotIvaLabel = $"IVA ({EstadoPagoFormat.PctConfig(cfg.IvaPct)})";
-        TotIvaText = EstadoPagoFormat.Uf(t.Iva);
+        TotIvaText = FormatMoney(t.Iva);
         TotMesLabel = $"Total a pagar · {EstadoPagoFormat.MesesCortos[SelectedMes - 1].ToLowerInvariant()}";
-        TotTotalText = EstadoPagoFormat.Uf(t.Total);
+        TotTotalText = FormatMoney(t.Total);
     }
 
     private void ResetTotalesTexts()
@@ -506,7 +512,7 @@ public sealed partial class EstadosPagoViewModel
         foreach (var cell in Meses)
         {
             if (totalesPorMes.TryGetValue(cell.Mes, out var totales))
-                cell.MontoLabel = EstadoPagoFormat.Uf(totales.Total);
+                cell.MontoLabel = FormatMoney(totales.Total);
         }
 
         if (currentRow is not null && totalesPorMes.TryGetValue(SelectedMes, out var t))

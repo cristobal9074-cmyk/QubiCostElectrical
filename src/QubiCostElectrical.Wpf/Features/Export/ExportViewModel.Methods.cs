@@ -257,18 +257,21 @@ public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefres
         ? $"Congelados el {session.ProjectInfo.FechaCongelamientoPrecios:dd-MM-yyyy} · los cambios del banco de precios no afectan esta oferta."
         : "Los cambios del banco de precios todavía afectan esta oferta. Al exportar se ofrecerá congelarlos.";
 
-    public string TotalOfertaDisplay => $"$ {TotalClp:N0} CLP ({TotalUf:N3} UF)";
+    // Política de moneda: en CLP no se expone ninguna cifra en UF (chip de total, tooltip y manifiesto).
+    private bool MuestraUf =>
+        !string.Equals(session.ProjectInfo.MonedaPresupuesto, "CLP", StringComparison.OrdinalIgnoreCase);
 
-    public string TotalOfertaPillHeader =>
-        string.Equals(session.ProjectInfo.MonedaPresupuesto, "CLP", StringComparison.OrdinalIgnoreCase)
-            ? "Total CLP" : "Total UF";
+    public string TotalOfertaDisplay => MuestraUf
+        ? $"$ {TotalClp:N0} CLP ({TotalUf:N3} UF)"
+        : $"$ {TotalClp:N0} CLP";
 
-    public string TotalOfertaPillText =>
-        string.Equals(session.ProjectInfo.MonedaPresupuesto, "CLP", StringComparison.OrdinalIgnoreCase)
-            ? $"$ {TotalClp:N0}" : $"{TotalUf:N3} UF";
+    public string TotalOfertaPillHeader => MuestraUf ? "Total UF" : "Total CLP";
 
-    public string TotalOfertaSecondaryTooltip =>
-        $"Neto: $ {TotalClp:N0} CLP · {TotalUf:N3} UF (Tasa UF: $ {(session.ProjectInfo.ValorUfClp > 0 ? session.ProjectInfo.ValorUfClp : PriceConversion.DefaultValorUfClp):N0})";
+    public string TotalOfertaPillText => MuestraUf ? $"{TotalUf:N3} UF" : $"$ {TotalClp:N0}";
+
+    public string TotalOfertaSecondaryTooltip => MuestraUf
+        ? $"Neto: $ {TotalClp:N0} CLP · {TotalUf:N3} UF (Tasa UF: $ {(session.ProjectInfo.ValorUfClp > 0 ? session.ProjectInfo.ValorUfClp : PriceConversion.DefaultValorUfClp):N0})"
+        : $"Neto: $ {TotalClp:N0} CLP";
 
     public ICommand RefreshCommand => refreshCommand;
     public ICommand ExportOfferPdfCommand => exportOfferPdfCommand;
@@ -743,7 +746,7 @@ public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefres
                     $"Estado: {StateText}{Environment.NewLine}" +
                     $"Revisión: {VersionText}{Environment.NewLine}" +
                     $"Total CLP: $ {TotalClp:N0}{Environment.NewLine}" +
-                    $"Total UF: {TotalUf:N3} UF{Environment.NewLine}" +
+                    (MuestraUf ? $"Total UF: {TotalUf:N3} UF{Environment.NewLine}" : "") +
                     $"Exportado: {AppClock.Now:yyyy-MM-dd HH:mm:ss}",
                     System.Text.Encoding.UTF8);
 

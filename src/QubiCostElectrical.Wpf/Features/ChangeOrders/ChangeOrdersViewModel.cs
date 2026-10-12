@@ -59,7 +59,30 @@ public sealed partial class ChangeOrdersViewModel : ObservableObject, IDisposabl
     public decimal MontoPendiente => _session.OrdenesCambio
                                           .Where(x => x.Estado is "Borrador" or "En revisión")
                                           .Sum(x => x.DeltaVentaUf);
-    public string ImpactoNetoDisplay => $"{MontoAprobado:+0.###;-0.###;0} UF";
+
+    /// <summary>
+    /// Política de moneda del proyecto: en CLP no se expone ninguna cifra en UF. Los montos se
+    /// guardan en UF (motor), así que en CLP se convierten con el valor UF vigente.
+    /// </summary>
+    public bool MuestraUf =>
+        !string.Equals(_session.ProjectInfo.MonedaPresupuesto, CurrencyConversionService.CurrencyClp, StringComparison.OrdinalIgnoreCase);
+
+    private decimal UfRate => _session.ValorUfClp > 0m ? _session.ValorUfClp : PriceConversion.DefaultValorUfClp;
+
+    public string MontoAprobadoDisplay => FormatMonto(MontoAprobado);
+    public string MontoPendienteDisplay => FormatMonto(MontoPendiente);
+    public string ImpactoNetoDisplay => MuestraUf
+        ? $"{MontoAprobado:+0.###;-0.###;0} UF"
+        : ClpSigned(Math.Round(MontoAprobado * UfRate, 0, MidpointRounding.AwayFromZero));
+
+    private string FormatMonto(decimal uf)
+        => MuestraUf ? $"{uf:N3} UF" : $"$ {Math.Round(uf * UfRate, 0, MidpointRounding.AwayFromZero):N0}";
+
+    private string FormatDelta(decimal uf)
+        => MuestraUf ? $"{uf:+0.###;-0.###;0} UF" : ClpSigned(Math.Round(uf * UfRate, 0, MidpointRounding.AwayFromZero));
+
+    private static string ClpSigned(decimal clp)
+        => clp > 0m ? $"+$ {clp:N0}" : clp < 0m ? $"- $ {Math.Abs(clp):N0}" : "$ 0";
 
     private bool HasProject => !string.IsNullOrEmpty(_session.CurrentProjectPath);
     public ChangeOrdersViewModel(WpfAppHost host) : this(host.Session, host.UndoService) { }
@@ -68,6 +91,7 @@ public sealed partial class ChangeOrdersViewModel : ObservableObject, IDisposabl
     {
         _session = session;
         _undo = undo;
+        ShowEditor = (oc, isNew) => ChangeOrderEditorDialog.Show(oc, isNew, MuestraUf, UfRate);
         Reload();
     }
 
@@ -207,7 +231,7 @@ public sealed partial class ChangeOrdersViewModel : ObservableObject, IDisposabl
 
         int seq = 1;
         foreach (var row in filtered)
-            Items.Add(new ChangeOrderRowVm(row, seq++));
+            Items.Add(new ChangeOrderRowVm(row, seq++, FormatDelta));
 
         Selected = Items.FirstOrDefault(i => i.Id == prevId);
         RefreshSummary();
@@ -242,6 +266,9 @@ public sealed partial class ChangeOrdersViewModel : ObservableObject, IDisposabl
         OnPropertyChanged(nameof(TotalRechazado));
         OnPropertyChanged(nameof(MontoAprobado));
         OnPropertyChanged(nameof(MontoPendiente));
+        OnPropertyChanged(nameof(MuestraUf));
+        OnPropertyChanged(nameof(MontoAprobadoDisplay));
+        OnPropertyChanged(nameof(MontoPendienteDisplay));
         OnPropertyChanged(nameof(ImpactoNetoDisplay));
         OnPropertyChanged(nameof(HasNoProject));
     }
@@ -271,11 +298,13 @@ public sealed partial class ChangeOrdersViewModel : ObservableObject, IDisposabl
 public sealed class ChangeOrderRowVm
 {
     private readonly ChangeOrderRow _row;
+    private readonly Func<decimal, string> _formatDelta;
 
-    public ChangeOrderRowVm(ChangeOrderRow row, int seq)
+    public ChangeOrderRowVm(ChangeOrderRow row, int seq, Func<decimal, string>? formatDelta = null)
     {
         _row = row;
         Seq = seq;
+        _formatDelta = formatDelta ?? (uf => $"{uf:+0.###;-0.###;0} UF");
     }
 
     public string Id => _row.Id;
@@ -300,7 +329,7 @@ public sealed class ChangeOrderRowVm
 
     public string FechaDisplay => FechaCreacion.ToString("dd/MM/yyyy");
     public string ModificadoDisplay => FechaModificacion.ToString("dd/MM/yyyy");
-    public string DeltaDisplay => $"{DeltaVentaUf:+0.###;-0.###;0} UF";
+    public string DeltaDisplay => _formatDelta(DeltaVentaUf);
     public string DeltaKind => DeltaVentaUf > 0 ? "Aumenta" : DeltaVentaUf < 0 ? "Reduce" : "Neutro";
     public bool EsBorrador => Estado == "Borrador";
     public bool EsAprobado => Estado == "Aprobado";

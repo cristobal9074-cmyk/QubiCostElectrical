@@ -47,7 +47,23 @@ public sealed record EstadoPagoExportRequest(
     EstadoPagoExportMes Mes,
     IReadOnlyList<EstadoPagoExportCronogramaMes> Cronograma,
     string ExportadoPor,
-    DateTime ExportadoAt);
+    DateTime ExportadoAt,
+    string MonedaPresupuesto = Moneda.CLP,
+    decimal ValorUfClp = 0m)
+{
+    /// <summary>
+    /// <c>true</c> cuando el proyecto permite montos en UF (UF/USD/EUR). Con CLP los montos
+    /// del estado de pago (que el motor lleva en UF) se convierten a pesos y no se rotula UF.
+    /// </summary>
+    public bool MuestraUf =>
+        !string.Equals(
+            string.IsNullOrWhiteSpace(MonedaPresupuesto) ? Moneda.CLP : MonedaPresupuesto.Trim(),
+            Moneda.CLP,
+            StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>UF vigente del proyecto, con el valor por defecto del motor si viene en 0.</summary>
+    public decimal UfRate => ValorUfClp > 0m ? ValorUfClp : PriceConversion.DefaultValorUfClp;
+}
 
 /// <summary>Entrada del builder: capítulo del Itemizado con sus partidas base.</summary>
 public sealed record EstadoPagoExportSeccionInput(

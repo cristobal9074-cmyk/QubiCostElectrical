@@ -204,7 +204,8 @@ public partial class CubicacionView : UserControl
             }
 
             if (e.PropertyName is nameof(CubicacionViewModel.IsSectorMatrixMode)
-                or nameof(CubicacionViewModel.VisibleSectorHeaders))
+                or nameof(CubicacionViewModel.VisibleSectorHeaders)
+                or nameof(CubicacionViewModel.MuestraUf))
             {
                 ApplyGridMode();
             }
@@ -907,6 +908,14 @@ public partial class CubicacionView : UserControl
             return;
         }
 
+        // Ctrl+V se atiende aquí: el pegado Excel marca PreviewKeyDown como atendido y eso suprime el KeyDown que burbujea hasta el UserControl.
+        if (!editing && Keyboard.Modifiers == ModifierKeys.Control && e.Key == Key.V)
+        {
+            OnPasteKeyDown(ResourceGrid, e);
+            e.Handled = true;
+            return;
+        }
+
         if (!editing && e.KeyboardDevice.Modifiers == ModifierKeys.Control && e.Key is Key.C or Key.X)
         {
             DataGridExcelNavigation.CopySelectionToClipboard(ResourceGrid);
@@ -1371,8 +1380,12 @@ public partial class CubicacionView : UserControl
             TotalPriceColumn.Visibility = Visibility.Visible;
             SubtotalColumn.Visibility = Visibility.Visible;
             GgUtColumn.Visibility = Visibility.Visible;
-            UfUnitColumn.Visibility = Visibility.Visible;
-            SubtotalUfColumn.Visibility = Visibility.Visible;
+            // Política de moneda: en un proyecto en CLP no hay columnas UF (UNIT/SUBTOTAL).
+            var ufVisibility = Vm.MuestraUf ? Visibility.Visible : Visibility.Collapsed;
+            UfUnitColumn.Visibility = ufVisibility;
+            SubtotalUfColumn.Visibility = ufVisibility;
+            ItemRowUfUnitCell.Visibility = ufVisibility;
+            ItemRowSubtotalUfCell.Visibility = ufVisibility;
             ObservacionesColumn.Visibility = Visibility.Visible;
             IndexColumn.Visibility = Visibility.Visible;
             UnidadColumn.Visibility = Visibility.Visible;      // unidad del recurso — editable

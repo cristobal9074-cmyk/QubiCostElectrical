@@ -399,6 +399,10 @@ public static partial class SQLiteProjectStore
         EnsureSchema(connection);
 
         var proyecto = SqliteProjectInfoStore.Load(connection) ?? new ProjectInfoRow();
+        // El FA no es un dato de la app sino una calibración del proyecto: el 62,80 que arrastran los
+        // .qce antiguos era el default heredado, no una decisión del estimador, así que entra como
+        // "sin calibrar" (0) y el modo Automático lo vuelve a derivar desde el plan de obra.
+        proyecto.IndiceMoFa = MaterialMoResolver.NormalizarFaGuardado(proyecto.IndiceMoFa);
         SqliteProjectInfoStore.LoadCollections(connection, proyecto);
 
 #pragma warning disable CS0618

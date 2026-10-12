@@ -3,7 +3,9 @@ namespace QubiCostElectrical;
 public sealed record PurchaseListExcelRequest(
     string ProjectTitle,
     decimal ToleranciaPct,
-    IReadOnlyList<CompraMaterialViewModel> Rows);
+    IReadOnlyList<CompraMaterialViewModel> Rows,
+    bool MuestraUf = true,
+    decimal ValorUfClp = 0m);
 
 public sealed record PurchaseListRfqRequest(
     string ProjectTitle,

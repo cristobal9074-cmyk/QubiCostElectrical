@@ -79,9 +79,9 @@ public sealed class ProjectInfoRow
     /// <summary>Si true, la tarifa derivada desde el plan de M.O. multiplica (1 + LeyesSocialesMoPct/100).</summary>
     public bool TarifaDhConLeyes { get; set; }
     /// <summary>
-    /// Índice global de M.O. "FA" (COSTOS!E192 del Excel, 62,80). Solo multiplica dentro de la
-    /// fórmula de material "Porcentaje" (Material × % × FA); las M.O. fijas y el modo rendimiento
-    /// no se afectan. Editable en la pantalla Costo.
+    /// Índice global de M.O. "FA" (COSTOS!E192 del Excel). Solo multiplica dentro de la fórmula de
+    /// material "Porcentaje" (Material × % × FA); las M.O. fijas y el modo rendimiento no se afectan.
+    /// 0 = sin calibrar: se deriva del plan de obra (Automático o Calcular FA) y queda guardado aquí.
     /// </summary>
     public decimal IndiceMoFa { get; set; } = MaterialMoResolver.IndiceMoFaDefault;
     public decimal HerramientasPct { get; set; } = 0m;

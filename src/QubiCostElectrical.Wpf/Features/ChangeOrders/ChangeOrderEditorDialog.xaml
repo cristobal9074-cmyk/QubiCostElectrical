@@ -40,18 +40,18 @@
             <ColumnDefinition Width="*"/>
           </Grid.ColumnDefinitions>
           <StackPanel Grid.Column="0">
-            <TextBlock Text="Costo base (UF)" Style="{StaticResource Form.Label}"/>
+            <TextBlock Text="{Binding CostoBaseLabel}" Style="{StaticResource Form.Label}"/>
             <TextBox x:Name="CostoBaseBox" Style="{StaticResource Form.TextBox}" Margin="0"
                      Text="{Binding CostoBaseText, UpdateSourceTrigger=PropertyChanged}"/>
           </StackPanel>
           <StackPanel Grid.Column="2">
-            <TextBlock Text="Delta costo (UF)" Style="{StaticResource Form.Label}"/>
+            <TextBlock Text="{Binding DeltaCostoLabel}" Style="{StaticResource Form.Label}"/>
             <TextBox x:Name="DeltaCostoBox" Style="{StaticResource Form.TextBox}" Margin="0"
                      Text="{Binding DeltaCostoText, UpdateSourceTrigger=PropertyChanged}"/>
           </StackPanel>
         </Grid>
 
-        <TextBlock Text="Delta venta (UF)" Style="{StaticResource Form.Label}"/>
+        <TextBlock Text="{Binding DeltaVentaLabel}" Style="{StaticResource Form.Label}"/>
         <TextBox x:Name="DeltaVentaBox" Style="{StaticResource Form.TextBox}" MaxLength="20" Margin="0,0,0,10"
                  Text="{Binding DeltaVentaText, UpdateSourceTrigger=PropertyChanged}"/>
 

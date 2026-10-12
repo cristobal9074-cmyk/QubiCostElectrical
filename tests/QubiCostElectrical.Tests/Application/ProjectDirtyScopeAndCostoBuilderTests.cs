@@ -103,4 +103,29 @@ public sealed class CostoBreakdownLineBuilderTests
     {
         Assert.Equal(expected, CostoOrigenDescriptor.Describe(origen));
     }
+
+    [Fact]
+    public void BuildLines_ClpProject_LabelsPricePerSquareMeterInPesos()
+    {
+        var project = new ProjectInfoRow { MonedaPresupuesto = "CLP", MetrosCuadrados = 100 };
+        var cost = new CostBreakdown { TotalVentaUf = 10_000_000m, UfM2 = 100_000m };
+
+        var lines = CostoBreakdownLineBuilder.BuildLines(cost, project);
+
+        var metro = Assert.Single(lines, l => CostoBreakdownLineBuilder.IsMetroLine(l.Label));
+        Assert.StartsWith("$ / m²", metro.Label, StringComparison.Ordinal);
+        Assert.DoesNotContain("UF", metro.Label, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void BuildLines_UfProject_LabelsPricePerSquareMeterInUf()
+    {
+        var project = new ProjectInfoRow { MonedaPresupuesto = "UF", MetrosCuadrados = 100 };
+        var cost = new CostBreakdown { TotalVentaUf = 10_000_000m, UfM2 = 100_000m };
+
+        var lines = CostoBreakdownLineBuilder.BuildLines(cost, project);
+
+        var metro = Assert.Single(lines, l => CostoBreakdownLineBuilder.IsMetroLine(l.Label));
+        Assert.StartsWith("UF / m²", metro.Label, StringComparison.Ordinal);
+    }
 }

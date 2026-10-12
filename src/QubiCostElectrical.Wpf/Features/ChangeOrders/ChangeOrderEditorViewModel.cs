@@ -29,6 +29,32 @@ public sealed partial class ChangeOrderEditorViewModel : ObservableObject
     [ObservableProperty]
     private string? _validationErrorMessage;
 
+    /// <summary>
+    /// Política de moneda de presentación. Los montos se guardan en UF (motor); cuando el proyecto
+    /// está en CLP se muestran y se capturan en pesos usando el valor UF vigente.
+    /// </summary>
+    public bool MuestraUf { get; private set; } = true;
+
+    public decimal UfRate { get; private set; } = PriceConversion.DefaultValorUfClp;
+
+    public string EtiquetaMoneda => MuestraUf ? "UF" : "$";
+
+    public string CostoBaseLabel => $"Costo base ({EtiquetaMoneda})";
+    public string DeltaCostoLabel => $"Delta costo ({EtiquetaMoneda})";
+    public string DeltaVentaLabel => $"Delta venta ({EtiquetaMoneda})";
+
+    /// <summary>Aplica la política de moneda antes de <see cref="LoadFrom"/>.</summary>
+    public void ConfigureCurrency(bool muestraUf, decimal ufRate)
+    {
+        MuestraUf = muestraUf;
+        UfRate = ufRate > 0m ? ufRate : PriceConversion.DefaultValorUfClp;
+        OnPropertyChanged(nameof(MuestraUf));
+        OnPropertyChanged(nameof(EtiquetaMoneda));
+        OnPropertyChanged(nameof(CostoBaseLabel));
+        OnPropertyChanged(nameof(DeltaCostoLabel));
+        OnPropertyChanged(nameof(DeltaVentaLabel));
+    }
+
     partial void OnNumeroChanged(string value) => ClearError();
     partial void OnTituloChanged(string value) => ClearError();
     partial void OnCreadoPorChanged(string value) => ClearError();
@@ -42,12 +68,22 @@ public sealed partial class ChangeOrderEditorViewModel : ObservableObject
         Numero = oc.Numero;
         Titulo = oc.Titulo;
         CreadoPor = oc.CreadoPor;
-        DeltaVentaText = oc.DeltaVentaUf.ToString("N3", CultureInfo.InvariantCulture);
-        DeltaCostoText = oc.DeltaCostoUf.ToString("N3", CultureInfo.InvariantCulture);
-        CostoBaseText = oc.CostoBaseUf.ToString("N3", CultureInfo.InvariantCulture);
+        DeltaVentaText = ToText(oc.DeltaVentaUf);
+        DeltaCostoText = ToText(oc.DeltaCostoUf);
+        CostoBaseText = ToText(oc.CostoBaseUf);
         Nota = oc.Nota;
         ValidationErrorMessage = null;
     }
+
+    /// <summary>Monto de motor (UF) al texto de la moneda de presentación.</summary>
+    private string ToText(decimal uf)
+        => MuestraUf
+            ? uf.ToString("N3", CultureInfo.InvariantCulture)
+            : Math.Round(uf * UfRate, 0, MidpointRounding.AwayFromZero).ToString("N0", CultureInfo.InvariantCulture);
+
+    /// <summary>Texto de la moneda de presentación al monto de motor (UF).</summary>
+    private decimal ToUf(decimal valor)
+        => MuestraUf ? valor : PriceConversion.ClpToUf(valor, UfRate);
 
     public bool TrySave(ChangeOrderRow target)
     {
@@ -83,9 +119,9 @@ public sealed partial class ChangeOrderEditorViewModel : ObservableObject
         target.Numero = numero;
         target.Titulo = titulo;
         target.CreadoPor = CreadoPor.Trim();
-        target.DeltaVentaUf = deltaVenta;
-        target.DeltaCostoUf = deltaCosto;
-        target.CostoBaseUf = costoBase;
+        target.DeltaVentaUf = ToUf(deltaVenta);
+        target.DeltaCostoUf = ToUf(deltaCosto);
+        target.CostoBaseUf = ToUf(costoBase);
         target.Nota = Nota.Trim();
 
         ValidationErrorMessage = null;

@@ -77,14 +77,14 @@
       </Border>
       <Border Style="{StaticResource ChipCard}" Margin="0,0,6,0">
         <StackPanel>
-          <TextBlock Text="{Binding MontoAprobado, StringFormat={}{0:N3} UF}"
+          <TextBlock Text="{Binding MontoAprobadoDisplay}"
                      Style="{StaticResource ChipNum}" Foreground="{DynamicResource Brush.Success}" FontSize="13"/>
           <TextBlock Text="Monto aprobado" Style="{StaticResource ChipLbl}"/>
         </StackPanel>
       </Border>
       <Border Style="{StaticResource ChipCard}" Margin="0">
         <StackPanel>
-          <TextBlock Text="{Binding MontoPendiente, StringFormat={}{0:N3} UF}"
+          <TextBlock Text="{Binding MontoPendienteDisplay}"
                      Style="{StaticResource ChipNum}" FontSize="13"/>
           <TextBlock Text="Monto pendiente" Style="{StaticResource ChipLbl}"/>
         </StackPanel>

@@ -59,4 +59,15 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
     private bool showEmptyState = true;
     private bool hasNoFilterResults;
     private System.Windows.Threading.DispatcherTimer? searchDebounceTimer;
+
+    /// <summary>
+    /// Regla de moneda del proyecto: con CLP no se expone ninguna cifra en UF (columnas
+    /// PRECIO UF / MO UF). El precio fuente es siempre CLP; la UF es solo una equivalencia
+    /// derivada y se oculta cuando el proyecto está en pesos.
+    /// </summary>
+    public bool MuestraUf =>
+        !string.Equals(session.ProjectInfo.MonedaPresupuesto, CurrencyConversionService.CurrencyClp, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Notifica el cambio de política de moneda para que la vista reaplique la grilla.</summary>
+    private void NotifyMonedaChanged() => OnPropertyChanged(nameof(MuestraUf));
 }

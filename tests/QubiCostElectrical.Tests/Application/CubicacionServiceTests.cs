@@ -370,10 +370,19 @@ public sealed class CubicacionServiceTests
     {
         var row = new CubicacionRow();
         var material = MaterialPorcentaje(2000m);
-        _service.ApplyMaterial(row, material, 0m, new ProjectInfoRow());
+        _service.ApplyMaterial(row, material, 0m, ProyectoFaCalibrado());
         // 2000 × 2,5% × 62,80 = 3140
         Assert.Equal(3140m, row.MoClp);
         Assert.Equal(999m, material.MoClp); // el catálogo conserva su M.O. fija
+    }
+
+    /// <summary>Sin FA calibrado la M.O. por % del itemizado queda en 0: no hay factor que multiplique.</summary>
+    [Fact]
+    public void ApplyMaterial_MaterialPorcentaje_SinFaCalibrado_UsaFactorNeutro()
+    {
+        var row = new CubicacionRow();
+        _service.ApplyMaterial(row, MaterialPorcentaje(2000m), 0m, new ProjectInfoRow());
+        Assert.Equal(50m, row.MoClp);
     }
 
     [Fact]
@@ -382,17 +391,21 @@ public sealed class CubicacionServiceTests
         var row = new CubicacionRow { Codigo = "CBL12", MatClp = 2000m, MoClp = 1m };
         var material = MaterialPorcentaje(2000m);
         int updated = _service.SyncPricesFromCatalog(
-            new[] { row }, new[] { material }, 0m, valorizaciones: null, new ProjectInfoRow());
+            new[] { row }, new[] { material }, 0m, valorizaciones: null, ProyectoFaCalibrado());
         Assert.Equal(1, updated);
         Assert.Equal(3140m, row.MoClp);
     }
 
+    /// <summary>Proyecto con el FA de la planilla PEL039A (COSTOS!E192); la app parte en 0 = sin calibrar.</summary>
+    private static ProjectInfoRow ProyectoFaCalibrado() => new() { IndiceMoFa = 62.80m };
+
+    /// <summary>Sin proyecto que calibre el FA, la M.O. por % se evalúa con factor 1 (Material × %).</summary>
     [Fact]
-    public void SyncPricesFromCatalog_MaterialPorcentaje_SinProyecto_UsaFaDefault()
+    public void SyncPricesFromCatalog_MaterialPorcentaje_SinProyecto_UsaFactorNeutro()
     {
         var row = new CubicacionRow { Codigo = "CBL12", MatClp = 2000m, MoClp = 1m };
         var material = MaterialPorcentaje(2000m);
         _service.SyncPricesFromCatalog(new[] { row }, new[] { material }, 0m);
-        Assert.Equal(3140m, row.MoClp);
+        Assert.Equal(50m, row.MoClp);
     }
 }

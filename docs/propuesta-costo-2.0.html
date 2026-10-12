@@ -1,0 +1,1981 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Desglose de costos 2.0 · Qubi Cost Electrical</title>
+<style>
+  :root {
+    --navy: #101C30;
+    --blue: #2563B0;
+    --blue-dark: #1D4ED8;
+    --blue-soft: #EAF1FF;
+    --blue-faint: #EDF3FA;
+    --brand: #1A3B6E;
+    --ink: #101A26;
+    --ink-2: #3C4A5C;
+    --ink-3: #5C6A7C;
+    --ink-4: #7B8798;
+    --muted: #8B95A3;
+    --line: #DDE3EA;
+    --line-2: #EEF2F6;
+    --canvas: #EDF0F4;
+    --paper: #FFFFFF;
+    --surface-2: #FAFBFD;
+    --wash: #F4F7FB;
+    --amber: #8A5D0B;
+    --amber-soft: #FBF1DD;
+    --amber-edge: #C79433;
+    --green: #15803D;
+    --green-soft: #EAF8EF;
+    --green-edge: #7CC79B;
+    --red: #B23C3C;
+    --red-soft: #FFF0F0;
+    --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+    --mono: "Cascadia Mono", "JetBrains Mono", Consolas, ui-monospace, monospace;
+    --shadow-sm: 0 1px 2px rgba(16, 28, 48, .06);
+    --shadow: 0 10px 30px rgba(16, 28, 48, .07);
+    --shadow-lg: 0 24px 60px rgba(16, 28, 48, .14);
+    --radius: 10px;
+    --radius-lg: 14px;
+  }
+  [data-theme="dark"] {
+    --navy: #0B0E14;
+    --blue: #4B8DF7;
+    --blue-dark: #3B82F6;
+    --blue-soft: #1E2D4A;
+    --blue-faint: #1C2838;
+    --brand: #9EB1C8;
+    --ink: #E4E7EC;
+    --ink-2: #BCC0C6;
+    --ink-3: #8B929C;
+    --ink-4: #7A828D;
+    --muted: #7A828D;
+    --line: #313743;
+    --line-2: #262B34;
+    --canvas: #15181F;
+    --paper: #1B1F27;
+    --surface-2: #23272F;
+    --wash: #21262F;
+    --amber: #F0B23E;
+    --amber-soft: #2C2410;
+    --amber-edge: #6B5320;
+    --green: #4ADE80;
+    --green-soft: #14301F;
+    --green-edge: #235E3B;
+    --red: #F87171;
+    --red-soft: #33191B;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, .4);
+    --shadow: 0 10px 30px rgba(0, 0, 0, .4);
+    --shadow-lg: 0 24px 60px rgba(0, 0, 0, .55);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    font-family: var(--font); color: var(--ink); background: var(--navy);
+    font-size: 13px; -webkit-font-smoothing: antialiased;
+  }
+  button, input, select { font: inherit; color: inherit; }
+  button { cursor: pointer; border: 0; background: none; }
+  :focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; border-radius: 4px; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+  .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+  /* ============================================================ documento */
+  .doc { max-width: 1320px; margin: 0 auto; padding: 30px 18px 90px; }
+  .doc > header { color: #E8EEF7; padding: 6px 4px 26px; }
+  .kicker { font-size: 10px; font-weight: 750; letter-spacing: .2em; text-transform: uppercase; color: #8FA8C6; }
+  .doc > header h1 { margin: 8px 0 10px; font-size: 30px; font-weight: 700; letter-spacing: -.025em; }
+  .doc > header p { margin: 0; color: #A9BACD; font-size: 13.5px; max-width: 900px; line-height: 1.6; }
+  .doc > header p b { color: #DCE7F5; font-weight: 650; }
+  .toc { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
+  .toc a {
+    font-size: 11px; font-weight: 650; color: #CFE0F4; text-decoration: none;
+    padding: 5px 11px; border: 1px solid #244A73; border-radius: 999px;
+  }
+  .toc a:hover { background: rgba(255, 255, 255, .08); color: #fff; }
+
+  .card {
+    background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-lg);
+    box-shadow: var(--shadow); margin-bottom: 22px; overflow: hidden;
+  }
+  .card > .cap { padding: 18px 20px 0; }
+  .card h2 { margin: 0; font-size: 16px; font-weight: 700; letter-spacing: -.01em; }
+  .card h2 .n { color: var(--blue); font-family: var(--mono); margin-right: 8px; }
+  .card .lead { margin: 7px 0 0; color: var(--ink-3); font-size: 13px; line-height: 1.6; max-width: 940px; }
+  .card .body { padding: 16px 20px 20px; }
+  .h {
+    margin: 0 0 9px; font-size: 10px; font-weight: 750; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--brand);
+  }
+  .h.gap { margin-top: 20px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  @media (max-width: 1000px) { .grid2, .grid3 { grid-template-columns: 1fr; } }
+
+  .problem { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; background: var(--surface-2); }
+  .problem .tag {
+    display: inline-flex; align-items: center; gap: 6px; height: 20px; padding: 0 8px; border-radius: 999px;
+    background: var(--red-soft); color: var(--red); font-size: 10px; font-weight: 750;
+    letter-spacing: .07em; text-transform: uppercase;
+  }
+  .problem h3 { margin: 11px 0 6px; font-size: 14px; letter-spacing: -.01em; }
+  .problem p { margin: 0; color: var(--ink-2); font-size: 12.5px; line-height: 1.65; }
+  .problem p + p { margin-top: 8px; }
+  code {
+    font-family: var(--mono); font-size: 11.5px; background: var(--blue-faint); color: var(--brand);
+    padding: 1px 5px; border-radius: 4px; border: 1px solid var(--line-2);
+  }
+  [data-theme="dark"] code { background: var(--blue-soft); color: #9CC0FF; }
+  .fix { margin-top: 10px; padding-left: 10px; border-left: 3px solid var(--green); font-size: 12.5px; color: var(--ink-2); line-height: 1.6; }
+  .fix b { color: var(--green); font-weight: 700; }
+
+  /* ============================================================ mockup */
+  .mock {
+    border: 1px solid var(--line); border-radius: var(--radius-lg); overflow: hidden;
+    background: var(--canvas); box-shadow: var(--shadow-lg);
+  }
+  .shell {
+    height: 48px; display: flex; align-items: center; gap: 14px; padding: 0 14px;
+    background: var(--navy); color: #EEF4FB; font-size: 12px; flex: none;
+  }
+  .shell .mark {
+    width: 24px; height: 24px; border-radius: 7px; background: var(--blue);
+    display: grid; place-items: center; font-size: 12px; font-weight: 750; color: #fff;
+  }
+  .shell .brand { font-size: 11px; letter-spacing: .12em; font-weight: 750; line-height: 1.15; }
+  .shell .brand span { display: block; letter-spacing: .16em; color: #9EB1C8; font-weight: 650; font-size: 8.5px; }
+  .shell .nav { display: flex; gap: 2px; margin-left: 10px; }
+  .shell .nav button {
+    height: 34px; padding: 0 11px; color: #A9BACD; font-size: 12px; font-weight: 600;
+    border-bottom: 2px solid transparent; border-radius: 0;
+  }
+  .shell .nav button.on { color: #fff; border-bottom-color: var(--blue); }
+  .shell .nav button:hover { color: #fff; }
+  .shell .right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+  .shell .pill {
+    display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px;
+    border: 1px solid #244A73; border-radius: 8px; color: #CFE0F4; font-size: 11.5px;
+  }
+  .shell .pill b { color: #fff; font-family: var(--mono); font-weight: 650; }
+  .shell .pill i { width: 7px; height: 7px; border-radius: 999px; background: var(--green); display: inline-block; }
+
+  .page { padding: 16px 16px 22px; background: var(--canvas); }
+
+  .pagehead { display: flex; align-items: flex-start; gap: 16px; padding: 2px 2px 14px; }
+  .pagehead h3 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -.015em; }
+  .pagehead .sub { color: var(--ink-4); font-size: 11.5px; margin-top: 3px; }
+  .pagehead .meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px;
+    border: 1px solid var(--line); background: var(--paper); border-radius: 7px;
+    font-size: 11px; color: var(--ink-3);
+  }
+  .chip b { font-family: var(--mono); color: var(--ink); font-weight: 650; }
+  .chip .dot { width: 6px; height: 6px; border-radius: 999px; background: var(--green); }
+  .pagehead .acts { margin-left: auto; display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+
+  .btn {
+    height: 28px; padding: 0 12px; border-radius: 8px; font-size: 12px; font-weight: 650;
+    border: 1px solid var(--line); background: var(--paper); color: var(--ink-2);
+    display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+  }
+  .btn:hover { background: var(--wash); }
+  .btn.primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .btn.primary:hover { background: var(--blue-dark); }
+  .btn.ghost { background: transparent; border-color: transparent; color: var(--ink-3); }
+  .btn.ghost:hover { background: var(--wash); }
+  .btn.sm { height: 26px; padding: 0 10px; font-size: 11.5px; }
+  .btn[disabled] { opacity: .45; pointer-events: none; }
+
+  .seg {
+    display: inline-flex; background: var(--surface-2); border: 1px solid var(--line);
+    border-radius: 8px; padding: 2px; gap: 2px;
+  }
+  .seg button {
+    height: 24px; padding: 0 10px; border-radius: 6px; font-size: 11.5px; font-weight: 650;
+    color: var(--ink-3);
+  }
+  .seg button.on { background: var(--paper); color: var(--blue); box-shadow: var(--shadow-sm); }
+  .seg button[disabled] { opacity: .34; cursor: not-allowed; }
+  .chk { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--ink-3); cursor: pointer; }
+  .chk input { accent-color: var(--blue); }
+
+  /* KPIs */
+  .hero {
+    background: var(--paper); border: 1px solid var(--line); border-radius: 12px;
+    padding: 14px 16px; margin-bottom: 12px; box-shadow: var(--shadow-sm);
+  }
+  .kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; }
+  @media (max-width: 1180px) { .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; } }
+  @media (max-width: 720px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .kpi { padding: 4px 12px; border-right: 1px solid var(--line-2); min-width: 0; }
+  .kpi:last-child { border-right: 0; }
+  .kpi .k { font-size: 9.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kpi .v { font-family: var(--mono); font-size: 19px; font-weight: 650; letter-spacing: -.035em; margin-top: 5px; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kpi .s { font-size: 10.5px; color: var(--ink-3); margin-top: 5px; min-height: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kpi .s .up { color: var(--green); font-weight: 650; }
+  .kpi.accent .v { color: var(--blue); }
+  .kpi.strong .v { color: var(--ink); font-weight: 700; }
+  @media (max-width: 1180px) { .kpi { border-right: 0; padding: 4px 0; } }
+
+  .verdict {
+    display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px;
+    border-radius: 999px; font-size: 11px; font-weight: 700;
+    background: var(--green-soft); color: var(--green); border: 1px solid var(--green-edge);
+  }
+
+  /* tabs */
+  .tabs {
+    display: flex; gap: 2px; padding: 0 4px; background: var(--paper);
+    border: 1px solid var(--line); border-bottom: 0; border-radius: 12px 12px 0 0; overflow-x: auto;
+  }
+  .tab {
+    height: 40px; padding: 0 15px; font-size: 12.5px; font-weight: 650; color: var(--ink-4);
+    border-bottom: 2px solid transparent; display: inline-flex; align-items: center; gap: 7px; white-space: nowrap;
+  }
+  .tab:hover { color: var(--ink-2); }
+  .tab.on { color: var(--blue); border-bottom-color: var(--blue); }
+  .tab .cnt { font-family: var(--mono); font-size: 10px; background: var(--blue-faint); color: var(--brand); border-radius: 999px; padding: 1px 7px; }
+  [data-theme="dark"] .tab .cnt { background: var(--blue-soft); color: #9CC0FF; }
+  .panel {
+    border: 1px solid var(--line); border-radius: 0 0 12px 12px; background: var(--paper);
+    padding: 16px; min-height: 430px;
+  }
+  .panel[hidden] { display: none; }
+
+  .cols { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+  .cols3 { display: grid; grid-template-columns: 268px minmax(0, 1fr) 300px; min-height: 520px; }
+  .cols3 > * + * { border-left: 1px solid var(--line-2); }
+  .pane { min-width: 0; padding: 0 14px; }
+  .pane:first-child { padding-left: 0; }
+  .pane:last-child { padding-right: 0; }
+  @media (max-width: 1080px) { .cols, .cols3 { grid-template-columns: 1fr; } .cols3 > * + * { border-left: 0; border-top: 1px solid var(--line-2); padding: 14px 0 0; } }
+
+  /* tablas */
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    text-align: right; font-size: 9.5px; letter-spacing: .09em; text-transform: uppercase;
+    color: var(--ink-4); font-weight: 750; padding: 0 8px 8px; border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+  }
+  th:first-child, td.l { text-align: left; }
+  td { padding: 6px 8px; border-bottom: 1px solid var(--line-2); font-size: 12.5px; vertical-align: middle; }
+  td.n { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  td.o { text-align: center; }
+  .org {
+    display: inline-block; font-family: var(--mono); font-size: 9px; font-weight: 700;
+    letter-spacing: .04em; color: var(--ink-4); background: var(--surface-2);
+    border: 1px solid var(--line-2); border-radius: 4px; padding: 1px 5px; cursor: help;
+  }
+  tr.grp td { padding: 9px 8px; border-bottom: 1px solid var(--line); background: var(--surface-2); }
+  tr.grp:hover td { background: var(--wash); }
+  tr.grp .lg { display: flex; align-items: center; gap: 7px; }
+  tr.grp .chev {
+    width: 12px; flex: none; font-size: 10px; color: var(--ink-4); text-align: left;
+    background: none; border: 0; padding: 0;
+  }
+  tr.grp:hover .chev { color: var(--blue); }
+  tr.grp .gname { font-size: 12.5px; font-weight: 700; color: var(--ink); }
+  tr.grp .git { font-size: 9.5px; font-weight: 600; color: var(--ink-4); }
+  tr.grp td.n { font-weight: 700; color: var(--ink); }
+  tr.det td.l { padding-left: 27px; color: var(--ink-2); }
+  tr.det td.l::before { content: "·"; color: var(--ink-4); margin-right: 7px; }
+  tr.sec td {
+    padding: 16px 8px 5px; font-size: 9.5px; font-weight: 750; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--brand); border-bottom: 0; background: none;
+  }
+  tr.tot td { font-weight: 700; border-top: 1px solid var(--line); border-bottom: 0; padding-top: 9px; }
+  tr.grand td { font-weight: 750; font-size: 13.5px; border-top: 2px solid var(--navy); border-bottom: 0; padding-top: 11px; }
+  [data-theme="dark"] tr.grand td { border-top-color: var(--blue); }
+  tr.dim td { color: var(--ink-3); }
+  tr.row:hover td { background: var(--wash); }
+  td .pct {
+    display: inline-block; min-width: 46px; padding: 1px 6px; border-radius: 5px;
+    background: var(--surface-2); border: 1px solid var(--line-2); font-size: 10.5px; color: var(--ink-3);
+  }
+  td .uf { display: block; font-size: 10px; color: var(--ink-4); margin-top: 2px; }
+  .hint { color: var(--ink-4); font-size: 11.5px; line-height: 1.55; margin: 0; }
+  .hint b { color: var(--ink-2); }
+
+  /* waterfall */
+  .wf { margin-top: 14px; border-top: 1px solid var(--line-2); padding-top: 12px; }
+  .wf .row { display: grid; grid-template-columns: 190px minmax(0, 1fr) 128px; align-items: center; gap: 10px; padding: 3px 0; }
+  .wf .lab { font-size: 11.5px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .wf .track { position: relative; height: 16px; background: var(--surface-2); border-radius: 4px; overflow: hidden; }
+  .wf .bar { position: absolute; top: 0; height: 100%; border-radius: 3px; transition: none; }
+  .wf .val { text-align: right; font-family: var(--mono); font-size: 11.5px; color: var(--ink-2); }
+  .wf .row.total .lab { font-weight: 700; color: var(--ink); }
+  .wf .row.total .val { font-weight: 700; color: var(--ink); }
+  .wf .row.grand { border-top: 1px solid var(--line); margin-top: 5px; padding-top: 8px; }
+  .wf .row.grand .lab, .wf .row.grand .val { font-weight: 750; font-size: 12.5px; color: var(--ink); }
+  .c-exec { background: linear-gradient(180deg, #4A7FC1, #2563B0); }
+  .c-gg { background: linear-gradient(180deg, #7FA8D9, #4A7FC1); }
+  .c-fact { background: linear-gradient(180deg, #86BF9E, #15803D); }
+  .c-neg { background: repeating-linear-gradient(45deg, #E8A9A9, #E8A9A9 4px, #F3C7C7 4px, #F3C7C7 8px); }
+  .c-iva { background: repeating-linear-gradient(45deg, #D8DEE6, #D8DEE6 4px, #EAEFF5 4px, #EAEFF5 8px); }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--ink-3); }
+  .legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+
+  /* familias */
+  .fam .frow { display: grid; grid-template-columns: minmax(0, 1fr) 110px 62px 60px 66px 124px; align-items: center; gap: 4px; padding: 6px 2px; border-bottom: 1px solid var(--line-2); position: relative; }
+  .fam .frow.head { border-bottom: 1px solid var(--line); padding-bottom: 8px; }
+  .fam .frow.head span { font-size: 9.5px; font-weight: 750; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-4); text-align: right; }
+  .fam .frow.head span:first-child { text-align: left; }
+  .fam .frow:hover { background: var(--wash); }
+  .fam .fname { font-size: 12px; font-weight: 650; }
+  .fam .fsub { font-size: 10px; color: var(--ink-4); margin-top: 1px; }
+  .fam .num { text-align: right; font-family: var(--mono); font-size: 12px; color: var(--ink-2); }
+  .fam .val { text-align: right; font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--blue); }
+  .fam input {
+    width: 100%; height: 24px; border: 1px solid var(--line); border-radius: 6px;
+    background: var(--surface-2); text-align: right; padding: 0 6px;
+    font-family: var(--mono); font-size: 11.5px; font-weight: 650;
+  }
+  .fam input:focus { border-color: var(--blue); background: var(--paper); box-shadow: 0 0 0 3px var(--blue-soft); }
+  .fam .share { position: absolute; left: 0; bottom: 0; height: 3px; border-radius: 2px; background: var(--blue); opacity: .45; }
+  .famfoot { display: flex; flex-wrap: wrap; gap: 18px; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
+  .famfoot .st { font-size: 11.5px; color: var(--ink-3); }
+  .famfoot .st b { font-family: var(--mono); color: var(--ink); font-weight: 700; }
+  .famfoot .st.blue b { color: var(--blue); }
+  .bar-share { display: flex; gap: 3px; margin-top: 12px; height: 8px; }
+  .bar-share i { border-radius: 3px; }
+
+  /* palancas */
+  .lever { padding: 10px 0; border-bottom: 1px solid var(--line-2); }
+  .lever:last-child { border-bottom: 0; }
+  .lever .top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .lever .top label { font-size: 11.5px; color: var(--ink-2); font-weight: 600; }
+  .lever .row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+  input[type="number"], input[type="text"] {
+    border: 1px solid var(--line); border-radius: 7px; background: var(--surface-2);
+    font-family: var(--mono); font-weight: 650; font-size: 12px; text-align: right;
+    padding: 0 8px; height: 26px;
+  }
+  input[type="range"] { flex: 1; accent-color: var(--blue); }
+  .lever .imp { font-size: 11px; color: var(--ink-4); margin-top: 7px; }
+  .lever .imp b { font-family: var(--mono); color: var(--ink); font-weight: 700; }
+  .presets { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 8px; }
+  .presets button { height: 24px; border: 1px solid var(--line); border-radius: 6px; background: var(--paper); font-size: 11px; font-weight: 650; color: var(--ink-3); }
+  .presets button:hover { background: var(--wash); }
+  select {
+    width: 100%; height: 28px; border: 1px solid var(--line); border-radius: 7px;
+    background: var(--surface-2); padding: 0 8px; font-size: 12px;
+  }
+  .callout {
+    margin-top: 10px; padding: 9px 11px; border-radius: 8px; font-size: 11.5px; line-height: 1.55;
+    background: var(--amber-soft); border: 1px solid var(--amber-edge); color: var(--amber);
+  }
+  .callout b { font-weight: 700; }
+  .callout.ok { background: var(--green-soft); border-color: var(--green-edge); color: var(--green); }
+
+  /* GO */
+  .go-total { background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 11px 13px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .go-total .v { font-family: var(--mono); font-size: 16px; font-weight: 700; }
+  .go-cat { border: 1px solid var(--line); border-radius: 10px; margin-bottom: 8px; overflow: hidden; background: var(--paper); }
+  .go-cat.open { border-color: #BFD3F0; background: #FBFDFF; }
+  [data-theme="dark"] .go-cat.open { border-color: #2C4A78; background: #1E2530; }
+  .go-cat > button { width: 100%; display: grid; grid-template-columns: 16px 40px minmax(0, 1fr) 104px 52px; align-items: center; gap: 8px; padding: 10px; text-align: left; }
+  .go-cat > button:hover { background: var(--wash); }
+  .go-cat .chev { color: var(--ink-4); font-size: 11px; }
+  .go-cat .code { font-family: var(--mono); font-size: 10px; font-weight: 700; color: var(--ink-3); background: var(--surface-2); border: 1px solid var(--line); border-radius: 5px; padding: 2px 4px; text-align: center; }
+  .go-cat .name { font-size: 12px; font-weight: 650; }
+  .go-cat .cnt { font-size: 9.5px; color: var(--ink-4); margin-top: 2px; }
+  .go-cat .amt { text-align: right; font-family: var(--mono); font-size: 12px; font-weight: 700; }
+  .go-cat .pct { text-align: center; font-family: var(--mono); font-size: 10px; font-weight: 700; color: var(--blue); background: var(--blue-soft); border-radius: 5px; padding: 2px 4px; }
+  .go-items { padding: 0 10px 10px; }
+  .go-items .ihead, .go-items .irow { display: grid; grid-template-columns: minmax(0, 1fr) 54px 62px 96px 92px; gap: 6px; align-items: center; padding: 4px 0; }
+  .go-items .ihead { border-bottom: 1px solid var(--line-2); padding-bottom: 6px; }
+  .go-items .ihead span { font-size: 9px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-4); text-align: right; }
+  .go-items .ihead span:first-child { text-align: left; }
+  .go-items .irow { border-bottom: 1px solid var(--line-2); font-size: 12px; }
+  .go-items .irow:last-child { border-bottom: 0; }
+  .go-items .irow .n { text-align: right; font-family: var(--mono); }
+  .go-items .irow .tt { text-align: right; font-family: var(--mono); font-weight: 650; }
+  .go-items .irow .un { text-align: center; font-size: 10.5px; color: var(--ink-4); }
+  .go-items .irow:hover { background: var(--wash); }
+
+  /* sidebar de secciones */
+  .spec { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .spec .srow { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 12px; padding: 9px 12px; border-bottom: 1px solid var(--line-2); font-size: 12.5px; }
+  .spec .srow:last-child { border-bottom: 0; }
+  .spec .srow:nth-child(odd) { background: var(--surface-2); }
+  .spec .k { color: var(--ink-4); font-weight: 650; font-size: 11.5px; }
+  .spec .v { color: var(--ink-2); line-height: 1.55; }
+
+  .tokens { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+  .token { display: inline-flex; align-items: center; gap: 7px; font-size: 11.5px; color: var(--ink-2); background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 5px 9px; }
+  .token i { width: 14px; height: 14px; border-radius: 4px; border: 1px solid rgba(0,0,0,.14); display: inline-block; }
+
+  .toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+  .toolbar .sp { margin-left: auto; }
+  .note-foot { color: #7F93AB; font-size: 11.5px; line-height: 1.6; max-width: 900px; margin: 4px 4px 0; }
+  .note-foot b { color: #A9BACD; }
+
+  @media print {
+    body { background: #fff; }
+    .doc > header { color: #111; }
+    .doc > header p, .kicker { color: #444; }
+    .card, .mock { box-shadow: none; break-inside: avoid; }
+    .toc, .toolbar { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="doc">
+
+  <header>
+    <div class="kicker">Propuesta de rediseño · Módulo Costos</div>
+    <h1>Desglose de costos <span style="color:#8FA8C6">2.0</span></h1>
+    <p>
+      La pantalla más extensa del producto concentra hoy <b>once bloques</b> en tres columnas que compiten por la
+      atención: costo directo, familias de materiales, mano de obra directa e indirecta, viáticos, gastos
+      operacionales, subcontratos, herramientas, utilidad y márgenes. Esta propuesta la reordena en
+      <b>cuatro niveles de lectura</b> —resumen, composición, ajustes y detalle— respetando la política de
+      <b>moneda única</b>: en CLP no aparece ninguna cifra en UF.
+    </p>
+    <nav class="toc">
+      <a href="#diagnostico">Diagnóstico</a>
+      <a href="#mockup">Mockup 2.0</a>
+      <a href="#composicion">Composición</a>
+      <a href="#familias">Familias</a>
+      <a href="#mano-obra">M.O. y viáticos</a>
+      <a href="#go">Gastos operacionales</a>
+      <a href="#cierre">Márgenes y cierre</a>
+      <a href="#totales">Totales</a>
+      <a href="#contrato">Contrato de datos</a>
+    </nav>
+  </header>
+
+  <!-- ==================================================== 1. DIAGNÓSTICO -->
+  <section class="card" id="diagnostico">
+    <div class="cap">
+      <h2><span class="n">01</span>Lo que no funciona hoy</h2>
+      <p class="lead">
+        Ocho hallazgos sobre <code>CostoView.xaml</code> (1.193 líneas) y su ViewModel (2.076 líneas). Ninguno es un
+        bug: son decisiones de jerarquía que se acumularon por capas.
+      </p>
+    </div>
+    <div class="body">
+      <div class="grid2">
+
+        <div class="problem">
+          <span class="tag">Jerarquía</span>
+          <h3>El resultado vive dentro de un acordeón cerrado</h3>
+          <p>
+            "Análisis financiero" guarda la tabla <code>CostRows</code> —la composición completa del precio— detrás de
+            un <code>ScrollViewer MaxHeight="360"</code> que arranca colapsado. Es la información que el usuario abre
+            la pantalla para ver.
+          </p>
+          <p>
+            Además solo dos líneas son legibles sin hacer clic: costo de ejecución, margen y venta unitaria. El
+            resto —GG, utilidad, riesgo, VA equipos, diferencia por factores— está escondido.
+          </p>
+          <div class="fix"><b>2.0</b> — La composición pasa a ser el bloque central, siempre visible, con
+            <b>4 sub-familias plegables</b> de costo directo (<i>Materiales · M.O. · Equipos · Complementarios</i>),
+            la sección <i>Recargos, margen y cierre</i>, el <b>origen</b> de cada línea y subtotales anclados.</div>
+        </div>
+
+        <div class="problem">
+          <span class="tag">Densidad</span>
+          <h3>Tres columnas con 248 px para las palancas</h3>
+          <p>
+            La columna de cierre concentra dieciocho controles en 248 px: GG, utilidad, VA equipos, ferretería,
+            descuento comercial con slider y cinco presets, selector de contrato con campos condicionales
+            (objetivo, contingencia, fee %, fee fijo, costo objetivo, % compartido, tope), dos checkboxes de política
+            y cuatro controles de M.O. instalación.
+          </p>
+          <p>
+            Los <code>TextBox</code> de coeficiente quedan en 74 px y las etiquetas rotan a dos líneas: es la zona con
+            más errores de tipeo de la app.
+          </p>
+          <div class="fix"><b>2.0</b> — Los ajustes se separan en <i>Palancas</i> (siempre visibles, con rango y
+            impacto) y <i>Contrato</i> (campos condicionales agrupados bajo el tipo elegido).</div>
+        </div>
+
+        <div class="problem">
+          <span class="tag">Ceguera de datos</span>
+          <h3>Los gastos operacionales 3.1–3.6 no se pueden leer de un vistazo</h3>
+          <p>
+            Seis categorías con 24 ítems existen en el motor (<code>GastoOperacionalPlantilla</code>) pero en pantalla
+            son tarjetas colapsadas. No hay total por categoría ni participación sobre el GO, así que el usuario no
+            puede ver dónde está el dinero.
+          </p>
+          <div class="fix"><b>2.0</b> — Tarjeta de total + seis categorías con barra de participación y el detalle
+            <i>concepto / un / cant / P.U. / total</i> ya calculado.</div>
+        </div>
+
+        <div class="problem">
+          <span class="tag">Familias</span>
+          <h3>El factor de presentación no muestra su efecto en el precio</h3>
+          <p>
+            La grilla de familias tiene <code>COSTO</code>, <code>FACTOR</code>, <code>DCTO %</code>,
+            <code>EFECTIVO</code> y <code>VENTA</code>, pero la barra de <code>Share</code> es de 3 px y la
+            participación se calcula sobre el ancho del grid. No hay Pareto ni orden por peso.
+          </p>
+          <div class="fix"><b>2.0</b> — Pareto de familias ordenado por costo, barra de participación de 8 px y
+            edición en línea del factor con recálculo de totales.</div>
+        </div>
+
+        <div class="problem">
+          <span class="tag">Mano de obra</span>
+          <h3>M.O. directa, indirecta y viáticos viven en otros módulos</h3>
+          <p>
+            El desglose muestra una sola línea "Mano de obra". La dotación, la tarifa D/H, las leyes sociales y el
+            per-diem de viáticos de GO 3.3 hay que ir a buscarlos a <i>Mano de obra</i> y al diálogo de viáticos.
+          </p>
+          <div class="fix"><b>2.0</b> — Pestaña <i>M.O. y viáticos</i> con directa, indirecta y el detalle de viáticos
+            en la misma pantalla, sin perder el enlace a sus módulos.</div>
+        </div>
+
+        <div class="problem">
+          <span class="tag">Moneda</span>
+          <h3>Dos ejes de moneda en la misma pantalla</h3>
+          <p>
+            El chip "UF" del encabezado (<code>ShowCurrencyColumn</code>) y las columnas <code>CurrencyFigure</code> /
+            <code>ValorMonedaLabel</code> conviven con <code>CoefCostoHeader</code> y <code>CoefVentaHeader</code>, que
+            rotulan según <code>Currency</code>. Son dos fuentes distintas para la misma decisión.
+          </p>
+          <div class="fix"><b>2.0</b> — Un único conmutador <i>CLP / UF / USD</i> que gobierna KPIs, composición,
+            familias y GO. En CLP no se renderiza ninguna etiqueta ni cifra en UF.</div>
+        </div>
+
+        <div class="problem">
+          <span class="tag">Márgenes</span>
+          <h3>El margen real no se explica</h3>
+          <p>
+            <code>MargenLabel</code> muestra un porcentaje sin decir si es sobre venta o sobre costo, ni cuánto aporta
+            cada palanca. Con política T&amp;M o Suma Alzada, GG y utilidad se deshabilitan
+            (<code>IsGastosGeneralesEditable</code>) y aparecen hints que cambian el modelo de precio sin contexto.
+          </p>
+          <div class="fix"><b>2.0</b> — Bloque de márgenes con desglose del margen (base, palancas, resultado) y el
+            estado de cada palanca según la política de contrato vigente.</div>
+        </div>
+
+        <div class="problem">
+          <span class="tag">Totales</span>
+          <h3>No hay cascada de precio</h3>
+          <p>
+            "Total venta" aparece como un número final. No se ve el tránsito <i>costo de ejecución → costo total
+            proyecto → diferencia por factores → descuento → venta neta → IVA → total</i>. El usuario tiene que sumar
+            filas para auditar el precio.
+          </p>
+          <div class="fix"><b>2.0</b> — Cascada de precio siempre visible, con el descuento como paso explícito y el
+            IVA separado del neto.</div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================================================== 2. MOCKUP -->
+  <section class="card" id="mockup">
+    <div class="cap">
+      <h2><span class="n">02</span>Mockup interactivo 2.0</h2>
+      <p class="lead">
+        Replica funcional de la pantalla. Los importes son de un edificio de <b>3.200 m²</b> con <b>UF = 39.250 CLP</b>
+        y cierran entre sí: la suma de las familias iguala la línea de materiales, y el GO suma exactamente las seis
+        categorías 3.1–3.6. Cambia el factor de una familia o mueve el descuento y toda la cascada se recalcula.
+      </p>
+    </div>
+    <div class="body" style="padding-top:0">
+      <div class="toolbar">
+        <span class="h" style="margin:0">Moneda de presentación</span>
+        <div class="seg" id="segCurrency">
+          <button id="curCLP" data-cur="CLP" class="on">CLP</button>
+          <button id="curUF" data-cur="UF" disabled>UF</button>
+          <button id="curUSD" data-cur="USD" disabled>USD</button>
+        </div>
+        <label class="chk"><input type="checkbox" id="chkUf"> UF del día configurada</label>
+        <span class="sp"></span>
+        <button class="btn ghost sm" id="btnTheme">◐ Tema</button>
+        <button class="btn ghost sm" id="btnReset">↺ Restablecer valores</button>
+      </div>
+
+      <div class="mock">
+        <!-- shell -->
+        <div class="shell">
+          <div class="mark">Q</div>
+          <div class="brand">QUBI COST<span>ELECTRICAL</span></div>
+          <nav class="nav">
+            <button>Proyecto</button>
+            <button>Itemizado</button>
+            <button>Cubicación</button>
+            <button>APU</button>
+            <button class="on">Costos</button>
+            <button>Cierre</button>
+          </nav>
+          <div class="right">
+            <span class="pill"><i></i> <b>CLP</b> · moneda base</span>
+            <span class="pill">Guardado <b>14:52</b></span>
+          </div>
+        </div>
+
+        <!-- page -->
+        <div class="page">
+          <div class="pagehead">
+            <div>
+              <h3>Desglose de costos</h3>
+              <div class="sub">Edificio Corporativo Andes · Rev. C · 3.200 m² construidos</div>
+              <div class="meta">
+                <span class="chip"><span class="dot"></span> Cierre viable</span>
+                <span class="chip">Política <b>Margen sobre costo</b></span>
+                <span class="chip" id="chipUf">UF del día <b>$ 39.250</b></span>
+                <span class="chip">Preset <b>Estándar</b></span>
+              </div>
+            </div>
+            <div class="acts">
+              <button class="btn sm">Restaurar</button>
+              <button class="btn sm">Guardar preset</button>
+              <button class="btn sm">Exportar</button>
+              <button class="btn primary sm">Aplicar al presupuesto</button>
+            </div>
+          </div>
+
+          <!-- hero -->
+          <div class="hero">
+            <div class="kpis">
+              <div class="kpi">
+                <div class="k">Costo de ejecución</div>
+                <div class="v" id="kpiEjec">—</div>
+                <div class="s" id="kpiEjecSub">—</div>
+              </div>
+              <div class="kpi">
+                <div class="k">Costo total proyecto</div>
+                <div class="v" id="kpiCostoProy">—</div>
+                <div class="s" id="kpiCostoProySub">—</div>
+              </div>
+              <div class="kpi">
+                <div class="k">Margen real</div>
+                <div class="v" id="kpiMargen">—</div>
+                <div class="s" id="kpiMargenSub">—</div>
+              </div>
+              <div class="kpi accent">
+                <div class="k">Venta unitaria</div>
+                <div class="v" id="kpiUnit">—</div>
+                <div class="s" id="kpiUnitSub">—</div>
+              </div>
+              <div class="kpi strong">
+                <div class="k">Venta neta</div>
+                <div class="v" id="kpiNeta">—</div>
+                <div class="s" id="kpiNetaSub">—</div>
+              </div>
+              <div class="kpi accent">
+                <div class="k">Concentración materiales</div>
+                <div class="v" id="kpiConc">—</div>
+                <div class="s" id="kpiConcSub">—</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- tabs -->
+          <div class="tabs" id="tabs">
+            <button class="tab on" data-tab="t-comp">Composición <span class="cnt" id="cntRows">21</span></button>
+            <button class="tab" data-tab="t-cie">Márgenes y cierre</button>
+            <button class="tab" data-tab="t-fam">Familias <span class="cnt">10</span></button>
+            <button class="tab" data-tab="t-mo">M.O. y viáticos <span class="cnt">7</span></button>
+            <button class="tab" data-tab="t-go">Gastos operacionales <span class="cnt">6</span></button>
+          </div>
+
+          <!-- ============ TAB: composición ============ -->
+          <div class="panel" id="t-comp">
+            <div class="cols">
+              <div>
+                <div class="toolbar" style="margin-bottom:10px">
+                  <div class="h" style="margin:0">Composición de la venta</div>
+                  <span class="sp"></span>
+                  <span class="hint" style="font-size:11px">4 sub-familias · clic para desglosar</span>
+                </div>
+                <table id="tblComp">
+                  <thead>
+                    <tr>
+                      <th>Concepto</th>
+                      <th style="width:58px">Origen</th>
+                      <th style="width:120px">Importe</th>
+                      <th style="width:74px">% venta</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tblCompBody"></tbody>
+                </table>
+                <p class="hint" style="margin-top:10px">
+                  % sobre <b>venta neta</b> (antes de IVA). El <b>origen</b> indica de dónde sale cada línea:
+                  <span class="org">CUB</span> cubicación ·
+                  <span class="org">APU</span> complementarios ·
+                  <span class="org">OC</span> órdenes de cambio ·
+                  <span class="org">GLO</span> recargos globales ·
+                  <span class="org">COEF</span> política ·
+                  <span class="org">FAM</span> factores de familia ·
+                  <span class="org">NEG</span> negociación ·
+                  <span class="org">TRIB</span> impuesto.
+                </p>
+              </div>
+              <div>
+                <div class="h">Cascada de precio</div>
+                <div class="wf" id="wf" style="border-top:0;padding-top:0;margin-top:0"></div>
+                <div class="legend">
+                  <span><i class="c-exec"></i> Costo</span>
+                  <span><i class="c-gg"></i> Recargos</span>
+                  <span><i class="c-fact"></i> Factores</span>
+                  <span><i class="c-neg"></i> Descuento</span>
+                  <span><i class="c-iva"></i> IVA</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ============ TAB: cierre ============ -->
+          <div class="panel" id="t-cie" hidden>
+            <div class="cols3">
+              <div class="pane">
+                <div class="h">Palancas</div>
+                <div class="lever">
+                  <div class="top"><label>Gastos generales</label><input type="number" id="inGg" value="5.0" step="0.1" style="width:66px"></div>
+                  <input type="range" id="rgGg" min="0" max="20" step="0.1" value="5">
+                  <div class="imp">Base: Mat + MO + GO · impacto <b id="impGg">—</b></div>
+                </div>
+                <div class="lever">
+                  <div class="top"><label>Utilidad</label><input type="number" id="inUt" value="8.0" step="0.1" style="width:66px"></div>
+                  <input type="range" id="rgUt" min="0" max="30" step="0.1" value="8">
+                  <div class="imp">Margen sobre costo · impacto <b id="impUt">—</b></div>
+                </div>
+                <div class="lever">
+                  <div class="top"><label>Valor agregado equipos</label><input type="number" id="inVa" value="3.0" step="0.1" style="width:66px"></div>
+                  <input type="range" id="rgVa" min="0" max="20" step="0.1" value="3">
+                  <div class="imp">Solo sobre equipos · impacto <b id="impVa">—</b></div>
+                </div>
+                <div class="lever">
+                  <div class="top"><label>Ferretería</label><input type="number" id="inFer" value="3.5" step="0.1" style="width:66px"></div>
+                  <input type="range" id="rgFer" min="0" max="10" step="0.1" value="3.5">
+                  <div class="imp">% sobre materiales · impacto <b id="impFer">—</b></div>
+                </div>
+                <div class="lever">
+                  <div class="top"><label>Descuento comercial</label><input type="number" id="inDcto" value="2.0" step="0.5" style="width:66px"></div>
+                  <input type="range" id="rgDcto" min="0" max="15" step="0.5" value="2">
+                  <div class="presets">
+                    <button data-d="0">0</button><button data-d="3">3</button><button data-d="5">5</button>
+                    <button data-d="7">7</button><button data-d="10">10</button>
+                  </div>
+                  <div class="imp">Sobre venta bruta · impacto <b id="impDcto">—</b></div>
+                </div>
+              </div>
+
+              <div class="pane">
+                <div class="h">Política de cierre y márgenes</div>
+                <div class="spec">
+                  <div class="srow"><span class="k">Política vigente</span><span class="v">
+                    <select id="selPolicy">
+                      <option value="markup" selected>Margen sobre costo (Unit Price)</option>
+                      <option value="tm">T&amp;M — administración + fee</option>
+                      <option value="lumpsum">Suma alzada con contingencia</option>
+                      <option value="gainshare">Costo objetivo + Gainshare</option>
+                    </select>
+                  </span></div>
+                  <div class="srow"><span class="k">Costo base</span><span class="v" id="mBase">—</span></div>
+                  <div class="srow"><span class="k">Recargos</span><span class="v" id="mRec">—</span></div>
+                  <div class="srow"><span class="k">Diferencia por factores</span><span class="v" id="mFact">—</span></div>
+                  <div class="srow"><span class="k">Descuento</span><span class="v" id="mDesc">—</span></div>
+                  <div class="srow"><span class="k">= Margen real</span><span class="v" style="font-weight:700;color:var(--ink)" id="mReal">—</span></div>
+                </div>
+
+                <div class="callout" id="policyNote">
+                  <b>Margen sobre costo.</b> GG y utilidad son editables; la venta por familia se habilita con
+                  factores de presentación. Las palancas bloqueadas se atenúan según la política.
+                </div>
+
+                <div class="h gap">M.O. instalación</div>
+                <div class="spec">
+                  <div class="srow"><span class="k">Modo</span><span class="v">M.O. por rendimiento (Tarifa D/H ÷ rendimiento del material)</span></div>
+                  <div class="srow"><span class="k">Tarifa D/H</span><span class="v num">$ 28.400 /hora-hombre</span></div>
+                  <div class="srow"><span class="k">Índice M.O. (FA)</span><span class="v num">62,80</span></div>
+                  <div class="srow"><span class="k">Leyes sociales</span><span class="v">Incluidas al derivar la tarifa</span></div>
+                </div>
+              </div>
+
+              <div class="pane">
+                <div class="h">Descuento puntual</div>
+                <div style="display:flex;flex-direction:column;gap:6px">
+                  <div style="display:flex;gap:6px;align-items:center;border:1px solid var(--line);border-radius:9px;padding:7px">
+                    <span class="num" style="font-size:11px;font-weight:700;background:var(--surface-2);border:1px solid var(--line);border-radius:5px;padding:2px 6px">TAB-01</span>
+                    <span style="font-size:11.5px;flex:1">Tableros — cierre comercial</span>
+                    <span class="num" style="font-size:11.5px;font-weight:700">3,0 %</span>
+                  </div>
+                  <div style="display:flex;gap:6px;align-items:center;border:1px solid var(--line);border-radius:9px;padding:7px">
+                    <span class="num" style="font-size:11px;font-weight:700;background:var(--surface-2);border:1px solid var(--line);border-radius:5px;padding:2px 6px">COND-02</span>
+                    <span style="font-size:11.5px;flex:1">Conductores — acuerdo marco</span>
+                    <span class="num" style="font-size:11.5px;font-weight:700">1,5 %</span>
+                  </div>
+                  <button class="btn sm" style="align-self:flex-start;margin-top:2px">+ Agregar</button>
+                </div>
+
+                <div class="h gap">Estado de las palancas</div>
+                <table>
+                  <thead><tr><th style="text-align:left">Palanca</th><th>Editable</th><th>Valor</th></tr></thead>
+                  <tbody id="polBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- ============ TAB: familias ============ -->
+          <div class="panel fam" id="t-fam" hidden>
+            <div class="toolbar">
+              <div class="h" style="margin:0">Presentación · familias de materiales</div>
+              <span class="sp"></span>
+              <button class="btn sm">Estándar</button>
+              <button class="btn sm">Típicos</button>
+              <button class="btn ghost sm">Reset 1,00×</button>
+            </div>
+            <div class="frow head">
+              <span>Familia</span>
+              <span id="hCosto">Costo $</span>
+              <span>Factor</span>
+              <span>Dcto %</span>
+              <span>Efectivo</span>
+              <span id="hVenta">Venta $</span>
+            </div>
+            <div id="famBody"></div>
+            <div class="famfoot">
+              <span class="st">Total familias · <b id="famCosto">—</b></span>
+              <span class="st">Venta presentación <b id="famVenta">—</b></span>
+              <span class="st blue">Δ <b id="famDelta">—</b></span>
+              <span class="sp" style="margin-left:auto"></span>
+              <span class="chip">Factor medio <b id="famMedio">—</b></span>
+              <span class="chip">Activas <b id="famActivas">—</b></span>
+            </div>
+            <div class="bar-share" id="famShare"></div>
+            <p class="hint" style="margin-top:12px">
+              El factor efectivo es <b>factor × (1 − dcto/100)</b>. Dominio del factor: 1,00× a 5,00×; el rango de
+              mercado en instalaciones eléctricas es 1,05×–1,50×. El descuento por familia se acota al 50%.
+            </p>
+          </div>
+
+          <!-- ============ TAB: M.O. y viáticos ============ -->
+          <div class="panel" id="t-mo" hidden>
+            <div class="cols">
+              <div>
+                <div class="h">Mano de obra directa · 11 meses de obra</div>
+                <table>
+                  <thead>
+                    <tr><th>Cargo</th><th style="width:56px">Pers.</th><th style="width:56px">Meses</th><th style="width:104px">Tarifa mes</th><th style="width:120px">Total</th></tr>
+                  </thead>
+                  <tbody id="moDirBody"></tbody>
+                </table>
+                <div class="h gap">Mano de obra indirecta</div>
+                <table>
+                  <thead>
+                    <tr><th>Cargo</th><th style="width:56px">Pers.</th><th style="width:56px">Meses</th><th style="width:104px">Tarifa mes</th><th style="width:120px">Total</th></tr>
+                  </thead>
+                  <tbody id="moIndBody"></tbody>
+                </table>
+                <div class="callout ok" style="margin-top:12px">
+                  <b>M.O. total $ 124.740.000</b> — coincide con la línea <i>Mano de obra</i> de la composición.
+                  Tarifa D/H derivable del plan MO (índice FA 62,80) con o sin leyes sociales.
+                </div>
+              </div>
+              <div>
+                <div class="h">Viáticos · gasto operacional 3.3</div>
+                <table>
+                  <thead>
+                    <tr><th>Concepto</th><th style="width:52px">Un</th><th style="width:60px">Cant</th><th style="width:96px">P.U.</th><th style="width:110px">Total</th></tr>
+                  </thead>
+                  <tbody id="viaBody"></tbody>
+                </table>
+                <div class="h gap">Método per diem</div>
+                <div class="spec">
+                  <div class="srow"><span class="k">Alimentación</span><span class="v">3 comidas × 60 días hombre — tramo único</span></div>
+                  <div class="srow"><span class="k">Arriendo</span><span class="v">Factor por zona y categoría; se abona contra ITO</span></div>
+                  <div class="srow"><span class="k">Pasajes</span><span class="v">Trayecto × ida/vuelta × dotación, tope por tramo</span></div>
+                  <div class="srow"><span class="k">Traslado en bus</span><span class="v">Traslado colectivo de trabajadores (ítem asegurado en 3.3)</span></div>
+                  <div class="srow"><span class="k">Destino</span><span class="v">Se aplica a GO 3.3 como líneas con cantidad y P.U.</span></div>
+                </div>
+                <p class="hint" style="margin-top:10px">
+                  Los tres ítems de 3.3 suman <b>$ 9.685.000</b> = 23,1% del GO total.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- ============ TAB: GO ============ -->
+          <div class="panel" id="t-go" hidden>
+            <div class="toolbar">
+              <div class="h" style="margin:0">Gastos operacionales 3.1 – 3.6</div>
+              <span class="sp"></span>
+              <button class="btn ghost sm">Restablecer</button>
+              <button class="btn sm">+ Categoría</button>
+            </div>
+            <div class="go-total">
+              <div>
+                <div style="font-size:11px;color:var(--ink-3)">Total gastos operacionales</div>
+                <div style="font-family:var(--mono);font-size:10.5px;color:var(--ink-4);margin-top:2px">6 categorías · 24 ítems</div>
+              </div>
+              <div style="text-align:right">
+                <div class="v" id="goTotal">—</div>
+                <div style="font-family:var(--mono);font-size:10.5px;color:var(--ink-4)" id="goTotalSub">—</div>
+              </div>
+            </div>
+            <div id="goBody"></div>
+            <p class="hint" style="margin-top:10px">
+              Cada categoría muestra su participación sobre el GO. La edición de ítems es en línea
+              (<i>concepto / un / cant / P.U.</i>) y el subtotal se recalcula al perder foco.
+            </p>
+          </div>
+
+                  </div><!-- /page -->
+      </div><!-- /mock -->
+      <p class="note-foot" style="color:var(--ink-4);margin-top:14px">
+        <b>Interactivo:</b> cambia <b>Moneda de presentación</b>, edita el <b>factor</b> o el <b>dcto %</b> de una
+        familia, mueve el slider de <b>descuento comercial</b>, ajusta <b>GG / utilidad / VA / ferretería</b> y expande
+        las categorías de GO. La cascada y todos los totales se recalculan. Prueba <b>CLP</b> vs <b>UF</b> para ver la
+        política de moneda única en acción.
+      </p>
+    </div>
+  </section>
+
+  <!-- ==================================================== 3. COMPOSICIÓN -->
+  <section class="card" id="composicion">
+    <div class="cap">
+      <h2><span class="n">03</span>Composición del precio</h2>
+      <p class="lead">
+        Una sola tabla, dos secciones, subtotales anclados. Reemplaza al acordeón "Análisis financiero" y a la
+        cabecera de KPIs dispersa.
+      </p>
+    </div>
+    <div class="body">
+      <div class="grid2">
+        <div>
+          <div class="h">Costos directos — lo que se ejecuta en obra</div>
+          <table>
+            <tbody>
+              <tr class="row"><td class="l">Mano de obra</td><td class="n">124.740.000</td><td class="n">19,55 %</td></tr>
+              <tr class="row"><td class="l">Materiales</td><td class="n">262.500.000</td><td class="n">41,15 %</td></tr>
+              <tr class="row"><td class="l">Ferretería (3,5%)</td><td class="n">9.187.500</td><td class="n">1,44 %</td></tr>
+              <tr class="row"><td class="l">Equipos</td><td class="n">24.300.000</td><td class="n">3,81 %</td></tr>
+              <tr class="row"><td class="l">Gastos operacionales</td><td class="n">41.850.000</td><td class="n">6,56 %</td></tr>
+              <tr class="row"><td class="l">Subcontratos</td><td class="n">18.600.000</td><td class="n">2,92 %</td></tr>
+              <tr class="row"><td class="l">Herramientas</td><td class="n">6.200.000</td><td class="n">0,97 %</td></tr>
+              <tr class="row"><td class="l">Mermas</td><td class="n">4.100.000</td><td class="n">0,64 %</td></tr>
+              <tr class="row"><td class="l">Transporte</td><td class="n">3.450.000</td><td class="n">0,54 %</td></tr>
+              <tr class="row"><td class="l">Órdenes de cambio</td><td class="n">2.100.000</td><td class="n">0,33 %</td></tr>
+              <tr class="tot"><td class="l">Costo de ejecución</td><td class="n">497.027.500</td><td class="n">77,91 %</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <div class="h">Recargos, margen y cierre</div>
+          <table>
+            <tbody>
+              <tr class="row"><td class="l">Riesgo (1,5%)</td><td class="n">7.455.413</td><td class="n">1,17 %</td></tr>
+              <tr class="row"><td class="l">Gastos generales (5,0%)</td><td class="n">21.454.500</td><td class="n">3,36 %</td></tr>
+              <tr class="row"><td class="l">Utilidades (8,0%)</td><td class="n">34.327.200</td><td class="n">5,38 %</td></tr>
+              <tr class="row"><td class="l">VA sobre equipos (3,0%)</td><td class="n">729.000</td><td class="n">0,11 %</td></tr>
+              <tr class="tot"><td class="l">Costo total proyecto</td><td class="n">560.993.613</td><td class="n">87,93 %</td></tr>
+              <tr class="row"><td class="l">Diferencia por factores</td><td class="n">90.009.000</td><td class="n">14,11 %</td></tr>
+              <tr class="row"><td class="l">Descuento</td><td class="n" style="color:var(--red)">−13.020.052</td><td class="n">−2,04 %</td></tr>
+              <tr class="tot"><td class="l">Total venta neto</td><td class="n">637.982.561</td><td class="n">100,00 %</td></tr>
+              <tr class="row"><td class="l">IVA (19%)</td><td class="n">121.216.687</td><td class="n">—</td></tr>
+              <tr class="grand"><td class="l">TOTAL VENTA</td><td class="n">759.199.248</td><td class="n"></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================================================== 4. FAMILIAS -->
+  <section class="card" id="familias">
+    <div class="cap">
+      <h2><span class="n">04</span>Familias de materiales</h2>
+      <p class="lead">
+        Es el bloque que convierte costo en precio. Diez familias, un factor por familia, y una barra de
+        participación que ahora sí se lee.
+      </p>
+    </div>
+    <div class="body">
+      <div class="grid2">
+        <div>
+          <div class="h">Pareto por costo</div>
+          <div class="spec">
+            <div class="srow"><span class="k">Conductores</span><span class="v num">$ 72.000.000 · 27,4% · ×1,57</span></div>
+            <div class="srow"><span class="k">Canalización</span><span class="v num">$ 53.200.000 · 20,3% · ×1,57</span></div>
+            <div class="srow"><span class="k">Tableros</span><span class="v num">$ 36.500.000 · 13,9% · ×1,30</span></div>
+            <div class="srow"><span class="k">Iluminación</span><span class="v num">$ 24.400.000 · 9,3% · ×1,30</span></div>
+            <div class="srow"><span class="k">Equipos</span><span class="v num">$ 18.100.000 · 6,9% · ×1,30</span></div>
+            <div class="srow"><span class="k">Accesorios</span><span class="v num">$ 16.300.000 · 6,2% · ×1,30</span></div>
+            <div class="srow"><span class="k">Enchufes y tomacorrientes</span><span class="v num">$ 13.800.000 · 5,3% · ×1,30</span></div>
+            <div class="srow"><span class="k">Protecciones</span><span class="v num">$ 10.900.000 · 4,2% · ×1,30</span></div>
+            <div class="srow"><span class="k">Varios y obras menores</span><span class="v num">$ 10.300.000 · 3,9% · ×1,15</span></div>
+            <div class="srow"><span class="k">Puesta a tierra</span><span class="v num">$ 7.000.000 · 2,7% · ×1,30</span></div>
+            <div class="srow"><span class="k" style="color:var(--ink)">Total = línea Materiales</span><span class="v num" style="font-weight:700;color:var(--ink)">$ 262.500.000 · 100%</span></div>
+          </div>
+        </div>
+        <div>
+          <div class="h">Reglas del factor</div>
+          <div class="spec">
+            <div class="srow"><span class="k">Factor efectivo</span><span class="v num">factor × (1 − dcto / 100)</span></div>
+            <div class="srow"><span class="k">Dominio del factor</span><span class="v">1,00× a 5,00× — el techo evita propagar un valor atípico a la venta</span></div>
+            <div class="srow"><span class="k">Rango de mercado</span><span class="v">1,05×–1,50× en instalaciones eléctricas</span></div>
+            <div class="srow"><span class="k">Descuento por familia</span><span class="v">Acotado al 50%; en cierre la negociación se mueve entre 0% y 10%</span></div>
+            <div class="srow"><span class="k">Diferencia por factores</span><span class="v">Σ venta familia − Σ costo familia − margen base ya incluido sobre materiales</span></div>
+            <div class="srow"><span class="k">Presets</span><span class="v">Estándar (Conductores y Canalización 1,57×; Tableros 1,30×) y Típicos (promedio histórico)</span></div>
+          </div>
+          <div class="h gap">Ferretería por familia (3,5%)</div>
+          <table>
+            <thead><tr><th style="text-align:left">Familia</th><th>Materiales</th><th>Ferretería</th></tr></thead>
+            <tbody>
+              <tr class="row"><td class="l">Conductores</td><td class="n">72.000.000</td><td class="n">2.520.000</td></tr>
+              <tr class="row"><td class="l">Canalización</td><td class="n">53.200.000</td><td class="n">1.862.000</td></tr>
+              <tr class="row"><td class="l">Tableros</td><td class="n">36.500.000</td><td class="n">1.277.500</td></tr>
+              <tr class="tot"><td class="l">Total</td><td class="n">262.500.000</td><td class="n">9.187.500</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================================================== 5. M.O. -->
+  <section class="card" id="mano-obra">
+    <div class="cap">
+      <h2><span class="n">05</span>Mano de obra directa, indirecta y viáticos</h2>
+      <p class="lead">
+        Hoy el desglose muestra <b>una sola línea</b> de mano de obra. La propuesta la abre sin obligar a salir del
+        módulo: la dotación, el ciclo de reposición y el per-diem se leen aquí.
+      </p>
+    </div>
+    <div class="body">
+      <div class="grid3">
+        <div>
+          <div class="h">Directa · $ 95.040.000</div>
+          <table>
+            <thead><tr><th style="text-align:left">Cargo</th><th>Pers.</th><th>Meses</th><th>Total</th></tr></thead>
+            <tbody>
+              <tr class="row"><td class="l">Maestro eléctrico</td><td class="n">2</td><td class="n">11</td><td class="n">20.240.000</td></tr>
+              <tr class="row"><td class="l">Electricista 1ª</td><td class="n">5</td><td class="n">11</td><td class="n">39.600.000</td></tr>
+              <tr class="row"><td class="l">Electricista 2ª</td><td class="n">4</td><td class="n">11</td><td class="n">24.640.000</td></tr>
+              <tr class="row"><td class="l">Ayudante</td><td class="n">2</td><td class="n">11</td><td class="n">10.560.000</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <div class="h">Indirecta · $ 29.700.000</div>
+          <table>
+            <thead><tr><th style="text-align:left">Cargo</th><th>Pers.</th><th>Meses</th><th>Total</th></tr></thead>
+            <tbody>
+              <tr class="row"><td class="l">Jefe de obra</td><td class="n">1</td><td class="n">11</td><td class="n">16.280.000</td></tr>
+              <tr class="row"><td class="l">Prevencionista de riesgos</td><td class="n">1</td><td class="n">11</td><td class="n">7.480.000</td></tr>
+              <tr class="row"><td class="l">Bodeguero</td><td class="n">1</td><td class="n">11</td><td class="n">5.940.000</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <div class="h">Viáticos (GO 3.3) · $ 9.685.000</div>
+          <table>
+            <thead><tr><th style="text-align:left">Concepto</th><th>Un</th><th>Cant</th><th>Total</th></tr></thead>
+            <tbody>
+              <tr class="row"><td class="l">Pasajes MO directa</td><td class="n">día</td><td class="n">2.400</td><td class="n">4.440.000</td></tr>
+              <tr class="row"><td class="l">Viáticos MO indirecta</td><td class="n">mes</td><td class="n">60</td><td class="n">3.720.000</td></tr>
+              <tr class="row"><td class="l">Traslado en bus</td><td class="n">viaje</td><td class="n">10</td><td class="n">1.525.000</td></tr>
+            </tbody>
+          </table>
+          <div class="callout ok" style="margin-top:10px">
+            <b>$ 124.740.000</b> de M.O. total = línea <i>Mano de obra</i> de la composición.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================================================== 6. GO -->
+  <section class="card" id="go">
+    <div class="cap">
+      <h2><span class="n">06</span>Gastos operacionales 3.1 – 3.6</h2>
+      <p class="lead">
+        Seis categorías y veinticuatro ítems que hoy viven colapsados. La propuesta expone el total, la participación
+        de cada categoría y el detalle ya valorizado.
+      </p>
+    </div>
+    <div class="body">
+      <div class="spec">
+        <div class="srow"><span class="k">3.1 · Gastos de oficina</span><span class="v num">$ 6.840.000 · 16,3% — faena, teléfono/internet, radios, implementos, bancarios</span></div>
+        <div class="srow"><span class="k">3.2 · Arriendos y mant. herramientas</span><span class="v num">$ 11.240.000 · 26,9% — grúas, plataformas, andamios, mantención, fletes internos</span></div>
+        <div class="srow"><span class="k">3.3 · Movilización y viáticos</span><span class="v num">$ 9.685.000 · 23,1% — pasajes, viáticos indirectos, traslado en bus</span></div>
+        <div class="srow"><span class="k">3.4 · Transporte de materiales / fletes</span><span class="v num">$ 4.185.000 · 10,0% — vehículo de terreno, fletes especiales</span></div>
+        <div class="srow"><span class="k">3.5 · Costos por EPP</span><span class="v num">$ 6.370.000 · 15,2% — indumentaria directa/indirecta y accesorios opcionales</span></div>
+        <div class="srow"><span class="k">3.6 · Trámites y documentación</span><span class="v num">$ 3.530.000 · 8,4% — ensayos, boletas de garantía, certificaciones SEC, permisos</span></div>
+        <div class="srow"><span class="k" style="color:var(--ink)">Total GO</span><span class="v num" style="font-weight:700;color:var(--ink)">$ 41.850.000 · 100%</span></div>
+      </div>
+      <p class="hint" style="margin-top:12px">
+        El sync EPP → GO 3.5 y el diálogo de viáticos → GO 3.3 se conservan: la pantalla solo deja de esconderlos.
+        La categoría 3.3 se garantiza siempre con el ítem de traslado en bus.
+      </p>
+    </div>
+  </section>
+
+  <!-- ==================================================== 7. CIERRE -->
+  <section class="card" id="cierre">
+    <div class="cap">
+      <h2><span class="n">07</span>Márgenes y cierre</h2>
+      <p class="lead">
+        El margen deja de ser un porcentaje suelto: se muestra de dónde sale. Cada palanca indica su base de cálculo
+        y si está habilitada por la política de contrato.
+      </p>
+    </div>
+    <div class="body">
+      <div class="grid2">
+        <div>
+          <div class="h">Desglose del margen real</div>
+          <div class="spec">
+            <div class="srow"><span class="k">Venta neta</span><span class="v num">$ 637.982.561</span></div>
+            <div class="srow"><span class="k">− Costo total proyecto</span><span class="v num">$ 560.993.613</span></div>
+            <div class="srow"><span class="k">= Margen</span><span class="v num" style="font-weight:700;color:var(--ink)">$ 76.988.948</span></div>
+            <div class="srow"><span class="k">Margen real</span><span class="v num" style="font-weight:700;color:var(--blue)">12,07 % sobre venta</span></div>
+            <div class="srow"><span class="k">Markup</span><span class="v num">13,72 % sobre costo</span></div>
+          </div>
+          <div class="callout" style="margin-top:12px">
+            <b>Atención al modelo.</b> Con <b>Margen sobre costo</b> la utilidad se calcula sobre el costo;
+            con <b>Margen sobre venta</b> el porcentaje se aplica a la venta. La misma cifra de 8% produce precios
+            distintos: la etiqueta debe decir cuál se está usando.
+          </div>
+        </div>
+        <div>
+          <div class="h">Palancas y su estado según política</div>
+          <table>
+            <thead><tr><th style="text-align:left">Palanca</th><th style="text-align:left">Base</th><th>Valor</th><th>Impacto</th></tr></thead>
+            <tbody>
+              <tr class="row"><td class="l">Gastos generales</td><td class="l" style="color:var(--ink-3);font-size:11.5px">Mat + MO + GO</td><td class="n">5,0 %</td><td class="n">21.454.500</td></tr>
+              <tr class="row"><td class="l">Utilidad</td><td class="l" style="color:var(--ink-3);font-size:11.5px">Mat + MO + GO</td><td class="n">8,0 %</td><td class="n">34.327.200</td></tr>
+              <tr class="row"><td class="l">VA sobre equipos</td><td class="l" style="color:var(--ink-3);font-size:11.5px">Solo equipos</td><td class="n">3,0 %</td><td class="n">729.000</td></tr>
+              <tr class="row"><td class="l">Ferretería</td><td class="l" style="color:var(--ink-3);font-size:11.5px">Materiales</td><td class="n">3,5 %</td><td class="n">9.187.500</td></tr>
+              <tr class="row"><td class="l">Riesgo</td><td class="l" style="color:var(--ink-3);font-size:11.5px">Costo de ejecución</td><td class="n">1,5 %</td><td class="n">7.455.413</td></tr>
+              <tr class="row"><td class="l">Descuento comercial</td><td class="l" style="color:var(--ink-3);font-size:11.5px">Venta bruta</td><td class="n">2,0 %</td><td class="n" style="color:var(--red)">−13.020.052</td></tr>
+            </tbody>
+          </table>
+          <p class="hint" style="margin-top:10px">
+            Si la política es <b>T&amp;M</b> o <b>Suma alzada</b>, GG y utilidad pasan a solo lectura y el precio lo
+            fija el contrato (fee, contingencia o costo objetivo). La UI debe atenuarlos, no esconderlos.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================================================== 8. TOTALES -->
+  <section class="card" id="totales">
+    <div class="cap">
+      <h2><span class="n">08</span>Totales y moneda única</h2>
+      <p class="lead">
+        El tránsito completo del precio, y la política de moneda aplicada de punta a punta.
+      </p>
+    </div>
+    <div class="body">
+      <div class="grid2">
+        <div>
+          <div class="h">Cascada</div>
+          <div class="spec">
+            <div class="srow"><span class="k">Costo de ejecución</span><span class="v num">$ 497.027.500</span></div>
+            <div class="srow"><span class="k">+ Recargos y margen</span><span class="v num">$ 63.966.113</span></div>
+            <div class="srow"><span class="k">= Costo total proyecto</span><span class="v num" style="font-weight:700;color:var(--ink)">$ 560.993.613</span></div>
+            <div class="srow"><span class="k">+ Diferencia por factores</span><span class="v num">$ 90.009.000</span></div>
+            <div class="srow"><span class="k">− Descuento comercial</span><span class="v num" style="color:var(--red)">−$ 13.020.052</span></div>
+            <div class="srow"><span class="k">= Venta neta</span><span class="v num" style="font-weight:700;color:var(--ink)">$ 637.982.561</span></div>
+            <div class="srow"><span class="k">+ IVA (19%)</span><span class="v num">$ 121.216.687</span></div>
+            <div class="srow"><span class="k" style="color:var(--ink)">= TOTAL VENTA</span><span class="v num" style="font-weight:700;color:var(--blue)">$ 759.199.248</span></div>
+            <div class="srow"><span class="k">Venta neta / m²</span><span class="v num">$ 199.370 · 3.200 m²</span></div>
+          </div>
+        </div>
+        <div>
+          <div class="h">Regla de presentación por moneda</div>
+          <div class="spec">
+            <div class="srow"><span class="k">CLP</span><span class="v">Solo pesos. <b>No</b> se renderiza ninguna cifra ni etiqueta en UF — ni en KPIs, ni en columnas, ni en tooltips, ni en exportaciones.</span></div>
+            <div class="srow"><span class="k">UF</span><span class="v">UF como moneda principal ($ 16.254,33 UF totales; 5,08 UF/m²) con el equivalente en pesos en línea secundaria.</span></div>
+            <div class="srow"><span class="k">USD / EUR</span><span class="v">Moneda primaria + equivalente en pesos; la paridad sale de la configuración del proyecto, no de un selector local.</span></div>
+            <div class="srow"><span class="k">Fuente única</span><span class="v"><code>ProjectInfoRow.MonedaPresupuesto</code> gobierna la pantalla completa y los exportadores.</span></div>
+          </div>
+          <div class="h gap">Equivalentes de control (solo referencia)</div>
+          <table>
+            <thead><tr><th style="text-align:left">Hito</th><th>CLP</th><th>UF</th></tr></thead>
+            <tbody>
+              <tr class="row"><td class="l">Costo de ejecución</td><td class="n">497.027.500</td><td class="n">12.663,76</td></tr>
+              <tr class="row"><td class="l">Costo total proyecto</td><td class="n">560.993.613</td><td class="n">14.292,83</td></tr>
+              <tr class="row"><td class="l">Venta neta</td><td class="n">637.982.561</td><td class="n">16.254,33</td></tr>
+              <tr class="row"><td class="l">Total venta c/IVA</td><td class="n">759.199.248</td><td class="n">19.342,66</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================================================== 9. CONTRATO -->
+  <section class="card" id="contrato">
+    <div class="cap">
+      <h2><span class="n">09</span>Contrato de datos y tokens</h2>
+      <p class="lead">
+        Nada de lo propuesto cambia el motor de cálculo. Es la misma proyección
+        <code>CostoBreakdownLineBuilder</code> y el mismo <code>CostBreakdown</code>; solo cambia cómo se lee.
+      </p>
+    </div>
+    <div class="body">
+      <div class="grid2">
+        <div>
+          <div class="h">Origen de cada bloque</div>
+          <div class="spec">
+            <div class="srow"><span class="k">Composición</span><span class="v"><code>CostoBreakdownLineBuilder.BuildLines</code> → líneas con <i>label / amount / explanation / kind</i> (<code>regular · coef · total · subtotal · grand</code>).</span></div>
+            <div class="srow"><span class="k">KPIs</span><span class="v"><code>CostoDirectoSubLabel</code>, <code>MargenLabel</code>, <code>UfM2Label</code>, <code>TotalVentaSubLabel</code>.</span></div>
+            <div class="srow"><span class="k">Familias</span><span class="v"><code>CoefFactors</code> con <code>ValueText</code>, <code>DiscountText</code>, <code>EffectiveLabel</code>, <code>VentaUfLabel</code>, <code>Share</code>; totales en <code>FamCostoLabel / FamVentaLabel / FamDeltaLabel</code>.</span></div>
+            <div class="srow"><span class="k">M.O.</span><span class="v"><code>RefreshMoSection</code> + <code>MoDirecta</code> / <code>MoIndirecta</code> del proyecto.</span></div>
+            <div class="srow"><span class="k">Viáticos</span><span class="v"><code>ViaticosProfesionalViewModel</code> → aplica a <code>GO 3.3</code>.</span></div>
+            <div class="srow"><span class="k">Gastos operacionales</span><span class="v"><code>GastoOperacionalPlantilla</code> (3.1–3.6) + <code>RefreshGoSection</code>; EPP sincroniza a 3.5.</span></div>
+            <div class="srow"><span class="k">Cierre</span><span class="v"><code>ClosingPolicySection</code>, <code>NegotiationSimulator</code>, <code>MoInstalacion</code>, <code>CoefFactors</code>.</span></div>
+            <div class="srow"><span class="k">Moneda</span><span class="v"><code>MonedaPresupuesto</code> → <code>Currency</code>, <code>ShowCurrencyColumn</code>, <code>CurrencyColumnHeader</code>.</span></div>
+          </div>
+        </div>
+        <div>
+          <div class="h">Tokens del design system</div>
+          <div class="tokens">
+            <span class="token"><i style="background:#2563B0"></i> Brush.Blue · acción y cifra de venta</span>
+            <span class="token"><i style="background:#15803D"></i> Brush.Success · cierre viable</span>
+            <span class="token"><i style="background:#8A5D0B"></i> Brush.Warning · palanca bloqueada</span>
+            <span class="token"><i style="background:#B23C3C"></i> Brush.Danger · descuento / déficit</span>
+            <span class="token"><i style="background:#EDF0F4"></i> Brush.Canvas · fondo de página</span>
+            <span class="token"><i style="background:#101A26"></i> Brush.Ink · texto principal</span>
+            <span class="token"><i style="background:#8B95A3"></i> Brush.Ink4 · etiquetas y unidades</span>
+            <span class="token"><i style="background:#EEF2F6"></i> Brush.Line2 · separadores internos</span>
+          </div>
+
+          <div class="h gap">Jerarquía tipográfica</div>
+          <div class="spec">
+            <div class="srow"><span class="k">Título de sección</span><span class="v">10 px · 750 · letter-spacing .12em · versalitas · <code>Brush.Brand</code></span></div>
+            <div class="srow"><span class="k">KPI</span><span class="v">21 px mono · 650 · tabular-nums</span></div>
+            <div class="srow"><span class="k">Fila de tabla</span><span class="v">12,5 px · regular; importe en mono alineado a la derecha</span></div>
+            <div class="srow"><span class="k">Subtotal</span><span class="v">12,5 px · 700 con borde superior</span></div>
+            <div class="srow"><span class="k">Gran total</span><span class="v">13,5 px · 750 con borde superior de 2 px</span></div>
+          </div>
+
+          <div class="callout ok" style="margin-top:14px">
+            <b>Sin cambio de motor.</b> Se mantienen <code>CostBreakdown</code>, las políticas de cierre, los presets
+            de factores, el sync EPP→GO 3.5 y el diálogo de viáticos. La propuesta es de presentación.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <p class="note-foot" style="color:#7F93AB">
+    Importes ilustrativos de un edificio de 3.200 m² con UF = 39.250 CLP, internamente consistentes: la suma de las
+    diez familias iguala la línea <i>Materiales</i> de la composición, el GO suma exactamente 3.1–3.6 y la cascada
+    cierra en el total de venta. Documento de diseño — no modifica código ni datos del producto.
+  </p>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var UF_DEFAULT = 39250;
+  var M2_DEFAULT = 3200;
+  var IVA = 0.19;
+
+  // ---------------- modelo ----------------
+  function baseModel() {
+    return {
+      currency: "CLP",
+      uf: UF_DEFAULT,
+      m2: M2_DEFAULT,
+      open: { "Materiales": true, "Mano de obra": true, "Equipos": true, "Complementarios": true },
+      orgHint: {
+        CUB: "Valorizado desde la cubicación / itemizado del proyecto",
+        APU: "Derivado del APU (rendimiento × tarifa)",
+        OC: "Órdenes de cambio aprobadas",
+        GLO: "Recargo o gasto global",
+        COEF: "Coeficiente o política de cálculo",
+        FAM: "Factores de presentación por familia",
+        NEG: "Negociación comercial",
+        TRIB: "Impuesto (IVA 19 %)"
+      },
+      direct: {
+        mo: 124740000,
+        mat: 262500000,
+        ferreteria: 9187500,
+        equipos: 24300000,
+        go: 41850000,
+        sub: 18600000,
+        herr: 6200000,
+        mermas: 4100000,
+        transp: 3450000,
+        oc: 2100000
+      },
+      ggPct: 5.0,
+      utPct: 8.0,
+      vaPct: 3.0,
+      ferreteriaPct: 3.5,
+      riesgoPct: 1.5,
+      baseMarginOnMat: 21000000,
+      discountPct: 2.0,
+      families: [
+        { name: "Conductores", cost: 72000000, factor: 1.57, dcto: 0 },
+        { name: "Canalización", cost: 53200000, factor: 1.57, dcto: 0 },
+        { name: "Tableros", cost: 36500000, factor: 1.30, dcto: 0 },
+        { name: "Iluminación", cost: 24400000, factor: 1.30, dcto: 0 },
+        { name: "Equipos", cost: 18100000, factor: 1.30, dcto: 0 },
+        { name: "Accesorios", cost: 16300000, factor: 1.30, dcto: 0 },
+        { name: "Enchufes y tomacorrientes", cost: 13800000, factor: 1.30, dcto: 0 },
+        { name: "Protecciones", cost: 10900000, factor: 1.30, dcto: 0 },
+        { name: "Puesta a tierra", cost: 7000000, factor: 1.30, dcto: 0 },
+        { name: "Varios y obras menores", cost: 10300000, factor: 1.15, dcto: 0 }
+      ]
+    };
+  }
+
+  var MO_DIR = [
+    { cargo: "Maestro eléctrico", pers: 2, meses: 11, tarifa: 920000 },
+    { cargo: "Electricista 1ª", pers: 5, meses: 11, tarifa: 720000 },
+    { cargo: "Electricista 2ª", pers: 4, meses: 11, tarifa: 560000 },
+    { cargo: "Ayudante", pers: 2, meses: 11, tarifa: 480000 }
+  ];
+  var MO_IND = [
+    { cargo: "Jefe de obra", pers: 1, meses: 11, tarifa: 1480000 },
+    { cargo: "Prevencionista de riesgos", pers: 1, meses: 11, tarifa: 680000 },
+    { cargo: "Bodeguero", pers: 1, meses: 11, tarifa: 540000 }
+  ];
+  var VIATICOS = [
+    { concepto: "Pasajes MO directa", un: "día", cant: 2400, pu: 1850 },
+    { concepto: "Viáticos MO indirecta", un: "mes", cant: 60, pu: 62000 },
+    { concepto: "Arriendo / traslado en bus", un: "viaje", cant: 10, pu: 152500 }
+  ];
+  var GO = [
+    { code: "3.1", name: "Gastos de oficina", items: [
+      { c: "Instalación de faena (oficina, bodega, container)", un: "GL", cant: 1, pu: 4200000 },
+      { c: "Teléfono e internet", un: "mes", cant: 12, pu: 78000 },
+      { c: "Radios de comunicación (arriendo)", un: "mes", cant: 12, pu: 45000 },
+      { c: "Implementos de oficina", un: "mes", cant: 12, pu: 38000 },
+      { c: "Gastos bancarios y notariales", un: "mes", cant: 12, pu: 59000 }
+    ]},
+    { code: "3.2", name: "Arriendos y mant. herramientas", items: [
+      { c: "Arriendo de grúas", un: "día", cant: 18, pu: 320000 },
+      { c: "Arriendo plataformas elevadoras", un: "día", cant: 22, pu: 145000 },
+      { c: "Arriendo de andamios", un: "mes", cant: 4, pu: 380000 },
+      { c: "Mantención herramientas menores", un: "mes", cant: 6, pu: 65000 },
+      { c: "Fletes internos en obra", un: "GL", cant: 1, pu: 380000 }
+    ]},
+    { code: "3.3", name: "Movilización y viáticos", items: [
+      { c: "Pasajes MO directa", un: "día", cant: 2400, pu: 1850 },
+      { c: "Viáticos MO indirecta", un: "mes", cant: 60, pu: 62000 },
+      { c: "Arriendo / traslado en bus", un: "viaje", cant: 10, pu: 152500 }
+    ]},
+    { code: "3.4", name: "Transporte de materiales / fletes", items: [
+      { c: "Vehículo de terreno (arriendo + combustible)", un: "mes", cant: 6, pu: 480000 },
+      { c: "Fletes especiales (conductores, tableros)", un: "GL", cant: 3, pu: 435000 }
+    ]},
+    { code: "3.5", name: "Costos por EPP", items: [
+      { c: "EPP indumentaria MO directa", un: "GL", cant: 1, pu: 4320000 },
+      { c: "EPP indumentaria MO indirecta", un: "GL", cant: 1, pu: 1480000 },
+      { c: "EPP accesorios opcionales", un: "GL", cant: 1, pu: 570000 }
+    ]},
+    { code: "3.6", name: "Trámites y documentación", items: [
+      { c: "Ensayos eléctricos y protocolos", un: "GL", cant: 1, pu: 1850000 },
+      { c: "Boletas de garantía", un: "un", cant: 2, pu: 240000 },
+      { c: "Certificaciones SEC", un: "GL", cant: 1, pu: 780000 },
+      { c: "Trámites municipales y permisos", un: "GL", cant: 1, pu: 420000 }
+    ]}
+  ];
+
+  var PRESETS = {
+    markup: { gg: true, ut: true, va: true, fer: true, dcto: true,
+      note: "<b>Margen sobre costo.</b> GG y utilidad se calculan sobre Mat + MO + GO; la venta por familia se habilita con factores de presentación." },
+    tm: { gg: false, ut: false, va: true, fer: true, dcto: true,
+      note: "<b>T&amp;M — administración + fee.</b> GG y utilidad quedan bloqueados al fee del contrato; solo el descuento y la venta por familia siguen editables." },
+    lumpsum: { gg: false, ut: true, va: false, fer: true, dcto: true,
+      note: "<b>Suma alzada.</b> El precio lo fija el contrato; se exige una contingencia mínima de riesgo y GG/utilidad pasan a referencia." },
+    gainshare: { gg: false, ut: false, va: false, fer: true, dcto: true,
+      note: "<b>Costo objetivo + Gainshare.</b> El margen se comparte sobre el ahorro contra el costo objetivo; las palancas de costo quedan en solo lectura." }
+  };
+
+  var state = baseModel();
+
+  // ---------------- formato ----------------
+  var nfCLP = new Intl.NumberFormat("es-CL", { maximumFractionDigits: 0 });
+  var nf2 = new Intl.NumberFormat("es-CL", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  var nf3 = new Intl.NumberFormat("es-CL", { minimumFractionDigits: 2, maximumFractionDigits: 3 });
+
+  function clp(v) { return "$ " + nfCLP.format(Math.round(v)); }
+  function clpSigned(v) { return (v < 0 ? "−" : "") + "$ " + nfCLP.format(Math.abs(Math.round(v))); }
+  function pct(v) { return nf2.format(v) + " %"; }
+
+  // Importe principal según moneda. Invariante: con CLP esta función NUNCA devuelve "UF".
+  function money(v) {
+    v = Math.round(v);
+    if (state.currency === "CLP") return clpSigned(v);
+    return (v < 0 ? "−" : "") + nf3.format(Math.abs(v) / state.uf) + " UF";
+  }
+  // Línea secundaria: solo existe cuando la moneda base no es CLP.
+  function moneySecondary(v) {
+    if (state.currency === "CLP") return "";
+    return clp(v);
+  }
+  function moneyUnit(v) {
+    // v es el importe POR m².
+    if (state.currency === "CLP") return clp(v) + " /m²";
+    return nf2.format(v / state.uf) + " UF/m²";
+  }
+
+  // ---------------- cálculo ----------------
+  function compute() {
+    var s = state;
+    var d = s.direct;
+
+    var ejecucion = d.mo + d.mat + d.ferreteria + d.equipos + d.go + d.sub + d.herr + d.mermas + d.transp + d.oc;
+    var ggBase = d.mat + d.mo + d.go;
+    // En CLP los importes del motor son enteros: se redondea cada recargo, no solo al mostrar.
+    var riesgo = Math.round(ejecucion * s.riesgoPct / 100);
+    var gg = Math.round(ggBase * s.ggPct / 100);
+    var ut = Math.round(ggBase * s.utPct / 100);
+    var va = Math.round(d.equipos * s.vaPct / 100);
+    var costoProyecto = ejecucion + riesgo + gg + ut + va;
+
+    var famCosto = s.families.reduce(function (a, f) { return a + f.cost; }, 0);
+    var famVenta = s.families.reduce(function (a, f) {
+      return a + f.cost * f.factor * (1 - Math.min(50, f.dcto) / 100);
+    }, 0);
+    var deltaFam = famVenta - famCosto;
+    var deltaFactores = deltaFam - s.baseMarginOnMat;
+
+    var ventaBruta = costoProyecto + deltaFactores;
+    var descuento = Math.round(ventaBruta * s.discountPct / 100);
+    var ventaNeta = ventaBruta - descuento;
+    var iva = Math.round(ventaNeta * IVA);
+    var total = ventaNeta + iva;
+    var margen = ventaNeta > 0 ? (ventaNeta - costoProyecto) / ventaNeta * 100 : 0;
+
+    return {
+      ejecucion: ejecucion, ggBase: ggBase, riesgo: riesgo, gg: gg, ut: ut, va: va,
+      recargos: riesgo + gg + ut + va,
+      costoProyecto: costoProyecto,
+      famCosto: famCosto, famVenta: famVenta, deltaFam: deltaFam, deltaFactores: deltaFactores,
+      ventaBruta: ventaBruta, descuento: descuento, ventaNeta: ventaNeta, iva: iva, total: total,
+      margen: margen,
+      m2: ventaNeta / s.m2,
+      ufm2: ventaNeta / s.uf / s.m2
+    };
+  }
+
+  var C = compute();
+
+  // ---------------- render: composición ----------------
+  // Sub-familias de costo directo. Origen: CUB cubicación · APU APU · OC órdenes de cambio · GLO global · COEF política.
+  function compGroups() {
+    var d = state.direct;
+    return [
+      {
+        g: "Materiales", org: "CUB",
+        lines: [
+          { label: "Materiales", v: d.mat, org: "CUB", ex: "Materiales valorizados desde cubicación × precio APU" },
+          { label: "Ferretería (" + nf2.format(state.ferreteriaPct) + "%)", v: d.ferreteria, org: "COEF", ex: "Coeficiente global sobre materiales" },
+          { label: "Mermas", v: d.mermas, org: "COEF", ex: "Pérdida por corte y manipulación" }
+        ]
+      },
+      {
+        g: "Mano de obra", org: "CUB",
+        lines: [
+          { label: "Mano de obra", v: d.mo, org: "CUB", ex: "Persona-día valorizada desde rendimiento APU + tarifa D/H" }
+        ]
+      },
+      {
+        g: "Equipos", org: "APU",
+        lines: [
+          { label: "Equipos", v: d.equipos, org: "APU", ex: "Máquinas y equipos de montaje" },
+          { label: "Herramientas", v: d.herr, org: "APU", ex: "Herramientas menores y de poder" }
+        ]
+      },
+      {
+        g: "Complementarios", org: "GLO",
+        lines: [
+          { label: "Gastos operacionales", v: d.go, org: "GLO", ex: "Suma GO 3.1 – 3.6" },
+          { label: "Subcontratos", v: d.sub, org: "CUB", ex: "Partidas subcontratadas (subpartida del itemizado)" },
+          { label: "Transporte", v: d.transp, org: "GLO", ex: "Fletes y movilización a obra" },
+          { label: "Órdenes de cambio", v: d.oc, org: "OC", ex: "Adicionales aprobados por OC" }
+        ]
+      }
+    ];
+  }
+
+  function compRows() {
+    return [
+      { sec: "Recargos, margen y cierre" },
+      { label: "Riesgo (" + nf2.format(state.riesgoPct) + "%)", v: C.riesgo, org: "COEF", ex: "Contingencia sobre costo de ejecución" },
+      { label: "Gastos generales (" + nf2.format(state.ggPct) + "%)", v: C.gg, org: "COEF", ex: "Base: materiales + M.O. + GO" },
+      { label: "Utilidades (" + nf2.format(state.utPct) + "%)", v: C.ut, org: "COEF", ex: "Margen sobre costo directo" },
+      { label: "VA sobre equipos (" + nf2.format(state.vaPct) + "%)", v: C.va, org: "COEF", ex: "Valor agregado sobre equipos" },
+      { label: "Costo total proyecto", v: C.costoProyecto, kind: "tot" },
+      { label: "Diferencia por factores", v: C.deltaFactores, org: "FAM", ex: "Σ venta familia − Σ costo familia − margen base" },
+      { label: "Descuento", v: -C.descuento, neg: true, org: "NEG", ex: "Descuento comercial sobre venta bruta" },
+      { label: "Total venta neto", v: C.ventaNeta, kind: "tot" },
+      { label: "IVA (19%)", v: C.iva, dim: true, noPct: true, org: "TRIB", ex: "Impuesto al valor agregado" },
+      { label: "TOTAL VENTA", v: C.total, kind: "grand", noPct: true }
+    ];
+  }
+
+  function orgChip(org) {
+    if (!org) return "";
+    return '<span class="org" title="' + (state.orgHint[org] || org) + '">' + org + "</span>";
+  }
+
+  function renderComp() {
+    var body = document.getElementById("tblCompBody");
+    var html = "";
+    var count = 0;
+
+    // --- costo directo agrupado en 4 sub-familias ---
+    var groups = compGroups();
+    html += '<tr class="sec"><td colspan="4">Costo directo · 4 sub-familias</td></tr>';
+    for (var gi = 0; gi < groups.length; gi++) {
+      var gr = groups[gi];
+      var subtotal = gr.lines.reduce(function (a, l) { return a + l.v; }, 0);
+      var open = state.open[gr.g] !== false;
+      count++;
+      var pSub = C.ventaNeta > 0 ? (subtotal / C.ventaNeta) * 100 : 0;
+      html += '<tr class="grp" data-grp="' + gr.g + '">' +
+        '<td class="l"><span class="lg"><button class="chev" data-grp="' + gr.g + '" aria-expanded="' + open + '">' + (open ? "▾" : "▸") + '</button>' +
+        '<span class="gname">' + gr.g + '</span><span class="git">' + gr.lines.length + " líneas</span></span></td>" +
+        '<td class="o">' + orgChip(gr.org) + "</td>" +
+        '<td class="n">' + money(subtotal) + "</td>" +
+        '<td class="n"><span class="pct">' + pct(pSub) + "</span></td></tr>";
+      for (var li = 0; li < gr.lines.length; li++) {
+        var l = gr.lines[li];
+        count++;
+        var pL = C.ventaNeta > 0 ? (l.v / C.ventaNeta) * 100 : 0;
+        html += '<tr class="det" data-parent="' + gr.g + '"' + (open ? "" : " hidden") + '>' +
+          '<td class="l" title="' + (l.ex || "") + '">' + l.label + "</td>" +
+          '<td class="o">' + orgChip(l.org) + "</td>" +
+          '<td class="n">' + money(l.v) + "</td>" +
+          '<td class="n"><span class="pct">' + pct(pL) + "</span></td></tr>";
+      }
+    }
+    count++;
+    html += '<tr class="tot"><td class="l">Costo de ejecución</td>' +
+      '<td class="o">' + orgChip("CUB") + "</td>" +
+      '<td class="n">' + money(C.ejecucion) + "</td>" +
+      '<td class="n"><span class="pct">' + pct(C.ventaNeta > 0 ? (C.ejecucion / C.ventaNeta) * 100 : 0) + "</span></td></tr>";
+
+    // --- recargos, margen y cierre ---
+    var rows = compRows();
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i];
+      if (r.sec) { html += '<tr class="sec"><td colspan="4">' + r.sec + "</td></tr>"; continue; }
+      count++;
+      var cls = "row" + (r.kind === "tot" ? " tot" : "") + (r.kind === "grand" ? " grand" : "") + (r.dim ? " dim" : "");
+      var p = C.ventaNeta > 0 ? (r.v / C.ventaNeta) * 100 : 0;
+      var pctHtml = r.noPct ? "" : '<span class="pct">' + pct(p) + "</span>";
+      var sec2 = moneySecondary(r.v);
+      html += '<tr class="' + cls + '"' + (r.ex ? ' title="' + r.ex + '"' : "") + '><td class="l">' + r.label + "</td>" +
+        '<td class="o">' + orgChip(r.org) + "</td>" +
+        '<td class="n"' + (r.neg ? ' style="color:var(--red)"' : "") + ">" + money(r.v) +
+        (sec2 ? '<span class="uf">' + sec2 + "</span>" : "") + "</td>" +
+        '<td class="n">' + pctHtml + "</td></tr>";
+    }
+    body.innerHTML = html;
+    document.getElementById("cntRows").textContent = String(count);
+  }
+
+  // ---------------- render: cascada ----------------
+  function renderWf() {
+    var steps = [
+      { lab: "Costo de ejecución", from: 0, to: C.ejecucion, cls: "c-exec" },
+      { lab: "Riesgo", from: C.ejecucion, to: C.ejecucion + C.riesgo, cls: "c-gg", sign: "+" },
+      { lab: "Gastos generales", from: C.ejecucion + C.riesgo, to: C.ejecucion + C.riesgo + C.gg, cls: "c-gg", sign: "+" },
+      { lab: "Utilidad", from: C.ejecucion + C.riesgo + C.gg, to: C.costoProyecto - C.va, cls: "c-gg", sign: "+" },
+      { lab: "VA equipos", from: C.costoProyecto - C.va, to: C.costoProyecto, cls: "c-gg", sign: "+" },
+      { lab: "Costo total proyecto", from: 0, to: C.costoProyecto, cls: "c-exec", total: true },
+      { lab: "Diferencia por factores", from: C.costoProyecto, to: C.ventaBruta, cls: "c-fact", sign: "+" },
+      { lab: "Descuento comercial", from: C.ventaBruta, to: C.ventaNeta, cls: "c-neg", sign: "−" },
+      { lab: "Venta neta", from: 0, to: C.ventaNeta, cls: "c-fact", total: true },
+      { lab: "IVA (19%)", from: C.ventaNeta, to: C.total, cls: "c-iva", sign: "+" },
+      { lab: "TOTAL VENTA", from: 0, to: C.total, cls: "c-exec", total: true, grand: true }
+    ];
+    var scale = C.total > 0 ? C.total : 1;
+    var html = "";
+    for (var i = 0; i < steps.length; i++) {
+      var s = steps[i];
+      var left = (Math.min(s.from, s.to) / scale) * 100;
+      var w = (Math.abs(s.to - s.from) / scale) * 100;
+      if (s.total) { left = 0; w = (s.to / scale) * 100; }
+      if (!s.total && w < 0.35) w = 0.35;
+      var amt = s.total ? s.to : Math.abs(s.to - s.from);
+      var cls = "row" + (s.total ? " total" : "") + (s.grand ? " grand" : "");
+      html += '<div class="' + cls + '"><div class="lab">' + s.lab + '</div>' +
+        '<div class="track"><div class="bar ' + s.cls + '" style="left:' + left.toFixed(3) + "%;width:" + w.toFixed(3) + '%"></div></div>' +
+        '<div class="val">' + (s.sign || "") + clcShort(amt) + "</div></div>";
+    }
+    document.getElementById("wf").innerHTML = html;
+  }
+
+  // Etiqueta compacta. Invariante: con CLP no se emite "UF".
+  function clcShort(v) {
+    var a = Math.abs(v);
+    if (state.currency !== "CLP") return nf3.format(a / state.uf) + " UF";
+    if (a >= 1000000) return "$ " + nf2.format(a / 1000000) + " M";
+    return clp(a);
+  }
+
+  // Concentración de materiales: participación de las 3 familias de mayor costo.
+  function materialConcentration() {
+    var fams = state.families.slice().sort(function (a, b) { return b.cost - a.cost; });
+    var total = fams.reduce(function (a, f) { return a + f.cost; }, 0);
+    var top = fams.slice(0, 3);
+    var sum = top.reduce(function (a, f) { return a + f.cost; }, 0);
+    return {
+      share: total > 0 ? (sum / total) * 100 : 0,
+      names: top.map(function (f) { return f.name; }),
+      count: fams.length
+    };
+  }
+
+  // ---------------- render: KPIs ----------------
+  function renderKpis() {
+    var s = state;
+    var enClp = s.currency === "CLP";
+
+    set("kpiEjec", money(C.ejecucion));
+    set("kpiEjecSub", enClp
+      ? (nf2.format(C.ejecucion / C.ventaNeta * 100) + " % de la venta neta")
+      : nf3.format(C.ejecucion / s.uf) + " UF · " + clp(C.ejecucion));
+
+    set("kpiCostoProy", money(C.costoProyecto));
+    set("kpiCostoProySub", enClp
+      ? ("Ejecución + recargos · " + nf2.format(C.costoProyecto / C.ventaNeta * 100) + " % de la venta")
+      : nf3.format(C.costoProyecto / s.uf) + " UF · " + clp(C.costoProyecto));
+
+    set("kpiMargen", pct(C.margen));
+    set("kpiMargenSub", '<span class="up">✓ viable</span> · sobre venta');
+
+    // En CLP la venta unitaria se expresa solo en pesos por m²; la UF/m² es exclusiva del modo UF.
+    set("kpiUnit", enClp ? (clp(C.ventaNeta / s.m2) + " /m²") : moneyUnit(C.ventaNeta / s.m2));
+    set("kpiUnitSub", enClp ? (nfCLP.format(s.m2) + " m² construidos") : (clp(C.ventaNeta / s.m2) + " /m²"));
+
+    set("kpiNeta", money(C.ventaNeta));
+    set("kpiNetaSub", enClp ? ("IVA " + clp(C.iva)) : clp(C.ventaNeta));
+
+    var conc = materialConcentration();
+    set("kpiConc", nf2.format(conc.share) + " %");
+    set("kpiConcSub", "Top 3 de " + conc.count + " familias · " + conc.names.join(" · "));
+
+    // Política de moneda: en CLP se retira todo rastro de UF, incluido el chip de paridad.
+    var chipUf = document.getElementById("chipUf");
+    chipUf.style.display = enClp ? "none" : "inline-flex";
+    chipUf.innerHTML = "UF del día <b>" + clp(s.uf) + "</b>";
+  }
+
+  // ---------------- render: familias ----------------
+  function efectivo(f) { return f.factor * (1 - Math.min(50, f.dcto) / 100); }
+  function ventaFamilia(f) { return f.cost * efectivo(f); }
+
+  function renderFam() {
+    var body = document.getElementById("famBody");
+    var html = "";
+    var maxCost = state.families.reduce(function (a, f) { return Math.max(a, f.cost); }, 1);
+
+    for (var i = 0; i < state.families.length; i++) {
+      var f = state.families[i];
+      var eff = efectivo(f);
+      html += '<div class="frow">' +
+        '<div><div class="fname">' + f.name + '</div>' +
+        '<div class="fsub">ferretería ' + clp(f.cost * state.ferreteriaPct / 100) + "</div></div>" +
+        '<div class="num">' + money(f.cost) + "</div>" +
+        '<div><input type="number" step="0.01" min="1" max="5" value="' + f.factor.toFixed(2) + '" data-f="' + i + '"></div>' +
+        '<div><input type="number" step="0.5" min="0" max="50" value="' + f.dcto.toFixed(1) + '" data-d="' + i + '"></div>' +
+        '<div class="num" data-eff="' + i + '">' + nf2.format(eff) + "×</div>" +
+        '<div class="val">' + money(ventaFamilia(f)) + "</div>" +
+        '<div class="share" style="width:' + ((f.cost / maxCost) * 100).toFixed(2) + '%"></div>' +
+        "</div>";
+    }
+    body.innerHTML = html;
+
+    set("famCosto", money(C.famCosto));
+    set("famVenta", money(C.famVenta));
+    set("famDelta", "+" + money(C.deltaFam));
+    set("famMedio", nf2.format(C.famVenta / C.famCosto) + "×");
+    var act = state.families.filter(function (f) { return f.factor > 1.0001; }).length;
+    set("famActivas", act + "/" + state.families.length);
+
+    // encabezados según moneda
+    document.getElementById("hCosto").textContent = state.currency === "CLP" ? "Costo $" : "Costo def.";
+    document.getElementById("hVenta").textContent = state.currency === "CLP" ? "Venta $" : "Venta def.";
+
+    // barra de participación por costo
+    var colors = ["#2563B0", "#3A78C2", "#5190D2", "#6BA3DF", "#86B7E8", "#9BC8EF",
+                  "#15803D", "#4BA36A", "#86BF9E", "#B7D8C4"];
+    var sh = "";
+    for (var k = 0; k < state.families.length; k++) {
+      sh += '<i style="flex:' + state.families[k].cost + ";background:" + colors[k % colors.length] + '"></i>';
+    }
+    document.getElementById("famShare").innerHTML = sh;
+  }
+
+  // ---------------- render: M.O. y viáticos ----------------
+  function renderMo() {
+    var h = "";
+    for (var i = 0; i < MO_DIR.length; i++) {
+      var m = MO_DIR[i];
+      h += '<tr class="row"><td class="l">' + m.cargo + '</td><td class="n">' + m.pers + '</td><td class="n">' + m.meses +
+        '</td><td class="n">' + clp(m.tarifa) + '</td><td class="n">' + clp(m.pers * m.meses * m.tarifa) + "</td></tr>";
+    }
+    document.getElementById("moDirBody").innerHTML = h;
+
+    h = "";
+    for (var j = 0; j < MO_IND.length; j++) {
+      var n = MO_IND[j];
+      h += '<tr class="row"><td class="l">' + n.cargo + '</td><td class="n">' + n.pers + '</td><td class="n">' + n.meses +
+        '</td><td class="n">' + clp(n.tarifa) + '</td><td class="n">' + clp(n.pers * n.meses * n.tarifa) + "</td></tr>";
+    }
+    document.getElementById("moIndBody").innerHTML = h;
+
+    h = "";
+    for (var k = 0; k < VIATICOS.length; k++) {
+      var v = VIATICOS[k];
+      h += '<tr class="row"><td class="l">' + v.concepto + '</td><td class="n">' + v.un + '</td><td class="n">' + nfCLP.format(v.cant) +
+        '</td><td class="n">' + clp(v.pu) + '</td><td class="n">' + clp(v.cant * v.pu) + "</td></tr>";
+    }
+    document.getElementById("viaBody").innerHTML = h;
+  }
+
+  // ---------------- render: GO ----------------
+  function goTotals() {
+    return GO.map(function (c) {
+      return c.items.reduce(function (a, it) { return a + it.cant * it.pu; }, 0);
+    });
+  }
+
+  function renderGo() {
+    var totals = goTotals();
+    var gtot = totals.reduce(function (a, b) { return a + b; }, 0);
+    set("goTotal", clp(gtot));
+    set("goTotalSub", (state.currency === "CLP" ? "" : nf3.format(gtot / state.uf) + " UF · ") + "GO 3.1–3.6");
+
+    var h = "";
+    for (var i = 0; i < GO.length; i++) {
+      var c = GO[i];
+      var t = totals[i];
+      var p = gtot > 0 ? (t / gtot) * 100 : 0;
+      h += '<div class="go-cat' + (i === 2 ? " open" : "") + '" data-go="' + i + '">' +
+        '<button type="button"><span class="chev">' + (i === 2 ? "▾" : "▸") + "</span>" +
+        '<span class="code">' + c.code + '</span>' +
+        '<span><span class="name">' + c.name + '</span><span class="cnt">' + c.items.length + " ítems</span></span>" +
+        '<span class="amt">' + clp(t) + "</span>" +
+        '<span class="pct">' + nf2.format(p) + "%</span></button>" +
+        '<div class="go-items" style="display:' + (i === 2 ? "block" : "none") + '">' +
+        '<div class="ihead"><span>Concepto</span><span>Un</span><span>Cant</span><span>P.U.</span><span>Total</span></div>';
+      for (var j = 0; j < c.items.length; j++) {
+        var it = c.items[j];
+        h += '<div class="irow"><span>' + it.c + '</span><span class="un">' + it.un + '</span><span class="n">' + nfCLP.format(it.cant) +
+          '</span><span class="n">' + clp(it.pu) + '</span><span class="tt">' + clp(it.cant * it.pu) + "</span></div>";
+      }
+      h += "</div></div>";
+    }
+    document.getElementById("goBody").innerHTML = h;
+
+    var cats = document.querySelectorAll("#goBody .go-cat");
+    for (var k = 0; k < cats.length; k++) {
+      cats[k].querySelector("button").addEventListener("click", function () {
+        var open = this.parentNode.classList.toggle("open");
+        this.querySelector(".chev").textContent = open ? "▾" : "▸";
+        this.parentNode.querySelector(".go-items").style.display = open ? "block" : "none";
+      });
+    }
+  }
+
+  // ---------------- render: márgenes / palancas ----------------
+  function renderCierre() {
+    set("mBase", money(C.costoProyecto));
+    set("mRec", money(C.recargos));
+    set("mFact", money(C.deltaFactores));
+    set("mDesc", "−" + money(C.descuento));
+    set("mReal", pct(C.margen) + " sobre venta");
+
+    set("impGg", money(C.gg));
+    set("impUt", money(C.ut));
+    set("impVa", money(C.va));
+    set("impFer", money(state.direct.ferreteria));
+    set("impDcto", "−" + money(C.descuento));
+
+    var pol = PRESETS[document.getElementById("selPolicy").value] || PRESETS.markup;
+    set("policyNote", pol.note);
+
+    var en = { markup: true, tm: false, lumpsum: false, gainshare: false };
+    var polKey = document.getElementById("selPolicy").value;
+    var isOn = polKey === "markup";
+
+    var rows = [
+      ["Gastos generales", isOn ? "Mat + MO + GO" : "fee del contrato", pct(state.ggPct), isOn],
+      ["Utilidad", isOn ? "Mat + MO + GO" : "según contrato", pct(state.utPct), isOn],
+      ["VA sobre equipos", "solo equipos", pct(state.vaPct), pol.va],
+      ["Ferretería", "materiales", pct(state.ferreteriaPct), pol.fer],
+      ["Riesgo", "costo de ejecución", pct(state.riesgoPct), true],
+      ["Descuento comercial", "venta bruta", pct(state.discountPct), pol.dcto]
+    ];
+    var h = "";
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i];
+      var badge = r[3]
+        ? '<span style="color:var(--green);font-weight:700">sí</span>'
+        : '<span style="color:var(--amber);font-weight:700">no</span>';
+      h += '<tr class="row' + (r[3] ? "" : " dim") + '"><td class="l">' + r[0] + '</td><td class="l" style="font-size:11px;color:var(--ink-4)">' +
+        r[1] + '</td><td class="n">' + r[2] + "</td><td class=\"n\">" + badge + "</td></tr>";
+    }
+    document.getElementById("polBody").innerHTML = h;
+
+    // atenuar palancas bloqueadas
+    toggleLever("inGg", "rgGg", pol.gg);
+    toggleLever("inUt", "rgUt", pol.ut);
+    toggleLever("inVa", "rgVa", pol.va);
+    toggleLever("inFer", "rgFer", pol.fer);
+    toggleLever("inDcto", "rgDcto", pol.dcto);
+  }
+
+  function toggleLever(inId, rgId, enabled) {
+    var a = document.getElementById(inId), b = document.getElementById(rgId);
+    [a, b].forEach(function (el) { el.disabled = !enabled; el.style.opacity = enabled ? "" : ".4"; });
+  }
+
+  // ---------------- util ----------------
+  function set(id, html) { var el = document.getElementById(id); if (el) el.innerHTML = html; }
+
+  function renderAll() {
+    applyCurrencyGating();
+    C = compute();
+    renderKpis();
+    renderComp();
+    renderWf();
+    renderFam();
+    renderMo();
+    renderGo();
+    renderCierre();
+  }
+
+  // ---------------- eventos ----------------
+  // Política de moneda: UF/USD solo se habilitan si la UF del día está configurada.
+  function applyCurrencyGating() {
+    var on = document.getElementById("chkUf").checked;
+    var btns = document.querySelectorAll("#segCurrency button[data-cur]");
+    Array.prototype.forEach.call(btns, function (b) {
+      var cur = b.getAttribute("data-cur");
+      var enabled = cur === "CLP" || on;
+      b.disabled = !enabled;
+      if (!enabled && b.classList.contains("on")) {
+        b.classList.remove("on");
+        document.getElementById("curCLP").classList.add("on");
+        state.currency = "CLP";
+      }
+    });
+  }
+
+  document.getElementById("chkUf").addEventListener("change", function () {
+    applyCurrencyGating();
+    renderAll();
+  });
+
+  // moneda
+  document.getElementById("segCurrency").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-cur]");
+    if (!b || b.disabled) return;
+    state.currency = b.getAttribute("data-cur");
+    Array.prototype.forEach.call(this.querySelectorAll("button"), function (x) { x.classList.toggle("on", x === b); });
+    renderAll();
+  });
+
+  // tabs
+  document.getElementById("tabs").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-tab]");
+    if (!b) return;
+    var id = b.getAttribute("data-tab");
+    Array.prototype.forEach.call(this.querySelectorAll("button"), function (x) { x.classList.toggle("on", x === b); });
+    ["t-comp", "t-cie", "t-fam", "t-mo", "t-go"].forEach(function (pid) {
+      document.getElementById(pid).hidden = pid !== id;
+    });
+  });
+
+  // composición: plegar / desplegar sub-familias de costo directo
+  document.getElementById("tblCompBody").addEventListener("click", function (e) {
+    var g = e.target.getAttribute && e.target.getAttribute("data-grp");
+    if (!g) { var tr = e.target.closest("tr.grp"); g = tr ? tr.getAttribute("data-grp") : null; }
+    if (!g) return;
+    state.open[g] = state.open[g] === false;
+    renderComp();
+  });
+
+  // familias: factor y descuento
+  document.getElementById("famBody").addEventListener("change", function (e) {
+    var t = e.target;
+    var fi = t.getAttribute("data-f"), di = t.getAttribute("data-d");
+    if (fi !== null) {
+      var v = parseFloat(t.value) || 1;
+      state.families[+fi].factor = Math.min(5, Math.max(1, v));
+    } else if (di !== null) {
+      var d = parseFloat(t.value) || 0;
+      state.families[+di].dcto = Math.min(50, Math.max(0, d));
+    } else return;
+    renderAll();
+  });
+
+  // palancas
+  function bindPair(inId, rgId, key, min, max) {
+    var a = document.getElementById(inId), b = document.getElementById(rgId);
+    function push(val, from) {
+      var v = Math.min(max, Math.max(min, parseFloat(val) || 0));
+      if (key === "discountPct") state.discountPct = v;
+      else state[key] = v;
+      if (from !== "in") a.value = v.toFixed(1);
+      if (from !== "rg") b.value = String(v);
+      if (key === "ferreteriaPct") state.direct.ferreteria = Math.round(state.direct.mat * v / 100);
+      renderAll();
+    }
+    a.addEventListener("change", function () { push(a.value, "in"); });
+    b.addEventListener("input", function () { push(b.value, "rg"); });
+  }
+  bindPair("inGg", "rgGg", "ggPct", 0, 20);
+  bindPair("inUt", "rgUt", "utPct", 0, 30);
+  bindPair("inVa", "rgVa", "vaPct", 0, 20);
+  bindPair("inFer", "rgFer", "ferreteriaPct", 0, 10);
+  bindPair("inDcto", "rgDcto", "discountPct", 0, 15);
+
+  document.querySelectorAll(".presets button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var d = parseFloat(b.getAttribute("data-d"));
+      state.discountPct = d;
+      document.getElementById("inDcto").value = d.toFixed(1);
+      document.getElementById("rgDcto").value = String(d);
+      renderAll();
+    });
+  });
+
+  document.getElementById("selPolicy").addEventListener("change", renderCierre);
+
+  // tema
+  document.getElementById("btnTheme").addEventListener("click", function () {
+    var root = document.documentElement;
+    root.setAttribute("data-theme", root.getAttribute("data-theme") === "dark" ? "light" : "dark");
+  });
+
+  // reset
+  document.getElementById("btnReset").addEventListener("click", function () {
+    state = baseModel();
+    document.getElementById("inGg").value = "5.0"; document.getElementById("rgGg").value = "5";
+    document.getElementById("inUt").value = "8.0"; document.getElementById("rgUt").value = "8";
+    document.getElementById("inVa").value = "3.0"; document.getElementById("rgVa").value = "3";
+    document.getElementById("inFer").value = "3.5"; document.getElementById("rgFer").value = "3.5";
+    document.getElementById("inDcto").value = "2.0"; document.getElementById("rgDcto").value = "2";
+    document.getElementById("selPolicy").value = "markup";
+    document.getElementById("chkUf").checked = false;
+    Array.prototype.forEach.call(document.querySelectorAll("#segCurrency button"), function (x) {
+      x.classList.toggle("on", x.getAttribute("data-cur") === "CLP");
+    });
+    renderAll();
+  });
+
+  renderAll();
+})();
+</script>
+</body>
+</html>

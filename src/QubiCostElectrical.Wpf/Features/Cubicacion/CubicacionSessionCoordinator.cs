@@ -106,6 +106,7 @@ internal sealed class CubicacionSessionCoordinator : IDisposable, ISessionChange
             case ProjectSessionChangeKind.ProjectInfo:
                 ReloadPartidasFromSession();
                 parent.RefreshValorUfEnFilasCargadas();
+                parent.NotifyMonedaChanged();
                 break;
             case ProjectSessionChangeKind.Cubicacion:
             case ProjectSessionChangeKind.QtyHeaders:

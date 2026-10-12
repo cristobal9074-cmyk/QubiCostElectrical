@@ -262,7 +262,10 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
         System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
         {
             if (e.Kind == ProjectSessionChangeKind.ProjectInfo)
+            {
                 RefreshValorUfEnTodasLasFilas();
+                NotifyMonedaChanged();
+            }
             if (e.Kind is ProjectSessionChangeKind.ProjectInfo or ProjectSessionChangeKind.Materiales or ProjectSessionChangeKind.Reset or ProjectSessionChangeKind.Saved)
                 ReloadProjectPreview();
         });
@@ -770,7 +773,10 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
 
     private decimal TarifaDhActiva => HasProject ? session.ProjectInfo.TarifaDhClp : 0m;
 
-    /// <summary>Índice global M.O. (FA) del proyecto activo, con default si el proyecto no trae valor.</summary>
+    /// <summary>
+    /// Índice global M.O. (FA) del proyecto activo. 0 = sin calibrar: la M.O. por % se calcula como
+    /// Material × % (factor 1) hasta que el índice se derive del plan de obra (Costo → Familias → FACTORES).
+    /// </summary>
     private decimal IndiceMoFaActiva =>
         HasProject && session.ProjectInfo.IndiceMoFa > 0m
             ? session.ProjectInfo.IndiceMoFa

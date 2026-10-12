@@ -58,4 +58,42 @@ public sealed class NewProjectDialogClosingPolicyTests
         var s = NewProjectDialog.BuildClosingPolicy(ClosingPolicyType.TargetPrice, -1m);
         Assert.Equal(0m, s.TargetPriceClp);
     }
+
+    [Fact]
+    public void ResolveInitialTemplate_WithoutExplicitId_IsBlank()
+    {
+        // "Nuevo proyecto" no debe inyectar partidas: el itemizado nace vacío y se guarda así.
+        var template = NewProjectDialog.ResolveInitialTemplate(null);
+
+        Assert.True(template.EsEnBlanco);
+        Assert.Empty(template.CreateInstanceRows());
+    }
+
+    [Fact]
+    public void ResolveInitialTemplate_WithExplicitId_KeepsThatTemplate()
+    {
+        // Las tarjetas de plantilla del inicio siguen precargando su obra típica.
+        var residential = NewProjectDialog.ResolveInitialTemplate("residential_building");
+
+        Assert.Equal("residential_building", residential.Id);
+        Assert.False(residential.EsEnBlanco);
+        Assert.NotEmpty(residential.CreateInstanceRows());
+    }
+
+    [Fact]
+    public void ResolveInitialTemplate_WithUnknownId_FallsBackToBlank()
+    {
+        var template = NewProjectDialog.ResolveInitialTemplate("plantilla-que-no-existe");
+
+        Assert.True(template.EsEnBlanco);
+        Assert.Empty(template.CreateInstanceRows());
+    }
+
+    [Fact]
+    public void Catalog_BlankTemplate_HasNoRows()
+    {
+        Assert.True(ProjectTemplateCatalog.Blank.EsEnBlanco);
+        Assert.Equal("blank", ProjectTemplateCatalog.Blank.Id);
+        Assert.Empty(ProjectTemplateCatalog.Blank.CreateInstanceRows());
+    }
 }

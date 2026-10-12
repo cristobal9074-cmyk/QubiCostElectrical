@@ -1,0 +1,1998 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Resumen ejecutivo 2.0 · Qubi Cost Electrical</title>
+<style>
+  :root {
+    --navy: #101C30;
+    --blue: #2563B0;
+    --blue-dark: #1D4ED8;
+    --blue-soft: #EAF1FF;
+    --blue-faint: #EDF3FA;
+    --brand: #1A3B6E;
+    --ink: #101A26;
+    --ink-2: #3C4A5C;
+    --ink-3: #5C6A7C;
+    --ink-4: #7B8798;
+    --muted: #8B95A3;
+    --line: #DDE3EA;
+    --line-2: #EEF2F6;
+    --canvas: #EDF0F4;
+    --paper: #FFFFFF;
+    --surface-2: #FAFBFD;
+    --wash: #F4F7FB;
+    --amber: #8A5D0B;
+    --amber-soft: #FBF1DD;
+    --amber-edge: #C79433;
+    --green: #15803D;
+    --green-soft: #EAF8EF;
+    --green-edge: #7CC79B;
+    --red: #B23C3C;
+    --red-soft: #FFF0F0;
+    --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+    --mono: "Cascadia Mono", "JetBrains Mono", Consolas, ui-monospace, monospace;
+    --shadow-sm: 0 1px 2px rgba(16, 28, 48, .06);
+    --shadow: 0 10px 30px rgba(16, 28, 48, .07);
+    --shadow-lg: 0 24px 60px rgba(16, 28, 48, .14);
+    --radius: 10px;
+    --radius-lg: 14px;
+  }
+  [data-theme="dark"] {
+    --navy: #0B0E14;
+    --blue: #4B8DF7;
+    --blue-dark: #3B82F6;
+    --blue-soft: #1E2D4A;
+    --blue-faint: #1C2838;
+    --brand: #9EB1C8;
+    --ink: #E4E7EC;
+    --ink-2: #BCC0C6;
+    --ink-3: #8B929C;
+    --ink-4: #7A828D;
+    --muted: #7A828D;
+    --line: #313743;
+    --line-2: #262B34;
+    --canvas: #15181F;
+    --paper: #1B1F27;
+    --surface-2: #23272F;
+    --wash: #21262F;
+    --amber: #F0B23E;
+    --amber-soft: #2C2410;
+    --amber-edge: #6B5320;
+    --green: #4ADE80;
+    --green-soft: #14301F;
+    --green-edge: #235E3B;
+    --red: #F87171;
+    --red-soft: #33191B;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, .4);
+    --shadow: 0 10px 30px rgba(0, 0, 0, .4);
+    --shadow-lg: 0 24px 60px rgba(0, 0, 0, .55);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    font-family: var(--font); color: var(--ink); background: var(--navy);
+    font-size: 13px; -webkit-font-smoothing: antialiased;
+  }
+  button, input, select { font: inherit; color: inherit; }
+  button { cursor: pointer; border: 0; background: none; }
+  :focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; border-radius: 4px; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+  .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+  /* ============================================================ documento */
+  .doc { max-width: 1320px; margin: 0 auto; padding: 30px 18px 90px; }
+  .doc > header { color: #E8EEF7; padding: 6px 4px 26px; }
+  .kicker { font-size: 10px; font-weight: 750; letter-spacing: .2em; text-transform: uppercase; color: #8FA8C6; }
+  .doc > header h1 { margin: 8px 0 10px; font-size: 30px; font-weight: 700; letter-spacing: -.025em; }
+  .doc > header p { margin: 0; color: #A9BACD; font-size: 13.5px; max-width: 900px; line-height: 1.6; }
+  .doc > header p b { color: #DCE7F5; font-weight: 650; }
+  .toc { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
+  .toc a {
+    font-size: 11px; font-weight: 650; color: #CFE0F4; text-decoration: none;
+    padding: 5px 11px; border: 1px solid #244A73; border-radius: 999px;
+  }
+  .toc a:hover { background: rgba(255, 255, 255, .08); color: #fff; }
+
+  .card {
+    background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-lg);
+    box-shadow: var(--shadow); margin-bottom: 22px; overflow: hidden;
+  }
+  .card > .cap { padding: 18px 20px 0; }
+  .card h2 { margin: 0; font-size: 16px; font-weight: 700; letter-spacing: -.01em; }
+  .card h2 .n { color: var(--blue); font-family: var(--mono); margin-right: 8px; }
+  .card .lead { margin: 7px 0 0; color: var(--ink-3); font-size: 13px; line-height: 1.6; max-width: 940px; }
+  .card .body { padding: 16px 20px 20px; }
+  .h {
+    margin: 0 0 9px; font-size: 10px; font-weight: 750; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--brand);
+  }
+  .h.gap { margin-top: 20px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  @media (max-width: 1000px) { .grid2, .grid3 { grid-template-columns: 1fr; } }
+
+  .problem { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; background: var(--surface-2); }
+  .problem .tag {
+    display: inline-flex; align-items: center; gap: 6px; height: 20px; padding: 0 8px; border-radius: 999px;
+    background: var(--red-soft); color: var(--red); font-size: 10px; font-weight: 750;
+    letter-spacing: .07em; text-transform: uppercase;
+  }
+  .problem h3 { margin: 11px 0 6px; font-size: 14px; letter-spacing: -.01em; }
+  .problem p { margin: 0; color: var(--ink-2); font-size: 12.5px; line-height: 1.65; }
+  .problem p + p { margin-top: 8px; }
+  code {
+    font-family: var(--mono); font-size: 11.5px; background: var(--blue-faint); color: var(--brand);
+    padding: 1px 5px; border-radius: 4px; border: 1px solid var(--line-2);
+  }
+  [data-theme="dark"] code { background: var(--blue-soft); color: #9CC0FF; }
+  .fix { margin-top: 10px; padding-left: 10px; border-left: 3px solid var(--green); font-size: 12.5px; color: var(--ink-2); line-height: 1.6; }
+  .fix b { color: var(--green); font-weight: 700; }
+
+  /* ============================================================ mockup */
+  .mock {
+    border: 1px solid var(--line); border-radius: var(--radius-lg); overflow: hidden;
+    background: var(--canvas); box-shadow: var(--shadow-lg);
+  }
+  .shell {
+    height: 48px; display: flex; align-items: center; gap: 14px; padding: 0 14px;
+    background: var(--navy); color: #EEF4FB; font-size: 12px; flex: none;
+  }
+  .shell .mark {
+    width: 24px; height: 24px; border-radius: 7px; background: var(--blue);
+    display: grid; place-items: center; font-size: 12px; font-weight: 750; color: #fff;
+  }
+  .shell .brand { font-size: 11px; letter-spacing: .12em; font-weight: 750; line-height: 1.15; }
+  .shell .brand span { display: block; letter-spacing: .16em; color: #9EB1C8; font-weight: 650; font-size: 8.5px; }
+  .shell .nav { display: flex; gap: 2px; margin-left: 10px; }
+  .shell .nav button {
+    height: 34px; padding: 0 11px; color: #A9BACD; font-size: 12px; font-weight: 600;
+    border-bottom: 2px solid transparent; border-radius: 0;
+  }
+  .shell .nav button.on { color: #fff; border-bottom-color: var(--blue); }
+  .shell .nav button:hover { color: #fff; }
+  .shell .right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+  .shell .pill {
+    display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px;
+    border: 1px solid #244A73; border-radius: 8px; color: #CFE0F4; font-size: 11.5px;
+  }
+  .shell .pill b { color: #fff; font-family: var(--mono); font-weight: 650; }
+  .shell .pill i { width: 7px; height: 7px; border-radius: 999px; background: var(--green); display: inline-block; }
+
+  .page { padding: 14px 14px 18px; background: var(--canvas); }
+  .pagehead { display: flex; align-items: flex-start; gap: 16px; padding: 2px 2px 12px; }
+  .pagehead h3 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -.015em; }
+  .pagehead .sub { color: var(--ink-4); font-size: 11.5px; margin-top: 3px; }
+  .pagehead .meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .pagehead .acts { margin-left: auto; display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px;
+    border: 1px solid var(--line); background: var(--paper); border-radius: 7px;
+    font-size: 11px; color: var(--ink-3);
+  }
+  .chip b { font-family: var(--mono); color: var(--ink); font-weight: 650; }
+  .chip .dot { width: 6px; height: 6px; border-radius: 999px; background: var(--green); }
+  .chip.blue { background: var(--blue-soft); border-color: #BFD3F0; color: var(--brand); }
+  [data-theme="dark"] .chip.blue { border-color: #2C4A78; color: #9CC0FF; }
+  .chip.amber { background: var(--amber-soft); border-color: var(--amber-edge); color: var(--amber); }
+  .chip.red { background: var(--red-soft); border-color: #E3AFAF; color: var(--red); }
+  .chip.green { background: var(--green-soft); border-color: var(--green-edge); color: var(--green); }
+
+  .btn {
+    height: 28px; padding: 0 12px; border-radius: 8px; font-size: 12px; font-weight: 650;
+    border: 1px solid var(--line); background: var(--paper); color: var(--ink-2);
+    display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+  }
+  .btn:hover { background: var(--wash); }
+  .btn.primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .btn.primary:hover { background: var(--blue-dark); }
+  .btn.ghost { background: transparent; border-color: transparent; color: var(--ink-3); }
+  .btn.ghost:hover { background: var(--wash); }
+  .btn.sm { height: 24px; padding: 0 9px; font-size: 11.5px; }
+  .btn[disabled] { opacity: .45; pointer-events: none; }
+
+  /* toolbar de la propuesta */
+  .toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+  .toolbar .sp { margin-left: auto; }
+  .toolbar label { font-size: 11.5px; color: var(--ink-3); display: inline-flex; align-items: center; gap: 7px; }
+  .seg {
+    display: inline-flex; background: var(--surface-2); border: 1px solid var(--line);
+    border-radius: 8px; padding: 2px; gap: 2px;
+  }
+  .seg button {
+    height: 24px; padding: 0 10px; border-radius: 6px; font-size: 11.5px; font-weight: 650;
+    color: var(--ink-3);
+  }
+  .seg button.on { background: var(--paper); color: var(--blue); box-shadow: var(--shadow-sm); }
+  .seg button[disabled] { opacity: .34; cursor: not-allowed; }
+
+  /* veredicto */
+  .verdict {
+    display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 12px;
+    border: 1px solid var(--line); background: var(--paper); margin-bottom: 11px;
+  }
+  .verdict .vdot { width: 11px; height: 11px; border-radius: 999px; flex: none; }
+  .verdict .vt { min-width: 0; }
+  .verdict .vt b { font-size: 13.5px; font-weight: 700; display: block; letter-spacing: -.01em; }
+  .verdict .vt span { font-size: 11.5px; color: var(--ink-3); display: block; margin-top: 2px; }
+  .verdict .vcta { margin-left: auto; flex: none; }
+  .verdict.ok { background: var(--green-soft); border-color: var(--green-edge); }
+  .verdict.ok .vdot { background: var(--green); }
+  .verdict.ok .vt b { color: var(--green); }
+  .verdict.warn { background: var(--amber-soft); border-color: var(--amber-edge); }
+  .verdict.warn .vdot { background: var(--amber); }
+  .verdict.warn .vt b { color: var(--amber); }
+  .verdict.bad { background: var(--red-soft); border-color: #E3AFAF; }
+  .verdict.bad .vdot { background: var(--red); }
+  .verdict.bad .vt b { color: var(--red); }
+
+  /* KPIs de decisión */
+  .kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 11px; margin-bottom: 11px; }
+  @media (max-width: 1180px) { .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (max-width: 760px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .kpi {
+    background: var(--paper); border: 1px solid var(--line); border-radius: 12px;
+    overflow: hidden; display: flex; flex-direction: column; min-width: 0;
+  }
+  .kpi .kbar { height: 3px; flex: none; }
+  .kpi .kin { padding: 10px 12px 11px; display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 0; }
+  .kpi .kk { font-size: 9.5px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-4);
+             white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kpi .kv { font-family: var(--mono); font-size: 19px; font-weight: 650; letter-spacing: -.03em; line-height: 1;
+             white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kpi .ks { font-size: 10.5px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kpi .kf { margin-top: auto; display: flex; align-items: center; gap: 8px; }
+  .kpi .kf .kc {
+    font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 999px;
+    background: var(--surface-2); border: 1px solid var(--line-2); color: var(--ink-3); white-space: nowrap;
+  }
+  .kpi .kf .kc.up { background: var(--green-soft); border-color: var(--green-edge); color: var(--green); }
+  .kpi .kf .kc.warn { background: var(--amber-soft); border-color: var(--amber-edge); color: var(--amber); }
+  .kpi .kf .kc.danger { background: var(--red-soft); border-color: #E3AFAF; color: var(--red); }
+  .kpi .kf .kc.blue { background: var(--blue-soft); border-color: #BFD3F0; color: var(--brand); }
+  [data-theme="dark"] .kpi .kf .kc.blue { border-color: #2C4A78; color: #9CC0FF; }
+  .kpi .kf .kgauge { flex: 1; height: 5px; border-radius: 3px; background: var(--line-2); overflow: hidden; min-width: 24px; }
+  .kpi .kf .kgauge i { display: block; height: 100%; border-radius: 3px; background: var(--blue); }
+  .kpi .kf .kspark { width: 52px; height: 18px; flex: none; }
+
+  /* grilla 12 columnas del cockpit */
+  .grid12 { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 11px; align-items: start; }
+  .g3 { grid-column: span 3; } .g4 { grid-column: span 4; } .g5 { grid-column: span 5; }
+  .g6 { grid-column: span 6; } .g7 { grid-column: span 7; } .g8 { grid-column: span 8; }
+  .g9 { grid-column: span 9; } .g12 { grid-column: span 12; }
+  @media (max-width: 1180px) { .g3, .g4, .g5, .g6, .g7, .g8, .g9 { grid-column: span 12; } }
+
+  .panel {
+    background: var(--paper); border: 1px solid var(--line); border-radius: 12px;
+    overflow: hidden; min-width: 0;
+  }
+  .phead { padding: 12px 14px 0; display: flex; align-items: flex-start; gap: 10px; }
+  .phead h4 { margin: 0; font-size: 13px; font-weight: 700; letter-spacing: -.01em; }
+  .phead .psub { font-size: 11px; color: var(--ink-3); margin-top: 2px; }
+  .phead .pright { margin-left: auto; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  .pbody { padding: 12px 14px 14px; }
+  .pfoot {
+    display: flex; flex-wrap: wrap; gap: 14px; align-items: center;
+    padding: 10px 14px; border-top: 1px solid var(--line); background: var(--surface-2); font-size: 11.5px; color: var(--ink-3);
+  }
+  .pfoot b { font-family: var(--mono); font-weight: 700; color: var(--ink); }
+  .pfoot .blue b { color: var(--blue); }
+
+  /* cascada */
+  .wf { display: flex; flex-direction: column; gap: 5px; }
+  .wf .w { display: grid; grid-template-columns: 176px minmax(0, 1fr) 122px; align-items: center; gap: 10px; padding: 1px 0; }
+  .wf .wl { font-size: 11.5px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .wf .wt { position: relative; height: 15px; background: var(--surface-2); border-radius: 4px; overflow: hidden; }
+  .wf .wb { position: absolute; top: 0; height: 100%; border-radius: 3px; }
+  .wf .wv { text-align: right; font-family: var(--mono); font-size: 11.5px; color: var(--ink-2); white-space: nowrap; }
+  .wf .w.total .wl, .wf .w.total .wv { font-weight: 700; color: var(--ink); }
+  .wf .w.grand { border-top: 1px solid var(--line); margin-top: 4px; padding-top: 7px; }
+  .wf .w.grand .wl, .wf .w.grand .wv { font-weight: 750; font-size: 12.5px; color: var(--ink); }
+  .wf .w.dim .wl { color: var(--ink-3); }
+  .c-exec { background: linear-gradient(180deg, #4A7FC1, #2563B0); }
+  .c-gg { background: linear-gradient(180deg, #7FA8D9, #4A7FC1); }
+  .c-fact { background: linear-gradient(180deg, #86BF9E, #15803D); }
+  .c-neg { background: repeating-linear-gradient(45deg, #E8A9A9, #E8A9A9 4px, #F3C7C7 4px, #F3C7C7 8px); }
+  .c-iva { background: repeating-linear-gradient(45deg, #D8DEE6, #D8DEE6 4px, #EAEFF5 4px, #EAEFF5 8px); }
+  [data-theme="dark"] .c-neg { background: repeating-linear-gradient(45deg, #7A3B3B, #7A3B3B 4px, #9C5252 4px, #9C5252 8px); }
+  [data-theme="dark"] .c-iva { background: repeating-linear-gradient(45deg, #3A414D, #3A414D 4px, #4B535F 4px, #4B535F 8px); }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--ink-3); }
+  .legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+
+  /* preparación / anillo */
+  .prep { display: flex; gap: 14px; align-items: center; }
+  .ring { width: 104px; height: 104px; flex: none; position: relative; }
+  .ring svg { width: 104px; height: 104px; display: block; }
+  .ring .rc { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+  .ring .rc b { font-family: var(--mono); font-size: 21px; font-weight: 700; letter-spacing: -.03em; display: block; }
+  .ring .rc span { font-size: 9.5px; color: var(--ink-4); }
+  .checklist { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+  .ck {
+    display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; align-items: center; gap: 9px;
+    padding: 7px 9px; border: 1px solid var(--line-2); background: var(--surface-2); border-radius: 9px;
+  }
+  .ck:hover { border-color: var(--line); background: var(--wash); }
+  .ck .kd { width: 20px; height: 20px; border-radius: 999px; display: grid; place-items: center; font-size: 11px; font-weight: 750; }
+  .ck .kd.ok { background: var(--green-soft); color: var(--green); }
+  .ck .kd.warn { background: var(--amber-soft); color: var(--amber); }
+  .ck .kl { font-size: 12px; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ck .kx { font-family: var(--mono); font-size: 11px; color: var(--ink-3); white-space: nowrap; }
+
+  /* stepper */
+  .steps { display: flex; flex-direction: column; }
+  .step { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 10px; }
+  .step .rail { display: flex; flex-direction: column; align-items: center; }
+  .step .dot {
+    width: 24px; height: 24px; border-radius: 999px; display: grid; place-items: center;
+    font-size: 11px; font-weight: 750; flex: none;
+    background: var(--surface-2); border: 1px solid var(--line); color: var(--ink-4);
+  }
+  .step .dot.done { background: var(--green-soft); border-color: var(--green-edge); color: var(--green); }
+  .step .dot.warn { background: var(--amber-soft); border-color: var(--amber-edge); color: var(--amber); }
+  .step .dot.now { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .step .line { width: 2px; flex: 1; min-height: 12px; background: var(--line-2); margin: 3px 0; }
+  .step .line.done { background: var(--green-edge); }
+  .step .txt { padding: 2px 0 12px; min-width: 0; }
+  .step .st { font-size: 12.5px; font-weight: 650; color: var(--ink-3); }
+  .step .st.now { color: var(--blue); }
+  .step .st.done { color: var(--ink); }
+  .step .sd { font-size: 11px; color: var(--ink-4); margin-top: 1px; }
+
+  /* partidas críticas */
+  .ptable { width: 100%; border-collapse: collapse; }
+  .ptable th {
+    text-align: right; font-size: 9.5px; letter-spacing: .09em; text-transform: uppercase;
+    color: var(--ink-4); font-weight: 750; padding: 0 8px 7px; border-bottom: 1px solid var(--line); white-space: nowrap;
+  }
+  .ptable th:first-child, .ptable td.l { text-align: left; }
+  .ptable td { padding: 6px 8px; border-bottom: 1px solid var(--line-2); font-size: 12px; vertical-align: middle; }
+  .ptable td.n { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .ptable tr:hover td { background: var(--wash); }
+  .ptable tr.sel td { background: var(--blue-faint); }
+  .ptable .it { font-family: var(--mono); font-weight: 700; font-size: 11px; color: var(--ink); }
+  .ptable .sh { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 7px; align-items: center; }
+  .ptable .sh .bar { height: 4px; border-radius: 2px; background: var(--line-2); overflow: hidden; }
+  .ptable .sh .bar i { display: block; height: 100%; border-radius: 2px; background: var(--blue); }
+  .ptable .sh .bar.b i { opacity: .55; }
+  .ptable .sh .bar.c i { background: var(--muted); opacity: .45; }
+  .cls {
+    display: inline-block; min-width: 20px; text-align: center; font-size: 10px; font-weight: 750;
+    padding: 2px 6px; border-radius: 5px; background: var(--surface-2); color: var(--ink-3); border: 1px solid var(--line-2);
+  }
+  .cls.a { background: var(--blue-soft); border-color: #BFD3F0; color: var(--brand); }
+  .cls.b { background: var(--surface-2); color: var(--ink-2); }
+  .cls.c { background: transparent; color: var(--ink-4); }
+  [data-theme="dark"] .cls.a { background: var(--blue-soft); border-color: #2C4A78; color: #9CC0FF; }
+
+  /* alertas */
+  .alerts { display: flex; flex-direction: column; gap: 7px; }
+  .al {
+    border: 1px solid var(--line); border-left-width: 3px; border-radius: 9px; padding: 8px 10px;
+    background: var(--paper);
+  }
+  .al:hover { background: var(--wash); }
+  .al .ah { display: flex; align-items: center; gap: 7px; }
+  .al .asev {
+    font-size: 9.5px; font-weight: 750; letter-spacing: .07em; text-transform: uppercase;
+    padding: 1px 6px; border-radius: 999px;
+  }
+  .al .acnt { margin-left: auto; font-family: var(--mono); font-size: 10.5px; color: var(--ink-4); }
+  .al .at { font-size: 12px; font-weight: 650; margin-top: 4px; color: var(--ink); }
+  .al .ad { font-size: 11px; color: var(--ink-3); margin-top: 1px; }
+  .al.blk { border-left-color: var(--red); }
+  .al.blk .asev { background: var(--red-soft); color: var(--red); }
+  .al.cri { border-left-color: var(--amber); }
+  .al.cri .asev { background: var(--amber-soft); color: var(--amber); }
+  .al.may { border-left-color: var(--amber-edge); }
+  .al.may .asev { background: var(--surface-2); color: var(--ink-2); border: 1px solid var(--line-2); }
+  .al.inf { border-left-color: var(--blue); }
+  .al.inf .asev { background: var(--blue-soft); color: var(--brand); }
+  [data-theme="dark"] .al.inf .asev { color: #9CC0FF; }
+
+  /* charts */
+  .chartbox { position: relative; }
+  .chartbox svg { display: block; width: 100%; height: auto; }
+  .abchit { cursor: pointer; }
+  .abchit:hover rect.abcbar { filter: brightness(1.12); }
+  .detail {
+    margin-top: 10px; padding: 9px 11px; border-radius: 9px;
+    background: var(--surface-2); border: 1px solid var(--line-2); font-size: 11.5px; color: var(--ink-2);
+  }
+  .detail b { font-family: var(--mono); color: var(--ink); font-weight: 700; }
+  .detail .dim { color: var(--ink-4); }
+
+  .scen { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+  .scen input[type="range"] { flex: 1; accent-color: var(--blue); }
+  .scen .sv { font-family: var(--mono); font-size: 12.5px; font-weight: 700; min-width: 52px; text-align: right; }
+  .scenrow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; margin-top: 10px; }
+  .sc {
+    border: 1px solid var(--line-2); background: var(--surface-2); border-radius: 9px; padding: 8px 9px;
+  }
+  .sc .sck { font-size: 9.5px; font-weight: 750; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-4); }
+  .sc .scv { font-family: var(--mono); font-size: 14px; font-weight: 700; margin-top: 4px; letter-spacing: -.02em; }
+  .sc .scs { font-size: 10.5px; color: var(--ink-3); margin-top: 2px; }
+  .sc.neg .scv { color: var(--red); }
+  .sc.pos .scv { color: var(--amber); }
+  .sc.bad .scv { color: var(--red); }
+
+  /* actividad */
+  .feed { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+  @media (max-width: 1000px) { .feed { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .fi { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 9px; align-items: start; padding: 8px;
+        border: 1px solid var(--line-2); border-radius: 9px; background: var(--surface-2); }
+  .fi .fic { width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; font-size: 12px;
+             background: var(--blue-soft); color: var(--blue); }
+  .fi.save .fic { background: var(--green-soft); color: var(--green); }
+  .fi.adj .fic { background: var(--amber-soft); color: var(--amber); }
+  .fi .fa { font-size: 11.5px; font-weight: 650; color: var(--ink-2); line-height: 1.35; }
+  .fi .fm { font-size: 10.5px; color: var(--ink-4); margin-top: 3px; }
+
+  /* landing (estado vacío) */
+  .tpls { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 11px; }
+  @media (max-width: 1000px) { .tpls { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .tpl {
+    border: 1px solid var(--line); border-radius: 11px; padding: 13px; background: var(--paper);
+    display: flex; flex-direction: column; gap: 7px;
+  }
+  .tpl:hover { border-color: var(--blue); box-shadow: var(--shadow-sm); }
+  .tpl .ti { width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; font-size: 16px;
+             background: var(--blue-soft); }
+  .tpl.amb .ti { background: var(--amber-soft); }
+  .tpl.grn .ti { background: var(--green-soft); }
+  .tpl.amb { border-color: var(--line); }
+  .tpl h5 { margin: 0; font-size: 12.5px; font-weight: 700; }
+  .tpl .tn { font-family: var(--mono); font-size: 9.5px; font-weight: 700; color: var(--ink-4); letter-spacing: .04em; }
+  .tpl .td { font-size: 11px; color: var(--ink-3); line-height: 1.5; flex: 1; }
+  .recent { display: flex; flex-direction: column; gap: 6px; }
+  .rc-item {
+    display: grid; grid-template-columns: 3px minmax(0, 1fr) auto; gap: 10px; align-items: center;
+    padding: 8px 9px; border: 1px solid var(--line-2); border-radius: 9px; background: var(--surface-2);
+  }
+  .rc-item:hover { background: var(--wash); border-color: var(--line); }
+  .rc-item .ra { width: 3px; height: 26px; border-radius: 2px; background: var(--blue); }
+  .rc-item.miss .ra { background: var(--amber-edge); }
+  .rc-item .rn { font-size: 12px; font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rc-item .rs { font-size: 10.5px; color: var(--ink-4); margin-top: 2px; }
+  .rc-item .rt { display: flex; align-items: center; gap: 6px; }
+  .rc-item .rd { font-family: var(--mono); font-size: 10.5px; color: var(--ink-4); white-space: nowrap; }
+  .rc-item .pin { font-size: 11px; color: var(--blue); }
+  .quick3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; margin-top: 14px; }
+  .q3 { border: 1px solid var(--line-2); background: var(--surface-2); border-radius: 9px; padding: 9px 10px; }
+  .q3 .qk { font-size: 9.5px; font-weight: 750; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-4); }
+  .q3 .qv { font-family: var(--mono); font-size: 15px; font-weight: 700; margin-top: 4px; }
+  .q3 .qs { font-size: 10.5px; color: var(--ink-3); margin-top: 2px; }
+
+  .spec { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .spec .srow { display: grid; grid-template-columns: 158px minmax(0, 1fr); gap: 12px; padding: 9px 12px; border-bottom: 1px solid var(--line-2); font-size: 12.5px; }
+  .spec .srow:last-child { border-bottom: 0; }
+  .spec .srow:nth-child(odd) { background: var(--surface-2); }
+  .spec .k { color: var(--ink-4); font-weight: 650; font-size: 11.5px; }
+  .spec .v { color: var(--ink-2); line-height: 1.55; }
+
+  .tokens { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+  .token { display: inline-flex; align-items: center; gap: 7px; font-size: 11.5px; color: var(--ink-2); background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 5px 9px; }
+  .token i { width: 14px; height: 14px; border-radius: 4px; border: 1px solid rgba(0,0,0,.14); display: inline-block; }
+
+  .note-foot { color: #7F93AB; font-size: 11.5px; line-height: 1.6; max-width: 900px; margin: 4px 4px 0; }
+  .note-foot b { color: #A9BACD; }
+
+  @media print {
+    body { background: #fff; }
+    .doc > header { color: #111; }
+    .doc > header p, .kicker { color: #444; }
+    .card, .mock { box-shadow: none; break-inside: avoid; }
+    .toc, .toolbar { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="doc">
+
+  <header>
+    <div class="kicker">Propuesta de rediseño · Módulo Proyecto</div>
+    <h1>Resumen ejecutivo <span style="color:#8FA8C6">2.0</span></h1>
+    <p>
+      Hoy la pantalla de entrada mezcla <b>dos productos distintos</b> en el mismo archivo —el inicio con proyectos
+      recientes y el cockpit de decisión— y responde cuatro veces, con cuatro fórmulas distintas, a la pregunta
+      <i>“¿cuántas partidas están listas?”</i>. También dibuja sus dos gráficos con geometría fija en píxeles
+      (<code>760×300</code>, barras de <code>80</code>, ejes en <code>y=50…250</code>) y calcula la sensibilidad sobre
+      una base de venta que no es la que muestra su propio KPI. Esta propuesta la convierte en una
+      <b>sala de decisiones</b> que responde cinco preguntas en orden —cuánto vale, de dónde sale, dónde está el
+      dinero, qué puede torcerlo y qué hacer ahora— con <b>una sola definición de cada número</b>.
+    </p>
+    <nav class="toc">
+      <a href="#diagnostico">Diagnóstico</a>
+      <a href="#mockup">Mockup 2.0</a>
+      <a href="#decision">Anatomía</a>
+      <a href="#kpis">Contrato de KPIs</a>
+      <a href="#cascada">Cascada</a>
+      <a href="#riesgo">Riesgo</a>
+      <a href="#abc">Concentración ABC</a>
+      <a href="#cierre">Plan de cierre</a>
+      <a href="#inicio">Inicio</a>
+      <a href="#contrato">Contrato de datos</a>
+      <a href="#tokens">Tokens</a>
+      <a href="#plan">Plan</a>
+    </nav>
+  </header>
+
+  <!-- ==================================================== 1. DIAGNÓSTICO -->
+  <section class="card" id="diagnostico">
+    <div class="cap">
+      <h2><span class="n">01</span>Lo que no funciona hoy</h2>
+      <p class="lead">
+        Ocho hallazgos sobre <code>DashboardView.xaml</code> (1.524 líneas), su code-behind (372) y su ViewModel
+        (1.430 líneas repartidas en <code>DashboardViewModel</code> + <code>.Methods</code> + <code>.Uf</code>).
+        Ninguno es un bug de cálculo: son decisiones de jerarquía, de contrato de datos y de geometría que se
+        acumularon por capas.
+      </p>
+    </div>
+    <div class="body">
+      <div class="grid2">
+
+        <div class="problem">
+          <span class="tag">Jerarquía</span>
+          <h3>Dos pantallas distintas viven en el mismo archivo</h3>
+          <p>
+            Un solo <code>DashboardView.xaml</code> contiene el <i>inicio</i> (tarjeta “Abra un presupuesto .qce” +
+            lista de recientes) y el <i>cockpit ejecutivo</i>, separados por un <code>ShowEmptyState</code> que alterna
+            la visibilidad de dos <code>ScrollViewer</code> completos. Son dos públicos, dos densidades y dos ciclos de
+            vida en un archivo de 1.524 líneas.
+          </p>
+          <div class="fix"><b>2.0</b> — Se separan en dos controles: <code>DashboardLandingView</code> (Inicio) y
+            <code>DashboardCockpitView</code> (Resumen ejecutivo), sobre un contenedor delgado que solo decide cuál
+            mostrar. Ninguno de los dos pasa de ~450 líneas.</div>
+        </div>
+
+        <div class="problem">
+          <span class="tag">Contrato de datos</span>
+          <h3>“Partidas listas” se calcula cuatro veces con tres criterios</h3>
+          <p>
+            El número del KPI es <code>total − (EmptyPartidas + MaterialsWithoutPrice)</code>, su chip cuenta esos
+            mismos pendientes, la barra del KPI sale de <code>PartidasReadyPercent = (total − EmptyPartidas)/total</code>
+            y la etiqueta bajo el anillo de preparación dice <code>total − EmptyPartidas</code>. Con 9 vacíos y 7
+            materiales sin precio sobre 124 partidas, la misma pantalla afirma <b>108/124</b>, <b>92,7%</b>,
+            <b>115 de 124</b> y <b>87,1%</b>.
+          </p>
+          <p>
+            El anillo, además, no mide cobertura: es un promedio plano de 4 checks, así que solo puede valer
+            0, 25, 50, 75 o 100, y <code>IsOfferReady</code> exige <code>≥ 99,5</code>.
+          </p>
+          <div class="fix"><b>2.0</b> — Una sola definición:
+            <b>Listas = partidas del itemizado sin vacío crítico y con precio vigente</b>. Ese único valor alimenta el
+            KPI, su barra, el anillo y el veredicto. Los 4 checks pasan a ser cobertura por etapa (115/124, 117/124),
+            no un promedio.</div>
+        </div>
+
+        <div class="problem">
+          <span class="tag">Cálculo</span>
+          <h3>La sensibilidad se grafica sobre otra venta que la del KPI</h3>
+          <p>
+            <code>CalculateMaterialSensitivityTotal</code> no aplica la <i>diferencia por factores de familia</i> ni el
+            <i>descuento comercial</i>: su base es el <b>costo total proyecto</b>. El KPI “TOTAL VENTA” usa
+            <code>cost.TotalVentaUf</code>, que sí los incluye. En el escenario de esta propuesta son
+            <b>$ 560.993.613</b> contra <b>$ 637.982.561</b> — un 12% de diferencia entre la línea rotulada
+            “Total venta base” del gráfico y el KPI homónimo.
+          </p>
+          <div class="fix"><b>2.0</b> — La curva se proyecta sobre <b>la misma venta neta del KPI</b>. El escenario
+            “materiales +10%” se expresa como impacto sobre la venta neta publicada (+4,6%), no sobre una base interna.</div>
+        </div>
+
+        <div class="problem">
+          <span class="tag">Geometría</span>
+          <h3>Los gráficos están cableados a 760×300 píxeles</h3>
+          <p>
+            <code>ParetoBarLeftConverter</code> devuelve <code>57 + (rank−1)·68</code>,
+            <code>ParetoPointYConverter</code> usa <code>250 − acum·2</code>, el área de sensibilidad cierra en
+            <code>y=235</code> y las grillas se dibujan con líneas literales en <code>y = 50, 90, 130, 170, 210, 250</code>.
+            Todo dentro de un <code>Viewbox</code> con <code>Canvas Width="760" Height="300"</code>.
+          </p>
+          <p>
+            Consecuencia: el eje del Pareto se rotula <code>0..100</code> en 5 saltos aunque el máximo real sea 12%, y
+            las etiquetas de ítem se rotan −35° con ancho fijo <code>80</code> en <code>Canvas.Top="256"</code>: con
+            más de 10 partidas se pisan entre sí.
+          </p>
+          <div class="fix"><b>2.0</b> — Geometría derivada del dato: el eje se ajusta al máximo real (con redondeo a
+            múltiplos legibles), y los gráficos se renderizan con <code>viewBox</code> proporcional en vez de
+            <code>Canvas</code> de tamaño fijo. Sin constantes mágicas en el code-behind.</div>
+        </div>
+
+        <div class="problem">
+          <span class="tag">Anotación</span>
+          <h3>El llamado de atención del +10% está clavado en el lienzo</h3>
+          <p>
+            El globo rojo de impacto de materiales se dibuja en <code>Canvas.Left="524" Canvas.Top="24"</code>, unido
+            al punto con una línea que termina en <code>X2="530" Y2="54"</code>. Si cambia la escala, el escenario o el
+            número de puntos, la etiqueta queda flotando lejos del dato. La leyenda “Total venta base” se posiciona
+            con <code>Margin="0,-17,0,0"</code>.
+          </p>
+          <div class="fix"><b>2.0</b> — El marcador y su etiqueta se anclan al punto calculado (<code>point.x</code>,
+            <code>point.y</code>) y la etiqueta se coloca con lógica de <i>avoid-collision</i> (arriba/abajo del punto
+            según el espacio). Sin márgenes negativos.</div>
+        </div>
+
+        <div class="problem">
+          <span class="tag">Densidad</span>
+          <h3>La franja de KPIs es un <code>UniformGrid Columns="4"</code></h3>
+          <p>
+            Cuatro tarjetas fijas, siempre cuatro columnas iguales. En una ventana de 1.280 px cada una recibe ~296 px
+            para un valor de 25 px, un caption, un chip y un sparkline de 76 px, todo con
+            <code>TextWrapping="NoWrap"</code> + <code>TextTrimming</code>: las cifras largas se cortan antes que
+            reacomodarse. Y faltan dos lecturas que un director sí pide: <b>margen real</b> y <b>concentración</b>.
+          </p>
+          <div class="fix"><b>2.0</b> — Seis KPIs de decisión en grilla fluida (6 → 3 → 2 columnas) con
+            <code>MinWidth</code> por tarjeta: Venta neta, Margen real, $/m², Partidas listas, Riesgo y
+            Concentración A. Cada tarjeta lleva su barra o sparkline y un chip con la lectura accionable.</div>
+        </div>
+
+        <div class="problem">
+          <span class="tag">Recorrido</span>
+          <h3>La columna lateral acumula cuatro tarjetas en 360 px</h3>
+          <p>
+            Preparación + flujo de cierre + alertas + actividad apiladas suman más de 1.100 px de scroll propio dentro
+            del scroll de la página. El anillo de preparación mide 120 px, el flujo usa conectores de
+            <code>Margin="17,36,0,-4"</code> para dibujar su línea, y las alertas usan
+            <code>BorderThickness="3,1,1,1"</code> con fondo por severidad: un lenguaje visual que no aparece en
+            ninguna otra pantalla del producto.
+          </p>
+          <div class="fix"><b>2.0</b> — Rejilla de 12 columnas con una sola área lateral que agrupa
+            <i>Preparación</i>, <i>Flujo</i> y <i>Alertas</i> como secciones de un mismo panel, y la actividad baja a
+            una franja horizontal de 5 eventos. Las alertas se alinean al lenguaje del producto: chip de severidad +
+            punto de color, sin fondo saturado.</div>
+        </div>
+
+        <div class="problem">
+          <span class="tag">Superficie muerta</span>
+          <h3>La VM calcula datos que la vista nunca enlaza</h3>
+          <p>
+            <code>CostMaterials</code>, <code>CostLabor</code>, <code>CostDirect</code>, <code>CostTotal</code>,
+            <code>CostUfM2</code>, <code>CostGo</code>, <code>CostMargin</code>, <code>MargenRealPctLabel</code>,
+            <code>SubtitleText</code>, <code>NextStepTitle/Detail</code>, <code>TopAlertTitle/Detail</code>,
+            <code>PriceValidity*</code>, <code>VersionComparisonLabel</code>,
+            <code>GastosGeneralesSimulatedPct</code>, <code>UtilidadSimulatedPct</code>,
+            <code>ToggleFilterCommand</code>, <code>IsFiltering*</code>, <code>IsAnyFilterActive</code> y
+            <code>QuickTemplates</code> se declaran y se recalculan en cada <code>Load()</code> sin un solo binding
+            en la vista. Todo <code>QuickTemplates</code> (4 plantillas con comando) está construido y no se muestra.
+          </p>
+          <div class="fix"><b>2.0</b> — Se reutiliza esa superficie en vez de descartarla: las 4 plantillas alimentan
+            el inicio 2.0, <code>MargenRealPctLabel</code> y el <code>CostGo</code> alimentan KPIs y cascada, y el
+            resto se retira del contrato. El baseline de 1.430 líneas del gate baja, no sube.</div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================================================== 2. MOCKUP -->
+  <section class="card" id="mockup">
+    <div class="cap">
+      <h2><span class="n">02</span>Mockup interactivo 2.0</h2>
+      <p class="lead">
+        Réplica funcional de la pantalla. Los importes son del mismo edificio de <b>3.200 m²</b> con
+        <b>UF = 39.250 CLP</b> de la propuesta de Desglose de costos 2.0 y cierran entre sí: la cascada termina
+        exactamente en la venta neta del KPI. Cambia <b>tema</b>, <b>moneda</b>, <b>escenario de materiales</b>,
+        el <b>filtro ABC</b> y alterna entre <b>proyecto abierto</b> e <b>inicio</b>.
+      </p>
+    </div>
+    <div class="body">
+      <div class="toolbar">
+        <div class="seg" id="segView">
+          <button data-view="project" class="on">Proyecto abierto</button>
+          <button data-view="landing">Inicio (sin proyecto)</button>
+        </div>
+        <div class="sp"></div>
+        <label>Tema
+          <div class="seg" id="segTheme">
+            <button data-theme="light" class="on">Claro</button>
+            <button data-theme="dark">Oscuro</button>
+          </div>
+        </label>
+        <label>Moneda
+          <div class="seg" id="segCur">
+            <button data-cur="CLP" class="on">CLP</button>
+            <button data-cur="UF">UF</button>
+            <button data-cur="USD">USD</button>
+          </div>
+        </label>
+      </div>
+
+      <div class="mock">
+        <div class="shell">
+          <div class="mark">Q</div>
+          <div class="brand">QUBI COST<span>ELECTRICAL</span></div>
+          <div class="nav">
+            <button class="on">Resumen</button>
+            <button>Itemizado</button>
+            <button>Cubicación</button>
+            <button>Costos</button>
+            <button>Cierre</button>
+          </div>
+          <div class="right">
+            <span class="pill" id="shellUf"><i></i> UF <b>$ 39.250</b></span>
+            <span class="pill">v1.1.1</span>
+          </div>
+        </div>
+
+        <!-- ============================== COCKPIT ============================== -->
+        <div class="page" id="viewProject">
+
+          <div class="pagehead">
+            <div>
+              <div class="meta">
+                <span class="chip blue">Rev. C</span>
+                <span class="chip">Suma Alzada</span>
+                <span class="chip" id="chipCur">Presentación CLP</span>
+                <span class="chip"><span class="dot"></span> Guardado hace 6 min</span>
+              </div>
+              <h3 style="margin-top:9px">Edificio Corporativo Andes</h3>
+              <div class="sub">Inmobiliaria Los Robles SpA · 3.200 m² construidos · 11 meses de obra · UF del día $ 39.250</div>
+            </div>
+            <div class="acts">
+              <button class="btn" id="btnExport">Exportar</button>
+              <button class="btn primary" id="btnPrimary">Cerrar oferta</button>
+            </div>
+          </div>
+
+          <!-- veredicto -->
+          <div class="verdict warn" id="verdict">
+            <span class="vdot"></span>
+            <div class="vt">
+              <b id="vTitle">Apta para ofertar con reservas</b>
+              <span id="vReason">108 de 124 partidas listas · 1 alerta bloqueante · sensibilidad +10% materiales = +4,6% sobre la venta neta</span>
+            </div>
+            <div class="vcta"><button class="btn sm" id="vCta">Resolver pendientes →</button></div>
+          </div>
+
+          <!-- 6 KPIs -->
+          <div class="kpis" id="kpiStrip"></div>
+
+          <!-- fila A: cascada + preparación -->
+          <div class="grid12">
+            <section class="panel g8">
+              <div class="phead">
+                <div>
+                  <h4>Cascada de precio</h4>
+                  <div class="psub">Del costo de ejecución a la venta neta, paso por paso</div>
+                </div>
+                <div class="pright">
+                  <button class="btn ghost sm" id="btnCostos">Ver desglose de costos →</button>
+                </div>
+              </div>
+              <div class="pbody">
+                <div class="wf" id="wf"></div>
+                <div class="legend">
+                  <span><i class="c-exec"></i> Costo de ejecución</span>
+                  <span><i class="c-gg"></i> Recargos y margen</span>
+                  <span><i class="c-fact"></i> Factores y venta</span>
+                  <span><i class="c-neg"></i> Descuento</span>
+                  <span><i class="c-iva"></i> IVA</span>
+                </div>
+              </div>
+              <div class="pfoot">
+                <span class="blue">Margen real <b id="wfMargen">12,07 %</b></span>
+                <span>Costo total / venta neta <b id="wfRatio">87,93 %</b></span>
+                <span>Venta neta / m² <b id="wfM2">$ 199.370</b></span>
+                <span class="sp" style="margin-left:auto">IVA <b id="wfIva">$ 121.216.687</b> informativo</span>
+              </div>
+            </section>
+
+            <section class="panel g4">
+              <div class="phead">
+                <div>
+                  <h4>Preparación de la oferta</h4>
+                  <div class="psub">Un solo número, cuatro coberturas</div>
+                </div>
+                <div class="pright"><span class="chip amber" id="prepBadge">En curso</span></div>
+              </div>
+              <div class="pbody">
+                <div class="prep">
+                  <div class="ring" id="ring">
+                    <svg viewBox="0 0 104 104" aria-hidden="true">
+                      <circle cx="52" cy="52" r="45" fill="none" stroke="var(--line-2)" stroke-width="9"></circle>
+                      <circle id="ringArc" cx="52" cy="52" r="45" fill="none" stroke="var(--blue)" stroke-width="9"
+                              stroke-linecap="round" transform="rotate(-90 52 52)"
+                              stroke-dasharray="0 282.74"></circle>
+                    </svg>
+                    <div class="rc"><b id="ringPct">87%</b><span>listas</span></div>
+                  </div>
+                  <div class="checklist" id="checklist"></div>
+                </div>
+              </div>
+              <div class="pfoot">
+                <span>Pendientes <b id="prepPend">16</b></span>
+                <span>Bloqueantes <b id="prepBlk">1</b></span>
+              </div>
+            </section>
+          </div>
+
+          <!-- fila B: ABC + riesgo -->
+          <div class="grid12" style="margin-top:11px">
+            <section class="panel g7">
+              <div class="phead">
+                <div>
+                  <h4>Concentración de costo — ABC</h4>
+                  <div class="psub" id="abcSub">16 barras que cierran el 100 % del costo directo</div>
+                </div>
+                <div class="pright">
+                  <div class="seg" id="segAbc">
+                    <button data-abc="all" class="on">Todas</button>
+                    <button data-abc="A">A</button>
+                    <button data-abc="B">B</button>
+                    <button data-abc="C">C</button>
+                  </div>
+                  <button class="btn ghost sm" id="btnItemizado">Ver itemizado →</button>
+                </div>
+              </div>
+              <div class="pbody">
+                <div class="chartbox">
+                  <svg id="abcSvg" viewBox="0 0 900 300" role="img" aria-label="Concentración ABC de partidas"></svg>
+                </div>
+                <div class="detail" id="abcDetail"></div>
+                <div class="legend" id="abcLegend"></div>
+              </div>
+              <div class="pfoot">
+                <span class="blue">Clase A <b id="abcA">11</b> partidas · <b id="abcAp">82,2 %</b></span>
+                <span>Clase B <b id="abcB">4</b> · <b id="abcBp">12,3 %</b></span>
+                <span>Clase C <b id="abcC">109</b> · <b id="abcCp">5,5 %</b></span>
+                <span style="margin-left:auto">Barras <b id="abcN">16</b> · 124 partidas en el proyecto</span>
+              </div>
+            </section>
+
+            <section class="panel g5">
+              <div class="phead">
+                <div>
+                  <h4>Riesgo y sensibilidad</h4>
+                  <div class="psub">Qué pasa con la venta si los materiales suben</div>
+                </div>
+                <div class="pright"><span class="chip amber" id="riskChip">Riesgo MEDIO</span></div>
+              </div>
+              <div class="pbody">
+                <div class="scen">
+                  <span style="font-size:11.5px;color:var(--ink-3)">Materiales</span>
+                  <input type="range" id="scenRange" min="-10" max="20" step="5" value="10" />
+                  <span class="sv" id="scenVal">+10 %</span>
+                </div>
+                <div class="chartbox">
+                  <svg id="sensSvg" viewBox="0 0 520 300" role="img" aria-label="Curva de sensibilidad de la venta"></svg>
+                </div>
+                <div class="scenrow" id="scenRow"></div>
+              </div>
+              <div class="pfoot">
+                <span>Escenario <b id="riskScen">+10 % materiales</b></span>
+                <span class="blue">Impacto venta <b id="riskImpact">+4,6 %</b></span>
+              </div>
+            </section>
+          </div>
+
+          <!-- fila C: partidas + flujo/alertas -->
+          <div class="grid12" style="margin-top:11px">
+            <section class="panel g8">
+              <div class="phead">
+                <div>
+                  <h4>Partidas críticas</h4>
+                  <div class="psub">Ordenadas por participación en el costo directo</div>
+                </div>
+                <div class="pright">
+                  <span class="chip" id="critCount">18 mostradas</span>
+                  <button class="btn ghost sm" id="btnTodas">Ver todas →</button>
+                </div>
+              </div>
+              <div class="pbody" style="padding:10px 8px 6px">
+                <table class="ptable">
+                  <thead>
+                    <tr>
+                      <th>Ítem</th><th>Partida</th><th>Monto</th><th style="width:150px">Participación</th><th>Clase</th><th>Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody id="critBody"></tbody>
+                </table>
+              </div>
+            </section>
+
+            <div class="g4" style="display:grid;gap:11px">
+              <section class="panel">
+                <div class="phead">
+                  <div>
+                    <h4>Flujo de cierre</h4>
+                    <div class="psub">6 etapas hasta emitir la oferta</div>
+                  </div>
+                </div>
+                <div class="pbody"><div class="steps" id="steps"></div></div>
+              </section>
+
+              <section class="panel">
+                <div class="phead">
+                  <div>
+                    <h4>Alertas</h4>
+                    <div class="psub">Puntos que frenan la emisión</div>
+                  </div>
+                  <div class="pright">
+                    <span class="chip red" id="alBlk">1 bloqueante</span>
+                  </div>
+                </div>
+                <div class="pbody"><div class="alerts" id="alerts"></div></div>
+                <div class="pfoot"><button class="btn ghost sm">Ver revisión completa →</button></div>
+              </section>
+            </div>
+          </div>
+
+          <!-- fila D: actividad -->
+          <div class="grid12" style="margin-top:11px">
+            <section class="panel g12">
+              <div class="phead">
+                <div>
+                  <h4>Actividad reciente</h4>
+                  <div class="psub">Últimos cambios registrados en el archivo</div>
+                </div>
+                <div class="pright"><button class="btn ghost sm">Abrir auditoría →</button></div>
+              </div>
+              <div class="pbody"><div class="feed" id="feed"></div></div>
+            </section>
+          </div>
+
+        </div>
+
+        <!-- ============================== INICIO ============================== -->
+        <div class="page" id="viewLanding" hidden>
+          <div class="grid12">
+            <section class="panel g7">
+              <div class="pbody" style="padding:22px 22px 20px">
+                <div class="kicker" style="color:var(--ink-4)">Qubi Cost Electrical</div>
+                <h3 style="margin:9px 0 7px;font-size:21px;letter-spacing:-.02em">Abra un presupuesto <span class="num">.qce</span></h3>
+                <p style="margin:0;color:var(--ink-3);font-size:12.5px;line-height:1.65;max-width:520px">
+                  Venta neta, margen real, concentración de costo, riesgo de materiales y preparación de la oferta en
+                  un solo tablero. Colaboración por carpeta compartida: un editor exclusivo por archivo.
+                </p>
+                <div style="display:flex;gap:7px;margin-top:16px;flex-wrap:wrap">
+                  <button class="btn primary" style="height:32px">Abrir proyecto</button>
+                  <button class="btn" style="height:32px">Nuevo proyecto</button>
+                  <button class="btn" style="height:32px">Restaurar copia</button>
+                </div>
+                <div class="quick3">
+                  <div class="q3"><div class="qk">Recientes</div><div class="qv">12</div><div class="qs">en este equipo</div></div>
+                  <div class="q3"><div class="qk">Último abierto</div><div class="qv">hace 2 d</div><div class="qs">Andes · Rev. C</div></div>
+                  <div class="q3"><div class="qk">Plantillas</div><div class="qv">4</div><div class="qs">normativa SEC</div></div>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel g5">
+              <div class="phead">
+                <div>
+                  <h4>Recientes</h4>
+                  <div class="psub">Proyectos .qce abiertos en este equipo</div>
+                </div>
+                <div class="pright"><span class="chip">v1.1.1</span></div>
+              </div>
+              <div class="pbody">
+                <div class="recent" id="recent"></div>
+              </div>
+            </section>
+
+            <section class="panel g12">
+              <div class="phead">
+                <div>
+                  <h4>Empezar desde una plantilla</h4>
+                  <div class="psub">Estructura de capítulos, APU base y checklist normativo precargados</div>
+                </div>
+                <div class="pright"><button class="btn ghost sm">Gestionar plantillas →</button></div>
+              </div>
+              <div class="pbody"><div class="tpls" id="tpls"></div></div>
+            </section>
+          </div>
+        </div>
+      </div>
+
+      <p class="note-foot">
+        Importes ilustrativos del mismo edificio de 3.200 m² con UF = 39.250 CLP, internamente consistentes: la cascada
+        cierra en la venta neta, la concentración ABC suma el 100% del costo directo y la sensibilidad se recalcula con
+        el escenario elegido. Con <b>CLP</b> no se emite ninguna cifra ni etiqueta en UF; con <b>UF</b> o <b>USD</b> la
+        moneda principal lleva el equivalente en pesos en línea secundaria.
+      </p>
+    </div>
+  </section>
+
+  <!-- ==================================================== 3. ANATOMÍA -->
+  <section class="card" id="decision">
+    <div class="cap">
+      <h2><span class="n">03</span>Anatomía de la decisión</h2>
+      <p class="lead">
+        El Resumen no es un tablero de métricas: es una secuencia de cinco preguntas. Cada zona del 2.0 responde
+        exactamente una, en el orden en que un director las hace.
+      </p>
+    </div>
+    <div class="body">
+      <div class="spec">
+        <div class="srow"><span class="k">1 · ¿Cuánto vale?</span><span class="v">Identidad + <b>6 KPIs de decisión</b>: venta neta, margen real, venta neta por m², partidas listas, riesgo de materiales y concentración clase A. Todo en la moneda de presentación del proyecto.</span></div>
+        <div class="srow"><span class="k">2 · ¿De dónde sale?</span><span class="v"><b>Cascada de precio</b> de 11 pasos: costo de ejecución → riesgo → GG → utilidad → VA equipos → costo total → diferencia por factores → descuento → venta neta → IVA → total. Cada paso con su monto y su peso sobre la venta.</span></div>
+        <div class="srow"><span class="k">3 · ¿Dónde está el dinero?</span><span class="v"><b>Concentración ABC</b> (barras + curva acumulada + marca del 80%) y <b>partidas críticas</b> con participación, clase y acciones directas a Itemizado y APU.</span></div>
+        <div class="srow"><span class="k">4 · ¿Qué puede torcerlo?</span><span class="v"><b>Riesgo y sensibilidad</b> con escenario manipulable: al mover el costo de materiales se recalcula la venta neta proyectada, el margen proyectado y el impacto en puntos porcentuales sobre la venta publicada.</span></div>
+        <div class="srow"><span class="k">5 · ¿Qué hago ahora?</span><span class="v"><b>Veredicto</b> en una línea con su razón, <b>preparación</b> con un solo número y cuatro coberturas, <b>flujo de cierre</b> de 6 etapas vinculadas a sus rutas reales y <b>alertas</b> ordenadas por severidad.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================================================== 4. KPIs -->
+  <section class="card" id="kpis">
+    <div class="cap">
+      <h2><span class="n">04</span>Contrato de los seis KPIs</h2>
+      <p class="lead">
+        Se conservan los cuatro KPIs del motor —total venta, partidas listas, moneda por m² y riesgo de oferta— y se
+        agregan las dos lecturas que faltaban: margen real y concentración. Ningún KPI se calcula en la vista.
+      </p>
+    </div>
+    <div class="body">
+      <div class="spec">
+        <div class="srow"><span class="k">Venta neta</span><span class="v"><code>cost.TotalVenta</code> menos IVA si el proyecto no lo incluye en el total. Chip: variación del costo directo contra la versión anterior (verde si baja, rojo si sube). Es la única cifra rotulada “venta”.</span></div>
+        <div class="srow"><span class="k">Margen real</span><span class="v"><code>(venta neta − costo total proyecto) / venta neta</code>. Chip de umbral configurable (piso del estudio, 10% por defecto) con lectura <i>viable</i> / <i>bajo piso</i>.</span></div>
+        <div class="srow"><span class="k">Venta neta / m²</span><span class="v"><code>venta neta / ProjectInfo.MetrosCuadrados</code>. Si faltan m², el KPI entra en estado de <i>configuración</i> con el mismo hint que hoy (<code>ConfigurationHint</code>) y no muestra un cero.</span></div>
+        <div class="srow"><span class="k">Partidas listas</span><span class="v"><b>Definición única:</b> partidas no‑título sin vacío crítico y con precio vigente. Alimenta el número, la barra del KPI, el anillo de preparación y el veredicto. Chip: pendientes desglosados (<i>sin cubicar</i> + <i>sin precio</i>).</span></div>
+        <div class="srow"><span class="k">Riesgo de materiales</span><span class="v"><code>CalculateMaterialImpactPct</code> proyectado sobre la <b>venta neta real</b>. Umbrales del motor: ≥5% ALTO, ≥2,5% MEDIO, resto BAJO. Chip: el impacto del escenario elegido.</span></div>
+        <div class="srow"><span class="k">Concentración A</span><span class="v">Participación de la clase A (partidas hasta cubrir el 80% del costo directo). Chip: <i>n partidas de N</i>. Es el indicador que dice dónde mirar primero en una negociación.</span></div>
+      </div>
+      <p class="h gap">Política de moneda</p>
+      <div class="tokens">
+        <span class="token"><i style="background:var(--blue)"></i> Con <b>CLP</b>: solo pesos. Ninguna etiqueta, celda, tooltip ni chip en UF.</span>
+        <span class="token"><i style="background:var(--green)"></i> Con <b>UF</b>/<b>USD</b>: moneda principal + equivalente en pesos en línea secundaria.</span>
+        <span class="token"><i style="background:var(--amber-edge)"></i> El conmutador del mockup es solo demostrativo; en la app la moneda la fija <code>MonedaPresupuesto</code>.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================================================== 5. CASCADA -->
+  <section class="card" id="cascada">
+    <div class="cap">
+      <h2><span class="n">05</span>Cascada de precio</h2>
+      <p class="lead">
+        Reemplaza el bloque “Estructura de la oferta”, que solo mostraba cuatro barras de participación.
+        El objetivo es que un director pueda auditar el precio sin sumar filas: cada recargo tiene su monto, su
+        porcentaje sobre la venta y su color.
+      </p>
+    </div>
+    <div class="body">
+      <div class="spec">
+        <div class="srow"><span class="k">Ejecución</span><span class="v"><b>$ 497.027.500</b> · costo directo completo (materiales, M.O., equipos, GO, subcontratos, herramientas, mermas, transporte y órdenes de cambio). Barra de ancho completo.</span></div>
+        <div class="srow"><span class="k">Recargos</span><span class="v">Riesgo 1,5% (<b>$ 7.455.413</b>) + GG 5% (<b>$ 21.454.500</b>) + utilidad 8% (<b>$ 34.327.200</b>) + VA equipos 3% (<b>$ 729.000</b>). Barras de puente <i>desde</i> el acumulado anterior.</span></div>
+        <div class="srow"><span class="k">Costo total proyecto</span><span class="v"><b>$ 560.993.613</b> · línea de total, la referencia que usa el motor para el margen y la que hoy no aparece en pantalla.</span></div>
+        <div class="srow"><span class="k">Factores y descuento</span><span class="v">Diferencia por factores de familia <b>+$ 90.009.000</b> (verde) y descuento comercial 2% <b>−$ 13.020.052</b> (rojo rayado, para que una rebaja nunca se lea como ganancia).</span></div>
+        <div class="srow"><span class="k">Venta neta</span><span class="v"><b>$ 637.982.561</b> · segunda línea de total. Es exactamente el valor del KPI “venta neta”: invariante verificada por prueba.</span></div>
+        <div class="srow"><span class="k">IVA</span><span class="v"><b>$ 121.216.687</b> en gris rayado y en una línea aparte: nunca se suma al neto sin avisar. Se muestra solo si el proyecto incluye IVA o si el usuario lo pide.</span></div>
+      </div>
+      <p class="h gap">Invariantes</p>
+      <div class="spec">
+        <div class="srow"><span class="k">Cierre</span><span class="v">La última línea de la cascada y el chip “Venta neta” del KPI comparten la misma fuente. Cualquier diferencia es un fallo de prueba, no de pantalla.</span></div>
+        <div class="srow"><span class="k">Proporción</span><span class="v">El ancho de cada barra se mide contra el <b>total con IVA</b>, para que el IVA no desborde el gráfico cuando está incluido en el total.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================================================== 6. RIESGO -->
+  <section class="card" id="riesgo">
+    <div class="cap">
+      <h2><span class="n">06</span>Riesgo y sensibilidad</h2>
+      <p class="lead">
+        El gráfico deja de ser decorativo: el escenario se manipula y todo lo que depende de él se recalcula.
+        Se elimina la anotación clavada en el lienzo y se corrige la base de cálculo.
+      </p>
+    </div>
+    <div class="body">
+      <div class="grid2">
+        <div>
+          <p class="h">Escenario</p>
+          <div class="spec">
+            <div class="srow"><span class="k">Control</span><span class="v">Deslizador de <b>−10% a +20%</b> en pasos de 5, más tres tarjetas de escenario rápido (base, +10%, +20%). El valor elegido queda en el estado de la página mientras el proyecto esté abierto.</span></div>
+            <div class="srow"><span class="k">Recálculo</span><span class="v">Al mover el escenario se recalculan: la curva, el marcador con su etiqueta anclada al punto, el chip del KPI de riesgo, el impacto en puntos sobre la venta y el texto del veredicto.</span></div>
+            <div class="srow"><span class="k">Fórmula</span><span class="v"><code>riesgo = round(directo · pct)</code>, <code>gg = round((mat + MO + GO) · pct)</code>, <code>ut</code> sobre la misma base y <code>va</code> sobre equipos. Luego factores de familia y descuento, igual que la cascada.</span></div>
+          </div>
+        </div>
+        <div>
+          <p class="h">Lectura del riesgo</p>
+          <div class="spec">
+            <div class="srow"><span class="k">Umbrales</span><span class="v">Los del motor, sin retocar: <b>≥5% ALTO</b> (rojo), <b>≥2,5% MEDIO</b> (ámbar), resto <b>BAJO</b> (verde). El escenario de esta propuesta da +4,6% → <b>MEDIO</b>.</span></div>
+            <div class="srow"><span class="k">Por qué sube tanto</span><span class="v">Los materiales son el 46,8% del costo proyecto y los recargos (riesgo, GG, utilidad) apalancan el alza. Por eso el KPI incluye el porcentaje directo: el riesgo no se explica con una palabra.</span></div>
+            <div class="srow"><span class="k">Acción</span><span class="v">Si el escenario cruza el umbral ALTO, el chip pasa a rojo y el veredicto agrega la cláusula de revisión de precios como acción sugerida.</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================================================== 7. ABC -->
+  <section class="card" id="abc">
+    <div class="cap">
+      <h2><span class="n">07</span>Concentración de costo — ABC</h2>
+      <p class="lead">
+        El Pareto actual clasifica A/B/C con umbrales sobre la participación individual y dibuja ejes fijos.
+        El 2.0 clasifica por <b>acumulado real</b> y deriva la geometría del dato.
+      </p>
+    </div>
+    <div class="body">
+      <div class="grid2">
+        <div>
+          <p class="h">Clasificación</p>
+          <div class="spec">
+            <div class="srow"><span class="k">A</span><span class="v">Conjunto mínimo de partidas que cubre el <b>80%</b> del costo directo: el ítem que cruza el umbral entra en A. En el ejemplo: <b>11 de 124</b> partidas = <b>82,20%</b>.</span></div>
+            <div class="srow"><span class="k">B</span><span class="v">Siguiente tramo hasta el <b>95%</b>. En el ejemplo: <b>4 partidas</b> = <b>12,29%</b>.</span></div>
+            <div class="srow"><span class="k">C</span><span class="v">El resto: <b>109 partidas</b> = <b>5,51%</b> del costo, dibujadas como una sola barra rotulada <b>Cola</b> (las 3 partidas finales del tramo listado más las 106 partidas menores con sus cargos no itemizados). Es donde conviene automatizar y no deliberar.</span></div>
+            <div class="srow"><span class="k">Base de cálculo</span><span class="v">El acumulado se mide contra el <b>costo directo completo</b>, no contra el top mostrado. Así el 80% significa lo mismo con 16 o con 124 filas en pantalla, y la serie cierra en el 100% del costo.</span></div>
+            <div class="srow"><span class="k">Clase</span><span class="v">Se calcula en el servicio, no en la vista, y se expone ya resuelta (<code>ParetoClass</code>) con el monto por clase (<code>CostA/B/C</code>) que hoy existe en el modelo pero no se muestra.</span></div>
+          </div>
+        </div>
+        <div>
+          <p class="h">Geometría</p>
+          <div class="spec">
+            <div class="srow"><span class="k">Eje izquierdo</span><span class="v">Escala al máximo real de participación redondeado al alza a múltiplos de 4 puntos. Con 16,0% de participación máxima el eje llega a 16%, no a 100%.</span></div>
+            <div class="srow"><span class="k">Eje derecho</span><span class="v">Acumulado 0–100% con la curva y la <b>marca del 80%</b> como línea punteada rotulada. El rótulo flotante actual se reemplaza por la marca fija.</span></div>
+            <div class="srow"><span class="k">Etiquetas</span><span class="v">Rotadas −38° con el código de ítem y ancladas al centro de su barra. Se dibujan las 15 partidas mayores más una barra punteada rotulada <b>Cola</b> que agrupa el resto: 16 barras cierran el 100% del costo directo.</span></div>
+            <div class="srow"><span class="k">Filtro de clase</span><span class="v">A/B/C <b>atenúa</b> las barras de las otras clases en vez de eliminarlas: la geometría y la lectura del acumulado se conservan, y ningún filtro puede dejar el gráfico vacío. La tabla de partidas críticas sí lista la clase completa.</span></div>
+            <div class="srow"><span class="k">Interacción</span><span class="v">Al pasar el cursor la barra se resalta; al hacer clic, la franja de detalle muestra ítem, partida, monto, participación y acumulado, y la fila correspondiente de la tabla queda seleccionada.</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================================================== 8. PLAN DE CIERRE -->
+  <section class="card" id="cierre">
+    <div class="cap">
+      <h2><span class="n">08</span>Plan de cierre</h2>
+      <p class="lead">
+        Prepara, ejecuta y explica el cierre en un solo panel lateral. Reemplaza las cuatro tarjetas apiladas que hoy
+        suman más de 1.100 px de scroll propio.
+      </p>
+    </div>
+    <div class="body">
+      <div class="grid2">
+        <div>
+          <p class="h">Preparación</p>
+          <div class="spec">
+            <div class="srow"><span class="k">Anillo</span><span class="v">Un único número: <b>partidas listas</b> (108/124 = 87%). Se elimina el promedio plano de 4 checks que solo podía valer 0/25/50/75/100.</span></div>
+            <div class="srow"><span class="k">Coberturas</span><span class="v">Debajo del anillo, cuatro líneas con su conteo real: datos del proyecto (completo), itemizado importado (124), cubicación (115 de 124) y precios vigentes (117 de 124). Informan, no promedian.</span></div>
+            <div class="srow"><span class="k">Estado</span><span class="v">El chip pasa a <i>Listo</i> solo cuando <b>partidas listas = 100%</b> y no hay bloqueantes. Se acaba el <code>≥ 99,5</code> sobre un anillo que no medía cobertura.</span></div>
+          </div>
+        </div>
+        <div>
+          <p class="h">Ejecución y bloqueo</p>
+          <div class="spec">
+            <div class="srow"><span class="k">Flujo</span><span class="v">Las 6 etapas reales del motor —Proyecto, Itemizado, Cubicación, Precios, Revisión, Exportar— con cuatro estados: cumplida, <b>cumplida con reservas</b> (ámbar, cuando su cobertura no es completa), actual (azul) y pendiente. Cada etapa navega a su ruta.</span></div>
+            <div class="srow"><span class="k">Alertas</span><span class="v">Ordenadas por severidad con chip de color y contador por grupo. Se agrupan por causa cuando comparten origen: 9 partidas sin cubicación se muestran como una alerta con contador, no como nueve filas.</span></div>
+            <div class="srow"><span class="k">Veredicto</span><span class="v">Una línea arriba de todo: <i>no apta</i> con cualquier bloqueante, <i>apta con reservas</i> con pendientes o riesgo medio/alto, <i>apta</i> en el resto. Incluye la razón con sus números y el botón que resuelve el primer pendiente.</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================================================== 9. INICIO -->
+  <section class="card" id="inicio">
+    <div class="cap">
+      <h2><span class="n">09</span>Inicio (sin proyecto abierto)</h2>
+      <p class="lead">
+        Hoy el estado vacío son dos cajas: una con dos botones y otra con la lista de recientes. El 2.0 lo convierte en
+        un lanzador real y, de paso, usa la superficie de VM que ya existe y nunca se mostraba.
+      </p>
+    </div>
+    <div class="body">
+      <div class="spec">
+        <div class="srow"><span class="k">Bloque principal</span><span class="v">Promesa en una línea, tres acciones (abrir, nuevo, restaurar copia) y tres cifras de contexto: recientes en el equipo, último abierto y plantillas disponibles.</span></div>
+        <div class="srow"><span class="k">Recientes</span><span class="v">Ficha por proyecto con nombre, carpeta, estado del archivo y fecha. Fijar (pin) y quitar del listado dejan de ser comandos huérfanos en la VM: hoy existen como <code>TogglePinRecentProjectCommand</code> y <code>RemoveRecentProjectCommand</code> y no tienen superficie.</span></div>
+        <div class="srow"><span class="k">Plantillas</span><span class="v">Las cuatro plantillas del motor —Edificio Residencial, Galpón Industrial, Local Comercial y Planta Solar FV— con su norma SEC y su descripción. Es exactamente el contenido de <code>QuickTemplates</code>, hoy construido en la VM y jamás enlazado.</span></div>
+        <div class="srow"><span class="k">Estado del archivo</span><span class="v">Un archivo ausente o en solo lectura se marca en ámbar con su motivo, antes de que el usuario haga doble clic y reciba un error.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================================================== 10. CONTRATO -->
+  <section class="card" id="contrato">
+    <div class="cap">
+      <h2><span class="n">10</span>Contrato de datos</h2>
+      <p class="lead">
+        El rediseño no pide datos nuevos al motor: reordena, unifica y expone lo que ya existe. Los tipos
+        <code>DashboardExecutiveService</code> y <code>DashboardParetoSummary</code> se mantienen.
+      </p>
+    </div>
+    <div class="body">
+      <div class="spec">
+        <div class="srow"><span class="k">Se reutiliza</span><span class="v"><code>KpiCards</code>, <code>CostShares</code>, <code>WorkflowSteps</code>, <code>Alerts</code>, <code>OfferReadinessItems</code>, <code>TopPartidas</code>, <code>ParetoSummary</code>, <code>SensitivityCurve</code>, <code>RecentAuditEntries</code>, <code>RecentProjects</code>, <code>QuickTemplates</code> y todos sus comandos.</span></div>
+        <div class="srow"><span class="k">Se agrega</span><span class="v"><code>Verdict</code> (estado, título, razón y comando), <code>PriceCascadeSteps</code>, <code>ScenarioMaterialPct</code>, <code>ScenarioOptions</code>, <code>ConcentrationLabel</code> y <code>PendingBreakdown</code>. Se calculan en un VM hijo (<code>DashboardCockpitVm</code>) para no crecer el tipo exento.</span></div>
+        <div class="srow"><span class="k">Se corrige</span><span class="v"><code>PartidasReadyPercent</code> pasa a ser <code>PartidasListas / TotalPartidas</code> con la definición única, y <code>CalculateMaterialImpactPct</code> se alimenta de la venta neta real del proyecto.</span></div>
+        <div class="srow"><span class="k">Se retira</span><span class="v"><code>CostMaterials/Labor/OtherDirect/Direct/Total/UfM2</code>, <code>CostGo</code>, <code>CostMargin</code>, <code>SubtitleText</code>, <code>TopAlertTitle/Detail</code>, <code>PriceValidity*</code>, <code>GastosGeneralesSimulatedPct</code>, <code>UtilidadSimulatedPct</code>, <code>ToggleFilterCommand</code>, <code>IsFiltering*</code>, <code>IsAnyFilterActive</code>, <code>NextStepTitle/Detail</code> y <code>QuickSummaryCards</code>.</span></div>
+        <div class="srow"><span class="k">Code-behind</span><span class="v">Los 13 convertidores de <code>DashboardView.xaml.cs</code> (372 líneas) con geometría cableada se reemplazan por un <code>DashboardChartGeometry</code> puro y testeable (entra punto, sale punto) en Application.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================================================== 11. TOKENS -->
+  <section class="card" id="tokens">
+    <div class="cap">
+      <h2><span class="n">11</span>Tokens, accesibilidad y comportamiento</h2>
+    </div>
+    <div class="body">
+      <p class="h">Tokens usados (todos existentes en el design system)</p>
+      <div class="tokens">
+        <span class="token"><i style="background:#2563B0"></i> Brush.Blue · acción y dato principal</span>
+        <span class="token"><i style="background:#15803D"></i> Brush.Green · estado correcto</span>
+        <span class="token"><i style="background:#C79433"></i> Brush.AmberRisk · reserva o pendiente</span>
+        <span class="token"><i style="background:#B23C3C"></i> Brush.DangerDark · bloqueante</span>
+        <span class="token"><i style="background:#8B95A3"></i> Brush.Muted · dato informativo</span>
+        <span class="token"><i style="background:#EEF2F6;border-color:#DDE3EA"></i> Brush.Line2 · separadores</span>
+      </div>
+      <p class="h gap">Comportamiento</p>
+      <div class="spec">
+        <div class="srow"><span class="k">Responsive</span><span class="v">6 → 3 → 2 KPIs; la rejilla de 12 columnas colapsa a una columna bajo 1.180 px. Ninguna cifra se corta: los valores usan <code>MinWidth</code> y moneda abreviada (<i>$ 638,0 M</i>) cuando el ancho es insuficiente.</span></div>
+        <div class="srow"><span class="k">Teclado</span><span class="v">Tab recorre KPI → cascada → ABC → sensibilidad → partidas → flujo → alertas. La tabla de partidas mantiene Enter para abrir la partida y Ctrl+Enter para abrir su APU, igual que hoy con el doble clic.</span></div>
+        <div class="srow"><span class="k">Lectores de pantalla</span><span class="v">Los dos gráficos exponen <code>role="img"</code> con un resumen textual, y cada cifra clave tiene su equivalente en la franja de pie del panel. Ningún dato existe <i>solo</i> en el dibujo.</span></div>
+        <div class="srow"><span class="k">Rendimiento</span><span class="v">Un único cálculo por <code>Load()</code>: KPIs, cascada, ABC y curva se derivan del mismo estado y se recalculan juntos ante un cambio de escenario (sin consultar el repositorio).</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================================================== 12. PLAN -->
+  <section class="card" id="plan">
+    <div class="cap">
+      <h2><span class="n">12</span>Plan de implementación</h2>
+      <p class="lead">
+        Cinco fases con verificación en cada una. Ninguna toca el motor de cálculo, el esquema SQLite ni las
+        migraciones.
+      </p>
+    </div>
+    <div class="body">
+      <div class="spec">
+        <div class="srow"><span class="k">Fase 1 · Separar</span><span class="v">Partir <code>DashboardView.xaml</code> en <code>DashboardLandingView</code> + <code>DashboardCockpitView</code> y mover los convertidores de geometría a <code>DashboardChartGeometry</code>. Gate: <code>XamlResourceIntegrityGuardTest</code> en verde y ningún <code>x:Key</code> huérfano.</span></div>
+        <div class="srow"><span class="k">Fase 2 · Unificar el dato</span><span class="v">Definición única de partidas listas, corrección de la base de sensibilidad y exposición de <code>CostA/B/C</code> y <code>Verdict</code>. Gate: prueba que exige que la última línea de la cascada sea igual al KPI de venta neta y que el anillo sea igual al KPI de partidas listas.</span></div>
+        <div class="srow"><span class="k">Fase 3 · Cockpit visual</span><span class="v">6 KPIs, cascada, ABC con viewBox proporcional, sensibilidad con escenario y panel de cierre. Gate: prueba de humo XAML sobre las dos vistas con cero errores de binding (patrón <code>XamlViewSmokeHost</code> ya existente).</span></div>
+        <div class="srow"><span class="k">Fase 4 · Inicio</span><span class="v">Lanzador con plantillas, recientes con pin y estado del archivo. Gate: las 4 plantillas crean proyecto con <code>NewProjectWithTemplateAsync</code> y los recientes abren sin excepción.</span></div>
+        <div class="srow"><span class="k">Fase 5 · Retiro</span><span class="v">Eliminar la superficie muerta de la VM y bajar el baseline de 1.430 líneas de <code>DashboardViewModel</code> en <code>MaxLineCountTest</code>. Gate: <code>dotnet test QubiCostElectrical.Wpf.sln -c Release</code> sin fallos.</span></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var UF_DEFAULT = 39250;
+  var USD_DEFAULT = 950;
+  var M2 = 3200;
+  var IVA_PCT = 0.19;
+
+  // ---------------- modelo (idéntico a la propuesta de Desglose de costos 2.0) ----------------
+  var DIRECT = {
+    mo: 124740000, mat: 262500000, ferreteria: 9187500, equipos: 24300000, go: 41850000,
+    sub: 18600000, herr: 6200000, mermas: 4100000, transp: 3450000, oc: 2100000
+  };
+  var P = { gg: 5.0, ut: 8.0, va: 3.0, riesgo: 1.5, dcto: 2.0, baseMarginOnMat: 21000000 };
+
+  // Top 18 de las 124 partidas valorizadas. La suma del top 18 no cubre el 100% del
+  // costo directo: la cola (106 partidas menores) y los cargos no itemizados completan el total.
+  var PDIRECT_TOTAL = 497027500;
+  var PARTIDAS = [
+    { it: "2.1.1", name: "Conductores alimentadores THHN", v: 79520000, ch: "2.02" },
+    { it: "2.2.1", name: "Bandejas portacables y soportería", v: 53180000, ch: "2.02" },
+    { it: "2.3.1", name: "Tablero general de baja tensión TG", v: 44730000, ch: "2.03" },
+    { it: "1.1.1", name: "Movimiento de tierras y ductos enterrados", v: 42250000, ch: "1.01" },
+    { it: "3.1.1", name: "Luminarias LED panel 60×60", v: 38270000, ch: "3.01" },
+    { it: "2.4.1", name: "Canalizaciones EMT y conduit PVC", v: 31310000, ch: "2.04" },
+    { it: "4.2.1", name: "Fuerza motriz: clima y ascensores", v: 28830000, ch: "4.02" },
+    { it: "3.2.1", name: "Alumbrado de emergencia y señalética", v: 26840000, ch: "3.02" },
+    { it: "4.1.1", name: "Enchufes y tomacorrientes", v: 24350000, ch: "4.01" },
+    { it: "5.2.1", name: "Grupo de presión y bombas", v: 22370000, ch: "5.02" },
+    { it: "2.5.1", name: "Malla de puesta a tierra profunda", v: 16900000, ch: "2.05" },
+    { it: "5.1.1", name: "Grupo electrógeno 150 kVA", v: 16400000, ch: "5.01" },
+    { it: "2.6.1", name: "Protecciones y diferenciales", v: 15700000, ch: "2.06" },
+    { it: "6.1.1", name: "Sistema de detección de incendios", v: 14900000, ch: "6.01" },
+    { it: "2.7.1", name: "Sala eléctrica y empalme", v: 14100000, ch: "2.07" },
+    { it: "3.3.1", name: "Iluminación exterior y áreas comunes", v: 8450000, ch: "3.03" },
+    { it: "7.1.1", name: "Pruebas, protocolos y certificación SEC", v: 4970000, ch: "7.01" },
+    { it: "8.1.1", name: "Obras menores y varios", v: 2980000, ch: "8.01" }
+  ];
+
+  var VERSION_DELTA_PCT = 2.4;
+  var TOTAL_PARTIDAS = 124;
+  var EMPTY_PARTIDAS = 9;
+  var MATERIALS_NO_PRICE = 7;
+  var BLOCKING = 1;
+
+  var ALERTS = [
+    { sev: "blk", label: "Bloqueante", titulo: "9 partidas sin cubicación", detalle: "El APU no puede valorizar sin metrado. Ir a Cubicación.", cnt: 9 },
+    { sev: "cri", label: "Crítico", titulo: "7 materiales sin precio vigente", detalle: "Última actualización hace 46 días. Confirmar en Banco de precios.", cnt: 7 },
+    { sev: "may", label: "Mayor", titulo: "Revisión final sin ejecutar", detalle: "El checklist no se corre desde el 29-09.", cnt: 1 },
+    { sev: "may", label: "Mayor", titulo: "3 líneas de APU con rendimiento 0", detalle: "Rendimiento nulo infla el costo unitario. Revisar APU.", cnt: 3 },
+    { sev: "inf", label: "Info", titulo: "UF del día actualizada", detalle: "Sincronizada hace 3 días desde el servicio.", cnt: 1 }
+  ];
+
+  var FEED = [
+    { k: "save", a: "Guardado del proyecto", m: "hace 6 min · C. Rojas" },
+    { k: "adj", a: "Precio de conductor THHN actualizado", m: "hace 2 h · C. Rojas" },
+    { k: "edit", a: "12 líneas de cubicación agregadas", m: "hace 5 h · M. Díaz" },
+    { k: "edit", a: "Factor de familia «Conductores» 1,57 → 1,57", m: "ayer · C. Rojas" },
+    { k: "save", a: "Revisión final ejecutada", m: "29-09 · M. Díaz" }
+  ];
+
+  var TEMPLATES = [
+    { id: "residential_building", icon: "🏢", t: "Edificio Residencial", n: "RIC N° 01 al 10", cls: "", d: "Empalmes concentrados, shaft vertical, departamentos tipo y servicios comunes." },
+    { id: "industrial_warehouse", icon: "🏭", t: "Galpón Industrial", n: "RIC N° 02, 04, 10", cls: "amb", d: "Subestación, tableros de fuerza, bandejas portacables y fuerza motriz." },
+    { id: "commercial_retail", icon: "🏬", t: "Local Comercial", n: "RIC N° 02, 08, 10", cls: "grn", d: "Alumbrado de emergencia, clima, climatización y tableros comerciales." },
+    { id: "solar_pv_plant", icon: "☀️", t: "Planta Solar FV", n: "RIC N° 19, 06", cls: "amb", d: "Inversores, arreglos DC/AC, protecciones y malla de puesta a tierra profunda." }
+  ];
+
+  var RECENT = [
+    { n: "Edificio Corporativo Andes", p: "…\\Proyectos\\Andes", s: "Rev. C · listo para ofertar con reservas", d: "hoy 18:06", state: "", pin: true },
+    { n: "Galpón Logístico Quilicura", p: "…\\Proyectos\\Quilicura", s: "Rev. B · en cubicación", d: "ayer", state: "", pin: false },
+    { n: "Local Comercial Mall Plaza", p: "…\\Clientes\\MallPlaza", s: "Rev. A · sin revisión final", d: "08-10", state: "", pin: false },
+    { n: "Planta Solar Atacama FV", p: "…\\ERNC\\Atacama", s: "Archivo en solo lectura (otro editor activo)", d: "06-10", state: "miss", pin: false },
+    { n: "Edificio Oficinas Providencia", p: "…\\Proyectos\\Providencia", s: "Rev. D · oferta emitida", d: "02-10", state: "", pin: false }
+  ];
+
+  var STEPS = [
+    { t: "Proyecto", d: "Datos completos", s: "done" },
+    { t: "Itemizado", d: "124 partidas", s: "done" },
+    { t: "Cubicación", d: "115 de 124 cubiertas", s: "warn" },
+    { t: "Precios", d: "117 de 124 vigentes", s: "warn" },
+    { t: "Revisión", d: "1 bloqueante pendiente", s: "now" },
+    { t: "Exportar", d: "Bloqueado por alertas", s: "" }
+  ];
+
+  // ---------------- estado ----------------
+  var state = {
+    theme: "light", currency: "CLP", view: "project", abc: "all", scenario: 10, sel: 0
+  };
+
+  // ---------------- cálculo ----------------
+  function ejecucion() {
+    var d = DIRECT;
+    return d.mo + d.mat + d.ferreteria + d.equipos + d.go + d.sub + d.herr + d.mermas + d.transp + d.oc;
+  }
+
+  var EJEC = ejecucion();
+  var GG_BASE = DIRECT.mat + DIRECT.mo + DIRECT.go;
+  var RIESGO = Math.round(EJEC * P.riesgo / 100);
+  var GG = Math.round(GG_BASE * P.gg / 100);
+  var UT = Math.round(GG_BASE * P.ut / 100);
+  var VA = Math.round(DIRECT.equipos * P.va / 100);
+  var COSTO_TOTAL = EJEC + RIESGO + GG + UT + VA;
+
+  var FAM_COSTO = 262500000;
+  var FAM_VENTA = 373509000;
+  var DELTA_FACTORES = (FAM_VENTA - FAM_COSTO) - P.baseMarginOnMat; // 90.009.000
+
+  var VENTA_BRUTA = COSTO_TOTAL + DELTA_FACTORES;
+  var DESCUENTO = Math.round(VENTA_BRUTA * P.dcto / 100);
+  var VENTA_NETA = VENTA_BRUTA - DESCUENTO;
+  var IVA = Math.round(VENTA_NETA * IVA_PCT);
+  var TOTAL = VENTA_NETA + IVA;
+  var MARGEN = VENTA_NETA > 0 ? (VENTA_NETA - COSTO_TOTAL) / VENTA_NETA * 100 : 0;
+
+  // Costo total proyecto con materiales desplazados pct%.
+  function scenarioCosto(pct) {
+    var mat = DIRECT.mat * (1 + pct / 100);
+    var directo = Math.max(0, EJEC - DIRECT.mat + mat);
+    var riesgo = Math.round(directo * P.riesgo / 100);
+    var base = directo + riesgo;
+    var ggBase = mat + DIRECT.mo + DIRECT.go;
+    var gg = Math.round(ggBase * P.gg / 100);
+    var ut = Math.round(ggBase * P.ut / 100);
+    var va = Math.round(DIRECT.equipos * P.va / 100);
+    return base + gg + ut + va;
+  }
+
+  // Proyección sobre la MISMA venta neta del KPI (corrige la base de la sensibilidad).
+  function scenario(pct) {
+    var costo = scenarioCosto(pct);
+    var bruto = costo + DELTA_FACTORES;
+    var neta = bruto - Math.round(bruto * P.dcto / 100);
+    return {
+      pct: pct, costo: costo, neta: neta,
+      margen: neta > 0 ? (neta - costo) / neta * 100 : 0,
+      impacto: VENTA_NETA > 0 ? (neta - VENTA_NETA) / VENTA_NETA * 100 : 0
+    };
+  }
+
+  function riskLabel(impacto) {
+    if (impacto >= 5) return { t: "ALTO", cls: "danger" };
+    if (impacto >= 2.5) return { t: "MEDIO", cls: "warn" };
+    return { t: "BAJO", cls: "up" };
+  }
+
+  var PENDIENTES = EMPTY_PARTIDAS + MATERIALS_NO_PRICE;
+  var LISTAS = TOTAL_PARTIDAS - PENDIENTES;
+  var LISTAS_PCT = LISTAS * 100 / TOTAL_PARTIDAS;
+
+  // ABC por acumulado real, medido contra el COSTO DIRECTO completo (no contra el top mostrado).
+  var ABC = (function () {
+    var sorted = PARTIDAS.slice().sort(function (a, b) { return b.v - a.v; });
+    var base = PDIRECT_TOTAL;
+    var acc = 0;
+    var out = [];
+    for (var i = 0; i < sorted.length; i++) {
+      var p = sorted[i];
+      var share = p.v / base * 100;
+      acc += share;
+      out.push({ it: p.it, name: p.name, v: p.v, ch: p.ch, share: share, accum: acc, cls: "", rank: i + 1 });
+    }
+    // Clase por acumulado: A hasta cubrir el 80% (el ítem que cruza entra en A), B hasta el 95%, C el resto.
+    for (var k = 0; k < out.length; k++) {
+      if (out[k].accum <= 80 || (k > 0 && out[k - 1].accum <= 80)) out[k].cls = "A";
+      else if (out[k].accum <= 95) out[k].cls = "B";
+      else out[k].cls = "C";
+    }
+    // Cola agregada: lo que el top individual no cubre se dibuja como una sola barra
+    // para que la serie cierre exactamente en el 100 % del costo directo.
+    var individual = out.slice();
+    var shownTop = out.reduce(function (a, r) { return a + r.v; }, 0);
+    var tail = Math.max(0, base - shownTop);
+    var cola = null;
+    if (tail > 1) {
+      cola = { it: "Cola", name: "Partidas menores y cargos no itemizados", v: tail, ch: "—",
+        share: tail / base * 100, accum: 100, cls: "C", rank: out.length + 1, tail: true };
+      out.push(cola);
+    }
+    return { rows: out, individual: individual, tail: cola, base: base, shown: shownTop };
+  })();
+
+  var CLASES = (function () {
+    var c = { A: { n: 0, v: 0 }, B: { n: 0, v: 0 }, C: { n: 0, v: 0 } };
+    for (var i = 0; i < ABC.rows.length; i++) {
+      var r = ABC.rows[i];
+      c[r.cls].n++; c[r.cls].v += r.v;
+    }
+    // Cola no listada: sólo lo que no está ya representado por la barra agregada.
+    c.C.v += Math.max(0, ABC.base - ABC.shown - (ABC.tail ? ABC.tail.v : 0));
+    c.C.n += Math.max(0, TOTAL_PARTIDAS - ABC.rows.length);
+    return c;
+  })();
+
+  // ---------------- formato ----------------
+  var nf0 = new Intl.NumberFormat("es-CL", { maximumFractionDigits: 0 });
+  var nf1 = new Intl.NumberFormat("es-CL", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  var nf2 = new Intl.NumberFormat("es-CL", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  var nfUS = new Intl.NumberFormat("es-CL", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  function clp(v) {
+    var a = Math.abs(v);
+    return (v < 0 ? "−" : "") + "$ " + nf0.format(Math.round(a));
+  }
+  function clpShort(v) {
+    var a = Math.abs(v);
+    return (v < 0 ? "−" : "") + (a >= 1000000 ? "$ " + nf1.format(a / 1000000) + " M" : "$ " + nf0.format(Math.round(a)));
+  }
+  function ufOf(v) { return (v < 0 ? "−" : "") + nf2.format(Math.abs(v) / UF_DEFAULT) + " UF"; }
+  function usdOf(v) { return (v < 0 ? "−" : "") + "US$ " + nfUS.format(Math.abs(v) / USD_DEFAULT); }
+  function money(v) {
+    if (state.currency === "CLP") return clp(v);
+    if (state.currency === "UF") return ufOf(v);
+    return usdOf(v);
+  }
+  function moneyShort(v) {
+    if (state.currency === "CLP") return clpShort(v);
+    if (state.currency === "UF") return nf2.format(Math.abs(v) / UF_DEFAULT) + " UF";
+    return "US$ " + nf2.format(Math.abs(v) / USD_DEFAULT);
+  }
+  function moneyUnit(v) {
+    if (state.currency === "CLP") return "$ " + nf0.format(Math.round(v)) + " /m²";
+    if (state.currency === "UF") return nf2.format(v / UF_DEFAULT) + " UF/m²";
+    return "US$ " + nfUS.format(v / USD_DEFAULT) + " /m²";
+  }
+  function pct(v, d) { return nf2.format(v) + " %"; }
+  function sec(v) { return state.currency === "CLP" ? "" : clp(v); }
+  function el(id) { return document.getElementById(id); }
+  function set(id, html) { var n = el(id); if (n) n.innerHTML = html; }
+  function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+
+  // ---------------- render: KPIs ----------------
+  function spark(points, color) {
+    // points: array de valores 0..1 (y = arriba).
+    var w = 52, h = 18, d = "";
+    for (var i = 0; i < points.length; i++) {
+      var x = (i / (points.length - 1)) * (w - 4) + 2;
+      var y = h - 3 - points[i] * (h - 6);
+      d += (i ? " L" : "M") + x.toFixed(1) + " " + y.toFixed(1);
+    }
+    return '<svg class="kspark" viewBox="0 0 ' + w + " " + h + '" preserveAspectRatio="none">' +
+      '<path d="' + d + '" fill="none" stroke="' + color + '" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  }
+
+  function kpi(o) {
+    var f = '<div class="kf">';
+    if (o.chip) f += '<span class="kc ' + (o.chipCls || "") + '">' + o.chip + "</span>";
+    if (typeof o.gauge === "number") f += '<span class="kgauge"><i style="width:' + o.gauge.toFixed(1) + '%"></i></span>';
+    if (o.spark) f += spark(o.spark, o.color);
+    f += "</div>";
+    return '<article class="kpi">' +
+      '<div class="kbar" style="background:' + o.color + '"></div>' +
+      '<div class="kin">' +
+        '<div class="kk">' + o.k + "</div>" +
+        '<div class="kv">' + o.v + "</div>" +
+        '<div class="ks">' + o.s + "</div>" +
+        f +
+      "</div></article>";
+  }
+
+  function renderKpis() {
+    var sc = scenario(state.scenario);
+    var rl = riskLabel(sc.impacto);
+    var concA = CLASES.A.v / ABC.base * 100;
+    var html = "";
+
+    html += kpi({
+      k: "Venta neta", v: money(VENTA_NETA), s: "Total venta oficial · " + (state.currency === "CLP" ? "sin IVA" : clp(VENTA_NETA) + " · sin IVA"),
+      color: "var(--blue)", chip: (VERSION_DELTA_PCT >= 0 ? "▲ " : "▼ ") + nf1.format(Math.abs(VERSION_DELTA_PCT)) + "% vs Rev. B",
+      chipCls: VERSION_DELTA_PCT >= 0 ? "danger" : "up",
+      spark: [0.30, 0.34, 0.42, 0.40, 0.52, 0.58, 0.64]
+    });
+    html += kpi({
+      k: "Margen real", v: pct(MARGEN), s: "Sobre venta neta · piso 10%",
+      color: "var(--green)", chip: MARGEN >= 10 ? "✓ viable" : "bajo piso", chipCls: MARGEN >= 10 ? "up" : "warn",
+      gauge: Math.min(100, MARGEN / 15 * 100)
+    });
+    html += kpi({
+      k: "Venta neta / m²", v: moneyUnit(VENTA_NETA / M2), s: nf0.format(M2) + " m² construidos",
+      color: "var(--amber)", chip: "11 meses de obra", chipCls: ""
+    });
+    html += kpi({
+      k: "Partidas listas", v: nf0.format(LISTAS) + " / " + nf0.format(TOTAL_PARTIDAS), s: pct(LISTAS_PCT) + " con cubicación y precio",
+      color: "var(--blue)", chip: nf0.format(PENDIENTES) + " pendientes", chipCls: PENDIENTES > 0 ? "warn" : "up",
+      gauge: LISTAS_PCT
+    });
+    html += kpi({
+      k: "Riesgo materiales", v: rl.t, s: "+" + nf1.format(state.scenario) + "% materiales → " + (sc.impacto >= 0 ? "+" : "") + nf1.format(sc.impacto) + "% venta",
+      color: rl.cls === "danger" ? "var(--red)" : (rl.cls === "warn" ? "var(--amber)" : "var(--green)"),
+      chip: "escenario " + (state.scenario > 0 ? "+" : "") + nf1.format(state.scenario) + "%", chipCls: rl.cls,
+      spark: [0.20, 0.28, 0.34, 0.42, 0.50, 0.58, 0.66]
+    });
+    html += kpi({
+      k: "Concentración A", v: pct(concA), s: nf0.format(CLASES.A.n) + " partidas cubren el 80% del costo",
+      color: "var(--blue)", chip: "pocas partidas = foco", chipCls: "blue"
+    });
+
+    el("kpiStrip").innerHTML = html;
+
+    set("chipCur", "Presentación " + state.currency);
+    el("shellUf").style.display = state.currency === "CLP" ? "none" : "inline-flex";
+  }
+
+  // ---------------- render: veredicto ----------------
+  function renderVerdict() {
+    var sc = scenario(state.scenario);
+    var rl = riskLabel(sc.impacto);
+    var v = el("verdict"), t = el("vTitle"), r = el("vReason");
+
+    var kind, title;
+    if (BLOCKING > 0) { kind = "bad"; title = "No apta para ofertar"; }
+    else if (PENDIENTES > 0 || rl.t !== "BAJO") { kind = "warn"; title = "Apta para ofertar con reservas"; }
+    else { kind = "ok"; title = "Apta para ofertar"; }
+
+    v.className = "verdict " + kind;
+    t.textContent = title;
+    r.textContent = nf0.format(LISTAS) + " de " + nf0.format(TOTAL_PARTIDAS) + " partidas listas · " +
+      BLOCKING + (BLOCKING === 1 ? " alerta bloqueante" : " alertas bloqueantes") + " · sensibilidad +" +
+      nf1.format(state.scenario) + "% materiales = " + (sc.impacto >= 0 ? "+" : "") + nf1.format(sc.impacto) + "% sobre la venta neta";
+
+    el("riskChip").textContent = "Riesgo " + rl.t;
+    el("riskChip").className = "chip " + (rl.t === "ALTO" ? "red" : (rl.t === "MEDIO" ? "amber" : "green"));
+    set("riskScen", (state.scenario > 0 ? "+" : "") + nf1.format(state.scenario) + " % materiales");
+    set("riskImpact", (sc.impacto >= 0 ? "+" : "") + nf1.format(sc.impacto) + " %");
+  }
+
+  // ---------------- render: cascada ----------------
+  function renderWf() {
+    var steps = [
+      { lab: "Costo de ejecución", from: 0, to: EJEC, cls: "c-exec", total: true },
+      { lab: "Riesgo (1,5%)", from: EJEC, to: EJEC + RIESGO, cls: "c-gg", sign: "+" },
+      { lab: "Gastos generales (5%)", from: EJEC + RIESGO, to: EJEC + RIESGO + GG, cls: "c-gg", sign: "+" },
+      { lab: "Utilidad (8%)", from: EJEC + RIESGO + GG, to: COSTO_TOTAL - VA, cls: "c-gg", sign: "+" },
+      { lab: "VA sobre equipos (3%)", from: COSTO_TOTAL - VA, to: COSTO_TOTAL, cls: "c-gg", sign: "+" },
+      { lab: "Costo total proyecto", from: 0, to: COSTO_TOTAL, cls: "c-exec", total: true },
+      { lab: "Diferencia por factores", from: COSTO_TOTAL, to: VENTA_BRUTA, cls: "c-fact", sign: "+" },
+      { lab: "Descuento comercial (2%)", from: VENTA_BRUTA, to: VENTA_NETA, cls: "c-neg", sign: "−" },
+      { lab: "Venta neta", from: 0, to: VENTA_NETA, cls: "c-fact", total: true },
+      { lab: "IVA (19%)", from: VENTA_NETA, to: TOTAL, cls: "c-iva", sign: "+", dim: true },
+      { lab: "TOTAL VENTA", from: 0, to: TOTAL, cls: "c-exec", total: true, grand: true }
+    ];
+    var scale = TOTAL > 0 ? TOTAL : 1;
+    var html = "";
+    for (var i = 0; i < steps.length; i++) {
+      var s = steps[i];
+      var left = (Math.min(s.from, s.to) / scale) * 100;
+      var w = (Math.abs(s.to - s.from) / scale) * 100;
+      if (s.total) { left = 0; w = (s.to / scale) * 100; }
+      if (!s.total && w < 0.35) w = 0.35;
+      var amt = s.total ? s.to : Math.abs(s.to - s.from);
+      var cls = "w" + (s.total ? " total" : "") + (s.grand ? " grand" : "") + (s.dim ? " dim" : "");
+      html += '<div class="' + cls + '"><div class="wl">' + s.lab + "</div>" +
+        '<div class="wt"><div class="wb ' + s.cls + '" style="left:' + left.toFixed(3) + "%;width:" + w.toFixed(3) + '%"></div></div>' +
+        '<div class="wv">' + (s.sign || "") + moneyShort(amt) + "</div></div>";
+    }
+    el("wf").innerHTML = html;
+
+    set("wfMargen", pct(MARGEN));
+    set("wfRatio", pct(COSTO_TOTAL / VENTA_NETA * 100));
+    set("wfM2", moneyUnit(VENTA_NETA / M2));
+    set("wfIva", money(IVA));
+  }
+
+  // ---------------- render: preparación ----------------
+  function renderPrep() {
+    var cubiertas = TOTAL_PARTIDAS - EMPTY_PARTIDAS;
+    var precios = TOTAL_PARTIDAS - MATERIALS_NO_PRICE;
+    var items = [
+      { l: "Datos del proyecto", x: "completos", ok: true },
+      { l: "Itemizado importado", x: nf0.format(TOTAL_PARTIDAS) + " partidas", ok: true },
+      { l: "Cubicación completada", x: nf0.format(cubiertas) + " de " + nf0.format(TOTAL_PARTIDAS), ok: false },
+      { l: "Precios vigentes", x: nf0.format(precios) + " de " + nf0.format(TOTAL_PARTIDAS), ok: false }
+    ];
+    var html = "";
+    for (var i = 0; i < items.length; i++) {
+      var o = items[i];
+      html += '<div class="ck"><span class="kd ' + (o.ok ? "ok" : "warn") + '">' + (o.ok ? "✔" : "!") + "</span>" +
+        '<span class="kl">' + o.l + '</span><span class="kx">' + o.x + "</span></div>";
+    }
+    el("checklist").innerHTML = html;
+
+    var circ = 2 * Math.PI * 45;
+    el("ringArc").setAttribute("stroke-dasharray", (circ * LISTAS_PCT / 100).toFixed(1) + " " + circ.toFixed(1));
+    el("ringArc").setAttribute("stroke", LISTAS_PCT >= 100 ? "var(--green)" : "var(--blue)");
+    set("ringPct", nf0.format(LISTAS_PCT) + "%");
+    var badge = el("prepBadge");
+    badge.textContent = LISTAS_PCT >= 100 ? "Listo" : "En curso";
+    badge.className = "chip " + (LISTAS_PCT >= 100 ? "green" : "amber");
+    set("prepPend", nf0.format(PENDIENTES));
+    set("prepBlk", nf0.format(BLOCKING));
+  }
+
+  // ---------------- render: ABC ----------------
+  function renderAbc() {
+    // Las barras son siempre las mismas (15 mayores + cola agregada) para conservar la
+    // lectura del acumulado: el filtro de clase atenúa el resto, nunca deja el gráfico vacío.
+    var filt = state.abc;
+    var rows = ABC.individual.slice(0, 15);
+    if (ABC.tail) rows.push(ABC.tail);
+    var W = 900, H = 300, L = 46, R = 880, T = 22, B = 244;
+    var pw = R - L, ph = B - T;
+
+    var maxShare = 0;
+    for (var i = 0; i < rows.length; i++) maxShare = Math.max(maxShare, rows[i].share);
+    var axisMax = Math.max(4, Math.ceil(maxShare / 4) * 4);
+
+    var n = Math.max(1, rows.length);
+    var step = pw / n;
+    var barW = Math.min(42, Math.max(10, step * 0.56));
+
+    var s = '<g>';
+    // grillas y eje izquierdo
+    var ticks = 4;
+    for (var t = 0; t <= ticks; t++) {
+      var y = B - (t / ticks) * ph;
+      s += '<line x1="' + L + '" y1="' + y.toFixed(1) + '" x2="' + R + '" y2="' + y.toFixed(1) + '" stroke="' + (t === 0 ? "var(--line)" : "var(--line-2)") + '" stroke-width="1"/>';
+      s += '<text x="' + (L - 8) + '" y="' + (y + 3.5).toFixed(1) + '" text-anchor="end" font-size="9.5" fill="var(--muted)" font-family="var(--mono)">' + nf0.format(axisMax * t / ticks) + "%</text>";
+      s += '<text x="' + (R + 8) + '" y="' + (y + 3.5).toFixed(1) + '" font-size="9.5" fill="var(--muted)" font-family="var(--mono)">' + nf0.format(25 * t) + "%</text>";
+    }
+    s += '<text x="' + L + '" y="14" font-size="9.5" fill="var(--muted)">Participación de la partida</text>';
+    s += '<text x="' + R + '" y="14" text-anchor="end" font-size="9.5" fill="var(--muted)">Acumulado</text>';
+
+    // barras
+    for (var k = 0; k < rows.length; k++) {
+      var r = rows[k];
+      var x = L + k * step + (step - barW) / 2;
+      var hgt = Math.max(1.5, (r.share / axisMax) * ph);
+      var yb = B - hgt;
+      var dim = filt !== "all" && r.cls !== filt;
+      var fill = r.cls === "A" || r.cls === "B" ? "var(--blue)" : "var(--muted)";
+      var op = dim ? "0.12" : (r.cls === "B" ? "0.55" : (r.cls === "C" ? "0.38" : "1"));
+      s += '<g class="abchit" data-i="' + ABC.rows.indexOf(r) + '">' +
+        '<rect x="' + x.toFixed(1) + '" y="' + yb.toFixed(1) + '" width="' + barW.toFixed(1) + '" height="' + hgt.toFixed(1) +
+        '" rx="3" class="abcbar" fill="' + fill + '" opacity="' + op + '"' +
+        (r.tail ? ' stroke="var(--muted)" stroke-width="1" stroke-dasharray="3 2"' : "") +
+        '><title>' + esc(r.it + " · " + r.name + " · " + clp(r.v) + " · " + pct(r.share)) + "</title></rect>" +
+        '<text x="' + (x + barW / 2).toFixed(1) + '" y="' + (B + 12) + '" text-anchor="end" font-size="9.5" fill="var(--muted)" opacity="' + (dim ? "0.3" : "1") + '" ' +
+        'font-family="var(--mono)" transform="rotate(-38 ' + (x + barW / 2).toFixed(1) + " " + (B + 12) + ')">' + esc(r.tail ? "Cola" : r.it) + "</text>" +
+        "</g>";
+      // rombo de la marca de 80% sólo en el primer cruce
+      if (k < rows.length - 1 && rows[k].accum <= 80 && rows[k + 1].accum > 80) {
+        s += '<line x1="' + (x + barW + (step - barW) / 2).toFixed(1) + '" y1="' + T + '" x2="' + (x + barW + (step - barW) / 2).toFixed(1) +
+          '" y2="' + B + '" stroke="var(--amber-edge)" stroke-width="1.4" stroke-dasharray="4 4"/>';
+      }
+    }
+
+    // marca del 80% (línea horizontal del acumulado)
+    var y80 = B - 0.8 * ph;
+    s += '<line x1="' + L + '" y1="' + y80.toFixed(1) + '" x2="' + R + '" y2="' + y80.toFixed(1) + '" stroke="var(--green)" stroke-width="1" stroke-dasharray="5 4" opacity="0.75"/>';
+    s += '<text x="' + (L + 4) + '" y="' + (y80 - 4).toFixed(1) + '" font-size="9.5" fill="var(--green)" font-family="var(--mono)">80% del costo</text>';
+
+    // curva acumulada
+    var poly = "";
+    for (var m = 0; m < rows.length; m++) {
+      var xm = L + m * step + step / 2;
+      var ym = B - (rows[m].accum / 100) * ph;
+      poly += (m ? " L" : "M") + xm.toFixed(1) + " " + ym.toFixed(1);
+      s += '<circle cx="' + xm.toFixed(1) + '" cy="' + ym.toFixed(1) + '" r="2.6" fill="var(--paper)" stroke="var(--green)" stroke-width="1.6"/>';
+    }
+    s += '<path d="' + poly + '" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
+    s += "</g>";
+
+    el("abcSvg").innerHTML = s;
+    el("abcSvg").setAttribute("viewBox", "0 0 " + W + " " + H);
+
+    // detalle de la partida seleccionada
+    var sel = ABC.rows[Math.min(state.sel, ABC.rows.length - 1)];
+    if (sel) {
+      el("abcDetail").innerHTML = '<b>' + esc(sel.it) + "</b> " + esc(sel.name) +
+        ' <span class="dim">· capítulo ' + esc(sel.ch) + "</span> &nbsp;·&nbsp; <b>" + clp(sel.v) + "</b> de costo directo" +
+        " &nbsp;·&nbsp; participación <b>" + pct(sel.share) + "</b> &nbsp;·&nbsp; acumulado <b>" + pct(sel.accum) + "</b> &nbsp;·&nbsp; clase <b>" + sel.cls + "</b>";
+    }
+
+    el("abcLegend").innerHTML =
+      '<span><i style="background:var(--blue)"></i> Clase A · ' + nf0.format(CLASES.A.n) + " partidas · " + pct(CLASES.A.v / ABC.base * 100) + "</span>" +
+      '<span><i style="background:var(--blue);opacity:.55"></i> Clase B · ' + nf0.format(CLASES.B.n) + " · " + pct(CLASES.B.v / ABC.base * 100) + "</span>" +
+      '<span><i style="background:var(--muted);opacity:.38"></i> Clase C · ' + nf0.format(CLASES.C.n) + " · " + pct(CLASES.C.v / ABC.base * 100) + "</span>" +
+      '<span><i style="background:var(--green)"></i> Acumulado real</span>';
+
+    set("abcA", nf0.format(CLASES.A.n)); set("abcAp", pct(CLASES.A.v / ABC.base * 100));
+    set("abcB", nf0.format(CLASES.B.n)); set("abcBp", pct(CLASES.B.v / ABC.base * 100));
+    set("abcC", nf0.format(CLASES.C.n)); set("abcCp", pct(CLASES.C.v / ABC.base * 100));
+    set("abcN", nf0.format(rows.length));
+    set("abcSub", state.abc === "all"
+      ? nf0.format(rows.length) + " barras que cierran el 100 % del costo directo · " +
+        nf0.format(CLASES.A.n) + " clase A + " + nf0.format(CLASES.B.n) + " clase B + cola C"
+      : "Clase " + state.abc + " · " + nf0.format(CLASES[state.abc].n) + " partidas · " +
+        pct(CLASES[state.abc].v / ABC.base * 100) + " del costo directo · el resto de la serie queda atenuado");
+
+    var hits = el("abcSvg").querySelectorAll(".abchit");
+    for (var q = 0; q < hits.length; q++) {
+      hits[q].addEventListener("click", function () {
+        state.sel = parseInt(this.getAttribute("data-i"), 10) || 0;
+        renderAbc(); renderCrit();
+      });
+    }
+  }
+
+  // ---------------- render: sensibilidad ----------------
+  function renderSens() {
+    var pcts = [-10, -5, 0, 5, 10, 15, 20];
+    var pts = pcts.map(scenario);
+    var ptsCosto = pcts.map(function (p) { return scenarioCosto(p); });
+
+    var W = 520, H = 300, L = 58, R = 500, T = 24, B = 240;
+    var pw = R - L, ph = B - T;
+
+    var minV = Math.min.apply(null, pts.map(function (p) { return p.neta; }));
+    var maxV = Math.max.apply(null, pts.map(function (p) { return p.neta; }));
+    var pad = (maxV - minV) * 0.18 || 1;
+    minV -= pad; maxV += pad;
+
+    var minX = pcts[0], maxX = pcts[pcts.length - 1];
+    function cx(p) { return L + ((p - minX) / (maxX - minX)) * pw; }
+    function cy(v) { return B - ((v - minV) / (maxV - minV)) * ph; }
+
+    var s = "";
+    for (var t = 0; t <= 4; t++) {
+      var y = B - (t / 4) * ph;
+      var v = minV + (maxV - minV) * t / 4;
+      s += '<line x1="' + L + '" y1="' + y.toFixed(1) + '" x2="' + R + '" y2="' + y.toFixed(1) + '" stroke="' + (t === 0 ? "var(--line)" : "var(--line-2)") + '" stroke-width="1"/>';
+      s += '<text x="' + (L - 7) + '" y="' + (y + 3.5).toFixed(1) + '" text-anchor="end" font-size="9.5" fill="var(--muted)" font-family="var(--mono)">' + moneyShort(v) + "</text>";
+    }
+
+    var poly = "", area = "";
+    for (var i = 0; i < pts.length; i++) {
+      var x = cx(pts[i].pct), y2 = cy(pts[i].neta);
+      poly += (i ? " L" : "M") + x.toFixed(1) + " " + y2.toFixed(1);
+      area += (i ? " L" : "M") + x.toFixed(1) + " " + y2.toFixed(1);
+    }
+    area += " L" + cx(maxX).toFixed(1) + " " + B + " L" + cx(minX).toFixed(1) + " " + B + " Z";
+    s += '<path d="' + area + '" fill="var(--blue)" opacity="0.07"/>';
+
+    // línea base
+    var yb = cy(VENTA_NETA);
+    s += '<line x1="' + L + '" y1="' + yb.toFixed(1) + '" x2="' + R + '" y2="' + yb.toFixed(1) + '" stroke="var(--muted)" stroke-width="1.3" stroke-dasharray="4 4"/>';
+    s += '<text x="' + (R - 2) + '" y="' + (yb - 5).toFixed(1) + '" text-anchor="end" font-size="9.5" fill="var(--muted)">Venta neta base · ' + moneyShort(VENTA_NETA) + "</text>";
+
+    s += '<path d="' + poly + '" fill="none" stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>';
+
+    // ejes X
+    for (var j = 0; j < pcts.length; j++) {
+      s += '<text x="' + cx(pcts[j]).toFixed(1) + '" y="' + (B + 16) + '" text-anchor="middle" font-size="9.5" fill="var(--muted)">' +
+        (pcts[j] === 0 ? "Base" : (pcts[j] > 0 ? "+" : "") + pcts[j] + "%") + "</text>";
+    }
+    s += '<text x="' + L + '" y="' + (H - 6) + '" font-size="9.5" fill="var(--muted)">Variación del costo de materiales</text>';
+
+    // marcadores
+    for (var k = 0; k < pts.length; k++) {
+      var isCur = pts[k].pct === state.scenario;
+      var rr = isCur ? 4.6 : 3.2;
+      s += '<circle cx="' + cx(pts[k].pct).toFixed(1) + '" cy="' + cy(pts[k].neta).toFixed(1) + '" r="' + rr +
+        '" fill="' + (isCur ? "var(--blue)" : "var(--paper)") + '" stroke="var(--blue)" stroke-width="2"/>';
+    }
+
+    // marcador del escenario elegido, con etiqueta anclada al punto
+    var cur = scenario(state.scenario);
+    var xc = cx(cur.pct), yc = cy(cur.neta);
+    var above = yc > T + 44;
+    s += '<line x1="' + xc.toFixed(1) + '" y1="' + T + '" x2="' + xc.toFixed(1) + '" y2="' + B + '" stroke="var(--blue)" stroke-width="1" opacity="0.35"/>';
+    var bx = Math.min(Math.max(xc - 62, L), R - 128);
+    var by = above ? yc - 44 : yc + 12;
+    s += '<line x1="' + xc.toFixed(1) + '" y1="' + yc.toFixed(1) + '" x2="' + (bx + 62).toFixed(1) + '" y2="' + (above ? by + 34 : by).toFixed(1) +
+      '" stroke="var(--blue)" stroke-width="1.2" opacity="0.7"/>';
+    s += '<rect x="' + bx.toFixed(1) + '" y="' + by.toFixed(1) + '" width="124" height="34" rx="7" fill="var(--blue)" opacity="0.10"/>' +
+      '<rect x="' + bx.toFixed(1) + '" y="' + by.toFixed(1) + '" width="124" height="34" rx="7" fill="none" stroke="var(--blue)" stroke-width="1"/>' +
+      '<text x="' + (bx + 10).toFixed(1) + '" y="' + (by + 14).toFixed(1) + '" font-size="10" fill="var(--ink-3)">Venta neta</text>' +
+      '<text x="' + (bx + 10).toFixed(1) + '" y="' + (by + 27).toFixed(1) + '" font-size="11.5" font-weight="700" fill="var(--blue)" font-family="var(--mono)">' + moneyShort(cur.neta) + " · " + (cur.impacto >= 0 ? "+" : "") + nf1.format(cur.impacto) + "%</text>";
+
+    el("sensSvg").innerHTML = s;
+
+    // tarjetas de escenario
+    var picks = [0, 10, 20];
+    var h = "";
+    for (var p = 0; p < picks.length; p++) {
+      var scp = scenario(picks[p]);
+      var rl = riskLabel(scp.impacto);
+      var cls = picks[p] === 0 ? "" : (rl.t === "ALTO" ? "bad" : (rl.t === "MEDIO" ? "pos" : "pos"));
+      h += '<div class="sc ' + cls + '"><div class="sck">' + (picks[p] === 0 ? "Base" : "+" + picks[p] + "% materiales") + "</div>" +
+        '<div class="scv">' + moneyShort(scp.neta) + "</div>" +
+        '<div class="scs">margen ' + pct(scp.margen) + " · venta " + (scp.impacto >= 0 ? "+" : "") + nf1.format(scp.impacto) + "%</div></div>";
+    }
+    el("scenRow").innerHTML = h;
+  }
+
+  // ---------------- render: partidas críticas ----------------
+  function renderCrit() {
+    // La tabla sí lista la clase elegida completa; en la clase C se incluye la cola agregada,
+    // de modo que ningún filtro devuelve una tabla vacía.
+    var rows;
+    if (state.abc === "all") {
+      rows = ABC.individual.slice(0, 15);
+      if (ABC.tail) rows.push(ABC.tail);
+    } else {
+      rows = ABC.individual.filter(function (r) { return r.cls === state.abc; }).slice(0, 15);
+      if (state.abc === "C" && ABC.tail) rows.push(ABC.tail);
+    }
+    var html = "";
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i];
+      var sel = ABC.rows.indexOf(r) === state.sel;
+      html += '<tr class="' + (sel ? "sel" : "") + '" data-i="' + ABC.rows.indexOf(r) + '">' +
+        '<td class="l"><span class="it">' + esc(r.it) + "</span></td>" +
+        '<td class="l">' + esc(r.name) + "</td>" +
+        '<td class="n">' + money(r.v) + "</td>" +
+        '<td><div class="sh"><span class="num" style="font-size:10.5px;color:var(--blue);font-weight:700;text-align:right">' + pct(r.share) + "</span>" +
+        '<span class="bar ' + r.cls.toLowerCase() + '"><i style="width:' + (r.share / 20 * 100).toFixed(1) + '%"></i></span></div></td>' +
+        '<td><span class="cls ' + r.cls.toLowerCase() + '">' + r.cls + "</span></td>" +
+        '<td><button class="btn ghost sm">Ir →</button> <button class="btn ghost sm">📦</button></td>' +
+        "</tr>";
+    }
+    el("critBody").innerHTML = html;
+    set("critCount", nf0.format(rows.length) + " mostradas" +
+      (state.abc === "all" ? "" : " · clase " + state.abc + " (" + nf0.format(CLASES[state.abc].n) + " en total)"));
+
+    var trs = el("critBody").querySelectorAll("tr");
+    for (var k = 0; k < trs.length; k++) {
+      trs[k].addEventListener("click", function () {
+        state.sel = parseInt(this.getAttribute("data-i"), 10) || 0;
+        renderAbc(); renderCrit();
+      });
+    }
+  }
+
+  // ---------------- render: pasos, alertas, feed, inicio ----------------
+  function renderSteps() {
+    var html = "";
+    for (var i = 0; i < STEPS.length; i++) {
+      var s = STEPS[i];
+      var isLast = i === STEPS.length - 1;
+      var glyph = s.s === "done" ? "✔" : (s.s === "warn" ? "!" : (s.s === "now" ? "●" : (i + 1)));
+      var lineCls = s.s === "done" ? "done" : "";
+      html += '<div class="step"><div class="rail"><span class="dot ' + s.s + '">' + glyph + "</span>" +
+        (isLast ? "" : '<span class="line ' + lineCls + '"></span>') + "</div>" +
+        '<div class="txt"><div class="st ' + s.s + '">' + s.t + '</div><div class="sd">' + s.d + "</div></div></div>";
+    }
+    el("steps").innerHTML = html;
+  }
+
+  function renderAlerts() {
+    var html = "";
+    for (var i = 0; i < ALERTS.length; i++) {
+      var a = ALERTS[i];
+      html += '<div class="al ' + a.sev + '"><div class="ah"><span class="asev">' + a.label + "</span>" +
+        '<span class="acnt">' + nf0.format(a.cnt) + "</span></div>" +
+        '<div class="at">' + esc(a.titulo) + '</div><div class="ad">' + esc(a.detalle) + "</div></div>";
+    }
+    el("alerts").innerHTML = html;
+    set("alBlk", BLOCKING + " bloqueante" + (BLOCKING === 1 ? "" : "s"));
+  }
+
+  function renderFeed() {
+    var html = "";
+    for (var i = 0; i < FEED.length; i++) {
+      var f = FEED[i];
+      var ic = f.k === "save" ? "✔" : (f.k === "adj" ? "≈" : "✎");
+      html += '<div class="fi ' + f.k + '"><span class="fic">' + ic + "</span>" +
+        '<div><div class="fa">' + esc(f.a) + '</div><div class="fm">' + esc(f.m) + "</div></div></div>";
+    }
+    el("feed").innerHTML = html;
+  }
+
+  function renderLanding() {
+    var h = "";
+    for (var i = 0; i < RECENT.length; i++) {
+      var r = RECENT[i];
+      h += '<div class="rc-item ' + r.state + '"><span class="ra"></span>' +
+        '<div><div class="rn">' + (r.pin ? '<span class="pin">★</span> ' : "") + esc(r.n) + '</div><div class="rs">' + esc(r.s) + "</div></div>" +
+        '<div class="rt"><span class="rd">' + esc(r.d) + '</span><button class="btn ghost sm">⋯</button></div></div>';
+    }
+    el("recent").innerHTML = h;
+
+    h = "";
+    for (var k = 0; k < TEMPLATES.length; k++) {
+      var t = TEMPLATES[k];
+      h += '<div class="tpl ' + t.cls + '"><span class="ti">' + t.icon + "</span>" +
+        "<div><h5>" + esc(t.t) + '</h5><div class="tn">' + esc(t.n) + "</div></div>" +
+        '<div class="td">' + esc(t.d) + '</div><button class="btn sm">Crear →</button></div>';
+    }
+    el("tpls").innerHTML = h;
+  }
+
+  // ---------------- render global ----------------
+  function render() {
+    if (state.view === "project") {
+      renderKpis(); renderVerdict(); renderWf(); renderPrep();
+      renderAbc(); renderSens(); renderCrit(); renderSteps(); renderAlerts(); renderFeed();
+    } else {
+      renderLanding();
+    }
+  }
+
+  // ---------------- interacción ----------------
+  function wireSeg(rootId, attr, apply) {
+    var root = el(rootId);
+    if (!root) return;
+    var btns = root.querySelectorAll("button");
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].addEventListener("click", function () {
+        for (var j = 0; j < btns.length; j++) btns[j].classList.remove("on");
+        this.classList.add("on");
+        apply(this.getAttribute(attr));
+      });
+    }
+  }
+
+  wireSeg("segView", "data-view", function (v) {
+    state.view = v;
+    el("viewProject").hidden = v !== "project";
+    el("viewLanding").hidden = v !== "landing";
+    render();
+  });
+
+  wireSeg("segTheme", "data-theme", function (v) {
+    state.theme = v;
+    document.documentElement.setAttribute("data-theme", v);
+    render();
+  });
+
+  wireSeg("segCur", "data-cur", function (v) {
+    state.currency = v;
+    render();
+  });
+
+  wireSeg("segAbc", "data-abc", function (v) {
+    state.abc = v;
+    renderAbc(); renderCrit();
+  });
+
+  var range = el("scenRange");
+  if (range) {
+    range.addEventListener("input", function () {
+      state.scenario = parseInt(this.value, 10);
+      set("scenVal", (state.scenario > 0 ? "+" : "") + state.scenario + " %");
+      renderKpis(); renderVerdict(); renderSens();
+    });
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>

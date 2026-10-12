@@ -128,12 +128,21 @@ internal sealed class CubicacionSectorService
         parent.NotifyVisibleSectorHeadersChanged();
     }
 
-    private string ResolveSectorHeader(int offset)
-    {
-        var zones = session.ZonasProyecto
-            .Where(z => z.Activa)
+    /// <summary>
+    /// Zonas activas en el orden de las columnas de casillas: el índice en esta lista ES el número
+    /// de casilla (offset) que se guarda en <see cref="CubicacionRow.QtyExpressions"/>. Única fuente
+    /// de verdad, compartida con el diálogo que pregunta en qué zona entra un material recién creado
+    /// (ver CubicacionRowMutationService) para que encabezados y escritura no se desalineen.
+    /// </summary>
+    public static IReadOnlyList<ZonaProyecto> ZonasActivasOrdenadas(BudgetProjectSession session)
+        => (session?.ZonasProyecto ?? new List<ZonaProyecto>())
+            .Where(z => z != null && z.Activa)
             .OrderBy(z => z.Orden)
             .ToList();
+
+    private string ResolveSectorHeader(int offset)
+    {
+        var zones = ZonasActivasOrdenadas(session);
 
         if (offset < zones.Count && !string.IsNullOrWhiteSpace(zones[offset].Nombre))
             return zones[offset].Nombre.Trim();

@@ -52,6 +52,21 @@ public sealed partial class NewProjectDialog : Window, INotifyPropertyChanged
         }
     }
 
+    /// <summary>
+    /// Plantilla preseleccionada del diálogo. Sin id explícito devuelve la plantilla en blanco,
+    /// de modo que un proyecto nuevo arranque con el itemizado vacío; un id desconocido también
+    /// cae en blanco en vez de inyectar partidas que el usuario no pidió.
+    /// </summary>
+    public static ProjectTemplate ResolveInitialTemplate(string? initialTemplateId)
+    {
+        if (string.IsNullOrWhiteSpace(initialTemplateId))
+            return ProjectTemplateCatalog.Blank;
+
+        return ProjectTemplateCatalog.All.FirstOrDefault(
+                   t => string.Equals(t.Id, initialTemplateId, StringComparison.OrdinalIgnoreCase))
+               ?? ProjectTemplateCatalog.Blank;
+    }
+
     public NewProjectDialog() : this(null, null)
     {
     }
@@ -62,15 +77,10 @@ public sealed partial class NewProjectDialog : Window, INotifyPropertyChanged
         DataContext = this;
         TemplateBox.ItemsSource = ProjectTemplateCatalog.All;
 
-        if (!string.IsNullOrWhiteSpace(initialTemplateId))
-        {
-            var found = ProjectTemplateCatalog.All.FirstOrDefault(t => string.Equals(t.Id, initialTemplateId, StringComparison.OrdinalIgnoreCase));
-            TemplateBox.SelectedItem = found ?? ProjectTemplateCatalog.All.ElementAtOrDefault(1) ?? ProjectTemplateCatalog.All.FirstOrDefault();
-        }
-        else
-        {
-            TemplateBox.SelectedIndex = 1; // Edificio Residencial SEC por defecto
-        }
+        // Un proyecto nuevo nace EN BLANCO: el itemizado queda vacío y se guarda así dentro del
+        // .qce. La estructura se agrega solo si el usuario la elige acá o llega desde una tarjeta
+        // de plantilla (esas pasan un id explícito y siguen precargando su obra típica).
+        TemplateBox.SelectedItem = ResolveInitialTemplate(initialTemplateId);
 
         if (!string.IsNullOrWhiteSpace(suggestedName))
         {

@@ -20,6 +20,14 @@ public partial class PlantillasView : UserControl
         InitializeComponent();
         DataContext = vm;
 
+        // Política de moneda: en CLP no se muestra la columna P. UF del preview de recursos.
+        vm.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(PlantillasVm.MuestraUf))
+                ApplyMonedaPolicy(vm);
+        };
+        ApplyMonedaPolicy(vm);
+
         // Cultura de los bindings = cultura del sistema (es-CL): sin esto WPF usa en-US,
         // rechaza "1,5" al teclear y muestra puntos donde el resto de la app muestra comas.
         Language = XmlLanguage.GetLanguage(CultureInfo.CurrentCulture.IetfLanguageTag);
@@ -57,8 +65,14 @@ public partial class PlantillasView : UserControl
         }
     }
 
-    private void ResourcesGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
+    /// <summary>
+    /// Política de moneda del proyecto: en CLP se oculta la columna P. UF del preview de recursos
+    /// del conjunto para que no quede ninguna cifra en UF en pantalla.
+    /// </summary>
+    private void ApplyMonedaPolicy(PlantillasVm vm)
+        => PreviewPrecioUfColumn.Visibility = vm.MuestraUf ? Visibility.Visible : Visibility.Collapsed;
+
+    private void ResourcesGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)    {
         // Las combos vivas dentro de celdas (Regla, Tipo, Rol, Dividir de) participan en
         // el BindingGroup de la fila de la DataGrid: su traslado al source queda diferido
         // hasta el commit de celda y se pierde si el usuario sale de la grilla sin pasar

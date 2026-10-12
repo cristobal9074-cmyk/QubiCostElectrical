@@ -24,7 +24,7 @@ public sealed class PriceBankEntryVm : ViewModelBase
         this.valorUfClp = valorUfClp;
         this.modoRendimiento = modoRendimiento;
         this.tarifaDhClp = tarifaDhClp;
-        this.indiceMoFa = indiceMoFa > 0m ? indiceMoFa : MaterialMoResolver.IndiceMoFaDefault;
+        this.indiceMoFa = Math.Max(0m, indiceMoFa);
 
         // Sanación de entradas ya contaminadas (pesos en columna MoUf)
         if (source.MoClp == 0m && source.MoUf > 15m)

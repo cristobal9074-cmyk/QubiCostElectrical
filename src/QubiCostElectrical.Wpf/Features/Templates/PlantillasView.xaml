@@ -1175,7 +1175,7 @@
                                                FontSize="16" FontWeight="Bold"
                                                Foreground="{DynamicResource Brush.Ink}"
                                                HorizontalAlignment="Center" Margin="0,0,0,8"/>
-                                    <TextBlock Text="Mira sus recursos, rendimientos y precios UF. Crea una con «＋ Nueva» en la lista."
+                                    <TextBlock Text="Mira sus recursos, rendimientos y precios. Crea una con «＋ Nueva» en la lista."
                                                FontSize="12" Foreground="{DynamicResource Brush.Muted}"
                                                TextWrapping="Wrap" TextAlignment="Center" MaxWidth="320"/>
                                 </StackPanel>
@@ -1262,7 +1262,7 @@
                                                         </Style>
                                                     </DataGridTextColumn.ElementStyle>
                                                 </DataGridTextColumn>
-                                                <DataGridTextColumn Header="P. UF" Width="90" Binding="{Binding PrecioUf, StringFormat=N2}"
+                                                <DataGridTextColumn x:Name="PreviewPrecioUfColumn" Header="P. UF" Width="90" Binding="{Binding PrecioUf, StringFormat=N2}"
                                                                     HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}">
                                                     <DataGridTextColumn.ElementStyle>
                                                         <Style TargetType="TextBlock">

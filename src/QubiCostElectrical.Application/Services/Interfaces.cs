@@ -226,6 +226,14 @@ public interface ICurrencyConversionService
     string FormatMoneyFromUf(decimal uf, string? currency, decimal valorUfClp, decimal tipoCambioUsdClp);
     string FormatMoneyFromUfCompact(decimal uf, string? currency, decimal valorUfClp, decimal tipoCambioUsdClp);
     string FormatMoneyFromClp(decimal clp, string? currency, decimal valorUfClp, decimal tipoCambioUsdClp);
+
+    /// <summary>
+    /// Formato de paridad (principal, secundario) para la moneda activa. Regla de producto:
+    /// si la moneda es CLP, el principal es el monto en pesos y el secundario queda vacío
+    /// (nunca se muestra UF). Para UF/USD/EUR el principal va en esa moneda y el secundario
+    /// es el equivalente en CLP, para dar visibilidad del precio.
+    /// </summary>
+    (string Primary, string Secondary) FormatMoneyPairFromClp(decimal clp, string? currency, decimal valorUfClp, decimal tipoCambioUsdClp);
 }
 
 public interface IPurchaseListService

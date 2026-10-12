@@ -44,7 +44,7 @@ public sealed class FamiliaShareWidthConverter : System.Windows.Data.IMultiValue
         double width = values.Length > 1 && values[1] is double w ? w : 0d;
         if (share <= 0d || width <= 1d || double.IsNaN(width) || double.IsInfinity(width))
             return 0d;
-        return Math.Max(6d, share * width);
+        return Math.Max(6d, Math.Min(share, 1d) * width);
     }
 
     public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)

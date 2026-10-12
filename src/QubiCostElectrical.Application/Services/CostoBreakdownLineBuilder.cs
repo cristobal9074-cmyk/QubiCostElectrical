@@ -66,10 +66,19 @@ public static class CostoBreakdownLineBuilder
         lines.Add(new("IVA", cost.IvaUf, "IVA incluido en total", "regular"));
         lines.Add(new("TOTAL VENTA", cost.TotalVentaUf, "Neto + IVA", "grand"));
         if (project.MetrosCuadrados > 0)
-            lines.Add(new($"UF / m² ({project.MetrosCuadrados:N0} m²)", cost.UfM2, "Total venta / m²", "regular"));
+            lines.Add(new($"{(CostoBreakdownLineBuilder.IsClp(project) ? "$" : "UF")} / m² ({project.MetrosCuadrados:N0} m²)",
+                cost.UfM2, "Total venta / m²", "regular"));
 
         return lines;
     }
+
+    /// <summary>Verdadero cuando el proyecto está configurado en pesos chilenos.</summary>
+    public static bool IsClp(ProjectInfoRow project)
+        => string.Equals(project.MonedaPresupuesto, "CLP", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>La línea de precio por m² cambia de unidad según la moneda del proyecto.</summary>
+    public static bool IsMetroLine(string label)
+        => label.StartsWith("UF / m", StringComparison.Ordinal) || label.StartsWith("$ / m", StringComparison.Ordinal);
 }
 
 public static class CostoOrigenDescriptor

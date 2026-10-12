@@ -79,6 +79,34 @@ public static class DashboardLandingCoordinator
         };
     }
 
+    /// <summary>
+    /// Presentación del estado del archivo en la lista de recientes: chip, motivo y color.
+    /// Un archivo ausente manda por sobre el semáforo de avance, porque el usuario debe saberlo
+    /// antes de hacer doble clic y comerse el error.
+    /// </summary>
+    public static (string Text, string Caption, Brush Accent, Brush Soft) DescribeArchiveState(
+        bool isMissing, DashboardProjectStateKind state)
+    {
+        if (isMissing)
+        {
+            return ("Archivo no encontrado",
+                    "La ruta ya no existe: quítalo de recientes o devuélvelo a su carpeta",
+                    DashboardKpiBrushes.Amber, DashboardKpiBrushes.AmberSoft);
+        }
+
+        return state switch
+        {
+            DashboardProjectStateKind.Complete =>
+                ("Completo", "Listo para cerrar", DashboardKpiBrushes.Green, DashboardKpiBrushes.GreenSoft),
+            DashboardProjectStateKind.InProgress =>
+                ("En progreso", "En desarrollo", DashboardKpiBrushes.Amber, DashboardKpiBrushes.AmberSoft),
+            DashboardProjectStateKind.Draft =>
+                ("Borrador", "Pendiente de trabajo", DashboardKpiBrushes.Blue, DashboardKpiBrushes.BlueSoft),
+            _ =>
+                ("Sin estado", "Estado no disponible", DashboardKpiBrushes.BlueDark, DashboardKpiBrushes.BlueSoft)
+        };
+    }
+
     public static void OpenProjectFolder(string? path)
     {
         if (string.IsNullOrWhiteSpace(path)) return;

@@ -124,7 +124,7 @@ public sealed class ClosingPolicySectionVm : ViewModelBase
             if (drift > 0.05m)
             {
                 StampNote = $"Parámetro fijado el {stamped:d}, cuando el costo de ejecución era "
-                    + $"{selection.ParamsStampedCostoEjecucionClp:N2} UF (hoy {currentCostoEjecucionUf:N2} UF). Revíselo.";
+                    + $"$ {selection.ParamsStampedCostoEjecucionClp:N0} (hoy $ {currentCostoEjecucionUf:N0}). Revíselo.";
                 HasStampNote = true;
             }
         }
@@ -240,11 +240,11 @@ public sealed class ClosingPolicySectionVm : ViewModelBase
         OnPropertyChanged(nameof(GainshareCapClpText));
     }
 
-    public void SetResult(ClosingPolicyResult result, string ventaFinalSubLabel)
+    public void SetResult(ClosingPolicyResult result, string ventaFinalLabel, string ventaFinalSubLabel, string margenLabel)
     {
-        VentaFinalLabel = $"{result.VentaFinalClp:N2} UF";
+        VentaFinalLabel = ventaFinalLabel;
         VentaFinalSubLabel = ventaFinalSubLabel;
-        MargenLabel = $"{result.MargenClp:N2} UF · {result.MargenPct:N1}%";
+        MargenLabel = margenLabel;
         Explicacion = result.Explicacion;
         Advertencias.Clear();
         foreach (var w in result.Advertencias)

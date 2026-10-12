@@ -43,10 +43,17 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
         string hash = BuildHash(ctx, cost, netUf, folio);
 
         var cultureES = CultureInfo.GetCultureInfo("es-CL");
+        var monedaDoc = ctx.Currency;
+        bool muestraUf = ctx.MuestraUf;
+        // Encabezado de la columna principal: "UF"/"USD" en proyectos con UF, "$" en CLP.
+        string HdrMoneda = monedaDoc.EncabezadoPrincipal;
+        string HdrEquivalente = monedaDoc.EncabezadoEquivalenteClp;
         string UF(decimal v) => v.ToString("#,##0.000", cultureES);
         string N(decimal v) => v.ToString("N0", cultureES);
-        string MoneyFromClp(decimal clp) => currencyConversion.FormatMoneyFromClp(
-            clp, ctx.CurrencyLabel, valorUf, project.TipoCambioUsdClp);
+        // Importe principal desde un monto en pesos (moneda base del motor).
+        string MoneyFromClp(decimal clp) => monedaDoc.DesdeClp(clp);
+        // Equivalente en pesos; cadena vacía cuando el proyecto está en CLP.
+        string EqClp(decimal clp) => monedaDoc.EquivalenteClp(clp);
         string S(string? s) => string.IsNullOrWhiteSpace(s) ? "—" : s.Trim();
         string DateLong(DateTime d) => d.ToString("d 'de' MMMM 'de' yyyy", cultureES);
 
@@ -203,7 +210,7 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
                 {
                     page.Size(PageSizes.A4);
                     page.Margin(0);
-                    RenderCover(page.Content(), ctx, offer, template, logoBytes, clientLogoBytes, coverTitle, coverSubtitle, netUf, folio, hash, date, valid, cultureES, signatureBytes, coverLayout, CNavy, CBlue);
+                    RenderCover(page.Content(), ctx, offer, template, logoBytes, clientLogoBytes, coverTitle, coverSubtitle, netUf, netClp, folio, hash, date, valid, cultureES, signatureBytes, coverLayout, CNavy, CBlue);
                 });
             }
 
@@ -265,7 +272,9 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
                                 cr.RelativeItem().Column(cc =>
                                 {
                                     cc.Item().Text(t => t.Span("Monto Neto Ofertado:").FontSize(7.5f).FontColor(CMuted));
-                                    cc.Item().Text(t => t.Span($"UF {netUf:N3}  ·  $ {netClp:N0} CLP").FontSize(9.5f).Bold().FontColor(CNavy));
+                                    cc.Item().Text(t => t.Span(muestraUf
+                                        ? $"UF {netUf.ToString("#,##0.000", cultureES)}  ·  $ {netClp:N0} CLP"
+                                        : $"$ {netClp:N0}").FontSize(9.5f).Bold().FontColor(CNavy));
                                     if (offer.IncludeIvaNote)
                                         cc.Item().Text(t => t.Span("Valores netos · agregar 19% IVA").FontSize(7).Italic().FontColor(CMuted));
                                 });
@@ -357,22 +366,24 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
                             {
                                 c.RelativeColumn(3);
                                 c.RelativeColumn(2);
-                                c.RelativeColumn(2);
+                                if (muestraUf)
+                                    c.RelativeColumn(2);
                             });
                             table.Header(h =>
                             {
                                 TH(h.Cell().Background(CNavy).Padding(5), "Concepto");
-                                TH(h.Cell().Background(CNavy).Padding(5), "UF", right: true);
-                                TH(h.Cell().Background(CNavy).Padding(5), ctx.CurrencyLabel, right: true);
+                                TH(h.Cell().Background(CNavy).Padding(5), HdrMoneda, right: true);
+                                if (muestraUf)
+                                    TH(h.Cell().Background(CNavy).Padding(5), HdrEquivalente, right: true);
                             });
 
                             void CostRow(string label, decimal clp, bool alt, bool bold = false, bool highlight = false)
                             {
                                 string bg = highlight ? CLight : (alt ? CRowAlt : CWhite);
-                                decimal uf = PriceConversion.ClpToUf(clp, valorUf);
                                 TD(table.Cell().Background(bg).PaddingHorizontal(6).PaddingVertical(4), label, bold: bold);
-                                TD(table.Cell().Background(bg).PaddingHorizontal(6).PaddingVertical(4), UF(uf), right: true, bold: bold);
                                 TD(table.Cell().Background(bg).PaddingHorizontal(6).PaddingVertical(4), MoneyFromClp(clp), right: true, bold: bold);
+                                if (muestraUf)
+                                    TD(table.Cell().Background(bg).PaddingHorizontal(6).PaddingVertical(4), EqClp(clp), right: true, bold: bold);
                             }
 
                             var pol = cost.ClosingPolicy;
@@ -425,9 +436,11 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
 
                         decimal clpM2 = cost.UfM2;
                         decimal ufM2 = PriceConversion.ClpToUf(clpM2, valorUf);
-                        if (ufM2 > 0m)
+                        if (clpM2 > 0m)
                             col.Item().PaddingTop(6).Text(t =>
-                                t.Span($"UF/m² referencial: {ufM2:N3}  ·  $ {clpM2:N0} CLP/m²")
+                                t.Span(muestraUf
+                                    ? $"UF/m² referencial: {ufM2.ToString("#,##0.000", cultureES)}  ·  $ {clpM2:N0} CLP/m²"
+                                    : $"$ {clpM2:N0} CLP/m²")
                                  .FontSize(8).FontColor(CMuted).Italic());
 
                         string explicacionNota = cost.ClosingPolicy switch
@@ -493,7 +506,9 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
                                             r.RelativeItem().PaddingLeft(6).Text(t =>
                                             {
                                                 t.Span(cmp.Label).FontSize(8).Bold().FontColor(CText);
-                                                t.Span($"  ·  UF {cmpUf:N3}  ·  $ {cmp.Clp:N0}").FontSize(7.5f).FontColor(CMuted);
+                                                t.Span(muestraUf
+                                                    ? $"  ·  UF {cmpUf:N3}  ·  $ {cmp.Clp:N0}"
+                                                    : $"  ·  $ {cmp.Clp:N0}").FontSize(7.5f).FontColor(CMuted);
                                             });
                                             r.ConstantItem(60).AlignRight().Text(t =>
                                                 t.Span($"{cmpPct:N1}%").FontSize(8).Bold().FontColor(CNavy));
@@ -567,8 +582,11 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
                                         });
                                         r.ConstantItem(220).AlignRight().Text(t =>
                                         {
-                                            t.Span($"UF {ch.Uf:N3}").FontSize(8.5f).Bold().FontColor(CNavy);
-                                            t.Span($"  ·  $ {ch.Clp:N0}  ·  ").FontSize(8).FontColor(CMuted);
+                                            t.Span(muestraUf ? $"UF {ch.Uf:N3}" : $"$ {ch.Clp:N0}").FontSize(8.5f).Bold().FontColor(CNavy);
+                                            if (muestraUf)
+                                                t.Span($"  ·  $ {ch.Clp:N0}  ·  ").FontSize(8).FontColor(CMuted);
+                                            else
+                                                t.Span("  ·  ").FontSize(8).FontColor(CMuted);
                                             t.Span($"{ch.Pct:N1}%").FontSize(8.5f).Bold().FontColor(CBlue);
                                         });
                                     });
@@ -594,7 +612,8 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
                             {
                                 c.RelativeColumn(4);   // Capítulo
                                 c.ConstantColumn(42);  // Partidas
-                                c.ConstantColumn(70);  // UF
+                                if (muestraUf)
+                                    c.ConstantColumn(70);  // UF
                                 c.ConstantColumn(85);  // CLP
                                 c.ConstantColumn(55);  // %
                             });
@@ -602,8 +621,9 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
                             {
                                 TH(h.Cell().Background(CNavy).Padding(5), "Capítulo / Especialidad");
                                 TH(h.Cell().Background(CNavy).Padding(5), "Partidas", right: true);
-                                TH(h.Cell().Background(CNavy).Padding(5), "Subtotal UF", right: true);
-                                TH(h.Cell().Background(CNavy).Padding(5), ctx.CurrencyLabel, right: true);
+                                if (muestraUf)
+                                    TH(h.Cell().Background(CNavy).Padding(5), "Subtotal UF", right: true);
+                                TH(h.Cell().Background(CNavy).Padding(5), muestraUf ? HdrEquivalente : HdrMoneda, right: true);
                                 TH(h.Cell().Background(CNavy).Padding(5), "Incidencia", right: true);
                             });
 
@@ -613,7 +633,8 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
                                 string bg = alt ? CRowAlt : CWhite;
                                 TD(tbl.Cell().Background(bg).PaddingHorizontal(5).PaddingVertical(3), ch.Name);
                                 TD(tbl.Cell().Background(bg).PaddingHorizontal(5).PaddingVertical(3), ch.Count.ToString(), right: true);
-                                TD(tbl.Cell().Background(bg).PaddingHorizontal(5).PaddingVertical(3), UF(ch.Uf), right: true);
+                                if (muestraUf)
+                                    TD(tbl.Cell().Background(bg).PaddingHorizontal(5).PaddingVertical(3), UF(ch.Uf), right: true);
                                 TD(tbl.Cell().Background(bg).PaddingHorizontal(5).PaddingVertical(3), MoneyFromClp(ch.Clp), right: true);
                                 TD(tbl.Cell().Background(bg).PaddingHorizontal(5).PaddingVertical(3), $"{ch.Pct:N1}%", right: true, bold: true);
                                 alt = !alt;
@@ -622,7 +643,8 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
                             // Total
                             tbl.Cell().ColumnSpan(2).Background(CNavy).PaddingVertical(5).PaddingHorizontal(5)
                                 .Text(t => t.Span("TOTAL GENERAL PRESUPUESTO").FontSize(8).Bold().FontColor(CWhite));
-                            TDNavy(tbl.Cell().Background(CNavy).PaddingHorizontal(5).PaddingVertical(5), $"UF {UF(netUf)}", right: true);
+                            if (muestraUf)
+                                TDNavy(tbl.Cell().Background(CNavy).PaddingHorizontal(5).PaddingVertical(5), $"UF {UF(netUf)}", right: true);
                             TDNavy(tbl.Cell().Background(CNavy).PaddingHorizontal(5).PaddingVertical(5), MoneyFromClp(netClp), right: true);
                             TDNavy(tbl.Cell().Background(CNavy).PaddingHorizontal(5).PaddingVertical(5), "100.0%", right: true);
                         });
@@ -704,11 +726,14 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
                                 col.Item().PaddingTop(8)
                                     .Background(CHead).Border(1).BorderColor(CLine).Padding(8).Row(pr =>
                                     {
-                                        pr.RelativeItem().Column(pc =>
+                                        if (muestraUf)
                                         {
-                                            pc.Item().Text(t => t.Span("VALOR UF REF:").FontSize(7).Bold().FontColor(CMuted));
-                                            pc.Item().Text(t => t.Span($"$ {valorUf:N2} CLP").FontSize(8.5f).Bold().FontColor(CNavy));
-                                        });
+                                            pr.RelativeItem().Column(pc =>
+                                            {
+                                                pc.Item().Text(t => t.Span("VALOR UF REF:").FontSize(7).Bold().FontColor(CMuted));
+                                                pc.Item().Text(t => t.Span($"$ {valorUf:N2} CLP").FontSize(8.5f).Bold().FontColor(CNavy));
+                                            });
+                                        }
                                         pr.RelativeItem().Column(pc =>
                                         {
                                             pc.Item().Text(t => t.Span("VALIDEZ OFERTA:").FontSize(7).Bold().FontColor(CMuted));
@@ -758,8 +783,9 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
                     {
                         PageTitle(col, "Tabla de Partidas");
                         bool showPu = offer.ShowUnitPricesInItemizado;
-                        int totalCols = showPu ? 7 : 6;
-                        int totalSpan = showPu ? 5 : 4;
+                        // En CLP no se emite la columna UF: queda una sola columna de moneda.
+                        int totalCols = 4 + (showPu ? 1 : 0) + monedaDoc.ColumnasMoneda;
+                        int totalSpan = totalCols - monedaDoc.ColumnasMoneda;
 
                         col.Item().PaddingTop(12).Table(table =>
                         {
@@ -772,7 +798,8 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
                                 if (showPu)
                                     c.ConstantColumn(52); // P.U. UF
                                 c.ConstantColumn(58);    // Total UF
-                                c.ConstantColumn(72);    // CLP
+                                if (muestraUf)
+                                    c.ConstantColumn(72);    // CLP
                             });
                             table.Header(h =>
                             {
@@ -781,9 +808,10 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
                                 TH(h.Cell().Background(CNavy).Padding(5), "UD");
                                 TH(h.Cell().Background(CNavy).Padding(5), "Cant.", right: true);
                                 if (showPu)
-                                    TH(h.Cell().Background(CNavy).Padding(5), "P.U. UF", right: true);
-                                TH(h.Cell().Background(CNavy).Padding(5), "Total UF", right: true);
-                                TH(h.Cell().Background(CNavy).Padding(5), ctx.CurrencyLabel, right: true);
+                                    TH(h.Cell().Background(CNavy).Padding(5), $"P.U. {HdrMoneda}", right: true);
+                                TH(h.Cell().Background(CNavy).Padding(5), $"Total {HdrMoneda}", right: true);
+                                if (muestraUf)
+                                    TH(h.Cell().Background(CNavy).Padding(5), HdrEquivalente, right: true);
                             });
 
                             bool alt = false;
@@ -821,10 +849,14 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
                                     if (showPu)
                                     {
                                         decimal puUf = r.Cantidad > 0m ? rowUf / r.Cantidad : 0m;
-                                        TD(table.Cell().Background(bg).PaddingHorizontal(5).PaddingVertical(3), r.Cantidad > 0m ? UF(puUf) : "", right: true);
+                                        TD(table.Cell().Background(bg).PaddingHorizontal(5).PaddingVertical(3),
+                                            r.Cantidad > 0m ? (muestraUf ? UF(puUf) : $"$ {rowClp / r.Cantidad:N0}") : "", right: true);
                                     }
-                                    TD(table.Cell().Background(bg).PaddingHorizontal(5).PaddingVertical(3), rowClp > 0m ? UF(rowUf) : "", right: true);
-                                    TD(table.Cell().Background(bg).PaddingHorizontal(5).PaddingVertical(3), rowClp > 0m ? MoneyFromClp(rowClp) : "", right: true);
+                                    TD(table.Cell().Background(bg).PaddingHorizontal(5).PaddingVertical(3),
+                                        rowClp > 0m ? (muestraUf ? UF(rowUf) : $"$ {rowClp:N0}") : "", right: true);
+                                    if (muestraUf)
+                                        TD(table.Cell().Background(bg).PaddingHorizontal(5).PaddingVertical(3),
+                                            rowClp > 0m ? EqClp(rowClp) : "", right: true);
                                     alt = !alt;
                                 }
                             }
@@ -832,8 +864,10 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
                             // Fila de total
                             table.Cell().ColumnSpan((uint)totalSpan).Background(CNavy).PaddingVertical(6).PaddingHorizontal(6)
                                 .Text(t => t.Span("TOTAL NETO").FontSize(8).Bold().FontColor(CWhite));
-                            TDNavy(table.Cell().Background(CNavy).PaddingHorizontal(5).PaddingVertical(6), $"UF {UF(netUf)}", right: true);
-                            TDNavy(table.Cell().Background(CNavy).PaddingHorizontal(5).PaddingVertical(6), MoneyFromClp(netClp), right: true);
+                            TDNavy(table.Cell().Background(CNavy).PaddingHorizontal(5).PaddingVertical(6),
+                                muestraUf ? $"UF {UF(netUf)}" : $"$ {netClp:N0}", right: true);
+                            if (muestraUf)
+                                TDNavy(table.Cell().Background(CNavy).PaddingHorizontal(5).PaddingVertical(6), EqClp(netClp), right: true);
                         });
 
                         if (offer.IncludeIvaNote)
@@ -859,13 +893,15 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
                             {
                                 c.RelativeColumn(3);
                                 c.RelativeColumn(2);
-                                c.RelativeColumn(2);
+                                if (muestraUf)
+                                    c.RelativeColumn(2);
                             });
                             table.Header(h =>
                             {
                                 TH(h.Cell().Background(CNavy).Padding(5), "Área");
-                                TH(h.Cell().Background(CNavy).Padding(5), "UF", right: true);
-                                TH(h.Cell().Background(CNavy).Padding(5), ctx.CurrencyLabel, right: true);
+                                TH(h.Cell().Background(CNavy).Padding(5), HdrMoneda, right: true);
+                                if (muestraUf)
+                                    TH(h.Cell().Background(CNavy).Padding(5), HdrEquivalente, right: true);
                             });
                             bool alt = false;
                             foreach (var a in areas)
@@ -873,8 +909,10 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
                                 string bg = alt ? CRowAlt : CWhite;
                                 TD(table.Cell().Background(bg).PaddingHorizontal(6).PaddingVertical(4), a.Area);
                                 decimal areaUf = PriceConversion.ClpToUf(a.Total, valorUf);
-                                TD(table.Cell().Background(bg).PaddingHorizontal(6).PaddingVertical(4), UF(areaUf), right: true);
-                                TD(table.Cell().Background(bg).PaddingHorizontal(6).PaddingVertical(4), MoneyFromClp(a.Total), right: true);
+                                TD(table.Cell().Background(bg).PaddingHorizontal(6).PaddingVertical(4),
+                                    muestraUf ? UF(areaUf) : $"$ {a.Total:N0}", right: true);
+                                if (muestraUf)
+                                    TD(table.Cell().Background(bg).PaddingHorizontal(6).PaddingVertical(4), EqClp(a.Total), right: true);
                                 alt = !alt;
                             }
                         });
@@ -1056,6 +1094,7 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
         string coverTitle,
         string coverSubtitle,
         decimal netUf,
+        decimal netClp,
         string folio,
         string hash,
         DateTime date,
@@ -1154,7 +1193,7 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
                              .FontSize(10).Bold().FontColor(CWhite));
                 }
 
-                RenderCoverSections(body, ctx, offer, template, netUf, folio, hash, date, valid, cultureES, signatureBytes, layout, primaryColor, accentColor);
+                RenderCoverSections(body, ctx, offer, template, netUf, netClp, folio, hash, date, valid, cultureES, signatureBytes, layout, primaryColor, accentColor);
             });
         });
     }
@@ -1165,6 +1204,7 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
         OfferPdfSettings offer,
         ExportReportTemplateSettings template,
         decimal netUf,
+        decimal netClp,
         string folio,
         string hash,
         DateTime date,
@@ -1185,13 +1225,13 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
             col.Item().PaddingTop(index == 0 ? 18 : 14).Row(row =>
             {
                 row.RelativeItem().Element(c =>
-                    RenderCoverSectionCard(c, left, ctx, offer, template, netUf, folio, hash, date, valid, cultureES, signatureBytes, primaryColor, accentColor));
+                    RenderCoverSectionCard(c, left, ctx, offer, template, netUf, netClp, folio, hash, date, valid, cultureES, signatureBytes, primaryColor, accentColor));
 
                 if (right.HasValue)
                 {
                     row.ConstantItem(18);
                     row.RelativeItem().Element(c =>
-                        RenderCoverSectionCard(c, right.Value, ctx, offer, template, netUf, folio, hash, date, valid, cultureES, signatureBytes, primaryColor, accentColor));
+                        RenderCoverSectionCard(c, right.Value, ctx, offer, template, netUf, netClp, folio, hash, date, valid, cultureES, signatureBytes, primaryColor, accentColor));
                 }
             });
 
@@ -1206,6 +1246,7 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
         OfferPdfSettings offer,
         ExportReportTemplateSettings template,
         decimal netUf,
+        decimal netClp,
         string folio,
         string hash,
         DateTime date,
@@ -1218,7 +1259,7 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
         container.Background(CWhite).Border(1).BorderColor(CLine).Padding(14).Column(card =>
         {
             card.Item().Text(t =>
-                t.Span(CoverSectionTitle(section)).FontSize(10).Bold().FontColor(primaryColor));
+                t.Span(CoverSectionTitle(section, ctx.MuestraUf)).FontSize(10).Bold().FontColor(primaryColor));
 
             switch (section)
             {
@@ -1240,12 +1281,23 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
                     break;
 
                 case ReportCoverSectionKind.Summary:
-                    card.Item().PaddingTop(6).Text(t =>
-                        t.Span($"UF {netUf.ToString("#,##0.000", cultureES)}").FontSize(24).Bold().FontColor(primaryColor));
                     decimal valorUfCover = ctx.Project.ValorUfClp > 0m ? ctx.Project.ValorUfClp : PriceConversion.DefaultValorUfClp;
-                    card.Item().PaddingTop(2).Text(t =>
-                        t.Span(currencyConversion.FormatMoneyFromUf(netUf, ctx.CurrencyLabel, valorUfCover, ctx.Project.TipoCambioUsdClp))
-                         .FontSize(12).FontColor(accentColor));
+                    if (ctx.MuestraUf)
+                    {
+                        card.Item().PaddingTop(6).Text(t =>
+                            t.Span($"UF {netUf.ToString("#,##0.000", cultureES)}").FontSize(24).Bold().FontColor(primaryColor));
+                        card.Item().PaddingTop(2).Text(t =>
+                            t.Span(currencyConversion.FormatMoneyFromUf(netUf, ctx.CurrencyLabel, valorUfCover, ctx.Project.TipoCambioUsdClp))
+                             .FontSize(12).FontColor(accentColor));
+                    }
+                    else
+                    {
+                        // Proyecto en CLP: se muestra sólo el monto en pesos, sin UF ni tasa.
+                        card.Item().PaddingTop(6).Text(t =>
+                            t.Span($"$ {netClp:N0}").FontSize(24).Bold().FontColor(primaryColor));
+                        card.Item().PaddingTop(2).Text(t =>
+                            t.Span($"CLP · neto").FontSize(12).FontColor(accentColor));
+                    }
                     if (offer.IncludeIvaNote)
                     {
                         card.Item().PaddingTop(8).Text(t =>
@@ -1301,11 +1353,11 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
         col.Item().PaddingTop(2).Text(t => t.Span(Excerpt(value, 140)).FontSize(8).FontColor(CText));
     }
 
-    private static string CoverSectionTitle(ReportCoverSectionKind section) => section switch
+    private static string CoverSectionTitle(ReportCoverSectionKind section, bool muestraUf) => section switch
     {
         ReportCoverSectionKind.Project => "Proyecto",
         ReportCoverSectionKind.Client => "Cliente",
-        ReportCoverSectionKind.Summary => "Resumen UF",
+        ReportCoverSectionKind.Summary => muestraUf ? "Resumen UF" : "Resumen $",
         ReportCoverSectionKind.Itemized => "Itemizado",
         ReportCoverSectionKind.Conditions => "Condiciones",
         ReportCoverSectionKind.Signature => "Firma",

@@ -176,7 +176,18 @@ public sealed partial class PlantillasVm : ViewModelBase, IRefreshablePage, IPag
     public ICommand EliminarSeleccionCommand { get; }
     public ICommand ToggleAyudaCommand { get; }
 
-    public void Refresh() => Load();
+    /// <summary>
+    /// Política de moneda del proyecto: en CLP no se expone ninguna cifra en UF (columna P. UF
+    /// del preview de recursos del conjunto).
+    /// </summary>
+    public bool MuestraUf =>
+        !string.Equals(session.ProjectInfo.MonedaPresupuesto, CurrencyConversionService.CurrencyClp, StringComparison.OrdinalIgnoreCase);
+
+    public void Refresh()
+    {
+        Load();
+        OnPropertyChanged(nameof(MuestraUf));
+    }
 
     public void Load()
     {

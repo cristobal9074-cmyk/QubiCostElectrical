@@ -92,6 +92,8 @@ public sealed class DashboardCostShareVm
 public sealed class DashboardOfferReadinessItemVm
 {
     public string Label { get; init; } = "";
+    /// <summary>Avance medido de la compuerta ("108 de 124"), no un booleano suelto.</summary>
+    public string Detail { get; init; } = "";
     public bool IsComplete { get; init; }
     public bool IsWarning { get; init; }
     public Brush StatusBrush { get; init; } = DashboardKpiBrushes.Green;
@@ -116,6 +118,7 @@ internal static class DashboardKpiBrushes
     public static Brush AmberSoft => ThemeOrFallback("Brush.AmberSoft", "#FFF5DD");
     public static Brush RedSoft => ThemeOrFallback("Brush.RedSoft", "#FFF0F0");
     public static Brush GreenSoft => ThemeOrFallback("Brush.GreenSoft", "#EAF8EF");
+    public static Brush Muted => ThemeOrFallback("Brush.Muted", "#64748B");
 
     public static Brush ForAccent(DashboardExecutiveKpiAccent accent) => accent switch
     {
@@ -197,7 +200,6 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
     private string nextStepDetail = "";
     private string primaryCtaLabel = "Continuar";
     private ShellRoute primaryCtaRoute = ShellRoute.Takeoff;
-    private int blockingAlertCount;
     private string partidasReadyLabel = "—";
     private double partidasReadyPercent;
     private bool isDetailExpanded;
@@ -235,6 +237,40 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
     public GridLength MarginShareWidth { get => marginShareWidth; private set => SetProperty(ref marginShareWidth, value); }
     private DashboardParetoSummary paretoSummary = DashboardParetoSummary.Empty;
     public DashboardParetoSummary ParetoSummary { get => paretoSummary; private set => SetProperty(ref paretoSummary, value); }
+
+    private DashboardWaterfallVm waterfall = DashboardWaterfallVm.Empty;
+    /// <summary>Cascada de precio: un solo origen de datos para el precio de la oferta.</summary>
+    public DashboardWaterfallVm Waterfall { get => waterfall; private set => SetProperty(ref waterfall, value); }
+
+    private DashboardReadinessContract readiness = DashboardReadinessContract.Empty;
+    /// <summary>Contrato único de preparación: KPI, barra, anillo, checklist y veredicto.</summary>
+    public DashboardReadinessContract Readiness { get => readiness; private set => SetProperty(ref readiness, value); }
+
+    private string verdictTitle = "Sin itemizado";
+    public string VerdictTitle { get => verdictTitle; private set => SetProperty(ref verdictTitle, value); }
+
+    private string verdictReason = "";
+    public string VerdictReason { get => verdictReason; private set => SetProperty(ref verdictReason, value); }
+
+    /// <summary>ok | warn | bad | mute — controla el tono del veredicto.</summary>
+    private string verdictKind = "mute";
+    public string VerdictKind
+    {
+        get => verdictKind;
+        private set
+        {
+            if (SetProperty(ref verdictKind, value))
+            {
+                OnPropertyChanged(nameof(IsVerdictOk));
+                OnPropertyChanged(nameof(IsVerdictWarn));
+                OnPropertyChanged(nameof(IsVerdictBad));
+            }
+        }
+    }
+
+    public bool IsVerdictOk => verdictKind == "ok";
+    public bool IsVerdictWarn => verdictKind == "warn";
+    public bool IsVerdictBad => verdictKind == "bad";
 
     private string? selectedParetoFilter;
     public string? SelectedParetoFilter

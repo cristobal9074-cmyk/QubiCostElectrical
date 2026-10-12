@@ -9,6 +9,9 @@ public partial class PrecioListaEditarDialog : Window
 {
     private readonly PrecioListaResumenVm vm;
 
+    /// <summary>Código del material creado, para que la ventana que lo abrió pueda encadenarlo a la cubicación.</summary>
+    public string? CodigoCreado { get; private set; }
+
     public PrecioListaEditarDialog(PrecioListaResumenVm vm, PrecioListaMaterialVm? _)
     {
         InitializeComponent();
@@ -43,15 +46,24 @@ public partial class PrecioListaEditarDialog : Window
             ? (item.Content as string) ?? "un"
             : "un";
 
-        vm.AgregarMaterial(
-            codigo,
-            descripcion,
-            unidad,
-            CategoriaBox.Text.Trim(),
-            matClp,
-            moClp,
-            ProveedorBox.Text.Trim(),
-            FechaPicker.SelectedDate ?? DateTime.Today);
+        if (!vm.AgregarMaterial(
+                codigo,
+                descripcion,
+                unidad,
+                CategoriaBox.Text.Trim(),
+                matClp,
+                moClp,
+                ProveedorBox.Text.Trim(),
+                FechaPicker.SelectedDate ?? DateTime.Today))
+        {
+            // El aviso de código duplicado ya lo mostró AgregarMaterial: se deja el formulario abierto
+            // para corregir el código en vez de cerrar perdiendo lo escrito.
+            CodigoBox.Focus();
+            CodigoBox.SelectAll();
+            return;
+        }
+
+        CodigoCreado = codigo;
         DialogResult = true;
     }
 }

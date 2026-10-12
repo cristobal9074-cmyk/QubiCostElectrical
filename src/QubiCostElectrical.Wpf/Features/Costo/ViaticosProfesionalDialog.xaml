@@ -725,7 +725,8 @@
                       <TextBlock Text="Total categoría 3.3" FontWeight="Bold" Foreground="{DynamicResource Brush.White}" VerticalAlignment="Center" />
                       <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
                         <TextBlock Text="{Binding FootTotalLabel}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.lg}" FontWeight="Bold" Foreground="{DynamicResource Brush.White}" Margin="0,0,16,0" />
-                        <TextBlock Text="{Binding FootUfLabel}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.base}" Foreground="{DynamicResource Brush.BrandStroke2}" />
+                        <TextBlock Text="{Binding FootUfLabel}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.base}" Foreground="{DynamicResource Brush.BrandStroke2}"
+                                   Visibility="{Binding MuestraEquivalenciaUf, Converter={StaticResource BoolToVisibility}}" />
                       </StackPanel>
                     </DockPanel>
                   </Border>

@@ -167,7 +167,6 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
     public string NextStepTitle { get => nextStepTitle; private set => SetProperty(ref nextStepTitle, value); }
     public string NextStepDetail { get => nextStepDetail; private set => SetProperty(ref nextStepDetail, value); }
     public string PrimaryCtaLabel { get => primaryCtaLabel; private set => SetProperty(ref primaryCtaLabel, value); }
-    public int BlockingAlertCount { get => blockingAlertCount; private set => SetProperty(ref blockingAlertCount, value); }
     public string PartidasReadyLabel { get => partidasReadyLabel; private set => SetProperty(ref partidasReadyLabel, value); }
     public double PartidasReadyPercent { get => partidasReadyPercent; private set => SetProperty(ref partidasReadyPercent, value); }
     public bool IsDetailExpanded { get => isDetailExpanded; set => SetProperty(ref isDetailExpanded, value); }
@@ -327,6 +326,11 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
                 OfferReadinessItems.Clear();
                 TopPartidas.Clear();
                 ParetoSummary = DashboardParetoSummary.Empty;
+                Waterfall = DashboardWaterfallVm.Empty;
+                Readiness = DashboardReadinessContract.Empty;
+                VerdictTitle = "Abra un proyecto";
+                VerdictReason = "Cree o abra un archivo .qce para ver venta, margen y preparación de la oferta.";
+                VerdictKind = "mute";
                 RecentAuditEntries.Clear();
                 LoadLandingState();
                 CostMaterials = CostLabor = CostOtherDirect = CostDirect = CostTotal = CostUfM2 = CostGo = CostMargin = MargenRealPctLabel = "—";
@@ -361,15 +365,11 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
                 decimal valorUf = project.ValorUfClp > 0m ? project.ValorUfClp : PriceConversion.DefaultValorUfClp;
 
                 string FormatClp(decimal clp) => $"$ {clp:N0}";
-                string FormatUf(decimal clp)
-                {
-                    decimal uf = PriceConversion.ClpToUf(clp, valorUf);
-                    return $"{uf:N2} UF";
-                }
                 string FormatDual(decimal clp)
                 {
-                    decimal uf = PriceConversion.ClpToUf(clp, valorUf);
-                    return $"$ {clp:N0} · {uf:N2} UF";
+                    // Regla de moneda: en CLP solo pesos; en UF/USD el valor primario con su equivalente en pesos.
+                    var pair = currency.FormatMoneyPairFromClp(clp, project.MonedaPresupuesto, valorUf, project.TipoCambioUsdClp);
+                    return pair.Secondary.Length == 0 ? pair.Primary : $"{pair.Primary} ({pair.Secondary})";
                 }
                 string FormatMoney(decimal clp) =>
                     currency.FormatMoneyFromClp(clp, project.MonedaPresupuesto, valorUf, project.TipoCambioUsdClp);
@@ -384,7 +384,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
 
                 BuildWorkflow(state.Alerts);
                 BuildAlerts(state.Alerts);
-                BuildOfferReadiness(state.Alerts);
+                BuildReadiness(state.Alerts);
                 BuildPriceValidity();
                 BuildVersionComparison();
                 UpdateNextStep(state.Alerts);
@@ -399,11 +399,11 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
                 foreach (var kpi in state.Executive.Kpis)
                 {
                     string val, cap;
+                    bool isClpPref = string.Equals(project.MonedaPresupuesto, "CLP", StringComparison.OrdinalIgnoreCase);
                     if (kpi.Title == "TOTAL VENTA")
                     {
-                        bool isClpPref = string.Equals(project.MonedaPresupuesto, "CLP", StringComparison.OrdinalIgnoreCase);
-                        val = isClpPref ? FormatClp(totalVentaClp) : FormatUf(totalVentaClp);
-                        cap = isClpPref ? $"{FormatUf(totalVentaClp)} · Valor oficial" : $"{FormatClp(totalVentaClp)} · Valor oficial";
+                        val = FormatMoney(totalVentaClp);
+                        cap = isClpPref ? "Valor oficial" : $"{FormatClp(totalVentaClp)} · Valor oficial";
                     }
                     else if (kpi.Title.EndsWith("/ m²", StringComparison.OrdinalIgnoreCase) || kpi.Title.Contains("m²"))
                     {
@@ -411,9 +411,8 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
                         {
                             decimal clpM2 = totalVentaClp / project.MetrosCuadrados;
                             decimal ufM2 = PriceConversion.ClpToUf(clpM2, valorUf);
-                            bool isClpPref = string.Equals(project.MonedaPresupuesto, "CLP", StringComparison.OrdinalIgnoreCase);
                             val = isClpPref ? $"$ {clpM2:N0} / m²" : $"{ufM2:N2} UF / m²";
-                            cap = isClpPref ? $"{ufM2:N2} UF/m² · Superficie" : $"$ {clpM2:N0} CLP/m² · Superficie";
+                            cap = isClpPref ? "Total venta / m²" : $"$ {clpM2:N0} CLP/m² · Superficie";
                         }
                         else
                         {
@@ -427,9 +426,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
                         cap = kpi.Caption;
                     }
 
-                    int pendientes = kpi.Title == "PARTIDAS LISTAS"
-                        ? state.Alerts.EmptyPartidas + state.Alerts.MaterialsWithoutPrice
-                        : 0;
+                    int pendientes = kpi.Title == "PARTIDAS LISTAS" ? Readiness.Pendientes : 0;
                     string chip = kpi.Title switch
                     {
                         "TOTAL VENTA" => HasVersionComparison
@@ -466,7 +463,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
                         ChipLabel = chip,
                         ChipKind = chipKind,
                         IconKind = iconKind,
-                        ShowUfUpdateButton = kpi.Title == "TOTAL VENTA",
+                        ShowUfUpdateButton = kpi.Title == "TOTAL VENTA" && !isClpPref,
                         GaugePercent = gauge,
                         GaugeFillWidth = new GridLength(Math.Max(0.001, gauge), GridUnitType.Star),
                         GaugeRemainWidth = new GridLength(Math.Max(0.001, 100 - gauge), GridUnitType.Star)
@@ -499,8 +496,11 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
                 CostMargin = FormatDual(marginClp);
                 MargenRealPctLabel = $"{state.Cost.MargenRealPct:N1}%";
 
+                var enClpResumen = string.Equals(project.MonedaPresupuesto, "CLP", StringComparison.OrdinalIgnoreCase);
                 CostUfM2 = project.MetrosCuadrados > 0
-                    ? $"{PriceConversion.ClpToUf(totalVentaClp / project.MetrosCuadrados, valorUf):N2} UF/m² · $ {(totalVentaClp / project.MetrosCuadrados):N0}/m²"
+                    ? enClpResumen
+                        ? $"$ {totalVentaClp / project.MetrosCuadrados:N0}/m²"
+                        : $"{PriceConversion.ClpToUf(totalVentaClp / project.MetrosCuadrados, valorUf):N2} UF/m² · $ {(totalVentaClp / project.MetrosCuadrados):N0}/m²"
                     : "Configure m² en datos del proyecto";
                 UpdateCostDistribution(state.Cost.TotalVentaUf, state.Cost.MaterialesUf, state.Cost.ManoObraUf, state.Cost.GastosOperacionalesUf, marginClp);
 
@@ -522,8 +522,8 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
                         ItemId = itemId,
                         Item = row.Item,
                         Partida = row.Partida,
-                        TotalLabel = $"$ {rowClp:N0} ({rowUf:N1} UF)",
-                        TotalClpLabel = $"$ {rowClp:N0}",
+                        TotalLabel = FormatDual(rowClp),
+                        TotalClpLabel = FormatClp(rowClp),
                         TotalUfLabel = $"{rowUf:N2} UF",
                         SharePct = Math.Clamp(sharePct, 0, 100),
                         AccumPct = Math.Clamp(runningAccum, 0, 100),
@@ -535,6 +535,55 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
                 ParetoAxisMaxPct = Math.Max(5, Math.Ceiling(maxShare / 5) * 5);
                 OnPropertyChanged(nameof(FilteredTopPartidas));
                 OnPropertyChanged(nameof(HasTopPartidas));
+
+                // 5.º y 6.º KPI: las dos lecturas que faltaban (margen real y concentración de costo).
+                double margenPct = (double)state.Cost.MargenRealPct;
+                var margenAccent = margenPct >= 10d
+                    ? DashboardExecutiveKpiAccent.RiskLow
+                    : (margenPct > 0d ? DashboardExecutiveKpiAccent.RiskMedium : DashboardExecutiveKpiAccent.RiskHigh);
+                KpiCards.Add(new DashboardKpiCardVm
+                {
+                    Title = "MARGEN REAL",
+                    Value = MargenRealPctLabel,
+                    Caption = $"{CostMargin} · margen sobre la venta neta",
+                    Accent = margenAccent,
+                    AccentBrush = DashboardKpiBrushes.ForAccent(margenAccent),
+                    AccentSoftBrush = DashboardKpiBrushes.ForAccentSoft(margenAccent),
+                    ChipLabel = margenPct >= 10d ? "Saludable" : (margenPct > 0d ? "Ajustado" : "Bajo costo"),
+                    ChipKind = margenPct >= 10d ? "up" : (margenPct > 0d ? "warn" : "danger"),
+                    IconKind = "margen"
+                });
+
+                var concentracion = ParetoSummary;
+                KpiCards.Add(new DashboardKpiCardVm
+                {
+                    Title = "CONCENTRACIÓN A",
+                    Value = $"{concentracion.PctA:N1}%",
+                    Caption = concentracion.CountA > 0
+                        ? $"{concentracion.CountA} partidas cubren el 80% del costo directo"
+                        : "Aún sin partidas críticas Tipo A",
+                    Accent = DashboardExecutiveKpiAccent.Blue,
+                    AccentBrush = DashboardKpiBrushes.BlueDark,
+                    AccentSoftBrush = DashboardKpiBrushes.BlueSoft,
+                    ChipLabel = concentracion.CountA <= 15 ? "Foco" : "Dispersa",
+                    ChipKind = concentracion.CountA <= 15 ? "mute" : "warn",
+                    IconKind = "concentracion"
+                });
+
+                // Cascada de precio: un único recorrido auditable del costo de ejecución al total.
+                Waterfall = DashboardCockpitComposer.BuildWaterfall(
+                    state.Cost,
+                    new DashboardWaterfallPolicy(
+                        project.RiesgoPct,
+                        project.GastosGeneralesPct,
+                        project.UtilidadPct,
+                        project.ValorAgregadoEquiposPct,
+                        project.DescuentoPct,
+                        project.IvaPct <= 0m ? 19m : project.IvaPct,
+                        project.IncluirIvaEnTotal),
+                    clp => enClpResumen ? DashboardMoneyShort.Format(clp) : FormatMoney(clp));
+
+                UpdateVerdict(state.Executive.MaterialImpact10Pct);
 
                 SensitivityCurve.Clear();
                 foreach (var pt in state.Executive.SensitivityCurve)
@@ -642,51 +691,21 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
 
     private DashboardRecentProjectVm BuildRecentProject(RecentProjectInfo project, DashboardProjectStateKind state)
     {
-        var accent = state switch
-        {
-            DashboardProjectStateKind.Complete => DashboardKpiBrushes.Green,
-            DashboardProjectStateKind.InProgress => DashboardKpiBrushes.Amber,
-            DashboardProjectStateKind.Draft => DashboardKpiBrushes.Blue,
-            _ => DashboardKpiBrushes.BlueDark
-        };
-
-        var soft = state switch
-        {
-            DashboardProjectStateKind.Complete => DashboardKpiBrushes.GreenSoft,
-            DashboardProjectStateKind.InProgress => DashboardKpiBrushes.AmberSoft,
-            DashboardProjectStateKind.Draft => DashboardKpiBrushes.BlueSoft,
-            _ => DashboardKpiBrushes.BlueSoft
-        };
-
-        var statusText = project.IsMissing
-            ? "No encontrado"
-            : state switch
-            {
-                DashboardProjectStateKind.Complete => "Completo",
-                DashboardProjectStateKind.InProgress => "En progreso",
-                DashboardProjectStateKind.Draft => "Borrador",
-                _ => "Sin estado"
-            };
+        var archive = DashboardLandingCoordinator.DescribeArchiveState(project.IsMissing, state);
 
         return new DashboardRecentProjectVm
         {
             Name = string.IsNullOrWhiteSpace(project.Name) ? Path.GetFileNameWithoutExtension(project.Path) : project.Name,
             Path = project.Path,
-            StatusText = statusText,
-            StatusCaption = project.IsMissing ? "Ruta no disponible" : state switch
-            {
-                DashboardProjectStateKind.Complete => "Listo para cerrar",
-                DashboardProjectStateKind.InProgress => "En desarrollo",
-                DashboardProjectStateKind.Draft => "Pendiente de trabajo",
-                _ => "Estado no disponible"
-            },
+            StatusText = archive.Text,
+            StatusCaption = archive.Caption,
             DisplayDate = project.DisplayDate,
             IsMissing = project.IsMissing,
             IsPinned = project.IsPinned,
             StateKind = state,
-            AccentBrush = accent,
-            AccentSoftBrush = soft,
-            StatusForeground = accent,
+            AccentBrush = archive.Accent,
+            AccentSoftBrush = archive.Soft,
+            StatusForeground = archive.Accent,
             OpenCommand = new RelayCommand(() => _ = shell.OpenRecentProjectAsync(project.Path)),
             OpenFolderCommand = new RelayCommand(() => OpenProjectFolder(project.Path)),
             CopyPathCommand = new RelayCommand(() => CopyProjectPathToClipboard(project.Path)),
@@ -835,7 +854,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
             ("Itemizado", $"{totalPartidas:N0} partidas",                                     s2, s1 && !s2, ShellRoute.Itemized),
             ("Cubicación",$"{Math.Max(0, totalPartidas - review.EmptyPartidas):N0} cubiertas",s3, s2 && !s3, ShellRoute.Takeoff),
             ("Precios",   review.MaterialsWithoutPrice > 0 ? $"{review.MaterialsWithoutPrice:N0} sin precio" : "Precios vigentes", s4, s3 && !s4, ShellRoute.Prices),
-            ("Revisión",  $"{review.BlockingCount} bloqueantes",                              s5, s4 && !s5, ShellRoute.Review),
+            ("Revisión",  DashboardCockpitComposer.BlockingLabel(review.BlockingCount),        s5, s4 && !s5, ShellRoute.Review),
             ("Exportar",  review.ReadyToExport ? "Listo" : "Bloqueado",                      s6, s5 && !s6, ShellRoute.OfferDocuments),
         };
 
@@ -886,12 +905,8 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
 
     private void UpdateNextStep(FinalReviewSummary review)
     {
-        int totalPartidas = session.Itemizado.Count(x => !x.EsTitulo);
-        int readyPartidas = Math.Max(0, totalPartidas - review.EmptyPartidas);
-        PartidasReadyLabel = $"{readyPartidas:N0} de {totalPartidas:N0} partidas listas";
-        PartidasReadyPercent = totalPartidas == 0 ? 0 : Math.Min(100, readyPartidas * 100d / totalPartidas);
-        BlockingAlertCount = review.BlockingCount;
-
+        // Los números de preparación (partidas listas, %, bloqueantes) los fija BuildReadiness
+        // desde el contrato único; acá sólo se elige el siguiente paso del flujo.
         var current = WorkflowSteps.FirstOrDefault(s => s.IsCurrent)
                       ?? WorkflowSteps.LastOrDefault(s => !s.IsComplete)
                       ?? WorkflowSteps.LastOrDefault();
@@ -909,7 +924,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
             NextStepTitle = current.IsComplete && WorkflowSteps.All(s => s.IsComplete)
                 ? "Proyecto listo para exportar"
                 : $"Siguiente paso: {current.Title.ToLowerInvariant()}";
-            NextStepDetail = $"{PartidasReadyLabel} · {review.BlockingCount:N0} alertas bloqueantes";
+            NextStepDetail = $"{PartidasReadyLabel} · {DashboardCockpitComposer.BlockingAlertPhrase(review.BlockingCount)}";
             SubtitleText = review.BlockingCount > 0
                 ? "Hay decisiones pendientes que afectan la oferta."
                 : review.ReadyToExport
@@ -954,56 +969,65 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
         primaryCtaCommand.RaiseCanExecuteChanged();
     }
 
-    private void BuildOfferReadiness(FinalReviewSummary review)
+    /// <summary>
+    /// Construye el contrato único de preparación (partidas no-título sin vacío crítico y con precio
+    /// vigente) y de él derivan el KPI, su barra de avance, el anillo, el checklist y el veredicto.
+    /// </summary>
+    private void BuildReadiness(FinalReviewSummary review)
     {
-        var project = session.ProjectInfo;
         int totalPartidas = session.Itemizado.Count(x => !x.EsTitulo);
-        bool hasProjectData = !string.IsNullOrWhiteSpace(project.Nombre) && project.Nombre != "Proyecto sin nombre";
-        bool hasItemizado = totalPartidas > 0;
-        bool cubicacionOk = hasItemizado && review.EmptyPartidas == 0;
-        int stalePrices = CountStalePrices();
+        var contract = DashboardReadinessContract.Build(
+            totalPartidas,
+            review.EmptyPartidas,
+            review.MaterialsWithoutPrice,
+            review.BlockingCount,
+            review.CriticalCount);
+
+        Readiness = contract;
+        PartidasReadyLabel = $"{contract.Listas:N0} de {contract.TotalPartidas:N0} partidas listas";
+        PartidasReadyPercent = contract.ListasPercent;
+        BlockingAlertCount = review.BlockingCount;
+        OfferReadinessRingPercent = contract.RingPercent;
 
         OfferReadinessItems.Clear();
-        OfferReadinessItems.Add(new DashboardOfferReadinessItemVm
+        foreach (var check in DashboardCockpitComposer.BuildReadinessChecks(contract))
         {
-            Label = "Datos del proyecto",
-            IsComplete = hasProjectData,
-            StatusBrush = hasProjectData ? DashboardKpiBrushes.Green : DashboardKpiBrushes.AmberRisk,
-            NavigateCommand = new RelayCommand(() => shell.RequestNavigate(ShellRoute.Project), () => !ShowEmptyState)
-        });
-        OfferReadinessItems.Add(new DashboardOfferReadinessItemVm
-        {
-            Label = "Itemizado importado",
-            IsComplete = hasItemizado,
-            StatusBrush = hasItemizado ? DashboardKpiBrushes.Green : DashboardKpiBrushes.AmberRisk,
-            NavigateCommand = new RelayCommand(() => shell.RequestNavigate(ShellRoute.Itemized), () => !ShowEmptyState)
-        });
-        OfferReadinessItems.Add(new DashboardOfferReadinessItemVm
-        {
-            Label = "Cubicación completada",
-            IsComplete = cubicacionOk,
-            StatusBrush = cubicacionOk ? DashboardKpiBrushes.Green : DashboardKpiBrushes.AmberRisk,
-            NavigateCommand = new RelayCommand(() => shell.RequestNavigate(ShellRoute.Takeoff), () => !ShowEmptyState)
-        });
-        OfferReadinessItems.Add(new DashboardOfferReadinessItemVm
-        {
-            Label = stalePrices > 0 ? $"Precios por confirmar ({stalePrices:N0})" : "Precios vigentes",
-            IsComplete = stalePrices == 0,
-            IsWarning = stalePrices > 0,
-            StatusBrush = stalePrices > 0 ? DashboardKpiBrushes.AmberRisk : DashboardKpiBrushes.Green,
-            NavigateCommand = new RelayCommand(() => shell.RequestNavigate(ShellRoute.Prices), () => !ShowEmptyState)
-        });
+            var route = check.Label switch
+            {
+                "Datos del proyecto" => ShellRoute.Project,
+                "Itemizado importado" => ShellRoute.Itemized,
+                "Cubicación" => ShellRoute.Takeoff,
+                _ => ShellRoute.Prices
+            };
+            OfferReadinessItems.Add(new DashboardOfferReadinessItemVm
+            {
+                Label = check.Label,
+                Detail = check.Detail,
+                IsComplete = check.Ok,
+                IsWarning = check.Warn,
+                StatusBrush = check.Ok ? DashboardKpiBrushes.Green : DashboardKpiBrushes.AmberRisk,
+                NavigateCommand = new RelayCommand(() => shell.RequestNavigate(route), () => !ShowEmptyState)
+            });
+        }
 
-        int completeCount = OfferReadinessItems.Count(i => i.IsComplete);
-        OfferReadinessRingPercent = OfferReadinessItems.Count == 0
-            ? 0
-            : Math.Min(100, completeCount * 100d / OfferReadinessItems.Count);
         OnPropertyChanged(nameof(IsOfferReady));
         OnPropertyChanged(nameof(ReadinessBadgeLabel));
     }
 
-    private int CountStalePrices()
-        => session.Materiales.Count(m => m.RequiereRevisionPrecio);
+    /// <summary>
+    /// Veredicto de la oferta en una línea. Se deriva del contrato de preparación y del impacto de
+    /// materiales sobre la venta neta, así que siempre coincide con el KPI y con el anillo.
+    /// </summary>
+    private void UpdateVerdict(decimal materialImpact10Pct)
+    {
+        string scenario = Readiness.TotalPartidas > 0
+            ? DashboardCockpitComposer.BuildScenarioLabel(10m, materialImpact10Pct)
+            : "";
+        var (title, reason, kind) = DashboardCockpitComposer.BuildVerdict(Readiness, scenario);
+        VerdictTitle = title;
+        VerdictReason = reason;
+        VerdictKind = kind;
+    }
 
     private void BuildPriceValidity()
     {

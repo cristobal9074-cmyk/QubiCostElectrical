@@ -8,9 +8,22 @@ namespace QubiCostElectrical.Wpf.Features.Cubicacion;
 
 public sealed class PrecioListaMaterialVm : INotifyPropertyChanged
 {
-    private readonly PriceBankEntry bankEntry;
+    // Entrada del banco de precios global. Null en los materiales que existen SOLO en el proyecto:
+    // esos no tienen —ni deben tener— fila en el banco compartido entre proyectos.
+    private readonly PriceBankEntry? bankEntry;
+
+    // Material del catálogo del .qce. Referencia directa en los materiales solo-proyecto (para que
+    // renombrar el código no los desenganche); en los del banco se resuelve por código al guardar.
+    private readonly MaterialRow? materialRow;
 
     private readonly BudgetProjectSession session;
+
+    /// <summary>
+    /// Material que vive únicamente en el proyecto. El alta de esta pantalla lo crea así: son
+    /// materiales de ESTE proyecto (un tablero, una luminaria puntual), no catálogo reutilizable, y
+    /// no deben engordar el banco de precios compartido entre todos los proyectos.
+    /// </summary>
+    public bool EsSoloProyecto { get; }
 
     private string codigo = "";
 
@@ -231,9 +244,9 @@ public sealed class PrecioListaMaterialVm : INotifyPropertyChanged
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public PrecioListaMaterialVm(PriceBankEntry entry, BudgetProjectSession session)
+        : this(session, esSoloProyecto: false, materialRow: null)
     {
         bankEntry = entry;
-        this.session = session;
         Codigo = entry.Codigo;
         Descripcion = entry.Descripcion;
         Unidad = entry.Unidad;
@@ -244,8 +257,56 @@ public sealed class PrecioListaMaterialVm : INotifyPropertyChanged
         FechaPrecio = entry.FechaPrecio;
     }
 
-    public void SyncToBank(IPriceBankStore store, decimal valorUfClp)
+    /// <summary>
+    /// Material del catálogo del proyecto que no está en el banco de precios global.
+    /// </summary>
+    public PrecioListaMaterialVm(MaterialRow material, BudgetProjectSession session)
+        : this(session, esSoloProyecto: true, materialRow: material)
     {
+        Codigo = material.Codigo;
+        Descripcion = material.Descripcion;
+        Unidad = material.Unidad;
+        Categoria = material.Categoria;
+        MatClp = material.MatClp;
+        MoClp = material.MoClp;
+        Proveedor = material.Proveedor;
+        FechaPrecio = material.FechaPrecio;
+    }
+
+    private PrecioListaMaterialVm(BudgetProjectSession session, bool esSoloProyecto, MaterialRow? materialRow)
+    {
+        this.session = session;
+        EsSoloProyecto = esSoloProyecto;
+        this.materialRow = materialRow;
+    }
+
+    /// <summary>
+    /// Guarda la fila donde corresponde: siempre en el catálogo del proyecto y, solo si la fila
+    /// viene del banco de precios, también en el banco global. Un material nacido en este proyecto
+    /// no se propaga al banco compartido.
+    /// </summary>
+    public void Guardar(IPriceBankStore store, decimal valorUfClp)
+    {
+        // materialRow directo cuando la fila es del proyecto; si no, se busca por código, que es el
+        // caso de los materiales del banco que además existen en el catálogo del .qce.
+        MaterialRow? fila = materialRow
+            ?? session.Materiales.FirstOrDefault((MaterialRow x) => CodeHelper.Match(x.Codigo, Codigo));
+        if (fila != null)
+        {
+            fila.Codigo = Codigo;
+            fila.Descripcion = Descripcion;
+            fila.Unidad = Unidad;
+            fila.MatClp = MatClp;
+            fila.MoClp = MoClp;
+            fila.Proveedor = Proveedor;
+            fila.FechaPrecio = DateTime.Today;
+            fila.UltimaActualizacionPrecio = AppClock.Now;
+            fila.RecalcularUf(valorUfClp);
+        }
+
+        if (EsSoloProyecto || bankEntry == null)
+            return;
+
         bankEntry.Codigo = Codigo;
         bankEntry.Descripcion = Descripcion;
         bankEntry.Unidad = Unidad;
@@ -255,19 +316,6 @@ public sealed class PrecioListaMaterialVm : INotifyPropertyChanged
         bankEntry.Proveedor = Proveedor;
         bankEntry.RecalcularUf(valorUfClp);
         store.Upsert(bankEntry);
-        MaterialRow? materialRow = session.Materiales.FirstOrDefault((MaterialRow x) => string.Equals(x.Codigo, Codigo, StringComparison.OrdinalIgnoreCase));
-        if (materialRow != null)
-        {
-            materialRow.Codigo = Codigo;
-            materialRow.Descripcion = Descripcion;
-            materialRow.Unidad = Unidad;
-            materialRow.MatClp = MatClp;
-            materialRow.MoClp = MoClp;
-            materialRow.Proveedor = Proveedor;
-            materialRow.FechaPrecio = DateTime.Today;
-            materialRow.UltimaActualizacionPrecio = AppClock.Now;
-            materialRow.RecalcularUf(valorUfClp);
-        }
     }
 
     private void OnPropertyChanged(string prop)

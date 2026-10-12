@@ -158,10 +158,21 @@ public sealed class MaterialMoResolverTests
     }
 
     [Fact]
-    public void MoClpEfectiva_FormulaPorcentaje_MultiplicaMatPctFaDefault()
+    public void MoClpEfectiva_FormulaPorcentaje_SinFaCalibrado_UsaFactorNeutro()
     {
-        // Paridad con la planilla estándar: 1000 × 2,5% × 62,80 (FA default) = 1570
-        var proyecto = new ProjectInfoRow(); // modo directo, FA por defecto
+        // El FA no tiene valor de fábrica: un proyecto nuevo parte sin calibrar y la fórmula
+        // Material × % × FA se evalúa con factor 1 (Material × %) hasta que el índice se derive
+        // del plan de obra — una M.O. provisional visible en vez de $0.
+        var proyecto = new ProjectInfoRow(); // modo directo, FA sin calibrar
+        Assert.Equal(0m, MaterialMoResolver.IndiceFa(proyecto));
+        Assert.Equal(25m, MaterialMoResolver.MoClpEfectiva(MaterialPorcentaje(1000m, 2.5m), proyecto));
+    }
+
+    [Fact]
+    public void MoClpEfectiva_FormulaPorcentaje_ConFaCalibrado_MultiplicaMatPctFa()
+    {
+        // Paridad con la planilla PEL039A: 1000 × 2,5% × 62,80 (FA de ese proyecto) = 1570
+        var proyecto = new ProjectInfoRow { IndiceMoFa = 62.80m };
         Assert.Equal(1570m, MaterialMoResolver.MoClpEfectiva(MaterialPorcentaje(1000m, 2.5m), proyecto));
     }
 
@@ -173,9 +184,11 @@ public sealed class MaterialMoResolverTests
     }
 
     [Fact]
-    public void MoClpEfectiva_FormulaPorcentaje_SinProyecto_UsaFaDefault()
+    public void MoClpEfectiva_FormulaPorcentaje_SinProyecto_UsaFactorNeutro()
     {
-        Assert.Equal(1570m, MaterialMoResolver.MoClpEfectiva(MaterialPorcentaje(1000m, 2.5m), null));
+        // Sin proyecto que pueda calibrar el FA, el material que declara la fórmula cotiza Material × %
+        // en vez de quedarse en 0.
+        Assert.Equal(25m, MaterialMoResolver.MoClpEfectiva(MaterialPorcentaje(1000m, 2.5m), null));
     }
 
     [Fact]
@@ -191,5 +204,57 @@ public sealed class MaterialMoResolverTests
     public void MoClpEfectiva_FormulaPorcentaje_PctCero_FallbackADirecta()
     {
         Assert.Equal(999m, MaterialMoResolver.MoClpEfectiva(MaterialPorcentaje(1000m, 0m), new ProjectInfoRow()));
+    }
+
+    // ── MoClpPorPorcentaje / IndiceFa (usados por el alta rápida de la lista de precios) ──
+
+    [Fact]
+    public void MoClpPorPorcentaje_MaterialPorPctPorFa_DaMismaCifraQueElMotor()
+    {
+        // 1000 × 2,5% × 62,80 = 1570 — el alta rápida debe previsualizar exactamente esto.
+        Assert.Equal(1570m, MaterialMoResolver.MoClpPorPorcentaje(1000m, 2.5m, 62.80m));
+    }
+
+    [Fact]
+    public void MoClpPorPorcentaje_FaCeroONegativo_UsaFactorNeutro()
+    {
+        // FA sin calibrar = factor 1: el alta rápida previsualiza Material × %, no $0. Al mover el FA
+        // desde Costos la cifra se recalcula con el índice real.
+        Assert.Equal(25m, MaterialMoResolver.MoClpPorPorcentaje(1000m, 2.5m, 0m));
+        Assert.Equal(25m, MaterialMoResolver.MoClpPorPorcentaje(1000m, 2.5m, -1m));
+    }
+
+    [Fact]
+    public void MoClpPorPorcentaje_MaterialOPctNoPositivos_RetornaCero()
+    {
+        Assert.Equal(0m, MaterialMoResolver.MoClpPorPorcentaje(0m, 2.5m, 62.80m));
+        Assert.Equal(0m, MaterialMoResolver.MoClpPorPorcentaje(1000m, 0m, 62.80m));
+    }
+
+    [Fact]
+    public void IndiceFa_SinProyectoOFaCero_RetornaCeroSinCalibrar()
+    {
+        Assert.Equal(0m, MaterialMoResolver.IndiceMoFaDefault);
+        Assert.Equal(MaterialMoResolver.IndiceMoFaDefault, MaterialMoResolver.IndiceFa(null));
+        Assert.Equal(MaterialMoResolver.IndiceMoFaDefault, MaterialMoResolver.IndiceFa(new ProjectInfoRow { IndiceMoFa = 0m }));
+    }
+
+    [Fact]
+    public void IndiceFa_ProyectoConFa_RespetaElValorDelProyecto()
+    {
+        Assert.Equal(50m, MaterialMoResolver.IndiceFa(new ProjectInfoRow { IndiceMoFa = 50m }));
+    }
+
+    /// <summary>
+    /// El 62,80 entró a todos los .qce antiguos como default de la app, no como calibración del
+    /// proyecto: al cargar se trata como "sin calibrar" para que no reaparezca en pantalla.
+    /// </summary>
+    [Fact]
+    public void NormalizarFaGuardado_FaHeredado_EntraComoSinCalibrar()
+    {
+        Assert.Equal(0m, MaterialMoResolver.NormalizarFaGuardado(62.80m));
+        Assert.Equal(0m, MaterialMoResolver.NormalizarFaGuardado(0m));
+        Assert.Equal(0m, MaterialMoResolver.NormalizarFaGuardado(-5m));
+        Assert.Equal(79.20m, MaterialMoResolver.NormalizarFaGuardado(79.20m));
     }
 }

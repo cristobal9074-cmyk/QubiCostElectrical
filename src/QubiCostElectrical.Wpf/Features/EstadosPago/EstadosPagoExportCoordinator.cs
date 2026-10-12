@@ -102,7 +102,9 @@ public sealed class EstadosPagoExportCoordinator
             LoadSecciones(),
             session.EstadoPagoMeses,
             session.ProjectInfo.UsuarioNombre,
-            AppClock.Now);
+            AppClock.Now,
+            session.ProjectInfo.MonedaPresupuesto,
+            session.ValorUfClp);
     }
 
     /// <summary>Repite el agrupado por capítulos de la pantalla (título → partidas).</summary>

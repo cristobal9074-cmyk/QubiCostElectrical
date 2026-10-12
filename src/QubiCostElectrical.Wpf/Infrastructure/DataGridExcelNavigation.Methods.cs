@@ -212,19 +212,17 @@ public static partial class DataGridExcelNavigation
                 return;
             }
 
-            // Ctrl+V: pegar desde portapapeles en selección si la grilla es editable
+            // Ctrl+V: si el dueño declaró HandlePasteByHost, su pegado con lógica de negocio manda
+            // (código → material, fórmulas, sectores) y el evento se deja sin manejar.
             if (e.Key == Key.V && Keyboard.Modifiers == ModifierKeys.Control && !grid.IsReadOnly)
             {
-                if (Clipboard.ContainsText())
-                {
-                    string clipText = Clipboard.GetText();
-                    if (!string.IsNullOrEmpty(clipText))
-                    {
-                        TryPasteIntoSelection(grid, clipText);
-                        e.Handled = true;
-                        return;
-                    }
-                }
+                if (GetHandlePasteByHost(grid))
+                    return;
+
+                string clipText = Clipboard.ContainsText() ? Clipboard.GetText() : "";
+                if (!string.IsNullOrEmpty(clipText) && TryPasteIntoSelection(grid, clipText))
+                    e.Handled = true;
+                return;
             }
 
             if (e.Key is Key.Enter or Key.Return or Key.Tab)
@@ -239,9 +237,7 @@ public static partial class DataGridExcelNavigation
                         if (targetCol != null)
                         {
                             grid.CurrentCell = new DataGridCellInfo(targetRow, targetCol);
-                            grid.SelectedCells.Clear();
-                            grid.SelectedCells.Add(grid.CurrentCell);
-                            grid.SelectedItem = targetRow;
+                            DataGridSelection.SeleccionarFila(grid, targetRow, targetCol);
                         }
                     }
                 }
@@ -354,9 +350,7 @@ public static partial class DataGridExcelNavigation
                         if (targetCol != null)
                         {
                             grid.CurrentCell = new DataGridCellInfo(targetRow, targetCol);
-                            grid.SelectedCells.Clear();
-                            grid.SelectedCells.Add(grid.CurrentCell);
-                            grid.SelectedItem = targetRow;
+                            DataGridSelection.SeleccionarFila(grid, targetRow, targetCol);
                         }
                     }
                 }
@@ -1003,16 +997,7 @@ public static partial class DataGridExcelNavigation
             return;
 
         var item = grid.Items[rowIndex];
-        if (grid.SelectionUnit == DataGridSelectionUnit.FullRow)
-        {
-            grid.SelectedItem = item;
-            grid.SelectedIndex = rowIndex;
-        }
-        else
-        {
-            grid.SelectedCells.Clear();
-            grid.SelectedCells.Add(new DataGridCellInfo(item, column));
-        }
+        DataGridSelection.SeleccionarFila(grid, item, column);
 
         grid.CurrentCell = new DataGridCellInfo(item, column);
 

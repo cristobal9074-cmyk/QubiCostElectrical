@@ -197,14 +197,14 @@ public sealed partial class CubicacionViewModel
         else if (SelectedPartida != null && !string.IsNullOrWhiteSpace(SelectedPartida.Codigo))
             codigo = SelectedPartida.Codigo;
 
-        if (!string.IsNullOrWhiteSpace(codigo) && priceBankStore.GetByCodigo(codigo) == null)
-            codigo = "";
+        if (!string.IsNullOrWhiteSpace(codigo) && priceBankStore.GetByCodigo(codigo) == null) codigo = "";
 
         var dialog = new PrecioListaResumenDialog(session, priceBankStore, codigo)
         {
             Owner = Application.Current.MainWindow
         };
         dialog.ShowDialog();
+        rowMutationService.AplicarMaterialCreado(dialog.MaterialCreado);
     }
 
     private void OpenCubicacionScTomar()

@@ -9,8 +9,9 @@ namespace QubiCostElectrical.Wpf.Features.Costo;
 
 public sealed partial class ViaticosProfesionalViewModel : ViewModelBase
 {
-    public ViaticosProfesionalViewModel(decimal valorUfClp, decimal picoDirecta, decimal rolesIndirectos, int mesesObra)
+    public ViaticosProfesionalViewModel(decimal valorUfClp, decimal picoDirecta, decimal rolesIndirectos, int mesesObra, bool ocultarEquivalenciaUf = false)
     {
+        muestraEquivalenciaUf = !ocultarEquivalenciaUf;
         valorUf = valorUfClp > 0 ? valorUfClp : PriceConversion.DefaultValorUfClp;
         dotDir = Math.Max(0, picoDirecta);
         dotInd = Math.Max(0, rolesIndirectos);
@@ -164,6 +165,9 @@ public sealed partial class ViaticosProfesionalViewModel : ViewModelBase
     public string KpiTotal { get => kpiTotal; private set => SetProperty(ref kpiTotal, value); }
     public string FootTotalLabel { get => footTotalLabel; private set => SetProperty(ref footTotalLabel, value); }
     public string FootUfLabel { get => footUfLabel; private set => SetProperty(ref footUfLabel, value); }
+
+    /// <summary>Falso cuando el proyecto está en CLP: no se expone la equivalencia en UF.</summary>
+    public bool MuestraEquivalenciaUf => muestraEquivalenciaUf;
     public string BadgeAlim { get => badgeAlim; private set => SetProperty(ref badgeAlim, value); }
     public string BadgeArr { get => badgeArr; private set => SetProperty(ref badgeArr, value); }
     public string HintArriendo { get => hintArriendo; private set => SetProperty(ref hintArriendo, value); }
@@ -342,7 +346,7 @@ public sealed partial class ViaticosProfesionalViewModel : ViewModelBase
         KpiOtros = Fmt(totOtros);
         KpiTotal = Fmt(total);
         FootTotalLabel = Fmt(total);
-        FootUfLabel = $"{total / uf:N2} UF";
+        FootUfLabel = muestraEquivalenciaUf ? $"{total / uf:N2} UF" : "";
 
         OnPropertyChanged(nameof(MealDesLabel));
         OnPropertyChanged(nameof(MealAlmLabel));

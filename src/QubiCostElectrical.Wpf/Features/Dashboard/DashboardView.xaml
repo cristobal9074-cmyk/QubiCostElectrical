@@ -140,6 +140,24 @@
         </DataTrigger>
       </Style.Triggers>
     </Style>
+    <Style x:Key="Dashboard.KpiIcon.Margen" TargetType="Path">
+      <Setter Property="Visibility" Value="Collapsed" />
+      <Setter Property="Data" Value="M4,20 L20,4 M6.5,6.5 A2.5,2.5 0 1 1 6.49,6.5 M17.5,17.5 A2.5,2.5 0 1 1 17.49,17.5" />
+      <Style.Triggers>
+        <DataTrigger Binding="{Binding IconKind}" Value="margen">
+          <Setter Property="Visibility" Value="Visible" />
+        </DataTrigger>
+      </Style.Triggers>
+    </Style>
+    <Style x:Key="Dashboard.KpiIcon.Concentracion" TargetType="Path">
+      <Setter Property="Visibility" Value="Collapsed" />
+      <Setter Property="Data" Value="M3,21 V13 M8.5,21 V8 M14,21 V15.5 M19.5,21 V4" />
+      <Style.Triggers>
+        <DataTrigger Binding="{Binding IconKind}" Value="concentracion">
+          <Setter Property="Visibility" Value="Visible" />
+        </DataTrigger>
+      </Style.Triggers>
+    </Style>
 
     <!-- Sparklines decorativos por IconKind -->
     <Style x:Key="Dashboard.Spark.Up" TargetType="Path">
@@ -437,11 +455,55 @@
           </StackPanel>
         </DockPanel>
 
-        <!-- 2. Tira de KPIs -->
+        <!-- 2. Veredicto: una línea, derivada del contrato único de preparación -->
+        <Border Margin="0,0,0,16" CornerRadius="10" Padding="16,13" BorderThickness="1">
+          <Border.Style>
+            <Style TargetType="Border">
+              <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+              <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
+              <Style.Triggers>
+                <DataTrigger Binding="{Binding IsVerdictOk}" Value="True">
+                  <Setter Property="Background" Value="{DynamicResource Brush.GreenSoft}" />
+                  <Setter Property="BorderBrush" Value="{DynamicResource Brush.Green}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsVerdictWarn}" Value="True">
+                  <Setter Property="Background" Value="{DynamicResource Brush.AmberSoft}" />
+                  <Setter Property="BorderBrush" Value="{DynamicResource Brush.AmberRisk}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsVerdictBad}" Value="True">
+                  <Setter Property="Background" Value="{DynamicResource Brush.RedSoft}" />
+                  <Setter Property="BorderBrush" Value="{DynamicResource Brush.DangerDark}" />
+                </DataTrigger>
+              </Style.Triggers>
+            </Style>
+          </Border.Style>
+          <DockPanel LastChildFill="True">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
+              <Border Style="{StaticResource Dashboard.Pill}" Margin="0,0,8,0"
+                      Background="{DynamicResource Brush.RedSoft}" BorderBrush="{DynamicResource Brush.DangerDark}"
+                      TextElement.Foreground="{DynamicResource Brush.DangerDark}"
+                      Visibility="{Binding HasBlockingAlerts, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock Text="{Binding BlockingAlertLabel}" FontSize="10.5" FontWeight="Bold" />
+              </Border>
+              <Button Style="{StaticResource Button.Secondary}" Content="{Binding VerdictActionLabel}"
+                      Padding="12,6" Command="{Binding GoToReviewCommand}" Margin="0,0,8,0" />
+              <Button Style="{StaticResource Button.Secondary}" Content="Ver desglose de costos"
+                      Padding="12,6" Command="{Binding GoToProjectCommand}" />
+            </StackPanel>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{Binding VerdictTitle}" FontSize="14" FontWeight="Bold"
+                         Foreground="{DynamicResource Brush.Ink}" TextTrimming="CharacterEllipsis" />
+              <TextBlock Text="{Binding VerdictReason}" FontSize="12" Margin="0,3,0,0"
+                         Foreground="{DynamicResource Brush.Ink3}" TextWrapping="Wrap" />
+            </StackPanel>
+          </DockPanel>
+        </Border>
+
+        <!-- 3. Tira de KPIs: seis lecturas en dos filas de tres, sin UniformGrid fijo de cuatro -->
         <ItemsControl ItemsSource="{Binding KpiCards}" Margin="0,0,0,0">
           <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate>
-              <UniformGrid Columns="4" />
+              <UniformGrid Columns="3" />
             </ItemsPanelTemplate>
           </ItemsControl.ItemsPanel>
           <ItemsControl.ItemTemplate>
@@ -464,6 +526,12 @@
                                   StrokeThickness="1.6" Stretch="Uniform" Width="18" Height="18"
                                   StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" />
                             <Path Style="{StaticResource Dashboard.KpiIcon.Riesgo}" Stroke="{Binding AccentBrush}"
+                                  StrokeThickness="1.6" Stretch="Uniform" Width="18" Height="18"
+                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" />
+                            <Path Style="{StaticResource Dashboard.KpiIcon.Margen}" Stroke="{Binding AccentBrush}"
+                                  StrokeThickness="1.6" Stretch="Uniform" Width="18" Height="18"
+                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" />
+                            <Path Style="{StaticResource Dashboard.KpiIcon.Concentracion}" Stroke="{Binding AccentBrush}"
                                   StrokeThickness="1.6" Stretch="Uniform" Width="18" Height="18"
                                   StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" />
                           </Grid>
@@ -533,7 +601,7 @@
           </ItemsControl.ItemTemplate>
         </ItemsControl>
 
-        <!-- 3. Estructura de la oferta -->
+        <!-- 3. Cascada de precio: del costo directo a la venta neta, cada paso auditable -->
         <Border Style="{StaticResource Dashboard.Card}">
           <StackPanel>
             <DockPanel Margin="18,15,18,0">
@@ -543,11 +611,78 @@
                 <TextBlock Text="{Binding ClosingPolicyLabel}" FontSize="10.5" FontWeight="Bold" />
               </Border>
               <StackPanel>
-                <TextBlock Text="Estructura de la oferta" Style="{StaticResource Dashboard.CardTitle}" />
-                <TextBlock Text="Distribución del precio de venta" Style="{StaticResource Dashboard.CardSub}" />
+                <TextBlock Text="Cascada de precio" Style="{StaticResource Dashboard.CardTitle}" />
+                <TextBlock Text="Del costo directo de ejecución a la venta neta, paso a paso"
+                           Style="{StaticResource Dashboard.CardSub}" />
               </StackPanel>
             </DockPanel>
-            <StackPanel Margin="18,14,18,18">
+
+            <ItemsControl ItemsSource="{Binding Waterfall.Rows}" Margin="18,16,18,4">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Grid Margin="0,0,0,3">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="210" />
+                      <ColumnDefinition Width="*" MinWidth="60" />
+                      <ColumnDefinition Width="126" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="{Binding Label}" FontSize="12"
+                               Foreground="{DynamicResource Brush.Ink2}" TextTrimming="CharacterEllipsis"
+                               VerticalAlignment="Center" Margin="0,0,12,0" />
+                    <Grid Grid.Column="1" Height="10" VerticalAlignment="Center" Margin="0,0,12,0">
+                      <Border CornerRadius="5" Background="{DynamicResource Brush.Line2}" />
+                      <Grid>
+                        <Grid.ColumnDefinitions>
+                          <ColumnDefinition Width="{Binding BarOffset}" />
+                          <ColumnDefinition Width="{Binding BarLength}" />
+                          <ColumnDefinition Width="{Binding BarRemainder}" />
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="1" CornerRadius="5" Background="{Binding BarBrush}">
+                          <Border.Style>
+                            <Style TargetType="Border">
+                              <Setter Property="Opacity" Value="1" />
+                              <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsDimmed}" Value="True">
+                                  <Setter Property="Opacity" Value="0.42" />
+                                </DataTrigger>
+                              </Style.Triggers>
+                            </Style>
+                          </Border.Style>
+                        </Border>
+                      </Grid>
+                    </Grid>
+                    <TextBlock Grid.Column="2" Text="{Binding SignedAmountLabel}" FontSize="12.5"
+                               FontFamily="{StaticResource Font.Mono}" HorizontalAlignment="Right"
+                               VerticalAlignment="Center">
+                      <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                          <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}" />
+                          <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsGrandTotal}" Value="True">
+                              <Setter Property="FontWeight" Value="Bold" />
+                              <Setter Property="FontSize" Value="13.5" />
+                              <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
+                            </DataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </TextBlock.Style>
+                    </TextBlock>
+                  </Grid>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <Border Height="1" Background="{DynamicResource Brush.Line}" Margin="18,12,18,0" />
+
+            <DockPanel Margin="18,14,18,0">
+              <TextBlock DockPanel.Dock="Right" Text="Composición del precio" FontSize="11"
+                         Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
+              <TextBlock Text="Base de costo directo y reparto por naturaleza" FontSize="11.5"
+                         FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink2}"
+                         VerticalAlignment="Center" />
+            </DockPanel>
+
+            <StackPanel Margin="18,10,18,18">
               <Border CornerRadius="6" ClipToBounds="True" Height="13"
                       Background="{DynamicResource Brush.Line2}">
                 <Grid>
@@ -971,7 +1106,7 @@
                           </Style>
                         </DataGridTextColumn.ElementStyle>
                       </DataGridTextColumn>
-                      <DataGridTextColumn Header="CLP" Binding="{Binding TotalClpLabel}" Width="100">
+                      <DataGridTextColumn Header="MONTO" Binding="{Binding TotalLabel}" Width="150">
                         <DataGridTextColumn.ElementStyle>
                           <Style TargetType="TextBlock">
                             <Setter Property="HorizontalAlignment" Value="Right" />
@@ -1106,7 +1241,7 @@
                 <DockPanel Margin="18,15,18,0">
                   <StackPanel>
                     <TextBlock Text="Sensibilidad de la oferta" Style="{StaticResource Dashboard.CardTitle}" />
-                    <TextBlock Text="Variación del costo de materiales vs total venta (UF)" Style="{StaticResource Dashboard.CardSub}" />
+                    <TextBlock Text="Variación del costo de materiales vs total venta" Style="{StaticResource Dashboard.CardSub}" />
                   </StackPanel>
                 </DockPanel>
                 <StackPanel Margin="10,8,10,8">
@@ -1401,9 +1536,7 @@
                             Background="{DynamicResource Brush.RedSoft}" BorderBrush="{DynamicResource Brush.DangerDark}"
                             TextElement.Foreground="{DynamicResource Brush.DangerDark}"
                             Visibility="{Binding HasBlockingAlerts, Converter={StaticResource BoolToVisibility}}">
-                      <TextBlock FontSize="10.5" FontWeight="Bold">
-                        <Run Text="{Binding BlockingAlertCount, Mode=OneWay}" /><Run Text=" bloqueantes" />
-                      </TextBlock>
+                      <TextBlock Text="{Binding BlockingAlertLabel}" FontSize="10.5" FontWeight="Bold" />
                     </Border>
                     <Border Style="{StaticResource Dashboard.Pill}"
                             Background="{DynamicResource Brush.AmberSoft}" BorderBrush="{DynamicResource Brush.AmberRisk}"

@@ -1,5 +1,7 @@
 using System.IO;
+using System.Linq;
 using System.Windows;
+using System.Windows.Media;
 using QubiCostElectrical;
 using QubiCostElectrical.Wpf.Features.Dashboard;
 using QubiCostElectrical.Wpf.Infrastructure;
@@ -36,6 +38,13 @@ public sealed class DashboardViewModelTests
         public void RefreshChrome() { }
     }
 
+    /// <summary>
+    /// Los pinceles de tema se resuelven por recurso o por color de respaldo, así que en pruebas
+    /// pueden ser instancias distintas: se compara el tono, no la referencia.
+    /// </summary>
+    private static void AssertSameColor(Brush expected, Brush actual)
+        => Assert.Equal(expected.ToString(), actual.ToString());
+
     [Fact]
     public async Task Load_WithOpenProject_PopulatesCostDistributionAndKpiAccents()
     {
@@ -52,13 +61,32 @@ public sealed class DashboardViewModelTests
         vm.Load();
 
         Assert.False(vm.ShowEmptyState);
-        Assert.Equal(4, vm.KpiCards.Count);
+        Assert.Equal(6, vm.KpiCards.Count);
+        Assert.Equal(6, vm.WorkflowSteps.Count);
+        Assert.Equal("TOTAL VENTA", vm.KpiCards[0].Title);
+        Assert.Equal("PARTIDAS LISTAS", vm.KpiCards[1].Title);
+        Assert.Equal("MARGEN REAL", vm.KpiCards[4].Title);
+        Assert.Equal("CONCENTRACIÓN A", vm.KpiCards[5].Title);
+        Assert.NotNull(vm.Waterfall);
+        Assert.InRange(vm.Waterfall.Rows.Count, 4, 11);
+        Assert.Equal("Costo de ejecución", vm.Waterfall.Rows[0].Label);
+        Assert.Contains("TOTAL VENTA", vm.Waterfall.Rows[^1].Label);
+        Assert.True(vm.Waterfall.Rows[^1].IsGrandTotal);
+        // Ningún escalón opcional puede quedar en blanco: los recargos en cero se omiten.
+        Assert.DoesNotContain(vm.Waterfall.Rows, r => r.AmountLabel == "0");
+        Assert.True(vm.Readiness.TotalPartidas >= 0);
+        Assert.False(string.IsNullOrWhiteSpace(vm.VerdictTitle));
+        Assert.False(string.IsNullOrWhiteSpace(vm.VerdictKind));
+        Assert.False(string.IsNullOrWhiteSpace(vm.VerdictActionLabel));
+        Assert.False(string.IsNullOrWhiteSpace(vm.BlockingAlertLabel));
+        Assert.Contains("bloqueante", vm.BlockingAlertLabel);
+        // Una sola fuente del texto: el chip comparte el rótulo con el compositor.
+        Assert.Equal(DashboardCockpitComposer.BlockingLabel(vm.BlockingAlertCount), vm.BlockingAlertLabel);
         Assert.Equal(4, vm.CostShares.Count);
         Assert.Equal(GridUnitType.Star, vm.MaterialShareWidth.GridUnitType);
         Assert.Equal(GridUnitType.Star, vm.LaborShareWidth.GridUnitType);
         Assert.Equal(GridUnitType.Star, vm.GoShareWidth.GridUnitType);
         Assert.Equal(GridUnitType.Star, vm.MarginShareWidth.GridUnitType);
-        Assert.Equal(6, vm.WorkflowSteps.Count);
     }
 
     [Fact]
@@ -182,7 +210,7 @@ public sealed class DashboardViewModelTests
 
             vm.Load();
             Assert.False(vm.ShowEmptyState);
-            Assert.Equal(4, vm.KpiCards.Count);
+            Assert.Equal(6, vm.KpiCards.Count);
             Assert.Equal(4, vm.CostShares.Count);
             Assert.Equal(6, vm.WorkflowSteps.Count);
 
@@ -195,6 +223,112 @@ public sealed class DashboardViewModelTests
             Assert.Empty(vm.CostShares);
             Assert.Empty(vm.WorkflowSteps);
         }
+    }
+
+    [Fact]
+    public void DashboardLandingCoordinator_MissingArchiveIsAmberWithReason()
+    {
+        // Archivo ausente: manda por sobre el semáforo de avance y explica el motivo.
+        var missing = DashboardLandingCoordinator.DescribeArchiveState(true, DashboardProjectStateKind.Unknown);
+        Assert.Equal("Archivo no encontrado", missing.Text);
+        Assert.Contains("ya no existe", missing.Caption);
+        AssertSameColor(DashboardKpiBrushes.Amber, missing.Accent);
+        AssertSameColor(DashboardKpiBrushes.AmberSoft, missing.Soft);
+
+        // Archivo presente: el semáforo de avance no se contamina.
+        var draft = DashboardLandingCoordinator.DescribeArchiveState(false, DashboardProjectStateKind.Draft);
+        Assert.Equal("Borrador", draft.Text);
+        AssertSameColor(DashboardKpiBrushes.Blue, draft.Accent);
+
+        var complete = DashboardLandingCoordinator.DescribeArchiveState(false, DashboardProjectStateKind.Complete);
+        Assert.Equal("Completo", complete.Text);
+        AssertSameColor(DashboardKpiBrushes.Green, complete.Accent);
+
+        var progress = DashboardLandingCoordinator.DescribeArchiveState(false, DashboardProjectStateKind.InProgress);
+        Assert.Equal("En progreso", progress.Text);
+        AssertSameColor(DashboardKpiBrushes.Amber, progress.Accent);
+
+        var unknown = DashboardLandingCoordinator.DescribeArchiveState(false, DashboardProjectStateKind.Unknown);
+        Assert.Equal("Sin estado", unknown.Text);
+        AssertSameColor(DashboardKpiBrushes.BlueDark, unknown.Accent);
+    }
+
+    [Fact]
+    public void DashboardLandingCoordinator_ExposesFourTemplatesWithSecNorm()
+    {
+        var templates = DashboardLandingCoordinator.CreateQuickTemplates(new FakeShell()).ToList();
+
+        Assert.Equal(4, templates.Count);
+        Assert.All(templates, t => Assert.False(string.IsNullOrWhiteSpace(t.NormaSec)));
+        Assert.All(templates, t => Assert.NotNull(t.UseTemplateCommand));
+        Assert.Contains(templates, t => t.Id == "residential_building");
+        Assert.Contains(templates, t => t.Id == "solar_pv_plant");
+    }
+
+    [Fact]
+    public void DashboardCockpitComposer_VerdictPhrasesAgreeInNumber()
+    {
+        var bad = DashboardCockpitComposer.BuildVerdict(
+            DashboardReadinessContract.Build(10, 0, 0, 1, 0), "");
+        Assert.Contains("1 alerta bloqueante impide cerrar la oferta", bad.Reason);
+        Assert.Equal("bad", bad.Kind);
+
+        var badMany = DashboardCockpitComposer.BuildVerdict(
+            DashboardReadinessContract.Build(10, 0, 0, 3, 0), "");
+        Assert.Contains("3 alertas bloqueantes impiden cerrar la oferta", badMany.Reason);
+
+        var warn = DashboardCockpitComposer.BuildVerdict(
+            DashboardReadinessContract.Build(10, 1, 0, 0, 0), "");
+        Assert.Contains("1 pendiente", warn.Reason);
+        Assert.DoesNotContain("1 pendientes", warn.Reason);
+        Assert.Equal("warn", warn.Kind);
+
+        var ok = DashboardCockpitComposer.BuildVerdict(
+            DashboardReadinessContract.Build(10, 0, 0, 0, 0), "");
+        Assert.Equal("ok", ok.Kind);
+        Assert.Equal("Apta para ofertar", ok.Title);
+
+        Assert.Equal("1 bloqueante", DashboardCockpitComposer.BlockingLabel(1));
+        Assert.Equal("2 bloqueantes", DashboardCockpitComposer.BlockingLabel(2));
+    }
+
+    [Fact]
+    public void DashboardCockpitComposer_OmitsZeroStepsButAlwaysKeepsMilestones()
+    {
+        var cost = new CostBreakdown
+        {
+            CostoDirectoUf = 100m,
+            RiesgoUf = 0m,
+            GastosGeneralesUf = 5m,
+            UtilidadUf = 8m,
+            ValorAgregadoEquiposUf = 0m,
+            DescuentoUf = 0m,
+            TotalVentaNetoUf = 120m,
+            IvaUf = 22.8m,
+            TotalVentaConIvaUf = 142.8m,
+            TotalVentaUf = 142.8m
+        };
+        var policy = new DashboardWaterfallPolicy(0m, 5m, 8m, 0m, 0m, 19m, true);
+
+        var waterfall = DashboardCockpitComposer.BuildWaterfall(cost, policy, v => v.ToString("N0"));
+
+        var labels = waterfall.Rows.Select(r => r.Label).ToList();
+        // Hitos invariantes: nunca se omiten aunque el proyecto no tenga recargos.
+        Assert.Equal("Costo de ejecución", labels[0]);
+        Assert.Contains("Costo total proyecto", labels);
+        Assert.Contains("Venta neta", labels);
+        Assert.Contains(labels, l => l.StartsWith("TOTAL VENTA"));
+        Assert.True(waterfall.Rows[^1].IsGrandTotal);
+
+        // Recargos en cero: sin fila en blanco.
+        Assert.DoesNotContain(waterfall.Rows, r => r.AmountLabel == "0");
+        Assert.DoesNotContain(labels, l => l.StartsWith("Riesgo ("));
+        Assert.DoesNotContain(labels, l => l.StartsWith("VA sobre equipos ("));
+        Assert.DoesNotContain(labels, l => l.StartsWith("Descuento comercial ("));
+
+        // Sin descuento, la diferencia por factores cierra la estructura contra el neto.
+        Assert.Contains("Diferencia por factores", labels);
+        Assert.Equal("IVA (19,0%)", labels[labels.Count - 2]);
     }
 
     [Fact]

@@ -690,8 +690,8 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
         string moneda = string.IsNullOrWhiteSpace(session.ProjectInfo.MonedaPresupuesto)
             ? "CLP"
             : session.ProjectInfo.MonedaPresupuesto;
-        // UF es tasa opcional de referencia; no es requerida para calcular en CLP
-        CurrencyChip = session.ProjectInfo.ValorUfClp > 0
+        // UF es tasa opcional: con el presupuesto en CLP no se expone (política de moneda única).
+        CurrencyChip = !string.Equals(moneda, "CLP", StringComparison.OrdinalIgnoreCase) && session.ProjectInfo.ValorUfClp > 0
             ? $"{moneda} (UF={session.ProjectInfo.ValorUfClp:N0})"
             : moneda;
         RefreshContext();
@@ -711,12 +711,23 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
             var project = session.ProjectInfo;
             decimal valorUf = project.ValorUfClp > 0 ? project.ValorUfClp : session.ValorUfClp;
             if (valorUf <= 0) valorUf = PriceConversion.DefaultValorUfClp;
-            decimal cdUf = PriceConversion.ClpToUf(cost.CostoDirectoClp, valorUf);
-            decimal ventaUf = PriceConversion.ClpToUf(cost.TotalVentaClp, valorUf);
-            TickerCostoDirecto = $"{cdUf:N0} UF";
             TickerMargen = $"{project.UtilidadPct:N1}%";
-            TickerTotalOfertaUf = $"{ventaUf:N0} UF";
-            TickerTotalOfertaClp = $"(${cost.TotalVentaClp:N0})";
+
+            // Política de moneda: si el presupuesto está en CLP no se muestra UF (solo pesos);
+            // en UF se muestra el monto en UF y el equivalente CLP entre paréntesis.
+            bool esClp = string.Equals(project.MonedaPresupuesto, "CLP", StringComparison.OrdinalIgnoreCase);
+            if (esClp)
+            {
+                TickerCostoDirecto = $"$ {cost.CostoDirectoClp:N0}";
+                TickerTotalOfertaUf = $"$ {cost.TotalVentaClp:N0}";
+                TickerTotalOfertaClp = "";
+            }
+            else
+            {
+                TickerCostoDirecto = $"{PriceConversion.ClpToUf(cost.CostoDirectoClp, valorUf):N0} UF";
+                TickerTotalOfertaUf = $"{PriceConversion.ClpToUf(cost.TotalVentaClp, valorUf):N0} UF";
+                TickerTotalOfertaClp = $"(${cost.TotalVentaClp:N0})";
+            }
         }
         catch
         {

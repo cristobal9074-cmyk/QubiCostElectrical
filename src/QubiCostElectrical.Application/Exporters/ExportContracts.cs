@@ -110,7 +110,24 @@ public sealed class ExportProjectContext
     public string Location => string.IsNullOrWhiteSpace(Project.Ubicacion) ? "Sin ubicación" : Project.Ubicacion;
     public string BudgetStatus => string.IsNullOrWhiteSpace(Project.EstadoPresupuesto) ? "Borrador" : Project.EstadoPresupuesto;
     public bool IsDraft => string.Equals(BudgetStatus, "Borrador", StringComparison.OrdinalIgnoreCase);
-    public string CurrencyLabel => string.IsNullOrWhiteSpace(Project.MonedaPresupuesto) ? "UF" : Project.MonedaPresupuesto.Trim().ToUpperInvariant();
+
+    /// <summary>
+    /// Moneda de presentación del proyecto. Es la única fuente de verdad para los exportadores:
+    /// sale de <see cref="ProjectInfoRow.MonedaPresupuesto"/> y por defecto es CLP (nunca UF).
+    /// </summary>
+    public string CurrencyLabel =>
+        string.IsNullOrWhiteSpace(Project.MonedaPresupuesto) ? Moneda.CLP : Project.MonedaPresupuesto.Trim().ToUpperInvariant();
+
+    /// <summary>
+    /// <c>true</c> cuando el proyecto permite mostrar UF (UF/USD/EUR). Con CLP los documentos
+    /// exportados no emiten valores ni columnas en UF.
+    /// </summary>
+    public bool MuestraUf =>
+        !string.Equals(CurrencyLabel, CurrencyConversionService.CurrencyClp, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Política de moneda compartida por los exportadores PDF y Excel.</summary>
+    public ExportCurrencyPresenter Currency => new(Project.MonedaPresupuesto, Project.ValorUfClp, Project.TipoCambioUsdClp);
+
     public BudgetSettings BudgetSettings => ExcelCostosBridge.EnrichFromProjectData(BudgetSettings.FromProject(Project), Data);
     public OfferPdfSettings OfferSettings => Project.OfertaPdf ?? new OfferPdfSettings();
 }

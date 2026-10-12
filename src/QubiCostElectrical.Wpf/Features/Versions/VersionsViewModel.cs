@@ -14,11 +14,14 @@ namespace QubiCostElectrical.Wpf.Features.Versions;
 
 public sealed class VersionRowVm
 {
-    public VersionRowVm(BudgetVersionRow source, bool isActive, decimal deltaUf)
+    private readonly VersionsCurrencyFormat? currency;
+
+    public VersionRowVm(BudgetVersionRow source, bool isActive, decimal deltaUf, VersionsCurrencyFormat? currency = null)
     {
         Source = source;
         IsActive = isActive;
         DeltaUf = deltaUf;
+        this.currency = currency;
     }
 
     public BudgetVersionRow Source { get; }
@@ -31,7 +34,19 @@ public sealed class VersionRowVm
     public DateTime FechaCreacion => Source.FechaCreacion;
     public DateTime FechaModificacion => Source.FechaModificacion;
     public decimal MontoVentaUf => Source.MontoVentaUf;
-    public string DeltaText => DeltaUf == 0m ? "—" : $"{(DeltaUf > 0m ? "+" : string.Empty)}{DeltaUf:N3}";
+
+    // MontoVentaUf/DeltaUf son pesos chilenos (nombre legado). Con el valor de moneda del
+    // proyecto se muestra "1.234 UF" o "$ 48.000"; sin contexto (tests) se mantiene el N3.
+    public string MontoVentaText => currency is null
+        ? $"{MontoVentaUf:N3}"
+        : currency.FromClp(MontoVentaUf);
+
+    public string DeltaText => DeltaUf == 0m
+        ? "—"
+        : currency is null
+            ? $"{(DeltaUf > 0m ? "+" : string.Empty)}{DeltaUf:N3}"
+            : currency.FromClpSigned(DeltaUf);
+
     public string DeltaKind => DeltaUf > 0m ? "Aumenta" : DeltaUf < 0m ? "Reduce" : "Neutro";
     public string RevBadge => string.IsNullOrWhiteSpace(Codigo) ? "—" : Codigo.Length <= 3 ? Codigo : Codigo[^3..];
 
@@ -59,9 +74,12 @@ public enum RevisionDiffFilterMode
 
 public sealed class VersionComparisonRowVm
 {
-    public VersionComparisonRowVm(BudgetVersionComparisonRow source)
+    private readonly VersionsCurrencyFormat? currency;
+
+    public VersionComparisonRowVm(BudgetVersionComparisonRow source, VersionsCurrencyFormat? currency = null)
     {
         Source = source;
+        this.currency = currency;
     }
 
     public BudgetVersionComparisonRow Source { get; }
@@ -84,6 +102,16 @@ public sealed class VersionComparisonRowVm
     public decimal PuUfActual => Source.PuUfActual;
     public decimal DeltaPuUf => Source.DeltaPuUf;
     public string DeltaPuUfText => DeltaPuUf == 0m ? "—" : (DeltaPuUf > 0m ? $"+{DeltaPuUf:N3}" : $"{DeltaPuUf:N3}");
+
+    // Baseline/Current/Delta y P.U. vienen en UF reales del motor (CubicacionRow.UfTotal).
+    // Con CLP se presentan en pesos y la UF desaparece de la grilla.
+    public string PuBaseText => currency is null ? $"{PuUfBase:N3}" : currency.FromUf(PuUfBase);
+    public string PuActualText => currency is null ? $"{PuUfActual:N3}" : currency.FromUf(PuUfActual);
+    public string TotalBaseText => currency is null ? $"{BaselineUf:N3}" : currency.FromUf(BaselineUf);
+    public string TotalActualText => currency is null ? $"{CurrentUf:N3}" : currency.FromUf(CurrentUf);
+    public string DeltaUfText => currency is null
+        ? $"{DeltaUf:N3}"
+        : currency.FromUfSigned(DeltaUf);
 
     public decimal BaselineClp => Source.BaselineClp;
     public decimal CurrentClp => Source.CurrentClp;

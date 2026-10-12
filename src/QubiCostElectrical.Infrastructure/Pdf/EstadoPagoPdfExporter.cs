@@ -35,7 +35,16 @@ public sealed class EstadoPagoPdfExporter : IEstadoPagoPdfExporter
         QuestPdfBootstrap.EnsureCommunityLicense();
 
         var esCL = CultureInfo.GetCultureInfo("es-CL");
+        // Los montos del estado de pago los lleva el motor en UF. Con CLP nunca se muestra UF:
+        // se convierten a pesos. Con UF/USD se muestra la UF y, junto a ella, el equivalente en pesos.
+        bool muestraUf = request.MuestraUf;
+        decimal ufRate = request.UfRate;
         string UF(decimal v) => v.ToString("#,##0.000", esCL);
+        string Pesos(decimal uf) => $"$ {Math.Round(uf * ufRate, 0, MidpointRounding.AwayFromZero):N0}";
+        string Monto(decimal uf) => muestraUf ? UF(uf) + " UF" : Pesos(uf);
+        string MontoConEquivalente(decimal uf) => muestraUf ? $"{UF(uf)} UF  ·  {Pesos(uf)}" : Pesos(uf);
+        string Equivalente(decimal uf) => muestraUf ? Pesos(uf) : "";
+        string Hdr(string concepto) => $"{concepto} {(muestraUf ? "UF" : "$")}";
         string Pct(decimal v) => v.ToString("0.0", esCL) + " %";
 
         Document.Create(container =>
@@ -98,15 +107,16 @@ public sealed class EstadoPagoPdfExporter : IEstadoPagoPdfExporter
                     var t = mes.Totales;
                     col.Item().Row(kpis =>
                     {
-                        WriteKpi(kpis, "TRABAJO DEL MES", UF(t.TrabajoMes) + " UF", CText);
+                        WriteKpi(kpis, "TRABAJO DEL MES", MontoConEquivalente(t.TrabajoMes), CText);
                         kpis.ConstantItem(6);
-                        WriteKpi(kpis, "ACUMULADO", $"{UF(t.Acum)} UF · {Pct(t.PctAcum)}", CText);
+                        WriteKpi(kpis, "ACUMULADO", $"{MontoConEquivalente(t.Acum)} · {Pct(t.PctAcum)}", CText);
                         kpis.ConstantItem(6);
-                        WriteKpi(kpis, "TOTAL A PAGAR", UF(t.Total) + " UF", CNavy, destacado: true);
+                        WriteKpi(kpis, "TOTAL A PAGAR", MontoConEquivalente(t.Total), CNavy, destacado: true);
                     });
 
                     col.Item().PaddingTop(10).Table(table =>
                     {
+                        int spanCols = muestraUf ? 8 : 7;
                         table.ColumnsDefinition(cols =>
                         {
                             cols.ConstantColumn(48);
@@ -116,24 +126,28 @@ public sealed class EstadoPagoPdfExporter : IEstadoPagoPdfExporter
                             cols.ConstantColumn(56);
                             cols.ConstantColumn(76);
                             cols.ConstantColumn(56);
+                            if (muestraUf)
+                                cols.ConstantColumn(76); // equivalente en pesos
                         });
 
                         table.Header(h =>
                         {
                             h.Cell().Background(CNavy).Padding(4).AlignCenter().Text("CÓDIGO").Bold().FontColor(CWhite).FontSize(7.5f);
                             h.Cell().Background(CNavy).Padding(4).Text("PARTIDA (ITEMIZADO)").Bold().FontColor(CWhite).FontSize(7.5f);
-                            h.Cell().Background(CNavy).Padding(4).AlignRight().Text("MONTO CONTRATADO UF").Bold().FontColor(CWhite).FontSize(7.5f);
+                            h.Cell().Background(CNavy).Padding(4).AlignRight().Text(Hdr("MONTO CONTRATADO").ToUpperInvariant()).Bold().FontColor(CWhite).FontSize(7.5f);
                             h.Cell().Background(CNavy).Padding(4).AlignRight().Text("AV. ANTERIOR %").Bold().FontColor(CWhite).FontSize(7.5f);
                             h.Cell().Background(CNavy).Padding(4).AlignRight().Text("AV. MES %").Bold().FontColor(CWhite).FontSize(7.5f);
-                            h.Cell().Background(CNavy).Padding(4).AlignRight().Text("MONTO DEL MES UF").Bold().FontColor(CWhite).FontSize(7.5f);
+                            h.Cell().Background(CNavy).Padding(4).AlignRight().Text(Hdr("MONTO DEL MES").ToUpperInvariant()).Bold().FontColor(CWhite).FontSize(7.5f);
                             h.Cell().Background(CNavy).Padding(4).AlignRight().Text("ACUMULADO %").Bold().FontColor(CWhite).FontSize(7.5f);
+                            if (muestraUf)
+                                h.Cell().Background(CNavy).Padding(4).AlignRight().Text("EQUIV. $").Bold().FontColor(CWhite).FontSize(7.5f);
                         });
 
                         int fila = 0;
                         foreach (var sec in mes.Secciones)
                         {
                             if (!string.IsNullOrWhiteSpace(sec.Capitulo))
-                                table.Cell().ColumnSpan(7).Background(CBand).Padding(3).Text(sec.Capitulo).Bold().FontSize(7.5f).FontColor(CNavy);
+                                table.Cell().ColumnSpan((uint)spanCols).Background(CBand).Padding(3).Text(sec.Capitulo).Bold().FontSize(7.5f).FontColor(CNavy);
 
                             foreach (var f in sec.Filas)
                             {
@@ -141,32 +155,34 @@ public sealed class EstadoPagoPdfExporter : IEstadoPagoPdfExporter
                                 string bg = fila % 2 == 0 ? CRowAlt : CWhite;
                                 table.Cell().Background(bg).BorderBottom(0.5f).BorderColor(CLine).Padding(3).AlignCenter().Text(f.Item).FontSize(7.5f);
                                 table.Cell().Background(bg).BorderBottom(0.5f).BorderColor(CLine).Padding(3).Text(f.Descripcion).FontSize(7.5f);
-                                table.Cell().Background(bg).BorderBottom(0.5f).BorderColor(CLine).Padding(3).AlignRight().Text(UF(f.Monto)).FontSize(7.5f);
+                                table.Cell().Background(bg).BorderBottom(0.5f).BorderColor(CLine).Padding(3).AlignRight().Text(Monto(f.Monto)).FontSize(7.5f);
                                 table.Cell().Background(bg).BorderBottom(0.5f).BorderColor(CLine).Padding(3).AlignRight().Text(Pct(f.AvanceAnterior)).FontSize(7.5f);
                                 table.Cell().Background(bg).BorderBottom(0.5f).BorderColor(CLine).Padding(3).AlignRight().Text(Pct(f.AvanceMes)).FontSize(7.5f);
-                                table.Cell().Background(bg).BorderBottom(0.5f).BorderColor(CLine).Padding(3).AlignRight().Text(UF(f.MontoMes)).FontSize(7.5f).Bold();
+                                table.Cell().Background(bg).BorderBottom(0.5f).BorderColor(CLine).Padding(3).AlignRight().Text(Monto(f.MontoMes)).FontSize(7.5f).Bold();
                                 table.Cell().Background(bg).BorderBottom(0.5f).BorderColor(CLine).Padding(3).AlignRight().Text(Pct(f.AcumPct)).FontSize(7.5f);
+                                if (muestraUf)
+                                    table.Cell().Background(bg).BorderBottom(0.5f).BorderColor(CLine).Padding(3).AlignRight().Text(Equivalente(f.MontoMes)).FontSize(7.5f);
                             }
                         }
 
                         if (fila == 0)
-                            table.Cell().ColumnSpan(7).Padding(6).AlignCenter().Text("Sin partidas en el Itemizado.").FontColor(CMuted);
+                            table.Cell().ColumnSpan((uint)spanCols).Padding(6).AlignCenter().Text("Sin partidas en el Itemizado.").FontColor(CMuted);
                     });
 
                     var cfg = request.Config;
-                    col.Item().PaddingTop(8).Width(300).AlignRight().Border(1).BorderColor(CLine).Padding(6).Column(totals =>
+                    col.Item().PaddingTop(8).Width(380).AlignRight().Border(1).BorderColor(CLine).Padding(6).Column(totals =>
                     {
                         totals.Item().Text("TOTALES DEL MES").Bold().FontSize(8).FontColor(CNavy);
-                        WriteTotalRow(totals, "Trabajo del mes", UF(t.TrabajoMes));
-                        WriteTotalRow(totals, "Acumulado a la fecha", UF(t.Acum));
-                        WriteTotalRow(totals, $"Recupero de anticipo ({cfg.AnticipoPct:0.##} %)", UF(t.RecuperoMes));
-                        WriteTotalRow(totals, $"Retención garantía ({cfg.RetencionPct:0.##} %)", UF(t.RetencionMes));
-                        WriteTotalRow(totals, "Neto antes de IVA", UF(t.Neto));
-                        WriteTotalRow(totals, $"IVA ({cfg.IvaPct:0.##} %)", UF(t.Iva));
+                        WriteTotalRow(totals, "Trabajo del mes", MontoConEquivalente(t.TrabajoMes));
+                        WriteTotalRow(totals, "Acumulado a la fecha", MontoConEquivalente(t.Acum));
+                        WriteTotalRow(totals, $"Recupero de anticipo ({cfg.AnticipoPct:0.##} %)", MontoConEquivalente(t.RecuperoMes));
+                        WriteTotalRow(totals, $"Retención garantía ({cfg.RetencionPct:0.##} %)", MontoConEquivalente(t.RetencionMes));
+                        WriteTotalRow(totals, "Neto antes de IVA", MontoConEquivalente(t.Neto));
+                        WriteTotalRow(totals, $"IVA ({cfg.IvaPct:0.##} %)", MontoConEquivalente(t.Iva));
                         totals.Item().PaddingTop(4).Background(CHighlight).Padding(4).Row(r =>
                         {
                             r.RelativeItem().Text("TOTAL A PAGAR").Bold().FontSize(9);
-                            r.ConstantItem(110).AlignRight().Text(UF(t.Total) + " UF").Bold().FontSize(9);
+                            r.ConstantItem(190).AlignRight().Text(MontoConEquivalente(t.Total)).Bold().FontSize(9);
                         });
                     });
 
@@ -186,7 +202,7 @@ public sealed class EstadoPagoPdfExporter : IEstadoPagoPdfExporter
                             h.Cell().Background(CNavy).Padding(4).Text("MES").Bold().FontColor(CWhite).FontSize(7.5f);
                             h.Cell().Background(CNavy).Padding(4).Text("FOLIO").Bold().FontColor(CWhite).FontSize(7.5f);
                             h.Cell().Background(CNavy).Padding(4).Text("ESTADO").Bold().FontColor(CWhite).FontSize(7.5f);
-                            h.Cell().Background(CNavy).Padding(4).AlignRight().Text("TOTAL UF").Bold().FontColor(CWhite).FontSize(7.5f);
+                            h.Cell().Background(CNavy).Padding(4).AlignRight().Text(Hdr("TOTAL").ToUpperInvariant()).Bold().FontColor(CWhite).FontSize(7.5f);
                         });
 
                         int cm = 0;
@@ -199,7 +215,7 @@ public sealed class EstadoPagoPdfExporter : IEstadoPagoPdfExporter
                             crono.Cell().Background(bg).BorderBottom(0.5f).BorderColor(CLine).Padding(3).Text(pendiente ? "—" : m.Folio).FontSize(7.5f);
                             crono.Cell().Background(bg).BorderBottom(0.5f).BorderColor(CLine).Padding(3).Text(m.EstadoLabel).FontSize(7.5f);
                             crono.Cell().Background(bg).BorderBottom(0.5f).BorderColor(CLine).Padding(3).AlignRight()
-                                .Text(pendiente ? "—" : UF(m.Total!.Value)).FontSize(7.5f);
+                                .Text(pendiente ? "—" : Monto(m.Total!.Value)).FontSize(7.5f);
                         }
                     });
                 });
@@ -239,7 +255,7 @@ public sealed class EstadoPagoPdfExporter : IEstadoPagoPdfExporter
         totals.Item().PaddingTop(3).Row(r =>
         {
             r.RelativeItem().Text(label).FontSize(8);
-            r.ConstantItem(110).AlignRight().Text(valor).FontSize(8).Bold();
+            r.ConstantItem(170).AlignRight().Text(valor).FontSize(8).Bold();
         });
     }
 }

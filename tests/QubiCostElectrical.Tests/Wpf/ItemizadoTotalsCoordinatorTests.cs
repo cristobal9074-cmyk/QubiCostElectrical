@@ -161,4 +161,57 @@ public sealed class ItemizadoTotalsCoordinatorTests
         Assert.Equal("Mostrando 1 de 2 partidas", snapshot.FooterPartidasText);
         Assert.True(snapshot.HasActiveFilter);
     }
+
+    [Fact]
+    public void Calculate_InClp_HidesUfSecondary()
+    {
+        var p1 = BuildPartidaVm("p1", 75m);
+        var allRows = new List<ItemizadoRowVm> { p1 };
+        var ctx = ItemizadoCurrencyCoordinator.CreateContext(Moneda.CLP, 40_000m, 950m, 1050m);
+
+        var snapshot = ItemizadoTotalsCoordinator.Calculate(allRows, allRows, ctx, false, "");
+
+        // Política de moneda: CLP ⇒ sólo pesos, nunca UF.
+        Assert.StartsWith("$", snapshot.TotalBudgetUfText);
+        Assert.DoesNotContain("UF", snapshot.TotalBudgetUfText);
+        Assert.Equal("", snapshot.TotalBudgetClpText);
+    }
+
+    [Fact]
+    public void Calculate_InUf_ShowsUfPrimaryAndClpSecondary()
+    {
+        var p1 = BuildPartidaVm("p1", 75m);
+        var allRows = new List<ItemizadoRowVm> { p1 };
+        var ctx = ItemizadoCurrencyCoordinator.CreateContext(Moneda.UF, 40_000m, 950m, 1050m);
+
+        var snapshot = ItemizadoTotalsCoordinator.Calculate(allRows, allRows, ctx, false, "");
+
+        Assert.Contains("UF", snapshot.TotalBudgetUfText);
+        Assert.StartsWith("$", snapshot.TotalBudgetClpText);
+    }
+
+    private static ItemizadoRowVm BuildPartidaVm(string id, decimal totalUf)
+    {
+        var vm = new ItemizadoRowVm(new ItemizadoRow { Id = id, Item = "1.1", Descripcion = "Partida" });
+        vm.ApplyPresentation(new ItemizadoRowPresentation
+        {
+            SourceIndex = 0,
+            Id = id,
+            ParentId = "",
+            Item = "1.1",
+            Descripcion = "Partida",
+            Unidad = "UN",
+            Cantidad = 1m,
+            EsTitulo = false,
+            ExcluidoCubicacion = false,
+            CompletionState = PartidaCompletionState.Completed,
+            CompletionPct = 100,
+            UnitPriceUf = totalUf,
+            TotalUf = totalUf,
+            HasPrice = true,
+            StatusLabel = "Completo",
+            StatusKind = "ok"
+        });
+        return vm;
+    }
 }

@@ -105,9 +105,59 @@ public static class ExcelCostosBridge
         return total;
     }
 
-    public static BudgetSettings EnrichFromProjectData(BudgetSettings settings, ProjectFileData? data)
+    /// <summary>
+    /// Días-hombre (DD/HH) del plan de mano de obra: Σ dotación-mes × 22 jornadas, la misma cuenta
+    /// que la columna TOTAL DD/HH del Excel (MANO DE OBRA!U23 = 182 × 22 = 4.004). Es el
+    /// denominador con el que el estimador lee la tarifa y cuadra el FA, no un costo.
+    /// </summary>
+    public static decimal SumDiasHombre(
+        IEnumerable<MoDirectaRow>? directa,
+        IEnumerable<MoIndirectaRow>? indirecta,
+        int fallbackMonths = 0)
     {
-        settings ??= BudgetSettings.FromProject(null);
+        var dir = directa ?? Enumerable.Empty<MoDirectaRow>();
+        var ind = indirecta ?? Enumerable.Empty<MoIndirectaRow>();
+        int months = dir.Select(r => r.DotacionMensual?.Count ?? 0)
+            .Concat(ind.Select(r => r.DotacionMensual?.Count ?? 0))
+            .DefaultIfEmpty(0).Max();
+        if (months <= 0)
+            months = Math.Max(0, fallbackMonths);
+
+        decimal dotacion = 0m;
+        foreach (var r in dir)
+        {
+            if (months <= 0)
+            {
+                dotacion += Math.Max(0, r.Dotacion);
+                continue;
+            }
+            for (int i = 0; i < months; i++)
+                dotacion += DotacionDelMes(r.DotacionMensual, i, r.Dotacion);
+        }
+        foreach (var r in ind)
+        {
+            decimal fracc = r.FraccionEfectiva;
+            if (months <= 0)
+            {
+                dotacion += Math.Max(0, r.Dotacion) * fracc;
+                continue;
+            }
+            for (int i = 0; i < months; i++)
+                dotacion += DotacionDelMes(r.DotacionMensual, i, r.Dotacion) * fracc;
+        }
+
+        return Math.Round(dotacion * MaterialMoResolver.DiasPorJornal, 0, MidpointRounding.AwayFromZero);
+    }
+
+    private static int DotacionDelMes(List<int>? dotacionMensual, int mes, int dotacionBase)
+    {
+        if (dotacionMensual != null && mes < dotacionMensual.Count && dotacionMensual[mes] >= 0)
+            return dotacionMensual[mes];
+        return Math.Max(0, dotacionBase);
+    }
+
+    public static BudgetSettings EnrichFromProjectData(BudgetSettings settings, ProjectFileData? data)
+    {        settings ??= BudgetSettings.FromProject(null);
         data ??= new ProjectFileData();
         var project = data.Proyecto ?? new ProjectInfoRow();
         int months = project.MoDuracionMeses > 0 ? project.MoDuracionMeses : 12;

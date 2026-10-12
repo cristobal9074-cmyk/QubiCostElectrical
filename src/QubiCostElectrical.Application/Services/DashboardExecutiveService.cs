@@ -22,7 +22,7 @@ public sealed class DashboardExecutiveService
 
         int totalPartidas = items.Count(x => !x.EsTitulo);
         int listas = CountPartidasListas(review, totalPartidas);
-        decimal impacto10 = CalculateMaterialImpactPct(cost, project, 10m);
+        decimal impacto10 = CalculateMaterialImpactOnSalePct(cost, project, 10m);
         string riesgo = RiskLabel(review, impacto10);
 
         var kpis = new[]
@@ -48,7 +48,7 @@ public sealed class DashboardExecutiveService
             new DashboardExecutiveKpiDefinition(
                 $"{NormalizeCurrencyLabel(currencyLabel)} / m²",
                 "Costo comercial por superficie",
-                "UF/m² = total venta / metros cuadrados. Configura m² en Datos del proyecto si falta.",
+                "Total venta / m². Configura m² en Datos del proyecto si falta.",
                 false,
                 DashboardExecutiveKpiAccent.Orange,
                 cost.UfM2 > 0m ? DashboardExecutiveKpiValueKind.Money : DashboardExecutiveKpiValueKind.ConfigurationHint,
@@ -69,7 +69,7 @@ public sealed class DashboardExecutiveService
             kpis,
             RankPartidas(cost, items),
             RankMateriales(cost),
-            BuildSensitivityCurve(cost, project, DefaultSensitivityPcts),
+            BuildSensitivityCurveOnSale(cost, project, DefaultSensitivityPcts),
             impacto10);
     }
 
@@ -120,6 +120,47 @@ public sealed class DashboardExecutiveService
 
         decimal adjusted = CalculateMaterialSensitivityTotal(cost, project, materialVariationPct);
         return (adjusted - cost.TotalVentaUf) / cost.TotalVentaUf * 100m;
+    }
+
+    /// <summary>
+    /// Venta proyectada del escenario de materiales, anclada en el total oficial del motor.
+    /// La curva se corrige por el mismo delta que el motor aplica en 0%, de modo que el punto base
+    /// coincide exactamente con el KPI de venta sin importar la política de costos aplicada.
+    /// </summary>
+    public decimal ProjectSaleOnMaterialVariation(CostBreakdown cost, ProjectInfoRow project, decimal materialVariationPct)
+    {
+        cost ??= new CostBreakdown();
+        project ??= new ProjectInfoRow();
+
+        decimal delta = CalculateMaterialSensitivityTotal(cost, project, materialVariationPct)
+                      - CalculateMaterialSensitivityTotal(cost, project, 0m);
+
+        return cost.TotalVentaUf + delta;
+    }
+
+    /// <summary>
+    /// Impacto de la variación de materiales medido sobre la MISMA venta neta que muestra el KPI
+    /// (antes se medía contra el costo total proyecto, así que gráfico y KPI no cerraban).
+    /// </summary>
+    public decimal CalculateMaterialImpactOnSalePct(CostBreakdown cost, ProjectInfoRow project, decimal materialVariationPct)
+    {
+        cost ??= new CostBreakdown();
+        if (cost.TotalVentaUf <= 0m)
+            return 0m;
+
+        decimal proyectada = ProjectSaleOnMaterialVariation(cost, project, materialVariationPct);
+        return (proyectada - cost.TotalVentaUf) / cost.TotalVentaUf * 100m;
+    }
+
+    /// <summary>Curva de sensibilidad anclada a la venta neta oficial, con los mismos puntos del contrato.</summary>
+    public IReadOnlyList<DashboardSensitivityPoint> BuildSensitivityCurveOnSale(
+        CostBreakdown cost,
+        ProjectInfoRow project,
+        IEnumerable<decimal> scenarioPcts)
+    {
+        return (scenarioPcts ?? DefaultSensitivityPcts)
+            .Select(pct => new DashboardSensitivityPoint(pct, ProjectSaleOnMaterialVariation(cost, project, pct)))
+            .ToList();
     }
 
     public string RiskLabel(FinalReviewSummary review, decimal impactoMaterial10Pct)

@@ -98,6 +98,22 @@ public sealed partial class ExcelExportInfrastructure : IExcelProjectExporter
     private string Currency => ctx.CurrencyLabel;
     private string UfFmt => ClosedXmlExportStyler.UfExcelFormat();
     private string ProjectFmt => ClosedXmlExportStyler.ProjectCurrencyExcelFormat(Currency);
+
+    /// <summary>
+    /// <c>true</c> cuando el proyecto permite columnas en UF (UF/USD/EUR). Con CLP la regla de
+    /// producto prohíbe mostrar UF en cualquier documento, incluido este Excel interno.
+    /// </summary>
+    private bool MuestraUf => ctx.MuestraUf;
+
+    /// <summary>
+    /// Oculta una columna de la hoja cuando el proyecto está en CLP. Se oculta en lugar de
+    /// eliminarla para no romper las fórmulas vivas del libro (que referencian letras de columna).
+    /// </summary>
+    private void HideIfClp(IXLWorksheet ws, int column)
+    {
+        if (!MuestraUf)
+            ws.Column(column).Hide();
+    }
     private static double D(decimal value) => ClosedXmlExportStyler.ToDouble(value);
 
     private CostBreakdown Cost()
@@ -181,6 +197,8 @@ public sealed partial class ExcelExportInfrastructure : IExcelProjectExporter
         WriteKpi(ws, 10, "Total venta", cost.TotalVentaUf, Project.IncluirIvaEnTotal ? "Neto + IVA" : "Neto");
         WriteKpi(ws, 11, "UF/m²", cost.UfM2, "Total / m²");
         StyleTable(ws, 3, 4, 11, 7, "tbl_control_kpis");
+        // Proyecto en CLP: la columna "VALOR UF" no debe existir a la vista.
+        HideIfClp(ws, 5);
 
         int idx = 14;
         ws.Cell(idx++, 1).Value = "ÍNDICE DE HOJAS";
@@ -241,7 +259,11 @@ public sealed partial class ExcelExportInfrastructure : IExcelProjectExporter
         Info(ws, r++, "Plazo ejecución", string.IsNullOrWhiteSpace(Offer.ProjectDuration) ? "Por definir" : Offer.ProjectDuration);
         Info(ws, r++, "Validez oferta", $"{Offer.ValidityDays} días");
         Info(ws, r++, "Moneda", Currency);
+        int filaUfRef = r;
         Info(ws, r++, "Valor UF CLP", Project.ValorUfClp, ClosedXmlExportStyler.ClpExcelFormat());
+        // Proyecto en CLP: nunca se expone la UF de referencia.
+        if (!MuestraUf)
+            ws.Row(filaUfRef).Hide();
         Info(ws, r++, "Dólar CLP", Project.TipoCambioUsdClp, ClosedXmlExportStyler.ClpExcelFormat());
         Info(ws, r++, "Estado formal", ctx.BudgetStatus);
         Info(ws, r++, "Último cambio", LastStatusChangeText());
@@ -274,6 +296,11 @@ public sealed partial class ExcelExportInfrastructure : IExcelProjectExporter
         ws.Cell(2, 7).Style.Font.Bold = true;
         ws.Cell(2, 7).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
         ws.Cell(2, 8).Value = Offer.OfferDate == default ? DateTime.Today.ToString("dd-MM-yyyy") : Offer.OfferDate.ToString("dd-MM-yyyy");
+
+        // Proyecto en CLP: el factor se mantiene (lo usan las fórmulas vivas de P.U. $),
+        // pero la celda no debe anunciar UF.
+        if (!MuestraUf)
+            ws.Cell(2, 1).Value = "FACTOR INTERNO:";
 
         // Fila 3: Encabezados de tabla
         Header(ws, 3, new[] { "ÍTEM", "DESCRIPCIÓN", "UNIDAD", "CANTIDAD", "P.U. UF", "TOTAL UF", "P.U. " + Currency, "TOTAL " + Currency, "OBSERVACIÓN" });
@@ -399,6 +426,9 @@ public sealed partial class ExcelExportInfrastructure : IExcelProjectExporter
         ws.Range(4, 4, totalBrutoRow, 4).Style.NumberFormat.Format = "#,##0.00";
         ws.Range(4, 5, totalBrutoRow, 6).Style.NumberFormat.Format = UfFmt;
         ws.Range(4, 7, totalBrutoRow, 8).Style.NumberFormat.Format = ProjectFmt;
+        // Proyecto en CLP: se ocultan P.U. UF (E) y TOTAL UF (F); quedan las columnas en pesos.
+        HideIfClp(ws, 5);
+        HideIfClp(ws, 6);
     }
 
     private void ExportCubicacion(XLWorkbook wb)
@@ -444,6 +474,9 @@ public sealed partial class ExcelExportInfrastructure : IExcelProjectExporter
         ws.Range(4, 17, Math.Max(row - 1, 4), 18).Style.NumberFormat.Format = "0.00%";
         ws.Range(4, 21, Math.Max(row - 1, 4), 21).Style.NumberFormat.Format = UfFmt;
         ws.Range(4, 22, Math.Max(row - 1, 4), 22).Style.NumberFormat.Format = ProjectFmt;
+        // Proyecto en CLP: se ocultan MAT/M-O/UNIT/TOTAL UF y el total UF en vivo de la col. 21.
+        foreach (int col in new[] { 7, 8, 9, 10, 21 })
+            HideIfClp(ws, col);
     }
 
 
@@ -523,6 +556,9 @@ public sealed partial class ExcelExportInfrastructure : IExcelProjectExporter
         StyleTable(ws, 3, 1, Math.Max(row - 1, 3), 16, "tbl_apu_profesional");
         ws.Range(4, 10, Math.Max(row - 1, 4), 10).Style.NumberFormat.Format = UfFmt;
         ws.Range(4, 16, Math.Max(row - 1, 4), 16).Style.NumberFormat.Format = UfFmt;
+        // Proyecto en CLP: se ocultan Precio UF y Total UF del APU.
+        HideIfClp(ws, 10);
+        HideIfClp(ws, 16);
     }
 
     private void ExportMateriales(XLWorkbook wb)
@@ -555,6 +591,9 @@ public sealed partial class ExcelExportInfrastructure : IExcelProjectExporter
         StyleTable(ws, 3, 1, Math.Max(row - 1, 3), 17, "tbl_lista_precios");
         ws.Range(4, 11, Math.Max(row - 1, 4), 13).Style.NumberFormat.Format = UfFmt;
         ws.Range(4, 14, Math.Max(row - 1, 4), 14).Style.NumberFormat.Format = ProjectFmt;
+        // Proyecto en CLP: se ocultan MAT/M-O/TOTAL UF; queda TOTAL en pesos.
+        foreach (int col in new[] { 11, 12, 13 })
+            HideIfClp(ws, col);
     }
 
     private void ExportHojaCosto(XLWorkbook wb)
@@ -565,7 +604,7 @@ public sealed partial class ExcelExportInfrastructure : IExcelProjectExporter
         decimal valorUf = Project.ValorUfClp > 0m ? Project.ValorUfClp : PriceConversion.DefaultValorUfClp;
 
         // Fila 2: Parámetros del presupuesto y celda de referencia dinámica B2 ($B$2)
-        ws.Cell(2, 1).Value = "VALOR UF REF:";
+        ws.Cell(2, 1).Value = MuestraUf ? "VALOR UF REF:" : "FACTOR INTERNO:";
         ws.Cell(2, 1).Style.Font.Bold = true;
         ws.Cell(2, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
         ws.Cell(2, 2).SetValue(D(valorUf));
@@ -621,6 +660,8 @@ public sealed partial class ExcelExportInfrastructure : IExcelProjectExporter
         StyleTable(ws, 3, 1, lastRow, 4, "tbl_hoja_costo");
         ws.Range(4, 2, lastRow, 2).Style.NumberFormat.Format = UfFmt;
         ws.Range(4, 3, lastRow, 3).Style.NumberFormat.Format = ProjectFmt;
+        // Proyecto en CLP: se oculta la columna de valores en UF; la columna 3 queda en pesos.
+        HideIfClp(ws, 2);
 
         void WriteCost(IXLWorksheet s, int row, string label, decimal clpValue, string note)
         {
@@ -684,8 +725,16 @@ public sealed partial class ExcelExportInfrastructure : IExcelProjectExporter
         Info(ws, r++, "Fecha", Offer.OfferDate == default ? DateTime.Today : Offer.OfferDate);
         Info(ws, r++, "N° oferta", Offer.OfferNumber);
         Info(ws, r++, "Revisión", Offer.RevisionTag);
-        Info(ws, r++, "Monto neto UF", netAmountUf, UfFmt);
-        Info(ws, r++, "Monto neto " + Currency, netAmountClp, ProjectFmt);
+        if (MuestraUf)
+        {
+            Info(ws, r++, "Monto neto UF", netAmountUf, UfFmt);
+            Info(ws, r++, "Monto neto " + Currency, netAmountClp, ProjectFmt);
+        }
+        else
+        {
+            // Proyecto en CLP: el monto neto se informa sólo en pesos.
+            Info(ws, r++, "Monto neto $", netAmountClp, ProjectFmt);
+        }
         Info(ws, r++, "IVA", Offer.IncludeIvaNote ? "Se debe agregar IVA cuando corresponda" : "Según condiciones comerciales");
         Info(ws, r++, "Plazo ejecución", string.IsNullOrWhiteSpace(Offer.ProjectDuration) ? "Por definir" : Offer.ProjectDuration);
         Info(ws, r++, "Validez", $"{Offer.ValidityDays} días");
@@ -711,6 +760,8 @@ public sealed partial class ExcelExportInfrastructure : IExcelProjectExporter
         ws.Range(header + 1, 2, Math.Max(r - 1, header + 1), 2).Style.NumberFormat.Format = UfFmt;
         ws.Range(header + 1, 3, Math.Max(r - 1, header + 1), 3).Style.NumberFormat.Format = ProjectFmt;
         ws.Range(header + 1, 4, Math.Max(r - 1, header + 1), 4).Style.NumberFormat.Format = "0.00%";
+        // Proyecto en CLP: se oculta TOTAL UF del resumen por áreas.
+        HideIfClp(ws, 2);
 
         r += 2;
         ws.Cell(r++, 1).Value = "Marcas y especificaciones";
@@ -758,6 +809,9 @@ public sealed partial class ExcelExportInfrastructure : IExcelProjectExporter
         }
         StyleTable(ws, 3, 1, Math.Max(3, row - 1), 13, "tbl_auditoria_precios");
         ws.Range(4, 5, Math.Max(row - 1, 4), 5).Style.NumberFormat.Format = UfFmt;
+        // Proyecto en CLP: se ocultan Precio UF y la UF usada (columna de trazabilidad).
+        HideIfClp(ws, 5);
+        HideIfClp(ws, 7);
     }
 
 
@@ -795,6 +849,9 @@ public sealed partial class ExcelExportInfrastructure : IExcelProjectExporter
         ws.Range(4, 6, Math.Max(row - 1, 4), 6).Style.NumberFormat.Format = "0.00%";
         ws.Range(4, 8, Math.Max(row - 1, 4), 10).Style.NumberFormat.Format = UfFmt;
         ws.Range(4, 11, Math.Max(row - 1, 4), 11).Style.NumberFormat.Format = ProjectFmt;
+        // Proyecto en CLP: se ocultan PRECIO UF, TOTAL NETO UF y TOTAL COMPRA UF.
+        foreach (int col in new[] { 8, 9, 10 })
+            HideIfClp(ws, col);
     }
 
     private List<OfferItemizadoClienteRow> BuildOfferRows()

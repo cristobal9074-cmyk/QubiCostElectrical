@@ -627,8 +627,8 @@
                     </DataGridTemplateColumn>
 
                     <!-- Venta UF -->
-                    <DataGridTextColumn Header="Venta UF" Width="125" SortMemberPath="MontoVentaUf"
-                                        Binding="{Binding MontoVentaUf, StringFormat={}{0:N3}}"
+                    <DataGridTextColumn x:Name="VentaColumn" Header="Venta UF" Width="125" SortMemberPath="MontoVentaUf"
+                                        Binding="{Binding MontoVentaText}"
                                         HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}">
                       <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
@@ -643,7 +643,7 @@
                     </DataGridTextColumn>
 
                     <!-- Δ UF -->
-                    <DataGridTextColumn Header="Δ UF" Width="115" SortMemberPath="DeltaUf"
+                    <DataGridTextColumn x:Name="VentaDeltaColumn" Header="Δ UF" Width="115" SortMemberPath="DeltaUf"
                                         Binding="{Binding DeltaText}"
                                         HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}">
                       <DataGridTextColumn.ElementStyle>
@@ -1094,41 +1094,41 @@
                     </DataGridTemplateColumn>
 
                     <!-- P.U. UF -->
-                    <DataGridTemplateColumn Header="P.U. UF" Width="112"
+                    <DataGridTemplateColumn x:Name="PuColumn" Header="P.U. UF" Width="112"
                                             HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}">
                       <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                           <TextBlock Style="{StaticResource Versions.NumCell}" ToolTip="{Binding DeltaPuUfText}">
-                            <Run Text="{Binding PuUfBase, StringFormat={}{0:N3}, Mode=OneWay}" />
+                            <Run Text="{Binding PuBaseText, Mode=OneWay}" />
                             <Run Text=" → " />
-                            <Run Text="{Binding PuUfActual, StringFormat={}{0:N3}, Mode=OneWay}" />
+                            <Run Text="{Binding PuActualText, Mode=OneWay}" />
                           </TextBlock>
                         </DataTemplate>
                       </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
 
                     <!-- Total UF -->
-                    <DataGridTemplateColumn Header="Total UF" Width="130"
+                    <DataGridTemplateColumn x:Name="TotalColumn" Header="Total UF" Width="130"
                                             HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}">
                       <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                           <TextBlock Style="{StaticResource Versions.NumCell}">
-                            <Run Text="{Binding BaselineUf, StringFormat={}{0:N3}, Mode=OneWay}" />
+                            <Run Text="{Binding TotalBaseText, Mode=OneWay}" />
                             <Run Text=" → " />
-                            <Run Text="{Binding CurrentUf, StringFormat={}{0:N3}, Mode=OneWay}" />
+                            <Run Text="{Binding TotalActualText, Mode=OneWay}" />
                           </TextBlock>
                         </DataTemplate>
                       </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
 
                     <!-- Δ UF -->
-                    <DataGridTemplateColumn Header="Δ UF" Width="108"
+                    <DataGridTemplateColumn x:Name="DeltaUfColumn" Header="Δ UF" Width="108"
                                             HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}">
                       <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                           <TextBlock FontFamily="{StaticResource Font.Mono}" FontSize="11.5" FontWeight="Bold"
                                      TextAlignment="Right" HorizontalAlignment="Right" VerticalAlignment="Center"
-                                     Text="{Binding DeltaUf, StringFormat={}{0:N3}}">
+                                     Text="{Binding DeltaUfText}">
                             <TextBlock.Style>
                               <Style TargetType="TextBlock">
                                 <Setter Property="Foreground" Value="{DynamicResource Brush.Ink4}" />
@@ -1236,8 +1236,8 @@
                           <TextBlock Grid.Column="3" Text="Q base" Style="{StaticResource Text.SectionLabel}" HorizontalAlignment="Right" />
                           <TextBlock Grid.Column="4" Text="Q actual" Style="{StaticResource Text.SectionLabel}" HorizontalAlignment="Right" />
                           <TextBlock Grid.Column="5" Text="Δ Q" Style="{StaticResource Text.SectionLabel}" HorizontalAlignment="Right" />
-                          <TextBlock Grid.Column="6" Text="UF unit." Style="{StaticResource Text.SectionLabel}" HorizontalAlignment="Right" />
-                          <TextBlock Grid.Column="7" Text="Δ UF" Style="{StaticResource Text.SectionLabel}" HorizontalAlignment="Right" />
+                          <TextBlock x:Name="ResourcePrecioUnitHeader" Grid.Column="6" Text="UF unit." Style="{StaticResource Text.SectionLabel}" HorizontalAlignment="Right" />
+                          <TextBlock x:Name="ResourceDeltaHeader" Grid.Column="7" Text="Δ UF" Style="{StaticResource Text.SectionLabel}" HorizontalAlignment="Right" />
                         </Grid>
                       </Border>
 
@@ -1272,9 +1272,9 @@
                                            Style="{StaticResource Versions.NumCell}" FontSize="10.5" />
                                 <TextBlock Grid.Column="5" Text="{Binding DeltaCantidad, StringFormat={}{0:+0.##;-0.##;—}}"
                                            Style="{StaticResource Versions.NumCell}" FontSize="10.5" FontWeight="SemiBold" />
-                                <TextBlock Grid.Column="6" Text="{Binding UfUnitario, StringFormat='{}{0:N3} UF'}"
+                                <TextBlock Grid.Column="6" Text="{Binding PrecioUnitarioText}"
                                            Style="{StaticResource Versions.NumCell}" FontSize="10.5" />
-                                <TextBlock Grid.Column="7" Text="{Binding DeltaTotalUf, StringFormat='{}{0:+0.000;-0.000;—} UF'}"
+                                <TextBlock Grid.Column="7" Text="{Binding DeltaTotalText}"
                                            Style="{StaticResource Versions.NumCell}" FontSize="10.5" FontWeight="SemiBold" />
                               </Grid>
                             </DataTemplate>

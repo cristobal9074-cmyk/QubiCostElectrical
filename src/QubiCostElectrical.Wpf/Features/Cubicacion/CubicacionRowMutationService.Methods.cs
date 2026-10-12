@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Windows;
 using QubiCostElectrical;
 using QubiCostElectrical.Wpf.Infrastructure;
+using QubiCostElectrical.Wpf.Shell;
 
 namespace QubiCostElectrical.Wpf.Features.Cubicacion;
 
@@ -222,6 +224,114 @@ internal sealed partial class CubicacionRowMutationService
             $"{updated} recurso(s) actualizados desde el catálogo.",
             actionLabel: "Deshacer",
             action: () => ShellNotificationService.RequestUndo?.Invoke());
+    }
+
+    /// <summary>
+    /// Baja a la cubicación el material recién creado en la lista de precios: el alta se usa justamente
+    /// cuando falta un material en la partida que se está levantando. Sin partida editable seleccionada,
+    /// el material ya quedó en el catálogo del proyecto y solo se avisa por qué no se pudo asignar.
+    /// </summary>
+    public void AplicarMaterialCreado(string? codigo)
+    {
+        if (string.IsNullOrWhiteSpace(codigo)) return;
+
+        MaterialRow? material = session.Materiales.FirstOrDefault(m => CodeHelper.Match(m.Codigo, codigo));
+        if (material == null) return;
+
+        // El catálogo creció fuera de la cubicación (la lista de precios escribe en session.Materiales
+        // directamente): los índices cacheados de validación y autocompletado quedaron viejos. Sin
+        // invalidarlos el código nuevo no se ofrece al escribir, y EnsureMaterialInProjectCatalog lo
+        // agregaría por segunda vez al no encontrarlo en el índice.
+        parent.InvalidateAutocompleteMaterialIndex();
+        parent.ValidationMaterialesIndex = null;
+
+        if (!parent.CanEdit || parent.SelectedPartida?.EsPartida != true || parent.SelectedRow == null)
+        {
+            ShellNotificationService.Instance.ShowWarning(
+                "Material creado en el proyecto",
+                $"'{codigo}' quedó en la lista de precios. Selecciona una partida de la cubicación para asignarlo.");
+            return;
+        }
+
+        ApplyMaterial(material);
+        (int Offset, string Cantidad)? casilla = SolicitarCasillaDeCubicacion(material);
+        if (casilla is { } elegida)
+            AplicarCasillaDeCubicacion(material.Codigo, elegida.Offset, elegida.Cantidad);
+
+        ShellNotificationService.Instance.ShowSuccess(
+            "Material en la cubicación",
+            DescribirMaterialCubicado(material, casilla),
+            actionLabel: "Deshacer",
+            action: () => ShellNotificationService.RequestUndo?.Invoke());
+    }
+
+    private string DescribirMaterialCubicado(MaterialRow material, (int Offset, string Cantidad)? casilla)
+    {
+        string partida = parent.SelectedPartida?.Codigo ?? "la partida";
+        if (casilla is not { } elegida)
+            return $"'{material.Codigo}' quedó asignado a {partida}. Sin casilla de zona: cúbíquelo en la grilla.";
+
+        string zona = NombreCasilla(elegida.Offset);
+        return $"'{material.Codigo}' quedó asignado a {partida} y cubicado con {elegida.Cantidad} en {zona}.";
+    }
+
+    private string NombreCasilla(int offset)
+    {
+        var zonas = CubicacionSectorService.ZonasActivasOrdenadas(session);
+        return offset < zonas.Count && !string.IsNullOrWhiteSpace(zonas[offset].Nombre)
+            ? zonas[offset].Nombre.Trim()
+            : $"casilla {offset + 1}";
+    }
+
+    /// <summary>
+    /// Pregunta zona y cantidad para la casilla del material recién creado. Devuelve null si no hay
+    /// UI modal disponible (pruebas, cierre de la app) o si el usuario elige "Omitir": en ese caso el
+    /// material queda igual en la partida y se cubica a mano como antes.
+    /// </summary>
+    private (int Offset, string Cantidad)? SolicitarCasillaDeCubicacion(MaterialRow material)
+    {
+        if (!parent.CanEdit || parent.SelectedRow == null || !ShellWindow.CanShowModalDialog)
+            return null;
+        // El diálogo se abre sobre la ventana principal: sin shell (pruebas, arranque) no hay
+        // pregunta modal y el llamador sigue con el material ya asignado.
+        if (Application.Current?.MainWindow is not ShellWindow shell)
+            return null;
+
+        var dialog = new ZonaCantidadDialog(
+            CubicacionSectorService.ZonasActivasOrdenadas(session),
+            material.Codigo,
+            material.Descripcion,
+            parent.SelectedPartida?.Descripcion)
+        {
+            Owner = shell
+        };
+
+        return dialog.ShowDialog() == true
+            ? (dialog.Offset, dialog.CantidadTexto)
+            : null;
+    }
+
+    /// <summary>
+    /// Escribe la cantidad en la casilla de la zona indicada. La columna CANT es calculada (suma de
+    /// las casillas), así que escribir la casilla es lo que deja la fila con cantidad — y dispara el
+    /// mismo camino que teclear en la grilla: recálculo, validación, propagación a filas esclavo,
+    /// totales y undo (el punto de undo ya lo dejó ApplyMaterial, así que "Deshacer" revierte el
+    /// material y su casilla juntos).
+    /// </summary>
+    public void AplicarCasillaDeCubicacion(string? codigo, int offset, string cantidad)
+    {
+        var row = parent.SelectedRow;
+        if (!parent.CanEdit || row == null || string.IsNullOrWhiteSpace(cantidad))
+            return;
+        if (!string.IsNullOrWhiteSpace(codigo) && !CodeHelper.Match(row.Codigo, codigo))
+            return;
+
+        // ApplyMaterial ya dejó el punto de undo de la acción; marcarlo como pendiente evita que la
+        // casilla empuje OTRO punto y que "Deshacer" revierta solo la cantidad dejando el material.
+        parent.HasPendingUndoForEdit = true;
+        parent.SetSectorExpressionDirect(row, offset, cantidad);
+        row.RefreshDisplayProperties();
+        parent.RightPanel.LoadRow(row);
     }
 
     public void ApplyMaterial(MaterialRow? material)

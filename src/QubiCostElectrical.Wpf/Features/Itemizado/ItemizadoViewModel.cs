@@ -117,6 +117,7 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
         });
         session.Saved += sessionSavedHandler;
 
+        SyncCurrencyFromProject();
         Reload(syncOnly: false);
         ProcessPendingShellAction();
     }
@@ -229,7 +230,9 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
     public string TotalPresupuestoClpText => totalsSnapshot.TotalBudgetClpText;
     public string FooterPartidasText => totalsSnapshot.FooterPartidasText;
     public string FooterTotalUfText => totalsSnapshot.FooterTotalUfText;
-    public string FooterTotalClpText => totalsSnapshot.FooterTotalClpText;
+    public string FooterTotalClpText => string.IsNullOrWhiteSpace(totalsSnapshot.FooterTotalClpText)
+        ? ""
+        : $"({totalsSnapshot.FooterTotalClpText})";
     public string UfRateCaption => totalsSnapshot.UfRateCaption;
     public bool HasActiveFilter => totalsSnapshot.HasActiveFilter;
 
@@ -276,10 +279,16 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
     public string ViewPerspectiveLabel => isViewVenta ? "Venta (P.V.)" : "Costo Directo";
 
     private string selectedDeliveryCurrency = Moneda.UF;
+
+    /// <summary>
+    /// Moneda de presentación del Itemizado. Es un espejo de la moneda del proyecto
+    /// (<c>ProjectInfo.MonedaPresupuesto</c>), que es la única fuente de verdad: no se edita
+    /// desde esta pantalla.
+    /// </summary>
     public string SelectedDeliveryCurrency
     {
         get => selectedDeliveryCurrency;
-        set
+        private set
         {
             string normalized = (value ?? Moneda.UF).Trim().ToUpperInvariant();
             if (SetProperty(ref selectedDeliveryCurrency, normalized))
@@ -295,10 +304,20 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
         }
     }
 
-    public bool IsCurrencyUf { get => selectedDeliveryCurrency == Moneda.UF; set { if (value) SelectedDeliveryCurrency = Moneda.UF; } }
-    public bool IsCurrencyClp { get => selectedDeliveryCurrency == Moneda.CLP; set { if (value) SelectedDeliveryCurrency = Moneda.CLP; } }
-    public bool IsCurrencyUsd { get => selectedDeliveryCurrency == Moneda.USD; set { if (value) SelectedDeliveryCurrency = Moneda.USD; } }
-    public bool IsCurrencyEur { get => selectedDeliveryCurrency == Moneda.EUR; set { if (value) SelectedDeliveryCurrency = Moneda.EUR; } }
+    public bool IsCurrencyUf => selectedDeliveryCurrency == Moneda.UF;
+    public bool IsCurrencyClp => selectedDeliveryCurrency == Moneda.CLP;
+    public bool IsCurrencyUsd => selectedDeliveryCurrency == Moneda.USD;
+    public bool IsCurrencyEur => selectedDeliveryCurrency == Moneda.EUR;
+
+    /// <summary>
+    /// Sincroniza la moneda de presentación del Itemizado con la moneda del proyecto
+    /// (única fuente de verdad). Se invoca al abrir la pantalla y cuando el proyecto cambia.
+    /// </summary>
+    public void SyncCurrencyFromProject()
+    {
+        if (projectWorkspace.HasOpenProject)
+            SelectedDeliveryCurrency = session.ProjectInfo.MonedaPresupuesto;
+    }
 
     public string HeaderUnitPriceCaption => PriceConversion.GetCurrencyHeaderLabel("P.U.", selectedDeliveryCurrency);
     public string HeaderTotalCaption => PriceConversion.GetCurrencyHeaderLabel("TOTAL", selectedDeliveryCurrency);
@@ -323,6 +342,7 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
 
     public void Refresh()
     {
+        SyncCurrencyFromProject();
         Reload(syncOnly: false);
         ProcessPendingShellAction();
     }

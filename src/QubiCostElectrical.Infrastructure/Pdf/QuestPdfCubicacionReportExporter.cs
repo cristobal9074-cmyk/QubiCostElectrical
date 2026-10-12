@@ -37,6 +37,8 @@ public sealed class QuestPdfCubicacionReportExporter : ICubicacionReportPdfExpor
         string N(decimal v) => v.ToString("#,##0.###", cultureES);
         string Money(decimal uf) => currencyConversion.FormatMoneyFromUf(
             uf, ctx.CurrencyLabel, ctx.Project.ValorUfClp, ctx.Project.TipoCambioUsdClp);
+        bool muestraUf = ctx.MuestraUf;
+        string MontoUf(decimal uf) => muestraUf ? UF(uf) : Money(uf);
         string S(string? s) => string.IsNullOrWhiteSpace(s) ? "-" : s.Trim();
 
         var rowsByItem = ctx.Cubicacion
@@ -127,7 +129,7 @@ public sealed class QuestPdfCubicacionReportExporter : ICubicacionReportPdfExpor
                             t.Span($"PARTIDA {S(item.Item)} · {Short(item.Descripcion, 72)}")
                              .FontSize(11).Bold().FontColor(CNavy));
                         col.Item().PaddingTop(4).Text(t =>
-                            t.Span($"Unidad: {S(item.Unidad)}  ·  Cantidad: {N(item.Cantidad)}  ·  Subtotal: UF {UF(totalUf)}")
+                            t.Span($"Unidad: {S(item.Unidad)}  ·  Cantidad: {N(item.Cantidad)}  ·  Subtotal: {(muestraUf ? "UF " : "")}{MontoUf(totalUf)}")
                              .FontSize(8).FontColor(CMuted));
 
                         col.Item().PaddingTop(8).Table(table =>
@@ -150,8 +152,8 @@ public sealed class QuestPdfCubicacionReportExporter : ICubicacionReportPdfExpor
                                 TH(h.Cell().PaddingHorizontal(4).PaddingVertical(3), "Material");
                                 TH(h.Cell().PaddingHorizontal(4).PaddingVertical(3), "UD");
                                 TH(h.Cell().PaddingHorizontal(4).PaddingVertical(3), "Cant.", right: true);
-                                TH(h.Cell().PaddingHorizontal(4).PaddingVertical(3), "Unit UF", right: true);
-                                TH(h.Cell().PaddingHorizontal(4).PaddingVertical(3), "Total UF", right: true);
+                                TH(h.Cell().PaddingHorizontal(4).PaddingVertical(3), muestraUf ? "Unit UF" : "Unit $", right: true);
+                                TH(h.Cell().PaddingHorizontal(4).PaddingVertical(3), muestraUf ? "Total UF" : "Total $", right: true);
                             });
 
                             bool alt = false;
@@ -164,8 +166,8 @@ public sealed class QuestPdfCubicacionReportExporter : ICubicacionReportPdfExpor
                                 TD(table.Cell().Background(bg).PaddingHorizontal(4).PaddingVertical(3), Short(line.Descripcion, 38));
                                 TD(table.Cell().Background(bg).PaddingHorizontal(4).PaddingVertical(3), line.Unidad);
                                 TD(table.Cell().Background(bg).PaddingHorizontal(4).PaddingVertical(3), N(line.Cantidad), right: true);
-                                TD(table.Cell().Background(bg).PaddingHorizontal(4).PaddingVertical(3), UF(line.UfUnit), right: true);
-                                TD(table.Cell().Background(bg).PaddingHorizontal(4).PaddingVertical(3), UF(line.UfTotal), right: true);
+                                TD(table.Cell().Background(bg).PaddingHorizontal(4).PaddingVertical(3), MontoUf(line.UfUnit), right: true);
+                                TD(table.Cell().Background(bg).PaddingHorizontal(4).PaddingVertical(3), MontoUf(line.UfTotal), right: true);
 
                                 if (lineIdx < 5)
                                 {
@@ -208,7 +210,8 @@ public sealed class QuestPdfCubicacionReportExporter : ICubicacionReportPdfExpor
                             c.RelativeColumn(1);
                             c.RelativeColumn(1);
                             c.RelativeColumn(2);
-                            c.RelativeColumn(2);
+                            if (muestraUf)
+                                c.RelativeColumn(2);
                         });
 
                         table.Header(h =>
@@ -216,8 +219,9 @@ public sealed class QuestPdfCubicacionReportExporter : ICubicacionReportPdfExpor
                             TH(h.Cell().PaddingHorizontal(5).PaddingVertical(4), "Área");
                             TH(h.Cell().PaddingHorizontal(5).PaddingVertical(4), "Líneas", right: true);
                             TH(h.Cell().PaddingHorizontal(5).PaddingVertical(4), "Mat.", right: true);
-                            TH(h.Cell().PaddingHorizontal(5).PaddingVertical(4), "Total UF", right: true);
-                            TH(h.Cell().PaddingHorizontal(5).PaddingVertical(4), ctx.CurrencyLabel, right: true);
+                            TH(h.Cell().PaddingHorizontal(5).PaddingVertical(4), muestraUf ? "Total UF" : "Total " + ctx.Currency.EncabezadoPrincipal, right: true);
+                            if (muestraUf)
+                                TH(h.Cell().PaddingHorizontal(5).PaddingVertical(4), ctx.CurrencyLabel, right: true);
                         });
 
                         bool alt = false;
@@ -232,8 +236,9 @@ public sealed class QuestPdfCubicacionReportExporter : ICubicacionReportPdfExpor
                             TD(table.Cell().Background(bg).PaddingHorizontal(5).PaddingVertical(4), Short(area.Key, 40));
                             TD(table.Cell().Background(bg).PaddingHorizontal(5).PaddingVertical(4), area.Count().ToString("N0"), right: true);
                             TD(table.Cell().Background(bg).PaddingHorizontal(5).PaddingVertical(4), area.Select(x => x.Codigo).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase).Count().ToString("N0"), right: true);
-                            TD(table.Cell().Background(bg).PaddingHorizontal(5).PaddingVertical(4), UF(totalAreaUf), right: true);
-                            TD(table.Cell().Background(bg).PaddingHorizontal(5).PaddingVertical(4), Money(totalAreaUf), right: true);
+                            TD(table.Cell().Background(bg).PaddingHorizontal(5).PaddingVertical(4), MontoUf(totalAreaUf), right: true);
+                            if (muestraUf)
+                                TD(table.Cell().Background(bg).PaddingHorizontal(5).PaddingVertical(4), Money(totalAreaUf), right: true);
                             alt = !alt;
                         }
                     });

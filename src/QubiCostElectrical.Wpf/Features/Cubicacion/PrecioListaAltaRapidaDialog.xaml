@@ -1,0 +1,171 @@
+<Window x:Class="QubiCostElectrical.Wpf.Features.Cubicacion.PrecioListaAltaRapidaDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Style="{StaticResource Dialog.Window}"
+        Title="Alta rápida de material"
+        Width="580" Height="640" MinWidth="520" MinHeight="560"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        PreviewKeyDown="OnWindowPreviewKeyDown"
+        KeyDown="OnWindowKeyDown">
+  <Border Style="{StaticResource Dialog.Chrome}" Margin="16">
+    <Grid>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="*" />
+        <RowDefinition Height="Auto" />
+      </Grid.RowDefinitions>
+
+      <StackPanel Grid.Row="0" Margin="0,0,0,12">
+        <TextBlock Text="Alta rápida de material" Style="{StaticResource Dialog.HeaderTitle}" />
+        <TextBlock Style="{StaticResource Dialog.HeaderSubtitle}"
+                   Text="Familia, precio y mano de obra. El código se genera solo y la M.O. se calcula con Material × % × FA." />
+        <TextBlock FontSize="10.5" Foreground="{DynamicResource Brush.Muted}" Margin="0,4,0,0" TextWrapping="Wrap"
+                   Text="Teclado: parte en Familia (escribe o ↓ para elegir) · Enter pasa al campo siguiente · Ctrl+Enter agrega · Esc cancela." />
+      </StackPanel>
+
+      <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+        <StackPanel>
+          <TextBlock Text="Familia" Style="{StaticResource Text.Caption}" Margin="0,0,0,4" />
+          <ComboBox x:Name="FamiliaCombo" Style="{StaticResource Form.ComboBox}" Margin="0,0,0,10"
+                    IsEditable="True"
+                    ItemsSource="{Binding FamiliasDisponibles}"
+                    SelectionChanged="OnFamiliaChanged"
+                    DropDownClosed="OnFamiliaDropDownClosed"
+                    ToolTip="Escribe para filtrar o pulsa ↓ para ver la lista. Se guarda como Categoría del material." />
+
+          <TextBlock Text="Descripción" Style="{StaticResource Text.Caption}" Margin="0,0,0,4" />
+          <TextBox x:Name="DescripcionBox" Style="{StaticResource Form.TextBox}" Margin="0,0,0,10"
+                   TextChanged="OnDescripcionChanged"
+                   ToolTip="Ej. Tablero eléctrico 12 circuitos" />
+
+          <Grid Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="12" />
+              <ColumnDefinition Width="150" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0">
+              <TextBlock Text="Precio material (CLP)" Style="{StaticResource Text.Caption}" Margin="0,0,0,4" />
+              <TextBox x:Name="MatClpBox" Style="{StaticResource Form.TextBox}" Text="0"
+                       TextChanged="OnPrecioChanged" />
+            </StackPanel>
+            <StackPanel Grid.Column="2">
+              <TextBlock Text="Unidad" Style="{StaticResource Text.Caption}" Margin="0,0,0,4" />
+              <ComboBox x:Name="UnidadCombo" Style="{StaticResource Form.ComboBox}" SelectedIndex="0">
+                <ComboBoxItem Content="un" />
+                <ComboBoxItem Content="m" />
+                <ComboBoxItem Content="m2" />
+                <ComboBoxItem Content="m3" />
+                <ComboBoxItem Content="kg" />
+                <ComboBoxItem Content="gl" />
+              </ComboBox>
+            </StackPanel>
+          </Grid>
+
+          <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}"
+                  BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,2,0,10">
+            <StackPanel>
+              <CheckBox x:Name="UsarFormulaCheck" Content="Calcular M.O. con la fórmula  Material × % × FA"
+                        IsChecked="True" Margin="0,0,0,10"
+                        Checked="OnUsarFormulaChanged" Unchecked="OnUsarFormulaChanged"
+                        ToolTip="Marcado: la mano de obra se calcula con Material × % × FA (2,5 % por defecto). Desmarcado: el material queda sin M.O. (solo material)." />
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="12" />
+                  <ColumnDefinition Width="150" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                  <TextBlock Text="% de M.O. sobre el material" Style="{StaticResource Text.Caption}" Margin="0,0,0,4" />
+                  <TextBox x:Name="PorcentajeBox" Style="{StaticResource Form.TextBox}" Text="2,5"
+                           TextChanged="OnPorcentajeChanged"
+                           ToolTip="Porcentaje de mano de obra sobre el precio del material (por defecto 2,5 %)." />
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                  <TextBlock Text="FA (índice M.O.)" Style="{StaticResource Text.Caption}" Margin="0,0,0,4" />
+                  <TextBox x:Name="FaBox" Style="{StaticResource Form.TextBox}"
+                           Text="{Binding IndiceMoFaTexto, UpdateSourceTrigger=LostFocus}"
+                           TextChanged="OnFaChanged"
+                           ToolTip="Índice de mano de obra del proyecto. Editable: al confirmarlo se recalibra la M.O. del catálogo." />
+                  <Button x:Name="CalcularFaButton" Content="Calcular FA" Command="{Binding CalcularFaCommand}" Style="{StaticResource Button.Secondary}"
+                          Height="22" Padding="6,0" Margin="0,4,0,0" FontSize="10.5"
+                          ToolTip="Deriva el FA desde el plan de mano de obra del proyecto (M.O. real ÷ base de materiales)." />
+                </StackPanel>
+              </Grid>
+
+              <TextBlock Text="{Binding FaDerivadoTexto}" FontSize="10.5" Foreground="{DynamicResource Brush.BlueDark}"
+                         TextWrapping="Wrap" Margin="0,8,0,0"
+                         Visibility="{Binding FaDerivadoVisible, Converter={StaticResource BoolToVisibility}}" />
+
+              <DockPanel Margin="0,10,0,0" LastChildFill="False">
+                <TextBlock DockPanel.Dock="Left" Text="Mano de obra calculada" Style="{StaticResource Text.Caption}"
+                           VerticalAlignment="Center" />
+                <TextBlock DockPanel.Dock="Right" x:Name="MoCalculadaText" FontSize="15" FontWeight="Bold"
+                           Foreground="{DynamicResource Brush.Success}" VerticalAlignment="Center" />
+              </DockPanel>
+
+              <!-- De dónde sale la cifra: con el FA sin calibrar se usa factor neutro (Material × %). -->
+              <TextBlock x:Name="MoExplicacionText" FontSize="10.5" TextWrapping="Wrap" Margin="0,3,0,0"
+                         Foreground="{DynamicResource Brush.Muted}" />
+            </StackPanel>
+          </Border>
+
+          <!-- ¿Por qué el FA está en 0? Explicación permanente: el aviso solo aparecía cuando
+               faltaba el plan de mano de obra, y en un proyecto nuevo el FA queda en 0 sin que
+               nadie diga por qué la mano de obra no suma. -->
+          <Border CornerRadius="8" BorderThickness="1" Padding="10,8" Margin="0,0,0,10">
+            <Border.Style>
+              <Style TargetType="Border">
+                <Setter Property="Background" Value="{DynamicResource Brush.AmberSoft}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource Brush.Amber2}" />
+                <Style.Triggers>
+                  <DataTrigger Binding="{Binding FaSinCalibrar}" Value="False">
+                    <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+                    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </Border.Style>
+            <DockPanel LastChildFill="True">
+              <TextBlock DockPanel.Dock="Left" FontSize="12" FontWeight="Bold" Margin="0,0,8,0" VerticalAlignment="Top">
+                <TextBlock.Style>
+                  <Style TargetType="TextBlock">
+                    <Setter Property="Text" Value="!" />
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Amber}" />
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding FaSinCalibrar}" Value="False">
+                        <Setter Property="Text" Value="i" />
+                        <Setter Property="Foreground" Value="{DynamicResource Brush.BlueDark}" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </TextBlock.Style>
+              </TextBlock>
+              <TextBlock Text="{Binding ExplicacionFa}" TextWrapping="Wrap" FontSize="11"
+                         Foreground="{DynamicResource Brush.Ink2}" />
+            </DockPanel>
+          </Border>
+
+          <DockPanel LastChildFill="False" Margin="0,0,0,2">
+            <TextBlock DockPanel.Dock="Left" Text="Código automático" Style="{StaticResource Text.Caption}"
+                       VerticalAlignment="Center" />
+            <TextBlock DockPanel.Dock="Right" x:Name="CodigoText" FontFamily="Consolas, Segoe UI Mono, monospace"
+                       FontSize="13" FontWeight="Bold" Foreground="{DynamicResource Brush.BlueDark}"
+                       VerticalAlignment="Center" />
+          </DockPanel>
+        </StackPanel>
+      </ScrollViewer>
+
+      <DockPanel Grid.Row="2" Style="{StaticResource Dialog.Footer}" LastChildFill="False">
+        <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center" FontSize="10.5"
+                   Foreground="{DynamicResource Brush.Muted}"
+                   Text="Enter = siguiente campo · Ctrl+Enter = agregar" />
+        <Button DockPanel.Dock="Right" Style="{StaticResource Button.Primary}" Content="Agregar material (Ctrl+Enter)"
+                MinWidth="180" IsDefault="True" Click="OnGuardarClick" />
+        <Button DockPanel.Dock="Right" Style="{StaticResource Button.Secondary}" Content="Cancelar"
+                MinWidth="100" Margin="0,0,8,0" IsCancel="True" />
+      </DockPanel>
+    </Grid>
+  </Border>
+</Window>

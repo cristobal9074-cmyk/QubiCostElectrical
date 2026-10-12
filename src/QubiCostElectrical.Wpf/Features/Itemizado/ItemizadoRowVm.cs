@@ -331,12 +331,9 @@ public sealed class ItemizadoRowVm : ViewModelBase, IGridCellValidationSource
         get
         {
             if (UnitPriceUf <= 0m) return "—";
-            if (currencyContext == null || currencyContext.Currency == Moneda.UF)
+            if (currencyContext == null)
                 return UnitPriceUf.ToString("N3", CultureInfo.CurrentCulture);
-
-            decimal unitPriceClp = UnitPriceUf * currencyContext.ValorUfClp;
-            decimal converted = ItemizadoCurrencyCoordinator.ConvertClpToDelivery(unitPriceClp, currencyContext);
-            return ItemizadoCurrencyCoordinator.FormatUnitPrice(converted, currencyContext);
+            return ItemizadoCurrencyCoordinator.FormatUnitPricePair(UnitPriceUf, currencyContext);
         }
     }
 
@@ -345,12 +342,9 @@ public sealed class ItemizadoRowVm : ViewModelBase, IGridCellValidationSource
         get
         {
             if (TotalUf <= 0m) return "—";
-            if (currencyContext == null || currencyContext.Currency == Moneda.UF)
+            if (currencyContext == null)
                 return TotalUf.ToString("N2", CultureInfo.CurrentCulture);
-
-            decimal totalClp = TotalUf * currencyContext.ValorUfClp;
-            decimal converted = ItemizadoCurrencyCoordinator.ConvertClpToDelivery(totalClp, currencyContext);
-            return ItemizadoCurrencyCoordinator.FormatTotal(converted, currencyContext);
+            return ItemizadoCurrencyCoordinator.FormatTotalPair(TotalUf, currencyContext);
         }
     }
 
@@ -425,19 +419,9 @@ public sealed class ItemizadoRowVm : ViewModelBase, IGridCellValidationSource
         get
         {
             if (TotalUf <= 0m) return "";
-            if (currencyContext == null || currencyContext.Currency == Moneda.UF)
+            if (currencyContext == null)
                 return $"{TotalUf:N2} UF";
-
-            decimal totalClp = TotalUf * currencyContext.ValorUfClp;
-            decimal converted = ItemizadoCurrencyCoordinator.ConvertClpToDelivery(totalClp, currencyContext);
-            string formatted = ItemizadoCurrencyCoordinator.FormatTotal(converted, currencyContext);
-            return currencyContext.Currency switch
-            {
-                Moneda.CLP => $"$ {formatted}",
-                Moneda.USD => $"US$ {formatted}",
-                Moneda.EUR => $"€ {formatted}",
-                _ => $"{formatted} UF"
-            };
+            return ItemizadoCurrencyCoordinator.FormatTotalPair(TotalUf, currencyContext);
         }
     }
 

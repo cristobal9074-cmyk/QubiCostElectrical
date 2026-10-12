@@ -71,8 +71,8 @@ public static class ItemizadoTotalsCoordinator
 
         string rateCaption = ItemizadoCurrencyCoordinator.BuildRateCaption(currencyContext);
 
-        var (totalMainText, totalSecText) = FormatCurrencyPair(totalBudgetDelivery, totalBudgetClp, totalBudgetUf, currencyContext);
-        var (visMainText, visSecText) = FormatCurrencyPair(visibleTotalDelivery, visibleTotalClp, visibleTotalUf, currencyContext);
+        var (totalMainText, totalSecText) = FormatCurrencyPair(totalBudgetDelivery, totalBudgetClp, currencyContext);
+        var (visMainText, visSecText) = FormatCurrencyPair(visibleTotalDelivery, visibleTotalClp, currencyContext);
 
         return new ItemizadoTotalsSnapshot(
             TotalBudgetUf: totalBudgetUf,
@@ -95,12 +95,11 @@ public static class ItemizadoTotalsCoordinator
     private static (string Main, string Secondary) FormatCurrencyPair(
         decimal deliveryAmount,
         decimal clpAmount,
-        decimal ufAmount,
         CurrencyPresentationContext ctx)
     {
         return ctx.Currency switch
         {
-            Moneda.CLP => ($"$ {clpAmount:N0}", $"({ufAmount:N2} UF)"),
+            Moneda.CLP => ($"$ {clpAmount:N0}", ""),
             Moneda.USD => ($"US$ {deliveryAmount:N2}", $"$ {clpAmount:N0}"),
             Moneda.EUR => ($"€ {deliveryAmount:N2}", $"$ {clpAmount:N0}"),
             _ => ($"{deliveryAmount:N2} UF", $"$ {clpAmount:N0}")

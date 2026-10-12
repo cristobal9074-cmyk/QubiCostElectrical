@@ -37,10 +37,11 @@ public sealed class PurchaseListExcelExporter : IPurchaseListExcelExporter
         ws.Range(2, 1, 2, 8).Style.Font.Bold = true;
 
         int headerRow = 4;
+        string etiquetaMoneda = request.MuestraUf ? "UF" : "$";
         ClosedXmlExportStyler.SetHeaderRow(ws, headerRow, new[]
         {
             "RANK", "CÓDIGO", "DESCRIPCIÓN", "UNIDAD", "CATEGORÍA", "CANTIDAD NETA",
-            "TOLERANCIA %", "CANTIDAD COMPRA", "PRECIO MAT UF", "TOTAL NETO UF", "TOTAL COMPRA UF", "LÍNEAS"
+            "TOLERANCIA %", "CANTIDAD COMPRA", $"PRECIO MAT {etiquetaMoneda}", $"TOTAL NETO {etiquetaMoneda}", $"TOTAL COMPRA {etiquetaMoneda}", "LÍNEAS"
         });
 
         int row = headerRow + 1;
@@ -55,7 +56,7 @@ public sealed class PurchaseListExcelExporter : IPurchaseListExcelExporter
             ws.Cell(row, 6).SetValue(ClosedXmlExportStyler.ToDouble(x.CantidadNeta));
             ws.Cell(row, 7).SetValue(ClosedXmlExportStyler.ToDouble(x.ToleranciaPct / 100m));
             ws.Cell(row, 8).FormulaA1 = $"F{row}*(1+G{row})";
-            ws.Cell(row, 9).SetValue(ClosedXmlExportStyler.ToDouble(x.MatUfUnitario));
+            ws.Cell(row, 9).SetValue(ClosedXmlExportStyler.ToDouble(PrecioUnitario(x, request)));
             ws.Cell(row, 10).FormulaA1 = $"F{row}*I{row}";
             ws.Cell(row, 11).FormulaA1 = $"H{row}*I{row}";
             ws.Cell(row, 12).SetValue(x.Lineas);
@@ -67,14 +68,14 @@ public sealed class PurchaseListExcelExporter : IPurchaseListExcelExporter
         ws.Range(headerRow + 1, 6, Math.Max(lastRow, headerRow + 1), 6).Style.NumberFormat.Format = "#,##0.00";
         ws.Range(headerRow + 1, 7, Math.Max(lastRow, headerRow + 1), 7).Style.NumberFormat.Format = "0.00%";
         ws.Range(headerRow + 1, 8, Math.Max(lastRow, headerRow + 1), 8).Style.NumberFormat.Format = "#,##0.00";
-        ws.Range(headerRow + 1, 9, Math.Max(lastRow, headerRow + 1), 11).Style.NumberFormat.Format = ClosedXmlExportStyler.UfExcelFormat();
+        ws.Range(headerRow + 1, 9, Math.Max(lastRow, headerRow + 1), 11).Style.NumberFormat.Format = FormatoMoneda(request);
         ws.Range(headerRow + 1, 12, Math.Max(lastRow, headerRow + 1), 12).Style.NumberFormat.Format = "#,##0";
 
         int totalRow = lastRow + 2;
-        ws.Cell(totalRow, 10).Value = "TOTAL COMPRA UF";
+        ws.Cell(totalRow, 10).Value = $"TOTAL COMPRA {etiquetaMoneda}";
         ws.Cell(totalRow, 10).Style.Font.Bold = true;
         ws.Cell(totalRow, 11).FormulaA1 = lastRow > headerRow ? $"SUM(K{headerRow + 1}:K{lastRow})" : "0";
-        ws.Cell(totalRow, 11).Style.NumberFormat.Format = ClosedXmlExportStyler.UfExcelFormat();
+        ws.Cell(totalRow, 11).Style.NumberFormat.Format = FormatoMoneda(request);
         ws.Range(totalRow, 10, totalRow, 11).Style.Fill.BackgroundColor = XLColor.FromColor(Color.FromArgb(229, 241, 255));
         ws.Range(totalRow, 10, totalRow, 11).Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
 
@@ -85,6 +86,26 @@ public sealed class PurchaseListExcelExporter : IPurchaseListExcelExporter
         ClosedXmlExportStyler.FinalizeClosedXmlWorksheet(ws);
         wb.SaveAs(path);
     }
+
+    /// <summary>
+    /// Precio unitario del material en la moneda de presentación: UF cuando el proyecto lo
+    /// permite; en CLP se usa el valor en pesos y se recurre a la conversión si no viniera informado.
+    /// </summary>
+    private static decimal PrecioUnitario(CompraMaterialViewModel x, PurchaseListExcelRequest request)
+    {
+        if (request.MuestraUf)
+            return x.MatUfUnitario;
+
+        return x.MatClpUnitario > 0m
+            ? x.MatClpUnitario
+            : x.MatUfUnitario * ValorUf(request.ValorUfClp);
+    }
+
+    private static decimal ValorUf(decimal valorUfClp)
+        => valorUfClp > 0m ? valorUfClp : PriceConversion.DefaultValorUfClp;
+
+    private static string FormatoMoneda(PurchaseListExcelRequest request)
+        => request.MuestraUf ? ClosedXmlExportStyler.UfExcelFormat() : "$ #,##0";
 
     public void ExportRfq(string path, PurchaseListRfqRequest request)
     {

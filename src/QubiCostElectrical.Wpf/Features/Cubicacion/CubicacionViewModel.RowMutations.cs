@@ -9,11 +9,9 @@ public sealed partial class CubicacionViewModel
     // contacto público que CubicacionMedicionesVm y el resto de los partials ya conocen, sin
     // cambiar ninguna firma. Los RelayCommand del constructor apuntan directo al colaborador.
 
-    // Expuesto para CubicacionMedicionesVm: agregar una línea de medición a una fila
-    // placeholder (isSessionBacked=false, p. ej. una fila vacía en la que el usuario nunca
-    // escribió código) creaba MeasurementLineRow que referenciaban un CubicacionRow.Id que
-    // jamás llegaba a session.Cubicacion — una medición huérfana silenciosa que se perdía
-    // (o quedaba flotando sin dueño) al cambiar de partida.
+    // Expuesto para CubicacionMedicionesVm: medir una fila placeholder (isSessionBacked=false)
+    // creaba MeasurementLineRow huérfanas que referenciaban un CubicacionRow.Id que jamás
+    // llegaba a session.Cubicacion y se perdían al cambiar de partida.
     internal void EnsureRowPersisted(CubicacionRowVm row) => rowMutationService.EnsureRowInSession(row);
 
     internal void EnsureRowInSession(CubicacionRowVm row) => rowMutationService.EnsureRowInSession(row);
@@ -21,6 +19,8 @@ public sealed partial class CubicacionViewModel
     internal void TryAutoResolveFromPriceBank(CubicacionRowVm row) => rowMutationService.TryAutoResolveFromPriceBank(row);
 
     internal void ApplyMaterial(MaterialRow material) => rowMutationService.ApplyMaterial(material);
+    /// <summary>Expuesto para pruebas: baja a la cubicación el material creado en la lista de precios.</summary>
+    internal void AplicarMaterialCreado(string? codigo) => rowMutationService.AplicarMaterialCreado(codigo);
 
     internal static MaterialRow FromBankEntry(PriceBankEntry entry)
     {

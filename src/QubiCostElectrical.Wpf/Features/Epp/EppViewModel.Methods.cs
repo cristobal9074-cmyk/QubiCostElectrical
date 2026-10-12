@@ -197,7 +197,14 @@ public sealed partial class EppViewModel : SessionAwareViewModelBase, IRefreshab
     public string GranTotalLabel => TotalEppLabel;
     public decimal TotalEppUf => PriceConversion.ClpToUf(TotalEpp, session.ValorUfClp > 0m ? session.ValorUfClp : PriceConversion.DefaultValorUfClp);
     public string TotalEppUfLabel => $"{TotalEppUf:N2} UF";
-    public string GranTotalDualLabel => TotalEpp > 0m ? $"$ {TotalEpp:N0} ({TotalEppUfLabel})" : "$ 0";
+
+    // Política de moneda: en CLP el gran total no expone equivalencia en UF (solo pesos).
+    private bool MuestraUf =>
+        !string.Equals(session.ProjectInfo.MonedaPresupuesto, "CLP", StringComparison.OrdinalIgnoreCase);
+
+    public string GranTotalDualLabel => TotalEpp > 0m
+        ? (MuestraUf ? $"$ {TotalEpp:N0} ({TotalEppUfLabel})" : $"$ {TotalEpp:N0}")
+        : "$ 0";
 
     public string MoDirectaCountLabel { get; private set; } = "";
     public string MoIndirectaCountLabel { get; private set; } = "";

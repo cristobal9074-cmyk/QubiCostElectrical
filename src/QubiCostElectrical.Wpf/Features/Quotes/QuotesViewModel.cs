@@ -123,4 +123,14 @@ public sealed partial class QuotesViewModel : SessionAwareViewModelBase, IRefres
     // proveedor visible en cada refiltrado (O(proveedores×entradas) por tecla cuando hay
     // categoría activa). Se recalcula solo cuando cambia SelectedCategory o allEntries.
     private readonly HashSet<string> providersInSelectedCategory = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Regla de moneda del proyecto: con CLP no se expone ninguna cifra en UF (columnas
+    /// PRECIO UF / MEJOR UF / DELTA UF). El precio fuente de la cotización siempre es CLP.
+    /// </summary>
+    public bool MuestraUf =>
+        !string.Equals(session.ProjectInfo.MonedaPresupuesto, Moneda.CLP, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Notifica el cambio de política de moneda para que la vista reaplique la grilla.</summary>
+    private void NotifyMonedaChanged() => OnPropertyChanged(nameof(MuestraUf));
 }

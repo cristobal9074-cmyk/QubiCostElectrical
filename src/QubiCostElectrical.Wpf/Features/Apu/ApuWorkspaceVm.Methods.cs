@@ -410,14 +410,65 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
         selectedPartida?.Refresh(apu);
         OnPropertyChanged(nameof(CostoMoTotal));
         OnPropertyChanged(nameof(CostoTransporteTotal));
-        CostDistribution.Recalculate(CostoMat, CostoMoTotal, CostoEquipo, CostoSc, CostoTransporteTotal, CostoDirecto);
+        CostDistribution.Recalculate(CostoMat, CostoMoTotal, CostoEquipo, CostoSc, CostoTransporteTotal, CostoDirecto, session.ProjectInfo.MonedaPresupuesto, ValorUfVigente);
+        NotifyMoneyDisplays();
+    }
+
+    // ─── Política de moneda ──────────────────────────────────────────────────
+    // El motor guarda los montos del APU en pesos (ApuRow.*Uf es nombre legado: ver
+    // BudgetEngine "apu.PrecioUnitUf ya está en CLP"). La UI, por regla de producto, muestra
+    // pesos cuando el proyecto está en CLP y, cuando está en UF/USD, el valor en esa moneda
+    // con su equivalente en pesos.
+    private static readonly CurrencyConversionService CurrencySvc = new();
+
+    /// <summary>Falso cuando el proyecto está en CLP: no se expone ninguna cifra en UF.</summary>
+    public bool MuestraUf
+        => !string.Equals(session.ProjectInfo.MonedaPresupuesto, "CLP", StringComparison.OrdinalIgnoreCase);
+
+    private decimal ValorUfVigente
+        => session.ProjectInfo.ValorUfClp > 0m ? session.ProjectInfo.ValorUfClp : PriceConversion.DefaultValorUfClp;
+
+    private string Money(decimal clp)
+    {
+        var info = session.ProjectInfo;
+        var (primary, secondary) = CurrencySvc.FormatMoneyPairFromClp(clp, info.MonedaPresupuesto, ValorUfVigente, info.TipoCambioUsdClp);
+        return secondary.Length == 0 ? primary : $"{primary} ({secondary})";
+    }
+
+    public string PrecioUnitDisplay => Money(PrecioUnit);
+    public string TotalPartidaDisplay => Money(TotalPartida);
+    public string CostoDirectoDisplay => Money(CostoDirecto);
+    public string CostoMatDisplay => Money(CostoMat);
+    public string CostoMoTotalDisplay => Money(CostoMoTotal);
+    public string CostoEquipoDisplay => Money(CostoEquipo);
+    public string CostoScDisplay => Money(CostoSc);
+    public string CostoTransporteDisplay => Money(CostoTransporteTotal);
+    public string CostoHerrDisplay => Money(CostoHerr);
+    public string ImprevistosDisplay => Money(Imprevistos);
+    public string VentaUnitDisplay => Money(VentaUnit);
+
+    private void NotifyMoneyDisplays()
+    {
+        OnPropertyChanged(nameof(MuestraUf));
+        OnPropertyChanged(nameof(PrecioUnitDisplay));
+        OnPropertyChanged(nameof(TotalPartidaDisplay));
+        OnPropertyChanged(nameof(CostoDirectoDisplay));
+        OnPropertyChanged(nameof(CostoMatDisplay));
+        OnPropertyChanged(nameof(CostoMoTotalDisplay));
+        OnPropertyChanged(nameof(CostoEquipoDisplay));
+        OnPropertyChanged(nameof(CostoScDisplay));
+        OnPropertyChanged(nameof(CostoTransporteDisplay));
+        OnPropertyChanged(nameof(CostoHerrDisplay));
+        OnPropertyChanged(nameof(ImprevistosDisplay));
+        OnPropertyChanged(nameof(VentaUnitDisplay));
     }
 
     private void ClearApu()
     {
         CostoMat = CostoMo = CostoEquipo = CostoSc = CostoHerr = 0m;
         CostoDirecto = Imprevistos = PrecioUnit = VentaUnit = TotalPartida = 0m;
-        CostDistribution.Recalculate(0, 0, 0, 0, 0, 0);
+        CostDistribution.Recalculate(0, 0, 0, 0, 0, 0, session.ProjectInfo.MonedaPresupuesto, ValorUfVigente);
+        NotifyMoneyDisplays();
         AlertText = "";
         HasAlerts = false;
     }
@@ -511,12 +562,12 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
             pendingUndoForEdit = true;
             foreach (var mat in dialog.SelectedMaterials)
             {
-                decimal precioUf = mat.MatUf;
-                if (precioUf <= 0m && mat.MatClpConFallback > 0m)
-                {
-                    decimal valorUf = session.ValorUfClp > 0m ? session.ValorUfClp : PriceConversion.DefaultValorUfClp;
-                    precioUf = PriceConversion.ClpToUf(mat.MatClpConFallback, valorUf);
-                }
+                // ApuRecursoRow.PrecioUf es el precio unitario en CLP (nombre legado). El catálogo
+                // de materiales guarda CLP y deriva UF; se usa el CLP para no inyectar UF donde el
+                // motor espera pesos.
+                decimal precioClp = mat.MatClpConFallback;
+                if (precioClp <= 0m && mat.MatUf > 0m)
+                    precioClp = Math.Round(mat.MatUf * ValorUfVigente, MidpointRounding.AwayFromZero);
 
                 var recurso = new ApuRecursoRow
                 {
@@ -525,7 +576,7 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
                     Descripcion = mat.Descripcion,
                     Unidad = mat.Unidad,
                     Rendimiento = 1m,
-                    PrecioUf = precioUf,
+                    PrecioUf = precioClp,
                     MermaPct = 0m,
                     ImprevistosPct = 0m,
                     FuentePrecio = "Banco de precios",
@@ -645,7 +696,9 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
         row.CodigoMaterial = suggestion.Codigo;
         row.Descripcion = suggestion.Descripcion;
         row.Unidad = string.IsNullOrWhiteSpace(suggestion.Unidad) ? "un" : suggestion.Unidad;
-        row.PrecioUf = suggestion.MatUf;
+        // El motor espera el precio del recurso en CLP (ver nota en MuestraUf); la sugerencia
+        // trae MatClp ya resuelto desde el catálogo/banco.
+        row.PrecioUf = suggestion.MatClp;
         row.Tipo = ApuTipoRecurso.MAT;
         row.FuentePrecio = suggestion.SourceBadge;
         if (!string.IsNullOrWhiteSpace(suggestion.Proveedor))

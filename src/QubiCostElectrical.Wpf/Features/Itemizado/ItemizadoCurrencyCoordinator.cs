@@ -90,4 +90,34 @@ public static class ItemizadoCurrencyCoordinator
             _ => $"Paridad UF al día: ${ctx.ValorUfClp:N0}"
         };
     }
+
+    /// <summary>
+    /// Precio unitario en la moneda de entrega, con el equivalente en CLP entre paréntesis.
+    /// Regla de producto: en CLP se muestra solo pesos (sin UF); en UF/USD/EUR se agrega el CLP.
+    /// </summary>
+    public static string FormatUnitPricePair(decimal unitPriceUf, CurrencyPresentationContext ctx)
+        => FormatPair(unitPriceUf, ctx, isUnitPrice: true, decimals: 3);
+
+    /// <summary>
+    /// Total en la moneda de entrega, con el equivalente en CLP entre paréntesis.
+    /// Regla de producto: en CLP se muestra solo pesos (sin UF); en UF/USD/EUR se agrega el CLP.
+    /// </summary>
+    public static string FormatTotalPair(decimal totalUf, CurrencyPresentationContext ctx)
+        => FormatPair(totalUf, ctx, isUnitPrice: false, decimals: 2);
+
+    private static string FormatPair(decimal amountUf, CurrencyPresentationContext ctx, bool isUnitPrice, int decimals)
+    {
+        decimal clp = amountUf * ctx.ValorUfClp;
+        if (ctx.Currency == Moneda.CLP)
+            return $"$ {clp:N0}";
+
+        decimal converted = ConvertClpToDelivery(clp, ctx);
+        string primary = ctx.Currency switch
+        {
+            Moneda.USD => $"US$ {converted:N2}",
+            Moneda.EUR => $"€ {converted:N2}",
+            _ => $"{converted.ToString($"N{decimals}", System.Globalization.CultureInfo.CurrentCulture)} UF"
+        };
+        return $"{primary} ($ {clp:N0})";
+    }
 }

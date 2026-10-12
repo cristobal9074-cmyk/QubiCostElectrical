@@ -133,9 +133,35 @@ public sealed class ShellChromeAlertsTests : IDisposable
         var shell = CreateShell(host);
         shell.RefreshChrome();
 
-        Assert.Contains("UF", shell.TickerCostoDirecto);
+        // El proyecto nuevo queda en CLP: no debe mostrar UF (política de moneda).
+        Assert.StartsWith("$", shell.TickerCostoDirecto);
+        Assert.DoesNotContain("UF", shell.TickerCostoDirecto);
         Assert.NotEqual("—", shell.TickerCostoDirecto);
         Assert.Equal($"{15m:N1}%", shell.TickerMargen);
+        Assert.StartsWith("$", shell.TickerTotalOfertaUf);
+        Assert.DoesNotContain("UF", shell.TickerTotalOfertaUf);
+        Assert.NotEqual("—", shell.TickerTotalOfertaUf);
+        Assert.Equal("", shell.TickerTotalOfertaClp);
+    }
+
+    [Fact]
+    public void RefreshChrome_WithProjectInUf_ShowsUfAndClp()
+    {
+        WpfTestHost.EnsureInitialized();
+        var host = WpfAppHost.Current;
+        host.Session.NewProject("chrome-ticker-uf");
+        host.Session.CurrentProjectPath = "chrome-ticker-uf.qce";
+        host.Session.ProjectInfo.MonedaPresupuesto = "UF";
+        host.Session.ProjectInfo.ValorUfClp = 38000m;
+        host.Session.ProjectInfo.UtilidadPct = 15m;
+        host.Session.Itemizado.Add(new ItemizadoRow { Id = "T1", Item = "1", Descripcion = "General", EsTitulo = true });
+        host.Session.Itemizado.Add(new ItemizadoRow { Id = "P1", Item = "1.1", ParentId = "T1", Descripcion = "Partida 1", Unidad = "GL" });
+        host.Session.Cubicacion.Add(new CubicacionRow { ItemId = "P1", Codigo = "MAT01", Cantidad = 10m, MatUf = 10m, Unidad = "UN" });
+
+        var shell = CreateShell(host);
+        shell.RefreshChrome();
+
+        Assert.Contains("UF", shell.TickerCostoDirecto);
         Assert.Contains("UF", shell.TickerTotalOfertaUf);
         Assert.NotEqual("—", shell.TickerTotalOfertaUf);
         Assert.StartsWith("($", shell.TickerTotalOfertaClp);

@@ -107,6 +107,21 @@ public sealed class CurrencyConversionService : ICurrencyConversionService
         };
     }
 
+    /// <summary>
+    /// Formato de paridad (principal, secundario). Regla de producto: CLP ⇒ principal en pesos
+    /// y secundario vacío (nunca se muestra UF); UF/USD/EUR ⇒ principal en esa moneda y
+    /// secundario en CLP entre paréntesis para dar visibilidad del precio.
+    /// </summary>
+    public (string Primary, string Secondary) FormatMoneyPairFromClp(decimal clp, string? currency, decimal valorUfClp, decimal tipoCambioUsdClp)
+    {
+        string normalized = NormalizeCurrency(currency);
+        string primary = FormatMoneyFromClp(clp, normalized, valorUfClp, tipoCambioUsdClp);
+        if (normalized == CurrencyClp)
+            return (primary, "");
+
+        return (primary, $"$ {Money.Round(clp):N0}");
+    }
+
     public string FormatMoneyFromUf(decimal uf, string? currency, decimal valorUfClp, decimal tipoCambioUsdClp)
     {
         string normalized = NormalizeCurrency(currency);

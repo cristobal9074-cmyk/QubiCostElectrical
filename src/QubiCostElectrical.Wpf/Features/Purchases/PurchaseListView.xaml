@@ -156,13 +156,13 @@
                                 HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}" />
             <DataGridTextColumn Header="Cant. compra" Binding="{Binding CantidadCompra, StringFormat={}{0:N2}}" Width="95"
                                 HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}" />
-            <DataGridTextColumn Header="Precio UF" Binding="{Binding MatUfUnitario, StringFormat={}{0:N4}}" Width="85"
+            <DataGridTextColumn x:Name="PrecioUfColumn" Header="Precio UF" Binding="{Binding MatUfUnitario, StringFormat={}{0:N4}}" Width="85"
                                 HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}" />
             <DataGridTextColumn Header="P. Unit CLP" Binding="{Binding MatClpUnitario, StringFormat={}$ {0:N0}}" Width="90"
                                 HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}" />
-            <DataGridTextColumn Header="Neto UF" Binding="{Binding TotalNetoUf, StringFormat={}{0:N3}}" Width="90"
+            <DataGridTextColumn x:Name="NetoUfColumn" Header="Neto UF" Binding="{Binding TotalNetoUf, StringFormat={}{0:N3}}" Width="90"
                                 HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}" />
-            <DataGridTextColumn Header="Compra UF" Binding="{Binding TotalCompraUf, StringFormat={}{0:N3}}" Width="90"
+            <DataGridTextColumn x:Name="CompraUfColumn" Header="Compra UF" Binding="{Binding TotalCompraUf, StringFormat={}{0:N3}}" Width="90"
                                 HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}" />
             <DataGridTextColumn Header="Total CLP" Binding="{Binding TotalCompraClp, StringFormat={}$ {0:N0}}" Width="95"
                                 HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}" />

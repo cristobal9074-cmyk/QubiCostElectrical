@@ -41,7 +41,8 @@ public static class PriceBankSeeder
         "Los precios van en pesos chilenos (CLP). Rendimiento (u/D-H) es opcional;\n" +
         "déjelo vacío si no usa el modo M.O. por rendimiento.\n" +
         "Para materiales sin M.O. propia use M.O. por % (Sí) + Porcentaje M.O. (2,5 = 2,5%):\n" +
-        "la M.O. resultante es Precio × % × Índice FA (62,80 por defecto, editable en Costo).";
+        "la M.O. resultante es Precio × % × Índice FA del proyecto (0 = sin calibrar: se usa factor 1 " +
+        "y el índice se deriva en Costo → Familias).";
 
     /// <summary>
     /// Escribe plantilla Excel (.xlsx) o CSV según extensión, con cabeceras oficiales + 2 filas de ejemplo.

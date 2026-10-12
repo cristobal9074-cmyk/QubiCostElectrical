@@ -12,6 +12,9 @@ public sealed class ApuCostDistributionCoordinator : ViewModelBase
 {
     private double matPct, moPct, eqPct, scPct, otrosPct;
     private decimal costoMat, costoMo, costoEq, costoSc, costoOtros, costoDirecto;
+    private string moneda = CurrencyConversionService.CurrencyClp;
+    private decimal valorUfClp = PriceConversion.DefaultValorUfClp;
+    private static readonly CurrencyConversionService Currency = new();
 
     public double MatPct => matPct;
     public double MoPct => moPct;
@@ -30,11 +33,18 @@ public sealed class ApuCostDistributionCoordinator : ViewModelBase
     public bool HasSc => scPct > 0.05;
     public bool HasOtros => otrosPct > 0.05;
 
-    public string MatTooltip => $"Materiales: {matPct:N1}% ({costoMat:N4} UF) — Suministros e insumos de la partida";
-    public string MoTooltip => $"Mano de Obra: {moPct:N1}% ({costoMo:N4} UF) — Horas hombre e instalación eléctrica";
-    public string EqTooltip => $"Equipos y Maquinaria: {eqPct:N1}% ({costoEq:N4} UF) — Equipamiento e instrumentos";
-    public string ScTooltip => $"Subcontratos: {scPct:N1}% ({costoSc:N4} UF) — Servicios especializados y pruebas";
-    public string OtrosTooltip => $"Transporte y Otros: {otrosPct:N1}% ({costoOtros:N4} UF) — Fletes y gastos auxiliares";
+    public string MatTooltip => $"Materiales: {matPct:N1}% ({FmtClp(costoMat)}) — Suministros e insumos de la partida";
+    public string MoTooltip => $"Mano de Obra: {moPct:N1}% ({FmtClp(costoMo)}) — Horas hombre e instalación eléctrica";
+    public string EqTooltip => $"Equipos y Maquinaria: {eqPct:N1}% ({FmtClp(costoEq)}) — Equipamiento e instrumentos";
+    public string ScTooltip => $"Subcontratos: {scPct:N1}% ({FmtClp(costoSc)}) — Servicios especializados y pruebas";
+    public string OtrosTooltip => $"Transporte y Otros: {otrosPct:N1}% ({FmtClp(costoOtros)}) — Fletes y gastos auxiliares";
+
+    /// <summary>Monto en CLP (base del motor) formateado según la moneda del proyecto.</summary>
+    private string FmtClp(decimal clp)
+    {
+        var (primary, secondary) = Currency.FormatMoneyPairFromClp(clp, moneda, valorUfClp, 0m);
+        return secondary.Length == 0 ? primary : $"{primary} ({secondary})";
+    }
 
     public string MatBadge => $"Materiales {matPct:N1}%";
     public string MoBadge => $"Mano de Obra {moPct:N1}%";
@@ -42,7 +52,7 @@ public sealed class ApuCostDistributionCoordinator : ViewModelBase
     public string ScBadge => $"Subcontratos {scPct:N1}%";
     public string OtrosBadge => $"Otros {otrosPct:N1}%";
 
-    public void Recalculate(decimal mat, decimal mo, decimal eq, decimal sc, decimal otros, decimal directo)
+    public void Recalculate(decimal mat, decimal mo, decimal eq, decimal sc, decimal otros, decimal directo, string? moneda = null, decimal valorUfClp = 0m)
     {
         costoMat = mat;
         costoMo = mo;
@@ -50,6 +60,8 @@ public sealed class ApuCostDistributionCoordinator : ViewModelBase
         costoSc = sc;
         costoOtros = otros;
         costoDirecto = directo;
+        this.moneda = Currency.NormalizeCurrency(moneda);
+        this.valorUfClp = valorUfClp > 0m ? valorUfClp : PriceConversion.DefaultValorUfClp;
 
         if (directo <= 0m)
         {

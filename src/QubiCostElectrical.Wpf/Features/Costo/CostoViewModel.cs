@@ -80,6 +80,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
     private CostoRowVm? ufMetroCierre;
     public ClosingPolicySectionVm ClosingPolicySection { get; }
     public CommercialNegotiationVm NegotiationSimulator { get; }
+    public CostoViewTabsVm Tabs { get; } = new();   // pestaña activa, KPIs del hero y sub-familias (rediseño 2.0)
 
     public ClosingPolicyType CurrentPolicy => session.Data.ClosingPolicy?.Policy ?? ClosingPolicyType.CostPlusMarkup;
     public bool IsGastosGeneralesEditable => CanEdit && CurrentPolicy != ClosingPolicyType.CostPlusFee;
@@ -110,4 +111,29 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         "Brush.Pink",
         "Brush.Slate"
     ];
+
+    /// <summary>
+    /// Regla de moneda del proyecto: con CLP solo se muestran pesos; con UF/USD se muestra el valor
+    /// primario y, como secundario, su equivalente en pesos para conservar la referencia de precio.
+    /// </summary>
+    private (string Primary, string Secondary) MoneyPair(decimal clp)
+    {
+        var info = session.ProjectInfo;
+        decimal uf = info.ValorUfClp > 0m ? info.ValorUfClp : currentValorUf;
+        return currencySvc.FormatMoneyPairFromClp(clp, info.MonedaPresupuesto, uf, info.TipoCambioUsdClp);
+    }
+
+    /// <summary>Valor primario en la moneda del proyecto ("$ 1.234" en CLP, "12,34 UF" en UF).</summary>
+    private string MoneyPrimary(decimal clp) => MoneyPair(clp).Primary;
+
+    /// <summary>Valor en la moneda del proyecto con su equivalente en pesos cuando la moneda no es CLP.</summary>
+    private string MoneyText(decimal clp)
+    {
+        var (primary, secondary) = MoneyPair(clp);
+        return secondary.Length == 0 ? primary : $"{primary} ({secondary})";
+    }
+
+    /// <summary>Falso cuando el proyecto está en CLP: en ese caso no se expone ninguna cifra en UF.</summary>
+    private bool ShowsUfFigures
+        => !string.Equals(session.ProjectInfo.MonedaPresupuesto, "CLP", StringComparison.OrdinalIgnoreCase);
 }

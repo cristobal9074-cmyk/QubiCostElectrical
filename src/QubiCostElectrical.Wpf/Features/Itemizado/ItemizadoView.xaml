@@ -487,40 +487,19 @@
               </StackPanel>
             </Border>
 
-            <!-- Selector de Moneda de Entrega: [ UF | CLP | USD | EUR ] -->
+            <!-- Moneda de entrega: espejo de la moneda del proyecto (se define en Proyecto) -->
             <Border Background="{DynamicResource Brush.ChipBg}"
                     BorderBrush="{DynamicResource Brush.Line}"
                     BorderThickness="1"
                     CornerRadius="6"
-                    Padding="1.5"
+                    Padding="8,3"
                     Margin="0,0,8,0"
-                    VerticalAlignment="Center">
-              <StackPanel Orientation="Horizontal">
-                <RadioButton Content="UF"
-                             IsChecked="{Binding IsCurrencyUf}"
-                             GroupName="ItemizadoCurrencyDelivery"
-                             Style="{StaticResource PerspectiveToggleRadioButtonStyle}"
-                             Padding="6,2" FontSize="10.5"
-                             ToolTip="Presentar precios en Unidad de Fomento (UF)" />
-                <RadioButton Content="CLP"
-                             IsChecked="{Binding IsCurrencyClp}"
-                             GroupName="ItemizadoCurrencyDelivery"
-                             Style="{StaticResource PerspectiveToggleRadioButtonStyle}"
-                             Padding="6,2" FontSize="10.5"
-                             ToolTip="Presentar precios en Pesos Chilenos ($ CLP)" />
-                <RadioButton Content="USD"
-                             IsChecked="{Binding IsCurrencyUsd}"
-                             GroupName="ItemizadoCurrencyDelivery"
-                             Style="{StaticResource PerspectiveToggleRadioButtonStyle}"
-                             Padding="6,2" FontSize="10.5"
-                             ToolTip="Presentar precios en Dólares (US$)" />
-                <RadioButton Content="EUR"
-                             IsChecked="{Binding IsCurrencyEur}"
-                             GroupName="ItemizadoCurrencyDelivery"
-                             Style="{StaticResource PerspectiveToggleRadioButtonStyle}"
-                             Padding="6,2" FontSize="10.5"
-                             ToolTip="Presentar precios en Euros (€)" />
-              </StackPanel>
+                    VerticalAlignment="Center"
+                    ToolTip="La moneda se define en Proyecto → Moneda base del presupuesto. En UF se muestra además el equivalente en CLP.">
+              <TextBlock Text="{Binding SelectedDeliveryCurrency}"
+                         FontSize="11" FontWeight="SemiBold"
+                         Foreground="{DynamicResource Brush.Ink2}"
+                         VerticalAlignment="Center" />
             </Border>
 
             <Border Width="1" Height="20" Background="{DynamicResource Brush.Line}" Margin="0,0,8,0" VerticalAlignment="Center" />
@@ -1151,7 +1130,7 @@
               <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                 <TextBlock Text="TOTAL OFERTA:" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,6,0" VerticalAlignment="Center" />
                 <TextBlock Text="{Binding FooterTotalUfText}" FontSize="13" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Blue}" VerticalAlignment="Center" />
-                <TextBlock Text="{Binding FooterTotalClpText, StringFormat=' ({0})'}" FontSize="12" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink}" Margin="6,0,0,0" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding FooterTotalClpText}" FontSize="12" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink}" Margin="6,0,0,0" VerticalAlignment="Center" />
               </StackPanel>
             </StackPanel>
 

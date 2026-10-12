@@ -219,7 +219,7 @@
                   </Style>
                 </DataGridTextColumn.ElementStyle>
               </DataGridTextColumn>
-              <DataGridTextColumn Header="Precio UF" Binding="{Binding PrecioUfCalculado, StringFormat={}{0:N4}}" Width="85" IsReadOnly="True"
+              <DataGridTextColumn x:Name="PrecioUfColumn" Header="Precio UF" Binding="{Binding PrecioUfCalculado, StringFormat={}{0:N4}}" Width="85" IsReadOnly="True"
                                   HeaderStyle="{StaticResource DataGridColumnHeader.Formula}">
                 <DataGridTextColumn.ElementStyle>
                   <Style TargetType="TextBlock">
@@ -252,7 +252,7 @@
                   </Style>
                 </DataGridTextColumn.ElementStyle>
               </DataGridTextColumn>
-              <DataGridTextColumn Header="MO UF" Binding="{Binding MoUfCalculado, StringFormat={}{0:N4}}" Width="80" IsReadOnly="True"
+              <DataGridTextColumn x:Name="MoUfColumn" Header="MO UF" Binding="{Binding MoUfCalculado, StringFormat={}{0:N4}}" Width="80" IsReadOnly="True"
                                   HeaderStyle="{StaticResource DataGridColumnHeader.Formula}">
                 <DataGridTextColumn.ElementStyle>
                   <Style TargetType="TextBlock">

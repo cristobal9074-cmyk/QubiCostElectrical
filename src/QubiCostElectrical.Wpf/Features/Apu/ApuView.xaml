@@ -202,9 +202,9 @@
             <StackPanel Grid.Row="0" Grid.Column="1" HorizontalAlignment="Right">
               <TextBlock Text="Precio unitario" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}"
                          HorizontalAlignment="Right"/>
-              <TextBlock Text="{Binding PrecioUnit, StringFormat='{}{0:N4} UF'}" FontSize="{StaticResource Font.Size.price}" FontWeight="Bold"
+              <TextBlock Text="{Binding PrecioUnitDisplay}" FontSize="{StaticResource Font.Size.price}" FontWeight="Bold"
                          Foreground="{DynamicResource Brush.Blue}" HorizontalAlignment="Right"/>
-              <TextBlock Text="{Binding TotalPartida, StringFormat='Total: {0:N2} UF'}" FontSize="{StaticResource Font.Size.sm}"
+              <TextBlock Text="{Binding TotalPartidaDisplay, StringFormat='Total: {0}'}" FontSize="{StaticResource Font.Size.sm}"
                          Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Right"/>
             </StackPanel>
 
@@ -407,11 +407,11 @@
                     </Style>
                   </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
-                <DataGridTextColumn x:Name="PrecioUfColumn" Header="Precio UF" Binding="{Binding PrecioUf, StringFormat=N4}" Width="85" IsReadOnly="False" HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}"
+                <DataGridTextColumn x:Name="PrecioUfColumn" Header="Precio $ CLP" Binding="{Binding PrecioUf, StringFormat=N0}" Width="100" IsReadOnly="False" HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}"
                                     EditingElementStyle="{StaticResource ApuNumericCellEditing}">
                   <DataGridTextColumn.ElementStyle>
                     <Style TargetType="TextBlock" BasedOn="{StaticResource Text.Cell.Editable}">
-                      <Setter Property="ToolTip" Value="Precio en UF del recurso (editable)" />
+                      <Setter Property="ToolTip" Value="Precio unitario del recurso en CLP (editable)" />
                     </Style>
                   </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
@@ -431,12 +431,12 @@
                     </Style>
                   </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
-                <DataGridTextColumn Header="Costo UF fx" Binding="{Binding CostoUnitUf, StringFormat=N4, Mode=OneWay}" Width="92" IsReadOnly="True" HeaderStyle="{StaticResource DataGridColumnHeader.Formula}">
+                <DataGridTextColumn Header="Costo $ fx" Binding="{Binding CostoUnitUf, StringFormat=N0, Mode=OneWay}" Width="100" IsReadOnly="True" HeaderStyle="{StaticResource DataGridColumnHeader.Formula}">
                   <DataGridTextColumn.ElementStyle>
                     <Style TargetType="TextBlock" BasedOn="{StaticResource Text.Cell.Formula}">
                       <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
                       <Setter Property="FontWeight" Value="SemiBold" />
-                      <Setter Property="ToolTip" Value="Costo Unitario UF = Rend. × Precio UF × (1 + Merma% + Imprev.%)" />
+                      <Setter Property="ToolTip" Value="Costo unitario CLP = Rend. × Precio CLP × (1 + Merma% + Imprev.%)" />
                     </Style>
                   </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
@@ -592,11 +592,12 @@
                                        TextTrimming="CharacterEllipsis" Margin="0,1,0,0" />
                           </StackPanel>
 
-                          <!-- Columna Derecha: Precios CLP y UF -->
+                          <!-- Columna Derecha: precio en pesos + equivalencia UF (oculta en proyectos CLP) -->
                           <Border Grid.Column="1" Background="{DynamicResource Brush.Surface2}" CornerRadius="4" Padding="6,4" VerticalAlignment="Center">
                             <StackPanel HorizontalAlignment="Right">
                               <TextBlock Text="{Binding MatClpDisplay}" FontFamily="{StaticResource Font.Mono}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" HorizontalAlignment="Right" />
-                              <TextBlock Text="{Binding MatUfDisplay}" FontFamily="{StaticResource Font.Mono}" FontSize="9.5" Foreground="{DynamicResource Brush.Blue}" HorizontalAlignment="Right" Margin="0,1,0,0" />
+                              <TextBlock Text="{Binding MatUfDisplay}" FontFamily="{StaticResource Font.Mono}" FontSize="9.5" Foreground="{DynamicResource Brush.Blue}" HorizontalAlignment="Right" Margin="0,1,0,0"
+                                         Visibility="{Binding MuestraUf, Converter={StaticResource BoolToVisibility}}" />
                             </StackPanel>
                           </Border>
                         </Grid>
@@ -613,42 +614,42 @@
               <DockPanel LastChildFill="True">
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
                   <TextBlock Text="COSTO DIRECTO: " FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
-                  <TextBlock Text="{Binding CostoDirecto, StringFormat='{}{0:N4} UF'}" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource Brush.Accent}" VerticalAlignment="Center" />
+                  <TextBlock Text="{Binding CostoDirectoDisplay}" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource Brush.Accent}" VerticalAlignment="Center" />
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                   <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Padding="6,2" Margin="0,0,6,0">
                     <StackPanel Orientation="Horizontal">
                       <TextBlock Text="Mat: " FontSize="11" Foreground="{DynamicResource Brush.Muted}" />
-                      <TextBlock Text="{Binding CostoMat, StringFormat='{}{0:N4} UF'}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Success}" />
+                      <TextBlock Text="{Binding CostoMatDisplay}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Success}" />
                     </StackPanel>
                   </Border>
 
                   <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Padding="6,2" Margin="0,0,6,0">
                     <StackPanel Orientation="Horizontal">
                       <TextBlock Text="M.O.: " FontSize="11" Foreground="{DynamicResource Brush.Muted}" />
-                      <TextBlock Text="{Binding CostoMoTotal, StringFormat='{}{0:N4} UF'}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Amber}" />
+                      <TextBlock Text="{Binding CostoMoTotalDisplay}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Amber}" />
                     </StackPanel>
                   </Border>
 
                   <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Padding="6,2" Margin="0,0,6,0">
                     <StackPanel Orientation="Horizontal">
                       <TextBlock Text="Eq: " FontSize="11" Foreground="{DynamicResource Brush.Muted}" />
-                      <TextBlock Text="{Binding CostoEquipo, StringFormat='{}{0:N4} UF'}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" />
+                      <TextBlock Text="{Binding CostoEquipoDisplay}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" />
                     </StackPanel>
                   </Border>
 
                   <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Padding="6,2" Margin="0,0,6,0">
                     <StackPanel Orientation="Horizontal">
                       <TextBlock Text="SC: " FontSize="11" Foreground="{DynamicResource Brush.Muted}" />
-                      <TextBlock Text="{Binding CostoSc, StringFormat='{}{0:N4} UF'}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Info}" />
+                      <TextBlock Text="{Binding CostoScDisplay}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Info}" />
                     </StackPanel>
                   </Border>
 
                   <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Padding="6,2">
                     <StackPanel Orientation="Horizontal">
                       <TextBlock Text="Transp/Otros: " FontSize="11" Foreground="{DynamicResource Brush.Muted}" />
-                      <TextBlock Text="{Binding CostoTransporteTotal, StringFormat='{}{0:N4} UF'}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Purple}" />
+                      <TextBlock Text="{Binding CostoTransporteDisplay}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Purple}" />
                     </StackPanel>
                   </Border>
                 </StackPanel>
@@ -680,12 +681,12 @@
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
               <StackPanel Margin="0,0,20,0">
                 <TextBlock Text="PRECIO VENTA" Style="{StaticResource Text.TotalsLabel}"/>
-                <TextBlock Text="{Binding VentaUnit, StringFormat=N4}" Style="{StaticResource Text.TotalsValue}"
+                <TextBlock Text="{Binding VentaUnitDisplay}" Style="{StaticResource Text.TotalsValue}"
                            Foreground="{DynamicResource Brush.Green}"/>
               </StackPanel>
               <StackPanel>
                 <TextBlock Text="TOTAL PARTIDA" Style="{StaticResource Text.TotalsLabel}"/>
-                <TextBlock Text="{Binding TotalPartida, StringFormat=N2}" Style="{StaticResource Text.TotalsValue}"
+                <TextBlock Text="{Binding TotalPartidaDisplay}" Style="{StaticResource Text.TotalsValue}"
                            FontSize="{StaticResource Font.Size.h3}" Foreground="{DynamicResource Brush.Blue}"/>
               </StackPanel>
             </StackPanel>
@@ -693,19 +694,19 @@
             <StackPanel Orientation="Horizontal">
               <StackPanel Margin="0,0,20,0">
                 <TextBlock Text="COSTO DIRECTO" Style="{StaticResource Text.TotalsLabel}"/>
-                <TextBlock Text="{Binding CostoDirecto, StringFormat=N4}" Style="{StaticResource Text.TotalsValue}"/>
+                <TextBlock Text="{Binding CostoDirectoDisplay}" Style="{StaticResource Text.TotalsValue}"/>
               </StackPanel>
               <StackPanel Margin="0,0,20,0">
                 <TextBlock Text="HERRAMIENTAS" Style="{StaticResource Text.TotalsLabel}"/>
-                <TextBlock Text="{Binding CostoHerr, StringFormat=N4}" Style="{StaticResource Text.TotalsValue}"/>
+                <TextBlock Text="{Binding CostoHerrDisplay}" Style="{StaticResource Text.TotalsValue}"/>
               </StackPanel>
               <StackPanel Margin="0,0,20,0">
                 <TextBlock Text="IMPREVISTOS" Style="{StaticResource Text.TotalsLabel}"/>
-                <TextBlock Text="{Binding Imprevistos, StringFormat=N4}" Style="{StaticResource Text.TotalsValue}"/>
+                <TextBlock Text="{Binding ImprevistosDisplay}" Style="{StaticResource Text.TotalsValue}"/>
               </StackPanel>
               <StackPanel Margin="0,0,20,0">
                 <TextBlock Text="P. UNITARIO" Style="{StaticResource Text.TotalsLabel}"/>
-                <TextBlock Text="{Binding PrecioUnit, StringFormat=N4}" Style="{StaticResource Text.TotalsValue}"/>
+                <TextBlock Text="{Binding PrecioUnitDisplay}" Style="{StaticResource Text.TotalsValue}"/>
               </StackPanel>
             </StackPanel>
           </DockPanel>

@@ -91,12 +91,31 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
     }
 
     protected override void OnSessionChanged(object? sender, ProjectSessionChangedEventArgs e) =>
-        System.Windows.Application.Current?.Dispatcher.InvokeAsync(Refresh);
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        {
+            Refresh();
+            NotifyMonedaChanged();
+        });
 
     public ObservableCollection<CompraMaterialViewModel> Rows => rows;
     public ICollectionView FilteredRows => rowsView;
     public ObservableCollection<string> CategoryOptions => categoryOptions;
     public bool HasProject => workspace.HasOpenProject;
+
+    /// <summary>
+    /// Regla de moneda del proyecto: con CLP no se expone ninguna cifra en UF (ni columnas
+    /// PRECIO UF / NETO UF / COMPRA UF ni la equivalencia UF del resumen). La vista reaplica las
+    /// columnas y esta VM recalcula el mensaje de estado.
+    /// </summary>
+    public bool MuestraUf =>
+        !string.Equals(session.ProjectInfo.MonedaPresupuesto, CurrencyConversionService.CurrencyClp, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Notifica el cambio de política de moneda para que la vista reaplique la grilla.</summary>
+    private void NotifyMonedaChanged()
+    {
+        OnPropertyChanged(nameof(MuestraUf));
+        UpdateSummary();
+    }
 
     public string SearchText
     {
@@ -308,7 +327,9 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
         SummaryText = $"{visible:N0} visibles · {rows.Count:N0} total · {missingPrices:N0} sin precio";
         StatusMessage = rows.Count == 0
             ? "No hay recursos comprables en la cubicación actual."
-            : $"Lista consolidada: {totalNeto:N2} UF ($ {totalNetoClp:N0}) neto · {totalCompra:N2} UF ($ {totalCompraClp:N0}) compra.";
+            : MuestraUf
+                ? $"Lista consolidada: {totalNeto:N2} UF ($ {totalNetoClp:N0}) neto · {totalCompra:N2} UF ($ {totalCompraClp:N0}) compra."
+                : $"Lista consolidada: $ {totalNetoClp:N0} neto · $ {totalCompraClp:N0} compra.";
         exportExcelCommand.RaiseCanExecuteChanged();
         exportRfqCommand.RaiseCanExecuteChanged();
     }
@@ -337,7 +358,9 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
             purchaseListExcel.Export(file, new PurchaseListExcelRequest(
                 session.ProjectInfo.Nombre,
                 ToleranciaPct,
-                snapshot));
+                snapshot,
+                MuestraUf,
+                session.ValorUfClp));
 
             StatusMessage = $"Lista de compra exportada: {Path.GetFileName(file)}";
             WpfDialogService.Info("Lista de compra", "La exportación se completó correctamente.");

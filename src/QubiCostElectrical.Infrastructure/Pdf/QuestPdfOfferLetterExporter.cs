@@ -93,7 +93,10 @@ public sealed class QuestPdfOfferLetterExporter : IOfferLetterPdfExporter
             netUf = rawNetClp > 0m ? PriceConversion.ClpToUf(rawNetClp, valorUf) : 0m;
         }
 
-        string totalUfText = netUf > 0m ? netUf.ToString("#,##0.000", culture) + " UF" : "S/I";
+        // El documento respeta la moneda del proyecto: con CLP nunca se menciona la UF.
+        string totalMontoText = ctx.MuestraUf
+            ? (netUf > 0m ? $"{netUf.ToString("#,##0.000", culture)} UF" : "S/I")
+            : (rawNetClp > 0m ? $"$ {Money.Round(rawNetClp):N0} CLP" : "S/I");
         string ivaNote = offer.IncludeIvaNote ? " + IVA" : "";
         string fechaLarga = date.ToString("d 'de' MMMM 'de' yyyy", culture);
 
@@ -236,7 +239,7 @@ public sealed class QuestPdfOfferLetterExporter : IOfferLetterPdfExporter
                     }
 
                     Section("OFERTA COMERCIAL:");
-                    col.Item().PaddingTop(4).Text($"El Valor Total Neto del Presupuesto asciende a {totalUfText}{ivaNote}.").FontSize(10).Bold().FontColor(cNavy);
+                    col.Item().PaddingTop(4).Text($"El Valor Total Neto del Presupuesto asciende a {totalMontoText}{ivaNote}.").FontSize(10).Bold().FontColor(cNavy);
 
                     // Firma
                     col.Item().PaddingTop(18).Column(s =>

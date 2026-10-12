@@ -59,7 +59,8 @@ internal sealed class CubicacionClipboardCoordinator
             codigo ?? parent.QuickAddCodigoDraft ?? parent.SelectedRow?.Codigo,
             descripcion ?? parent.SelectedRow?.Descripcion,
             unidad ?? parent.SelectedRow?.Unidad,
-            contexto)
+            contexto,
+            parent.SelectedRow?.ValorUfClp ?? 0m)
         {
             Owner = owner
         };

@@ -1,3 +1,5 @@
+using System;
+
 namespace QubiCostElectrical.Wpf.Features.EstadosPago;
 
 /// <summary>Textos y formatos compartidos de la pantalla Estados de pago.</summary>
@@ -21,6 +23,10 @@ public static class EstadoPagoFormat
     };
 
     public static string Uf(decimal valor) => $"{valor:N2} UF";
+
+    /// <summary>Monto en pesos chilenos (proyectos con MonedaPresupuesto = CLP).</summary>
+    public static string Clp(decimal valor) =>
+        $"$ {Math.Round(valor, 0, MidpointRounding.AwayFromZero):N0}";
 
     public static string Pct(decimal valor) => $"{valor:N1} %";
 

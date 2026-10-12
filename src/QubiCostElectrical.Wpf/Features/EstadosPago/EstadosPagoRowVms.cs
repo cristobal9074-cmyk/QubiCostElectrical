@@ -91,6 +91,12 @@ public sealed class EstadoPagoPartidaVm : ViewModelBase
     public decimal AvanceAnterior => avanceAnterior;
     public bool IsEditable { get; }
 
+    /// <summary>Monto contratado de la partida en la moneda del proyecto (CLP o UF).</summary>
+    public string MontoLabel => parent.FormatMoney(Monto);
+
+    /// <summary>Monto del mes en la moneda del proyecto (CLP o UF).</summary>
+    public string MontoMesLabel => parent.FormatMoney(montoMes);
+
     public decimal AvanceMes
     {
         get => avanceMes;
@@ -130,5 +136,6 @@ public sealed class EstadoPagoPartidaVm : ViewModelBase
         AcumPct = acum;
         MontoMes = montoMesValor;
         OnPropertyChanged(nameof(AcumFillPct));
+        OnPropertyChanged(nameof(MontoMesLabel));
     }
 }

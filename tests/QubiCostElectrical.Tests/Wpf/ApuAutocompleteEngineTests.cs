@@ -121,6 +121,67 @@ public sealed class ApuAutocompleteEngineTests
     }
 
     [Fact]
+    public async Task SearchAsync_ApuResourceSuggestion_ExposesClpPriceAndDerivedUf()
+    {
+        var session = new BudgetProjectSession();
+        session.ValorUfClp = 38000m;
+        session.Data.Apus = new List<ApuRow>
+        {
+            new()
+            {
+                Descripcion = "APU de prueba",
+                Unidad = "un",
+                Recursos = new List<ApuRecursoRow>
+                {
+                    new()
+                    {
+                        Tipo = ApuTipoRecurso.MAT,
+                        CodigoMaterial = "CBL-APU-16",
+                        Descripcion = "Cable APU 16 mm2",
+                        Unidad = "m",
+                        Rendimiento = 1m,
+                        // ApuRow.*Uf es la moneda base del motor: aquí el precio está en CLP.
+                        PrecioUf = 5000m
+                    }
+                }
+            }
+        };
+
+        var engine = new ApuAutocompleteEngine(session, new MaterialSearchService());
+
+        var results = await engine.SearchAsync("CBL-APU-16");
+
+        Assert.NotEmpty(results);
+        var first = results[0];
+        Assert.Equal(5000m, first.MatClp);
+        Assert.Equal(PriceConversion.ClpToUf(5000m, 38000m), first.MatUf);
+    }
+
+    [Fact]
+    public async Task SearchAsync_WhenProjectIsClp_SuggestionHidesUf()
+    {
+        var session = new BudgetProjectSession();
+        session.ValorUfClp = 38000m;
+        session.ProjectInfo.MonedaPresupuesto = "CLP";
+        session.Materiales.Add(new MaterialRow
+        {
+            Codigo = "CBL-CLP-1",
+            Descripcion = "Cable CLP 1 mm2",
+            Unidad = "m",
+            MatClp = 900m
+        });
+
+        var engine = new ApuAutocompleteEngine(session, new MaterialSearchService());
+
+        var clpResults = await engine.SearchAsync("CBL-CLP-1");
+        Assert.False(clpResults[0].MuestraUf);
+
+        session.ProjectInfo.MonedaPresupuesto = "UF";
+        var ufResults = await engine.SearchAsync("CBL-CLP-1");
+        Assert.True(ufResults[0].MuestraUf);
+    }
+
+    [Fact]
     public void ApplyAutocompleteSuggestion_PopulatesRecursoRowProperly()
     {
         var session = new BudgetProjectSession();

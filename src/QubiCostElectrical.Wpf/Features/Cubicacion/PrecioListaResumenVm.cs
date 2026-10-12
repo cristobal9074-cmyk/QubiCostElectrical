@@ -91,13 +91,15 @@ public sealed class PrecioListaResumenVm : ViewModelBase
             return;
         }
         string value = query.Trim().ToLowerInvariant();
-        foreach (PriceBankEntry allBankEntry in allBankEntries)
+        // Se busca sobre lo que muestra la lista (banco + materiales del proyecto), no solo el banco:
+        // así un material creado solo en este proyecto también se sugiere al escribir su código.
+        foreach (PrecioListaMaterialVm item in allItems)
         {
-            string text = (allBankEntry.Codigo ?? "").ToLowerInvariant();
-            string text2 = (allBankEntry.Descripcion ?? "").ToLowerInvariant();
+            string text = (item.Codigo ?? "").ToLowerInvariant();
+            string text2 = (item.Descripcion ?? "").ToLowerInvariant();
             if (text.Contains(value) || text2.Contains(value))
             {
-                AutocompleteResults.Add(new PriceBankSuggestionVm(allBankEntry));
+                AutocompleteResults.Add(new PriceBankSuggestionVm(item.Codigo ?? "", item.Descripcion ?? "", item.Unidad ?? "", item.MatClp, item.MoClp));
             }
         }
         AutocompleteVisible = AutocompleteResults.Count > 0;
@@ -123,8 +125,24 @@ public sealed class PrecioListaResumenVm : ViewModelBase
         {
             allItems.Add(new PrecioListaMaterialVm(item, session));
         }
+
+        // Materiales que existen SOLO en el proyecto (los que crea esta pantalla): no están en el
+        // banco de precios global y sin esto desaparecerían de la lista al reabrirla.
+        var codigosMostrados = new HashSet<string>(
+            allBankEntries.Select((PriceBankEntry e) => CodeHelper.Normalize(e.Codigo)), StringComparer.Ordinal);
+        foreach (MaterialRow material in session.Materiales
+                     .OrderBy((MaterialRow m) => m.Codigo, StringComparer.OrdinalIgnoreCase))
+        {
+            if (string.IsNullOrWhiteSpace(material.Codigo))
+                continue;
+            if (codigosMostrados.Add(CodeHelper.Normalize(material.Codigo)))
+                allItems.Add(new PrecioListaMaterialVm(material, session));
+        }
+
         filteredView = CollectionViewSource.GetDefaultView(allItems);
         filteredView.Filter = FilterPredicate;
+        CalcularFaCommand = new RelayCommand(CalcularFa);
+        RefrescarFa();
         RefreshFilterChips();
         if (!string.IsNullOrWhiteSpace(autoFilterCodigo))
         {
@@ -166,83 +184,313 @@ public sealed class PrecioListaResumenVm : ViewModelBase
 
     public void ActualizarPrecioEnSesion(PrecioListaMaterialVm item)
     {
-        item.SyncToBank(priceBankStore, session.ProjectInfo.ValorUfClp);
+        item.Guardar(priceBankStore, session.ProjectInfo.ValorUfClp);
         session.SyncCubicacionPricesFromMateriales();
         session.MarkDirty(ProjectDirtyScope.Materiales, ProjectDirtyScope.Cubicacion);
         RefreshKpis();
     }
 
+    // ── Alta rápida ───────────────────────────────────────────────────────────
+    // El alta rápida no obliga a escribir un código: lo sugiere la familia, y la M.O. sale de la
+    // fórmula Material × % × FA en vez de teclearse. Estas tres piezas son las que consumen el
+    // diálogo de alta rápida; el cálculo de la M.O. vive en el motor (MaterialMoResolver) para que
+    // la vista previa y el resultado del presupuesto sean siempre la misma cifra.
+
+    /// <summary>Familias reales del proyecto: categorías del banco de precios + materiales cargados.</summary>
+    public IReadOnlyList<string> FamiliasDisponibles
+    {
+        get
+        {
+            var vistas = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var nombres = new List<string>();
+
+            void Agregar(string? nombre)
+            {
+                if (string.IsNullOrWhiteSpace(nombre))
+                    return;
+                string limpio = nombre.Trim();
+                if (vistas.Add(limpio))
+                    nombres.Add(limpio);
+            }
+
+            foreach (var entry in allBankEntries)
+                Agregar(entry.Categoria);
+            foreach (var material in session.Materiales)
+                Agregar(material.Categoria);
+
+            nombres.Sort(StringComparer.CurrentCultureIgnoreCase);
+            return nombres;
+        }
+    }
+
+    /// <summary>FA vigente del proyecto (índice de M.O.): el que se usará al guardar.</summary>
+    public decimal IndiceMoFa => MaterialMoResolver.IndiceFa(session.ProjectInfo);
+
+    private string indiceMoFaTexto = "";
+
+    /// <summary>
+    /// FA editable desde el propio alta rápida: al cambiarlo se recalibra la M.O. del catálogo y
+    /// del itemizado con él, igual que al reescribir COSTOS!E192 en la planilla original.
+    /// 0 = sin calibrar: la M.O. por % se calcula con factor neutro (Material × %).
+    /// </summary>
+    public string IndiceMoFaTexto
+    {
+        get => indiceMoFaTexto;
+        set
+        {
+            if (!SetProperty(ref indiceMoFaTexto, value ?? ""))
+                return;
+            if (!TryParseFa(value, out decimal fa) || fa < 0m)
+            {
+                NotificarExplicacionFa();
+                return;
+            }
+            AplicarFa(fa);
+        }
+    }
+
+    /// <summary>Deriva el FA desde el plan de mano de obra del proyecto y lo deja aplicado.</summary>
+    public RelayCommand CalcularFaCommand { get; }
+
+    /// <summary>FA que corresponde al plan de M.O., siempre calculado, frente al índice vigente.</summary>
+    public string FaDerivadoTexto => faDerivadoTexto;
+
+    public bool FaDerivadoVisible => !string.IsNullOrEmpty(faDerivadoTexto);
+
+    private string faDerivadoTexto = "";
+
+    /// <summary>El FA está sin calibrar: la M.O. por % sale de Material × % (factor neutro) hasta que se fije un índice.</summary>
+    public bool FaSinCalibrar => IndiceMoFa <= 0m;
+
+    /// <summary>
+    /// Por qué el FA está (o no) en cero, en lenguaje llano. El alta rápida lo muestra al lado de
+    /// la fórmula: un proyecto recién creado o sin plan de mano de obra deja el FA en 0 y hay que
+    /// explicar de dónde sale entonces la cifra de mano de obra.
+    /// </summary>
+    public string ExplicacionFa
+    {
+        get
+        {
+            if (IndiceMoFa > 0m)
+                return $"FA {IndiceMoFa:N2} calibrado: la M.O. de este material se calcula sola con Material × % × FA.";
+
+            var resultado = FactorAjusteMoService.CalcularParaProyecto(session.Data, session.ProjectInfo);
+            if (resultado.PuedeCalcular)
+                return $"El FA está en 0 porque este proyecto todavía no se ha calibrado: la M.O. se calcula por ahora como "
+                     + $"Material × % (factor 1). Le corresponde {resultado.Fa!.Value:N2} según su plan de mano de obra: "
+                     + "pulsa «Calcular FA» para aplicarlo.";
+
+            if (resultado.TienePlanMo)
+                return "El FA está en 0 porque ningún material del itemizado usa M.O. por % (Precio × % × FA), "
+                     + "así que no hay con qué calibrarlo: fija el FA a mano o guarda el material sin fórmula.";
+
+            return "El FA está en 0 porque el proyecto aún no tiene plan de mano de obra (dotación y sueldos). "
+                 + "Mientras tanto la M.O. se calcula como Material × % (factor neutro) y se recalcula sola al "
+                 + "mover el FA desde Costos: complétalo en el módulo Mano de obra, o escribe el FA a mano aquí.";
+        }
+    }
+
+    /// <summary>Refresca los textos del FA (vigente, derivado y aviso) desde el proyecto.</summary>
+    public void RefrescarFa()
+    {
+        indiceMoFaTexto = IndiceMoFa.ToString("N2", System.Globalization.CultureInfo.CurrentCulture);
+        faDerivadoTexto = CalcularFaDerivadoTexto();
+
+        OnPropertyChanged(nameof(IndiceMoFa));
+        OnPropertyChanged(nameof(IndiceMoFaTexto));
+        OnPropertyChanged(nameof(FaDerivadoTexto));
+        OnPropertyChanged(nameof(FaDerivadoVisible));
+        NotificarExplicacionFa();
+    }
+
+    private void NotificarExplicacionFa()
+    {
+        OnPropertyChanged(nameof(FaSinCalibrar));
+        OnPropertyChanged(nameof(ExplicacionFa));
+    }
+
+    private string CalcularFaDerivadoTexto()
+    {
+        var resultado = FactorAjusteMoService.CalcularParaProyecto(session.Data, session.ProjectInfo);
+        if (!resultado.PuedeCalcular)
+            return "";
+
+        string derivado = resultado.Fa!.Value.ToString("N2", System.Globalization.CultureInfo.CurrentCulture);
+        decimal vigente = IndiceMoFa;
+        return Math.Abs(vigente - resultado.Fa.Value) < 0.005m
+            ? "FA calibrado con la M.O. real del proyecto (" + derivado + ")."
+            : "FA automático del proyecto: " + derivado + " (vigente "
+              + vigente.ToString("N2", System.Globalization.CultureInfo.CurrentCulture) + "). Pulsa Calcular FA para aplicarlo.";
+    }
+
+    /// <summary>Aplica el FA al proyecto y deja la lista de precios con la M.O. ya recalculada.</summary>
+    private void AplicarFa(decimal fa)
+    {
+        IndiceMoFaAplicado aplicado = session.AplicarIndiceMoFa(fa, priceBankStore);
+        foreach (var cambio in aplicado.Materiales)
+        {
+            var fila = allItems.FirstOrDefault(i => string.Equals(i.Codigo, cambio.Codigo, StringComparison.OrdinalIgnoreCase));
+            if (fila != null)
+                fila.MoClp = cambio.NuevoClp;
+        }
+
+        indiceMoFaTexto = aplicado.IndiceMoFa.ToString("N2", System.Globalization.CultureInfo.CurrentCulture);
+        faDerivadoTexto = CalcularFaDerivadoTexto();
+
+        OnPropertyChanged(nameof(IndiceMoFa));
+        OnPropertyChanged(nameof(IndiceMoFaTexto));
+        OnPropertyChanged(nameof(FaDerivadoTexto));
+        OnPropertyChanged(nameof(FaDerivadoVisible));
+        NotificarExplicacionFa();
+        RefreshKpis();
+    }
+
+    private void CalcularFa()
+    {
+        var resultado = FactorAjusteMoService.CalcularParaProyecto(session.Data, session.ProjectInfo);
+        if (!resultado.PuedeCalcular)
+        {
+            // Sin plan de M.O. no hay con qué derivarlo; se explica en el propio panel en vez de
+            // abrir un modal, porque el aviso del FA genérico ya está visible al lado del campo.
+            faDerivadoTexto = resultado.TienePlanMo
+                ? "Ningún material del itemizado usa M.O. por % (Precio × % × FA): el FA no cambia la mano de obra."
+                : "Sin plan de mano de obra: carga dotación y sueldos en el módulo Mano de obra para poder derivar el FA.";
+            OnPropertyChanged(nameof(FaDerivadoTexto));
+            OnPropertyChanged(nameof(FaDerivadoVisible));
+            return;
+        }
+
+        IndiceMoFaTexto = resultado.Fa!.Value.ToString("N2", System.Globalization.CultureInfo.CurrentCulture);
+    }
+
+    private static bool TryParseFa(string? texto, out decimal fa)
+    {
+        fa = 0m;
+        if (string.IsNullOrWhiteSpace(texto))
+            return false;
+        string limpio = texto.Trim().Replace(" ", "");
+        return decimal.TryParse(limpio, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.CurrentCulture, out fa)
+            || decimal.TryParse(limpio.Replace(',', '.'), System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out fa);
+    }
+
+    /// <summary>Código libre sugerido para la familia/descripción; el usuario no necesita escribirlo.</summary>
+    public string SugerirCodigo(string? familia, string? descripcion)
+    {
+        var existentes = allBankEntries.Select(e => e.Codigo)
+            .Concat(session.Materiales.Select(m => m.Codigo))
+            .Concat(allItems.Select(i => i.Codigo));
+        return MaterialCodeGenerator.Siguiente(familia, descripcion, existentes);
+    }
+
+    /// <summary>M.O. por fórmula Material × % × FA con el FA del proyecto, para la vista previa.</summary>
+    public decimal CalcularMoPorcentaje(decimal matClp, decimal porcentajeMaterial) =>
+        MaterialMoResolver.MoClpPorPorcentaje(matClp, porcentajeMaterial, IndiceMoFa);
+
+    /// <summary>
+    /// Precio de referencia de un código: primero el banco de precios y, si no está, el catálogo del
+    /// proyecto (materiales que solo existen aquí). Se consulta el catálogo y no la lista en pantalla
+    /// para no devolver la propia fila que se está editando.
+    /// </summary>
     public PriceBankEntry? LookupByCodigo(string codigo)
     {
-        return priceBankStore.GetByCodigo(codigo.Trim());
+        PriceBankEntry? delBanco = priceBankStore.GetByCodigo(codigo.Trim());
+        if (delBanco != null)
+            return delBanco;
+
+        MaterialRow? fila = session.Materiales.FirstOrDefault((MaterialRow m) => CodeHelper.Match(m.Codigo, codigo));
+        if (fila == null)
+            return null;
+
+        return new PriceBankEntry
+        {
+            Codigo = fila.Codigo,
+            Descripcion = fila.Descripcion,
+            Unidad = fila.Unidad,
+            Categoria = fila.Categoria,
+            MatClp = fila.MatClp,
+            MoClp = fila.MoClp,
+            Proveedor = fila.Proveedor,
+            FechaPrecio = fila.FechaPrecio
+        };
     }
 
     public (decimal MatClp, decimal MoClp)? LookupPricesByDescripcion(string descripcion)
     {
-        PriceBankEntry? priceBankEntry = priceBankStore.GetAll().FirstOrDefault((PriceBankEntry e) => string.Equals(e.Descripcion, descripcion.Trim(), StringComparison.OrdinalIgnoreCase));
-        if (priceBankEntry == null)
-        {
-            return null;
-        }
-        return (priceBankEntry.MatClp, priceBankEntry.MoClp);
+        string buscada = descripcion.Trim();
+        PriceBankEntry? priceBankEntry = priceBankStore.GetAll().FirstOrDefault((PriceBankEntry e) => string.Equals(e.Descripcion, buscada, StringComparison.OrdinalIgnoreCase));
+        if (priceBankEntry != null)
+            return (priceBankEntry.MatClp, priceBankEntry.MoClp);
+
+        MaterialRow? fila = session.Materiales.FirstOrDefault((MaterialRow m) => string.Equals(m.Descripcion, buscada, StringComparison.OrdinalIgnoreCase));
+        return fila == null ? null : (fila.MatClp, fila.MoClp);
     }
 
-    public void AgregarMaterial(string codigo, string descripcion, string unidad, string categoria, decimal matClp, decimal moClp, string proveedor, DateTime fechaPrecio)
+    /// <summary>
+    /// Crea el material en el catálogo del PROYECTO (nunca en el banco global) y lo agrega a la lista.
+    /// Devuelve false si el código ya existía, en cuyo caso no se crea nada.
+    /// </summary>
+    public bool AgregarMaterial(string codigo, string descripcion, string unidad, string categoria, decimal matClp, decimal moClp, string proveedor, DateTime fechaPrecio,
+        string moFormulaTipo = "", decimal moPorcentajeMaterial = 2.5m)
     {
-        if (priceBankStore.GetByCodigo(codigo) != null)
+        // El material nace en el PROYECTO, no en el banco de precios global: el banco es compartido
+        // entre todos los proyectos y estos materiales (tableros, luminarias puntuales) son propios
+        // de este presupuesto. Cientos de variantes distintas por proyecto no deben convertirse en
+        // catálogo reutilizable de los demás.
+        if (ExisteCodigo(codigo))
         {
-            WpfDialogService.Info("Código duplicado", "Ya existe un material con el código '" + codigo + "' en el banco de precios.");
-            return;
+            WpfDialogService.Info("Código duplicado", "Ya existe un material con el código '" + codigo + "' en la lista de precios.");
+            return false;
         }
+
         decimal valorUfClp = session.ProjectInfo.ValorUfClp;
-        PriceBankEntry priceBankEntry = new PriceBankEntry
+        // Con fórmula de porcentaje la M.O. se deriva (Material × % × FA) en vez de teclearse; el
+        // MoClp guardado queda como valor efectivo para que listas y exportaciones muestren la cifra
+        // que el motor ya aplica, y la fórmula queda en el material para que siga viva si cambia el FA.
+        bool porPorcentaje = string.Equals(moFormulaTipo, MaterialMoResolver.MoFormulaPorcentaje, StringComparison.OrdinalIgnoreCase)
+            && moPorcentajeMaterial > 0m;
+        decimal moEfectiva = porPorcentaje
+            ? MaterialMoResolver.MoClpPorPorcentaje(matClp, moPorcentajeMaterial, MaterialMoResolver.IndiceFa(session.ProjectInfo))
+            : moClp;
+
+        var materialRow = new MaterialRow
         {
             Codigo = codigo,
             Descripcion = descripcion,
             Unidad = (string.IsNullOrWhiteSpace(unidad) ? "un" : unidad),
             Categoria = (categoria ?? ""),
             MatClp = matClp,
-            MoClp = moClp,
+            MoClp = moEfectiva,
+            MoFormulaTipo = porPorcentaje ? MaterialMoResolver.MoFormulaPorcentaje : "",
+            MoPorcentajeMaterial = moPorcentajeMaterial,
             Proveedor = (proveedor ?? ""),
             FechaPrecio = ((fechaPrecio == default(DateTime)) ? DateTime.Today : fechaPrecio),
             OrigenPrecio = "Lista de precios",
-            ActualizadoEn = AppClock.Now
+            UltimaActualizacionPrecio = AppClock.Now
         };
-        priceBankEntry.RecalcularUf(valorUfClp);
-        priceBankStore.Upsert(priceBankEntry);
-        MaterialRow? materialRow = session.Materiales.FirstOrDefault((MaterialRow x) => string.Equals(x.Codigo, codigo, StringComparison.OrdinalIgnoreCase));
-        if (materialRow == null)
-        {
-            materialRow = new MaterialRow
-            {
-                Codigo = codigo,
-                Descripcion = descripcion,
-                Unidad = priceBankEntry.Unidad,
-                Categoria = priceBankEntry.Categoria,
-                MatClp = matClp,
-                MoClp = moClp,
-                Proveedor = (proveedor ?? ""),
-                FechaPrecio = priceBankEntry.FechaPrecio,
-                OrigenPrecio = "Lista de precios",
-                UltimaActualizacionPrecio = AppClock.Now
-            };
-            materialRow.RecalcularUf(valorUfClp);
-            session.Materiales.Add(materialRow);
-        }
-        session.MarkDirty("material_add");
-        allItems.Add(new PrecioListaMaterialVm(priceBankEntry, session));
+        materialRow.RecalcularUf(valorUfClp);
+
+        session.Materiales.Add(materialRow);
+        session.MarkDirty(ProjectDirtyScope.Materiales);
+        allItems.Add(new PrecioListaMaterialVm(materialRow, session));
         RefreshKpis();
-        ICollectionView? obj = filteredView;
-        if (obj != null)
-        {
-            obj.Refresh();
-        }
+        filteredView?.Refresh();
+        return true;
     }
+
+    /// <summary>El código ya existe en el banco de precios global o en el catálogo del proyecto.</summary>
+    private bool ExisteCodigo(string codigo) =>
+        !string.IsNullOrWhiteSpace(codigo)
+        && (priceBankStore.GetByCodigo(codigo.Trim()) != null
+            || session.Materiales.Any((MaterialRow m) => CodeHelper.Match(m.Codigo, codigo)));
 
     public void EliminarMaterial(PrecioListaMaterialVm vm)
     {
-        priceBankStore.Delete(vm.Codigo);
-        MaterialRow? materialRow = session.Materiales.FirstOrDefault((MaterialRow x) => string.Equals(x.Codigo, vm.Codigo, StringComparison.OrdinalIgnoreCase));
+        // Un material creado en este proyecto no tiene fila en el banco global: borrarla sería un
+        // no-op silencioso. Solo se quita del catálogo del .qce.
+        if (!vm.EsSoloProyecto)
+            priceBankStore.Delete(vm.Codigo);
+
+        MaterialRow? materialRow = session.Materiales.FirstOrDefault((MaterialRow x) => CodeHelper.Match(x.Codigo, vm.Codigo));
         if (materialRow != null)
         {
             session.Materiales.Remove(materialRow);

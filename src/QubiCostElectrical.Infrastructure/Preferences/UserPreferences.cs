@@ -71,6 +71,13 @@ public sealed class UserPreferences
     /// (tarifa D/H ÷ rendimiento del material) en vez del M.O. directo del catálogo.
     /// </summary>
     public bool MoInstalacionPorRendimientoDefault { get; set; } = false;
+
+    /// <summary>
+    /// Default del modo automático del índice de M.O. (FA): cuando está activo, el FA se recalcula
+    /// solo para que la M.O. del itemizado ("EN PPTO") cuadre con el costo real del plan de obra
+    /// ("COSTO"), igual que el 62,80 calibrado a mano del Excel. Escribir un FA a mano lo desactiva.
+    /// </summary>
+    public bool FaAutomatico { get; set; } = true;
     /// <summary>Últimas N rutas abiertas (max 8), más reciente primero.</summary>
     public List<string> RecentFiles { get; set; } = new();
 

@@ -1,0 +1,62 @@
+<Window x:Class="QubiCostElectrical.Wpf.Features.Cubicacion.ZonaCantidadDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Style="{StaticResource Dialog.Window}"
+        Title="Casilla de cubicación"
+        Width="470"
+        SizeToContent="Height"
+        MinWidth="420"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False">
+  <Border Style="{StaticResource Dialog.Chrome}" Margin="16">
+    <Grid>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+      </Grid.RowDefinitions>
+
+      <StackPanel Grid.Row="0" Margin="0,0,0,14">
+        <TextBlock Text="Casilla de cubicación" Style="{StaticResource Dialog.HeaderTitle}" />
+        <TextBlock Style="{StaticResource Dialog.HeaderSubtitle}"
+                   Text="El material quedó en la partida. Indique en qué zona y con qué cantidad entra en la cubicación." />
+      </StackPanel>
+
+      <StackPanel Grid.Row="1">
+        <!-- Contexto: qué material y en qué partida se está cubicando. -->
+        <Border Background="{DynamicResource Brush.Surface2}" CornerRadius="7" Padding="12,9" Margin="0,0,0,12">
+          <StackPanel>
+            <TextBlock x:Name="MaterialText" Style="{StaticResource Text.Caption}" TextWrapping="Wrap" />
+            <TextBlock x:Name="PartidaText" Style="{StaticResource Text.Caption}" TextWrapping="Wrap" Margin="0,3,0,0" />
+          </StackPanel>
+        </Border>
+
+        <TextBlock Text="Zona" Style="{StaticResource Text.Caption}" Margin="0,0,0,4" />
+        <ComboBox x:Name="ZonaCombo" Style="{StaticResource Form.ComboBox}" Margin="0,0,0,10"
+                  PreviewKeyDown="OnZonaComboKeyDown" />
+
+        <Border x:Name="SinZonasBanner" Style="{StaticResource Dialog.Banner.Warning}" Visibility="Collapsed"
+                Margin="0,0,0,10">
+          <TextBlock Style="{StaticResource Dialog.Banner.Text}"
+                     Text="Este proyecto no tiene zonas configuradas: la cantidad se escribirá en la primera casilla. Puede definirlas en el menú ⋯ → Zonas… de la barra de Cubicación." />
+        </Border>
+
+        <TextBlock Text="Cantidad en esa zona" Style="{StaticResource Text.Caption}" Margin="0,0,0,4" />
+        <TextBox x:Name="CantidadBox" Style="{StaticResource Form.TextBox}" Text="1" />
+
+        <TextBlock Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Muted}"
+                   TextWrapping="Wrap" Margin="0,10,0,0"
+                   Text="La columna CANT se calcula sumando las casillas de zona: al escribir aquí, la cantidad de la fila se actualiza sola." />
+      </StackPanel>
+
+      <DockPanel Grid.Row="2" Style="{StaticResource Dialog.Footer}" LastChildFill="False">
+        <Button DockPanel.Dock="Right" Style="{StaticResource Button.Primary}" Content="Cubicar"
+                MinWidth="110" IsDefault="True" Click="OnCubicarClick" />
+        <Button DockPanel.Dock="Right" Style="{StaticResource Button.Secondary}" Content="Omitir"
+                MinWidth="100" Margin="0,0,8,0" IsCancel="True"
+                ToolTip="Dejar el material sin casilla de zona; puede cubicarlo después en la grilla" />
+      </DockPanel>
+    </Grid>
+  </Border>
+</Window>

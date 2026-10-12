@@ -1,9 +1,6 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
@@ -54,12 +51,6 @@ public sealed class PlantillasViewXamlSmokeTests : IDisposable
         public void RefreshChrome() { }
     }
 
-    private static readonly BlockingCollection<Action> uiQueue = new();
-    private static readonly ManualResetEventSlim uiReady = new(false);
-    private static readonly object uiStartLock = new();
-    private static bool uiStarted;
-    private static System.Windows.Application? uiApp;
-
     private readonly IDisposable templateDbScope;
     private readonly string templateDbPath;
     private readonly IDisposable conjuntoDbScope;
@@ -84,28 +75,11 @@ public sealed class PlantillasViewXamlSmokeTests : IDisposable
     }
 
     /// <summary>
-    /// Ejecuta la acción en un hilo STA compartido que hospeda la Application con el tema de
-    /// la app (se crea una sola vez). Sin Dispatcher.Run: como en el resto de tests WPF, se
-    /// construye UI sin bombardear la cola de mensajes.
+    /// Ejecuta la acción en el hilo STA compartido que hospeda la Application con el tema de la
+    /// app. El host es compartido (XamlViewSmokeHost): WPF sólo admite una Application por
+    /// AppDomain y crear una propia aborta el host de pruebas de toda la suite.
     /// </summary>
-    private static void RunOnUiSta(Action action)
-    {
-        StartUiThread();
-        ExceptionDispatchInfo? captured = null;
-        using var done = new ManualResetEventSlim(false);
-        uiQueue.Add(() =>
-        {
-            try
-            {
-                RestoreApplicationCurrent();
-                action();
-            }
-            catch (Exception ex) { captured = ExceptionDispatchInfo.Capture(ex); }
-            finally { done.Set(); }
-        });
-        done.Wait();
-        captured?.Throw();
-    }
+    private static void RunOnUiSta(Action action) => XamlViewSmokeHost.Run(action);
 
     /// <summary>
     /// La suite no corre Dispatcher.Run, así que la cola del hilo UI no se drena sola: las
@@ -113,44 +87,7 @@ public sealed class PlantillasViewXamlSmokeTests : IDisposable
     /// expresión, o el push TwoWay de SelectedValue) quedarían pendientes para siempre y
     /// ItemsSource permanecería nulo. Este frame procesa todo lo encolado hasta ApplicationIdle.
     /// </summary>
-    private static void PompearBindingQueue()
-    {
-        var frame = new System.Windows.Threading.DispatcherFrame();
-        System.Windows.Threading.Dispatcher.CurrentDispatcher.BeginInvoke(
-            System.Windows.Threading.DispatcherPriority.ApplicationIdle,
-            new Action(() => frame.Continue = false));
-        System.Windows.Threading.Dispatcher.PushFrame(frame);
-    }
-
-    private static void StartUiThread()
-    {
-        if (Volatile.Read(ref uiStarted)) return;
-        lock (uiStartLock)
-        {
-            if (uiStarted) return;
-            var thread = new Thread(() =>
-            {
-                var app = new System.Windows.Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
-                app.Resources.MergedDictionaries.Add(new ResourceDictionary
-                {
-                    Source = new Uri("pack://application:,,,/QubiCostElectrical;component/DesignSystem/Theme.xaml")
-                });
-                uiApp = app;
-                Volatile.Write(ref uiStarted, true);
-                uiReady.Set();
-                foreach (var work in uiQueue.GetConsumingEnumerable())
-                    work();
-            })
-            {
-                IsBackground = true,
-                Name = "PlantillasViewSmoke_STA"
-            };
-            thread.SetApartmentState(ApartmentState.STA);
-            thread.Start();
-            if (!uiReady.Wait(TimeSpan.FromSeconds(30)))
-                throw new TimeoutException("El hilo STA con la Application no arrancó en 30 s.");
-        }
-    }
+    private static void PompearBindingQueue() => XamlViewSmokeHost.Pump();
 
     /// <summary>
     /// Application.Current es global: si queda no-nulo después del smoke, el resto de la suite
@@ -158,40 +95,7 @@ public sealed class PlantillasViewXamlSmokeTests : IDisposable
     /// Application.Current?.Dispatcher encolan en un dispatcher sin pump (refrescos que nunca
     /// corren y tests que cuelgan). Se limpia el campo interno para restaurar el estado previo.
     /// </summary>
-    private static void ClearApplicationCurrent()
-    {
-        foreach (var type in typeof(System.Windows.Application).Assembly.GetTypes())
-        {
-            FieldInfo[] fields;
-            try { fields = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static); }
-            catch { continue; }
-
-            foreach (var field in fields)
-                if (field.FieldType == typeof(System.Windows.Application))
-                    try { field.SetValue(null, null); } catch { }
-        }
-    }
-
-    /// <summary>
-    /// Cada test de esta clase limpia Application.Current en su finally (contrato con el resto
-    /// de la suite), pero el hilo STA y la Application son compartidos entre métodos: el siguiente
-    /// test encontraría Application.Current = null y los StaticResource del XAML
-    /// (p. ej. Radius.Lg en EmptyStateControl) fallarían. Se restaura al inicio de cada acción.
-    /// </summary>
-    private static void RestoreApplicationCurrent()
-    {
-        if (uiApp == null) return;
-        foreach (var type in typeof(System.Windows.Application).Assembly.GetTypes())
-        {
-            FieldInfo[] fields;
-            try { fields = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static); }
-            catch { continue; }
-
-            foreach (var field in fields)
-                if (field.FieldType == typeof(System.Windows.Application) && field.GetValue(null) == null)
-                    try { field.SetValue(null, uiApp); } catch { }
-        }
-    }
+    private static void ClearApplicationCurrent() => XamlViewSmokeHost.ClearApplicationCurrent();
 
     [Fact]
     public void PlantillasView_InitializeComponent_NoLanzaXamlParseException()

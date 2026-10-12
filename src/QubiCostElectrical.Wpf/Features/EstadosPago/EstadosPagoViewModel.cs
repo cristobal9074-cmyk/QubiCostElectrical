@@ -51,11 +51,35 @@ public sealed partial class EstadosPagoViewModel : SessionAwareViewModelBase, IR
         private set => SetProperty(ref canApprove, value);
     }
 
-    public string PageSubtitle { get; } =
-        "Cronograma mensual de cobros · valores tomados del Itemizado · moneda UF (referencia CLP al pie)";
+    public string PageSubtitle => MuestraUf
+        ? "Cronograma mensual de cobros · valores tomados del Itemizado · moneda UF (referencia CLP al pie)"
+        : "Cronograma mensual de cobros · valores tomados del Itemizado · moneda CLP";
 
     public string ConfigHint { get; } =
         "El recupero de anticipo es proporcional al avance acumulado. La retención garantía se aplica sobre el trabajo del mes. Cambia un valor y el estado se recalcula en vivo.";
+
+    // ── Política de moneda ────────────────────────────────────────────────────
+    /// <summary>
+    /// Regla de moneda del proyecto: con CLP no se expone ninguna cifra en UF (KPIs, calendario,
+    /// detalle del mes, totales y resumen se muestran directamente en pesos).
+    /// </summary>
+    public bool MuestraUf =>
+        !string.Equals(session.ProjectInfo.MonedaPresupuesto, Moneda.CLP, StringComparison.OrdinalIgnoreCase);
+
+    private decimal UfRate => session.ValorUfClp > 0m ? session.ValorUfClp : PriceConversion.DefaultValorUfClp;
+
+    /// <summary>
+    /// Formatea un monto del cronograma (que el motor mantiene en UF) según la moneda del
+    /// proyecto: UF/USD ⇒ UF; CLP ⇒ pesos chilenos.
+    /// </summary>
+    internal string FormatMoney(decimal valor) =>
+        MuestraUf ? EstadoPagoFormat.Uf(valor) : EstadoPagoFormat.Clp(valor * UfRate);
+
+    // ── KPIs en texto (moneda del proyecto) ───────────────────────────────────
+    public string KpiContratadoText => FormatMoney(KpiContratado);
+    public string KpiAcumText => FormatMoney(KpiAcum);
+    public string KpiSaldoText => FormatMoney(KpiSaldo);
+    public string KpiRetencionText => FormatMoney(KpiRetencion);
 
     // ── KPIs ──────────────────────────────────────────────────────────────────
     private decimal kpiContratado;

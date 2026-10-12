@@ -22,6 +22,8 @@ public sealed class BudgetRevisionDiffExcelExporter : IBudgetRevisionDiffExcelEx
         wb.Style.Font.FontSize = 9;
 
         decimal valorUf = summary.ValorUf > 0m ? summary.ValorUf : PriceConversion.DefaultValorUfClp;
+        bool uf = summary.MuestraUf;
+        string fmtMonto = uf ? ClosedXmlExportStyler.UfExcelFormat() : ClosedXmlExportStyler.ClpExcelFormat();
 
         // ══════════════════════════════════════════════════════════════════
         // HOJA 1: RESUMEN EJECUTIVO
@@ -31,7 +33,7 @@ public sealed class BudgetRevisionDiffExcelExporter : IBudgetRevisionDiffExcelEx
         ClosedXmlExportStyler.AddSheetTitle(ws1, "01 · RESUMEN EJECUTIVO DE VARIACIONES Y ADICIONALES", 8);
 
         // Fila 2: Parámetros del proyecto y anclaje de Valor UF en $B$2
-        ws1.Cell(2, 1).Value = "VALOR UF REF:";
+        ws1.Cell(2, 1).Value = uf ? "VALOR UF REF:" : "FACTOR INTERNO:";
         ws1.Cell(2, 1).Style.Font.Bold = true;
         ws1.Cell(2, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
         ws1.Cell(2, 2).SetValue(ClosedXmlExportStyler.ToDouble(valorUf));
@@ -73,7 +75,7 @@ public sealed class BudgetRevisionDiffExcelExporter : IBudgetRevisionDiffExcelEx
         int tRow = 5;
         ClosedXmlExportStyler.SetHeaderRow(ws1, tRow, new[]
         {
-            "CONCEPTO FINANCIERO", "PARTIDAS", "MONTO EN UF", "MONTO EN CLP", "INCIDENCIA %", "OBSERVACIÓN"
+            "CONCEPTO FINANCIERO", "PARTIDAS", uf ? "MONTO EN UF" : "MONTO $", uf ? "MONTO EN CLP" : "MONTO $", "INCIDENCIA %", "OBSERVACIÓN"
         });
 
         // Filas de datos
@@ -82,7 +84,7 @@ public sealed class BudgetRevisionDiffExcelExporter : IBudgetRevisionDiffExcelEx
         ws1.Cell(tRow, 1).Value = $"Presupuesto Base ({summary.BaselineLabel})";
         ws1.Cell(tRow, 2).SetValue(summary.Rows.Count(r => r.BaselineUf > 0));
         ws1.Cell(tRow, 3).SetValue(ClosedXmlExportStyler.ToDouble(summary.BaselineUf));
-        ws1.Cell(tRow, 3).Style.NumberFormat.Format = ClosedXmlExportStyler.UfExcelFormat();
+        ws1.Cell(tRow, 3).Style.NumberFormat.Format = fmtMonto;
         ws1.Cell(tRow, 4).FormulaA1 = $"C{tRow}*$B$2";
         ws1.Cell(tRow, 4).Style.NumberFormat.Format = ClosedXmlExportStyler.ClpExcelFormat();
         ws1.Cell(tRow, 5).SetValue(1.0);
@@ -94,7 +96,7 @@ public sealed class BudgetRevisionDiffExcelExporter : IBudgetRevisionDiffExcelEx
         ws1.Cell(tRow, 1).Value = $"Presupuesto Modificado ({summary.CurrentLabel})";
         ws1.Cell(tRow, 2).SetValue(summary.Rows.Count(r => r.CurrentUf > 0));
         ws1.Cell(tRow, 3).SetValue(ClosedXmlExportStyler.ToDouble(summary.CurrentUf));
-        ws1.Cell(tRow, 3).Style.NumberFormat.Format = ClosedXmlExportStyler.UfExcelFormat();
+        ws1.Cell(tRow, 3).Style.NumberFormat.Format = fmtMonto;
         ws1.Cell(tRow, 4).FormulaA1 = $"C{tRow}*$B$2";
         ws1.Cell(tRow, 4).Style.NumberFormat.Format = ClosedXmlExportStyler.ClpExcelFormat();
         ws1.Cell(tRow, 5).FormulaA1 = $"C{tRow}/C{tRow - 1}";
@@ -107,7 +109,7 @@ public sealed class BudgetRevisionDiffExcelExporter : IBudgetRevisionDiffExcelEx
         ws1.Cell(tRow, 1).Style.Font.FontColor = XLColor.FromHtml("#059669");
         ws1.Cell(tRow, 2).SetValue(summary.AddedCount + summary.Rows.Count(r => r.DiffKind == RevisionDiffKind.Modificado && r.DeltaUf > 0));
         ws1.Cell(tRow, 3).SetValue(ClosedXmlExportStyler.ToDouble(summary.TotalAdicionalesUf));
-        ws1.Cell(tRow, 3).Style.NumberFormat.Format = ClosedXmlExportStyler.UfExcelFormat();
+        ws1.Cell(tRow, 3).Style.NumberFormat.Format = fmtMonto;
         ws1.Cell(tRow, 3).Style.Font.Bold = true;
         ws1.Cell(tRow, 3).Style.Font.FontColor = XLColor.FromHtml("#059669");
         ws1.Cell(tRow, 4).FormulaA1 = $"C{tRow}*$B$2";
@@ -124,7 +126,7 @@ public sealed class BudgetRevisionDiffExcelExporter : IBudgetRevisionDiffExcelEx
         ws1.Cell(tRow, 1).Style.Font.FontColor = XLColor.FromHtml("#DC2626");
         ws1.Cell(tRow, 2).SetValue(summary.RemovedCount + summary.Rows.Count(r => r.DiffKind == RevisionDiffKind.Modificado && r.DeltaUf < 0));
         ws1.Cell(tRow, 3).SetValue(ClosedXmlExportStyler.ToDouble(summary.TotalDeductivosUf));
-        ws1.Cell(tRow, 3).Style.NumberFormat.Format = ClosedXmlExportStyler.UfExcelFormat();
+        ws1.Cell(tRow, 3).Style.NumberFormat.Format = fmtMonto;
         ws1.Cell(tRow, 3).Style.Font.Bold = true;
         ws1.Cell(tRow, 3).Style.Font.FontColor = XLColor.FromHtml("#DC2626");
         ws1.Cell(tRow, 4).FormulaA1 = $"C{tRow}*$B$2";
@@ -141,7 +143,7 @@ public sealed class BudgetRevisionDiffExcelExporter : IBudgetRevisionDiffExcelEx
         ws1.Cell(tRow, 1).Style.Font.Bold = true;
         ws1.Cell(tRow, 2).SetValue(summary.Rows.Count(r => r.DeltaUf != 0));
         ws1.Cell(tRow, 3).FormulaA1 = $"C8+C9";
-        ws1.Cell(tRow, 3).Style.NumberFormat.Format = ClosedXmlExportStyler.UfExcelFormat();
+        ws1.Cell(tRow, 3).Style.NumberFormat.Format = fmtMonto;
         ws1.Cell(tRow, 3).Style.Font.Bold = true;
         ws1.Cell(tRow, 4).FormulaA1 = $"C{tRow}*$B$2";
         ws1.Cell(tRow, 4).Style.NumberFormat.Format = ClosedXmlExportStyler.ClpExcelFormat();
@@ -152,6 +154,8 @@ public sealed class BudgetRevisionDiffExcelExporter : IBudgetRevisionDiffExcelEx
         ws1.Range(tRow, 1, tRow, 6).Style.Fill.BackgroundColor = XLColor.FromHtml("#EFF6FF");
 
         ws1.Columns().AdjustToContents();
+        if (!uf)
+            ws1.Column(3).Hide();
 
         // ══════════════════════════════════════════════════════════════════
         // HOJA 2: DETALLE COMPLETO DE VARIACIONES CON FÓRMULAS VIVAS
@@ -166,8 +170,8 @@ public sealed class BudgetRevisionDiffExcelExporter : IBudgetRevisionDiffExcelEx
         {
             "ÍTEM", "DESCRIPCIÓN DE LA PARTIDA", "UNIDAD",
             "CANT. BASE", "CANT. ACT.", "DELTA CANTIDAD",
-            "P.U. BASE UF", "P.U. ACT. UF", "DELTA P.U. UF",
-            "TOTAL BASE UF", "TOTAL ACT. UF", "DELTA TOTAL UF", "DELTA TOTAL CLP",
+            uf ? "P.U. BASE UF" : "P.U. BASE $", uf ? "P.U. ACT. UF" : "P.U. ACT. $", uf ? "DELTA P.U. UF" : "DELTA P.U. $",
+            uf ? "TOTAL BASE UF" : "TOTAL BASE $", uf ? "TOTAL ACT. UF" : "TOTAL ACT. $", uf ? "DELTA TOTAL UF" : "DELTA TOTAL $", "DELTA TOTAL CLP",
             "ESTADO SEMÁFORO", "DETALLE TÉCNICO DE LA MODIFICACIÓN"
         });
 
@@ -192,24 +196,24 @@ public sealed class BudgetRevisionDiffExcelExporter : IBudgetRevisionDiffExcelEx
             ws2.Cell(dRow, 6).Style.Font.Bold = true;
 
             // Precios Unitarios
-            ws2.Cell(dRow, 7).SetValue(ClosedXmlExportStyler.ToDouble(r.PuUfBase));
-            ws2.Cell(dRow, 7).Style.NumberFormat.Format = ClosedXmlExportStyler.UfExcelFormat();
-            ws2.Cell(dRow, 8).SetValue(ClosedXmlExportStyler.ToDouble(r.PuUfActual));
-            ws2.Cell(dRow, 8).Style.NumberFormat.Format = ClosedXmlExportStyler.UfExcelFormat();
+            ws2.Cell(dRow, 7).SetValue(ClosedXmlExportStyler.ToDouble(uf ? r.PuUfBase : r.PuUfBase * valorUf));
+            ws2.Cell(dRow, 7).Style.NumberFormat.Format = fmtMonto;
+            ws2.Cell(dRow, 8).SetValue(ClosedXmlExportStyler.ToDouble(uf ? r.PuUfActual : r.PuUfActual * valorUf));
+            ws2.Cell(dRow, 8).Style.NumberFormat.Format = fmtMonto;
 
             // FÓRMULA VIVA Delta PU = H - G
             ws2.Cell(dRow, 9).FormulaA1 = $"H{dRow}-G{dRow}";
-            ws2.Cell(dRow, 9).Style.NumberFormat.Format = "+0.000;-0.000;\"—\"";
+            ws2.Cell(dRow, 9).Style.NumberFormat.Format = uf ? "+0.000;-0.000;\"—\"" : "+$ #,##0;-$ #,##0;\"—\"";
 
-            // Totales UF
-            ws2.Cell(dRow, 10).SetValue(ClosedXmlExportStyler.ToDouble(r.BaselineUf));
-            ws2.Cell(dRow, 10).Style.NumberFormat.Format = ClosedXmlExportStyler.UfExcelFormat();
-            ws2.Cell(dRow, 11).SetValue(ClosedXmlExportStyler.ToDouble(r.CurrentUf));
-            ws2.Cell(dRow, 11).Style.NumberFormat.Format = ClosedXmlExportStyler.UfExcelFormat();
+            // Totales
+            ws2.Cell(dRow, 10).SetValue(ClosedXmlExportStyler.ToDouble(uf ? r.BaselineUf : r.BaselineUf * valorUf));
+            ws2.Cell(dRow, 10).Style.NumberFormat.Format = fmtMonto;
+            ws2.Cell(dRow, 11).SetValue(ClosedXmlExportStyler.ToDouble(uf ? r.CurrentUf : r.CurrentUf * valorUf));
+            ws2.Cell(dRow, 11).Style.NumberFormat.Format = fmtMonto;
 
-            // FÓRMULA VIVA Delta Total UF = K - J
+            // FÓRMULA VIVA Delta Total = K - J
             ws2.Cell(dRow, 12).FormulaA1 = $"K{dRow}-J{dRow}";
-            ws2.Cell(dRow, 12).Style.NumberFormat.Format = "+#,##0.000;-#,##0.000;\"—\"";
+            ws2.Cell(dRow, 12).Style.NumberFormat.Format = uf ? "+#,##0.000;-#,##0.000;\"—\"" : "+$ #,##0;-$ #,##0;\"—\"";
             ws2.Cell(dRow, 12).Style.Font.Bold = true;
 
             // FÓRMULA VIVA Delta Total CLP = L{row} * '01_RESUMEN_EJECUTIVO'!$B$2
@@ -264,15 +268,15 @@ public sealed class BudgetRevisionDiffExcelExporter : IBudgetRevisionDiffExcelEx
         ws2.Range(totRow, 1, totRow, 9).Style.Font.Bold = true;
 
         ws2.Cell(totRow, 10).FormulaA1 = $"SUM(J4:J{totRow - 1})";
-        ws2.Cell(totRow, 10).Style.NumberFormat.Format = ClosedXmlExportStyler.UfExcelFormat();
+        ws2.Cell(totRow, 10).Style.NumberFormat.Format = fmtMonto;
         ws2.Cell(totRow, 10).Style.Font.Bold = true;
 
         ws2.Cell(totRow, 11).FormulaA1 = $"SUM(K4:K{totRow - 1})";
-        ws2.Cell(totRow, 11).Style.NumberFormat.Format = ClosedXmlExportStyler.UfExcelFormat();
+        ws2.Cell(totRow, 11).Style.NumberFormat.Format = fmtMonto;
         ws2.Cell(totRow, 11).Style.Font.Bold = true;
 
         ws2.Cell(totRow, 12).FormulaA1 = $"SUM(L4:L{totRow - 1})";
-        ws2.Cell(totRow, 12).Style.NumberFormat.Format = ClosedXmlExportStyler.UfExcelFormat();
+        ws2.Cell(totRow, 12).Style.NumberFormat.Format = fmtMonto;
         ws2.Cell(totRow, 12).Style.Font.Bold = true;
 
         ws2.Cell(totRow, 13).FormulaA1 = $"SUM(M4:M{totRow - 1})";
@@ -281,6 +285,8 @@ public sealed class BudgetRevisionDiffExcelExporter : IBudgetRevisionDiffExcelEx
 
         ws2.Range(totRow, 1, totRow, 15).Style.Fill.BackgroundColor = XLColor.FromHtml("#E2E8F0");
         ws2.Columns().AdjustToContents();
+        if (!uf)
+            ws2.Column(13).Hide();
 
         // ══════════════════════════════════════════════════════════════════
         // HOJA 3: SOLICITUD FORMAL DE ADICIONALES (SOLO INCREMENTOS NETOS)
@@ -297,7 +303,7 @@ public sealed class BudgetRevisionDiffExcelExporter : IBudgetRevisionDiffExcelEx
         ws3.Cell(2, 4).Style.Font.Bold = true;
         ws3.Cell(2, 5).Value = summary.ClientName;
 
-        ws3.Cell(2, 7).Value = "VALOR UF:";
+        ws3.Cell(2, 7).Value = uf ? "VALOR UF:" : "FACTOR INTERNO:";
         ws3.Cell(2, 7).Style.Font.Bold = true;
         ws3.Cell(2, 8).FormulaA1 = "'01_RESUMEN_EJECUTIVO'!$B$2";
         ws3.Cell(2, 8).Style.NumberFormat.Format = ClosedXmlExportStyler.ClpExcelFormat();
@@ -306,7 +312,7 @@ public sealed class BudgetRevisionDiffExcelExporter : IBudgetRevisionDiffExcelEx
         ClosedXmlExportStyler.SetHeaderRow(ws3, aHeadRow, new[]
         {
             "ÍTEM", "DESCRIPCIÓN DE LA PARTIDA ADICIONAL", "UNIDAD",
-            "CANTIDAD", "P.U. UF", "TOTAL ADICIONAL UF", "TOTAL ADICIONAL CLP",
+            "CANTIDAD", uf ? "P.U. UF" : "P.U. $", uf ? "TOTAL ADICIONAL UF" : "TOTAL ADICIONAL $", "TOTAL ADICIONAL CLP",
             "JUSTIFICACIÓN TÉCNICA"
         });
 
@@ -325,12 +331,12 @@ public sealed class BudgetRevisionDiffExcelExporter : IBudgetRevisionDiffExcelEx
 
             ws3.Cell(aRow, 4).SetValue(ClosedXmlExportStyler.ToDouble(qAdic));
             ws3.Cell(aRow, 4).Style.NumberFormat.Format = "#,##0.##";
-            ws3.Cell(aRow, 5).SetValue(ClosedXmlExportStyler.ToDouble(puUf));
-            ws3.Cell(aRow, 5).Style.NumberFormat.Format = ClosedXmlExportStyler.UfExcelFormat();
+            ws3.Cell(aRow, 5).SetValue(ClosedXmlExportStyler.ToDouble(uf ? puUf : puUf * valorUf));
+            ws3.Cell(aRow, 5).Style.NumberFormat.Format = fmtMonto;
 
             // Fórmulas
             ws3.Cell(aRow, 6).FormulaA1 = $"D{aRow}*E{aRow}";
-            ws3.Cell(aRow, 6).Style.NumberFormat.Format = ClosedXmlExportStyler.UfExcelFormat();
+            ws3.Cell(aRow, 6).Style.NumberFormat.Format = fmtMonto;
             ws3.Cell(aRow, 6).Style.Font.Bold = true;
 
             ws3.Cell(aRow, 7).FormulaA1 = $"F{aRow}*'01_RESUMEN_EJECUTIVO'!$B$2";
@@ -348,7 +354,7 @@ public sealed class BudgetRevisionDiffExcelExporter : IBudgetRevisionDiffExcelEx
         ws3.Range(aTotRow, 1, aTotRow, 5).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
 
         ws3.Cell(aTotRow, 6).FormulaA1 = $"SUM(F5:F{aTotRow - 1})";
-        ws3.Cell(aTotRow, 6).Style.NumberFormat.Format = ClosedXmlExportStyler.UfExcelFormat();
+        ws3.Cell(aTotRow, 6).Style.NumberFormat.Format = fmtMonto;
         ws3.Cell(aTotRow, 6).Style.Font.Bold = true;
 
         ws3.Cell(aTotRow, 7).FormulaA1 = $"SUM(G5:G{aTotRow - 1})";
@@ -356,6 +362,8 @@ public sealed class BudgetRevisionDiffExcelExporter : IBudgetRevisionDiffExcelEx
         ws3.Cell(aTotRow, 7).Style.Font.Bold = true;
 
         ws3.Range(aTotRow, 1, aTotRow, 8).Style.Fill.BackgroundColor = XLColor.FromHtml("#ECFDF5");
+        if (!uf)
+            ws3.Column(7).Hide();
 
         // Bloque de Firmas en Hoja 3
         int signRow = aTotRow + 4;

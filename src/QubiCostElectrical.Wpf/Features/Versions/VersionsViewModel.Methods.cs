@@ -83,9 +83,27 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
     }
 
     protected override void OnSessionChanged(object? sender, ProjectSessionChangedEventArgs e) =>
-        System.Windows.Application.Current?.Dispatcher.InvokeAsync(Refresh);
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        {
+            Refresh();
+            NotifyMonedaChanged();
+        });
 
     public bool HasProject => workspace.HasOpenProject;
+
+    /// <summary>
+    /// Regla de moneda del proyecto: con CLP no se expone ninguna cifra en UF (columnas Venta /
+    /// P.U. / Total / Δ UF y la mini tabla de recursos se muestran en pesos).
+    /// </summary>
+    public bool MuestraUf =>
+        !string.Equals(session.ProjectInfo.MonedaPresupuesto, Moneda.CLP, StringComparison.OrdinalIgnoreCase);
+
+    private decimal UfRate => session.ValorUfClp > 0m ? session.ValorUfClp : PriceConversion.DefaultValorUfClp;
+
+    /// <summary>Formateador de Versiones según la moneda del proyecto.</summary>
+    internal VersionsCurrencyFormat CurrencyFormat => new(MuestraUf, UfRate);
+
+    private void NotifyMonedaChanged() => OnPropertyChanged(nameof(MuestraUf));
 
     public bool IsReadOnly => session.IsReadOnly;
 
@@ -163,8 +181,12 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
         }
     }
 
-    public IReadOnlyList<BudgetVersionResourceDiffRow> SelectedRowResourceDiffs =>
-        selectedComparisonRow?.ResourceDiffs ?? Array.Empty<BudgetVersionResourceDiffRow>();
+    public IReadOnlyList<VersionsResourceDiffVm> SelectedRowResourceDiffs =>
+        SelectedComparisonRow is null
+            ? Array.Empty<VersionsResourceDiffVm>()
+            : SelectedComparisonRow.ResourceDiffs
+                .Select(r => new VersionsResourceDiffVm(r, CurrencyFormat))
+                .ToList();
 
     public bool HasSelectedRowResourceDiffs =>
         selectedComparisonRow?.HasResourceDiffs == true;
@@ -320,9 +342,11 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
         private set => SetProperty(ref comparisonDeltaPct, value);
     }
 
-    // DeltaUf contiene CLP desde la migración (nombre legado)
-    public string ComparisonDeltaText => ComparisonDeltaUf == 0m ? "—"
-        : $"{(ComparisonDeltaUf > 0m ? "+" : string.Empty)}$ {ComparisonDeltaUf:N0}";
+    // ComparisonDeltaUf llega en UF reales desde el comparador de revisiones
+    // (BudgetVersionComparisonSummary.DeltaUf, derivado de CubicacionRow.UfTotal).
+    public string ComparisonDeltaText => ComparisonDeltaUf == 0m
+        ? "—"
+        : CurrencyFormat.FromUfSigned(ComparisonDeltaUf);
     public string ComparisonDeltaPctText => ComparisonDeltaPct == 0m ? "—"
         : $"{(ComparisonDeltaPct > 0m ? "+" : string.Empty)}{ComparisonDeltaPct:N2}%";
 
@@ -414,7 +438,7 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
                     ? current.MontoVentaUf - sorted[i + 1].MontoVentaUf
                     : 0m;
 
-                versions.Add(new VersionRowVm(current, isActive, delta));
+                versions.Add(new VersionRowVm(current, isActive, delta, CurrencyFormat));
             }
 
             if (versions.Count == 0)
@@ -474,9 +498,34 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
             ?? ComparisonVersionOptions.FirstOrDefault();
     }
 
-    private void RefreshComparison()
+    /// <summary>Línea de totales de la comparación en la moneda del proyecto.</summary>
+    private string BuildTotalsText(BudgetVersionComparisonSummary summary, string currentVerb) => MuestraUf
+        ? $"Base {summary.BaselineUf:N3} UF · {currentVerb} {summary.CurrentUf:N3} UF · Delta {summary.DeltaUf:N3} UF ({summary.DeltaPct:N2}%)"
+        : $"Base $ {summary.BaselineClp:N0} · {currentVerb} $ {summary.CurrentClp:N0} · Delta $ {summary.DeltaClp:N0} ({summary.DeltaPct:N2}%)";
+
+    /// <summary>
+    /// Chips de variación (adicionales / deductivos / neto) en la moneda del proyecto. Con CLP
+    /// se usan las columnas en pesos del resumen y nunca se muestra UF.
+    /// </summary>
+    private (string Adicionales, string Deductivos, string Neto) BuildVariationTexts(
+        BudgetVersionComparisonSummary summary)
     {
-        comparisonRows.Clear();
+        if (!MuestraUf)
+        {
+            return (
+                $"+$ {Math.Abs(summary.TotalAdicionalesClp):N0}",
+                $"- $ {Math.Abs(summary.TotalDeductivosClp):N0}",
+                $"{(summary.NetVariationClp >= 0m ? "+" : "-")}$ {Math.Abs(summary.NetVariationClp):N0}");
+        }
+
+        return (
+            $"+{summary.TotalAdicionalesUf:N3} UF · +$ {summary.TotalAdicionalesClp:N0}",
+            $"{summary.TotalDeductivosUf:N3} UF · $ {summary.TotalDeductivosClp:N0}",
+            $"{(summary.NetVariationUf >= 0m ? "+" : "")}{summary.NetVariationUf:N3} UF · {(summary.NetVariationClp >= 0m ? "+$ " : "$ ")}{summary.NetVariationClp:N0}");
+    }
+
+    private void RefreshComparison()
+    {        comparisonRows.Clear();
         IsAddendaComparison = false;
         AddendaFileName = string.Empty;
         lastIncomingAddendaItems = null;
@@ -494,9 +543,9 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
             ComparisonChangedText = "0 modificadas";
             ComparisonRemovedText = "0 eliminadas";
             ComparisonUnchangedText = "0 sin cambio";
-            ComparisonAdicionalesText = "+0.000 UF";
-            ComparisonDeductivosText = "0.000 UF";
-            ComparisonNetVariationText = "0.000 UF";
+            ComparisonAdicionalesText = MuestraUf ? "+0.000 UF" : "+$ 0";
+            ComparisonDeductivosText = MuestraUf ? "0.000 UF" : "- $ 0";
+            ComparisonNetVariationText = MuestraUf ? "0.000 UF" : "$ 0";
             ComparisonDeltaUf = 0m;
             ComparisonDeltaPct = 0m;
             ComparisonModeHint = "Selecciona una versión para comparar.";
@@ -533,9 +582,9 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
                 ComparisonChangedText = "0 modificadas";
                 ComparisonRemovedText = "0 eliminadas";
                 ComparisonUnchangedText = "0 sin cambio";
-                ComparisonAdicionalesText = "+0.000 UF";
-                ComparisonDeductivosText = "0.000 UF";
-                ComparisonNetVariationText = "0.000 UF";
+                ComparisonAdicionalesText = MuestraUf ? "+0.000 UF" : "+$ 0";
+                ComparisonDeductivosText = MuestraUf ? "0.000 UF" : "- $ 0";
+                ComparisonNetVariationText = MuestraUf ? "0.000 UF" : "$ 0";
                 ComparisonDeltaUf = 0m;
                 ComparisonDeltaPct = 0m;
                 ComparisonModeHint = "Selecciona la versión B para comparar A vs B.";
@@ -557,7 +606,7 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
 
         currentSummary = summary;
         foreach (var row in summary.Rows)
-            comparisonRows.Add(new VersionComparisonRowVm(row));
+            comparisonRows.Add(new VersionComparisonRowVm(row, CurrencyFormat));
 
         SelectedComparisonRow = comparisonRows.FirstOrDefault();
 
@@ -565,15 +614,14 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
         ComparisonStatusText = summary.Rows.Count == 0
             ? "No hay diferencias entre la versión seleccionada y el estado actual."
             : $"Comparando {summary.BaselineLabel} contra {summary.CurrentLabel}.";
-        // BaselineUf/CurrentUf/DeltaUf contienen CLP desde la migración
-        ComparisonTotalsText = $"Base $ {summary.BaselineUf:N0} · Actual $ {summary.CurrentUf:N0} · Delta $ {summary.DeltaUf:N0} ({summary.DeltaPct:N2}%)";
+        // BaselineUf/CurrentUf/DeltaUf del comparador llegan en UF reales (CubicacionRow.UfTotal);
+        // en CLP se usan las columnas en pesos del resumen.
+        ComparisonTotalsText = BuildTotalsText(summary, "Actual");
         ComparisonAddedText = $"{summary.AddedCount:N0} nuevas";
         ComparisonChangedText = $"{summary.ChangedCount:N0} modificadas";
         ComparisonRemovedText = $"{summary.RemovedCount:N0} eliminadas";
         ComparisonUnchangedText = $"{summary.UnchangedCount:N0} sin cambio";
-        ComparisonAdicionalesText = $"+{summary.TotalAdicionalesUf:N3} UF · +$ {summary.TotalAdicionalesClp:N0}";
-        ComparisonDeductivosText = $"{summary.TotalDeductivosUf:N3} UF · $ {summary.TotalDeductivosClp:N0}";
-        ComparisonNetVariationText = $"{(summary.NetVariationUf >= 0 ? "+" : "")}{summary.NetVariationUf:N3} UF · {(summary.NetVariationClp >= 0 ? "+$ " : "$ ")}{summary.NetVariationClp:N0}";
+        (ComparisonAdicionalesText, ComparisonDeductivosText, ComparisonNetVariationText) = BuildVariationTexts(summary);
         ComparisonDeltaUf = summary.DeltaUf;
         ComparisonDeltaPct = summary.DeltaPct;
         ComparisonModeHint = CompareAgainstCurrent
@@ -824,7 +872,7 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
 
         WpfDialogService.Info(
             "Orden de Cambio Generada",
-            $"Se ha creado exitosamente la orden «{changeOrder.Numero} — {changeOrder.Titulo}» con {changeOrder.Lineas.Count} partidas afectadas y un impacto de venta estimado de {changeOrder.DeltaVentaUf:+0.###;-0.###;0} UF.\n\nA continuación se abrirá el módulo de Órdenes de Cambio.");
+            $"Se ha creado exitosamente la orden «{changeOrder.Numero} — {changeOrder.Titulo}» con {changeOrder.Lineas.Count} partidas afectadas y un impacto de venta estimado de {CurrencyFormat.FromUfSigned(changeOrder.DeltaVentaUf)}.\n\nA continuación se abrirá el módulo de Órdenes de Cambio.");
 
         shell.RequestNavigate(ShellRoute.ChangeOrders);
     }
@@ -887,20 +935,18 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
 
             comparisonRows.Clear();
             foreach (var row in summary.Rows)
-                comparisonRows.Add(new VersionComparisonRowVm(row));
+                comparisonRows.Add(new VersionComparisonRowVm(row, CurrencyFormat));
 
             SelectedComparisonRow = comparisonRows.FirstOrDefault();
 
             ComparisonSummaryText = $"{summary.Rows.Count:N0} partidas analizadas";
             ComparisonStatusText = $"Semáforo de Aclaración / Addenda: {summary.BaselineLabel} vs {summary.CurrentLabel}";
-            ComparisonTotalsText = $"Base $ {summary.BaselineUf:N0} · Addenda $ {summary.CurrentUf:N0} · Delta $ {summary.DeltaUf:N0} ({summary.DeltaPct:N2}%)";
+            ComparisonTotalsText = BuildTotalsText(summary, "Addenda");
             ComparisonAddedText = $"{summary.AddedCount:N0} adicionales";
             ComparisonChangedText = $"{summary.ChangedCount:N0} con cambio de metraje";
             ComparisonRemovedText = $"{summary.RemovedCount:N0} deductivos";
             ComparisonUnchangedText = $"{summary.UnchangedCount:N0} sin cambio";
-            ComparisonAdicionalesText = $"+{summary.TotalAdicionalesUf:N3} UF · +$ {summary.TotalAdicionalesClp:N0}";
-            ComparisonDeductivosText = $"{summary.TotalDeductivosUf:N3} UF · $ {summary.TotalDeductivosClp:N0}";
-            ComparisonNetVariationText = $"{(summary.NetVariationUf >= 0 ? "+" : "")}{summary.NetVariationUf:N3} UF · {(summary.NetVariationClp >= 0 ? "+$ " : "$ ")}{summary.NetVariationClp:N0}";
+            (ComparisonAdicionalesText, ComparisonDeductivosText, ComparisonNetVariationText) = BuildVariationTexts(summary);
             ComparisonDeltaUf = summary.DeltaUf;
             ComparisonDeltaPct = summary.DeltaPct;
             ComparisonModeHint = $"Addenda entrante: «{addendaName}» · Semáforo activado";
@@ -924,7 +970,7 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
                 $"• 🟢 Aumentos de Metraje: {mayoresMetrajes} partidas\n" +
                 $"• 🔴 Deductivos / Omitidas: {summary.RemovedCount} partidas\n" +
                 $"• 🔴 Reducciones de Metraje: {menoresMetrajes} partidas\n" +
-                $"• ⚡ Saldo Neto Variación: {(summary.NetVariationUf >= 0 ? "+" : "")}{summary.NetVariationUf:N3} UF ({(summary.NetVariationClp >= 0 ? "+$ " : "$ ")}{summary.NetVariationClp:N0})\n\n" +
+                $"• ⚡ Saldo Neto Variación: {CurrencyFormat.FromUfSigned(summary.NetVariationUf)} ({(summary.NetVariationClp >= 0 ? "+$ " : "$ ")}{summary.NetVariationClp:N0})\n\n" +
                 $"Use los filtros del semáforo para auditar los cambios o presione «⚡ Aplicar Cantidades de Addenda» para incorporar las modificaciones al proyecto.");
         }
         catch (Exception ex)

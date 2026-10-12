@@ -38,6 +38,7 @@ public sealed class BudgetRevisionDiffPdfExporter : IBudgetRevisionDiffPdfExport
         string UF(decimal v) => v.ToString("#,##0.000", esCL);
         string CLP(decimal v) => "$ " + v.ToString("#,##0", esCL);
         string Qty(decimal v) => v.ToString("#,##0.##", esCL);
+        bool uf = summary.MuestraUf;
 
         Document.Create(container =>
         {
@@ -66,7 +67,8 @@ public sealed class BudgetRevisionDiffPdfExporter : IBudgetRevisionDiffPdfExport
                         row.ConstantItem(200).AlignRight().Column(c =>
                         {
                             c.Item().Text($"Fecha: {summary.FechaComparacion:dd/MM/yyyy}").FontColor("#CBD5E1").FontSize(8);
-                            c.Item().Text($"Valor UF Ref: {CLP(summary.ValorUf)}").Bold().FontColor(CWhite).FontSize(8.5f);
+                            if (uf)
+                                c.Item().Text($"Valor UF Ref: {CLP(summary.ValorUf)}").Bold().FontColor(CWhite).FontSize(8.5f);
                             c.Item().Text("QubiCost Electrical").FontColor("#94A3B8").FontSize(7.5f);
                         });
                     });
@@ -93,8 +95,15 @@ public sealed class BudgetRevisionDiffPdfExporter : IBudgetRevisionDiffPdfExport
                         kpis.RelativeItem().Border(1).BorderColor(CLine).Background(CWhite).Padding(6).Column(c =>
                         {
                             c.Item().Text("PRESUPUESTO BASE").FontSize(7).Bold().FontColor(CMuted);
-                            c.Item().Text($"{UF(summary.BaselineUf)} UF").FontSize(10).Bold().FontColor(CText);
-                            c.Item().Text(CLP(summary.BaselineClp)).FontSize(7.5f).FontColor(CMuted);
+                            if (uf)
+                            {
+                                c.Item().Text($"{UF(summary.BaselineUf)} UF").FontSize(10).Bold().FontColor(CText);
+                                c.Item().Text(CLP(summary.BaselineClp)).FontSize(7.5f).FontColor(CMuted);
+                            }
+                            else
+                            {
+                                c.Item().Text(CLP(summary.BaselineClp)).FontSize(11).Bold().FontColor(CText);
+                            }
                         });
 
                         kpis.ConstantItem(6);
@@ -103,8 +112,15 @@ public sealed class BudgetRevisionDiffPdfExporter : IBudgetRevisionDiffPdfExport
                         kpis.RelativeItem().Border(1).BorderColor(CLine).Background(CWhite).Padding(6).Column(c =>
                         {
                             c.Item().Text("PRESUPUESTO MODIFICADO").FontSize(7).Bold().FontColor(CMuted);
-                            c.Item().Text($"{UF(summary.CurrentUf)} UF").FontSize(10).Bold().FontColor(CText);
-                            c.Item().Text(CLP(summary.CurrentClp)).FontSize(7.5f).FontColor(CMuted);
+                            if (uf)
+                            {
+                                c.Item().Text($"{UF(summary.CurrentUf)} UF").FontSize(10).Bold().FontColor(CText);
+                                c.Item().Text(CLP(summary.CurrentClp)).FontSize(7.5f).FontColor(CMuted);
+                            }
+                            else
+                            {
+                                c.Item().Text(CLP(summary.CurrentClp)).FontSize(11).Bold().FontColor(CText);
+                            }
                         });
 
                         kpis.ConstantItem(6);
@@ -113,8 +129,15 @@ public sealed class BudgetRevisionDiffPdfExporter : IBudgetRevisionDiffPdfExport
                         kpis.RelativeItem().Border(1).BorderColor(CGreen).Background(CGreenBg).Padding(6).Column(c =>
                         {
                             c.Item().Text($"🟢 TOTAL ADICIONALES (+) · {summary.AddedCount} nuevas").FontSize(7).Bold().FontColor(CGreen);
-                            c.Item().Text($"+{UF(summary.TotalAdicionalesUf)} UF").FontSize(10).Bold().FontColor(CGreen);
-                            c.Item().Text($"+{CLP(summary.TotalAdicionalesClp)}").FontSize(7.5f).Bold().FontColor(CGreen);
+                            if (uf)
+                            {
+                                c.Item().Text($"+{UF(summary.TotalAdicionalesUf)} UF").FontSize(10).Bold().FontColor(CGreen);
+                                c.Item().Text($"+{CLP(summary.TotalAdicionalesClp)}").FontSize(7.5f).Bold().FontColor(CGreen);
+                            }
+                            else
+                            {
+                                c.Item().Text($"+{CLP(summary.TotalAdicionalesClp)}").FontSize(11).Bold().FontColor(CGreen);
+                            }
                         });
 
                         kpis.ConstantItem(6);
@@ -123,8 +146,15 @@ public sealed class BudgetRevisionDiffPdfExporter : IBudgetRevisionDiffPdfExport
                         kpis.RelativeItem().Border(1).BorderColor(CRed).Background(CRedBg).Padding(6).Column(c =>
                         {
                             c.Item().Text($"🔴 TOTAL DEDUCTIVOS (-) · {summary.RemovedCount} eliminadas").FontSize(7).Bold().FontColor(CRed);
-                            c.Item().Text($"{UF(summary.TotalDeductivosUf)} UF").FontSize(10).Bold().FontColor(CRed);
-                            c.Item().Text(CLP(summary.TotalDeductivosClp)).FontSize(7.5f).Bold().FontColor(CRed);
+                            if (uf)
+                            {
+                                c.Item().Text($"{UF(summary.TotalDeductivosUf)} UF").FontSize(10).Bold().FontColor(CRed);
+                                c.Item().Text(CLP(summary.TotalDeductivosClp)).FontSize(7.5f).Bold().FontColor(CRed);
+                            }
+                            else
+                            {
+                                c.Item().Text(CLP(summary.TotalDeductivosClp)).FontSize(11).Bold().FontColor(CRed);
+                            }
                         });
 
                         kpis.ConstantItem(6);
@@ -137,8 +167,15 @@ public sealed class BudgetRevisionDiffPdfExporter : IBudgetRevisionDiffPdfExport
                         kpis.RelativeItem(1.2f).Border(1).BorderColor(CNavy).Background(netBg).Padding(6).Column(c =>
                         {
                             c.Item().Text("⚡ SALDO NETO RECLAMO ADICIONAL").FontSize(7).Bold().FontColor(netAccent);
-                            c.Item().Text($"{(summary.NetVariationUf > 0 ? "+" : "")}{UF(summary.NetVariationUf)} UF").FontSize(11).Bold().FontColor(netFg);
-                            c.Item().Text($"{(summary.NetVariationClp > 0 ? "+" : "")}{CLP(summary.NetVariationClp)} ({summary.DeltaPct:+0.00;-0.00}%)").FontSize(8).Bold().FontColor(netAccent);
+                            if (uf)
+                            {
+                                c.Item().Text($"{(summary.NetVariationUf > 0 ? "+" : "")}{UF(summary.NetVariationUf)} UF").FontSize(11).Bold().FontColor(netFg);
+                                c.Item().Text($"{(summary.NetVariationClp > 0 ? "+" : "")}{CLP(summary.NetVariationClp)} ({summary.DeltaPct:+0.00;-0.00}%)").FontSize(8).Bold().FontColor(netAccent);
+                            }
+                            else
+                            {
+                                c.Item().Text($"{(summary.NetVariationClp > 0 ? "+" : "")}{CLP(summary.NetVariationClp)} ({summary.DeltaPct:+0.00;-0.00}%)").FontSize(11).Bold().FontColor(netFg);
+                            }
                         });
                     });
                 });
@@ -156,12 +193,13 @@ public sealed class BudgetRevisionDiffPdfExporter : IBudgetRevisionDiffPdfExport
                             cols.ConstantColumn(46);  // Base Q
                             cols.ConstantColumn(46);  // Actual Q
                             cols.ConstantColumn(46);  // Delta Q
-                            cols.ConstantColumn(52);  // P.U. Base
-                            cols.ConstantColumn(52);  // P.U. Actual
-                            cols.ConstantColumn(58);  // Total Base
-                            cols.ConstantColumn(58);  // Total Actual
-                            cols.ConstantColumn(64);  // Delta UF
-                            cols.ConstantColumn(68);  // Delta CLP
+                            cols.ConstantColumn(60);  // P.U. Base
+                            cols.ConstantColumn(60);  // P.U. Actual
+                            cols.ConstantColumn(62);  // Total Base
+                            cols.ConstantColumn(62);  // Total Actual
+                            cols.ConstantColumn(uf ? 64 : 72);  // Delta moneda
+                            if (uf)
+                                cols.ConstantColumn(68);  // Delta CLP
                             cols.ConstantColumn(80);  // Semáforo
                         });
 
@@ -174,12 +212,13 @@ public sealed class BudgetRevisionDiffPdfExporter : IBudgetRevisionDiffPdfExport
                             h.Cell().Background(CNavy).Padding(4).AlignRight().Text("Q BASE").Bold().FontColor(CWhite).FontSize(7.5f);
                             h.Cell().Background(CNavy).Padding(4).AlignRight().Text("Q ACT.").Bold().FontColor(CWhite).FontSize(7.5f);
                             h.Cell().Background(CNavy).Padding(4).AlignRight().Text("Δ Q").Bold().FontColor(CWhite).FontSize(7.5f);
-                            h.Cell().Background(CNavy).Padding(4).AlignRight().Text("P.U. BASE").Bold().FontColor(CWhite).FontSize(7.5f);
-                            h.Cell().Background(CNavy).Padding(4).AlignRight().Text("P.U. ACT.").Bold().FontColor(CWhite).FontSize(7.5f);
-                            h.Cell().Background(CNavy).Padding(4).AlignRight().Text("BASE UF").Bold().FontColor(CWhite).FontSize(7.5f);
-                            h.Cell().Background(CNavy).Padding(4).AlignRight().Text("ACT. UF").Bold().FontColor(CWhite).FontSize(7.5f);
-                            h.Cell().Background(CNavy).Padding(4).AlignRight().Text("Δ UF").Bold().FontColor(CWhite).FontSize(7.5f);
-                            h.Cell().Background(CNavy).Padding(4).AlignRight().Text("Δ CLP").Bold().FontColor(CWhite).FontSize(7.5f);
+                            h.Cell().Background(CNavy).Padding(4).AlignRight().Text(uf ? "P.U. BASE (UF)" : "P.U. BASE ($)").Bold().FontColor(CWhite).FontSize(7.5f);
+                            h.Cell().Background(CNavy).Padding(4).AlignRight().Text(uf ? "P.U. ACT. (UF)" : "P.U. ACT. ($)").Bold().FontColor(CWhite).FontSize(7.5f);
+                            h.Cell().Background(CNavy).Padding(4).AlignRight().Text(uf ? "BASE UF" : "BASE $").Bold().FontColor(CWhite).FontSize(7.5f);
+                            h.Cell().Background(CNavy).Padding(4).AlignRight().Text(uf ? "ACT. UF" : "ACT. $").Bold().FontColor(CWhite).FontSize(7.5f);
+                            h.Cell().Background(CNavy).Padding(4).AlignRight().Text(uf ? "Δ UF" : "Δ TOTAL $").Bold().FontColor(CWhite).FontSize(7.5f);
+                            if (uf)
+                                h.Cell().Background(CNavy).Padding(4).AlignRight().Text("Δ CLP").Bold().FontColor(CWhite).FontSize(7.5f);
                             h.Cell().Background(CNavy).Padding(4).AlignCenter().Text("ESTADO").Bold().FontColor(CWhite).FontSize(7.5f);
                         });
 
@@ -225,21 +264,35 @@ public sealed class BudgetRevisionDiffPdfExporter : IBudgetRevisionDiffPdfExport
                             table.Cell().Background(rowBg).BorderBottom(0.5f).BorderColor(CLine).Padding(3).AlignRight().Text(Qty(r.CantidadBase)).FontSize(7.5f);
                             table.Cell().Background(rowBg).BorderBottom(0.5f).BorderColor(CLine).Padding(3).AlignRight().Text(Qty(r.CantidadActual)).FontSize(7.5f);
                             table.Cell().Background(rowBg).BorderBottom(0.5f).BorderColor(CLine).Padding(3).AlignRight().Text(r.DeltaCantidad == 0m ? "—" : (r.DeltaCantidad > 0m ? $"+{Qty(r.DeltaCantidad)}" : Qty(r.DeltaCantidad))).FontSize(7.5f).Bold();
-                            table.Cell().Background(rowBg).BorderBottom(0.5f).BorderColor(CLine).Padding(3).AlignRight().Text(r.PuUfBase > 0m ? UF(r.PuUfBase) : "—").FontSize(7.5f);
-                            table.Cell().Background(rowBg).BorderBottom(0.5f).BorderColor(CLine).Padding(3).AlignRight().Text(r.PuUfActual > 0m ? UF(r.PuUfActual) : "—").FontSize(7.5f);
-                            table.Cell().Background(rowBg).BorderBottom(0.5f).BorderColor(CLine).Padding(3).AlignRight().Text(UF(r.BaselineUf)).FontSize(7.5f);
-                            table.Cell().Background(rowBg).BorderBottom(0.5f).BorderColor(CLine).Padding(3).AlignRight().Text(UF(r.CurrentUf)).FontSize(7.5f);
-                            table.Cell().Background(rowBg).BorderBottom(0.5f).BorderColor(CLine).Padding(3).AlignRight().Text(r.DeltaUf == 0m ? "—" : (r.DeltaUf > 0m ? $"+{UF(r.DeltaUf)}" : UF(r.DeltaUf))).FontSize(8f).Bold().FontColor(deltaFg);
-                            table.Cell().Background(rowBg).BorderBottom(0.5f).BorderColor(CLine).Padding(3).AlignRight().Text(r.DeltaClp == 0m ? "—" : (r.DeltaClp > 0m ? $"+{CLP(r.DeltaClp)}" : CLP(r.DeltaClp))).FontSize(7.5f).FontColor(deltaFg);
+                            if (uf)
+                            {
+                                table.Cell().Background(rowBg).BorderBottom(0.5f).BorderColor(CLine).Padding(3).AlignRight().Text(r.PuUfBase > 0m ? UF(r.PuUfBase) : "—").FontSize(7.5f);
+                                table.Cell().Background(rowBg).BorderBottom(0.5f).BorderColor(CLine).Padding(3).AlignRight().Text(r.PuUfActual > 0m ? UF(r.PuUfActual) : "—").FontSize(7.5f);
+                                table.Cell().Background(rowBg).BorderBottom(0.5f).BorderColor(CLine).Padding(3).AlignRight().Text(UF(r.BaselineUf)).FontSize(7.5f);
+                                table.Cell().Background(rowBg).BorderBottom(0.5f).BorderColor(CLine).Padding(3).AlignRight().Text(UF(r.CurrentUf)).FontSize(7.5f);
+                                table.Cell().Background(rowBg).BorderBottom(0.5f).BorderColor(CLine).Padding(3).AlignRight().Text(r.DeltaUf == 0m ? "—" : (r.DeltaUf > 0m ? $"+{UF(r.DeltaUf)}" : UF(r.DeltaUf))).FontSize(8f).Bold().FontColor(deltaFg);
+                                table.Cell().Background(rowBg).BorderBottom(0.5f).BorderColor(CLine).Padding(3).AlignRight().Text(r.DeltaClp == 0m ? "—" : (r.DeltaClp > 0m ? $"+{CLP(r.DeltaClp)}" : CLP(r.DeltaClp))).FontSize(7.5f).FontColor(deltaFg);
+                            }
+                            else
+                            {
+                                decimal puBaseClp = r.PuUfBase * summary.ValorUf;
+                                decimal puActClp = r.PuUfActual * summary.ValorUf;
+                                table.Cell().Background(rowBg).BorderBottom(0.5f).BorderColor(CLine).Padding(3).AlignRight().Text(puBaseClp > 0m ? CLP(puBaseClp) : "—").FontSize(7.5f);
+                                table.Cell().Background(rowBg).BorderBottom(0.5f).BorderColor(CLine).Padding(3).AlignRight().Text(puActClp > 0m ? CLP(puActClp) : "—").FontSize(7.5f);
+                                table.Cell().Background(rowBg).BorderBottom(0.5f).BorderColor(CLine).Padding(3).AlignRight().Text(CLP(r.BaselineClp)).FontSize(7.5f);
+                                table.Cell().Background(rowBg).BorderBottom(0.5f).BorderColor(CLine).Padding(3).AlignRight().Text(CLP(r.CurrentClp)).FontSize(7.5f);
+                                table.Cell().Background(rowBg).BorderBottom(0.5f).BorderColor(CLine).Padding(3).AlignRight().Text(r.DeltaClp == 0m ? "—" : (r.DeltaClp > 0m ? $"+{CLP(r.DeltaClp)}" : CLP(r.DeltaClp))).FontSize(8f).Bold().FontColor(deltaFg);
+                            }
                             table.Cell().Background(rowBg).BorderBottom(0.5f).BorderColor(CLine).Padding(2).AlignCenter().Background(badgeBg).Border(0.5f).BorderColor(badgeFg).PaddingVertical(2).PaddingHorizontal(4).Text(r.DisplayBadge).FontSize(6.5f).Bold().FontColor(badgeFg);
                         }
 
                         // Fila de Totalización
                         table.Cell().ColumnSpan(8).Background("#E2E8F0").Padding(4).AlignRight().Text("TOTALES COMPARATIVOS:").Bold().FontSize(8.5f);
-                        table.Cell().Background("#E2E8F0").Padding(4).AlignRight().Text(UF(summary.BaselineUf)).Bold().FontSize(8.5f);
-                        table.Cell().Background("#E2E8F0").Padding(4).AlignRight().Text(UF(summary.CurrentUf)).Bold().FontSize(8.5f);
-                        table.Cell().Background("#E2E8F0").Padding(4).AlignRight().Text($"{(summary.DeltaUf > 0 ? "+" : "")}{UF(summary.DeltaUf)}").Bold().FontSize(9f).FontColor(summary.DeltaUf >= 0 ? CGreen : CRed);
-                        table.Cell().Background("#E2E8F0").Padding(4).AlignRight().Text($"{(summary.DeltaClp > 0 ? "+" : "")}{CLP(summary.DeltaClp)}").Bold().FontSize(8.5f).FontColor(summary.DeltaClp >= 0 ? CGreen : CRed);
+                        table.Cell().Background("#E2E8F0").Padding(4).AlignRight().Text(uf ? UF(summary.BaselineUf) : CLP(summary.BaselineClp)).Bold().FontSize(8.5f);
+                        table.Cell().Background("#E2E8F0").Padding(4).AlignRight().Text(uf ? UF(summary.CurrentUf) : CLP(summary.CurrentClp)).Bold().FontSize(8.5f);
+                        table.Cell().Background("#E2E8F0").Padding(4).AlignRight().Text($"{(summary.DeltaUf > 0 ? "+" : "")}{(uf ? UF(summary.DeltaUf) : CLP(summary.DeltaClp))}").Bold().FontSize(9f).FontColor(summary.DeltaUf >= 0 ? CGreen : CRed);
+                        if (uf)
+                            table.Cell().Background("#E2E8F0").Padding(4).AlignRight().Text($"{(summary.DeltaClp > 0 ? "+" : "")}{CLP(summary.DeltaClp)}").Bold().FontSize(8.5f).FontColor(summary.DeltaClp >= 0 ? CGreen : CRed);
                         table.Cell().Background("#E2E8F0").Padding(4).AlignCenter().Text($"{summary.Rows.Count} partidas").FontSize(7.5f).FontColor(CMuted);
                     });
                 });

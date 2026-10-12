@@ -182,4 +182,57 @@ public sealed class ProjectWorkspaceServiceRoundtripTests
             }
         }
     }
+
+    /// <summary>
+    /// Un proyecto nuevo arranca sin partidas: el itemizado vacío se graba en el .qce y se vuelve
+    /// a leer vacío. Es el archivo —no la app— el que define el contenido del itemizado.
+    /// </summary>
+    [Fact]
+    public async Task NewProjectWithDefaultTemplate_PersistsEmptyItemizado()
+    {
+        var services = AppServices.CreateDefault();
+        var session = new BudgetProjectSession();
+        session.NewProject("blank");
+
+        // Mismo camino que ShellViewModel.CreateNewProjectInternalAsync: la plantilla por defecto
+        // del diálogo es la blanca (sin filas).
+        var template = NewProjectDialog.ResolveInitialTemplate(null);
+        Assert.True(template.EsEnBlanco);
+
+        session.InitializeProjectParameters(
+            "Proyecto vacío",
+            "Cliente sin nombre",
+            "Sin ubicación",
+            "CLP",
+            NewProjectDialog.BuildClosingPolicy(ClosingPolicyType.CostPlusMarkup, 0m),
+            template.CreateInstanceRows());
+
+        Assert.Empty(session.Itemizado);
+
+        var workspace = new ProjectWorkspaceService(session, services.ProjectRepository, services.Validation);
+        string path = Path.Combine(Path.GetTempPath(), $"qce-blank-{Guid.NewGuid():N}.qce");
+
+        try
+        {
+            await workspace.SaveAsAsync(path);
+
+            var session2 = new BudgetProjectSession();
+            var workspace2 = new ProjectWorkspaceService(session2, services.ProjectRepository, services.Validation);
+            await workspace2.OpenAsync(path);
+
+            Assert.Empty(session2.Itemizado);
+            Assert.Equal("Proyecto vacío", session2.ProjectInfo.Nombre);
+        }
+        finally
+        {
+            try
+            {
+                if (File.Exists(path))
+                    File.Delete(path);
+            }
+            catch (Exception)
+            {
+            }
+        }
+    }
 }

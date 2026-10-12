@@ -51,7 +51,8 @@ public sealed class CubicacionReportExcelExporter : ICubicacionReportExcelExport
         ws.Cell(2, 8).Value = $"Fecha: {ctx.ExportedAt:dd/MM/yyyy HH:mm}";
 
         int row = 4;
-        Header(ws, row, new[] { "ÍTEM", "PARTIDA", "ÁREA", "CÓDIGO", "MATERIAL / RECURSO", "UD", "CANTIDAD", "EXPRESIONES / ZONAS", "FÓRMULA TOTAL", "REGLAS", "UNIT UF", "TOTAL UF" });
+        string etiqueta = ctx.MuestraUf ? "UF" : "$";
+        Header(ws, row, new[] { "ÍTEM", "PARTIDA", "ÁREA", "CÓDIGO", "MATERIAL / RECURSO", "UD", "CANTIDAD", "EXPRESIONES / ZONAS", "FÓRMULA TOTAL", "REGLAS", $"UNIT {etiqueta}", $"TOTAL {etiqueta}" });
         row++;
 
         var rowsByItem = ctx.Cubicacion
@@ -72,7 +73,7 @@ public sealed class CubicacionReportExcelExporter : ICubicacionReportExcelExport
             ws.Cell(row, 3).Value = item.Unidad;
             ws.Cell(row, 7).SetValue(ToDouble(item.Cantidad));
             ws.Cell(row, 8).Value = "Subtotal partida";
-            ws.Cell(row, 12).SetValue(ToDouble(itemTotal));
+            ws.Cell(row, 12).SetValue(ToDouble(MontoEnMoneda(ctx, itemTotal)));
             ws.Range(row, 1, row, 12).Style.Fill.BackgroundColor = XLColor.FromHtml("#EAF1FB");
             ws.Range(row, 1, row, 12).Style.Font.Bold = true;
             row++;
@@ -89,8 +90,8 @@ public sealed class CubicacionReportExcelExporter : ICubicacionReportExcelExport
                 ws.Cell(row, 8).Value = BuildExpressionSummary(ctx, line);
                 ws.Cell(row, 9).Value = line.TotalExpression;
                 ws.Cell(row, 10).Value = BuildRuleSummary(line);
-                ws.Cell(row, 11).SetValue(ToDouble(line.UfUnit));
-                ws.Cell(row, 12).SetValue(ToDouble(line.UfTotal));
+                ws.Cell(row, 11).SetValue(ToDouble(MontoEnMoneda(ctx, line.UfUnit)));
+                ws.Cell(row, 12).SetValue(ToDouble(MontoEnMoneda(ctx, line.UfTotal)));
                 row++;
             }
 
@@ -106,7 +107,7 @@ public sealed class CubicacionReportExcelExporter : ICubicacionReportExcelExport
         }
 
         ws.Range(5, 7, Math.Max(row, 5), 7).Style.NumberFormat.Format = "#,##0.###";
-        ws.Range(5, 11, Math.Max(row, 5), 12).Style.NumberFormat.Format = "#,##0.000";
+        ws.Range(5, 11, Math.Max(row, 5), 12).Style.NumberFormat.Format = ctx.MuestraUf ? "#,##0.000" : "$ #,##0";
         ws.Column(1).Width = 10;
         ws.Column(2).Width = 34;
         ws.Column(3).Width = 18;
@@ -117,8 +118,8 @@ public sealed class CubicacionReportExcelExporter : ICubicacionReportExcelExport
         ws.Column(8).Width = 46;
         ws.Column(9).Width = 28;
         ws.Column(10).Width = 26;
-        ws.Column(11).Width = 12;
-        ws.Column(12).Width = 12;
+        ws.Column(11).Width = 14;
+        ws.Column(12).Width = 14;
         ws.Range(1, 1, Math.Max(row, 5), 12).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
         ws.Range(5, 2, Math.Max(row, 5), 10).Style.Alignment.WrapText = true;
         ws.SheetView.FreezeRows(4);
@@ -134,7 +135,7 @@ public sealed class CubicacionReportExcelExporter : ICubicacionReportExcelExport
         ws.Cell(1, 1).Style.Font.Bold = true;
         ws.Cell(1, 1).Style.Font.FontSize = 14;
         ws.Range(1, 1, 1, 6).Merge();
-        Header(ws, 3, new[] { "ÁREA", "LÍNEAS", "MATERIALES", "CANTIDAD TOTAL", "TOTAL UF", "TOTAL " + ctx.CurrencyLabel });
+        Header(ws, 3, new[] { "ÁREA", "LÍNEAS", "MATERIALES", "CANTIDAD TOTAL", "TOTAL UF", "TOTAL " + ctx.Currency.EncabezadoPrincipal });
         int row = 4;
         foreach (var area in ctx.Cubicacion
             .Where(x => !string.IsNullOrWhiteSpace(x.Codigo) || x.Cantidad != 0m)
@@ -153,6 +154,8 @@ public sealed class CubicacionReportExcelExporter : ICubicacionReportExcelExport
         ws.Columns().AdjustToContents(10, 42);
         ws.Range(4, 5, Math.Max(row, 4), 5).Style.NumberFormat.Format = "#,##0.000";
         ws.Range(4, 6, Math.Max(row, 4), 6).Style.NumberFormat.Format = ProjectFormat(ctx);
+        if (!ctx.MuestraUf)
+            ws.Column(5).Hide();
         ws.SheetView.FreezeRows(3);
     }
 
@@ -202,8 +205,15 @@ public sealed class CubicacionReportExcelExporter : ICubicacionReportExcelExport
     private decimal ToProjectCurrency(ExportProjectContext ctx, decimal uf)
         => currencyConversion.ConvertUfToCurrency(uf, ctx.CurrencyLabel, ctx.Project.ValorUfClp, ctx.Project.TipoCambioUsdClp);
 
+    /// <summary>
+    /// Monto en UF real convertido a la moneda de presentación: en CLP se multiplica por el valor
+    /// de la UF (el motor guarda pesos); en UF/USD/EUR se mantiene la cifra en UF.
+    /// </summary>
+    private static decimal MontoEnMoneda(ExportProjectContext ctx, decimal uf)
+        => ctx.MuestraUf ? uf : uf * ctx.Currency.ValorUfClp;
+
     private static string ProjectFormat(ExportProjectContext ctx)
-        => ctx.CurrencyLabel == "CLP" ? "#,##0" : "#,##0.000";
+        => ctx.MuestraUf ? "#,##0.000" : "$ #,##0";
 
     private static double ToDouble(decimal value) => Convert.ToDouble(value, CultureInfo.InvariantCulture);
 }

@@ -55,6 +55,8 @@ public sealed class ProjectWorkspaceService : IProjectWorkspaceService
             _ => throw new InvalidDataException("El archivo no contiene un proyecto compatible de Qubi Cost Electrical.")
         };
 
+        RepairApuPrices(data);
+
         if (format != ProjectFileFormat.Sqlite || ShouldMigrateToCurrentFormat(path))
         {
             await MigrateToCurrentFormatAsync(path, data, cancellationToken).ConfigureAwait(false);
@@ -149,8 +151,22 @@ public sealed class ProjectWorkspaceService : IProjectWorkspaceService
             ? repository.LoadSQLiteSnapshot(path)
             : repository.LoadProjectFile(path, ProjectJsonSerializer.Options);
 
+        RepairApuPrices(data);
+
         Session.ApplySnapshot(data, path, markDirty: false);
         Session.MarkSaved();
+    }
+
+    /// <summary>
+    /// Repara en memoria los precios de recursos APU que quedaron guardados en UF en vez de CLP
+    /// (ver <see cref="ApuPriceNormalizer"/>). No marca el proyecto como sucio: la corrección se
+    /// persiste en el siguiente guardado normal y es idempotente.
+    /// </summary>
+    private static void RepairApuPrices(ProjectFileData data)
+    {
+        int reparados = ApuPriceNormalizer.Normalize(data);
+        if (reparados > 0)
+            AppLog.Info("ProjectWorkspace", $"Precios APU normalizados a CLP: {reparados} recurso(s).");
     }
 
     private async Task<ProjectFileData> LoadSqliteWithBackupFallbackAsync(string path, CancellationToken cancellationToken)

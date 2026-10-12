@@ -21,7 +21,9 @@ public static class EstadoPagoExportBuilder
         IReadOnlyList<EstadoPagoExportSeccionInput> secciones,
         IEnumerable<EstadoPagoMesRow> meses,
         string exportadoPor,
-        DateTime exportadoAt)
+        DateTime exportadoAt,
+        string monedaPresupuesto = Moneda.CLP,
+        decimal valorUfClp = 0m)
     {
         if (row is null)
             return null;
@@ -54,7 +56,9 @@ public static class EstadoPagoExportBuilder
             mes,
             cronograma,
             exportadoPor ?? "",
-            exportadoAt);
+            exportadoAt,
+            monedaPresupuesto,
+            valorUfClp);
     }
 
     private static IReadOnlyList<EstadoPagoExportSeccion> BuildSecciones(

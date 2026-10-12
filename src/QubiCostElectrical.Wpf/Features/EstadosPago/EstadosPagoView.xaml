@@ -230,7 +230,7 @@
       <UniformGrid Grid.Row="1" Columns="6" Margin="20,14,20,0">
         <Border Style="{StaticResource Card.Kpi}" Padding="14,10" Margin="0,0,8,0">
           <StackPanel VerticalAlignment="Center">
-            <TextBlock Text="{Binding KpiContratado, StringFormat={}{0:N2} UF}"
+            <TextBlock Text="{Binding KpiContratadoText}"
                        FontFamily="{StaticResource Font.Mono}" FontSize="15" FontWeight="SemiBold"
                        Foreground="{DynamicResource Brush.Ink}" TextTrimming="CharacterEllipsis" />
             <TextBlock Text="Total contratado" Style="{StaticResource Text.KpiLabel}" Margin="0,3,0,0" />
@@ -246,7 +246,7 @@
         </Border>
         <Border Style="{StaticResource Card.Kpi}" Padding="14,10" Margin="0,0,8,0">
           <StackPanel VerticalAlignment="Center">
-            <TextBlock Text="{Binding KpiAcum, StringFormat={}{0:N2} UF}"
+            <TextBlock Text="{Binding KpiAcumText}"
                        FontFamily="{StaticResource Font.Mono}" FontSize="15" FontWeight="SemiBold"
                        Foreground="{DynamicResource Brush.Success}" TextTrimming="CharacterEllipsis" />
             <TextBlock Text="Acumulado aprobado" Style="{StaticResource Text.KpiLabel}" Margin="0,3,0,0" />
@@ -254,7 +254,7 @@
         </Border>
         <Border Style="{StaticResource Card.Kpi}" Padding="14,10" Margin="0,0,8,0">
           <StackPanel VerticalAlignment="Center">
-            <TextBlock Text="{Binding KpiSaldo, StringFormat={}{0:N2} UF}"
+            <TextBlock Text="{Binding KpiSaldoText}"
                        FontFamily="{StaticResource Font.Mono}" FontSize="15" FontWeight="SemiBold"
                        Foreground="{DynamicResource Brush.Ink}" TextTrimming="CharacterEllipsis" />
             <TextBlock Text="Saldo por ejecutar" Style="{StaticResource Text.KpiLabel}" Margin="0,3,0,0" />
@@ -262,7 +262,7 @@
         </Border>
         <Border Style="{StaticResource Card.Kpi}" Padding="14,10" Margin="0,0,8,0">
           <StackPanel VerticalAlignment="Center">
-            <TextBlock Text="{Binding KpiRetencion, StringFormat={}{0:N2} UF}"
+            <TextBlock Text="{Binding KpiRetencionText}"
                        FontFamily="{StaticResource Font.Mono}" FontSize="15" FontWeight="SemiBold"
                        Foreground="{DynamicResource Brush.Amber}" TextTrimming="CharacterEllipsis" />
             <TextBlock Text="Retención retenida" Style="{StaticResource Text.KpiLabel}" Margin="0,3,0,0" />
@@ -432,13 +432,13 @@
                                   </Grid.ColumnDefinitions>
                                   <TextBlock Text="{Binding Item}" Style="{StaticResource CellCod}" />
                                   <TextBlock Grid.Column="1" Text="{Binding Descripcion}" Style="{StaticResource CellName}" Margin="8,0,8,0" />
-                                  <TextBlock Grid.Column="2" Text="{Binding Monto, StringFormat={}{0:N2}}" Style="{StaticResource CellNum}" Margin="0,0,8,0" />
+                                  <TextBlock Grid.Column="2" Text="{Binding MontoLabel}" Style="{StaticResource CellNum}" Margin="0,0,8,0" />
                                   <TextBlock Grid.Column="3" Text="{Binding AvanceAnterior, StringFormat={}{0:N2}}" Style="{StaticResource CellNum}" Margin="0,0,8,0" />
                                   <TextBox Grid.Column="4"
                                            Style="{StaticResource AvanceCellBox}" Margin="0,0,8,0"
                                            IsEnabled="{Binding IsEditable}"
                                            Text="{Binding AvanceMes, UpdateSourceTrigger=LostFocus, Mode=TwoWay}" />
-                                  <TextBlock Grid.Column="5" Text="{Binding MontoMes, StringFormat={}{0:N2}}" Style="{StaticResource CellNumStrong}" Margin="0,0,8,0" />
+                                  <TextBlock Grid.Column="5" Text="{Binding MontoMesLabel}" Style="{StaticResource CellNumStrong}" Margin="0,0,8,0" />
                                   <Grid Grid.Column="6">
                                     <Grid.ColumnDefinitions>
                                       <ColumnDefinition Width="*" />

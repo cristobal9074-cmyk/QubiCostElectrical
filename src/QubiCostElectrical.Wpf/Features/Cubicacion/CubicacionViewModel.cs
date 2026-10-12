@@ -38,7 +38,7 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
     private readonly CubicacionPersistenceService persistenceService;
     private readonly CubicacionLoadingService loadingService;
     private readonly CubicacionSectorService sectorService;
-    private readonly CubicacionRowMutationService rowMutationService;
+    internal readonly CubicacionRowMutationService rowMutationService; // internal: las pruebas ejercitan el flujo de casilla sin pasar por el diálogo modal
     private readonly CubicacionClipboardCoordinator clipboardCoordinator;
 
     // MarkDirty(ProjectDirtyScope.Cubicacion) dispara session.Changed de forma SÍNCRONA, y este mismo
