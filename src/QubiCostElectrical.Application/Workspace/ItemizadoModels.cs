@@ -31,7 +31,12 @@ public sealed class ItemizadoRowPresentation
     public required bool ExcluidoCubicacion { get; init; }
     public required PartidaCompletionState CompletionState { get; init; }
     public required decimal CompletionPct { get; init; }
+    /// <summary>Precio unitario en UF (unidad de presentación del Itemizado; el motor calcula en CLP).</summary>
     public required decimal UnitPriceUf { get; init; }
+    /// <summary>
+    /// Total de la partida en UF. La tasa UF del proyecto lo lleva a pesos al mostrarlo:
+    /// guardar pesos aquí infla los totales por la tasa (grilla, pie y estados de pago).
+    /// </summary>
     public decimal TotalUf { get; set; }
     public bool HasPrice { get; set; }
     public required string StatusLabel { get; init; }

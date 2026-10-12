@@ -52,7 +52,7 @@ public sealed class ItemizadoWorkspaceService : IItemizadoWorkspaceService
         else
         {
             cost = presenter.BuildCostBreakdown();
-            totalsByItem = BuildTotalsByItem(cost);
+            totalsByItem = BuildTotalsByItem(cost, session.ValorUfClp);
         }
         var rows = new List<ItemizadoRowPresentation>();
 
@@ -281,11 +281,21 @@ public sealed class ItemizadoWorkspaceService : IItemizadoWorkspaceService
             : $"Partida {row.Item}: {label}";
     }
 
-    private static Dictionary<string, decimal> BuildTotalsByItem(CostBreakdown cost)
+    /// <summary>
+    /// Costo directo por partida en UF, la unidad de presentación del Itemizado Valorado.
+    /// El origen de costos viene en CLP (campos históricos <c>*Uf</c> del motor), así que se
+    /// convierte con la UF del proyecto: exponerlo en pesos aquí inflaría por la tasa UF
+    /// tanto la grilla como el pie y los estados de pago, que ya asumen UF.
+    /// </summary>
+    private static Dictionary<string, decimal> BuildTotalsByItem(CostBreakdown cost, decimal valorUfClp)
     {
+        decimal ufRate = valorUfClp > 0m ? valorUfClp : PriceConversion.DefaultValorUfClp;
         return (cost.Origenes ?? new List<CostOriginBreakdown>())
             .GroupBy(x => x.ItemId ?? "", StringComparer.OrdinalIgnoreCase)
-            .ToDictionary(g => g.Key, g => g.Sum(x => x.TotalUf), StringComparer.OrdinalIgnoreCase);
+            .ToDictionary(
+                g => g.Key,
+                g => PriceConversion.ClpToUf(g.Sum(x => x.TotalUf), ufRate),
+                StringComparer.OrdinalIgnoreCase);
     }
 
     private static ItemizadoSummaryMetrics BuildSummary(

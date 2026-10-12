@@ -78,21 +78,22 @@ public sealed class CrossModuleBudgetMathParityTests
         var rowP2 = pageState.Rows.First(r => r.Id == "1.0.02");
         var rowP3 = pageState.Rows.First(r => r.Id == "1.0.03");
 
-        // Paridad partida por partida: el total del Itemizado coincide exactamente con Cubicación
-        Assert.Equal(expectedP1, rowP1.TotalUf);
-        Assert.Equal(expectedP2, rowP2.TotalUf);
-        Assert.Equal(expectedP3, rowP3.TotalUf);
+        // El Itemizado expone UF; Cubicación y el motor llevan CLP como fuente de verdad.
+        decimal ufRate = session.ProjectInfo.ValorUfClp;
+        Assert.Equal(PriceConversion.ClpToUf(expectedP1, ufRate), rowP1.TotalUf, 4);
+        Assert.Equal(PriceConversion.ClpToUf(expectedP2, ufRate), rowP2.TotalUf, 4);
+        Assert.Equal(PriceConversion.ClpToUf(expectedP3, ufRate), rowP3.TotalUf, 4);
 
-        Assert.Equal(expectedP1 / 2m, rowP1.UnitPriceUf);
-        Assert.Equal(expectedP2 / 120m, rowP2.UnitPriceUf);
-        Assert.Equal(expectedP3 / 1m, rowP3.UnitPriceUf);
+        Assert.Equal(PriceConversion.ClpToUf(expectedP1 / 2m, ufRate), rowP1.UnitPriceUf, 4);
+        Assert.Equal(PriceConversion.ClpToUf(expectedP2 / 120m, ufRate), rowP2.UnitPriceUf, 4);
+        Assert.Equal(PriceConversion.ClpToUf(expectedP3 / 1m, ufRate), rowP3.UnitPriceUf, 4);
 
         // 3. Totales acumulados del presupuesto
         decimal totalDirectoCubicacion = tP1.CostoDirecto + tP2.CostoDirecto + tP3.CostoDirecto;
-        decimal totalItemizado = pageState.Rows.Where(r => !r.EsTitulo).Sum(r => r.TotalUf);
+        decimal totalItemizadoUf = pageState.Rows.Where(r => !r.EsTitulo).Sum(r => r.TotalUf);
 
-        Assert.Equal(totalDirectoCubicacion, totalItemizado);
-        Assert.Equal(3_836_000m, totalItemizado);
+        Assert.Equal(PriceConversion.ClpToUf(totalDirectoCubicacion, ufRate), totalItemizadoUf, 4);
+        Assert.Equal(PriceConversion.ClpToUf(3_836_000m, ufRate), totalItemizadoUf, 4);
 
         // 4. Paridad con el BudgetEngine del Dashboard
         var dashboardPresenter = new DashboardPresenter(new DashboardPresenterServices(
@@ -103,8 +104,9 @@ public sealed class CrossModuleBudgetMathParityTests
 
         var costBreakdown = dashboardPresenter.BuildCost(session.Data);
 
-        Assert.Equal(totalItemizado, costBreakdown.CostoDirectoUf);
-        Assert.Equal(totalItemizado, costBreakdown.CostoDirectoClp);
+        // El motor del Dashboard lleva pesos en sus campos históricos *Uf: comparar en CLP.
+        Assert.Equal(totalDirectoCubicacion, costBreakdown.CostoDirectoUf, 4);
+        Assert.Equal(totalDirectoCubicacion, costBreakdown.CostoDirectoClp, 4);
     }
 
     [Fact]
@@ -207,4 +209,64 @@ public sealed class CrossModuleBudgetMathParityTests
         // Cuadratura de la identidad contable fundamental
         Assert.Equal(cost.TotalVentaConIvaUf, cost.TotalVentaNetoUf + cost.IvaUf);
     }
+
+    [Fact]
+    public void Itemizado_ExponeUf_YElPieMuestraElMismoMontoEnPesos()
+    {
+        // 40 ML de cable a $95.000 = $3.800.000 de costo directo.
+        // Con UF a $38.000 el Itemizado debe exponer 100 UF, no 3.800.000 "UF".
+        var session = new BudgetProjectSession();
+        session.NewProject("Proyecto Moneda Itemizado", "Auditor");
+        session.ProjectInfo.ValorUfClp = 38_000m;
+
+        session.Itemizado.Add(new ItemizadoRow { Id = "1.0", Item = "1", Descripcion = "FUERZA", EsTitulo = true });
+        session.Itemizado.Add(new ItemizadoRow
+        {
+            Id = "1.0.01", ParentId = "1.0", Item = "1.1", Descripcion = "Cable 50mm2", Unidad = "ML", Cantidad = 40m
+        });
+        session.Cubicacion.Add(new CubicacionRow
+        {
+            Id = "c1", ItemId = "1.0.01", Tipo = "MAT", Codigo = "CAB-50", Descripcion = "Cable cobre 50mm2",
+            Unidad = "ML", Cantidad = 40m, MatClp = 95_000m
+        });
+
+        const decimal costoDirectoClp = 3_800_000m;
+        const decimal costoDirectoUf = 100m;
+
+        var services = new AppServicesBuilder().Build();
+        var presenter = ItemizadoPresenterFactory.CreatePresenter(services, session);
+        var pageState = new ItemizadoWorkspaceService().BuildPageState(presenter, session);
+
+        // 1. La presentación del Itemizado entrega UF, no pesos con etiqueta UF.
+        var fila = pageState.Rows.First(r => r.Id == "1.0.01");
+        Assert.Equal(costoDirectoUf, fila.TotalUf, 4);
+        Assert.Equal(costoDirectoUf / 40m, fila.UnitPriceUf, 4);
+
+        var vm = new ItemizadoRowVm(new ItemizadoRow
+        {
+            Id = "1.0.01", Item = "1.1", Descripcion = "Cable 50mm2", Unidad = "ML", Cantidad = 40m
+        });
+        vm.ApplyPresentation(fila);
+
+        // 2. En UF la fila se muestra en UF y el equivalente en pesos es el costo real.
+        var ctxUf = ItemizadoCurrencyCoordinator.CreateContext(Moneda.UF, session.ValorUfClp, 950m, 1050m);
+        vm.ApplyCurrencyContext(ctxUf);
+        Assert.StartsWith("100", vm.TotalText);
+
+        var totalesUf = ItemizadoTotalsCoordinator.Calculate(new[] { vm }, new[] { vm }, ctxUf, false, "");
+        Assert.Equal(costoDirectoUf, totalesUf.VisibleTotalUf, 4);
+        Assert.Equal(costoDirectoClp, totalesUf.VisibleTotalClp, 2);
+        Assert.Contains("3800000", SoloDigitos(totalesUf.FooterTotalClpText));
+
+        // 3. En CLP el pie muestra sólo pesos: el mismo monto, sin inflarlo con la tasa UF.
+        var ctxClp = ItemizadoCurrencyCoordinator.CreateContext(Moneda.CLP, session.ValorUfClp, 950m, 1050m);
+        var totalesClp = ItemizadoTotalsCoordinator.Calculate(new[] { vm }, new[] { vm }, ctxClp, false, "");
+        Assert.Equal(costoDirectoClp, totalesClp.TotalBudgetClp, 2);
+        Assert.Equal("", totalesClp.TotalBudgetClpText);
+        Assert.Equal("", totalesClp.FooterTotalClpText);
+        Assert.Contains("3800000", SoloDigitos(totalesClp.FooterTotalUfText));
+        Assert.DoesNotContain("UF", totalesClp.FooterTotalUfText);
+    }
+
+    private static string SoloDigitos(string texto) => new(texto.Where(char.IsDigit).ToArray());
 }
