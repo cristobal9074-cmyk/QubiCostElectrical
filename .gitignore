@@ -62,6 +62,8 @@ desktop.ini
 *.temp
 *.bak
 *.orig
+# Servidores locales de un solo uso (p. ej. para servir docs/*.html mientras se revisa)
+tmp-serve.*
 
 # ── Generated documents / exports ─────────────────────────────────────────────
 exports/
