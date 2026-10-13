@@ -343,6 +343,30 @@ internal static class CubicacionFormulaPicker
         return null;
     }
 
+    public static bool TryNavigateUpFromFirstRow(DataGrid? grid, KeyEventArgs e, TextBox? unidadBox, TextBox? cantBox, DataGridColumn? cantCol, IReadOnlyList<DataGridColumn>? sectorCols)
+    {
+        if (grid == null || e.Key != Key.Up || (Keyboard.Modifiers & (ModifierKeys.Control | ModifierKeys.Alt | ModifierKeys.Shift)) != ModifierKeys.None)
+            return false;
+
+        int currentRow = grid.CurrentCell.IsValid && grid.CurrentCell.Item != null ? grid.Items.IndexOf(grid.CurrentCell.Item) : grid.SelectedIndex;
+        if (currentRow > 0) return false;
+
+        grid.CommitEdit(DataGridEditingUnit.Cell, true);
+        grid.CommitEdit(DataGridEditingUnit.Row, true);
+
+        var curCol = grid.CurrentCell.Column;
+        bool isQtySide = (cantCol != null && curCol == cantCol) || (sectorCols != null && curCol != null && sectorCols.Contains(curCol));
+        var targetBox = isQtySide ? cantBox : unidadBox;
+        if (targetBox != null)
+        {
+            targetBox.Focus();
+            targetBox.SelectAll();
+            e.Handled = true;
+            return true;
+        }
+        return false;
+    }
+
     public static bool HandleUnidadNavigation(TextBox tb, KeyEventArgs e, CubicacionViewModel? vm, DataGrid? grid, DataGridColumn? colUnidad, Action focusCant)
     {
         if (vm == null) return false;
@@ -387,13 +411,16 @@ internal static class CubicacionFormulaPicker
         {
             int targetRow = _unidadPickIndex >= 0 ? _unidadPickIndex : 0;
             CommitUnidadPick(tb, vm, grid);
-            FocusGridCell(grid, targetRow, colUnidad);
+            var targetCol = FindColumn(grid, "CÓDIGO") ?? colUnidad;
+            FocusGridCell(grid, targetRow, targetCol);
             e.Handled = true;
             return true;
         }
         if (e.Key == Key.Escape)
         {
             CancelUnidadPick(tb, vm.Rows, vm, grid);
+            var targetCol = FindColumn(grid, "CÓDIGO") ?? colUnidad;
+            FocusGridCell(grid, 0, targetCol);
             e.Handled = true;
             return true;
         }
@@ -436,13 +463,16 @@ internal static class CubicacionFormulaPicker
         {
             int targetRow = _cantPickIndex >= 0 ? _cantPickIndex : 0;
             commitCant();
-            FocusGridCell(grid, targetRow, colCant);
+            var targetCol = FindColumn(grid, "CÓDIGO") ?? colCant;
+            FocusGridCell(grid, targetRow, targetCol);
             e.Handled = true;
             return true;
         }
         if (e.Key == Key.Escape)
         {
             CancelCantPick(tb, vm.Rows, grid);
+            var targetCol = FindColumn(grid, "CÓDIGO") ?? colCant;
+            FocusGridCell(grid, 0, targetCol);
             e.Handled = true;
             return true;
         }

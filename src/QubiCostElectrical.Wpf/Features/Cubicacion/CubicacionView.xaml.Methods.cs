@@ -866,11 +866,7 @@ public partial class CubicacionView : UserControl
 
     private void OnGridPreviewKeyDown(object sender, KeyEventArgs e)
     {
-        if (CubicacionFormulaPicker.IsUnidadActive || CubicacionFormulaPicker.UnidadPickIndex >= 0)
-        {
-            if (e.Key == Key.Escape) { CubicacionFormulaPicker.CancelUnidadPick(ActiveUnidadBox, Vm.Rows, Vm, ResourceGrid); e.Handled = true; return; }
-            if (e.Key is Key.Up or Key.Down or Key.Enter or Key.Return && CubicacionFormulaPicker.HandleUnidadNavigation(ActiveUnidadBox, e, Vm, ResourceGrid, UnidadColumn, () => { ActiveCantBox.Focus(); ActiveCantBox.SelectAll(); })) { e.Handled = true; return; }
-        }
+        if (CubicacionFormulaPicker.TryNavigateUpFromFirstRow(ResourceGrid, e, ActiveUnidadBox, ActiveCantBox, CantidadColumn, _sectorColumns)) return;
 
         var editing = IsGridEditing();
         if (editing && MatchesConfiguredShortcut(e, CubicacionShortcutCatalog.PartidaPrevious, CubicacionShortcutCatalog.PartidaNext, CubicacionShortcutCatalog.QuickJump))
@@ -1545,7 +1541,7 @@ public partial class CubicacionView : UserControl
         // En modo Casillas, seleccionar todo / extender selección desde una casilla de sector
         // (Ctrl+Shift+flecha, Ctrl+E, etc.) no debe arrastrar Código/Descripción/Unidad/Cantidad
         // (datos del material, no cantidades a operar) — solo las columnas de sectores.
-        DataGridExcelNavigation.SetColumnScope(ResourceGrid, col => _sectorColumns.Contains(col));
+        DataGridExcelNavigation.SetColumnScope(ResourceGrid, col => !col.IsReadOnly && col != IndexColumn);
 
         // Al entrar a Casillas, el foco siempre parte en la primera casilla de la tabla de
         // cubicación — ahorra tener que hacer clic manualmente, igual que en Detalle.
