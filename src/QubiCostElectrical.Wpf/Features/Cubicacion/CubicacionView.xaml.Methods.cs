@@ -264,8 +264,6 @@ public partial class CubicacionView : UserControl
         {
             BindingOperations.GetBindingExpression(tb, TextBox.TextProperty)?.UpdateSource();
             if (tb == PartidaCodigoBox) { PartidaDescripcionBox?.Focus(); PartidaDescripcionBox?.SelectAll(); }
-            else if (tb == PartidaDescripcionBox) { PartidaUnidadBarBox?.Focus(); PartidaUnidadBarBox?.SelectAll(); }
-            else if (tb == PartidaUnidadBarBox) { PartidaCantidadBarBox?.Focus(); PartidaCantidadBarBox?.SelectAll(); }
             else { ResourceGrid?.Focus(); }
             e.Handled = true;
         }
@@ -400,7 +398,7 @@ public partial class CubicacionView : UserControl
 
         if (e.Key == Key.Escape)
         {
-            if (tb == CantHeaderBox || tb == PartidaCantidadBarBox)
+            if (tb == CantHeaderBox || tb.Tag as string == "PartidaCant")
             {
                 CancelCantPick();
             }
@@ -413,7 +411,7 @@ public partial class CubicacionView : UserControl
 
         if (e.Key is Key.Enter or Key.Return)
         {
-            if (tb == CantHeaderBox || tb == PartidaCantidadBarBox)
+            if (tb == CantHeaderBox || tb.Tag as string == "PartidaCant")
             {
                 CommitCantHeaderBox(tb);
             }
@@ -493,7 +491,12 @@ public partial class CubicacionView : UserControl
         tb.Dispatcher.BeginInvoke(new Action(() => tb.SelectAll()), System.Windows.Threading.DispatcherPriority.Input);
     }
 
-    private TextBox ActiveCantBox => (PartidaCantidadBarBox?.IsFocused == true) ? PartidaCantidadBarBox : CantHeaderBox;
+    private TextBox ActiveCantBox => (Keyboard.FocusedElement as TextBox) is { } tb && (tb == CantHeaderBox || tb.Tag as string == "PartidaCant") ? tb : CantHeaderBox;
+
+    private void OnHeaderTextBoxPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is TextBox tb && !tb.IsKeyboardFocused) { tb.Focus(); SelectAllDeferred(tb); e.Handled = true; }
+    }
 
     private void OnCantHeaderBoxGotFocus(object sender, RoutedEventArgs e)
     {
@@ -569,11 +572,9 @@ public partial class CubicacionView : UserControl
         // fórmula escrita como si no hubiera pasado nada.
         binding?.UpdateTarget();
 
-        // Mantener ambas cajas sincronizadas (la de la barra superior y la de la fila de detalle)
+        // Mantener ambas cajas sincronizadas (la de la cabecera y la de la fila de detalle)
         if (box != CantHeaderBox)
             BindingOperations.GetBindingExpression(CantHeaderBox, TextBox.TextProperty)?.UpdateTarget();
-        if (PartidaCantidadBarBox != null && box != PartidaCantidadBarBox)
-            BindingOperations.GetBindingExpression(PartidaCantidadBarBox, TextBox.TextProperty)?.UpdateTarget();
     }
 
     // Inserta o reemplaza, en el mismo lugar del texto, el token (R1, R2...) de la fila que se
@@ -1320,8 +1321,18 @@ public partial class CubicacionView : UserControl
         var thinStyle = thin ? (Style)FindResource("DataGridColumnHeader.Thin") : null;
         SetColumnHeader(CodigoColumn, thin, "CÓDIGO", thinStyle);
         SetColumnHeader(DescripcionColumn, thin, "DESCRIPCIÓN", thinStyle);
-        SetColumnHeader(UnidadColumn, thin, "UD", thinStyle);
-        SetColumnHeader(CantidadColumn, thin, "CANT", thinStyle);
+        if (thin)
+        {
+            UnidadColumn.HeaderTemplate = null; SetColumnHeader(UnidadColumn, true, "", thinStyle);
+            CantidadColumn.HeaderTemplate = null; SetColumnHeader(CantidadColumn, true, "", thinStyle);
+        }
+        else
+        {
+            UnidadColumn.HeaderTemplate = (DataTemplate)FindResource("HeaderTemplate.PartidaUnidad");
+            UnidadColumn.Header = null; UnidadColumn.HeaderStyle = null;
+            CantidadColumn.HeaderTemplate = (DataTemplate)FindResource("HeaderTemplate.PartidaCantidad");
+            CantidadColumn.Header = null; CantidadColumn.HeaderStyle = null;
+        }
         SetColumnHeader(MaterialPriceColumn, thin, "MAT $", thinStyle);
         SetColumnHeader(LaborPriceColumn, thin, "MO $", thinStyle);
         SetColumnHeader(TotalPriceColumn, thin, "$ UNIT", thinStyle);

@@ -15,6 +15,38 @@
         <KeyBinding Key="F" Modifiers="Control" Command="ApplicationCommands.Find" />
     </UserControl.InputBindings>
 
+    <UserControl.Resources>
+        <!-- Header editable para UD en modo Casillas (copia exacta de Detalle) -->
+        <DataTemplate x:Key="HeaderTemplate.PartidaUnidad">
+            <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="1"
+                    CornerRadius="2" Padding="1,2" Margin="-10,-8" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                    ToolTip="Unidad de la partida (editable · Enter para guardar)">
+                <TextBox Text="{Binding DataContext.PartidaUnidadText, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}"
+                         FontFamily="{StaticResource Font.Ui}" FontSize="11" FontWeight="Bold"
+                         HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                         Padding="0" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource Brush.Ink}"
+                         GotFocus="OnPartidaFieldGotFocus" PreviewKeyDown="OnPartidaFieldPreviewKeyDown"
+                         PreviewMouseLeftButtonDown="OnHeaderTextBoxPreviewMouseLeftButtonDown" />
+            </Border>
+        </DataTemplate>
+
+        <!-- Header editable para CANT en modo Casillas (copia exacta de Detalle) -->
+        <DataTemplate x:Key="HeaderTemplate.PartidaCantidad">
+            <Border Background="{DynamicResource Brush.SuccessBg}" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="1"
+                    CornerRadius="2" Padding="1,2" Margin="-8,-8" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                    ToolTip="Cantidad oficial de la partida (editable o fórmula R1+R2... · Enter para guardar)">
+                <TextBox Tag="PartidaCant"
+                         Text="{Binding DataContext.PartidaCantidadText, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=LostFocus}"
+                         FontFamily="{StaticResource Font.Mono}" FontSize="12" FontWeight="Bold"
+                         HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                         Padding="0" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource Brush.Success}"
+                         GotFocus="OnCantHeaderBoxGotFocus" LostFocus="OnCantHeaderBoxLostFocus"
+                         PreviewKeyDown="OnCantHeaderBoxPreviewKeyDown"
+                         PreviewMouseLeftButtonDown="OnHeaderTextBoxPreviewMouseLeftButtonDown" />
+            </Border>
+        </DataTemplate>
+    </UserControl.Resources>
+
     <!-- Layout principal tres zonas -->
     <Grid>
         <ctrl:EmptyStateControl Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}}"
@@ -245,36 +277,9 @@
                                  Text="{Binding PartidaDescripcion, UpdateSourceTrigger=LostFocus}"
                                  FontSize="14" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}"
                                  Background="Transparent" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
-                                 Padding="8,3" Margin="0,0,8,0" MinWidth="220" MaxWidth="600"
+                                 Padding="8,3" MinWidth="250" MaxWidth="850"
                                  ToolTip="Editar nombre/descripción de la partida · Enter para guardar"
                                  PreviewKeyDown="OnPartidaHeaderBoxPreviewKeyDown" />
-                        <Border BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4"
-                                Background="{DynamicResource Brush.Surface}" Margin="0,0,8,0" Padding="4,1"
-                                ToolTip="Unidad de medida de la partida (ej. GL, M, UN) · Enter para guardar">
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <TextBlock Text="UD" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="2,0,4,0" VerticalAlignment="Center" />
-                                <TextBox x:Name="PartidaUnidadBarBox"
-                                         Text="{Binding PartidaUnidadText, UpdateSourceTrigger=LostFocus}"
-                                         FontFamily="{StaticResource Font.Ui}" FontSize="12" FontWeight="SemiBold"
-                                         Foreground="{DynamicResource Brush.Ink}" Background="Transparent" BorderThickness="0"
-                                         Padding="2,2" MinWidth="35" MaxWidth="70" HorizontalContentAlignment="Center"
-                                         PreviewKeyDown="OnPartidaHeaderBoxPreviewKeyDown" />
-                            </StackPanel>
-                        </Border>
-                        <Border BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4"
-                                Background="{DynamicResource Brush.Surface}" Margin="0,0,8,0" Padding="4,1"
-                                ToolTip="Cantidad oficial de la partida · Escriba un número o fórmula · Enter para guardar">
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <TextBlock Text="CANT" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="2,0,4,0" VerticalAlignment="Center" />
-                                <TextBox x:Name="PartidaCantidadBarBox"
-                                         Text="{Binding PartidaCantidadText, UpdateSourceTrigger=LostFocus}"
-                                         FontFamily="{StaticResource Font.Mono}" FontSize="12" FontWeight="Bold"
-                                         Foreground="{DynamicResource Brush.Success}" Background="Transparent" BorderThickness="0"
-                                         Padding="2,2" MinWidth="55" MaxWidth="100" HorizontalContentAlignment="Right"
-                                         GotFocus="OnCantHeaderBoxGotFocus" LostFocus="OnCantHeaderBoxLostFocus"
-                                         PreviewKeyDown="OnCantHeaderBoxPreviewKeyDown" />
-                            </StackPanel>
-                        </Border>
                     </StackPanel>
                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
                         <Button Style="{StaticResource Button.Toolbar}" Content="Tomar SC"
