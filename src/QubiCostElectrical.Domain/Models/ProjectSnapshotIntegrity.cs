@@ -199,6 +199,8 @@ public static class ProjectSnapshotIntegrity
         project.LaborDaySettings ??= new LaborDaySettingsRow();
         project.Variables ??= new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
         project.FamiliasPrecioAsignadas ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        project.FamiliasPersonalizadas ??= new List<string>();
+        project.FamiliasOcultas ??= new List<string>();
         project.OfertaPdf ??= new OfferPdfSettings();
         project.HistorialEstados ??= new List<BudgetStatusHistoryRow>();
         project.CubicacionCellComments ??= new List<CubicacionCellCommentRow>();

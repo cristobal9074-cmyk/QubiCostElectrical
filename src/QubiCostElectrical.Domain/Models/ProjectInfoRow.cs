@@ -112,6 +112,18 @@ public sealed class ProjectInfoRow
     /// Vacío = queda sin asignar. Se guarda en el JSON del proyecto, sin cambio de esquema.
     /// </summary>
     public Dictionary<string, string> FamiliasPrecioAsignadas { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Familias creadas o administradas explícitamente por el usuario en este proyecto.
+    /// Se guarda en el JSON del proyecto, sin cambio de esquema SQLite.
+    /// </summary>
+    public List<string> FamiliasPersonalizadas { get; set; } = new();
+
+    /// <summary>
+    /// Familias estándar que el usuario decidió ocultar o dar de baja en este proyecto.
+    /// Se guarda en el JSON del proyecto, sin cambio de esquema SQLite.
+    /// </summary>
+    public List<string> FamiliasOcultas { get; set; } = new();
     public OfferPdfSettings OfertaPdf { get; set; } = new();
     public List<CubicacionCellCommentRow> CubicacionCellComments { get; set; } = new();
     public DateTime LastSQLiteSavedAt { get; set; } = DateTime.MinValue;

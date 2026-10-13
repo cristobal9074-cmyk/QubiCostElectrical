@@ -37,7 +37,8 @@ public sealed class MaxLineCountTest
         // +64 por la política de moneda única del proyecto: con CLP no se expone ninguna cifra en UF
         // (columnas y chips UF se ocultan en el análisis y en la sección de familias), con UF/USD se
         // muestra el par "moneda + equivalente en pesos" en KPIs, familias, ferretería, GO y MO.
-        ["src/QubiCostElectrical.Wpf/Features/Costo/CostoViewModel"] = 2076,
+        // +26 por comando y apertura de la ventana de gestión de familias desde la sección de presentación.
+        ["src/QubiCostElectrical.Wpf/Features/Costo/CostoViewModel"] = 2115,
         // WIP sin commitear (turnos/planillas en curso); no crecer más desde aquí.
         // + Botón "Tomar proyección MO": comando que aplica la proyección a la dotación (24 líneas, 06-10).
         // + Renombre de cargos directos con nombre-GUID a "Maestro"/"Ayudante" en SeedCargos (6 líneas, 07-10).

@@ -42,19 +42,27 @@ public sealed class BudgetSettings
     /// </summary>
     public decimal DefaultPresentationFactor { get; set; } = 1m;
 
-    /// <summary>Normaliza la familia y devuelve su factor; si no está, <see cref="DefaultPresentationFactor"/>.</summary>
+    /// <summary>Normaliza la familia y devuelve su factor; si no está, prueba su objetivo natural o <see cref="DefaultPresentationFactor"/>.</summary>
     public decimal ResolvePresentationFactor(string? family)
     {
         var norm = FamilyPresentationDefaults.Normalize(family);
-        return PresentationFactorsByFamily.TryGetValue(norm, out var f) ? f : DefaultPresentationFactor;
+        if (PresentationFactorsByFamily.TryGetValue(norm, out var f))
+            return f;
+        var natural = FamilyPresentationDefaults.NaturalCanonicalTarget(norm);
+        if (PresentationFactorsByFamily.TryGetValue(natural, out var fn))
+            return fn;
+        return DefaultPresentationFactor;
     }
 
     /// <summary>Como <see cref="ResolvePresentationFactor"/> pero informa si la familia estaba
-    /// mapeada explícitamente (para distinguir un factor 1.0 pactado del fallback).</summary>
+    /// mapeada explícitamente o por su objetivo natural.</summary>
     public bool TryResolvePresentationFactor(string? family, out decimal factor)
     {
         var norm = FamilyPresentationDefaults.Normalize(family);
-        return PresentationFactorsByFamily.TryGetValue(norm, out factor);
+        if (PresentationFactorsByFamily.TryGetValue(norm, out factor))
+            return true;
+        var natural = FamilyPresentationDefaults.NaturalCanonicalTarget(norm);
+        return PresentationFactorsByFamily.TryGetValue(natural, out factor);
     }
     public decimal MetrosCuadrados { get; set; }
     public decimal HerramientasPct { get; set; } = 0m;

@@ -1279,6 +1279,7 @@
                              Style="{StaticResource CierreHint}" Margin="0,3,0,0" />
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                  <Button Content="Gestionar familias" Command="{Binding AbrirGestionFamiliasCommand}" Style="{StaticResource Button.Secondary}" Height="24" Padding="8,0" Margin="0,0,5,0" FontSize="10.5" ToolTip="Ver, crear, renombrar y dar de baja familias del catálogo eléctrico" />
                   <Button Content="Estándar" Command="{Binding LoadCoeficientesEstandarCommand}" Style="{StaticResource Button.Secondary}" Height="24" Padding="8,0" Margin="0,0,5,0" FontSize="10.5" />
                   <Button Content="Típicos" Command="{Binding LoadTipicosCoeficientesCommand}" Style="{StaticResource Button.Secondary}" Height="24" Padding="8,0" Margin="0,0,5,0" FontSize="10.5" />
                   <Button Content="Reset 1,00×" Command="{Binding ResetCoeficientesCommand}" Style="{StaticResource Button.Ghost}" Height="24" Padding="8,0" FontSize="10.5" />

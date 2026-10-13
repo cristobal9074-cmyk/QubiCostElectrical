@@ -38,7 +38,7 @@ public abstract class SessionAwareViewModelBase : ViewModelBase, IDisposable, IS
     {
         sessionChangeActive = active;
         if (active && pendingByKind.Count > 0)
-            coalescer?.Signal();
+            FlushPendingSessionChange();
     }
 
     /// <summary>True si había cambios pendientes (el flush los aplicará vía coalescer o inmediato).</summary>

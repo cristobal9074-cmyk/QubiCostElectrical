@@ -45,6 +45,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         ToggleFerreteriaDetalleCommand = new RelayCommand(ToggleFerreteriaDetalle);
         AbrirCatalogoFamiliasCommand = new RelayCommand<CoefFactorVm>(AbrirCatalogoFamilias);
         ElegirFamiliaPrecioCommand = new RelayCommand<PrecioFamiliaPickVm>(ElegirFamiliaPrecio);
+        AbrirGestionFamiliasCommand = new RelayCommand(AbrirGestionFamilias, () => CanEdit);
         OpenViaticosCommand = new RelayCommand<GastoOpCategoriaVm>(OpenViaticos, c => CanEdit && c is { IsViaticosCategory: true });
         OpenViaticosBarCommand = new RelayCommand(
             () => OpenViaticos(GastosOperacionales.FirstOrDefault(c => c.IsViaticosCategory)),
@@ -175,6 +176,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
                 ResetCoeficientesCommand.RaiseCanExecuteChanged();
                 LoadCoeficientesEstandarCommand.RaiseCanExecuteChanged();
                 LoadTipicosCoeficientesCommand.RaiseCanExecuteChanged();
+                AbrirGestionFamiliasCommand.RaiseCanExecuteChanged();
                 SaveCostosPresetCommand.RaiseCanExecuteChanged();
                 RestoreCostosPresetCommand.RaiseCanExecuteChanged();
                 ApplyCoeficientesCommand.RaiseCanExecuteChanged();
@@ -403,6 +405,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
     public RelayCommand ToggleFerreteriaDetalleCommand { get; }
     public RelayCommand<CoefFactorVm> AbrirCatalogoFamiliasCommand { get; }
     public RelayCommand<PrecioFamiliaPickVm> ElegirFamiliaPrecioCommand { get; }
+    public RelayCommand AbrirGestionFamiliasCommand { get; }
     private bool analisisAbierto;
     public bool AnalisisAbierto
     {
@@ -1144,7 +1147,22 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         PrecioFamiliasLibres.Clear();
 
         var map = session.ProjectInfo.FamiliasPrecioAsignadas;
-        foreach (var nombre in EnumerarFamiliasPrecio())
+        var familiasActivas = EnumerarFamiliasPrecio();
+        var clavesActivas = new HashSet<string>(familiasActivas.Select(FamilyPresentationDefaults.Normalize), StringComparer.OrdinalIgnoreCase);
+
+        // Limpiar asignaciones huérfanas de listas de precios anteriores que ya no existen
+        if (map != null && map.Count > 0)
+        {
+            var huerfanas = map.Keys.Where(k => !clavesActivas.Contains(k)).ToList();
+            if (huerfanas.Count > 0)
+            {
+                foreach (var h in huerfanas)
+                    map.Remove(h);
+                session.MarkDirty(ProjectDirtyScope.ProjectInfo);
+            }
+        }
+
+        foreach (var nombre in familiasActivas)
         {
             var clave = FamilyPresentationDefaults.Normalize(nombre);
             var chip = new PrecioFamiliaChipVm(nombre, clave);
@@ -1158,6 +1176,38 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         OnPropertyChanged(nameof(HasPrecioFamiliasLibres));
         foreach (var row in CoefFactors)
             row.RefrescarResumenFamilias();
+    }
+
+    private void AbrirGestionFamilias()
+    {
+        if (!CanEdit)
+            return;
+
+        var vm = new GestionFamiliasViewModel(session, priceBank, () =>
+        {
+            suppressCoefRefresh = true;
+            try
+            {
+                RefreshCostOnly();
+                RebuildPrecioFamiliaChips();
+                OnPropertyChanged(nameof(Familias));
+            }
+            finally
+            {
+                suppressCoefRefresh = false;
+            }
+        });
+
+        var owner = System.Windows.Application.Current?.MainWindow;
+        var dialog = new GestionFamiliasDialog(vm);
+        if (owner != null)
+            dialog.Owner = owner;
+
+        dialog.ShowDialog();
+
+        RefreshCostOnly();
+        RebuildPrecioFamiliaChips();
+        OnPropertyChanged(nameof(Familias));
     }
 
     private void AbrirCatalogoFamilias(CoefFactorVm? fila)
@@ -1231,34 +1281,23 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
                 string.Equals(f.FamilyKey, assigned, StringComparison.OrdinalIgnoreCase));
         }
 
-        return CoefFactors.FirstOrDefault(f =>
+        var direct = CoefFactors.FirstOrDefault(f =>
             string.Equals(FamilyPresentationDefaults.Normalize(f.FamilyKey), clave, StringComparison.Ordinal));
+        if (direct != null)
+            return direct;
+
+        var naturalTarget = FamilyPresentationDefaults.NaturalCanonicalTarget(clave);
+        return CoefFactors.FirstOrDefault(f =>
+            string.Equals(FamilyPresentationDefaults.Normalize(f.FamilyKey), naturalTarget, StringComparison.Ordinal));
     }
 
     private List<string> EnumerarFamiliasPrecio()
     {
-        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var names = new List<string>();
-        void Add(string? name)
-        {
-            if (string.IsNullOrWhiteSpace(name))
-                return;
-            var trimmed = name.Trim();
-            if (seen.Add(trimmed))
-                names.Add(trimmed);
-        }
-
-        if (priceBank != null)
-        {
-            foreach (var entry in priceBank.GetAll())
-                Add(entry.Categoria);
-        }
-
-        foreach (var material in session.Data.Materiales ?? Enumerable.Empty<MaterialRow>())
-            Add(material.Categoria);
-
-        names.Sort(StringComparer.CurrentCultureIgnoreCase);
-        return names;
+        var bankCategories = (priceBank?.GetAll().Select(e => e.Categoria) ?? Enumerable.Empty<string>()).ToList();
+        return ElectricalFamilyCatalog.CombinarFamiliasConOcultas(
+            session.ProjectInfo.FamiliasOcultas,
+            session.ProjectInfo.FamiliasPersonalizadas,
+            bankCategories).ToList();
     }
 
     private void UpdateCoefChips()

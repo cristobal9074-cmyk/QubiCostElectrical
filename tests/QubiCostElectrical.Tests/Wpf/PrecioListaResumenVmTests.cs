@@ -132,10 +132,18 @@ public sealed class PrecioListaResumenVmTests
             new() { Codigo = "TAB-001", Categoria = "Tableros" },
             new() { Codigo = "TAB-002", Categoria = "tableros" }, // duplicado sin distinguir mayúsculas
             new() { Codigo = "CON-001", Categoria = "Conductores" },
+            new() { Codigo = "LUM-001", Categoria = "Luminarias" },
         });
         var vm = new PrecioListaResumenVm(session, store);
 
-        Assert.Equal(new[] { "Conductores", "Luminarias", "Tableros" }, vm.FamiliasDisponibles);
+        Assert.Contains("Conductores", vm.FamiliasDisponibles);
+        Assert.Contains("Luminarias", vm.FamiliasDisponibles);
+        Assert.Contains("Tableros", vm.FamiliasDisponibles);
+        Assert.Contains("Transformadores", vm.FamiliasDisponibles);
+        Assert.Contains("Grupo electrógeno", vm.FamiliasDisponibles);
+        Assert.Contains("Ducto barra", vm.FamiliasDisponibles);
+        Assert.Contains("Media tensión", vm.FamiliasDisponibles);
+        Assert.Equal(1, vm.FamiliasDisponibles.Count(f => string.Equals(f, "Tableros", StringComparison.OrdinalIgnoreCase)));
     }
 
     [Fact]

@@ -75,26 +75,20 @@
                        TextWrapping="Wrap" Margin="0,4,0,0" />
           </StackPanel>
 
-          <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top">
-            <Button Style="{StaticResource Button.Secondary}" Content="Importar lista" Command="{Binding ImportFileCommand}" Margin="0,0,6,0" />
-            <Button Style="{StaticResource Button.Secondary}" Content="Descargar plantilla" Command="{Binding DownloadTemplateCommand}" Margin="0,0,6,0"
+          <WrapPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
+            <Button Style="{StaticResource Button.Secondary}" Content="Importar lista" Command="{Binding ImportFileCommand}" Margin="0,0,6,6" />
+            <Button Style="{StaticResource Button.Secondary}" Content="Descargar plantilla" Command="{Binding DownloadTemplateCommand}" Margin="0,0,6,6"
                     ToolTip="Plantilla .xlsx/.csv: Código · Descripción · UN · Precio CLP · Familia · MO" />
-            <Button Style="{StaticResource Button.Secondary}" Content="Importar proyecto" Command="{Binding ImportProjectCommand}" Margin="0,0,6,0" />
-            <Button Style="{StaticResource Button.Primary}" Content="Aplicar al proyecto" Command="{Binding ApplyProjectPricesCommand}" Margin="0,0,6,0" />
-            <Button Style="{StaticResource Button.Secondary}" Content="Nuevo" Command="{Binding NewEntryCommand}" Margin="0,0,6,0" />
-            <Button Style="{StaticResource Button.Secondary}" Content="Guardar" Command="{Binding SaveSelectedCommand}" Margin="0,0,6,0" />
-            <Button Style="{StaticResource Button.Secondary}" Content="Eliminar" Command="{Binding DeleteSelectedCommand}" Margin="0,0,6,0" />
-            <Button Style="{StaticResource Button.Ghost}" Content="⋯" Padding="12,4" Margin="0,0,0,0"
-                    ToolTip="Acciones destructivas" Click="OnMoreActionsClick">
-              <Button.ContextMenu>
-                <ContextMenu>
-                  <MenuItem Header="Eliminar todo" Command="{Binding DeleteAllCommand}"
-                            Foreground="{DynamicResource Brush.Danger}"
-                            ToolTip="Vacía por completo el banco de precios (irreversible)" />
-                </ContextMenu>
-              </Button.ContextMenu>
-            </Button>
-          </StackPanel>
+            <Button Style="{StaticResource Button.Secondary}" Content="Importar proyecto" Command="{Binding ImportProjectCommand}" Margin="0,0,6,6" />
+            <Button Style="{StaticResource Button.Primary}" Content="Aplicar al proyecto" Command="{Binding ApplyProjectPricesCommand}" Margin="0,0,6,6" />
+            <Button Style="{StaticResource Button.Secondary}" Content="Nuevo" Command="{Binding NewEntryCommand}" Margin="0,0,6,6" />
+            <Button Style="{StaticResource Button.Secondary}" Content="Guardar" Command="{Binding SaveSelectedCommand}" Margin="0,0,6,6" />
+            <Button Style="{StaticResource Button.Secondary}" Content="Eliminar" Command="{Binding DeleteSelectedCommand}" Margin="0,0,6,6"
+                    ToolTip="Elimina el material seleccionado del banco" />
+            <Button Style="{StaticResource Button.Secondary}" Content="Vaciar banco" Command="{Binding DeleteAllCommand}" Margin="0,0,6,6"
+                    Foreground="{DynamicResource Brush.Danger}"
+                    ToolTip="Vacía por completo todos los materiales y familias del banco de precios para cargar una nueva lista de precios (irreversible)" />
+          </WrapPanel>
         </DockPanel>
 
         <!-- Único filtro además del buscador: Familia (Proveedor/Marca ya no se muestran en la

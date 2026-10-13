@@ -101,8 +101,7 @@ internal sealed class ShellNavigationCoordinator
             currentView = cachedView;
             currentPageVm = cachedVm;
             SetSessionListening(currentPageVm, true);
-            // SessionAware/Cub ya flushean pending al reactivar — no Refresh() doble.
-            if (currentPageVm is not ISessionChangeAware && currentPageVm is IRefreshablePage refreshable)
+            if (currentPageVm is IRefreshablePage refreshable)
                 refreshable.Refresh();
             refreshContext();
             ApplyNavigationContext(context, cachedView);

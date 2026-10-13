@@ -199,10 +199,7 @@ public sealed partial class CubicacionViewModel
 
         if (!string.IsNullOrWhiteSpace(codigo) && priceBankStore.GetByCodigo(codigo) == null) codigo = "";
 
-        var dialog = new PrecioListaResumenDialog(session, priceBankStore, codigo)
-        {
-            Owner = Application.Current.MainWindow
-        };
+        var dialog = new PrecioListaResumenDialog(session, priceBankStore, codigo) { Owner = Application.Current.MainWindow };
         dialog.ShowDialog();
         rowMutationService.AplicarMaterialCreado(dialog.MaterialCreado);
     }
@@ -217,10 +214,7 @@ public sealed partial class CubicacionViewModel
             return;
         }
 
-        var dialog = new ResumenScTomarDialog(cuadros, config, session.ZonasProyecto)
-        {
-            Owner = Application.Current.MainWindow
-        };
+        var dialog = new ResumenScTomarDialog(cuadros, config, session.ZonasProyecto) { Owner = Application.Current.MainWindow };
         if (dialog.ShowDialog() != true || dialog.Result == null)
             return;
 
@@ -273,7 +267,6 @@ public sealed partial class CubicacionViewModel
         {
             var itemId = item.ItemId ?? "";
             if (itemId.Length == 0) continue;
-
             var mat = item.MatClp * item.Cantidad;
             var mo = item.MoClp * item.Cantidad;
             if (costs.TryGetValue(itemId, out var existing))
@@ -282,57 +275,56 @@ public sealed partial class CubicacionViewModel
                 costs[itemId] = new PartidaCost(mat, mo, mat + mo);
         }
 
-        var items = new List<ItemizadoPartidaVm>();
-        foreach (var partida in Partidas)
+        var items = Partidas.Select(p =>
         {
-            var esSeccion = !partida.EsPartida;
-            var cost = partida.Id != null && costs.TryGetValue(partida.Id, out var value)
-                ? value
-                : new PartidaCost(0m, 0m, 0m);
-
-            items.Add(new ItemizadoPartidaVm
+            var cost = p.Id != null && costs.TryGetValue(p.Id, out var v) ? v : new PartidaCost(0m, 0m, 0m);
+            return new ItemizadoPartidaVm
             {
-                EsSeccion = esSeccion,
-                Id = partida.Id ?? "",
-                ItemCode = esSeccion ? "" : partida.Codigo,
-                Descripcion = partida.Descripcion,
-                Unidad = partida.Unidad,
-                Cantidad = partida.Cantidad,
+                EsSeccion = !p.EsPartida,
+                Id = p.Id ?? "",
+                ItemCode = p.Codigo ?? "",
+                Descripcion = p.Descripcion,
+                Unidad = p.Unidad,
+                Cantidad = p.Cantidad,
                 MaterialTotal = cost.Mat,
                 ManoObraTotal = cost.Mo,
                 CostoDirecto = cost.Total
-            });
-        }
+            };
+        }).ToList();
 
-        var dialog = new ResumenItemizadoDialog(items, SelectedPartida?.Id)
+        SetSessionChangeActive(false);
+        try
         {
-            Owner = Application.Current.MainWindow
-        };
-        if (dialog.ShowDialog() != true || dialog.Result == null)
-            return;
+            var dialog = new ResumenItemizadoDialog(items, SelectedPartida?.Id, session, itemizadoPresenter, undo) { Owner = Application.Current.MainWindow };
+            dialog.ShowDialog();
 
-        var targetId = dialog.Result.Id;
-        var targetPartida = Partidas.FirstOrDefault(p => string.Equals(p.Id, targetId, StringComparison.OrdinalIgnoreCase));
-        if (targetPartida == null) return;
+            if (dialog.HasMutations)
+            {
+                session.MarkDirty(ProjectDirtyScope.Itemizado);
+                loadingService.LoadPartidas();
+                NotifyCubicacionSummaryChanged();
+            }
 
-        if (!FilteredPartidas.Contains(targetPartida))
-        {
-            IsPartidaFilterTodos = true;
+            var resultTarget = dialog.Result ?? (dialog.HasMutations ? dialog.SelectedRow : null);
+            if (resultTarget == null) return;
+
+            var targetId = resultTarget.Id;
+            var targetPartida = Partidas.FirstOrDefault(p => string.Equals(p.Id, targetId, StringComparison.OrdinalIgnoreCase));
+            if (targetPartida != null)
+            {
+                if (!FilteredPartidas.Contains(targetPartida)) IsPartidaFilterTodos = true;
+                SelectPartida(targetPartida);
+            }
+
+            if (dialog.ShouldAddResource && AddRowCommand.CanExecute(null)) AddRowCommand.Execute(null);
+
+            if (dialog.ShouldDeleteRows)
+            {
+                var rowIds = session.Cubicacion.Where(r => string.Equals(r.ItemId, targetId, StringComparison.OrdinalIgnoreCase)).Select(r => r.Id).ToList();
+                if (rowIds.Count > 0) cubicacionPresenter.DeleteRows(rowIds);
+            }
         }
-
-        SelectPartida(targetPartida);
-        if (dialog.ShouldAddResource && AddRowCommand.CanExecute(null))
-            AddRowCommand.Execute(null);
-
-        if (dialog.ShouldDeleteRows)
-        {
-            var rowIds = session.Cubicacion
-                .Where(r => string.Equals(r.ItemId, targetId, StringComparison.OrdinalIgnoreCase))
-                .Select(r => r.Id)
-                .ToList();
-            if (rowIds.Count > 0)
-                cubicacionPresenter.DeleteRows(rowIds);
-        }
+        finally { SetSessionChangeActive(true); }
     }
 
     public void OpenQuickJumpPartida()

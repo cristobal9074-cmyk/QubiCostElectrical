@@ -196,32 +196,12 @@ public sealed class PrecioListaResumenVm : ViewModelBase
     // diálogo de alta rápida; el cálculo de la M.O. vive en el motor (MaterialMoResolver) para que
     // la vista previa y el resultado del presupuesto sean siempre la misma cifra.
 
-    /// <summary>Familias reales del proyecto: categorías del banco de precios + materiales cargados.</summary>
-    public IReadOnlyList<string> FamiliasDisponibles
-    {
-        get
-        {
-            var vistas = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            var nombres = new List<string>();
-
-            void Agregar(string? nombre)
-            {
-                if (string.IsNullOrWhiteSpace(nombre))
-                    return;
-                string limpio = nombre.Trim();
-                if (vistas.Add(limpio))
-                    nombres.Add(limpio);
-            }
-
-            foreach (var entry in allBankEntries)
-                Agregar(entry.Categoria);
-            foreach (var material in session.Materiales)
-                Agregar(material.Categoria);
-
-            nombres.Sort(StringComparer.CurrentCultureIgnoreCase);
-            return nombres;
-        }
-    }
+    /// <summary>Familias del proyecto: lista de precios / banco actual + familias personalizadas y estándar internas sin duplicar.</summary>
+    public IReadOnlyList<string> FamiliasDisponibles =>
+        ElectricalFamilyCatalog.CombinarFamiliasConOcultas(
+            session.ProjectInfo.FamiliasOcultas,
+            session.ProjectInfo.FamiliasPersonalizadas,
+            allBankEntries.Select(e => e.Categoria));
 
     /// <summary>FA vigente del proyecto (índice de M.O.): el que se usará al guardar.</summary>
     public decimal IndiceMoFa => MaterialMoResolver.IndiceFa(session.ProjectInfo);
@@ -471,7 +451,30 @@ public sealed class PrecioListaResumenVm : ViewModelBase
 
         session.Materiales.Add(materialRow);
         session.MarkDirty(ProjectDirtyScope.Materiales);
+
+        // Si la familia ingresada no es estándar ni del banco de precios, registrarla como personalizada
+        if (!string.IsNullOrWhiteSpace(categoria))
+        {
+            string claveCat = ElectricalFamilyCatalog.ClaveCanonica(categoria);
+            bool esEstandar = ElectricalFamilyCatalog.FamiliasEstandar.Any(e =>
+                string.Equals(ElectricalFamilyCatalog.ClaveCanonica(e), claveCat, StringComparison.OrdinalIgnoreCase));
+            bool esBanco = allBankEntries.Any(b =>
+                string.Equals(ElectricalFamilyCatalog.ClaveCanonica(b.Categoria), claveCat, StringComparison.OrdinalIgnoreCase));
+
+            if (!esEstandar && !esBanco)
+            {
+                session.ProjectInfo.FamiliasPersonalizadas ??= new List<string>();
+                if (!session.ProjectInfo.FamiliasPersonalizadas.Any(p =>
+                    string.Equals(ElectricalFamilyCatalog.ClaveCanonica(p), claveCat, StringComparison.OrdinalIgnoreCase)))
+                {
+                    session.ProjectInfo.FamiliasPersonalizadas.Add(categoria.Trim());
+                    session.MarkDirty(ProjectDirtyScope.ProjectInfo);
+                }
+            }
+        }
+
         allItems.Add(new PrecioListaMaterialVm(materialRow, session));
+        OnPropertyChanged(nameof(FamiliasDisponibles));
         RefreshKpis();
         filteredView?.Refresh();
         return true;

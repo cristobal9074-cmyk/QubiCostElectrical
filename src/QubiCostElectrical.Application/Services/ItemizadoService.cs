@@ -51,9 +51,30 @@ public sealed class ItemizadoService : IItemizadoService
 
         int row = selectedIndex < 0 ? itemizado.Count - 1 : Math.Min(selectedIndex, itemizado.Count - 1);
         var selected = itemizado[Math.Max(0, row)];
-        string parent = selected.EsTitulo
-            ? ItemizadoHierarchyRules.NormalizeTitleId(selected.Id)
-            : ParentOf(selected.Id, itemizado);
+
+        string parent = "";
+        if (selected.EsTitulo)
+        {
+            parent = ItemizadoHierarchyRules.NormalizeTitleId(selected.Id);
+        }
+        else if (!string.IsNullOrWhiteSpace(selected.ParentId))
+        {
+            parent = selected.ParentId;
+        }
+        else
+        {
+            for (int i = row; i >= 0; i--)
+            {
+                if (itemizado[i].EsTitulo)
+                {
+                    parent = itemizado[i].Id;
+                    break;
+                }
+            }
+            if (string.IsNullOrWhiteSpace(parent))
+                parent = ParentOf(selected.Id, itemizado);
+        }
+
         int pos = Math.Min(row + 1, itemizado.Count);
 
         var nueva = ItemizadoHierarchyRules.CreatePartidaRow(itemizado, parent, desc, unidad);

@@ -1,0 +1,324 @@
+<Window x:Class="QubiCostElectrical.Wpf.Features.Costo.GestionFamiliasDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Style="{StaticResource Dialog.Window}"
+        Title="Administración de Familias Eléctricas"
+        Width="740" Height="680" MinWidth="620" MinHeight="500"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResizeWithGrip"
+        FontFamily="{StaticResource Font.Ui}"
+        KeyDown="OnWindowKeyDown">
+  <Window.Resources>
+    <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+  </Window.Resources>
+  <Border Style="{StaticResource Dialog.Chrome}" Margin="16">
+    <Grid>
+      <Grid.RowDefinitions>
+        <!-- Header -->
+        <RowDefinition Height="Auto" />
+        <!-- Nueva familia & buscador -->
+        <RowDefinition Height="Auto" />
+        <!-- KPIs & barra de estado -->
+        <RowDefinition Height="Auto" />
+        <!-- Lista de familias -->
+        <RowDefinition Height="*" />
+        <!-- Footer -->
+        <RowDefinition Height="Auto" />
+      </Grid.RowDefinitions>
+
+      <!-- Encabezado -->
+      <StackPanel Grid.Row="0" Margin="0,0,0,14">
+        <TextBlock Text="Administración de Familias" Style="{StaticResource Dialog.HeaderTitle}" />
+        <TextBlock Style="{StaticResource Dialog.HeaderSubtitle}"
+                   Text="Catálogo de familias eléctricas del proyecto. Las familias activas se usan para autocompletar en el Alta Rápida de materiales y calcular markups de sobreventa en Costos." />
+      </StackPanel>
+
+      <!-- Panel de creación rápida y búsqueda -->
+      <Border Grid.Row="1" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}"
+              BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,0,0,10">
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+          </Grid.RowDefinitions>
+
+          <!-- Input para crear nueva familia -->
+          <Grid Grid.Row="0" Margin="0,0,0,8">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="10" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBox x:Name="NuevaFamiliaInput" Style="{StaticResource Form.TextBox}"
+                     Text="{Binding NuevaFamiliaNombre, UpdateSourceTrigger=PropertyChanged}"
+                     Tag="Nombre de nueva familia (ej. Control y Automatización, Celdas MT)…"
+                     KeyDown="OnNuevaFamiliaKeyDown" />
+            <Button Grid.Column="2" Content="Crear familia" Command="{Binding CrearFamiliaCommand}"
+                    Style="{StaticResource Button.Primary}" Height="34" Padding="14,0" />
+          </Grid>
+
+          <!-- Buscador y filtro por origen -->
+          <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="12" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBox Grid.Column="0" Style="{StaticResource Form.SearchBox}"
+                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                     Tag="Filtrar familias por nombre, código o tipo…" />
+
+            <!-- Píldoras de filtro: Todas, Creadas, Lista de precios, Estándar -->
+            <Border Grid.Column="2" Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}"
+                    BorderThickness="1" CornerRadius="6" Padding="2" VerticalAlignment="Center">
+              <StackPanel Orientation="Horizontal">
+                <RadioButton Content="Todas" GroupName="FiltroFamiliaOrigen"
+                             IsChecked="{Binding FiltroTodasSelected, Mode=TwoWay}"
+                             Style="{StaticResource FilterChip.Base}" />
+                <RadioButton Content="Creadas" GroupName="FiltroFamiliaOrigen"
+                             IsChecked="{Binding FiltroCreadasSelected, Mode=TwoWay}"
+                             Style="{StaticResource FilterChip.Success}"
+                             ToolTip="Familias personalizadas creadas en el proyecto" />
+                <RadioButton Content="Lista de precios" GroupName="FiltroFamiliaOrigen"
+                             IsChecked="{Binding FiltroListaPreciosSelected, Mode=TwoWay}"
+                             Style="{StaticResource FilterChip.Warning}"
+                             ToolTip="Familias importadas o presentes en la lista / banco de precios" />
+                <RadioButton Content="Estándar" GroupName="FiltroFamiliaOrigen"
+                             IsChecked="{Binding FiltroEstandarSelected, Mode=TwoWay}"
+                             Style="{StaticResource FilterChip.Base}"
+                             ToolTip="Familias estándar del catálogo base de la app" />
+              </StackPanel>
+            </Border>
+          </Grid>
+        </Grid>
+      </Border>
+
+      <!-- KPIs & Mensaje de estado -->
+      <Grid Grid.Row="2" Margin="0,0,0,8">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+          <TextBlock FontSize="11" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center">
+            <Run Text="Total:" FontWeight="SemiBold" />
+            <Run Text="{Binding TotalFamilias, Mode=OneWay}" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" />
+            <Run Text="familias  ·  Creadas:" Foreground="{DynamicResource Brush.Ink4}" />
+            <Run Text="{Binding FamiliasCreadasCount, Mode=OneWay}" FontWeight="Bold" Foreground="{DynamicResource Brush.SuccessDark}" />
+            <Run Text=" ·  Lista precios:" Foreground="{DynamicResource Brush.Ink4}" />
+            <Run Text="{Binding FamiliasListaPreciosCount, Mode=OneWay}" FontWeight="Bold" Foreground="{DynamicResource Brush.BlueDark}" />
+            <Run Text=" ·  En uso:" Foreground="{DynamicResource Brush.Ink4}" />
+            <Run Text="{Binding FamiliasEnUsoCount, Mode=OneWay}" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue2}" />
+          </TextBlock>
+
+          <TextBlock Text="{Binding StatusMessage}" FontSize="11" FontStyle="Italic"
+                     Foreground="{DynamicResource Brush.SuccessDark}" Margin="16,0,0,0" VerticalAlignment="Center"
+                     TextTrimming="CharacterEllipsis" />
+        </StackPanel>
+
+        <!-- Botón restaurar familias estándar si hay alguna oculta -->
+        <Button Grid.Column="1" Content="Restaurar estándar" Command="{Binding RestaurarEstandarCommand}"
+                Style="{StaticResource Button.Ghost}" Height="24" Padding="8,0" FontSize="10.5"
+                ToolTip="Restaurar las familias estándar del sistema que fueron dadas de baja en este proyecto"
+                Visibility="{Binding HayFamiliasOcultas, Converter={StaticResource BooleanToVisibilityConverter}}" />
+      </Grid>
+
+      <!-- Lista de familias -->
+      <Border Grid.Row="3" Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}"
+              BorderThickness="1" CornerRadius="8" ClipToBounds="True">
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+          <ItemsControl ItemsSource="{Binding FilteredFamilias}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Border BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,0,1" Padding="12,8">
+                  <Border.Style>
+                    <Style TargetType="Border">
+                      <Setter Property="Background" Value="Transparent" />
+                      <Style.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                          <Setter Property="Background" Value="{DynamicResource Brush.BlueFaint}" />
+                        </Trigger>
+                      </Style.Triggers>
+                    </Style>
+                  </Border.Style>
+
+                  <Grid>
+                    <!-- Vista normal (cuando NO está en edición) -->
+                    <Grid>
+                      <Grid.Style>
+                        <Style TargetType="Grid">
+                          <Setter Property="Visibility" Value="Visible" />
+                          <Style.Triggers>
+                            <DataTrigger Binding="{Binding EnEdicion}" Value="True">
+                              <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </Grid.Style>
+
+                      <Grid.ColumnDefinitions>
+                        <!-- Prefijo badge -->
+                        <ColumnDefinition Width="48" />
+                        <!-- Nombre & badge tipo -->
+                        <ColumnDefinition Width="*" MinWidth="180" />
+                        <!-- Materiales count -->
+                        <ColumnDefinition Width="100" />
+                        <!-- Factor sobreventa -->
+                        <ColumnDefinition Width="70" />
+                        <!-- Botones de acción -->
+                        <ColumnDefinition Width="Auto" />
+                      </Grid.ColumnDefinitions>
+
+                      <!-- Badge Prefijo sugerido -->
+                      <Border Grid.Column="0" Background="{DynamicResource Brush.BlueSoft}" CornerRadius="4"
+                              Padding="4,2" HorizontalAlignment="Left" VerticalAlignment="Center"
+                              ToolTip="Prefijo generado automáticamente para códigos libres">
+                        <TextBlock Text="{Binding PrefijoSugerido}" FontFamily="{StaticResource Font.Mono}"
+                                   FontWeight="Bold" FontSize="11" Foreground="{DynamicResource Brush.BlueDark}" />
+                      </Border>
+
+                      <!-- Nombre de la familia y Badge de tipo/origen -->
+                      <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="6,0,0,0">
+                        <TextBlock Text="{Binding Nombre}" FontSize="12.5" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" />
+
+                        <!-- Badge tipo / origen (Creada, Lista de precios, Estándar) -->
+                        <Border CornerRadius="3" Padding="5,1" Margin="8,0,0,0" VerticalAlignment="Center">
+                          <Border.Style>
+                            <Style TargetType="Border">
+                              <Setter Property="Background" Value="{DynamicResource Brush.TrackSoft}" />
+                              <Style.Triggers>
+                                <DataTrigger Binding="{Binding EsPersonalizada}" Value="True">
+                                  <Setter Property="Background" Value="#E8F8F0" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding VieneDeListaPrecios}" Value="True">
+                                  <Setter Property="Background" Value="#FEF3E2" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding EsEstandar}" Value="True">
+                                  <Setter Property="Background" Value="#EBF3FC" />
+                                </DataTrigger>
+                              </Style.Triggers>
+                            </Style>
+                          </Border.Style>
+                          <TextBlock Text="{Binding TipoLabel}" FontSize="9.5" FontWeight="SemiBold">
+                            <TextBlock.Style>
+                              <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
+                                <Style.Triggers>
+                                  <DataTrigger Binding="{Binding EsPersonalizada}" Value="True">
+                                    <Setter Property="Foreground" Value="#0E6251" />
+                                  </DataTrigger>
+                                  <DataTrigger Binding="{Binding VieneDeListaPrecios}" Value="True">
+                                    <Setter Property="Foreground" Value="#B9770E" />
+                                  </DataTrigger>
+                                  <DataTrigger Binding="{Binding EsEstandar}" Value="True">
+                                    <Setter Property="Foreground" Value="{DynamicResource Brush.BlueDark}" />
+                                  </DataTrigger>
+                                </Style.Triggers>
+                              </Style>
+                            </TextBlock.Style>
+                          </TextBlock>
+                        </Border>
+                      </StackPanel>
+
+                      <!-- Conteo de materiales en presupuesto -->
+                      <TextBlock Grid.Column="2" Text="{Binding MaterialesCountLabel}" VerticalAlignment="Center"
+                                 FontSize="11" HorizontalAlignment="Right" Margin="0,0,12,0">
+                        <TextBlock.Style>
+                          <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.Ink4}" />
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding EnUso}" Value="True">
+                                <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}" />
+                                <Setter Property="FontWeight" Value="SemiBold" />
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </TextBlock.Style>
+                      </TextBlock>
+
+                      <!-- Factor sobreventa efectivo -->
+                      <Border Grid.Column="3" Background="{DynamicResource Brush.Surface2}" CornerRadius="4"
+                              Padding="6,2" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,0"
+                              ToolTip="Factor de presentación/sobreventa efectivo en Costos">
+                        <TextBlock Text="{Binding FactorMarkupEfectivoLabel}" FontFamily="{StaticResource Font.Mono}"
+                                   FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink2}" />
+                      </Border>
+
+                      <!-- Botones de Acción (Renombrar / Eliminar) -->
+                      <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Content="Renombrar" Style="{StaticResource Button.Secondary}"
+                                Height="26" Padding="8,0" FontSize="10.5" Margin="0,0,5,0"
+                                Command="{Binding DataContext.IniciarEdicionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                CommandParameter="{Binding}"
+                                ToolTip="Modificar el nombre de esta familia y actualizar los materiales que la usan" />
+
+                        <Button Content="Eliminar" Style="{StaticResource Button.Ghost}"
+                                Height="26" Padding="8,0" FontSize="10.5"
+                                Command="{Binding DataContext.EliminarFamiliaCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                CommandParameter="{Binding}"
+                                ToolTip="Eliminar o deshabilitar esta familia del proyecto" />
+                      </StackPanel>
+                    </Grid>
+
+                    <!-- Vista en edición (cuando el usuario hace clic en Renombrar) -->
+                    <Grid>
+                      <Grid.Style>
+                        <Style TargetType="Grid">
+                          <Setter Property="Visibility" Value="Collapsed" />
+                          <Style.Triggers>
+                            <DataTrigger Binding="{Binding EnEdicion}" Value="True">
+                              <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </Grid.Style>
+
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="8" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="5" />
+                        <ColumnDefinition Width="Auto" />
+                      </Grid.ColumnDefinitions>
+
+                      <TextBox Grid.Column="0" Style="{StaticResource Form.TextBox}" Height="28" Padding="6,2"
+                               Text="{Binding NombreEditado, UpdateSourceTrigger=PropertyChanged}" />
+
+                      <Button Grid.Column="2" Content="Guardar" Style="{StaticResource Button.Primary}"
+                              Height="26" Padding="10,0" FontSize="10.5"
+                              Command="{Binding DataContext.GuardarEdicionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                              CommandParameter="{Binding}" />
+
+                      <Button Grid.Column="4" Content="Cancelar" Style="{StaticResource Button.Ghost}"
+                              Height="26" Padding="8,0" FontSize="10.5"
+                              Command="{Binding DataContext.CancelarEdicionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                              CommandParameter="{Binding}" />
+                    </Grid>
+
+                  </Grid>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+      </Border>
+
+      <!-- Pie de diálogo -->
+      <Grid Grid.Row="4" Margin="0,12,0,0">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <TextBlock Grid.Column="0" FontSize="10.5" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center"
+                   Text="Los cambios se aplican de inmediato en este presupuesto." />
+
+        <Button Grid.Column="1" Content="Cerrar" Style="{StaticResource Button.Primary}"
+                Height="32" Padding="20,0" Click="OnCerrarClick" />
+      </Grid>
+    </Grid>
+  </Border>
+</Window>

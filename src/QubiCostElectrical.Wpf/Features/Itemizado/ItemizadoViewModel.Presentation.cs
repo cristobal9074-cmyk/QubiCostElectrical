@@ -114,7 +114,7 @@ public sealed partial class ItemizadoViewModel
         {
             if (e.Kind == ProjectSessionChangeKind.ProjectInfo)
                 SyncCurrencyFromProject();
-            RefreshPresentation(includeCosts: false);
+            RefreshAfterStructureChange();
         }
     }
 
@@ -277,12 +277,12 @@ public sealed partial class ItemizadoViewModel
 
     private void RefreshAfterStructureChange()
     {
-        if (ShowEmptyState)
-            return;
-
+        if (ShowEmptyState) return;
         SyncRowModels();
         ReorderRowsFromSession();
         RefreshPresentation(includeCosts: true);
+        SafeRefreshView();
+        UpdateFilterCounts();
         ShowEmptyItemizado = session.Itemizado.Count == 0;
         RestoreSelection();
         RaiseCommandStates();
@@ -290,12 +290,8 @@ public sealed partial class ItemizadoViewModel
 
     private void RefreshPresentation(bool includeCosts = true)
     {
-        if (ShowEmptyState)
-            return;
-        var state = workspace.BuildPageState(
-            presenter,
-            session,
-            includeCosts ? null : costTotalsByItem);
+        if (ShowEmptyState) return;
+        var state = workspace.BuildPageState(presenter, session, includeCosts ? null : costTotalsByItem);
         ApplyPresentation(state, includeCosts, refreshView: false);
         UpdateHeader(state);
     }
