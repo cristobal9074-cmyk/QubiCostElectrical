@@ -117,6 +117,13 @@ public sealed partial class CubicacionRowVm : ViewModelBase, IGridCellValidation
         set => SetProperty(ref isFormulaPickTarget, value);
     }
 
+    private bool isCantPickTarget;
+    public bool IsCantPickTarget
+    {
+        get => isCantPickTarget;
+        set => SetProperty(ref isCantPickTarget, value);
+    }
+
     // Sectores absolutos (0-299) apuntados al "pickear" referencias entre casillas con las
     // flechas desde otra celda de la partida (ver HandleSectorPick) — puede haber MÁS DE UNO
     // por fila (ej. sumar varias casillas de la MISMA fila, horizontal: F4C1+F4C2+F4C3). A

@@ -413,7 +413,7 @@ public partial class CubicacionView : UserControl
             if (tb == CantHeaderBox || tb.Tag as string == "PartidaCant")
             {
                 CommitCantHeaderBox(tb);
-                CubicacionFormulaPicker.FocusGridCell(ResourceGrid, 0, CantidadColumn);
+                CubicacionFormulaPicker.FocusGridCell(ResourceGrid, 0, CodigoColumn ?? CantidadColumn);
             }
             else if (tb == UnidadHeaderBox || tb.Tag as string == "PartidaUnidad")
             {

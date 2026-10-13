@@ -752,6 +752,17 @@
 
                     <!-- Cantidad -->
                     <DataGridTextColumn x:Name="CantidadColumn" Header="CANT fx" Binding="{Binding CantidadDisplay}" Width="74" MinWidth="66" IsReadOnly="True" HeaderStyle="{StaticResource DataGridColumnHeader.Formula}">
+                        <DataGridTextColumn.CellStyle>
+                            <Style TargetType="DataGridCell" BasedOn="{StaticResource DataGridCell.Excel}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsCantPickTarget}" Value="True">
+                                        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
+                                        <Setter Property="BorderThickness" Value="2" />
+                                        <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGridTextColumn.CellStyle>
                         <DataGridTextColumn.ElementStyle>
                             <Style TargetType="TextBlock">
                                 <Setter Property="HorizontalAlignment" Value="Right" />
@@ -767,6 +778,10 @@
                                     <DataTrigger Binding="{Binding CantidadCellError, Converter={StaticResource StringNotEmptyToBool}}" Value="True">
                                         <Setter Property="Background" Value="{DynamicResource Brush.RedSoft}" />
                                         <Setter Property="ToolTip" Value="{Binding CantidadCellError}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsCantPickTarget}" Value="True">
+                                        <Setter Property="FontWeight" Value="Bold" />
+                                        <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>

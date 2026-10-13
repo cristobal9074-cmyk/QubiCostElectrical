@@ -123,13 +123,13 @@ public class CubicacionFormulaPickerTests
             // 1. Initial Down from "+" -> "+C1"
             CubicacionFormulaPicker.ApplyCantPick(tb, 0, rows, null);
             Assert.Equal("+C1", tb.Text);
-            Assert.True(rows[0].IsFormulaPickTarget);
+            Assert.True(rows[0].IsCantPickTarget);
 
             // 2. Down again -> slides to "+C2"
             CubicacionFormulaPicker.ApplyCantPick(tb, 1, rows, null);
             Assert.Equal("+C2", tb.Text);
-            Assert.False(rows[0].IsFormulaPickTarget);
-            Assert.True(rows[1].IsFormulaPickTarget);
+            Assert.False(rows[0].IsCantPickTarget);
+            Assert.True(rows[1].IsCantPickTarget);
 
             // 3. User types "+" to add another term -> "+C2+"
             tb.Text = "+C2+";
@@ -141,12 +141,12 @@ public class CubicacionFormulaPickerTests
             Assert.True(afterOp);
             CubicacionFormulaPicker.ApplyCantPick(tb, 0, rows, null);
             Assert.Equal("+C2+C1", tb.Text);
-            Assert.True(rows[0].IsFormulaPickTarget);
+            Assert.True(rows[0].IsCantPickTarget);
 
             // 5. Down again slides the second term -> "+C2+C2" then "+C2+C3"
             CubicacionFormulaPicker.ApplyCantPick(tb, 2, rows, null);
             Assert.Equal("+C2+C3", tb.Text);
-            Assert.True(rows[2].IsFormulaPickTarget);
+            Assert.True(rows[2].IsCantPickTarget);
 
             // 6. User types "-" -> "+C2+C3-"
             tb.Text = "+C2+C3-";
@@ -155,11 +155,11 @@ public class CubicacionFormulaPickerTests
             // 7. PickCantCell clicking row 0 -> appends C1 -> "+C2+C3-C1"
             CubicacionFormulaPicker.PickCantCell(tb, 0, rows, null, null);
             Assert.Equal("+C2+C3-C1", tb.Text);
-            Assert.True(rows[0].IsFormulaPickTarget);
+            Assert.True(rows[0].IsCantPickTarget);
 
             // 8. Escape cancels and restores original
             CubicacionFormulaPicker.CancelCantPick(tb, rows, null);
-            Assert.False(rows[0].IsFormulaPickTarget);
+            Assert.False(rows[0].IsCantPickTarget);
             Assert.Equal("+", tb.Text);
         });
     }

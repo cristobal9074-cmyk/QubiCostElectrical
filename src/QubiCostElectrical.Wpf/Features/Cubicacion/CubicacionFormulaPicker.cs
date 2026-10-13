@@ -89,13 +89,11 @@ internal static class CubicacionFormulaPicker
         {
             for (int i = 0; i < rows.Count; i++)
             {
+                if (rows[i].IsCantPickTarget)
+                    rows[i].IsCantPickTarget = false;
                 if (rows[i].IsFormulaPickTarget)
                     rows[i].IsFormulaPickTarget = false;
             }
-        }
-        if (grid != null)
-        {
-            try { grid.SelectedCells.Clear(); } catch { }
         }
         _cantPickIndex = -1;
         _unidadPickIndex = -1;
@@ -200,28 +198,23 @@ internal static class CubicacionFormulaPicker
         UpdateCantGridHighlight(newIndex, rows, grid, col);
     }
 
-    private static void UpdateCantGridHighlight(int index, IReadOnlyList<CubicacionRowVm>? rows, DataGrid? grid, DataGridColumn? col)
+    private static void UpdateCantGridHighlight(int index, IReadOnlyList<CubicacionRowVm>? rows, DataGrid? grid, DataGridColumn? col = null)
     {
-        ClearCantPickHighlight(rows, grid);
+        if (rows != null)
+        {
+            for (int i = 0; i < rows.Count; i++)
+            {
+                if (rows[i].IsCantPickTarget)
+                    rows[i].IsCantPickTarget = false;
+            }
+        }
         _cantPickIndex = index;
         if (rows != null && index >= 0 && index < rows.Count)
         {
             var targetRow = rows[index];
-            targetRow.IsFormulaPickTarget = true;
+            targetRow.IsCantPickTarget = true;
             if (grid != null)
             {
-                var targetCol = col ?? FindColumn(grid, "CANT");
-                if (targetCol != null)
-                {
-                    try
-                    {
-                        grid.SelectedCells.Clear();
-                        var cell = new DataGridCellInfo(targetRow, targetCol);
-                        grid.SelectedCells.Add(cell);
-                        grid.CurrentCell = cell;
-                    }
-                    catch { }
-                }
                 try { grid.ScrollIntoView(targetRow); } catch { }
             }
         }
