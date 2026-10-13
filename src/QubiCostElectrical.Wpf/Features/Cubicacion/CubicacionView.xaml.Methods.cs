@@ -1328,10 +1328,11 @@ public partial class CubicacionView : UserControl
         }
         else
         {
+            var ph = (Style)FindResource("DataGridColumnHeader.PartidaHeader");
             UnidadColumn.HeaderTemplate = (DataTemplate)FindResource("HeaderTemplate.PartidaUnidad");
-            UnidadColumn.Header = null; UnidadColumn.HeaderStyle = null;
+            UnidadColumn.Header = null; UnidadColumn.HeaderStyle = ph;
             CantidadColumn.HeaderTemplate = (DataTemplate)FindResource("HeaderTemplate.PartidaCantidad");
-            CantidadColumn.Header = null; CantidadColumn.HeaderStyle = null;
+            CantidadColumn.Header = null; CantidadColumn.HeaderStyle = ph;
         }
         SetColumnHeader(MaterialPriceColumn, thin, "MAT $", thinStyle);
         SetColumnHeader(LaborPriceColumn, thin, "MO $", thinStyle);

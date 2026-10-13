@@ -16,34 +16,75 @@
     </UserControl.InputBindings>
 
     <UserControl.Resources>
-        <!-- Header editable para UD en modo Casillas (copia exacta de Detalle) -->
+        <!-- Estilo de encabezado integrado para UD y CANT en modo Casillas -->
+        <Style x:Key="DataGridColumnHeader.PartidaHeader" TargetType="DataGridColumnHeader" BasedOn="{StaticResource DataGridColumnHeader.Prototype}">
+            <Setter Property="Padding" Value="4,3" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Stretch" />
+        </Style>
+
+        <!-- Header editable para UD en modo Casillas: título limpio "UD" + caja de edición integrada -->
         <DataTemplate x:Key="HeaderTemplate.PartidaUnidad">
-            <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="1"
-                    CornerRadius="2" Padding="1,2" Margin="-10,-8" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-                    ToolTip="Unidad de la partida (editable · Enter para guardar)">
-                <TextBox Text="{Binding DataContext.PartidaUnidadText, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}"
-                         FontFamily="{StaticResource Font.Ui}" FontSize="11" FontWeight="Bold"
-                         HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                         Padding="0" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource Brush.Ink}"
-                         GotFocus="OnPartidaFieldGotFocus" PreviewKeyDown="OnPartidaFieldPreviewKeyDown"
-                         PreviewMouseLeftButtonDown="OnHeaderTextBoxPreviewMouseLeftButtonDown" />
-            </Border>
+            <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <TextBlock Grid.Row="0" Text="UD"
+                           FontSize="9" FontWeight="Bold"
+                           Foreground="{DynamicResource Brush.Muted}"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,2" />
+                <Border Grid.Row="1"
+                        Background="{DynamicResource Brush.Surface}"
+                        BorderBrush="{DynamicResource Brush.Line}"
+                        BorderThickness="1"
+                        CornerRadius="3"
+                        MinHeight="20"
+                        VerticalAlignment="Center"
+                        ToolTip="Unidad de la partida (editable · Enter para guardar)">
+                    <TextBox Text="{Binding DataContext.PartidaUnidadText, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}"
+                             FontFamily="{StaticResource Font.Ui}" FontSize="11" FontWeight="Bold"
+                             HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                             Padding="2,0" BorderThickness="0" Background="Transparent"
+                             Foreground="{DynamicResource Brush.Ink}"
+                             GotFocus="OnPartidaFieldGotFocus" PreviewKeyDown="OnPartidaFieldPreviewKeyDown"
+                             PreviewMouseLeftButtonDown="OnHeaderTextBoxPreviewMouseLeftButtonDown" />
+                </Border>
+            </Grid>
         </DataTemplate>
 
-        <!-- Header editable para CANT en modo Casillas (copia exacta de Detalle) -->
+        <!-- Header editable para CANT en modo Casillas: título limpio "CANT" + caja de edición con badge verde de fórmula -->
         <DataTemplate x:Key="HeaderTemplate.PartidaCantidad">
-            <Border Background="{DynamicResource Brush.SuccessBg}" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="1"
-                    CornerRadius="2" Padding="1,2" Margin="-8,-8" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-                    ToolTip="Cantidad oficial de la partida (editable o fórmula R1+R2... · Enter para guardar)">
-                <TextBox Tag="PartidaCant"
-                         Text="{Binding DataContext.PartidaCantidadText, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=LostFocus}"
-                         FontFamily="{StaticResource Font.Mono}" FontSize="12" FontWeight="Bold"
-                         HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                         Padding="0" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource Brush.Success}"
-                         GotFocus="OnCantHeaderBoxGotFocus" LostFocus="OnCantHeaderBoxLostFocus"
-                         PreviewKeyDown="OnCantHeaderBoxPreviewKeyDown"
-                         PreviewMouseLeftButtonDown="OnHeaderTextBoxPreviewMouseLeftButtonDown" />
-            </Border>
+            <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <TextBlock Grid.Row="0" Text="CANT"
+                           FontSize="9" FontWeight="Bold"
+                           Foreground="{DynamicResource Brush.Muted}"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,2" />
+                <Border Grid.Row="1"
+                        Background="{DynamicResource Brush.SuccessBg}"
+                        BorderBrush="{DynamicResource Brush.SuccessBorder}"
+                        BorderThickness="1"
+                        CornerRadius="3"
+                        MinHeight="20"
+                        VerticalAlignment="Center"
+                        ToolTip="Cantidad oficial de la partida (editable o fórmula R1+R2... · Enter para guardar)">
+                    <TextBox Tag="PartidaCant"
+                             Text="{Binding DataContext.PartidaCantidadText, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=LostFocus}"
+                             FontFamily="{StaticResource Font.Mono}" FontSize="11" FontWeight="Bold"
+                             HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                             Padding="2,0" BorderThickness="0" Background="Transparent"
+                             Foreground="{DynamicResource Brush.Success}"
+                             GotFocus="OnCantHeaderBoxGotFocus" LostFocus="OnCantHeaderBoxLostFocus"
+                             PreviewKeyDown="OnCantHeaderBoxPreviewKeyDown"
+                             PreviewMouseLeftButtonDown="OnHeaderTextBoxPreviewMouseLeftButtonDown" />
+                </Border>
+            </Grid>
         </DataTemplate>
     </UserControl.Resources>
 
@@ -652,7 +693,7 @@
                del DataGrid se ocultan y la unidad de la PARTIDA (editable) vive en la fila de
                partida de arriba. -->
                     <DataGridTextColumn x:Name="UnidadColumn" Header="UD" Binding="{Binding Unidad, UpdateSourceTrigger=LostFocus}"
-                              Width="38">
+                              Width="48" MinWidth="42">
                         <DataGridTextColumn.ElementStyle>
                             <Style TargetType="TextBlock">
                                 <Style.Triggers>
@@ -676,7 +717,7 @@
                     </DataGridTextColumn>
 
                     <!-- Cantidad -->
-                    <DataGridTextColumn x:Name="CantidadColumn" Header="CANT fx" Binding="{Binding CantidadDisplay}" Width="62" IsReadOnly="True" HeaderStyle="{StaticResource DataGridColumnHeader.Formula}">
+                    <DataGridTextColumn x:Name="CantidadColumn" Header="CANT fx" Binding="{Binding CantidadDisplay}" Width="74" MinWidth="66" IsReadOnly="True" HeaderStyle="{StaticResource DataGridColumnHeader.Formula}">
                         <DataGridTextColumn.ElementStyle>
                             <Style TargetType="TextBlock">
                                 <Setter Property="HorizontalAlignment" Value="Right" />
