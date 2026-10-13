@@ -121,7 +121,7 @@ internal static class CubicacionFormulaPicker
         }
     }
 
-    private static readonly System.Text.RegularExpressions.Regex UnidadRefRegex = new(@"^[\+=]?[CcRrFf](?<idx>\d+)$", System.Text.RegularExpressions.RegexOptions.Compiled);
+    private static readonly System.Text.RegularExpressions.Regex UnidadRefRegex = new(@"^[\+=]?[UuCcRrFf](?<idx>\d+)$", System.Text.RegularExpressions.RegexOptions.Compiled);
 
     public static int GetCurrentUnidadIndex(TextBox? tb)
     {
@@ -129,7 +129,7 @@ internal static class CubicacionFormulaPicker
             return _unidadPickIndex;
         if (tb == null) return -1;
         string text = (tb.Text ?? "").Trim();
-        var m = System.Text.RegularExpressions.Regex.Match(text, @"[CcRrFf](?<idx>\d+)");
+        var m = System.Text.RegularExpressions.Regex.Match(text, @"[UuCcRrFf](?<idx>\d+)");
         if (m.Success && int.TryParse(m.Groups["idx"].Value, out int idx))
             return idx - 1;
         return -1;
@@ -152,7 +152,7 @@ internal static class CubicacionFormulaPicker
         ClearCantPickHighlight(rows);
 
         _unidadPickIndex = newIndex;
-        string token = $"+F{newIndex + 1}";
+        string token = $"+U{newIndex + 1}";
         box.Text = token;
         box.SelectAll();
 

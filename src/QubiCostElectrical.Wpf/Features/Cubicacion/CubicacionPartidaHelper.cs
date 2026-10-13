@@ -11,7 +11,7 @@ namespace QubiCostElectrical.Wpf.Features.Cubicacion;
 /// </summary>
 internal static class CubicacionPartidaHelper
 {
-    private static readonly Regex UnidadRefRegex = new(@"^[\+=]?[CcRrFf](?<idx>\d+)$", RegexOptions.Compiled);
+    private static readonly Regex UnidadRefRegex = new(@"^[\+=]?[UuCcRrFf](?<idx>\d+)$", RegexOptions.Compiled);
 
     public static string ResolveUnidadReference(string input, IReadOnlyList<CubicacionRowVm>? rows)
     {
