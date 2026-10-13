@@ -196,7 +196,7 @@ public sealed partial class EppViewModel : SessionAwareViewModelBase, IRefreshab
     public string TotalAccOpcionalesLabel => $"$ {TotalAccOpcionales:N0}";
     public string GranTotalLabel => TotalEppLabel;
     public decimal TotalEppUf => PriceConversion.ClpToUf(TotalEpp, session.ValorUfClp > 0m ? session.ValorUfClp : PriceConversion.DefaultValorUfClp);
-    public string TotalEppUfLabel => $"{TotalEppUf:N2} UF";
+    public string TotalEppUfLabel => $"{TotalEppUf:N3} UF";
 
     // Política de moneda: en CLP el gran total no expone equivalencia en UF (solo pesos).
     private bool MuestraUf =>

@@ -60,13 +60,13 @@ public sealed partial class DashboardViewModel
                 case UfUpdateStatus.SinCambios:
                     UfUpdateLabel = $"UF al día · $ {outcome.ValorClp:N0}";
                     ModuleFeedback.NotifySuccess("UF al día",
-                        $"La UF del proyecto ya corresponde al {outcome.Fecha:dd/MM/yyyy}: $ {outcome.ValorClp:N2}.");
+                        $"La UF del proyecto ya corresponde al {outcome.Fecha:dd/MM/yyyy}: $ {outcome.ValorClp:N0}.");
                     break;
 
                 default:
                     UfUpdateLabel = $"UF al día · $ {outcome.ValorClp:N0}";
                     ModuleFeedback.NotifySuccess("UF actualizada",
-                        $"1 UF = $ {outcome.ValorClp:N2} · vigente al {outcome.Fecha:dd/MM/yyyy}.");
+                        $"1 UF = $ {outcome.ValorClp:N0} · vigente al {outcome.Fecha:dd/MM/yyyy}.");
                     Refresh();
                     break;
             }

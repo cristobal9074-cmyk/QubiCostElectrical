@@ -724,8 +724,8 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
             }
             else
             {
-                TickerCostoDirecto = $"{PriceConversion.ClpToUf(cost.CostoDirectoClp, valorUf):N0} UF";
-                TickerTotalOfertaUf = $"{PriceConversion.ClpToUf(cost.TotalVentaClp, valorUf):N0} UF";
+                TickerCostoDirecto = $"{PriceConversion.ClpToUf(cost.CostoDirectoClp, valorUf):N3} UF";
+                TickerTotalOfertaUf = $"{PriceConversion.ClpToUf(cost.TotalVentaClp, valorUf):N3} UF";
                 TickerTotalOfertaClp = $"(${cost.TotalVentaClp:N0})";
             }
         }

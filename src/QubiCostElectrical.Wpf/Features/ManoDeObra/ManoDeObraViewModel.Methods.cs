@@ -81,7 +81,7 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
     private string Fmt(decimal n)
     {
         if (viewInUf)
-            return (n / valorUf).ToString("N2", CultureInfo.GetCultureInfo("es-CL")) + " UF";
+            return (n / valorUf).ToString("N3", CultureInfo.GetCultureInfo("es-CL")) + " UF";
         return "$ " + Math.Round(n).ToString("N0", CultureInfo.GetCultureInfo("es-CL"));
     }
 
@@ -89,7 +89,7 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
         => "$ " + Math.Round(n).ToString("N0", CultureInfo.GetCultureInfo("es-CL"));
 
     private string FmtUf(decimal n, decimal vUf)
-        => (n / vUf).ToString("N2", CultureInfo.GetCultureInfo("es-CL")) + " UF";
+        => (n / vUf).ToString("N3", CultureInfo.GetCultureInfo("es-CL")) + " UF";
 
     private readonly List<MoProjectionTaskVm> projectionTasks = new();
 

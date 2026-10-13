@@ -22,7 +22,7 @@ public static class EstadoPagoFormat
         _ => ("Pendiente", "Muted")
     };
 
-    public static string Uf(decimal valor) => $"{valor:N2} UF";
+    public static string Uf(decimal valor) => $"{valor:N3} UF";
 
     /// <summary>Monto en pesos chilenos (proyectos con MonedaPresupuesto = CLP).</summary>
     public static string Clp(decimal valor) =>

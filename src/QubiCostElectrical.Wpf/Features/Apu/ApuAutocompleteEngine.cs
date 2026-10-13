@@ -46,7 +46,7 @@ public sealed class ApuAutocompleteSuggestionVm
 
     public bool HasProveedor => !string.IsNullOrWhiteSpace(Proveedor);
     public string MatClpDisplay => MatClp > 0m ? $"$ {MatClp:N0}" : (MatUf > 0m ? "—" : "$ 0");
-    public string MatUfDisplay => MatUf > 0m ? $"{MatUf:N4} UF" : "0.0000 UF";
+    public string MatUfDisplay => $"{MatUf:N3} UF";
 }
 
 public sealed class ApuAutocompleteEngine

@@ -343,7 +343,7 @@ public sealed class ItemizadoRowVm : ViewModelBase, IGridCellValidationSource
         {
             if (TotalUf <= 0m) return "—";
             if (currencyContext == null)
-                return TotalUf.ToString("N2", CultureInfo.CurrentCulture);
+                return TotalUf.ToString("N3", CultureInfo.CurrentCulture);
             return ItemizadoCurrencyCoordinator.FormatTotalPair(TotalUf, currencyContext);
         }
     }
@@ -420,7 +420,7 @@ public sealed class ItemizadoRowVm : ViewModelBase, IGridCellValidationSource
         {
             if (TotalUf <= 0m) return "";
             if (currencyContext == null)
-                return $"{TotalUf:N2} UF";
+                return $"{TotalUf:N3} UF";
             return ItemizadoCurrencyCoordinator.FormatTotalPair(TotalUf, currencyContext);
         }
     }

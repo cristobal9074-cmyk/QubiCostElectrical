@@ -262,8 +262,8 @@ public sealed partial class ProjectViewModel : ViewModelBase, IPageWithPendingCh
     public decimal MarkupRatio => (1 + (snapshot.GastosGeneralesPct / 100m)) * (1 + (snapshot.UtilidadPct / 100m));
     public string MarkupRatioText => $"{MarkupRatio:N3}x";
     public string MarkupSubtext => $"(GG {snapshot.GastosGeneralesPct:N1}% × Utilidad {snapshot.UtilidadPct:N1}%)";
-    public string ValorUfClpDisplay => snapshot.ValorUfClp > 0 ? $"${snapshot.ValorUfClp.ToString("N2", MoneyCulture)} CLP" : "No asignado";
-    public string ValorUfClpShort => snapshot.ValorUfClp > 0 ? $"${snapshot.ValorUfClp.ToString("N2", MoneyCulture)}" : "—";
+    public string ValorUfClpDisplay => snapshot.ValorUfClp > 0 ? $"${snapshot.ValorUfClp.ToString("N0", MoneyCulture)} CLP" : "No asignado";
+    public string ValorUfClpShort => snapshot.ValorUfClp > 0 ? $"${snapshot.ValorUfClp.ToString("N0", MoneyCulture)}" : "—";
     public string RatioM2Subtext => snapshot.MetrosCuadrados > 0
         ? $"Superficie: {snapshot.MetrosCuadrados.ToString("N0", MoneyCulture)} m²"
         : "Superficie no definida";

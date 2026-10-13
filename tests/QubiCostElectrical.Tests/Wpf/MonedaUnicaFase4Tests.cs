@@ -99,7 +99,7 @@ public sealed class MonedaUnicaFase4Tests
     {
         string text = EstadoPagoFormat.Uf(1.234m);
 
-        Assert.Equal($"{(1.234m).ToString("N2", CultureInfo.CurrentCulture)} UF", text);
+        Assert.Equal($"{(1.234m).ToString("N3", CultureInfo.CurrentCulture)} UF", text);
         Assert.EndsWith("UF", text);
     }
 }

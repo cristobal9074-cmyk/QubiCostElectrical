@@ -411,7 +411,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
                         {
                             decimal clpM2 = totalVentaClp / project.MetrosCuadrados;
                             decimal ufM2 = PriceConversion.ClpToUf(clpM2, valorUf);
-                            val = isClpPref ? $"$ {clpM2:N0} / m²" : $"{ufM2:N2} UF / m²";
+                            val = isClpPref ? $"$ {clpM2:N0} / m²" : $"{ufM2:N3} UF / m²";
                             cap = isClpPref ? "Total venta / m²" : $"$ {clpM2:N0} CLP/m² · Superficie";
                         }
                         else
@@ -500,7 +500,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
                 CostUfM2 = project.MetrosCuadrados > 0
                     ? enClpResumen
                         ? $"$ {totalVentaClp / project.MetrosCuadrados:N0}/m²"
-                        : $"{PriceConversion.ClpToUf(totalVentaClp / project.MetrosCuadrados, valorUf):N2} UF/m² · $ {(totalVentaClp / project.MetrosCuadrados):N0}/m²"
+                        : $"{PriceConversion.ClpToUf(totalVentaClp / project.MetrosCuadrados, valorUf):N3} UF/m² · $ {(totalVentaClp / project.MetrosCuadrados):N0}/m²"
                     : "Configure m² en datos del proyecto";
                 UpdateCostDistribution(state.Cost.TotalVentaUf, state.Cost.MaterialesUf, state.Cost.ManoObraUf, state.Cost.GastosOperacionalesUf, marginClp);
 
@@ -524,7 +524,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
                         Partida = row.Partida,
                         TotalLabel = FormatDual(rowClp),
                         TotalClpLabel = FormatClp(rowClp),
-                        TotalUfLabel = $"{rowUf:N2} UF",
+                        TotalUfLabel = $"{rowUf:N3} UF",
                         SharePct = Math.Clamp(sharePct, 0, 100),
                         AccumPct = Math.Clamp(runningAccum, 0, 100),
                         Category = category

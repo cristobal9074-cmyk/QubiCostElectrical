@@ -95,7 +95,7 @@ public static class ProjectFichaExporter
                         table.Cell().Background("#F9FAFB").Padding(4).Text("Moneda Base").FontSize(8);
                         table.Cell().Background("#F9FAFB").Padding(4).Text(snapshot.MonedaPresupuesto).FontSize(8).Bold();
                         table.Cell().Background("#F9FAFB").Padding(4).Text("Valor UF (CLP)").FontSize(8);
-                        table.Cell().Background("#F9FAFB").Padding(4).Text(snapshot.ValorUfClp.ToString("N2")).FontSize(8).Bold();
+                        table.Cell().Background("#F9FAFB").Padding(4).Text(snapshot.ValorUfClp.ToString("N0")).FontSize(8).Bold();
 
                         table.Cell().Padding(4).Text("Gastos Generales (GG)").FontSize(8);
                         table.Cell().Padding(4).Text(snapshot.GastosGeneralesPct.ToString("F1") + "%").FontSize(8).Bold();
@@ -110,7 +110,7 @@ public static class ProjectFichaExporter
                         table.Cell().Padding(4).Text("Superficie Obra").FontSize(8);
                         table.Cell().Padding(4).Text(snapshot.MetrosCuadrados.ToString("N2") + " m²").FontSize(8).Bold();
                         table.Cell().Padding(4).Text("Cambio USD (CLP)").FontSize(8);
-                        table.Cell().Padding(4).Text(snapshot.TipoCambioUsdClp.ToString("N2")).FontSize(8).Bold();
+                        table.Cell().Padding(4).Text(snapshot.TipoCambioUsdClp.ToString("N0")).FontSize(8).Bold();
                     });
 
                     // 4. Coeficientes de Sobreventa (Markups)

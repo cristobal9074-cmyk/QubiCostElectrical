@@ -817,7 +817,7 @@
                             <StackPanel>
                                 <TextBlock Style="{StaticResource Text.TotalsLabel}" Text="MATERIALES" Margin="0,0,0,4" />
                                 <TextBlock Style="{StaticResource Text.TotalsValue}" Text="{Binding TotalMateriales, StringFormat='$ {0:N0}'}" FontWeight="SemiBold" />
-                                <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding TotalMaterialesUf, StringFormat='{}{0:N2} UF'}" Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Center" Margin="0,2,0,0"
+                                <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding TotalMaterialesUf, StringFormat='{}{0:N3} UF'}" Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Center" Margin="0,2,0,0"
                                            Visibility="{Binding MuestraUf, Converter={StaticResource BoolToVisibility}}" />
                             </StackPanel>
                         </Border>
@@ -827,7 +827,7 @@
                             <StackPanel>
                                 <TextBlock Style="{StaticResource Text.TotalsLabel}" Text="MANO DE OBRA" Margin="0,0,0,4" />
                                 <TextBlock Style="{StaticResource Text.TotalsValue}" Text="{Binding TotalManoObra, StringFormat='$ {0:N0}'}" FontWeight="SemiBold" />
-                                <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding TotalManoObraUf, StringFormat='{}{0:N2} UF'}" Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Center" Margin="0,2,0,0"
+                                <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding TotalManoObraUf, StringFormat='{}{0:N3} UF'}" Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Center" Margin="0,2,0,0"
                                            Visibility="{Binding MuestraUf, Converter={StaticResource BoolToVisibility}}" />
                             </StackPanel>
                         </Border>
@@ -836,7 +836,7 @@
                             <StackPanel>
                                 <TextBlock Style="{StaticResource Text.TotalsLabel}" Text="COSTO DIRECTO" Margin="0,0,0,4" />
                                 <TextBlock Style="{StaticResource Text.TotalsValue}" Text="{Binding TotalCostoDirecto, StringFormat='$ {0:N0}'}" Foreground="{DynamicResource Brush.Blue}" FontWeight="SemiBold" />
-                                <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding TotalCostoDirectoUf, StringFormat='{}{0:N2} UF'}" Foreground="{DynamicResource Brush.Blue}" HorizontalAlignment="Center" Margin="0,2,0,0"
+                                <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding TotalCostoDirectoUf, StringFormat='{}{0:N3} UF'}" Foreground="{DynamicResource Brush.Blue}" HorizontalAlignment="Center" Margin="0,2,0,0"
                                            Visibility="{Binding MuestraUf, Converter={StaticResource BoolToVisibility}}" />
                             </StackPanel>
                         </Border>
@@ -845,7 +845,7 @@
                             <StackPanel>
                                 <TextBlock Style="{StaticResource Text.TotalsLabel}" Text="COSTO DIR. UNIT." Margin="0,0,0,4" />
                                 <TextBlock Style="{StaticResource Text.TotalsValue}" Text="{Binding PrecioUnitario, StringFormat='$ {0:N0}'}" FontWeight="SemiBold" />
-                                <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding PrecioUnitarioUf, StringFormat='{}{0:N2} UF'}" Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Center" Margin="0,2,0,0"
+                                <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding PrecioUnitarioUf, StringFormat='{}{0:N3} UF'}" Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Center" Margin="0,2,0,0"
                                            Visibility="{Binding MuestraUf, Converter={StaticResource BoolToVisibility}}" />
                             </StackPanel>
                         </Border>
@@ -856,7 +856,7 @@
                                 <TextBlock Style="{StaticResource Text.TotalsValue}" FontSize="14" FontWeight="Bold"
                             Foreground="{DynamicResource Brush.Ink}"
                             Text="{Binding TotalPartida, StringFormat='$ {0:N0}'}" />
-                                <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding TotalPartidaUf, StringFormat='{}{0:N2} UF'}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Blue}" HorizontalAlignment="Center" Margin="0,2,0,0"
+                                <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding TotalPartidaUf, StringFormat='{}{0:N3} UF'}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Blue}" HorizontalAlignment="Center" Margin="0,2,0,0"
                                            Visibility="{Binding MuestraUf, Converter={StaticResource BoolToVisibility}}" />
                             </StackPanel>
                         </Border>

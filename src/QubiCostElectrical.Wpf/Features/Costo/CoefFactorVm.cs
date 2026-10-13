@@ -92,8 +92,8 @@ public sealed class CoefFactorVm : ViewModelBase
 
     public void SetPresentation(decimal costoUf, decimal ventaUf, double shareOfCost, string? costoLabel = null, string? ventaLabel = null)
     {
-        CostoUfLabel = costoLabel ?? (costoUf > 0m ? costoUf.ToString("N2", CultureInfo.CurrentCulture) : "—");
-        VentaUfLabel = ventaLabel ?? (costoUf > 0m ? ventaUf.ToString("N2", CultureInfo.CurrentCulture) : "—");
+        CostoUfLabel = costoLabel ?? (costoUf > 0m ? costoUf.ToString("N3", CultureInfo.CurrentCulture) : "—");
+        VentaUfLabel = ventaLabel ?? (costoUf > 0m ? ventaUf.ToString("N3", CultureInfo.CurrentCulture) : "—");
         Share = shareOfCost;
     }
 

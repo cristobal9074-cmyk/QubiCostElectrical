@@ -346,7 +346,7 @@ public sealed partial class ViaticosProfesionalViewModel : ViewModelBase
         KpiOtros = Fmt(totOtros);
         KpiTotal = Fmt(total);
         FootTotalLabel = Fmt(total);
-        FootUfLabel = muestraEquivalenciaUf ? $"{total / uf:N2} UF" : "";
+        FootUfLabel = muestraEquivalenciaUf ? $"{total / uf:N3} UF" : "";
 
         OnPropertyChanged(nameof(MealDesLabel));
         OnPropertyChanged(nameof(MealAlmLabel));

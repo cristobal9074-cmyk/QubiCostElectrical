@@ -20,7 +20,7 @@ public sealed class ItemizadoTotalsCoordinatorTests
 
         Assert.Equal(0m, snapshot.TotalBudgetUf);
         Assert.Equal(0m, snapshot.TotalBudgetClp);
-        Assert.Equal("0,00 UF", snapshot.TotalBudgetUfText);
+        Assert.Equal("0,000 UF", snapshot.TotalBudgetUfText);
         Assert.Equal("$ 0", snapshot.TotalBudgetClpText);
         Assert.Equal(0, snapshot.TotalPartidasCount);
         Assert.Equal(0, snapshot.VisiblePartidasCount);
@@ -97,7 +97,7 @@ public sealed class ItemizadoTotalsCoordinatorTests
 
         Assert.Equal(75m, snapshot.TotalBudgetUf);
         Assert.Equal(3_000_000m, snapshot.TotalBudgetClp);
-        Assert.Equal("75,00 UF", snapshot.TotalBudgetUfText);
+        Assert.Equal("75,000 UF", snapshot.TotalBudgetUfText);
         Assert.Equal("$ 3.000.000", snapshot.TotalBudgetClpText);
         Assert.Equal(2, snapshot.TotalPartidasCount);
         Assert.Equal(2, snapshot.VisiblePartidasCount);

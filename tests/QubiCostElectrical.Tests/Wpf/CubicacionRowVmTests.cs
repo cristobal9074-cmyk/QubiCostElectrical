@@ -194,11 +194,12 @@ public sealed class CubicacionRowVmTests
     }
 
     [Fact]
-    public void UfTotalDisplay_FormatsWithFourDecimals()
+    public void UfTotalDisplay_FormatsWithThreeDecimals()
     {
         var vm = Make(new CubicacionRow { Cantidad = 2m, MatUf = 1.23456m, MoUf = 0m });
 
-        Assert.Equal("2,4691", vm.UfTotalDisplay);
+        // Política monetaria: la UF se muestra con 3 decimales.
+        Assert.Equal("2,469", vm.UfTotalDisplay);
     }
 
     [Fact]

@@ -328,7 +328,7 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
         StatusMessage = rows.Count == 0
             ? "No hay recursos comprables en la cubicación actual."
             : MuestraUf
-                ? $"Lista consolidada: {totalNeto:N2} UF ($ {totalNetoClp:N0}) neto · {totalCompra:N2} UF ($ {totalCompraClp:N0}) compra."
+                ? $"Lista consolidada: {totalNeto:N3} UF ($ {totalNetoClp:N0}) neto · {totalCompra:N3} UF ($ {totalCompraClp:N0}) compra."
                 : $"Lista consolidada: $ {totalNetoClp:N0} neto · $ {totalCompraClp:N0} compra.";
         exportExcelCommand.RaiseCanExecuteChanged();
         exportRfqCommand.RaiseCanExecuteChanged();

@@ -200,8 +200,8 @@ public sealed class CommandPaletteEngine
                             : (!string.IsNullOrWhiteSpace(rec.Descripcion) ? rec.Descripcion : (rec.CodigoMaterial ?? "Insumo APU"));
 
                         var priceStr = rec.PrecioBaseUf > 0
-                            ? $" · {rec.PrecioBaseUf:N2} UF / {rec.Unidad}"
-                            : (rec.PrecioUf > 0 ? $" · {rec.PrecioUf:N2} UF / {rec.Unidad}" : "");
+                            ? $" · {rec.PrecioBaseUf:N3} UF / {rec.Unidad}"
+                            : (rec.PrecioUf > 0 ? $" · {rec.PrecioUf:N3} UF / {rec.Unidad}" : "");
 
                         results.Add(new CommandPaletteItemVm(
                             title,

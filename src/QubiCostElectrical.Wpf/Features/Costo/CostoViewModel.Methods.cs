@@ -1549,7 +1549,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         ValorUfDiaLabel = valorUf.ToString("N0", CultureInfo.CurrentCulture);
         UfM2Label = enClp
             ? $"$ {m2Clp:N0}/m²"
-            : $"{PriceConversion.ClpToUf(m2Clp, valorUf):N2} UF/m²";
+            : $"{PriceConversion.ClpToUf(m2Clp, valorUf):N3} UF/m²";
         UfM2SubLabel = project.MetrosCuadrados > 0
             ? (enClp ? "Total venta / m²" : $"$ {m2Clp:N0}/m²")
             : "Sin m²";

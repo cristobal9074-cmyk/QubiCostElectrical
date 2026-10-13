@@ -182,7 +182,7 @@ public sealed class CurrencyViewModel : ViewModelBase, IPageWithPendingChanges, 
     // ─── Presentación calculada ─────────────────────────────────────────────
 
     public string ResumenClp => ValorUfClp > 0
-        ? $"1 UF = $ {ValorUfClp:N2} CLP"
+        ? $"1 UF = $ {ValorUfClp:N0} CLP"
         : "Sin tasa UF configurada";
 
     public string ResumenUsd => TipoCambioUsdClp > 0
@@ -223,7 +223,7 @@ public sealed class CurrencyViewModel : ViewModelBase, IPageWithPendingChanges, 
         HasValidCache = cache != null && !CacheStale && cache.UfClp > 0;
         CachedUfValue = cache?.UfClp ?? 0;
         CachedUsdValue = cache?.UsdClp ?? 0;
-        CachedUfPrompt = HasValidCache ? $"Cargar valor sugerido del Banco Central ($ {CachedUfValue:N2})" : "";
+        CachedUfPrompt = HasValidCache ? $"Cargar valor sugerido del Banco Central ($ {CachedUfValue:N0})" : "";
 
         RefreshHistorial(info);
     }
@@ -353,7 +353,7 @@ public sealed record CurrencyHistoryEntry(
     bool Activa)
 {
     public string FechaDisplay => Fecha.ToString("dd/MM/yyyy");
-    public string UfDisplay => $"$ {UfClp:N2}";
+    public string UfDisplay => $"$ {UfClp:N0}";
     public string UsdDisplay => $"$ {UsdClp:N0}";
     public string EstadoDisplay => Activa ? "Activa" : "Histórica";
 }

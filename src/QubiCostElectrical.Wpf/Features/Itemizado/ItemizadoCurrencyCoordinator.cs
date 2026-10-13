@@ -103,7 +103,7 @@ public static class ItemizadoCurrencyCoordinator
     /// Regla de producto: en CLP se muestra solo pesos (sin UF); en UF/USD/EUR se agrega el CLP.
     /// </summary>
     public static string FormatTotalPair(decimal totalUf, CurrencyPresentationContext ctx)
-        => FormatPair(totalUf, ctx, isUnitPrice: false, decimals: 2);
+        => FormatPair(totalUf, ctx, isUnitPrice: false, decimals: 3);
 
     private static string FormatPair(decimal amountUf, CurrencyPresentationContext ctx, bool isUnitPrice, int decimals)
     {

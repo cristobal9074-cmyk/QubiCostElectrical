@@ -102,7 +102,7 @@ public static class ItemizadoTotalsCoordinator
             Moneda.CLP => ($"$ {clpAmount:N0}", ""),
             Moneda.USD => ($"US$ {deliveryAmount:N2}", $"$ {clpAmount:N0}"),
             Moneda.EUR => ($"€ {deliveryAmount:N2}", $"$ {clpAmount:N0}"),
-            _ => ($"{deliveryAmount:N2} UF", $"$ {clpAmount:N0}")
+            _ => ($"{deliveryAmount:N3} UF", $"$ {clpAmount:N0}")
         };
     }
 }

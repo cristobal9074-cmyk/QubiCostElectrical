@@ -534,7 +534,7 @@ public sealed partial class CubicacionRowVm : ViewModelBase, IGridCellValidation
     internal static string FormatDecimal(decimal v)
         => Math.Round(v, MidpointRounding.AwayFromZero).ToString("N0", CultureInfo.CurrentCulture);
 
-    private static string FormatUf(decimal v) => v.ToString("N4", CultureInfo.CurrentCulture);
+    private static string FormatUf(decimal v) => v.ToString("N3", CultureInfo.CurrentCulture);
     private static string FormatClp(decimal v) => v.ToString("N0", CultureInfo.CurrentCulture);
 
     private void PropagatePriceToProjectCatalog()

@@ -125,7 +125,7 @@ public sealed class GastoOpCategoriaVm : ViewModelBase
     }
 
     public string MontoLabel => CurrencyFormat.Clp(MontoClp);
-    public string UfLabel => $"{Uf:N2} UF";
+    public string UfLabel => $"{Uf:N3} UF";
     public string PctLabel => $"{Pct:N1}%";
 
     public void SetValorUf(decimal v)

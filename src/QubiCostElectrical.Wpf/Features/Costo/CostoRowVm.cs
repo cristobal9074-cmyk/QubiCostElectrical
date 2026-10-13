@@ -21,7 +21,7 @@ public sealed class CostoRowVm
     /// <summary>regular | total | subtotal | grand | coef</summary>
     public string Kind { get; init; } = "regular";
 
-    public string ValorUfLabel => $"{ValorUf:N2} UF";
+    public string ValorUfLabel => $"{ValorUf:N3} UF";
     public string UfFigura => $"{ValorUf:N2}";
     /// <summary>Valor primario en la moneda del proyecto (primera columna del análisis financiero).</summary>
     public string CurrencyFigure { get; init; } = "";

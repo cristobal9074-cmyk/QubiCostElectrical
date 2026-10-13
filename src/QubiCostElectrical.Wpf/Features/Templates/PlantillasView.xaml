@@ -1262,7 +1262,7 @@
                                                         </Style>
                                                     </DataGridTextColumn.ElementStyle>
                                                 </DataGridTextColumn>
-                                                <DataGridTextColumn x:Name="PreviewPrecioUfColumn" Header="P. UF" Width="90" Binding="{Binding PrecioUf, StringFormat=N2}"
+                                                <DataGridTextColumn x:Name="PreviewPrecioUfColumn" Header="P. UF" Width="90" Binding="{Binding PrecioUf, StringFormat=N3}"
                                                                     HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}">
                                                     <DataGridTextColumn.ElementStyle>
                                                         <Style TargetType="TextBlock">

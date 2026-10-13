@@ -731,7 +731,7 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
                                             pr.RelativeItem().Column(pc =>
                                             {
                                                 pc.Item().Text(t => t.Span("VALOR UF REF:").FontSize(7).Bold().FontColor(CMuted));
-                                                pc.Item().Text(t => t.Span($"$ {valorUf:N2} CLP").FontSize(8.5f).Bold().FontColor(CNavy));
+                                                pc.Item().Text(t => t.Span($"$ {valorUf:N0} CLP").FontSize(8.5f).Bold().FontColor(CNavy));
                                             });
                                         }
                                         pr.RelativeItem().Column(pc =>

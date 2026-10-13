@@ -63,9 +63,9 @@ public sealed class CostoViaticosGoldenTests
         Assert.Equal(ExpectedTotalClp, SumResultItemsClp(vm));
         Assert.Equal(ExpectedTotalClp, SumLineasActivasClp(vm));
 
-        var expectedUf = ExpectedTotalClp / ValorUfClp; // 306.65789… → N2
+        var expectedUf = ExpectedTotalClp / ValorUfClp; // 306.65789… → N3
         Assert.Contains(
-            expectedUf.ToString("N2", CultureInfo.CurrentCulture),
+            expectedUf.ToString("N3", CultureInfo.CurrentCulture),
             vm.FootUfLabel,
             StringComparison.Ordinal);
         Assert.Equal(Math.Round(expectedUf, 2), Math.Round(ExpectedTotalClp / vm.ValorUf, 2));
