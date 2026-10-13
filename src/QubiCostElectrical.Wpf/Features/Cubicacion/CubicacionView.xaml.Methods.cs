@@ -399,9 +399,9 @@ public partial class CubicacionView : UserControl
         if (e.Key == Key.Escape)
         {
             if (tb == CantHeaderBox || tb.Tag as string == "PartidaCant")
-            {
                 CancelCantPick();
-            }
+            else if (tb == UnidadHeaderBox || tb.Tag as string == "PartidaUnidad")
+                CubicacionFormulaPicker.CancelUnidadPick(tb, Vm.Rows);
             SetFieldEditingState(tb, false);
             BindingOperations.GetBindingExpression(tb, TextBox.TextProperty)?.UpdateTarget();
             tb.SelectAll();
@@ -414,6 +414,12 @@ public partial class CubicacionView : UserControl
             if (tb == CantHeaderBox || tb.Tag as string == "PartidaCant")
             {
                 CommitCantHeaderBox(tb);
+                CubicacionFormulaPicker.FocusGridCell(ResourceGrid, 0, CantidadColumn);
+            }
+            else if (tb == UnidadHeaderBox || tb.Tag as string == "PartidaUnidad")
+            {
+                CubicacionFormulaPicker.CommitUnidadPick(tb, Vm);
+                CubicacionFormulaPicker.FocusGridCell(ResourceGrid, 0, UnidadColumn);
             }
             else
             {
@@ -437,18 +443,20 @@ public partial class CubicacionView : UserControl
         {
             if (e.Key is Key.Left or Key.Right)
             {
-                var fields = new[] { UnidadHeaderBox, CantHeaderBox, ObservacionHeaderBox };
-                int idx = Array.IndexOf(fields, tb);
-                if (idx >= 0)
+                if (tb == UnidadHeaderBox || tb.Tag as string == "PartidaUnidad")
                 {
-                    int next = idx + (e.Key == Key.Right ? 1 : -1);
-                    if (next >= 0 && next < fields.Length)
-                    {
-                        fields[next].Focus();
-                    }
+                    if (e.Key == Key.Right) { ActiveCantBox.Focus(); ActiveCantBox.SelectAll(); e.Handled = true; return true; }
                 }
-                e.Handled = true;
-                return true;
+                else if (tb == CantHeaderBox || tb.Tag as string == "PartidaCant")
+                {
+                    if (e.Key == Key.Left) { ActiveUnidadBox.Focus(); ActiveUnidadBox.SelectAll(); e.Handled = true; return true; }
+                    else if (e.Key == Key.Right && ObservacionHeaderBox != null && ObservacionHeaderBox.IsVisible)
+                    { ObservacionHeaderBox.Focus(); ObservacionHeaderBox.SelectAll(); e.Handled = true; return true; }
+                }
+                else if (tb == ObservacionHeaderBox && e.Key == Key.Left)
+                {
+                    ActiveCantBox.Focus(); ActiveCantBox.SelectAll(); e.Handled = true; return true;
+                }
             }
         }
 
@@ -491,7 +499,17 @@ public partial class CubicacionView : UserControl
         tb.Dispatcher.BeginInvoke(new Action(() => tb.SelectAll()), System.Windows.Threading.DispatcherPriority.Input);
     }
 
-    private TextBox ActiveCantBox => (Keyboard.FocusedElement as TextBox) is { } tb && (tb == CantHeaderBox || tb.Tag as string == "PartidaCant") ? tb : CantHeaderBox;
+    private TextBox? _templateUnidadBox;
+    private TextBox? _templateCantBox;
+
+    private void OnUnidadHeaderBoxLoaded(object sender, RoutedEventArgs e) { if (sender is TextBox tb && tb.Tag as string == "PartidaUnidad") _templateUnidadBox = tb; }
+    private void OnCantHeaderBoxLoaded(object sender, RoutedEventArgs e) { if (sender is TextBox tb && tb.Tag as string == "PartidaCant") _templateCantBox = tb; }
+
+    private TextBox ActiveUnidadBox => (Keyboard.FocusedElement as TextBox) is { } tb && (tb == UnidadHeaderBox || tb.Tag as string == "PartidaUnidad")
+        ? tb : (Vm.IsSectorMatrixMode ? (_templateUnidadBox ?? UnidadHeaderBox) : UnidadHeaderBox);
+
+    private TextBox ActiveCantBox => (Keyboard.FocusedElement as TextBox) is { } tb && (tb == CantHeaderBox || tb.Tag as string == "PartidaCant")
+        ? tb : (Vm.IsSectorMatrixMode ? (_templateCantBox ?? CantHeaderBox) : CantHeaderBox);
 
     private void OnHeaderTextBoxPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
@@ -500,7 +518,7 @@ public partial class CubicacionView : UserControl
 
     private void OnUnidadHeaderBoxGotFocus(object sender, RoutedEventArgs e)
     {
-        var tb = sender as TextBox ?? UnidadHeaderBox;
+        var tb = sender as TextBox ?? ActiveUnidadBox;
         CubicacionFormulaPicker.SetActiveUnidadBox(tb);
         SetFieldEditingState(tb, false);
         SelectAllDeferred(tb);
@@ -508,36 +526,15 @@ public partial class CubicacionView : UserControl
 
     private void OnUnidadHeaderBoxLostFocus(object sender, RoutedEventArgs e)
     {
-        var tb = sender as TextBox ?? UnidadHeaderBox;
+        var tb = sender as TextBox ?? ActiveUnidadBox;
         CubicacionFormulaPicker.CommitUnidadPick(tb, Vm);
     }
 
     private void OnUnidadHeaderBoxPreviewKeyDown(object sender, KeyEventArgs e)
     {
-        var tb = sender as TextBox ?? UnidadHeaderBox;
+        var tb = sender as TextBox ?? ActiveUnidadBox;
         if (HandleExcelFieldPreviewKeyDown(tb, e)) return;
-        if (e.Key == Key.Down && Vm.Rows.Count > 0)
-        {
-            int next = CubicacionFormulaPicker.UnidadPickIndex < 0 ? 0 : Math.Min(CubicacionFormulaPicker.UnidadPickIndex + 1, Vm.Rows.Count - 1);
-            CubicacionFormulaPicker.ApplyUnidadPick(tb, next, Vm.Rows, ResourceGrid);
-            e.Handled = true;
-        }
-        else if (e.Key == Key.Up && Vm.Rows.Count > 0)
-        {
-            if (CubicacionFormulaPicker.UnidadPickIndex <= 0) CubicacionFormulaPicker.CancelUnidadPick(tb, Vm.Rows);
-            else CubicacionFormulaPicker.ApplyUnidadPick(tb, CubicacionFormulaPicker.UnidadPickIndex - 1, Vm.Rows, ResourceGrid);
-            e.Handled = true;
-        }
-        else if (e.Key is Key.Enter or Key.Return)
-        {
-            CubicacionFormulaPicker.CommitUnidadPick(tb, Vm);
-            e.Handled = true;
-        }
-        else if (e.Key == Key.Escape)
-        {
-            CubicacionFormulaPicker.CancelUnidadPick(tb, Vm.Rows);
-            e.Handled = true;
-        }
+        CubicacionFormulaPicker.HandleUnidadNavigation(tb, e, Vm, ResourceGrid, UnidadColumn, () => { ActiveCantBox.Focus(); ActiveCantBox.SelectAll(); });
     }
 
     private void OnCantHeaderBoxGotFocus(object sender, RoutedEventArgs e)
@@ -557,20 +554,7 @@ public partial class CubicacionView : UserControl
     {
         var tb = sender as TextBox ?? ActiveCantBox;
         if (HandleExcelFieldPreviewKeyDown(tb, e)) return;
-        if (!_cantEditingStarted) { if (e.Key is Key.Down or Key.Up) e.Handled = true; return; }
-        if (e.Key == Key.Down && Vm.Rows.Count > 0)
-        {
-            int cur = CubicacionFormulaPicker.CantPickIndex;
-            ApplyCantPick(cur < 0 ? 0 : Math.Min(cur + 1, Vm.Rows.Count - 1));
-            e.Handled = true;
-        }
-        else if (e.Key == Key.Up && Vm.Rows.Count > 0)
-        {
-            int cur = CubicacionFormulaPicker.CantPickIndex;
-            ApplyCantPick(cur <= 0 ? -1 : cur - 1);
-            e.Handled = true;
-        }
-        else if (CubicacionFormulaPicker.CantPickIndex >= 0) FinalizeCantPick();
+        CubicacionFormulaPicker.HandleCantNavigation(tb, e, Vm, ResourceGrid, CantidadColumn, () => { ActiveUnidadBox.Focus(); ActiveUnidadBox.SelectAll(); }, () => CommitCantHeaderBox(tb), _cantEditingStarted);
     }
 
     private void CommitCantHeaderBox(TextBox? target = null)
@@ -980,6 +964,21 @@ public partial class CubicacionView : UserControl
         var modifiers = e.KeyboardDevice.Modifiers;
         // Con Alt presionado WPF entrega Key.System; la tecla real va en SystemKey.
         var key = e.Key == Key.System ? e.SystemKey : e.Key;
+
+        // Flecha Arriba en fila 1 (sin editar): sube el foco a las casillas de cabecera (UD / CANT)
+        if (!editing && modifiers == ModifierKeys.None && e.Key == Key.Up)
+        {
+            int currentRowIdx = ResourceGrid.Items.IndexOf(ResourceGrid.CurrentCell.Item ?? ResourceGrid.SelectedItem);
+            if (currentRowIdx == 0)
+            {
+                var targetBox = (ResourceGrid.CurrentCell.Column == CantidadColumn || _sectorColumns.Contains(ResourceGrid.CurrentCell.Column))
+                    ? ActiveCantBox : ActiveUnidadBox;
+                targetBox.Focus();
+                targetBox.SelectAll();
+                e.Handled = true;
+                return;
+            }
+        }
 
         // Insert o Ctrl+N → agregar nueva fila
         if ((e.Key == Key.Insert && modifiers == ModifierKeys.None && !editing) || (e.Key == Key.N && modifiers == ModifierKeys.Control && !editing))
