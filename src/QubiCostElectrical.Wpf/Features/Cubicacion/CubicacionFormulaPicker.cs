@@ -23,10 +23,23 @@ internal static class CubicacionFormulaPicker
     public static TextBox? ActiveUnidadBox => _activeUnidadBox;
     public static bool IsUnidadActive => _activeUnidadBox != null;
 
-    public static void SetActiveUnidadBox(TextBox? box)
+    public static void SetActiveUnidadBox(TextBox? box, CubicacionViewModel? vm = null)
     {
         _activeUnidadBox = box;
-        _unidadOriginalText = box?.Text ?? "";
+        string text = (box?.Text ?? "").Trim();
+        if (!text.StartsWith("+") && !text.StartsWith("="))
+        {
+            if (!string.IsNullOrEmpty(text))
+                _unidadOriginalText = text;
+            else if (!string.IsNullOrEmpty(vm?.PartidaUnidad))
+                _unidadOriginalText = vm.PartidaUnidad;
+            else
+                _unidadOriginalText = text;
+        }
+        else if (string.IsNullOrEmpty(_unidadOriginalText) || _unidadOriginalText.StartsWith("+") || _unidadOriginalText.StartsWith("="))
+        {
+            _unidadOriginalText = vm?.PartidaUnidad ?? "";
+        }
         _unidadPickIndex = -1;
     }
 
@@ -112,12 +125,14 @@ internal static class CubicacionFormulaPicker
 
     public static int GetCurrentUnidadIndex(TextBox? tb)
     {
+        if (_unidadPickIndex >= 0)
+            return _unidadPickIndex;
         if (tb == null) return -1;
         string text = (tb.Text ?? "").Trim();
-        var m = UnidadRefRegex.Match(text);
+        var m = System.Text.RegularExpressions.Regex.Match(text, @"[CcRrFf](?<idx>\d+)");
         if (m.Success && int.TryParse(m.Groups["idx"].Value, out int idx))
             return idx - 1;
-        return _unidadPickIndex;
+        return -1;
     }
 
     public static int GetCurrentCantIndex(TextBox? tb)
@@ -172,7 +187,10 @@ internal static class CubicacionFormulaPicker
     public static void CancelUnidadPick(TextBox? box, IReadOnlyList<CubicacionRowVm>? rows, CubicacionViewModel? vm = null)
     {
         var targetBox = box ?? _activeUnidadBox;
-        string orig = _unidadOriginalText ?? "";
+        string orig = (!string.IsNullOrEmpty(_unidadOriginalText) && !_unidadOriginalText.StartsWith("+") && !_unidadOriginalText.StartsWith("="))
+            ? _unidadOriginalText
+            : (vm?.PartidaUnidad ?? "");
+
         if (targetBox != null)
         {
             targetBox.Text = orig;
@@ -185,6 +203,7 @@ internal static class CubicacionFormulaPicker
         ClearCantPickHighlight(rows ?? vm?.Rows);
         _unidadPickIndex = -1;
         _activeUnidadBox = null;
+        _unidadOriginalText = orig;
     }
 
     public static bool TryPickUnidad(TextBox? focusedTb, CubicacionRowVm? targetRow, TextBox? unidadHeaderBox, CubicacionViewModel? vm)
@@ -315,7 +334,7 @@ internal static class CubicacionFormulaPicker
             }
             else if (cur == 0)
             {
-                CancelUnidadPick(tb, vm.Rows, vm);
+                ApplyUnidadPick(tb, 0, vm.Rows, grid);
             }
             e.Handled = true;
             return true;

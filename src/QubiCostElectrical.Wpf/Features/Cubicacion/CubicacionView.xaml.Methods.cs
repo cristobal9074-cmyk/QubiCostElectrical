@@ -518,7 +518,7 @@ public partial class CubicacionView : UserControl
     private void OnUnidadHeaderBoxGotFocus(object sender, RoutedEventArgs e)
     {
         var tb = sender as TextBox ?? ActiveUnidadBox;
-        CubicacionFormulaPicker.SetActiveUnidadBox(tb);
+        CubicacionFormulaPicker.SetActiveUnidadBox(tb, Vm);
         SetFieldEditingState(tb, false);
         SelectAllDeferred(tb);
     }
@@ -532,6 +532,7 @@ public partial class CubicacionView : UserControl
     private void OnUnidadHeaderBoxPreviewKeyDown(object sender, KeyEventArgs e)
     {
         var tb = sender as TextBox ?? ActiveUnidadBox;
+        if (e.Key == Key.Escape) { CubicacionFormulaPicker.CancelUnidadPick(tb, Vm.Rows, Vm); SetFieldEditingState(tb, false); tb.SelectAll(); e.Handled = true; return; }
         if (HandleExcelFieldPreviewKeyDown(tb, e)) return;
         CubicacionFormulaPicker.HandleUnidadNavigation(tb, e, Vm, ResourceGrid, UnidadColumn, () => { ActiveCantBox.Focus(); ActiveCantBox.SelectAll(); });
     }
