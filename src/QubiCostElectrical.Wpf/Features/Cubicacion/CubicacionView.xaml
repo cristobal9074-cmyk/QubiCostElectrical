@@ -698,7 +698,7 @@
                del DataGrid se ocultan y la unidad de la PARTIDA (editable) vive en la fila de
                partida de arriba. -->
                     <DataGridTextColumn x:Name="UnidadColumn" Header="UD" Binding="{Binding Unidad, UpdateSourceTrigger=LostFocus}"
-                              Width="48" MinWidth="42">
+                              Width="48" MinWidth="42" IsReadOnly="True">
                         <DataGridTextColumn.CellStyle>
                             <Style TargetType="DataGridCell" BasedOn="{StaticResource DataGridCell.Excel}">
                                 <Style.Triggers>

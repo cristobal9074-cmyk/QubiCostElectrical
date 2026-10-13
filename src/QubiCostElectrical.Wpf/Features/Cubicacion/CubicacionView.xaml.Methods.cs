@@ -602,18 +602,18 @@ public partial class CubicacionView : UserControl
         // 1. Clic para tomar unidad en UD de partida (cabecera Casillas o Detalle)
         bool isUnidadActive = CubicacionFormulaPicker.IsUnidadActive ||
                               (focusedTb != null && (focusedTb == UnidadHeaderBox || focusedTb.Tag as string == "PartidaUnidad"));
-        if (isUnidadActive && rowIndex >= 0)
+        if ((isUnidadActive || cell.Column == UnidadColumn) && rowIndex >= 0)
         {
             if (cell.Column == UnidadColumn)
             {
                 var box = CubicacionFormulaPicker.ActiveUnidadBox ?? focusedTb ?? UnidadHeaderBox;
+                CubicacionFormulaPicker.SetActiveUnidadBox(box, Vm);
                 CubicacionFormulaPicker.ApplyUnidadPick(box, rowIndex, Vm.Rows, ResourceGrid);
-                if (e.ClickCount >= 2)
-                    CubicacionFormulaPicker.CommitUnidadPick(box, Vm);
+                if (e.ClickCount >= 2) CubicacionFormulaPicker.CommitUnidadPick(box, Vm);
                 box.Focus();
+                e.Handled = true;
+                return;
             }
-            e.Handled = true;
-            return;
         }
 
         // 1b. Clic mientras se edita celda de recurso en columna UD
@@ -1436,13 +1436,10 @@ public partial class CubicacionView : UserControl
         IndexColumn.Visibility = Visibility.Visible;
         IndexColumn.Header = "#";
         UnidadColumn.Visibility = Visibility.Visible;
+        UnidadColumn.IsReadOnly = true;
         CantidadColumn.Visibility = Visibility.Visible;
-        CantidadColumn.IsReadOnly = false;
-        CantidadColumn.Binding = new Binding(nameof(CubicacionRowVm.Cantidad))
-        {
-            UpdateSourceTrigger = UpdateSourceTrigger.LostFocus,
-            Mode = BindingMode.TwoWay
-        };
+        CantidadColumn.IsReadOnly = true;
+        CantidadColumn.Binding = new Binding(nameof(CubicacionRowVm.CantidadDisplay));
         ResourceGrid.HeadersVisibility = DataGridHeadersVisibility.Column;
         SetSharedColumnHeaders(thin: false);
         CancelCantPick();
