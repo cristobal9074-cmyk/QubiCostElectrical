@@ -517,6 +517,7 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
             OnPropertyChanged(nameof(PartidaCodigo));
             OnPropertyChanged(nameof(PartidaPositionText));
             MarkDirty();
+            session.MarkDirty(ProjectDirtyScope.Itemizado);
         }
     }
 
@@ -537,6 +538,7 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
             selectedPartida.Descripcion = clean;
             OnPropertyChanged(nameof(PartidaDescripcion));
             MarkDirty();
+            session.MarkDirty(ProjectDirtyScope.Itemizado);
         }
     }
     public string PartidaUnidad => selectedPartida?.Unidad ?? "";
@@ -562,6 +564,7 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
             OnPropertyChanged(nameof(PartidaUnidadText));
             OnPropertyChanged(nameof(PartidaUnidad));
             MarkDirty();
+            session.MarkDirty(ProjectDirtyScope.Itemizado);
         }
     }
 
@@ -626,6 +629,7 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
                     selectedPartida.Cantidad = parsed;
                     OnPropertyChanged(nameof(PartidaCantidadText));
                     MarkDirty();
+                    session.MarkDirty(ProjectDirtyScope.Itemizado);
                     ScheduleRefreshTotals();
                 }
                 else

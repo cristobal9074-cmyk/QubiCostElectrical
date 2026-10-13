@@ -245,9 +245,36 @@
                                  Text="{Binding PartidaDescripcion, UpdateSourceTrigger=LostFocus}"
                                  FontSize="14" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}"
                                  Background="Transparent" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
-                                 Padding="8,3" MinWidth="250" MaxWidth="850"
+                                 Padding="8,3" Margin="0,0,8,0" MinWidth="220" MaxWidth="600"
                                  ToolTip="Editar nombre/descripción de la partida · Enter para guardar"
                                  PreviewKeyDown="OnPartidaHeaderBoxPreviewKeyDown" />
+                        <Border BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4"
+                                Background="{DynamicResource Brush.Surface}" Margin="0,0,8,0" Padding="4,1"
+                                ToolTip="Unidad de medida de la partida (ej. GL, M, UN) · Enter para guardar">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="UD" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="2,0,4,0" VerticalAlignment="Center" />
+                                <TextBox x:Name="PartidaUnidadBarBox"
+                                         Text="{Binding PartidaUnidadText, UpdateSourceTrigger=LostFocus}"
+                                         FontFamily="{StaticResource Font.Ui}" FontSize="12" FontWeight="SemiBold"
+                                         Foreground="{DynamicResource Brush.Ink}" Background="Transparent" BorderThickness="0"
+                                         Padding="2,2" MinWidth="35" MaxWidth="70" HorizontalContentAlignment="Center"
+                                         PreviewKeyDown="OnPartidaHeaderBoxPreviewKeyDown" />
+                            </StackPanel>
+                        </Border>
+                        <Border BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4"
+                                Background="{DynamicResource Brush.Surface}" Margin="0,0,8,0" Padding="4,1"
+                                ToolTip="Cantidad oficial de la partida · Escriba un número o fórmula · Enter para guardar">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="CANT" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="2,0,4,0" VerticalAlignment="Center" />
+                                <TextBox x:Name="PartidaCantidadBarBox"
+                                         Text="{Binding PartidaCantidadText, UpdateSourceTrigger=LostFocus}"
+                                         FontFamily="{StaticResource Font.Mono}" FontSize="12" FontWeight="Bold"
+                                         Foreground="{DynamicResource Brush.Success}" Background="Transparent" BorderThickness="0"
+                                         Padding="2,2" MinWidth="55" MaxWidth="100" HorizontalContentAlignment="Right"
+                                         GotFocus="OnCantHeaderBoxGotFocus" LostFocus="OnCantHeaderBoxLostFocus"
+                                         PreviewKeyDown="OnCantHeaderBoxPreviewKeyDown" />
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
                         <Button Style="{StaticResource Button.Toolbar}" Content="Tomar SC"

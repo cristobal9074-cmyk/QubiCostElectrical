@@ -260,33 +260,20 @@ public partial class CubicacionView : UserControl
 
     private void OnPartidaHeaderBoxPreviewKeyDown(object sender, KeyEventArgs e)
     {
-        if (e.Key == Key.Enter)
+        if (e.Key == Key.Enter && sender is TextBox tb)
         {
-            if (sender is TextBox tb)
-            {
-                var binding = BindingOperations.GetBindingExpression(tb, TextBox.TextProperty);
-                binding?.UpdateSource();
-                if (tb == PartidaCodigoBox)
-                {
-                    PartidaDescripcionBox?.Focus();
-                    PartidaDescripcionBox?.SelectAll();
-                }
-                else
-                {
-                    ResourceGrid?.Focus();
-                }
-                e.Handled = true;
-            }
+            BindingOperations.GetBindingExpression(tb, TextBox.TextProperty)?.UpdateSource();
+            if (tb == PartidaCodigoBox) { PartidaDescripcionBox?.Focus(); PartidaDescripcionBox?.SelectAll(); }
+            else if (tb == PartidaDescripcionBox) { PartidaUnidadBarBox?.Focus(); PartidaUnidadBarBox?.SelectAll(); }
+            else if (tb == PartidaUnidadBarBox) { PartidaCantidadBarBox?.Focus(); PartidaCantidadBarBox?.SelectAll(); }
+            else { ResourceGrid?.Focus(); }
+            e.Handled = true;
         }
-        else if (e.Key == Key.Escape)
+        else if (e.Key == Key.Escape && sender is TextBox tbEsc)
         {
-            if (sender is TextBox tb)
-            {
-                var binding = BindingOperations.GetBindingExpression(tb, TextBox.TextProperty);
-                binding?.UpdateTarget();
-                ResourceGrid?.Focus();
-                e.Handled = true;
-            }
+            BindingOperations.GetBindingExpression(tbEsc, TextBox.TextProperty)?.UpdateTarget();
+            ResourceGrid?.Focus();
+            e.Handled = true;
         }
     }
 
@@ -413,7 +400,7 @@ public partial class CubicacionView : UserControl
 
         if (e.Key == Key.Escape)
         {
-            if (tb == CantHeaderBox)
+            if (tb == CantHeaderBox || tb == PartidaCantidadBarBox)
             {
                 CancelCantPick();
             }
@@ -426,9 +413,9 @@ public partial class CubicacionView : UserControl
 
         if (e.Key is Key.Enter or Key.Return)
         {
-            if (tb == CantHeaderBox)
+            if (tb == CantHeaderBox || tb == PartidaCantidadBarBox)
             {
-                CommitCantHeaderBox();
+                CommitCantHeaderBox(tb);
             }
             else
             {
@@ -506,22 +493,27 @@ public partial class CubicacionView : UserControl
         tb.Dispatcher.BeginInvoke(new Action(() => tb.SelectAll()), System.Windows.Threading.DispatcherPriority.Input);
     }
 
+    private TextBox ActiveCantBox => (PartidaCantidadBarBox?.IsFocused == true) ? PartidaCantidadBarBox : CantHeaderBox;
+
     private void OnCantHeaderBoxGotFocus(object sender, RoutedEventArgs e)
     {
-        SetFieldEditingState(CantHeaderBox, false);
+        var tb = sender as TextBox ?? ActiveCantBox;
+        SetFieldEditingState(tb, false);
         CancelCantPick();
-        SelectAllDeferred(CantHeaderBox);
+        SelectAllDeferred(tb);
     }
 
     private void OnCantHeaderBoxLostFocus(object sender, RoutedEventArgs e)
     {
-        CommitCantHeaderBox();
+        var tb = sender as TextBox ?? ActiveCantBox;
+        CommitCantHeaderBox(tb);
     }
 
 
     private void OnCantHeaderBoxPreviewKeyDown(object sender, KeyEventArgs e)
     {
-        if (HandleExcelFieldPreviewKeyDown(CantHeaderBox, e)) return;
+        var tb = sender as TextBox ?? ActiveCantBox;
+        if (HandleExcelFieldPreviewKeyDown(tb, e)) return;
 
         // Sin recursos no hay nada que "pickear" con ↓/↑, pero eso no debe bloquear Enter ni
         // Escape — antes un "return" temprano acá dejaba la Cantidad oficial sin poder
@@ -563,11 +555,12 @@ public partial class CubicacionView : UserControl
             FinalizeCantPick();
     }
 
-    private void CommitCantHeaderBox()
+    private void CommitCantHeaderBox(TextBox? target = null)
     {
         FinalizeCantPick();
         _cantEditingStarted = false;
-        var binding = BindingOperations.GetBindingExpression(CantHeaderBox, TextBox.TextProperty);
+        var box = target ?? ActiveCantBox;
+        var binding = BindingOperations.GetBindingExpression(box, TextBox.TextProperty);
         binding?.UpdateSource();
         // UpdateSource() por sí solo no alcanza: como el valor viaja "de vuelta" a este mismo
         // TextBox (setter transforma la fórmula en el resultado numérico), WPF no refresca el
@@ -575,6 +568,12 @@ public partial class CubicacionView : UserControl
         // para que la celda muestre el resultado (p.ej. "R1+R2" → "3,00") en vez de dejar la
         // fórmula escrita como si no hubiera pasado nada.
         binding?.UpdateTarget();
+
+        // Mantener ambas cajas sincronizadas (la de la barra superior y la de la fila de detalle)
+        if (box != CantHeaderBox)
+            BindingOperations.GetBindingExpression(CantHeaderBox, TextBox.TextProperty)?.UpdateTarget();
+        if (PartidaCantidadBarBox != null && box != PartidaCantidadBarBox)
+            BindingOperations.GetBindingExpression(PartidaCantidadBarBox, TextBox.TextProperty)?.UpdateTarget();
     }
 
     // Inserta o reemplaza, en el mismo lugar del texto, el token (R1, R2...) de la fila que se
@@ -584,6 +583,7 @@ public partial class CubicacionView : UserControl
     // de fórmula (y en algunos casos, una excepción).
     private void ApplyCantPick(int newIndex)
     {
+        var box = ActiveCantBox;
         if (newIndex < 0)
         {
             RemoveCantPickToken();
@@ -600,24 +600,24 @@ public partial class CubicacionView : UserControl
             // o clic directo en un recurso como primer gesto sin haber tecleado nada — la
             // referencia debe REEMPLAZAR esa selección, no agregarse después. Sin esto, "0,00"
             // seleccionado + clic en un recurso daba "0,00R1" en vez de "R1".
-            if (CantHeaderBox.SelectionLength > 0)
+            if (box.SelectionLength > 0)
             {
-                _cantPickTokenStart = CantHeaderBox.SelectionStart;
-                _cantPickTokenLength = CantHeaderBox.SelectionLength;
+                _cantPickTokenStart = box.SelectionStart;
+                _cantPickTokenLength = box.SelectionLength;
             }
             else
             {
-                _cantPickTokenStart = Math.Clamp(CantHeaderBox.CaretIndex, 0, CantHeaderBox.Text.Length);
+                _cantPickTokenStart = Math.Clamp(box.CaretIndex, 0, box.Text.Length);
                 _cantPickTokenLength = 0;
             }
         }
 
-        string text = CantHeaderBox.Text;
+        string text = box.Text;
         int removeLength = Math.Min(_cantPickTokenLength, text.Length - _cantPickTokenStart);
         text = text.Remove(_cantPickTokenStart, Math.Max(removeLength, 0)).Insert(_cantPickTokenStart, token);
-        CantHeaderBox.Text = text;
+        box.Text = text;
         _cantPickTokenLength = token.Length;
-        CantHeaderBox.CaretIndex = _cantPickTokenStart + _cantPickTokenLength;
+        box.CaretIndex = _cantPickTokenStart + _cantPickTokenLength;
 
         ClearCantPickHighlight();
         _cantPickIndex = newIndex;
@@ -626,35 +626,19 @@ public partial class CubicacionView : UserControl
             ResourceGrid.ScrollIntoView(ResourceGrid.Items[_cantPickIndex]);
     }
 
-    // Deja el token ya escrito tal cual (no lo borra) y cierra la sesión de "pickeo" — la
-    // siguiente ↓/↑ empieza una referencia nueva en vez de seguir moviendo esta.
-    private void FinalizeCantPick()
-    {
-        ClearCantPickHighlight();
-        _cantPickIndex = -1;
-        _cantPickTokenStart = -1;
-        _cantPickTokenLength = 0;
-    }
+    private void FinalizeCantPick() { ClearCantPickHighlight(); _cantPickIndex = -1; _cantPickTokenStart = -1; _cantPickTokenLength = 0; }
 
-    // Cancela la referencia en curso y borra su texto — se usa cuando ↑ retrocede antes de la
-    // primera fila, o al presionar Escape.
-    private void CancelCantPick()
-    {
-        RemoveCantPickToken();
-        ClearCantPickHighlight();
-        _cantPickIndex = -1;
-        _cantPickTokenStart = -1;
-        _cantPickTokenLength = 0;
-    }
+    private void CancelCantPick() { RemoveCantPickToken(); ClearCantPickHighlight(); _cantPickIndex = -1; _cantPickTokenStart = -1; _cantPickTokenLength = 0; }
 
     private void RemoveCantPickToken()
     {
+        var box = ActiveCantBox;
         if (_cantPickTokenLength <= 0 || _cantPickTokenStart < 0) return;
-        string text = CantHeaderBox.Text;
+        string text = box.Text;
         int removeLength = Math.Min(_cantPickTokenLength, text.Length - _cantPickTokenStart);
         if (removeLength <= 0) return;
-        CantHeaderBox.Text = text.Remove(_cantPickTokenStart, removeLength);
-        CantHeaderBox.CaretIndex = _cantPickTokenStart;
+        box.Text = text.Remove(_cantPickTokenStart, removeLength);
+        box.CaretIndex = _cantPickTokenStart;
         _cantPickTokenLength = 0;
     }
 
@@ -1437,10 +1421,12 @@ public partial class CubicacionView : UserControl
         IndexColumn.Header = "#";
         UnidadColumn.Visibility = Visibility.Visible;
         CantidadColumn.Visibility = Visibility.Visible;
-        // CANTIDAD vuelve a ser de solo lectura: en Casillas se arma sola desde las celdas de
-        // sector (S1/S2/P1...), no se escribe directo acá.
-        CantidadColumn.IsReadOnly = true;
-        CantidadColumn.Binding = new Binding(nameof(CubicacionRowVm.CantidadDisplay));
+        CantidadColumn.IsReadOnly = false;
+        CantidadColumn.Binding = new Binding(nameof(CubicacionRowVm.Cantidad))
+        {
+            UpdateSourceTrigger = UpdateSourceTrigger.LostFocus,
+            Mode = BindingMode.TwoWay
+        };
         ResourceGrid.HeadersVisibility = DataGridHeadersVisibility.Column;
         SetSharedColumnHeaders(thin: false);
         CancelCantPick();
