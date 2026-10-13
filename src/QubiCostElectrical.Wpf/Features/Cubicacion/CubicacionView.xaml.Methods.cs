@@ -866,12 +866,15 @@ public partial class CubicacionView : UserControl
 
     private void OnGridPreviewKeyDown(object sender, KeyEventArgs e)
     {
+        if (CubicacionFormulaPicker.IsUnidadActive || CubicacionFormulaPicker.UnidadPickIndex >= 0)
+        {
+            if (e.Key == Key.Escape) { CubicacionFormulaPicker.CancelUnidadPick(ActiveUnidadBox, Vm.Rows, Vm); e.Handled = true; return; }
+            if (e.Key is Key.Up or Key.Down or Key.Enter or Key.Return && CubicacionFormulaPicker.HandleUnidadNavigation(ActiveUnidadBox, e, Vm, ResourceGrid, UnidadColumn, () => { ActiveCantBox.Focus(); ActiveCantBox.SelectAll(); })) { e.Handled = true; return; }
+        }
+
         var editing = IsGridEditing();
         if (editing && MatchesConfiguredShortcut(e, CubicacionShortcutCatalog.PartidaPrevious, CubicacionShortcutCatalog.PartidaNext, CubicacionShortcutCatalog.QuickJump))
-        {
-            ResourceGrid.CommitEdit(DataGridEditingUnit.Cell, true);
-            ResourceGrid.CommitEdit(DataGridEditingUnit.Row, true);
-        }
+        { ResourceGrid.CommitEdit(DataGridEditingUnit.Cell, true); ResourceGrid.CommitEdit(DataGridEditingUnit.Row, true); }
 
         if (CubicacionShortcutRouting.TryHandle(e, Vm))
         {

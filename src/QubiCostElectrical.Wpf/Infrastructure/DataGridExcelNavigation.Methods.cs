@@ -177,8 +177,14 @@ public static partial class DataGridExcelNavigation
 
     public static void HandlePreviewKeyDown(DataGrid grid, KeyEventArgs e)
     {
+        if (e.OriginalSource is DependencyObject dep && FindParent<DataGridColumnHeader>(dep) != null)
+            return;
+
         if (e.Key == Key.Escape)
         {
+            if (e.OriginalSource is TextBox || (e.OriginalSource is DependencyObject d && FindParent<TextBox>(d) != null))
+                return;
+
             grid.CancelEdit();
             ClearCopyMarker(grid);
             e.Handled = true;

@@ -155,6 +155,7 @@ internal static class CubicacionFormulaPicker
         string token = $"+U{newIndex + 1}";
         box.Text = token;
         box.SelectAll();
+        box.Focus();
 
         if (_unidadPickIndex >= 0 && _unidadPickIndex < rows.Count)
         {
@@ -195,6 +196,7 @@ internal static class CubicacionFormulaPicker
         {
             targetBox.Text = orig;
             targetBox.SelectAll();
+            targetBox.Focus();
         }
         if (vm != null)
         {
@@ -327,15 +329,10 @@ internal static class CubicacionFormulaPicker
         }
         if (e.Key == Key.Up)
         {
+            int maxRow = (vm.Rows != null && vm.Rows.Count > 0) ? vm.Rows.Count - 1 : 0;
             int cur = GetCurrentUnidadIndex(tb);
-            if (cur > 0)
-            {
-                ApplyUnidadPick(tb, cur - 1, vm.Rows, grid);
-            }
-            else if (cur == 0)
-            {
-                ApplyUnidadPick(tb, 0, vm.Rows, grid);
-            }
+            int next = cur < 0 ? 0 : Math.Max(cur - 1, 0);
+            ApplyUnidadPick(tb, next, vm.Rows, grid);
             e.Handled = true;
             return true;
         }
