@@ -615,6 +615,20 @@
                 <DataGrid.Columns>
                     <!-- # / indicador error -->
                     <DataGridTemplateColumn x:Name="IndexColumn" Header="#" Width="44" CanUserResize="False" CanUserSort="False">
+                        <DataGridTemplateColumn.CellStyle>
+                            <Style TargetType="DataGridCell" BasedOn="{StaticResource DataGridCell.Excel}">
+                                <Setter Property="Focusable" Value="False" />
+                                <Setter Property="IsHitTestVisible" Value="False" />
+                                <Setter Property="BorderBrush" Value="Transparent" />
+                                <Setter Property="Background" Value="Transparent" />
+                                <Style.Triggers>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter Property="BorderBrush" Value="Transparent" />
+                                        <Setter Property="Background" Value="Transparent" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGridTemplateColumn.CellStyle>
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <Grid>

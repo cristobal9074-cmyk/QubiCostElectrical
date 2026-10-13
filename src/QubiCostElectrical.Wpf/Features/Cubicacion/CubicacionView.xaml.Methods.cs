@@ -532,7 +532,7 @@ public partial class CubicacionView : UserControl
     private void OnUnidadHeaderBoxPreviewKeyDown(object sender, KeyEventArgs e)
     {
         var tb = sender as TextBox ?? ActiveUnidadBox;
-        if (e.Key == Key.Escape) { CubicacionFormulaPicker.CancelUnidadPick(tb, Vm.Rows, Vm); SetFieldEditingState(tb, false); tb.SelectAll(); e.Handled = true; return; }
+        if (e.Key == Key.Escape) { CubicacionFormulaPicker.CancelUnidadPick(tb, Vm.Rows, Vm, ResourceGrid); SetFieldEditingState(tb, false); tb.SelectAll(); e.Handled = true; return; }
         if (HandleExcelFieldPreviewKeyDown(tb, e)) return;
         CubicacionFormulaPicker.HandleUnidadNavigation(tb, e, Vm, ResourceGrid, UnidadColumn, () => { ActiveCantBox.Focus(); ActiveCantBox.SelectAll(); });
     }
@@ -567,10 +567,10 @@ public partial class CubicacionView : UserControl
         if (box != CantHeaderBox) BindingOperations.GetBindingExpression(CantHeaderBox, TextBox.TextProperty)?.UpdateTarget();
     }
 
-    private void ApplyCantPick(int newIndex) => CubicacionFormulaPicker.ApplyCantPick(ActiveCantBox, newIndex, Vm.Rows, ResourceGrid);
-    private void FinalizeCantPick() => CubicacionFormulaPicker.FinalizeCantPick(Vm.Rows);
-    private void CancelCantPick() => CubicacionFormulaPicker.CancelCantPick(ActiveCantBox, Vm.Rows);
-    private void ClearCantPickHighlight() => CubicacionFormulaPicker.ClearCantPickHighlight(Vm.Rows);
+    private void ApplyCantPick(int newIndex) => CubicacionFormulaPicker.ApplyCantPick(ActiveCantBox, newIndex, Vm.Rows, ResourceGrid, CantidadColumn);
+    private void FinalizeCantPick() => CubicacionFormulaPicker.FinalizeCantPick(Vm.Rows, ResourceGrid);
+    private void CancelCantPick() => CubicacionFormulaPicker.CancelCantPick(ActiveCantBox, Vm.Rows, ResourceGrid);
+    private void ClearCantPickHighlight() => CubicacionFormulaPicker.ClearCantPickHighlight(Vm.Rows, ResourceGrid);
 
     // Clic directo en una celda CANT de un recurso mientras CantHeaderBox tiene el foco →
     // inserta/reemplaza su referencia y la confirma en un solo paso (equivale a ↓/↑ hasta esa
@@ -608,8 +608,8 @@ public partial class CubicacionView : UserControl
             {
                 var box = CubicacionFormulaPicker.ActiveUnidadBox ?? focusedTb ?? UnidadHeaderBox;
                 CubicacionFormulaPicker.SetActiveUnidadBox(box, Vm);
-                CubicacionFormulaPicker.ApplyUnidadPick(box, rowIndex, Vm.Rows, ResourceGrid);
-                if (e.ClickCount >= 2) CubicacionFormulaPicker.CommitUnidadPick(box, Vm);
+                CubicacionFormulaPicker.ApplyUnidadPick(box, rowIndex, Vm.Rows, ResourceGrid, UnidadColumn);
+                if (e.ClickCount >= 2) CubicacionFormulaPicker.CommitUnidadPick(box, Vm, ResourceGrid);
                 box.Focus();
                 e.Handled = true;
                 return;
@@ -868,7 +868,7 @@ public partial class CubicacionView : UserControl
     {
         if (CubicacionFormulaPicker.IsUnidadActive || CubicacionFormulaPicker.UnidadPickIndex >= 0)
         {
-            if (e.Key == Key.Escape) { CubicacionFormulaPicker.CancelUnidadPick(ActiveUnidadBox, Vm.Rows, Vm); e.Handled = true; return; }
+            if (e.Key == Key.Escape) { CubicacionFormulaPicker.CancelUnidadPick(ActiveUnidadBox, Vm.Rows, Vm, ResourceGrid); e.Handled = true; return; }
             if (e.Key is Key.Up or Key.Down or Key.Enter or Key.Return && CubicacionFormulaPicker.HandleUnidadNavigation(ActiveUnidadBox, e, Vm, ResourceGrid, UnidadColumn, () => { ActiveCantBox.Focus(); ActiveCantBox.SelectAll(); })) { e.Handled = true; return; }
         }
 
