@@ -553,6 +553,7 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
             if (session.IsReadOnly) return;
             if (selectedPartida == null) return;
             string clean = (value ?? "").Trim();
+            clean = ResolveUnidadReference(clean);
             if (selectedPartida.Unidad == clean) return;
 
             undo.PushUndoPoint(session, $"Cambiar unidad partida {selectedPartida.Codigo}");
@@ -567,6 +568,9 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
             session.MarkDirty(ProjectDirtyScope.Itemizado);
         }
     }
+
+    public string ResolveUnidadReference(string input)
+        => CubicacionPartidaHelper.ResolveUnidadReference(input, Rows);
 
     public string PartidaPositionText
     {
@@ -600,10 +604,6 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
             }
             else if (QuantityFormulaService.IsFormulaLike(clean))
             {
-                // Fórmula de suma/resta/multiplicación/división sobre las cantidades de los
-                // recursos de abajo — cada uno se referencia como R1, R2... (R{n} = fila n de
-                // la grilla, en el orden visible). Solo se guarda el resultado; la fórmula en
-                // sí no persiste (no hay campo para eso en ItemizadoRow).
                 var variables = BuildPartidaCantidadVariables();
                 var result = QuantityFormulaService.Evaluate(clean, variables);
                 success = result.Success;
@@ -644,11 +644,8 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
         }
     }
 
-    // R1, R2... = Cantidad de cada recurso de la partida activa, en el orden visible de la
-    // grilla — para que la Cantidad oficial (CANT, modo Detalle) pueda sumar/restar/multiplicar/
-    // dividir filas de recursos escribiendo o "pickeando" referencias tipo Excel.
-    private Dictionary<string, decimal> BuildPartidaCantidadVariables()
-        => PartidaCantidadVariablesBuilder.Build(Rows.Select(r => r.Cantidad).ToList());
+    public Dictionary<string, decimal> BuildPartidaCantidadVariables()
+        => CubicacionPartidaHelper.BuildVariables(Rows, session);
 
     // Observación de la partida para la constructora — a diferencia de CubicacionRowVm.NotaInterna
     // (por recurso, solo revisión interna), esta viaja al Resumen/oferta. Se guarda en

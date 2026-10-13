@@ -517,26 +517,12 @@ public partial class CubicacionView : UserControl
     {
         var tb = sender as TextBox ?? ActiveCantBox;
         if (HandleExcelFieldPreviewKeyDown(tb, e)) return;
-
-        // Sin recursos no hay nada que "pickear" con ↓/↑, pero eso no debe bloquear Enter ni
-        // Escape — antes un "return" temprano acá dejaba la Cantidad oficial sin poder
-        // confirmarse con Enter en una partida sin recursos todavía.
         bool canPickRows = Vm.Rows.Count > 0;
-
-        // Recién seleccionada (sin editar todavía): ↓/↑ acá NO arma fórmula todavía.
         if (!_cantEditingStarted)
         {
-            if (e.Key is Key.Down or Key.Up)
-            {
-                // Sin editar, las flechas no hacen nada especial (no navegan la grilla ni arman
-                // fórmula) — la celda "solo funciona si se entra a editarla".
-                e.Handled = true;
-                return;
-            }
+            if (e.Key is Key.Down or Key.Up) { e.Handled = true; return; }
             return;
         }
-
-        // Ya en edición: ↓/↑ arma/mueve la referencia en curso (si hay recursos de dónde tomarla).
         if (e.Key == Key.Down && canPickRows)
         {
             int next = _cantPickIndex < 0 ? 0 : Math.Min(_cantPickIndex + 1, Vm.Rows.Count - 1);
@@ -544,18 +530,13 @@ public partial class CubicacionView : UserControl
             e.Handled = true;
             return;
         }
-
         if (e.Key == Key.Up && canPickRows)
         {
             ApplyCantPick(_cantPickIndex <= 0 ? -1 : _cantPickIndex - 1);
             e.Handled = true;
             return;
         }
-
-        // Cualquier otra tecla (operador, dígito, borrar, Tab...) confirma la referencia que
-        // estaba en curso; a partir de acá vuelve a escribirse como texto normal.
-        if (_cantPickIndex >= 0)
-            FinalizeCantPick();
+        if (_cantPickIndex >= 0) FinalizeCantPick();
     }
 
     private void CommitCantHeaderBox(TextBox? target = null)
@@ -565,14 +546,7 @@ public partial class CubicacionView : UserControl
         var box = target ?? ActiveCantBox;
         var binding = BindingOperations.GetBindingExpression(box, TextBox.TextProperty);
         binding?.UpdateSource();
-        // UpdateSource() por sí solo no alcanza: como el valor viaja "de vuelta" a este mismo
-        // TextBox (setter transforma la fórmula en el resultado numérico), WPF no refresca el
-        // Text automáticamente para no pisar lo que se está tecleando. Forzar UpdateTarget()
-        // para que la celda muestre el resultado (p.ej. "R1+R2" → "3,00") en vez de dejar la
-        // fórmula escrita como si no hubiera pasado nada.
         binding?.UpdateTarget();
-
-        // Mantener ambas cajas sincronizadas (la de la cabecera y la de la fila de detalle)
         if (box != CantHeaderBox)
             BindingOperations.GetBindingExpression(CantHeaderBox, TextBox.TextProperty)?.UpdateTarget();
     }
@@ -585,60 +559,34 @@ public partial class CubicacionView : UserControl
     private void ApplyCantPick(int newIndex)
     {
         var box = ActiveCantBox;
-        if (newIndex < 0)
-        {
-            RemoveCantPickToken();
-            ClearCantPickHighlight();
-            _cantPickIndex = -1;
-            return;
-        }
-
-        string token = $"R{newIndex + 1}";
-
+        if (newIndex < 0) { RemoveCantPickToken(); ClearCantPickHighlight(); _cantPickIndex = -1; return; }
+        string token = $"C{newIndex + 1}";
         if (_cantPickIndex < 0)
         {
-            // Si al entrar a la celda seguía todo (o parte) seleccionado — ej. recién enfocada,
-            // o clic directo en un recurso como primer gesto sin haber tecleado nada — la
-            // referencia debe REEMPLAZAR esa selección, no agregarse después. Sin esto, "0,00"
-            // seleccionado + clic en un recurso daba "0,00R1" en vez de "R1".
-            if (box.SelectionLength > 0)
-            {
-                _cantPickTokenStart = box.SelectionStart;
-                _cantPickTokenLength = box.SelectionLength;
-            }
-            else
-            {
-                _cantPickTokenStart = Math.Clamp(box.CaretIndex, 0, box.Text.Length);
-                _cantPickTokenLength = 0;
-            }
+            if (box.SelectionLength > 0) { _cantPickTokenStart = box.SelectionStart; _cantPickTokenLength = box.SelectionLength; }
+            else { _cantPickTokenStart = Math.Clamp(box.CaretIndex, 0, box.Text.Length); _cantPickTokenLength = 0; }
         }
-
         string text = box.Text;
-        int removeLength = Math.Min(_cantPickTokenLength, text.Length - _cantPickTokenStart);
-        text = text.Remove(_cantPickTokenStart, Math.Max(removeLength, 0)).Insert(_cantPickTokenStart, token);
-        box.Text = text;
+        int rem = Math.Min(_cantPickTokenLength, text.Length - _cantPickTokenStart);
+        box.Text = text.Remove(_cantPickTokenStart, Math.Max(rem, 0)).Insert(_cantPickTokenStart, token);
         _cantPickTokenLength = token.Length;
         box.CaretIndex = _cantPickTokenStart + _cantPickTokenLength;
-
         ClearCantPickHighlight();
         _cantPickIndex = newIndex;
         Vm.Rows[_cantPickIndex].IsFormulaPickTarget = true;
-        if (_cantPickIndex < ResourceGrid.Items.Count)
-            ResourceGrid.ScrollIntoView(ResourceGrid.Items[_cantPickIndex]);
+        if (_cantPickIndex < ResourceGrid.Items.Count) ResourceGrid.ScrollIntoView(ResourceGrid.Items[_cantPickIndex]);
     }
 
     private void FinalizeCantPick() { ClearCantPickHighlight(); _cantPickIndex = -1; _cantPickTokenStart = -1; _cantPickTokenLength = 0; }
-
     private void CancelCantPick() { RemoveCantPickToken(); ClearCantPickHighlight(); _cantPickIndex = -1; _cantPickTokenStart = -1; _cantPickTokenLength = 0; }
 
     private void RemoveCantPickToken()
     {
         var box = ActiveCantBox;
         if (_cantPickTokenLength <= 0 || _cantPickTokenStart < 0) return;
-        string text = box.Text;
-        int removeLength = Math.Min(_cantPickTokenLength, text.Length - _cantPickTokenStart);
-        if (removeLength <= 0) return;
-        box.Text = text.Remove(_cantPickTokenStart, removeLength);
+        int rem = Math.Min(_cantPickTokenLength, box.Text.Length - _cantPickTokenStart);
+        if (rem <= 0) return;
+        box.Text = box.Text.Remove(_cantPickTokenStart, rem);
         box.CaretIndex = _cantPickTokenStart;
         _cantPickTokenLength = 0;
     }
@@ -655,8 +603,7 @@ public partial class CubicacionView : UserControl
     private void OnResourceGridPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         // Alt+clic en una casilla de la matriz de sectores (modo Casillas): abre la Hoja de
-        // Cubicación en modo selección y trae el valor elegido directo a esa casilla. Se revisa
-        // primero porque no depende de tener el foco en CantHeaderBox (eso es exclusivo de Detalle).
+        // Cubicación en modo selección y trae el valor elegido directo a esa casilla.
         if (Vm.IsSectorMatrixMode && Keyboard.Modifiers == ModifierKeys.Alt &&
             e.OriginalSource is DependencyObject altDep)
         {
@@ -670,20 +617,51 @@ public partial class CubicacionView : UserControl
             }
         }
 
-        if (!Vm.IsDetailMode || !CantHeaderBox.IsKeyboardFocused) return;
         if (e.OriginalSource is not DependencyObject dep) return;
-
         var cell = FindParent<DataGridCell>(dep);
-        if (cell == null || !ReferenceEquals(cell.Column, CantidadColumn)) return;
+        if (cell == null || cell.DataContext is not CubicacionRowVm targetRow) return;
 
-        int rowIndex = ResourceGrid.Items.IndexOf(cell.DataContext);
-        if (rowIndex < 0) return;
+        var focusedTb = Keyboard.FocusedElement as TextBox;
 
-        ApplyCantPick(rowIndex);
-        FinalizeCantPick();
-        _cantEditingStarted = true;
-        CantHeaderBox.Focus();
-        e.Handled = true;
+        // 1. Clic para tomar unidad en UD de partida o celda de recurso
+        bool isUnidadEditing = focusedTb != null && (focusedTb == UnidadHeaderBox || focusedTb.Tag as string == "PartidaUnidad" || (FindParent<DataGridCell>(focusedTb)?.Column == UnidadColumn));
+        if (isUnidadEditing && CubicacionFormulaPicker.TryPickUnidad(focusedTb!, targetRow, UnidadHeaderBox, Vm))
+        {
+            e.Handled = true;
+            return;
+        }
+
+        // 2. Clic para tomar casillas en CANT (modo Detalle o modo Casillas)
+        bool isCantEditing = focusedTb != null && (focusedTb == CantHeaderBox || focusedTb.Tag as string == "PartidaCant" || _cantEditingStarted);
+        if (isCantEditing)
+        {
+            int rowIndex = ResourceGrid.Items.IndexOf(targetRow);
+            if (rowIndex >= 0 && CubicacionFormulaPicker.TryPickCant(ActiveCantBox, rowIndex, _sectorColumns.IndexOf(cell.Column), Vm))
+            {
+                ClearCantPickHighlight();
+                _cantPickIndex = rowIndex;
+                if (_cantPickIndex >= 0 && _cantPickIndex < Vm.Rows.Count)
+                    Vm.Rows[_cantPickIndex].IsFormulaPickTarget = true;
+                _cantEditingStarted = true;
+                e.Handled = true;
+                return;
+            }
+        }
+
+        // 3. Clic para tomar casillas mientras se edita una casilla de sector
+        if (focusedTb != null && FindParent<DataGridCell>(focusedTb) is { } editingCell && _sectorColumns.Contains(editingCell.Column) && cell != editingCell)
+        {
+            if (focusedTb.Text.StartsWith("=") || focusedTb.Text.StartsWith("+") || EndsWithFormulaOperator(focusedTb))
+            {
+                int rowIndex = ResourceGrid.Items.IndexOf(targetRow);
+                if (rowIndex >= 0 && CubicacionFormulaPicker.TryPickSector(focusedTb, rowIndex, _sectorColumns.IndexOf(cell.Column)))
+                {
+                    RefreshSectorReferenceHighlights(focusedTb);
+                    e.Handled = true;
+                    return;
+                }
+            }
+        }
     }
 
     // Arma al vuelo el menú contextual de una casilla de la matriz de sectores, con la opción
@@ -868,6 +846,30 @@ public partial class CubicacionView : UserControl
             {
                 row.SectorValues[slot] = sectorBox.Text;
                 RecordMeasurement(sectorBox.Text);
+            }
+            else if (ReferenceEquals(e.Column, UnidadColumn) && e.EditingElement is TextBox unidadBox)
+            {
+                string resolved = Vm.ResolveUnidadReference(unidadBox.Text);
+                if (resolved != unidadBox.Text)
+                {
+                    unidadBox.Text = resolved;
+                    row.Unidad = resolved;
+                }
+                RecordMeasurement(unidadBox.Text);
+            }
+            else if (ReferenceEquals(e.Column, CantidadColumn) && e.EditingElement is TextBox cantBox)
+            {
+                if (QuantityFormulaService.IsFormulaLike(cantBox.Text))
+                {
+                    var vars = Vm.BuildPartidaCantidadVariables();
+                    var res = QuantityFormulaService.Evaluate(cantBox.Text, vars);
+                    if (res.Success)
+                    {
+                        cantBox.Text = res.Value.ToString("N2", System.Globalization.CultureInfo.CurrentCulture);
+                        row.Cantidad = res.Value;
+                    }
+                }
+                RecordMeasurement(cantBox.Text);
             }
             else if (e.EditingElement is TextBox generalBox)
             {

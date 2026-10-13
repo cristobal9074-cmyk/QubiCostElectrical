@@ -14,7 +14,12 @@ public static class PartidaCantidadVariablesBuilder
             return dict;
 
         for (var i = 0; i < resourceQuantities.Count; i++)
-            dict[$"R{i + 1}"] = resourceQuantities[i];
+        {
+            var val = resourceQuantities[i];
+            dict[$"R{i + 1}"] = val;
+            dict[$"C{i + 1}"] = val;
+            dict[$"F{i + 1}"] = val;
+        }
         return dict;
     }
 }

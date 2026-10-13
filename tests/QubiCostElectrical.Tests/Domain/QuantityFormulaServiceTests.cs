@@ -293,4 +293,36 @@ public sealed class QuantityFormulaServiceTests
         Assert.True(result.Success);
         Assert.Equal(1m, result.Value);
     }
+
+    [Theory]
+    [InlineData("+C1+C2", 30)]
+    [InlineData("=C1*C2", 200)]
+    [InlineData("+C1*1.15", 11.5)]
+    [InlineData("+(C1+C2)/2", 15)]
+    [InlineData("=SUMA(C1, C2, C3)", 60)]
+    [InlineData("+SUMA(C1:C3)", 60)]
+    [InlineData("=SUM(C1..C3)", 60)]
+    [InlineData("=PROMEDIO(C1:C3)", 20)]
+    [InlineData("=MAX(C1, C2, C3)", 30)]
+    [InlineData("=MIN(C1, C2, C3)", 10)]
+    [InlineData("=REDONDEAR(C1/3, 2)", 3.33)]
+    [InlineData("=REDONDEAR(C1/3; 2)", 3.33)]
+    [InlineData("+C1*15%", 1.5)]
+    [InlineData("=ABS(-25)", 25)]
+    [InlineData("=RAIZ(100)", 10)]
+    [InlineData("=SI(C1 > 0, 100, 0)", 100)]
+    public void Evaluate_ExcelFunctions_AndCasillaAliases(string expr, decimal expected)
+    {
+        var vars = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["C1"] = 10m,
+            ["C2"] = 20m,
+            ["C3"] = 30m,
+            ["R1"] = 10m,
+            ["F1"] = 10m
+        };
+        var result = QuantityFormulaService.Evaluate(expr, vars);
+        Assert.True(result.Success, result.Error);
+        Assert.Equal(expected, result.Value);
+    }
 }
