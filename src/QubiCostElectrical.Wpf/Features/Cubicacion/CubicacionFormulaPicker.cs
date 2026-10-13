@@ -34,10 +34,11 @@ internal static class CubicacionFormulaPicker
     {
         if (rows != null)
         {
-            if (_cantPickIndex >= 0 && _cantPickIndex < rows.Count)
-                rows[_cantPickIndex].IsFormulaPickTarget = false;
-            if (_unidadPickIndex >= 0 && _unidadPickIndex < rows.Count)
-                rows[_unidadPickIndex].IsFormulaPickTarget = false;
+            for (int i = 0; i < rows.Count; i++)
+            {
+                if (rows[i].IsFormulaPickTarget)
+                    rows[i].IsFormulaPickTarget = false;
+            }
         }
         _cantPickIndex = -1;
         _unidadPickIndex = -1;
@@ -139,7 +140,6 @@ internal static class CubicacionFormulaPicker
         string token = $"+F{newIndex + 1}";
         box.Text = token;
         box.SelectAll();
-        box.CaretIndex = token.Length;
 
         if (_unidadPickIndex >= 0 && _unidadPickIndex < rows.Count)
         {
@@ -169,11 +169,20 @@ internal static class CubicacionFormulaPicker
         _activeUnidadBox = null;
     }
 
-    public static void CancelUnidadPick(TextBox? box, IReadOnlyList<CubicacionRowVm>? rows)
+    public static void CancelUnidadPick(TextBox? box, IReadOnlyList<CubicacionRowVm>? rows, CubicacionViewModel? vm = null)
     {
-        if (box != null && !string.IsNullOrEmpty(_unidadOriginalText))
-            box.Text = _unidadOriginalText;
-        ClearCantPickHighlight(rows);
+        var targetBox = box ?? _activeUnidadBox;
+        string orig = _unidadOriginalText ?? "";
+        if (targetBox != null)
+        {
+            targetBox.Text = orig;
+            targetBox.SelectAll();
+        }
+        if (vm != null)
+        {
+            vm.PartidaUnidadText = orig;
+        }
+        ClearCantPickHighlight(rows ?? vm?.Rows);
         _unidadPickIndex = -1;
         _activeUnidadBox = null;
     }
@@ -271,9 +280,22 @@ internal static class CubicacionFormulaPicker
         if (vm == null) return false;
         if (e.Key == Key.Right)
         {
+            if (GetCurrentUnidadIndex(tb) >= 0)
+            {
+                e.Handled = true;
+                return true;
+            }
             focusCant();
             e.Handled = true;
             return true;
+        }
+        if (e.Key == Key.Left)
+        {
+            if (GetCurrentUnidadIndex(tb) >= 0)
+            {
+                e.Handled = true;
+                return true;
+            }
         }
         if (e.Key == Key.Down)
         {
@@ -293,7 +315,7 @@ internal static class CubicacionFormulaPicker
             }
             else if (cur == 0)
             {
-                ApplyUnidadPick(tb, 0, vm.Rows, grid);
+                CancelUnidadPick(tb, vm.Rows, vm);
             }
             e.Handled = true;
             return true;
@@ -307,7 +329,7 @@ internal static class CubicacionFormulaPicker
         }
         if (e.Key == Key.Escape)
         {
-            CancelUnidadPick(tb, vm.Rows);
+            CancelUnidadPick(tb, vm.Rows, vm);
             e.Handled = true;
             return true;
         }

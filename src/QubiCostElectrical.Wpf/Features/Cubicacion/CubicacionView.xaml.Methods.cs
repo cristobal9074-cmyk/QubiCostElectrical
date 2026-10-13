@@ -401,9 +401,8 @@ public partial class CubicacionView : UserControl
             if (tb == CantHeaderBox || tb.Tag as string == "PartidaCant")
                 CancelCantPick();
             else if (tb == UnidadHeaderBox || tb.Tag as string == "PartidaUnidad")
-                CubicacionFormulaPicker.CancelUnidadPick(tb, Vm.Rows);
+                CubicacionFormulaPicker.CancelUnidadPick(tb, Vm.Rows, Vm);
             SetFieldEditingState(tb, false);
-            BindingOperations.GetBindingExpression(tb, TextBox.TextProperty)?.UpdateTarget();
             tb.SelectAll();
             e.Handled = true;
             return true;
@@ -604,11 +603,14 @@ public partial class CubicacionView : UserControl
                               (focusedTb != null && (focusedTb == UnidadHeaderBox || focusedTb.Tag as string == "PartidaUnidad"));
         if (isUnidadActive && rowIndex >= 0)
         {
-            var box = CubicacionFormulaPicker.ActiveUnidadBox ?? focusedTb ?? UnidadHeaderBox;
-            CubicacionFormulaPicker.ApplyUnidadPick(box, rowIndex, Vm.Rows, ResourceGrid);
-            if (e.ClickCount >= 2)
-                CubicacionFormulaPicker.CommitUnidadPick(box, Vm);
-            box.Focus();
+            if (cell.Column == UnidadColumn)
+            {
+                var box = CubicacionFormulaPicker.ActiveUnidadBox ?? focusedTb ?? UnidadHeaderBox;
+                CubicacionFormulaPicker.ApplyUnidadPick(box, rowIndex, Vm.Rows, ResourceGrid);
+                if (e.ClickCount >= 2)
+                    CubicacionFormulaPicker.CommitUnidadPick(box, Vm);
+                box.Focus();
+            }
             e.Handled = true;
             return;
         }

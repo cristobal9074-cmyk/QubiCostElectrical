@@ -872,11 +872,6 @@
                                 <Setter Property="Background" Value="{DynamicResource Brush.RedSoft}" />
                                 <Setter Property="ToolTip" Value="{Binding ErrorMessage}" />
                             </DataTrigger>
-                            <!-- Resalte de "pickeo" de fila desde la fórmula de Cantidad oficial (↓/↑ o clic).
-                   No usa la selección real de la grilla — evita disparar SelectedRow/foco. -->
-                            <DataTrigger Binding="{Binding IsFormulaPickTarget}" Value="True">
-                                <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
-                            </DataTrigger>
                         </Style.Triggers>
                     </Style>
                 </DataGrid.RowStyle>
