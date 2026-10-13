@@ -13,12 +13,28 @@ internal static class CubicacionFormulaPicker
     private static int _cantPickTokenStart = -1;
     private static int _cantPickTokenLength;
 
+    private static int _unidadPickIndex = -1;
+    private static string _unidadOriginalText = "";
+    private static TextBox? _activeUnidadBox;
+
     public static int CantPickIndex => _cantPickIndex;
+    public static int UnidadPickIndex => _unidadPickIndex;
+    public static TextBox? ActiveUnidadBox => _activeUnidadBox;
+    public static bool IsUnidadActive => _activeUnidadBox != null;
+
+    public static void SetActiveUnidadBox(TextBox? box)
+    {
+        _activeUnidadBox = box;
+        _unidadOriginalText = box?.Text ?? "";
+        _unidadPickIndex = -1;
+    }
 
     public static void ClearCantPickHighlight(IReadOnlyList<CubicacionRowVm>? rows)
     {
         if (rows != null && _cantPickIndex >= 0 && _cantPickIndex < rows.Count)
             rows[_cantPickIndex].IsFormulaPickTarget = false;
+        if (rows != null && _unidadPickIndex >= 0 && _unidadPickIndex < rows.Count)
+            rows[_unidadPickIndex].IsFormulaPickTarget = false;
     }
 
     public static void FinalizeCantPick(IReadOnlyList<CubicacionRowVm>? rows)
@@ -91,6 +107,51 @@ internal static class CubicacionFormulaPicker
             if (grid != null && _cantPickIndex < grid.Items.Count)
                 grid.ScrollIntoView(grid.Items[_cantPickIndex]);
         }
+    }
+
+    public static void ApplyUnidadPick(TextBox? box, int newIndex, IReadOnlyList<CubicacionRowVm>? rows, DataGrid? grid)
+    {
+        if (box == null || rows == null || newIndex < 0 || newIndex >= rows.Count) return;
+        ClearCantPickHighlight(rows);
+
+        _unidadPickIndex = newIndex;
+        string token = $"+F{newIndex + 1}";
+        box.Text = token;
+        box.CaretIndex = token.Length;
+
+        rows[_unidadPickIndex].IsFormulaPickTarget = true;
+        if (grid != null && _unidadPickIndex < grid.Items.Count)
+            grid.ScrollIntoView(grid.Items[_unidadPickIndex]);
+    }
+
+    public static void CommitUnidadPick(TextBox? box, CubicacionViewModel? vm)
+    {
+        if (vm == null) return;
+        var targetBox = box ?? _activeUnidadBox;
+        string raw = (targetBox?.Text ?? "").Trim();
+        string resolved = CubicacionPartidaHelper.ResolveUnidadReference(raw, vm.Rows);
+        if (!string.IsNullOrWhiteSpace(resolved))
+        {
+            if (targetBox != null) targetBox.Text = resolved;
+            vm.PartidaUnidadText = resolved;
+        }
+        else if (!string.IsNullOrWhiteSpace(raw) && !raw.StartsWith("+") && !raw.StartsWith("="))
+        {
+            vm.PartidaUnidadText = raw;
+        }
+
+        ClearCantPickHighlight(vm.Rows);
+        _unidadPickIndex = -1;
+        _activeUnidadBox = null;
+    }
+
+    public static void CancelUnidadPick(TextBox? box, IReadOnlyList<CubicacionRowVm>? rows)
+    {
+        if (box != null && !string.IsNullOrEmpty(_unidadOriginalText))
+            box.Text = _unidadOriginalText;
+        ClearCantPickHighlight(rows);
+        _unidadPickIndex = -1;
+        _activeUnidadBox = null;
     }
 
     public static bool TryPickUnidad(TextBox? focusedTb, CubicacionRowVm? targetRow, TextBox? unidadHeaderBox, CubicacionViewModel? vm)

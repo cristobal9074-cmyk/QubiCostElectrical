@@ -49,7 +49,8 @@
                              HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                              Padding="2,0" BorderThickness="0" Background="Transparent"
                              Foreground="{DynamicResource Brush.Ink}"
-                             GotFocus="OnPartidaFieldGotFocus" PreviewKeyDown="OnPartidaFieldPreviewKeyDown"
+                             GotFocus="OnUnidadHeaderBoxGotFocus" LostFocus="OnUnidadHeaderBoxLostFocus"
+                             PreviewKeyDown="OnUnidadHeaderBoxPreviewKeyDown"
                              PreviewMouseLeftButtonDown="OnHeaderTextBoxPreviewMouseLeftButtonDown" />
                 </Border>
             </Grid>
@@ -498,7 +499,8 @@
                      FontFamily="{StaticResource Font.Ui}" FontSize="11" FontWeight="Bold"
                      HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                      Padding="0" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource Brush.Ink}"
-                     GotFocus="OnPartidaFieldGotFocus" PreviewKeyDown="OnPartidaFieldPreviewKeyDown"
+                     GotFocus="OnUnidadHeaderBoxGotFocus" LostFocus="OnUnidadHeaderBoxLostFocus"
+                     PreviewKeyDown="OnUnidadHeaderBoxPreviewKeyDown"
                      ToolTip="Unidad de la partida — editable si el itemizado no la trae. Ctrl+←/→ para moverse entre Unidad, Cantidad y Observaciones." />
                     </Border>
                     <!-- Cantidad oficial de la partida — número o fórmula tipo Excel (R1+R2...) -->
@@ -695,12 +697,27 @@
                partida de arriba. -->
                     <DataGridTextColumn x:Name="UnidadColumn" Header="UD" Binding="{Binding Unidad, UpdateSourceTrigger=LostFocus}"
                               Width="48" MinWidth="42">
+                        <DataGridTextColumn.CellStyle>
+                            <Style TargetType="DataGridCell" BasedOn="{StaticResource DataGridCell.Excel}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsFormulaPickTarget}" Value="True">
+                                        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
+                                        <Setter Property="BorderThickness" Value="2" />
+                                        <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGridTextColumn.CellStyle>
                         <DataGridTextColumn.ElementStyle>
                             <Style TargetType="TextBlock">
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding UnidadCellError, Converter={StaticResource StringNotEmptyToBool}}" Value="True">
                                         <Setter Property="Background" Value="{DynamicResource Brush.RedSoft}" />
                                         <Setter Property="ToolTip" Value="{Binding UnidadCellError}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsFormulaPickTarget}" Value="True">
+                                        <Setter Property="FontWeight" Value="Bold" />
+                                        <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
@@ -856,7 +873,7 @@
                             <!-- Resalte de "pickeo" de fila desde la fórmula de Cantidad oficial (↓/↑ o clic).
                    No usa la selección real de la grilla — evita disparar SelectedRow/foco. -->
                             <DataTrigger Binding="{Binding IsFormulaPickTarget}" Value="True">
-                                <Setter Property="Background" Value="{DynamicResource Brush.SuccessBg}" />
+                                <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>

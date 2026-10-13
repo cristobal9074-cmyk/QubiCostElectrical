@@ -28,9 +28,6 @@ public partial class CubicacionView : UserControl, IInGridSearchable
     private Point _autocompleteHoverFreezePos;
     private readonly List<DataGridColumn> _sectorColumns = new();
     private bool _suppressSelectionSync;
-    private int _cantPickIndex = -1;
-    private int _cantPickTokenStart = -1;
-    private int _cantPickTokenLength;
     private bool _cantEditingStarted;
     private readonly Dictionary<TextBox, bool> _fieldEditingState = new();
 
