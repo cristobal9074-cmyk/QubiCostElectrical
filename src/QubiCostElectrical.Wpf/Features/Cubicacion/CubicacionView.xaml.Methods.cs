@@ -449,8 +449,12 @@ public partial class CubicacionView : UserControl
                 else if (tb == CantHeaderBox || tb.Tag as string == "PartidaCant")
                 {
                     if (e.Key == Key.Left) { ActiveUnidadBox.Focus(); ActiveUnidadBox.SelectAll(); e.Handled = true; return true; }
-                    else if (e.Key == Key.Right && ObservacionHeaderBox != null && ObservacionHeaderBox.IsVisible)
-                    { ObservacionHeaderBox.Focus(); ObservacionHeaderBox.SelectAll(); e.Handled = true; return true; }
+                    else if (e.Key == Key.Right)
+                    {
+                        CommitCantHeaderBox(tb);
+                        CubicacionFormulaPicker.FocusFirstCubicacionCell(ResourceGrid, _sectorColumns, CantidadColumn);
+                        e.Handled = true; return true;
+                    }
                 }
                 else if (tb == ObservacionHeaderBox && e.Key == Key.Left)
                 {
@@ -554,7 +558,7 @@ public partial class CubicacionView : UserControl
     {
         var tb = sender as TextBox ?? ActiveCantBox;
         if (HandleExcelFieldPreviewKeyDown(tb, e)) return;
-        CubicacionFormulaPicker.HandleCantNavigation(tb, e, Vm, ResourceGrid, CantidadColumn, () => { ActiveUnidadBox.Focus(); ActiveUnidadBox.SelectAll(); }, () => CommitCantHeaderBox(tb), _cantEditingStarted);
+        CubicacionFormulaPicker.HandleCantNavigation(tb, e, Vm, ResourceGrid, CantidadColumn, () => { ActiveUnidadBox.Focus(); ActiveUnidadBox.SelectAll(); }, () => CommitCantHeaderBox(tb), () => { CommitCantHeaderBox(tb); CubicacionFormulaPicker.FocusFirstCubicacionCell(ResourceGrid, _sectorColumns, CantidadColumn); }, _cantEditingStarted);
     }
 
     private void CommitCantHeaderBox(TextBox? target = null)

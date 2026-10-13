@@ -367,16 +367,24 @@ internal static class CubicacionFormulaPicker
         return false;
     }
 
+    public static void FocusFirstCubicacionCell(DataGrid? grid, IReadOnlyList<DataGridColumn>? sectorCols, DataGridColumn? cantCol)
+    {
+        if (grid == null || grid.Items.Count == 0) return;
+        DataGridColumn? targetCol = (sectorCols != null && sectorCols.Count > 0)
+            ? sectorCols[0]
+            : (cantCol ?? FindColumn(grid, "CÓDIGO"));
+        if (targetCol != null)
+        {
+            FocusGridCell(grid, 0, targetCol);
+        }
+    }
+
     public static bool HandleUnidadNavigation(TextBox tb, KeyEventArgs e, CubicacionViewModel? vm, DataGrid? grid, DataGridColumn? colUnidad, Action focusCant)
     {
         if (vm == null) return false;
         if (e.Key == Key.Right)
         {
-            if (GetCurrentUnidadIndex(tb) >= 0)
-            {
-                e.Handled = true;
-                return true;
-            }
+            CommitUnidadPick(tb, vm, grid);
             focusCant();
             e.Handled = true;
             return true;
@@ -427,7 +435,7 @@ internal static class CubicacionFormulaPicker
         return false;
     }
 
-    public static bool HandleCantNavigation(TextBox tb, KeyEventArgs e, CubicacionViewModel? vm, DataGrid? grid, DataGridColumn? colCant, Action focusUnidad, Action commitCant, bool isEditingStarted)
+    public static bool HandleCantNavigation(TextBox tb, KeyEventArgs e, CubicacionViewModel? vm, DataGrid? grid, DataGridColumn? colCant, Action focusUnidad, Action commitCant, Action? focusFirstSector = null, bool isEditingStarted = false)
     {
         if (vm == null) return false;
         if (e.Key == Key.Left)
@@ -435,6 +443,16 @@ internal static class CubicacionFormulaPicker
             focusUnidad();
             e.Handled = true;
             return true;
+        }
+        if (e.Key == Key.Right)
+        {
+            if (focusFirstSector != null)
+            {
+                commitCant();
+                focusFirstSector();
+                e.Handled = true;
+                return true;
+            }
         }
         if (e.Key == Key.Down)
         {
