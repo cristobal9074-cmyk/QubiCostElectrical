@@ -76,7 +76,7 @@
                         CornerRadius="3"
                         MinHeight="20"
                         VerticalAlignment="Center"
-                        ToolTip="Cantidad oficial de la partida (editable o fórmula R1+R2... · Enter para guardar)">
+                        ToolTip="{Binding DataContext.PartidaCantidadToolTip, RelativeSource={RelativeSource AncestorType=UserControl}}">
                     <TextBox Tag="PartidaCant"
                              Text="{Binding DataContext.PartidaCantidadText, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=LostFocus}"
                              FontFamily="{StaticResource Font.Mono}" FontSize="11" FontWeight="Bold"
@@ -516,7 +516,7 @@
                      Padding="0" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource Brush.Success}"
                      GotFocus="OnCantHeaderBoxGotFocus" LostFocus="OnCantHeaderBoxLostFocus"
                      PreviewKeyDown="OnCantHeaderBoxPreviewKeyDown"
-                     ToolTip="Cantidad oficial de la partida — escriba un número o una fórmula (R1+R2), o ↓/↑ y un operador (+, -, *, /) para tomar cantidades de los recursos de abajo" />
+                     ToolTip="{Binding PartidaCantidadToolTip}" />
                     </Border>
                     <!-- Etiquetas de columna (estos títulos no tienen fila de encabezado aparte en Detalle) -->
                     <Border x:Name="ItemRowMatCell" DockPanel.Dock="Left" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0"

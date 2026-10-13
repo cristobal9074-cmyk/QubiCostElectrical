@@ -255,7 +255,7 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
             if (selectedPartida != null) selectedPartida.IsActiva = true;
             OnPropertyChanged(nameof(SelectedPartida)); OnPropertyChanged(nameof(PartidaCodigo)); OnPropertyChanged(nameof(PartidaDescripcion));
             OnPropertyChanged(nameof(PartidaUnidad)); OnPropertyChanged(nameof(PartidaUnidadText)); OnPropertyChanged(nameof(PartidaPositionText));
-            OnPropertyChanged(nameof(PartidaCantidadText)); OnPropertyChanged(nameof(PartidaObservacionesText)); OnPropertyChanged(nameof(ExcluidoCubicacion));
+            OnPropertyChanged(nameof(PartidaCantidadText)); OnPropertyChanged(nameof(PartidaCantidadToolTip)); OnPropertyChanged(nameof(PartidaObservacionesText)); OnPropertyChanged(nameof(ExcluidoCubicacion));
             OnPropertyChanged(nameof(MotivoNoCubicarText)); OnPropertyChanged(nameof(HasPartidaNote)); OnPropertyChanged(nameof(PartidaNoteLabel));
             OnPropertyChanged(nameof(IsEmpty)); OnPropertyChanged(nameof(HasPartida)); OnPropertyChanged(nameof(IsDetailHeaderVisible));
             OnPropertyChanged(nameof(IsReadOnly)); OnPropertyChanged(nameof(PartidaEstadoText));
@@ -597,21 +597,18 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
             string clean = (value ?? "").Trim();
             decimal parsed;
             bool success;
-            if (string.IsNullOrEmpty(clean))
-            {
-                parsed = 0m;
-                success = true;
-            }
+            if (string.IsNullOrEmpty(clean)) { parsed = 0m; success = true; selectedPartida.CantidadFormula = ""; }
             else if (QuantityFormulaService.IsFormulaLike(clean))
             {
-                var variables = BuildPartidaCantidadVariables();
-                var result = QuantityFormulaService.Evaluate(clean, variables);
-                success = result.Success;
-                parsed = result.Value;
+                string evalStr = clean.TrimEnd('+', '-', '*', '/', '^', '(', ',');
+                var result = QuantityFormulaService.Evaluate(evalStr, BuildPartidaCantidadVariables());
+                success = result.Success; parsed = result.Value;
+                if (success) selectedPartida.CantidadFormula = clean;
             }
             else
             {
                 success = decimal.TryParse(clean, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.CurrentCulture, out parsed);
+                if (success) selectedPartida.CantidadFormula = "";
             }
 
             if (success)
@@ -621,28 +618,22 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
                     undo.PushUndoPoint(session, $"Modificar cantidad en Partida {selectedPartida.Codigo} ({selectedPartida.Cantidad:G29} → {parsed:G29})");
 
                     var item = session.Itemizado.FirstOrDefault(x => string.Equals(x.Id, selectedPartida.Id, StringComparison.OrdinalIgnoreCase));
-                    if (item != null)
-                    {
-                        item.Cantidad = parsed;
-                    }
+                    if (item != null) item.Cantidad = parsed;
 
                     selectedPartida.Cantidad = parsed;
                     OnPropertyChanged(nameof(PartidaCantidadText));
+                    OnPropertyChanged(nameof(PartidaCantidadToolTip));
                     MarkDirty();
                     session.MarkDirty(ProjectDirtyScope.Itemizado);
                     ScheduleRefreshTotals();
                 }
-                else
-                {
-                    OnPropertyChanged(nameof(PartidaCantidadText));
-                }
+                else { OnPropertyChanged(nameof(PartidaCantidadText)); OnPropertyChanged(nameof(PartidaCantidadToolTip)); }
             }
-            else
-            {
-                OnPropertyChanged(nameof(PartidaCantidadText));
-            }
+            else { OnPropertyChanged(nameof(PartidaCantidadText)); OnPropertyChanged(nameof(PartidaCantidadToolTip)); }
         }
     }
+
+    public string PartidaCantidadToolTip => selectedPartida?.CantidadToolTip ?? "Cantidad oficial de la partida (editable o fórmula tipo Excel ej: +C1+C2 · Enter para guardar)";
 
     public Dictionary<string, decimal> BuildPartidaCantidadVariables()
         => CubicacionPartidaHelper.BuildVariables(Rows, session);

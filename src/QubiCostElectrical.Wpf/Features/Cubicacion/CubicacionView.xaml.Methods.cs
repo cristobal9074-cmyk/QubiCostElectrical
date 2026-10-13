@@ -544,8 +544,8 @@ public partial class CubicacionView : UserControl
     private void OnCantHeaderBoxGotFocus(object sender, RoutedEventArgs e)
     {
         var tb = sender as TextBox ?? ActiveCantBox;
+        CubicacionFormulaPicker.SetActiveCantBox(tb, Vm);
         SetFieldEditingState(tb, false);
-        CancelCantPick();
         SelectAllDeferred(tb);
     }
 
@@ -629,9 +629,9 @@ public partial class CubicacionView : UserControl
 
         // 2. Clic para tomar casillas en CANT (modo Detalle o modo Casillas)
         bool isCantEditing = focusedTb != null && (focusedTb == CantHeaderBox || focusedTb.Tag as string == "PartidaCant" || _cantEditingStarted);
-        if (isCantEditing && rowIndex >= 0 && CubicacionFormulaPicker.TryPickCant(ActiveCantBox, rowIndex, _sectorColumns.IndexOf(cell.Column), Vm))
+        if (isCantEditing && rowIndex >= 0 && cell.Column == CantidadColumn)
         {
-            ApplyCantPick(rowIndex);
+            CubicacionFormulaPicker.PickCantCell(ActiveCantBox, rowIndex, Vm.Rows, ResourceGrid, CantidadColumn);
             _cantEditingStarted = true;
             e.Handled = true;
             return;

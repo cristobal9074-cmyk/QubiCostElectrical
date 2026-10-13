@@ -97,6 +97,21 @@ public sealed class PartidaListItemVm : ViewModelBase
         set => SetProperty(ref cantidad, value);
     }
 
+    private string cantidadFormula = "";
+    public string CantidadFormula
+    {
+        get => cantidadFormula;
+        set
+        {
+            if (SetProperty(ref cantidadFormula, value ?? ""))
+                OnPropertyChanged(nameof(CantidadToolTip));
+        }
+    }
+
+    public string CantidadToolTip => !string.IsNullOrWhiteSpace(cantidadFormula)
+        ? $"Fórmula: {cantidadFormula}\nResultado: {cantidad.ToString("N2", System.Globalization.CultureInfo.CurrentCulture)}"
+        : "Cantidad oficial de la partida (editable o fórmula tipo Excel ej: +C1+C2 · Enter para guardar)";
+
     public int RecursoCount
     {
         get => recursoCount;

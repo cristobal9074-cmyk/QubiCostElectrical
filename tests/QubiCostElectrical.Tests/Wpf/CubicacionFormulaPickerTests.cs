@@ -104,4 +104,78 @@ public class CubicacionFormulaPickerTests
         Assert.Equal("GLOBAL", CubicacionPartidaHelper.ResolveUnidadReference("+u3", rows));
         Assert.Equal("PZA", CubicacionPartidaHelper.ResolveUnidadReference("+F2", rows)); // retrocompatible
     }
+
+    [Fact]
+    public void DownAndUp_NavigatesCantRows_AndChainsMultipleTokensCorrectly()
+    {
+        XamlViewSmokeHost.Run(() =>
+        {
+            var tb = new TextBox { Text = "+" };
+            var rows = new List<CubicacionRowVm>
+            {
+                new CubicacionRowVm(new CubicacionRow { Cantidad = 10m }, false, () => true),
+                new CubicacionRowVm(new CubicacionRow { Cantidad = 20m }, false, () => true),
+                new CubicacionRowVm(new CubicacionRow { Cantidad = 30m }, false, () => true),
+            };
+
+            CubicacionFormulaPicker.SetActiveCantBox(tb);
+
+            // 1. Initial Down from "+" -> "+C1"
+            CubicacionFormulaPicker.ApplyCantPick(tb, 0, rows, null);
+            Assert.Equal("+C1", tb.Text);
+            Assert.True(rows[0].IsFormulaPickTarget);
+
+            // 2. Down again -> slides to "+C2"
+            CubicacionFormulaPicker.ApplyCantPick(tb, 1, rows, null);
+            Assert.Equal("+C2", tb.Text);
+            Assert.False(rows[0].IsFormulaPickTarget);
+            Assert.True(rows[1].IsFormulaPickTarget);
+
+            // 3. User types "+" to add another term -> "+C2+"
+            tb.Text = "+C2+";
+            tb.CaretIndex = tb.Text.Length;
+
+            // 4. Down picks next term starting at row 0 -> "+C2+C1"
+            int caret = tb.CaretIndex;
+            bool afterOp = (caret > 0 && CubicacionFormulaPicker.IsOperatorChar(tb.Text[caret - 1])) || CubicacionFormulaPicker.EndsWithOperator(tb.Text);
+            Assert.True(afterOp);
+            CubicacionFormulaPicker.ApplyCantPick(tb, 0, rows, null);
+            Assert.Equal("+C2+C1", tb.Text);
+            Assert.True(rows[0].IsFormulaPickTarget);
+
+            // 5. Down again slides the second term -> "+C2+C2" then "+C2+C3"
+            CubicacionFormulaPicker.ApplyCantPick(tb, 2, rows, null);
+            Assert.Equal("+C2+C3", tb.Text);
+            Assert.True(rows[2].IsFormulaPickTarget);
+
+            // 6. User types "-" -> "+C2+C3-"
+            tb.Text = "+C2+C3-";
+            tb.CaretIndex = tb.Text.Length;
+
+            // 7. PickCantCell clicking row 0 -> appends C1 -> "+C2+C3-C1"
+            CubicacionFormulaPicker.PickCantCell(tb, 0, rows, null, null);
+            Assert.Equal("+C2+C3-C1", tb.Text);
+            Assert.True(rows[0].IsFormulaPickTarget);
+
+            // 8. Escape cancels and restores original
+            CubicacionFormulaPicker.CancelCantPick(tb, rows, null);
+            Assert.False(rows[0].IsFormulaPickTarget);
+            Assert.Equal("+", tb.Text);
+        });
+    }
+
+    [Fact]
+    public void PartidaListItemVm_StoresFormula_AndProducesToolTip()
+    {
+        var row = new ItemizadoRow { Id = "P1", Item = "1.1", Descripcion = "Partida Prueba", Cantidad = 30m };
+        var vm = new PartidaListItemVm(row);
+
+        Assert.Equal("", vm.CantidadFormula);
+        Assert.Contains("Cantidad oficial", vm.CantidadToolTip);
+
+        vm.CantidadFormula = "+C1+C2";
+        Assert.Equal("+C1+C2", vm.CantidadFormula);
+        Assert.Contains("+C1+C2", vm.CantidadToolTip);
+        Assert.Contains("Resultado: 30", vm.CantidadToolTip);
+    }
 }
