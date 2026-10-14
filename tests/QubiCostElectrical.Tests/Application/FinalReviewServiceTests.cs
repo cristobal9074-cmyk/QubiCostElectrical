@@ -421,4 +421,47 @@ public sealed class FinalReviewServiceTests
         Assert.Equal(0, result.MissingApus);
         Assert.DoesNotContain(result.Issues, i => i.Category == FinalReviewCategory.MissingApu);
     }
+
+    [Fact]
+    public void Build_PartidaCubicada_SinCantidadGlobal_GeneraAlertaValorizacionGlobal()
+    {
+        var item = Partida("P1", "1.1", "Canalización");
+        item.Cantidad = 0m;
+        item.Unidad = "M";
+        var cub = Cub("P1", "PVC20", "PVC 20mm", 100m);
+
+        var result = _service.Build(new[] { item }, null, new[] { cub }, null);
+
+        var issue = Assert.Single(result.Issues, i => i.Category == FinalReviewCategory.PartidaSinValorizacionGlobal);
+        Assert.Equal(FinalReviewSeverity.Blocker, issue.Severity);
+        Assert.Contains("cantidad global", issue.Problem, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Build_PartidaCubicada_SinUnidadGlobal_GeneraAlertaValorizacionGlobal()
+    {
+        var item = Partida("P1", "1.1", "Canalización");
+        item.Cantidad = 100m;
+        item.Unidad = "";
+        var cub = Cub("P1", "PVC20", "PVC 20mm", 100m);
+
+        var result = _service.Build(new[] { item }, null, new[] { cub }, null);
+
+        var issue = Assert.Single(result.Issues, i => i.Category == FinalReviewCategory.PartidaSinValorizacionGlobal);
+        Assert.Equal(FinalReviewSeverity.Blocker, issue.Severity);
+        Assert.Contains("unidad de medida global", issue.Problem, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Build_PartidaCubicada_ConUnidadYCantidad_NoGeneraAlertaValorizacionGlobal()
+    {
+        var item = Partida("P1", "1.1", "Canalización");
+        item.Cantidad = 100m;
+        item.Unidad = "M";
+        var cub = Cub("P1", "PVC20", "PVC 20mm", 100m);
+
+        var result = _service.Build(new[] { item }, null, new[] { cub }, null);
+
+        Assert.DoesNotContain(result.Issues, i => i.Category == FinalReviewCategory.PartidaSinValorizacionGlobal);
+    }
 }

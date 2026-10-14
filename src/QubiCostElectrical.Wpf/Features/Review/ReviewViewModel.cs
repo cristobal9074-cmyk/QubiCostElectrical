@@ -37,6 +37,7 @@ internal static class FinalReviewIssueExtensions
         FinalReviewCategory.AntecedentePendienteMandante => "Pendiente del mandante",
         FinalReviewCategory.MedicionSinRegistroPlano => "Medici\u00f3n sin registro de plano",
         FinalReviewCategory.FechaCorteAntecedentesNoDefinida => "Fecha de corte no definida",
+        FinalReviewCategory.PartidaSinValorizacionGlobal => "Sin valorización global",
         _ => "Revisi\u00f3n"
     };
 }

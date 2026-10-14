@@ -425,67 +425,14 @@ public sealed partial class CubicacionViewModel
     }
 
     public void ExecuteFillDownSector(CubicacionRowVm sourceRow, IReadOnlyList<CubicacionRowVm> targetRows, int sectorSlot)
-    {
-        if (IsReadOnly || sourceRow == null || targetRows.Count == 0 || sectorSlot < 0 || sectorSlot >= MaximumSectorCount)
-            return;
-
-        PushUndoPoint("Rellenar abajo (Ctrl+D)");
-        string sourceExpr = sourceRow.SectorValues[sectorSlot];
-        foreach (var target in targetRows)
-        {
-            target.SectorValues[sectorSlot] = sourceExpr;
-            ApplyBatchSectorExpressions(target, new HashSet<int> { sectorSlot });
-        }
-        MarkDirty();
-        SaveStatusText = "Rellenado hacia abajo (Ctrl+D).";
-    }
+        => CubicacionFillHelper.FillDownSector(this, sourceRow, targetRows, sectorSlot);
 
     public void ExecuteFillDownCantidad(CubicacionRowVm sourceRow, IReadOnlyList<CubicacionRowVm> targetRows)
-    {
-        if (IsReadOnly || sourceRow == null || targetRows.Count == 0)
-            return;
-
-        PushUndoPoint("Rellenar abajo (Ctrl+D)");
-        decimal sourceCant = sourceRow.Cantidad;
-        foreach (var target in targetRows)
-        {
-            target.Cantidad = sourceCant;
-            OnRowEdited(target);
-        }
-        MarkDirty();
-        SaveStatusText = "Rellenado de cantidad hacia abajo (Ctrl+D).";
-    }
+        => CubicacionFillHelper.FillDownCantidad(this, sourceRow, targetRows);
 
     public void ExecuteFillRight(CubicacionRowVm row, int sourceSlot, IReadOnlyList<int> targetSlots)
-    {
-        if (IsReadOnly || row == null || sourceSlot < 0 || sourceSlot >= MaximumSectorCount || targetSlots.Count == 0)
-            return;
-
-        PushUndoPoint("Rellenar a la derecha (Ctrl+R)");
-        string sourceExpr = row.SectorValues[sourceSlot];
-        var slots = new HashSet<int>();
-        foreach (int targetSlot in targetSlots)
-        {
-            if (targetSlot >= 0 && targetSlot < MaximumSectorCount)
-            {
-                row.SectorValues[targetSlot] = sourceExpr;
-                slots.Add(targetSlot);
-            }
-        }
-        ApplyBatchSectorExpressions(row, slots);
-        MarkDirty();
-        SaveStatusText = "Rellenado hacia la derecha (Ctrl+R).";
-    }
+        => CubicacionFillHelper.FillRight(this, row, sourceSlot, targetSlots);
 
     public void ExecuteRepeatMeasurement(CubicacionRowVm row, int targetSlot, string expression)
-    {
-        if (IsReadOnly || row == null || targetSlot < 0 || targetSlot >= MaximumSectorCount || string.IsNullOrWhiteSpace(expression))
-            return;
-
-        PushUndoPoint("Repetir medición (F4)");
-        row.SectorValues[targetSlot] = expression;
-        ApplyBatchSectorExpressions(row, new HashSet<int> { targetSlot });
-        MarkDirty();
-        SaveStatusText = $"Medición repetida (F4): '{expression}'";
-    }
+        => CubicacionFillHelper.RepeatMeasurement(this, row, targetSlot, expression);
 }

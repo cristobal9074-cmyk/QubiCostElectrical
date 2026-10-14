@@ -32,6 +32,7 @@ public enum FinalReviewCategory
     , CommercialModelIncomplete
     , EngineInconsistency
     , FormulaSyntaxError
+    , PartidaSinValorizacionGlobal
 }
 
 public sealed record FinalReviewIssue(
@@ -75,6 +76,7 @@ public sealed record FinalReviewIssue(
         FinalReviewCategory.CommercialModelIncomplete => "Modelo comercial incompleto",
         FinalReviewCategory.EngineInconsistency => "Inconsistencia de cálculo",
         FinalReviewCategory.FormulaSyntaxError => "Error en fórmula",
+        FinalReviewCategory.PartidaSinValorizacionGlobal => "Sin valorización global",
         _ => "Revisión"
     };
 }
@@ -161,6 +163,7 @@ public sealed partial class FinalReviewService : IFinalReviewService
         AddCommercialModelIssues(issues, itemList, commercialRules);
         AddEmptyOrIncompletePartidas(issues, itemList, cubList, overriddenItemIds);
         AddZeroQuantities(issues, cubList, itemById);
+        AddPartidasSinValorizacionGlobal(issues, itemList, cubList, overriddenItemIds);
         AddMaterialsWithoutPrice(issues, cubList, materialList, itemById);
         AddAreasNotAssigned(issues, cubList, itemById);
         AddMissingOrIncompleteApus(issues, itemList, cubList, apuList, settings, overriddenItemIds);

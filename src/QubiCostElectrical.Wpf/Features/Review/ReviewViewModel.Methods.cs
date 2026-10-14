@@ -344,6 +344,12 @@ public sealed partial class ReviewViewModel : SessionAwareViewModelBase, IRefres
             zeroQuantities == 0 ? ChecklistStatus.Pass : ChecklistStatus.Fail,
             zeroQuantities, FinalReviewCategory.ZeroQuantity,
             SetCategoryFilter, () => hasProject));
+        int sinValorizacionGlobal = summary.Issues.Count(x => x.Category == FinalReviewCategory.PartidaSinValorizacionGlobal);
+        checklist.Add(new ChecklistItemVm(
+            sinValorizacionGlobal == 0 ? "Partidas valorizadas globalmente" : $"{sinValorizacionGlobal:N0} partida(s) sin unidad o cant. global",
+            sinValorizacionGlobal == 0 ? ChecklistStatus.Pass : ChecklistStatus.Fail,
+            sinValorizacionGlobal, FinalReviewCategory.PartidaSinValorizacionGlobal,
+            SetCategoryFilter, () => hasProject));
         checklist.Add(new ChecklistItemVm(
             summary.MaterialsWithoutPrice == 0 ? "Precios completos" : $"{summary.MaterialsWithoutPrice:N0} materiales sin precio",
             summary.MaterialsWithoutPrice == 0 ? ChecklistStatus.Pass : ChecklistStatus.Fail,

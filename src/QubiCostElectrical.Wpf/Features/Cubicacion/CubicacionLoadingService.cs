@@ -132,7 +132,7 @@ internal sealed class CubicacionLoadingService
                 || p.Codigo.Contains(f, StringComparison.OrdinalIgnoreCase);
             if (!searchMatch) continue;
 
-            bool isLista = p.ExcluidoCubicacion || (p.TieneCubicacion && !p.HasIssues);
+            bool isLista = p.ExcluidoCubicacion || (p.TieneCubicacion && !p.HasIssues && !p.SinValorizacionGlobal);
             bool statusMatch = statusFilter switch
             {
                 CubicacionStatusFilterMode.Todos => true,
@@ -200,7 +200,7 @@ internal sealed class CubicacionLoadingService
     public void UpdateFilterCounts()
     {
         int total = parent.Partidas.Count(p => p.EsPartida);
-        int listas = parent.Partidas.Count(p => p.EsPartida && (p.ExcluidoCubicacion || (p.TieneCubicacion && !p.HasIssues)));
+        int listas = parent.Partidas.Count(p => p.EsPartida && (p.ExcluidoCubicacion || (p.TieneCubicacion && !p.HasIssues && !p.SinValorizacionGlobal)));
         int pendientes = Math.Max(0, total - listas);
         parent.TotalPartidasCount = total;
         parent.ListasPartidasCount = listas;

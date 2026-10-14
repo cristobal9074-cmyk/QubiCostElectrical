@@ -90,6 +90,7 @@ internal sealed class CubicacionPersistenceService
         // Rows ya está filtrado a la partida activa, evita re-escanear toda la sesión.
         partida.RecursoCount = parent.Rows.Count(r => r.HasContent);
         parent.UpdateFilterCounts();
+        parent.NotifyGlobalValorizacionChanged();
     }
 
     public void ValidateRows()

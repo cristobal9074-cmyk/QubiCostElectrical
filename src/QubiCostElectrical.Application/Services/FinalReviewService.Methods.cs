@@ -71,6 +71,50 @@ public sealed partial class FinalReviewService : IFinalReviewService
         }
     }
 
+    private static void AddPartidasSinValorizacionGlobal(
+        List<FinalReviewIssue> issues,
+        IReadOnlyList<ItemizadoRow> itemList,
+        IReadOnlyList<CubicacionRow> cubList,
+        ISet<string> overriddenItemIds)
+    {
+        var cubicadasConMaterial = cubList
+            .Where(x => !string.IsNullOrWhiteSpace(x.Codigo) && x.Cantidad > 0m)
+            .Select(x => S(x.ItemId))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var item in itemList.Where(x => !x.EsTitulo))
+        {
+            if (item.ExcluidoCubicacion) continue;
+            if (overriddenItemIds.Contains(S(item.Id))) continue;
+            if (!cubicadasConMaterial.Contains(S(item.Id))) continue;
+
+            bool faltaCant = item.Cantidad <= 0m;
+            bool faltaUnidad = string.IsNullOrWhiteSpace(item.Unidad);
+
+            if (faltaCant || faltaUnidad)
+            {
+                string problema = (faltaCant && faltaUnidad)
+                    ? "La partida tiene materiales cubicados pero no cuenta con unidad ni cantidad global en el encabezado."
+                    : faltaCant
+                        ? "La partida tiene materiales cubicados pero su cantidad global en el encabezado es cero o vacía."
+                        : "La partida tiene materiales cubicados pero no tiene unidad de medida global en el encabezado.";
+
+                issues.Add(new FinalReviewIssue(
+                    $"GLOBAL_VAL|{S(item.Id)}",
+                    FinalReviewSeverity.Blocker,
+                    FinalReviewCategory.PartidaSinValorizacionGlobal,
+                    S(item.Id),
+                    S(item.Item),
+                    S(item.Descripcion),
+                    "",
+                    S(item.Descripcion),
+                    1,
+                    problema,
+                    "Completar la Unidad y Cantidad en el encabezado de Cubicación o en el Ítemizado para valorizar la partida en el presupuesto."));
+            }
+        }
+    }
+
     private static void AddMaterialsWithoutPrice(List<FinalReviewIssue> issues, IReadOnlyList<CubicacionRow> cubList, IReadOnlyList<MaterialRow> materialList, IReadOnlyDictionary<string, ItemizadoRow> itemById)
     {
         var materialByCode = materialList
@@ -426,6 +470,7 @@ public sealed partial class FinalReviewService : IFinalReviewService
         FinalReviewCategory.FormulaSyntaxError => 0,
         FinalReviewCategory.EmptyPartida => 1,
         FinalReviewCategory.ZeroQuantity => 2,
+        FinalReviewCategory.PartidaSinValorizacionGlobal => 2,
         FinalReviewCategory.MaterialWithoutPrice => 3,
         FinalReviewCategory.MissingCurrencyUf => 4,
         FinalReviewCategory.ZeroTotalSale => 5,

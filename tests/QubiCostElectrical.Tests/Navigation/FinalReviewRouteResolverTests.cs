@@ -11,6 +11,7 @@ public sealed class FinalReviewRouteResolverTests
     [InlineData(FinalReviewCategory.EmptyPartida, WorkspaceReviewTarget.Takeoff)]
     [InlineData(FinalReviewCategory.FechaCorteAntecedentesNoDefinida, WorkspaceReviewTarget.Documents)]
     [InlineData(FinalReviewCategory.MissingCurrencyUf, WorkspaceReviewTarget.Project)]
+    [InlineData(FinalReviewCategory.PartidaSinValorizacionGlobal, WorkspaceReviewTarget.Takeoff)]
     public void Resolve_MapsKnownCategories(FinalReviewCategory category, WorkspaceReviewTarget expected)
     {
         Assert.Equal(expected, FinalReviewRouteResolver.Resolve(category));

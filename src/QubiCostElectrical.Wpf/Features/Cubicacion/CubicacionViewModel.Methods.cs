@@ -261,6 +261,7 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
             OnPropertyChanged(nameof(IsEmpty)); OnPropertyChanged(nameof(HasPartida)); OnPropertyChanged(nameof(IsDetailHeaderVisible));
             OnPropertyChanged(nameof(IsReadOnly)); OnPropertyChanged(nameof(PartidaEstadoText));
             NotifyCubicacionSummaryChanged();
+            NotifyGlobalValorizacionChanged();
             LoadCubicacionRows();
             ((RelayCommand)AplicarConjuntoCommand).RaiseCanExecuteChanged(); ((RelayCommand)CrearConjuntoDesdePartidaCommand).RaiseCanExecuteChanged();
             ((RelayCommand)AddRowCommand).RaiseCanExecuteChanged(); ((RelayCommand)InsertRowCommand).RaiseCanExecuteChanged();
@@ -563,6 +564,7 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
                 selectedPartida.Unidad = clean;
                 OnPropertyChanged(nameof(PartidaUnidadText));
                 OnPropertyChanged(nameof(PartidaUnidad));
+                NotifyGlobalValorizacionChanged();
                 MarkDirty();
                 session.MarkDirty(ProjectDirtyScope.Itemizado);
             }
@@ -593,59 +595,55 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
         }
         set
         {
-            if (session.IsReadOnly) return;
-            if (selectedPartida == null) return;
+            if (session.IsReadOnly || selectedPartida == null) return;
             string clean = (value ?? "").Trim();
-            decimal parsed;
-            bool success;
-            if (string.IsNullOrEmpty(clean)) { parsed = 0m; success = true; selectedPartida.CantidadFormula = ""; }
-            else if (QuantityFormulaService.IsFormulaLike(clean))
+            if (!CubicacionPartidaHelper.TryParsePartidaCantidad(clean, BuildPartidaCantidadVariables(), out decimal parsed, out string formula))
             {
-                string evalStr = clean.TrimEnd('+', '-', '*', '/', '^', '(', ',');
-                var result = QuantityFormulaService.Evaluate(evalStr, BuildPartidaCantidadVariables());
-                success = result.Success; parsed = result.Value;
-                if (success) selectedPartida.CantidadFormula = clean;
-            }
-            else
-            {
-                success = decimal.TryParse(clean, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.CurrentCulture, out parsed)
-                       || decimal.TryParse(clean, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out parsed);
-                if (success && (selectedPartida.Cantidad != parsed || string.IsNullOrEmpty(selectedPartida.CantidadFormula)))
-                    selectedPartida.CantidadFormula = "";
+                OnPropertyChanged(nameof(PartidaCantidadText));
+                OnPropertyChanged(nameof(PartidaCantidadToolTip));
+                NotifyGlobalValorizacionChanged();
+                return;
             }
 
-            if (success)
+            if (!string.IsNullOrEmpty(formula)) selectedPartida.CantidadFormula = formula;
+            else if (selectedPartida.Cantidad != parsed || string.IsNullOrEmpty(selectedPartida.CantidadFormula)) selectedPartida.CantidadFormula = "";
+
+            suppressSessionReload++;
+            try
             {
-                suppressSessionReload++;
-                try
+                var item = session.Itemizado.FirstOrDefault(x => string.Equals(x.Id, selectedPartida.Id, StringComparison.OrdinalIgnoreCase));
+                if (item != null) item.Cantidad = parsed;
+                if (selectedPartida.Cantidad != parsed)
                 {
-                    var item = session.Itemizado.FirstOrDefault(x => string.Equals(x.Id, selectedPartida.Id, StringComparison.OrdinalIgnoreCase));
-                    if (item != null) item.Cantidad = parsed;
-
-                    if (selectedPartida.Cantidad != parsed)
-                    {
-                        undo.PushUndoPoint(session, $"Modificar cantidad en Partida {selectedPartida.Codigo} ({selectedPartida.Cantidad:G29} → {parsed:G29})");
-                        selectedPartida.Cantidad = parsed;
-                    }
-
-                    // Sincronización arriba→abajo: si la partida proviene de una plantilla (tiene esclavos)
-                    // y el maestro no está desglosado en casillas de zonas, la cantidad de la partida manda
-                    // sobre el maestro y propaga a sus esclavos (ideal para alimentadores y circuitos lineales).
-                    CubicacionPartidaHelper.SincronizarMaestroDesdePartida(Rows, parsed, session, ValidateRow);
-
-                    OnPropertyChanged(nameof(PartidaCantidadText));
-                    OnPropertyChanged(nameof(PartidaCantidadToolTip));
-                    MarkDirty();
-                    session.MarkDirty(ProjectDirtyScope.Itemizado);
-                    ScheduleRefreshTotals();
+                    undo.PushUndoPoint(session, $"Modificar cantidad en Partida {selectedPartida.Codigo} ({selectedPartida.Cantidad:G29} → {parsed:G29})");
+                    selectedPartida.Cantidad = parsed;
                 }
-                finally { suppressSessionReload--; }
+                CubicacionPartidaHelper.SincronizarMaestroDesdePartida(Rows, parsed, session, ValidateRow);
+                OnPropertyChanged(nameof(PartidaCantidadText));
+                OnPropertyChanged(nameof(PartidaCantidadToolTip));
+                NotifyGlobalValorizacionChanged();
+                MarkDirty();
+                session.MarkDirty(ProjectDirtyScope.Itemizado);
+                ScheduleRefreshTotals();
             }
-            else { OnPropertyChanged(nameof(PartidaCantidadText)); OnPropertyChanged(nameof(PartidaCantidadToolTip)); }
+            finally { suppressSessionReload--; }
         }
     }
 
     public string PartidaCantidadToolTip => selectedPartida?.CantidadToolTip ?? "Cantidad oficial de la partida (editable o fórmula tipo Excel ej: +C1+C2 · Enter para guardar)";
+
+    public bool HasAlertaSinValorizacionGlobal => selectedPartida is { SinValorizacionGlobal: true };
+    public bool IsPartidaUnidadMissing => selectedPartida is { HasMissingGlobalUnidad: true };
+    public bool IsPartidaCantidadMissing => selectedPartida is { HasMissingGlobalCantidad: true };
+    public string AlertaSinValorizacionGlobalMensaje => CubicacionPartidaHelper.GetAlertaMensaje(selectedPartida);
+
+    public void NotifyGlobalValorizacionChanged()
+    {
+        OnPropertyChanged(nameof(HasAlertaSinValorizacionGlobal));
+        OnPropertyChanged(nameof(AlertaSinValorizacionGlobalMensaje));
+        OnPropertyChanged(nameof(IsPartidaUnidadMissing));
+        OnPropertyChanged(nameof(IsPartidaCantidadMissing));
+    }
 
     public Dictionary<string, decimal> BuildPartidaCantidadVariables()
         => CubicacionPartidaHelper.BuildVariables(Rows, session);

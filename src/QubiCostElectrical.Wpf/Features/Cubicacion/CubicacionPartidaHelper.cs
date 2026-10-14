@@ -114,4 +114,44 @@ internal static class CubicacionPartidaHelper
         validateRow(maestroVm);
         session.SyncCubicacionRowComposition(maestroVm.Source);
     }
+
+    public static bool TryParsePartidaCantidad(
+        string clean,
+        Dictionary<string, decimal> variables,
+        out decimal parsed,
+        out string formula)
+    {
+        formula = "";
+        if (string.IsNullOrEmpty(clean))
+        {
+            parsed = 0m;
+            return true;
+        }
+
+        if (QuantityFormulaService.IsFormulaLike(clean))
+        {
+            string evalStr = clean.TrimEnd('+', '-', '*', '/', '^', '(', ',');
+            var result = QuantityFormulaService.Evaluate(evalStr, variables);
+            parsed = result.Value;
+            if (result.Success) formula = clean;
+            return result.Success;
+        }
+
+        return decimal.TryParse(clean, NumberStyles.Number, CultureInfo.CurrentCulture, out parsed)
+            || decimal.TryParse(clean, NumberStyles.Number, CultureInfo.InvariantCulture, out parsed);
+    }
+
+    public static string GetAlertaMensaje(PartidaListItemVm? partida)
+    {
+        if (partida == null || !partida.SinValorizacionGlobal)
+            return "";
+
+        if (partida.HasMissingGlobalUnidad && partida.HasMissingGlobalCantidad)
+            return "Partida cubicada sin valorización global: Esta partida cuenta con materiales cubicados, pero no tiene definida su unidad ni cantidad global en el encabezado. Ingrese la Unidad y Cantidad arriba para que se valorice en el presupuesto y la oferta.";
+
+        if (partida.HasMissingGlobalCantidad)
+            return "Partida cubicada sin cantidad global: Esta partida cuenta con materiales cubicados, pero su cantidad global arriba es 0. Ingrese la Cantidad de la partida para que se valorice en el presupuesto y la oferta.";
+
+        return "Partida cubicada sin unidad global: Esta partida cuenta con materiales cubicados, pero no tiene definida su unidad de medida arriba (ej. GL, UN, M, ML). Defina la Unidad de la partida para valorizarla en el presupuesto y la oferta.";
+    }
 }

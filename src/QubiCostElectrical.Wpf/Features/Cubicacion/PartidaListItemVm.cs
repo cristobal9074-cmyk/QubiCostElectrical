@@ -76,7 +76,16 @@ public sealed class PartidaListItemVm : ViewModelBase
     public string Unidad
     {
         get => unidad;
-        set => SetProperty(ref unidad, value);
+        set
+        {
+            if (SetProperty(ref unidad, value))
+            {
+                OnPropertyChanged(nameof(SinValorizacionGlobal));
+                OnPropertyChanged(nameof(HasMissingGlobalUnidad));
+                OnPropertyChanged(nameof(StatusBadgeText));
+                OnPropertyChanged(nameof(ExclusionTooltip));
+            }
+        }
     }
     public bool EsPartida { get; }
     public bool ExcluidoCubicacion
@@ -87,6 +96,9 @@ public sealed class PartidaListItemVm : ViewModelBase
             if (SetProperty(ref excluidoCubicacion, value))
             {
                 OnPropertyChanged(nameof(ExclusionTooltip));
+                OnPropertyChanged(nameof(SinValorizacionGlobal));
+                OnPropertyChanged(nameof(HasMissingGlobalUnidad));
+                OnPropertyChanged(nameof(HasMissingGlobalCantidad));
                 OnPropertyChanged(nameof(StatusBadgeText));
             }
         }
@@ -94,7 +106,16 @@ public sealed class PartidaListItemVm : ViewModelBase
     public decimal Cantidad
     {
         get => cantidad;
-        set => SetProperty(ref cantidad, value);
+        set
+        {
+            if (SetProperty(ref cantidad, value))
+            {
+                OnPropertyChanged(nameof(SinValorizacionGlobal));
+                OnPropertyChanged(nameof(HasMissingGlobalCantidad));
+                OnPropertyChanged(nameof(StatusBadgeText));
+                OnPropertyChanged(nameof(ExclusionTooltip));
+            }
+        }
     }
 
     private string cantidadFormula = "";
@@ -120,12 +141,23 @@ public sealed class PartidaListItemVm : ViewModelBase
             if (SetProperty(ref recursoCount, value))
             {
                 OnPropertyChanged(nameof(TieneCubicacion));
+                OnPropertyChanged(nameof(SinValorizacionGlobal));
+                OnPropertyChanged(nameof(HasMissingGlobalUnidad));
+                OnPropertyChanged(nameof(HasMissingGlobalCantidad));
                 OnPropertyChanged(nameof(StatusBadgeText));
+                OnPropertyChanged(nameof(ExclusionTooltip));
             }
         }
     }
 
     public bool TieneCubicacion => recursoCount > 0;
+
+    /// <summary>
+    /// Alerta: la partida tiene materiales cubicados pero le falta la unidad o cantidad global en el encabezado.
+    /// </summary>
+    public bool SinValorizacionGlobal => EsPartida && TieneCubicacion && !ExcluidoCubicacion && (Cantidad <= 0m || string.IsNullOrWhiteSpace(Unidad));
+    public bool HasMissingGlobalUnidad => EsPartida && TieneCubicacion && !ExcluidoCubicacion && string.IsNullOrWhiteSpace(Unidad);
+    public bool HasMissingGlobalCantidad => EsPartida && TieneCubicacion && !ExcluidoCubicacion && Cantidad <= 0m;
 
     // Código no encontrado en el catálogo, o precio en cero, en al menos un recurso de la
     // partida. Antes solo se detectaba abriendo la partida y mirando fila por fila; con
@@ -142,7 +174,7 @@ public sealed class PartidaListItemVm : ViewModelBase
         ? (string.IsNullOrWhiteSpace(Codigo) ? Descripcion : $"{Codigo}  {Descripcion}")
         : $"  {Descripcion}";
 
-    /// <summary>Solo muestra la observación si hay texto; la exclusión se ve por tachado, no por cartel.</summary>
+    /// <summary>Muestra alerta cuando falta valorización global, observación si hay texto o estado de cubicación.</summary>
     public string StatusBadgeText
     {
         get
@@ -150,6 +182,14 @@ public sealed class PartidaListItemVm : ViewModelBase
             var nota = MotivoNoCubicar.Trim();
             if (!string.IsNullOrEmpty(nota))
                 return nota;
+            if (SinValorizacionGlobal)
+            {
+                if (HasMissingGlobalUnidad && HasMissingGlobalCantidad)
+                    return "Sin unidad ni cant. global";
+                if (HasMissingGlobalCantidad)
+                    return "Sin cantidad global";
+                return "Sin unidad global";
+            }
             if (HasIssues)
                 return "Con observaciones";
             return TieneCubicacion ? "Cubicada" : "Sin cubicación";
@@ -161,9 +201,19 @@ public sealed class PartidaListItemVm : ViewModelBase
         get
         {
             var motivo = MotivoNoCubicar.Trim();
-            return string.IsNullOrEmpty(motivo)
-                ? DisplayLabel
-                : $"{DisplayLabel}\n{motivo}";
+            if (!string.IsNullOrEmpty(motivo))
+                return $"{DisplayLabel}\n{motivo}";
+
+            if (SinValorizacionGlobal)
+            {
+                if (HasMissingGlobalUnidad && HasMissingGlobalCantidad)
+                    return $"{DisplayLabel}\n⚠️ Partida cubicada sin unidad ni cantidad global (arriba).";
+                if (HasMissingGlobalCantidad)
+                    return $"{DisplayLabel}\n⚠️ Partida cubicada con cantidad global en cero (arriba).";
+                return $"{DisplayLabel}\n⚠️ Partida cubicada sin unidad de medida global (arriba).";
+            }
+
+            return DisplayLabel;
         }
     }
 }
