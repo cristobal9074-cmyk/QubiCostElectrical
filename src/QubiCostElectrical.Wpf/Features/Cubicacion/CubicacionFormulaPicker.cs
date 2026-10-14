@@ -371,7 +371,12 @@ internal static class CubicacionFormulaPicker
             if (targetBox != null) targetBox.Text = resolved;
             vm.PartidaUnidadText = resolved;
         }
-        else if (!string.IsNullOrWhiteSpace(raw) && !raw.StartsWith("+") && !raw.StartsWith("="))
+        else if (string.IsNullOrWhiteSpace(raw))
+        {
+            if (targetBox != null) targetBox.Text = "";
+            vm.PartidaUnidadText = "";
+        }
+        else if (!raw.StartsWith("+") && !raw.StartsWith("="))
         {
             vm.PartidaUnidadText = raw;
         }
@@ -502,19 +507,7 @@ internal static class CubicacionFormulaPicker
     public static void FocusGridCell(DataGrid? grid, int rowIndex, DataGridColumn? col)
     {
         if (grid == null || grid.Items.Count == 0 || rowIndex < 0 || rowIndex >= grid.Items.Count || col == null) return;
-        var row = grid.Items[rowIndex];
-        grid.ScrollIntoView(row);
-        if (grid.SelectionUnit != DataGridSelectionUnit.FullRow)
-        {
-            grid.SelectedCells.Clear();
-            var cell = new DataGridCellInfo(row, col);
-            grid.SelectedCells.Add(cell);
-            grid.CurrentCell = cell;
-        }
-        else
-        {
-            grid.SelectedItem = row;
-        }
+        QubiCostElectrical.Wpf.Infrastructure.DataGridExcelNavigation.FocusCell(grid, rowIndex, col);
         grid.Focus();
     }
 
@@ -545,6 +538,9 @@ internal static class CubicacionFormulaPicker
         var targetBox = isQtySide ? cantBox : unidadBox;
         if (targetBox != null)
         {
+            grid.SelectedCells.Clear();
+            grid.SelectedItem = null;
+            grid.CurrentCell = default;
             targetBox.Focus();
             targetBox.SelectAll();
             e.Handled = true;
@@ -577,13 +573,6 @@ internal static class CubicacionFormulaPicker
         }
         if (e.Key == Key.Right)
         {
-            if (_unidadPickIndex >= 0)
-            {
-                CommitUnidadPick(tb, vm, grid);
-                focusCant();
-                e.Handled = true;
-                return true;
-            }
             if (tb.SelectionLength == 0 && tb.CaretIndex < (tb.Text ?? "").Length)
             {
                 return false; // permitir que la flecha derecha mueva el cursor dentro del texto
@@ -595,31 +584,21 @@ internal static class CubicacionFormulaPicker
         }
         if (e.Key == Key.Left)
         {
-            if (_unidadPickIndex >= 0)
-            {
-                e.Handled = true;
-                return true;
-            }
             if (tb.SelectionLength == 0 && tb.CaretIndex > 0)
             {
                 return false; // permitir que la flecha izquierda mueva el cursor dentro del texto
             }
+            return false;
         }
         if (e.Key == Key.Down)
         {
-            int maxRow = (vm.Rows != null && vm.Rows.Count > 0) ? vm.Rows.Count - 1 : 0;
-            int cur = GetCurrentUnidadIndex(tb);
-            int next = cur < 0 ? 0 : Math.Min(cur + 1, maxRow);
-            ApplyUnidadPick(tb, next, vm.Rows, grid, colUnidad);
+            CommitUnidadPick(tb, vm, grid);
+            FocusGridCell(grid, 0, colUnidad ?? FindColumn(grid, "CÓDIGO"));
             e.Handled = true;
             return true;
         }
         if (e.Key == Key.Up)
         {
-            int maxRow = (vm.Rows != null && vm.Rows.Count > 0) ? vm.Rows.Count - 1 : 0;
-            int cur = GetCurrentUnidadIndex(tb);
-            int next = cur <= 0 ? 0 : cur - 1;
-            ApplyUnidadPick(tb, next, vm.Rows, grid, colUnidad);
             e.Handled = true;
             return true;
         }
@@ -646,6 +625,13 @@ internal static class CubicacionFormulaPicker
         if (vm == null) return false;
         if (e.Key == Key.Tab)
         {
+            if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
+            {
+                commitCant();
+                focusUnidad();
+                e.Handled = true;
+                return true;
+            }
             commitCant();
             if (focusFirstSector != null) focusFirstSector();
             else FocusGridCell(grid, 0, FindColumn(grid, "CÓDIGO") ?? colCant);
@@ -694,7 +680,7 @@ internal static class CubicacionFormulaPicker
             if (!isFormula && _cantPickIndex < 0)
             {
                 commitCant();
-                FocusGridCell(grid, 0, FindColumn(grid, "CÓDIGO") ?? colCant);
+                FocusGridCell(grid, 0, colCant ?? FindColumn(grid, "CÓDIGO"));
                 e.Handled = true;
                 return true;
             }

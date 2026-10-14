@@ -475,48 +475,26 @@ public partial class CubicacionView : UserControl
     // Unidad y Observaciones de la partida: al entrar queda todo seleccionado (como Excel) y
     // se navega con flechas directas (o Ctrl+←/→). No arman fórmula (eso es exclusivo de
     // Cantidad, ver OnCantHeaderBoxPreviewKeyDown).
-    private void OnPartidaFieldGotFocus(object sender, RoutedEventArgs e)
+    private void ClearGridSelection()
     {
-        if (sender is TextBox tb)
-        {
-            SetFieldEditingState(tb, false);
-            SelectAllDeferred(tb);
-        }
+        ResourceGrid.SelectedCells.Clear();
+        ResourceGrid.SelectedItem = null;
+        ResourceGrid.CurrentCell = default;
     }
 
-    private void OnPartidaFieldPreviewKeyDown(object sender, KeyEventArgs e)
-    {
-        if (sender is TextBox tb)
-            HandleExcelFieldPreviewKeyDown(tb, e);
-    }
-
-    // Un SelectAll() llamado directo dentro de GotFocus es poco confiable con foco por CLIC:
-    // el mouse-up que sigue al GotFocus reposiciona el cursor en el punto del clic y cancela
-    // la selección recién hecha (funciona bien con Tab, que no tiene ese mouse-up). Con
-    // BeginInvoke se aplica después de que WPF termina de procesar ese clic.
-    private static void SelectAllDeferred(TextBox tb)
-    {
-        tb.Dispatcher.BeginInvoke(new Action(() => tb.SelectAll()), System.Windows.Threading.DispatcherPriority.Input);
-    }
+    private void OnPartidaFieldGotFocus(object sender, RoutedEventArgs e) { ClearGridSelection(); if (sender is TextBox tb) { SetFieldEditingState(tb, false); SelectAllDeferred(tb); } }
+    private void OnPartidaFieldPreviewKeyDown(object sender, KeyEventArgs e) { if (sender is TextBox tb) HandleExcelFieldPreviewKeyDown(tb, e); }
+    private static void SelectAllDeferred(TextBox tb) => tb.Dispatcher.BeginInvoke(new Action(() => tb.SelectAll()), System.Windows.Threading.DispatcherPriority.Input);
 
     private TextBox? _templateUnidadBox;
     private TextBox? _templateCantBox;
-
     private void OnUnidadHeaderBoxLoaded(object sender, RoutedEventArgs e) { if (sender is TextBox tb && tb.Tag as string == "PartidaUnidad") _templateUnidadBox = tb; }
     private void OnCantHeaderBoxLoaded(object sender, RoutedEventArgs e) { if (sender is TextBox tb && tb.Tag as string == "PartidaCant") _templateCantBox = tb; }
+    private TextBox ActiveUnidadBox => (Keyboard.FocusedElement as TextBox) is { } tb && (tb == UnidadHeaderBox || tb.Tag as string == "PartidaUnidad") ? tb : (Vm.IsSectorMatrixMode ? (_templateUnidadBox ?? UnidadHeaderBox) : UnidadHeaderBox);
+    private TextBox ActiveCantBox => (Keyboard.FocusedElement as TextBox) is { } tb && (tb == CantHeaderBox || tb.Tag as string == "PartidaCant") ? tb : (Vm.IsSectorMatrixMode ? (_templateCantBox ?? CantHeaderBox) : CantHeaderBox);
 
-    private TextBox ActiveUnidadBox => (Keyboard.FocusedElement as TextBox) is { } tb && (tb == UnidadHeaderBox || tb.Tag as string == "PartidaUnidad")
-        ? tb : (Vm.IsSectorMatrixMode ? (_templateUnidadBox ?? UnidadHeaderBox) : UnidadHeaderBox);
-
-    private TextBox ActiveCantBox => (Keyboard.FocusedElement as TextBox) is { } tb && (tb == CantHeaderBox || tb.Tag as string == "PartidaCant")
-        ? tb : (Vm.IsSectorMatrixMode ? (_templateCantBox ?? CantHeaderBox) : CantHeaderBox);
-
-    private void OnHeaderTextBoxPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-    {
-        if (sender is TextBox tb && !tb.IsKeyboardFocused) { tb.Focus(); SelectAllDeferred(tb); e.Handled = true; }
-    }
-
-    private void OnUnidadHeaderBoxGotFocus(object sender, RoutedEventArgs e) { var tb = sender as TextBox ?? ActiveUnidadBox; CubicacionFormulaPicker.SetActiveUnidadBox(tb, Vm); SetFieldEditingState(tb, false); SelectAllDeferred(tb); }
+    private void OnHeaderTextBoxPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e) { if (sender is TextBox tb && !tb.IsKeyboardFocused) { ClearGridSelection(); tb.Focus(); SelectAllDeferred(tb); e.Handled = true; } }
+    private void OnUnidadHeaderBoxGotFocus(object sender, RoutedEventArgs e) { var tb = sender as TextBox ?? ActiveUnidadBox; ClearGridSelection(); CubicacionFormulaPicker.SetActiveUnidadBox(tb, Vm); SetFieldEditingState(tb, false); SelectAllDeferred(tb); }
     private void OnUnidadHeaderBoxLostFocus(object sender, RoutedEventArgs e) => CubicacionFormulaPicker.CommitUnidadPick(sender as TextBox ?? ActiveUnidadBox, Vm);
 
     private void OnUnidadHeaderBoxPreviewKeyDown(object sender, KeyEventArgs e)
@@ -527,8 +505,7 @@ public partial class CubicacionView : UserControl
         HandleExcelFieldPreviewKeyDown(tb, e);
     }
 
-    private void OnCantHeaderBoxGotFocus(object sender, RoutedEventArgs e) { var tb = sender as TextBox ?? ActiveCantBox; CubicacionFormulaPicker.SetActiveCantBox(tb, Vm); SetFieldEditingState(tb, false); SelectAllDeferred(tb); }
-
+    private void OnCantHeaderBoxGotFocus(object sender, RoutedEventArgs e) { var tb = sender as TextBox ?? ActiveCantBox; ClearGridSelection(); CubicacionFormulaPicker.SetActiveCantBox(tb, Vm); SetFieldEditingState(tb, false); SelectAllDeferred(tb); }
     private void OnCantHeaderBoxLostFocus(object sender, RoutedEventArgs e) => CommitCantHeaderBox(sender as TextBox ?? ActiveCantBox);
     private void OnCantHeaderBoxPreviewTextInput(object sender, TextCompositionEventArgs e) => CubicacionFormulaPicker.NotifyCantTextInput(e.Text);
 
@@ -551,7 +528,7 @@ public partial class CubicacionView : UserControl
             var box = target ?? ActiveCantBox;
             FinalizeCantPick();
             _cantEditingStarted = false;
-            if (box != null && Vm != null && !string.IsNullOrWhiteSpace(box.Text)) { Vm.PartidaCantidadText = box.Text; box.Text = Vm.PartidaCantidadText; }
+            if (box != null && Vm != null) { Vm.PartidaCantidadText = box.Text ?? ""; box.Text = Vm.PartidaCantidadText; }
             if (box != null) BindingOperations.GetBindingExpression(box, TextBox.TextProperty)?.UpdateTarget();
             if (box != CantHeaderBox && CantHeaderBox != null) { CantHeaderBox.Text = Vm?.PartidaCantidadText ?? ""; BindingOperations.GetBindingExpression(CantHeaderBox, TextBox.TextProperty)?.UpdateTarget(); }
             if (_templateCantBox != null && _templateCantBox != box) { _templateCantBox.Text = Vm?.PartidaCantidadText ?? ""; BindingOperations.GetBindingExpression(_templateCantBox, TextBox.TextProperty)?.UpdateTarget(); }
@@ -564,14 +541,8 @@ public partial class CubicacionView : UserControl
     private void CancelCantPick()
     {
         _isCancellingCant = true;
-        try
-        {
-            CubicacionFormulaPicker.CancelCantPick(ActiveCantBox, Vm.Rows, Vm, ResourceGrid);
-        }
-        finally
-        {
-            Dispatcher.BeginInvoke(new Action(() => _isCancellingCant = false), System.Windows.Threading.DispatcherPriority.Background);
-        }
+        try { CubicacionFormulaPicker.CancelCantPick(ActiveCantBox, Vm.Rows, Vm, ResourceGrid); }
+        finally { Dispatcher.BeginInvoke(new Action(() => _isCancellingCant = false), System.Windows.Threading.DispatcherPriority.Background); }
     }
     private void ClearCantPickHighlight() => CubicacionFormulaPicker.ClearCantPickHighlight(Vm.Rows, ResourceGrid);
 
@@ -877,6 +848,14 @@ public partial class CubicacionView : UserControl
 
     private void OnGridPreviewKeyDown(object sender, KeyEventArgs e)
     {
+        // Si el evento de teclado proviene de un control secundario fuera de las celdas/filas del DataGrid
+        // (por ejemplo el TextBox de cabecera de partida UD o CANT en modo Casillas), no debe ser
+        // interceptado por los comandos de fila/celda de la grilla (evitando borrar filas o alterar selecciones).
+        if (e.OriginalSource is DependencyObject dep && FindParent<DataGridCell>(dep) == null && FindParent<DataGridRow>(dep) == null)
+        {
+            return;
+        }
+
         if (CubicacionFormulaPicker.TryNavigateUpFromFirstRow(ResourceGrid, e, ActiveUnidadBox, ActiveCantBox, CantidadColumn, _sectorColumns)) return;
 
         var editing = IsGridEditing();
