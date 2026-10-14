@@ -62,6 +62,7 @@
                              Loaded="OnUnidadHeaderBoxLoaded"
                              GotFocus="OnUnidadHeaderBoxGotFocus" LostFocus="OnUnidadHeaderBoxLostFocus"
                              PreviewKeyDown="OnUnidadHeaderBoxPreviewKeyDown"
+                             TextChanged="OnUnidadHeaderBoxTextChanged"
                              PreviewMouseLeftButtonDown="OnHeaderTextBoxPreviewMouseLeftButtonDown" />
                 </Border>
             </Grid>
@@ -553,6 +554,7 @@
                      Padding="0" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource Brush.Ink}"
                      GotFocus="OnUnidadHeaderBoxGotFocus" LostFocus="OnUnidadHeaderBoxLostFocus"
                      PreviewKeyDown="OnUnidadHeaderBoxPreviewKeyDown"
+                     TextChanged="OnUnidadHeaderBoxTextChanged"
                      ToolTip="Unidad de la partida — editable si el itemizado no la trae. Ctrl+←/→ para moverse entre Unidad, Cantidad y Observaciones." />
                     </Border>
                     <!-- Cantidad oficial de la partida — número o fórmula tipo Excel (R1+R2...) -->
@@ -1217,6 +1219,33 @@
                     IsEnabled="{Binding CanCreateMaterial}" />
                     </Border>
                 </Grid>
+            </Border>
+        </Popup>
+
+        <!-- Popup autocompletado de unidades de partida (UD) -->
+        <Popup x:Name="UnidadSuggestionsPopup" StaysOpen="False" AllowsTransparency="True" Placement="Bottom">
+            <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}"
+                    BorderThickness="1" CornerRadius="6" Padding="2" MaxHeight="220" MinWidth="140"
+                    SnapsToDevicePixels="True">
+                <ListBox x:Name="UnidadSuggestionsList" BorderThickness="0" Background="Transparent"
+                         PreviewMouseLeftButtonDown="OnUnidadSuggestionClick"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem">
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                            <Setter Property="Padding" Value="6,3" />
+                            <Setter Property="Cursor" Value="Hand" />
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <DockPanel LastChildFill="True">
+                                <TextBlock Text="{Binding Code}" FontWeight="Bold" FontSize="11" Width="42" Foreground="{DynamicResource Brush.Blue}" />
+                                <TextBlock Text="{Binding Description}" FontSize="11" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" />
+                            </DockPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
             </Border>
         </Popup>
         </Grid>

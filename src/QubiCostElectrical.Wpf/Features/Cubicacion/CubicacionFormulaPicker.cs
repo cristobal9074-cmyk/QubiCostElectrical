@@ -368,6 +368,7 @@ internal static class CubicacionFormulaPicker
         string resolved = CubicacionPartidaHelper.ResolveUnidadReference(raw, vm.Rows);
         if (!string.IsNullOrWhiteSpace(resolved))
         {
+            resolved = resolved.ToUpperInvariant();
             if (targetBox != null) targetBox.Text = resolved;
             vm.PartidaUnidadText = resolved;
         }
@@ -378,12 +379,108 @@ internal static class CubicacionFormulaPicker
         }
         else if (!raw.StartsWith("+") && !raw.StartsWith("="))
         {
+            raw = raw.ToUpperInvariant();
+            if (targetBox != null) targetBox.Text = raw;
             vm.PartidaUnidadText = raw;
         }
 
         ClearCantPickHighlight(vm.Rows, grid);
         _unidadPickIndex = -1;
         _activeUnidadBox = null;
+    }
+
+    public static bool IsUnidadFormulaMode(TextBox? box)
+    {
+        if (box == null) return false;
+        if (_unidadPickIndex >= 0) return true;
+        string text = (box.Text ?? "").TrimStart();
+        return text.StartsWith("+") || text.StartsWith("=");
+    }
+
+    public record UnidadSuggestion(string Code, string Description);
+
+    public static readonly UnidadSuggestion[] StandardUnidades =
+    [
+        new("ML", "Metro lineal"),
+        new("UN", "Unidad"),
+        new("GL", "Global"),
+        new("PTO", "Punto"),
+        new("M2", "Metro cuadrado"),
+        new("M3", "Metro cúbico"),
+        new("KG", "Kilogramo"),
+        new("ROLLO", "Rollo"),
+        new("TRAMO", "Tramo"),
+        new("KIT", "Kit"),
+        new("JGO", "Juego"),
+        new("PZA", "Pieza")
+    ];
+
+    public static IReadOnlyList<UnidadSuggestion> FilterUnidadSuggestions(string query)
+    {
+        if (string.IsNullOrWhiteSpace(query)) return StandardUnidades;
+        string q = query.Trim();
+        return StandardUnidades
+            .Where(u => u.Code.StartsWith(q, StringComparison.OrdinalIgnoreCase)
+                     || u.Code.IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0
+                     || u.Description.IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0)
+            .OrderByDescending(u => u.Code.StartsWith(q, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+    }
+
+    public static void ShowUnidadSuggestions(TextBox tb, System.Windows.Controls.Primitives.Popup popup, ListBox list)
+    {
+        string text = (tb.Text ?? "").Trim();
+        if (string.IsNullOrEmpty(text) || text.StartsWith("+") || text.StartsWith("="))
+        {
+            popup.IsOpen = false;
+            return;
+        }
+
+        var matches = FilterUnidadSuggestions(text);
+        if (matches.Count > 0)
+        {
+            popup.PlacementTarget = tb;
+            list.ItemsSource = matches;
+            list.SelectedIndex = 0;
+            popup.IsOpen = true;
+        }
+        else
+        {
+            popup.IsOpen = false;
+        }
+    }
+
+    public static bool HandleUnidadPopupKey(KeyEventArgs e, System.Windows.Controls.Primitives.Popup popup, ListBox list, Action<UnidadSuggestion> onApply)
+    {
+        if (!popup.IsOpen) return false;
+        if (e.Key == Key.Down)
+        {
+            list.SelectedIndex = Math.Min(list.SelectedIndex + 1, list.Items.Count - 1);
+            e.Handled = true;
+            return true;
+        }
+        if (e.Key == Key.Up)
+        {
+            list.SelectedIndex = Math.Max(list.SelectedIndex - 1, 0);
+            e.Handled = true;
+            return true;
+        }
+        if (e.Key is Key.Enter or Key.Return or Key.Tab)
+        {
+            if (list.SelectedItem is UnidadSuggestion sug)
+            {
+                onApply(sug);
+                e.Handled = true;
+                return true;
+            }
+        }
+        if (e.Key == Key.Escape)
+        {
+            popup.IsOpen = false;
+            e.Handled = true;
+            return true;
+        }
+        return false;
     }
 
     public static void CancelUnidadPick(TextBox? box, IReadOnlyList<CubicacionRowVm>? rows, CubicacionViewModel? vm = null, DataGrid? grid = null)
@@ -564,18 +661,27 @@ internal static class CubicacionFormulaPicker
     public static bool HandleUnidadNavigation(TextBox tb, KeyEventArgs e, CubicacionViewModel? vm, DataGrid? grid, DataGridColumn? colUnidad, Action focusCant)
     {
         if (vm == null) return false;
+        bool isFormula = IsUnidadFormulaMode(tb);
+
         if (e.Key == Key.Tab)
         {
-            CommitUnidadPick(tb, vm, grid);
+            CommitUnidadPick(tb, vm, grid, force: true);
             focusCant();
             e.Handled = true;
             return true;
         }
         if (e.Key == Key.Right)
         {
+            if (isFormula)
+            {
+                CommitUnidadPick(tb, vm, grid, force: true);
+                focusCant();
+                e.Handled = true;
+                return true;
+            }
             if (tb.SelectionLength == 0 && tb.CaretIndex < (tb.Text ?? "").Length)
             {
-                return false; // permitir que la flecha derecha mueva el cursor dentro del texto
+                return false;
             }
             CommitUnidadPick(tb, vm, grid);
             focusCant();
@@ -584,14 +690,25 @@ internal static class CubicacionFormulaPicker
         }
         if (e.Key == Key.Left)
         {
+            if (isFormula) { e.Handled = true; return true; }
             if (tb.SelectionLength == 0 && tb.CaretIndex > 0)
             {
-                return false; // permitir que la flecha izquierda mueva el cursor dentro del texto
+                return false;
             }
             return false;
         }
         if (e.Key == Key.Down)
         {
+            if (isFormula)
+            {
+                int maxRow = (vm.Rows != null && vm.Rows.Count > 0) ? vm.Rows.Count - 1 : 0;
+                int cur = _unidadPickIndex >= 0 ? _unidadPickIndex : GetCurrentUnidadIndex(tb);
+                int next = cur < 0 ? 0 : Math.Min(cur + 1, maxRow);
+                ApplyUnidadPick(tb, next, vm.Rows, grid, colUnidad);
+                e.Handled = true;
+                return true;
+            }
+
             CommitUnidadPick(tb, vm, grid);
             FocusGridCell(grid, 0, colUnidad ?? FindColumn(grid, "CÓDIGO"));
             e.Handled = true;
@@ -599,6 +716,15 @@ internal static class CubicacionFormulaPicker
         }
         if (e.Key == Key.Up)
         {
+            if (isFormula)
+            {
+                int cur = _unidadPickIndex >= 0 ? _unidadPickIndex : GetCurrentUnidadIndex(tb);
+                int next = cur <= 0 ? 0 : cur - 1;
+                ApplyUnidadPick(tb, next, vm.Rows, grid, colUnidad);
+                e.Handled = true;
+                return true;
+            }
+
             e.Handled = true;
             return true;
         }
@@ -612,8 +738,11 @@ internal static class CubicacionFormulaPicker
         if (e.Key == Key.Escape)
         {
             CancelUnidadPick(tb, vm.Rows, vm, grid);
-            var targetCol = FindColumn(grid, "CÓDIGO") ?? colUnidad;
-            FocusGridCell(grid, 0, targetCol);
+            if (!isFormula)
+            {
+                var targetCol = FindColumn(grid, "CÓDIGO") ?? colUnidad;
+                FocusGridCell(grid, 0, targetCol);
+            }
             e.Handled = true;
             return true;
         }

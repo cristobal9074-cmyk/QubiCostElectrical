@@ -495,11 +495,36 @@ public partial class CubicacionView : UserControl
 
     private void OnHeaderTextBoxPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e) { if (sender is TextBox tb && !tb.IsKeyboardFocused) { ClearGridSelection(); tb.Focus(); SelectAllDeferred(tb); e.Handled = true; } }
     private void OnUnidadHeaderBoxGotFocus(object sender, RoutedEventArgs e) { var tb = sender as TextBox ?? ActiveUnidadBox; ClearGridSelection(); CubicacionFormulaPicker.SetActiveUnidadBox(tb, Vm); SetFieldEditingState(tb, false); SelectAllDeferred(tb); }
-    private void OnUnidadHeaderBoxLostFocus(object sender, RoutedEventArgs e) => CubicacionFormulaPicker.CommitUnidadPick(sender as TextBox ?? ActiveUnidadBox, Vm);
+    private void OnUnidadHeaderBoxLostFocus(object sender, RoutedEventArgs e)
+    {
+        UnidadSuggestionsPopup.IsOpen = false;
+        CubicacionFormulaPicker.CommitUnidadPick(sender as TextBox ?? ActiveUnidadBox, Vm);
+    }
+
+    private void OnUnidadHeaderBoxTextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (sender is TextBox tb && tb.IsKeyboardFocused)
+            CubicacionFormulaPicker.ShowUnidadSuggestions(tb, UnidadSuggestionsPopup, UnidadSuggestionsList);
+    }
+
+    private void OnUnidadSuggestionClick(object sender, MouseButtonEventArgs e)
+    {
+        if (UnidadSuggestionsList.SelectedItem is CubicacionFormulaPicker.UnidadSuggestion sug) ApplyUnidadSuggestion(sug);
+    }
+
+    private void ApplyUnidadSuggestion(CubicacionFormulaPicker.UnidadSuggestion sug)
+    {
+        var tb = ActiveUnidadBox;
+        if (tb != null) { tb.Text = sug.Code; if (Vm != null) Vm.PartidaUnidadText = sug.Code; }
+        UnidadSuggestionsPopup.IsOpen = false;
+        ActiveCantBox.Focus();
+        ActiveCantBox.SelectAll();
+    }
 
     private void OnUnidadHeaderBoxPreviewKeyDown(object sender, KeyEventArgs e)
     {
         var tb = sender as TextBox ?? ActiveUnidadBox;
+        if (CubicacionFormulaPicker.HandleUnidadPopupKey(e, UnidadSuggestionsPopup, UnidadSuggestionsList, ApplyUnidadSuggestion)) return;
         if (e.Key == Key.Escape) { CubicacionFormulaPicker.CancelUnidadPick(tb, Vm.Rows, Vm, ResourceGrid); SetFieldEditingState(tb, false); tb.SelectAll(); e.Handled = true; return; }
         if (CubicacionFormulaPicker.HandleUnidadNavigation(tb, e, Vm, ResourceGrid, UnidadColumn, () => { ActiveCantBox.Focus(); ActiveCantBox.SelectAll(); })) return;
         HandleExcelFieldPreviewKeyDown(tb, e);
