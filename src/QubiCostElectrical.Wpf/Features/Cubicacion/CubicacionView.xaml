@@ -400,6 +400,8 @@
                                               ToolTip="Herramienta de apoyo para cubicar: agregue ítems y sume sus mediciones antes de trasladarlas a la partida" />
                                     <MenuItem Header="Cargar Plantilla…" Command="{Binding AplicarConjuntoCommand}"
                                               ToolTip="Cargar una plantilla creada en la pestaña Plantillas sobre la partida seleccionada" />
+                                    <MenuItem Header="Guardar como Plantilla…" Command="{Binding CrearConjuntoDesdePartidaCommand}"
+                                              ToolTip="Crear una plantilla reutilizable en tu biblioteca global a partir de los materiales y fórmulas de esta partida" />
                                     <MenuItem Header="Zonas…" Command="{Binding ManageZonasCommand}"
                                               ToolTip="Definir las zonas del proyecto (nombres, orden y estado de los sectores)" />
                                 </ContextMenu>

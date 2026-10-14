@@ -230,12 +230,19 @@
         </Grid.ColumnDefinitions>
 
         <!-- Mode choices -->
-        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-          <TextBlock Text="Modo de aplicación:" FontWeight="Bold" FontSize="{StaticResource Font.Size.md}" Foreground="{DynamicResource Brush.Ink}" Margin="0,0,16,0" VerticalAlignment="Center"/>
-          <RadioButton x:Name="RbReemplazar" Content="Reemplazar materiales existentes en la partida"
-                       IsChecked="True" VerticalAlignment="Center" Margin="0,0,16,0" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink}"/>
-          <RadioButton x:Name="RbAgregar" Content="Agregar al final"
-                       VerticalAlignment="Center" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink}"/>
+        <StackPanel Grid.Column="0" Orientation="Vertical" VerticalAlignment="Center">
+          <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+            <TextBlock Text="Modo de aplicación:" FontWeight="Bold" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink}" Margin="0,0,16,0" VerticalAlignment="Center"/>
+            <RadioButton x:Name="RbReemplazar" Content="Reemplazar materiales existentes"
+                         IsChecked="True" VerticalAlignment="Center" Margin="0,0,16,0" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink}"/>
+            <RadioButton x:Name="RbAgregar" Content="Agregar al final"
+                         VerticalAlignment="Center" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink}"/>
+          </StackPanel>
+          <StackPanel Orientation="Horizontal">
+            <CheckBox x:Name="ChkUsarCantidadPartida" Content="Calcular desde la cantidad oficial de la partida (arriba)"
+                      IsChecked="False" VerticalAlignment="Center" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink}"
+                      ToolTip="Si está marcado, el material maestro toma la cantidad oficial del encabezado y calcula sus esclavos automáticamente (ideal para alimentadores). Si está desmarcado, carga en cero para cubicar por casillas (lo de la foto)."/>
+          </StackPanel>
         </StackPanel>
 
         <!-- Buttons -->

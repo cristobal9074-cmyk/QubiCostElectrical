@@ -1,0 +1,269 @@
+<Window x:Class="QubiCostElectrical.Wpf.Features.Cubicacion.CrearPlantillaDesdeCubicacionDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:infra="clr-namespace:QubiCostElectrical.Wpf.Infrastructure"
+        xmlns:local="clr-namespace:QubiCostElectrical.Wpf.Features.Cubicacion"
+        Title="Crear Plantilla desde Cubicación"
+        Width="920" Height="620"
+        MinWidth="780" MinHeight="480"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        ResizeMode="CanResizeWithGrip"
+        Style="{StaticResource Dialog.Window}">
+
+  <Window.Resources>
+    <Style x:Key="HeaderLabel" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="11"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}"/>
+      <Setter Property="Margin" Value="0,0,0,4"/>
+    </Style>
+
+    <Style x:Key="InputBox" TargetType="TextBox">
+      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="Padding" Value="8,5"/>
+      <Setter Property="Background" Value="{DynamicResource Brush.Surface}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}"/>
+    </Style>
+
+    <Style x:Key="InputCombo" TargetType="ComboBox">
+      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="Padding" Value="8,5"/>
+      <Setter Property="Background" Value="{DynamicResource Brush.Surface}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}"/>
+    </Style>
+  </Window.Resources>
+
+  <Border Style="{StaticResource Dialog.Chrome}" Margin="14">
+    <Grid>
+      <Grid.RowDefinitions>
+        <!-- Header -->
+        <RowDefinition Height="Auto"/>
+        <!-- Metadata Inputs -->
+        <RowDefinition Height="Auto"/>
+        <!-- Table Title and Helper -->
+        <RowDefinition Height="Auto"/>
+        <!-- Grid of materials with Maestro/Esclavo roles -->
+        <RowDefinition Height="*"/>
+        <!-- Footer / Buttons -->
+        <RowDefinition Height="Auto"/>
+      </Grid.RowDefinitions>
+
+      <!-- ── Encabezado ────────────────────────────────────────────────── -->
+      <Border Grid.Row="0" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1" Padding="18,14">
+        <StackPanel>
+          <TextBlock Text="CREAR PLANTILLA DESDE ESTA CUBICACIÓN" FontSize="{StaticResource Font.Size.h3}" FontWeight="Black" Foreground="{DynamicResource Brush.Ink}"/>
+          <TextBlock Text="Guarda los materiales cubicados de esta partida como una plantilla reutilizable en tu biblioteca global con fórmulas maestro→esclavo."
+                     FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" Margin="0,3,0,0"/>
+        </StackPanel>
+      </Border>
+
+      <!-- ── Metadatos de la plantilla ──────────────────────────────────── -->
+      <Border Grid.Row="1" Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1" Padding="18,12">
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="2*"/>
+            <ColumnDefinition Width="16"/>
+            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="16"/>
+            <ColumnDefinition Width="1.2*"/>
+          </Grid.ColumnDefinitions>
+
+          <!-- Nombre -->
+          <StackPanel Grid.Column="0">
+            <TextBlock Text="NOMBRE DE LA PLANTILLA *" Style="{StaticResource HeaderLabel}"/>
+            <TextBox x:Name="TxtNombre" Style="{StaticResource InputBox}" ToolTip="Ej: Alimentador Trifásico 5x16mm + Tubería"/>
+          </StackPanel>
+
+          <!-- Código -->
+          <StackPanel Grid.Column="2">
+            <TextBlock Text="CÓDIGO SUGERIDO *" Style="{StaticResource HeaderLabel}"/>
+            <TextBox x:Name="TxtCodigo" Style="{StaticResource InputBox}" ToolTip="Código identificador único (ej: ALIM-3F-16)"/>
+          </StackPanel>
+
+          <!-- Categoría / Tipo -->
+          <StackPanel Grid.Column="4">
+            <TextBlock Text="CATEGORÍA / TIPO *" Style="{StaticResource HeaderLabel}"/>
+            <ComboBox x:Name="CmbTipo" Style="{StaticResource InputCombo}"/>
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- ── Título de materiales y modo de comportamiento ────────────── -->
+      <Border Grid.Row="2" Background="{DynamicResource Brush.Surface2}" Padding="18,8" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1">
+        <DockPanel LastChildFill="True">
+          <TextBlock DockPanel.Dock="Left" Text="Configuración de Roles (Maestros y Esclavos)" FontWeight="Bold" FontSize="11.5" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center"/>
+          <TextBlock DockPanel.Dock="Right" Text="* Las cantidades de la partida se usaron para sugerir factores automáticamente" FontSize="10.5" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" FontStyle="Italic"/>
+        </DockPanel>
+      </Border>
+
+      <!-- ── Grilla de materiales ──────────────────────────────────────── -->
+      <Border Grid.Row="3" Background="{DynamicResource Brush.Surface}" Margin="18,12,18,8" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="8">
+        <DataGrid x:Name="GridRecursos"
+                  AutoGenerateColumns="False"
+                  CanUserAddRows="False"
+                  CanUserDeleteRows="False"
+                  CanUserResizeRows="False"
+                  GridLinesVisibility="Horizontal"
+                  HeadersVisibility="Column"
+                  BorderThickness="0"
+                  Background="Transparent"
+                  SelectionMode="Single"
+                  SelectionUnit="FullRow">
+          <DataGrid.Columns>
+            <!-- # / Indice -->
+            <DataGridTextColumn Header="#" Binding="{Binding DisplayIndex}" Width="35" IsReadOnly="True">
+              <DataGridTextColumn.ElementStyle>
+                <Style TargetType="TextBlock">
+                  <Setter Property="HorizontalAlignment" Value="Center"/>
+                  <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}"/>
+                  <Setter Property="FontSize" Value="11"/>
+                </Style>
+              </DataGridTextColumn.ElementStyle>
+            </DataGridTextColumn>
+
+            <!-- Código -->
+            <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" Width="100" IsReadOnly="True">
+              <DataGridTextColumn.ElementStyle>
+                <Style TargetType="TextBlock">
+                  <Setter Property="FontWeight" Value="SemiBold"/>
+                  <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}"/>
+                  <Setter Property="FontSize" Value="11"/>
+                </Style>
+              </DataGridTextColumn.ElementStyle>
+            </DataGridTextColumn>
+
+            <!-- Descripción -->
+            <DataGridTextColumn Header="Descripción del Material" Binding="{Binding Descripcion}" Width="*" IsReadOnly="True">
+              <DataGridTextColumn.ElementStyle>
+                <Style TargetType="TextBlock">
+                  <Setter Property="FontSize" Value="11"/>
+                  <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                  <Setter Property="ToolTip" Value="{Binding Descripcion}"/>
+                </Style>
+              </DataGridTextColumn.ElementStyle>
+            </DataGridTextColumn>
+
+            <!-- Ud -->
+            <DataGridTextColumn Header="Ud." Binding="{Binding Unidad}" Width="45" IsReadOnly="True">
+              <DataGridTextColumn.ElementStyle>
+                <Style TargetType="TextBlock">
+                  <Setter Property="HorizontalAlignment" Value="Center"/>
+                  <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}"/>
+                  <Setter Property="FontSize" Value="11"/>
+                </Style>
+              </DataGridTextColumn.ElementStyle>
+            </DataGridTextColumn>
+
+            <!-- Cantidad Origen -->
+            <DataGridTextColumn Header="Cant. Partida" Binding="{Binding CantidadDisplay}" Width="85" IsReadOnly="True">
+              <DataGridTextColumn.ElementStyle>
+                <Style TargetType="TextBlock">
+                  <Setter Property="HorizontalAlignment" Value="Right"/>
+                  <Setter Property="FontFamily" Value="Consolas, monospace"/>
+                  <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}"/>
+                  <Setter Property="FontSize" Value="11"/>
+                </Style>
+              </DataGridTextColumn.ElementStyle>
+            </DataGridTextColumn>
+
+            <!-- Rol: Maestro / Esclavo / Operación -->
+            <DataGridTemplateColumn Header="Rol" Width="105">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <ComboBox ItemsSource="{Binding RolesDisponibles}"
+                            SelectedItem="{Binding Rol, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                            FontSize="11" Padding="4,2"/>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+
+            <!-- Maestro al que sigue -->
+            <DataGridTemplateColumn Header="Depende de (Maestro)" Width="150">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <ComboBox ItemsSource="{Binding MaestrosDisponibles}"
+                            SelectedValue="{Binding MaestroId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                            SelectedValuePath="Id"
+                            DisplayMemberPath="Label"
+                            IsEnabled="{Binding EsEsclavo}"
+                            FontSize="11" Padding="4,2"/>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+
+            <!-- Tipo Cálculo (Factor o Espaciamiento) -->
+            <DataGridTemplateColumn Header="Tipo Cálculo" Width="130">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <ComboBox ItemsSource="{Binding TiposCalculoDisponibles}"
+                            SelectedItem="{Binding TipoCalculoLabel, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                            IsEnabled="{Binding EsEsclavo}"
+                            FontSize="11" Padding="4,2"/>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+
+            <!-- Factor o Espaciamiento -->
+            <DataGridTemplateColumn Header="Factor / Metros" Width="100">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <TextBox Text="{Binding FactorText, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                           IsEnabled="{Binding EsEsclavo}"
+                           FontFamily="Consolas, monospace" FontSize="11"
+                           HorizontalContentAlignment="Right" Padding="4,2"
+                           ToolTip="Multiplicador (ej: 5 para cable trifásico) o metros entre soportes (ej: 1.5)"/>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+
+            <!-- Operación (si es rol Operación) -->
+            <DataGridTemplateColumn Header="Fórmula Operación" Width="140">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <TextBox Text="{Binding Operacion, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                           IsEnabled="{Binding EsOperacion}"
+                           FontFamily="Consolas, monospace" FontSize="11" Padding="4,2"
+                           ToolTip="Fórmula libre combinando códigos de materiales (ej: PAZ * 2 + TEEG500)"/>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+          </DataGrid.Columns>
+        </DataGrid>
+      </Border>
+
+      <!-- ── Footer: Opciones y Botones ────────────────────────────────── -->
+      <Border Grid.Row="4" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,1,0,0" Padding="18,12">
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+          </Grid.ColumnDefinitions>
+
+          <!-- Aviso / Comportamiento -->
+          <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+            <TextBlock Text="💡" Margin="0,0,6,0" VerticalAlignment="Center"/>
+            <TextBlock Text="Al cargar la plantilla podrás elegir si calcular desde la cantidad oficial de la partida o cubicar por casillas."
+                       FontSize="11" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center"/>
+          </StackPanel>
+
+          <!-- Botones de Acción -->
+          <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+            <Button x:Name="BtnGuardar" Content="Guardar en Biblioteca"
+                    Style="{DynamicResource Button.Primary}"
+                    Padding="16,6" Margin="0,0,10,0"
+                    IsDefault="True" Click="BtnGuardar_Click"/>
+            <Button Content="Cancelar"
+                    Style="{DynamicResource Button.Secondary}"
+                    Padding="14,6"
+                    IsCancel="True"/>
+          </StackPanel>
+        </Grid>
+      </Border>
+    </Grid>
+  </Border>
+</Window>

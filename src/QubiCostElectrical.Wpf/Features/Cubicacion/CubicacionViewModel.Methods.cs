@@ -120,6 +120,7 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
         MoveRowUpCommand = new RelayCommand(() => rowMutationService.MoveSelectedRow(-1), () => CanEdit && rowMutationService.CanMoveRow(-1));
         MoveRowDownCommand = new RelayCommand(() => rowMutationService.MoveSelectedRow(1), () => CanEdit && rowMutationService.CanMoveRow(1));
         AplicarConjuntoCommand = new RelayCommand(AplicarConjunto, () => !session.IsReadOnly);
+        CrearConjuntoDesdePartidaCommand = new RelayCommand(CrearConjuntoDesdePartida, () => !session.IsReadOnly && SelectedPartida?.EsPartida == true);
         RefreshPricesCommand = new RelayCommand(() => rowMutationService.RefreshPricesForSelectedRows(), () => CanEdit && (Rows.Any(r => r.IsSelected) || SelectedRow != null));
         OpenProjectCommand = new RelayCommand(() => _ = shell.OpenProjectAsync());
         NavigateToApuCommand = new RelayCommand(NavigateToApu, () => SelectedPartida?.EsPartida == true);
@@ -261,11 +262,9 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
             OnPropertyChanged(nameof(IsReadOnly)); OnPropertyChanged(nameof(PartidaEstadoText));
             NotifyCubicacionSummaryChanged();
             LoadCubicacionRows();
-            ((RelayCommand)AplicarConjuntoCommand).RaiseCanExecuteChanged();
-            ((RelayCommand)AddRowCommand).RaiseCanExecuteChanged();
-            ((RelayCommand)InsertRowCommand).RaiseCanExecuteChanged();
-            ((RelayCommand)DeletePartidaCommand).RaiseCanExecuteChanged();
-            ((RelayCommand)AddPartidaCommand).RaiseCanExecuteChanged();
+            ((RelayCommand)AplicarConjuntoCommand).RaiseCanExecuteChanged(); ((RelayCommand)CrearConjuntoDesdePartidaCommand).RaiseCanExecuteChanged();
+            ((RelayCommand)AddRowCommand).RaiseCanExecuteChanged(); ((RelayCommand)InsertRowCommand).RaiseCanExecuteChanged();
+            ((RelayCommand)DeletePartidaCommand).RaiseCanExecuteChanged(); ((RelayCommand)AddPartidaCommand).RaiseCanExecuteChanged();
         }
     }
 
@@ -426,9 +425,8 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
             OnPropertyChanged(nameof(ExcluidoCubicacion));
             OnPropertyChanged(nameof(IsReadOnly));
             OnPropertyChanged(nameof(PartidaEstadoText));
-            ((RelayCommand)AddRowCommand).RaiseCanExecuteChanged();
-            ((RelayCommand)InsertRowCommand).RaiseCanExecuteChanged();
-            ((RelayCommand)AplicarConjuntoCommand).RaiseCanExecuteChanged();
+            ((RelayCommand)AddRowCommand).RaiseCanExecuteChanged(); ((RelayCommand)InsertRowCommand).RaiseCanExecuteChanged();
+            ((RelayCommand)AplicarConjuntoCommand).RaiseCanExecuteChanged(); ((RelayCommand)CrearConjuntoDesdePartidaCommand).RaiseCanExecuteChanged();
             ((RelayCommand)OpenScTomarCommand).RaiseCanExecuteChanged();
         }
     }
@@ -630,6 +628,11 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
                         selectedPartida.Cantidad = parsed;
                     }
 
+                    // Sincronización arriba→abajo: si la partida proviene de una plantilla (tiene esclavos)
+                    // y el maestro no está desglosado en casillas de zonas, la cantidad de la partida manda
+                    // sobre el maestro y propaga a sus esclavos (ideal para alimentadores y circuitos lineales).
+                    CubicacionPartidaHelper.SincronizarMaestroDesdePartida(Rows, parsed, session, ValidateRow);
+
                     OnPropertyChanged(nameof(PartidaCantidadText));
                     OnPropertyChanged(nameof(PartidaCantidadToolTip));
                     MarkDirty();
@@ -721,6 +724,7 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
     public ICommand MoveRowUpCommand { get; }
     public ICommand MoveRowDownCommand { get; }
     public ICommand AplicarConjuntoCommand { get; }
+    public ICommand CrearConjuntoDesdePartidaCommand { get; }
     public ICommand RefreshPricesCommand { get; private set; } = null!;
     public ICommand OpenProjectCommand { get; }
     public ICommand NavigateToApuCommand { get; }
@@ -728,9 +732,7 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
     private void NavigateToApu()
     {
         if (SelectedPartida != null && !string.IsNullOrWhiteSpace(SelectedPartida.Id))
-        {
             session.PendingItemizadoSelectionId = SelectedPartida.Id;
-        }
         shell.RequestNavigate(QubiCostElectrical.Wpf.Navigation.ShellRoute.Apu);
     }
 

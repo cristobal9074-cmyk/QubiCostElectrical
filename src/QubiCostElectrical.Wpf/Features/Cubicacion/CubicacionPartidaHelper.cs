@@ -91,4 +91,27 @@ internal static class CubicacionPartidaHelper
 
         return dict;
     }
+
+    public static void SincronizarMaestroDesdePartida(
+        IReadOnlyList<CubicacionRowVm>? rows,
+        decimal parsed,
+        BudgetProjectSession session,
+        Action<CubicacionRowVm> validateRow)
+    {
+        if (rows == null || rows.Count == 0) return;
+
+        bool tieneEsclavos = rows.Any(r => r.Source.Esclavo != null);
+        if (!tieneEsclavos) return;
+
+        var maestroVm = rows.FirstOrDefault(r => r.Source.Esclavo == null &&
+            rows.Any(other => other.Source.Esclavo != null && CodeHelper.Match(other.Source.Esclavo.MaestroCodigo, r.Codigo)))
+            ?? rows.FirstOrDefault(r => r.Source.Esclavo == null);
+
+        if (maestroVm == null || maestroVm.HasFormula || maestroVm.Cantidad == parsed) return;
+
+        maestroVm.Cantidad = parsed;
+        maestroVm.RefreshDisplayProperties();
+        validateRow(maestroVm);
+        session.SyncCubicacionRowComposition(maestroVm.Source);
+    }
 }

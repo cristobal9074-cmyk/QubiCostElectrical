@@ -202,7 +202,8 @@ internal sealed class CubicacionPersistenceService
             return;
         }
 
-        var dialog = new ConjuntoPickerDialog(conjuntos);
+        decimal partidaCant = targetPartidaVms.Count == 1 ? targetPartidaVms[0].Cantidad : 0m;
+        var dialog = new ConjuntoPickerDialog(conjuntos, partidaCant);
         if (Application.Current?.MainWindow is { IsLoaded: true } main)
             dialog.Owner = main;
 
@@ -226,6 +227,7 @@ internal sealed class CubicacionPersistenceService
 
         int totalAdded = 0;
         var allWarnings = new List<string>();
+        bool enCero = !dialog.UsarCantidadPartida;
 
         foreach (var targetVm in targetPartidaVms)
         {
@@ -240,9 +242,9 @@ internal sealed class CubicacionPersistenceService
                         .Select(c => c.Id)
                         .ToList());
 
-            // Carga en cero: la plantilla aporta material + vínculos maestro→esclavo; las
-            // cantidades se ingresan en la hoja (pedido explícito: nunca aparece 1 por defecto).
-            var result = conjuntoService.ExpandToCubicacion(dialog.SelectedConjunto, partida, session.Materiales, cantidadesEnCero: true);
+            // Si UsarCantidadPartida está activo, expande con cantidadesEnCero = false usando la cantidad de la partida.
+            // Si está desmarcado, expande en cero para cubicar por casillas (lo de la foto).
+            var result = conjuntoService.ExpandToCubicacion(dialog.SelectedConjunto, partida, session.Materiales, cantidadesEnCero: enCero);
             foreach (var row in result.Rows)
                 session.Cubicacion.Add(row);
 
@@ -294,5 +296,43 @@ internal sealed class CubicacionPersistenceService
             parent.SelectedRow.IsSelected = true;
 
         System.Windows.Input.CommandManager.InvalidateRequerySuggested();
+    }
+
+    public void CrearConjuntoDesdePartida()
+    {
+        if (session.IsReadOnly)
+        {
+            WpfDialogService.Info("Solo lectura", "El proyecto está en solo lectura; no se pueden crear plantillas.");
+            return;
+        }
+
+        var selectedPartida = parent.SelectedPartida;
+        if (selectedPartida == null || !selectedPartida.EsPartida)
+        {
+            WpfDialogService.Info("Seleccione una partida", "Seleccione una partida con materiales cubicados para crear una plantilla.");
+            return;
+        }
+
+        var partida = session.Itemizado.FirstOrDefault(i =>
+            string.Equals(i.Id, selectedPartida.Id, StringComparison.OrdinalIgnoreCase));
+
+        var targetRows = parent.Rows.Where(r => r.IsSelected).ToList();
+        if (targetRows.Count == 0)
+            targetRows = parent.Rows.ToList();
+
+        if (targetRows.Count == 0)
+        {
+            WpfDialogService.Info("Sin materiales", "Esta partida no tiene materiales cubicados.\n\nAgregue materiales antes de crear una plantilla.");
+            return;
+        }
+
+        IConjuntoTemplateStore? store = null;
+        try { store = new ConjuntoTemplateStore(); } catch { }
+
+        var dialog = new CrearPlantillaDesdeCubicacionDialog(targetRows, partida, session, store);
+        if (Application.Current?.MainWindow is { IsLoaded: true } main)
+            dialog.Owner = main;
+
+        dialog.ShowDialog();
     }
 }

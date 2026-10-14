@@ -552,4 +552,58 @@ public sealed class ConjuntoElectricoServiceTests
         // Cantidad resuelta 80 / partida 10 = rendimiento 8 por unidad
         Assert.Equal(8m, apu.Recursos.First(r => r.CodigoMaterial == "OP1").Rendimiento);
     }
+
+    [Fact]
+    public void ExpandToCubicacion_AlimentadorTrifasico_CalculatesConductorx5AndTerminals()
+    {
+        // Maestro: Ducto 55m. Esclavo 1: Conductor factor 5 -> 275m. Esclavo 2: Terminales factor 10 -> 10 un.
+        var ducto = MatRecurso("DUCTO", 1m);
+        var cable = MatRecurso("CABLE-16", 1m, factor: 5m);
+        cable.MaestroId = ducto.Id;
+
+        var conjunto = Conjunto("ALIM-3F", ducto, cable);
+        conjunto.TipoConjunto = ConjuntoTipo.Alimentador;
+
+        var materiales = new[]
+        {
+            Mat("DUCTO", "Tubería Conduit 50mm", "ML"),
+            Mat("CABLE-16", "Cable Cu 16mm2", "ML")
+        };
+
+        // Al cargar con la cantidad de la partida (55 m)
+        var result = _service.ExpandToCubicacion(conjunto, Partida("P1", 55m), materiales, cantidadesEnCero: false);
+
+        Assert.Equal(2, result.Rows.Count);
+        var rowDucto = result.Rows.First(r => r.Codigo == "DUCTO");
+        var rowCable = result.Rows.First(r => r.Codigo == "CABLE-16");
+
+        Assert.Equal(55m, rowDucto.Cantidad);
+        Assert.Equal(275m, rowCable.Cantidad);
+        Assert.NotNull(rowCable.Esclavo);
+        Assert.Equal("DUCTO", rowCable.Esclavo!.MaestroCodigo);
+    }
+
+    [Fact]
+    public void ExpandToCubicacion_ModoCasillasEnCero_ConservaVinculoEsclavoConCantidadCero()
+    {
+        var bandeja = MatRecurso("BRG500", 1m);
+        var tapa = MatRecurso("TAPA", 1m, factor: 1m);
+        tapa.MaestroId = bandeja.Id;
+
+        var conjunto = Conjunto("BANDEJA-500", bandeja, tapa);
+        var materiales = new[]
+        {
+            Mat("BRG500", "Bandeja Portaconductores", "ML"),
+            Mat("TAPA", "Tapa Recta", "ML")
+        };
+
+        // Modo casillas (lo de la foto): carga en cero
+        var result = _service.ExpandToCubicacion(conjunto, Partida("P1", 100m), materiales, cantidadesEnCero: true);
+
+        Assert.Equal(2, result.Rows.Count);
+        Assert.Equal(0m, result.Rows[0].Cantidad);
+        Assert.Equal(0m, result.Rows[1].Cantidad);
+        Assert.NotNull(result.Rows[1].Esclavo);
+        Assert.Equal("BRG500", result.Rows[1].Esclavo!.MaestroCodigo);
+    }
 }

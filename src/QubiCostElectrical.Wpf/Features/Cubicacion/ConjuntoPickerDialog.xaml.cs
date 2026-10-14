@@ -10,16 +10,26 @@ namespace QubiCostElectrical.Wpf.Features.Cubicacion;
 public partial class ConjuntoPickerDialog : Window
 {
     private readonly List<ConjuntoElectricoRow> allConjuntos;
+    private readonly decimal partidaCantidad;
 
-    public ConjuntoPickerDialog(IEnumerable<ConjuntoElectricoRow> conjuntos)
+    public ConjuntoPickerDialog(IEnumerable<ConjuntoElectricoRow> conjuntos, decimal partidaCantidad = 0m)
     {
         allConjuntos = conjuntos.ToList();
+        this.partidaCantidad = partidaCantidad;
         InitializeComponent();
-        Loaded += (_, _) => { ConjuntoList.ItemsSource = allConjuntos; };
+        Loaded += (_, _) =>
+        {
+            ConjuntoList.ItemsSource = allConjuntos;
+            if (this.partidaCantidad > 0m)
+            {
+                ChkUsarCantidadPartida.Content = $"Calcular desde la cantidad oficial de la partida ({this.partidaCantidad:G29}) (ideal para alimentadores)";
+            }
+        };
     }
 
     public ConjuntoElectricoRow? SelectedConjunto { get; private set; }
     public bool Reemplazar => RbReemplazar.IsChecked == true;
+    public bool UsarCantidadPartida => ChkUsarCantidadPartida.IsChecked == true;
 
     private void FilterBox_TextChanged(object sender, TextChangedEventArgs e)
     {
@@ -37,6 +47,11 @@ public partial class ConjuntoPickerDialog : Window
         var sel = ConjuntoList.SelectedItem as ConjuntoElectricoRow;
         BtnAplicar.IsEnabled = sel != null;
         PreviewGrid.ItemsSource = sel?.Recursos;
+
+        if (sel != null && partidaCantidad > 0m && string.Equals(sel.TipoConjunto, ConjuntoTipo.Alimentador, StringComparison.OrdinalIgnoreCase))
+        {
+            ChkUsarCantidadPartida.IsChecked = true;
+        }
 
         if (sel != null && sel.Recursos.Count == 0)
         {

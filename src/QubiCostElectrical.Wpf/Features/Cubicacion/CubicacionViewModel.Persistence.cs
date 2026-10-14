@@ -40,6 +40,7 @@ public sealed partial class CubicacionViewModel
     public void OnRowEdited(CubicacionRowVm row, ProjectFileData? preEditSnapshot = null) => persistenceService.OnRowEdited(row, preEditSnapshot);
 
     private void AplicarConjunto() => persistenceService.AplicarConjunto();
+    private void CrearConjuntoDesdePartida() => persistenceService.CrearConjuntoDesdePartida();
 
     internal void SyncGridRowSelection(IEnumerable<CubicacionRowVm> selected) => persistenceService.SyncGridRowSelection(selected);
 }
