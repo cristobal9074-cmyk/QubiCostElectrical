@@ -42,7 +42,9 @@ internal static class CubicacionPartidaHelper
             {
                 for (int c = 0; c < exprs.Length; c++)
                 {
-                    string rawVal = exprs[c] ?? "";
+                    string rawVal = (exprs[c] ?? "").Trim();
+                    if (string.IsNullOrEmpty(rawVal)) continue;
+
                     if (decimal.TryParse(rawVal, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal val)
                         || decimal.TryParse(rawVal, NumberStyles.Number, CultureInfo.CurrentCulture, out val))
                     {
@@ -50,7 +52,28 @@ internal static class CubicacionPartidaHelper
                         dict[$"R{r + 1}C{c + 1}"] = val;
                         dict[$"C{r + 1}Z{c + 1}"] = val;
                     }
+                    else
+                    {
+                        var eval = QuantityFormulaService.Evaluate(rawVal, dict);
+                        if (eval.Success)
+                        {
+                            dict[$"F{r + 1}C{c + 1}"] = eval.Value;
+                            dict[$"R{r + 1}C{c + 1}"] = eval.Value;
+                            dict[$"C{r + 1}Z{c + 1}"] = eval.Value;
+                        }
+                    }
                 }
+            }
+        }
+
+        // Casillas vacías por defecto en 0m para permitir fórmulas que referencien celdas vacías
+        for (int r = 1; r <= Math.Max(rowList.Count, 30); r++)
+        {
+            for (int c = 1; c <= 20; c++)
+            {
+                dict.TryAdd($"F{r}C{c}", 0m);
+                dict.TryAdd($"R{r}C{c}", 0m);
+                dict.TryAdd($"C{r}Z{c}", 0m);
             }
         }
 

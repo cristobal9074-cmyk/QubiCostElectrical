@@ -556,16 +556,19 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
             clean = ResolveUnidadReference(clean);
             if (selectedPartida.Unidad == clean) return;
 
-            undo.PushUndoPoint(session, $"Cambiar unidad partida {selectedPartida.Codigo}");
-            var item = session.Itemizado.FirstOrDefault(x => string.Equals(x.Id, selectedPartida.Id, StringComparison.OrdinalIgnoreCase));
-            if (item != null)
-                item.Unidad = clean;
-
-            selectedPartida.Unidad = clean;
-            OnPropertyChanged(nameof(PartidaUnidadText));
-            OnPropertyChanged(nameof(PartidaUnidad));
-            MarkDirty();
-            session.MarkDirty(ProjectDirtyScope.Itemizado);
+            suppressSessionReload++;
+            try
+            {
+                undo.PushUndoPoint(session, $"Cambiar unidad partida {selectedPartida.Codigo}");
+                var item = session.Itemizado.FirstOrDefault(x => string.Equals(x.Id, selectedPartida.Id, StringComparison.OrdinalIgnoreCase));
+                if (item != null) item.Unidad = clean;
+                selectedPartida.Unidad = clean;
+                OnPropertyChanged(nameof(PartidaUnidadText));
+                OnPropertyChanged(nameof(PartidaUnidad));
+                MarkDirty();
+                session.MarkDirty(ProjectDirtyScope.Itemizado);
+            }
+            finally { suppressSessionReload--; }
         }
     }
 
@@ -607,27 +610,33 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
             }
             else
             {
-                success = decimal.TryParse(clean, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.CurrentCulture, out parsed);
-                if (success) selectedPartida.CantidadFormula = "";
+                success = decimal.TryParse(clean, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.CurrentCulture, out parsed)
+                       || decimal.TryParse(clean, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out parsed);
+                if (success && (selectedPartida.Cantidad != parsed || string.IsNullOrEmpty(selectedPartida.CantidadFormula)))
+                    selectedPartida.CantidadFormula = "";
             }
 
             if (success)
             {
-                if (selectedPartida.Cantidad != parsed)
+                suppressSessionReload++;
+                try
                 {
-                    undo.PushUndoPoint(session, $"Modificar cantidad en Partida {selectedPartida.Codigo} ({selectedPartida.Cantidad:G29} → {parsed:G29})");
-
                     var item = session.Itemizado.FirstOrDefault(x => string.Equals(x.Id, selectedPartida.Id, StringComparison.OrdinalIgnoreCase));
                     if (item != null) item.Cantidad = parsed;
 
-                    selectedPartida.Cantidad = parsed;
+                    if (selectedPartida.Cantidad != parsed)
+                    {
+                        undo.PushUndoPoint(session, $"Modificar cantidad en Partida {selectedPartida.Codigo} ({selectedPartida.Cantidad:G29} → {parsed:G29})");
+                        selectedPartida.Cantidad = parsed;
+                    }
+
                     OnPropertyChanged(nameof(PartidaCantidadText));
                     OnPropertyChanged(nameof(PartidaCantidadToolTip));
                     MarkDirty();
                     session.MarkDirty(ProjectDirtyScope.Itemizado);
                     ScheduleRefreshTotals();
                 }
-                else { OnPropertyChanged(nameof(PartidaCantidadText)); OnPropertyChanged(nameof(PartidaCantidadToolTip)); }
+                finally { suppressSessionReload--; }
             }
             else { OnPropertyChanged(nameof(PartidaCantidadText)); OnPropertyChanged(nameof(PartidaCantidadToolTip)); }
         }

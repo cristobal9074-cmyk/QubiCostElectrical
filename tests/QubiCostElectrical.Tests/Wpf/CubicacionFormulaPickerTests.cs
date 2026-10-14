@@ -178,4 +178,80 @@ public class CubicacionFormulaPickerTests
         Assert.Contains("+C1+C2", vm.CantidadToolTip);
         Assert.Contains("Resultado: 30", vm.CantidadToolTip);
     }
+
+    [Fact]
+    public void Down_MultipleRows_FluidlyCyclesUnidad_WithoutFocusLossOrAutoCommit()
+    {
+        XamlViewSmokeHost.Run(() =>
+        {
+            var tb = new TextBox { Text = "+" };
+            var rows = new List<CubicacionRowVm>
+            {
+                new CubicacionRowVm(new CubicacionRow { Unidad = "ML" }, false, () => true),
+                new CubicacionRowVm(new CubicacionRow { Unidad = "UN" }, false, () => true),
+                new CubicacionRowVm(new CubicacionRow { Unidad = "PZA" }, false, () => true),
+                new CubicacionRowVm(new CubicacionRow { Unidad = "GL" }, false, () => true),
+                new CubicacionRowVm(new CubicacionRow { Unidad = "KG" }, false, () => true),
+            };
+
+            CubicacionFormulaPicker.SetActiveUnidadBox(tb);
+
+            // Row 0 (+U1)
+            CubicacionFormulaPicker.ApplyUnidadPick(tb, 0, rows, null);
+            Assert.Equal("+U1", tb.Text);
+            Assert.True(rows[0].IsFormulaPickTarget);
+            Assert.False(rows[1].IsFormulaPickTarget);
+
+            // Row 1 (+U2)
+            CubicacionFormulaPicker.ApplyUnidadPick(tb, 1, rows, null);
+            Assert.Equal("+U2", tb.Text);
+            Assert.False(rows[0].IsFormulaPickTarget);
+            Assert.True(rows[1].IsFormulaPickTarget);
+
+            // Row 2 (+U3)
+            CubicacionFormulaPicker.ApplyUnidadPick(tb, 2, rows, null);
+            Assert.Equal("+U3", tb.Text);
+            Assert.False(rows[1].IsFormulaPickTarget);
+            Assert.True(rows[2].IsFormulaPickTarget);
+
+            // Row 3 (+U4)
+            CubicacionFormulaPicker.ApplyUnidadPick(tb, 3, rows, null);
+            Assert.Equal("+U4", tb.Text);
+            Assert.True(rows[3].IsFormulaPickTarget);
+
+            // Row 4 (+U5)
+            CubicacionFormulaPicker.ApplyUnidadPick(tb, 4, rows, null);
+            Assert.Equal("+U5", tb.Text);
+            Assert.True(rows[4].IsFormulaPickTarget);
+
+            // Up back to Row 3 (+U4)
+            CubicacionFormulaPicker.ApplyUnidadPick(tb, 3, rows, null);
+            Assert.Equal("+U4", tb.Text);
+            Assert.True(rows[3].IsFormulaPickTarget);
+            Assert.False(rows[4].IsFormulaPickTarget);
+
+            // Resolving +U4 resolves to row 3 unit ("GL")
+            Assert.Equal("GL", CubicacionPartidaHelper.ResolveUnidadReference(tb.Text, rows));
+        });
+    }
+
+    [Fact]
+    public void ExcelG45_ChainedFormula_C1PlusC5_EvaluatesTo80()
+    {
+        var session = new BudgetProjectSession();
+        var rows = new List<CubicacionRowVm>
+        {
+            new CubicacionRowVm(new CubicacionRow { Cantidad = 40m }, false, () => true), // C1 (Row 46 in Excel)
+            new CubicacionRowVm(new CubicacionRow { Cantidad = 18m }, false, () => true), // C2
+            new CubicacionRowVm(new CubicacionRow { Cantidad = 2m }, false, () => true),  // C3
+            new CubicacionRowVm(new CubicacionRow { Cantidad = 4m }, false, () => true),  // C4
+            new CubicacionRowVm(new CubicacionRow { Cantidad = 40m }, false, () => true), // C5 (Row 50 in Excel)
+        };
+
+        var vars = CubicacionPartidaHelper.BuildVariables(rows, session);
+        var result = QuantityFormulaService.Evaluate("+C1+C5", vars);
+
+        Assert.True(result.Success);
+        Assert.Equal(80m, result.Value);
+    }
 }

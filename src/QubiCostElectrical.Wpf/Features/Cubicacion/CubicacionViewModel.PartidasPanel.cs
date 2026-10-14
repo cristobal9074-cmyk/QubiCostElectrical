@@ -59,6 +59,12 @@ public sealed partial class CubicacionViewModel
             {
                 var created = Partidas.FirstOrDefault(p =>
                     string.Equals(p.Id, newId, StringComparison.OrdinalIgnoreCase) && p.EsPartida);
+                if (created == null)
+                {
+                    LoadPartidas();
+                    created = Partidas.FirstOrDefault(p =>
+                        string.Equals(p.Id, newId, StringComparison.OrdinalIgnoreCase) && p.EsPartida);
+                }
                 if (created != null)
                     SelectPartida(created);
             }

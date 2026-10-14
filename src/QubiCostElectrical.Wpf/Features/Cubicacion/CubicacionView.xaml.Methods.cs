@@ -172,13 +172,9 @@ public partial class CubicacionView : UserControl
     private void SetFieldEditingState(TextBox tb, bool isEditing)
     {
         _fieldEditingState[tb] = isEditing;
-        if (tb == CantHeaderBox)
-            _cantEditingStarted = isEditing;
+        if (tb == CantHeaderBox || tb.Tag as string == "PartidaCant") _cantEditingStarted = isEditing;
     }
-    private bool IsFieldEditing(TextBox tb)
-    {
-        return _fieldEditingState.TryGetValue(tb, out var isEditing) && isEditing;
-    }
+    private bool IsFieldEditing(TextBox tb) => _fieldEditingState.TryGetValue(tb, out var isEditing) && isEditing;
 
     public CubicacionView(CubicacionViewModel vm)
     {
@@ -412,13 +408,14 @@ public partial class CubicacionView : UserControl
         {
             if (tb == CantHeaderBox || tb.Tag as string == "PartidaCant")
             {
-                CommitCantHeaderBox(tb);
+                CommitCantHeaderBox(tb, force: true);
                 CubicacionFormulaPicker.FocusGridCell(ResourceGrid, 0, CodigoColumn ?? CantidadColumn);
             }
             else if (tb == UnidadHeaderBox || tb.Tag as string == "PartidaUnidad")
             {
-                CubicacionFormulaPicker.CommitUnidadPick(tb, Vm);
-                CubicacionFormulaPicker.FocusGridCell(ResourceGrid, 0, UnidadColumn);
+                CubicacionFormulaPicker.CommitUnidadPick(tb, Vm, null, force: true);
+                ActiveCantBox.Focus();
+                ActiveCantBox.SelectAll();
             }
             else
             {
@@ -451,7 +448,7 @@ public partial class CubicacionView : UserControl
                     if (e.Key == Key.Left) { ActiveUnidadBox.Focus(); ActiveUnidadBox.SelectAll(); e.Handled = true; return true; }
                     else if (e.Key == Key.Right)
                     {
-                        CommitCantHeaderBox(tb);
+                        CommitCantHeaderBox(tb, force: true);
                         CubicacionFormulaPicker.FocusFirstCubicacionCell(ResourceGrid, _sectorColumns, CantidadColumn);
                         e.Handled = true; return true;
                     }
@@ -519,61 +516,63 @@ public partial class CubicacionView : UserControl
         if (sender is TextBox tb && !tb.IsKeyboardFocused) { tb.Focus(); SelectAllDeferred(tb); e.Handled = true; }
     }
 
-    private void OnUnidadHeaderBoxGotFocus(object sender, RoutedEventArgs e)
-    {
-        var tb = sender as TextBox ?? ActiveUnidadBox;
-        CubicacionFormulaPicker.SetActiveUnidadBox(tb, Vm);
-        SetFieldEditingState(tb, false);
-        SelectAllDeferred(tb);
-    }
-
-    private void OnUnidadHeaderBoxLostFocus(object sender, RoutedEventArgs e)
-    {
-        var tb = sender as TextBox ?? ActiveUnidadBox;
-        CubicacionFormulaPicker.CommitUnidadPick(tb, Vm);
-    }
+    private void OnUnidadHeaderBoxGotFocus(object sender, RoutedEventArgs e) { var tb = sender as TextBox ?? ActiveUnidadBox; CubicacionFormulaPicker.SetActiveUnidadBox(tb, Vm); SetFieldEditingState(tb, false); SelectAllDeferred(tb); }
+    private void OnUnidadHeaderBoxLostFocus(object sender, RoutedEventArgs e) => CubicacionFormulaPicker.CommitUnidadPick(sender as TextBox ?? ActiveUnidadBox, Vm);
 
     private void OnUnidadHeaderBoxPreviewKeyDown(object sender, KeyEventArgs e)
     {
         var tb = sender as TextBox ?? ActiveUnidadBox;
         if (e.Key == Key.Escape) { CubicacionFormulaPicker.CancelUnidadPick(tb, Vm.Rows, Vm, ResourceGrid); SetFieldEditingState(tb, false); tb.SelectAll(); e.Handled = true; return; }
-        if (HandleExcelFieldPreviewKeyDown(tb, e)) return;
-        CubicacionFormulaPicker.HandleUnidadNavigation(tb, e, Vm, ResourceGrid, UnidadColumn, () => { ActiveCantBox.Focus(); ActiveCantBox.SelectAll(); });
+        if (CubicacionFormulaPicker.HandleUnidadNavigation(tb, e, Vm, ResourceGrid, UnidadColumn, () => { ActiveCantBox.Focus(); ActiveCantBox.SelectAll(); })) return;
+        HandleExcelFieldPreviewKeyDown(tb, e);
     }
 
-    private void OnCantHeaderBoxGotFocus(object sender, RoutedEventArgs e)
-    {
-        var tb = sender as TextBox ?? ActiveCantBox;
-        CubicacionFormulaPicker.SetActiveCantBox(tb, Vm);
-        SetFieldEditingState(tb, false);
-        SelectAllDeferred(tb);
-    }
+    private void OnCantHeaderBoxGotFocus(object sender, RoutedEventArgs e) { var tb = sender as TextBox ?? ActiveCantBox; CubicacionFormulaPicker.SetActiveCantBox(tb, Vm); SetFieldEditingState(tb, false); SelectAllDeferred(tb); }
 
-    private void OnCantHeaderBoxLostFocus(object sender, RoutedEventArgs e)
-    {
-        CommitCantHeaderBox(sender as TextBox ?? ActiveCantBox);
-    }
+    private void OnCantHeaderBoxLostFocus(object sender, RoutedEventArgs e) => CommitCantHeaderBox(sender as TextBox ?? ActiveCantBox);
+    private void OnCantHeaderBoxPreviewTextInput(object sender, TextCompositionEventArgs e) => CubicacionFormulaPicker.NotifyCantTextInput(e.Text);
 
     private void OnCantHeaderBoxPreviewKeyDown(object sender, KeyEventArgs e)
     {
         var tb = sender as TextBox ?? ActiveCantBox;
-        if (HandleExcelFieldPreviewKeyDown(tb, e)) return;
-        CubicacionFormulaPicker.HandleCantNavigation(tb, e, Vm, ResourceGrid, CantidadColumn, () => { ActiveUnidadBox.Focus(); ActiveUnidadBox.SelectAll(); }, () => CommitCantHeaderBox(tb), () => { CommitCantHeaderBox(tb); CubicacionFormulaPicker.FocusFirstCubicacionCell(ResourceGrid, _sectorColumns, CantidadColumn); }, _cantEditingStarted);
+        CubicacionFormulaPicker.NotifyCantKeyDown(e.Key);
+        if (CubicacionFormulaPicker.HandleCantNavigation(tb, e, Vm, ResourceGrid, CantidadColumn, () => { ActiveUnidadBox.Focus(); ActiveUnidadBox.SelectAll(); }, () => CommitCantHeaderBox(tb, force: true), () => { CommitCantHeaderBox(tb, force: true); CubicacionFormulaPicker.FocusFirstCubicacionCell(ResourceGrid, _sectorColumns, CantidadColumn); }, _cantEditingStarted)) return;
+        HandleExcelFieldPreviewKeyDown(tb, e);
     }
 
-    private void CommitCantHeaderBox(TextBox? target = null)
+    private bool _isCommittingCant;
+    private bool _isCancellingCant;
+    private void CommitCantHeaderBox(TextBox? target = null, bool force = false)
     {
-        FinalizeCantPick();
-        _cantEditingStarted = false;
-        var box = target ?? ActiveCantBox;
-        BindingOperations.GetBindingExpression(box, TextBox.TextProperty)?.UpdateSource();
-        BindingOperations.GetBindingExpression(box, TextBox.TextProperty)?.UpdateTarget();
-        if (box != CantHeaderBox) BindingOperations.GetBindingExpression(CantHeaderBox, TextBox.TextProperty)?.UpdateTarget();
+        if (_isCommittingCant || _isCancellingCant || (!force && CubicacionFormulaPicker.SuppressLostFocusCommit)) return;
+        _isCommittingCant = true;
+        try
+        {
+            var box = target ?? ActiveCantBox;
+            FinalizeCantPick();
+            _cantEditingStarted = false;
+            if (box != null && Vm != null && !string.IsNullOrWhiteSpace(box.Text)) { Vm.PartidaCantidadText = box.Text; box.Text = Vm.PartidaCantidadText; }
+            if (box != null) BindingOperations.GetBindingExpression(box, TextBox.TextProperty)?.UpdateTarget();
+            if (box != CantHeaderBox && CantHeaderBox != null) { CantHeaderBox.Text = Vm?.PartidaCantidadText ?? ""; BindingOperations.GetBindingExpression(CantHeaderBox, TextBox.TextProperty)?.UpdateTarget(); }
+            if (_templateCantBox != null && _templateCantBox != box) { _templateCantBox.Text = Vm?.PartidaCantidadText ?? ""; BindingOperations.GetBindingExpression(_templateCantBox, TextBox.TextProperty)?.UpdateTarget(); }
+        }
+        finally { _isCommittingCant = false; }
     }
 
     private void ApplyCantPick(int newIndex) => CubicacionFormulaPicker.ApplyCantPick(ActiveCantBox, newIndex, Vm.Rows, ResourceGrid, CantidadColumn);
     private void FinalizeCantPick() => CubicacionFormulaPicker.FinalizeCantPick(Vm.Rows, ResourceGrid);
-    private void CancelCantPick() => CubicacionFormulaPicker.CancelCantPick(ActiveCantBox, Vm.Rows, ResourceGrid);
+    private void CancelCantPick()
+    {
+        _isCancellingCant = true;
+        try
+        {
+            CubicacionFormulaPicker.CancelCantPick(ActiveCantBox, Vm.Rows, Vm, ResourceGrid);
+        }
+        finally
+        {
+            Dispatcher.BeginInvoke(new Action(() => _isCancellingCant = false), System.Windows.Threading.DispatcherPriority.Background);
+        }
+    }
     private void ClearCantPickHighlight() => CubicacionFormulaPicker.ClearCantPickHighlight(Vm.Rows, ResourceGrid);
 
     // Clic directo en una celda CANT de un recurso mientras CantHeaderBox tiene el foco →
@@ -606,18 +605,22 @@ public partial class CubicacionView : UserControl
         // 1. Clic para tomar unidad en UD de partida (cabecera Casillas o Detalle)
         bool isUnidadActive = CubicacionFormulaPicker.IsUnidadActive ||
                               (focusedTb != null && (focusedTb == UnidadHeaderBox || focusedTb.Tag as string == "PartidaUnidad"));
-        if ((isUnidadActive || cell.Column == UnidadColumn) && rowIndex >= 0)
+        if (isUnidadActive && rowIndex >= 0)
         {
-            if (cell.Column == UnidadColumn)
+            var box = CubicacionFormulaPicker.ActiveUnidadBox ?? focusedTb ?? UnidadHeaderBox;
+            CubicacionFormulaPicker.SetActiveUnidadBox(box, Vm);
+            CubicacionFormulaPicker.ApplyUnidadPick(box, rowIndex, Vm.Rows, ResourceGrid, UnidadColumn);
+            if (e.ClickCount >= 2)
             {
-                var box = CubicacionFormulaPicker.ActiveUnidadBox ?? focusedTb ?? UnidadHeaderBox;
-                CubicacionFormulaPicker.SetActiveUnidadBox(box, Vm);
-                CubicacionFormulaPicker.ApplyUnidadPick(box, rowIndex, Vm.Rows, ResourceGrid, UnidadColumn);
-                if (e.ClickCount >= 2) CubicacionFormulaPicker.CommitUnidadPick(box, Vm, ResourceGrid);
-                box.Focus();
+                CubicacionFormulaPicker.CommitUnidadPick(box, Vm, ResourceGrid, force: true);
+                ActiveCantBox.Focus();
+                ActiveCantBox.SelectAll();
                 e.Handled = true;
                 return;
             }
+            box.Focus();
+            e.Handled = true;
+            return;
         }
 
         // 1b. Clic mientras se edita celda de recurso en columna UD
@@ -628,11 +631,15 @@ public partial class CubicacionView : UserControl
         }
 
         // 2. Clic para tomar casillas en CANT (modo Detalle o modo Casillas)
-        bool isCantEditing = focusedTb != null && (focusedTb == CantHeaderBox || focusedTb.Tag as string == "PartidaCant" || _cantEditingStarted);
+        bool isCantEditing = (focusedTb != null && (focusedTb == CantHeaderBox || focusedTb.Tag as string == "PartidaCant"))
+                             || _cantEditingStarted || CubicacionFormulaPicker.IsCantActive;
         if (isCantEditing && rowIndex >= 0 && cell.Column == CantidadColumn)
         {
-            CubicacionFormulaPicker.PickCantCell(ActiveCantBox, rowIndex, Vm.Rows, ResourceGrid, CantidadColumn);
+            var box = CubicacionFormulaPicker.ActiveCantBox ?? focusedTb ?? ActiveCantBox;
+            CubicacionFormulaPicker.SetActiveCantBox(box, Vm);
+            CubicacionFormulaPicker.PickCantCell(box, rowIndex, Vm.Rows, ResourceGrid, CantidadColumn);
             _cantEditingStarted = true;
+            box.Focus();
             e.Handled = true;
             return;
         }
@@ -1407,16 +1414,6 @@ public partial class CubicacionView : UserControl
             // Totales CLP visibles también en Detalle: MANO DE OBRA = Σ (MO $ × cantidad).
             // Solo se oculta la barra de atajos de teclado.
             SetBottomChromeVisible(showTotals: true, showStatus: false);
-
-            // Al entrar a Detalle, el foco siempre parte en la Cantidad oficial de la partida
-            // — a pedido explícito. Con BeginInvoke porque la fila recién se está haciendo
-            // visible (Visibility bindea a IsDetailMode) y todavía no está lista para recibir
-            // foco en este mismo tick.
-            Dispatcher.BeginInvoke(new Action(() =>
-            {
-                if (Vm.IsDetailMode)
-                    CantHeaderBox.Focus();
-            }), System.Windows.Threading.DispatcherPriority.Input);
             DataGridExcelNavigation.SetColumnScope(ResourceGrid, null);
             return;
         }

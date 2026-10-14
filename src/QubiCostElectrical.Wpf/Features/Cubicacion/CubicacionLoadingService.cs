@@ -41,6 +41,15 @@ internal sealed class CubicacionLoadingService
     public void LoadPartidas()
     {
         parent.UpdateEmptyState();
+        var prevFormulas = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var p in parent.Partidas)
+        {
+            if (!string.IsNullOrWhiteSpace(p.CantidadFormula) && !string.IsNullOrWhiteSpace(p.Id))
+                prevFormulas[p.Id] = p.CantidadFormula;
+        }
+        if (parent.SelectedPartida != null && !string.IsNullOrWhiteSpace(parent.SelectedPartida.CantidadFormula) && !string.IsNullOrWhiteSpace(parent.SelectedPartida.Id))
+            prevFormulas[parent.SelectedPartida.Id] = parent.SelectedPartida.CantidadFormula;
+
         parent.Partidas.Clear();
         parent.FilteredPartidas.Clear();
 
@@ -98,7 +107,10 @@ internal sealed class CubicacionLoadingService
                 && titleIdsWithChildren.Contains(item.Id ?? "")
                 && count == 0;
 
-            parent.Partidas.Add(new PartidaListItemVm(item, count, hasIssues, isPureSectionTitle));
+            var pvm = new PartidaListItemVm(item, count, hasIssues, isPureSectionTitle);
+            if (!string.IsNullOrWhiteSpace(item.Id) && prevFormulas.TryGetValue(item.Id, out var formula))
+                pvm.CantidadFormula = formula;
+            parent.Partidas.Add(pvm);
         }
         ApplyFilter();
     }

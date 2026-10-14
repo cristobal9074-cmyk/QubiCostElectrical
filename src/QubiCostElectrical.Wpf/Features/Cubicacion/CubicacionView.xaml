@@ -86,6 +86,7 @@
                              Loaded="OnCantHeaderBoxLoaded"
                              GotFocus="OnCantHeaderBoxGotFocus" LostFocus="OnCantHeaderBoxLostFocus"
                              PreviewKeyDown="OnCantHeaderBoxPreviewKeyDown"
+                             PreviewTextInput="OnCantHeaderBoxPreviewTextInput"
                              PreviewMouseLeftButtonDown="OnHeaderTextBoxPreviewMouseLeftButtonDown" />
                 </Border>
             </Grid>
@@ -516,6 +517,7 @@
                      Padding="0" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource Brush.Success}"
                      GotFocus="OnCantHeaderBoxGotFocus" LostFocus="OnCantHeaderBoxLostFocus"
                      PreviewKeyDown="OnCantHeaderBoxPreviewKeyDown"
+                     PreviewTextInput="OnCantHeaderBoxPreviewTextInput"
                      ToolTip="{Binding PartidaCantidadToolTip}" />
                     </Border>
                     <!-- Etiquetas de columna (estos títulos no tienen fila de encabezado aparte en Detalle) -->

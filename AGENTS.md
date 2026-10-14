@@ -94,3 +94,8 @@ Política en `UserRolePermissions` (Domain). La sesión aplica restricciones ví
 - Lógica de negocio en Domain/Application, nunca en code-behind de vistas.
 - No reintroducir nombres `PresupuestoElectrico` en scripts operativos ni UI visible.
 - Documentación histórica en `docs/WPF_*` puede mencionar WinForms; la fuente de verdad operativa es este archivo y `CLAUDE.md`.
+- **Publicación y Pruebas del Usuario:**
+  - El usuario abre y prueba la aplicación exclusivamente a través del acceso directo en el escritorio: `C:\Users\cristobal1\Desktop\Qubi Cost Electrical.lnk` (que apunta a `publish\win-x64\QubiCostElectrical.exe`).
+  - **SIEMPRE que se realicen cambios de código, se DEBE compilar y publicar en `publish\win-x64`** para que el usuario pruebe la versión correcta.
+  - El proyecto activo que el usuario utiliza como referencia para validar es: `C:\Users\cristobal1\Documents\Presupuestos Electricos\PEL039A2026 ABIERTO.qce`.
+

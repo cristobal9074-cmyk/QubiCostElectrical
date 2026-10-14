@@ -7,15 +7,13 @@ public static class PartidaCantidadVariablesBuilder
 {
     public static Dictionary<string, decimal> Build(IReadOnlyList<decimal> resourceQuantities)
     {
-        var dict = new Dictionary<string, decimal>(
-            resourceQuantities?.Count ?? 0,
-            StringComparer.OrdinalIgnoreCase);
-        if (resourceQuantities == null)
-            return dict;
+        int count = resourceQuantities?.Count ?? 0;
+        int max = Math.Max(count, 100);
+        var dict = new Dictionary<string, decimal>(max * 3, StringComparer.OrdinalIgnoreCase);
 
-        for (var i = 0; i < resourceQuantities.Count; i++)
+        for (var i = 0; i < max; i++)
         {
-            var val = resourceQuantities[i];
+            var val = (resourceQuantities != null && i < count) ? resourceQuantities[i] : 0m;
             dict[$"R{i + 1}"] = val;
             dict[$"C{i + 1}"] = val;
             dict[$"F{i + 1}"] = val;

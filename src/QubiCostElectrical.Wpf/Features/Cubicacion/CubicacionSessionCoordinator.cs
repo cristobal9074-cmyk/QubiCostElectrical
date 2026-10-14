@@ -44,6 +44,8 @@ internal sealed class CubicacionSessionCoordinator : IDisposable, ISessionChange
 
     private void OnSessionChangedRaw(object? sender, ProjectSessionChangedEventArgs e)
     {
+        if (parent.SuppressSessionReloadCount > 0)
+            return;
         pendingByKind[e.Kind] = e;
         if (!sessionChangeActive)
             return;
@@ -121,7 +123,11 @@ internal sealed class CubicacionSessionCoordinator : IDisposable, ISessionChange
 
     private void ReloadPartidasFromSession()
     {
+        if (parent.SuppressSessionReloadCount > 0)
+            return;
+
         string? prevId = parent.SelectedPartida?.Id;
+        string? prevFormula = parent.SelectedPartida?.CantidadFormula;
         parent.LoadPartidas();
 
         if (string.IsNullOrWhiteSpace(prevId))
@@ -132,7 +138,11 @@ internal sealed class CubicacionSessionCoordinator : IDisposable, ISessionChange
 
         var still = parent.Partidas.FirstOrDefault(p => string.Equals(p.Id, prevId, StringComparison.OrdinalIgnoreCase));
         if (still != null && still.EsPartida)
+        {
+            if (!string.IsNullOrWhiteSpace(prevFormula) && string.IsNullOrWhiteSpace(still.CantidadFormula))
+                still.CantidadFormula = prevFormula;
             parent.SelectPartida(still);
+        }
         else
             parent.SelectFirstPartida();
     }

@@ -142,6 +142,84 @@ public sealed class CubicacionViewModelTests
         }
     }
 
+    [Fact]
+    public void PartidaCantidadText_Formula_C1C2C3_Evaluation()
+    {
+        var host = WpfAppHost.Current;
+        host.Session.NewProject("test-formula-c1c2c3");
+        host.Session.Itemizado.Add(new ItemizadoRow
+        {
+            Id = "P1",
+            Item = "1.1",
+            Descripcion = "Partida Test",
+            Unidad = "UN",
+            Cantidad = 0m
+        });
+        host.Session.Cubicacion.Add(new CubicacionRow { Id = "R1", ItemId = "P1", Tipo = "MAT", Codigo = "A1", Descripcion = "Mat 1", QtyExpressions = new[] { "10" } });
+        host.Session.Cubicacion.Add(new CubicacionRow { Id = "R2", ItemId = "P1", Tipo = "MAT", Codigo = "A2", Descripcion = "Mat 2", QtyExpressions = new[] { "20" } });
+        host.Session.Cubicacion.Add(new CubicacionRow { Id = "R3", ItemId = "P1", Tipo = "MAT", Codigo = "A3", Descripcion = "Mat 3", QtyExpressions = new[] { "30" } });
+
+        var vm = new CubicacionPageVm(new FakeShell(), host);
+        vm.SelectPartida(vm.Partidas.Single(p => p.Id == "P1"));
+
+        Assert.Equal(10m, vm.Rows[0].Cantidad);
+        Assert.Equal(20m, vm.Rows[1].Cantidad);
+        Assert.Equal(30m, vm.Rows[2].Cantidad);
+
+        vm.PartidaCantidadText = "c1+c2+c3";
+        Assert.Equal(60m, vm.SelectedPartida?.Cantidad);
+        Assert.Equal("60,00", vm.PartidaCantidadText);
+        Assert.Equal("c1+c2+c3", vm.SelectedPartida?.CantidadFormula);
+
+        // Leading plus and fallback for empty/non-existent row (c10)
+        vm.PartidaCantidadText = "+c1+c2+c10";
+        Assert.Equal(30m, vm.SelectedPartida?.Cantidad);
+        Assert.Equal("30,00", vm.PartidaCantidadText);
+        Assert.Equal("+c1+c2+c10", vm.SelectedPartida?.CantidadFormula);
+
+        // Setting formatted string doesn't wipe formula
+        vm.PartidaCantidadText = "30,00";
+        Assert.Equal("+c1+c2+c10", vm.SelectedPartida?.CantidadFormula);
+    }
+
+    [Fact]
+    public void HeaderTemplate_Binding_UpdateSource_Works()
+    {
+        XamlViewSmokeHost.Run(() =>
+        {
+            var host = WpfAppHost.Current;
+            host.Session.NewProject("test-binding");
+            host.Session.Itemizado.Add(new ItemizadoRow
+            {
+                Id = "P1",
+                Item = "1.1",
+                Descripcion = "Test",
+                Unidad = "UN",
+                Cantidad = 0m
+            });
+            host.Session.Cubicacion.Add(new CubicacionRow { Id = "R1", ItemId = "P1", Tipo = "MAT", Codigo = "A1", Descripcion = "Mat 1", QtyExpressions = new[] { "10" } });
+            host.Session.Cubicacion.Add(new CubicacionRow { Id = "R2", ItemId = "P1", Tipo = "MAT", Codigo = "A2", Descripcion = "Mat 2", QtyExpressions = new[] { "20" } });
+            host.Session.Cubicacion.Add(new CubicacionRow { Id = "R3", ItemId = "P1", Tipo = "MAT", Codigo = "A3", Descripcion = "Mat 3", QtyExpressions = new[] { "30" } });
+
+            var vm = new CubicacionPageVm(new FakeShell(), host);
+            vm.SelectPartida(vm.Partidas.Single(p => p.Id == "P1"));
+
+            var tb = new System.Windows.Controls.TextBox();
+            var binding = new System.Windows.Data.Binding("PartidaCantidadText")
+            {
+                Source = vm,
+                UpdateSourceTrigger = System.Windows.Data.UpdateSourceTrigger.LostFocus
+            };
+            tb.SetBinding(System.Windows.Controls.TextBox.TextProperty, binding);
+
+            tb.Text = "c1+c2+c3";
+            System.Windows.Data.BindingOperations.GetBindingExpression(tb, System.Windows.Controls.TextBox.TextProperty)?.UpdateSource();
+
+            Assert.Equal(60m, vm.SelectedPartida?.Cantidad);
+            Assert.Equal("60,00", vm.PartidaCantidadText);
+        });
+    }
+
 
     [Fact]
     public async Task SelectPartida_LoadsRowsForItem()
@@ -1482,5 +1560,29 @@ public sealed class CubicacionViewModelTests
         rowVm.Cantidad = 10m;
         Assert.Equal(10m, rowVm.UfSubtotalCalculado);
         Assert.True(subtotalNotified);
+    }
+
+    [Fact]
+    public async Task RealProject_Formula_Test()
+    {
+        string path = @"C:\Users\cristobal1\Documents\Presupuestos Electricos\PEL039A2026 ABIERTO.qce";
+        if (!File.Exists(path)) return;
+
+        var host = WpfAppHost.Current;
+        await host.ProjectWorkspace.OpenAsync(path);
+
+        var vm = new CubicacionPageVm(new FakeShell(), host);
+        var p = vm.Partidas.FirstOrDefault(x => x.Descripcion.Contains("Ductos", StringComparison.OrdinalIgnoreCase)) ?? vm.Partidas.First(x => x.EsPartida);
+        vm.SelectPartida(p);
+
+        vm.PartidaCantidadText = "c1+c2+c3";
+        Assert.Equal(39m, vm.SelectedPartida?.Cantidad);
+        Assert.Equal("c1+c2+c3", vm.SelectedPartida?.CantidadFormula);
+
+        vm.PartidaCantidadText = "+c1+c2+c3";
+        Assert.Equal(39m, vm.SelectedPartida?.Cantidad);
+        Assert.Equal("+c1+c2+c3", vm.SelectedPartida?.CantidadFormula);
+
+
     }
 }

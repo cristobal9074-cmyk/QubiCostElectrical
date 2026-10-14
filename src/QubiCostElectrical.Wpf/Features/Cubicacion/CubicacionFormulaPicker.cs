@@ -19,7 +19,10 @@ internal static class CubicacionFormulaPicker
     private static int _unidadPickIndex = -1;
     private static string _unidadOriginalText = "";
     private static TextBox? _activeUnidadBox;
+    private static bool _suppressLostFocusCommit;
 
+    public static bool SuppressLostFocusCommit => _suppressLostFocusCommit;
+    public static void SetSuppressLostFocus(bool suppress) => _suppressLostFocusCommit = suppress;
     public static int CantPickIndex => _cantPickIndex;
     public static int UnidadPickIndex => _unidadPickIndex;
     public static TextBox? ActiveUnidadBox => _activeUnidadBox;
@@ -46,6 +49,33 @@ internal static class CubicacionFormulaPicker
     }
 
     public static bool IsOperatorChar(char ch) => ch is '+' or '-' or '*' or '/' or '^' or '(' or '=' or ',' or ';';
+
+    public static void NotifyCantKeyDown(Key key)
+    {
+        // Si el usuario escribe una tecla de operador o retroceso, el token actual ya quedó fijo
+        // y el próximo pickeo debe ser un nuevo término
+        if (key is Key.OemPlus or Key.Add or Key.OemMinus or Key.Subtract or Key.Multiply or Key.Divide or Key.Back or Key.Delete)
+        {
+            _cantPickIndex = -1;
+            _cantPickTokenStart = -1;
+            _cantPickTokenLength = 0;
+        }
+    }
+
+    public static void NotifyCantTextInput(string text)
+    {
+        if (string.IsNullOrEmpty(text)) return;
+        for (int i = 0; i < text.Length; i++)
+        {
+            if (IsOperatorChar(text[i]))
+            {
+                _cantPickIndex = -1;
+                _cantPickTokenStart = -1;
+                _cantPickTokenLength = 0;
+                break;
+            }
+        }
+    }
 
     public static bool EndsWithOperator(string? text)
     {
@@ -108,10 +138,14 @@ internal static class CubicacionFormulaPicker
         _activeCantBox = null;
     }
 
-    public static void CancelCantPick(TextBox? box, IReadOnlyList<CubicacionRowVm>? rows, DataGrid? grid = null)
+    public static void CancelCantPick(TextBox? box, IReadOnlyList<CubicacionRowVm>? rows, CubicacionViewModel? vm = null, DataGrid? grid = null)
     {
         var targetBox = box ?? _activeCantBox;
-        if (targetBox != null && !string.IsNullOrEmpty(_cantOriginalText))
+        if (targetBox != null && vm != null)
+        {
+            targetBox.Text = vm.PartidaCantidadText;
+        }
+        else if (targetBox != null && !string.IsNullOrEmpty(_cantOriginalText))
         {
             targetBox.Text = _cantOriginalText;
             targetBox.SelectAll();
@@ -144,55 +178,73 @@ internal static class CubicacionFormulaPicker
         newIndex = Math.Clamp(newIndex, 0, rows.Count - 1);
         string token = $"C{newIndex + 1}";
         string raw = box.Text ?? "";
-
+        // Si el texto termina con un operador o el cursor está justo tras un operador, debe empezar un nuevo token
         int caret = Math.Clamp(box.CaretIndex, 0, raw.Length);
         bool afterOp = (caret > 0 && IsOperatorChar(raw[caret - 1])) || EndsWithOperator(raw);
 
-        if (afterOp || _cantPickIndex < 0 || _cantPickTokenStart < 0)
+        // Si ya hay un pick activo de esta sesión y NO acabamos de tipear un operador, lo reemplazamos
+        if (!afterOp && _cantPickIndex >= 0 && _cantPickTokenStart >= 0 && _cantPickTokenStart <= raw.Length)
         {
-            if (box.SelectionLength > 0 && box.SelectionLength == raw.Length)
-            {
-                box.Text = "+" + token;
-                _cantPickTokenStart = 1;
-                _cantPickTokenLength = token.Length;
-                _cantPickIndex = newIndex;
-                box.CaretIndex = box.Text.Length;
-                UpdateCantGridHighlight(newIndex, rows, grid, col);
-                return;
-            }
+            int removeLength = Math.Min(_cantPickTokenLength, raw.Length - _cantPickTokenStart);
+            string updated = raw.Remove(_cantPickTokenStart, Math.Max(removeLength, 0)).Insert(_cantPickTokenStart, token);
+            box.Text = updated;
+            _cantPickTokenLength = token.Length;
+            _cantPickIndex = newIndex;
+            box.CaretIndex = _cantPickTokenStart + _cantPickTokenLength;
+            UpdateCantGridHighlight(newIndex, rows, grid, col);
+            return;
+        }
 
-            if (caret > 0 && IsOperatorChar(raw[caret - 1]))
+        // Si no hay token activo, determinamos dónde insertarlo
+        if (box.SelectionLength > 0 && box.SelectionLength == raw.Length)
+        {
+            box.Text = "+" + token;
+            _cantPickTokenStart = 1;
+            _cantPickTokenLength = token.Length;
+            _cantPickIndex = newIndex;
+            box.CaretIndex = box.Text.Length;
+            UpdateCantGridHighlight(newIndex, rows, grid, col);
+            return;
+        }
+
+        if (afterOp)
+        {
+            _cantPickTokenStart = caret > 0 ? caret : raw.Length;
+            _cantPickTokenLength = 0;
+        }
+        else if (box.SelectionLength > 0)
+        {
+            _cantPickTokenStart = box.SelectionStart;
+            _cantPickTokenLength = box.SelectionLength;
+        }
+        else
+        {
+            if (string.IsNullOrEmpty(raw) || raw == "0" || raw == "0,00")
             {
-                _cantPickTokenStart = caret;
+                box.Text = "+";
+                raw = "+";
+                _cantPickTokenStart = 1;
                 _cantPickTokenLength = 0;
-            }
-            else if (EndsWithOperator(raw))
-            {
-                _cantPickTokenStart = raw.Length;
-                _cantPickTokenLength = 0;
-            }
-            else if (box.SelectionLength > 0)
-            {
-                _cantPickTokenStart = box.SelectionStart;
-                _cantPickTokenLength = box.SelectionLength;
             }
             else
             {
-                if (string.IsNullOrEmpty(raw) || raw == "0" || raw == "0,00")
-                {
-                    box.Text = "+";
-                    raw = "+";
-                }
-                _cantPickTokenStart = Math.Clamp(box.CaretIndex, 0, raw.Length);
+                // Si había un número plano o texto sin operador al final, anexamos '+'
+                string op = "+";
+                raw += op;
+                box.Text = raw;
+                _cantPickTokenStart = raw.Length;
                 _cantPickTokenLength = 0;
             }
         }
 
-        string text = box.Text ?? "";
-        int removeLength = Math.Min(_cantPickTokenLength, text.Length - _cantPickTokenStart);
-        text = text.Remove(_cantPickTokenStart, Math.Max(removeLength, 0)).Insert(_cantPickTokenStart, token);
+        string current = box.Text ?? "";
+        int startPos = Math.Clamp(_cantPickTokenStart, 0, current.Length);
+        int remLen = Math.Min(_cantPickTokenLength, current.Length - startPos);
+        string text = current.Remove(startPos, Math.Max(remLen, 0)).Insert(startPos, token);
         box.Text = text;
+        _cantPickTokenStart = startPos;
         _cantPickTokenLength = token.Length;
+        _cantPickIndex = newIndex;
         box.CaretIndex = _cantPickTokenStart + _cantPickTokenLength;
 
         UpdateCantGridHighlight(newIndex, rows, grid, col);
@@ -200,22 +252,40 @@ internal static class CubicacionFormulaPicker
 
     private static void UpdateCantGridHighlight(int index, IReadOnlyList<CubicacionRowVm>? rows, DataGrid? grid, DataGridColumn? col = null)
     {
+        _cantPickIndex = index;
         if (rows != null)
         {
             for (int i = 0; i < rows.Count; i++)
             {
-                if (rows[i].IsCantPickTarget)
-                    rows[i].IsCantPickTarget = false;
+                rows[i].IsCantPickTarget = (i == _cantPickIndex);
+                if (rows[i].IsFormulaPickTarget)
+                    rows[i].IsFormulaPickTarget = false;
             }
         }
-        _cantPickIndex = index;
-        if (rows != null && index >= 0 && index < rows.Count)
+        _suppressLostFocusCommit = true;
+        try
         {
-            var targetRow = rows[index];
-            targetRow.IsCantPickTarget = true;
-            if (grid != null)
+            if (grid != null && _cantPickIndex >= 0 && rows != null && _cantPickIndex < rows.Count)
             {
-                try { grid.ScrollIntoView(targetRow); } catch { }
+                try { grid.ScrollIntoView(rows[_cantPickIndex]); } catch { }
+            }
+        }
+        finally
+        {
+            if (_activeCantBox != null)
+            {
+                _activeCantBox.Focus();
+                Keyboard.Focus(_activeCantBox);
+                _activeCantBox.Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    _activeCantBox?.Focus();
+                    if (_activeCantBox != null) Keyboard.Focus(_activeCantBox);
+                    _suppressLostFocusCommit = false;
+                }), System.Windows.Threading.DispatcherPriority.Input);
+            }
+            else
+            {
+                _suppressLostFocusCommit = false;
             }
         }
     }
@@ -253,39 +323,45 @@ internal static class CubicacionFormulaPicker
     {
         if (box == null || rows == null || rows.Count == 0) return;
         newIndex = Math.Clamp(newIndex, 0, rows.Count - 1);
-        ClearCantPickHighlight(rows, grid);
-
         _unidadPickIndex = newIndex;
         string token = $"+U{newIndex + 1}";
         box.Text = token;
-        box.SelectAll();
-        box.Focus();
+        box.CaretIndex = box.Text.Length;
 
-        if (_unidadPickIndex >= 0 && _unidadPickIndex < rows.Count)
+        if (rows != null)
         {
-            var targetRow = rows[_unidadPickIndex];
-            targetRow.IsFormulaPickTarget = true;
-            if (grid != null)
+            for (int i = 0; i < rows.Count; i++)
             {
-                var targetCol = col ?? FindColumn(grid, "UD");
-                if (targetCol != null)
-                {
-                    try
-                    {
-                        grid.SelectedCells.Clear();
-                        var cell = new DataGridCellInfo(targetRow, targetCol);
-                        grid.SelectedCells.Add(cell);
-                        grid.CurrentCell = cell;
-                    }
-                    catch { }
-                }
-                try { grid.ScrollIntoView(targetRow); } catch { }
+                rows[i].IsFormulaPickTarget = (i == _unidadPickIndex);
+                if (rows[i].IsCantPickTarget)
+                    rows[i].IsCantPickTarget = false;
             }
+        }
+
+        _suppressLostFocusCommit = true;
+        try
+        {
+            if (grid != null && rows != null && _unidadPickIndex >= 0 && _unidadPickIndex < rows.Count)
+            {
+                try { grid.ScrollIntoView(rows[_unidadPickIndex]); } catch { }
+            }
+        }
+        finally
+        {
+            box.Focus();
+            Keyboard.Focus(box);
+            box.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                box.Focus();
+                Keyboard.Focus(box);
+                _suppressLostFocusCommit = false;
+            }), System.Windows.Threading.DispatcherPriority.Input);
         }
     }
 
-    public static void CommitUnidadPick(TextBox? box, CubicacionViewModel? vm, DataGrid? grid = null)
+    public static void CommitUnidadPick(TextBox? box, CubicacionViewModel? vm, DataGrid? grid = null, bool force = false)
     {
+        if (!force && _suppressLostFocusCommit) return;
         if (vm == null) return;
         var targetBox = box ?? _activeUnidadBox;
         string raw = (targetBox?.Text ?? "").Trim();
@@ -492,8 +568,26 @@ internal static class CubicacionFormulaPicker
     public static bool HandleUnidadNavigation(TextBox tb, KeyEventArgs e, CubicacionViewModel? vm, DataGrid? grid, DataGridColumn? colUnidad, Action focusCant)
     {
         if (vm == null) return false;
+        if (e.Key == Key.Tab)
+        {
+            CommitUnidadPick(tb, vm, grid);
+            focusCant();
+            e.Handled = true;
+            return true;
+        }
         if (e.Key == Key.Right)
         {
+            if (_unidadPickIndex >= 0)
+            {
+                CommitUnidadPick(tb, vm, grid);
+                focusCant();
+                e.Handled = true;
+                return true;
+            }
+            if (tb.SelectionLength == 0 && tb.CaretIndex < (tb.Text ?? "").Length)
+            {
+                return false; // permitir que la flecha derecha mueva el cursor dentro del texto
+            }
             CommitUnidadPick(tb, vm, grid);
             focusCant();
             e.Handled = true;
@@ -501,10 +595,14 @@ internal static class CubicacionFormulaPicker
         }
         if (e.Key == Key.Left)
         {
-            if (GetCurrentUnidadIndex(tb) >= 0)
+            if (_unidadPickIndex >= 0)
             {
                 e.Handled = true;
                 return true;
+            }
+            if (tb.SelectionLength == 0 && tb.CaretIndex > 0)
+            {
+                return false; // permitir que la flecha izquierda mueva el cursor dentro del texto
             }
         }
         if (e.Key == Key.Down)
@@ -520,17 +618,15 @@ internal static class CubicacionFormulaPicker
         {
             int maxRow = (vm.Rows != null && vm.Rows.Count > 0) ? vm.Rows.Count - 1 : 0;
             int cur = GetCurrentUnidadIndex(tb);
-            int next = cur < 0 ? 0 : Math.Max(cur - 1, 0);
+            int next = cur <= 0 ? 0 : cur - 1;
             ApplyUnidadPick(tb, next, vm.Rows, grid, colUnidad);
             e.Handled = true;
             return true;
         }
         if (e.Key is Key.Enter or Key.Return)
         {
-            int targetRow = _unidadPickIndex >= 0 ? _unidadPickIndex : 0;
-            CommitUnidadPick(tb, vm, grid);
-            var targetCol = FindColumn(grid, "CÓDIGO") ?? colUnidad;
-            FocusGridCell(grid, targetRow, targetCol);
+            CommitUnidadPick(tb, vm, grid, force: true);
+            focusCant();
             e.Handled = true;
             return true;
         }
@@ -548,14 +644,40 @@ internal static class CubicacionFormulaPicker
     public static bool HandleCantNavigation(TextBox tb, KeyEventArgs e, CubicacionViewModel? vm, DataGrid? grid, DataGridColumn? colCant, Action focusUnidad, Action commitCant, Action? focusFirstSector = null, bool isEditingStarted = false)
     {
         if (vm == null) return false;
+        if (e.Key == Key.Tab)
+        {
+            commitCant();
+            if (focusFirstSector != null) focusFirstSector();
+            else FocusGridCell(grid, 0, FindColumn(grid, "CÓDIGO") ?? colCant);
+            e.Handled = true;
+            return true;
+        }
         if (e.Key == Key.Left)
         {
+            if (_cantPickIndex >= 0)
+            {
+                e.Handled = true;
+                return true;
+            }
+            if (tb.SelectionLength == 0 && tb.CaretIndex > 0)
+            {
+                return false; // permitir que la flecha izquierda mueva el cursor dentro del texto
+            }
             focusUnidad();
             e.Handled = true;
             return true;
         }
         if (e.Key == Key.Right)
         {
+            if (_cantPickIndex >= 0)
+            {
+                e.Handled = true;
+                return true;
+            }
+            if (tb.SelectionLength == 0 && tb.CaretIndex < (tb.Text ?? "").Length)
+            {
+                return false; // permitir que la flecha derecha mueva el cursor dentro del texto
+            }
             if (focusFirstSector != null)
             {
                 commitCant();
@@ -578,22 +700,9 @@ internal static class CubicacionFormulaPicker
             }
 
             int maxRow = (vm.Rows != null && vm.Rows.Count > 0) ? vm.Rows.Count - 1 : 0;
-            int caret = Math.Clamp(tb.CaretIndex, 0, raw.Length);
-            bool afterOp = (caret > 0 && IsOperatorChar(raw[caret - 1])) || EndsWithOperator(raw);
-
-            if (afterOp)
-            {
-                _cantPickIndex = -1;
-                _cantPickTokenStart = caret > 0 ? caret : raw.Length;
-                _cantPickTokenLength = 0;
-                ApplyCantPick(tb, 0, vm.Rows, grid, colCant);
-            }
-            else
-            {
-                int cur = _cantPickIndex >= 0 ? _cantPickIndex : GetCurrentCantIndex(tb);
-                int next = cur < 0 ? 0 : Math.Min(cur + 1, maxRow);
-                ApplyCantPick(tb, next, vm.Rows, grid, colCant);
-            }
+            int cur = _cantPickIndex >= 0 ? _cantPickIndex : GetCurrentCantIndex(tb);
+            int next = cur < 0 ? 0 : Math.Min(cur + 1, maxRow);
+            ApplyCantPick(tb, next, vm.Rows, grid, colCant);
             e.Handled = true;
             return true;
         }
@@ -608,28 +717,16 @@ internal static class CubicacionFormulaPicker
                 return true;
             }
 
-            int caret = Math.Clamp(tb.CaretIndex, 0, raw.Length);
-            bool afterOp = (caret > 0 && IsOperatorChar(raw[caret - 1])) || EndsWithOperator(raw);
-
-            if (afterOp)
-            {
-                _cantPickIndex = -1;
-                _cantPickTokenStart = caret > 0 ? caret : raw.Length;
-                _cantPickTokenLength = 0;
-                ApplyCantPick(tb, 0, vm.Rows, grid, colCant);
-            }
-            else
-            {
-                int cur = _cantPickIndex >= 0 ? _cantPickIndex : GetCurrentCantIndex(tb);
-                int next = cur <= 0 ? 0 : cur - 1;
-                ApplyCantPick(tb, next, vm.Rows, grid, colCant);
-            }
+            int cur = _cantPickIndex >= 0 ? _cantPickIndex : GetCurrentCantIndex(tb);
+            int next = cur <= 0 ? 0 : cur - 1;
+            ApplyCantPick(tb, next, vm.Rows, grid, colCant);
             e.Handled = true;
             return true;
         }
         if (e.Key is Key.Enter or Key.Return)
         {
             int targetRow = _cantPickIndex >= 0 ? _cantPickIndex : 0;
+            _suppressLostFocusCommit = false;
             commitCant();
             var targetCol = FindColumn(grid, "CÓDIGO") ?? colCant;
             FocusGridCell(grid, targetRow, targetCol);
@@ -638,7 +735,8 @@ internal static class CubicacionFormulaPicker
         }
         if (e.Key == Key.Escape)
         {
-            CancelCantPick(tb, vm.Rows, grid);
+            _suppressLostFocusCommit = false;
+            CancelCantPick(tb, vm.Rows, vm, grid);
             var targetCol = FindColumn(grid, "CÓDIGO") ?? colCant;
             FocusGridCell(grid, 0, targetCol);
             e.Handled = true;
