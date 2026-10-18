@@ -71,8 +71,9 @@ public static class SQLiteSchemaMigrator
 
         bool legacyWithoutPragma = userVersion == 0 && currentVersion > 0;
         bool needsMigration = legacyWithoutPragma || currentVersion < LatestSchemaVersion;
+        string? backupPath = null;
         if (needsMigration)
-            SqliteMigrationLedger.TryCreateMigrationBackup(connection, currentVersion, LatestSchemaVersion);
+            backupPath = SqliteMigrationLedger.TryCreateMigrationBackup(connection, currentVersion, LatestSchemaVersion);
 
         SqliteMigrationLedger.CreateMigrationLedger(connection, null);
 
@@ -102,11 +103,38 @@ public static class SQLiteSchemaMigrator
             {
                 AppLog.Critical("SQLiteMigración", $"Falló la migración a v{step.Version} ('{step.Name}'); se revierte la transacción", ex);
                 transaction.Rollback();
+
+                // Auto-recuperación atómica: si falla la migración, restaurar el archivo original desde el respaldo preventivo
+                bool restored = false;
+                if (!string.IsNullOrWhiteSpace(backupPath) && File.Exists(backupPath))
+                {
+                    restored = SqliteMigrationLedger.TryRestoreFromBackup(connection, backupPath);
+                }
+
                 throw new InvalidOperationException(
                     $"No se pudo actualizar la base de datos del proyecto a la versión {step.Version} ({step.Name}). "
-                    + "Se intentó crear un respaldo previo en la carpeta .schema_backups junto al archivo .db. "
-                    + "Si el problema persiste, restaura ese respaldo o contacta soporte con el log de la aplicación.",
+                    + (restored
+                        ? "La base de datos fue auto-restaurada de forma segura a su estado previo al intento de migración. "
+                        : "Se intentó crear un respaldo previo en la carpeta .schema_backups junto al archivo .db. ")
+                    + "Contacta soporte con el log de la aplicación.",
                     ex);
+            }
+        }
+
+        // Validación de salud post-migración obligatoria: previene abrir o salvar una base corrupta en obra
+        if (needsMigration)
+        {
+            string integrity = SqliteMigratorHelpers.ExecuteScalarText(connection, "PRAGMA integrity_check;");
+            if (!string.Equals(integrity, "ok", StringComparison.OrdinalIgnoreCase))
+            {
+                AppLog.Critical("SQLiteMigración", $"Integrity check falló tras migrar: '{integrity}'");
+                if (!string.IsNullOrWhiteSpace(backupPath) && File.Exists(backupPath))
+                {
+                    SqliteMigrationLedger.TryRestoreFromBackup(connection, backupPath);
+                }
+                throw new InvalidOperationException(
+                    $"La base de datos quedó en estado inconsistente tras la migración ({integrity}). "
+                    + "Se auto-restauró automáticamente el respaldo previo para proteger los datos.");
             }
         }
     }

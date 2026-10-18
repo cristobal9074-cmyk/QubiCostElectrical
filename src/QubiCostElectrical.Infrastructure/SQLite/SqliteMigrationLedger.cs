@@ -99,13 +99,13 @@ internal static class SqliteMigrationLedger
         cmd.ExecuteNonQuery();
     }
 
-    internal static void TryCreateMigrationBackup(SqliteConnection connection, int fromVersion, int latestVersion)
+    internal static string? TryCreateMigrationBackup(SqliteConnection connection, int fromVersion, int latestVersion)
     {
         try
         {
             string databasePath = connection.DataSource;
-            if (string.IsNullOrWhiteSpace(databasePath) || !File.Exists(databasePath)) return;
-            if (new FileInfo(databasePath).Length == 0) return;
+            if (string.IsNullOrWhiteSpace(databasePath) || !File.Exists(databasePath)) return null;
+            if (new FileInfo(databasePath).Length == 0) return null;
 
             using (var checkpoint = connection.CreateCommand())
             {
@@ -122,11 +122,39 @@ internal static class SqliteMigrationLedger
 
             File.Copy(databasePath, backupPath, overwrite: false);
             RotateMigrationBackups(directory, maxBackups: 10);
+            return backupPath;
         }
         catch (Exception ex)
         {
             // El backup de migración es preventivo. Si falló por bloqueo de archivo, no detenemos la apertura del proyecto.
             AppLog.Warning("SQLiteMigración", $"No se pudo crear el backup preventivo previo a migrar '{connection.DataSource}'", ex);
+            return null;
+        }
+    }
+
+    internal static bool TryRestoreFromBackup(SqliteConnection targetConnection, string backupPath)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(backupPath) || !File.Exists(backupPath))
+                return false;
+
+            using (var checkpoint = targetConnection.CreateCommand())
+            {
+                checkpoint.CommandText = "PRAGMA wal_checkpoint(TRUNCATE);";
+                checkpoint.ExecuteNonQuery();
+            }
+
+            using var sourceConn = new SqliteConnection($"Data Source={backupPath};Mode=ReadOnly");
+            sourceConn.Open();
+            sourceConn.BackupDatabase(targetConnection);
+            AppLog.Warning("SQLiteMigración", $"Base de datos '{targetConnection.DataSource}' auto-restaurada desde '{backupPath}' tras abortar migración.");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            AppLog.Critical("SQLiteMigración", $"Error al auto-restaurar backup '{backupPath}' sobre '{targetConnection.DataSource}'", ex);
+            return false;
         }
     }
 
