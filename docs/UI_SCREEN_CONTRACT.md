@@ -54,6 +54,6 @@ No combinar toast + StatusMessage + modal con el mismo texto.
 
 `WorkspacePageContractTests` verifica que las vistas core incluyan `WorkspacePageChrome` o el par `EmptyStateControl` + `SkeletonOverlayControl`.
 
-Incluye ApuCatalog, ApuMerge, Contracts (3) y ScenarioWorkspace (chrome listo; **sin** `ShellRoute`/menú — WIP navegación).
+Incluye ApuCatalog, ApuMerge y Contracts (3).
 
 Preferencias: EmptyStateControl + SkeletonOverlayControl (chrome no calza por namescope `x:Name` en rail); `ShowEmptyState=false` siempre (ajustes globales).

@@ -29,8 +29,7 @@ public sealed class WorkspacePageContractTests
         "src/QubiCostElectrical.Wpf/Features/Contracts/ContractEditorView.xaml",
         "src/QubiCostElectrical.Wpf/Features/Contracts/ContractVersionsView.xaml",
         "src/QubiCostElectrical.Wpf/Features/Preferences/PreferencesView.xaml",
-        "src/QubiCostElectrical.Wpf/Features/EstadosPago/EstadosPagoView.xaml",
-        // ScenarioWorkspaceView: Scenario WIP sin ShellRoute / sin nav — no es pantalla core.
+        "src/QubiCostElectrical.Wpf/Features/EstadosPago/EstadosPagoView.xaml"
     ];
 
     [Fact]
