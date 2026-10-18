@@ -5,8 +5,9 @@ using QubiCostElectrical;
 namespace QubiCostElectrical.Tests.Fixtures.MigrationCorpus;
 
 /// <summary>
-/// Fixture estructurada con los datos de referencia del proyecto real PEL039A2026 ABIERTO.qce.
-/// Permite validar la fidelidad de cálculo y preservación de datos en CI de manera determinista.
+/// Proyecto sintético para recorrer los pasos de esquema 1..32.
+/// El archivo real de obra está en corpus/PEL039A2026-ABIERTO.qce y lo exige
+/// ReferenceProject_PEL039A2026_CommittedCorpus_SurvivesMigrationAndRoundtrip.
 /// </summary>
 public static class PEL039ReferenceProjectFixture
 {

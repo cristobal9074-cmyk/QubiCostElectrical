@@ -37,13 +37,14 @@ public sealed class RealProjectMigrationCorpusTests : IDisposable
         }
     }
 
+    public static IEnumerable<object[]> HistoricalSchemas()
+    {
+        for (int version = 1; version <= 32; version++)
+            yield return new object[] { version };
+    }
+
     [Theory]
-    [InlineData(1)]  // Legacy con app_meta, sin user_version
-    [InlineData(14)] // Tablas antiguas pendientes de purga v15
-    [InlineData(20)] // Capas de cubicación
-    [InlineData(25)] // Columnas CLP
-    [InlineData(30)] // Cierre comercial
-    [InlineData(32)] // Contratos, pre-estados de pago
+    [MemberData(nameof(HistoricalSchemas))]
     public void Migration_FromHistoricalMilestones_ToSchema33_ZeroDataLoss_IntegrityCheckOk(int historicalVersion)
     {
         string dbPath = Path.Combine(_tempDir, $"project_v{historicalVersion}.qce");
@@ -152,45 +153,86 @@ public sealed class RealProjectMigrationCorpusTests : IDisposable
     }
 
     [Fact]
-    public void ReferenceProject_PEL039A2026_LiveMigrationAndRoundtripFidelity()
+    public void ReferenceProject_PEL039A2026_CommittedCorpus_SurvivesMigrationAndRoundtrip()
     {
-        string livePath = PEL039ReferenceProjectFixture.LiveDefaultPath;
-        string testPath;
+        string corpusPath = RequireCommittedCorpus();
+        Assert.True(new FileInfo(corpusPath).Length > 1_000_000, "El corpus commiteado es demasiado chico para ser PEL039A2026 ABIERTO.qce.");
+        string testPath = Path.Combine(_tempDir, "PEL039A2026-ABIERTO.qce");
+        File.Copy(corpusPath, testPath, overwrite: true);
 
-        if (File.Exists(livePath))
-        {
-            // Usar copia del archivo real de obra
-            testPath = Path.Combine(_tempDir, "PEL039A2026_LiveTest.qce");
-            File.Copy(livePath, testPath, overwrite: true);
-        }
-        else
-        {
-            // En CI donde no exista la carpeta Documents, usar la fixture determinista equivalente
-            testPath = Path.Combine(_tempDir, "PEL039A2026_SyntheticTest.qce");
-            var synthetic = PEL039ReferenceProjectFixture.CreateSyntheticReferenceProject();
-            SQLiteProjectStore.SaveSnapshot(testPath, synthetic);
-        }
+        var before = ReadCorpusFingerprint(testPath);
+        Assert.True(before.Itemizado > 0, "El corpus commiteado no tiene partidas.");
 
-        // Cargar el proyecto
         var loaded = SQLiteProjectStore.LoadSnapshot(testPath);
 
-        Assert.NotNull(loaded.Proyecto);
-        Assert.True(loaded.Itemizado.Count >= 69, $"El itemizado esperado debe ser al menos 69 partidas (actual: {loaded.Itemizado.Count})");
-        Assert.True(loaded.Cubicacion.Count >= 200, $"La cubicación esperada debe ser al menos 200 líneas (actual: {loaded.Cubicacion.Count})");
-        Assert.True(loaded.Materiales.Count >= 70, $"Los materiales esperados deben ser al menos 70 (actual: {loaded.Materiales.Count})");
+        Assert.Equal(before.Nombre, loaded.Proyecto?.Nombre);
+        Assert.Equal(before.Itemizado, loaded.Itemizado.Count);
+        Assert.Equal(before.Materiales, loaded.Materiales.Count);
+        Assert.Equal(before.Cubicacion, loaded.Cubicacion.Count);
+        Assert.Contains(loaded.Itemizado, row => row.Descripcion == before.FirstItemDescripcion);
 
-        // Validar salud con SQLiteProjectBackup
+        using (var conn = new SqliteConnection($"Data Source={testPath};Mode=ReadOnly"))
+        {
+            conn.Open();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "PRAGMA user_version;";
+            int version = Convert.ToInt32(cmd.ExecuteScalar() ?? 0);
+            Assert.True(version >= before.UserVersion, "La migración bajó el esquema del archivo de obra.");
+            Assert.True(version <= SQLiteSchemaMigrator.LatestSchemaVersion || before.UserVersion > SQLiteSchemaMigrator.LatestSchemaVersion);
+            cmd.CommandText = "PRAGMA integrity_check;";
+            Assert.Equal("ok", Convert.ToString(cmd.ExecuteScalar()));
+        }
+
         Assert.True(SQLiteProjectBackup.IsDatabaseHealthy(testPath));
 
-        // Roundtrip: Guardar a un segundo archivo y verificar paridad exacta
         string roundtripPath = Path.Combine(_tempDir, "PEL039A2026_Roundtrip.qce");
         SQLiteProjectStore.SaveSnapshot(roundtripPath, loaded);
-
         var roundtripLoaded = SQLiteProjectStore.LoadSnapshot(roundtripPath);
         Assert.Equal(loaded.Itemizado.Count, roundtripLoaded.Itemizado.Count);
         Assert.Equal(loaded.Cubicacion.Count, roundtripLoaded.Cubicacion.Count);
         Assert.Equal(loaded.Materiales.Count, roundtripLoaded.Materiales.Count);
         Assert.Equal(loaded.Proyecto?.Nombre, roundtripLoaded.Proyecto?.Nombre);
+        Assert.Contains(roundtripLoaded.Itemizado, row => row.Descripcion == before.FirstItemDescripcion);
+    }
+
+    private static string RequireCommittedCorpus()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir != null)
+        {
+            string nested = Path.Combine(dir.FullName, "tests", "QubiCostElectrical.Tests", "Fixtures", "MigrationCorpus", "corpus", "PEL039A2026-ABIERTO.qce");
+            if (File.Exists(nested))
+                return nested;
+            string local = Path.Combine(dir.FullName, "Fixtures", "MigrationCorpus", "corpus", "PEL039A2026-ABIERTO.qce");
+            if (File.Exists(local))
+                return local;
+            dir = dir.Parent;
+        }
+
+        throw new FileNotFoundException(
+            "Falta tests/QubiCostElectrical.Tests/Fixtures/MigrationCorpus/corpus/PEL039A2026-ABIERTO.qce. Sin esa copia del proyecto de obra, CI no detecta una migración que borre filas.");
+    }
+
+    private readonly record struct CorpusFingerprint(int UserVersion, int Itemizado, int Materiales, int Cubicacion, string Nombre, string FirstItemDescripcion);
+
+    private static CorpusFingerprint ReadCorpusFingerprint(string dbPath)
+    {
+        using var conn = new SqliteConnection($"Data Source={dbPath};Mode=ReadOnly");
+        conn.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "PRAGMA user_version;";
+        int version = Convert.ToInt32(cmd.ExecuteScalar() ?? 0);
+        cmd.CommandText = "SELECT COUNT(*) FROM itemizado;";
+        int itemizado = Convert.ToInt32(cmd.ExecuteScalar() ?? 0);
+        cmd.CommandText = "SELECT COUNT(*) FROM materiales;";
+        int materiales = Convert.ToInt32(cmd.ExecuteScalar() ?? 0);
+        cmd.CommandText = "SELECT COUNT(*) FROM cubicacion;";
+        int cubicacion = Convert.ToInt32(cmd.ExecuteScalar() ?? 0);
+        cmd.CommandText = "SELECT nombre FROM project_info LIMIT 1;";
+        string nombre = Convert.ToString(cmd.ExecuteScalar()) ?? "";
+        cmd.CommandText = "SELECT descripcion FROM itemizado ORDER BY sort_order LIMIT 1;";
+        string first = Convert.ToString(cmd.ExecuteScalar()) ?? "";
+        return new CorpusFingerprint(version, itemizado, materiales, cubicacion, nombre, first);
     }
 
     [Fact]
