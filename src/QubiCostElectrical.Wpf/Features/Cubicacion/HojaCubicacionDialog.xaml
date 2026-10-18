@@ -8,7 +8,7 @@
         WindowStartupLocation="CenterOwner"
         Closed="OnDialogClosed"
         KeyDown="OnWindowKeyDown">
-  <Border Style="{StaticResource Dialog.Chrome}" Margin="12" Padding="14">
+  <Border Style="{StaticResource Dialog.Chrome}">
   <Grid>
     <Grid.RowDefinitions>
       <!-- Header Ultra-Limpio -->
@@ -24,8 +24,12 @@
     <!-- Header Minimalista y Profesional ("Menos es más") -->
     <DockPanel Grid.Row="0" Margin="0,0,0,10" LastChildFill="False">
       <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
-        <TextBlock Text="Hoja de Cubicación" FontSize="15" FontWeight="SemiBold"
-                   Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" Margin="0,0,10,0" />
+        <Border Style="{StaticResource Dialog.HeaderIconContainer}" Margin="0,0,10,0">
+          <Path Data="M3 3h18v18H3z M3 9h18 M3 15h18 M9 3v18 M15 3v18"
+                Stroke="{DynamicResource Brush.Blue}" StrokeThickness="1.5"
+                HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="15" Height="15"/>
+        </Border>
+        <TextBlock Text="Hoja de Cubicación" Style="{StaticResource Dialog.HeaderTitle}" VerticalAlignment="Center" Margin="0,0,10,0" />
 
         <!-- Botón discreto de atajos -->
         <Button x:Name="BtnToggleHelp" Style="{StaticResource Button.Ghost}" Height="24" Padding="6,0"
@@ -71,7 +75,7 @@
                 <TextBlock Grid.Row="4" Grid.Column="1" Text="Copiar y pegar rangos con Excel" FontSize="11" Foreground="{DynamicResource Brush.Muted}" />
               </Grid>
 
-              <Separator Background="{DynamicResource Brush.Line}" Margin="0,2,0,6" />
+              <Separator Style="{StaticResource Separator.Subtle}" />
 
               <TextBlock Text="FÓRMULAS SOPORTADAS:" FontWeight="Bold" FontSize="11" Foreground="{DynamicResource Brush.Green}" Margin="0,0,0,4" />
               <Grid>
@@ -293,7 +297,7 @@
       </StackPanel>
 
       <Button DockPanel.Dock="Right" Style="{StaticResource Button.Primary}" Content="Listo"
-              MinWidth="90" Height="28" FontSize="12" IsDefault="True" IsCancel="True" Click="OnCloseClick" />
+              MinWidth="100" Height="34" FontSize="12" IsDefault="True" IsCancel="True" Click="OnCloseClick" />
     </DockPanel>
   </Grid>
   </Border>

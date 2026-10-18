@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Text;
 
-namespace QubiCostElectrical;
+namespace QubiCostElectrical.Infrastructure;
 
 /// <summary>
 /// Normaliza texto para búsquedas insensibles a mayúsculas/acentos. SQLite's UPPER() nativo es

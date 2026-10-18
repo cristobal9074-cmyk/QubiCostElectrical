@@ -15,6 +15,34 @@ public partial class VersionsView : UserControl
         Unloaded += OnUnloaded;
     }
 
+    private void OnUserControlKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key == System.Windows.Input.Key.F && (System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Control) == System.Windows.Input.ModifierKeys.Control)
+        {
+            if (MainTabControl?.SelectedIndex == 1)
+            {
+                SearchBoxComparison?.Focus();
+                SearchBoxComparison?.SelectAll();
+            }
+            else
+            {
+                SearchBoxVersions?.Focus();
+                SearchBoxVersions?.SelectAll();
+            }
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key == System.Windows.Input.Key.Escape)
+        {
+            if (DataContext is VersionsViewModel vm && vm.HasSearchText)
+            {
+                vm.ClearSearchCommand.Execute(null);
+                e.Handled = true;
+            }
+        }
+    }
+
     private void OnLoaded(object sender, System.Windows.RoutedEventArgs e)
     {
         if (ComparisonDataGrid != null)

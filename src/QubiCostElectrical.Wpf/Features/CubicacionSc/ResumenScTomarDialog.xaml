@@ -41,7 +41,7 @@
     </DataTemplate>
   </Window.Resources>
 
-  <Border Style="{StaticResource Dialog.Chrome}" Margin="16" Padding="18">
+  <Border Style="{StaticResource Dialog.Chrome}" Padding="18">
     <Grid>
       <Grid.RowDefinitions>
         <RowDefinition Height="Auto" />
@@ -84,8 +84,10 @@
 
         <!-- Título y subtítulo con icono a la izquierda -->
         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-          <Border Width="40" Height="40" CornerRadius="10" Background="#EFF6FF" BorderBrush="#DBEAFE" BorderThickness="1" Margin="0,0,12,0" VerticalAlignment="Center">
-            <TextBlock Text="⚡" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" />
+          <Border Style="{StaticResource Dialog.HeaderIconContainer}" Margin="0,0,12,0">
+            <Path Data="M13 2 3 14h9l-1 8 10-12h-9l1-8z"
+                  Stroke="{DynamicResource Brush.Blue}" StrokeThickness="1.5"
+                  HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="16" Height="16"/>
           </Border>
           <StackPanel VerticalAlignment="Center">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -262,10 +264,10 @@
 
         <!-- Botones a la derecha -->
         <Button x:Name="TomarButton" DockPanel.Dock="Right" Content="Tomar seleccionado"
-                Style="{StaticResource Button.Primary}" MinWidth="150" Margin="8,0,0,0"
+                Style="{StaticResource Button.Primary}" MinWidth="150" Height="34"
                 Click="OnFooterTomarClick" />
         <Button DockPanel.Dock="Right" Content="Cancelar (Esc)" Style="{StaticResource Button.Secondary}"
-                MinWidth="100" IsCancel="True" Command="{Binding CerrarCommand}" />
+                MinWidth="100" Height="34" Margin="0,0,10,0" IsCancel="True" Command="{Binding CerrarCommand}" />
       </DockPanel>
     </Grid>
   </Border>

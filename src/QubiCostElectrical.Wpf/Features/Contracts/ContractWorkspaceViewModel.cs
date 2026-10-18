@@ -75,8 +75,9 @@ public sealed class ContractWorkspaceViewModel : WorkspacePageViewModelBase
     private readonly IPermissionService permissions;
 
     public ContractWorkspaceViewModel(IShellNavigationHost shell, WpfAppHost host)
-        : this(shell, host.Session, host.ProjectWorkspace, host.Services.ProjectDb, host.Permissions) { }
+        : this(shell, host.Session, host.ProjectWorkspace, host.ProjectDb, host.Permissions) { }
 
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
     public ContractWorkspaceViewModel(IShellNavigationHost shell, BudgetProjectSession session, IProjectWorkspaceService workspace, IProjectDbContext projectDb, IPermissionService permissions)
         : base(session, workspace)
     {

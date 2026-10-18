@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using ClosedXML.Excel;
 
-namespace QubiCostElectrical;
+namespace QubiCostElectrical.Infrastructure;
 
 public sealed class ItemizadoSpreadsheetReader : IItemizadoSpreadsheetReader
 {

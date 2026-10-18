@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using Microsoft.Data.Sqlite;
 
-namespace QubiCostElectrical;
+namespace QubiCostElectrical.Infrastructure;
 
 internal static class SqliteMigrationLedger
 {

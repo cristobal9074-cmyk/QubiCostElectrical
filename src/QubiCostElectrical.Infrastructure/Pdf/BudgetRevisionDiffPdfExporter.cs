@@ -7,7 +7,7 @@ using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 
-namespace QubiCostElectrical;
+namespace QubiCostElectrical.Infrastructure;
 
 public sealed class BudgetRevisionDiffPdfExporter : IBudgetRevisionDiffPdfExporter
 {

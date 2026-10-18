@@ -41,25 +41,47 @@
 
   <Style x:Key="DataGridColumnHeader.Prototype" TargetType="DataGridColumnHeader">
     <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
-    <Setter Property="FontSize" Value="{StaticResource Font.Size.2xs}" />
-    <Setter Property="FontWeight" Value="Bold" />
-    <Setter Property="Padding" Value="11,9" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink4}" />
+    <Setter Property="FontFamily" Value="{StaticResource Font.Ui}" />
+    <Setter Property="FontSize" Value="9.5" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Height" Value="32" />
+    <Setter Property="Padding" Value="10,6" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="HorizontalContentAlignment" Value="Left" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
     <Setter Property="BorderThickness" Value="0,0,1,1" />
+    <Style.Triggers>
+      <Trigger Property="CanUserSort" Value="True">
+        <Setter Property="Cursor" Value="Hand" />
+      </Trigger>
+      <Trigger Property="IsMouseOver" Value="True">
+        <Setter Property="Background" Value="{DynamicResource Brush.RowHover}" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}" />
+      </Trigger>
+    </Style.Triggers>
   </Style>
+
+  <Style x:Key="DataGridColumnHeader.Base" TargetType="DataGridColumnHeader" BasedOn="{StaticResource DataGridColumnHeader.Prototype}" />
 
   <Style x:Key="DataGridColumnHeader.Numeric" TargetType="DataGridColumnHeader" BasedOn="{StaticResource DataGridColumnHeader.Prototype}">
     <Setter Property="HorizontalContentAlignment" Value="Right" />
-    <Setter Property="Padding" Value="8,9,14,9" />
+    <Setter Property="Padding" Value="8,6,12,6" />
   </Style>
 
+  <Style x:Key="DataGridColumnHeader.Center" TargetType="DataGridColumnHeader" BasedOn="{StaticResource DataGridColumnHeader.Prototype}">
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="Padding" Value="6,6" />
+  </Style>
+
+  <!-- Alias para compatibilidad -->
+  <Style x:Key="DataGridColumnHeader.Centered" TargetType="DataGridColumnHeader" BasedOn="{StaticResource DataGridColumnHeader.Center}" />
+
   <!-- Encabezado distintivo de fórmulas calculadas (fx) -->
-  <Style x:Key="DataGridColumnHeader.Formula" TargetType="DataGridColumnHeader" BasedOn="{StaticResource DataGridColumnHeader.Prototype}">
-    <Setter Property="HorizontalContentAlignment" Value="Right" />
-    <Setter Property="Padding" Value="8,9,14,9" />
+  <Style x:Key="DataGridColumnHeader.Formula" TargetType="DataGridColumnHeader" BasedOn="{StaticResource DataGridColumnHeader.Numeric}">
     <Setter Property="Background" Value="{DynamicResource Brush.CellFormulaBg}" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.FormulaBadge}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
     <Setter Property="ToolTip" Value="Columna calculada automáticamente mediante fórmulas matemáticas" />
   </Style>
 
@@ -78,17 +100,10 @@
     <Setter Property="Padding" Value="11,10" />
     <Setter Property="BorderThickness" Value="0,0,1,1" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line2}" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}" />
     <Setter Property="FocusVisualStyle" Value="{x:Null}" />
     <Style.Triggers>
-      <!-- Base por tipo de celda: Editable vs Fórmula -->
-      <Trigger Property="IsReadOnly" Value="True">
-        <Setter Property="Background" Value="{DynamicResource Brush.CellFormulaBg}" />
-        <Setter Property="Foreground" Value="{DynamicResource Brush.CellFormulaInk}" />
-      </Trigger>
-      <Trigger Property="IsReadOnly" Value="False">
-        <Setter Property="Background" Value="{DynamicResource Brush.CellEditableBg}" />
-      </Trigger>
-
       <!-- Resalte visual de capítulos / títulos WBS para que la celda adopte el fondo del capítulo -->
       <DataTrigger Binding="{Binding IsTitleRow}" Value="True">
         <Setter Property="Background" Value="{DynamicResource Brush.ChapterRowBg}" />
@@ -96,7 +111,7 @@
         <Setter Property="FontWeight" Value="SemiBold" />
       </DataTrigger>
 
-      <!-- Hover interactivo solo en celdas editables para guiar al usuario -->
+      <!-- Hover interactivo en celdas editables si la grilla es editable -->
       <MultiTrigger>
         <MultiTrigger.Conditions>
           <Condition Property="IsReadOnly" Value="False" />
@@ -106,10 +121,6 @@
         <Setter Property="Background" Value="{DynamicResource Brush.CellEditableHoverBg}" />
       </MultiTrigger>
 
-      <Trigger Property="IsSelected" Value="True">
-        <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
-        <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
-      </Trigger>
       <Trigger Property="IsFocused" Value="True">
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
         <Setter Property="BorderThickness" Value="1.5" />
@@ -118,10 +129,25 @@
   </Style>
 
   <Style x:Key="DataGridRow.Prototype" TargetType="DataGridRow">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="SnapsToDevicePixels" Value="True" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="BorderThickness" Value="0" />
     <Style.Triggers>
       <Trigger Property="IsMouseOver" Value="True">
         <Setter Property="Background" Value="{DynamicResource Brush.RowHover}" />
       </Trigger>
+      <Trigger Property="IsSelected" Value="True">
+        <Setter Property="Background" Value="{DynamicResource Brush.ActiveRowBg}" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+      </Trigger>
+      <MultiTrigger>
+        <MultiTrigger.Conditions>
+          <Condition Property="IsSelected" Value="True" />
+          <Condition Property="IsMouseOver" Value="True" />
+        </MultiTrigger.Conditions>
+        <Setter Property="Background" Value="{DynamicResource Brush.ActiveRowHoverBg}" />
+      </MultiTrigger>
     </Style.Triggers>
   </Style>
 

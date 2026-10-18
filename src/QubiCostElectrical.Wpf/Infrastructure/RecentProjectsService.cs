@@ -14,10 +14,16 @@ public sealed record RecentProjectInfo(string Path, string Name, DateTime LastMo
 public sealed class RecentProjectsService
 {
     private const int MaxRecent = 8;
+    private readonly IUserPreferencesStore preferencesStore;
+
+    public RecentProjectsService(IUserPreferencesStore? preferencesStore = null)
+    {
+        this.preferencesStore = preferencesStore ?? WpfAppHost.Current?.UserPreferencesStore ?? new InMemoryUserPreferencesStore();
+    }
 
     public IReadOnlyList<RecentProjectInfo> GetProjects()
     {
-        var prefs = UserPreferencesStore.Load();
+        var prefs = preferencesStore.Load();
         var pinnedSet = new HashSet<string>(prefs.PinnedRecentFiles.Select(Normalize), StringComparer.OrdinalIgnoreCase);
 
         var projects = prefs.RecentFiles
@@ -51,7 +57,7 @@ public sealed class RecentProjectsService
             return;
 
         path = Normalize(path);
-        var prefs = UserPreferencesStore.Load();
+        var prefs = preferencesStore.Load();
         prefs.RecentFiles.RemoveAll(r => Equivalent(r, path));
         prefs.RecentFiles.Insert(0, path);
         while (prefs.RecentFiles.Count > MaxRecent)
@@ -60,7 +66,7 @@ public sealed class RecentProjectsService
             prefs.RecentFiles.RemoveAt(prefs.RecentFiles.Count - 1);
             prefs.PinnedRecentFiles.RemoveAll(r => Equivalent(r, toRemove));
         }
-        UserPreferencesStore.Save(prefs);
+        preferencesStore.Save(prefs);
     }
 
     public bool TogglePin(string path)
@@ -69,7 +75,7 @@ public sealed class RecentProjectsService
             return false;
 
         path = Normalize(path);
-        var prefs = UserPreferencesStore.Load();
+        var prefs = preferencesStore.Load();
         bool nowPinned;
 
         if (prefs.PinnedRecentFiles.Any(r => Equivalent(r, path)))
@@ -86,7 +92,7 @@ public sealed class RecentProjectsService
             nowPinned = true;
         }
 
-        UserPreferencesStore.Save(prefs);
+        preferencesStore.Save(prefs);
         return nowPinned;
     }
 
@@ -94,7 +100,7 @@ public sealed class RecentProjectsService
     {
         if (string.IsNullOrWhiteSpace(path))
             return false;
-        var prefs = UserPreferencesStore.Load();
+        var prefs = preferencesStore.Load();
         return prefs.PinnedRecentFiles.Any(r => Equivalent(r, path));
     }
 
@@ -103,20 +109,20 @@ public sealed class RecentProjectsService
         if (string.IsNullOrWhiteSpace(path))
             return;
         path = Normalize(path);
-        var prefs = UserPreferencesStore.Load();
+        var prefs = preferencesStore.Load();
         int removedRecent = prefs.RecentFiles.RemoveAll(r => Equivalent(r, path));
         int removedPinned = prefs.PinnedRecentFiles.RemoveAll(r => Equivalent(r, path));
         if (removedRecent > 0 || removedPinned > 0)
-            UserPreferencesStore.Save(prefs);
+            preferencesStore.Save(prefs);
     }
 
     public void RemoveMissing()
     {
-        var prefs = UserPreferencesStore.Load();
+        var prefs = preferencesStore.Load();
         int removedRecent = prefs.RecentFiles.RemoveAll(f => !File.Exists(f));
         int removedPinned = prefs.PinnedRecentFiles.RemoveAll(f => !File.Exists(f));
         if (removedRecent > 0 || removedPinned > 0)
-            UserPreferencesStore.Save(prefs);
+            preferencesStore.Save(prefs);
     }
 
     // ── helpers ──────────────────────────────────────────────────────────────

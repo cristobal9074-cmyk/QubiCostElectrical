@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text.Json;
 using Microsoft.Data.Sqlite;
 
-namespace QubiCostElectrical;
+namespace QubiCostElectrical.Infrastructure;
 
 internal static class SqliteStoreHelpers
 {

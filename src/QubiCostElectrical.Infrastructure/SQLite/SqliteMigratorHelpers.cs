@@ -2,7 +2,7 @@ using System;
 using System.Data;
 using Microsoft.Data.Sqlite;
 
-namespace QubiCostElectrical;
+namespace QubiCostElectrical.Infrastructure;
 
 internal static class SqliteMigratorHelpers
 {

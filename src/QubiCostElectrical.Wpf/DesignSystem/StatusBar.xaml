@@ -10,13 +10,40 @@
     <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
     <Setter Property="BorderThickness" Value="0,1,0,0" />
-    <Setter Property="Padding" Value="16,4" />
-    <Setter Property="MinHeight" Value="26" />
+    <Setter Property="Padding" Value="12,2" />
+    <Setter Property="MinHeight" Value="28" />
+    <Setter Property="SnapsToDevicePixels" Value="True" />
   </Style>
 
   <Style x:Key="Shell.StatusBarText" TargetType="TextBlock" BasedOn="{StaticResource Text.Caption}">
     <Setter Property="VerticalAlignment" Value="Center" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
+    <Setter Property="FontSize" Value="11" />
+  </Style>
+
+  <!-- Elemento interactivo individual de la barra de estado con hover sutil -->
+  <Style x:Key="Shell.StatusBarItem" TargetType="Border">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="CornerRadius" Value="4" />
+    <Setter Property="Padding" Value="6,2" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="SnapsToDevicePixels" Value="True" />
+    <Style.Triggers>
+      <Trigger Property="IsMouseOver" Value="True">
+        <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+      </Trigger>
+    </Style.Triggers>
+  </Style>
+
+  <!-- Divisor vertical nítido entre segmentos -->
+  <Style x:Key="Shell.StatusBarDivider" TargetType="Border">
+    <Setter Property="Width" Value="1" />
+    <Setter Property="Height" Value="13" />
+    <Setter Property="Margin" Value="4,0" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Line}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="SnapsToDevicePixels" Value="True" />
   </Style>
 
 </ResourceDictionary>

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text.Json;
 using Microsoft.Data.Sqlite;
 
-namespace QubiCostElectrical;
+namespace QubiCostElectrical.Infrastructure;
 
 /// <summary>
 /// Persistencia de estados de pago (fase Ejecución): filas mensuales del cronograma de

@@ -1,6 +1,6 @@
 using System;
 
-namespace QubiCostElectrical;
+namespace QubiCostElectrical.Infrastructure;
 
 /// <summary>
 /// Tamaño de la imagen de la firma en los PDF, convertido de milímetros (configurables

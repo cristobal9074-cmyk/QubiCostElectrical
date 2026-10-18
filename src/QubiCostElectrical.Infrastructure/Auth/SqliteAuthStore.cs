@@ -1,7 +1,7 @@
 using System.Globalization;
 using Microsoft.Data.Sqlite;
 
-namespace QubiCostElectrical;
+namespace QubiCostElectrical.Infrastructure;
 
 public sealed class SqliteAuthStore : IDisposable
 {

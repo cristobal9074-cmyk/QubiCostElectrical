@@ -55,7 +55,7 @@ public partial class SolicitudPdfPreviewDialog : Window
             try
             {
                 File.Copy(pdfPath, dialog.FileName, overwrite: true);
-                WpfDialogService.InfoModal("Guardar", "El archivo se ha guardado exitosamente.");
+                ShellNotificationService.Instance.ShowSuccess("Guardado exitoso", "El archivo se ha guardado exitosamente.");
             }
             catch (Exception ex)
             {

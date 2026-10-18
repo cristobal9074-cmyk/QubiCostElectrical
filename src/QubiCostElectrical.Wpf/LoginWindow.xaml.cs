@@ -10,10 +10,10 @@ public partial class LoginWindow : Window
 {
     private readonly LoginViewModel _viewModel;
 
-    public LoginWindow(IAuthService authService)
+    public LoginWindow(IAuthService authService, IUserPreferencesStore? preferencesStore = null)
     {
         InitializeComponent();
-        _viewModel = new LoginViewModel(authService);
+        _viewModel = new LoginViewModel(authService, preferencesStore);
         DataContext = _viewModel;
         _viewModel.LoginSucceeded += OnLoginSucceeded;
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;

@@ -2,7 +2,7 @@ using System;
 using Microsoft.Extensions.DependencyInjection;
 using QubiCostElectrical.Infrastructure;
 
-namespace QubiCostElectrical;
+namespace QubiCostElectrical.Infrastructure;
 
 /// <summary>
 /// Ruta de la BD del banco de precios (compartida: banco + catálogo APU + benchmark). Se
@@ -24,6 +24,9 @@ public static class InfrastructureServiceCollectionExtensions
     {
         string Path(IServiceProvider sp) => sp.GetRequiredService<PriceBankPath>().Value;
 
+        // Preferencias de usuario locales (JSON).
+        services.AddSingleton<IUserPreferencesStore, UserPreferencesStore>();
+
         // Repositorio de proyecto (SQLite/JSON, pools estáticos internos).
         services.AddSingleton<IProjectRepository, ProjectRepository>();
 
@@ -34,6 +37,8 @@ public static class InfrastructureServiceCollectionExtensions
         // Catálogo APU: vive en la BD del banco de precios (catálogo compartido).
         services.AddSingleton<IApuCatalogRepository>(sp => new SqliteApuCatalogRepository(Path(sp)));
         services.AddSingleton<IApuVersionRepository>(sp => new SqliteApuVersionRepository(Path(sp)));
+        services.AddSingleton<IApuTemplateStore>(sp => new ApuTemplateStore(Path(sp)));
+        services.AddSingleton<IConjuntoTemplateStore>(sp => new ConjuntoTemplateStore(Path(sp)));
 
         // Planillas.
         services.AddSingleton<IItemizadoSpreadsheetReader, ItemizadoSpreadsheetReader>();

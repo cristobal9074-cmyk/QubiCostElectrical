@@ -564,6 +564,22 @@ public sealed class PreferencesViewModelTests
         Assert.Contains(vm.FilteredShortcuts, r => r.ActionId == CubicacionScShortcutCatalog.AddTablero);
     }
 
+    [Fact]
+    public void NavSections_HaveShortcutCues()
+    {
+        using var _ = UserPreferencesStore.UsePreferencesFilePathForTests(TempPath());
+        var vm = new PreferencesViewModel(WpfAppHost.Current);
+
+        Assert.Equal(7, vm.NavSections.Count);
+        Assert.Equal("Ctrl+1", vm.NavSections[0].ShortcutCue);
+        Assert.Equal("Ctrl+2", vm.NavSections[1].ShortcutCue);
+        Assert.Equal("Ctrl+3", vm.NavSections[2].ShortcutCue);
+        Assert.Equal("Ctrl+4", vm.NavSections[3].ShortcutCue);
+        Assert.Equal("Ctrl+5", vm.NavSections[4].ShortcutCue);
+        Assert.Equal("Ctrl+6", vm.NavSections[5].ShortcutCue);
+        Assert.Equal("Ctrl+7", vm.NavSections[6].ShortcutCue);
+    }
+
     // ─── Helper ───────────────────────────────────────────────────────────
 
     private sealed class FakeFileOpener(Action<string> onOpenFolder) : IFileOpenService

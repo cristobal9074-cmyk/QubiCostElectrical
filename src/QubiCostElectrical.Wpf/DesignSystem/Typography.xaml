@@ -50,8 +50,10 @@
   <Style x:Key="Text.KpiValue" TargetType="TextBlock">
     <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
     <Setter Property="FontSize" Value="{StaticResource Font.Size.2xl}" />
-    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="FontWeight" Value="Bold" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+    <Setter Property="Typography.NumeralAlignment" Value="Tabular" />
+    <Setter Property="Typography.NumeralStyle" Value="Lining" />
   </Style>
 
   <Style x:Key="Text.HeaderBrand" TargetType="TextBlock">
@@ -74,10 +76,17 @@
 
   <Style x:Key="Text.TotalsLabel" TargetType="TextBlock">
     <Setter Property="FontFamily" Value="{StaticResource Font.Ui}" />
-    <Setter Property="FontSize" Value="{StaticResource Font.Size.sm}" />
+    <Setter Property="FontSize" Value="10.5" />
     <Setter Property="FontWeight" Value="SemiBold" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
     <Setter Property="Margin" Value="0,0,0,2" />
+  </Style>
+
+  <Style x:Key="Text.TotalsHint" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
+    <Setter Property="Typography.NumeralAlignment" Value="Tabular" />
   </Style>
 
   <Style x:Key="Text.Numeric" TargetType="TextBlock">
@@ -115,8 +124,10 @@
   <Style x:Key="Text.TotalsValue" TargetType="TextBlock">
     <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
     <Setter Property="FontSize" Value="{StaticResource Font.Size.lg}" />
-    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="FontWeight" Value="Bold" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+    <Setter Property="Typography.NumeralAlignment" Value="Tabular" />
+    <Setter Property="Typography.NumeralStyle" Value="Lining" />
   </Style>
 
   <Style x:Key="Text.SectionTitle" TargetType="TextBlock">
@@ -126,13 +137,28 @@
     <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
   </Style>
 
-  <Style x:Key="Text.KpiLabel" TargetType="TextBlock" BasedOn="{StaticResource Text.SectionLabel}" />
+  <Style x:Key="Text.KpiLabel" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource Font.Ui}" />
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
+    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+  </Style>
+
+  <Style x:Key="Text.KpiHint" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource Font.Ui}" />
+    <Setter Property="FontSize" Value="11.5" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
+    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+  </Style>
 
   <Style x:Key="Text.KpiInline" TargetType="TextBlock">
     <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
     <Setter Property="FontSize" Value="{StaticResource Font.Size.kpi}" />
-    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="FontWeight" Value="Bold" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+    <Setter Property="Typography.NumeralAlignment" Value="Tabular" />
+    <Setter Property="Typography.NumeralStyle" Value="Lining" />
   </Style>
 
   <Style x:Key="Text.Helper" TargetType="TextBlock">

@@ -56,12 +56,9 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
     private string tickerMargen = "—";
     private string tickerTotalOfertaUf = "—";
     private string tickerTotalOfertaClp = "";
-    private string searchText = "";
-    private bool isSearchPaletteOpen;
+    private readonly ShellCommandPaletteCoordinator commandPalette;
     private bool isProjectPickerOpen;
     private bool isUserMenuOpen;
-    private QuickSearchItemVm? selectedQuickSearchItem;
-    private readonly ObservableCollection<QuickSearchItemVm> quickSearchResults = new();
 
     internal Func<ThreeWayResult> ShowCloseProjectDialog = () =>
         WpfDialogService.ConfirmSaveDiscardCancel("Cerrar proyecto",
@@ -89,6 +86,9 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
             $"El proyecto ya no existe en:\n{path}\n\nFue eliminado de la lista de recientes.");
 
     internal Action PostCloseNavigate = null!;
+    internal Action? ShowAboutRequested;
+
+    public void ShowAboutDialog() => ShowAboutRequested?.Invoke();
 
     // session/undo viven toda la vida del WpfAppHost — sin desuscribirse, cada
     // ShellViewModel nuevo (un ciclo de Cerrar sesión crea uno) deja la instancia vieja y su
@@ -106,7 +106,7 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
         : this(host ?? throw new ArgumentNullException(nameof(host)),
                host.Session, host.ProjectWorkspace, host.UndoService, host.ProjectLock, host.Permissions,
                host.Audit, host.Auth, host.Dashboard, host.ProjectEdit, host.Documents,
-               host.Services.PriceBankStore, host.Services.BudgetCalculation)
+               host.PriceBankStore, host.BudgetCalculation)
     {
     }
 
@@ -155,6 +155,8 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
         projectLifecycle = new ShellProjectLifecycle(
             session, projectWorkspace, undo, budgetCalculation, projectEdit, documents,
             projectLock, audit, permissions, autoSave, ClearPageCache);
+        commandPalette = new ShellCommandPaletteCoordinator(
+            session, this, priceBankStore, projectWorkspace, undo, OnPropertyChanged);
 
         var dispatcher = Application.Current?.Dispatcher;
         if (dispatcher != null)
@@ -446,31 +448,20 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
 
     public string SearchText
     {
-        get => searchText;
-        set
-        {
-            if (!SetProperty(ref searchText, value))
-                return;
-            OnPropertyChanged(nameof(HasSearchText));
-            RefreshQuickSearchResults();
-            IsSearchPaletteOpen = true;
-        }
+        get => commandPalette.SearchText;
+        set => commandPalette.SearchText = value;
     }
 
-    public bool HasSearchText => !string.IsNullOrWhiteSpace(searchText);
-    public bool HasQuickSearchResults => quickSearchResults.Count > 0;
-    public string ResultCountLabel => quickSearchResults.Count == 1 ? "1 coincidencia" : $"{quickSearchResults.Count} coincidencias";
+    public bool HasSearchText => commandPalette.HasSearchText;
+    public bool HasQuickSearchResults => commandPalette.HasQuickSearchResults;
+    public string ResultCountLabel => commandPalette.ResultCountLabel;
 
-    [RelayCommand]
-    private void ClearSearch()
-    {
-        SearchText = string.Empty;
-    }
+    public ICommand ClearSearchCommand => commandPalette.ClearSearchCommand;
 
     public bool IsSearchPaletteOpen
     {
-        get => isSearchPaletteOpen;
-        set => SetProperty(ref isSearchPaletteOpen, value);
+        get => commandPalette.IsSearchPaletteOpen;
+        set => commandPalette.IsSearchPaletteOpen = value;
     }
 
     public bool IsProjectPickerOpen
@@ -531,17 +522,12 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
         System.Windows.Input.CommandManager.InvalidateRequerySuggested();
     }
 
-    public ObservableCollection<QuickSearchItemVm> QuickSearchResults => quickSearchResults;
+    public ObservableCollection<QuickSearchItemVm> QuickSearchResults => commandPalette.QuickSearchResults;
 
     public QuickSearchItemVm? SelectedQuickSearchItem
     {
-        get => selectedQuickSearchItem;
-        set
-        {
-            if (!SetProperty(ref selectedQuickSearchItem, value))
-                return;
-            ExecuteQuickSearchItemCommand.NotifyCanExecuteChanged();
-        }
+        get => commandPalette.SelectedQuickSearchItem;
+        set => commandPalette.SelectedQuickSearchItem = value;
     }
 
     public ObservableCollection<RecentProjectInfo> RecentProjects => recentProjectItems;
@@ -596,50 +582,73 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
     public string TickerTotalOfertaUf { get => tickerTotalOfertaUf; private set => SetProperty(ref tickerTotalOfertaUf, value); }
     public string TickerTotalOfertaClp { get => tickerTotalOfertaClp; private set => SetProperty(ref tickerTotalOfertaClp, value); }
 
+    public string ProjectStructureSummary
+    {
+        get
+        {
+            if (!HasOpenProject) return "";
+            int partidas = session.Itemizado.Count(i => !i.EsTitulo);
+            int capitulos = session.Itemizado.Count(i => i.EsTitulo);
+            int tableros = session.CubicacionSC?.Count ?? 0;
+            return tableros > 0
+                ? $"{partidas} partidas · {capitulos} cap · {tableros} tab"
+                : $"{partidas} partidas · {capitulos} cap";
+        }
+    }
+
+    public string ProjectStructureToolTip
+    {
+        get
+        {
+            if (!HasOpenProject) return "";
+            int partidas = session.Itemizado.Count(i => !i.EsTitulo);
+            int capitulos = session.Itemizado.Count(i => i.EsTitulo);
+            int tableros = session.CubicacionSC?.Count ?? 0;
+            return $"Estructura del proyecto:{Environment.NewLine}• {partidas} partidas de obra{Environment.NewLine}• {capitulos} capítulos / títulos{Environment.NewLine}• {tableros} tableros de servicios comunes";
+        }
+    }
+
+    public string DirectCostToolTip
+    {
+        get
+        {
+            if (!HasOpenProject) return "";
+            var ufText = !string.IsNullOrWhiteSpace(TickerTotalOfertaClp)
+                ? $"{TickerTotalOfertaUf} {TickerTotalOfertaClp}"
+                : TickerTotalOfertaUf;
+            return $"Costo Directo Presupuestado:{Environment.NewLine}• Monto: {TickerCostoDirecto}{Environment.NewLine}• Venta final: {ufText}{Environment.NewLine}• Margen: {TickerMargen}";
+        }
+    }
+
+    public string PriceBankToolTip =>
+        $"Banco de Precios Global:{Environment.NewLine}• Catálogo unificado de materiales y mano de obra.{Environment.NewLine}• {PriceBankSyncLabel}";
+
+    public string SaveStateToolTip
+    {
+        get
+        {
+            if (!HasOpenProject) return "";
+            return HasUnsavedChanges
+                ? $"Hay cambios pendientes sin guardar.{Environment.NewLine}Presione Ctrl+S para guardar el archivo del proyecto."
+                : $"Todos los cambios han sido guardados.{Environment.NewLine}{SaveStateText}";
+        }
+    }
+
     public bool IsDashboardActive => CurrentRoute == ShellRoute.Dashboard;
     public bool IsOfferDocumentsActive => CurrentRoute == ShellRoute.OfferDocuments;
     public bool IsLandingScreen => CurrentRoute == ShellRoute.Dashboard && !HasOpenProject;
 
     public void Navigate(ShellRoute route) => RequestNavigate(route);
 
-    public void OpenQuickSearch()
-    {
-        RefreshQuickSearchResults();
-        IsSearchPaletteOpen = true;
-    }
+    public void OpenQuickSearch() => commandPalette.OpenQuickSearch();
 
-    public void CloseQuickSearch() => IsSearchPaletteOpen = false;
+    public void CloseQuickSearch() => commandPalette.CloseQuickSearch();
 
-    public async Task ExecuteQuickSearchAsync()
-    {
-        var item = SelectedQuickSearchItem ?? QuickSearchResults.FirstOrDefault();
-        if (item == null)
-            return;
+    public Task ExecuteQuickSearchAsync() => commandPalette.ExecuteQuickSearchAsync();
 
-        CloseQuickSearch();
-        await item.ExecuteAsync();
-    }
+    public void SelectQuickSearchIndex(int offset) => commandPalette.SelectQuickSearchIndex(offset);
 
-    public void SelectQuickSearchIndex(int offset)
-    {
-        if (QuickSearchResults.Count == 0)
-            return;
-
-        var currentIndex = SelectedQuickSearchItem != null ? QuickSearchResults.IndexOf(SelectedQuickSearchItem) : -1;
-        var nextIndex = currentIndex < 0 ? 0 : currentIndex + offset;
-        if (nextIndex < 0)
-            nextIndex = QuickSearchResults.Count - 1;
-        if (nextIndex >= QuickSearchResults.Count)
-            nextIndex = 0;
-
-        SelectedQuickSearchItem = QuickSearchResults[nextIndex];
-    }
-
-    public void SelectFirstQuickSearchItem()
-    {
-        if (QuickSearchResults.Count > 0)
-            SelectedQuickSearchItem = QuickSearchResults[0];
-    }
+    public void SelectFirstQuickSearchItem() => commandPalette.SelectFirstQuickSearchItem();
 
     public void RefreshChrome()
     {
@@ -657,6 +666,11 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
         OnPropertyChanged(nameof(ShowWorkflowStepper));
         OnPropertyChanged(nameof(HasUnsavedChanges));
         OnPropertyChanged(nameof(WindowTitleText));
+        OnPropertyChanged(nameof(ProjectStructureSummary));
+        OnPropertyChanged(nameof(ProjectStructureToolTip));
+        OnPropertyChanged(nameof(DirectCostToolTip));
+        OnPropertyChanged(nameof(PriceBankToolTip));
+        OnPropertyChanged(nameof(SaveStateToolTip));
         RefreshUserContext();
         RefreshQuickSearchResults();
 
@@ -778,79 +792,17 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
         return true;
     }
 
-    private CommandPaletteCategory selectedPaletteCategory = CommandPaletteCategory.All;
     public CommandPaletteCategory SelectedPaletteCategory
     {
-        get => selectedPaletteCategory;
-        set
-        {
-            if (SetProperty(ref selectedPaletteCategory, value))
-                RefreshQuickSearchResults();
-        }
+        get => commandPalette.SelectedPaletteCategory;
+        set => commandPalette.SelectedPaletteCategory = value;
     }
 
-    [RelayCommand]
-    public void SetPaletteCategory(object? param)
-    {
-        if (param is CommandPaletteCategory cat)
-            SelectedPaletteCategory = cat;
-        else if (param is string str && Enum.TryParse<CommandPaletteCategory>(str, true, out var parsed))
-            SelectedPaletteCategory = parsed;
-    }
+    public ICommand SetPaletteCategoryCommand => commandPalette.SetPaletteCategoryCommand;
 
-    private CommandPaletteEngine? commandPaletteEngine;
-    private CommandPaletteEngine PaletteEngine => commandPaletteEngine ??= new CommandPaletteEngine(
-        session,
-        this,
-        priceBankStore,
-        projectWorkspace,
-        undo);
+    public ICommand ExecuteQuickSearchItemCommand => commandPalette.ExecuteQuickSearchItemCommand;
 
-    private void RefreshQuickSearchResults()
-    {
-        var query = SearchText ?? string.Empty;
-        var previousSelection = SelectedQuickSearchItem;
-
-        quickSearchResults.Clear();
-        var results = PaletteEngine.Search(query, SelectedPaletteCategory, msg => ShellNotificationService.Instance.ShowSuccess("Comando ejecutado", msg));
-        foreach (var item in results)
-        {
-            quickSearchResults.Add(new QuickSearchItemVm(item));
-        }
-
-        OnPropertyChanged(nameof(HasQuickSearchResults));
-        OnPropertyChanged(nameof(ResultCountLabel));
-
-        if (quickSearchResults.Count == 0)
-        {
-            SelectedQuickSearchItem = null;
-            return;
-        }
-
-        if (previousSelection != null)
-        {
-            var match = quickSearchResults.FirstOrDefault(item => item.Title == previousSelection.Title);
-            if (match != null)
-            {
-                SelectedQuickSearchItem = match;
-                return;
-            }
-        }
-
-        SelectedQuickSearchItem = quickSearchResults[0];
-    }
-
-    [RelayCommand(CanExecute = nameof(CanExecuteQuickSearchItem))]
-    private Task ExecuteQuickSearchItemAsync(QuickSearchItemVm? item)
-    {
-        if (item == null)
-            return Task.CompletedTask;
-
-        CloseQuickSearch();
-        return item.ExecuteAsync();
-    }
-
-    private bool CanExecuteQuickSearchItem(QuickSearchItemVm? item) => item != null;
+    public void RefreshQuickSearchResults() => commandPalette.RefreshQuickSearchResults();
 
     private static string BuildInitials(string? name)
     {

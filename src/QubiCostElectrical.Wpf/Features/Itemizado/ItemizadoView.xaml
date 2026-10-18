@@ -3,7 +3,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:pe="clr-namespace:QubiCostElectrical;assembly=QubiCostElectrical.Application"
              xmlns:ctrl="clr-namespace:QubiCostElectrical.Wpf.Controls"
-             xmlns:infra="clr-namespace:QubiCostElectrical.Wpf.Infrastructure">
+             xmlns:infra="clr-namespace:QubiCostElectrical.Wpf.Infrastructure"
+             xmlns:local="clr-namespace:QubiCostElectrical.Wpf.Features.Itemizado">
   <UserControl.CommandBindings>
     <CommandBinding Command="ApplicationCommands.Find" Executed="OnFindExecuted" />
   </UserControl.CommandBindings>
@@ -187,25 +188,9 @@
         </DataTrigger>
       </Style.Triggers>
     </Style>
-    <Style x:Key="ItemizadoColumnHeader" TargetType="DataGridColumnHeader">
-      <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
-      <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
-      <Setter Property="FontSize" Value="9.5" />
-      <Setter Property="FontWeight" Value="SemiBold" />
-      <Setter Property="Padding" Value="10,6" />
-      <Setter Property="Height" Value="32" />
-      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
-      <Setter Property="BorderThickness" Value="0,0,1,1" />
-      <Setter Property="HorizontalContentAlignment" Value="Left" />
-    </Style>
-    <Style x:Key="NumericColumnHeader" TargetType="DataGridColumnHeader" BasedOn="{StaticResource ItemizadoColumnHeader}">
-      <Setter Property="HorizontalContentAlignment" Value="Right" />
-      <Setter Property="Padding" Value="8,6,10,6" />
-    </Style>
-    <Style x:Key="CenteredColumnHeader" TargetType="DataGridColumnHeader" BasedOn="{StaticResource ItemizadoColumnHeader}">
-      <Setter Property="HorizontalContentAlignment" Value="Center" />
-      <Setter Property="Padding" Value="6,6" />
-    </Style>
+    <Style x:Key="ItemizadoColumnHeader" TargetType="DataGridColumnHeader" BasedOn="{StaticResource DataGridColumnHeader.Prototype}" />
+    <Style x:Key="NumericColumnHeader" TargetType="DataGridColumnHeader" BasedOn="{StaticResource DataGridColumnHeader.Numeric}" />
+    <Style x:Key="CenteredColumnHeader" TargetType="DataGridColumnHeader" BasedOn="{StaticResource DataGridColumnHeader.Center}" />
     <Style x:Key="ItemizadoDataGridCell" TargetType="DataGridCell">
       <Setter Property="Padding" Value="8,2" />
       <Setter Property="VerticalContentAlignment" Value="Center" />
@@ -409,6 +394,7 @@
 
   <Grid>
     <ctrl:EmptyStateControl Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}}"
+                            IconData="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2 M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2 M9 5h6 M9 12h6 M9 16h4"
                             Title="Sin proyecto abierto"
                             Description="Abra un proyecto para gestionar el itemizado, importar una tabla o pegar partidas.">
       <ctrl:EmptyStateControl.Actions>
@@ -431,37 +417,74 @@
         <RowDefinition Height="Auto" />
       </Grid.RowDefinitions>
 
-      <!-- COMMAND BAR COMPACTA DE ALTA DENSIDAD -->
-      <Border Grid.Row="0"
-              Background="{DynamicResource Brush.Surface}"
-              BorderBrush="{DynamicResource Brush.Line}"
-              BorderThickness="1"
-              CornerRadius="8"
-              Padding="8,4"
-              Margin="0,0,0,5">
-        <DockPanel LastChildFill="True">
-          <!-- Lado derecho: KPI Compacto + Perspectiva Comercial + Botonera -->
-          <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-            <!-- Cockpit Financiero en Vivo -->
-            <Border Background="{DynamicResource Brush.Surface2}"
-                    BorderBrush="{DynamicResource Brush.Line}"
-                    BorderThickness="1"
-                    CornerRadius="6"
-                    Padding="8,2"
-                    Margin="0,0,8,0"
-                    VerticalAlignment="Center">
-              <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <StackPanel Margin="0,0,10,0" VerticalAlignment="Center">
-                  <TextBlock Text="TOTAL OFERTA" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" />
-                  <TextBlock Text="{Binding TotalPresupuestoUfText}" FontSize="12" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Blue}" />
+      <!-- CONTENEDOR SUPERIOR: COMMAND BAR + HERO KPI BAR -->
+      <StackPanel Grid.Row="0" Margin="0,0,0,5">
+        <!-- COMMAND BAR COMPACTA DE ALTA DENSIDAD -->
+        <Border Background="{DynamicResource Brush.Surface}"
+                BorderBrush="{DynamicResource Brush.Line}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="8,4"
+                Margin="0,0,0,4">
+          <DockPanel LastChildFill="True">
+            <!-- Lado derecho: KPI Compacto + Perspectiva Comercial + Botonera -->
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+              <!-- Cockpit Financiero en Vivo -->
+              <Border Background="{DynamicResource Brush.Surface}"
+                      BorderBrush="{DynamicResource Brush.Line}"
+                      BorderThickness="1"
+                      CornerRadius="{StaticResource Radius.Card}"
+                      Padding="10,4"
+                      Margin="0,0,8,0"
+                      VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                  <StackPanel Margin="0,0,12,0" VerticalAlignment="Center">
+                    <TextBlock Text="TOTAL OFERTA" Style="{StaticResource Text.KpiLabel}" />
+                    <TextBlock Text="{Binding TotalPresupuestoUfText}" FontSize="13" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Blue}" />
+                  </StackPanel>
+                  <Border Width="1" Background="{DynamicResource Brush.Line2}" Margin="0,2,12,2"
+                          Visibility="{Binding TotalPresupuestoClpText, Converter={StaticResource StringNotEmptyToVisibility}}" />
+                  <StackPanel VerticalAlignment="Center"
+                              Visibility="{Binding TotalPresupuestoClpText, Converter={StaticResource StringNotEmptyToVisibility}}">
+                    <TextBlock Text="EQUIVALENTE CLP" Style="{StaticResource Text.KpiLabel}" TextAlignment="Right" />
+                    <TextBlock Text="{Binding TotalPresupuestoClpText}" FontSize="11.5" FontWeight="SemiBold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink}" TextAlignment="Right" />
+                  </StackPanel>
                 </StackPanel>
-                <Border Width="1" Background="{DynamicResource Brush.Line}" Margin="0,2,10,2" />
-                <StackPanel VerticalAlignment="Center">
-                  <TextBlock Text="EQUIVALENTE CLP" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" TextAlignment="Right" />
-                  <TextBlock Text="{Binding TotalPresupuestoClpText}" FontSize="10.5" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink}" TextAlignment="Right" />
+              </Border>
+
+              <!-- Botón Toggle de Barra de Métricas y Proporción (Hero KPI) -->
+              <Button Command="{Binding ToggleHeroKpiBarCommand}"
+                      ToolTip="Mostrar / Ocultar panel de métricas ejecutivas y distribución de costos"
+                      Height="28" Padding="8,2" Margin="0,0,8,0"
+                      VerticalAlignment="Center">
+                <Button.Style>
+                  <Style TargetType="Button" BasedOn="{StaticResource Button.Secondary}">
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding IsHeroKpiBarExpanded}" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+                        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
+                        <Setter Property="Foreground" Value="{DynamicResource Brush.BlueDark}" />
+                        <Setter Property="FontWeight" Value="SemiBold" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </Button.Style>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                  <TextBlock Text="📊 Métricas" FontSize="11" VerticalAlignment="Center" Margin="0,0,4,0" />
+                  <TextBlock FontSize="9" VerticalAlignment="Center" Opacity="0.7">
+                    <TextBlock.Style>
+                      <Style TargetType="TextBlock">
+                        <Setter Property="Text" Value="▲" />
+                        <Style.Triggers>
+                          <DataTrigger Binding="{Binding IsHeroKpiBarExpanded}" Value="False">
+                            <Setter Property="Text" Value="▼" />
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </TextBlock.Style>
+                  </TextBlock>
                 </StackPanel>
-              </StackPanel>
-            </Border>
+              </Button>
 
             <!-- Selector de Perspectiva Comercial: [ Venta | Costo Directo ] -->
             <Border Background="{DynamicResource Brush.ChipBg}"
@@ -565,6 +588,9 @@
                   <MenuItem Header="Subir fila (Alt+↑)" Command="{Binding MoveUpCommand}" />
                   <MenuItem Header="Bajar fila (Alt+↓)" Command="{Binding MoveDownCommand}" />
                   <Separator />
+                  <MenuItem Header="Expandir todos los capítulos" Command="{Binding ExpandAllChaptersCommand}" />
+                  <MenuItem Header="Contraer todos los capítulos" Command="{Binding CollapseAllChaptersCommand}" />
+                  <Separator />
                   <MenuItem Header="Eliminar fila" Command="{Binding DeleteCommand}" />
                   <MenuItem Header="Vaciar itemizado" Command="{Binding ClearAllCommand}" />
                 </ContextMenu>
@@ -636,7 +662,7 @@
               </Border>
 
               <!-- Buscador con Atajo Ctrl+F y Botón Limpiar (✕) -->
-              <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="6" Padding="6,2" Height="26" VerticalAlignment="Center" Width="210">
+              <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="6" Padding="6,2" Height="26" VerticalAlignment="Center" MinWidth="210" MaxWidth="320">
                 <DockPanel LastChildFill="True">
                   <TextBlock DockPanel.Dock="Left" Text="🔍" FontSize="10" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,5,0" VerticalAlignment="Center" />
                   <!-- Botón limpiar búsqueda cuando hay texto -->
@@ -662,6 +688,168 @@
           </StackPanel>
         </DockPanel>
       </Border>
+
+      <!-- ══════════════════════════════════════════════════════════════════════
+           HERO KPI BAR (RESUMEN EJECUTIVO, PROPORCIÓN MAT/MO Y SALUD DE PARTIDAS)
+           ══════════════════════════════════════════════════════════════════════ -->
+      <Border Background="{DynamicResource Brush.Surface}"
+              BorderBrush="{DynamicResource Brush.Line}"
+              BorderThickness="1"
+              CornerRadius="8"
+              Padding="14,9"
+              Margin="0,0,0,2"
+              Visibility="{Binding IsHeroKpiBarExpanded, Converter={StaticResource BoolToVisibility}}">
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <!-- 0: Costo Directo y Oferta (270px) -->
+            <ColumnDefinition Width="270" />
+            <!-- Divisor -->
+            <ColumnDefinition Width="Auto" />
+            <!-- 1: Proporción Materiales vs Mano de Obra (*) -->
+            <ColumnDefinition Width="*" />
+            <!-- Divisor -->
+            <ColumnDefinition Width="Auto" />
+            <!-- 2: Salud del Presupuesto y Filtros Rápidos (330px) -->
+            <ColumnDefinition Width="330" />
+          </Grid.ColumnDefinitions>
+
+          <!-- ─── 0. RESUMEN FINANCIERO DIRECTO ─── -->
+          <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,14,0">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,3">
+              <Border Background="{DynamicResource Brush.BlueSoft}" CornerRadius="4" Padding="5,1" Margin="0,0,6,0">
+                <TextBlock Text="COSTO DIRECTO" FontSize="9" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Blue}" />
+              </Border>
+              <TextBlock Text="{Binding HeroKpi.DirectCostText}" FontSize="15" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink}" />
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <TextBlock Text="Venta:" FontSize="10.5" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,4,0" />
+              <TextBlock Text="{Binding HeroKpi.TotalOfferText}" FontSize="11" FontWeight="SemiBold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink2}" Margin="0,0,10,0" />
+              <TextBlock Text="Margen:" FontSize="10.5" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,4,0" />
+              <TextBlock Text="{Binding HeroKpi.MarginText}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" />
+            </StackPanel>
+          </StackPanel>
+
+          <!-- Divisor vertical -->
+          <Border Grid.Column="1" Width="1" Background="{DynamicResource Brush.Line}" Margin="0,2,14,2" />
+
+          <!-- ─── 1. PROPORCIÓN MATERIALES VS MANO DE OBRA ─── -->
+          <Grid Grid.Column="2" VerticalAlignment="Center" Margin="0,0,14,0">
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- Encabezados con porcentajes y montos -->
+            <DockPanel Grid.Row="0" LastChildFill="True" Margin="0,0,0,4">
+              <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                <Ellipse Width="7" Height="7" Fill="{DynamicResource Brush.Success}" Margin="0,0,4,0" />
+                <TextBlock Text="Mano de Obra: " FontSize="10" Foreground="{DynamicResource Brush.Muted}" />
+                <TextBlock Text="{Binding HeroKpi.ManoObraPctText}" FontSize="10.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" Margin="0,0,4,0" />
+                <TextBlock Text="{Binding HeroKpi.ManoObraText, StringFormat='({0})'}" FontSize="10" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink3}" />
+              </StackPanel>
+
+              <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Ellipse Width="7" Height="7" Fill="{DynamicResource Brush.Blue}" Margin="0,0,4,0" />
+                <TextBlock Text="Materiales: " FontSize="10" Foreground="{DynamicResource Brush.Muted}" />
+                <TextBlock Text="{Binding HeroKpi.MaterialesPctText}" FontSize="10.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" Margin="0,0,4,0" />
+                <TextBlock Text="{Binding HeroKpi.MaterialesText, StringFormat='({0})'}" FontSize="10" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink3}" />
+              </StackPanel>
+            </DockPanel>
+
+            <!-- Barra de proporción segmentada bicolor -->
+            <Border Grid.Row="1" Height="8" CornerRadius="4" ClipToBounds="True" Background="{DynamicResource Brush.Surface2}">
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="{Binding HeroKpi.MaterialesGridLength}" />
+                  <ColumnDefinition Width="{Binding HeroKpi.ManoObraGridLength}" />
+                  <ColumnDefinition Width="{Binding HeroKpi.OtrosGridLength}" />
+                </Grid.ColumnDefinitions>
+                <Border Grid.Column="0" Background="{DynamicResource Brush.Blue}" ToolTip="Materiales y Ferretería" />
+                <Border Grid.Column="1" Background="{DynamicResource Brush.Success}" ToolTip="Mano de Obra Directa" />
+                <Border Grid.Column="2" Background="{DynamicResource Brush.Line2}" ToolTip="Equipos y Subcontratos" />
+              </Grid>
+            </Border>
+
+            <!-- Subetiqueta explicativa -->
+            <TextBlock Grid.Row="2" Text="Distribución del costo directo entre recursos de materiales y brigadas de mano de obra"
+                       FontSize="9" Foreground="{DynamicResource Brush.Muted}" Margin="0,3,0,0" />
+          </Grid>
+
+          <!-- Divisor vertical -->
+          <Border Grid.Column="3" Width="1" Background="{DynamicResource Brush.Line}" Margin="0,2,14,2" />
+
+          <!-- ─── 2. SALUD DEL PRESUPUESTO Y FILTRO RÁPIDO ─── -->
+          <Grid Grid.Column="4" VerticalAlignment="Center">
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <DockPanel Grid.Row="0" LastChildFill="True" Margin="0,0,0,4">
+              <!-- Badge de estado -->
+              <Border DockPanel.Dock="Right" CornerRadius="10" Padding="8,2" VerticalAlignment="Center">
+                <Border.Style>
+                  <Style TargetType="Border">
+                    <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding HeroKpi.HealthBadgeKind}" Value="ok">
+                        <Setter Property="Background" Value="{DynamicResource Brush.SuccessSoft}" />
+                      </DataTrigger>
+                      <DataTrigger Binding="{Binding HeroKpi.HealthBadgeKind}" Value="warn">
+                        <Setter Property="Background" Value="{DynamicResource Brush.AmberSoft}" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </Border.Style>
+                <TextBlock FontSize="10" FontWeight="Bold">
+                  <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                      <Setter Property="Text" Value="{Binding HeroKpi.HealthBadgeText}" />
+                      <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}" />
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding HeroKpi.HealthBadgeKind}" Value="ok">
+                          <Setter Property="Foreground" Value="{DynamicResource Brush.Success}" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding HeroKpi.HealthBadgeKind}" Value="warn">
+                          <Setter Property="Foreground" Value="{DynamicResource Brush.AmberRisk}" />
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </TextBlock.Style>
+                </TextBlock>
+              </Border>
+
+              <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="SALUD DE PARTIDAS" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}" Margin="0,0,6,0" />
+                <TextBlock Text="{Binding HeroKpi.CompletionPct, StringFormat='({0}% listo)'}" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" />
+              </StackPanel>
+            </DockPanel>
+
+            <DockPanel Grid.Row="1" LastChildFill="True">
+              <!-- Botones de filtro rápido -->
+              <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button Style="{StaticResource Button.Secondary}"
+                        Content="Pendientes"
+                        Command="{Binding FilterIncompletosCommand}"
+                        FontSize="9.5" Height="22" Padding="6,1" Margin="0,0,3,0"
+                        ToolTip="Filtrar solo partidas pendientes para completarlas rápido" />
+                <Button Style="{StaticResource Button.Secondary}"
+                        Content="Todas"
+                        Command="{Binding FilterTodosCommand}"
+                        FontSize="9.5" Height="22" Padding="6,1"
+                        ToolTip="Mostrar todas las partidas" />
+              </StackPanel>
+
+              <TextBlock Text="{Binding HeroKpi.HealthDescriptionText}"
+                         FontSize="10" Foreground="{DynamicResource Brush.Muted}"
+                         TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="0,0,6,0" />
+            </DockPanel>
+          </Grid>
+        </Grid>
+      </Border>
+    </StackPanel>
 
       <!-- Empty Itemizado state: onboarding compacto -->
       <ScrollViewer Grid.Row="1" Margin="0,0,0,10"
@@ -756,6 +944,28 @@
             <Border Grid.Row="0" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1"
                     Padding="12,5" MinHeight="32">
               <DockPanel LastChildFill="True">
+                <!-- Botonera de Expansión / Contracción WBS Masiva -->
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
+                  <Button Style="{StaticResource Button.Ghost}"
+                          Command="{Binding ExpandAllChaptersCommand}"
+                          ToolTip="Expandir todos los capítulos (mostrar todas las partidas)"
+                          Padding="6,2" Margin="0,0,4,0" Cursor="Hand">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="⊞" FontSize="11" Margin="0,0,4,0" Foreground="{DynamicResource Brush.Blue}" />
+                      <TextBlock Text="Expandir todo" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink2}" />
+                    </StackPanel>
+                  </Button>
+                  <Button Style="{StaticResource Button.Ghost}"
+                          Command="{Binding CollapseAllChaptersCommand}"
+                          ToolTip="Contraer todos los capítulos (ver solo títulos y subtotales WBS)"
+                          Padding="6,2" Cursor="Hand">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="⊟" FontSize="11" Margin="0,0,4,0" Foreground="{DynamicResource Brush.Blue}" />
+                      <TextBlock Text="Contraer todo" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink2}" />
+                    </StackPanel>
+                  </Button>
+                </StackPanel>
+
                 <!-- Icono de contexto / jerarquía -->
                 <TextBlock DockPanel.Dock="Left" Text="📁" FontSize="11" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,8,0" VerticalAlignment="Center" />
 
@@ -1040,8 +1250,8 @@
             <!-- COLUMNA 5: P.U. (UF / CLP / USD / EUR) fx -->
             <DataGridTemplateColumn Width="115" HeaderStyle="{StaticResource NumericColumnHeader}" IsReadOnly="True">
               <DataGridTemplateColumn.Header>
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                  <TextBlock Text="{Binding DataContext.HeaderUnitPriceCaption, RelativeSource={RelativeSource AncestorType=DataGrid}}" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,4,0" />
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                  <TextBlock Text="{Binding DataContext.HeaderUnitPriceCaption, RelativeSource={RelativeSource AncestorType=DataGrid}}" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center" Margin="0,0,4,0" />
                   <Border Background="{DynamicResource Brush.BlueSoft}" BorderBrush="{DynamicResource Brush.BlueFocus}" BorderThickness="1" CornerRadius="3" Padding="3,0" VerticalAlignment="Center">
                     <TextBlock Text="fx" FontSize="8.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" />
                   </Border>
@@ -1062,8 +1272,8 @@
             <!-- COLUMNA 6: TOTAL (UF / CLP / USD / EUR) fx -->
             <DataGridTemplateColumn Width="125" HeaderStyle="{StaticResource NumericColumnHeader}" IsReadOnly="True">
               <DataGridTemplateColumn.Header>
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                  <TextBlock Text="{Binding DataContext.HeaderTotalCaption, RelativeSource={RelativeSource AncestorType=DataGrid}}" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,4,0" />
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                  <TextBlock Text="{Binding DataContext.HeaderTotalCaption, RelativeSource={RelativeSource AncestorType=DataGrid}}" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center" Margin="0,0,4,0" />
                   <Border Background="{DynamicResource Brush.BlueSoft}" BorderBrush="{DynamicResource Brush.BlueFocus}" BorderThickness="1" CornerRadius="3" Padding="3,0" VerticalAlignment="Center">
                     <TextBlock Text="fx" FontSize="8.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" />
                   </Border>
@@ -1128,9 +1338,10 @@
             <!-- Right side: Total Oferta y Equivalente CLP -->
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
               <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Text="TOTAL OFERTA:" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,6,0" VerticalAlignment="Center" />
+                <TextBlock Text="TOTAL OFERTA:" Style="{StaticResource Text.TotalsLabel}" Margin="0,0,6,0" VerticalAlignment="Center" />
                 <TextBlock Text="{Binding FooterTotalUfText}" FontSize="13" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Blue}" VerticalAlignment="Center" />
-                <TextBlock Text="{Binding FooterTotalClpText}" FontSize="12" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink}" Margin="6,0,0,0" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding FooterTotalClpText}" FontSize="12" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink}" Margin="6,0,0,0" VerticalAlignment="Center"
+                           Visibility="{Binding FooterTotalClpText, Converter={StaticResource StringNotEmptyToVisibility}}" />
               </StackPanel>
             </StackPanel>
 
@@ -1138,8 +1349,8 @@
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
               <TextBlock Text="∑" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" Margin="0,0,5,0" VerticalAlignment="Center" />
               <TextBlock Text="{Binding FooterPartidasText, StringFormat='Mostrando {0} partidas activas'}" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource Brush.Ink2}" Margin="0,0,6,0" VerticalAlignment="Center" />
-              <TextBlock Text="·" FontSize="11" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,6,0" VerticalAlignment="Center" />
-              <TextBlock Text="{Binding UfRateCaption, StringFormat='Paridad: {0}'}" FontSize="10.5" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,8,0" VerticalAlignment="Center" />
+              <TextBlock Text="·" FontSize="11" Foreground="{DynamicResource Brush.Ink4}" Margin="0,0,6,0" VerticalAlignment="Center" />
+              <TextBlock Text="{Binding UfRateCaption, StringFormat='Paridad: {0}'}" FontSize="10.5" Foreground="{DynamicResource Brush.Ink4}" Margin="0,0,8,0" VerticalAlignment="Center" />
               <Border Background="{DynamicResource Brush.AmberSoft}" CornerRadius="3" Padding="5,1"
                       Visibility="{Binding HasActiveFilter, Converter={StaticResource BoolToVisibility}}"
                       VerticalAlignment="Center">

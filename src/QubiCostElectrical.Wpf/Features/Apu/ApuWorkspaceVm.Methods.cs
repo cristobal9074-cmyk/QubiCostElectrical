@@ -17,8 +17,9 @@ namespace QubiCostElectrical.Wpf.Features.Apu;
 public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IPageWithPendingChanges, IPageWithCommitChanges
 {
     public ApuWorkspaceVm(IShellNavigationHost shell, WpfAppHost host)
-        : this(shell, host.Session, host.ProjectWorkspace, host.UndoService, host.Services.Apu, host.PriceBankStore, host.Services.MaterialSearch) { }
+        : this(shell, host.Session, host.ProjectWorkspace, host.UndoService, host.Apu, host.PriceBankStore, host.MaterialSearch) { }
 
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
     public ApuWorkspaceVm(
         IShellNavigationHost shell,
         BudgetProjectSession session,
@@ -33,7 +34,13 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
         this.workspace = workspace;
         this.undo = undo;
         this.apuSvc = apuSvc;
-        this.autocompleteEngine = new ApuAutocompleteEngine(session, materialSearch ?? new MaterialSearchService(), priceBankStore);
+        var autocompleteEngine = new ApuAutocompleteEngine(session, materialSearch ?? new MaterialSearchService(), priceBankStore);
+        this.autocompleteCoordinator = new ApuAutocompleteCoordinator(autocompleteEngine);
+        this.autocompleteCoordinator.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(ApuAutocompleteCoordinator.FirstItem))
+                OnPropertyChanged(nameof(AutocompleteFirstItem));
+        };
         try
         {
             templateStore = new ApuTemplateStore();
@@ -44,6 +51,12 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
             templateStoreStatusText = "La biblioteca de plantillas APU no está disponible. La edición seguirá funcionando sin plantillas.";
             WpfAppHost.Logger?.Warning("ApuWorkspace", "No se pudo inicializar la biblioteca de plantillas APU.", ex);
         }
+        this.templateCoordinator = new ApuTemplateCoordinator(
+            templateStore,
+            session,
+            undo,
+            msg => ConfirmOverwriteTemplate(msg),
+            status => TemplateStoreStatusText = status);
 
         Partidas = new ObservableCollection<ApuPartidaVm>();
         Recursos = new ObservableCollection<ApuRecursoVm>();
@@ -54,7 +67,8 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
         RecursosOtros = new ObservableCollection<ApuRecursoVm>();
 
         GenerarApuCommand = new RelayCommand(GenerarApu, () => CanEdit && SelectedPartida != null && !showEmptyState);
-        SaveCommand = new RelayCommand(Save, () => hasPendingChanges && CanEdit);
+        SaveCommand = new RelayCommand(Save, () => CanEdit);
+        ClearPartidaFilterCommand = new RelayCommand(() => PartidaFilter = string.Empty, () => HasPartidaFilter);
         AddRecursoCommand = new RelayCommand<string>(AddRecurso, _ => CanEdit && currentApu != null);
         AddMaterialInlineCommand = new RelayCommand(() => AddMaterialInline(), () => CanEdit && currentApu != null);
         OpenMaterialPickerCommand = new RelayCommand(OpenMaterialPickerModal, () => CanEdit && currentApu != null);
@@ -74,6 +88,7 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
     }
 
     public ICommand OpenQuickJumpCommand { get; }
+    public ICommand ClearPartidaFilterCommand { get; }
     public ICommand AddMaterialInlineCommand { get; }
     public ICommand OpenMaterialPickerCommand { get; }
 
@@ -159,13 +174,25 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
     public bool IsReadOnly => session.IsReadOnly;
     public bool CanEdit => !session.IsReadOnly;
 
+    public bool HasPartidaFilter => !string.IsNullOrWhiteSpace(partidaFilter);
+
     public string PartidaFilter
     {
         get => partidaFilter;
         set
         {
             if (!SetProperty(ref partidaFilter, value)) return;
-            ScheduleApplyFilter();
+            OnPropertyChanged(nameof(HasPartidaFilter));
+            (ClearPartidaFilterCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                filterDebounceTimer?.Stop();
+                ApplyFilter();
+            }
+            else
+            {
+                ScheduleApplyFilter();
+            }
         }
     }
 
@@ -624,90 +651,36 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
     // ─── Autocompletado e IntelliSense en Grilla APU ──────────────────────────
     public ObservableCollection<ApuAutocompleteSuggestionVm> AutocompleteResults
     {
-        get => autocompleteResults;
-        set => SetProperty(ref autocompleteResults, value);
+        get => autocompleteCoordinator.Results;
+        set => autocompleteCoordinator.Results = value;
     }
 
     public bool AutocompleteVisible
     {
-        get => autocompleteVisible;
-        set
-        {
-            if (SetProperty(ref autocompleteVisible, value) && !value)
-            {
-                autocompleteCts?.Cancel();
-            }
-        }
+        get => autocompleteCoordinator.Visible;
+        set => autocompleteCoordinator.Visible = value;
     }
 
     public ApuAutocompleteSuggestionVm? SelectedAutocompleteItem
     {
-        get => selectedAutocompleteItem;
-        set => SetProperty(ref selectedAutocompleteItem, value);
+        get => autocompleteCoordinator.SelectedItem;
+        set => autocompleteCoordinator.SelectedItem = value;
     }
 
     public string AutocompleteStatusText
     {
-        get => autocompleteStatusText;
-        set => SetProperty(ref autocompleteStatusText, value);
+        get => autocompleteCoordinator.StatusText;
+        set => autocompleteCoordinator.StatusText = value;
     }
 
-    public ApuAutocompleteSuggestionVm? AutocompleteFirstItem =>
-        AutocompleteResults.Count > 0 ? AutocompleteResults[0] : null;
+    public ApuAutocompleteSuggestionVm? AutocompleteFirstItem => autocompleteCoordinator.FirstItem;
 
-    public async Task SearchAutocompleteAsync(string query)
-    {
-        autocompleteCts?.Cancel();
-        autocompleteCts?.Dispose();
-        autocompleteCts = new System.Threading.CancellationTokenSource();
-        var ct = autocompleteCts.Token;
-
-        if (string.IsNullOrWhiteSpace(query) || query.Trim().Length < 2)
-        {
-            AutocompleteVisible = false;
-            AutocompleteResults = new ObservableCollection<ApuAutocompleteSuggestionVm>();
-            SelectedAutocompleteItem = null;
-            return;
-        }
-
-        try
-        {
-            var results = await autocompleteEngine.SearchAsync(query, ct);
-            if (!ct.IsCancellationRequested)
-            {
-                AutocompleteResults = new ObservableCollection<ApuAutocompleteSuggestionVm>(results);
-                SelectedAutocompleteItem = AutocompleteFirstItem;
-                AutocompleteVisible = results.Count > 0;
-                AutocompleteStatusText = results.Count > 0
-                    ? $"{results.Count} sugerencias · ↑↓ navegar · Enter o Tab insertar"
-                    : "Sin coincidencias";
-                OnPropertyChanged(nameof(AutocompleteFirstItem));
-            }
-        }
-        catch (OperationCanceledException) { }
-    }
+    public Task SearchAutocompleteAsync(string query) => autocompleteCoordinator.SearchAsync(query);
 
     public void ApplyAutocompleteSuggestion(ApuRecursoVm row, ApuAutocompleteSuggestionVm suggestion)
     {
-        if (row == null || suggestion == null || !CanEdit) return;
-        undo.PushUndoPoint(session, $"Aplicar insumo {suggestion.Codigo}");
         pendingUndoForEdit = true;
-
-        row.CodigoMaterial = suggestion.Codigo;
-        row.Descripcion = suggestion.Descripcion;
-        row.Unidad = string.IsNullOrWhiteSpace(suggestion.Unidad) ? "un" : suggestion.Unidad;
-        // El motor espera el precio del recurso en CLP (ver nota en MuestraUf); la sugerencia
-        // trae MatClp ya resuelto desde el catálogo/banco.
-        row.PrecioUf = suggestion.MatClp;
-        row.Tipo = ApuTipoRecurso.MAT;
-        row.FuentePrecio = suggestion.SourceBadge;
-        if (!string.IsNullOrWhiteSpace(suggestion.Proveedor))
-            row.Nota = suggestion.Proveedor;
-        if (row.Rendimiento <= 0m)
-            row.Rendimiento = 1m;
-
-        row.RefreshCalculated();
-        OnRowEdited();
+        autocompleteCoordinator.ApplySuggestion(row, suggestion, session, undo, () => OnRowEdited(), CanEdit);
     }
 
     private void DeleteRecurso(ApuRecursoVm? vm)
@@ -891,131 +864,18 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
                ?? throw new InvalidOperationException($"No se pudo clonar {typeof(T).Name} para baseline APU.");
     }
 
-    // ─── Guardar como plantilla ──────────────────────────────────────────────
-    private void GuardarComoPlantilla()
-    {
-        if (!CanEdit || currentApu == null || templateStore == null) return;
-        var nombre = WpfDialogService.PromptText("Guardar plantilla",
-            "Nombre de la plantilla:",
-            selectedPartida?.Descripcion ?? "Nueva plantilla");
-        if (string.IsNullOrWhiteSpace(nombre)) return;
+    // ─── Plantillas y Conjuntos ─────────────────────────────────────────────
+    private void GuardarComoPlantilla() =>
+        templateCoordinator.GuardarComoPlantilla(currentApu, selectedPartida, CanEdit);
 
-        var json = JsonSerializer.Serialize(currentApu.Recursos,
-            new JsonSerializerOptions { WriteIndented = false });
-        var row = new ApuTemplateRow
-        {
-            Nombre = nombre.Trim(),
-            Categoria = "APU",
-            Descripcion = selectedPartida?.Descripcion ?? "",
-            Unidad = selectedPartida?.Unidad ?? "",
-            JsonRecursos = json,
-        };
-        templateStore.Save(row);
-        WpfDialogService.Info("Plantilla guardada", $"Plantilla '{row.Nombre}' guardada correctamente.");
-    }
+    private void AplicarPlantilla() =>
+        templateCoordinator.AplicarPlantilla(currentApu, selectedPartida, Recursos, CreateRecursoVm, () => OnRowEdited(), CanEdit);
 
-    // ─── Aplicar plantilla ───────────────────────────────────────────────────
-    private void AplicarPlantilla()
-    {
-        if (!CanEdit || currentApu == null || templateStore == null) return;
-        var dialog = new ApuTemplatePickerDialog(templateStore);
-        if (dialog.ShowDialog() != true || dialog.SelectedTemplate == null) return;
+    internal bool ApplyTemplate(ApuTemplateRow template, bool reemplazar) =>
+        templateCoordinator.ApplyTemplate(template, reemplazar, currentApu, selectedPartida, Recursos, CreateRecursoVm, () => OnRowEdited(), CanEdit);
 
-        ApplyTemplate(dialog.SelectedTemplate, dialog.Reemplazar);
-    }
-
-    internal bool ApplyTemplate(ApuTemplateRow template, bool reemplazar)
-    {
-        if (!CanEdit || currentApu == null) return false;
-
-        List<ApuRecursoRow>? recursos = null;
-        try
-        {
-            recursos = JsonSerializer.Deserialize<List<ApuRecursoRow>>(template.JsonRecursos ?? "[]",
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-        }
-        catch (Exception ex)
-        {
-            TemplateStoreStatusText = "La plantilla seleccionada no se pudo leer. Use otra plantilla o vuelva a exportarla.";
-            WpfAppHost.Logger?.Warning("ApuWorkspace", "No se pudo deserializar la plantilla APU seleccionada.", ex);
-        }
-
-        if (recursos == null || recursos.Count == 0)
-        {
-            WpfDialogService.Info("Aplicar plantilla", "La plantilla no tiene recursos.");
-            return false;
-        }
-
-        if (reemplazar && currentApu.Recursos.Count > 0)
-        {
-            var partidaDesc = selectedPartida?.Descripcion ?? currentApu.Descripcion ?? "la partida actual";
-            var confirmMsg = $"El APU de '{partidaDesc}' ya contiene {currentApu.Recursos.Count} recurso(s) configurado(s).\n\n¿Está seguro de que desea reemplazarlos y eliminarlos definitivamente para aplicar la plantilla '{template.Nombre}'?";
-            if (!ConfirmOverwriteTemplate(confirmMsg))
-                return false;
-        }
-
-        undo.PushUndoPoint(session, $"Aplicar plantilla APU");
-        pendingUndoForEdit = true;
-        if (reemplazar)
-        {
-            currentApu.Recursos.Clear();
-            Recursos.Clear();
-        }
-
-        foreach (var r in recursos)
-        {
-            r.Id = Guid.NewGuid().ToString("N");
-            currentApu.Recursos.Add(r);
-            Recursos.Add(CreateRecursoVm(r));
-        }
-        OnRowEdited();
-        return true;
-    }
-
-    // ─── Crear conjunto eléctrico desde los recursos del APU actual ──────────
-    private void CrearConjunto()
-    {
-        if (!CanEdit || currentApu == null || currentApu.Recursos.Count == 0) return;
-
-        var nombre = WpfDialogService.PromptText("Crear conjunto",
-            "Nombre del conjunto:",
-            selectedPartida?.Descripcion ?? "Nuevo conjunto");
-        if (string.IsNullOrWhiteSpace(nombre)) return;
-
-        var conjunto = new ConjuntoElectricoRow
-        {
-            Codigo = $"CE-{DateTime.Now:yyMMdd-HHmm}",
-            Nombre = nombre.Trim(),
-            Descripcion = selectedPartida?.Descripcion ?? "",
-            Unidad = selectedPartida?.Unidad ?? "UN",
-            TipoConjunto = ConjuntoTipo.General,
-        };
-
-        foreach (var r in currentApu.Recursos)
-        {
-            conjunto.Recursos.Add(new ConjuntoRecursoRow
-            {
-                Tipo = r.Tipo,
-                Codigo = r.CodigoMaterial,
-                Descripcion = r.Descripcion,
-                Unidad = r.Unidad,
-                Rendimiento = r.Rendimiento,
-                Factor = 1m,
-                PrecioUf = r.PrecioUf,
-                ValorHHUf = r.ValorHHUf,
-                MermaPct = r.MermaPct,
-            });
-        }
-
-        session.ConjuntosElectricos.Add(conjunto);
-        session.MarkDirty(ProjectDirtyScope.ConjuntosElectricos);
-        bool guardadoGlobal = ConjuntoTemplateStore.TrySave(conjunto);
-        WpfDialogService.Info("Conjunto creado",
-            $"Conjunto '{conjunto.Nombre}' creado con {conjunto.Recursos.Count} recursos." +
-            (guardadoGlobal
-                ? "\nGuardado en la biblioteca global: visible en todos los proyectos."
-                : "\nNo se pudo guardar en la biblioteca global (solo en este proyecto)."));
-    }
+    private void CrearConjunto() =>
+        templateCoordinator.CrearConjunto(currentApu, selectedPartida, CanEdit);
 
     private bool isShowCoefficients;
     public bool IsShowCoefficients

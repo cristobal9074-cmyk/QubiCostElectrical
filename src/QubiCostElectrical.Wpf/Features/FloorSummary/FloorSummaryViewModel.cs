@@ -168,6 +168,7 @@ public sealed class FloorSummaryViewModel : SessionAwareViewModelBase, IRefresha
     public FloorSummaryViewModel(IShellNavigationHost shell, WpfAppHost host)
         : this(shell, host.Session, host.ProjectWorkspace) { }
 
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
     public FloorSummaryViewModel(IShellNavigationHost shell, BudgetProjectSession session, IProjectWorkspaceService workspace) : base(session)
     {
         this.shell = shell;

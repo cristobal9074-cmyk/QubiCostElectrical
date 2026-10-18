@@ -9,7 +9,7 @@
         ResizeMode="CanResizeWithGrip"
         ShowInTaskbar="False"
         FontFamily="{StaticResource Font.Ui}">
-  <Border Style="{StaticResource Dialog.Chrome}" Margin="16">
+  <Border Style="{StaticResource Dialog.Chrome}">
     <Grid>
       <Grid.RowDefinitions>
         <RowDefinition Height="Auto"/>
@@ -28,10 +28,17 @@
                      Foreground="{DynamicResource Brush.Accent}" VerticalAlignment="Center"/>
         </Border>
 
-        <StackPanel VerticalAlignment="Center">
-          <TextBlock Text="📦 Resumen y Lista de Compra de Materiales" Style="{StaticResource Dialog.HeaderTitle}"/>
-          <TextBlock Text="Consolidado de todos los materiales y recursos cubicados en las partidas de este adicional."
-                     FontSize="11" Foreground="{DynamicResource Brush.Muted}"/>
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+          <Border Style="{StaticResource Dialog.HeaderIconContainer}" Margin="0,0,10,0">
+            <Path Data="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z M3.27 6.96 12 12.01l8.73-5.05 M12 22.08V12"
+                  Stroke="{DynamicResource Brush.Blue}" StrokeThickness="1.5"
+                  HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="16" Height="16"/>
+          </Border>
+          <StackPanel VerticalAlignment="Center">
+            <TextBlock Text="Resumen y Lista de Compra de Materiales" Style="{StaticResource Dialog.HeaderTitle}"/>
+            <TextBlock Text="Consolidado de todos los materiales y recursos cubicados en las partidas de este adicional."
+                       FontSize="11" Foreground="{DynamicResource Brush.Muted}"/>
+          </StackPanel>
         </StackPanel>
       </DockPanel>
 
@@ -153,7 +160,7 @@
       <!-- ── 4. Botones Footer ── -->
       <DockPanel Grid.Row="3" Style="{StaticResource Dialog.Footer}" LastChildFill="False">
         <Button DockPanel.Dock="Right" Content="Cerrar" IsCancel="True"
-                Style="{StaticResource Button.Primary}" MinWidth="100"/>
+                Style="{StaticResource Button.Primary}" MinWidth="110" Height="34"/>
       </DockPanel>
     </Grid>
   </Border>

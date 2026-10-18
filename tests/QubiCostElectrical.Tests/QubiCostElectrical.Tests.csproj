@@ -16,6 +16,7 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <Using Include="QubiCostElectrical.Infrastructure" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\QubiCostElectrical.Domain\QubiCostElectrical.Domain.csproj" />

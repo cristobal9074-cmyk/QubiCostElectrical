@@ -4,6 +4,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ctrl="clr-namespace:QubiCostElectrical.Wpf.Controls"
              xmlns:local="clr-namespace:QubiCostElectrical.Wpf.Features.Costo"
+             xmlns:ds="clr-namespace:QubiCostElectrical.Wpf.DesignSystem"
              Background="{DynamicResource Brush.Canvas}">
 
   <UserControl.Resources>
@@ -44,27 +45,17 @@
     </Style>
 
     <!-- ─── Tipografía del hero de KPIs ──────────────────────────────────── -->
-    <Style x:Key="CostoKpiLabel" TargetType="TextBlock">
-      <Setter Property="FontFamily" Value="{StaticResource Font.Ui}" />
-      <Setter Property="FontSize" Value="9.5" />
-      <Setter Property="FontWeight" Value="Bold" />
-      <Setter Property="Foreground" Value="{DynamicResource Brush.Ink4}" />
+    <Style x:Key="CostoKpiLabel" TargetType="TextBlock" BasedOn="{StaticResource Text.KpiLabel}">
       <Setter Property="TextTrimming" Value="CharacterEllipsis" />
     </Style>
 
-    <Style x:Key="CostoKpiValue" TargetType="TextBlock">
-      <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
+    <Style x:Key="CostoKpiValue" TargetType="TextBlock" BasedOn="{StaticResource Text.KpiValue}">
       <Setter Property="FontSize" Value="{StaticResource Font.Size.xl}" />
-      <Setter Property="FontWeight" Value="SemiBold" />
-      <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
       <Setter Property="Margin" Value="0,4,0,0" />
       <Setter Property="TextTrimming" Value="CharacterEllipsis" />
     </Style>
 
-    <Style x:Key="CostoKpiHint" TargetType="TextBlock">
-      <Setter Property="FontFamily" Value="{StaticResource Font.Ui}" />
-      <Setter Property="FontSize" Value="10" />
-      <Setter Property="Foreground" Value="{DynamicResource Brush.Ink4}" />
+    <Style x:Key="CostoKpiHint" TargetType="TextBlock" BasedOn="{StaticResource Text.KpiHint}">
       <Setter Property="Margin" Value="0,2,0,0" />
       <Setter Property="TextTrimming" Value="CharacterEllipsis" />
     </Style>
@@ -202,22 +193,22 @@
 
     <!-- ─── Rotulación y campos numéricos de cierre ──────────────────────── -->
     <Style x:Key="CierreSec" TargetType="TextBlock">
-      <Setter Property="FontSize" Value="9.5" />
+      <Setter Property="FontSize" Value="11" />
       <Setter Property="FontWeight" Value="SemiBold" />
-      <Setter Property="Foreground" Value="{DynamicResource Brush.Ink4}" />
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
       <Setter Property="Margin" Value="0,8,0,4" />
     </Style>
 
     <Style x:Key="CierreHint" TargetType="TextBlock">
-      <Setter Property="FontSize" Value="10" />
-      <Setter Property="Foreground" Value="{DynamicResource Brush.Ink4}" />
+      <Setter Property="FontSize" Value="11" />
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
       <Setter Property="TextWrapping" Value="Wrap" />
     </Style>
 
     <Style x:Key="CierreLab" TargetType="TextBlock">
-      <Setter Property="FontSize" Value="9.5" />
-      <Setter Property="FontWeight" Value="Bold" />
-      <Setter Property="Foreground" Value="{DynamicResource Brush.Ink4}" />
+      <Setter Property="FontSize" Value="11" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}" />
       <Setter Property="Margin" Value="0,0,0,4" />
     </Style>
 
@@ -806,7 +797,7 @@
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
               </ItemsControl>
-              <Border Height="1" Background="{DynamicResource Brush.Line2}" Margin="0,8,0,0" />
+              <Separator Style="{StaticResource Separator.Subtle}" Margin="0,8,0,0" />
               <TextBlock Text="El riesgo de compra se concentra en estas familias: conviene negociar por volumen."
                          Style="{StaticResource CierreHint}" Margin="0,8,0,0" />
             </StackPanel>
@@ -928,7 +919,7 @@
                   <TextBox Grid.Column="1" Style="{StaticResource CierreNum}" Text="{Binding ValorAgregadoEquiposText, UpdateSourceTrigger=LostFocus}" />
                 </Grid>
 
-                <Border Height="1" Background="{DynamicResource Brush.Line2}" Margin="0,4,0,10" />
+                <Separator Style="{StaticResource Separator.Subtle}" Margin="0,4,0,10" />
 
                 <Grid Margin="0,4,0,8">
                   <Grid.RowDefinitions>
@@ -1061,7 +1052,7 @@
                   </Grid>
                 </Grid>
 
-                <Border Height="1" Background="{DynamicResource Brush.Line2}" Margin="0,6,0,6" />
+                <Separator Style="{StaticResource Separator.Subtle}" Margin="0,6,0,6" />
 
                 <StackPanel DataContext="{Binding NegotiationSimulator}"
                             IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}">
@@ -1131,12 +1122,14 @@
                   <TextBlock Text="PRECIO OBJETIVO (CLP)" Style="{StaticResource CierreLab}" Margin="0,9,0,4"
                              Visibility="{Binding ShowTargetPrice, Converter={StaticResource BoolToVisibility}}" />
                   <TextBox Text="{Binding TargetPriceClpText, UpdateSourceTrigger=LostFocus}" Style="{StaticResource CierreNum}"
+                           ds:FieldAdornment.Prefix="$" ds:FieldAdornment.Suffix="CLP"
                            Visibility="{Binding ShowTargetPrice, Converter={StaticResource BoolToVisibility}}"
                            IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" />
 
                   <TextBlock Text="CONTINGENCIA MÍN. %" Style="{StaticResource CierreLab}" Margin="0,9,0,4"
                              Visibility="{Binding ShowLumpSum, Converter={StaticResource BoolToVisibility}}" />
                   <TextBox Text="{Binding LumpSumMinRiskPctText, UpdateSourceTrigger=LostFocus}" Style="{StaticResource CierreNum}"
+                           ds:FieldAdornment.Suffix="%"
                            Visibility="{Binding ShowLumpSum, Converter={StaticResource BoolToVisibility}}"
                            IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" />
 
@@ -1149,11 +1142,13 @@
                     <StackPanel>
                       <TextBlock Text="FEE %" Style="{StaticResource CierreLab}" />
                       <TextBox Text="{Binding FeePctText, UpdateSourceTrigger=LostFocus}" Style="{StaticResource CierreNum}"
+                               ds:FieldAdornment.Suffix="%"
                                IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" />
                     </StackPanel>
                     <StackPanel Grid.Column="2">
                       <TextBlock Text="FEE FIJO (CLP)" Style="{StaticResource CierreLab}" />
                       <TextBox Text="{Binding FeeClpText, UpdateSourceTrigger=LostFocus}" Style="{StaticResource CierreNum}"
+                               ds:FieldAdornment.Prefix="$" ds:FieldAdornment.Suffix="CLP"
                                IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" />
                     </StackPanel>
                   </Grid>
@@ -1169,17 +1164,20 @@
                     <StackPanel>
                       <TextBlock Text="COSTO OBJETIVO" Style="{StaticResource CierreLab}" />
                       <TextBox Text="{Binding TargetCostClpText, UpdateSourceTrigger=LostFocus}" Style="{StaticResource CierreNum}"
+                               ds:FieldAdornment.Prefix="$" ds:FieldAdornment.Suffix="CLP"
                                IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" />
                     </StackPanel>
                     <StackPanel Grid.Column="2">
                       <TextBlock Text="% COMPARTIDO" Style="{StaticResource CierreLab}" />
                       <TextBox Text="{Binding GainsharePctText, UpdateSourceTrigger=LostFocus}" Style="{StaticResource CierreNum}"
+                               ds:FieldAdornment.Suffix="%"
                                IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" />
                     </StackPanel>
                   </Grid>
                   <TextBlock Text="TOPE DE GANANCIA (CLP)" Style="{StaticResource CierreLab}" Margin="0,9,0,4"
                              Visibility="{Binding ShowGainshare, Converter={StaticResource BoolToVisibility}}" />
                   <TextBox Text="{Binding GainshareCapClpText, UpdateSourceTrigger=LostFocus}" Style="{StaticResource CierreNum}"
+                           ds:FieldAdornment.Prefix="$" ds:FieldAdornment.Suffix="CLP"
                            Visibility="{Binding ShowGainshare, Converter={StaticResource BoolToVisibility}}"
                            IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" />
                   <TextBlock Text="{Binding GainshareSimulacionText}" Style="{StaticResource CierreHint}" Margin="0,8,0,0"
@@ -1220,8 +1218,9 @@
                   <TextBlock Text="M.O. por rendimiento (Tarifa D/H ÷ rendimiento del material)" TextWrapping="Wrap" FontSize="11" />
                 </CheckBox>
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,7">
-                  <TextBlock Text="Tarifa D/H (CLP)" FontSize="11" Foreground="{DynamicResource Brush.Ink2}" VerticalAlignment="Center" Margin="0,0,8,0" />
-                  <TextBox Text="{Binding MoInstalacion.TarifaDhClpText, UpdateSourceTrigger=LostFocus}" Style="{StaticResource CierreNum}" Width="120"
+                  <TextBlock Text="Tarifa D/H" FontSize="11" Foreground="{DynamicResource Brush.Ink2}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                  <TextBox Text="{Binding MoInstalacion.TarifaDhClpText, UpdateSourceTrigger=LostFocus}" Style="{StaticResource CierreNum}" Width="145"
+                           ds:FieldAdornment.Prefix="$" ds:FieldAdornment.Suffix="CLP"
                            IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" />
                   <Button Content="Derivar del plan MO" Command="{Binding MoInstalacion.DerivarTarifaDhCommand}" Style="{StaticResource Button.Secondary}"
                           Height="24" Padding="8,0" Margin="8,0,0,0" FontSize="10.5" VerticalAlignment="Center" />
@@ -1294,7 +1293,7 @@
                              FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink}" />
                 </Grid>
 
-                <Border Height="1" Background="{DynamicResource Brush.Line2}" Margin="0,4,0,10" />
+                <Separator Style="{StaticResource Separator.Subtle}" Margin="0,4,0,10" />
 
                 <CheckBox IsChecked="{Binding PoliticaCostosExcel}" Margin="0,0,0,7"
                           IsEnabled="{Binding IsFactoresFamiliaEditable}" FontSize="11" Foreground="{DynamicResource Brush.Ink2}">
@@ -1305,7 +1304,7 @@
                   <TextBlock Text="Venta por familia (factores de presentación)" TextWrapping="Wrap" FontSize="11" />
                 </CheckBox>
 
-                <Border Height="1" Background="{DynamicResource Brush.Line2}" Margin="0,12,0,8" />
+                <Separator Style="{StaticResource Separator.Subtle}" Margin="0,12,0,8" />
                 <Grid Margin="0,0,0,6">
                   <TextBlock Text="DESCUENTO PUNTUAL" Style="{StaticResource CierreSec}" Margin="0" VerticalAlignment="Center" />
                   <Button Content="+ Agregar" Command="{Binding AddNegotiatedDiscountCommand}" Style="{StaticResource Button.Secondary}"
@@ -1326,7 +1325,8 @@
                                    Text="{Binding Codigo, UpdateSourceTrigger=LostFocus}" ToolTip="Código" />
                           <TextBox Width="120" Style="{StaticResource Form.TextBox}" Height="24" FontSize="10.5" Padding="6,2" Margin="0,0,6,0" VerticalContentAlignment="Center"
                                    Text="{Binding Descripcion, UpdateSourceTrigger=LostFocus}" ToolTip="Descripción" />
-                          <TextBox Width="44" Style="{StaticResource CierreNum}" Height="24" FontSize="11" Margin="0,0,4,0"
+                          <TextBox Width="54" Style="{StaticResource CierreNum}" Height="24" FontSize="10.5" Margin="0,0,4,0"
+                                   ds:FieldAdornment.Suffix="%"
                                    Text="{Binding DescuentoPct, UpdateSourceTrigger=LostFocus}" ToolTip="Descuento %" />
                           <Button Content="×" Style="{StaticResource Button.Ghost}" Width="20" Height="20" Padding="0" FontSize="13" Foreground="{DynamicResource Brush.Ink4}"
                                   Command="{Binding DataContext.RemoveNegotiatedDiscountCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"

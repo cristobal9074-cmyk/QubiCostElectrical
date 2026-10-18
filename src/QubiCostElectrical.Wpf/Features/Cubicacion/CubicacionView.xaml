@@ -13,6 +13,8 @@
     <UserControl.InputBindings>
         <KeyBinding Key="B" Modifiers="Control" Command="ApplicationCommands.Find" />
         <KeyBinding Key="F" Modifiers="Control" Command="ApplicationCommands.Find" />
+        <KeyBinding Key="S" Modifiers="Control" Command="{Binding SaveCommand}" />
+        <KeyBinding Key="G" Modifiers="Control" Command="{Binding OpenQuickJumpCommand}" />
     </UserControl.InputBindings>
 
     <UserControl.Resources>
@@ -20,15 +22,15 @@
         <Style x:Key="DataGridColumnHeader.CasillasGeneral" TargetType="DataGridColumnHeader" BasedOn="{StaticResource DataGridColumnHeader.Prototype}">
             <Setter Property="Padding" Value="4,0" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
-            <Setter Property="Height" Value="28" />
-            <Setter Property="MaxHeight" Value="28" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="MaxHeight" Value="32" />
         </Style>
 
         <!-- Estilo de encabezado integrado para UD y CANT en modo Casillas -->
         <Style x:Key="DataGridColumnHeader.PartidaHeader" TargetType="DataGridColumnHeader" BasedOn="{StaticResource DataGridColumnHeader.Prototype}">
             <Setter Property="Padding" Value="2,1" />
-            <Setter Property="Height" Value="28" />
-            <Setter Property="MaxHeight" Value="28" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="MaxHeight" Value="32" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
         </Style>
@@ -190,9 +192,32 @@
                                        FontSize="9" Foreground="{DynamicResource Brush.Muted}"
                                        Text="Ctrl++ / Ctrl+-"
                                        ToolTip="Ctrl++ agregar partida bajo la selección · Ctrl+- eliminar la partida activa" />
-                            <TextBox Text="{Binding PartidaFilter, UpdateSourceTrigger=PropertyChanged}"
-                                     Style="{StaticResource Form.SearchBox}"
-                                     Tag="Buscar partida…" />
+                            <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="6" Padding="6,2" Height="26" VerticalAlignment="Center">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="🔍" FontSize="10" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,5,0" VerticalAlignment="Center" />
+                                    <Grid Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Text="Buscar partida…" FontSize="11" Foreground="{DynamicResource Brush.Muted}"
+                                                   IsHitTestVisible="False" VerticalAlignment="Center"
+                                                   Visibility="{Binding HasPartidaFilter, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}" />
+                                        <TextBox BorderThickness="0" Background="Transparent" VerticalAlignment="Center"
+                                                 FontSize="11" Foreground="{DynamicResource Brush.Ink}"
+                                                 Text="{Binding PartidaFilter, UpdateSourceTrigger=PropertyChanged}"
+                                                 ToolTip="Filtrar partidas por número de ítem o descripción" />
+                                    </Grid>
+                                    <Button Grid.Column="2" Content="✕"
+                                            Command="{Binding ClearPartidaFilterCommand}"
+                                            Visibility="{Binding HasPartidaFilter, Converter={StaticResource BoolToVisibility}}"
+                                            Style="{StaticResource Button.Ghost}"
+                                            FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}"
+                                            Padding="2,0" Margin="3,0,0,0" VerticalAlignment="Center" Cursor="Hand"
+                                            ToolTip="Limpiar filtro de partidas (Esc)" />
+                                </Grid>
+                            </Border>
                         </DockPanel>
 
                         <!-- Chips de Estado: [ Todas (149) ] · [ ✓ Listas (102) ] · [ ⚠️ Pendientes (47) ] -->
@@ -683,7 +708,7 @@
                 ScrollViewer.HorizontalScrollBarVisibility="Auto"
                 ScrollViewer.VerticalScrollBarVisibility="Auto"
                 RowHeight="28"
-                ColumnHeaderHeight="28"
+                ColumnHeaderHeight="32"
                 ColumnHeaderStyle="{StaticResource DataGridColumnHeader.CasillasGeneral}"
                 FrozenColumnCount="5"
                 BeginningEdit="OnGridBeginningEdit"
@@ -697,7 +722,7 @@
                 CurrentCellChanged="OnGridCurrentCellChanged">
                 <DataGrid.Columns>
                     <!-- # / indicador error -->
-                    <DataGridTemplateColumn x:Name="IndexColumn" Header="#" Width="44" IsReadOnly="True" CanUserResize="False" CanUserSort="False">
+                    <DataGridTemplateColumn x:Name="IndexColumn" Header="#" Width="44" IsReadOnly="True" CanUserResize="False" CanUserSort="False" HeaderStyle="{StaticResource DataGridColumnHeader.Center}">
                         <DataGridTemplateColumn.CellStyle>
                             <Style TargetType="DataGridCell" BasedOn="{StaticResource DataGridCell.Excel}">
                                 <Setter Property="Focusable" Value="False" />
@@ -1015,9 +1040,9 @@
                         <!-- Materiales -->
                         <Border Style="{StaticResource Card.Summary}" Background="{DynamicResource Brush.Surface2}" Margin="4" MinWidth="140">
                             <StackPanel>
-                                <TextBlock Style="{StaticResource Text.TotalsLabel}" Text="MATERIALES" Margin="0,0,0,4" />
+                                <TextBlock Style="{StaticResource Text.TotalsLabel}" Text="MATERIALES" />
                                 <TextBlock Style="{StaticResource Text.TotalsValue}" Text="{Binding TotalMateriales, StringFormat='$ {0:N0}'}" FontWeight="SemiBold" />
-                                <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding TotalMaterialesUf, StringFormat='{}{0:N3} UF'}" Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Center" Margin="0,2,0,0"
+                                <TextBlock Style="{StaticResource Text.TotalsHint}" Text="{Binding TotalMaterialesUf, StringFormat='{}{0:N3} UF'}"
                                            Visibility="{Binding MuestraUf, Converter={StaticResource BoolToVisibility}}" />
                             </StackPanel>
                         </Border>
@@ -1025,38 +1050,38 @@
                         <Border Style="{StaticResource Card.Summary}" Background="{DynamicResource Brush.Surface2}" Margin="4" MinWidth="140"
                     ToolTip="Suma de MO $ × cantidad de cada recurso de esta partida (CLP)">
                             <StackPanel>
-                                <TextBlock Style="{StaticResource Text.TotalsLabel}" Text="MANO DE OBRA" Margin="0,0,0,4" />
+                                <TextBlock Style="{StaticResource Text.TotalsLabel}" Text="MANO DE OBRA" />
                                 <TextBlock Style="{StaticResource Text.TotalsValue}" Text="{Binding TotalManoObra, StringFormat='$ {0:N0}'}" FontWeight="SemiBold" />
-                                <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding TotalManoObraUf, StringFormat='{}{0:N3} UF'}" Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Center" Margin="0,2,0,0"
+                                <TextBlock Style="{StaticResource Text.TotalsHint}" Text="{Binding TotalManoObraUf, StringFormat='{}{0:N3} UF'}"
                                            Visibility="{Binding MuestraUf, Converter={StaticResource BoolToVisibility}}" />
                             </StackPanel>
                         </Border>
                         <!-- Costo directo -->
                         <Border Style="{StaticResource Card.Summary}" Background="{DynamicResource Brush.Surface2}" Margin="4" MinWidth="140">
                             <StackPanel>
-                                <TextBlock Style="{StaticResource Text.TotalsLabel}" Text="COSTO DIRECTO" Margin="0,0,0,4" />
+                                <TextBlock Style="{StaticResource Text.TotalsLabel}" Text="COSTO DIRECTO" />
                                 <TextBlock Style="{StaticResource Text.TotalsValue}" Text="{Binding TotalCostoDirecto, StringFormat='$ {0:N0}'}" Foreground="{DynamicResource Brush.Blue}" FontWeight="SemiBold" />
-                                <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding TotalCostoDirectoUf, StringFormat='{}{0:N3} UF'}" Foreground="{DynamicResource Brush.Blue}" HorizontalAlignment="Center" Margin="0,2,0,0"
+                                <TextBlock Style="{StaticResource Text.TotalsHint}" Text="{Binding TotalCostoDirectoUf, StringFormat='{}{0:N3} UF'}" Foreground="{DynamicResource Brush.Blue}"
                                            Visibility="{Binding MuestraUf, Converter={StaticResource BoolToVisibility}}" />
                             </StackPanel>
                         </Border>
                         <!-- Costo Dir. Unitario -->
                         <Border Style="{StaticResource Card.Summary}" Background="{DynamicResource Brush.Surface2}" Margin="4" MinWidth="140">
                             <StackPanel>
-                                <TextBlock Style="{StaticResource Text.TotalsLabel}" Text="COSTO DIR. UNIT." Margin="0,0,0,4" />
+                                <TextBlock Style="{StaticResource Text.TotalsLabel}" Text="COSTO DIR. UNIT." />
                                 <TextBlock Style="{StaticResource Text.TotalsValue}" Text="{Binding PrecioUnitario, StringFormat='$ {0:N0}'}" FontWeight="SemiBold" />
-                                <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding PrecioUnitarioUf, StringFormat='{}{0:N3} UF'}" Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Center" Margin="0,2,0,0"
+                                <TextBlock Style="{StaticResource Text.TotalsHint}" Text="{Binding PrecioUnitarioUf, StringFormat='{}{0:N3} UF'}"
                                            Visibility="{Binding MuestraUf, Converter={StaticResource BoolToVisibility}}" />
                             </StackPanel>
                         </Border>
                         <!-- Costo Dir. Total -->
-                        <Border Style="{StaticResource Card.Summary}" Background="{DynamicResource Brush.BlueSoft}" BorderBrush="{DynamicResource Brush.Blue}" Margin="4" MinWidth="140">
+                        <Border Style="{StaticResource Card.Kpi.Hero}" Margin="4" MinWidth="140">
                             <StackPanel>
-                                <TextBlock Style="{StaticResource Text.TotalsLabel}" Text="COSTO DIR. TOTAL" Foreground="{DynamicResource Brush.Blue}" Margin="0,0,0,4" />
+                                <TextBlock Style="{StaticResource Text.TotalsLabel}" Text="COSTO DIR. TOTAL" Foreground="{DynamicResource Brush.Blue}" />
                                 <TextBlock Style="{StaticResource Text.TotalsValue}" FontSize="14" FontWeight="Bold"
                             Foreground="{DynamicResource Brush.Ink}"
                             Text="{Binding TotalPartida, StringFormat='$ {0:N0}'}" />
-                                <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding TotalPartidaUf, StringFormat='{}{0:N3} UF'}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Blue}" HorizontalAlignment="Center" Margin="0,2,0,0"
+                                <TextBlock Style="{StaticResource Text.TotalsHint}" Text="{Binding TotalPartidaUf, StringFormat='{}{0:N3} UF'}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Blue}"
                                            Visibility="{Binding MuestraUf, Converter={StaticResource BoolToVisibility}}" />
                             </StackPanel>
                         </Border>
@@ -1069,9 +1094,16 @@
               Padding="16,4" MinHeight="28"
               Visibility="{Binding HasPartida, Converter={StaticResource BoolToVisibility}}">
                 <DockPanel>
-                    <TextBlock DockPanel.Dock="Right" Style="{StaticResource Shell.StatusBarText}">
-            <Run Text="{Binding Rows.Count, Mode=OneWay}" FontWeight="SemiBold" /><Run Text=" recursos" />
-                    </TextBlock>
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
+                        <TextBlock Text="{Binding SaveStatusText}" Style="{StaticResource Shell.StatusBarText}"
+                                   Foreground="{DynamicResource Brush.Ink3}" Margin="0,0,10,0" VerticalAlignment="Center" />
+                        <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+                                CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
+                            <TextBlock Style="{StaticResource Shell.StatusBarText}">
+                                <Run Text="{Binding Rows.Count, Mode=OneWay}" FontWeight="SemiBold" /><Run Text=" recursos" />
+                            </TextBlock>
+                        </Border>
+                    </StackPanel>
                     <StackPanel Orientation="Horizontal">
                         <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
                     CornerRadius="4" Padding="6,2" Margin="0,0,10,0"

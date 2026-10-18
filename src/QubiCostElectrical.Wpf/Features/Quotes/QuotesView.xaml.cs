@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace QubiCostElectrical.Wpf.Features.Quotes;
 
@@ -53,5 +54,26 @@ public partial class QuotesView : UserControl
         SelectedUfColumn.Visibility = ufVisibility;
         BestUfColumn.Visibility = ufVisibility;
         DeltaUfColumn.Visibility = ufVisibility;
+    }
+
+    private void OnUserControlKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == System.Windows.Input.Key.Escape)
+        {
+            if (vm?.HasActiveFilters == true)
+            {
+                vm.ClearFiltersCommand.Execute(null);
+                e.Handled = true;
+                return;
+            }
+        }
+
+        if (e.KeyboardDevice.Modifiers == System.Windows.Input.ModifierKeys.Control && e.Key == System.Windows.Input.Key.F)
+        {
+            SearchBox.Focus();
+            SearchBox.SelectAll();
+            e.Handled = true;
+            return;
+        }
     }
 }

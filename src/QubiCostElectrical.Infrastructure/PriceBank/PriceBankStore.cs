@@ -5,7 +5,7 @@ using System.IO;
 using System.Linq;
 using Microsoft.Data.Sqlite;
 
-namespace QubiCostElectrical;
+namespace QubiCostElectrical.Infrastructure;
 
 /// <summary>
 /// Banco de precios central, persistente y compartido entre todos los proyectos.

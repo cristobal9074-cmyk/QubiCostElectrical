@@ -13,17 +13,25 @@
       <RowDefinition Height="Auto" />
     </Grid.RowDefinitions>
 
-    <StackPanel Grid.Row="0">
-      <TextBlock Text="Crear nuevo proyecto" Style="{StaticResource Dialog.HeaderTitle}" />
-      <TextBlock Text="Defina nombre, cliente, plantilla SEC y carpeta destino del archivo .qce."
-                 Style="{StaticResource Dialog.HeaderSubtitle}" />
-      <TextBlock x:Name="ValidationErrorBlock"
-                 Text="{Binding ValidationError, RelativeSource={RelativeSource AncestorType=Window}}"
-                 Foreground="{DynamicResource Brush.DangerDark}"
-                 TextWrapping="Wrap"
-                 Margin="0,0,0,6"
-                 Visibility="Collapsed" />
-    </StackPanel>
+    <DockPanel Grid.Row="0" Margin="0,0,0,16" LastChildFill="True">
+      <Border Style="{StaticResource Dialog.HeaderIconContainer}" DockPanel.Dock="Left">
+        <Path Data="M 4 20 h 16 a 2 2 0 0 0 2 -2 V 8 a 2 2 0 0 0 -2 -2 h -7.93 a 2 2 0 0 1 -1.66 -.9 l -.82 -1.2 A 2 2 0 0 0 7.93 3 H 4 a 2 2 0 0 0 -2 2 v 13 a 2 2 0 0 0 2 2 Z M 12 10 v 6 M 9 13 h 6"
+              Stroke="{DynamicResource Brush.Blue}" StrokeThickness="1.6"
+              StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+              Width="16" Height="16" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" />
+      </Border>
+      <StackPanel VerticalAlignment="Center">
+        <TextBlock Text="Crear nuevo proyecto" Style="{StaticResource Dialog.HeaderTitle}" />
+        <TextBlock Text="Defina nombre, cliente, plantilla SEC y carpeta destino del archivo .qce."
+                   Style="{StaticResource Dialog.HeaderSubtitle}" Margin="0" />
+        <TextBlock x:Name="ValidationErrorBlock"
+                   Text="{Binding ValidationError, RelativeSource={RelativeSource AncestorType=Window}}"
+                   Foreground="{DynamicResource Brush.DangerDark}"
+                   TextWrapping="Wrap"
+                   Margin="0,4,0,0"
+                   Visibility="Collapsed" />
+      </StackPanel>
+    </DockPanel>
 
     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
       <StackPanel>
@@ -165,9 +173,11 @@
       </StackPanel>
     </ScrollViewer>
 
-    <DockPanel Grid.Row="2" Style="{StaticResource Dialog.Footer}" LastChildFill="False">
-      <Button DockPanel.Dock="Right" Content="Crear proyecto" IsDefault="True" Style="{StaticResource Button.Primary}" Width="120" Click="OnCreate" />
-      <Button DockPanel.Dock="Right" Content="Cancelar" IsCancel="True" Style="{StaticResource Button.Secondary}" Width="90" Margin="0,0,8,0" />
+    <DockPanel Grid.Row="2" Style="{StaticResource Dialog.Footer}">
+      <Button DockPanel.Dock="Right" Content="Crear proyecto" IsDefault="True" Style="{StaticResource Button.Primary}"
+              MinWidth="130" Height="34" Click="OnCreate" />
+      <Button DockPanel.Dock="Right" Content="Cancelar" IsCancel="True" Style="{StaticResource Button.Secondary}"
+              MinWidth="90" Height="34" Margin="0,0,10,0" />
     </DockPanel>
   </Grid>
   </Border>

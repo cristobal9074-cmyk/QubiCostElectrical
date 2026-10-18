@@ -10,6 +10,7 @@
              d:DesignHeight="750" d:DesignWidth="1200">
   <Grid Background="{DynamicResource Brush.Canvas}">
     <ctrl:EmptyStateControl Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}}"
+                            IconData="M22 2 11 13 M22 2l-7 20-4-9-9-4 20-7z"
                             Title="Sin proyecto abierto"
                             Description="Abra un proyecto para gestionar solicitudes de materiales y EPP.">
       <ctrl:EmptyStateControl.Actions>

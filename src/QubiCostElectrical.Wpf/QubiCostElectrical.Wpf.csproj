@@ -52,10 +52,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Using Include="QubiCostElectrical.Infrastructure" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\QubiCostElectrical.Composition\QubiCostElectrical.Composition.csproj" />
     <ProjectReference Include="..\QubiCostElectrical.Application\QubiCostElectrical.Application.csproj" />
     <ProjectReference Include="..\QubiCostElectrical.Domain\QubiCostElectrical.Domain.csproj" />
-    <ProjectReference Include="..\QubiCostElectrical.Infrastructure\QubiCostElectrical.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

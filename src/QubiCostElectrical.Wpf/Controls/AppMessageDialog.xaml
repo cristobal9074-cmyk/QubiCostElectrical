@@ -53,20 +53,20 @@
         <Button x:Name="CancelButton"
                 Content="Cancelar"
                 Style="{StaticResource Button.Secondary}"
-                Width="96"
-                Margin="0,0,8,0"
+                MinWidth="96" Height="34"
+                Margin="0,0,10,0"
                 IsCancel="True"
                 Click="OnCancelClick" />
         <Button x:Name="SecondaryButton"
                 Content="No"
                 Style="{StaticResource Button.Secondary}"
-                Width="96"
-                Margin="0,0,8,0"
+                MinWidth="96" Height="34"
+                Margin="0,0,10,0"
                 Click="OnSecondaryClick" />
         <Button x:Name="PrimaryButton"
                 Content="Aceptar"
                 Style="{StaticResource Button.Primary}"
-                Width="96"
+                MinWidth="96" Height="34"
                 IsDefault="True"
                 Click="OnPrimaryClick" />
       </StackPanel>

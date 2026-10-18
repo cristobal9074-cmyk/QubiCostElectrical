@@ -6,7 +6,7 @@
         Title="Importar itemizado"
         Width="920" Height="640" MinWidth="720" MinHeight="420"
         WindowStartupLocation="CenterScreen">
-  <Border Style="{StaticResource Dialog.Chrome}" Margin="16">
+  <Border Style="{StaticResource Dialog.Chrome}">
   <Grid>
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto" />
@@ -15,12 +15,20 @@
       <RowDefinition Height="Auto" />
     </Grid.RowDefinitions>
 
-    <StackPanel Grid.Row="0" Margin="0,0,0,12">
-      <TextBlock x:Name="SummaryText" Style="{StaticResource Dialog.HeaderTitle}" />
-      <TextBlock x:Name="NoteText" Style="{StaticResource Dialog.HeaderSubtitle}" />
-      <TextBlock x:Name="WarningText" Margin="0,6,0,0" Foreground="{DynamicResource Brush.Amber}"
-                 TextWrapping="Wrap" Visibility="Collapsed" />
-    </StackPanel>
+    <DockPanel Grid.Row="0" Margin="0,0,0,16" LastChildFill="True">
+      <Border Style="{StaticResource Dialog.HeaderIconContainer}" DockPanel.Dock="Left">
+        <Path Data="M 21 15 v 4 a 2 2 0 0 1 -2 2 H 5 a 2 2 0 0 1 -2 -2 v -4 M 7 10 l 5 5 5 -5 M 12 15 V 3"
+              Stroke="{DynamicResource Brush.Blue}" StrokeThickness="1.6"
+              StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+              Width="16" Height="16" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" />
+      </Border>
+      <StackPanel VerticalAlignment="Center">
+        <TextBlock x:Name="SummaryText" Style="{StaticResource Dialog.HeaderTitle}" />
+        <TextBlock x:Name="NoteText" Style="{StaticResource Dialog.HeaderSubtitle}" Margin="0" />
+        <TextBlock x:Name="WarningText" Margin="0,4,0,0" Foreground="{DynamicResource Brush.Amber}"
+                   TextWrapping="Wrap" Visibility="Collapsed" />
+      </StackPanel>
+    </DockPanel>
 
     <Border Grid.Row="1" Style="{StaticResource Card.Section}" Padding="0">
       <DataGrid x:Name="PreviewGrid"
@@ -32,12 +40,12 @@
                 EnableRowVirtualization="True"
                 IsReadOnly="False">
         <DataGrid.Columns>
-          <DataGridTextColumn Header=" " Binding="{Binding StatusIcon}" Width="32" IsReadOnly="True" />
-          <DataGridTextColumn Header="Código" Binding="{Binding Item, UpdateSourceTrigger=PropertyChanged}" Width="100" />
-          <DataGridTextColumn Header="Descripción" Binding="{Binding Descripcion, UpdateSourceTrigger=PropertyChanged}" Width="*" />
-          <DataGridTextColumn Header="Ud." Binding="{Binding Unidad, UpdateSourceTrigger=PropertyChanged}" Width="60" />
-          <DataGridTextColumn Header="Cant." Binding="{Binding Cantidad, UpdateSourceTrigger=PropertyChanged}" Width="80" />
-          <DataGridTextColumn Header="Validación" Binding="{Binding RejectionReason}" Width="180" IsReadOnly="True" />
+          <DataGridTextColumn Header=" " Binding="{Binding StatusIcon}" Width="32" IsReadOnly="True" HeaderStyle="{StaticResource DataGridColumnHeader.Center}" />
+          <DataGridTextColumn Header="Código" Binding="{Binding Item, UpdateSourceTrigger=PropertyChanged}" Width="100" HeaderStyle="{StaticResource DataGridColumnHeader.Base}" />
+          <DataGridTextColumn Header="Descripción" Binding="{Binding Descripcion, UpdateSourceTrigger=PropertyChanged}" Width="*" HeaderStyle="{StaticResource DataGridColumnHeader.Base}" />
+          <DataGridTextColumn Header="Ud." Binding="{Binding Unidad, UpdateSourceTrigger=PropertyChanged}" Width="60" HeaderStyle="{StaticResource DataGridColumnHeader.Center}" />
+          <DataGridTextColumn Header="Cant." Binding="{Binding Cantidad, UpdateSourceTrigger=PropertyChanged}" Width="80" HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" />
+          <DataGridTextColumn Header="Validación" Binding="{Binding RejectionReason}" Width="180" IsReadOnly="True" HeaderStyle="{StaticResource DataGridColumnHeader.Base}" />
         </DataGrid.Columns>
       </DataGrid>
     </Border>
@@ -47,15 +55,15 @@
                  Foreground="{DynamicResource Brush.Red}" />
     </Border>
 
-    <DockPanel Grid.Row="3" Style="{StaticResource Dialog.Footer}" LastChildFill="False">
-      <Button x:Name="FixButton" DockPanel.Dock="Right" Style="{StaticResource Button.Secondary}"
-              Content="Aplicar corrección sugerida" MinWidth="200" Margin="0,0,8,0" Visibility="Collapsed"
-              Click="OnFixClick" />
+    <DockPanel Grid.Row="3" Style="{StaticResource Dialog.Footer}">
       <Button x:Name="AcceptButton" DockPanel.Dock="Right" Style="{StaticResource Button.Primary}"
-              Content="Aceptar" MinWidth="120" Margin="0,0,8,0" IsDefault="True"
+              Content="Aceptar e Importar" MinWidth="140" Height="34" IsDefault="True"
               Click="OnAcceptClick" />
+      <Button x:Name="FixButton" DockPanel.Dock="Right" Style="{StaticResource Button.Secondary}"
+              Content="Aplicar corrección sugerida" MinWidth="200" Height="34" Margin="0,0,10,0" Visibility="Collapsed"
+              Click="OnFixClick" />
       <Button DockPanel.Dock="Right" Style="{StaticResource Button.Secondary}"
-              Content="Cancelar" MinWidth="100" IsCancel="True"
+              Content="Cancelar" MinWidth="100" Height="34" Margin="0,0,10,0" IsCancel="True"
               Click="OnCancelClick" />
     </DockPanel>
   </Grid>

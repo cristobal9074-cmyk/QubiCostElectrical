@@ -60,7 +60,7 @@ public partial class SolicitudExcelPreviewDialog : Window
                     Materiales,
                     Epps);
 
-                WpfDialogService.InfoModal("Exportación Exitosa", "El archivo Excel se ha exportado y guardado con éxito.");
+                ShellNotificationService.Instance.ShowSuccess("Exportación exitosa", "El archivo Excel se ha exportado y guardado con éxito.");
                 DialogResult = true;
                 Close();
             }

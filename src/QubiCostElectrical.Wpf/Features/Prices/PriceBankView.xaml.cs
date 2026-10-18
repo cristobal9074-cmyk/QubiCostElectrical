@@ -51,4 +51,25 @@ public partial class PriceBankView : UserControl
             menu.IsOpen = true;
         }
     }
+
+    private void OnUserControlKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key == System.Windows.Input.Key.Escape)
+        {
+            if (DataContext is PriceBankViewModel vm && vm.HasActiveFilters)
+            {
+                vm.ClearFiltersCommand.Execute(null);
+                e.Handled = true;
+                return;
+            }
+        }
+
+        if (e.KeyboardDevice.Modifiers == System.Windows.Input.ModifierKeys.Control && e.Key == System.Windows.Input.Key.F)
+        {
+            SearchBox.Focus();
+            SearchBox.SelectAll();
+            e.Handled = true;
+            return;
+        }
+    }
 }

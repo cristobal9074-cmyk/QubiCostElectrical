@@ -36,8 +36,18 @@
     <Setter Property="Padding" Value="{StaticResource Padding.Card}" />
   </Style>
 
-  <Style x:Key="Card.Kpi" TargetType="Border" BasedOn="{StaticResource Card.Surface}">
-    <Setter Property="Padding" Value="{StaticResource Padding.Card}" />
+  <Style x:Key="Card.Kpi" TargetType="Border">
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Card}" />
+    <Setter Property="Padding" Value="14,10" />
+    <Setter Property="SnapsToDevicePixels" Value="True" />
+  </Style>
+
+  <Style x:Key="Card.Kpi.Hero" TargetType="Border" BasedOn="{StaticResource Card.Kpi}">
+    <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.BlueFocus}" />
   </Style>
 
   <Style x:Key="Card.Section" TargetType="Border" BasedOn="{StaticResource Card.Surface}">
@@ -79,19 +89,20 @@
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.DangerBorder}" />
   </Style>
 
-  <!-- Etiqueta de metadatos (estado/moneda/cliente): rectangular, borde fino, sin píldora. -->
+  <!-- Etiqueta de metadatos (estado/moneda/cliente): estilo píldora moderno y uniforme. -->
   <Style x:Key="Meta.Tag" TargetType="Border">
-    <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
     <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="2" />
-    <Setter Property="Padding" Value="7,3" />
+    <Setter Property="CornerRadius" Value="12" />
+    <Setter Property="Padding" Value="9,3" />
     <Setter Property="Margin" Value="0,0,6,0" />
     <Setter Property="VerticalAlignment" Value="Center" />
     <Setter Property="SnapsToDevicePixels" Value="True" />
   </Style>
 
   <Style x:Key="Meta.Tag.Accent" TargetType="Border" BasedOn="{StaticResource Meta.Tag}">
+    <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
   </Style>
 
@@ -130,8 +141,9 @@
     <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
     <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="6" />
-    <Setter Property="Padding" Value="12,8" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Card}" />
+    <Setter Property="Padding" Value="14,10" />
+    <Setter Property="SnapsToDevicePixels" Value="True" />
   </Style>
 
   <Style x:Key="Bar.Formula" TargetType="Border">
@@ -183,6 +195,28 @@
     <Setter Property="FontSize" Value="{StaticResource Font.Size.lg}" />
     <Setter Property="FontWeight" Value="Bold" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+  </Style>
+
+  <!-- ── Teclas estilizadas para atajos de teclado (Kbd Keycap estilo SaaS) ── -->
+  <Style x:Key="Badge.Kbd" TargetType="Border">
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
+    <Setter Property="BorderThickness" Value="1,1,1,2" />
+    <Setter Property="CornerRadius" Value="4" />
+    <Setter Property="Padding" Value="7,2" />
+    <Setter Property="Margin" Value="2,1" />
+    <Setter Property="MinHeight" Value="22" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="SnapsToDevicePixels" Value="True" />
+  </Style>
+
+  <Style x:Key="Text.Kbd" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
   </Style>
 
 </ResourceDictionary>

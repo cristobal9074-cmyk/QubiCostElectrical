@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using ClosedXML.Excel;
 
-namespace QubiCostElectrical;
+namespace QubiCostElectrical.Infrastructure;
 
 public sealed partial class ExcelExportInfrastructure : IExcelProjectExporter
 {

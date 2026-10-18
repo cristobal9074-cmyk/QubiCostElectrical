@@ -12,26 +12,8 @@ public sealed partial class ItemizadoViewModel
     private int refreshRetryCount;
     private const int MaxRefreshRetries = 25;
 
-    // Refresca la vista de la grilla de forma segura ante cualquier operación
-    // (edición de celda, agregar, eliminar, duplicar, mover...). El DataGrid puede
-    // tener abierta una transacción AddNew/EditItem en OTRA fila en el momento en
-    // que se dispara esta u otra mutación (p. ej. una fila recién agregada que entra
-    // en modo edición automático mientras el usuario elimina otra fila desde el menú
-    // contextual), y CollectionView.Refresh() lanza InvalidOperationException si se
-    // llama mientras esa transacción sigue abierta. En vez de intentar prevenir cada
-    // combinación posible de esta condición de carrera, se captura y reintenta en el
-    // siguiente ciclo del dispatcher, una vez que la transacción se cierra.
-    //
-    // Salvaguardas contra un bucle infinito (esto llegó a "trabar" la app en un caso
-    // real: agregar una partida, borrar la descripción y presionar Enter):
-    //  - refreshRetryScheduled evita que varias llamadas superpuestas (una edición de
-    //    celda puede disparar SafeRefreshView desde 2-3 lugares distintos en la misma
-    //    cadena síncrona) generen cada una su propia cola de reintentos en paralelo;
-    //    se coalescen en un solo reintento pendiente.
-    //  - MaxRefreshRetries pone un techo: si la transacción del DataGrid nunca llega
-    //    a cerrarse (por cualquier causa, conocida o no), se abandona ese refresco
-    //    puntual en vez de reintentar para siempre. El próximo cambio de estado real
-    //    disparará un refresco nuevo de todas formas.
+    // Refresca la vista de la grilla de forma segura ante transacciones abiertas de edición en DataGrid.
+    // Incluye coalescencia de reintentos en dispatcher y límite MaxRefreshRetries contra bucles infinitos.
     private void SafeRefreshView()
     {
         if (rowsView == null)
@@ -326,6 +308,7 @@ public sealed partial class ItemizadoViewModel
                 costTotalsByItem[presentation.Id] = presentation.TotalUf;
         }
 
+        lastSummary = state.Summary;
         SummaryPartidas = state.Summary.TotalPartidas.ToString("N0");
         SummaryCompletas = state.Summary.Completas.ToString("N0");
         SummaryIncompletas = state.Summary.Incompletas.ToString("N0");
@@ -373,6 +356,20 @@ public sealed partial class ItemizadoViewModel
             return;
 
         ItemizadoCollapseCoordinator.ToggleChapter(chapterRow, allRows);
+        SafeRefreshView();
+        UpdateFilterCounts();
+    }
+
+    public void CollapseAllChapters()
+    {
+        ItemizadoCollapseCoordinator.CollapseAll(allRows);
+        SafeRefreshView();
+        UpdateFilterCounts();
+    }
+
+    public void ExpandAllChapters()
+    {
+        ItemizadoCollapseCoordinator.ExpandAll(allRows);
         SafeRefreshView();
         UpdateFilterCounts();
     }
@@ -445,6 +442,13 @@ public sealed partial class ItemizadoViewModel
             FilterMode != ItemizadoFilterMode.Todos,
             debouncedSearchText);
 
+        heroKpiSnapshot = ItemizadoHeroKpiCoordinator.Compute(
+            presenter,
+            session,
+            lastSummary,
+            allRows.Count(x => x.EsTitulo),
+            currencyCtx);
+
         OnPropertyChanged(nameof(TotalPresupuestoUfText));
         OnPropertyChanged(nameof(TotalPresupuestoClpText));
         OnPropertyChanged(nameof(FooterPartidasText));
@@ -452,6 +456,7 @@ public sealed partial class ItemizadoViewModel
         OnPropertyChanged(nameof(FooterTotalClpText));
         OnPropertyChanged(nameof(UfRateCaption));
         OnPropertyChanged(nameof(HasActiveFilter));
+        OnPropertyChanged(nameof(HeroKpi));
     }
 
     private void RestoreSelection()

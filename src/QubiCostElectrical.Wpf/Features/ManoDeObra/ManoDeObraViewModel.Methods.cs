@@ -94,16 +94,29 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
     private string FmtUf(decimal n, decimal vUf)
         => (n / vUf).ToString("N3", CultureInfo.GetCultureInfo("es-CL")) + " UF";
 
-    private readonly List<MoProjectionTaskVm> projectionTasks = new();
+    private readonly ManoDeObraProjectionCoordinator _projectionCoordinator;
 
-    public MoProjectionTaskVm[] ProjectionTasks
-    {
-        get
-        {
-            FitProjectionMonths();
-            return projectionTasks.ToArray();
-        }
-    }
+    public MoProjectionTaskVm[] ProjectionTasks => _projectionCoordinator.ProjectionTasks;
+    public bool IsApplyingProjection => _projectionCoordinator.IsApplyingProjection;
+
+    internal BudgetProjectSession Session => session;
+    internal IProjectWorkspaceService Workspace => workspace;
+    internal Dictionary<string, int> CellOverrides => cellOverrides;
+    internal int InternalPeakHeadcount { get => peakHeadcount; set => peakHeadcount = value; }
+    internal void TriggerPropertyChanged(string name) => OnPropertyChanged(name);
+    internal void TriggerRecalcular() => Recalcular();
+    internal void TriggerPersistToSession() => PersistToSession();
+
+    public void FitProjectionMonths() => _projectionCoordinator.FitProjectionMonths();
+    public void AddProjectionTask(string? name = null) => _projectionCoordinator.AddProjectionTask(name);
+    public void RemoveProjectionTask(string id) => _projectionCoordinator.RemoveProjectionTask(id);
+    public void RenameProjectionTask(string id, string name) => _projectionCoordinator.RenameProjectionTask(id, name);
+    public bool SetProjectionQuantity(string id, int monthIndex, int value) => _projectionCoordinator.SetProjectionQuantity(id, monthIndex, value);
+    public void FlushProjectionEdits() => _projectionCoordinator.FlushProjectionEdits();
+    public int ProjectionMonthTotal(int monthIndex) => _projectionCoordinator.ProjectionMonthTotal(monthIndex);
+    public double ProjectionMonthlyAverage() => _projectionCoordinator.ProjectionMonthlyAverage();
+    public int ProjectionMonthlyAverageRounded() => _projectionCoordinator.ProjectionMonthlyAverageRounded();
+    public bool ProjectionMonthIsPeak(int monthIndex) => _projectionCoordinator.ProjectionMonthIsPeak(monthIndex);
 
     public MoCargoDef[] CargosDef { get; private set; } = Array.Empty<MoCargoDef>();
     public MoMesInfo[] Meses { get; private set; } = Array.Empty<MoMesInfo>();
@@ -117,12 +130,14 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
     public ManoDeObraViewModel(IShellNavigationHost shell, WpfAppHost host)
         : this(shell, host.Session, host.ProjectWorkspace, host.UndoService) { }
 
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
     public ManoDeObraViewModel(IShellNavigationHost shell, BudgetProjectSession session, IProjectWorkspaceService workspace, WpfUndoService? undo = null)
     {
         this.shell = shell;
         this.session = session;
         this.workspace = workspace;
         this.undo = undo;
+        _projectionCoordinator = new ManoDeObraProjectionCoordinator(this);
         OpenProjectCommand = new RelayCommand(() => _ = shell.OpenProjectAsync());
         ApplyCommand = new RelayCommand(ExecuteApply, () => CanEdit);
         ResetParamsCommand = new RelayCommand(ExecuteResetParams, () => CanEdit);
@@ -336,335 +351,8 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
         }
     }
 
-    private void LoadProjectionTasks()
-    {
-        projectionTasks.Clear();
-        var saved = session.Data.MoProjectionTasks;
-        if (saved != null)
-        {
-            foreach (var row in saved)
-            {
-                var cantidades = row.CantidadesMensuales
-                    .Take(totalMeses)
-                    .Concat(Enumerable.Repeat(0, totalMeses))
-                    .Take(totalMeses)
-                    .Select(v => Math.Max(0, v))
-                    .ToArray();
-                projectionTasks.Add(new MoProjectionTaskVm
-                {
-                    Id = string.IsNullOrWhiteSpace(row.Id) ? Guid.NewGuid().ToString("N") : row.Id,
-                    Nombre = string.IsNullOrWhiteSpace(row.Nombre) ? "Nueva tarea" : row.Nombre.Trim(),
-                    Cantidades = cantidades
-                });
-            }
-        }
-
-        if (projectionTasks.Count == 0 || IsPlaceholderProjection(projectionTasks))
-        {
-            projectionTasks.Clear();
-            foreach (var name in DefaultProjectionPartidas)
-                AddProjectionTaskCore(name);
-            PersistProjectionTasks();
-        }
-
-        OnPropertyChanged(nameof(ProjectionTasks));
-    }
-
-    private static readonly string[] DefaultProjectionPartidas =
-    [
-        "Loseros",
-        "Destapadores",
-        "Enlauchadores",
-        "Tablereros",
-        "Cableado",
-        "Cabl C. Escala",
-        "Artefactos",
-        "Fierros",
-        "Revisión Final",
-    ];
-
-    private static bool IsPlaceholderProjection(List<MoProjectionTaskVm> tasks)
-    {
-        if (tasks.Count != 1)
-            return false;
-        var only = tasks[0];
-        var name = only.Nombre.Trim();
-        var placeholder = name.Equals("Losero", StringComparison.OrdinalIgnoreCase)
-            || name.Equals("Nueva tarea", StringComparison.OrdinalIgnoreCase);
-        return placeholder && only.Cantidades.All(v => v == 0);
-    }
-
-    public void FitProjectionMonths()
-    {
-        if (totalMeses <= 0)
-            return;
-        var changed = false;
-        foreach (var task in projectionTasks)
-        {
-            if (task.Cantidades.Length == totalMeses)
-                continue;
-            var next = new int[totalMeses];
-            Array.Copy(task.Cantidades, next, Math.Min(task.Cantidades.Length, totalMeses));
-            task.Cantidades = next;
-            changed = true;
-        }
-
-        if (changed)
-        {
-            OnPropertyChanged(nameof(ProjectionTasks));
-            PersistProjectionTasks();
-        }
-    }
-
-    public void AddProjectionTask(string? name = null)
-    {
-        if (!CanEdit)
-            return;
-        var label = string.IsNullOrWhiteSpace(name)
-            ? $"Partida {projectionTasks.Count + 1}"
-            : name.Trim();
-        AddProjectionTaskCore(label);
-        PersistProjectionTasks();
-    }
-
-    public void RemoveProjectionTask(string id)
-    {
-        if (!CanEdit || string.IsNullOrWhiteSpace(id))
-            return;
-        FlushProjectionEdits();
-        var before = MonthlyProjectionTotals();
-        if (projectionTasks.RemoveAll(t => t.Id == id) == 0)
-            return;
-        OnPropertyChanged(nameof(ProjectionTasks));
-        PersistProjectionTasks();
-        PushChangedProjectionMonths(before);
-    }
-
-    public void RenameProjectionTask(string id, string name)
-    {
-        if (!CanEdit)
-            return;
-        var task = projectionTasks.FirstOrDefault(t => t.Id == id);
-        if (task == null)
-            return;
-        var label = string.IsNullOrWhiteSpace(name) ? "Partida" : name.Trim();
-        if (task.Nombre == label)
-            return;
-        task.Nombre = label;
-        OnPropertyChanged(nameof(ProjectionTasks));
-        PersistProjectionTasks();
-    }
-
-    public bool SetProjectionQuantity(string id, int monthIndex, int value)
-    {
-        if (!CanEdit)
-            return false;
-        var task = projectionTasks.FirstOrDefault(t => t.Id == id);
-        if (task == null || monthIndex < 0)
-            return false;
-
-        // Si la tarea tiene menos meses que el índice solicitado (ej: se amplió la duración del proyecto a 14, 20 o 50 meses),
-        // expandir automáticamente el arreglo de cantidades al tamaño necesario.
-        if (monthIndex >= task.Cantidades.Length)
-        {
-            var targetLen = Math.Max(monthIndex + 1, totalMeses);
-            var next = new int[targetLen];
-            Array.Copy(task.Cantidades, next, task.Cantidades.Length);
-            task.Cantidades = next;
-        }
-
-        value = Math.Max(0, value);
-        if (task.Cantidades[monthIndex] == value)
-            return false;
-        task.Cantidades[monthIndex] = value;
-        pendingProjectionMonths.Add(monthIndex);
-        projectionPersistPending = true;
-        return true;
-    }
-
-    private readonly HashSet<int> pendingProjectionMonths = new();
-    private bool projectionPersistPending;
-
-    /// <summary>
-    /// Escribe en la dotación y guarda una sola vez, cuando ya se dejó de escribir.
-    /// </summary>
-    public void FlushProjectionEdits()
-    {
-        if (!projectionPersistPending && pendingProjectionMonths.Count == 0)
-            return;
-
-        var months = pendingProjectionMonths.Count == 0
-            ? Array.Empty<int>()
-            : new int[pendingProjectionMonths.Count];
-        if (months.Length > 0)
-            pendingProjectionMonths.CopyTo(months);
-        pendingProjectionMonths.Clear();
-        var persistTasks = projectionPersistPending;
-        projectionPersistPending = false;
-
-        if (persistTasks)
-            PersistProjectionTasks();
-        if (months.Length > 0)
-            PushProjectionMonths(months);
-    }
-
-    /// <summary>True mientras el total de la proyección se escribe en los meses de MO directa.</summary>
-    public bool IsApplyingProjection { get; private set; }
-
-    private int[] MonthlyProjectionTotals()
-    {
-        var totals = new int[totalMeses];
-        for (var i = 0; i < totalMeses; i++)
-            totals[i] = ProjectionMonthTotal(i);
-        return totals;
-    }
-
-    private bool ApplySavedProjectionToDirecta()
-    {
-        if (totalMeses <= 0)
-            return false;
-        var months = Enumerable.Range(0, totalMeses).ToList();
-        return WriteProjectionMonths(months);
-    }
-
-    private void PushChangedProjectionMonths(int[] before)
-    {
-        var months = new List<int>();
-        for (var i = 0; i < totalMeses && i < before.Length; i++)
-        {
-            if (ProjectionMonthTotal(i) != before[i])
-                months.Add(i);
-        }
-        PushProjectionMonths(months);
-    }
-
-    private void PushProjectionMonths(IReadOnlyList<int> months)
-    {
-        if (months.Count == 0 || !WriteProjectionMonths(months))
-            return;
-        IsApplyingProjection = true;
-        try
-        {
-            Recalcular();
-            PersistToSession();
-        }
-        finally
-        {
-            IsApplyingProjection = false;
-        }
-    }
-
-    /// <summary>
-    /// El total de trabajadores del mes se reparte entre los cargos de MO directa
-    /// según su dotación pico, y queda como edición de esa columna.
-    /// </summary>
-    private bool WriteProjectionMonths(IReadOnlyList<int> months)
-    {
-        var directa = CargosDef.Where(c => c.EsDirecta).ToArray();
-        if (directa.Length == 0)
-            return false;
-
-        var weights = directa.Select(c => Math.Max(0, c.DotPico)).ToArray();
-        var changed = false;
-        foreach (var monthIndex in months)
-        {
-            if (monthIndex < 0 || monthIndex >= totalMeses)
-                continue;
-            var shares = SplitByWeight(ProjectionMonthTotal(monthIndex), weights);
-            for (var i = 0; i < directa.Length; i++)
-            {
-                var key = $"{directa[i].Id}_{monthIndex}";
-                if (cellOverrides.TryGetValue(key, out var current) && current == shares[i])
-                    continue;
-                cellOverrides[key] = shares[i];
-                changed = true;
-            }
-        }
-        return changed;
-    }
-
-    private static int[] SplitByWeight(int total, int[] weights)
-    {
-        var count = weights.Length;
-        var result = new int[count];
-        if (count == 0 || total <= 0)
-            return result;
-
-        var weightSum = weights.Sum();
-        if (weightSum <= 0)
-        {
-            var each = total / count;
-            var extra = total % count;
-            for (var i = 0; i < count; i++)
-                result[i] = each + (i < extra ? 1 : 0);
-            return result;
-        }
-
-        var exact = new double[count];
-        var assigned = 0;
-        for (var i = 0; i < count; i++)
-        {
-            exact[i] = total * (weights[i] / (double)weightSum);
-            result[i] = (int)Math.Floor(exact[i]);
-            assigned += result[i];
-        }
-
-        var left = total - assigned;
-        var order = Enumerable.Range(0, count)
-            .OrderByDescending(i => exact[i] - result[i])
-            .ToArray();
-        for (var k = 0; k < left; k++)
-            result[order[k]]++;
-        return result;
-    }
-
-    public int ProjectionMonthTotal(int monthIndex)
-        => projectionTasks.Sum(t => monthIndex >= 0 && monthIndex < t.Cantidades.Length ? t.Cantidades[monthIndex] : 0);
-
-    public double ProjectionMonthlyAverage()
-    {
-        if (totalMeses <= 0)
-            return 0;
-        double sum = 0;
-        for (var i = 0; i < totalMeses; i++)
-            sum += ProjectionMonthTotal(i);
-        return sum / totalMeses;
-    }
-
-    public int ProjectionMonthlyAverageRounded()
-    {
-        var avg = ProjectionMonthlyAverage();
-        return avg <= 0 ? 0 : (int)Math.Round(avg, MidpointRounding.AwayFromZero);
-    }
-
-    public bool ProjectionMonthIsPeak(int monthIndex)
-        => monthIndex >= 0 && monthIndex < Meses.Length && Meses[monthIndex].EsPeak;
-
-    private void AddProjectionTaskCore(string name)
-    {
-        projectionTasks.Add(new MoProjectionTaskVm
-        {
-            Id = Guid.NewGuid().ToString("N"),
-            Nombre = name,
-            Cantidades = new int[totalMeses]
-        });
-        OnPropertyChanged(nameof(ProjectionTasks));
-    }
-
-    private void PersistProjectionTasks()
-    {
-        if (!workspace.HasOpenProject || session.IsReadOnly)
-            return;
-
-        var data = session.Data;
-        data.MoProjectionTasks = projectionTasks.Select(t => new MoProjectionTaskRow
-        {
-            Id = t.Id,
-            Nombre = t.Nombre,
-            CantidadesMensuales = t.Cantidades
-        }).ToList();
-        session.MarkDirty("mo_projection_tasks");
-    }
+    private void LoadProjectionTasks() => _projectionCoordinator.LoadProjectionTasks();
+    private bool ApplySavedProjectionToDirecta() => _projectionCoordinator.ApplySavedProjectionToDirecta();
 
     private void ExecuteApply()
     {
@@ -716,109 +404,8 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
         PersistToSession();
     }
 
-    private void ExecuteTakeProjection()
-    {
-        if (!CanEdit)
-            return;
-        FlushProjectionEdits();
-        if (!projectionTasks.Any(t => t.Cantidades.Any(c => c > 0)))
-        {
-            ShellNotificationService.Instance.ShowWarning(
-                "Proyección MO",
-                "La proyección no tiene trabajadores asignados: carga los meses en el botón Proyección MO.");
-            return;
-        }
-
-        ApplySavedProjectionToDirecta();
-        Recalcular();
-        PersistToSession();
-        ShellNotificationService.Instance.ShowSuccess(
-            "Proyección MO",
-            "Dotación directa actualizada con los totales de la proyección.");
-    }
-
-    private void ExecuteApplyAverageProjection()
-    {
-        if (!CanEdit)
-            return;
-        FlushProjectionEdits();
-        if (!projectionTasks.Any(t => t.Cantidades.Any(c => c > 0)))
-        {
-            ShellNotificationService.Instance.ShowWarning(
-                "Proyección MO",
-                "La proyección no tiene trabajadores asignados: carga los meses en el botón Proyección MO.");
-            return;
-        }
-
-        var avgRounded = ProjectionMonthlyAverageRounded();
-        if (avgRounded <= 0)
-            return;
-
-        var directa = CargosDef.Where(c => c.EsDirecta).ToArray();
-        if (directa.Length == 0)
-            return;
-
-        var weights = directa.Select(c => Math.Max(0, c.DotPico)).ToArray();
-        if (weights.All(w => w <= 0))
-            weights = directa.Select(_ => 1).ToArray();
-
-        for (var monthIndex = 0; monthIndex < totalMeses; monthIndex++)
-        {
-            var shares = SplitByWeightWithParity(avgRounded, weights, monthIndex);
-            for (var i = 0; i < directa.Length; i++)
-            {
-                var key = $"{directa[i].Id}_{monthIndex}";
-                cellOverrides[key] = shares[i];
-            }
-        }
-
-        peakHeadcount = avgRounded;
-        OnPropertyChanged(nameof(PeakHeadcount));
-        Recalcular();
-        PersistToSession();
-        ShellNotificationService.Instance.ShowSuccess(
-            "Proyección MO",
-            $"Promedio de proyección ({avgRounded} pers./mes) aplicado a la dotación directa.");
-    }
-
-    private static int[] SplitByWeightWithParity(int total, int[] weights, int parityOffset)
-    {
-        var count = weights.Length;
-        var result = new int[count];
-        if (count == 0 || total <= 0)
-            return result;
-
-        var weightSum = weights.Sum();
-        if (weightSum <= 0)
-        {
-            var each = total / count;
-            var extra = total % count;
-            for (var i = 0; i < count; i++)
-            {
-                var idx = (i + parityOffset) % count;
-                result[idx] = each + (i < extra ? 1 : 0);
-            }
-            return result;
-        }
-
-        var exact = new double[count];
-        var assigned = 0;
-        for (var i = 0; i < count; i++)
-        {
-            exact[i] = total * (weights[i] / (double)weightSum);
-            result[i] = (int)Math.Floor(exact[i]);
-            assigned += result[i];
-        }
-
-        var left = total - assigned;
-        var order = Enumerable.Range(0, count)
-            .OrderByDescending(i => exact[i] - result[i])
-            .ThenBy(i => (i + parityOffset) % count)
-            .ToArray();
-        for (var k = 0; k < left; k++)
-            result[order[k]]++;
-        return result;
-    }
+    private void ExecuteTakeProjection() => _projectionCoordinator.ExecuteTakeProjection();
+    private void ExecuteApplyAverageProjection() => _projectionCoordinator.ExecuteApplyAverageProjection();
 
     private void ExecuteAddDirectaCargo()
     {

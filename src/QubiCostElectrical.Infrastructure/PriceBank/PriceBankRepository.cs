@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace QubiCostElectrical;
+namespace QubiCostElectrical.Infrastructure;
 
 /// <summary>
 /// Adaptador del banco de precios sobre <see cref="PriceBankStore"/> (SQLite central).

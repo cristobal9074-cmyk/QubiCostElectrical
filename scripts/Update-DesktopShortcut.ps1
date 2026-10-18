@@ -42,6 +42,8 @@ if ($Build) {
             --configuration $Configuration `
             --runtime $Runtime `
             --self-contained true `
+            -p:UseSharedCompilation=false `
+            -nr:false `
             -p:PublishSingleFile=true `
             -p:EnableCompressionInSingleFile=true `
             -p:DebugType=none `

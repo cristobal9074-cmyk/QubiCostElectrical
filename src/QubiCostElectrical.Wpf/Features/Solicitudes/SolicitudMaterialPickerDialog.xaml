@@ -8,7 +8,7 @@
         WindowStartupLocation="CenterOwner"
         KeyDown="OnWindowKeyDown">
 
-  <Border Style="{StaticResource Dialog.Chrome}" Margin="16">
+  <Border Style="{StaticResource Dialog.Chrome}" Padding="0">
     <Grid Background="{DynamicResource Brush.Canvas}">
       <Grid.RowDefinitions>
         <!-- Header -->
@@ -149,8 +149,8 @@
           </StackPanel>
 
           <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button Style="{StaticResource Button.Secondary}" Content="Cancelar" Click="OnCancelClick" Margin="0,0,10,0" MinWidth="100" />
-            <Button Style="{StaticResource Button.Primary}" Content="+ Agregar seleccionados a la solicitud" Click="OnAddClick" MinWidth="240" />
+            <Button Style="{StaticResource Button.Secondary}" Content="Cancelar" Click="OnCancelClick" Margin="0,0,10,0" MinWidth="100" Height="34" IsCancel="True" />
+            <Button Style="{StaticResource Button.Primary}" Content="+ Agregar seleccionados a la solicitud" Click="OnAddClick" MinWidth="240" Height="34" IsDefault="True" />
           </StackPanel>
         </Grid>
       </Border>

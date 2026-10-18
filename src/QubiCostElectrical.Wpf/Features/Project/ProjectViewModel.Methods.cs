@@ -15,9 +15,10 @@ namespace QubiCostElectrical.Wpf.Features.Project;
 public sealed partial class ProjectViewModel : ViewModelBase, IPageWithPendingChanges, IPageWithCommitChanges, IRefreshablePage
 {
     public ProjectViewModel(IShellNavigationHost shell, WpfAppHost host)
-        : this(shell, host.Session, host.ProjectWorkspace, host.Audit, host.Permissions, host.ProjectEdit) { }
+        : this(shell, host.Session, host.ProjectWorkspace, host.Audit, host.Permissions, host.ProjectEdit, host.UserPreferencesStore) { }
 
-    public ProjectViewModel(IShellNavigationHost shell, BudgetProjectSession session, IProjectWorkspaceService projectWorkspace, ProjectAuditRecorder audit, IPermissionService permissions, IProjectEditWorkspaceService projectEdit)
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
+    public ProjectViewModel(IShellNavigationHost shell, BudgetProjectSession session, IProjectWorkspaceService projectWorkspace, ProjectAuditRecorder audit, IPermissionService permissions, IProjectEditWorkspaceService projectEdit, IUserPreferencesStore? preferencesStore = null)
     {
         this.shell = shell;
         this.session = session;
@@ -25,6 +26,7 @@ public sealed partial class ProjectViewModel : ViewModelBase, IPageWithPendingCh
         this.audit = audit;
         this.permissions = permissions;
         this.projectEdit = projectEdit;
+        this.preferencesStore = preferencesStore ?? WpfAppHost.Current?.UserPreferencesStore ?? new UserPreferencesStore();
         SaveCommand = new RelayCommand(Save, () => HasPendingChanges && !ShowEmptyState && !session.IsReadOnly);
         CancelCommand = new RelayCommand(Cancel, () => HasPendingChanges && !ShowEmptyState && !session.IsReadOnly);
         OpenProjectCommand = new RelayCommand(() => _ = shell.OpenProjectAsync());
@@ -36,11 +38,43 @@ public sealed partial class ProjectViewModel : ViewModelBase, IPageWithPendingCh
         SetApuCostingModeCommand = new RelayCommand<string>(SetApuCostingMode, _ => !ShowEmptyState && !session.IsReadOnly);
         SelectMonedaCommand = new RelayCommand<string>(SelectMoneda, _ => !ShowEmptyState && !session.IsReadOnly);
         ApplyPreferencesDefaultsCommand = new RelayCommand(ApplyPreferencesDefaults, () => !ShowEmptyState && !session.IsReadOnly);
+
+        LoadScopeResidentialCommand = new RelayCommand(LoadScopeResidential, () => CanEdit);
+        LoadScopeCommercialCommand = new RelayCommand(LoadScopeCommercial, () => CanEdit);
+        LoadScopeIndustrialCommand = new RelayCommand(LoadScopeIndustrial, () => CanEdit);
+        ClearScopeCommand = new RelayCommand(ClearScope, () => CanEdit && !string.IsNullOrWhiteSpace(ScopeText));
+        CopyScopeCommand = new RelayCommand(CopyScope, () => !string.IsNullOrWhiteSpace(ScopeText));
+
+        LoadExclusionsStandardCommand = new RelayCommand(LoadExclusionsStandard, () => CanEdit);
+        LoadExclusionsCivilCommand = new RelayCommand(LoadExclusionsCivil, () => CanEdit);
+        ClearExclusionsCommand = new RelayCommand(ClearExclusions, () => CanEdit && !string.IsNullOrWhiteSpace(ExclusionsText));
+        CopyExclusionsCommand = new RelayCommand(CopyExclusions, () => !string.IsNullOrWhiteSpace(ExclusionsText));
+
+        SetCurrentUserAsEstimatorCommand = new RelayCommand(SetCurrentUserAsEstimator, () => CanEdit);
+        SetUserRoleCommand = new RelayCommand<string>(SetUserRole, _ => CanEdit);
     }
 
     public ICommand SetApuCostingModeCommand { get; }
     public ICommand SelectMonedaCommand { get; }
     public ICommand ApplyPreferencesDefaultsCommand { get; }
+
+    public ICommand LoadScopeResidentialCommand { get; }
+    public ICommand LoadScopeCommercialCommand { get; }
+    public ICommand LoadScopeIndustrialCommand { get; }
+    public ICommand ClearScopeCommand { get; }
+    public ICommand CopyScopeCommand { get; }
+
+    public ICommand LoadExclusionsStandardCommand { get; }
+    public ICommand LoadExclusionsCivilCommand { get; }
+    public ICommand ClearExclusionsCommand { get; }
+    public ICommand CopyExclusionsCommand { get; }
+
+    public ICommand SetCurrentUserAsEstimatorCommand { get; }
+    public ICommand SetUserRoleCommand { get; }
+
+    public string ScopeLengthSummary => $"{ScopeText?.Length ?? 0:N0} caracteres";
+    public string ExclusionsLengthSummary => $"{ExclusionsText?.Length ?? 0:N0} caracteres";
+    public string AuditCountSummary => $"{AuditEntries.Count:N0} registros de actividad persistidos en .qce";
 
     public bool ShowEmptyState
     {
@@ -51,6 +85,16 @@ public sealed partial class ProjectViewModel : ViewModelBase, IPageWithPendingCh
             ((RelayCommand)SaveCommand).RaiseCanExecuteChanged();
             ((RelayCommand)CancelCommand).RaiseCanExecuteChanged();
             ((RelayCommand)ApplyPreferencesDefaultsCommand).RaiseCanExecuteChanged();
+            ((RelayCommand)LoadScopeResidentialCommand).RaiseCanExecuteChanged();
+            ((RelayCommand)LoadScopeCommercialCommand).RaiseCanExecuteChanged();
+            ((RelayCommand)LoadScopeIndustrialCommand).RaiseCanExecuteChanged();
+            ((RelayCommand)ClearScopeCommand).RaiseCanExecuteChanged();
+            ((RelayCommand)CopyScopeCommand).RaiseCanExecuteChanged();
+            ((RelayCommand)LoadExclusionsStandardCommand).RaiseCanExecuteChanged();
+            ((RelayCommand)LoadExclusionsCivilCommand).RaiseCanExecuteChanged();
+            ((RelayCommand)ClearExclusionsCommand).RaiseCanExecuteChanged();
+            ((RelayCommand)CopyExclusionsCommand).RaiseCanExecuteChanged();
+            ((RelayCommand)SetCurrentUserAsEstimatorCommand).RaiseCanExecuteChanged();
             OnPropertyChanged(nameof(CanEdit));
         }
     }
@@ -254,8 +298,33 @@ public sealed partial class ProjectViewModel : ViewModelBase, IPageWithPendingCh
         }
     }
 
-    public string ScopeText { get => snapshot.ScopeText; set { snapshot.ScopeText = value; OnPropertyChanged(); NotifyDirty(); } }
-    public string ExclusionsText { get => snapshot.ExclusionsText; set { snapshot.ExclusionsText = value; OnPropertyChanged(); NotifyDirty(); } }
+    public string ScopeText
+    {
+        get => snapshot.ScopeText;
+        set
+        {
+            snapshot.ScopeText = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(ScopeLengthSummary));
+            ((RelayCommand)ClearScopeCommand).RaiseCanExecuteChanged();
+            ((RelayCommand)CopyScopeCommand).RaiseCanExecuteChanged();
+            NotifyDirty();
+        }
+    }
+
+    public string ExclusionsText
+    {
+        get => snapshot.ExclusionsText;
+        set
+        {
+            snapshot.ExclusionsText = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(ExclusionsLengthSummary));
+            ((RelayCommand)ClearExclusionsCommand).RaiseCanExecuteChanged();
+            ((RelayCommand)CopyExclusionsCommand).RaiseCanExecuteChanged();
+            NotifyDirty();
+        }
+    }
     public string ValidityDaysText
     {
         get => snapshot.ValidityDays.ToString(CultureInfo.CurrentCulture);
@@ -386,7 +455,7 @@ public sealed partial class ProjectViewModel : ViewModelBase, IPageWithPendingCh
     private void ApplyPreferencesDefaults()
     {
         if (ShowEmptyState || session.IsReadOnly) return;
-        var prefs = UserPreferencesStore.Load();
+        var prefs = preferencesStore.Load();
         snapshot.GastosGeneralesPct = prefs.DefaultGastosGeneralesPct;
         snapshot.UtilidadPct = prefs.DefaultUtilidadPct;
         OnPropertyChanged(nameof(GastosGeneralesText));
@@ -512,6 +581,115 @@ public sealed partial class ProjectViewModel : ViewModelBase, IPageWithPendingCh
         AuditEntries.Clear();
         foreach (var entry in audit.GetRecentEntries(300))
             AuditEntries.Add(new ProjectAuditEntryVm(entry));
+        OnPropertyChanged(nameof(AuditCountSummary));
+    }
+
+    private void LoadScopeResidential()
+    {
+        const string text = "• Suministro e instalación de alimentadores principales y subalimentadores bajo pliegos SEC (RIC N°03 y RIC N°04).\n"
+            + "• Montaje y conexionado de Tablero General de Alumbrado y Fuerza (TDAF) con protecciones termomagnéticas y diferenciales tipo A/AC según RIC N°02.\n"
+            + "• Canalizaciones embutidas y a la vista para circuitos de alumbrado y enchufes según RIC N°10.\n"
+            + "• Instalación y conexionado de artefactos eléctricos, módulos de tomacorrientes e interruptores según planos.\n"
+            + "• Sistema de Puesta a Tierra de protección y de servicio con medición de resistencia según pliego RIC N°06.\n"
+            + "• Pruebas de aislación, continuidad y rotulación de tableros según pliego RIC N°19.\n"
+            + "• Tramitación y obtención del Certificado de Declaración de Instalación Eléctrica Interior TE1 ante la SEC.";
+
+        ScopeText = string.IsNullOrWhiteSpace(ScopeText) ? text : ScopeText.TrimEnd() + Environment.NewLine + Environment.NewLine + text;
+    }
+
+    private void LoadScopeCommercial()
+    {
+        const string text = "• Suministro e instalación de tableros de distribución comercial con protecciones diferenciales inmunizadas según pliego RIC N°02.\n"
+            + "• Canalizaciones en bandejas portaconductores tipo malla/chapa perforada y tubería EMT según pliego RIC N°04.\n"
+            + "• Circuitos dedicados para enchufes comerciales, puestos de trabajo regulados y líneas de fuerza.\n"
+            + "• Sistema de iluminación general y circuitos de alumbrado de emergencia autoenergizados según pliego RIC N°08.\n"
+            + "• Canalización y ductería para corrientes débiles (datos, CCTV y control de acceso).\n"
+            + "• Pruebas de carga, equilibrio de fases, medición de impedancia de lazo y rotulación de circuitos bajo norma SEC.\n"
+            + "• Preparación de carpeta técnica y tramitación de declaración SEC TE1.";
+
+        ScopeText = string.IsNullOrWhiteSpace(ScopeText) ? text : ScopeText.TrimEnd() + Environment.NewLine + Environment.NewLine + text;
+    }
+
+    private void LoadScopeIndustrial()
+    {
+        const string text = "• Montaje y conexionado de Tablero General de Fuerza (TGF) y Centro de Control de Motores (CCM) según pliego RIC N°02.\n"
+            + "• Tendido de alimentadores de potencia en escalerillas portaconductores y ductos galvanizados pesados según RIC N°04.\n"
+            + "• Compensación de reactivos mediante banco automático de condensadores con filtro de armónicos.\n"
+            + "• Malla de puesta a tierra equipotencial industrial con valor de resistencia certificado bajo pliego RIC N°06.\n"
+            + "• Conexionado eléctrico de motores, bombas y actuadores de maquinaria de proceso.\n"
+            + "• Protecciones diferenciales tipo B / superinmunizadas y relés de protección térmica industrial.\n"
+            + "• Ensayos dieléctricos, termografía preliminar de tableros y declaración TE1 SEC.";
+
+        ScopeText = string.IsNullOrWhiteSpace(ScopeText) ? text : ScopeText.TrimEnd() + Environment.NewLine + Environment.NewLine + text;
+    }
+
+    private void ClearScope()
+    {
+        ScopeText = string.Empty;
+    }
+
+    private void CopyScope()
+    {
+        if (string.IsNullOrWhiteSpace(ScopeText)) return;
+        try
+        {
+            System.Windows.Clipboard.SetText(ScopeText);
+            ValidationSummary = "Alcance incluido copiado al portapapeles.";
+            ShellNotificationService.Instance.ShowCopied("Alcance incluido copiado al portapapeles.");
+        }
+        catch { }
+    }
+
+    private void LoadExclusionsStandard()
+    {
+        const string text = "• Obras civiles, pasadas en muros/losas diamantadas, sellos cortafuego, excavación de zanjas y reposición de pavimentos.\n"
+            + "• Pago de derechos de empalme, estudio de conexión, aportes financieros o tarifas de la empresa distribuidora de energía.\n"
+            + "• Suministro y montaje de luminarias decorativas de arquitectura o equipos especiales proporcionados por el mandante.\n"
+            + "• Equipos activos de climatización (HVAC), grupos generadores y sistemas UPS (salvo canalización expresamente indicada).\n"
+            + "• Cableado y equipamiento activo de corrientes débiles, racks, switches, cámaras CCTV y sistemas contra incendio.\n"
+            + "• Permisos municipales de edificación y pagos ajenos a la tramitación SEC TE1.";
+
+        ExclusionsText = string.IsNullOrWhiteSpace(ExclusionsText) ? text : ExclusionsText.TrimEnd() + Environment.NewLine + Environment.NewLine + text;
+    }
+
+    private void LoadExclusionsCivil()
+    {
+        const string text = "• Demoliciones, picados de muros, zanjas exteriores, rellenos compactados y terminaciones de albañilería/yeso.\n"
+            + "• Remates de pintura, reposición de baldosas o cerámica dañada por trazados no previstos.\n"
+            + "• Andamios tubulares, alzaprimas o plataformas de levante para trabajos a alturas superiores a 3,0 metros.\n"
+            + "• Retiro de escombros de faena fuera del recinto de la obra.";
+
+        ExclusionsText = string.IsNullOrWhiteSpace(ExclusionsText) ? text : ExclusionsText.TrimEnd() + Environment.NewLine + Environment.NewLine + text;
+    }
+
+    private void ClearExclusions()
+    {
+        ExclusionsText = string.Empty;
+    }
+
+    private void CopyExclusions()
+    {
+        if (string.IsNullOrWhiteSpace(ExclusionsText)) return;
+        try
+        {
+            System.Windows.Clipboard.SetText(ExclusionsText);
+            ValidationSummary = "Exclusiones copiadas al portapapeles.";
+            ShellNotificationService.Instance.ShowCopied("Exclusiones copiadas al portapapeles.");
+        }
+        catch { }
+    }
+
+    private void SetCurrentUserAsEstimator()
+    {
+        UsuarioNombre = Environment.UserName;
+        if (string.IsNullOrWhiteSpace(UsuarioRol))
+            UsuarioRol = "Estimador Eléctrico";
+    }
+
+    private void SetUserRole(string? role)
+    {
+        if (!string.IsNullOrWhiteSpace(role))
+            UsuarioRol = role.Trim();
     }
 
     private void Save()
@@ -602,6 +780,9 @@ public sealed partial class ProjectViewModel : ViewModelBase, IPageWithPendingCh
         OnPropertyChanged(nameof(SuperficieM2Formatted));
         OnPropertyChanged(nameof(RatioM2Subtext));
         OnPropertyChanged(nameof(HasProjectName));
+        OnPropertyChanged(nameof(ScopeLengthSummary));
+        OnPropertyChanged(nameof(ExclusionsLengthSummary));
+        OnPropertyChanged(nameof(AuditCountSummary));
         NotifyEstadoFlags();
         OnPropertyChanged(nameof(HasPendingChanges));
         OnPropertyChanged(nameof(CanEdit));

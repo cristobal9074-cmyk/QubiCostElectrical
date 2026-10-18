@@ -15,10 +15,13 @@ namespace QubiCostElectrical.Wpf.Features.Costo;
 public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefreshablePage
 {
     private readonly IPriceBankStore? priceBank;
+    private readonly CostoGastosOperacionalesCoordinator _goCoordinator;
+    private readonly CostoFamilyPricingCoordinator _familyPricingCoordinator;
 
     public CostoViewModel(IShellNavigationHost shell, WpfAppHost host)
-        : this(shell, host.Session, host.ProjectWorkspace, host.Dashboard, host.Services.CurrencyConversion, host.Audit, host.PriceBankStore, host.UndoService) { }
+        : this(shell, host.Session, host.ProjectWorkspace, host.Dashboard, host.Currency, host.Audit, host.PriceBankStore, host.UndoService) { }
 
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
     public CostoViewModel(IShellNavigationHost shell, BudgetProjectSession session, IProjectWorkspaceService workspace, DashboardPresenter dashboard, ICurrencyConversionService currencySvc, ProjectAuditRecorder? audit = null, IPriceBankStore? priceBank = null, WpfUndoService? undo = null) : base(session)
     {
         this.shell = shell;
@@ -29,6 +32,8 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         this.audit = audit;
         this.priceBank = priceBank;
         this.undo = undo;
+        _goCoordinator = new CostoGastosOperacionalesCoordinator(this);
+        _familyPricingCoordinator = new CostoFamilyPricingCoordinator(this);
         OpenProjectCommand = new RelayCommand(() => _ = shell.OpenProjectAsync());
         goToTakeoffCommand = new RelayCommand(() => shell.RequestNavigate(ShellRoute.Takeoff), () => !ShowEmptyState);
         goToItemizedCommand = new RelayCommand(() => shell.RequestNavigate(ShellRoute.Itemized), () => !ShowEmptyState);
@@ -97,7 +102,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
     public bool ShowGoSection
     {
         get => showGoSection;
-        private set => SetProperty(ref showGoSection, value);
+        internal set => SetProperty(ref showGoSection, value);
     }
 
     public bool ShowOrigenes
@@ -154,13 +159,13 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
     public int TotalMoDotacion { get => totalMoDotacion; private set => SetProperty(ref totalMoDotacion, value); }
     public int TotalMoDirectaDotacion { get => totalMoDirectaDotacion; private set => SetProperty(ref totalMoDirectaDotacion, value); }
     public string TotalMoDirectaDotacionLabel => TotalMoDirectaDotacion > 0 ? $"{TotalMoDirectaDotacion} contratos" : "";
-    public string TotalGoLabel { get => totalGoLabel; private set => SetProperty(ref totalGoLabel, value); }
-    public string TotalGoUfLabel { get => totalGoUfLabel; private set => SetProperty(ref totalGoUfLabel, value); }
-    public string TotalGoUfSubLabel { get => totalGoUfSubLabel; private set => SetProperty(ref totalGoUfSubLabel, value); }
-    public string GoComposeHint { get => goComposeHint; private set => SetProperty(ref goComposeHint, value); }
-    public string GoFooterSubLabel { get => goFooterSubLabel; private set => SetProperty(ref goFooterSubLabel, value); }
-    public string GoCategoriaCountLabel { get => goCategoriaCountLabel; private set => SetProperty(ref goCategoriaCountLabel, value); }
-    public string GoItemCountLabel { get => goItemCountLabel; private set => SetProperty(ref goItemCountLabel, value); }
+    public string TotalGoLabel { get => totalGoLabel; internal set => SetProperty(ref totalGoLabel, value); }
+    public string TotalGoUfLabel { get => totalGoUfLabel; internal set => SetProperty(ref totalGoUfLabel, value); }
+    public string TotalGoUfSubLabel { get => totalGoUfSubLabel; internal set => SetProperty(ref totalGoUfSubLabel, value); }
+    public string GoComposeHint { get => goComposeHint; internal set => SetProperty(ref goComposeHint, value); }
+    public string GoFooterSubLabel { get => goFooterSubLabel; internal set => SetProperty(ref goFooterSubLabel, value); }
+    public string GoCategoriaCountLabel { get => goCategoriaCountLabel; internal set => SetProperty(ref goCategoriaCountLabel, value); }
+    public string GoItemCountLabel { get => goItemCountLabel; internal set => SetProperty(ref goItemCountLabel, value); }
     public bool CanEdit
     {
         get => canEdit;
@@ -305,13 +310,13 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
     public string CoefFactorMedioLabel
     {
         get => coefFactorMedioLabel;
-        private set => SetProperty(ref coefFactorMedioLabel, value);
+        internal set => SetProperty(ref coefFactorMedioLabel, value);
     }
 
     public string CoefActivasLabel
     {
         get => coefActivasLabel;
-        private set => SetProperty(ref coefActivasLabel, value);
+        internal set => SetProperty(ref coefActivasLabel, value);
     }
 
     public bool CoefAppliedFlash
@@ -672,266 +677,20 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         ShowMoSection = true; // Siempre visible: lectura desde MO / plantilla
     }
 
-    private void RefreshGoSection(ProjectFileData data, decimal valorUf)
-    {
-        var open = GastosOperacionales
-            .Where(c => c.IsExpanded)
-            .Select(c => c.Codigo)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-        GastosOperacionales.Clear();
-
-        // Repara proyectos donde el sync EPP dejó solo 3.5 (u otras categorías faltantes).
-        var repaired = GastoOperacionalPlantilla.EnsureComplete(data);
-
-        var source = data.GastosOperacionales;
-        var seededFresh = source == null || source.Count == 0;
-        var rows = seededFresh ? GastoOperacionalPlantilla.CreateClean() : source!;
-
-        foreach (var r in rows)
-        {
-            var expanded = open.Contains(r.Codigo ?? "");
-            GastosOperacionales.Add(new GastoOpCategoriaVm(r, valorUf, OnGoChanged, expanded: expanded, canEdit: () => CanEdit));
-        }
-
-        var ensuredBus = EnsureTrasladoBusItem();
-        var syncedEpp = SyncGoEppFromBudget(data, valorUf);
-        UpdateGoTotals();
-        ShowGoSection = true;
-
-        if ((seededFresh || repaired || ensuredBus || syncedEpp) && CanEdit)
-            PersistGo(markDirty: true);
-    }
-
-    /// <summary>Empuja el total EPP del módulo a la categoría GO 3.5.</summary>
-    private bool SyncGoEppFromBudget(ProjectFileData data, decimal valorUf)
-    {
-        var epp = data.Epp;
-        if (epp == null || !epp.HasContent)
-            return false;
-
-        // Asegura que las cantidades EPP reflejen la MO actual antes de pintar GO.
-        var mo = EppBudgetData.ReadMoDrivers(data);
-        epp.ApplyMoDotacion(mo.MesesObra, mo.PromedioDirecto, mo.DotacionIndirecta);
-        data.Epp = epp;
-        EppBudgetData.PushToGoCategory(data, epp);
-
-        var cat = GastosOperacionales.FirstOrDefault(c =>
-            string.Equals(c.Codigo, "3.5", StringComparison.OrdinalIgnoreCase)
-            || c.Concepto.Contains("EPP", StringComparison.OrdinalIgnoreCase));
-
-        if (cat == null)
-        {
-            var row = data.GastosOperacionales?.FirstOrDefault(c =>
-                string.Equals(c.Codigo, "3.5", StringComparison.OrdinalIgnoreCase));
-            if (row == null)
-                return false;
-            cat = new GastoOpCategoriaVm(row, valorUf, OnGoChanged, canEdit: () => CanEdit);
-            // Insertar cerca del orden natural (después de 3.4 si existe).
-            var idx = GastosOperacionales.ToList().FindIndex(c =>
-                string.Compare(c.Codigo, "3.5", StringComparison.OrdinalIgnoreCase) > 0);
-            if (idx < 0) GastosOperacionales.Add(cat);
-            else GastosOperacionales.Insert(idx, cat);
-            return true;
-        }
-
-        var before = cat.MontoClp;
-        var goItems = epp.ToGoCategoryItems();
-        cat.ReplaceItems(goItems);
-        return Math.Abs(cat.MontoClp - before) > 0.5m || cat.Items.Count != goItems.Count;
-    }
-
-    /// <summary>
-    /// Asegura el ítem de arriendo de bus en 3.3 (traslado colectivo de trabajadores).
-    /// </summary>
-    private bool EnsureTrasladoBusItem()
-    {
-        var cat = GastosOperacionales.FirstOrDefault(c =>
-            GastoOperacionalCategoryMaintenance.IsMovilizacionCategory(c.Codigo, c.Concepto));
-        if (cat == null)
-            return false;
-
-        if (GastoOperacionalCategoryMaintenance.HasTrasladoBusItem(cat.Items.Select(i => i.Concepto)))
-            return false;
-
-        cat.AddItemSilent(
-            GastoOperacionalCategoryMaintenance.TrasladoBusConcepto,
-            GastoOperacionalCategoryMaintenance.TrasladoBusUnidad);
-        return true;
-    }
-
-    private void OnGoChanged()
-    {
-        UpdateGoTotals();
-        PersistGo(markDirty: true);
-    }
-
-    private void UpdateGoTotals()
-    {
-        var totalGoClp = GastosOperacionales.Sum(r => r.MontoClp);
-        foreach (var cat in GastosOperacionales)
-            cat.Pct = totalGoClp > 0 ? cat.MontoClp / totalGoClp * 100m : 0m;
-
-        TotalGoLabel = MoneyPrimary(totalGoClp);
-        TotalGoUfLabel = MoneyPair(totalGoClp).Secondary;
-        TotalGoUfSubLabel = MoneyPair(totalGoClp).Secondary;
-        GoCategoriaCountLabel = $"{GastosOperacionales.Count} categorías";
-        GoItemCountLabel = GastosOperacionales.Sum(c => c.Items.Count).ToString();
-        GoComposeHint = totalGoClp > 0 ? "por categoría" : "sin montos aún";
-        GoFooterSubLabel = totalGoClp > 0
-            ? "Incluye todas las categorías"
-            : "Listo para cargar números reales";
-
-        RebuildComposeBar(totalGoClp);
-    }
-
-    private void RebuildComposeBar(decimal totalGoClp)
-    {
-        GoComposeSegments.Clear();
-        GoComposeLegend.Clear();
-
-        var shares = GastosOperacionales
-            .Select(c => new CostoGoCategoryShare(c.Codigo, c.MontoClp, c.Pct))
-            .ToList();
-        var projection = CostoGoComposeProjectionBuilder.Build(shares, totalGoClp);
-
-        foreach (var seg in projection.Segments)
-        {
-            GoComposeSegments.Add(new GoComposeSegmentVm
-            {
-                Fill = CostoUiBrushes.Parse(GoPalette[seg.PaletteIndex % GoPalette.Length], seg.FillOpacity),
-                WidthUnits = seg.WidthUnits,
-            });
-        }
-
-        foreach (var item in projection.Legend)
-        {
-            GoComposeLegend.Add(new GoComposeLegendVm
-            {
-                Fill = CostoUiBrushes.Parse(GoPalette[item.PaletteIndex % GoPalette.Length]),
-                Codigo = item.Codigo,
-                PctLabel = item.PctLabel,
-            });
-        }
-    }
-
-    private void PersistGo(bool markDirty)
-    {
-        if (!CanEdit || ShowEmptyState)
-            return;
-
-        session.Data.GastosOperacionales = GastosOperacionales.Select(c => c.ToRow()).ToList();
-        if (!markDirty)
-            return;
-
-        suppressGoRefresh = true;
-        try
-        {
-            session.MarkDirty(ProjectDirtyScope.GastosOperacionales);
-        }
-        finally
-        {
-            suppressGoRefresh = false;
-        }
-    }
-
-    private void ToggleGoCategoria(GastoOpCategoriaVm? cat) => cat?.ToggleExpanded();
-
-    private void OpenViaticos(GastoOpCategoriaVm? cat)
-    {
-        if (!CanEdit || cat is not { IsViaticosCategory: true })
-            return;
-
-        var data = session.Data;
-        var picoDir = data.MoDirecta?.Sum(r => Math.Max(0, r.Dotacion)) ?? TotalMoDirectaDotacion;
-        var rolesInd = data.MoIndirecta?.Count(r => r.Dotacion > 0) ?? MoIndirectaRows.Count(r => r.Dotacion > 0);
-        if (rolesInd <= 0)
-            rolesInd = data.MoIndirecta?.Sum(r => Math.Max(0, r.Dotacion)) ?? MoIndirectaRows.Sum(r => r.Dotacion);
-        var mesesObra = data.MoDirecta?.Select(r => r.DotacionMensual?.Count ?? 0).DefaultIfEmpty(0).Max() ?? 0;
-        if (mesesObra <= 0)
-            mesesObra = data.MoIndirecta?.Select(r => r.DotacionMensual?.Count ?? 0).DefaultIfEmpty(0).Max() ?? 0;
-        if (mesesObra <= 0)
-            mesesObra = 12;
-
-        var vm = new ViaticosProfesionalViewModel(currentValorUf, picoDir, rolesInd, mesesObra, ocultarEquivalenciaUf: !ShowsUfFigures);
-        vm.SyncFromMoRequested = () =>
-        {
-            var d = session.Data;
-            var p = d.MoDirecta?.Sum(r => Math.Max(0, r.Dotacion)) ?? 0;
-            var ind = d.MoIndirecta?.Count(r => r.Dotacion > 0) ?? 0;
-            if (ind <= 0)
-                ind = d.MoIndirecta?.Sum(r => Math.Max(0, r.Dotacion)) ?? 0;
-            var m = d.MoDirecta?.Select(r => r.DotacionMensual?.Count ?? 0).DefaultIfEmpty(0).Max() ?? 12;
-            if (m <= 0) m = 12;
-            vm.ApplyMoSnapshot(p, ind, m, currentValorUf);
-        };
-
-        var owner = System.Windows.Application.Current?.MainWindow;
-        var dialog = new ViaticosProfesionalDialog(vm);
-        if (owner != null)
-            dialog.Owner = owner;
-
-        if (dialog.ShowDialog() != true)
-            return;
-
-        var bus = cat.Items.FirstOrDefault(i =>
-            i.Concepto.Contains("bus", StringComparison.OrdinalIgnoreCase)
-            || i.Concepto.Contains("Arriendo / traslado", StringComparison.OrdinalIgnoreCase));
-        var preserveBus = bus?.ToRow();
-        cat.ReplaceItems(vm.ResultItems, preserveBus);
-    }
-
-    private void AddGoItem(GastoOpCategoriaVm? cat)
-    {
-        if (!CanEdit || cat == null)
-            return;
-        cat.AddBlankItem();
-    }
-
-    private void RemoveGoItem(GastoOpItemVm? item)
-    {
-        if (!CanEdit || item == null)
-            return;
-        var cat = GastosOperacionales.FirstOrDefault(c => c.Items.Contains(item));
-        cat?.RemoveItem(item);
-    }
-
-    private void AddGoCategoria()
-    {
-        if (!CanEdit)
-            return;
-        var n = GastosOperacionales.Count + 1;
-        var row = new GastoOperacionalRow
-        {
-            Codigo = $"3.{n}",
-            Concepto = "Nueva categoría",
-            Items =
-            [
-                new GastoOperacionalItemRow { Concepto = "Nuevo ítem", Unidad = "un", Cantidad = 0, PrecioUnitarioClp = 0 }
-            ],
-        };
-        var vm = new GastoOpCategoriaVm(row, currentValorUf, OnGoChanged, canEdit: () => CanEdit);
-        GastosOperacionales.Add(vm);
-        OnGoChanged();
-    }
-
-    private void RemoveGoCategoria(GastoOpCategoriaVm? cat)
-    {
-        if (!CanEdit || cat == null)
-            return;
-        if (!GastosOperacionales.Remove(cat))
-            return;
-        OnGoChanged();
-    }
-
-    private void ResetGoPlantilla()
-    {
-        if (!CanEdit)
-            return;
-        GastosOperacionales.Clear();
-        foreach (var r in GastoOperacionalPlantilla.CreateClean())
-            GastosOperacionales.Add(new GastoOpCategoriaVm(r, currentValorUf, OnGoChanged, canEdit: () => CanEdit));
-        OnGoChanged();
-    }
+    private void RefreshGoSection(ProjectFileData data, decimal valorUf) => _goCoordinator.RefreshGoSection(data, valorUf);
+    private bool SyncGoEppFromBudget(ProjectFileData data, decimal valorUf) => _goCoordinator.SyncGoEppFromBudget(data, valorUf);
+    private bool EnsureTrasladoBusItem() => _goCoordinator.EnsureTrasladoBusItem();
+    private void OnGoChanged() => _goCoordinator.OnGoChanged();
+    private void UpdateGoTotals() => _goCoordinator.UpdateGoTotals();
+    private void RebuildComposeBar(decimal totalGoClp) => _goCoordinator.RebuildComposeBar(totalGoClp);
+    private void PersistGo(bool markDirty) => _goCoordinator.PersistGo(markDirty);
+    private void ToggleGoCategoria(GastoOpCategoriaVm? cat) => _goCoordinator.ToggleGoCategoria(cat);
+    private void OpenViaticos(GastoOpCategoriaVm? cat) => _goCoordinator.OpenViaticos(cat);
+    private void AddGoItem(GastoOpCategoriaVm? cat) => _goCoordinator.AddGoItem(cat);
+    private void RemoveGoItem(GastoOpItemVm? item) => _goCoordinator.RemoveGoItem(item);
+    private void AddGoCategoria() => _goCoordinator.AddGoCategoria();
+    private void RemoveGoCategoria(GastoOpCategoriaVm? cat) => _goCoordinator.RemoveGoCategoria(cat);
+    private void ResetGoPlantilla() => _goCoordinator.ResetGoPlantilla();
 
     private void ToggleAnalisis() => AnalisisAbierto = !AnalisisAbierto;
 
@@ -1107,223 +866,16 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         RebuildPrecioFamiliaChips();
     }
 
-    public void MovePrecioFamilia(PrecioFamiliaChipVm? chip, string? targetFamilyKey)
-    {
-        if (!CanEdit || chip == null)
-            return;
-
-        var target = CoefFactors.FirstOrDefault(f =>
-            string.Equals(f.FamilyKey, targetFamilyKey, StringComparison.OrdinalIgnoreCase));
-
-        PrecioFamiliasLibres.Remove(chip);
-        foreach (var row in CoefFactors)
-            row.FamiliasPrecio.Remove(chip);
-
-        if (target == null)
-            PrecioFamiliasLibres.Add(chip);
-        else
-            target.FamiliasPrecio.Add(chip);
-
-        OnPropertyChanged(nameof(HasPrecioFamiliasLibres));
-
-        session.ProjectInfo.FamiliasPrecioAsignadas ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        session.ProjectInfo.FamiliasPrecioAsignadas[chip.Clave] = target?.FamilyKey ?? "";
-
-        suppressCoefRefresh = true;
-        try
-        {
-            session.MarkDirty(ProjectDirtyScope.ProjectInfo);
-            session.SyncCubicacionGgUtFactorsFromVariables();
-            RefreshCostOnly();
-        }
-        finally
-        {
-            suppressCoefRefresh = false;
-        }
-    }
-
-    private void RebuildPrecioFamiliaChips()
-    {
-        foreach (var row in CoefFactors)
-            row.FamiliasPrecio.Clear();
-        PrecioFamiliasLibres.Clear();
-
-        var map = session.ProjectInfo.FamiliasPrecioAsignadas;
-        var familiasActivas = EnumerarFamiliasPrecio();
-        var clavesActivas = new HashSet<string>(familiasActivas.Select(FamilyPresentationDefaults.Normalize), StringComparer.OrdinalIgnoreCase);
-
-        // Limpiar asignaciones huérfanas de listas de precios anteriores que ya no existen
-        if (map != null && map.Count > 0)
-        {
-            var huerfanas = map.Keys.Where(k => !clavesActivas.Contains(k)).ToList();
-            if (huerfanas.Count > 0)
-            {
-                foreach (var h in huerfanas)
-                    map.Remove(h);
-                session.MarkDirty(ProjectDirtyScope.ProjectInfo);
-            }
-        }
-
-        foreach (var nombre in familiasActivas)
-        {
-            var clave = FamilyPresentationDefaults.Normalize(nombre);
-            var chip = new PrecioFamiliaChipVm(nombre, clave);
-            var row = FilaDeFamiliaPrecio(clave, map);
-            if (row == null)
-                PrecioFamiliasLibres.Add(chip);
-            else
-                row.FamiliasPrecio.Add(chip);
-        }
-
-        OnPropertyChanged(nameof(HasPrecioFamiliasLibres));
-        foreach (var row in CoefFactors)
-            row.RefrescarResumenFamilias();
-    }
-
-    private void AbrirGestionFamilias()
-    {
-        if (!CanEdit)
-            return;
-
-        var vm = new GestionFamiliasViewModel(session, priceBank, () =>
-        {
-            suppressCoefRefresh = true;
-            try
-            {
-                RefreshCostOnly();
-                RebuildPrecioFamiliaChips();
-                OnPropertyChanged(nameof(Familias));
-            }
-            finally
-            {
-                suppressCoefRefresh = false;
-            }
-        });
-
-        var owner = System.Windows.Application.Current?.MainWindow;
-        var dialog = new GestionFamiliasDialog(vm);
-        if (owner != null)
-            dialog.Owner = owner;
-
-        dialog.ShowDialog();
-
-        RefreshCostOnly();
-        RebuildPrecioFamiliaChips();
-        OnPropertyChanged(nameof(Familias));
-    }
-
-    private void AbrirCatalogoFamilias(CoefFactorVm? fila)
-    {
-        if (fila == null || !IsFactoresFamiliaEditable)
-            return;
-
-        var abrir = !fila.CatalogoAbierto;
-        foreach (var row in CoefFactors)
-            row.CatalogoAbierto = false;
-        if (!abrir)
-            return;
-
-        LlenarCatalogoFamilias(fila);
-        fila.CatalogoAbierto = true;
-    }
-
-    private void ElegirFamiliaPrecio(PrecioFamiliaPickVm? pick)
-    {
-        if (pick == null || pick.Bloqueada || !IsFactoresFamiliaEditable)
-            return;
-
-        var fila = CoefFactors.FirstOrDefault(f => f.CatalogoAbierto);
-        if (fila == null)
-            return;
-
-        var chip = PrecioFamiliasLibres.FirstOrDefault(c => MismaFamilia(c, pick))
-            ?? CoefFactors.SelectMany(r => r.FamiliasPrecio).FirstOrDefault(c => MismaFamilia(c, pick))
-            ?? new PrecioFamiliaChipVm(pick.Nombre, pick.Clave);
-        MovePrecioFamilia(chip, pick.EnEstaFila ? null : fila.FamilyKey);
-        if (fila.CatalogoAbierto)
-            LlenarCatalogoFamilias(fila);
-    }
-
-    private void LlenarCatalogoFamilias(CoefFactorVm fila)
-    {
-        fila.Catalogo.Clear();
-        foreach (var nombre in EnumerarFamiliasPrecio())
-        {
-            var clave = FamilyPresentationDefaults.Normalize(nombre);
-            CoefFactorVm? duena = null;
-            foreach (var row in CoefFactors)
-            {
-                if (row.FamiliasPrecio.Any(c => string.Equals(c.Clave, clave, StringComparison.OrdinalIgnoreCase)))
-                {
-                    duena = row;
-                    break;
-                }
-            }
-
-            var enEsta = ReferenceEquals(duena, fila);
-            fila.Catalogo.Add(new PrecioFamiliaPickVm(
-                nombre,
-                clave,
-                enEsta,
-                duena != null && !enEsta,
-                duena?.Name ?? ""));
-        }
-    }
-
-    private static bool MismaFamilia(PrecioFamiliaChipVm chip, PrecioFamiliaPickVm pick)
-        => string.Equals(chip.Clave, pick.Clave, StringComparison.OrdinalIgnoreCase);
-
-    private CoefFactorVm? FilaDeFamiliaPrecio(string clave, Dictionary<string, string>? map)
-    {
-        if (map != null && map.TryGetValue(clave, out var assigned))
-        {
-            if (string.IsNullOrWhiteSpace(assigned))
-                return null;
-            return CoefFactors.FirstOrDefault(f =>
-                string.Equals(f.FamilyKey, assigned, StringComparison.OrdinalIgnoreCase));
-        }
-
-        var direct = CoefFactors.FirstOrDefault(f =>
-            string.Equals(FamilyPresentationDefaults.Normalize(f.FamilyKey), clave, StringComparison.Ordinal));
-        if (direct != null)
-            return direct;
-
-        var naturalTarget = FamilyPresentationDefaults.NaturalCanonicalTarget(clave);
-        return CoefFactors.FirstOrDefault(f =>
-            string.Equals(FamilyPresentationDefaults.Normalize(f.FamilyKey), naturalTarget, StringComparison.Ordinal));
-    }
-
-    private List<string> EnumerarFamiliasPrecio()
-    {
-        var bankCategories = (priceBank?.GetAll().Select(e => e.Categoria) ?? Enumerable.Empty<string>()).ToList();
-        return ElectricalFamilyCatalog.CombinarFamiliasConOcultas(
-            session.ProjectInfo.FamiliasOcultas,
-            session.ProjectInfo.FamiliasPersonalizadas,
-            bankCategories).ToList();
-    }
-
-    private void UpdateCoefChips()
-    {
-        if (CoefFactors.Count == 0)
-        {
-            CoefFactorMedioLabel = "1,00×";
-            CoefActivasLabel = "0/0";
-            return;
-        }
-
-        decimal sum = 0m;
-        int active = 0;
-        foreach (var f in CoefFactors)
-        {
-            var v = session.GetFamilyPresentationFactor(f.FamilyKey);
-            sum += v;
-            if (v > 1m) active++;
-        }
-
-        var avg = sum / CoefFactors.Count;
-        CoefFactorMedioLabel = avg.ToString("N2", CultureInfo.CurrentCulture) + "×";
-        CoefActivasLabel = $"{active}/{CoefFactors.Count}";
-    }
+    public void MovePrecioFamilia(PrecioFamiliaChipVm? chip, string? targetFamilyKey) => _familyPricingCoordinator.MovePrecioFamilia(chip, targetFamilyKey);
+    private void RebuildPrecioFamiliaChips() => _familyPricingCoordinator.RebuildPrecioFamiliaChips();
+    private void AbrirGestionFamilias() => _familyPricingCoordinator.AbrirGestionFamilias();
+    private void AbrirCatalogoFamilias(CoefFactorVm? fila) => _familyPricingCoordinator.AbrirCatalogoFamilias(fila);
+    private void ElegirFamiliaPrecio(PrecioFamiliaPickVm? pick) => _familyPricingCoordinator.ElegirFamiliaPrecio(pick);
+    private void LlenarCatalogoFamilias(CoefFactorVm fila) => _familyPricingCoordinator.LlenarCatalogoFamilias(fila);
+    private static bool MismaFamilia(PrecioFamiliaChipVm chip, PrecioFamiliaPickVm pick) => CostoFamilyPricingCoordinator.MismaFamilia(chip, pick);
+    private CoefFactorVm? FilaDeFamiliaPrecio(string clave, Dictionary<string, string>? map) => _familyPricingCoordinator.FilaDeFamiliaPrecio(clave, map);
+    private List<string> EnumerarFamiliasPrecio() => _familyPricingCoordinator.EnumerarFamiliasPrecio();
+    private void UpdateCoefChips() => _familyPricingCoordinator.UpdateCoefChips();
 
     private void CommitFamilyMarkup(string familyKey, decimal value)
     {
@@ -1551,7 +1103,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         }
     }
 
-    private void RefreshCostOnly()
+    internal void RefreshCostOnly()
     {
         if (ShowEmptyState)
             return;

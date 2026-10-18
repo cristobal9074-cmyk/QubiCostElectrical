@@ -42,6 +42,7 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
     private readonly RelayCommand newEntryCommand;
     private readonly RelayCommand applyProjectPricesCommand;
     private readonly RelayCommand clearFiltersCommand;
+    private readonly RelayCommand clearSearchCommand;
 
     private readonly ICollectionView entriesView;
 

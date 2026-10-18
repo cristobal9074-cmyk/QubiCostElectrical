@@ -5,7 +5,7 @@ using System.IO;
 using System.Linq;
 using ClosedXML.Excel;
 
-namespace QubiCostElectrical;
+namespace QubiCostElectrical.Infrastructure;
 
 /// <summary>
 /// Exportador del Presupuesto Detallado con Partidas Abiertas en formato Excel,

@@ -5,7 +5,7 @@ using System.IO;
 using System.Linq;
 using Microsoft.Data.Sqlite;
 
-namespace QubiCostElectrical;
+namespace QubiCostElectrical.Infrastructure;
 
 public sealed partial class PriceBankStore : IPriceBankStore
 {

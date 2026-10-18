@@ -28,7 +28,7 @@
     </Style>
   </Window.Resources>
 
-  <Border Style="{StaticResource Dialog.Chrome}" Margin="16" Padding="18">
+  <Border Style="{StaticResource Dialog.Chrome}" Padding="18">
     <Grid>
       <Grid.RowDefinitions>
         <RowDefinition Height="Auto" />
@@ -77,8 +77,10 @@
 
         <!-- Título y subtítulo con icono a la izquierda -->
         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-          <Border Width="40" Height="40" CornerRadius="10" Background="#EFF6FF" BorderBrush="#DBEAFE" BorderThickness="1" Margin="0,0,12,0" VerticalAlignment="Center">
-            <TextBlock Text="🏷️" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" />
+          <Border Style="{StaticResource Dialog.HeaderIconContainer}" Margin="0,0,12,0">
+            <Path Data="M12 2H2v10l9.29 9.29a2 2 0 0 0 2.83 0l6.59-6.59a2 2 0 0 0 0-2.83L12 2Z M7 7h.01"
+                  Stroke="{DynamicResource Brush.Blue}" StrokeThickness="1.5"
+                  HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="16" Height="16"/>
           </Border>
           <StackPanel VerticalAlignment="Center">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -390,7 +392,7 @@
 
         <!-- Botón de cierre a la derecha -->
         <Button DockPanel.Dock="Right" Content="Cerrar (Esc)" Style="{StaticResource Button.Secondary}"
-                MinWidth="100" IsCancel="True" Click="OnCerrarClick" />
+                MinWidth="110" Height="34" IsCancel="True" Click="OnCerrarClick" />
       </DockPanel>
     </Grid>
   </Border>

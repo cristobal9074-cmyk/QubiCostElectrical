@@ -29,6 +29,7 @@
       <RowDefinition Height="Auto"/>
       <RowDefinition Height="Auto"/>
       <RowDefinition Height="*"/>
+      <RowDefinition Height="Auto"/>
     </Grid.RowDefinitions>
 
     <!-- ─── Título ────────────────────────────────────────────────────────── -->
@@ -54,8 +55,9 @@
     <!-- ─── Estado vacío — sin proyecto ────────────────────────────────────── -->
     <ctrl:EmptyStateControl Grid.Row="1" Grid.RowSpan="4"
                             Visibility="{Binding HasNoProject, Converter={StaticResource BoolToVisibility}}"
+                            IconData="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M12 18v-6 M9 15h6"
                             Title="Sin proyecto abierto"
-                            Description="Abre o crea un proyecto para gestionar adicionales de obra." />
+                            Description="Abre o crea un proyecto para gestionar adicionales y aumentos de obra." />
 
     <!-- ─── Panel resumen ────────────────────────────────────────────────── -->
     <UniformGrid Grid.Row="1" Rows="1" Margin="0,0,0,12"
@@ -107,173 +109,422 @@
 
     <!-- ─── Barra de acciones ──────────────────────────────────────────────── -->
     <DockPanel Grid.Row="2" Margin="0,0,0,10" LastChildFill="False"
-                Visibility="{Binding HasNoProject, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
-    <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
-      <Button Style="{StaticResource Button.Primary}" Content="+ Nuevo Adicional"
-              Click="OnAddClick" Padding="14,0" Height="30"/>
-      <Button Style="{StaticResource Button.Secondary}" Content="Editar" Margin="6,0,0,0"
-              IsEnabled="{Binding CanEdit}" Click="OnEditClick" Padding="12,0" Height="30"/>
-      <Button Content="Eliminar" Margin="6,0,0,0" Padding="12,0" Height="30"
-              IsEnabled="{Binding CanDelete}" Click="OnDeleteClick"
-              Foreground="{DynamicResource Brush.Danger}" Background="Transparent" BorderBrush="{DynamicResource Brush.DangerBorder}" BorderThickness="1"/>
-      <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="8,4"/>
-      <Button Style="{StaticResource Button.Secondary}" Content="→ En revisión" Margin="0,0,6,0"
-              IsEnabled="{Binding CanEnviarRevision}" Click="OnEnviarRevisionClick" Padding="10,0" Height="30"/>
-      <Button Style="{StaticResource Button.Secondary}" Content="✓ Aprobar" Margin="0,0,6,0"
-              IsEnabled="{Binding CanAprobar}" Click="OnAprobarClick" Padding="10,0" Height="30"
-              Foreground="{DynamicResource Brush.Success}"/>
-      <Button Style="{StaticResource Button.Secondary}" Content="✗ Rechazar" Margin="0,0,6,0"
-              IsEnabled="{Binding CanRechazar}" Click="OnRechazarClick" Padding="10,0" Height="30"
-              Foreground="{DynamicResource Brush.Danger}"/>
-      <Button Style="{StaticResource Button.Secondary}" Content="↩ Reabrir" Margin="0,0,0,0"
-              IsEnabled="{Binding CanReabrir}" Click="OnReabrirClick" Padding="10,0" Height="30"/>
-    </StackPanel>
-    <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
-      <TextBlock Text="Aumento neto acumulado: " FontSize="11" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center"/>
-      <TextBlock Text="{Binding ImpactoNetoDisplay}" FontSize="11" FontWeight="Bold"
-                 FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center"/>
-    </StackPanel>
+               Visibility="{Binding HasNoProject, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
+      <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+        <Button Style="{StaticResource Button.Primary}" Content="+ Nuevo Adicional"
+                Click="OnAddClick" Padding="14,0" Height="30"
+                ToolTip="Crear una nueva orden de cambio (Ctrl+N)"/>
+        <Button Style="{StaticResource Button.Secondary}" Content="Editar" Margin="6,0,0,0"
+                IsEnabled="{Binding CanEdit}" Click="OnEditClick" Padding="12,0" Height="30"
+                ToolTip="Editar partidas y cubicaciones (Enter)"/>
+        <Button Style="{StaticResource Button.Secondary}" Content="Duplicar" Margin="6,0,0,0"
+                IsEnabled="{Binding CanDuplicate}" Click="OnDuplicateClick" Padding="12,0" Height="30"
+                ToolTip="Duplicar orden seleccionada a un nuevo borrador (Ctrl+D)"/>
+        <Button Content="Eliminar" Margin="6,0,0,0" Padding="12,0" Height="30"
+                IsEnabled="{Binding CanDelete}" Click="OnDeleteClick"
+                Foreground="{DynamicResource Brush.Danger}" Background="Transparent" BorderBrush="{DynamicResource Brush.DangerBorder}" BorderThickness="1"
+                ToolTip="Eliminar orden seleccionada (Del)"/>
+        <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="8,4"/>
+        <Button Style="{StaticResource Button.Secondary}" Content="→ En revisión" Margin="0,0,6,0"
+                IsEnabled="{Binding CanEnviarRevision}" Click="OnEnviarRevisionClick" Padding="10,0" Height="30"
+                ToolTip="Enviar orden a revisión de la ITO o Mandante"/>
+        <Button Style="{StaticResource Button.Secondary}" Content="✓ Aprobar" Margin="0,0,6,0"
+                IsEnabled="{Binding CanAprobar}" Click="OnAprobarClick" Padding="10,0" Height="30"
+                Foreground="{DynamicResource Brush.Success}"
+                ToolTip="Aprobar orden e incorporar al presupuesto proyectado"/>
+        <Button Style="{StaticResource Button.Secondary}" Content="✗ Rechazar" Margin="0,0,6,0"
+                IsEnabled="{Binding CanRechazar}" Click="OnRechazarClick" Padding="10,0" Height="30"
+                Foreground="{DynamicResource Brush.Danger}"
+                ToolTip="Rechazar orden de cambio"/>
+        <Button Style="{StaticResource Button.Secondary}" Content="↩ Reabrir" Margin="0,0,0,0"
+                IsEnabled="{Binding CanReabrir}" Click="OnReabrirClick" Padding="10,0" Height="30"
+                ToolTip="Reabrir orden rechazada y pasar a Borrador"/>
+      </StackPanel>
+      <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
+        <TextBlock Text="Aumento neto acumulado: " FontSize="11" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center"/>
+        <TextBlock Text="{Binding ImpactoNetoDisplay}" FontSize="12" FontWeight="Bold"
+                   FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" Margin="0,0,12,0"/>
+        <Button Style="{StaticResource Button.Secondary}" Content="⟳ Refrescar" Height="28" Padding="10,0"
+                Click="OnRefreshClick" ToolTip="Refrescar lista y métricas (F5)"/>
+      </StackPanel>
     </DockPanel>
 
-    <!-- ─── Búsqueda y filtros ────────────────────────────────────────────── -->
-    <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,0,0,10"
-                Visibility="{Binding HasNoProject, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
-      <Border BorderBrush="{DynamicResource Brush.SlateLight}" BorderThickness="1" CornerRadius="4" Padding="6,0" Width="220">
-        <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                 BorderThickness="0" FontSize="11" VerticalAlignment="Center" Height="26"
-                 AutomationProperties.Name="Buscar órdenes">
-          <TextBox.Style>
-            <Style TargetType="TextBox">
-              <Style.Triggers>
-                <Trigger Property="Text" Value="">
-                  <Setter Property="Background">
-                    <Setter.Value>
-                      <VisualBrush Stretch="None" AlignmentX="Left">
-                        <VisualBrush.Visual>
-                          <TextBlock Text="Buscar…" Foreground="{DynamicResource Brush.Slate2}" FontSize="11"
-                                     Padding="0,4,0,0"/>
-                        </VisualBrush.Visual>
-                      </VisualBrush>
-                    </Setter.Value>
-                  </Setter>
-                </Trigger>
-              </Style.Triggers>
-            </Style>
-          </TextBox.Style>
-        </TextBox>
+    <!-- ─── Búsqueda y filtros rápidos ────────────────────────────────────── -->
+    <DockPanel Grid.Row="3" Margin="0,0,0,10"
+               Visibility="{Binding HasNoProject, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
+      <!-- Buscador a la izquierda -->
+      <Border DockPanel.Dock="Left" BorderBrush="{DynamicResource Brush.SlateLight}" BorderThickness="1" CornerRadius="6"
+              Background="{DynamicResource Brush.Surface}" Padding="8,0" Width="280" Height="30">
+        <Grid VerticalAlignment="Center">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+          </Grid.ColumnDefinitions>
+          <TextBlock Grid.Column="0" Text="🔍" FontSize="11" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+          <TextBox Grid.Column="1" x:Name="SearchBox"
+                   Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                   BorderThickness="0" FontSize="11.5" VerticalAlignment="Center" Background="Transparent"
+                   AutomationProperties.Name="Buscar órdenes">
+            <TextBox.Style>
+              <Style TargetType="TextBox">
+                <Style.Triggers>
+                  <Trigger Property="Text" Value="">
+                    <Setter Property="Background">
+                      <Setter.Value>
+                        <VisualBrush Stretch="None" AlignmentX="Left">
+                          <VisualBrush.Visual>
+                            <TextBlock Text="Buscar por número, título, nota… (Ctrl+F)" Foreground="{DynamicResource Brush.Slate2}" FontSize="11" />
+                          </VisualBrush.Visual>
+                        </VisualBrush>
+                      </Setter.Value>
+                    </Setter>
+                  </Trigger>
+                </Style.Triggers>
+              </Style>
+            </TextBox.Style>
+          </TextBox>
+          <Button Grid.Column="2" Content="✕" Width="18" Height="18" Padding="0" Margin="4,0,0,0"
+                  FontSize="9" Background="Transparent" BorderThickness="0" Foreground="{DynamicResource Brush.Muted}"
+                  Visibility="{Binding SearchText, Converter={StaticResource StringToVisibility}}"
+                  Click="OnClearFiltersClick" ToolTip="Limpiar búsqueda (Esc)" />
+        </Grid>
       </Border>
-      <ComboBox x:Name="EstadoFilterBox" Margin="8,0,0,0" Width="160" Style="{StaticResource Form.ComboBox}"
-                AutomationProperties.Name="Filtrar por estado"
-                SelectionChanged="OnFilterEstadoChanged">
-        <ComboBoxItem Content="Todos los estados" Tag=""/>
-        <ComboBoxItem Content="Borrador" Tag="Borrador"/>
-        <ComboBoxItem Content="En revisión" Tag="En revisión"/>
-        <ComboBoxItem Content="Aprobado" Tag="Aprobado"/>
-        <ComboBoxItem Content="Rechazado" Tag="Rechazado"/>
-      </ComboBox>
-      <Button Content="Limpiar filtros" Margin="8,0,0,0" FontSize="11" Padding="8,0" Height="28"
-              Background="Transparent" BorderBrush="{DynamicResource Brush.SlateLight}" BorderThickness="1"
-              Click="OnClearFiltersClick"/>
-    </StackPanel>
 
-    <!-- ─── Tabla ─────────────────────────────────────────────────────────── -->
+      <!-- Segmented filter chips a la derecha -->
+      <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
+        <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}"
+                BorderThickness="1" CornerRadius="6" Padding="3,2">
+          <StackPanel Orientation="Horizontal">
+            <RadioButton Style="{StaticResource FilterChip.Base}" GroupName="ChangeOrderStatusFilter"
+                         IsChecked="{Binding IsFilterAll, Mode=OneWay}" Click="OnFilterAllClick" ToolTip="Ver todas las órdenes de cambio">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Todas" VerticalAlignment="Center"/>
+                <Border CornerRadius="8" Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+                        Padding="5,0" Margin="5,0,0,0" VerticalAlignment="Center">
+                  <TextBlock Text="{Binding CountAll}" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}"/>
+                </Border>
+              </StackPanel>
+            </RadioButton>
+
+            <RadioButton Style="{StaticResource FilterChip.Base}" GroupName="ChangeOrderStatusFilter"
+                         IsChecked="{Binding IsFilterBorrador, Mode=OneWay}" Click="OnFilterBorradorClick" ToolTip="Filtrar borradores en elaboración">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Borrador" VerticalAlignment="Center"/>
+                <Border CornerRadius="8" Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+                        Padding="5,0" Margin="5,0,0,0" VerticalAlignment="Center">
+                  <TextBlock Text="{Binding CountBorrador}" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}"/>
+                </Border>
+              </StackPanel>
+            </RadioButton>
+
+            <RadioButton Style="{StaticResource FilterChip.Warning}" GroupName="ChangeOrderStatusFilter"
+                         IsChecked="{Binding IsFilterEnRevision, Mode=OneWay}" Click="OnFilterEnRevisionClick" ToolTip="Filtrar adicionales en revisión">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="En revisión" VerticalAlignment="Center"/>
+                <Border CornerRadius="8" Background="{DynamicResource Brush.AmberSoft}" BorderBrush="{DynamicResource Brush.AmberBorder}" BorderThickness="1"
+                        Padding="5,0" Margin="5,0,0,0" VerticalAlignment="Center">
+                  <TextBlock Text="{Binding CountEnRevision}" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Amber}"/>
+                </Border>
+              </StackPanel>
+            </RadioButton>
+
+            <RadioButton Style="{StaticResource FilterChip.Success}" GroupName="ChangeOrderStatusFilter"
+                         IsChecked="{Binding IsFilterAprobado, Mode=OneWay}" Click="OnFilterAprobadoClick" ToolTip="Filtrar adicionales aprobados">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Aprobadas" VerticalAlignment="Center"/>
+                <Border CornerRadius="8" Background="{DynamicResource Brush.SuccessBg}" BorderBrush="{DynamicResource Brush.SuccessBorder}" BorderThickness="1"
+                        Padding="5,0" Margin="5,0,0,0" VerticalAlignment="Center">
+                  <TextBlock Text="{Binding CountAprobado}" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Success}"/>
+                </Border>
+              </StackPanel>
+            </RadioButton>
+
+            <RadioButton Style="{StaticResource FilterChip.Base}" GroupName="ChangeOrderStatusFilter"
+                         IsChecked="{Binding IsFilterRechazado, Mode=OneWay}" Click="OnFilterRechazadoClick" ToolTip="Filtrar adicionales rechazados">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Rechazadas" VerticalAlignment="Center"/>
+                <Border CornerRadius="8" Background="{DynamicResource Brush.DangerBg}" BorderBrush="{DynamicResource Brush.DangerBorder}" BorderThickness="1"
+                        Padding="5,0" Margin="5,0,0,0" VerticalAlignment="Center">
+                  <TextBlock Text="{Binding CountRechazado}" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Danger}"/>
+                </Border>
+              </StackPanel>
+            </RadioButton>
+          </StackPanel>
+        </Border>
+
+        <Button Content="Limpiar" Margin="8,0,0,0" FontSize="11" Padding="10,0" Height="28"
+                Background="Transparent" BorderBrush="{DynamicResource Brush.SlateLight}" BorderThickness="1"
+                Click="OnClearFiltersClick" ToolTip="Restablecer filtros y búsqueda (Esc)"/>
+      </StackPanel>
+    </DockPanel>
+
+    <!-- ─── Tabla / Estado vacío ────────────────────────────────────────── -->
     <Border Grid.Row="4" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="10"
+            Background="{DynamicResource Brush.Surface}"
             Visibility="{Binding HasNoProject, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
-      <DataGrid ItemsSource="{Binding Items}"
-                SelectedItem="{Binding Selected, Mode=TwoWay}"
-                AutoGenerateColumns="False" IsReadOnly="True"
-                HeadersVisibility="Column" GridLinesVisibility="Horizontal"
-                RowHeight="36" FontSize="11"
-                SelectionMode="Single" SelectionUnit="FullRow"
-                Style="{StaticResource DataGrid.Workspace}"
-                BorderThickness="0" VirtualizingPanel.IsVirtualizing="True"
-                MouseDoubleClick="OnRowDoubleClick"
-                AutomationProperties.Name="Lista de órdenes de cambio">
-        <DataGrid.Columns>
-          <DataGridTextColumn Header="#"           Binding="{Binding Seq}"            Width="36"/>
-          <DataGridTextColumn Header="Número"      Binding="{Binding Numero}"         Width="90"/>
-          <DataGridTextColumn Header="Título"      Binding="{Binding Titulo}"         Width="*"/>
-          <DataGridTemplateColumn Header="Estado" Width="120" SortMemberPath="Estado">
-            <DataGridTemplateColumn.CellTemplate>
-              <DataTemplate>
-                <Border CornerRadius="{StaticResource Radius.Chip}" Padding="9,3" Margin="4,2"
-                        HorizontalAlignment="Left" VerticalAlignment="Center">
-                  <Border.Style>
-                    <Style TargetType="Border">
-                      <Setter Property="Background" Value="{DynamicResource Brush.ChipBg}"/>
-                      <Style.Triggers>
-                        <DataTrigger Binding="{Binding Estado}" Value="Aprobado">
-                          <Setter Property="Background" Value="{DynamicResource Brush.SuccessBg}"/>
-                        </DataTrigger>
-                        <DataTrigger Binding="{Binding Estado}" Value="Rechazado">
-                          <Setter Property="Background" Value="{DynamicResource Brush.DangerBg}"/>
-                        </DataTrigger>
-                        <DataTrigger Binding="{Binding Estado}" Value="En revisión">
-                          <Setter Property="Background" Value="{DynamicResource Brush.AmberSoft}"/>
-                        </DataTrigger>
-                      </Style.Triggers>
-                    </Style>
-                  </Border.Style>
-                  <TextBlock Text="{Binding Estado}" FontSize="10" FontWeight="SemiBold">
-                    <TextBlock.Style>
-                      <Style TargetType="TextBlock">
-                        <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}"/>
+      <Grid>
+        <ctrl:EmptyStateControl Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}}"
+                                IconData="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M12 18v-6 M9 15h6"
+                                Title="Sin adicionales registrados"
+                                Description="No se han registrado modificaciones de contrato ni partidas extraordinarias en esta faena.">
+          <ctrl:EmptyStateControl.Actions>
+            <Button Style="{StaticResource Button.Primary}" Content="+ Nuevo Adicional (Ctrl+N)" Click="OnAddClick" MinWidth="180" />
+          </ctrl:EmptyStateControl.Actions>
+        </ctrl:EmptyStateControl>
+
+        <DataGrid ItemsSource="{Binding Items}"
+                  Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}"
+                  SelectedItem="{Binding Selected, Mode=TwoWay}"
+                  AutoGenerateColumns="False" IsReadOnly="True"
+                  HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                  RowHeight="36" FontSize="11.5"
+                  SelectionMode="Single" SelectionUnit="FullRow"
+                  Style="{StaticResource DataGrid.Workspace}"
+                  BorderThickness="0" VirtualizingPanel.IsVirtualizing="True"
+                  MouseDoubleClick="OnRowDoubleClick"
+                  AutomationProperties.Name="Lista de órdenes de cambio">
+          <DataGrid.Columns>
+            <DataGridTextColumn Header="#" Binding="{Binding Seq}" Width="36"/>
+            <DataGridTextColumn Header="Número" Binding="{Binding Numero}" Width="95">
+              <DataGridTextColumn.ElementStyle>
+                <Style TargetType="TextBlock">
+                  <Setter Property="FontFamily" Value="{StaticResource Font.Mono}"/>
+                  <Setter Property="FontWeight" Value="Bold"/>
+                  <Setter Property="VerticalAlignment" Value="Center"/>
+                  <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}"/>
+                </Style>
+              </DataGridTextColumn.ElementStyle>
+            </DataGridTextColumn>
+
+            <DataGridTemplateColumn Header="Título" Width="*">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Titulo}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink}"
+                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <Border CornerRadius="8" Padding="5,1" Margin="0"
+                            Visibility="{Binding HasLineas, Converter={StaticResource BoolToVisibility}}"
+                            Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+                            VerticalAlignment="Center">
+                      <TextBlock Text="{Binding PartidasBadgeText}" FontSize="9.5" Foreground="{DynamicResource Brush.Muted}"/>
+                    </Border>
+                  </StackPanel>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+
+            <DataGridTemplateColumn Header="Estado" Width="120" SortMemberPath="Estado">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <Border CornerRadius="12" BorderThickness="1" Padding="9,2" Margin="4,2"
+                          HorizontalAlignment="Left" VerticalAlignment="Center">
+                    <Border.Style>
+                      <Style TargetType="Border">
+                        <Setter Property="Background" Value="{DynamicResource Brush.Surface2}"/>
+                        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}"/>
                         <Style.Triggers>
                           <DataTrigger Binding="{Binding Estado}" Value="Aprobado">
-                            <Setter Property="Foreground" Value="{DynamicResource Brush.Success}"/>
+                            <Setter Property="Background" Value="{DynamicResource Brush.SuccessBg}"/>
+                            <Setter Property="BorderBrush" Value="{DynamicResource Brush.SuccessBorder}"/>
                           </DataTrigger>
                           <DataTrigger Binding="{Binding Estado}" Value="Rechazado">
-                            <Setter Property="Foreground" Value="{DynamicResource Brush.Danger}"/>
+                            <Setter Property="Background" Value="{DynamicResource Brush.DangerBg}"/>
+                            <Setter Property="BorderBrush" Value="{DynamicResource Brush.DangerBorder}"/>
                           </DataTrigger>
                           <DataTrigger Binding="{Binding Estado}" Value="En revisión">
-                            <Setter Property="Foreground" Value="{DynamicResource Brush.Amber}"/>
+                            <Setter Property="Background" Value="{DynamicResource Brush.AmberSoft}"/>
+                            <Setter Property="BorderBrush" Value="{DynamicResource Brush.Amber2}"/>
                           </DataTrigger>
                         </Style.Triggers>
                       </Style>
-                    </TextBlock.Style>
-                  </TextBlock>
-                </Border>
-              </DataTemplate>
-            </DataGridTemplateColumn.CellTemplate>
-          </DataGridTemplateColumn>
-          <DataGridTextColumn Header="Fecha"       Binding="{Binding FechaDisplay}"   Width="90">
-            <DataGridTextColumn.ElementStyle>
-              <Style TargetType="TextBlock">
-                <Setter Property="FontFamily" Value="{StaticResource Font.Mono}"/>
-                <Setter Property="TextAlignment" Value="Right"/>
-                <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}"/>
-              </Style>
-            </DataGridTextColumn.ElementStyle>
-          </DataGridTextColumn>
-          <DataGridTextColumn Header="Creada por"  Binding="{Binding CreadoPor}"      Width="110"/>
-          <DataGridTextColumn Header="Impacto" Binding="{Binding DeltaDisplay}" Width="100">
-            <DataGridTextColumn.ElementStyle>
-              <Style TargetType="TextBlock">
-                <Setter Property="FontFamily" Value="{StaticResource Font.Mono}"/>
-                <Setter Property="FontWeight" Value="SemiBold"/>
-                <Setter Property="TextAlignment" Value="Right"/>
-                <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}"/>
-                <Style.Triggers>
-                  <!-- Rojo aumenta / verde reduce, como el prototipo -->
-                  <DataTrigger Binding="{Binding DeltaKind}" Value="Aumenta">
-                    <Setter Property="Foreground" Value="{DynamicResource Brush.Danger}"/>
-                  </DataTrigger>
-                  <DataTrigger Binding="{Binding DeltaKind}" Value="Reduce">
-                    <Setter Property="Foreground" Value="{DynamicResource Brush.Success}"/>
-                  </DataTrigger>
-                </Style.Triggers>
-              </Style>
-            </DataGridTextColumn.ElementStyle>
-          </DataGridTextColumn>
-          <DataGridTextColumn Header="Nota"        Binding="{Binding Nota}"           Width="140"/>
-        </DataGrid.Columns>
+                    </Border.Style>
+                    <TextBlock Text="{Binding EstadoDisplay}" FontSize="11" FontWeight="SemiBold">
+                      <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                          <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}"/>
+                          <Style.Triggers>
+                            <DataTrigger Binding="{Binding Estado}" Value="Aprobado">
+                              <Setter Property="Foreground" Value="{DynamicResource Brush.Success}"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Estado}" Value="Rechazado">
+                              <Setter Property="Foreground" Value="{DynamicResource Brush.Danger}"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Estado}" Value="En revisión">
+                              <Setter Property="Foreground" Value="{DynamicResource Brush.Amber}"/>
+                            </DataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </TextBlock.Style>
+                    </TextBlock>
+                  </Border>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
 
-        <DataGrid.RowStyle>
-          <Style TargetType="DataGridRow">
-            <Setter Property="ToolTip" Value="{Binding EstadoDisplay}"/>
-          </Style>
-        </DataGrid.RowStyle>
-      </DataGrid>
+            <DataGridTemplateColumn Header="Partidas" Width="95">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <Border CornerRadius="8" Padding="6,1.5" Margin="2"
+                          Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+                          HorizontalAlignment="Left" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding PartidasBadgeText}" FontSize="10.5" Foreground="{DynamicResource Brush.Ink2}" />
+                  </Border>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+
+            <DataGridTextColumn Header="Fecha" Binding="{Binding FechaDisplay}" Width="95">
+              <DataGridTextColumn.ElementStyle>
+                <Style TargetType="TextBlock">
+                  <Setter Property="FontFamily" Value="{StaticResource Font.Mono}"/>
+                  <Setter Property="TextAlignment" Value="Right"/>
+                  <Setter Property="VerticalAlignment" Value="Center"/>
+                  <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}"/>
+                </Style>
+              </DataGridTextColumn.ElementStyle>
+            </DataGridTextColumn>
+
+            <DataGridTextColumn Header="Creada por" Binding="{Binding CreadoPor}" Width="110">
+              <DataGridTextColumn.ElementStyle>
+                <Style TargetType="TextBlock">
+                  <Setter Property="VerticalAlignment" Value="Center"/>
+                  <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}"/>
+                </Style>
+              </DataGridTextColumn.ElementStyle>
+            </DataGridTextColumn>
+
+            <DataGridTextColumn Header="Impacto Venta" Binding="{Binding DeltaDisplay}" Width="115">
+              <DataGridTextColumn.ElementStyle>
+                <Style TargetType="TextBlock">
+                  <Setter Property="FontFamily" Value="{StaticResource Font.Mono}"/>
+                  <Setter Property="FontWeight" Value="SemiBold"/>
+                  <Setter Property="TextAlignment" Value="Right"/>
+                  <Setter Property="VerticalAlignment" Value="Center"/>
+                  <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}"/>
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding DeltaKind}" Value="Aumenta">
+                      <Setter Property="Foreground" Value="{DynamicResource Brush.Danger}"/>
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding DeltaKind}" Value="Reduce">
+                      <Setter Property="Foreground" Value="{DynamicResource Brush.Success}"/>
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </DataGridTextColumn.ElementStyle>
+            </DataGridTextColumn>
+
+            <DataGridTextColumn Header="Nota" Binding="{Binding Nota}" Width="140">
+              <DataGridTextColumn.ElementStyle>
+                <Style TargetType="TextBlock">
+                  <Setter Property="VerticalAlignment" Value="Center"/>
+                  <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                  <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}"/>
+                </Style>
+              </DataGridTextColumn.ElementStyle>
+            </DataGridTextColumn>
+          </DataGrid.Columns>
+
+          <DataGrid.RowStyle>
+            <Style TargetType="DataGridRow">
+              <Setter Property="ToolTip" Value="{Binding EstadoDisplay}"/>
+            </Style>
+          </DataGrid.RowStyle>
+        </DataGrid>
+      </Grid>
+    </Border>
+
+    <!-- ─── Inspector Contextual de Adicional Seleccionado ──────────────────── -->
+    <Border Grid.Row="5" Margin="0,10,0,0"
+            Background="{DynamicResource Brush.Surface}"
+            BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="8"
+            Padding="14,10"
+            Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibility}}">
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="2*"/>
+          <ColumnDefinition Width="Auto"/>
+          <ColumnDefinition Width="3*"/>
+          <ColumnDefinition Width="Auto"/>
+          <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Columna 1: Identificación y Estado -->
+        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+          <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+            <TextBlock Text="{Binding Selected.Numero}" FontFamily="{StaticResource Font.Mono}"
+                       FontWeight="Bold" FontSize="13" Foreground="{DynamicResource Brush.Ink}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+            <Border CornerRadius="10" BorderThickness="1" Padding="6,1" VerticalAlignment="Center"
+                    Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}">
+              <TextBlock Text="{Binding Selected.EstadoDisplay}" FontSize="10" FontWeight="SemiBold"
+                         Foreground="{DynamicResource Brush.Ink2}"/>
+            </Border>
+            <Border CornerRadius="10" BorderThickness="1" Padding="6,1" Margin="6,0,0,0" VerticalAlignment="Center"
+                    Background="{DynamicResource Brush.BlueSoft}" BorderBrush="{DynamicResource Brush.Blue}">
+              <TextBlock Text="{Binding Selected.PartidasBadgeText}" FontSize="10" FontWeight="SemiBold"
+                         Foreground="{DynamicResource Brush.Blue}"/>
+            </Border>
+          </StackPanel>
+
+          <TextBlock Text="{Binding Selected.Titulo}" FontSize="12" FontWeight="SemiBold"
+                     Foreground="{DynamicResource Brush.Ink}" TextTrimming="CharacterEllipsis"/>
+
+          <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+            <TextBlock Text="Creado por " FontSize="10.5" Foreground="{DynamicResource Brush.Muted}"/>
+            <TextBlock Text="{Binding Selected.CreadoPor}" FontSize="10.5" FontWeight="Medium" Foreground="{DynamicResource Brush.Ink2}" Margin="0,0,10,0"/>
+            <TextBlock Text="Fecha: " FontSize="10.5" Foreground="{DynamicResource Brush.Muted}"/>
+            <TextBlock Text="{Binding Selected.FechaDisplay}" FontFamily="{StaticResource Font.Mono}" FontSize="10.5" Foreground="{DynamicResource Brush.Ink2}"/>
+          </StackPanel>
+        </StackPanel>
+
+        <Separator Grid.Column="1" Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="14,2"/>
+
+        <!-- Columna 2: Desglose Económico -->
+        <Grid Grid.Column="2" VerticalAlignment="Center">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="1.2*"/>
+          </Grid.ColumnDefinitions>
+
+          <Border Grid.Column="0" Style="{StaticResource ChipCard}" Margin="0,0,6,0" Padding="8,5">
+            <StackPanel>
+              <TextBlock Text="{Binding Selected.DeltaCostoDisplay}" FontFamily="{StaticResource Font.Mono}"
+                         FontWeight="SemiBold" FontSize="11.5" Foreground="{DynamicResource Brush.Ink2}"/>
+              <TextBlock Text="Costo Directo" FontSize="9.5" Foreground="{DynamicResource Brush.Muted}"/>
+            </StackPanel>
+          </Border>
+
+          <Border Grid.Column="1" Style="{StaticResource ChipCard}" Margin="0,0,6,0" Padding="8,5">
+            <StackPanel>
+              <TextBlock FontFamily="{StaticResource Font.Mono}" FontWeight="SemiBold" FontSize="11.5" Foreground="{DynamicResource Brush.Ink2}">
+                <Run Text="{Binding Selected.GastosGeneralesPct, StringFormat={}{0:N0}%}"/>
+                <Run Text=" / "/>
+                <Run Text="{Binding Selected.UtilidadPct, StringFormat={}{0:N0}%}"/>
+              </TextBlock>
+              <TextBlock Text="GG% / Utilidad%" FontSize="9.5" Foreground="{DynamicResource Brush.Muted}"/>
+            </StackPanel>
+          </Border>
+
+          <Border Grid.Column="2" Style="{StaticResource ChipCard}" Padding="8,5" BorderBrush="{DynamicResource Brush.Accent}">
+            <StackPanel>
+              <TextBlock Text="{Binding Selected.DeltaDisplay}" FontFamily="{StaticResource Font.Mono}"
+                         FontWeight="Bold" FontSize="12.5" Foreground="{DynamicResource Brush.Accent}"/>
+              <TextBlock Text="Venta Neta Adicional" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}"/>
+            </StackPanel>
+          </Border>
+        </Grid>
+
+        <Separator Grid.Column="3" Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="14,2"/>
+
+        <!-- Columna 3: Acciones Rápidas -->
+        <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
+          <Button Style="{StaticResource Button.Secondary}" Content="Editar (Enter)" Height="28" Padding="10,0"
+                  IsEnabled="{Binding CanEdit}" Click="OnEditClick" Margin="0,0,6,0" ToolTip="Editar líneas y cubicaciones del adicional" />
+          <Button Style="{StaticResource Button.Secondary}" Content="Duplicar (Ctrl+D)" Height="28" Padding="10,0"
+                  IsEnabled="{Binding CanDuplicate}" Click="OnDuplicateClick" ToolTip="Clonar orden a nuevo borrador" />
+        </StackPanel>
+      </Grid>
     </Border>
   </Grid>
 </UserControl>

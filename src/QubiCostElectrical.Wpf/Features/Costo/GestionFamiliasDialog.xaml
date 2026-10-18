@@ -11,7 +11,7 @@
   <Window.Resources>
     <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
   </Window.Resources>
-  <Border Style="{StaticResource Dialog.Chrome}" Margin="16">
+  <Border Style="{StaticResource Dialog.Chrome}">
     <Grid>
       <Grid.RowDefinitions>
         <!-- Header -->
@@ -27,11 +27,19 @@
       </Grid.RowDefinitions>
 
       <!-- Encabezado -->
-      <StackPanel Grid.Row="0" Margin="0,0,0,14">
-        <TextBlock Text="Administración de Familias" Style="{StaticResource Dialog.HeaderTitle}" />
-        <TextBlock Style="{StaticResource Dialog.HeaderSubtitle}"
-                   Text="Catálogo de familias eléctricas del proyecto. Las familias activas se usan para autocompletar en el Alta Rápida de materiales y calcular markups de sobreventa en Costos." />
-      </StackPanel>
+      <DockPanel Grid.Row="0" Margin="0,0,0,16" LastChildFill="True">
+        <Border Style="{StaticResource Dialog.HeaderIconContainer}" DockPanel.Dock="Left">
+          <Path Data="M 20.59 13.41 l -7.17 7.17 a 2 2 0 0 1 -2.83 0 L 2 12 V 2 h 10 l 8.59 8.59 a 2 2 0 0 1 0 2.82 Z M 7 7 h.01"
+                Stroke="{DynamicResource Brush.Blue}" StrokeThickness="1.6"
+                StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                Width="16" Height="16" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Border>
+        <StackPanel VerticalAlignment="Center">
+          <TextBlock Text="Administración de Familias" Style="{StaticResource Dialog.HeaderTitle}" />
+          <TextBlock Style="{StaticResource Dialog.HeaderSubtitle}" Margin="0"
+                     Text="Catálogo de familias eléctricas del proyecto. Las familias activas se usan para autocompletar en el Alta Rápida de materiales y calcular markups de sobreventa en Costos." />
+        </StackPanel>
+      </DockPanel>
 
       <!-- Panel de creación rápida y búsqueda -->
       <Border Grid.Row="1" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}"
@@ -317,7 +325,7 @@
                    Text="Los cambios se aplican de inmediato en este presupuesto." />
 
         <Button Grid.Column="1" Content="Cerrar" Style="{StaticResource Button.Primary}"
-                Height="32" Padding="20,0" Click="OnCerrarClick" />
+                Height="34" MinWidth="110" Click="OnCerrarClick" IsDefault="True" />
       </Grid>
     </Grid>
   </Border>

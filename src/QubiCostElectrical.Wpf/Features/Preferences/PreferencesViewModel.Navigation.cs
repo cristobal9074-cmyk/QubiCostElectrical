@@ -21,6 +21,7 @@ public sealed class PreferencesNavItemVm
     public PreferencesSection Section { get; init; }
     public string Title { get; init; } = "";
     public string Description { get; init; } = "";
+    public string ShortcutCue { get; init; } = "";
 }
 
 public sealed partial class PreferencesViewModel
@@ -29,13 +30,13 @@ public sealed partial class PreferencesViewModel
 
     public ObservableCollection<PreferencesNavItemVm> NavSections { get; } = new()
     {
-        new() { Section = PreferencesSection.Identity, Title = "Identidad", Description = "Empresa y membrete" },
-        new() { Section = PreferencesSection.General, Title = "General", Description = "Carpetas y rutas" },
-        new() { Section = PreferencesSection.Theme, Title = "Apariencia", Description = "Tema claro/oscuro" },
-        new() { Section = PreferencesSection.Updates, Title = "Actualizaciones", Description = "Canal y versión" },
-        new() { Section = PreferencesSection.Diagnostics, Title = "Diagnóstico", Description = "Logs y recuperación" },
-        new() { Section = PreferencesSection.Users, Title = "Usuarios", Description = "Cuentas y roles" },
-        new() { Section = PreferencesSection.Shortcuts, Title = "Atajos", Description = "Teclado en cubicación" },
+        new() { Section = PreferencesSection.Identity, Title = "Identidad", Description = "Empresa y membrete", ShortcutCue = "Ctrl+1" },
+        new() { Section = PreferencesSection.General, Title = "General", Description = "Carpetas y rutas", ShortcutCue = "Ctrl+2" },
+        new() { Section = PreferencesSection.Theme, Title = "Apariencia", Description = "Tema claro/oscuro", ShortcutCue = "Ctrl+3" },
+        new() { Section = PreferencesSection.Updates, Title = "Actualizaciones", Description = "Canal y versión", ShortcutCue = "Ctrl+4" },
+        new() { Section = PreferencesSection.Diagnostics, Title = "Diagnóstico", Description = "Logs y recuperación", ShortcutCue = "Ctrl+5" },
+        new() { Section = PreferencesSection.Users, Title = "Usuarios", Description = "Cuentas y roles", ShortcutCue = "Ctrl+6" },
+        new() { Section = PreferencesSection.Shortcuts, Title = "Atajos", Description = "Teclado en cubicación", ShortcutCue = "Ctrl+7" },
     };
 
     public PreferencesSection SelectedSection

@@ -8,7 +8,7 @@
         WindowStartupLocation="CenterOwner"
         KeyDown="OnWindowKeyDown">
   
-  <Border Style="{StaticResource Dialog.Chrome}" Margin="16">
+  <Border Style="{StaticResource Dialog.Chrome}">
   <Grid Background="{DynamicResource Brush.Canvas}">
     <Grid.RowDefinitions>
       <!-- Premium Top Bar Banner -->
@@ -66,9 +66,9 @@
 
         <!-- Right Actions -->
         <StackPanel Grid.Column="1" Orientation="Horizontal">
-          <Button Style="{StaticResource Button.Secondary}" Content="Guardar como…" Click="OnSaveClick" Margin="0,0,8,0" MinWidth="130" Height="32" />
-          <Button Style="{StaticResource Button.Primary}" Content="Imprimir reporte" Click="OnPrintClick" Margin="0,0,8,0" MinWidth="140" Height="32" />
-          <Button Style="{StaticResource Button.Secondary}" Content="Cerrar" IsCancel="True" Click="OnCloseClick" MinWidth="90" Height="32" />
+          <Button Style="{StaticResource Button.Secondary}" Content="Cerrar" IsCancel="True" Click="OnCloseClick" MinWidth="90" Height="34" Margin="0,0,10,0" />
+          <Button Style="{StaticResource Button.Secondary}" Content="Guardar como…" Click="OnSaveClick" Margin="0,0,10,0" MinWidth="130" Height="34" />
+          <Button Style="{StaticResource Button.Primary}" Content="Imprimir reporte" Click="OnPrintClick" MinWidth="140" Height="34" />
         </StackPanel>
       </Grid>
     </Border>

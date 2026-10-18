@@ -8,7 +8,7 @@
         WindowStartupLocation="CenterOwner"
         ResizeMode="CanResizeWithGrip">
 
-  <Border Style="{StaticResource Dialog.Chrome}" Margin="16" Padding="18">
+  <Border Style="{StaticResource Dialog.Chrome}" Padding="18">
     <Grid>
       <Grid.RowDefinitions>
         <RowDefinition Height="Auto" />
@@ -19,8 +19,10 @@
       <!-- ── CABECERA COCKPIT ─────────────────────────────────────────────── -->
       <DockPanel Grid.Row="0" Margin="0,0,0,14" LastChildFill="True">
         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-          <Border Width="42" Height="42" CornerRadius="10" Background="#EFF6FF" BorderBrush="#DBEAFE" BorderThickness="1" Margin="0,0,12,0" VerticalAlignment="Center">
-            <TextBlock Text="🏢" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center" />
+          <Border Style="{StaticResource Dialog.HeaderIconContainer}" Margin="0,0,12,0">
+            <Path Data="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z M6 12H4a2 2 0 0 0-2 2v8 M18 9h2a2 2 0 0 1 2 2v11 M10 6h4 M10 10h4 M10 14h4 M10 18h4"
+                  Stroke="{DynamicResource Brush.Blue}" StrokeThickness="1.5"
+                  HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="16" Height="16"/>
           </Border>
           <StackPanel VerticalAlignment="Center">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -99,7 +101,7 @@
                 </Grid>
               </StackPanel>
 
-              <Separator Background="{DynamicResource Brush.Line}" Margin="0,4,0,12" />
+              <Separator Style="{StaticResource Separator.Section}" />
 
               <!-- 2. Subterráneos Stepper -->
               <Grid Margin="0,0,0,14">
@@ -112,13 +114,13 @@
                   <TextBlock Text="Niveles bajo cota de terreno" FontSize="10" Foreground="{DynamicResource Brush.Muted}" />
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
-                  <Button Style="{StaticResource Button.Secondary}" Content="-" Width="28" Height="28" Click="OnSubterraneosMinusClick" />
+                  <Button Style="{StaticResource Button.Secondary}" Content="-" Width="28" Height="28" Click="OnPisosComunesMinusClick" />
                   <TextBox x:Name="TxtSubterraneos" Text="2" Width="42" Height="28" Margin="3,0" TextAlignment="Center" VerticalContentAlignment="Center" TextChanged="OnSubterraneosTextChanged" />
                   <Button Style="{StaticResource Button.Secondary}" Content="+" Width="28" Height="28" Click="OnSubterraneosPlusClick" />
                 </StackPanel>
               </Grid>
 
-              <Separator Background="{DynamicResource Brush.Line}" Margin="0,4,0,12" />
+              <Separator Style="{StaticResource Separator.Section}" />
 
               <!-- 3. Configuración por Torre (Pisos y Cubiertas) -->
               <TextBlock Text="NIVELES POR CUERPO / TORRE" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,8" />
@@ -175,8 +177,8 @@
       <!-- ── FOOTER ───────────────────────────────────────────────────────── -->
       <DockPanel Grid.Row="2" Margin="0,14,0,0" LastChildFill="True">
         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-          <Button Style="{StaticResource Button.Secondary}" Content="Cancelar" MinWidth="100" Margin="0,0,8,0" IsCancel="True" />
-          <Button Style="{StaticResource Button.Primary}" MinWidth="150" IsDefault="True" Click="OnGenerarClick">
+          <Button Style="{StaticResource Button.Secondary}" Content="Cancelar" MinWidth="100" Height="34" Margin="0,0,10,0" IsCancel="True" />
+          <Button Style="{StaticResource Button.Primary}" MinWidth="150" Height="34" IsDefault="True" Click="OnGenerarClick">
             <StackPanel Orientation="Horizontal">
               <TextBlock Text="⚡" Margin="0,0,6,0" VerticalAlignment="Center" />
               <TextBlock Text="Generar Zonas" FontWeight="SemiBold" VerticalAlignment="Center" />

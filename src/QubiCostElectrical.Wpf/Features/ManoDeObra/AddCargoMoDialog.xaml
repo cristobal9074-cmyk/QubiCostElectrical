@@ -8,7 +8,7 @@
         ResizeMode="NoResize"
         Loaded="OnWindowLoaded"
         KeyDown="OnWindowKeyDown">
-  <Border Style="{StaticResource Dialog.Chrome}" Margin="16">
+  <Border Style="{StaticResource Dialog.Chrome}">
     <Grid>
       <Grid.RowDefinitions>
         <RowDefinition Height="Auto" />
@@ -17,16 +17,24 @@
       </Grid.RowDefinitions>
 
       <!-- Encabezado -->
-      <StackPanel Grid.Row="0" Margin="0,0,0,14">
-        <TextBlock x:Name="HeaderTitleText" Text="Nuevo Puesto Laboral" Style="{StaticResource Dialog.HeaderTitle}" />
-        <TextBlock x:Name="HeaderSubtitleText" Text="Ingrese la información del nuevo cargo para incorporarlo al proyecto."
-                   Style="{StaticResource Dialog.HeaderSubtitle}" Margin="0,2,0,0" />
-      </StackPanel>
+      <DockPanel Grid.Row="0" Margin="0,0,0,16" LastChildFill="True">
+        <Border Style="{StaticResource Dialog.HeaderIconContainer}" DockPanel.Dock="Left">
+          <Path Data="M 16 21 v -2 a 4 4 0 0 0 -4 -4 H 6 a 4 4 0 0 0 -4 4 v 2 M 9 11 a 4 4 0 1 0 0 -8 a 4 4 0 0 0 0 8 Z M 22 21 v -2 a 4 4 0 0 0 -3 -3.87 M 16 3.13 a 4 4 0 0 1 0 7.75"
+                Stroke="{DynamicResource Brush.Blue}" StrokeThickness="1.6"
+                StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                Width="16" Height="16" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Border>
+        <StackPanel VerticalAlignment="Center">
+          <TextBlock x:Name="HeaderTitleText" Text="Nuevo Puesto Laboral" Style="{StaticResource Dialog.HeaderTitle}" />
+          <TextBlock x:Name="HeaderSubtitleText" Text="Ingrese la información del nuevo cargo para incorporarlo al proyecto."
+                     Style="{StaticResource Dialog.HeaderSubtitle}" Margin="0" />
+        </StackPanel>
+      </DockPanel>
 
       <!-- Formulario -->
       <StackPanel Grid.Row="1" Margin="0,0,0,16">
         <!-- Nombre del cargo -->
-        <TextBlock Text="Nombre del puesto *" Style="{StaticResource Text.Caption}" Margin="0,0,0,4" />
+        <TextBlock Text="Nombre del puesto *" Style="{StaticResource Form.Label}" />
         <TextBox x:Name="NombreBox" Style="{StaticResource Form.TextBox}"
                  TextChanged="OnNombreTextChanged" Margin="0,0,0,12" />
 
@@ -39,7 +47,7 @@
 
           <!-- Código / Tag -->
           <StackPanel Grid.Column="0">
-            <TextBlock Text="Tag / Sigla *" Style="{StaticResource Text.Caption}" Margin="0,0,0,4" />
+            <TextBlock Text="Tag / Sigla *" Style="{StaticResource Form.Label}" />
             <TextBox x:Name="TagBox" Style="{StaticResource Form.TextBox}" MaxLength="6"
                      FontFamily="{StaticResource Font.Mono}" FontWeight="Bold"
                      TextChanged="OnTagTextChanged" />
@@ -47,7 +55,7 @@
 
           <!-- Sueldo Base Mensual -->
           <StackPanel Grid.Column="2">
-            <TextBlock Text="Sueldo base mensual (CLP) *" Style="{StaticResource Text.Caption}" Margin="0,0,0,4" />
+            <TextBlock Text="Sueldo base mensual (CLP) *" Style="{StaticResource Form.Label}" />
             <TextBox x:Name="SueldoBox" Style="{StaticResource Form.TextBox}"
                      FontFamily="{StaticResource Font.Mono}" Text="750.000"
                      GotFocus="OnSueldoGotFocus" LostFocus="OnSueldoLostFocus" />
@@ -63,13 +71,13 @@
           </Grid.ColumnDefinitions>
 
           <StackPanel Grid.Column="0">
-            <TextBlock Text="Dotación mensual fija *" Style="{StaticResource Text.Caption}" Margin="0,0,0,4" />
+            <TextBlock Text="Dotación mensual fija *" Style="{StaticResource Form.Label}" />
             <TextBox x:Name="DotacionBox" Style="{StaticResource Form.TextBox}"
                      FontFamily="{StaticResource Font.Mono}" Text="1" />
           </StackPanel>
 
           <StackPanel Grid.Column="2">
-            <TextBlock Text="Fracción de obra (0 a 1) *" Style="{StaticResource Text.Caption}" Margin="0,0,0,4" />
+            <TextBlock Text="Fracción de obra (0 a 1) *" Style="{StaticResource Form.Label}" />
             <TextBox x:Name="FraccionBox" Style="{StaticResource Form.TextBox}"
                      FontFamily="{StaticResource Font.Mono}" Text="1,00"
                      ToolTip="1,00 = 100% cobrado en esta obra. Ej: 0,50 para media jornada o 50%" />
@@ -84,12 +92,12 @@
         </Border>
       </StackPanel>
 
-      <!-- Botones de acción -->
-      <DockPanel Grid.Row="2" Style="{StaticResource Dialog.Footer}" LastChildFill="False">
+      <!-- Botones de acción: Cancelar a la izquierda de Guardar -->
+      <DockPanel Grid.Row="2" Style="{StaticResource Dialog.Footer}">
         <Button DockPanel.Dock="Right" Style="{StaticResource Button.Primary}" Content="Guardar puesto"
-                MinWidth="130" IsDefault="True" Click="OnAcceptClick" />
+                MinWidth="130" Height="34" IsDefault="True" Click="OnAcceptClick" />
         <Button DockPanel.Dock="Right" Style="{StaticResource Button.Secondary}" Content="Cancelar"
-                MinWidth="90" Margin="0,0,8,0" IsCancel="True" />
+                MinWidth="90" Height="34" Margin="0,0,10,0" IsCancel="True" />
       </DockPanel>
     </Grid>
   </Border>

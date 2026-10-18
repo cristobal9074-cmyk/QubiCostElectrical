@@ -18,6 +18,8 @@ public sealed partial class PreferencesViewModel : WorkspacePageViewModelBase, I
 {
     private readonly IAuthService auth;
     private readonly IPermissionService permissions;
+    private readonly IUserPreferencesStore preferencesStore;
+    private readonly IFileOpenService fileOpener;
     private UserPreferences _saved;
     private UserPreferences _draft = new();
     private BitmapImage? _logoImageSource;

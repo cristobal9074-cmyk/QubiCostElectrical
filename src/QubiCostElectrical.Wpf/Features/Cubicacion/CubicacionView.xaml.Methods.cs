@@ -83,6 +83,14 @@ public partial class CubicacionView : UserControl
         var key = e.Key == Key.System ? e.SystemKey : e.Key;
         var mods = Keyboard.Modifiers;
 
+        if (key == Key.Escape && !string.IsNullOrEmpty(Vm.PartidaFilter))
+        {
+            if (Vm.ClearPartidaFilterCommand.CanExecute(null))
+                Vm.ClearPartidaFilterCommand.Execute(null);
+            e.Handled = true;
+            return;
+        }
+
         // Ctrl++ (y Ctrl+Shift++ en teclados donde + va con Shift) → agregar partida
         bool ctrl = mods.HasFlag(ModifierKeys.Control);
         bool alt = mods.HasFlag(ModifierKeys.Alt);
@@ -144,7 +152,7 @@ public partial class CubicacionView : UserControl
         if (sender is Button btn && Vm != null)
         {
             var menu = new ContextMenu();
-            var prefs = UserPreferencesStore.Load();
+            var prefs = WpfAppHost.Current?.UserPreferencesStore?.Load() ?? new UserPreferences();
             var suggestions = ObservationMemoryStore.GetSuggestions(prefs);
 
             if (suggestions.Count == 0)
@@ -649,11 +657,11 @@ public partial class CubicacionView : UserControl
         // 3. Clic para tomar casillas mientras se edita una casilla de sector
         if (focusedTb != null && FindParent<DataGridCell>(focusedTb) is { } editingCell && _sectorColumns.Contains(editingCell.Column) && cell != editingCell)
         {
-            if (focusedTb.Text.StartsWith("=") || focusedTb.Text.StartsWith("+") || EndsWithFormulaOperator(focusedTb))
+            if (focusedTb.Text.StartsWith("=") || focusedTb.Text.StartsWith("+") || CubicacionSectorFormulaController.EndsWithFormulaOperator(focusedTb))
             {
                 if (rowIndex >= 0 && CubicacionFormulaPicker.TryPickSector(focusedTb, rowIndex, _sectorColumns.IndexOf(cell.Column)))
                 {
-                    RefreshSectorReferenceHighlights(focusedTb);
+                    _sectorFormulaController.RefreshSectorReferenceHighlights(focusedTb, Vm);
                     e.Handled = true;
                     return;
                 }
@@ -849,11 +857,7 @@ public partial class CubicacionView : UserControl
 
     private void OnGridCellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
     {
-        if (_sectorPickRow >= 0)
-            FinalizeSectorPick();
-        ClearAllSectorReferenceHighlights();
-        _sectorLastPickedRow = -1;
-        _sectorLastPickedCol = -1;
+        _sectorFormulaController.OnCellEditEnding(Vm);
 
         if ((ReferenceEquals(e.Column, CodigoColumn) || ReferenceEquals(e.Column, DescripcionColumn)) && e.EditingElement is TextBox tb)
         {
@@ -1732,23 +1736,7 @@ public partial class CubicacionView : UserControl
         }
     }
 
-    // Estado del "pickeo" de referencias a CUALQUIER celda (fila + columna) desde una casilla
-    // de sector — arma tokens "F{fila}C{columna}", resueltos como referencia viva por el motor
-    // de fórmulas (ver EvaluateSafeWithRowReferences). -1 = no hay pickeo en curso.
-    private int _sectorPickRow = -1;
-    private int _sectorPickCol = -1;
-    private int _sectorPickTokenStart = -1;
-    private int _sectorPickTokenLength;
-    // Última celda efectivamente elegida en ESTA edición (persiste entre referencias
-    // encadenadas, se limpia solo al terminar de editar la celda) — el siguiente pickeo
-    // arranca desde ACÁ, no desde la columna de la celda que se está editando, para que "una
-    // flecha a la izquierda" mueva un paso desde donde apuntabas antes, no desde donde escribís.
-    private int _sectorLastPickedRow = -1;
-    private int _sectorLastPickedCol = -1;
-    // Todas las filas actualmente resaltadas porque su celda aparece referenciada en el texto
-    // de la fórmula que se está editando — no solo la última "pickeada", para que el usuario
-    // vea de un vistazo TODO lo que está sumando, como Excel colorea cada rango referenciado.
-    private readonly HashSet<int> _sectorHighlightedRows = new();
+    private readonly CubicacionSectorFormulaController _sectorFormulaController = new();
 
     private bool HandleSectorNavigation(KeyEventArgs e)
     {
@@ -1757,39 +1745,27 @@ public partial class CubicacionView : UserControl
 
         var editingNow = IsGridEditing();
 
-        // Escribiendo en una casilla de sector: CUALQUIER flecha (sin modificador) arma o mueve
-        // una referencia viva a la celda apuntada (fila + columna), igual que escribir "=" y
-        // apuntar con el mouse a cualquier celda en Excel real — en vez de confirmar y saltar.
-        // Se activa si: ya hay un pickeo en curso, el carácter justo antes del cursor es un
-        // operador (+, -, *, /, =), O la fórmula ya tiene al menos una referencia armada antes
-        // (F{fila}C{columna}) y el cursor está al final — así apretar flecha de nuevo encadena
-        // otra suma sola, sin que el usuario tenga que tipear "+" a mano cada vez. Fuera de eso
-        // (ej. una celda con un número plano tipeado a mano), la flecha se comporta como
-        // siempre: confirma y mueve a la celda vecina.
         if (editingNow && e.KeyboardDevice.Modifiers == ModifierKeys.None && e.Key is Key.Up or Key.Down or Key.Left or Key.Right
             && _sectorColumns.Contains(ResourceGrid.CurrentCell.Column)
-            && (_sectorPickRow >= 0 || (Keyboard.FocusedElement is TextBox activeEditor && CanStartSectorPick(activeEditor))))
+            && (_sectorFormulaController.IsPickingInProgress || (Keyboard.FocusedElement is TextBox activeEditor && CubicacionSectorFormulaController.CanStartSectorPick(activeEditor))))
         {
-            HandleSectorPick(e.Key);
-            e.Handled = true;
-            return true;
+            if (Keyboard.FocusedElement is TextBox activeTb)
+            {
+                _sectorFormulaController.HandleSectorPick(e.Key, activeTb, Vm, ResourceGrid, _sectorColumns);
+                e.Handled = true;
+                return true;
+            }
         }
 
-        // Cualquier otra tecla mientras había una referencia en curso la deja fija (no la sigue
-        // moviendo) — la próxima flecha empieza una referencia nueva.
-        if (_sectorPickRow >= 0)
-            FinalizeSectorPick();
+        if (_sectorFormulaController.IsPickingInProgress)
+            _sectorFormulaController.FinalizeSectorPick();
 
         var modifiers = e.KeyboardDevice.Modifiers;
         int currentSlot = _sectorColumns.IndexOf(ResourceGrid.CurrentCell.Column);
-        // Capturada ANTES de cualquier CommitEdit — ver comentario en FocusSectorColumn/
-        // FocusCodigoColumn sobre por qué no hay que releer ResourceGrid.CurrentItem después.
         object? activeRow = ResourceGrid.CurrentCell.Item;
 
         if (modifiers == ModifierKeys.Control && e.Key is Key.Left or Key.Right)
         {
-            // Ctrl+Derecha desde la columna Código → ir al primer sector absoluto. Este chequeo
-            // no depende de currentSlot (Código nunca es una columna de sector).
             if (e.Key == Key.Right && ReferenceEquals(ResourceGrid.CurrentCell.Column, CodigoColumn))
             {
                 FocusSectorColumn(activeRow, 0);
@@ -1798,12 +1774,8 @@ public partial class CubicacionView : UserControl
             }
         }
 
-        // El resto de este bloque solo aplica con el foco realmente parado en una celda de
-        // sector. Si currentSlot es -1 (foco en Código/Descripción/Unidad/Cantidad), dejar que
-        // el manejo genérico de Ctrl+flecha (que nunca cambia de fila) se haga cargo.
         if (modifiers == ModifierKeys.Control && e.Key is Key.Left or Key.Right && currentSlot >= 0)
         {
-            // Ctrl+Izquierda en el primer sector absoluto (0-299) → volver a Código.
             if (e.Key == Key.Left && currentSlot == 0)
             {
                 FocusCodigoColumn(activeRow);
@@ -1811,9 +1783,6 @@ public partial class CubicacionView : UserControl
                 return true;
             }
 
-            // Estilo Excel real: salta al borde del bloque de datos entre los hasta 300
-            // sectores de la fila (no una paginación fija que ignora dónde hay contenido). Mira
-            // el arreglo completo (row.Source.QtyExpressions).
             var currentRow = activeRow as CubicacionRowVm;
             int direction = e.Key == Key.Right ? 1 : -1;
             int targetAbsolute = FindSectorDataEdge(
@@ -1828,202 +1797,15 @@ public partial class CubicacionView : UserControl
         return false;
     }
 
-    // Misma regla que usa Excel para Ctrl+flecha: si la celda actual tiene contenido y la
-    // siguiente también, avanza hasta el final del bloque contiguo; si la siguiente está vacía
-    // (o la actual lo está), salta directo a la próxima celda con contenido; si no hay ninguna
-    // más en esa dirección, va al extremo del rango (0 o max-1).
     internal static bool SectorHasContent(string[]? expressions, int index)
         => CubicacionSectorNavigation.HasContent(expressions, index);
 
     internal static int FindSectorDataEdge(string[]? expressions, int current, int direction, int max)
         => CubicacionSectorNavigation.FindDataEdge(expressions, current, direction, max);
 
-    // El carácter justo antes del cursor es un operador que espera un operando a continuación
-    // — igual que Excel: recién ahí las flechas empiezan a "apuntar" a otra celda.
-    private static bool EndsWithFormulaOperator(TextBox textBox)
-    {
-        int idx = textBox.CaretIndex;
-        if (idx <= 0 || idx > textBox.Text.Length) return false;
-        return textBox.Text[idx - 1] is '+' or '-' or '*' or '/' or '=' or '(';
-    }
+    private void ClearAllSectorReferenceHighlights() => _sectorFormulaController.ClearAllSectorReferenceHighlights(Vm);
 
-    private static readonly System.Text.RegularExpressions.Regex SectorCellReferenceRegex =
-        new(@"[Ff](\d+)[Cc](\d+)", System.Text.RegularExpressions.RegexOptions.Compiled);
-
-    // Con el cursor al final y la fórmula ya conteniendo al menos una referencia armada antes
-    // (F{fila}C{columna}), se puede encadenar otra suma con solo apretar flecha de nuevo — no
-    // hace falta tipear "+" a mano cada vez (ver HandleSectorPick, que inserta el operador
-    // solo). Evita el bug reportado en uso real: "quiero sumar varias y no puedo".
-    private static bool CanStartSectorPick(TextBox textBox)
-        => EndsWithFormulaOperator(textBox)
-           || (textBox.CaretIndex == textBox.Text.Length && SectorCellReferenceRegex.IsMatch(textBox.Text));
-
-    // Inserta o mueve, en el mismo lugar del texto, el token F{fila}C{columna} de la celda que
-    // se está "pickeando" con las flechas dentro de una casilla de sector — el token queda
-    // resuelto por el motor de fórmulas como una referencia VIVA a esa celda exacta (ver
-    // EvaluateSafeWithRowReferences), no un texto fijo. La columna se mueve solo dentro de la
-    // ventana de 15 sectores VISIBLE en pantalla — no se desplaza la ventana durante el pickeo
-    // para no reconstruir las columnas de la grilla en medio de una edición en curso.
-    private void HandleSectorPick(Key key)
-    {
-        if (Keyboard.FocusedElement is not TextBox textBox) return;
-        if (Vm.Rows.Count == 0) return;
-
-        if (_sectorPickRow < 0)
-        {
-            // Encadenando: ya hay una referencia armada antes y no terminaba en operador —
-            // se entiende que el usuario quiere sumar OTRO término, así que se inserta el "+"
-            // automáticamente antes de empezar el nuevo pickeo.
-            if (!EndsWithFormulaOperator(textBox) && textBox.CaretIndex == textBox.Text.Length)
-            {
-                int insertAt = textBox.Text.Length;
-                textBox.Text = textBox.Text.Insert(insertAt, "+");
-                textBox.CaretIndex = insertAt + 1;
-            }
-
-            // Arranca desde la ÚLTIMA celda efectivamente elegida en esta edición, si hubo una
-            // (encadenando una segunda referencia, el primer paso mueve desde ahí, no desde la
-            // columna de la celda que se está editando — si no, hacía falta un paso "extra" de
-            // más para llegar adonde el usuario apuntaba). Solo la PRIMERA referencia de toda la
-            // edición arranca desde la celda actual, como Excel.
-            if (_sectorLastPickedRow >= 0)
-            {
-                _sectorPickRow = _sectorLastPickedRow;
-                _sectorPickCol = _sectorLastPickedCol;
-            }
-            else
-            {
-                var currentRow = ResourceGrid.CurrentCell.Item as CubicacionRowVm;
-                _sectorPickRow = currentRow != null ? Vm.Rows.IndexOf(currentRow) : 0;
-                if (_sectorPickRow < 0) _sectorPickRow = 0;
-                int currentSlot = _sectorColumns.IndexOf(ResourceGrid.CurrentCell.Column);
-                _sectorPickCol = currentSlot >= 0 ? currentSlot : 0;
-            }
-        }
-
-        int rangeEnd = _sectorColumns.Count - 1;
-
-        switch (key)
-        {
-            case Key.Up: _sectorPickRow = Math.Max(0, _sectorPickRow - 1); break;
-            case Key.Down: _sectorPickRow = Math.Min(Vm.Rows.Count - 1, _sectorPickRow + 1); break;
-            case Key.Left: _sectorPickCol = Math.Max(0, _sectorPickCol - 1); break;
-            case Key.Right: _sectorPickCol = Math.Min(rangeEnd, _sectorPickCol + 1); break;
-        }
-
-        ApplySectorPick(textBox, _sectorPickRow, _sectorPickCol);
-    }
-
-    private void ApplySectorPick(TextBox textBox, int rowIndex, int colOffset)
-    {
-        _sectorLastPickedRow = rowIndex;
-        _sectorLastPickedCol = colOffset;
-
-        string token = $"F{rowIndex + 1}C{colOffset + 1}";
-        bool firstPick = _sectorPickTokenStart < 0;
-
-        if (firstPick)
-        {
-            if (textBox.SelectionLength > 0)
-            {
-                _sectorPickTokenStart = textBox.SelectionStart;
-                _sectorPickTokenLength = textBox.SelectionLength;
-            }
-            else
-            {
-                _sectorPickTokenStart = Math.Clamp(textBox.CaretIndex, 0, textBox.Text.Length);
-                _sectorPickTokenLength = 0;
-            }
-        }
-
-        string text = textBox.Text;
-        int removeLength = Math.Min(_sectorPickTokenLength, Math.Max(0, text.Length - _sectorPickTokenStart));
-        text = text.Remove(_sectorPickTokenStart, removeLength).Insert(_sectorPickTokenStart, token);
-        textBox.Text = text;
-        _sectorPickTokenLength = token.Length;
-        textBox.CaretIndex = _sectorPickTokenStart + _sectorPickTokenLength;
-
-        // Resalta TODAS las celdas referenciadas en el texto actual (no solo esta), para que se
-        // vea de un vistazo todo lo que se está sumando — a pedido explícito, como Excel colorea
-        // cada rango de una fórmula mientras se está armando.
-        RefreshSectorReferenceHighlights(textBox);
-
-        // Deliberadamente SIN ScrollIntoView acá: en una grilla virtualizada, desplazar la vista
-        // hacia la fila apuntada puede reciclar el contenedor de la fila que se está EDITANDO
-        // (si queda fuera del viewport), cortando la edición en curso a mitad de armar la
-        // fórmula — justo el bug reportado de "no puedo sumar varias". Si la fila apuntada no es
-        // visible, el usuario igual ve el resultado al confirmar; no vale el riesgo de romper la
-        // edición por mostrarla de entrada. Se refuerza el foco en el editor por si algo lo movió.
-        textBox.Focus();
-    }
-
-    // Reescanea el texto completo de la fórmula y resalta CADA celda referenciada — reemplaza
-    // por completo el conjunto anterior de resaltados (algunas pueden haberse borrado o
-    // cambiado de posición si el usuario editó el texto a mano). Agrupa por fila para poder
-    // marcar VARIAS columnas de la MISMA fila a la vez (ej. suma horizontal: F4C1+F4C2+F4C3),
-    // no solo una — antes solo quedaba resaltada la última columna de esa fila.
-    private void RefreshSectorReferenceHighlights(TextBox textBox)
-    {
-        var referencedByRow = new Dictionary<int, HashSet<int>>();
-        foreach (System.Text.RegularExpressions.Match m in SectorCellReferenceRegex.Matches(textBox.Text))
-        {
-            if (!int.TryParse(m.Groups[1].Value, out int rowNumber)) continue;
-            if (!int.TryParse(m.Groups[2].Value, out int colNumber)) continue;
-            int rowIndex = rowNumber - 1;
-            if (rowIndex < 0 || rowIndex >= Vm.Rows.Count) continue;
-            if (!referencedByRow.TryGetValue(rowIndex, out var offsets))
-                referencedByRow[rowIndex] = offsets = new HashSet<int>();
-            offsets.Add(colNumber - 1);
-        }
-
-        foreach (var rowIndex in _sectorHighlightedRows)
-        {
-            if (referencedByRow.ContainsKey(rowIndex)) continue;
-            if (rowIndex >= 0 && rowIndex < Vm.Rows.Count)
-            {
-                Vm.Rows[rowIndex].IsFormulaPickTarget = false;
-                Vm.Rows[rowIndex].ClearFormulaPickTargetOffsets();
-            }
-        }
-
-        foreach (var (rowIndex, offsets) in referencedByRow)
-        {
-            var row = Vm.Rows[rowIndex];
-            row.IsFormulaPickTarget = true;
-            row.ClearFormulaPickTargetOffsets();
-            foreach (var offset in offsets)
-                row.AddFormulaPickTargetOffset(offset);
-        }
-
-        _sectorHighlightedRows.Clear();
-        foreach (var rowIndex in referencedByRow.Keys)
-            _sectorHighlightedRows.Add(rowIndex);
-    }
-
-    private void ClearAllSectorReferenceHighlights()
-    {
-        foreach (var rowIndex in _sectorHighlightedRows)
-        {
-            if (rowIndex >= 0 && rowIndex < Vm.Rows.Count)
-            {
-                Vm.Rows[rowIndex].IsFormulaPickTarget = false;
-                Vm.Rows[rowIndex].ClearFormulaPickTargetOffsets();
-            }
-        }
-        _sectorHighlightedRows.Clear();
-    }
-
-    // Cierra la sesión de "pickeo" en curso (deja el token ya escrito tal cual) — la próxima
-    // flecha empieza una referencia nueva en vez de seguir moviendo esta. NO borra los
-    // resaltados: mientras la celda siga en edición, todas las referencias de la fórmula
-    // quedan marcadas (ver ClearAllSectorReferenceHighlights, llamado al terminar la edición).
-    private void FinalizeSectorPick()
-    {
-        _sectorPickRow = -1;
-        _sectorPickCol = -1;
-        _sectorPickTokenStart = -1;
-        _sectorPickTokenLength = 0;
-    }
+    private void FinalizeSectorPick() => _sectorFormulaController.FinalizeSectorPick();
 
     // Recibe la fila explícita (capturada en el momento del keypress, ANTES de cualquier
     // CommitEdit) en vez de releer ResourceGrid.CurrentItem dentro del callback diferido — con
@@ -2155,14 +1937,9 @@ public partial class CubicacionView : UserControl
         Vm?.NavigatePartidaRelative(offset);
     }
 
-    private string? _lastEnteredMeasurement;
+    private readonly CubicacionGridFillController _fillController = new();
 
-    private void RecordMeasurement(string? value)
-    {
-        string clean = (value ?? "").Trim();
-        if (!string.IsNullOrEmpty(clean))
-            _lastEnteredMeasurement = clean;
-    }
+    private void RecordMeasurement(string? value) => _fillController.RecordMeasurement(value);
 
     private int GetSectorSlotFromColumn(DataGridColumn? column)
     {
@@ -2170,171 +1947,11 @@ public partial class CubicacionView : UserControl
         return _sectorColumns.IndexOf(column);
     }
 
-    private void HandleFillDown()
-    {
-        if (Vm == null || Vm.IsReadOnly || Vm.SelectedPartida == null)
-            return;
+    private void HandleFillDown() => _fillController.HandleFillDown(Vm, ResourceGrid, CantidadColumn, GetSectorSlotFromColumn);
 
-        try
-        {
-            ResourceGrid.CommitEdit(DataGridEditingUnit.Cell, true);
-            ResourceGrid.CommitEdit(DataGridEditingUnit.Row, true);
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[CubicacionView] CommitEdit en FillDown: {ex.Message}");
-        }
+    private void HandleFillRight() => _fillController.HandleFillRight(Vm, ResourceGrid, GetSectorSlotFromColumn);
 
-        var selectedCells = ResourceGrid.SelectedCells.ToList();
-        if (selectedCells.Count == 0 && ResourceGrid.CurrentCell.IsValid)
-        {
-            selectedCells.Add(ResourceGrid.CurrentCell);
-        }
-
-        if (selectedCells.Count == 0)
-            return;
-
-        var byColumn = selectedCells.GroupBy(c => c.Column).ToList();
-
-        foreach (var colGroup in byColumn)
-        {
-            var col = colGroup.Key;
-            var rowsInCol = colGroup
-                .Select(c => c.Item as CubicacionRowVm)
-                .Where(r => r != null)
-                .Distinct()
-                .OrderBy(r => ResourceGrid.Items.IndexOf(r!))
-                .ToList();
-
-            if (rowsInCol.Count == 0)
-                continue;
-
-            CubicacionRowVm sourceRow;
-            List<CubicacionRowVm> targetRows;
-
-            int firstSelectedIdx = ResourceGrid.Items.IndexOf(rowsInCol[0]!);
-            if (rowsInCol.Count == 1)
-            {
-                if (firstSelectedIdx <= 0)
-                    continue;
-                sourceRow = (CubicacionRowVm)ResourceGrid.Items[firstSelectedIdx - 1];
-                targetRows = rowsInCol!;
-            }
-            else
-            {
-                sourceRow = rowsInCol[0]!;
-                targetRows = rowsInCol.Skip(1).ToList()!;
-            }
-
-            int sectorSlot = GetSectorSlotFromColumn(col);
-            if (sectorSlot >= 0 && sectorSlot < CubicacionViewModel.MaximumSectorCount)
-            {
-                Vm.ExecuteFillDownSector(sourceRow, targetRows, sectorSlot);
-            }
-            else if (col == CantidadColumn)
-            {
-                Vm.ExecuteFillDownCantidad(sourceRow, targetRows);
-            }
-        }
-    }
-
-    private void HandleFillRight()
-    {
-        if (Vm == null || Vm.IsReadOnly || Vm.SelectedPartida == null)
-            return;
-
-        try
-        {
-            ResourceGrid.CommitEdit(DataGridEditingUnit.Cell, true);
-            ResourceGrid.CommitEdit(DataGridEditingUnit.Row, true);
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[CubicacionView] CommitEdit en FillRight: {ex.Message}");
-        }
-
-        var selectedCells = ResourceGrid.SelectedCells.ToList();
-        if (selectedCells.Count == 0 && ResourceGrid.CurrentCell.IsValid)
-        {
-            selectedCells.Add(ResourceGrid.CurrentCell);
-        }
-
-        if (selectedCells.Count == 0)
-            return;
-
-        var byRow = selectedCells
-            .GroupBy(c => c.Item as CubicacionRowVm)
-            .Where(g => g.Key != null)
-            .ToList();
-
-        foreach (var rowGroup in byRow)
-        {
-            var row = rowGroup.Key!;
-            var sectorCols = rowGroup
-                .Select(c => (Column: c.Column, Slot: GetSectorSlotFromColumn(c.Column)))
-                .Where(x => x.Slot >= 0 && x.Slot < CubicacionViewModel.MaximumSectorCount)
-                .OrderBy(x => x.Slot)
-                .ToList();
-
-            if (sectorCols.Count == 0)
-                continue;
-
-            int sourceSlot;
-            List<int> targetSlots;
-
-            if (sectorCols.Count == 1)
-            {
-                sourceSlot = sectorCols[0].Slot;
-                if (sourceSlot + 1 >= CubicacionViewModel.MaximumSectorCount)
-                    continue;
-                targetSlots = new List<int> { sourceSlot + 1 };
-            }
-            else
-            {
-                sourceSlot = sectorCols[0].Slot;
-                targetSlots = sectorCols.Skip(1).Select(x => x.Slot).ToList();
-            }
-
-            Vm.ExecuteFillRight(row, sourceSlot, targetSlots);
-        }
-    }
-
-    private void HandleRepeatMeasurement()
-    {
-        if (Vm == null || Vm.IsReadOnly || Vm.SelectedPartida == null || string.IsNullOrWhiteSpace(_lastEnteredMeasurement))
-            return;
-
-        try
-        {
-            ResourceGrid.CommitEdit(DataGridEditingUnit.Cell, true);
-            ResourceGrid.CommitEdit(DataGridEditingUnit.Row, true);
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[CubicacionView] CommitEdit en RepeatMeasurement: {ex.Message}");
-        }
-
-        var currentCell = ResourceGrid.CurrentCell;
-        if (!currentCell.IsValid || currentCell.Item is not CubicacionRowVm row)
-            return;
-
-        int slot = GetSectorSlotFromColumn(currentCell.Column);
-        if (slot >= 0 && slot < CubicacionViewModel.MaximumSectorCount)
-        {
-            Vm.ExecuteRepeatMeasurement(row, slot, _lastEnteredMeasurement);
-        }
-        else if (currentCell.Column == CantidadColumn)
-        {
-            if (decimal.TryParse(_lastEnteredMeasurement, out decimal val))
-            {
-                Vm.PushUndoPoint("Repetir medición (F4)");
-                row.Cantidad = val;
-                Vm.OnRowEdited(row);
-                Vm.MarkDirty();
-                Vm.SaveStatusText = $"Cantidad repetida: '{val}' (F4).";
-            }
-        }
-    }
+    private void HandleRepeatMeasurement() => _fillController.HandleRepeatMeasurement(Vm, ResourceGrid, CantidadColumn, GetSectorSlotFromColumn);
 
     public void SelectAndScrollToRow(CubicacionRowVm row)
     {

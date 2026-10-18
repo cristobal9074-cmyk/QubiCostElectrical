@@ -35,6 +35,7 @@ public partial class ShellWindow : Window
             _viewModel.Dispose();
         };
         DataContext = _viewModel;
+        _viewModel.ShowAboutRequested = () => AboutDialog.Show(this);
         _viewModel.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName is nameof(ShellViewModel.CurrentRoute) or nameof(ShellViewModel.CurrentPhase))
@@ -803,6 +804,17 @@ public partial class ShellWindow : Window
     {
         if (_viewModel.IsUserMenuOpen)
             _viewModel.IsUserMenuOpen = false;
+    }
+
+    private void OnBrandAboutClick(object sender, RoutedEventArgs e)
+    {
+        AboutDialog.Show(this);
+    }
+
+    private void OnAboutMenuClick(object sender, RoutedEventArgs e)
+    {
+        UserMenuPopup.IsOpen = false;
+        AboutDialog.Show(this);
     }
 
     private void OnPopupSlideInOpened(object? sender, EventArgs e)

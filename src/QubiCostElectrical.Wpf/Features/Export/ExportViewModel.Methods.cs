@@ -19,11 +19,12 @@ public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefres
     public ExportViewModel(WpfAppHost host, IShellNavigationHost? shell = null)
         : this(host.Session, host.ProjectWorkspace, host.Permissions, host.Dashboard, host.Export, host.Audit,
                host.FileDialog, host.FileOpener,
-               host.Services.PdfExporter, host.Services.OfferLetterPdfExporter, host.Services.ExcelExporter, host.Services.WordLetterExporter,
-               host.Services.CubicacionReportExcelExporter, host.Services.CubicacionReportPdfExporter,
-               host.Services.CubicacionSCReportExcelExporter, host.Services.ProjectRepository, shell)
+               host.PdfExporter, host.OfferLetterPdfExporter, host.ExcelExporter, host.WordLetterExporter,
+               host.CubicacionReportExcelExporter, host.CubicacionReportPdfExporter,
+               host.CubicacionSCReportExcelExporter, host.ProjectRepository, shell)
     { }
 
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
     public ExportViewModel(
         BudgetProjectSession session,
         IProjectWorkspaceService projectWorkspace,
@@ -71,6 +72,7 @@ public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefres
         exportPackageCommand = new RelayCommand(async () => await ExportPackageAsync(), CanExport);
         previewOfferCommand = new RelayCommand(async () => await PreviewOfferAsync(), CanPreview);
         previewService = new DeliveryPreviewService(fileOpener, pdfExporter, excelExporter, wordLetterExporter, cubReportExcel, cubReportPdf, cubScReportExcel, offerLetterExporter);
+        executionCoordinator = new ExportExecutionCoordinator(fileDialog, fileOpener, pdfExporter, excelExporter, wordLetterExporter, cubReportExcel, cubReportPdf, cubScReportExcel, projectRepo);
         InitializeOfferWizard();
         OpenProjectCommand = shell != null
             ? new RelayCommand(() => _ = shell.OpenProjectAsync())
@@ -532,24 +534,8 @@ public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefres
         return string.IsNullOrWhiteSpace(name) ? fallback : name;
     }
 
-    private async Task ExportOfferPdfAsync()
-    {
-        try
-        {
-            if (!await EnsureExportAllowedAsync())
-                return;
-            var path = PromptSave("PDF de oferta", $"{SafeFileName(ProjectTitle, "Oferta")}.pdf", "PDF de oferta (*.pdf)|*.pdf");
-            if (path == null) return;
-            var ctx = BuildContext();
-            await Task.Run(() => pdfExporter.Export(ctx, path));
-            ShowExportSuccessWithFolderAction("Exportar PDF", $"Oferta generada en:{Environment.NewLine}{path}", path);
-        }
-        catch (Exception ex)
-        {
-            AppLog.Error("Export", "Falló la exportación: Exportar PDF", ex);
-            ShellNotificationService.Instance.ShowError("Exportar PDF", OperationFailureMessages.ToUserMessage(ex));
-        }
-    }
+    private Task ExportOfferPdfAsync() =>
+        executionCoordinator.ExportOfferPdfAsync(EnsureExportAllowedAsync, BuildContext(), ProjectTitle);
 
     private async Task PreviewOfferAsync()
     {
@@ -589,201 +575,35 @@ public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefres
         }
     }
 
-    private async Task ExportExcelAsync()
-    {
-        try
-        {
-            if (!await EnsureExportAllowedAsync())
-                return;
-            var path = PromptSave("Excel interno", $"{SafeFileName(ProjectTitle, "Control")}.xlsx", "Excel (*.xlsx)|*.xlsx");
-            if (path == null) return;
-            var ctx = BuildContext();
-            await Task.Run(() => excelExporter.Export(ctx, path));
-            ShowExportSuccessWithFolderAction("Exportar Excel", $"Libro generado en:{Environment.NewLine}{path}", path);
-        }
-        catch (Exception ex)
-        {
-            AppLog.Error("Export", "Falló la exportación: Exportar Excel", ex);
-            ShellNotificationService.Instance.ShowError("Exportar Excel", OperationFailureMessages.ToUserMessage(ex));
-        }
-    }
+    private Task ExportExcelAsync() =>
+        executionCoordinator.ExportExcelAsync(EnsureExportAllowedAsync, BuildContext(), ProjectTitle);
 
-    private async Task ExportLetterAsync()
-    {
-        try
-        {
-            if (!await EnsureExportAllowedAsync())
-                return;
-            var path = PromptSave("Carta de presentación", $"{SafeFileName(ProjectTitle, "Carta")}.docx", "Word (*.docx)|*.docx");
-            if (path == null) return;
-            var ctx = BuildContext();
-            await Task.Run(() => wordLetterExporter.Export(ctx, path));
-            ShowExportSuccessWithFolderAction("Exportar DOCX", $"Carta generada en:{Environment.NewLine}{path}", path);
-        }
-        catch (Exception ex)
-        {
-            AppLog.Error("Export", "Falló la exportación: Exportar DOCX", ex);
-            WpfDialogService.Error("Exportar DOCX", OperationFailureMessages.ToUserMessage(ex));
-        }
-    }
+    private Task ExportLetterAsync() =>
+        executionCoordinator.ExportLetterAsync(EnsureExportAllowedAsync, BuildContext(), ProjectTitle);
 
-    private async Task ExportMemoriaExcelAsync()
-    {
-        try
-        {
-            if (!await EnsureExportAllowedAsync())
-                return;
-            var path = PromptSave("Memoria cubicación Excel", $"{SafeFileName(ProjectTitle, "Memoria-Cubicacion")}.xlsx", "Excel (*.xlsx)|*.xlsx");
-            if (path == null) return;
-            var ctx = BuildContext();
-            await Task.Run(() => cubReportExcel.Export(ctx, path));
-            ShowExportSuccessWithFolderAction("Memoria Excel", $"Memoria generada en:{Environment.NewLine}{path}", path);
-        }
-        catch (Exception ex)
-        {
-            AppLog.Error("Export", "Falló la exportación: Memoria Excel", ex);
-            WpfDialogService.Error("Memoria Excel", OperationFailureMessages.ToUserMessage(ex));
-        }
-    }
+    private Task ExportMemoriaExcelAsync() =>
+        executionCoordinator.ExportMemoriaExcelAsync(EnsureExportAllowedAsync, BuildContext(), ProjectTitle);
 
-    private async Task ExportMemoriaPdfAsync()
-    {
-        try
-        {
-            if (!await EnsureExportAllowedAsync())
-                return;
-            var path = PromptSave("Memoria cubicación PDF", $"{SafeFileName(ProjectTitle, "Memoria-Cubicacion")}.pdf", "PDF (*.pdf)|*.pdf");
-            if (path == null) return;
-            var ctx = BuildContext();
-            await Task.Run(() => cubReportPdf.Export(ctx, path));
-            ShowExportSuccessWithFolderAction("Memoria PDF", $"Memoria generada en:{Environment.NewLine}{path}", path);
-        }
-        catch (Exception ex)
-        {
-            AppLog.Error("Export", "Falló la exportación: Memoria PDF", ex);
-            WpfDialogService.Error("Memoria PDF", OperationFailureMessages.ToUserMessage(ex));
-        }
-    }
+    private Task ExportMemoriaPdfAsync() =>
+        executionCoordinator.ExportMemoriaPdfAsync(EnsureExportAllowedAsync, BuildContext(), ProjectTitle);
 
-    private async Task ExportScTechnicalReportAsync()
-    {
-        try
-        {
-            if (!await EnsureExportAllowedAsync())
-                return;
-            var path = PromptSave("Reporte tecnico C.SEC", $"{SafeFileName(ProjectTitle, "Reporte-CSEC")}.xlsx", "Excel (*.xlsx)|*.xlsx");
-            if (path == null) return;
-            var ctx = BuildContext();
-            await Task.Run(() => cubScReportExcel.Export(ctx, path));
-            ShowExportSuccessWithFolderAction("Reporte tecnico C.SEC", $"Reporte generado en:{Environment.NewLine}{path}", path);
-        }
-        catch (Exception ex)
-        {
-            AppLog.Error("Export", "Falló la exportación: Reporte tecnico C.SEC", ex);
-            WpfDialogService.Error("Reporte tecnico C.SEC", OperationFailureMessages.ToUserMessage(ex));
-        }
-    }
+    private Task ExportScTechnicalReportAsync() =>
+        executionCoordinator.ExportScTechnicalReportAsync(EnsureExportAllowedAsync, BuildContext(), ProjectTitle);
 
-    private async Task ExportJsonAsync()
-    {
-        try
-        {
-            if (!await EnsureExportAllowedAsync())
-                return;
-            var path = PromptSave("Paquete JSON", $"{SafeFileName(ProjectTitle, "Proyecto")}.json", "JSON (*.json)|*.json");
-            if (path == null) return;
+    private Task ExportJsonAsync() =>
+        executionCoordinator.ExportJsonAsync(EnsureExportAllowedAsync, BuildContext(), ProjectTitle);
 
-            var ctx = BuildContext();
-            await projectRepo.SaveProjectFileAsync(path, ctx.Data, ProjectJsonSerializer.Options);
-            ShowExportSuccessWithFolderAction("Exportar JSON", $"Snapshot generado en:{Environment.NewLine}{path}", path);
-        }
-        catch (Exception ex)
-        {
-            AppLog.Error("Export", "Falló la exportación: Exportar JSON", ex);
-            WpfDialogService.Error("Exportar JSON", OperationFailureMessages.ToUserMessage(ex));
-        }
-    }
-
-    private async Task ExportPackageAsync()
-    {
-        try
-        {
-            if (!await EnsureExportAllowedAsync())
-                return;
-            var path = PromptSave("Paquete final", $"{SafeFileName(ProjectTitle, "Paquete-Final")}.zip", "Paquete final (*.zip)|*.zip");
-            if (path == null) return;
-
-            string tempRoot = Path.Combine(Path.GetTempPath(), "QubiCostElectrical", Guid.NewGuid().ToString("N"));
-            Directory.CreateDirectory(tempRoot);
-
-            // La carpeta temporal solo existe para armar el ZIP: sin este try/finally quedaba
-            // huérfana en %TEMP%\QubiCostElectrical\ después de CADA exportación (éxito o
-            // fallo), acumulando una carpeta con 8 archivos por cada "Paquete final" generado.
-            try
-            {
-                var ctx = BuildContext();
-                var baseName = SafeFileName(ProjectTitle, "Proyecto");
-                string offerPdf = Path.Combine(tempRoot, $"{baseName}-Oferta.pdf");
-                string controlXlsx = Path.Combine(tempRoot, $"{baseName}-Control.xlsx");
-                string letterDocx = Path.Combine(tempRoot, $"{baseName}-Carta.docx");
-                string memoriaXlsx = Path.Combine(tempRoot, $"{baseName}-Memoria-Cubicacion.xlsx");
-                string memoriaPdf = Path.Combine(tempRoot, $"{baseName}-Memoria-Cubicacion.pdf");
-                string reporteScXlsx = Path.Combine(tempRoot, $"{baseName}-Reporte-CSEC.xlsx");
-                string snapshotJson = Path.Combine(tempRoot, $"{baseName}.json");
-                string manifestTxt = Path.Combine(tempRoot, "MANIFEST.txt");
-
-                await Task.Run(() => pdfExporter.Export(ctx, offerPdf));
-                await Task.Run(() => excelExporter.Export(ctx, controlXlsx));
-                await Task.Run(() => wordLetterExporter.Export(ctx, letterDocx));
-                await Task.Run(() => cubReportExcel.Export(ctx, memoriaXlsx));
-                await Task.Run(() => cubReportPdf.Export(ctx, memoriaPdf));
-                await Task.Run(() => cubScReportExcel.Export(ctx, reporteScXlsx));
-                await projectRepo.SaveProjectFileAsync(snapshotJson, ctx.Data, ProjectJsonSerializer.Options);
-
-                await File.WriteAllTextAsync(manifestTxt,
-                    $"Proyecto: {ProjectTitle}{Environment.NewLine}" +
-                    $"Cliente: {ClientName}{Environment.NewLine}" +
-                    $"Estado: {StateText}{Environment.NewLine}" +
-                    $"Revisión: {VersionText}{Environment.NewLine}" +
-                    $"Total CLP: $ {TotalClp:N0}{Environment.NewLine}" +
-                    (MuestraUf ? $"Total UF: {TotalUf:N3} UF{Environment.NewLine}" : "") +
-                    $"Exportado: {AppClock.Now:yyyy-MM-dd HH:mm:ss}",
-                    System.Text.Encoding.UTF8);
-
-                if (File.Exists(path))
-                    File.Delete(path);
-
-                ZipFile.CreateFromDirectory(tempRoot, path, CompressionLevel.Optimal, includeBaseDirectory: false);
-                ShowExportSuccessWithFolderAction("Paquete final", $"ZIP generado en:{Environment.NewLine}{path}", path);
-            }
-            finally
-            {
-                try { Directory.Delete(tempRoot, recursive: true); }
-                catch (Exception ex) { AppLog.Error("Export", "No se pudo limpiar la carpeta temporal del paquete final", ex); }
-            }
-        }
-        catch (Exception ex)
-        {
-            AppLog.Error("Export", "Falló la exportación: Paquete final", ex);
-            WpfDialogService.Error("Paquete final", OperationFailureMessages.ToUserMessage(ex));
-        }
-    }
+    private Task ExportPackageAsync() =>
+        executionCoordinator.ExportPackageAsync(
+            EnsureExportAllowedAsync,
+            BuildContext(),
+            new ExportPackageMetadata(ProjectTitle, ClientName, StateText, VersionText, TotalClp, TotalUf, MuestraUf));
 
     private string? PromptSave(string title, string defaultName, string filter) =>
-        fileDialog.PromptSaveFile(title, defaultName, filter);
+        executionCoordinator.PromptSave(title, defaultName, filter);
 
-    private void ShowExportSuccessWithFolderAction(string title, string message, string path, bool pathIsFolder = false)
-    {
-        string? folder = pathIsFolder
-            ? path
-            : Path.GetDirectoryName(path);
-
-        ShellNotificationService.Instance.ShowSuccess(
-            title,
-            message,
-            actionLabel: string.IsNullOrWhiteSpace(folder) ? null : "Abrir carpeta",
-            action: string.IsNullOrWhiteSpace(folder) ? null : () => fileOpener.OpenFolder(folder));
-    }
+    private void ShowExportSuccessWithFolderAction(string title, string message, string path, bool pathIsFolder = false) =>
+        executionCoordinator.ShowExportSuccessWithFolderAction(title, message, path, pathIsFolder);
 
     private void ResetPreviewState()
     {

@@ -15,11 +15,6 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
 {
     internal const int MinVisibleRows = 8;
 
-    private static readonly System.Text.Json.JsonSerializerOptions BaselineJsonOptions = new()
-    {
-        PropertyNameCaseInsensitive = true,
-    };
-
     private readonly BudgetProjectSession session;
     private readonly ICubicacionService cubSvc;
     private readonly ICubicacionTakeoffQueryService querySvc;
@@ -40,6 +35,9 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
     private readonly CubicacionSectorService sectorService;
     internal readonly CubicacionRowMutationService rowMutationService; // internal: las pruebas ejercitan el flujo de casilla sin pasar por el diálogo modal
     private readonly CubicacionClipboardCoordinator clipboardCoordinator;
+    private readonly CubicacionBaselineCoordinator baselineCoordinator;
+    private readonly CubicacionNavigationCoordinator navigationCoordinator;
+    private readonly CubicacionPartidaCoordinator partidaCoordinator;
 
     // MarkDirty(ProjectDirtyScope.Cubicacion) dispara session.Changed de forma SÍNCRONA, y este mismo
     // ViewModel escucha ese evento para recargar Rows/Partidas desde session (necesario
@@ -50,11 +48,6 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
     // pulsación de tecla. Este contador suprime el eco sin afectar recargas genuinas
     // originadas fuera de esta instancia (Undo/Redo, importación, otra pantalla).
     private int suppressSessionReload;
-    /// <summary>Snapshot JSON de cubicación (+ capas) al Load/Refresh/Apply; restaura en Discard.</summary>
-    private List<CubicacionRow>? baselineCubicacion;
-    private List<CubicacionRecursoRow>? baselineRecursos;
-    private List<CubicacionZonaCantidadRow>? baselineZonas;
-    private List<CubicacionValorizacionRow>? baselineValorizaciones;
 
     internal void PushUndoPoint(string description) => undo.PushUndoPoint(session, description);
 }

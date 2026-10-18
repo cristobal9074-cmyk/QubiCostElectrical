@@ -23,6 +23,7 @@ internal sealed class ShellProjectLifecycle
     private readonly ProjectAuditRecorder audit;
     private readonly IPermissionService permissions;
     private readonly AutoSaveService autoSave;
+    private readonly IUserPreferencesStore preferencesStore;
     private readonly Action clearPageCache;
 
     public ShellProjectLifecycle(
@@ -36,7 +37,8 @@ internal sealed class ShellProjectLifecycle
         ProjectAuditRecorder audit,
         IPermissionService permissions,
         AutoSaveService autoSave,
-        Action clearPageCache)
+        Action clearPageCache,
+        IUserPreferencesStore? preferencesStore = null)
     {
         this.session = session;
         this.projectWorkspace = projectWorkspace;
@@ -49,6 +51,7 @@ internal sealed class ShellProjectLifecycle
         this.permissions = permissions;
         this.autoSave = autoSave;
         this.clearPageCache = clearPageCache;
+        this.preferencesStore = preferencesStore ?? WpfAppHost.Current?.UserPreferencesStore ?? new InMemoryUserPreferencesStore();
     }
 
     public void PrepareWorkspaceForNewOrOpen()
@@ -102,7 +105,7 @@ internal sealed class ShellProjectLifecycle
         // reset el primer recálculo del proyecto siguiente servía resultados del anterior.
         budgetCalculation.ResetIncrementalCache();
         clearPageCache();
-        var prefs = UserPreferencesStore.Load();
+        var prefs = preferencesStore.Load();
         session.NewProject(Environment.UserName, defaultGastosGeneralesPct: prefs.DefaultGastosGeneralesPct, defaultUtilidadPct: prefs.DefaultUtilidadPct);
         projectEdit.Discard();
         documents.DiscardChanges();

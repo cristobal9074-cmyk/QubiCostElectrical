@@ -12,6 +12,8 @@
     <CommandBinding Command="ApplicationCommands.Find" Executed="OnFindExecuted" />
   </UserControl.CommandBindings>
   <UserControl.InputBindings>
+    <KeyBinding Key="S" Modifiers="Control" Command="{Binding SaveCommand}" />
+    <KeyBinding Key="G" Modifiers="Control" Command="{Binding OpenQuickJumpCommand}" />
     <KeyBinding Key="B" Modifiers="Control" Command="ApplicationCommands.Find" />
     <KeyBinding Key="F" Modifiers="Control" Command="ApplicationCommands.Find" />
   </UserControl.InputBindings>
@@ -82,9 +84,33 @@
         </Border>
 
         <Border Grid.Row="1" Padding="8,6" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1">
-          <TextBox Text="{Binding PartidaFilter, UpdateSourceTrigger=PropertyChanged}"
-                   Style="{StaticResource Form.SearchBox}"
-                   Tag="Buscar partida…" />
+          <Grid>
+            <TextBox x:Name="PartidaSearchBox"
+                     Text="{Binding PartidaFilter, UpdateSourceTrigger=PropertyChanged}"
+                     Style="{StaticResource Form.SearchBox}"
+                     Tag="Buscar partida…"
+                     Padding="26,4,24,4"/>
+            <TextBlock Text="🔍"
+                       FontSize="11"
+                       Foreground="{DynamicResource Brush.Muted}"
+                       VerticalAlignment="Center"
+                       HorizontalAlignment="Left"
+                       Margin="8,0,0,0"
+                       IsHitTestVisible="False"/>
+            <Button Style="{StaticResource Button.Ghost}"
+                    Content="✕"
+                    Padding="0"
+                    Width="18" Height="18"
+                    FontSize="10"
+                    FontWeight="Bold"
+                    Foreground="{DynamicResource Brush.Muted}"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Margin="0,0,6,0"
+                    Command="{Binding ClearPartidaFilterCommand}"
+                    Visibility="{Binding HasPartidaFilter, Converter={StaticResource BoolToVisibility}}"
+                    ToolTip="Limpiar filtro (Esc)" />
+          </Grid>
         </Border>
 
         <!-- Lista de partidas -->
@@ -282,7 +308,11 @@
         <Border Grid.Row="1" Style="{StaticResource Bar.Formula}">
           <DockPanel LastChildFill="True">
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-              <Button Style="{StaticResource Button.ToolbarPrimary}" Content="Generar APU"
+              <Button Style="{StaticResource Button.ToolbarPrimary}" Content="Guardar (Ctrl+S)"
+                      Command="{Binding SaveCommand}"
+                      ToolTip="Guardar cambios del proyecto (Ctrl+S)"
+                      Margin="0,0,4,0"/>
+              <Button Style="{StaticResource Button.Toolbar}" Content="Generar APU"
                       Command="{Binding GenerarApuCommand}"
                       ToolTip="Generar APU desde cubicación valorizada" />
               <Button Style="{StaticResource Button.Toolbar}" Content="Actualizar precios"
@@ -368,9 +398,9 @@
                       VirtualizingStackPanel.IsVirtualizing="True"
                       VirtualizingStackPanel.VirtualizationMode="Recycling">
               <DataGrid.Columns>
-                <DataGridComboBoxColumn x:Name="TipoColumn" Header="Tipo" SelectedItemBinding="{Binding Tipo, UpdateSourceTrigger=PropertyChanged}"
-                                        ItemsSource="{StaticResource TipoRecursoValues}" Width="75" />
-                <DataGridTextColumn x:Name="CodigoColumn" Header="Código" Binding="{Binding CodigoMaterial}" Width="95" IsReadOnly="False">
+                <DataGridComboBoxColumn x:Name="TipoColumn" Header="TIPO" SelectedItemBinding="{Binding Tipo, UpdateSourceTrigger=PropertyChanged}"
+                                        ItemsSource="{StaticResource TipoRecursoValues}" Width="75" HeaderStyle="{StaticResource DataGridColumnHeader.Center}" />
+                <DataGridTextColumn x:Name="CodigoColumn" Header="CÓDIGO" Binding="{Binding CodigoMaterial}" Width="95" IsReadOnly="False">
                   <DataGridTextColumn.ElementStyle>
                     <Style TargetType="TextBlock">
                       <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
@@ -381,8 +411,8 @@
                     </Style>
                   </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
-                <DataGridTextColumn x:Name="DescripcionColumn" Header="Descripción" Binding="{Binding Descripcion}" Width="*" MinWidth="180" IsReadOnly="False" />
-                <DataGridTextColumn x:Name="UnidadColumn" Header="Ud" Binding="{Binding Unidad}" Width="45" IsReadOnly="False">
+                <DataGridTextColumn x:Name="DescripcionColumn" Header="DESCRIPCIÓN" Binding="{Binding Descripcion}" Width="*" MinWidth="180" IsReadOnly="False" />
+                <DataGridTextColumn x:Name="UnidadColumn" Header="UD" Binding="{Binding Unidad}" Width="45" IsReadOnly="False" HeaderStyle="{StaticResource DataGridColumnHeader.Center}">
                   <DataGridTextColumn.ElementStyle>
                     <Style TargetType="TextBlock">
                       <Setter Property="TextAlignment" Value="Center" />
@@ -392,7 +422,7 @@
                     </Style>
                   </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
-                <DataGridTextColumn x:Name="RendimientoColumn" Header="Rend." Binding="{Binding Rendimiento, StringFormat=N4}" Width="75" IsReadOnly="False" HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}"
+                <DataGridTextColumn x:Name="RendimientoColumn" Header="REND." Binding="{Binding Rendimiento, StringFormat=N4}" Width="75" IsReadOnly="False" HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}"
                                     EditingElementStyle="{StaticResource ApuNumericCellEditing}">
                   <DataGridTextColumn.ElementStyle>
                     <Style TargetType="TextBlock" BasedOn="{StaticResource Text.Cell.Editable}">
@@ -407,7 +437,7 @@
                     </Style>
                   </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
-                <DataGridTextColumn x:Name="PrecioUfColumn" Header="Precio $ CLP" Binding="{Binding PrecioUf, StringFormat=N0}" Width="100" IsReadOnly="False" HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}"
+                <DataGridTextColumn x:Name="PrecioUfColumn" Header="PRECIO $ CLP" Binding="{Binding PrecioUf, StringFormat=N0}" Width="100" IsReadOnly="False" HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}"
                                     EditingElementStyle="{StaticResource ApuNumericCellEditing}">
                   <DataGridTextColumn.ElementStyle>
                     <Style TargetType="TextBlock" BasedOn="{StaticResource Text.Cell.Editable}">
@@ -415,7 +445,7 @@
                     </Style>
                   </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
-                <DataGridTextColumn Header="Merma%" Binding="{Binding MermaPct, StringFormat=N1}" Width="65" IsReadOnly="False" HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}"
+                <DataGridTextColumn Header="MERMA %" Binding="{Binding MermaPct, StringFormat=N1}" Width="65" IsReadOnly="False" HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}"
                                     EditingElementStyle="{StaticResource ApuNumericCellEditing}">
                   <DataGridTextColumn.ElementStyle>
                     <Style TargetType="TextBlock" BasedOn="{StaticResource Text.Cell.Editable}">
@@ -423,7 +453,7 @@
                     </Style>
                   </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
-                <DataGridTextColumn Header="Imprev.%" Binding="{Binding ImprevistosPct, StringFormat=N1}" Width="70" IsReadOnly="False" HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}"
+                <DataGridTextColumn Header="IMPREV. %" Binding="{Binding ImprevistosPct, StringFormat=N1}" Width="70" IsReadOnly="False" HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}"
                                     EditingElementStyle="{StaticResource ApuNumericCellEditing}">
                   <DataGridTextColumn.ElementStyle>
                     <Style TargetType="TextBlock" BasedOn="{StaticResource Text.Cell.Editable}">
@@ -431,7 +461,7 @@
                     </Style>
                   </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
-                <DataGridTextColumn Header="Costo $ fx" Binding="{Binding CostoUnitUf, StringFormat=N0, Mode=OneWay}" Width="100" IsReadOnly="True" HeaderStyle="{StaticResource DataGridColumnHeader.Formula}">
+                <DataGridTextColumn Header="COSTO $ fx" Binding="{Binding CostoUnitUf, StringFormat=N0, Mode=OneWay}" Width="100" IsReadOnly="True" HeaderStyle="{StaticResource DataGridColumnHeader.Formula}">
                   <DataGridTextColumn.ElementStyle>
                     <Style TargetType="TextBlock" BasedOn="{StaticResource Text.Cell.Formula}">
                       <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
@@ -440,7 +470,7 @@
                     </Style>
                   </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
-                <DataGridTemplateColumn Header="Estado" Width="100" IsReadOnly="True">
+                <DataGridTemplateColumn Header="ESTADO" Width="100" IsReadOnly="True" HeaderStyle="{StaticResource DataGridColumnHeader.Center}">
                   <DataGridTemplateColumn.CellTemplate>
                     <DataTemplate>
                       <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="6,0" ToolTip="{Binding IssueTooltip}">

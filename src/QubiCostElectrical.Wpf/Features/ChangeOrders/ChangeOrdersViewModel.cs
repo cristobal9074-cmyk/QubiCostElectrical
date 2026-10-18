@@ -1,5 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
+using System.Windows.Input;
+using RelayCommand = QubiCostElectrical.Wpf.Infrastructure.RelayCommand;
 using QubiCostElectrical;
 using QubiCostElectrical.Wpf.Features.Dashboard;
 using QubiCostElectrical.Wpf.Infrastructure;
@@ -25,13 +27,20 @@ public sealed partial class ChangeOrdersViewModel : ObservableObject, IDisposabl
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanEdit))]
     [NotifyPropertyChangedFor(nameof(CanDelete))]
+    [NotifyPropertyChangedFor(nameof(CanDuplicate))]
     [NotifyPropertyChangedFor(nameof(CanEnviarRevision))]
     [NotifyPropertyChangedFor(nameof(CanAprobar))]
     [NotifyPropertyChangedFor(nameof(CanRechazar))]
     [NotifyPropertyChangedFor(nameof(CanReabrir))]
+    [NotifyPropertyChangedFor(nameof(HasSelection))]
     private ChangeOrderRowVm? _selected;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsFilterAll))]
+    [NotifyPropertyChangedFor(nameof(IsFilterBorrador))]
+    [NotifyPropertyChangedFor(nameof(IsFilterEnRevision))]
+    [NotifyPropertyChangedFor(nameof(IsFilterAprobado))]
+    [NotifyPropertyChangedFor(nameof(IsFilterRechazado))]
     private string _filterEstado = "";
 
     partial void OnFilterEstadoChanged(string value) => ApplyFilter();
@@ -41,12 +50,37 @@ public sealed partial class ChangeOrdersViewModel : ObservableObject, IDisposabl
 
     partial void OnSearchTextChanged(string value) => ApplyFilter();
 
+    public bool HasSelection => Selected != null;
+    public bool CanDuplicate => Selected != null && !_session.IsReadOnly;
     public bool CanEdit => Selected != null && !ChangeOrderStateMachine.IsLocked(Selected.Estado) && !_session.IsReadOnly;
     public bool CanDelete => Selected != null && !ChangeOrderStateMachine.IsLocked(Selected.Estado) && !_session.IsReadOnly;
     public bool CanEnviarRevision => Selected != null && ChangeOrderStateMachine.IsTransitionAllowed(Selected.Estado, "En revisión") && !_session.IsReadOnly;
     public bool CanAprobar => Selected != null && ChangeOrderStateMachine.IsTransitionAllowed(Selected.Estado, "Aprobado") && !_session.IsReadOnly;
     public bool CanRechazar => Selected != null && ChangeOrderStateMachine.IsTransitionAllowed(Selected.Estado, "Rechazado") && !_session.IsReadOnly;
     public bool CanReabrir => Selected != null && ChangeOrderStateMachine.IsTransitionAllowed(Selected.Estado, "Borrador") && Selected.Estado == "Rechazado" && !_session.IsReadOnly;
+
+    public bool IsFilterAll => string.IsNullOrEmpty(FilterEstado);
+    public bool IsFilterBorrador => FilterEstado == "Borrador";
+    public bool IsFilterEnRevision => FilterEstado == "En revisión";
+    public bool IsFilterAprobado => FilterEstado == "Aprobado";
+    public bool IsFilterRechazado => FilterEstado == "Rechazado";
+
+    public int CountAll => TotalOrdenes;
+    public int CountBorrador => TotalBorrador;
+    public int CountEnRevision => TotalEnRevision;
+    public int CountAprobado => TotalAprobado;
+    public int CountRechazado => TotalRechazado;
+
+    public void SetFilterAll() => FilterEstado = "";
+    public void SetFilterBorrador() => FilterEstado = "Borrador";
+    public void SetFilterEnRevision() => FilterEstado = "En revisión";
+    public void SetFilterAprobado() => FilterEstado = "Aprobado";
+    public void SetFilterRechazado() => FilterEstado = "Rechazado";
+    public void ClearFilters()
+    {
+        SearchText = "";
+        FilterEstado = "";
+    }
 
     private readonly ItemizadoPresenter? _itemizadoPresenter;
     private readonly IItemizadoWorkspaceService? _itemizadoWorkspace;
@@ -100,9 +134,26 @@ public sealed partial class ChangeOrdersViewModel : ObservableObject, IDisposabl
 
     private bool HasProject => !string.IsNullOrEmpty(_session.CurrentProjectPath);
 
+    public RelayCommand AddNewCommand { get; }
+    public RelayCommand EditSelectedCommand { get; }
+    public RelayCommand DeleteSelectedCommand { get; }
+    public RelayCommand DuplicateSelectedCommand { get; }
+    public RelayCommand EnviarRevisionCommand { get; }
+    public RelayCommand AprobarSelectedCommand { get; }
+    public RelayCommand RechazarSelectedCommand { get; }
+    public RelayCommand ReabrirSelectedCommand { get; }
+    public RelayCommand RefreshCommand { get; }
+    public RelayCommand ClearFiltersCommand { get; }
+    public RelayCommand SetFilterAllCommand { get; }
+    public RelayCommand SetFilterBorradorCommand { get; }
+    public RelayCommand SetFilterEnRevisionCommand { get; }
+    public RelayCommand SetFilterAprobadoCommand { get; }
+    public RelayCommand SetFilterRechazadoCommand { get; }
+
     public ChangeOrdersViewModel(WpfAppHost host)
         : this(host.Session, host.UndoService, host.Itemizado, host.ItemizadoWorkspace, host.PriceBankStore) { }
 
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
     public ChangeOrdersViewModel(
         BudgetProjectSession session,
         WpfUndoService undo,
@@ -115,6 +166,23 @@ public sealed partial class ChangeOrdersViewModel : ObservableObject, IDisposabl
         _itemizadoPresenter = itemizadoPresenter;
         _itemizadoWorkspace = itemizadoWorkspace;
         _priceBankStore = priceBankStore;
+
+        AddNewCommand = new RelayCommand(AddNew, () => HasProject && !_session.IsReadOnly);
+        EditSelectedCommand = new RelayCommand(EditSelected, () => CanEdit);
+        DeleteSelectedCommand = new RelayCommand(DeleteSelected, () => CanDelete);
+        DuplicateSelectedCommand = new RelayCommand(DuplicateSelected, () => CanDuplicate);
+        EnviarRevisionCommand = new RelayCommand(EnviarARevision, () => CanEnviarRevision);
+        AprobarSelectedCommand = new RelayCommand(AprobarSelected, () => CanAprobar);
+        RechazarSelectedCommand = new RelayCommand(RechazarSelected, () => CanRechazar);
+        ReabrirSelectedCommand = new RelayCommand(ReabrirSelected, () => CanReabrir);
+        RefreshCommand = new RelayCommand(Refresh);
+        ClearFiltersCommand = new RelayCommand(ClearFilters);
+        SetFilterAllCommand = new RelayCommand(SetFilterAll);
+        SetFilterBorradorCommand = new RelayCommand(SetFilterBorrador);
+        SetFilterEnRevisionCommand = new RelayCommand(SetFilterEnRevision);
+        SetFilterAprobadoCommand = new RelayCommand(SetFilterAprobado);
+        SetFilterRechazadoCommand = new RelayCommand(SetFilterRechazado);
+
         ShowEditor = (oc, isNew) => ChangeOrderEditorDialog.Show(oc, isNew, MuestraUf, UfRate, GetContractPartidas(), _session.Cubicacion, _priceBankStore, _session);
         Reload();
     }
@@ -234,6 +302,57 @@ public sealed partial class ChangeOrdersViewModel : ObservableObject, IDisposabl
         Selected = Items.FirstOrDefault(i => i.Id == oc.Id);
     }
 
+    public void DuplicateSelected()
+    {
+        if (_session.IsReadOnly || Selected is not { } vm) return;
+        var oc = FindRow(vm.Id);
+        if (oc == null) return;
+
+        var newOc = new ChangeOrderRow
+        {
+            Numero = NextNumero(),
+            Titulo = $"{oc.Titulo} (Copia)",
+            Estado = "Borrador",
+            CreadoPor = _session.ProjectInfo.UsuarioNombre,
+            PresupuestoBaseEstado = oc.PresupuestoBaseEstado,
+            GastosGeneralesPct = oc.GastosGeneralesPct,
+            UtilidadPct = oc.UtilidadPct,
+            DeltaCostoUf = oc.DeltaCostoUf,
+            DeltaGastosGeneralesUf = oc.DeltaGastosGeneralesUf,
+            DeltaUtilidadUf = oc.DeltaUtilidadUf,
+            DeltaVentaUf = oc.DeltaVentaUf,
+            Nota = oc.Nota,
+            Lineas = oc.Lineas.Select(l => new ChangeOrderLineRow
+            {
+                ItemId = l.ItemId,
+                Item = l.Item,
+                DescripcionPartida = l.DescripcionPartida,
+                TipoCambio = l.TipoCambio,
+                Unidad = l.Unidad,
+                EsContractual = l.EsContractual,
+                CantidadBase = l.CantidadBase,
+                CantidadAdicional = l.CantidadAdicional,
+                CantidadNueva = l.CantidadNueva,
+                PrecioUnitarioContratoClp = l.PrecioUnitarioContratoClp,
+                PrecioUnitarioContratoUf = l.PrecioUnitarioContratoUf,
+                SubtotalClp = l.SubtotalClp,
+                SubtotalUf = l.SubtotalUf,
+                CostoBaseUf = l.CostoBaseUf,
+                CostoNuevoUf = l.CostoNuevoUf,
+                DeltaCostoUf = l.DeltaCostoUf,
+                Nota = l.Nota,
+                Materiales = l.Materiales != null ? new List<CubicacionRow>(l.Materiales) : new List<CubicacionRow>()
+            }).ToList()
+        };
+
+        var before = _session.CreateSnapshot();
+        _undo.PushSnapshot(before, $"Duplicar orden {oc.Numero}");
+        _session.OrdenesCambio.Add(newOc);
+        _session.MarkDirty(ProjectDirtyScope.OrdenesCambio);
+        Reload();
+        Selected = Items.FirstOrDefault(i => i.Id == newOc.Id);
+    }
+
     public void DeleteSelected()
     {
         if (_session.IsReadOnly || Selected is not { } vm) return;
@@ -294,6 +413,7 @@ public sealed partial class ChangeOrdersViewModel : ObservableObject, IDisposabl
 
     // ── Estado vacío ──────────────────────────────────────────────────────
     public bool HasNoProject => !HasProject;
+    public bool ShowEmptyState => !HasNoProject && TotalOrdenes == 0;
 
     // ── Helpers internos ──────────────────────────────────────────────────
 
@@ -358,6 +478,11 @@ public sealed partial class ChangeOrdersViewModel : ObservableObject, IDisposabl
         OnPropertyChanged(nameof(TotalEnRevision));
         OnPropertyChanged(nameof(TotalAprobado));
         OnPropertyChanged(nameof(TotalRechazado));
+        OnPropertyChanged(nameof(CountAll));
+        OnPropertyChanged(nameof(CountBorrador));
+        OnPropertyChanged(nameof(CountEnRevision));
+        OnPropertyChanged(nameof(CountAprobado));
+        OnPropertyChanged(nameof(CountRechazado));
         OnPropertyChanged(nameof(MontoAprobado));
         OnPropertyChanged(nameof(MontoPendiente));
         OnPropertyChanged(nameof(MuestraUf));
@@ -368,6 +493,18 @@ public sealed partial class ChangeOrdersViewModel : ObservableObject, IDisposabl
         OnPropertyChanged(nameof(TotalProyectadoObraDisplay));
         OnPropertyChanged(nameof(PorcentajeAumentoAprobadoDisplay));
         OnPropertyChanged(nameof(HasNoProject));
+        OnPropertyChanged(nameof(ShowEmptyState));
+        OnPropertyChanged(nameof(HasSelection));
+        OnPropertyChanged(nameof(CanDuplicate));
+
+        (AddNewCommand as RelayCommand)?.RaiseCanExecuteChanged();
+        (EditSelectedCommand as RelayCommand)?.RaiseCanExecuteChanged();
+        (DeleteSelectedCommand as RelayCommand)?.RaiseCanExecuteChanged();
+        (DuplicateSelectedCommand as RelayCommand)?.RaiseCanExecuteChanged();
+        (EnviarRevisionCommand as RelayCommand)?.RaiseCanExecuteChanged();
+        (AprobarSelectedCommand as RelayCommand)?.RaiseCanExecuteChanged();
+        (RechazarSelectedCommand as RelayCommand)?.RaiseCanExecuteChanged();
+        (ReabrirSelectedCommand as RelayCommand)?.RaiseCanExecuteChanged();
     }
 
     private string NextNumero()
@@ -414,7 +551,16 @@ public sealed class ChangeOrderRowVm
     public DateTime FechaModificacion => _row.FechaModificacion;
     public decimal DeltaVentaUf => _row.DeltaVentaUf;
     public decimal DeltaCostoUf => _row.DeltaCostoUf;
+    public decimal DeltaGastosGeneralesUf => _row.DeltaGastosGeneralesUf;
+    public decimal DeltaUtilidadUf => _row.DeltaUtilidadUf;
+    public decimal GastosGeneralesPct => _row.GastosGeneralesPct;
+    public decimal UtilidadPct => _row.UtilidadPct;
     public string Nota => _row.Nota;
+
+    public int LineasCount => _row.Lineas?.Count ?? 0;
+    public bool HasLineas => LineasCount > 0;
+    public bool HasNota => !string.IsNullOrWhiteSpace(_row.Nota);
+    public string PartidasBadgeText => $"{LineasCount} {(LineasCount == 1 ? "partida" : "partidas")}";
 
     public string EstadoDisplay => Estado switch
     {
@@ -427,7 +573,12 @@ public sealed class ChangeOrderRowVm
     public string FechaDisplay => FechaCreacion.ToString("dd/MM/yyyy");
     public string ModificadoDisplay => FechaModificacion.ToString("dd/MM/yyyy");
     public string DeltaDisplay => _formatDelta(DeltaVentaUf);
+    public string DeltaCostoDisplay => _formatDelta(DeltaCostoUf);
+    public string DeltaGastosGeneralesDisplay => _formatDelta(DeltaGastosGeneralesUf);
+    public string DeltaUtilidadDisplay => _formatDelta(DeltaUtilidadUf);
     public string DeltaKind => DeltaVentaUf > 0 ? "Aumenta" : DeltaVentaUf < 0 ? "Reduce" : "Neutro";
     public bool EsBorrador => Estado == "Borrador";
     public bool EsAprobado => Estado == "Aprobado";
+    public bool EsEnRevision => Estado == "En revisión";
+    public bool EsRechazado => Estado == "Rechazado";
 }

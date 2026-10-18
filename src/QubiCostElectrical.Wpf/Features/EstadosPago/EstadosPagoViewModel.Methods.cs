@@ -28,6 +28,7 @@ public sealed partial class EstadosPagoViewModel
     private readonly ItemizadoPresenter presenter;
     private readonly IItemizadoWorkspaceService itemizadoWorkspace;
     private readonly EstadosPagoExportCoordinator exportCoordinator;
+    private readonly EstadosPagoWorkflowCoordinator workflowCoordinator;
 
     private readonly List<SeccionTemplate> seccionesTemplate = new();
     private List<EstadoPagoPartidaInput> partidas = new();
@@ -55,7 +56,8 @@ public sealed partial class EstadosPagoViewModel
         IPermissionService permissions,
         ItemizadoPresenter presenter,
         IItemizadoWorkspaceService itemizadoWorkspace,
-        EstadosPagoExportCoordinator exportCoordinator)
+        EstadosPagoExportCoordinator exportCoordinator,
+        EstadosPagoWorkflowCoordinator workflowCoordinator)
         : base(session)
     {
         this.shell = shell;
@@ -65,6 +67,7 @@ public sealed partial class EstadosPagoViewModel
         this.presenter = presenter;
         this.itemizadoWorkspace = itemizadoWorkspace;
         this.exportCoordinator = exportCoordinator;
+        this.workflowCoordinator = workflowCoordinator;
 
         SelectMesCommand = new RelayCommand<EstadoPagoMesCellVm>(SelectMes);
         GenerarMesCommand = new RelayCommand(GenerarMes, () => CanEdit && HasProject && hayPendienteGenerable);
@@ -241,14 +244,7 @@ public sealed partial class EstadosPagoViewModel
         totalesPorMes.Clear();
         if (!HasProject)
             return;
-
-        var cfg = session.EstadoPagoConfig;
-        foreach (var row in GeneratedRows())
-        {
-            var acumAntes = EstadoPagoCalculator.BuildAcumulado(session.EstadoPagoMeses, cfg.Anio, row.Mes - 1);
-            var detalle = EstadoPagoCalculator.CalcularMes(partidas, acumAntes, row.AvancesPorItem, cfg);
-            totalesPorMes[row.Mes] = detalle.Totales;
-        }
+        workflowCoordinator.RecomputeMonthTotals(partidas, totalesPorMes);
     }
 
     private void RebuildCells()
@@ -534,7 +530,7 @@ public sealed partial class EstadosPagoViewModel
 
     private void GenerarMes()
     {
-        int mes = FirstPendiente();
+        int mes = workflowCoordinator.FirstPendiente();
         if (mes > 0)
             GenerateMonth(mes, duplicadoDe: null);
     }
@@ -543,97 +539,36 @@ public sealed partial class EstadosPagoViewModel
 
     private void DuplicarAnterior()
     {
-        var prev = PreviousGeneratedRow(SelectedMes);
+        var prev = workflowCoordinator.PreviousGeneratedRow(SelectedMes);
         if (prev is not null)
             GenerateMonth(SelectedMes, prev);
     }
 
     private void GenerateMonth(int mes, EstadoPagoMesRow? duplicadoDe)
     {
-        if (!CanEdit || mes < 1 || mes > 12)
-            return;
-
-        var cfg = session.EstadoPagoConfig;
-        if (mes > cfg.CantMeses)
+        if (workflowCoordinator.GenerateMonth(mes, duplicadoDe, partidas, CanEdit, out int generatedMes))
         {
-            WpfDialogService.Warning(
-                "Estados de pago",
-                $"La configuración del año tiene {cfg.CantMeses} meses: no se puede generar el estado de {EstadoPagoFormat.MesesNombres[mes - 1].ToLowerInvariant()}.");
-            return;
+            SelectedMes = generatedMes;
+            RebuildAll();
         }
-
-        if (FindRow(mes) is not null)
-            return;
-
-        var acumAntes = EstadoPagoCalculator.BuildAcumulado(session.EstadoPagoMeses, cfg.Anio, mes - 1);
-        Dictionary<string, decimal> avances = duplicadoDe is null
-            ? partidas.ToDictionary(p => p.Id, _ => 0m, StringComparer.OrdinalIgnoreCase)
-            : EstadoPagoCalculator.ClampedCopy(duplicadoDe, acumAntes);
-
-        var row = new EstadoPagoMesRow
-        {
-            Id = EstadoPagoMesRow.BuildId(cfg.Anio, mes),
-            Anio = cfg.Anio,
-            Mes = mes,
-            Estado = EstadoPagoEst.Borrador,
-            Folio = EstadoPagoMesRow.BuildFolio(cfg.Anio, mes),
-            FechaEmision = AppClock.Now,
-            AvancesPorItem = avances
-        };
-
-        session.EstadoPagoMeses.Add(row);
-        session.EstadoPagoMeses.Sort((a, b) => a.Anio != b.Anio
-            ? a.Anio.CompareTo(b.Anio)
-            : a.Mes.CompareTo(b.Mes));
-        session.MarkDirty(ProjectDirtyScope.EstadosPago);
-
-        SelectedMes = mes;
-        RebuildAll();
     }
 
     private void Aprobar()
     {
-        if (!CanApprove || currentRow is null || currentRow.Estado != EstadoPagoEst.Borrador)
-            return;
-        currentRow.Estado = EstadoPagoEst.Revision;
-        currentRow.AprobadoPor = session.ProjectInfo.UsuarioNombre;
-        currentRow.FechaAprobacion = AppClock.Now;
-        session.MarkDirty(ProjectDirtyScope.EstadosPago);
-        WpfDialogService.Info(
-            "Estado aprobado",
-            $"El estado {currentRow.Folio} pasó a Revisión. Un administrador puede registrarlo como pagado.");
-        RebuildAll();
+        if (workflowCoordinator.Aprobar(currentRow, CanApprove))
+            RebuildAll();
     }
 
     private void RegistrarPago()
     {
-        if (!CanApprove || currentRow is null || currentRow.Estado != EstadoPagoEst.Revision)
-            return;
-        currentRow.Estado = EstadoPagoEst.Pago;
-        if (string.IsNullOrWhiteSpace(currentRow.AprobadoPor))
-        {
-            currentRow.AprobadoPor = session.ProjectInfo.UsuarioNombre;
-            currentRow.FechaAprobacion = AppClock.Now;
-        }
-        session.MarkDirty(ProjectDirtyScope.EstadosPago);
-        WpfDialogService.Info(
-            "Pago registrado",
-            $"El estado {currentRow.Folio} quedó registrado como Pagado.");
-        RebuildAll();
+        if (workflowCoordinator.RegistrarPago(currentRow, CanApprove))
+            RebuildAll();
     }
 
     private void Reabrir()
     {
-        if (!CanApprove || currentRow is null || currentRow.Estado == EstadoPagoEst.Borrador)
-            return;
-        currentRow.Estado = EstadoPagoEst.Borrador;
-        currentRow.AprobadoPor = "";
-        currentRow.FechaAprobacion = null;
-        session.MarkDirty(ProjectDirtyScope.EstadosPago);
-        WpfDialogService.Info(
-            "Estado reabierto",
-            $"El estado {currentRow.Folio} volvió a Borrador y puede editarse.");
-        RebuildAll();
+        if (workflowCoordinator.Reabrir(currentRow, CanApprove))
+            RebuildAll();
     }
 
     private void RaiseCommandStates()
@@ -651,53 +586,17 @@ public sealed partial class EstadosPagoViewModel
     /// <summary>Exportar exige proyecto abierto, mes generado y permiso de exportación del rol.</summary>
     private bool CanExportEstado() => HasProject && currentRow is not null && permissions.CanExportDocuments;
 
-    // ─── Consultas ────────────────────────────────────────────────────────────
+    // ─── Consultas delegadas al coordinador ───────────────────────────────────
 
-    private EstadoPagoMesRow? FindRow(int mes)
-    {
-        int anio = session.EstadoPagoConfig.Anio;
-        return session.EstadoPagoMeses.FirstOrDefault(r =>
-            r is not null && r.Anio == anio && r.Mes == mes);
-    }
+    private EstadoPagoMesRow? FindRow(int mes) => workflowCoordinator.FindRow(mes);
 
-    private List<EstadoPagoMesRow> GeneratedRows()
-    {
-        int anio = session.EstadoPagoConfig.Anio;
-        return session.EstadoPagoMeses
-            .Where(r => r is not null && r.Anio == anio && r.Mes >= 1)
-            .OrderBy(r => r.Mes)
-            .ToList();
-    }
+    private List<EstadoPagoMesRow> GeneratedRows() => workflowCoordinator.GeneratedRows();
 
-    /// <summary>Mes base para KPIs/resumen: el seleccionado si existe, si no el último con estado.</summary>
-    private int MesBase()
-    {
-        if (currentRow is not null)
-            return SelectedMes;
-        return LastGeneratedMes();
-    }
+    private int MesBase() => workflowCoordinator.MesBase(currentRow, SelectedMes);
 
-    private int LastGeneratedMes()
-    {
-        var rows = GeneratedRows();
-        return rows.Count > 0 ? rows[rows.Count - 1].Mes : 0;
-    }
+    private int LastGeneratedMes() => workflowCoordinator.LastGeneratedMes();
 
-    private int FirstPendiente()
-    {
-        int cant = session.EstadoPagoConfig.CantMeses;
-        for (int m = 1; m <= cant && m <= 12; m++)
-        {
-            if (FindRow(m) is null)
-                return m;
-        }
-        return 0;
-    }
+    private int FirstPendiente() => workflowCoordinator.FirstPendiente();
 
-    private EstadoPagoMesRow? PreviousGeneratedRow(int mes)
-    {
-        return GeneratedRows()
-            .Where(r => r.Mes < mes)
-            .LastOrDefault();
-    }
+    private EstadoPagoMesRow? PreviousGeneratedRow(int mes) => workflowCoordinator.PreviousGeneratedRow(mes);
 }

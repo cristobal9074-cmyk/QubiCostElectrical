@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 
-namespace QubiCostElectrical;
+namespace QubiCostElectrical.Infrastructure;
 
 /// <summary>
 /// Sembrado idempotente que antes vivía dentro de <c>AppServicesBuilder.Build()</c> (I/O de

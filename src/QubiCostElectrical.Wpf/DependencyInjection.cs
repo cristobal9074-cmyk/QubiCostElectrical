@@ -17,6 +17,7 @@ public static class WpfServiceCollectionExtensions
         services.AddSingleton<IFileOpenService, WpfFileOpenService>();
         services.AddSingleton<WpfUndoService>();
         services.AddSingleton<EstadosPagoExportCoordinator>();
+        services.AddSingleton<EstadosPagoWorkflowCoordinator>();
         services.AddViewModels();
 
         // Fachada histórica: agrega presenters/workspaces/auth/lock/audit resueltos del contenedor.
@@ -33,7 +34,7 @@ public static class WpfServiceCollectionExtensions
             sp.GetRequiredService<IItemizadoWorkspaceService>(),
             sp.GetRequiredService<IFileDialogService>(),
             sp.GetRequiredService<IFileOpenService>(),
-            sp.GetRequiredService<AuthService>(),
+            sp.GetRequiredService<IAuthService>(),
             sp.GetRequiredService<ProjectCollaborationLockService>(),
             sp.GetRequiredService<ProjectAuditRecorder>(),
             sp.GetRequiredService<IPermissionService>()));

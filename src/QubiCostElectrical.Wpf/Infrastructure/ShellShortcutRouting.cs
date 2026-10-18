@@ -10,7 +10,7 @@ public static class ShellShortcutRouting
     public static void InvalidateCache() => cachedPrefs = null;
 
     private static UserPreferences GetPreferences() =>
-        cachedPrefs ??= UserPreferencesStore.Load();
+        cachedPrefs ??= WpfAppHost.Current?.UserPreferencesStore?.Load() ?? new UserPreferences();
 
     public static bool Matches(KeyEventArgs e, params string[] actionIds)
     {

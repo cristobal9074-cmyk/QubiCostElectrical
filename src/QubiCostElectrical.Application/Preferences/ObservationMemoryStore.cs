@@ -59,7 +59,7 @@ public static class ObservationMemoryStore
             .ToList();
     }
 
-    public static void Remember(UserPreferences? prefs, string? observation)
+    public static void Remember(UserPreferences? prefs, string? observation, IUserPreferencesStore? store = null)
     {
         if (prefs == null || string.IsNullOrWhiteSpace(observation))
             return;
@@ -80,6 +80,9 @@ public static class ObservationMemoryStore
             prefs.RecentObservations = prefs.RecentObservations.Take(20).ToList();
         }
 
-        UserPreferencesStore.Save(prefs);
+        if (store != null)
+        {
+            store.Save(prefs);
+        }
     }
 }

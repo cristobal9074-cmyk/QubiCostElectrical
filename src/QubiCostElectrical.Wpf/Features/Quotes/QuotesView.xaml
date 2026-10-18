@@ -1,7 +1,12 @@
 <UserControl x:Class="QubiCostElectrical.Wpf.Features.Quotes.QuotesView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:ctrl="clr-namespace:QubiCostElectrical.Wpf.Controls">
+             xmlns:ctrl="clr-namespace:QubiCostElectrical.Wpf.Controls"
+             KeyDown="OnUserControlKeyDown">
+  <UserControl.InputBindings>
+    <KeyBinding Key="F5" Command="{Binding RefreshCommand}" />
+    <KeyBinding Key="I" Modifiers="Control" Command="{Binding ImportQuoteCommand}" />
+  </UserControl.InputBindings>
   <UserControl.Resources>
     <Style x:Key="QuotesNumericCell" TargetType="TextBlock">
       <Setter Property="HorizontalAlignment" Value="Right" />
@@ -15,6 +20,7 @@
     <ctrl:SkeletonOverlayControl Panel.ZIndex="20" Message="Cargando cotizaciones…"
                                  Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibility}}" />
     <ctrl:EmptyStateControl Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}}"
+                            IconData="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8"
                             Title="Sin cotizaciones"
                             Description="Importe una cotización de proveedor para comparar precios y aplicarlos al banco.">
       <ctrl:EmptyStateControl.Actions>
@@ -32,10 +38,13 @@
       </StackPanel>
       <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
         <Button Style="{StaticResource Button.Primary}" Content="Aplicar selección al banco"
-                Command="{Binding ApplySelectionToBankCommand}" Margin="0,0,6,0" />
-        <Button Style="{StaticResource Button.Secondary}" Content="Aplicar todos los mejores precios"
-                Command="{Binding ApplyAllBestPricesCommand}" Margin="0,0,6,0" />
-        <Button Style="{StaticResource Button.Secondary}" Content="Importar cotización" Margin="0,0,6,0" Command="{Binding ImportQuoteCommand}" />
+                Command="{Binding ApplySelectionToBankCommand}" Margin="0,0,6,0"
+                ToolTip="Aplica la cotización del proveedor seleccionado al catálogo central del banco de precios" />
+        <Button Style="{StaticResource Button.Secondary}" Content="Aplicar mejores precios al proyecto"
+                Command="{Binding ApplyAllBestPricesCommand}" Margin="0,0,6,0"
+                ToolTip="Aplica automáticamente los mejores precios comparados al proyecto activo" />
+        <Button Style="{StaticResource Button.Secondary}" Content="Importar cotización (Ctrl+I)" Margin="0,0,6,0" Command="{Binding ImportQuoteCommand}"
+                ToolTip="Importar cotización de proveedor desde archivo Excel o CSV (Ctrl+I)" />
       </StackPanel>
     </DockPanel>
 
@@ -58,8 +67,35 @@
 
         <Border Style="{StaticResource Card.Section}" Padding="10" Margin="0,0,0,10">
           <StackPanel>
-            <TextBox Style="{StaticResource Form.SearchBox}" Tag="Buscar proveedor o material…" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
-            <ComboBox Style="{StaticResource Form.ComboBox}" ItemsSource="{Binding CategoryOptions}" SelectedItem="{Binding SelectedCategory}" Margin="0,8,0,0" />
+            <Grid>
+              <TextBox x:Name="SearchBox"
+                       Style="{StaticResource Form.SearchBox}"
+                       Tag="Buscar proveedor o material… (Ctrl+F)"
+                       Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                       Padding="26,4,24,4" />
+              <TextBlock Text="🔍"
+                         FontSize="11"
+                         Foreground="{DynamicResource Brush.Muted}"
+                         VerticalAlignment="Center"
+                         HorizontalAlignment="Left"
+                         Margin="8,0,0,0"
+                         IsHitTestVisible="False" />
+              <Button Style="{StaticResource Button.Ghost}"
+                      Content="✕"
+                      Padding="0"
+                      Width="18" Height="18"
+                      FontSize="10"
+                      FontWeight="Bold"
+                      Foreground="{DynamicResource Brush.Muted}"
+                      HorizontalAlignment="Right"
+                      VerticalAlignment="Center"
+                      Margin="0,0,6,0"
+                      Command="{Binding ClearSearchCommand}"
+                      Visibility="{Binding HasSearchText, Converter={StaticResource BoolToVisibility}}"
+                      ToolTip="Limpiar búsqueda (Esc)" />
+            </Grid>
+            <ComboBox Style="{StaticResource Form.ComboBox}" ItemsSource="{Binding CategoryOptions}" SelectedItem="{Binding SelectedCategory}" Margin="0,8,0,0"
+                      ToolTip="Filtrar por categoría" />
           </StackPanel>
         </Border>
 
@@ -105,8 +141,10 @@
                     CommandParameter="{Binding SelectedComparisonRow}"
                     Margin="0,0,6,0"
                     ToolTip="Aplicar el mejor precio de la fila de comparación seleccionada al proyecto" />
-            <Button Style="{StaticResource Button.Secondary}" Content="Actualizar" Command="{Binding RefreshCommand}" Margin="0,0,6,0" />
-            <Button Style="{StaticResource Button.Ghost}" Content="Limpiar filtros" Command="{Binding ClearFiltersCommand}" />
+            <Button Style="{StaticResource Button.Secondary}" Content="Actualizar (F5)" Command="{Binding RefreshCommand}" Margin="0,0,6,0"
+                    ToolTip="Recargar cotizaciones y comparaciones (F5)" />
+            <Button Style="{StaticResource Button.Ghost}" Content="Limpiar filtros" Command="{Binding ClearFiltersCommand}"
+                    ToolTip="Restablecer búsqueda y filtro de categoría (Esc)" />
           </StackPanel>
           <StackPanel>
             <TextBlock Text="{Binding SelectedProvider.Proveedor, TargetNullValue='Cotizaciones de proveedores'}" Style="{StaticResource Text.ViewTitle}" />
@@ -127,15 +165,10 @@
           <Border Style="{StaticResource Card.Section}" Padding="0">
             <Grid>
               <!-- Empty state cuando no hay proveedor seleccionado -->
-              <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="24"
-                          Visibility="{Binding SelectedProvider, Converter={StaticResource NullToVisibility}}">
-                <TextBlock Text="Selecciona un proveedor" FontSize="16" FontWeight="SemiBold"
-                           Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Center" />
-                <TextBlock Text="Elige un proveedor de la lista izquierda para ver sus materiales cotizados."
-                           FontSize="12" Foreground="{DynamicResource Brush.Muted}"
-                           HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"
-                           MaxWidth="320" Margin="0,8,0,0" />
-              </StackPanel>
+              <ctrl:EmptyStateControl Visibility="{Binding SelectedProvider, Converter={StaticResource NullToVisibility}}"
+                                      IconData="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M22 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75"
+                                      Title="Selecciona un proveedor"
+                                      Description="Elige un proveedor del listado para inspeccionar sus materiales y el análisis comparativo de precios." />
               <DataGrid ItemsSource="{Binding ProviderEntries}"
                         AutoGenerateColumns="False"
                         CanUserAddRows="False"

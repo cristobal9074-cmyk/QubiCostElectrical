@@ -1,7 +1,7 @@
 using System.Threading;
 using QuestPDF.Infrastructure;
 
-namespace QubiCostElectrical;
+namespace QubiCostElectrical.Infrastructure;
 
 public static class QuestPdfBootstrap
 {

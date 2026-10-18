@@ -138,6 +138,16 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
     }
 
     /// <summary>Falso cuando el proyecto está en CLP: en ese caso no se expone ninguna cifra en UF.</summary>
-    private bool ShowsUfFigures
+    internal bool ShowsUfFigures
         => !string.Equals(session.ProjectInfo.MonedaPresupuesto, "CLP", StringComparison.OrdinalIgnoreCase);
+
+    internal BudgetProjectSession Session => session;
+    internal IPriceBankStore? PriceBank => priceBank;
+    internal decimal CurrentValorUf => currentValorUf;
+    internal bool SuppressGoRefresh { get => suppressGoRefresh; set => suppressGoRefresh = value; }
+    internal bool SuppressCoefRefresh { get => suppressCoefRefresh; set => suppressCoefRefresh = value; }
+    internal string FormatMoneyPrimary(decimal clp) => MoneyPrimary(clp);
+    internal (string Primary, string Secondary) FormatMoneyPair(decimal clp) => MoneyPair(clp);
+    internal void NotifyHasPrecioFamiliasLibresChanged() => OnPropertyChanged(nameof(HasPrecioFamiliasLibres));
+    internal void NotifyFamiliasChanged() => OnPropertyChanged(nameof(Familias));
 }

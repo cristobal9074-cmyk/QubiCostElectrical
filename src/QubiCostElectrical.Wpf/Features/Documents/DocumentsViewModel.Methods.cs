@@ -16,6 +16,7 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
     public DocumentsViewModel(IShellNavigationHost shell, WpfAppHost host)
         : this(shell, host.Session, host.ProjectWorkspace, host.Permissions, host.Documents) { }
 
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
     public DocumentsViewModel(IShellNavigationHost shell, BudgetProjectSession session, IProjectWorkspaceService projectWorkspace, IPermissionService permissions, IDocumentsWorkspaceService documents)
     {
         this.shell = shell;
@@ -42,8 +43,16 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
         SelectTipoFilterCommand = new RelayCommand<string>(SelectTipoFilter);
         SelectNavFilterCommand = new RelayCommand<string>(SelectNavFilter);
         ToggleInspectionFilterCommand = new RelayCommand<string>(ToggleInspectionFilter);
-        PreviousPreviewPageCommand = new RelayCommand(PreviousPreviewPage, () => currentPreviewPageIndex > 0);
-        NextPreviewPageCommand = new RelayCommand(NextPreviewPage, () => currentPreviewPageIndex < totalPreviewPages - 1);
+        previewCoordinator = new DocumentsPreviewCoordinator(() => SelectedRow);
+        previewCoordinator.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName != null)
+                OnPropertyChanged(e.PropertyName);
+        };
+        PreviousPreviewPageCommand = previewCoordinator.PreviousPreviewPageCommand;
+        NextPreviewPageCommand = previewCoordinator.NextPreviewPageCommand;
+        ClearSearchCommand = new RelayCommand(() => SearchText = string.Empty, () => !string.IsNullOrEmpty(SearchText));
+        CopyFilePathCommand = new RelayCommand(CopyFilePath, () => SelectedRow != null && !string.IsNullOrWhiteSpace(SelectedRow.RutaArchivo));
     }
 
     public bool CanEdit => !ShowEmptyState && !session.IsReadOnly;
@@ -56,26 +65,14 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
     public ObservableCollection<string> TipoChoices { get; } = new(AntecedenteTecnicoTipo.All);
     public ObservableCollection<string> DisciplinaChoices { get; } = new(AntecedenteDisciplina.All);
 
-    private ImageSource? previewImage;
-    private bool hasPreviewImage;
-    private bool isPreviewLoading;
-    private string selectedFileExtensionBadge = "DOC";
-    private string selectedFileSizeText = "";
-    private bool selectedFileExists;
-    private bool isPdfMultiPage;
-    private string previewPageIndicator = "1 / 1";
-    private int currentPreviewPageIndex;
-    private int totalPreviewPages;
-    private CancellationTokenSource? previewCts;
-
-    public ImageSource? PreviewImage { get => previewImage; private set => SetProperty(ref previewImage, value); }
-    public bool HasPreviewImage { get => hasPreviewImage; private set => SetProperty(ref hasPreviewImage, value); }
-    public bool IsPreviewLoading { get => isPreviewLoading; private set => SetProperty(ref isPreviewLoading, value); }
-    public string SelectedFileExtensionBadge { get => selectedFileExtensionBadge; private set => SetProperty(ref selectedFileExtensionBadge, value); }
-    public string SelectedFileSizeText { get => selectedFileSizeText; private set => SetProperty(ref selectedFileSizeText, value); }
-    public bool SelectedFileExists { get => selectedFileExists; private set => SetProperty(ref selectedFileExists, value); }
-    public bool IsPdfMultiPage { get => isPdfMultiPage; private set => SetProperty(ref isPdfMultiPage, value); }
-    public string PreviewPageIndicator { get => previewPageIndicator; private set => SetProperty(ref previewPageIndicator, value); }
+    public ImageSource? PreviewImage => previewCoordinator.PreviewImage;
+    public bool HasPreviewImage => previewCoordinator.HasPreviewImage;
+    public bool IsPreviewLoading => previewCoordinator.IsPreviewLoading;
+    public string SelectedFileExtensionBadge => previewCoordinator.SelectedFileExtensionBadge;
+    public string SelectedFileSizeText => previewCoordinator.SelectedFileSizeText;
+    public bool SelectedFileExists => previewCoordinator.SelectedFileExists;
+    public bool IsPdfMultiPage => previewCoordinator.IsPdfMultiPage;
+    public string PreviewPageIndicator => previewCoordinator.PreviewPageIndicator;
     public ICommand PreviousPreviewPageCommand { get; }
     public ICommand NextPreviewPageCommand { get; }
 
@@ -96,7 +93,15 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
     public string SearchText
     {
         get => searchText;
-        set { if (SetProperty(ref searchText, value)) { ApplyFilter(); NotifyListMeta(); } }
+        set
+        {
+            if (SetProperty(ref searchText, value))
+            {
+                ApplyFilter();
+                NotifyListMeta();
+                ((RelayCommand)ClearSearchCommand).RaiseCanExecuteChanged();
+            }
+        }
     }
 
     public string TipoFilter
@@ -301,6 +306,8 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
     public ICommand SelectTipoFilterCommand { get; }
     public ICommand SelectNavFilterCommand { get; }
     public ICommand ToggleInspectionFilterCommand { get; }
+    public ICommand ClearSearchCommand { get; }
+    public ICommand CopyFilePathCommand { get; }
 
     private void SelectTipoFilter(string? tipo) => SelectNavFilter(tipo);
 
@@ -768,171 +775,23 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
         }
     }
 
-    private void UpdateFilePreview()
+    private void CopyFilePath()
     {
-        previewCts?.Cancel();
         var path = SelectedRow?.RutaArchivo;
         if (string.IsNullOrWhiteSpace(path))
-        {
-            PreviewImage = null;
-            HasPreviewImage = false;
-            IsPreviewLoading = false;
-            SelectedFileExtensionBadge = SelectedRow?.Tipo?.ToUpperInvariant() ?? "DOC";
-            SelectedFileSizeText = "Sin archivo adjunto";
-            SelectedFileExists = false;
-            IsPdfMultiPage = false;
-            totalPreviewPages = 0;
-            currentPreviewPageIndex = 0;
-            PreviewPageIndicator = "";
             return;
-        }
-
-        string ext = Path.GetExtension(path).TrimStart('.').ToUpperInvariant();
-        SelectedFileExtensionBadge = string.IsNullOrWhiteSpace(ext) ? "DOC" : ext;
-
-        if (!File.Exists(path))
-        {
-            PreviewImage = null;
-            HasPreviewImage = false;
-            IsPreviewLoading = false;
-            SelectedFileSizeText = "Archivo no encontrado";
-            SelectedFileExists = false;
-            IsPdfMultiPage = false;
-            totalPreviewPages = 0;
-            currentPreviewPageIndex = 0;
-            PreviewPageIndicator = "";
-            return;
-        }
-
-        SelectedFileExists = true;
         try
         {
-            var fi = new FileInfo(path);
-            SelectedFileSizeText = fi.Length >= 1024 * 1024
-                ? $"{fi.Length / (1024.0 * 1024.0):N1} MB"
-                : $"{fi.Length / 1024.0:N0} KB";
+            System.Windows.Clipboard.SetText(path);
+            StatusMessage = "Ruta de archivo copiada al portapapeles.";
+            ShellNotificationService.Instance.ShowCopied("Ruta de archivo copiada al portapapeles.");
         }
         catch
         {
-            SelectedFileSizeText = "Disponible";
-        }
-
-        currentPreviewPageIndex = 0;
-        LoadCurrentPagePreview(path, ext);
-    }
-
-    private async void LoadCurrentPagePreview(string path, string ext)
-    {
-        previewCts?.Cancel();
-        previewCts?.Dispose();
-        previewCts = new CancellationTokenSource();
-        var ct = previewCts.Token;
-
-        try
-        {
-            if (string.Equals(ext, "PDF", StringComparison.OrdinalIgnoreCase))
-            {
-                IsPreviewLoading = true;
-                PreviewImage = null;
-                HasPreviewImage = false;
-
-                var result = await PdfPageRenderer.RenderPageAsync(path, currentPreviewPageIndex, dpi: 110, ct);
-
-                if (ct.IsCancellationRequested)
-                    return;
-
-                totalPreviewPages = result.PageCount;
-                IsPdfMultiPage = totalPreviewPages > 1;
-                PreviewPageIndicator = totalPreviewPages > 0 ? $"{currentPreviewPageIndex + 1} / {totalPreviewPages}" : "1 / 1";
-                PreviewImage = result.Image;
-                HasPreviewImage = PreviewImage != null;
-                IsPreviewLoading = false;
-            }
-            else if (ext is "PNG" or "JPG" or "JPEG" or "BMP")
-            {
-                IsPreviewLoading = true;
-                var bmp = await Task.Run(() =>
-                {
-                    try
-                    {
-                        var img = new BitmapImage();
-                        img.BeginInit();
-                        img.CacheOption = BitmapCacheOption.OnLoad;
-                        img.UriSource = new Uri(path);
-                        img.EndInit();
-                        img.Freeze();
-                        return img;
-                    }
-                    catch
-                    {
-                        return null;
-                    }
-                }, ct);
-
-                if (ct.IsCancellationRequested)
-                    return;
-
-                totalPreviewPages = 1;
-                IsPdfMultiPage = false;
-                PreviewPageIndicator = "1 / 1";
-                PreviewImage = bmp;
-                HasPreviewImage = bmp != null;
-                IsPreviewLoading = false;
-            }
-            else
-            {
-                IsPreviewLoading = false;
-                totalPreviewPages = 0;
-                IsPdfMultiPage = false;
-                PreviewPageIndicator = "";
-                PreviewImage = null;
-                HasPreviewImage = false;
-            }
-        }
-        catch (OperationCanceledException)
-        {
-            // Operación cancelada por nueva selección de plano
-        }
-        catch
-        {
-            PreviewImage = null;
-            HasPreviewImage = false;
-            IsPdfMultiPage = false;
-            PreviewPageIndicator = "";
-            IsPreviewLoading = false;
-        }
-        finally
-        {
-            if (!ct.IsCancellationRequested)
-            {
-                IsPreviewLoading = false;
-                ((RelayCommand)PreviousPreviewPageCommand).RaiseCanExecuteChanged();
-                ((RelayCommand)NextPreviewPageCommand).RaiseCanExecuteChanged();
-            }
         }
     }
 
-    private void PreviousPreviewPage()
-    {
-        if (currentPreviewPageIndex > 0 && SelectedRow?.RutaArchivo != null)
-        {
-            currentPreviewPageIndex--;
-            var path = SelectedRow.RutaArchivo;
-            var ext = Path.GetExtension(path).TrimStart('.').ToUpperInvariant();
-            LoadCurrentPagePreview(path, ext);
-        }
-    }
-
-    private void NextPreviewPage()
-    {
-        if (currentPreviewPageIndex < totalPreviewPages - 1 && SelectedRow?.RutaArchivo != null)
-        {
-            currentPreviewPageIndex++;
-            var path = SelectedRow.RutaArchivo;
-            var ext = Path.GetExtension(path).TrimStart('.').ToUpperInvariant();
-            LoadCurrentPagePreview(path, ext);
-        }
-    }
+    private void UpdateFilePreview() => previewCoordinator.UpdateFilePreview();
 
     private void Save()
     {
@@ -942,6 +801,7 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
         documents.SaveChanges();
         isDirty = false;
         StatusMessage = "Antecedentes guardados en el proyecto. Use Guardar en la barra superior para persistir el archivo.";
+        ShellNotificationService.Instance.ShowSuccess("Antecedentes guardados", "Los cambios se guardaron en el proyecto activo.");
         shell.RefreshChrome();
         NotifyDirty();
         Load();
@@ -966,6 +826,10 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
                 ? $"Se sincronizaron {count} planos vigentes del borrador actual a la oferta."
                 : $"Se sincronizaron {count} planos vigentes a la oferta."
             : "No había planos vigentes para sincronizar.";
+        if (count > 0)
+        {
+            ShellNotificationService.Instance.ShowSuccess("Planos sincronizados", $"Se sincronizaron {count} planos vigentes a la oferta.");
+        }
         shell.RefreshChrome();
     }
 
@@ -1078,6 +942,7 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
         ((RelayCommand)AttachFileCommand).RaiseCanExecuteChanged();
         ((RelayCommand<object>)OpenAttachedFileCommand).RaiseCanExecuteChanged();
         ((RelayCommand)OpenContainingFolderCommand).RaiseCanExecuteChanged();
+        ((RelayCommand)CopyFilePathCommand).RaiseCanExecuteChanged();
     }
 
     public void OnGridEdited() => OnRowEdited();

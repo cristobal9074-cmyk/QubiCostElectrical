@@ -960,5 +960,80 @@ public sealed class ChangeOrdersViewModelTests
         Assert.Equal("CAB-SUPERFLEX", deserialized.Lineas[0].Materiales[0].Codigo);
         Assert.Equal(220m, deserialized.Lineas[0].Materiales[0].Cantidad);
     }
+
+    [Fact]
+    public void DuplicateSelected_CreatesNewDraftCopy()
+    {
+        var host = SetupHost();
+        var vm = Vm(host);
+        vm.AddNew();
+        Assert.Single(vm.Items);
+        var original = vm.Items[0];
+        vm.Selected = original;
+
+        Assert.True(vm.CanDuplicate);
+        vm.DuplicateSelected();
+
+        Assert.Equal(2, host.Session.OrdenesCambio.Count);
+        Assert.Equal(2, vm.Items.Count);
+        Assert.NotNull(vm.Selected);
+        Assert.StartsWith("OC-", vm.Selected.Numero);
+        Assert.Contains("(Copia)", vm.Selected.Titulo);
+        Assert.Equal("Borrador", vm.Selected.Estado);
+    }
+
+    [Fact]
+    public void FilterChips_UpdateFilterEstadoAndCounts()
+    {
+        var host = SetupHost();
+        var vm = Vm(host);
+        vm.AddNew(); // OC 1: Borrador
+        Assert.Equal(1, vm.CountAll);
+        Assert.Equal(1, vm.CountBorrador);
+        Assert.True(vm.IsFilterAll);
+
+        vm.SetFilterBorrador();
+        Assert.True(vm.IsFilterBorrador);
+        Assert.False(vm.IsFilterAll);
+        Assert.Equal("Borrador", vm.FilterEstado);
+
+        vm.SetFilterEnRevision();
+        Assert.True(vm.IsFilterEnRevision);
+        Assert.Empty(vm.Items); // No en revision items
+
+        vm.ClearFilters();
+        Assert.True(vm.IsFilterAll);
+        Assert.Single(vm.Items);
+    }
+
+    [Fact]
+    public void ChangeOrderRowVm_ExposesRichInspectorProperties()
+    {
+        var oc = new ChangeOrderRow
+        {
+            Numero = "OC-099",
+            Titulo = "Aumento alimentador principal",
+            Estado = "En revisión",
+            CreadoPor = "Estimador Senior",
+            GastosGeneralesPct = 12m,
+            UtilidadPct = 10m,
+            DeltaCostoUf = 15.5m,
+            DeltaVentaUf = 19.096m,
+            Nota = "Requerido por aumento de potencia en sala bombas"
+        };
+        oc.Lineas.Add(new ChangeOrderLineRow { Item = "1.1", DescripcionPartida = "Conductor 240mm2" });
+
+        var vm = new ChangeOrderRowVm(oc, 1);
+
+        Assert.Equal(1, vm.LineasCount);
+        Assert.True(vm.HasLineas);
+        Assert.True(vm.HasNota);
+        Assert.Equal("1 partida", vm.PartidasBadgeText);
+        Assert.Equal(12m, vm.GastosGeneralesPct);
+        Assert.Equal(10m, vm.UtilidadPct);
+        Assert.True(vm.EsEnRevision);
+        Assert.False(vm.EsBorrador);
+        Assert.False(vm.EsAprobado);
+    }
 }
 

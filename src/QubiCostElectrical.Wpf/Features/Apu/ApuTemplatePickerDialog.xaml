@@ -10,7 +10,7 @@
         ShowInTaskbar="False"
         ResizeMode="CanResizeWithGrip">
 
-  <Border Style="{StaticResource Dialog.Chrome}" Margin="16">
+  <Border Style="{StaticResource Dialog.Chrome}">
   <Grid>
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto"/>
@@ -25,11 +25,19 @@
       <ColumnDefinition Width="*"/>
     </Grid.ColumnDefinitions>
 
-    <StackPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,0,0,12">
-      <TextBlock Text="Aplicar plantilla APU" Style="{StaticResource Dialog.HeaderTitle}" />
-      <TextBlock Text="Elija una plantilla y decida si reemplaza o agrega recursos al APU actual."
-                 Style="{StaticResource Dialog.HeaderSubtitle}" />
-    </StackPanel>
+    <DockPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,0,0,16" LastChildFill="True">
+      <Border Style="{StaticResource Dialog.HeaderIconContainer}" DockPanel.Dock="Left">
+        <Path Data="M 14 2 H 6 a 2 2 0 0 0 -2 2 v 16 a 2 2 0 0 0 2 2 h 12 a 2 2 0 0 0 2 -2 V 8 Z M 14 2 v 6 h 6 M 16 13 H 8 M 16 17 H 8 M 10 9 H 8"
+              Stroke="{DynamicResource Brush.Blue}" StrokeThickness="1.6"
+              StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+              Width="16" Height="16" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" />
+      </Border>
+      <StackPanel VerticalAlignment="Center">
+        <TextBlock Text="Aplicar Plantilla APU" Style="{StaticResource Dialog.HeaderTitle}" />
+        <TextBlock Text="Elija una plantilla y decida si reemplaza o agrega recursos al APU actual."
+                   Style="{StaticResource Dialog.HeaderSubtitle}" Margin="0" />
+      </StackPanel>
+    </DockPanel>
 
     <!-- Filtro -->
     <TextBox Grid.Row="1" Grid.Column="0"
@@ -81,12 +89,12 @@
               BorderThickness="1"
               CanUserResizeRows="False">
       <DataGrid.Columns>
-        <DataGridTextColumn Header="Tipo" Binding="{Binding Tipo}" Width="45"/>
-        <DataGridTextColumn Header="Código" Binding="{Binding CodigoMaterial}" Width="75"/>
-        <DataGridTextColumn Header="Descripción" Binding="{Binding Descripcion}" Width="*"/>
-        <DataGridTextColumn Header="Ud." Binding="{Binding Unidad}" Width="40"/>
-        <DataGridTextColumn Header="Rend." Binding="{Binding Rendimiento, StringFormat=N3}" Width="60"/>
-        <DataGridTextColumn Header="Precio $" Binding="{Binding PrecioUf, StringFormat=N0}" Width="90"/>
+        <DataGridTextColumn Header="TIPO" Binding="{Binding Tipo}" Width="45" HeaderStyle="{StaticResource DataGridColumnHeader.Center}"/>
+        <DataGridTextColumn Header="CÓDIGO" Binding="{Binding CodigoMaterial}" Width="75"/>
+        <DataGridTextColumn Header="DESCRIPCIÓN" Binding="{Binding Descripcion}" Width="*"/>
+        <DataGridTextColumn Header="UD" Binding="{Binding Unidad}" Width="40" HeaderStyle="{StaticResource DataGridColumnHeader.Center}"/>
+        <DataGridTextColumn Header="REND." Binding="{Binding Rendimiento, StringFormat=N3}" Width="60" HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}"/>
+        <DataGridTextColumn Header="PRECIO $" Binding="{Binding PrecioUf, StringFormat=N0}" Width="90" HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}"/>
       </DataGrid.Columns>
     </DataGrid>
 
@@ -102,13 +110,13 @@
 
     <!-- Botones -->
     <DockPanel Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3"
-               Style="{StaticResource Dialog.Footer}" LastChildFill="False">
-      <Button DockPanel.Dock="Right" x:Name="BtnAplicar" Content="Aplicar"
-              Style="{StaticResource Button.Primary}" MinWidth="90"
+               Style="{StaticResource Dialog.Footer}">
+      <Button DockPanel.Dock="Right" x:Name="BtnAplicar" Content="Aplicar plantilla"
+              Style="{StaticResource Button.Primary}" MinWidth="130" Height="34"
               IsDefault="True" IsEnabled="False"
               Click="BtnAplicar_Click"/>
       <Button DockPanel.Dock="Right" Content="Cancelar"
-              Style="{StaticResource Button.Secondary}" MinWidth="90" Margin="0,0,8,0"
+              Style="{StaticResource Button.Secondary}" MinWidth="90" Height="34" Margin="0,0,10,0"
               IsCancel="True"/>
     </DockPanel>
   </Grid>

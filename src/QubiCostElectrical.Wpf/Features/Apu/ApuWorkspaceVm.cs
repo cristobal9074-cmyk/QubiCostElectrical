@@ -25,7 +25,6 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
     private readonly IShellNavigationHost shell;
     private readonly BudgetProjectSession session;
     private readonly IApuService apuSvc;
-    private readonly ConjuntoElectricoService conjuntoSvc = new();
     private readonly IApuTemplateStore? templateStore;
     private readonly IProjectWorkspaceService workspace;
     private readonly WpfUndoService undo;
@@ -52,13 +51,9 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
     private string alertText = "";
     private bool hasAlerts;
 
-    // Autocompletado e IntelliSense
-    private readonly ApuAutocompleteEngine autocompleteEngine;
-    private ObservableCollection<ApuAutocompleteSuggestionVm> autocompleteResults = new();
-    private bool autocompleteVisible;
-    private ApuAutocompleteSuggestionVm? selectedAutocompleteItem;
-    private string autocompleteStatusText = "";
-    private System.Threading.CancellationTokenSource? autocompleteCts;
+    // Coordinadores
+    private readonly ApuAutocompleteCoordinator autocompleteCoordinator;
+    private readonly ApuTemplateCoordinator templateCoordinator;
 
     public Func<string, bool> ConfirmOverwriteTemplate { get; set; } = msg => WpfDialogService.Confirm("Reemplazar recursos de APU", msg, isWarning: true);
 }

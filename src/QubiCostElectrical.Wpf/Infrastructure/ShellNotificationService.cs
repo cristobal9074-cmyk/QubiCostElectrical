@@ -40,6 +40,9 @@ public sealed class ToastMessage
     public Action? Action { get; }
     public bool HasAction => !string.IsNullOrWhiteSpace(ActionLabel) && Action != null;
     public string? CustomGlyph { get; }
+    public bool HasCustomGlyph => !string.IsNullOrWhiteSpace(CustomGlyph);
+    public bool IsUndo => CustomGlyph == "↩";
+    public bool IsRedo => CustomGlyph == "↪";
 
     public string IconGlyph => CustomGlyph ?? Level switch
     {
@@ -85,6 +88,9 @@ public sealed class ShellNotificationService
         string desc = string.IsNullOrWhiteSpace(description) ? "Edición" : description;
         Enqueue("↪ Rehecho", desc, ToastLevel.Info, customGlyph: "↪", durationSeconds: 3.5);
     }
+
+    public void ShowCopied(string message = "Copiado al portapapeles.") =>
+        Enqueue("Portapapeles", message, ToastLevel.Success, durationSeconds: 3.0);
 
     public void Dismiss(ToastMessage toast)
     {
@@ -144,7 +150,7 @@ public sealed class ShellNotificationService
         if (!startTimer)
             return;
 
-        double seconds = durationSeconds > 0 ? durationSeconds : (toast.HasAction ? 8 : 4);
+        double seconds = durationSeconds > 0 ? durationSeconds : (toast.HasAction ? 6 : 3.5);
         var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(seconds) };
         timer.Tick += (_, _) =>
         {

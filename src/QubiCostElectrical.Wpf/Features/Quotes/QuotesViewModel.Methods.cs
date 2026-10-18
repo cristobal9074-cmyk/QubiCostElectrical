@@ -16,8 +16,9 @@ namespace QubiCostElectrical.Wpf.Features.Quotes;
 public sealed partial class QuotesViewModel : SessionAwareViewModelBase, IRefreshablePage
 {
     public QuotesViewModel(IShellNavigationHost shell, WpfAppHost host)
-        : this(shell, host.Session, host.ProjectWorkspace, host.Services.MaterialSearch, host.Services.PriceBankStore, host.UndoService) { }
+        : this(shell, host.Session, host.ProjectWorkspace, host.MaterialSearch, host.PriceBankStore, host.UndoService) { }
 
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
     public QuotesViewModel(IShellNavigationHost shell, BudgetProjectSession session, IProjectWorkspaceService workspace, IMaterialSearchService materialSearch, IPriceBankStore store, WpfUndoService? undo = null) : base(session)
     {
         this.shell = shell;
@@ -29,6 +30,7 @@ public sealed partial class QuotesViewModel : SessionAwareViewModelBase, IRefres
 
         refreshCommand = new RelayCommand(Refresh);
         clearFiltersCommand = new RelayCommand(ClearFilters);
+        ClearSearchCommand = new RelayCommand(() => SearchText = string.Empty, () => HasSearchText);
         importQuoteCommand = new RelayCommand(ImportQuote);
         applyPriceCommand = new RelayCommand<QuoteComparisonRowVm>(ApplyPrice, r => r != null && !session.IsReadOnly);
         applyAllBestPricesCommand = new RelayCommand(ApplyAllBestPrices, () => FilteredComparisonRows.Any() && !session.IsReadOnly);
@@ -67,6 +69,9 @@ public sealed partial class QuotesViewModel : SessionAwareViewModelBase, IRefres
     public IEnumerable<QuoteComparisonRowVm> FilteredComparisonRows => comparisonRows;
     public ObservableCollection<string> CategoryOptions => categoryOptions;
 
+    public bool HasSearchText => !string.IsNullOrWhiteSpace(searchText);
+    public bool HasActiveFilters => HasSearchText || (!string.IsNullOrEmpty(selectedCategory) && !string.Equals(selectedCategory, "Todas", StringComparison.OrdinalIgnoreCase));
+
     public string SearchText
     {
         get => searchText;
@@ -75,8 +80,12 @@ public sealed partial class QuotesViewModel : SessionAwareViewModelBase, IRefres
             if (!SetProperty(ref searchText, value))
                 return;
             cachedNormalizedSearch = materialSearch.Normalize(value ?? "");
-            if (System.Windows.Application.Current == null)
+            OnPropertyChanged(nameof(HasSearchText));
+            OnPropertyChanged(nameof(HasActiveFilters));
+            (ClearSearchCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            if (string.IsNullOrWhiteSpace(value) || System.Windows.Application.Current == null)
             {
+                searchDebounceTimer.Stop();
                 providerSummaryView.Refresh();
                 RefreshSelectedProvider();
                 UpdateSummary();
@@ -96,6 +105,7 @@ public sealed partial class QuotesViewModel : SessionAwareViewModelBase, IRefres
         {
             if (!SetProperty(ref selectedCategory, value))
                 return;
+            OnPropertyChanged(nameof(HasActiveFilters));
             RebuildProvidersInSelectedCategory();
             providerSummaryView.Refresh();
             RefreshSelectedProvider();
@@ -149,6 +159,7 @@ public sealed partial class QuotesViewModel : SessionAwareViewModelBase, IRefres
 
     public ICommand RefreshCommand => refreshCommand;
     public ICommand ClearFiltersCommand => clearFiltersCommand;
+    public ICommand ClearSearchCommand { get; }
     public ICommand ImportQuoteCommand => importQuoteCommand;
     public ICommand ApplyPriceCommand => applyPriceCommand;
     public ICommand ApplyAllBestPricesCommand => applyAllBestPricesCommand;
@@ -445,12 +456,16 @@ public sealed partial class QuotesViewModel : SessionAwareViewModelBase, IRefres
         searchText = "";
         cachedNormalizedSearch = "";
         OnPropertyChanged(nameof(SearchText));
+        OnPropertyChanged(nameof(HasSearchText));
         selectedCategory = "Todas";
         OnPropertyChanged(nameof(SelectedCategory));
+        OnPropertyChanged(nameof(HasActiveFilters));
+        (ClearSearchCommand as RelayCommand)?.RaiseCanExecuteChanged();
         RebuildProvidersInSelectedCategory();
         providerSummaryView.Refresh();
         RefreshSelectedProvider();
         UpdateSummary();
+        StatusMessage = "Filtros limpiados.";
     }
 
     private void ImportQuote()

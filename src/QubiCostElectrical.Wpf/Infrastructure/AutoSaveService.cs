@@ -174,7 +174,7 @@ public sealed class AutoSaveService : INotifyPropertyChanged, IDisposable
     {
         try
         {
-            return UserPreferencesStore.Load().AutosaveEnabled;
+            return WpfAppHost.Current?.UserPreferencesStore?.Load().AutosaveEnabled ?? false;
         }
         catch (Exception ex)
         {

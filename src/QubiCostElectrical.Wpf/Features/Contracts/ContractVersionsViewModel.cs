@@ -58,8 +58,9 @@ public sealed class ContractVersionsViewModel : WorkspacePageViewModelBase
     private readonly IProjectDbContext projectDb;
 
     public ContractVersionsViewModel(IShellNavigationHost shell, WpfAppHost host, ContractId contractId)
-        : this(shell, host.Session, host.ProjectWorkspace, host.Services.ProjectDb, contractId) { }
+        : this(shell, host.Session, host.ProjectWorkspace, host.ProjectDb, contractId) { }
 
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
     public ContractVersionsViewModel(IShellNavigationHost shell, BudgetProjectSession session, IProjectWorkspaceService workspace, IProjectDbContext projectDb, ContractId contractId)
         : base(session, workspace)
     {

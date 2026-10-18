@@ -51,13 +51,15 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
 
     public event Action<string>? RowAdded;
     internal void NotifyRowAdded(string rowId) => RowAdded?.Invoke(rowId);
+    internal void NotifyProperty(string name) => OnPropertyChanged(name);
 
     public CubicacionViewModel(IShellNavigationHost shell, WpfAppHost host)
         : this(shell, host.Session, host.ProjectWorkspace, host.Cubicacion, host.Itemizado, host.UndoService,
-               host.Services.Cubicacion, host.Services.CubicacionTakeoffQuery, host.Services.ProjectRepository,
-               host.Services.MaterialSearch, host.Services.PriceBankStore)
+               host.CubicacionService, host.CubicacionTakeoffQuery, host.ProjectRepository,
+               host.MaterialSearch, host.PriceBankStore)
     { }
 
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
     public CubicacionViewModel(
         IShellNavigationHost shell,
         BudgetProjectSession session,
@@ -91,6 +93,9 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
         sectorService = new CubicacionSectorService(this, session, undo, querySvc, cubicacionPresenter);
         rowMutationService = new CubicacionRowMutationService(this, session, undo, cubSvc, cubicacionPresenter, priceBankStore);
         clipboardCoordinator = new CubicacionClipboardCoordinator(this, session, undo, cubicacionPresenter, querySvc);
+        baselineCoordinator = new CubicacionBaselineCoordinator(this, session);
+        navigationCoordinator = new CubicacionNavigationCoordinator(this, session, shell);
+        partidaCoordinator = new CubicacionPartidaCoordinator(this, session, undo);
 
         RightPanel = new CubicacionRightPanelVm(session, this);
         Partidas = new ObservableCollection<PartidaListItemVm>();
@@ -159,51 +164,9 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
     }
 
     /// <summary>Avisa si quedan partidas en cola tras Cubicar multi-selección.</summary>
-    internal void PromptTakeoffQueueContinuation()
-    {
-        var remaining = session.PendingTakeoffQueueCount;
-        if (remaining <= 0)
-            return;
+    internal void PromptTakeoffQueueContinuation() => navigationCoordinator.PromptTakeoffQueueContinuation();
 
-        ShellNotificationService.Instance.ShowInfo(
-            "Cola de cubicación",
-            remaining == 1
-                ? "Queda 1 partida pendiente."
-                : $"Quedan {remaining:N0} partidas pendientes.",
-            "Siguiente",
-            AdvanceTakeoffQueue);
-    }
-
-    private void AdvanceTakeoffQueue()
-    {
-        var nextId = session.TryDequeueNextTakeoff();
-        if (string.IsNullOrWhiteSpace(nextId))
-            return;
-
-        var target = Partidas.FirstOrDefault(p =>
-            string.Equals(p.Id, nextId, StringComparison.OrdinalIgnoreCase) && p.EsPartida);
-        if (target == null)
-        {
-            WpfDialogService.Info("Cubicar", "La siguiente partida de la cola ya no está disponible.");
-            PromptTakeoffQueueContinuation();
-            return;
-        }
-
-        SelectPartida(target);
-        PromptTakeoffQueueContinuation();
-    }
-
-    public void SelectRowByTarget(string? rowId, string? code)
-    {
-        if (Rows.Count == 0) return;
-        var match = Rows.FirstOrDefault(r =>
-            (!string.IsNullOrWhiteSpace(rowId) && string.Equals(r.Id, rowId, StringComparison.OrdinalIgnoreCase)) ||
-            (!string.IsNullOrWhiteSpace(code) && string.Equals(r.Codigo, code, StringComparison.OrdinalIgnoreCase)));
-        if (match != null)
-        {
-            SelectedRow = match;
-        }
-    }
+    public void SelectRowByTarget(string? rowId, string? code) => navigationCoordinator.SelectRowByTarget(rowId, code);
 
     partial void InitializeSessionHandlers();
 
@@ -282,7 +245,21 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
         }
     }
 
-    public string PartidaFilter { get => partidaFilter; set { if (SetProperty(ref partidaFilter, value)) SchedulePartidaFilter(); } }
+    public string PartidaFilter
+    {
+        get => partidaFilter;
+        set
+        {
+            if (SetProperty(ref partidaFilter, value))
+            {
+                OnPropertyChanged(nameof(HasPartidaFilter));
+                if (string.IsNullOrEmpty(value)) { partidaFilterDebounceTimer?.Stop(); ApplyFilter(); }
+                else SchedulePartidaFilter();
+            }
+        }
+    }
+
+    public bool HasPartidaFilter => !string.IsNullOrWhiteSpace(partidaFilter);
 
     private void SchedulePartidaFilter()
     {
@@ -317,35 +294,15 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
     public void NotifyFilterCountsChanged() { OnPropertyChanged(nameof(TotalFilterLabel)); OnPropertyChanged(nameof(ListasFilterLabel)); OnPropertyChanged(nameof(PendientesFilterLabel)); }
     internal void UpdateFilterCounts() => loadingService.UpdateFilterCounts();
 
-    private string resourceSearchText = "";
-
     // No oculta filas (rompería los índices que usa el pegado desde Excel): busca y
     // selecciona la siguiente coincidencia, con ciclo al llegar al final de la lista.
     public string ResourceSearchText
     {
-        get => resourceSearchText;
-        set => SetProperty(ref resourceSearchText, value);
+        get => navigationCoordinator.ResourceSearchText;
+        set => navigationCoordinator.ResourceSearchText = value;
     }
 
-    public CubicacionRowVm? FindNextResource()
-    {
-        var needle = resourceSearchText.Trim();
-        if (string.IsNullOrEmpty(needle) || Rows.Count == 0)
-            return null;
-
-        int startIndex = SelectedRow != null ? Rows.IndexOf(SelectedRow) + 1 : 0;
-        for (int i = 0; i < Rows.Count; i++)
-        {
-            var row = Rows[(startIndex + i) % Rows.Count];
-            if (row.Codigo.Contains(needle, StringComparison.OrdinalIgnoreCase)
-                || row.Descripcion.Contains(needle, StringComparison.OrdinalIgnoreCase))
-            {
-                SelectedRow = row;
-                return row;
-            }
-        }
-        return null;
-    }
+    public CubicacionRowVm? FindNextResource() => navigationCoordinator.FindNextResource();
 
     public bool IsLeftPanelCollapsed
     {
@@ -387,49 +344,15 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
         internal set => SetProperty(ref saveStatusText, value);
     }
 
-    public string PartidaEstadoText
-    {
-        get
-        {
-            if (!HasPartida)
-                return "Sin partida seleccionada";
-            if (HasPartidaNote)
-                return MotivoNoCubicarText.Trim();
-            return SelectedPartida?.TieneCubicacion == true ? "Partida cubicada" : "Partida vacía";
-        }
-    }
-
-    /// <summary>Hay texto de observación (no implica exclusión).</summary>
-    public bool HasPartidaNote => !string.IsNullOrWhiteSpace(MotivoNoCubicarText);
-
-    public string PartidaNoteLabel => HasPartidaNote ? "Observación:" : "";
+    public string PartidaEstadoText => partidaCoordinator.PartidaEstadoText;
+    public bool HasPartidaNote => partidaCoordinator.HasPartidaNote;
+    public string PartidaNoteLabel => partidaCoordinator.PartidaNoteLabel;
 
     /// <summary>Exclusión de cubicación (Ctrl+E). Independiente de la observación.</summary>
     public bool ExcluidoCubicacion
     {
-        get => SelectedPartida?.ExcluidoCubicacion == true;
-        set
-        {
-            if (session.IsReadOnly || SelectedPartida?.EsPartida != true)
-                return;
-
-            var item = session.Itemizado.FirstOrDefault(x =>
-                string.Equals(x.Id, SelectedPartida.Id, StringComparison.OrdinalIgnoreCase));
-            if (item == null || item.ExcluidoCubicacion == value)
-                return;
-
-            undo.PushUndoPoint(session,
-                value ? $"Excluir de cubicación {SelectedPartida.Codigo}" : $"Incluir en cubicación {SelectedPartida.Codigo}");
-            item.ExcluidoCubicacion = value;
-            SelectedPartida.ExcluidoCubicacion = value;
-            MarkDirty();
-            OnPropertyChanged(nameof(ExcluidoCubicacion));
-            OnPropertyChanged(nameof(IsReadOnly));
-            OnPropertyChanged(nameof(PartidaEstadoText));
-            ((RelayCommand)AddRowCommand).RaiseCanExecuteChanged(); ((RelayCommand)InsertRowCommand).RaiseCanExecuteChanged();
-            ((RelayCommand)AplicarConjuntoCommand).RaiseCanExecuteChanged(); ((RelayCommand)CrearConjuntoDesdePartidaCommand).RaiseCanExecuteChanged();
-            ((RelayCommand)OpenScTomarCommand).RaiseCanExecuteChanged();
-        }
+        get => partidaCoordinator.ExcluidoCubicacion;
+        set => partidaCoordinator.ExcluidoCubicacion = value;
     }
 
     /// <summary>
@@ -438,256 +361,65 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
     /// </summary>
     public string MotivoNoCubicarText
     {
-        get
-        {
-            if (selectedPartida == null)
-                return "";
-            var item = session.Itemizado.FirstOrDefault(x =>
-                string.Equals(x.Id, selectedPartida.Id, StringComparison.OrdinalIgnoreCase));
-            return item?.MotivoNoCubicar ?? "";
-        }
-        set
-        {
-            if (session.IsReadOnly || selectedPartida?.EsPartida != true)
-                return;
-            var item = session.Itemizado.FirstOrDefault(x =>
-                string.Equals(x.Id, selectedPartida.Id, StringComparison.OrdinalIgnoreCase));
-            if (item == null)
-                return;
-
-            string clean = value ?? "";
-            if (string.Equals(item.MotivoNoCubicar, clean, StringComparison.Ordinal))
-                return;
-
-            undo.PushUndoPoint(session, $"Observación partida {selectedPartida.Codigo}");
-            item.MotivoNoCubicar = clean;
-            if (!string.IsNullOrWhiteSpace(clean))
-            {
-                ObservationMemoryStore.Remember(UserPreferencesStore.Load(), clean);
-            }
-
-            OnPropertyChanged(nameof(MotivoNoCubicarText));
-            OnPropertyChanged(nameof(HasPartidaNote));
-            OnPropertyChanged(nameof(PartidaNoteLabel));
-            OnPropertyChanged(nameof(PartidaEstadoText));
-            MarkDirty();
-        }
+        get => partidaCoordinator.MotivoNoCubicarText;
+        set => partidaCoordinator.MotivoNoCubicarText = value;
     }
 
-    public IReadOnlyList<ObservationChipPreset> ObservationChips => ObservationMemoryStore.StandardChips;
+    public IReadOnlyList<ObservationChipPreset> ObservationChips => partidaCoordinator.ObservationChips;
 
-    public void ApplyObservationChip(string text)
-    {
-        if (session.IsReadOnly || selectedPartida?.EsPartida != true)
-            return;
+    public void ApplyObservationChip(string text) => partidaCoordinator.ApplyObservationChip(text);
 
-        MotivoNoCubicarText = text;
-        SaveStatusText = $"Observación aplicada: '{text}'.";
-    }
+    public void ClearObservation() => partidaCoordinator.ClearObservation();
 
-    public void ClearObservation()
-    {
-        if (session.IsReadOnly || selectedPartida?.EsPartida != true)
-            return;
-
-        MotivoNoCubicarText = string.Empty;
-        SaveStatusText = "Observación eliminada.";
-    }
-
-    public string PartidaResumenText => !HasPartida
-        ? "Seleccione una partida para ver el detalle"
-        : $"{Rows.Count(r => r.HasContent):N0} recursos · $ {TotalPartida:N0} CLP";
+    public string PartidaResumenText => partidaCoordinator.PartidaResumenText;
 
     public string PartidaCodigo
     {
-        get => selectedPartida?.Codigo ?? "";
-        set
-        {
-            if (session.IsReadOnly || selectedPartida == null) return;
-            string clean = (value ?? "").Trim();
-            if (selectedPartida.Codigo == clean) return;
-
-            undo.PushUndoPoint(session, $"Cambiar ítem partida {selectedPartida.Codigo} a {clean}");
-            var item = session.Itemizado.FirstOrDefault(x => string.Equals(x.Id, selectedPartida.Id, StringComparison.OrdinalIgnoreCase));
-            if (item != null)
-                item.Item = clean;
-
-            selectedPartida.Codigo = clean;
-            OnPropertyChanged(nameof(PartidaCodigo));
-            OnPropertyChanged(nameof(PartidaPositionText));
-            MarkDirty();
-            session.MarkDirty(ProjectDirtyScope.Itemizado);
-        }
+        get => partidaCoordinator.PartidaCodigo;
+        set => partidaCoordinator.PartidaCodigo = value;
     }
 
     public string PartidaDescripcion
     {
-        get => selectedPartida?.Descripcion ?? "";
-        set
-        {
-            if (session.IsReadOnly || selectedPartida == null) return;
-            string clean = (value ?? "").Trim();
-            if (selectedPartida.Descripcion == clean) return;
-
-            undo.PushUndoPoint(session, $"Cambiar nombre partida {selectedPartida.Codigo}");
-            var item = session.Itemizado.FirstOrDefault(x => string.Equals(x.Id, selectedPartida.Id, StringComparison.OrdinalIgnoreCase));
-            if (item != null)
-                item.Descripcion = clean;
-
-            selectedPartida.Descripcion = clean;
-            OnPropertyChanged(nameof(PartidaDescripcion));
-            MarkDirty();
-            session.MarkDirty(ProjectDirtyScope.Itemizado);
-        }
+        get => partidaCoordinator.PartidaDescripcion;
+        set => partidaCoordinator.PartidaDescripcion = value;
     }
-    public string PartidaUnidad => selectedPartida?.Unidad ?? "";
 
-    // Unidad editable de la partida (modo Detalle) — cuando el itemizado no trae unidad, se
-    // escribe manual aquí y esa es la que viaja al Resumen del presupuesto.
+    public string PartidaUnidad => partidaCoordinator.PartidaUnidad;
+
     public string PartidaUnidadText
     {
-        get => PartidaUnidad;
-        set
-        {
-            if (session.IsReadOnly) return;
-            if (selectedPartida == null) return;
-            string clean = (value ?? "").Trim();
-            clean = ResolveUnidadReference(clean);
-            if (selectedPartida.Unidad == clean) return;
-
-            suppressSessionReload++;
-            try
-            {
-                undo.PushUndoPoint(session, $"Cambiar unidad partida {selectedPartida.Codigo}");
-                var item = session.Itemizado.FirstOrDefault(x => string.Equals(x.Id, selectedPartida.Id, StringComparison.OrdinalIgnoreCase));
-                if (item != null) item.Unidad = clean;
-                selectedPartida.Unidad = clean;
-                OnPropertyChanged(nameof(PartidaUnidadText));
-                OnPropertyChanged(nameof(PartidaUnidad));
-                NotifyGlobalValorizacionChanged();
-                MarkDirty();
-                session.MarkDirty(ProjectDirtyScope.Itemizado);
-            }
-            finally { suppressSessionReload--; }
-        }
+        get => partidaCoordinator.PartidaUnidadText;
+        set => partidaCoordinator.PartidaUnidadText = value;
     }
 
-    public string ResolveUnidadReference(string input)
-        => CubicacionPartidaHelper.ResolveUnidadReference(input, Rows);
+    public string ResolveUnidadReference(string input) => partidaCoordinator.ResolveUnidadReference(input);
 
-    public string PartidaPositionText
-    {
-        get
-        {
-            if (selectedPartida == null) return "";
-            var partidas = FilteredPartidas.Where(p => p.EsPartida).ToList();
-            int idx = partidas.IndexOf(selectedPartida);
-            return idx >= 0 ? $"Partida {idx + 1}/{partidas.Count}" : "";
-        }
-    }
+    public string PartidaPositionText => partidaCoordinator.PartidaPositionText;
 
     public string PartidaCantidadText
     {
-        get
-        {
-            if (selectedPartida == null) return "";
-            return selectedPartida.Cantidad % 1 == 0 ? selectedPartida.Cantidad.ToString("N0", System.Globalization.CultureInfo.CurrentCulture) : selectedPartida.Cantidad.ToString("#,##0.##", System.Globalization.CultureInfo.CurrentCulture);
-        }
-        set
-        {
-            if (session.IsReadOnly || selectedPartida == null) return;
-            string clean = (value ?? "").Trim();
-            if (!CubicacionPartidaHelper.TryParsePartidaCantidad(clean, BuildPartidaCantidadVariables(), out decimal parsed, out string formula))
-            {
-                OnPropertyChanged(nameof(PartidaCantidadText));
-                OnPropertyChanged(nameof(PartidaCantidadToolTip));
-                NotifyGlobalValorizacionChanged();
-                return;
-            }
-
-            if (!string.IsNullOrEmpty(formula)) selectedPartida.CantidadFormula = formula;
-            else if (selectedPartida.Cantidad != parsed || string.IsNullOrEmpty(selectedPartida.CantidadFormula)) selectedPartida.CantidadFormula = "";
-
-            suppressSessionReload++;
-            try
-            {
-                var item = session.Itemizado.FirstOrDefault(x => string.Equals(x.Id, selectedPartida.Id, StringComparison.OrdinalIgnoreCase));
-                if (item != null) item.Cantidad = parsed;
-                if (selectedPartida.Cantidad != parsed)
-                {
-                    undo.PushUndoPoint(session, $"Modificar cantidad en Partida {selectedPartida.Codigo} ({selectedPartida.Cantidad:G29} → {parsed:G29})");
-                    selectedPartida.Cantidad = parsed;
-                }
-                CubicacionPartidaHelper.SincronizarMaestroDesdePartida(Rows, parsed, session, ValidateRow);
-                OnPropertyChanged(nameof(PartidaCantidadText));
-                OnPropertyChanged(nameof(PartidaCantidadToolTip));
-                NotifyGlobalValorizacionChanged();
-                MarkDirty();
-                session.MarkDirty(ProjectDirtyScope.Itemizado);
-                ScheduleRefreshTotals();
-            }
-            finally { suppressSessionReload--; }
-        }
+        get => partidaCoordinator.PartidaCantidadText;
+        set => partidaCoordinator.PartidaCantidadText = value;
     }
 
-    public string PartidaCantidadToolTip => selectedPartida?.CantidadToolTip ?? "Cantidad oficial de la partida (editable o fórmula tipo Excel ej: +C1+C2 · Enter para guardar)";
+    public string PartidaCantidadToolTip => partidaCoordinator.PartidaCantidadToolTip;
 
-    public bool HasAlertaSinValorizacionGlobal => selectedPartida is { SinValorizacionGlobal: true };
-    public bool IsPartidaUnidadMissing => selectedPartida is { HasMissingGlobalUnidad: true };
-    public bool IsPartidaCantidadMissing => selectedPartida is { HasMissingGlobalCantidad: true };
-    public string AlertaSinValorizacionGlobalMensaje => CubicacionPartidaHelper.GetAlertaMensaje(selectedPartida);
-    public string AlertaSinValorizacionGlobalBadgeText
-    {
-        get
-        {
-            if (selectedPartida == null || !selectedPartida.SinValorizacionGlobal) return "";
-            if (selectedPartida.HasMissingGlobalUnidad && selectedPartida.HasMissingGlobalCantidad)
-                return "Sin unidad ni cantidad";
-            if (selectedPartida.HasMissingGlobalCantidad)
-                return "Sin cantidad global";
-            return "Sin unidad global";
-        }
-    }
+    public bool HasAlertaSinValorizacionGlobal => partidaCoordinator.HasAlertaSinValorizacionGlobal;
+    public bool IsPartidaUnidadMissing => partidaCoordinator.IsPartidaUnidadMissing;
+    public bool IsPartidaCantidadMissing => partidaCoordinator.IsPartidaCantidadMissing;
+    public string AlertaSinValorizacionGlobalMensaje => partidaCoordinator.AlertaSinValorizacionGlobalMensaje;
+    public string AlertaSinValorizacionGlobalBadgeText => partidaCoordinator.AlertaSinValorizacionGlobalBadgeText;
 
-    public void NotifyGlobalValorizacionChanged()
-    {
-        OnPropertyChanged(nameof(HasAlertaSinValorizacionGlobal));
-        OnPropertyChanged(nameof(AlertaSinValorizacionGlobalMensaje));
-        OnPropertyChanged(nameof(AlertaSinValorizacionGlobalBadgeText));
-        OnPropertyChanged(nameof(IsPartidaUnidadMissing));
-        OnPropertyChanged(nameof(IsPartidaCantidadMissing));
-    }
+    public void NotifyGlobalValorizacionChanged() => partidaCoordinator.NotifyGlobalValorizacionChanged();
 
     public Dictionary<string, decimal> BuildPartidaCantidadVariables()
-        => CubicacionPartidaHelper.BuildVariables(Rows, session);
+        => partidaCoordinator.BuildPartidaCantidadVariables();
 
-    // Observación de la partida para la constructora — a diferencia de CubicacionRowVm.NotaInterna
-    // (por recurso, solo revisión interna), esta viaja al Resumen/oferta. Se guarda en
-    // ItemizadoRow.Observaciones (campo ya existente, sin usar en la UI hasta ahora).
     public string PartidaObservacionesText
     {
-        get
-        {
-            var item = selectedPartida == null
-                ? null
-                : session.Itemizado.FirstOrDefault(x => string.Equals(x.Id, selectedPartida.Id, StringComparison.OrdinalIgnoreCase));
-            return item?.Observaciones ?? "";
-        }
-        set
-        {
-            if (session.IsReadOnly) return;
-            if (selectedPartida == null) return;
-            var item = session.Itemizado.FirstOrDefault(x => string.Equals(x.Id, selectedPartida.Id, StringComparison.OrdinalIgnoreCase));
-            if (item == null) return;
-
-            string clean = value ?? "";
-            if (item.Observaciones == clean) return;
-
-            undo.PushUndoPoint(session, $"Editar observación de {selectedPartida.Codigo}");
-            item.Observaciones = clean;
-            OnPropertyChanged(nameof(PartidaObservacionesText));
-            MarkDirty();
-        }
+        get => partidaCoordinator.PartidaObservacionesText;
+        set => partidaCoordinator.PartidaObservacionesText = value;
     }
 
     // Totales
@@ -740,12 +472,7 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
     public ICommand OpenProjectCommand { get; }
     public ICommand NavigateToApuCommand { get; }
 
-    private void NavigateToApu()
-    {
-        if (SelectedPartida != null && !string.IsNullOrWhiteSpace(SelectedPartida.Id))
-            session.PendingItemizadoSelectionId = SelectedPartida.Id;
-        shell.RequestNavigate(QubiCostElectrical.Wpf.Navigation.ShellRoute.Apu);
-    }
+    private void NavigateToApu() => navigationCoordinator.NavigateToApu();
 
     public bool ShowEmptyState
     {
@@ -756,7 +483,7 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
     internal void UpdateEmptyState() =>
         ShowEmptyState = !projectWorkspace.HasOpenProject;
 
-    public ProjectFileData? CaptureSnapshot() => session.IsReadOnly ? null : session.CreateSnapshot();
+    public ProjectFileData? CaptureSnapshot() => baselineCoordinator.CaptureSnapshot();
 
     // IRefreshablePage
     public void Refresh()
@@ -786,88 +513,13 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
     bool IPageWithPendingChanges.TryDiscardChanges() => TryDiscardChanges();
     bool IPageWithCommitChanges.TryApplyChanges() => TryApplyChanges();
 
-    public bool TryDiscardChanges()
-    {
-        if (!hasPendingChanges)
-            return true;
+    public bool TryDiscardChanges() => baselineCoordinator.TryDiscardChanges();
 
-        RestoreBaseline();
-        HasPendingChanges = false;
-        SaveStatusText = "Cambios descartados";
-        Refresh();
-        return true;
-    }
+    public bool TryApplyChanges() => baselineCoordinator.TryApplyChanges();
 
-    public bool TryApplyChanges()
-    {
-        if (session.IsReadOnly)
-            return !hasPendingChanges;
+    internal void ScheduleCaptureBaseline() => baselineCoordinator.ScheduleCaptureBaseline();
 
-        if (!session.IsDirty)
-        {
-            using (SuppressSessionReload())
-                session.MarkDirty(ProjectDirtyScope.Cubicacion);
-        }
-
-        CaptureBaseline();
-        MarkClean();
-        return true;
-    }
-
-    internal void ScheduleCaptureBaseline()
-    {
-        // Serializar miles de filas en el ctor/Refresh bloquea la UI (~2s en proyectos grandes).
-        var dispatcher = System.Windows.Application.Current?.Dispatcher;
-        if (dispatcher == null)
-        {
-            // Tests headless: sync solo en proyectos chicos (perf 800×15 no debe pagar JSON).
-            if (session.Cubicacion.Count <= 2_000)
-                CaptureBaseline();
-            return;
-        }
-
-        _ = dispatcher.InvokeAsync(() =>
-        {
-            if (!hasPendingChanges)
-                CaptureBaseline();
-        }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
-    }
-
-    internal void CaptureBaseline()
-    {
-        baselineCubicacion = CloneJson(session.Cubicacion.ToList());
-        baselineRecursos = CloneJson(session.CubicacionRecursos.ToList());
-        baselineZonas = CloneJson(session.CubicacionZonaCantidades.ToList());
-        baselineValorizaciones = CloneJson(session.CubicacionValorizaciones.ToList());
-    }
-
-    private void RestoreBaseline()
-    {
-        if (baselineCubicacion == null)
-            return;
-
-        ReplaceList(session.Cubicacion, CloneJson(baselineCubicacion));
-        if (baselineRecursos != null)
-            ReplaceList(session.CubicacionRecursos, CloneJson(baselineRecursos));
-        if (baselineZonas != null)
-            ReplaceList(session.CubicacionZonaCantidades, CloneJson(baselineZonas));
-        if (baselineValorizaciones != null)
-            ReplaceList(session.CubicacionValorizaciones, CloneJson(baselineValorizaciones));
-    }
-
-    private static void ReplaceList<T>(List<T> target, List<T> source)
-    {
-        target.Clear();
-        foreach (var item in source)
-            target.Add(item);
-    }
-
-    private static T CloneJson<T>(T source)
-    {
-        var json = System.Text.Json.JsonSerializer.Serialize(source, BaselineJsonOptions);
-        return System.Text.Json.JsonSerializer.Deserialize<T>(json, BaselineJsonOptions)
-               ?? throw new InvalidOperationException($"No se pudo clonar {typeof(T).Name} para baseline Cubicación.");
-    }
+    internal void CaptureBaseline() => baselineCoordinator.CaptureBaseline();
 
     private void PasteFromClipboard()
     {

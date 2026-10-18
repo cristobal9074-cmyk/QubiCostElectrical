@@ -76,7 +76,7 @@
     </Style>
   </Window.Resources>
 
-  <Border Style="{StaticResource Dialog.Chrome}" Margin="16">
+  <Border Style="{StaticResource Dialog.Chrome}">
   <Grid>
     <Grid.RowDefinitions>
       <!-- Dialog Header -->
@@ -89,10 +89,17 @@
 
     <!-- Dialog Header Banner -->
     <Border Grid.Row="0" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1" Padding="20,16">
-      <StackPanel>
-        <TextBlock Text="CARGAR PLANTILLA DE MATERIALES" FontSize="{StaticResource Font.Size.h3}" FontWeight="Black" Foreground="{DynamicResource Brush.Ink}"/>
-        <TextBlock Text="Selecciona una plantilla para cargar sus materiales en la partida seleccionada de tu cubicación."
-                   FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" Margin="0,4,0,0" />
+      <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+        <Border Style="{StaticResource Dialog.HeaderIconContainer}" Margin="0,0,12,0">
+          <Path Data="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8"
+                Stroke="{DynamicResource Brush.Blue}" StrokeThickness="1.5"
+                HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="16" Height="16"/>
+        </Border>
+        <StackPanel VerticalAlignment="Center">
+          <TextBlock Text="Cargar Plantilla de Materiales" Style="{StaticResource Dialog.HeaderTitle}"/>
+          <TextBlock Text="Selecciona una plantilla para cargar sus materiales en la partida seleccionada de tu cubicación."
+                     Style="{StaticResource Dialog.HeaderSubtitle}" Margin="0,2,0,0" />
+        </StackPanel>
       </StackPanel>
     </Border>
 
@@ -138,7 +145,10 @@
                   </Style>
                 </TextBox.Style>
               </TextBox>
-              <TextBlock Text="🔍" VerticalAlignment="Center" Margin="8,0,0,0" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Left" IsHitTestVisible="False"/>
+              <Path Data="M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16z M21 21l-4.35-4.35"
+                    Stroke="{DynamicResource Brush.Muted}" StrokeThickness="1.5"
+                    VerticalAlignment="Center" Margin="8,0,0,0" Width="13" Height="13" Stretch="Uniform"
+                    HorizontalAlignment="Left" IsHitTestVisible="False"/>
             </Grid>
           </Border>
 
@@ -247,15 +257,15 @@
 
         <!-- Buttons -->
         <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-          <Button x:Name="BtnAplicar" Content="Cargar Materiales"
-                  Style="{DynamicResource Button.Primary}"
-                  Width="140" Height="30" Margin="0,0,8,0"
-                  IsDefault="True" IsEnabled="False"
-                  Click="BtnAplicar_Click"/>
           <Button Content="Cancelar" 
                   Style="{DynamicResource Button.Secondary}"
-                  Width="90" Height="30"
+                  Width="90" Height="34" Margin="0,0,10,0"
                   IsCancel="True"/>
+          <Button x:Name="BtnAplicar" Content="Cargar Materiales"
+                  Style="{DynamicResource Button.Primary}"
+                  Width="140" Height="34"
+                  IsDefault="True" IsEnabled="False"
+                  Click="BtnAplicar_Click"/>
         </StackPanel>
       </Grid>
     </Border>

@@ -3,7 +3,12 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:QubiCostElectrical.Wpf.Features.Prices"
              xmlns:ctrl="clr-namespace:QubiCostElectrical.Wpf.Controls"
-             xmlns:infra="clr-namespace:QubiCostElectrical.Wpf.Infrastructure">
+             xmlns:infra="clr-namespace:QubiCostElectrical.Wpf.Infrastructure"
+             KeyDown="OnUserControlKeyDown">
+  <UserControl.InputBindings>
+    <KeyBinding Key="S" Modifiers="Control" Command="{Binding SaveSelectedCommand}" />
+    <KeyBinding Key="N" Modifiers="Control" Command="{Binding NewEntryCommand}" />
+  </UserControl.InputBindings>
   <UserControl.Resources>
     <!-- Chip "Vigente": verde si el precio tiene menos de 6 meses; ámbar "REVISAR" si no
          (ver MaterialRow.RequiereRevisionPrecio / PriceBankEntryVm.VigenciaKind). -->
@@ -34,6 +39,7 @@
     <ctrl:SkeletonOverlayControl Panel.ZIndex="20" Message="Cargando banco de precios…"
                                  Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" />
     <ctrl:EmptyStateControl Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}}"
+                            IconData="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z M3.27 6.96 12 12.01l8.73-5.05 M12 22.08V12"
                             Title="Banco vacío"
                             Description="Importe una lista con columnas Código · Descripción · UN · Precio CLP · Familia · MO. Descargue la plantilla si su archivo tiene otro formato.">
       <ctrl:EmptyStateControl.Actions>
@@ -75,20 +81,56 @@
                        TextWrapping="Wrap" Margin="0,4,0,0" />
           </StackPanel>
 
-          <WrapPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
-            <Button Style="{StaticResource Button.Secondary}" Content="Importar lista" Command="{Binding ImportFileCommand}" Margin="0,0,6,6" />
-            <Button Style="{StaticResource Button.Secondary}" Content="Descargar plantilla" Command="{Binding DownloadTemplateCommand}" Margin="0,0,6,6"
-                    ToolTip="Plantilla .xlsx/.csv: Código · Descripción · UN · Precio CLP · Familia · MO" />
-            <Button Style="{StaticResource Button.Secondary}" Content="Importar proyecto" Command="{Binding ImportProjectCommand}" Margin="0,0,6,6" />
-            <Button Style="{StaticResource Button.Primary}" Content="Aplicar al proyecto" Command="{Binding ApplyProjectPricesCommand}" Margin="0,0,6,6" />
-            <Button Style="{StaticResource Button.Secondary}" Content="Nuevo" Command="{Binding NewEntryCommand}" Margin="0,0,6,6" />
-            <Button Style="{StaticResource Button.Secondary}" Content="Guardar" Command="{Binding SaveSelectedCommand}" Margin="0,0,6,6" />
-            <Button Style="{StaticResource Button.Secondary}" Content="Eliminar" Command="{Binding DeleteSelectedCommand}" Margin="0,0,6,6"
-                    ToolTip="Elimina el material seleccionado del banco" />
-            <Button Style="{StaticResource Button.Secondary}" Content="Vaciar banco" Command="{Binding DeleteAllCommand}" Margin="0,0,6,6"
-                    Foreground="{DynamicResource Brush.Danger}"
-                    ToolTip="Vacía por completo todos los materiales y familias del banco de precios para cargar una nueva lista de precios (irreversible)" />
-          </WrapPanel>
+          <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+            <Button Style="{StaticResource Button.Primary}" Content="Aplicar al proyecto" Command="{Binding ApplyProjectPricesCommand}" Margin="0,0,6,0"
+                    ToolTip="Aplica los precios vigentes del banco a todas las partidas del proyecto activo" />
+            <Button Style="{StaticResource Button.Secondary}" Content="+ Nuevo (Ctrl+N)" Command="{Binding NewEntryCommand}" Margin="0,0,6,0"
+                    ToolTip="Crear un nuevo material en el catálogo central (Ctrl+N)" />
+            <Button Style="{StaticResource Button.Secondary}" Content="Guardar (Ctrl+S)" Command="{Binding SaveSelectedCommand}" Margin="0,0,6,0"
+                    ToolTip="Guardar los cambios editados en el material seleccionado (Ctrl+S)" />
+            <Button x:Name="PriceBankActionsBtn" Style="{StaticResource Button.Secondary}" Click="OnMoreActionsClick" Margin="0"
+                    ToolTip="Opciones de importación, plantillas y mantenimiento del banco">
+              <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="Acciones" VerticalAlignment="Center" Margin="0,0,5,0" />
+                <TextBlock Text="▾" FontSize="10" VerticalAlignment="Center" />
+              </StackPanel>
+              <Button.ContextMenu>
+                <ContextMenu>
+                  <MenuItem Header="Importar lista de precios (Excel/CSV)…" Command="{Binding ImportFileCommand}">
+                    <MenuItem.Icon>
+                      <TextBlock Text="📥" FontSize="12" VerticalAlignment="Center" />
+                    </MenuItem.Icon>
+                  </MenuItem>
+                  <MenuItem Header="Importar desde otro proyecto (.qce)…" Command="{Binding ImportProjectCommand}">
+                    <MenuItem.Icon>
+                      <TextBlock Text="📂" FontSize="12" VerticalAlignment="Center" />
+                    </MenuItem.Icon>
+                  </MenuItem>
+                  <MenuItem Header="Descargar plantilla de importación" Command="{Binding DownloadTemplateCommand}"
+                            ToolTip="Plantilla .xlsx/.csv con columnas normalizadas">
+                    <MenuItem.Icon>
+                      <TextBlock Text="📋" FontSize="12" VerticalAlignment="Center" />
+                    </MenuItem.Icon>
+                  </MenuItem>
+                  <Separator />
+                  <MenuItem Header="Eliminar material seleccionado" Command="{Binding DeleteSelectedCommand}"
+                            ToolTip="Elimina el material seleccionado del catálogo central">
+                    <MenuItem.Icon>
+                      <TextBlock Text="🗑️" FontSize="12" VerticalAlignment="Center" />
+                    </MenuItem.Icon>
+                  </MenuItem>
+                  <Separator />
+                  <MenuItem Header="Vaciar banco de precios…" Command="{Binding DeleteAllCommand}"
+                            Foreground="{DynamicResource Brush.Danger}"
+                            ToolTip="Vacía por completo todos los materiales y familias del banco de precios para cargar una nueva lista de precios (irreversible)">
+                    <MenuItem.Icon>
+                      <TextBlock Text="⚠️" FontSize="12" VerticalAlignment="Center" />
+                    </MenuItem.Icon>
+                  </MenuItem>
+                </ContextMenu>
+              </Button.ContextMenu>
+            </Button>
+          </StackPanel>
         </DockPanel>
 
         <!-- Único filtro además del buscador: Familia (Proveedor/Marca ya no se muestran en la
@@ -100,10 +142,37 @@
               <ColumnDefinition Width="200" />
               <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <TextBox Grid.Column="0" Style="{StaticResource Form.SearchBox}" Tag="Buscar por código, descripción o familia…" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0" />
+            <Grid Grid.Column="0" Margin="0,0,8,0">
+              <TextBox x:Name="SearchBox"
+                       Style="{StaticResource Form.SearchBox}"
+                       Tag="Buscar por código, descripción o familia… (Ctrl+F)"
+                       Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                       Padding="28,4,26,4" />
+              <TextBlock Text="🔍"
+                         FontSize="11"
+                         Foreground="{DynamicResource Brush.Muted}"
+                         VerticalAlignment="Center"
+                         HorizontalAlignment="Left"
+                         Margin="9,0,0,0"
+                         IsHitTestVisible="False" />
+              <Button Style="{StaticResource Button.Ghost}"
+                      Content="✕"
+                      Padding="0"
+                      Width="18" Height="18"
+                      FontSize="10"
+                      FontWeight="Bold"
+                      Foreground="{DynamicResource Brush.Muted}"
+                      HorizontalAlignment="Right"
+                      VerticalAlignment="Center"
+                      Margin="0,0,6,0"
+                      Command="{Binding ClearSearchCommand}"
+                      Visibility="{Binding HasSearchText, Converter={StaticResource BoolToVisibility}}"
+                      ToolTip="Limpiar búsqueda (Esc)" />
+            </Grid>
             <ComboBox Grid.Column="1" Style="{StaticResource Form.ComboBox}" ItemsSource="{Binding CategoryOptions}" SelectedItem="{Binding SelectedCategory}" Margin="0,0,8,0"
                       ToolTip="Filtrar por familia" />
-            <Button Grid.Column="2" Style="{StaticResource Button.Ghost}" Content="Limpiar filtros" Command="{Binding ClearFiltersCommand}" />
+            <Button Grid.Column="2" Style="{StaticResource Button.Ghost}" Content="Limpiar filtros" Command="{Binding ClearFiltersCommand}"
+                    ToolTip="Restablecer búsqueda y filtro de familia (Esc)" />
           </Grid>
         </Border>
 

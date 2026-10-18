@@ -320,6 +320,8 @@ public sealed class CommandPaletteEngine
         yield return new CommandPaletteItemVm("Oferta Comercial y Exportación", "Asistente de propuesta formal, cartas y reportes PDF/Excel", "F8 · Alt+O", CommandPaletteCategory.Navigation, () => { shell.RequestNavigate(ShellRoute.OfferDocuments); return Task.CompletedTask; }, "\uE896");
         yield return new CommandPaletteItemVm("Versiones y Trazabilidad", "Historial de versiones y auditoría del presupuesto", "Alt+0", CommandPaletteCategory.Navigation, () => { shell.RequestNavigate(ShellRoute.Versions); return Task.CompletedTask; }, "\uE81C");
         yield return new CommandPaletteItemVm("Preferencias", "Configuración general, roles y temas de la aplicación", "Alt+,", CommandPaletteCategory.Navigation, () => { shell.RequestNavigate(ShellRoute.Preferences); return Task.CompletedTask; }, "\uE713");
+        yield return new CommandPaletteItemVm("Acerca de Qubi Cost Electrical", "Presentación corporativa, versión, licencia y novedades", "", CommandPaletteCategory.Actions, () => { shell.ShowAboutDialog(); return Task.CompletedTask; }, "\uE946");
+        yield return new CommandPaletteItemVm("Atajos de teclado", "Ver todos los atajos de teclado del sistema", "F1", CommandPaletteCategory.Actions, () => { System.Windows.Application.Current?.Dispatcher.InvokeAsync(() => { if (System.Windows.Application.Current?.MainWindow is System.Windows.Window w) KeyboardShortcutsDialog.Show(w); }); return Task.CompletedTask; }, "\uE765");
         yield return new CommandPaletteItemVm("Abrir proyecto", "Abrir un presupuesto existente", "Ctrl+O", CommandPaletteCategory.Actions, () => shell.OpenProjectAsync(), "\uE8E5");
 
         if (!session.IsReadOnly)

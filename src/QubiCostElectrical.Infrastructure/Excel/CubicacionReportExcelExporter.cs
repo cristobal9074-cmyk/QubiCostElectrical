@@ -5,7 +5,7 @@ using System.IO;
 using System.Linq;
 using ClosedXML.Excel;
 
-namespace QubiCostElectrical;
+namespace QubiCostElectrical.Infrastructure;
 
 /// <summary>
 /// Reporte imprimible de cubicación/memoria de cálculo por partida y área.

@@ -15,9 +15,9 @@ namespace QubiCostElectrical.Wpf.Features.Templates;
 
 public sealed partial class PlantillasVm : ViewModelBase, IRefreshablePage, IPageWithPendingChanges, IPageWithCommitChanges
 {
-    public PlantillasVm(IShellNavigationHost shell, WpfAppHost host)
-        : this(shell, host.Session, host.Permissions, host.Services.PriceBankStore) { }
+    public PlantillasVm(IShellNavigationHost shell, WpfAppHost host) : this(shell, host.Session, host.Permissions, host.PriceBankStore) { }
 
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
     public PlantillasVm(IShellNavigationHost shell, BudgetProjectSession session, IPermissionService permissions, IPriceBankStore priceBankStore)
     {
         this.shell = shell;
@@ -51,13 +51,22 @@ public sealed partial class PlantillasVm : ViewModelBase, IRefreshablePage, IPag
         // Guardar conjuntos en la biblioteca global (banco_precios.db). Activo solo con cambios.
         SaveCommand = new RelayCommand(() => SaveConjuntos(), () => CanEdit && hasPendingChanges);
 
+        hierarchyCoordinator = new PlantillasHierarchyCoordinator(
+            () => CanEdit,
+            () => SelectedConjunto,
+            ConjuntoRecursos,
+            session,
+            conjuntoSvc,
+            MarkConjuntosDirty,
+            UpdateKpis,
+            msg => StatusMessage = msg,
+            OnPropertyChanged);
+
         // Selección múltiple de filas (barra contextual ámbar)
-        MarcarMaestrosSeleccionCommand = new RelayCommand(MarcarMaestrosSeleccion, PuedeEditarSeleccion);
-        AsignarMaestroSeleccionCommand = new RelayCommand<string>(
-            AsignarMaestroSeleccion,
-            id => PuedeEditarSeleccion() && !string.IsNullOrWhiteSpace(id));
-        LiberarSeleccionCommand = new RelayCommand(LiberarSeleccion, PuedeEditarSeleccion);
-        EliminarSeleccionCommand = new RelayCommand(EliminarSeleccion, PuedeEditarSeleccion);
+        MarcarMaestrosSeleccionCommand = hierarchyCoordinator.MarcarMaestrosSeleccionCommand;
+        AsignarMaestroSeleccionCommand = hierarchyCoordinator.AsignarMaestroSeleccionCommand;
+        LiberarSeleccionCommand = hierarchyCoordinator.LiberarSeleccionCommand;
+        EliminarSeleccionCommand = hierarchyCoordinator.EliminarSeleccionCommand;
         ToggleAyudaCommand = new RelayCommand(() => ShowRulesStrip = !ShowRulesStrip);
 
         Load();
@@ -119,33 +128,27 @@ public sealed partial class PlantillasVm : ViewModelBase, IRefreshablePage, IPag
     public bool HasPendingChanges => hasPendingChanges;
 
     // ── Selección múltiple de filas de la grilla ─────────────────────────────
-    public int SelectedRecursosCount => selectedRecursos.Count;
-    public bool HasSelectedRecursos => selectedRecursos.Count > 0;
-    public string SelectedRecursosLabel => $"{selectedRecursos.Count} fila(s) seleccionada(s)";
-    public IReadOnlyList<MaestroOptionVm> MaestrosParaSeleccion { get; private set; } = Array.Empty<MaestroOptionVm>();
+    public int SelectedRecursosCount => hierarchyCoordinator.SelectedRecursosCount;
+    public bool HasSelectedRecursos => hierarchyCoordinator.HasSelectedRecursos;
+    public string SelectedRecursosLabel => hierarchyCoordinator.SelectedRecursosLabel;
+    public IReadOnlyList<MaestroOptionVm> MaestrosParaSeleccion => hierarchyCoordinator.MaestrosParaSeleccion;
 
     /// <summary>Selección del combo «Convertir en esclavos de…»: ejecuta la acción masiva
     /// y vuelve a null para que el combo quede limpio (el label de al lado indica la acción).</summary>
     public MaestroOptionVm? MaestroDestinoSeleccion
     {
-        get => maestroDestinoSeleccion;
-        set
-        {
-            maestroDestinoSeleccion = null;
-            OnPropertyChanged(nameof(MaestroDestinoSeleccion));
-            if (value != null && !string.IsNullOrWhiteSpace(value.Id))
-                AsignarMaestroSeleccion(value.Id);
-        }
+        get => hierarchyCoordinator.MaestroDestinoSeleccion;
+        set => hierarchyCoordinator.MaestroDestinoSeleccion = value;
     }
 
     // ── Contadores de rol del conjunto activo (footer del editor) ────────────
-    public int ConteoMaestros => conteoMaestros;
-    public int ConteoEsclavos => conteoEsclavos;
-    public int ConteoOperaciones => conteoOperaciones;
+    public int ConteoMaestros => hierarchyCoordinator.ConteoMaestros;
+    public int ConteoEsclavos => hierarchyCoordinator.ConteoEsclavos;
+    public int ConteoOperaciones => hierarchyCoordinator.ConteoOperaciones;
 
     // ── Jerarquía maestro→esclavo y vista previa de expansión ────────────────
-    public ObservableCollection<JerarquiaNodoVm> Jerarquia { get; } = new();
-    public ObservableCollection<PreviewFilaVm> PreviewFilas { get; } = new();
+    public ObservableCollection<JerarquiaNodoVm> Jerarquia => hierarchyCoordinator.Jerarquia;
+    public ObservableCollection<PreviewFilaVm> PreviewFilas => hierarchyCoordinator.PreviewFilas;
 
     /// <summary>Strip de ayuda colapsable sobre la grilla (UI state).</summary>
     public bool ShowRulesStrip { get => showRulesStrip; set => SetProperty(ref showRulesStrip, value); }
@@ -382,8 +385,8 @@ public sealed partial class PlantillasVm : ViewModelBase, IRefreshablePage, IPag
             foreach (var r in item.Source.Recursos)
                 ConjuntoRecursos.Add(CreateRecursoVm(r));
 
-        SetSelectedRecursos(null);
-        RefreshMaestroOptions();
+        hierarchyCoordinator.SetSelectedRecursos(null);
+        hierarchyCoordinator.RefreshMaestroOptions();
     }
 
     private ConjuntoRecursoVm CreateRecursoVm(ConjuntoRecursoRow r) => new(
@@ -392,320 +395,23 @@ public sealed partial class PlantillasVm : ViewModelBase, IRefreshablePage, IPag
         {
             MarkConjuntosDirty();
             UpdateKpis();
-            RebuildPreview();
+            hierarchyCoordinator.RebuildPreview();
         },
         LookupMaterial,
-        GetMaestroOptions,
-        RefreshMaestroOptions,
+        hierarchyCoordinator.GetMaestroOptions,
+        hierarchyCoordinator.RefreshMaestroOptions,
         msg => StatusMessage = msg,
         () => (IReadOnlyList<ConjuntoRecursoRow>?)SelectedConjunto?.Source.Recursos
             ?? Array.Empty<ConjuntoRecursoRow>());
 
-    /// <summary>Filas candidatas a maestro para la fila selfId: sin MaestroId (no esclavas),
-    /// distintas de la propia y que expanden a cubicación (sin MO/HH/HERR).</summary>
-    private IReadOnlyList<MaestroOptionVm> GetMaestroOptions(string selfId)
-    {
-        var recursos = SelectedConjunto?.Source.Recursos;
-        if (recursos == null) return Array.Empty<MaestroOptionVm>();
-
-        var opciones = new List<MaestroOptionVm>();
-        foreach (var r in recursos)
-        {
-            if (string.IsNullOrWhiteSpace(r.Id) ||
-                string.Equals(r.Id, selfId, StringComparison.OrdinalIgnoreCase)) continue;
-            if (!string.IsNullOrWhiteSpace(r.MaestroId)) continue; // un esclavo nunca es maestro
-            if (r.Tipo is ApuTipoRecurso.MO or ApuTipoRecurso.HH or ApuTipoRecurso.HERR) continue;
-            opciones.Add(new MaestroOptionVm(r.Id, LabelOpcionRecurso(r)));
-        }
-        return opciones;
-    }
-
-    private void RefreshMaestroOptions()
-    {
-        foreach (var vm in ConjuntoRecursos)
-            vm.NotifyStructureChanged();
-        UpdateRoleCounts();
-        RebuildJerarquia();
-        RebuildPreview();
-        RefreshMaestrosParaSeleccion();
-        RaiseSelectionCommands();
-    }
-
-    private static string LabelOpcionRecurso(ConjuntoRecursoRow r)
-    {
-        string codigo = (r.Codigo ?? "").Trim();
-        string desc = (r.Descripcion ?? "").Trim();
-        if (codigo.Length > 0 && desc.Length > 0) return $"{codigo} — {desc}";
-        if (codigo.Length > 0) return codigo;
-        return desc.Length > 0 ? desc : "(sin código)";
-    }
-
-    // ── Selección múltiple de filas y acciones masivas ───────────────────────
-
-    /// <summary>
-    /// Sincroniza la selección de la grilla hacia la VM. SelectedItems no es una
-    /// DependencyProperty, así que la llama el code-behind en SelectionChanged
-    /// (mismo patrón que MaterialPickerDialog).
-    /// </summary>
     public void SetSelectedRecursos(IEnumerable<ConjuntoRecursoVm>? seleccion)
-    {
-        selectedRecursos.Clear();
-        if (seleccion != null)
-            foreach (var vm in seleccion)
-                if (vm != null && !selectedRecursos.Contains(vm))
-                    selectedRecursos.Add(vm);
+        => hierarchyCoordinator.SetSelectedRecursos(seleccion);
 
-        OnPropertyChanged(nameof(SelectedRecursosCount));
-        OnPropertyChanged(nameof(HasSelectedRecursos));
-        OnPropertyChanged(nameof(SelectedRecursosLabel));
-        RefreshMaestrosParaSeleccion();
-        RaiseSelectionCommands();
-    }
+    public void RefreshMaestroOptions()
+        => hierarchyCoordinator.RefreshMaestroOptions();
 
-    private bool PuedeEditarSeleccion() => CanEdit && SelectedConjunto != null && selectedRecursos.Count > 0;
-
-    private void RaiseSelectionCommands()
-    {
-        ((RelayCommand)MarcarMaestrosSeleccionCommand).RaiseCanExecuteChanged();
-        ((RelayCommand<string>)AsignarMaestroSeleccionCommand).RaiseCanExecuteChanged();
-        ((RelayCommand)LiberarSeleccionCommand).RaiseCanExecuteChanged();
-        ((RelayCommand)EliminarSeleccionCommand).RaiseCanExecuteChanged();
-    }
-
-    private void RefreshMaestrosParaSeleccion()
-    {
-        // Candidatos a maestro para la barra contextual: la propia fila nunca puede ser
-        // destino (GetMaestroOptions la excluye cuando se pasa su Id); aquí el Id "" no
-        // excluye a ninguna, y cada fila destino valida de nuevo contra sus opciones.
-        MaestrosParaSeleccion = GetMaestroOptions("");
-        OnPropertyChanged(nameof(MaestrosParaSeleccion));
-    }
-
-    private void MarcarMaestrosSeleccion()
-    {
-        if (!PuedeEditarSeleccion()) return;
-
-        int marcadas = 0;
-        foreach (var vm in selectedRecursos.ToList())
-        {
-            bool eraDistinta = vm.EsEsclavo || vm.EsOperacion;
-            vm.Operacion = "";
-            vm.MaestroId = "";
-            if (eraDistinta) marcadas++;
-        }
-
-        StatusMessage = marcadas > 0
-            ? $"{marcadas} fila(s) marcada(s) como maestro."
-            : "Las filas seleccionadas ya eran maestros.";
-        RefreshMaestrosParaSeleccion();
-        RaiseSelectionCommands();
-    }
-
-    private void AsignarMaestroSeleccion(string? maestroId)
-    {
-        if (!PuedeEditarSeleccion() || string.IsNullOrWhiteSpace(maestroId)) return;
-
-        string nombre = MaestrosParaSeleccion
-            .FirstOrDefault(o => string.Equals(o.Id, maestroId, StringComparison.OrdinalIgnoreCase))?.Label
-            ?? maestroId;
-
-        int aplicados = 0, omitidos = 0;
-        foreach (var vm in selectedRecursos.ToList())
-        {
-            // Un fila no puede ser su propio maestro; MO/HH/HERR y esclavos quedan
-            // fuera por GetMaestroOptions (la validación ocurre en MaestroId setter).
-            if (string.Equals(vm.Id, maestroId, StringComparison.OrdinalIgnoreCase))
-            {
-                omitidos++;
-                continue;
-            }
-
-            bool candidato = vm.MaestrosDisponibles
-                .Any(o => string.Equals(o.Id, maestroId, StringComparison.OrdinalIgnoreCase));
-            if (!candidato)
-            {
-                omitidos++;
-                continue;
-            }
-
-            vm.Operacion = "";
-            vm.MaestroId = maestroId;
-            if (vm.EsEsclavo) aplicados++; else omitidos++;
-        }
-
-        StatusMessage = aplicados > 0
-            ? $"{aplicados} fila(s) vinculada(s) a «{nombre}»" +
-              (omitidos > 0 ? $" · {omitidos} omitida(s)." : ".")
-            : "Ninguna fila pudo vincularse a ese maestro.";
-        RefreshMaestrosParaSeleccion();
-        RaiseSelectionCommands();
-    }
-
-    private void LiberarSeleccion()
-    {
-        if (!PuedeEditarSeleccion()) return;
-
-        int liberadas = 0;
-        foreach (var vm in selectedRecursos.ToList())
-        {
-            if (!vm.EsEsclavo) continue;
-            vm.MaestroId = "";
-            liberadas++;
-        }
-
-        StatusMessage = liberadas > 0
-            ? $"{liberadas} fila(s) liberada(s) — ahora calculan su propia cantidad."
-            : "Ninguna fila seleccionada estaba vinculada a un maestro.";
-        RefreshMaestrosParaSeleccion();
-        RaiseSelectionCommands();
-    }
-
-    private void EliminarSeleccion()
-    {
-        if (!PuedeEditarSeleccion()) return;
-
-        var filas = selectedRecursos.ToList();
-        int eliminadas = 0, liberados = 0;
-        foreach (var vm in filas)
-        {
-            if (SelectedConjunto == null || !SelectedConjunto.Source.Recursos.Contains(vm.Source)) continue;
-            SelectedConjunto.Source.Recursos.Remove(vm.Source);
-            liberados += ConjuntoElectricoService.LiberarEsclavos(SelectedConjunto.Source, vm.Source.Id);
-            ConjuntoRecursos.Remove(vm);
-            eliminadas++;
-        }
-
-        SelectedConjunto?.RefreshRecursoCount();
-        MarkConjuntosDirty();
-        SetSelectedRecursos(null);
-        RefreshMaestroOptions();
-        UpdateKpis();
-
-        StatusMessage = eliminadas > 0
-            ? $"{eliminadas} material(es) eliminado(s)" +
-              (liberados > 0 ? $" ({liberados} esclavo(s) liberado(s))." : ".")
-            : "No se eliminó ninguna fila.";
-    }
-
-    // ── Contadores de rol, jerarquía y vista previa de expansión ─────────────
-
-    private void UpdateRoleCounts()
-    {
-        int maestros = 0, esclavos = 0, operaciones = 0;
-        foreach (var vm in ConjuntoRecursos)
-        {
-            if (vm.EsMaestro) maestros++;
-            else if (vm.EsEsclavo) esclavos++;
-            else if (vm.EsOperacion) operaciones++;
-        }
-
-        conteoMaestros = maestros;
-        conteoEsclavos = esclavos;
-        conteoOperaciones = operaciones;
-        OnPropertyChanged(nameof(ConteoMaestros));
-        OnPropertyChanged(nameof(ConteoEsclavos));
-        OnPropertyChanged(nameof(ConteoOperaciones));
-    }
-
-    private void RebuildJerarquia()
-    {
-        Jerarquia.Clear();
-        if (ConjuntoRecursos.Count == 0) return;
-
-        var porId = new Dictionary<string, ConjuntoRecursoVm>(StringComparer.OrdinalIgnoreCase);
-        foreach (var vm in ConjuntoRecursos)
-            if (!string.IsNullOrWhiteSpace(vm.Id))
-                porId[vm.Id] = vm;
-
-        var hijos = new List<(string MaestroId, ConjuntoRecursoVm Hijo)>();
-        var huerfanos = new List<ConjuntoRecursoVm>();
-        foreach (var vm in ConjuntoRecursos)
-        {
-            if (!vm.EsEsclavo) continue;
-            if (!string.IsNullOrWhiteSpace(vm.MaestroId) && porId.ContainsKey(vm.MaestroId))
-                hijos.Add((vm.MaestroId, vm));
-            else
-                huerfanos.Add(vm);
-        }
-
-        foreach (var raiz in ConjuntoRecursos.Where(r => r.EsMaestro))
-        {
-            var hijosDeRaiz = hijos
-                .Where(h => string.Equals(h.MaestroId, raiz.Id, StringComparison.OrdinalIgnoreCase))
-                .Select(h => BuildJerarquiaNodo(h.Hijo))
-                .ToList();
-            var nodo = BuildJerarquiaNodo(raiz, hijosDeRaiz.Count > 0);
-            foreach (var hijo in hijosDeRaiz)
-                nodo.Hijos.Add(hijo);
-            Jerarquia.Add(nodo);
-        }
-
-        foreach (var op in ConjuntoRecursos.Where(r => !r.EsMaestro && !r.EsEsclavo))
-            Jerarquia.Add(BuildJerarquiaNodo(op));
-
-        foreach (var huerfano in huerfanos)
-            Jerarquia.Add(BuildJerarquiaNodo(huerfano, tieneHijos: false, kindOverride: "orphan"));
-    }
-
-    private static JerarquiaNodoVm BuildJerarquiaNodo(ConjuntoRecursoVm vm, bool tieneHijos = false, string? kindOverride = null)
-    {
-        string kind = kindOverride
-            ?? (vm.EsMaestro ? "master"
-                : vm.EsEsclavo ? "slave"
-                : vm.EsOperacion ? "op"
-                : "master");
-        return new JerarquiaNodoVm
-        {
-            Kind = kind,
-            Codigo = vm.Codigo,
-            Descripcion = vm.Descripcion,
-            Regla = DescribeRegla(vm),
-            TieneHijos = tieneHijos
-        };
-    }
-
-    private static string DescribeRegla(ConjuntoRecursoVm vm)
-    {
-        if (vm.EsOperacion)
-            return string.IsNullOrWhiteSpace(vm.Operacion) ? "sin fórmula" : "ƒ " + vm.Operacion;
-        if (vm.EsEsclavo)
-            return vm.TipoCalculo == TipoCalculoParametrico.Espaciamiento
-                ? $"÷ {vm.Espaciamiento:0.##} m"
-                : $"× {vm.Factor:0.##}";
-        return "base de la partida";
-    }
-
-    /// <summary>
-    /// Vista previa de la expansión con base 1 (receta unitaria), el mismo camino que usa
-    /// ExpandToCubicacion cuando la partida todavía no tiene cantidad. Las filas MO/HH/HERR
-    /// no aparecen: tampoco se cargan en cubicación (se resuelven en el APU).
-    /// </summary>
-    private void RebuildPreview()
-    {
-        PreviewFilas.Clear();
-        var conjunto = SelectedConjunto?.Source;
-        if (conjunto?.Recursos == null || conjunto.Recursos.Count == 0) return;
-
-        var partida = new ItemizadoRow
-        {
-            Id = "",
-            Descripcion = conjunto.Nombre,
-            Unidad = conjunto.Unidad,
-            Cantidad = 1m
-        };
-
-        var expandida = conjuntoSvc.ExpandToCubicacion(conjunto, partida, session.Materiales, cantidadesEnCero: false);
-        foreach (var row in expandida.Rows)
-        {
-            PreviewFilas.Add(new PreviewFilaVm
-            {
-                Codigo = row.Codigo ?? "",
-                Descripcion = row.Descripcion ?? "",
-                Unidad = row.Unidad ?? "",
-                Cantidad = row.Cantidad.ToString("0.###")
-            });
-        }
-    }
+    public void RebuildPreview()
+        => hierarchyCoordinator.RebuildPreview();
 
     private void ApplyTemplateFilter() => LoadTemplates();
     private void ApplyConjuntoFilter() => LoadConjuntos();

@@ -90,10 +90,11 @@
     <Color x:Key="Color.PanelSidebar">#FAFBFD</Color>
     <Color x:Key="Color.InputBorder">#DCE3EC</Color>
     <Color x:Key="Color.DropdownHover">#F1F5FA</Color>
-    <Color x:Key="Color.RowHover">#F6F9FC</Color>
+    <Color x:Key="Color.RowHover">#F1F5FB</Color>
     <Color x:Key="Color.ChipBg">#F1F4F8</Color>
     <Color x:Key="Color.ChapterRowBg">#F4F7FB</Color>
-    <Color x:Key="Color.ActiveRowBg">#EEF3FA</Color>
+    <Color x:Key="Color.ActiveRowBg">#E6EFFD</Color>
+    <Color x:Key="Color.ActiveRowHoverBg">#DCE8FC</Color>
     <Color x:Key="Color.CellFormulaBg">#F1F4F9</Color>
     <Color x:Key="Color.CellEditableBg">#FFFFFF</Color>
     <Color x:Key="Color.CellEditableHover">#F0F5FF</Color>
@@ -206,6 +207,7 @@
     <SolidColorBrush x:Key="Brush.ChipBg"       Color="{StaticResource Color.ChipBg}" />
     <SolidColorBrush x:Key="Brush.ChapterRowBg" Color="{StaticResource Color.ChapterRowBg}" />
     <SolidColorBrush x:Key="Brush.ActiveRowBg"  Color="{StaticResource Color.ActiveRowBg}" />
+    <SolidColorBrush x:Key="Brush.ActiveRowHoverBg" Color="{StaticResource Color.ActiveRowHoverBg}" />
 
     <SolidColorBrush x:Key="Brush.Info"         Color="{StaticResource Color.Info}" />
     <SolidColorBrush x:Key="Brush.InfoBg"       Color="{StaticResource Color.InfoBg}" />
@@ -277,6 +279,16 @@
     <LinearGradientBrush x:Key="Brush.PrimaryButton" StartPoint="0,0" EndPoint="0,1">
         <GradientStop Color="{StaticResource Color.Blue2}" Offset="0" />
         <GradientStop Color="{StaticResource Color.Blue}" Offset="1" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="Brush.PrimaryButtonHover" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="{StaticResource Color.Blue3}" Offset="0" />
+        <GradientStop Color="{StaticResource Color.Blue2}" Offset="1" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="Brush.PrimaryButtonPressed" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="{StaticResource Color.Blue}" Offset="0" />
+        <GradientStop Color="{StaticResource Color.BlueDark}" Offset="1" />
     </LinearGradientBrush>
 
     <LinearGradientBrush x:Key="Brush.BrandMark" StartPoint="0,0" EndPoint="1,1">

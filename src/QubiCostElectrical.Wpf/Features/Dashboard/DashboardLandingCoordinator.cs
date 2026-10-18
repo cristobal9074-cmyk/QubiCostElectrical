@@ -164,4 +164,121 @@ public static class DashboardLandingCoordinator
         reloadLandingState();
         ShellNotificationService.Instance.ShowInfo("Proyecto quitado", "El archivo fue eliminado de la lista de recientes.");
     }
+
+    public static IEnumerable<DashboardMetricVm> CreateLandingSummary(IReadOnlyList<DashboardRecentProjectVm> items)
+    {
+        yield return new DashboardMetricVm
+        {
+            Title = "Proyectos totales",
+            Value = items.Count.ToString("N0"),
+            Caption = "Según la lista de recientes",
+            AccentBrush = DashboardKpiBrushes.Blue,
+            AccentSoftBrush = DashboardKpiBrushes.BlueSoft
+        };
+        yield return new DashboardMetricVm
+        {
+            Title = "Completos",
+            Value = items.Count(x => x.StateKind == DashboardProjectStateKind.Complete).ToString("N0"),
+            Caption = "Listos para entregar",
+            AccentBrush = DashboardKpiBrushes.Green,
+            AccentSoftBrush = DashboardKpiBrushes.GreenSoft
+        };
+        yield return new DashboardMetricVm
+        {
+            Title = "En progreso",
+            Value = items.Count(x => x.StateKind == DashboardProjectStateKind.InProgress).ToString("N0"),
+            Caption = "Trabajo activo",
+            AccentBrush = DashboardKpiBrushes.Amber,
+            AccentSoftBrush = DashboardKpiBrushes.AmberSoft
+        };
+        yield return new DashboardMetricVm
+        {
+            Title = "Borradores",
+            Value = items.Count(x => x.StateKind is DashboardProjectStateKind.Draft or DashboardProjectStateKind.Unknown).ToString("N0"),
+            Caption = "Pendientes de revisar",
+            AccentBrush = DashboardKpiBrushes.BlueDark,
+            AccentSoftBrush = DashboardKpiBrushes.BlueSoft
+        };
+    }
+
+    public static DashboardRecentProjectVm BuildRecentProject(
+        RecentProjectInfo project,
+        DashboardProjectStateKind state,
+        IShellNavigationHost shell,
+        RecentProjectsService recentProjectsService,
+        Action reloadLandingState)
+    {
+        var archive = DescribeArchiveState(project.IsMissing, state);
+
+        return new DashboardRecentProjectVm
+        {
+            Name = string.IsNullOrWhiteSpace(project.Name) ? Path.GetFileNameWithoutExtension(project.Path) : project.Name,
+            Path = project.Path,
+            StatusText = archive.Text,
+            StatusCaption = archive.Caption,
+            DisplayDate = project.DisplayDate,
+            IsMissing = project.IsMissing,
+            IsPinned = project.IsPinned,
+            StateKind = state,
+            AccentBrush = archive.Accent,
+            AccentSoftBrush = archive.Soft,
+            StatusForeground = archive.Accent,
+            OpenCommand = new RelayCommand(() => _ = shell.OpenRecentProjectAsync(project.Path)),
+            OpenFolderCommand = new RelayCommand(() => OpenProjectFolder(project.Path)),
+            CopyPathCommand = new RelayCommand(() => CopyProjectPathToClipboard(project.Path)),
+            TogglePinCommand = new RelayCommand(() => TogglePin(recentProjectsService, project.Path, reloadLandingState)),
+            RemoveRecentCommand = new RelayCommand(() => RemoveRecent(recentProjectsService, shell, project.Path, reloadLandingState))
+        };
+    }
+
+    public static DashboardProjectStateKind DetermineProjectState(
+        RecentProjectInfo project,
+        ProjectFileFormatDetector formatDetector,
+        IProjectRepository projectRepo)
+    {
+        if (project.IsMissing)
+            return DashboardProjectStateKind.Unknown;
+
+        try
+        {
+            var format = formatDetector.Detect(project.Path);
+            // Solo se lee el campo "estado" (SQLite) en vez del snapshot completo (itemizado,
+            // cubicación, materiales, APUs) para no bloquear la UI al listar recientes.
+            string? estadoRaw = format switch
+            {
+                ProjectFileFormat.Sqlite => projectRepo.PeekSQLiteEstadoPresupuesto(project.Path),
+                ProjectFileFormat.LegacyJson => projectRepo
+                    .LoadProjectFile(project.Path, ProjectJsonSerializer.Options).Proyecto?.EstadoPresupuesto,
+                _ => null
+            };
+
+            var estado = estadoRaw?.Trim();
+            if (string.IsNullOrWhiteSpace(estado))
+                return DashboardProjectStateKind.Draft;
+
+            if (estado.Contains("complet", StringComparison.OrdinalIgnoreCase) ||
+                estado.Contains("aprob", StringComparison.OrdinalIgnoreCase))
+                return DashboardProjectStateKind.Complete;
+
+            if (estado.Contains("progres", StringComparison.OrdinalIgnoreCase) ||
+                estado.Contains("curso", StringComparison.OrdinalIgnoreCase) ||
+                estado.Contains("revision", StringComparison.OrdinalIgnoreCase) ||
+                estado.Contains("revisión", StringComparison.OrdinalIgnoreCase))
+            {
+                return DashboardProjectStateKind.InProgress;
+            }
+
+            if (estado.Contains("borr", StringComparison.OrdinalIgnoreCase) ||
+                estado.Contains("draft", StringComparison.OrdinalIgnoreCase))
+            {
+                return DashboardProjectStateKind.Draft;
+            }
+
+            return DashboardProjectStateKind.Draft;
+        }
+        catch
+        {
+            return DashboardProjectStateKind.Unknown;
+        }
+    }
 }

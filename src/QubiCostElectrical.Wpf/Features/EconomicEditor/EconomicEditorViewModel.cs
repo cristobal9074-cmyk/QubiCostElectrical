@@ -116,8 +116,9 @@ public sealed class EconomicEditorViewModel : SessionAwareViewModelBase
     public ICommand CalculateCommand { get; }
 
     public EconomicEditorViewModel(IShellNavigationHost shell, WpfAppHost host)
-        : this(shell, host.Session, host.ProjectWorkspace, host.Services.EconomicCalculation) { }
+        : this(shell, host.Session, host.ProjectWorkspace, host.EconomicCalculation) { }
 
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
     public EconomicEditorViewModel(IShellNavigationHost shell, BudgetProjectSession session, IProjectWorkspaceService workspace, IEconomicCalculationService economicCalc)
         : base(session)
     {

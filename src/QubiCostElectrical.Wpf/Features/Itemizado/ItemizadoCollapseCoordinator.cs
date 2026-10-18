@@ -13,6 +13,26 @@ public static class ItemizadoCollapseCoordinator
         UpdateHierarchy(allRows);
     }
 
+    public static void CollapseAll(IReadOnlyList<ItemizadoRowVm> allRows)
+    {
+        for (int i = 0; i < allRows.Count; i++)
+        {
+            if (allRows[i].EsTitulo)
+                allRows[i].IsCollapsed = true;
+        }
+        UpdateHierarchy(allRows);
+    }
+
+    public static void ExpandAll(IReadOnlyList<ItemizadoRowVm> allRows)
+    {
+        for (int i = 0; i < allRows.Count; i++)
+        {
+            if (allRows[i].EsTitulo)
+                allRows[i].IsCollapsed = false;
+        }
+        UpdateHierarchy(allRows);
+    }
+
     public static void UpdateHierarchy(IReadOnlyList<ItemizadoRowVm> allRows)
     {
         var collapsedStack = new Stack<ItemizadoRowVm>();

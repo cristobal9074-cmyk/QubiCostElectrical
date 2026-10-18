@@ -15,13 +15,15 @@ public class LoginViewModel : ViewModelBase
     private bool _isBusy;
     private bool _isFirstUser;
     private string? _displayName;
+    private readonly IUserPreferencesStore? _preferencesStore;
 
-    public LoginViewModel(IAuthService authService)
+    public LoginViewModel(IAuthService authService, IUserPreferencesStore? preferencesStore = null)
     {
         _authService = authService;
+        _preferencesStore = preferencesStore ?? WpfAppHost.Current?.UserPreferencesStore;
         LoginCommand = new RelayCommand(async () => await LoginAsync(), () => !IsBusy);
 
-        var prefs = UserPreferencesStore.Load();
+        var prefs = _preferencesStore?.Load() ?? new UserPreferences();
         _email = prefs.LastUserEmail;
         ProductVersion = $"v{ProductVersionInfo.ProductVersion}";
 
@@ -155,9 +157,9 @@ public class LoginViewModel : ViewModelBase
             {
                 SessionManager.SetSession(result.Value!);
 
-                var prefs = UserPreferencesStore.Load();
+                var prefs = _preferencesStore?.Load() ?? new UserPreferences();
                 prefs.LastUserEmail = email;
-                UserPreferencesStore.Save(prefs);
+                _preferencesStore?.Save(prefs);
 
                 LoginSucceeded?.Invoke(this, EventArgs.Empty);
             }

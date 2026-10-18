@@ -178,12 +178,12 @@
                       </Style>
                     </Ellipse.Style>
                   </Ellipse>
-                  <!-- Solo lectura: candado MDL2 -->
-                  <TextBlock Text="&#xE72E;" FontFamily="Segoe MDL2 Assets" FontSize="9"
-                             Foreground="{DynamicResource Brush.HeaderControl}"
-                             HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <TextBlock.Style>
-                      <Style TargetType="TextBlock">
+                  <!-- Solo lectura: candado Lucide -->
+                  <Path Data="{StaticResource Geo.Lock}"
+                        Stroke="{DynamicResource Brush.HeaderControl}"
+                        HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Path.Style>
+                      <Style TargetType="Path" BasedOn="{StaticResource Icon.Vector.Sm}">
                         <Setter Property="Visibility" Value="Collapsed" />
                         <Style.Triggers>
                           <DataTrigger Binding="{Binding IsReadOnly}" Value="True">
@@ -191,8 +191,8 @@
                           </DataTrigger>
                         </Style.Triggers>
                       </Style>
-                    </TextBlock.Style>
-                  </TextBlock>
+                    </Path.Style>
+                  </Path>
                 </Grid>
                 <TextBlock Text="{Binding SaveStateText, Mode=OneWay}" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center">
                   <TextBlock.Style>
@@ -215,13 +215,13 @@
                     ToolTip="{Binding UndoToolTip, Mode=OneWay}" Click="OnUndoClick"
                     IsEnabled="{Binding CanUndo, Mode=OneWay}"
                     AutomationProperties.Name="Deshacer">
-              <TextBlock Text="&#xE7A7;" FontFamily="Segoe MDL2 Assets" FontSize="13" Foreground="{DynamicResource Brush.HeaderControl}" />
+              <Path Data="{StaticResource Geo.Undo}" Style="{StaticResource Icon.Vector}" Width="13" Height="13" Stroke="{DynamicResource Brush.HeaderControl}" />
             </Button>
             <Button x:Name="RedoButton" Style="{StaticResource Button.HeaderIcon}" Margin="0,0,8,0"
                     ToolTip="{Binding RedoToolTip, Mode=OneWay}" Click="OnRedoClick"
                     IsEnabled="{Binding CanRedo, Mode=OneWay}"
                     AutomationProperties.Name="Rehacer">
-              <TextBlock Text="&#xE7A6;" FontFamily="Segoe MDL2 Assets" FontSize="13" Foreground="{DynamicResource Brush.HeaderControl}" />
+              <Path Data="{StaticResource Geo.Redo}" Style="{StaticResource Icon.Vector}" Width="13" Height="13" Stroke="{DynamicResource Brush.HeaderControl}" />
             </Button>
             <Button Content="Guardar" Margin="0,0,6,0"
                     Click="OnSaveClick"
@@ -299,16 +299,29 @@
                   <TextBlock Text="{Binding UserDisplayName, Mode=OneWay}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink2}" Margin="10,8,10,2" />
                   <TextBlock Text="{Binding UserEmail, Mode=OneWay}" FontSize="9" Foreground="{DynamicResource Brush.HeaderDim}" Margin="10,0,10,8" />
                   <Border Height="1" Background="{DynamicResource Brush.Line}" Margin="4,0" />
+                  <Button Click="OnAboutMenuClick"
+                          Background="Transparent"
+                          BorderThickness="0"
+                          Padding="10,7"
+                          Margin="0,4,0,0"
+                          Cursor="Hand"
+                          HorizontalContentAlignment="Stretch"
+                          ToolTip="Ver información de versión, licencia corporativa y novedades">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="ℹ️" FontSize="11" Margin="0,0,8,0" VerticalAlignment="Center" />
+                      <TextBlock Text="Acerca de Qubi Cost" FontSize="10.5" Foreground="{DynamicResource Brush.Ink2}" VerticalAlignment="Center" />
+                    </StackPanel>
+                  </Button>
                   <Button Command="{Binding LogoutCommand}"
                           Background="Transparent"
                           BorderThickness="0"
-                          Padding="10,8"
-                          Margin="0,4,0,0"
+                          Padding="10,7"
+                          Margin="0,2,0,0"
                           Cursor="Hand"
                           HorizontalContentAlignment="Stretch">
                     <StackPanel Orientation="Horizontal">
-                      <TextBlock Text="&#xE7E8;" FontFamily="Segoe MDL2 Assets" FontSize="11" Foreground="{DynamicResource Brush.Slate}" Margin="0,0,8,0" />
-                      <TextBlock Text="Cerrar sesión" FontSize="10" Foreground="{DynamicResource Brush.Slate}" />
+                      <Path Data="{StaticResource Geo.LogOut}" Style="{StaticResource Icon.Vector.Sm}" Stroke="{DynamicResource Brush.Slate}" Margin="0,0,8,0" />
+                      <TextBlock Text="Cerrar sesión" FontSize="10.5" Foreground="{DynamicResource Brush.Slate}" />
                     </StackPanel>
                   </Button>
                 </StackPanel>
@@ -316,22 +329,44 @@
             </Popup>
           </StackPanel>
 
-          <!-- 3. Logo y Marca -->
-          <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
-            <Border Width="34" Height="34" CornerRadius="{StaticResource Radius.Brand}" Background="{DynamicResource Brush.BrandMark}" Margin="0,0,9,0">
-              <Viewbox Width="22" Height="22">
-                <Canvas Width="28" Height="28">
-                  <Polygon Points="14,1 27,7.5 27,20.5 14,27 1,20.5 1,7.5" Fill="{DynamicResource Brush.BrandDark}" Stroke="{DynamicResource Brush.Blue3}" StrokeThickness="1.3"/>
-                  <Polygon Points="14,1 27,7.5 14,14 1,7.5" Fill="{DynamicResource Brush.BrandMid}" Stroke="{DynamicResource Brush.BrandStroke}" StrokeThickness="1"/>
-                  <Path Data="M16 5 L11 14 L14 14 L12 23 L19 12 L16 12 Z" Fill="White" Stroke="{DynamicResource Brush.BrandStroke3}" StrokeThickness="0.5"/>
-                </Canvas>
-              </Viewbox>
-            </Border>
-            <StackPanel VerticalAlignment="Center">
-              <TextBlock Text="{Binding ApplicationName, Mode=OneWay}" Style="{StaticResource Text.HeaderBrand}" FontSize="13" />
-              <TextBlock Text="{Binding ApplicationSub, Mode=OneWay}" FontSize="10" Foreground="{DynamicResource Brush.HeaderMuted}" />
+          <!-- 3. Logo y Marca (Clic para Acerca de) -->
+          <Button x:Name="BrandAboutButton"
+                  WindowChrome.IsHitTestVisibleInChrome="True"
+                  DockPanel.Dock="Left"
+                  Background="Transparent"
+                  BorderThickness="0"
+                  Padding="0"
+                  Cursor="Hand"
+                  Click="OnBrandAboutClick"
+                  ToolTip="Acerca de Qubi Cost Electrical (Versión, Licencia y Novedades)">
+            <Button.Template>
+              <ControlTemplate TargetType="Button">
+                <Border x:Name="Bd" Background="Transparent" CornerRadius="8" Padding="4,2">
+                  <ContentPresenter />
+                </Border>
+                <ControlTemplate.Triggers>
+                  <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.White12}" />
+                  </Trigger>
+                </ControlTemplate.Triggers>
+              </ControlTemplate>
+            </Button.Template>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <Border Width="34" Height="34" CornerRadius="{StaticResource Radius.Brand}" Background="{DynamicResource Brush.BrandMark}" Margin="0,0,9,0">
+                <Viewbox Width="22" Height="22">
+                  <Canvas Width="28" Height="28">
+                    <Polygon Points="14,1 27,7.5 27,20.5 14,27 1,20.5 1,7.5" Fill="{DynamicResource Brush.BrandDark}" Stroke="{DynamicResource Brush.Blue3}" StrokeThickness="1.3"/>
+                    <Polygon Points="14,1 27,7.5 14,14 1,7.5" Fill="{DynamicResource Brush.BrandMid}" Stroke="{DynamicResource Brush.BrandStroke}" StrokeThickness="1"/>
+                    <Path Data="M16 5 L11 14 L14 14 L12 23 L19 12 L16 12 Z" Fill="White" Stroke="{DynamicResource Brush.BrandStroke3}" StrokeThickness="0.5"/>
+                  </Canvas>
+                </Viewbox>
+              </Border>
+              <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="{Binding ApplicationName, Mode=OneWay}" Style="{StaticResource Text.HeaderBrand}" FontSize="13" />
+                <TextBlock Text="{Binding ApplicationSub, Mode=OneWay}" FontSize="10" Foreground="{DynamicResource Brush.HeaderMuted}" />
+              </StackPanel>
             </StackPanel>
-          </StackPanel>
+          </Button>
 
           <!-- 4. Selector de proyectos con ancho acotado y elipsis para nombres largos -->
           <Button x:Name="ProjectPickerButton" WindowChrome.IsHitTestVisibleInChrome="True" DockPanel.Dock="Left" Margin="14,0,0,0" Height="36" MinWidth="180" MaxWidth="300" Cursor="Hand" Background="{DynamicResource Brush.White8}" BorderBrush="{DynamicResource Brush.White18}" BorderThickness="1" Padding="11,0" Click="OnProjectPickerClick" AutomationProperties.Name="Selector de proyectos" AutomationProperties.HelpText="{Binding ActiveProjectLabel, Mode=OneWay}">
@@ -353,7 +388,7 @@
                            TextTrimming="CharacterEllipsis"
                            ToolTip="{Binding ActiveProjectLabel, Mode=OneWay}" />
               </StackPanel>
-              <TextBlock Text="&#xE70D;" FontFamily="Segoe MDL2 Assets" Margin="8,0,0,0" FontSize="10" Foreground="{DynamicResource Brush.HeaderNav}" VerticalAlignment="Center" />
+              <Path Data="{StaticResource Geo.ChevronDown}" Style="{StaticResource Icon.Vector.Sm}" Width="8" Height="8" Stroke="{DynamicResource Brush.HeaderNav}" Margin="8,0,0,0" VerticalAlignment="Center" />
             </StackPanel>
           </Button>
 
@@ -414,7 +449,7 @@
               </Style>
             </Border.Resources>
             <DockPanel Margin="10,0">
-              <TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource Brush.BrandStroke2}" VerticalAlignment="Center" Margin="0,0,8,0" FontSize="13" />
+              <Path Data="{StaticResource Geo.Search}" Style="{StaticResource Icon.Vector}" Width="13" Height="13" Stroke="{DynamicResource Brush.BrandStroke2}" VerticalAlignment="Center" Margin="0,0,8,0" />
               <Border DockPanel.Dock="Right" BorderBrush="{DynamicResource Brush.NavyBorder2}" BorderThickness="1" CornerRadius="5" Padding="6,1" Margin="8,0,0,0" VerticalAlignment="Center" Background="{DynamicResource Brush.NavyDeep2}">
                 <TextBlock Text="Ctrl+P / Ctrl+K" FontSize="9" Foreground="{DynamicResource Brush.Slate3}" FontWeight="SemiBold" />
               </Border>
@@ -567,7 +602,7 @@
                   <DockPanel>
                     <!-- Ícono de Lupa Azul de la App -->
                     <Border Width="30" Height="30" CornerRadius="8" Background="{DynamicResource Brush.BlueSoft}" Margin="0,0,10,0" VerticalAlignment="Center">
-                      <TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                      <Path Data="{StaticResource Geo.Search}" Style="{StaticResource Icon.Vector.Md}" Stroke="{DynamicResource Brush.Blue}" />
                     </Border>
 
                     <!-- Botón Limpiar [✕] -->
@@ -737,7 +772,7 @@
                               VerticalAlignment="Center"
                               Margin="24">
                     <Border Width="42" Height="42" CornerRadius="12" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" HorizontalAlignment="Center" Margin="0,0,0,10">
-                      <TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="18" Foreground="{DynamicResource Brush.Ink4}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                      <Path Data="{StaticResource Geo.Search}" Style="{StaticResource Icon.Vector.Lg}" Stroke="{DynamicResource Brush.Ink4}" />
                     </Border>
                     <TextBlock Text="No se encontraron coincidencias" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink2}" HorizontalAlignment="Center" />
                     <TextBlock Text="Prueba con otro término o selecciona 'Todos' para buscar en todo el proyecto" FontSize="10.5" Foreground="{DynamicResource Brush.Ink4}" HorizontalAlignment="Center" Margin="0,4,0,0" />
@@ -991,7 +1026,7 @@
                     </Border.Style>
                     <DockPanel>
                       <Border Width="26" Height="26" CornerRadius="7" Background="{DynamicResource Brush.SuccessBg}" Margin="0,0,10,0" VerticalAlignment="Center">
-                        <TextBlock Text="&#xE8A7;" FontFamily="Segoe MDL2 Assets" FontSize="13" Foreground="{DynamicResource Brush.SuccessBright}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Path Data="{StaticResource Geo.FolderOpen}" Style="{StaticResource Icon.Vector.Md}" Stroke="{DynamicResource Brush.SuccessBright}" />
                       </Border>
                       <StackPanel VerticalAlignment="Center">
                         <TextBlock Text="Abrir archivo" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink2}" />
@@ -1025,7 +1060,7 @@
                     </Border.Style>
                     <DockPanel>
                       <Border Width="26" Height="26" CornerRadius="7" Background="{DynamicResource Brush.BlueFaint}" Margin="0,0,10,0" VerticalAlignment="Center">
-                        <TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="13" Foreground="{DynamicResource Brush.Blue2}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Path Data="{StaticResource Geo.SaveAs}" Style="{StaticResource Icon.Vector.Md}" Stroke="{DynamicResource Brush.Blue2}" />
                       </Border>
                       <StackPanel VerticalAlignment="Center">
                         <TextBlock Text="Guardar como…" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink2}" />
@@ -1060,7 +1095,7 @@
                     </Border.Style>
                     <DockPanel>
                       <Border Width="26" Height="26" CornerRadius="7" Background="{DynamicResource Brush.DangerBg}" Margin="0,0,10,0" VerticalAlignment="Center">
-                        <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="12" Foreground="{DynamicResource Brush.Danger2}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Path Data="{StaticResource Geo.Close}" Style="{StaticResource Icon.Vector.Sm}" Stroke="{DynamicResource Brush.Danger2}" />
                       </Border>
                       <StackPanel VerticalAlignment="Center">
                         <TextBlock Text="Cerrar proyecto" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink2}" />
@@ -1187,7 +1222,7 @@
                               </Style>
                             </Button.Style>
                             <Border Width="22" Height="22" CornerRadius="6" Background="{DynamicResource Brush.Canvas}">
-                              <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="10" Foreground="{DynamicResource Brush.Slate}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                              <Path Data="{StaticResource Geo.Close}" Style="{StaticResource Icon.Vector.Sm}" Stroke="{DynamicResource Brush.Slate}" />
                             </Border>
                           </Button>
                         </Grid>
@@ -1212,7 +1247,7 @@
                     Width="28" Height="28" Margin="0,0,3,0"
                     AutomationProperties.Name="Atrás"
                     AutomationProperties.HelpText="Navegar a la vista anterior (Alt+←)">
-              <TextBlock Text="&#xE72B;" FontFamily="Segoe MDL2 Assets" FontSize="11" />
+              <Path Data="{StaticResource Geo.ChevronLeft}" Style="{StaticResource Icon.Vector.Sm}" />
             </Button>
             <Button Command="{Binding NavigateForwardCommand}"
                     ToolTip="Avanzar a la vista siguiente (Alt+→)"
@@ -1220,21 +1255,22 @@
                     Width="28" Height="28"
                     AutomationProperties.Name="Adelante"
                     AutomationProperties.HelpText="Navegar a la vista siguiente (Alt+→)">
-              <TextBlock Text="&#xE72A;" FontFamily="Segoe MDL2 Assets" FontSize="11" />
+              <Path Data="{StaticResource Geo.ChevronRight}" Style="{StaticResource Icon.Vector.Sm}" />
             </Button>
           </StackPanel>
 
           <!-- Breadcrumb de Orientación Activa en Cabecera -->
           <Border DockPanel.Dock="Right"
                   Background="{DynamicResource Brush.White8}"
-                  BorderBrush="{DynamicResource Brush.White12}"
-                  BorderThickness="1" CornerRadius="8" Padding="10,4"
+                  BorderBrush="{DynamicResource Brush.White18}"
+                  BorderThickness="1" CornerRadius="12" Padding="12,4"
                   VerticalAlignment="Center" Margin="10,0,0,0"
                   Visibility="{Binding HasOpenProject, Converter={StaticResource BoolToVisibility}}">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-              <TextBlock Text="{Binding BreadcrumbGroup}" FontSize="10.5" Foreground="{DynamicResource Brush.HeaderNav}" VerticalAlignment="Center" />
-              <TextBlock Text=" › " FontSize="10.5" Foreground="{DynamicResource Brush.HeaderDim}" VerticalAlignment="Center" Margin="4,0" />
-              <TextBlock Text="{Binding PageTitle}" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.White}" VerticalAlignment="Center" />
+              <TextBlock Text="{Binding BreadcrumbGroup}" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource Brush.HeaderNav}" VerticalAlignment="Center" />
+              <Path Data="{StaticResource Geo.ChevronRight}" Style="{StaticResource Icon.Vector.Sm}" Width="6" Height="6"
+                    Stroke="{DynamicResource Brush.HeaderDim}" Margin="6,0" VerticalAlignment="Center" />
+              <TextBlock Text="{Binding PageTitle}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.White}" VerticalAlignment="Center" />
             </StackPanel>
           </Border>
 
@@ -1394,9 +1430,23 @@
           <Border Width="52" Height="52" CornerRadius="12"
                   Background="{DynamicResource Brush.BlueFaint}"
                   HorizontalAlignment="Center" Margin="0,0,0,14">
-            <TextBlock Text="&#xE9F9;" FontFamily="Segoe MDL2 Assets" FontSize="24"
-                       Foreground="{DynamicResource Brush.Blue}"
-                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+            <Path Data="{StaticResource Geo.Spinner}" Style="{StaticResource Icon.Vector.Xl}"
+                  Stroke="{DynamicResource Brush.Blue}"
+                  RenderTransformOrigin="0.5,0.5">
+              <Path.RenderTransform>
+                <RotateTransform x:Name="BusySpinnerTransform" Angle="0" />
+              </Path.RenderTransform>
+              <Path.Triggers>
+                <EventTrigger RoutedEvent="Path.Loaded">
+                  <BeginStoryboard>
+                    <Storyboard RepeatBehavior="Forever">
+                      <DoubleAnimation Storyboard.TargetProperty="(Path.RenderTransform).(RotateTransform.Angle)"
+                                       From="0" To="360" Duration="0:0:1.2" />
+                    </Storyboard>
+                  </BeginStoryboard>
+                </EventTrigger>
+              </Path.Triggers>
+            </Path>
           </Border>
           <TextBlock Text="{Binding BusyMessage, FallbackValue='Procesando…'}"
                      FontSize="13" FontWeight="SemiBold"
@@ -1413,23 +1463,156 @@
     <Border Grid.Row="4" Style="{StaticResource Shell.StatusBar}"
             Visibility="{Binding IsLandingScreen, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
       <DockPanel LastChildFill="True">
-        <TextBlock DockPanel.Dock="Right"
-                   Style="{StaticResource Shell.StatusBarText}"
-                   FontWeight="SemiBold"
-                   Foreground="{DynamicResource Brush.Ink2}"
-                   Text="{Binding UserStatusLabel, Mode=OneWay}" />
-        <TextBlock DockPanel.Dock="Right"
-                   Style="{StaticResource Shell.StatusBarText}"
-                   Margin="0,0,16,0"
-                   Text="{Binding PriceBankSyncLabel, Mode=OneWay}" />
-        <TextBlock DockPanel.Dock="Right"
-                   Style="{StaticResource Shell.StatusBarText}"
-                   Margin="0,0,16,0"
-                   FontWeight="SemiBold"
-                   Text="{Binding CollaborationModeLabel, Mode=OneWay}" />
-        <TextBlock Style="{StaticResource Shell.StatusBarText}"
-                   Text="{Binding StatusBarHint, Mode=OneWay}"
-                   TextTrimming="CharacterEllipsis" />
+        <!-- SECCIÓN DERECHA: Métricas vivas y Estado del Sistema -->
+        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+
+          <!-- 1. Estructura del Proyecto (Partidas, Capítulos, Tableros) -->
+          <Border Style="{StaticResource Shell.StatusBarItem}"
+                  ToolTip="{Binding ProjectStructureToolTip, Mode=OneWay}"
+                  Visibility="{Binding HasOpenProject, Converter={StaticResource BoolToVisibility}}">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <Path Data="{StaticResource Geo.FileText}" Style="{StaticResource Icon.Vector.Sm}"
+                    Stroke="{DynamicResource Brush.Ink3}" Margin="0,0,5,0" />
+              <TextBlock Style="{StaticResource Shell.StatusBarText}"
+                         Text="{Binding ProjectStructureSummary, Mode=OneWay}"
+                         Foreground="{DynamicResource Brush.Ink2}" />
+            </StackPanel>
+          </Border>
+
+          <Border Style="{StaticResource Shell.StatusBarDivider}"
+                  Visibility="{Binding HasOpenProject, Converter={StaticResource BoolToVisibility}}" />
+
+          <!-- 2. Costo Directo Total en Vivo -->
+          <Border Style="{StaticResource Shell.StatusBarItem}"
+                  ToolTip="{Binding DirectCostToolTip, Mode=OneWay}"
+                  Visibility="{Binding HasOpenProject, Converter={StaticResource BoolToVisibility}}">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <Border Background="{DynamicResource Brush.BlueSoft}" CornerRadius="4" Padding="5,1" Margin="0,0,4,0">
+                <TextBlock Text="CD" FontSize="9.5" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}"
+                           Foreground="{DynamicResource Brush.Blue}" />
+              </Border>
+              <TextBlock Style="{StaticResource Shell.StatusBarText}"
+                         FontWeight="Bold"
+                         Foreground="{DynamicResource Brush.Ink}"
+                         FontFamily="{StaticResource Font.Mono}"
+                         Text="{Binding TickerCostoDirecto, Mode=OneWay}" />
+            </StackPanel>
+          </Border>
+
+          <Border Style="{StaticResource Shell.StatusBarDivider}"
+                  Visibility="{Binding HasOpenProject, Converter={StaticResource BoolToVisibility}}" />
+
+          <!-- 3. Modo Colaborativo (Editor Exclusivo / Solo Lectura) -->
+          <Border Style="{StaticResource Shell.StatusBarItem}"
+                  ToolTip="{Binding ReadOnlyBannerText, Mode=OneWay}"
+                  Visibility="{Binding HasOpenProject, Converter={StaticResource BoolToVisibility}}">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <!-- Punto de estado dinámico -->
+              <Ellipse Width="6" Height="6" Margin="0,0,5,0" VerticalAlignment="Center">
+                <Ellipse.Style>
+                  <Style TargetType="Ellipse">
+                    <Setter Property="Fill" Value="{DynamicResource Brush.Success}" />
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding IsReadOnly}" Value="True">
+                        <Setter Property="Fill" Value="{DynamicResource Brush.Blue}" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </Ellipse.Style>
+              </Ellipse>
+              <TextBlock FontWeight="SemiBold"
+                         Text="{Binding CollaborationModeLabel, Mode=OneWay}">
+                <TextBlock.Style>
+                  <Style TargetType="TextBlock" BasedOn="{StaticResource Shell.StatusBarText}">
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}" />
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding IsReadOnly}" Value="True">
+                        <Setter Property="Foreground" Value="{DynamicResource Brush.BlueDark}" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </TextBlock.Style>
+              </TextBlock>
+            </StackPanel>
+          </Border>
+
+          <Border Style="{StaticResource Shell.StatusBarDivider}" />
+
+          <!-- 4. Banco de Precios -->
+          <Border Style="{StaticResource Shell.StatusBarItem}"
+                  ToolTip="{Binding PriceBankToolTip, Mode=OneWay}">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <Path Data="{StaticResource Geo.FolderOpen}" Style="{StaticResource Icon.Vector.Sm}"
+                    Stroke="{DynamicResource Brush.Muted}" Margin="0,0,5,0" />
+              <TextBlock Style="{StaticResource Shell.StatusBarText}"
+                         Text="{Binding PriceBankSyncLabel, Mode=OneWay}" />
+            </StackPanel>
+          </Border>
+
+          <Border Style="{StaticResource Shell.StatusBarDivider}" />
+
+          <!-- 5. Usuario y Rol Activo -->
+          <Border Style="{StaticResource Shell.StatusBarItem}"
+                  ToolTip="{Binding UserEmail, Mode=OneWay}">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" FontSize="11"
+                         Foreground="{DynamicResource Brush.Muted}" Margin="0,0,5,0" VerticalAlignment="Center" />
+              <TextBlock Style="{StaticResource Shell.StatusBarText}"
+                         FontWeight="Medium"
+                         Foreground="{DynamicResource Brush.Ink2}"
+                         Text="{Binding UserStatusLabel, Mode=OneWay}" />
+            </StackPanel>
+          </Border>
+
+          <!-- 6. Estado de Guardado / Sincronización -->
+          <Border Style="{StaticResource Shell.StatusBarDivider}"
+                  Visibility="{Binding HasOpenProject, Converter={StaticResource BoolToVisibility}}" />
+
+          <Border Style="{StaticResource Shell.StatusBarItem}"
+                  ToolTip="{Binding SaveStateToolTip, Mode=OneWay}"
+                  Visibility="{Binding HasOpenProject, Converter={StaticResource BoolToVisibility}}">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <Ellipse Width="6" Height="6" Margin="0,0,5,0" VerticalAlignment="Center">
+                <Ellipse.Style>
+                  <Style TargetType="Ellipse">
+                    <Setter Property="Fill" Value="{DynamicResource Brush.Success}" />
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding HasUnsavedChanges}" Value="True">
+                        <Setter Property="Fill" Value="{DynamicResource Brush.AmberRisk}" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </Ellipse.Style>
+              </Ellipse>
+              <TextBlock FontSize="11" FontWeight="SemiBold"
+                         Text="{Binding SaveStateText, Mode=OneWay}">
+                <TextBlock.Style>
+                  <Style TargetType="TextBlock" BasedOn="{StaticResource Shell.StatusBarText}">
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding HasUnsavedChanges}" Value="True">
+                        <Setter Property="Foreground" Value="{DynamicResource Brush.AmberRisk}" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </TextBlock.Style>
+              </TextBlock>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+
+        <!-- SECCIÓN IZQUIERDA: Estado contextual / Atajos de teclado del módulo -->
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,0">
+          <Border Width="16" Height="16" CornerRadius="4" Background="{DynamicResource Brush.BlueSoft}"
+                  VerticalAlignment="Center" Margin="0,0,6,0">
+            <Path Data="{StaticResource Geo.Info}" Style="{StaticResource Icon.Vector.Sm}"
+                  Stroke="{DynamicResource Brush.Blue}" Width="9" Height="9" />
+          </Border>
+          <TextBlock Style="{StaticResource Shell.StatusBarText}"
+                     Text="{Binding StatusBarHint, Mode=OneWay}"
+                     TextTrimming="CharacterEllipsis"
+                     VerticalAlignment="Center" />
+        </StackPanel>
       </DockPanel>
     </Border>
     </Grid>

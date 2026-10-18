@@ -20,17 +20,18 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
             host.Session,
             host.ProjectWorkspace,
             host.Dashboard,
-            host.Services.VersionComparison,
-            host.Services.RevisionDiffPdfExporter,
-            host.Services.RevisionDiffExcelExporter,
+            host.VersionComparison,
+            host.RevisionDiffPdfExporter,
+            host.RevisionDiffExcelExporter,
             host.FileDialog,
             host.FileOpener,
-            host.Services.ItemizadoSpreadsheet,
-            host.Services.ImportItemizado,
-            host.Services.ProjectRepository,
+            host.ItemizadoSpreadsheet,
+            host.ImportItemizado,
+            host.ProjectRepository,
             host.UndoService)
     { }
 
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
     public VersionsViewModel(
         IShellNavigationHost shell,
         BudgetProjectSession session,
@@ -59,6 +60,11 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
         this.importItemizadoUseCase = importItemizadoUseCase;
         this.projectRepository = projectRepository;
         this.undo = undo;
+        this.comparisonCoordinator = new VersionsComparisonCoordinator(
+            versionComparison,
+            spreadsheetReader,
+            importItemizadoUseCase,
+            fileDialog);
 
         refreshCommand = new RelayCommand(Refresh);
         newCommand = new RelayCommand(CreateVersion, () => HasProject && !session.IsReadOnly);
@@ -75,6 +81,7 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
         saveAsNewVersionCommand = new RelayCommand(SaveAsNewVersion, () => HasProject && !session.IsReadOnly);
         applyAddendaQuantitiesCommand = new RelayCommand(ApplyAddendaQuantities, () => HasProject && !session.IsReadOnly && isAddendaComparison && lastIncomingAddendaItems != null);
         saveAddendaAsVersionCommand = new RelayCommand(SaveAddendaAsVersion, () => HasProject && !session.IsReadOnly && isAddendaComparison && currentSummary != null);
+        clearSearchCommand = new RelayCommand(ClearSearch, () => HasSearchText);
         OpenProjectCommand = new RelayCommand(() => _ = shell.OpenProjectAsync());
 
         versionsView = CollectionViewSource.GetDefaultView(versions);
@@ -257,10 +264,15 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
             if (!SetProperty(ref searchText, value ?? string.Empty))
                 return;
 
+            OnPropertyChanged(nameof(HasSearchText));
+            clearSearchCommand.RaiseCanExecuteChanged();
             versionsView.Refresh();
             comparisonRowsView.Refresh();
         }
     }
+
+    public bool HasSearchText => !string.IsNullOrWhiteSpace(searchText);
+    private void ClearSearch() => SearchText = string.Empty;
 
     public string SummaryText
     {
@@ -442,6 +454,7 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
     public ICommand SaveAsNewVersionCommand => saveAsNewVersionCommand;
     public ICommand ApplyAddendaQuantitiesCommand => applyAddendaQuantitiesCommand;
     public ICommand SaveAddendaAsVersionCommand => saveAddendaAsVersionCommand;
+    public ICommand ClearSearchCommand => clearSearchCommand;
     public ICommand OpenProjectCommand { get; }
 
     public void Refresh()
@@ -560,141 +573,66 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
     }
 
     /// <summary>Línea de totales de la comparación en la moneda del proyecto.</summary>
-    private string BuildTotalsText(BudgetVersionComparisonSummary summary, string currentVerb) => MuestraUf
-        ? $"Base {summary.BaselineUf:N3} UF · {currentVerb} {summary.CurrentUf:N3} UF · Delta {summary.DeltaUf:N3} UF ({summary.DeltaPct:N2}%)"
-        : $"Base $ {summary.BaselineClp:N0} · {currentVerb} $ {summary.CurrentClp:N0} · Delta $ {summary.DeltaClp:N0} ({summary.DeltaPct:N2}%)";
+    private string BuildTotalsText(BudgetVersionComparisonSummary summary, string currentVerb) =>
+        comparisonCoordinator.BuildTotalsText(summary, currentVerb, MuestraUf);
 
     /// <summary>
     /// Chips de variación (adicionales / deductivos / neto) en la moneda del proyecto. Con CLP
     /// se usan las columnas en pesos del resumen y nunca se muestra UF.
     /// </summary>
     private (string Adicionales, string Deductivos, string Neto) BuildVariationTexts(
-        BudgetVersionComparisonSummary summary)
+        BudgetVersionComparisonSummary summary) =>
+        comparisonCoordinator.BuildVariationTexts(summary, MuestraUf);
+
+    private void ApplyComparisonResult(VersionComparisonExecutionResult res)
     {
-        if (!MuestraUf)
-        {
-            return (
-                $"+$ {Math.Abs(summary.TotalAdicionalesClp):N0}",
-                $"- $ {Math.Abs(summary.TotalDeductivosClp):N0}",
-                $"{(summary.NetVariationClp >= 0m ? "+" : "-")}$ {Math.Abs(summary.NetVariationClp):N0}");
-        }
-
-        return (
-            $"+{summary.TotalAdicionalesUf:N3} UF",
-            $"{summary.TotalDeductivosUf:N3} UF",
-            $"{(summary.NetVariationUf >= 0m ? "+" : "")}{summary.NetVariationUf:N3} UF");
-    }
-
-    private void RefreshComparison()
-    {        comparisonRows.Clear();
-        IsAddendaComparison = false;
-        AddendaFileName = string.Empty;
-        lastIncomingAddendaItems = null;
-        applyAddendaQuantitiesCommand.RaiseCanExecuteChanged();
-        saveAddendaAsVersionCommand.RaiseCanExecuteChanged();
-
-        var selected = SelectedVersion?.Source;
-        if (selected == null)
-        {
-            currentSummary = null;
-            ComparisonSummaryText = "Sin comparación";
-            ComparisonStatusText = "Selecciona una versión para comparar con el estado actual.";
-            ComparisonTotalsText = "—";
-            ComparisonAddedText = "0 nuevas";
-            ComparisonChangedText = "0 modificadas";
-            ComparisonRemovedText = "0 eliminadas";
-            ComparisonUnchangedText = "0 sin cambio";
-            ComparisonAdicionalesText = MuestraUf ? "+0.000 UF" : "+$ 0";
-            ComparisonDeductivosText = MuestraUf ? "0.000 UF" : "- $ 0";
-            ComparisonNetVariationText = MuestraUf ? "0.000 UF" : "$ 0";
-            ComparisonDeltaUf = 0m;
-            ComparisonDeltaPct = 0m;
-            ComparisonModeHint = "Selecciona una versión para comparar.";
-            OnPropertyChanged(nameof(ComparisonDeltaText));
-            OnPropertyChanged(nameof(ComparisonDeltaPctText));
-            SelectedComparisonRow = null;
-            exportPdfCommand.RaiseCanExecuteChanged();
-            exportExcelCommand.RaiseCanExecuteChanged();
-            createChangeOrderFromDiffCommand.RaiseCanExecuteChanged();
-            return;
-        }
-
-        string baselineLabel = $"{selected.Codigo} · {selected.Nombre}";
-        BudgetVersionComparisonSummary summary;
-
-        if (CompareAgainstCurrent)
-        {
-            summary = versionComparison.Compare(
-                selected.Snapshot,
-                session.CreateSnapshot(),
-                baselineLabel,
-                "Estado actual");
-        }
-        else
-        {
-            var comparison = SelectedComparisonVersion?.Source;
-            if (comparison == null)
-            {
-                currentSummary = null;
-                ComparisonSummaryText = "Sin comparación";
-                ComparisonStatusText = "Selecciona una segunda versión para comparar.";
-                ComparisonTotalsText = "—";
-                ComparisonAddedText = "0 nuevas";
-                ComparisonChangedText = "0 modificadas";
-                ComparisonRemovedText = "0 eliminadas";
-                ComparisonUnchangedText = "0 sin cambio";
-                ComparisonAdicionalesText = MuestraUf ? "+0.000 UF" : "+$ 0";
-                ComparisonDeductivosText = MuestraUf ? "0.000 UF" : "- $ 0";
-                ComparisonNetVariationText = MuestraUf ? "0.000 UF" : "$ 0";
-                ComparisonDeltaUf = 0m;
-                ComparisonDeltaPct = 0m;
-                ComparisonModeHint = "Selecciona la versión B para comparar A vs B.";
-                OnPropertyChanged(nameof(ComparisonDeltaText));
-                OnPropertyChanged(nameof(ComparisonDeltaPctText));
-                SelectedComparisonRow = null;
-                exportPdfCommand.RaiseCanExecuteChanged();
-                exportExcelCommand.RaiseCanExecuteChanged();
-                createChangeOrderFromDiffCommand.RaiseCanExecuteChanged();
-                return;
-            }
-
-            summary = versionComparison.Compare(
-                selected.Snapshot,
-                comparison.Snapshot,
-                baselineLabel,
-                $"{comparison.Codigo} · {comparison.Nombre}");
-        }
-
-        currentSummary = summary;
-        foreach (var row in summary.Rows)
-            comparisonRows.Add(new VersionComparisonRowVm(row, CurrencyFormat));
+        currentSummary = res.Summary;
+        comparisonRows.Clear();
+        foreach (var row in res.Rows)
+            comparisonRows.Add(row);
 
         SelectedComparisonRow = comparisonRows.FirstOrDefault();
 
-        ComparisonSummaryText = $"{summary.Rows.Count:N0} partidas comparadas";
-        ComparisonStatusText = summary.Rows.Count == 0
-            ? "No hay diferencias entre la versión seleccionada y el estado actual."
-            : $"Comparando {summary.BaselineLabel} contra {summary.CurrentLabel}.";
-        // BaselineUf/CurrentUf/DeltaUf del comparador llegan en UF reales (CubicacionRow.UfTotal);
-        // en CLP se usan las columnas en pesos del resumen.
-        ComparisonTotalsText = BuildTotalsText(summary, "Actual");
-        ComparisonAddedText = $"{summary.AddedCount:N0} nuevas";
-        ComparisonChangedText = $"{summary.ChangedCount:N0} modificadas";
-        ComparisonRemovedText = $"{summary.RemovedCount:N0} eliminadas";
-        ComparisonUnchangedText = $"{summary.UnchangedCount:N0} sin cambio";
-        (ComparisonAdicionalesText, ComparisonDeductivosText, ComparisonNetVariationText) = BuildVariationTexts(summary);
-        ComparisonDeltaUf = summary.DeltaUf;
-        ComparisonDeltaPct = summary.DeltaPct;
-        ComparisonModeHint = CompareAgainstCurrent
-            ? $"Versión A = {summary.BaselineLabel} · Versión B = estado actual"
-            : $"Versión A = {summary.BaselineLabel} · Versión B = {summary.CurrentLabel}";
+        ComparisonSummaryText = res.SummaryText;
+        ComparisonStatusText = res.StatusText;
+        ComparisonTotalsText = res.TotalsText;
+        ComparisonAddedText = res.AddedText;
+        ComparisonChangedText = res.ChangedText;
+        ComparisonRemovedText = res.RemovedText;
+        ComparisonUnchangedText = res.UnchangedText;
+        ComparisonAdicionalesText = res.AdicionalesText;
+        ComparisonDeductivosText = res.DeductivosText;
+        ComparisonNetVariationText = res.NetVariationText;
+        ComparisonDeltaUf = res.DeltaUf;
+        ComparisonDeltaPct = res.DeltaPct;
+        ComparisonModeHint = res.ModeHint;
+
+        IsAddendaComparison = res.IsAddenda;
+        AddendaFileName = res.AddendaFileName;
+        lastIncomingAddendaItems = res.IncomingAddendaItems;
+
         OnPropertyChanged(nameof(ComparisonDeltaText));
         OnPropertyChanged(nameof(ComparisonDeltaPctText));
         NotifyComparisonSummaryChanged();
         exportPdfCommand.RaiseCanExecuteChanged();
         exportExcelCommand.RaiseCanExecuteChanged();
         createChangeOrderFromDiffCommand.RaiseCanExecuteChanged();
+        applyAddendaQuantitiesCommand.RaiseCanExecuteChanged();
+        saveAddendaAsVersionCommand.RaiseCanExecuteChanged();
         comparisonRowsView.Refresh();
+    }
+
+    private void RefreshComparison()
+    {
+        var res = comparisonCoordinator.CompareInternal(
+            SelectedVersion,
+            CompareAgainstCurrent,
+            SelectedComparisonVersion,
+            session,
+            MuestraUf,
+            CurrencyFormat);
+
+        ApplyComparisonResult(res);
     }
 
     private void CreateVersion()
@@ -846,7 +784,7 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
     {
         if (currentSummary == null)
         {
-            WpfDialogService.InfoModal("Exportar Informe", "No hay datos de comparación disponibles para exportar.");
+            WpfDialogService.Warning("Exportar Informe", "No hay datos de comparación disponibles para exportar.");
             return;
         }
 
@@ -888,7 +826,7 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
     {
         if (currentSummary == null)
         {
-            WpfDialogService.InfoModal("Exportar Excel", "No hay datos de comparación disponibles para exportar.");
+            WpfDialogService.Warning("Exportar Excel", "No hay datos de comparación disponibles para exportar.");
             return;
         }
 
@@ -966,94 +904,14 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
     {
         if (!HasProject) return;
 
-        string? filePath = fileDialog?.PromptOpenFile("Libros de Excel (*.xlsx;*.xls)|*.xlsx;*.xls|Todos los archivos (*.*)|*.*")
-            ?? PromptOpenFileDirect();
+        var res = comparisonCoordinator.CompareWithExcel(
+            session,
+            PromptOpenFileDirect,
+            MuestraUf,
+            CurrencyFormat);
 
-        if (string.IsNullOrWhiteSpace(filePath) || !System.IO.File.Exists(filePath))
-            return;
-
-        try
-        {
-            var reader = spreadsheetReader ?? new ItemizadoSpreadsheetReader();
-            var parser = importItemizadoUseCase ?? new ImportarItemizadoUseCase();
-
-            var table = reader.ReadFirstWorksheet(filePath);
-            if (table == null || table.Count == 0)
-            {
-                WpfDialogService.InfoModal("Archivo sin datos", "El archivo seleccionado no contiene filas o datos legibles.");
-                return;
-            }
-
-            var result = parser.Execute(table.Select(r => r.ToList()).ToList());
-            if (!string.IsNullOrWhiteSpace(result.Error))
-            {
-                WpfDialogService.InfoModal("Error al importar Addenda", $"No se pudo leer la estructura del itemizado:\n{result.Error}");
-                return;
-            }
-
-            if (result.Rows.Count == 0)
-            {
-                WpfDialogService.InfoModal("Sin partidas", "No se encontraron partidas válidas en el archivo de la Addenda.");
-                return;
-            }
-
-            string addendaName = System.IO.Path.GetFileName(filePath);
-            var snapshot = session.CreateSnapshot();
-            var summary = versionComparison.CompareWithIncomingItemizado(
-                result.Rows,
-                snapshot,
-                incomingLabel: $"Addenda ({addendaName})",
-                currentLabel: "Presupuesto Base");
-
-            lastIncomingAddendaItems = result.Rows;
-            AddendaFileName = addendaName;
-            IsAddendaComparison = true;
-            currentSummary = summary;
-
-            comparisonRows.Clear();
-            foreach (var row in summary.Rows)
-                comparisonRows.Add(new VersionComparisonRowVm(row, CurrencyFormat));
-
-            SelectedComparisonRow = comparisonRows.FirstOrDefault();
-
-            ComparisonSummaryText = $"{summary.Rows.Count:N0} partidas analizadas";
-            ComparisonStatusText = $"Semáforo de Aclaración / Addenda: {summary.BaselineLabel} vs {summary.CurrentLabel}";
-            ComparisonTotalsText = BuildTotalsText(summary, "Addenda");
-            ComparisonAddedText = $"{summary.AddedCount:N0} adicionales";
-            ComparisonChangedText = $"{summary.ChangedCount:N0} con cambio de metraje";
-            ComparisonRemovedText = $"{summary.RemovedCount:N0} deductivos";
-            ComparisonUnchangedText = $"{summary.UnchangedCount:N0} sin cambio";
-            (ComparisonAdicionalesText, ComparisonDeductivosText, ComparisonNetVariationText) = BuildVariationTexts(summary);
-            ComparisonDeltaUf = summary.DeltaUf;
-            ComparisonDeltaPct = summary.DeltaPct;
-            ComparisonModeHint = $"Addenda entrante: «{addendaName}» · Semáforo activado";
-
-            OnPropertyChanged(nameof(ComparisonDeltaText));
-            OnPropertyChanged(nameof(ComparisonDeltaPctText));
-            exportPdfCommand.RaiseCanExecuteChanged();
-            exportExcelCommand.RaiseCanExecuteChanged();
-            createChangeOrderFromDiffCommand.RaiseCanExecuteChanged();
-            applyAddendaQuantitiesCommand.RaiseCanExecuteChanged();
-            saveAddendaAsVersionCommand.RaiseCanExecuteChanged();
-            comparisonRowsView.Refresh();
-
-            int mayoresMetrajes = summary.Rows.Count(r => r.DiffKind == RevisionDiffKind.Modificado && r.DeltaCantidad > 0);
-            int menoresMetrajes = summary.Rows.Count(r => r.DiffKind == RevisionDiffKind.Modificado && r.DeltaCantidad < 0);
-
-            WpfDialogService.Info(
-                "Addenda Analizada con Éxito",
-                $"Se ha cargado y contrastado «{addendaName}» contra el presupuesto activo:\n\n" +
-                $"• 🟢 Partidas Nuevas / Adicionales: {summary.AddedCount} partidas\n" +
-                $"• 🟢 Aumentos de Metraje: {mayoresMetrajes} partidas\n" +
-                $"• 🔴 Deductivos / Omitidas: {summary.RemovedCount} partidas\n" +
-                $"• 🔴 Reducciones de Metraje: {menoresMetrajes} partidas\n" +
-                $"• ⚡ Saldo Neto Variación: {CurrencyFormat.FromUfSigned(summary.NetVariationUf)} ({(summary.NetVariationClp >= 0 ? "+$ " : "$ ")}{summary.NetVariationClp:N0})\n\n" +
-                $"Use los filtros del semáforo para auditar los cambios o presione «⚡ Aplicar Cantidades de Addenda» para incorporar las modificaciones al proyecto.");
-        }
-        catch (Exception ex)
-        {
-            WpfDialogService.ErrorModal("Error al procesar Addenda", $"Ocurrió una excepción al leer o comparar la Addenda:\n{ex.Message}");
-        }
+        if (res != null)
+            ApplyComparisonResult(res);
     }
 
     private void ApplyAddendaQuantities()

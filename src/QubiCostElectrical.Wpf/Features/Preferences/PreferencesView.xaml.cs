@@ -11,12 +11,13 @@ namespace QubiCostElectrical.Wpf.Features.Preferences;
 
 public partial class PreferencesView : UserControl
 {
-    private readonly WpfAppHost host;
-
-    public PreferencesView(WpfAppHost host)
+    public PreferencesView()
     {
-        this.host = host ?? throw new ArgumentNullException(nameof(host));
         InitializeComponent();
+    }
+
+    public PreferencesView(WpfAppHost? host) : this()
+    {
     }
 
     private void OnSaveClick(object sender, RoutedEventArgs e)
@@ -80,13 +81,13 @@ public partial class PreferencesView : UserControl
     private void OnOpenLogsFolderClick(object sender, RoutedEventArgs e)
     {
         if (DataContext is not PreferencesViewModel vm) return;
-        vm.OpenLogsFolder(host.FileOpener);
+        vm.OpenLogsFolder();
     }
 
     private void OnOpenRecoveryFolderClick(object sender, RoutedEventArgs e)
     {
         if (DataContext is not PreferencesViewModel vm) return;
-        vm.OpenRecoveryFolder(host.FileOpener);
+        vm.OpenRecoveryFolder();
     }
 
     private void OnBrowseLogoClick(object sender, RoutedEventArgs e)
@@ -283,8 +284,56 @@ public partial class PreferencesView : UserControl
 
     private void OnPreviewKeyDown(object sender, KeyEventArgs e)
     {
-        if (DataContext is PreferencesViewModel vm)
-            vm.HandleShortcutCaptureKey(e);
+        if (DataContext is not PreferencesViewModel vm) return;
+
+        if (vm.HandleShortcutCaptureKey(e))
+            return;
+
+        if (Keyboard.Modifiers == ModifierKeys.Control)
+        {
+            if (e.Key == Key.S)
+            {
+                if (vm.HasPendingChanges)
+                {
+                    vm.TrySave();
+                    e.Handled = true;
+                }
+            }
+            else if (e.Key == Key.Enter)
+            {
+                if (vm.HasPendingChanges)
+                {
+                    vm.ApplyChanges();
+                    e.Handled = true;
+                }
+            }
+            else if (e.Key is >= Key.D1 and <= Key.D7)
+            {
+                int sectionIdx = e.Key - Key.D1;
+                if (sectionIdx >= 0 && sectionIdx < vm.NavSections.Count)
+                {
+                    vm.SelectedSection = vm.NavSections[sectionIdx].Section;
+                    e.Handled = true;
+                }
+            }
+            else if (e.Key is >= Key.NumPad1 and <= Key.NumPad7)
+            {
+                int sectionIdx = e.Key - Key.NumPad1;
+                if (sectionIdx >= 0 && sectionIdx < vm.NavSections.Count)
+                {
+                    vm.SelectedSection = vm.NavSections[sectionIdx].Section;
+                    e.Handled = true;
+                }
+            }
+        }
+        else if (e.Key == Key.Escape)
+        {
+            if (vm.HasPendingChanges)
+            {
+                vm.Cancel();
+                e.Handled = true;
+            }
+        }
     }
 
     private void OnChangeShortcutClick(object sender, RoutedEventArgs e)

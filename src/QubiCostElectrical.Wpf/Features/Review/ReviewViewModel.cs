@@ -134,6 +134,7 @@ public sealed partial class ReviewViewModel : SessionAwareViewModelBase, IRefres
     private readonly RelayCommand refreshCommand;
     private readonly RelayCommand goToIssueCommand;
     private readonly RelayCommand resetFilterCommand;
+    private readonly RelayCommand clearSearchCommand;
     private readonly RelayCommand nextWarRoomIssueCommand;
     private readonly RelayCommand previousWarRoomIssueCommand;
     private readonly RelayCommand markResolvedLocalCommand;

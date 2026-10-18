@@ -16,6 +16,7 @@
     <Setter Property="Height" Value="30" />
     <Setter Property="Cursor" Value="Hand" />
     <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="FocusVisualStyle" Value="{x:Null}" />
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate TargetType="Button">
@@ -23,7 +24,7 @@
                   Background="{TemplateBinding Background}"
                   BorderBrush="{TemplateBinding BorderBrush}"
                   BorderThickness="{TemplateBinding BorderThickness}"
-                  CornerRadius="9"
+                  CornerRadius="8"
                   Padding="{TemplateBinding Padding}"
                   RenderTransformOrigin="0.5,0.5">
             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -31,22 +32,20 @@
                               TextElement.Foreground="{Binding Foreground, RelativeSource={RelativeSource TemplatedParent}}" />
           </Border>
           <ControlTemplate.Triggers>
-            <Trigger Property="IsMouseOver" Value="True">
-              <Setter TargetName="Bd" Property="Opacity" Value="0.92" />
-            </Trigger>
             <Trigger Property="IsPressed" Value="True">
-              <Setter TargetName="Bd" Property="Opacity" Value="0.82" />
               <Setter TargetName="Bd" Property="RenderTransform">
                 <Setter.Value>
-                  <ScaleTransform ScaleX="0.98" ScaleY="0.98" />
+                  <ScaleTransform ScaleX="0.97" ScaleY="0.97" />
                 </Setter.Value>
               </Setter>
             </Trigger>
             <Trigger Property="IsKeyboardFocused" Value="True">
               <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Brush.BlueFocus}" />
+              <Setter TargetName="Bd" Property="BorderThickness" Value="1.5" />
             </Trigger>
             <Trigger Property="IsEnabled" Value="False">
-              <Setter TargetName="Bd" Property="Opacity" Value="0.5" />
+              <Setter TargetName="Bd" Property="Opacity" Value="0.45" />
+              <Setter Property="Cursor" Value="Arrow" />
             </Trigger>
           </ControlTemplate.Triggers>
         </ControlTemplate>
@@ -58,6 +57,16 @@
     <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
     <Setter Property="Background" Value="{DynamicResource Brush.PrimaryButton}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
+    <Style.Triggers>
+      <Trigger Property="IsMouseOver" Value="True">
+        <Setter Property="Background" Value="{DynamicResource Brush.PrimaryButtonHover}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue3}" />
+      </Trigger>
+      <Trigger Property="IsPressed" Value="True">
+        <Setter Property="Background" Value="{DynamicResource Brush.PrimaryButtonPressed}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.BlueDark}" />
+      </Trigger>
+    </Style.Triggers>
   </Style>
 
   <Style x:Key="Button.Secondary" TargetType="Button" BasedOn="{StaticResource Button.Base}">
@@ -68,6 +77,11 @@
       <Trigger Property="IsMouseOver" Value="True">
         <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.InputHoverBorder}" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+      </Trigger>
+      <Trigger Property="IsPressed" Value="True">
+        <Setter Property="Background" Value="{DynamicResource Brush.Line2}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
       </Trigger>
     </Style.Triggers>
   </Style>
@@ -92,6 +106,16 @@
     <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
     <Setter Property="Background" Value="{DynamicResource Brush.ChipBg}" />
     <Setter Property="BorderBrush" Value="Transparent" />
+    <Style.Triggers>
+      <Trigger Property="IsMouseOver" Value="True">
+        <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+      </Trigger>
+      <Trigger Property="IsPressed" Value="True">
+        <Setter Property="Background" Value="{DynamicResource Brush.Line2}" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+      </Trigger>
+    </Style.Triggers>
   </Style>
 
   <Style x:Key="Button.Link" TargetType="Button" BasedOn="{StaticResource Button.Base}">
@@ -100,6 +124,12 @@
     <Setter Property="BorderBrush" Value="Transparent" />
     <Setter Property="Padding" Value="4,0" />
     <Setter Property="Height" Value="24" />
+    <Style.Triggers>
+      <Trigger Property="IsMouseOver" Value="True">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Blue3}" />
+        <Setter Property="TextBlock.TextDecorations" Value="Underline" />
+      </Trigger>
+    </Style.Triggers>
   </Style>
 
   <Style x:Key="Button.HeaderIcon" TargetType="Button">
@@ -110,6 +140,7 @@
     <Setter Property="BorderBrush" Value="#1CFFFFFF" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="Foreground" Value="#BFD0E2" />
+    <Setter Property="FocusVisualStyle" Value="{x:Null}" />
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate TargetType="Button">
@@ -117,23 +148,28 @@
                   Background="{TemplateBinding Background}"
                   BorderBrush="{TemplateBinding BorderBrush}"
                   BorderThickness="1"
-                  CornerRadius="9"
+                  CornerRadius="8"
                   RenderTransformOrigin="0.5,0.5">
             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
                               TextElement.Foreground="{Binding Foreground, RelativeSource={RelativeSource TemplatedParent}}" />
           </Border>
           <ControlTemplate.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
-              <Setter TargetName="Bd" Property="Background" Value="#1AFFFFFF" />
+              <Setter TargetName="Bd" Property="Background" Value="#22FFFFFF" />
+              <Setter TargetName="Bd" Property="BorderBrush" Value="#40FFFFFF" />
               <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
             </Trigger>
             <Trigger Property="IsPressed" Value="True">
-              <Setter TargetName="Bd" Property="Background" Value="#2AFFFFFF" />
+              <Setter TargetName="Bd" Property="Background" Value="#35FFFFFF" />
               <Setter TargetName="Bd" Property="RenderTransform">
                 <Setter.Value>
                   <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
                 </Setter.Value>
               </Setter>
+            </Trigger>
+            <Trigger Property="IsKeyboardFocused" Value="True">
+              <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Brush.BlueFocus}" />
+              <Setter TargetName="Bd" Property="Background" Value="#25FFFFFF" />
             </Trigger>
             <Trigger Property="IsEnabled" Value="False">
               <Setter TargetName="Bd" Property="Opacity" Value="0.30" />

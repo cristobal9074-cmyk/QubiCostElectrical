@@ -132,7 +132,7 @@
     </Style>
   </Window.Resources>
 
-  <Border Style="{StaticResource Dialog.Chrome}" Margin="12">
+  <Border Style="{StaticResource Dialog.Chrome}">
   <Grid>
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto" />
@@ -752,8 +752,8 @@
           <TextBlock Text="{Binding FootTotalLabel}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.xl}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink}" Margin="0,2,0,0" />
         </StackPanel>
         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
-          <Button Content="Cancelar" Click="OnCancel" Style="{StaticResource Button.Secondary}" Padding="14,9" Margin="0,0,8,0" />
-          <Button Content="Aplicar a GO 3.3" Click="OnApply" Style="{StaticResource Button.Primary}" Padding="16,9" FontWeight="SemiBold" />
+          <Button Content="Cancelar" Click="OnCancel" Style="{StaticResource Button.Secondary}" Height="34" MinWidth="90" Margin="0,0,10,0" />
+          <Button Content="Aplicar a GO 3.3" Click="OnApply" Style="{StaticResource Button.Primary}" Height="34" MinWidth="130" FontWeight="SemiBold" />
         </StackPanel>
       </DockPanel>
     </Border>

@@ -79,6 +79,13 @@ public partial class ApuView : UserControl, IInGridSearchable
 
     private void OnUserControlKeyDown(object sender, KeyEventArgs e)
     {
+        if (e.Key == Key.Escape && Vm.HasPartidaFilter)
+        {
+            Vm.ClearPartidaFilterCommand.Execute(null);
+            e.Handled = true;
+            return;
+        }
+
         if (e.KeyboardDevice.Modifiers == ModifierKeys.Control && e.Key == Key.G)
         {
             if (Vm.OpenQuickJumpCommand.CanExecute(null))

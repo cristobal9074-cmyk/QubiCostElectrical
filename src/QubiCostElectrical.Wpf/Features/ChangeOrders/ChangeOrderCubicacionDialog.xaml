@@ -9,7 +9,7 @@
         ResizeMode="CanResizeWithGrip"
         ShowInTaskbar="False"
         FontFamily="{StaticResource Font.Ui}">
-  <Border Style="{StaticResource Dialog.Chrome}" Margin="16">
+  <Border Style="{StaticResource Dialog.Chrome}">
     <Grid>
       <Grid.RowDefinitions>
         <RowDefinition Height="Auto"/>
@@ -310,10 +310,10 @@
 
       <!-- ── 5. Botones Footer ── -->
       <DockPanel Grid.Row="4" Style="{StaticResource Dialog.Footer}" LastChildFill="False">
-        <Button DockPanel.Dock="Left" Content="Cancelar" IsCancel="True"
-                Style="{StaticResource Button.Secondary}" MinWidth="90"/>
         <Button DockPanel.Dock="Right" Content="✓ Guardar Cubicación" IsDefault="True"
-                Style="{StaticResource Button.Primary}" MinWidth="160" Click="OnGuardarClick"/>
+                Style="{StaticResource Button.Primary}" MinWidth="160" Height="34" Click="OnGuardarClick"/>
+        <Button DockPanel.Dock="Right" Content="Cancelar" IsCancel="True"
+                Style="{StaticResource Button.Secondary}" MinWidth="90" Height="34" Margin="0,0,10,0"/>
       </DockPanel>
     </Grid>
   </Border>

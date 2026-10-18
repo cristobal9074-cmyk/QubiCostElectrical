@@ -143,8 +143,8 @@
         <Button Content="Seleccionar todo" Style="{StaticResource Button.Secondary}" Height="30" Padding="12,0" Margin="0,0,8,0" Click="OnSelectAll" />
         <Button Content="Deseleccionar todo" Style="{StaticResource Button.Secondary}" Height="30" Padding="12,0" Click="OnDeselectAll" />
       </StackPanel>
-      <Button DockPanel.Dock="Right" Content="Agregar seleccionados" Style="{StaticResource Button.Primary}" Height="32" Width="180" Margin="8,0,0,0" Click="OnAccept" />
-      <Button DockPanel.Dock="Right" Content="Cancelar" Style="{StaticResource Button.Secondary}" IsCancel="True" Height="32" Width="90" />
+      <Button DockPanel.Dock="Right" Content="Agregar seleccionados" Style="{StaticResource Button.Primary}" Height="34" Width="180" Click="OnAccept" />
+      <Button DockPanel.Dock="Right" Content="Cancelar" Style="{StaticResource Button.Secondary}" IsCancel="True" Height="34" Width="90" Margin="0,0,10,0" />
     </DockPanel>
   </Grid>
 </Window>

@@ -58,7 +58,7 @@
     </Style>
   </Window.Resources>
 
-  <Border Style="{StaticResource Dialog.Chrome}" Margin="16" Padding="18">
+  <Border Style="{StaticResource Dialog.Chrome}" Padding="18">
     <Grid>
       <Grid.RowDefinitions>
         <RowDefinition Height="Auto" />
@@ -258,9 +258,9 @@
       <DockPanel Grid.Row="3" Margin="0,14,0,0" LastChildFill="True">
         <!-- Botones de Acción a la Derecha -->
         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-          <Button Style="{StaticResource Button.Secondary}" Content="Cancelar" MinWidth="90" Margin="0,0,8,0" IsCancel="True" />
-          <Button Style="{StaticResource Button.Secondary}" Content="➕ Añadir al Final" MinWidth="130" Margin="0,0,8,0" Click="OnAppendClick" />
-          <Button Style="{StaticResource Button.Primary}" Content="✓ Reemplazar Zonas Actuales" MinWidth="180" IsDefault="True" Click="OnReplaceClick" />
+          <Button Style="{StaticResource Button.Secondary}" Content="Cancelar" MinWidth="90" Height="34" Margin="0,0,10,0" IsCancel="True" />
+          <Button Style="{StaticResource Button.Secondary}" Content="➕ Añadir al Final" MinWidth="130" Height="34" Margin="0,0,10,0" Click="OnAppendClick" />
+          <Button Style="{StaticResource Button.Primary}" Content="✓ Reemplazar Zonas Actuales" MinWidth="180" Height="34" IsDefault="True" Click="OnReplaceClick" />
         </StackPanel>
 
         <!-- Leyenda de Atajos de Teclado -->

@@ -19,14 +19,17 @@ namespace QubiCostElectrical.Wpf.Features.Preferences;
 public sealed partial class PreferencesViewModel
 {
     public PreferencesViewModel(WpfAppHost host)
-        : this(host.Session, host.ProjectWorkspace, host.Auth, host.Permissions) { }
+        : this(host.Session, host.ProjectWorkspace, host.Auth, host.Permissions, host.FileOpener, host.UserPreferencesStore) { }
 
-    public PreferencesViewModel(BudgetProjectSession session, IProjectWorkspaceService workspace, IAuthService auth, IPermissionService permissions)
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
+    public PreferencesViewModel(BudgetProjectSession session, IProjectWorkspaceService workspace, IAuthService auth, IPermissionService permissions, IFileOpenService fileOpener, IUserPreferencesStore? preferencesStore = null)
         : base(session, workspace)
     {
         this.auth = auth;
         this.permissions = permissions;
-        _saved = UserPreferencesStore.Load();
+        this.fileOpener = fileOpener ?? WpfAppHost.Current?.FileOpener ?? new WpfFileOpenService();
+        this.preferencesStore = preferencesStore ?? WpfAppHost.Current?.UserPreferencesStore ?? new UserPreferencesStore();
+        _saved = this.preferencesStore.Load();
         _draft = Clone(_saved);
         LoadFromDraft();
         Updates = new UpdatesViewModel(
@@ -349,7 +352,7 @@ public sealed partial class PreferencesViewModel
         ValidationError = Validate();
         if (ValidationError != null) { SaveStatus = ""; return false; }
         CommitDraftToSaved();
-        UserPreferencesStore.Save(_saved);
+        preferencesStore.Save(_saved);
         CubicacionShortcutRouting.InvalidateCache();
         ShellShortcutRouting.InvalidateCache();
         HasPendingChanges = false;
@@ -368,7 +371,7 @@ public sealed partial class PreferencesViewModel
         ValidationError = Validate();
         if (ValidationError != null) return;
         CommitDraftToSaved();
-        UserPreferencesStore.Save(_saved);
+        preferencesStore.Save(_saved);
         CubicacionShortcutRouting.InvalidateCache();
         ShellShortcutRouting.InvalidateCache();
         HasPendingChanges = false;
@@ -391,7 +394,7 @@ public sealed partial class PreferencesViewModel
 
     public void Discard()
     {
-        _saved = UserPreferencesStore.Load();
+        _saved = preferencesStore.Load();
         _draft = Clone(_saved);
         LoadFromDraft();
         HasPendingChanges = false;
@@ -422,16 +425,16 @@ public sealed partial class PreferencesViewModel
         return true;
     }
 
-    public void OpenLogsFolder(IFileOpenService opener)
+    public void OpenLogsFolder(IFileOpenService? opener = null)
     {
         var path = EnsureWritableFolder(LogsFolderPath, "Logs");
-        opener.OpenFolder(path);
+        (opener ?? fileOpener).OpenFolder(path);
     }
 
-    public void OpenRecoveryFolder(IFileOpenService opener)
+    public void OpenRecoveryFolder(IFileOpenService? opener = null)
     {
         var path = EnsureWritableFolder(RecoveryFolderPath, "Autosave");
-        opener.OpenFolder(path);
+        (opener ?? fileOpener).OpenFolder(path);
     }
 
     private string? Validate()

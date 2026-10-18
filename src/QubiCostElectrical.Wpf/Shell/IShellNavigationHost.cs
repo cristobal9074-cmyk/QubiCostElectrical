@@ -21,4 +21,5 @@ public interface IShellNavigationHost
     Task SaveProjectAsAsync();
     void RefreshChrome();
     void RefreshCurrentPage() { }
+    void ShowAboutDialog() { }
 }

@@ -107,6 +107,13 @@ public partial class CubicacionScView : UserControl
         bool alt = (Keyboard.Modifiers & ModifierKeys.Alt) == ModifierKeys.Alt;
         bool shift = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift;
 
+        if (e.Key == Key.Escape && DataContext is CubicacionScViewModel scVmEsc && scVmEsc.HasSearchText)
+        {
+            if (scVmEsc.ClearSearchCommand.CanExecute(null)) scVmEsc.ClearSearchCommand.Execute(null);
+            e.Handled = true;
+            return;
+        }
+
         if (ctrl && !alt && DataContext is CubicacionScViewModel scVm)
         {
             bool isPlus = e.Key is Key.Add or Key.OemPlus || (shift && e.Key is Key.OemPlus or Key.Oem1 or Key.OemQuestion);

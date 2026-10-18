@@ -100,6 +100,58 @@ public sealed class ShellReviewAndVersionsTests
     }
 
     [Fact]
+    public void Review_SearchAndFilter_SupportsInstantResetAndShortcuts()
+    {
+        var host = WpfAppHost.Current;
+        host.Session.NewProject("review-search-test");
+        host.Session.ProjectInfo.Nombre = "Proyecto test filtros";
+        host.Session.Itemizado.Add(new ItemizadoRow
+        {
+            Id = "P1",
+            Item = "1.1",
+            Descripcion = "Canalización",
+            Unidad = "GL"
+        });
+        host.Session.Cubicacion.Add(new CubicacionRow
+        {
+            ItemId = "P1",
+            Codigo = "PVC20",
+            Descripcion = "PVC 20",
+            Cantidad = 0m,
+            MatUf = 1m
+        });
+
+        var shell = new FakeShellHost();
+        var vm = new ReviewViewModel(shell, WpfAppHost.Current);
+
+        Assert.NotEmpty(vm.Issues);
+        Assert.False(vm.HasSearchText);
+        Assert.False(vm.HasActiveFilters);
+        Assert.NotEmpty(vm.Checklist);
+
+        // Buscar texto
+        vm.SearchText = "PVC";
+        Assert.True(vm.HasSearchText);
+        Assert.True(vm.HasActiveFilters);
+        Assert.True(vm.ClearSearchCommand.CanExecute(null));
+
+        // Limpiar búsqueda
+        vm.ClearSearchCommand.Execute(null);
+        Assert.Empty(vm.SearchText);
+        Assert.False(vm.HasSearchText);
+
+        // Cambiar severidad
+        vm.SelectedSeverity = "Bloqueante";
+        Assert.True(vm.HasActiveFilters);
+        Assert.True(vm.ResetFilterCommand.CanExecute(null));
+
+        // Quitar filtros completos
+        vm.ResetFilterCommand.Execute(null);
+        Assert.Equal("Todas", vm.SelectedSeverity);
+        Assert.False(vm.HasActiveFilters);
+    }
+
+    [Fact]
     public async Task Versions_ShowComparisonAgainstCurrentSnapshot()
     {
         var host = WpfAppHost.Current;
@@ -176,6 +228,36 @@ public sealed class ShellReviewAndVersionsTests
     }
 
     [Fact]
+    public async Task Versions_SearchAndClear_SupportsInstantReset()
+    {
+        var host = WpfAppHost.Current;
+        var path = Path.Combine(Path.GetTempPath(), $"versions-search-{Guid.NewGuid():N}.qce");
+        host.Session.NewProject("versions-search-test");
+        host.Session.ProjectInfo.Nombre = "Proyecto versiones search";
+        host.Session.Versiones.Add(new BudgetVersionRow
+        {
+            Codigo = "REV-A",
+            Nombre = "Entrega Preliminar",
+            CreadoPor = "Estimador"
+        });
+        await host.ProjectWorkspace.SaveAsAsync(path);
+
+        var vm = new VersionsViewModel(new FakeShellHost(), WpfAppHost.Current);
+
+        Assert.NotEmpty(vm.Versions);
+        Assert.False(vm.HasSearchText);
+        Assert.False(vm.ClearSearchCommand.CanExecute(null));
+
+        vm.SearchText = "Preliminar";
+        Assert.True(vm.HasSearchText);
+        Assert.True(vm.ClearSearchCommand.CanExecute(null));
+
+        vm.ClearSearchCommand.Execute(null);
+        Assert.Empty(vm.SearchText);
+        Assert.False(vm.HasSearchText);
+    }
+
+    [Fact]
     public void Export_NavigateToExport_BuildsDeliveryShellState()
     {
         var host = WpfAppHost.Current;
@@ -213,7 +295,7 @@ public sealed class ShellReviewAndVersionsTests
         Assert.Contains("PDF de oferta", vm.DeliveryPackageText);
         Assert.Contains("Excel interno", vm.DeliveryPackageText);
         Assert.Contains("carta DOCX", vm.DeliveryPackageText);
-        Assert.Equal(7, vm.DocumentSelector.Documents.Count);
+        Assert.Equal(10, vm.DocumentSelector.Documents.Count);
         Assert.Contains(vm.DocumentSelector.Documents, x => x.Title == "Oferta comercial PDF");
         Assert.Contains(vm.DocumentSelector.Documents, x => x.Title == "Reporte t\u00e9cnico C.SEC");
         Assert.Contains("Tema corporativo", vm.CorporateThemeText);

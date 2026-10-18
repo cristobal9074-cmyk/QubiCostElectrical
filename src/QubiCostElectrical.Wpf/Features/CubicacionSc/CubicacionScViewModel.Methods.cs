@@ -28,8 +28,9 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
     public event Action? RequestCommitGridEdit;
 
     public CubicacionScViewModel(IShellNavigationHost shell, WpfAppHost host)
-        : this(shell, host.Session, host.ProjectWorkspace, host.UndoService, host.Services.CubicacionSCReportExcelExporter) { }
+        : this(shell, host.Session, host.ProjectWorkspace, host.UndoService, host.CubicacionSCReportExcelExporter) { }
 
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
     public CubicacionScViewModel(
         IShellNavigationHost shell,
         BudgetProjectSession session,
@@ -42,13 +43,15 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
         this.undo = undo;
         this.session = session;
         this.cubScExcel = cubScExcel ?? new CubicacionSCTechnicalReportExcelExporter();
+        this.exportCoordinator = new CubicacionScExportCoordinator(this.cubScExcel);
+        this.clipboardCoordinator = new CubicacionScClipboardCoordinator();
 
         AddCuadroCommand = new RelayCommand(AddCuadro, () => !showEmptyState && CanEdit);
         RemoveCuadroCommand = new RelayCommand<object>(RemoveCuadro, param => CanEdit && (param is CuadroScRowVm || selectedCuadro != null));
         AddCircuitoCommand = new RelayCommand(AddCircuito, () => selectedCuadro != null && CanEdit);
         RemoveCircuitoCommand = new RelayCommand(RemoveCircuito, () => selectedCircuito != null && CanEdit);
         CopyCircuitoCommand = new RelayCommand(CopyCircuito, () => selectedCircuito != null && CanEdit);
-        PasteCircuitoCommand = new RelayCommand(PasteCircuito, () => clipboardCircuito != null && selectedCircuito != null && CanEdit);
+        PasteCircuitoCommand = new RelayCommand(PasteCircuito, () => clipboardCoordinator.HasClipboard && selectedCircuito != null && CanEdit);
         DuplicateCircuitoCommand = new RelayCommand(DuplicateCircuito, () => selectedCircuito != null && selectedCuadro != null && CanEdit);
         AddArtefactoCommand = new RelayCommand(AddArtefacto, () => selectedCircuito != null && CanEdit && !string.IsNullOrWhiteSpace(NuevoArtefactoNombre));
         RemoveArtefactoCommand = new RelayCommand<ArtefactoScRowVm>(RemoveArtefacto, a => a != null && CanEdit);
@@ -60,6 +63,13 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
         ExportPdfCommand = new RelayCommand(ExportPdf, () => !showEmptyState);
         BalancearFasesCommand = new RelayCommand(BalancearFases, () => selectedCuadro != null && CanEdit);
         ExportarCuadroSecCommand = new RelayCommand(ExportarCuadroSec, () => !showEmptyState);
+        ClearSearchCommand = new RelayCommand(() => SearchText = string.Empty, () => HasSearchText);
+        SaveCommand = new RelayCommand(async () =>
+        {
+            TryApplyChanges();
+            await workspace.SaveAsync();
+            StatusMessage = "Cambios guardados.";
+        }, () => !showEmptyState && CanEdit);
         SelectPerspectiveCommand = new RelayCommand<string>(SelectPerspective);
         MoveCuadroPerspectiveCommand = new RelayCommand<CuadroScRowVm>(MoveCuadroToOtherPerspective, _ => CanEdit);
         ToggleAdvancedModeCommand = new RelayCommand(() =>
@@ -328,11 +338,15 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
         set
         {
             if (!SetProperty(ref searchText, value)) return;
+            OnPropertyChanged(nameof(HasSearchText));
             OnPropertyChanged(nameof(CuadrosFiltrados));
             OnPropertyChanged(nameof(CuadrosFiltradosCount));
             OnPropertyChanged(nameof(CircuitosFiltrados));
+            if (ClearSearchCommand is RelayCommand rc) rc.RaiseCanExecuteChanged();
         }
     }
+
+    public bool HasSearchText => !string.IsNullOrWhiteSpace(searchText);
 
     public string PisoFiltro
     {
@@ -449,6 +463,8 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
     public ICommand ExportPdfCommand { get; }
     public ICommand BalancearFasesCommand { get; }
     public ICommand ExportarCuadroSecCommand { get; }
+    public ICommand ClearSearchCommand { get; }
+    public ICommand SaveCommand { get; }
 
     public void Refresh()
     {
@@ -652,11 +668,11 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
         // muchos circuitos iguales sin retippear — solo cambia REC/ubicación después.
         var circuito = new CircuitoSCRow
         {
-            Numero = NextCircuitoNumero(cuadro),
+            Numero = CubicacionScClipboardCoordinator.NextCircuitoNumero(cuadro),
             Descripcion = "Circuito nuevo"
         };
         if (selectedCircuito != null)
-            ApplyCanalizacionTemplate(selectedCircuito.Source, circuito);
+            CubicacionScClipboardCoordinator.ApplyCanalizacionTemplate(selectedCircuito.Source, circuito);
 
         if (cuadro.EsDepto)
         {
@@ -675,42 +691,6 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
         InsertCircuitoVm(cuadro, circuito);
     }
 
-    private static void ApplyCanalizacionTemplate(CircuitoSCRow from, CircuitoSCRow to)
-    {
-        to.Tipo = from.Tipo;
-        to.Sistema = from.Sistema;
-        to.FaseRst = from.FaseRst;
-        to.NumConductores = from.NumConductores;
-        to.MermaPct = from.MermaPct;
-        to.Ubicacion = from.Ubicacion;
-        to.TipoRecorrido = from.TipoRecorrido;
-        to.TipoTuberia = from.TipoTuberia;
-        to.SeccionTuberia = from.SeccionTuberia;
-        to.TipoBandeja = from.TipoBandeja;
-        to.AnchoBandeja = from.AnchoBandeja;
-        to.ConductorDistribucion = from.ConductorDistribucion;
-        to.SeccionDistribucion = from.SeccionDistribucion;
-        to.ConductorDerivacion = from.ConductorDerivacion;
-        to.SeccionDerivacion = from.SeccionDerivacion;
-        to.MontajesAlumbrado = from.MontajesAlumbrado;
-        to.Cajas58 = from.Cajas58;
-        to.Cajas100x100 = from.Cajas100x100;
-        to.Cajas100x65 = from.Cajas100x65;
-        to.SensoresMovimiento = from.SensoresMovimiento;
-        to.Senaleticas = from.Senaleticas;
-        to.CintaLedMts = from.CintaLedMts;
-        if (from.PisosTramos != null && from.PisosTramos.Count > 0)
-        {
-            to.PisosTramos = from.PisosTramos.Select(t => new CircuitoPisoTramo
-            {
-                ZonaId = t.ZonaId,
-                ZonaNombre = t.ZonaNombre,
-                MetrosBandeja = 0,
-                MetrosTuberia = 0
-            }).ToList();
-        }
-    }
-
     /// <summary>Marca dirty tras pegar/rellenar celdas desde la grilla (Ctrl+V / Ctrl+D fill).</summary>
     public void NotifyGridCellsEdited()
     {
@@ -726,30 +706,28 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
 
     public void ClearCircuitoClipboard()
     {
-        if (clipboardCircuito == null) return;
-        clipboardCircuito = null;
+        if (!clipboardCoordinator.HasClipboard) return;
+        clipboardCoordinator.ClearClipboard();
         ((RelayCommand)PasteCircuitoCommand).RaiseCanExecuteChanged();
     }
 
     private void CopyCircuito()
     {
         if (selectedCircuito == null) return;
-        clipboardCircuito = selectedCircuito.Source.Clone(selectedCircuito.Numero);
+        var msg = clipboardCoordinator.Copy(selectedCircuito);
         ((RelayCommand)PasteCircuitoCommand).RaiseCanExecuteChanged();
-        StatusMessage = $"Circuito {selectedCircuito.Numero} copiado · ve a otro circuito y Ctrl+V lo reemplaza (no agrega fila) · Ctrl+D duplica";
+        if (msg != null) StatusMessage = msg;
     }
 
     private void PasteCircuito()
     {
-        if (clipboardCircuito == null || selectedCircuito == null) return;
+        if (!clipboardCoordinator.HasClipboard || selectedCircuito == null) return;
         undo.PushUndoPoint(session, "Pegar circuito SC");
         pendingUndoForEdit = true;
-        int destino = selectedCircuito.Numero;
-        selectedCircuito.ApplyClipboardFrom(clipboardCircuito);
-        selectedCuadro?.NotifyCircuitosActivosChanged();
+        var msg = clipboardCoordinator.Paste(selectedCircuito, selectedCuadro);
         MarkDirty();
         pendingUndoForEdit = false;
-        StatusMessage = $"Circuito {destino} actualizado con la copia (mismo N°, sin fila nueva)";
+        if (msg != null) StatusMessage = msg;
     }
 
     private void DuplicateCircuito()
@@ -760,14 +738,13 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
 
         undo.PushUndoPoint(session, "Duplicar circuito SC");
         pendingUndoForEdit = true;
-        int numero = NextCircuitoNumero(cuadro);
-        var clone = selectedCircuito.Source.Clone(numero);
-        InsertCircuitoVm(cuadro, clone);
-        StatusMessage = $"Circuito {numero} duplicado · cambia REC/ubicación y sigue con Ctrl+D";
+        var result = clipboardCoordinator.Duplicate(selectedCircuito, cuadro);
+        if (result.HasValue)
+        {
+            InsertCircuitoVm(cuadro, result.Value.Clone);
+            StatusMessage = result.Value.StatusMessage;
+        }
     }
-
-    private static int NextCircuitoNumero(CuadroCargaSCRow cuadro) =>
-        cuadro.Circuitos.Count == 0 ? 1 : cuadro.Circuitos.Max(c => c.Numero) + 1;
 
     private void InsertCircuitoVm(CuadroCargaSCRow cuadro, CircuitoSCRow circuito)
     {
@@ -906,66 +883,8 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
     /// autoguardado ya reemplazó el objeto. El resumen y el .qce leen la sesión:
     /// sin esto, 5/8, A11 y A01 quedan en la grilla y el total de cajas sale en 0.
     /// </summary>
-    internal bool SincronizarGrillaConSesion()
-    {
-        var changed = false;
-        foreach (var vm in Circuitos)
-        {
-            var live = session.CubicacionSC
-                .SelectMany(c => c.Circuitos)
-                .FirstOrDefault(c => string.Equals(c.Id, vm.Id, StringComparison.Ordinal));
-            if (live == null || ReferenceEquals(live, vm.Source))
-                continue;
-
-            var from = vm.Source;
-            if (!MismaListaArtefactos(live.Artefactos, from.Artefactos))
-            {
-                live.Artefactos = from.Artefactos.Select(a => new ArtefactoSCRow
-                {
-                    Nombre = a.Nombre,
-                    Categoria = a.Categoria,
-                    Cantidad = a.Cantidad,
-                    ZonaId = a.ZonaId,
-                }).ToList();
-                changed = true;
-            }
-
-            changed |= CopiarSiDifiere(live.Cajas58, from.Cajas58, v => live.Cajas58 = v);
-            changed |= CopiarSiDifiere(live.Cajas100x100, from.Cajas100x100, v => live.Cajas100x100 = v);
-            changed |= CopiarSiDifiere(live.Cajas100x65, from.Cajas100x65, v => live.Cajas100x65 = v);
-            changed |= CopiarSiDifiere(live.MontajesAlumbrado, from.MontajesAlumbrado, v => live.MontajesAlumbrado = v);
-            changed |= CopiarSiDifiere(live.SensoresMovimiento, from.SensoresMovimiento, v => live.SensoresMovimiento = v);
-            changed |= CopiarSiDifiere(live.Senaleticas, from.Senaleticas, v => live.Senaleticas = v);
-            changed |= CopiarSiDifiere(live.CintaLedMts, from.CintaLedMts, v => live.CintaLedMts = v);
-        }
-        return changed;
-    }
-
-    private static bool CopiarSiDifiere(decimal actual, decimal visible, Action<decimal> asignar)
-    {
-        if (actual == visible)
-            return false;
-        asignar(visible);
-        return true;
-    }
-
-    private static bool MismaListaArtefactos(IReadOnlyList<ArtefactoSCRow> left, IReadOnlyList<ArtefactoSCRow> right)
-    {
-        if (left.Count != right.Count)
-            return false;
-        for (var i = 0; i < left.Count; i++)
-        {
-            if (!string.Equals(left[i].Nombre, right[i].Nombre, StringComparison.OrdinalIgnoreCase))
-                return false;
-            if (!string.Equals(left[i].Categoria, right[i].Categoria, StringComparison.OrdinalIgnoreCase))
-                return false;
-            if (left[i].Cantidad != right[i].Cantidad)
-                return false;
-            if (!string.Equals(left[i].ZonaId ?? "", right[i].ZonaId ?? "", StringComparison.Ordinal))
-                return false;
-        }
-        return true;
-    }
+    internal bool SincronizarGrillaConSesion() =>
+        CubicacionScSessionSync.SincronizarGrillaConSesion(Circuitos, session);
 
     // Invocado por cada CircuitoScRowVm (callback onPisosChanged) al confirmar el flyout de zonas
     // o al parsear un rango en Ubicación: solo refresca el filtro de pisos. El dirty lo dispara
@@ -1181,70 +1100,7 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
         ShellNotificationService.Instance.ShowSuccess("Balanceo de Fases SEC", status);
     }
 
-    private void ExportarCuadroSec()
-    {
-        try
-        {
-            var sfd = new Microsoft.Win32.SaveFileDialog
-            {
-                Filter = "Planilla Excel (*.xlsx)|*.xlsx",
-                FileName = $"Cuadro_Cargas_SEC_{session.ProjectInfo.Nombre ?? "Proyecto"}.xlsx"
-            };
+    private void ExportarCuadroSec() => exportCoordinator.ExportarCuadroSec(session);
 
-            if (sfd.ShowDialog() == true)
-            {
-                if (OperationFailureMessages.IsFileLocked(sfd.FileName))
-                {
-                    WpfDialogService.Error("Archivo en uso", OperationFailureMessages.FileInUseUserMessage);
-                    return;
-                }
-
-                var exportContext = new ExportProjectContext
-                {
-                    Data = session.Data,
-                    CurrentProjectPath = session.CurrentProjectPath,
-                    ExportedBy = session.CurrentUserName,
-                    ExportedAt = AppClock.Now
-                };
-
-                cubScExcel.ExportCuadroCargasSec(exportContext, sfd.FileName);
-                ShellNotificationService.Instance.ShowSuccess("Cuadro SEC Exportado", $"Cuadro de cargas guardado en {System.IO.Path.GetFileName(sfd.FileName)}.");
-            }
-        }
-        catch (Exception ex)
-        {
-            ShellNotificationService.Instance.ShowError("Error al exportar Cuadro SEC", OperationFailureMessages.ToUserMessage(ex));
-        }
-    }
-
-    private void ExportPdf()
-    {
-        try
-        {
-            var isDepto = IsPerspectiveDeptos;
-            var subTitle = isDepto ? "Deptos" : "Generales";
-            var sfd = new Microsoft.Win32.SaveFileDialog
-            {
-                Filter = "Archivo PDF (*.pdf)|*.pdf",
-                FileName = $"Cubicacion_{subTitle}_{session.ProjectInfo.Nombre ?? "Proyecto"}.pdf"
-            };
-
-            if (sfd.ShowDialog() == true)
-            {
-                if (OperationFailureMessages.IsFileLocked(sfd.FileName))
-                {
-                    WpfDialogService.Error("Archivo en uso", OperationFailureMessages.FileInUseUserMessage);
-                    return;
-                }
-
-                var cuadrosFiltrados = session.CubicacionSC.Where(c => isDepto ? c.EsDepto : !c.EsDepto).ToList();
-                CubicacionScPdfExporter.Export(session.ProjectInfo, cuadrosFiltrados, session.ZonasProyecto, Config, sfd.FileName);
-                ShellNotificationService.Instance.ShowSuccess("PDF exportado", $"Registro C.SC ({subTitle}) guardado en {System.IO.Path.GetFileName(sfd.FileName)}.");
-            }
-        }
-        catch (Exception ex)
-        {
-            ShellNotificationService.Instance.ShowError("Error al exportar PDF", OperationFailureMessages.ToUserMessage(ex));
-        }
-    }
+    private void ExportPdf() => exportCoordinator.ExportPdf(session, IsPerspectiveDeptos, Config);
 }

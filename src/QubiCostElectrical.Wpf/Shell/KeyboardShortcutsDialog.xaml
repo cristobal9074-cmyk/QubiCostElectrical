@@ -1,52 +1,156 @@
 <Window x:Class="QubiCostElectrical.Wpf.Shell.KeyboardShortcutsDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Atajos de teclado"
-        Width="560" Height="520"
+        Title="Atajos de teclado — Qubi Cost Electrical"
+        Width="680" Height="600"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         Style="{StaticResource Dialog.Window}">
-  <Border Style="{StaticResource Dialog.Chrome}" Margin="16">
+  <Border Style="{StaticResource Dialog.Chrome}">
     <Grid>
       <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
         <RowDefinition Height="Auto" />
         <RowDefinition Height="*" />
         <RowDefinition Height="Auto" />
       </Grid.RowDefinitions>
 
-      <StackPanel Margin="0,0,0,12">
-        <TextBlock Text="Atajos de teclado" Style="{StaticResource Dialog.HeaderTitle}" />
-        <TextBlock Text="Referencia rápida para trabajar sin mouse. Los atajos de Cubicación reflejan Preferencias."
-                   Style="{StaticResource Dialog.HeaderSubtitle}" Margin="0,0,0,0" />
-      </StackPanel>
-
-      <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-        <StackPanel>
-          <TextBlock Text="GLOBAL" Style="{StaticResource Text.SectionLabel}" Margin="0,0,0,6" />
-          <TextBlock Style="{StaticResource Text.Body}" Margin="0,0,0,10" TextWrapping="Wrap"
-                     Text="Ctrl+K — Paleta de comandos · Ctrl+S — Guardar · Ctrl+Shift+S — Guardar como · Ctrl+Z/Y — Deshacer/Rehacer · Ctrl+N/O/W — Proyecto · F1 — Esta ayuda · F8 — Revisión" />
-
-          <TextBlock Text="NAVEGACIÓN" Style="{StaticResource Text.SectionLabel}" Margin="0,8,0,6" />
-          <TextBlock Style="{StaticResource Text.Body}" Margin="0,0,0,10" TextWrapping="Wrap"
-                     Text="Alt+← / Alt+→ — Vista anterior / siguiente (Historial) · Alt+1 Resumen · Alt+2 Itemizado · Alt+3 Cubicación · Alt+Shift+3 C.SC · Alt+4 APU · Alt+6 Precios · Alt+9 Revisión · Alt+O Exportar" />
-
-          <TextBlock Text="ITEMIZADO" Style="{StaticResource Text.SectionLabel}" Margin="0,8,0,6" />
-          <TextBlock Style="{StaticResource Text.Body}" Margin="0,0,0,10" TextWrapping="Wrap"
-                     Text="Ins — Agregar partida · Alt+↑/↓ — Mover fila · Supr — Eliminar · Ctrl+V — Pegar filas · Ctrl+Shift+C — Cubicar" />
-
-          <TextBlock Text="CUBICACIÓN" Style="{StaticResource Text.SectionLabel}" Margin="0,8,0,6" />
-          <TextBlock x:Name="CubicacionShortcutsText" Style="{StaticResource Text.Body}" Margin="0,0,0,10" TextWrapping="Wrap"
-                     Text="Configurable en Preferencias" />
-
-          <TextBlock Text="APU" Style="{StaticResource Text.SectionLabel}" Margin="0,8,0,6" />
-          <TextBlock Style="{StaticResource Text.Body}" TextWrapping="Wrap"
-                     Text="Enter — Editar celda · Supr — Quitar recurso · Generar APU / Actualizar precios en la barra" />
+      <!-- ── Cabecera Principal ── -->
+      <DockPanel Grid.Row="0" Margin="0,0,0,14" LastChildFill="True">
+        <Border Style="{StaticResource Dialog.HeaderIconContainer}" DockPanel.Dock="Left">
+          <Path Data="M 10 8 h.01 M 14 8 h.01 M 18 8 h.01 M 6 8 h.01 M 6 12 h.01 M 18 12 h.01 M 10 12 h.01 M 14 12 h.01 M 7 16 h10 M 4 4 h 16 a 2 2 0 0 1 2 2 v 12 a 2 2 0 0 1 -2 2 H 4 a 2 2 0 0 1 -2 -2 V 6 a 2 2 0 0 1 2 -2 Z"
+                Stroke="{DynamicResource Brush.Blue}" StrokeThickness="1.6"
+                StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                Width="20" Height="20" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Border>
+        <StackPanel VerticalAlignment="Center">
+          <TextBlock Text="Atajos de Teclado" Style="{StaticResource Dialog.HeaderTitle}" />
+          <TextBlock Text="Referencia interactiva para trabajar a máxima velocidad sin usar el mouse."
+                     Style="{StaticResource Dialog.HeaderSubtitle}" Margin="0" />
         </StackPanel>
+      </DockPanel>
+
+      <!-- ── Buscador Rápido de Atajos ── -->
+      <Border Grid.Row="1" Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}"
+              BorderThickness="1" CornerRadius="8" Padding="10,6" Margin="0,0,0,14">
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+          </Grid.ColumnDefinitions>
+          <Path Grid.Column="0" Data="{StaticResource Geo.Search}" Style="{StaticResource Icon.Vector}"
+                Stroke="{DynamicResource Brush.Muted}" Margin="0,0,8,0" />
+          <TextBox Grid.Column="1" x:Name="SearchBox" BorderThickness="0" Background="Transparent"
+                   FontSize="12" VerticalContentAlignment="Center"
+                   TextChanged="OnSearchTextChanged">
+            <TextBox.Style>
+              <Style TargetType="TextBox">
+                <Style.Triggers>
+                  <Trigger Property="Text" Value="">
+                    <Setter Property="Background">
+                      <Setter.Value>
+                        <VisualBrush Stretch="None" AlignmentX="Left">
+                          <VisualBrush.Visual>
+                            <TextBlock Text="Buscar atajo o comando (ej: guardar, partida, f5, excel)..."
+                                       Foreground="{DynamicResource Brush.Muted}" FontSize="12" />
+                          </VisualBrush.Visual>
+                        </VisualBrush>
+                      </Setter.Value>
+                    </Setter>
+                  </Trigger>
+                </Style.Triggers>
+              </Style>
+            </TextBox.Style>
+          </TextBox>
+        </Grid>
+      </Border>
+
+      <!-- ── Listado de Categorías y Atajos ── -->
+      <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Margin="0,0,-4,0" Padding="0,0,4,0">
+        <ItemsControl ItemsSource="{Binding FilteredGroups}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}"
+                      BorderThickness="1" CornerRadius="10" Padding="16,12" Margin="0,0,0,12">
+                <StackPanel>
+                  <!-- Cabecera de Categoría -->
+                  <DockPanel LastChildFill="True" Margin="0,0,0,8">
+                    <Border DockPanel.Dock="Right" Style="{StaticResource Meta.Tag}" Padding="8,2">
+                      <TextBlock Text="{Binding Items.Count, StringFormat={}{0} atajos}"
+                                 Style="{StaticResource Meta.Tag.Text}" FontSize="10" />
+                    </Border>
+                    <TextBlock Text="{Binding Title}" Style="{StaticResource Text.SectionLabel}"
+                               VerticalAlignment="Center" Margin="0" />
+                  </DockPanel>
+
+                  <Separator Style="{StaticResource Separator.Subtle}" Margin="0,0,0,6" />
+
+                  <!-- Filas de Atajos -->
+                  <ItemsControl ItemsSource="{Binding Items}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Border Padding="6,5" CornerRadius="6" Background="Transparent" SnapsToDevicePixels="True">
+                          <Border.Style>
+                            <Style TargetType="Border">
+                              <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                  <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+                                </Trigger>
+                              </Style.Triggers>
+                            </Style>
+                          </Border.Style>
+                          <Grid>
+                            <Grid.ColumnDefinitions>
+                              <ColumnDefinition Width="220" />
+                              <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Insignias de Teclas (Kbd Chips) -->
+                            <ItemsControl Grid.Column="0" ItemsSource="{Binding Tokens}" VerticalAlignment="Center">
+                              <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                  <StackPanel Orientation="Horizontal" VerticalAlignment="Center" />
+                                </ItemsPanelTemplate>
+                              </ItemsControl.ItemsPanel>
+                              <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                  <Grid VerticalAlignment="Center">
+                                    <!-- Tecla regular -->
+                                    <Border Style="{StaticResource Badge.Kbd}"
+                                            Visibility="{Binding IsPlus, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
+                                      <TextBlock Text="{Binding Text}" Style="{StaticResource Text.Kbd}" />
+                                    </Border>
+                                    <!-- Separador + -->
+                                    <TextBlock Text="+" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}"
+                                               Margin="2,0" VerticalAlignment="Center"
+                                               Visibility="{Binding IsPlus, Converter={StaticResource BoolToVisibility}}" />
+                                  </Grid>
+                                </DataTemplate>
+                              </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <!-- Descripción de la acción -->
+                            <TextBlock Grid.Column="1" Text="{Binding Description}" Style="{StaticResource Text.Body}"
+                                       VerticalAlignment="Center" Foreground="{DynamicResource Brush.Ink}" Margin="8,0,0,0" />
+                          </Grid>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
       </ScrollViewer>
 
-      <DockPanel Grid.Row="2" Style="{StaticResource Dialog.Footer}" LastChildFill="False">
+      <!-- ── Barra de Acciones Inferior ── -->
+      <DockPanel Grid.Row="3" Style="{StaticResource Dialog.Footer}">
+        <TextBlock Text="Atajos de cubicación reflejan la configuración de Preferencias."
+                   Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Muted}"
+                   VerticalAlignment="Center" />
         <Button DockPanel.Dock="Right" Content="Cerrar" Style="{StaticResource Button.Primary}"
-                Padding="20,8" Click="OnCloseClick" IsDefault="True" />
+                MinWidth="100" Height="34" Click="OnCloseClick" IsDefault="True" IsCancel="True" />
       </DockPanel>
     </Grid>
   </Border>

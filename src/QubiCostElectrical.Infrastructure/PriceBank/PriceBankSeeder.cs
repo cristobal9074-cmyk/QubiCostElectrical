@@ -7,7 +7,7 @@ using System.Reflection;
 using System.Text;
 using ClosedXML.Excel;
 
-namespace QubiCostElectrical;
+namespace QubiCostElectrical.Infrastructure;
 
 /// <summary>
 /// Importa materiales desde Excel (.xlsx) o CSV al banco de precios.

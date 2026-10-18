@@ -80,7 +80,7 @@ public partial class App : Application
 
             splash.Close();
 
-            var login = new LoginWindow(_authService);
+            var login = new LoginWindow(_authService, host.UserPreferencesStore);
             login.WindowStartupLocation = WindowStartupLocation.CenterScreen;
 
             if (login.ShowDialog() == true)

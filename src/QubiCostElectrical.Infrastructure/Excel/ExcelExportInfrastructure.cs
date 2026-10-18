@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using ClosedXML.Excel;
 
-namespace QubiCostElectrical;
+namespace QubiCostElectrical.Infrastructure;
 
 /// <summary>
 /// Exportador Excel reusable/testeable. La UI solo arma ExportProjectContext y este servicio genera el archivo.

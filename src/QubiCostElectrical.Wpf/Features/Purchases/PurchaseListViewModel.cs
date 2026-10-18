@@ -33,6 +33,7 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
     private readonly RelayCommand exportExcelCommand;
     private readonly RelayCommand exportRfqCommand;
     private readonly RelayCommand clearFiltersCommand;
+    private readonly RelayCommand clearSearchCommand;
     private readonly RelayCommand goToOriginCommand;
     private readonly RelayCommand goToUsageCommand;
     private readonly RelayCommand groupByProviderCommand;
@@ -50,8 +51,9 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
     private MaterialUsageBreakdown? selectedUsage;
 
     public PurchaseListViewModel(IShellNavigationHost shell, WpfAppHost host)
-        : this(shell, host.Session, host.ProjectWorkspace, host.Permissions, host.Services.MaterialSearch, host.Services.PurchaseList, host.Services.PurchaseListExcel) { }
+        : this(shell, host.Session, host.ProjectWorkspace, host.Permissions, host.MaterialSearch, host.PurchaseList, host.PurchaseListExcel) { }
 
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
     public PurchaseListViewModel(IShellNavigationHost shell, BudgetProjectSession session, IProjectWorkspaceService workspace, IPermissionService permissions, IMaterialSearchService materialSearch, IPurchaseListService purchaseList, IPurchaseListExcelExporter purchaseListExcel) : base(session)
     {
         this.shell = shell;
@@ -66,6 +68,7 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
         exportExcelCommand = new RelayCommand(ExportExcel, CanExportExcel);
         exportRfqCommand = new RelayCommand(ExportRfq, CanExportExcel);
         clearFiltersCommand = new RelayCommand(ClearFilters);
+        clearSearchCommand = new RelayCommand(() => SearchText = string.Empty, () => HasSearchText);
         goToOriginCommand = new RelayCommand(GoToOrigin, () => selectedRow != null);
         goToUsageCommand = new RelayCommand(GoToSelectedUsage, () => SelectedUsage != null || selectedRow != null);
         groupByProviderCommand = new RelayCommand(ToggleGroupByProvider);
@@ -117,6 +120,9 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
         UpdateSummary();
     }
 
+    public bool HasSearchText => !string.IsNullOrWhiteSpace(searchText);
+    public bool HasActiveFilters => HasSearchText || (!string.IsNullOrEmpty(selectedCategory) && !string.Equals(selectedCategory, "Todas", StringComparison.OrdinalIgnoreCase));
+
     public string SearchText
     {
         get => searchText;
@@ -124,8 +130,12 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
         {
             if (!SetProperty(ref searchText, value))
                 return;
-            if (System.Windows.Application.Current == null)
+            OnPropertyChanged(nameof(HasSearchText));
+            OnPropertyChanged(nameof(HasActiveFilters));
+            (ClearSearchCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            if (string.IsNullOrWhiteSpace(value) || System.Windows.Application.Current == null)
             {
+                searchDebounceTimer.Stop();
                 rowsView.Refresh();
                 UpdateSummary();
             }
@@ -144,6 +154,7 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
         {
             if (!SetProperty(ref selectedCategory, value))
                 return;
+            OnPropertyChanged(nameof(HasActiveFilters));
             rowsView.Refresh();
             UpdateSummary();
         }
@@ -226,6 +237,7 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
     public ICommand ExportExcelCommand => exportExcelCommand;
     public ICommand ExportRfqCommand => exportRfqCommand;
     public ICommand ClearFiltersCommand => clearFiltersCommand;
+    public ICommand ClearSearchCommand => clearSearchCommand;
     public ICommand GoToOriginCommand => goToOriginCommand;
     public ICommand GoToUsageCommand => goToUsageCommand;
     public ICommand GroupByProviderCommand => groupByProviderCommand;
@@ -432,10 +444,14 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
         searchDebounceTimer.Stop();
         searchText = "";
         OnPropertyChanged(nameof(SearchText));
+        OnPropertyChanged(nameof(HasSearchText));
         selectedCategory = "Todas";
         OnPropertyChanged(nameof(SelectedCategory));
+        OnPropertyChanged(nameof(HasActiveFilters));
+        (ClearSearchCommand as RelayCommand)?.RaiseCanExecuteChanged();
         rowsView.Refresh();
         UpdateSummary();
+        StatusMessage = "Filtros limpiados.";
     }
 
     private void ToggleGroupByProvider()

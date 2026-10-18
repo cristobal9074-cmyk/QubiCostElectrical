@@ -271,6 +271,7 @@
 
     <Grid>
         <ctrl:EmptyStateControl Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}}"
+                                IconData="M4 19.5A2.5 2.5 0 0 1 6.5 17H20 M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"
                                 Title="Catálogo de plantillas no disponible"
                                 Description="No se pudo cargar el almacén de plantillas APU y conjuntos eléctricos."/>
 

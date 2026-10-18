@@ -18,11 +18,12 @@ namespace QubiCostElectrical.Wpf.Features.Dashboard;
 public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage, IDisposable
 {
     public DashboardViewModel(IShellNavigationHost shell, WpfAppHost host)
-        : this(shell, host.Session, host.ProjectWorkspace, host.Audit, host.Currency, host.Dashboard, host.Services.ProjectRepository)
+        : this(shell, host.Session, host.ProjectWorkspace, host.Audit, host.Currency, host.Dashboard, host.ProjectRepository)
     {
         ufUpdater = new DashboardUfUpdateService(session, host.UndoService);
     }
 
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
     public DashboardViewModel(IShellNavigationHost shell, BudgetProjectSession session, IProjectWorkspaceService projectWorkspace, ProjectAuditRecorder audit, ICurrencyConversionService currency, DashboardPresenter dashboard, IProjectRepository projectRepo)
     {
         this.shell = shell;
@@ -33,6 +34,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
         this.dashboard = dashboard;
         this.projectRepo = projectRepo;
         recentProjectsService = new RecentProjectsService();
+        readinessCoordinator = new DashboardReadinessCoordinator(session, shell, currency);
         ufUpdater = new DashboardUfUpdateService(session, undo: null);
         KpiCards = new ObservableCollection<DashboardKpiCardVm>();
         CostShares = new ObservableCollection<DashboardCostShareVm>();
@@ -41,6 +43,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
         OfferReadinessItems = new ObservableCollection<DashboardOfferReadinessItemVm>();
         TopPartidas = new ObservableCollection<DashboardPartidaVm>();
         RecentProjects = new ObservableCollection<DashboardRecentProjectVm>();
+        BindingOperations.EnableCollectionSynchronization(RecentProjects, recentProjectsLock);
         QuickSummaryCards = new ObservableCollection<DashboardMetricVm>();
         QuickTemplates = new ObservableCollection<DashboardTemplateCardVm>();
         RecentAuditEntries = new ObservableCollection<ProjectAuditEntryVm>();
@@ -50,10 +53,10 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
 
         NewProjectCommand = new RelayCommand(() => _ = shell.NewProjectAsync());
         CreateProjectFromTemplateCommand = new RelayCommand<string>(templateId => _ = shell.NewProjectWithTemplateAsync(templateId ?? "residential_building"));
-        OpenFolderRecentProjectCommand = new RelayCommand<string>(path => OpenProjectFolder(path));
-        CopyRecentProjectPathCommand = new RelayCommand<string>(path => CopyProjectPathToClipboard(path));
-        TogglePinRecentProjectCommand = new RelayCommand<string>(path => TogglePin(path));
-        RemoveRecentProjectCommand = new RelayCommand<string>(path => RemoveRecent(path));
+        OpenFolderRecentProjectCommand = new RelayCommand<string>(path => DashboardLandingCoordinator.OpenProjectFolder(path));
+        CopyRecentProjectPathCommand = new RelayCommand<string>(path => DashboardLandingCoordinator.CopyProjectPathToClipboard(path));
+        TogglePinRecentProjectCommand = new RelayCommand<string>(path => DashboardLandingCoordinator.TogglePin(recentProjectsService, path, LoadLandingState));
+        RemoveRecentProjectCommand = new RelayCommand<string>(path => DashboardLandingCoordinator.RemoveRecent(recentProjectsService, shell, path, LoadLandingState));
         OpenProjectCommand = new RelayCommand(() => _ = shell.OpenProjectAsync());
         ActualizarUfCommand = new RelayCommand(() => _ = ActualizarUfAsync(), () => PuedeActualizarUf);
         continueTakeoffCommand = new RelayCommand(() => shell.RequestNavigate(ShellRoute.Takeoff), () => !ShowEmptyState);
@@ -75,6 +78,9 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
         GoToPreferencesCommand = new RelayCommand(() => shell.RequestNavigate(ShellRoute.Preferences));
         OpenRecentProjectCommand = new RelayCommand<string>(path => _ = shell.OpenRecentProjectAsync(path ?? string.Empty), path => !string.IsNullOrWhiteSpace(path));
         ExitApplicationCommand = new RelayCommand(ExitApplication);
+        ClearRecentSearchCommand = new RelayCommand(() => RecentSearchText = string.Empty);
+        SetRecentFilterAllCommand = new RelayCommand(() => IsRecentFilterPinnedOnly = false);
+        SetRecentFilterPinnedCommand = new RelayCommand(() => IsRecentFilterPinnedOnly = true);
         GoToPartidaCommand = new RelayCommand<DashboardPartidaVm>(p =>
         {
             if (p != null && !string.IsNullOrWhiteSpace(p.ItemId))
@@ -282,6 +288,80 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
     public ICommand TogglePinRecentProjectCommand { get; }
     public ICommand RemoveRecentProjectCommand { get; }
     public ICommand ExitApplicationCommand { get; }
+    public ICommand ClearRecentSearchCommand { get; }
+    public ICommand SetRecentFilterAllCommand { get; }
+    public ICommand SetRecentFilterPinnedCommand { get; }
+
+    private ICollectionView? filteredRecentProjects;
+    public ICollectionView FilteredRecentProjects
+    {
+        get
+        {
+            if (filteredRecentProjects == null)
+            {
+                filteredRecentProjects = CollectionViewSource.GetDefaultView(RecentProjects);
+                filteredRecentProjects.Filter = FilterRecentProjectsPredicate;
+            }
+            return filteredRecentProjects;
+        }
+    }
+
+    private string recentSearchText = "";
+    public string RecentSearchText
+    {
+        get => recentSearchText;
+        set
+        {
+            if (SetProperty(ref recentSearchText, value))
+            {
+                FilteredRecentProjects?.Refresh();
+                OnPropertyChanged(nameof(HasRecentSearchText));
+                OnPropertyChanged(nameof(HasFilteredRecentProjects));
+            }
+        }
+    }
+    public bool HasRecentSearchText => !string.IsNullOrWhiteSpace(recentSearchText);
+
+    private bool isRecentFilterPinnedOnly;
+    public bool IsRecentFilterPinnedOnly
+    {
+        get => isRecentFilterPinnedOnly;
+        set
+        {
+            if (SetProperty(ref isRecentFilterPinnedOnly, value))
+            {
+                FilteredRecentProjects?.Refresh();
+                OnPropertyChanged(nameof(IsRecentFilterAll));
+                OnPropertyChanged(nameof(HasFilteredRecentProjects));
+            }
+        }
+    }
+    public bool IsRecentFilterAll
+    {
+        get => !isRecentFilterPinnedOnly;
+        set => IsRecentFilterPinnedOnly = !value;
+    }
+
+    public int PinnedProjectsCount => RecentProjects.Count(p => p.IsPinned);
+    public int TotalRecentProjectsCount => RecentProjects.Count;
+    public bool HasFilteredRecentProjects => FilteredRecentProjects != null && !FilteredRecentProjects.IsEmpty;
+
+    private bool FilterRecentProjectsPredicate(object item)
+    {
+        if (item is not DashboardRecentProjectVm project) return false;
+
+        if (isRecentFilterPinnedOnly && !project.IsPinned)
+            return false;
+
+        if (string.IsNullOrWhiteSpace(recentSearchText))
+            return true;
+
+        var search = recentSearchText.Trim();
+        return (project.Name?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false)
+            || (project.Path?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false)
+            || (project.StatusText?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false);
+    }
+
     public ICommand ToggleThemeCommand { get; }
     public ICommand ToggleFilterCommand { get; }
     public ObservableCollection<DashboardTemplateCardVm> QuickTemplates { get; }
@@ -382,93 +462,52 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
                 decimal totalVentaClp = state.Cost.TotalVentaClp;
                 decimal totalVentaUf = PriceConversion.ClpToUf(totalVentaClp, valorUf);
 
-                BuildWorkflow(state.Alerts);
-                BuildAlerts(state.Alerts);
-                BuildReadiness(state.Alerts);
-                BuildPriceValidity();
-                BuildVersionComparison();
-                UpdateNextStep(state.Alerts);
+                WorkflowSteps.Clear();
+                foreach (var step in readinessCoordinator.BuildWorkflow(state.Alerts, ShowEmptyState))
+                    WorkflowSteps.Add(step);
+
+                Alerts.Clear();
+                foreach (var alert in readinessCoordinator.BuildAlerts(state.Alerts))
+                    Alerts.Add(alert);
+
+                var readinessResult = readinessCoordinator.BuildReadiness(state.Alerts, ShowEmptyState);
+                Readiness = readinessResult.Contract;
+                PartidasReadyLabel = readinessResult.PartidasReadyLabel;
+                PartidasReadyPercent = readinessResult.PartidasReadyPercent;
+                BlockingAlertCount = readinessResult.BlockingAlertCount;
+                OfferReadinessRingPercent = readinessResult.RingPercent;
+                OfferReadinessItems.Clear();
+                foreach (var item in readinessResult.Items)
+                    OfferReadinessItems.Add(item);
+
+                var priceValidity = readinessCoordinator.BuildPriceValidity();
+                PriceValidityLabel = priceValidity.Label;
+                PriceValidityCaption = priceValidity.Caption;
+                PriceValidityPercent = priceValidity.Percent;
+
+                var versionComparison = readinessCoordinator.BuildVersionComparison();
+                HasVersionComparison = versionComparison.HasComparison;
+                VersionComparisonLabel = versionComparison.Label;
+                VersionDeltaCaption = versionComparison.Caption;
+                VersionDirectCostDeltaPercent = versionComparison.DeltaPercent;
+
+                var nextStep = readinessCoordinator.DetermineNextStep(state.Alerts, WorkflowSteps, PartidasReadyLabel);
+                NextStepTitle = nextStep.NextStepTitle;
+                NextStepDetail = nextStep.NextStepDetail;
+                SubtitleText = nextStep.SubtitleText;
+                PrimaryCtaLabel = nextStep.PrimaryCtaLabel;
+                primaryCtaRoute = nextStep.PrimaryCtaRoute;
+                HasTopAlert = nextStep.HasTopAlert;
+                TopAlertTitle = nextStep.TopAlertTitle;
+                TopAlertDetail = nextStep.TopAlertDetail;
+                primaryCtaCommand.RaiseCanExecuteChanged();
+
                 OnPropertyChanged(nameof(HasAlerts));
                 OnPropertyChanged(nameof(IsOfferReady));
                 OnPropertyChanged(nameof(ReadinessBadgeLabel));
                 OnPropertyChanged(nameof(MajorAlertCount));
                 OnPropertyChanged(nameof(HasBlockingAlerts));
                 OnPropertyChanged(nameof(HasMajorAlerts));
-
-                KpiCards.Clear();
-                foreach (var kpi in state.Executive.Kpis)
-                {
-                    string val, cap;
-                    bool isClpPref = string.Equals(project.MonedaPresupuesto, "CLP", StringComparison.OrdinalIgnoreCase);
-                    if (kpi.Title == "TOTAL VENTA")
-                    {
-                        val = FormatMoney(totalVentaClp);
-                        cap = isClpPref ? "Valor oficial" : $"{FormatClp(totalVentaClp)} · Valor oficial";
-                    }
-                    else if (kpi.Title.EndsWith("/ m²", StringComparison.OrdinalIgnoreCase) || kpi.Title.Contains("m²"))
-                    {
-                        if (project.MetrosCuadrados > 0)
-                        {
-                            decimal clpM2 = totalVentaClp / project.MetrosCuadrados;
-                            decimal ufM2 = PriceConversion.ClpToUf(clpM2, valorUf);
-                            val = isClpPref ? $"$ {clpM2:N0} / m²" : $"{ufM2:N3} UF / m²";
-                            cap = isClpPref ? "Total venta / m²" : $"$ {clpM2:N0} CLP/m² · Superficie";
-                        }
-                        else
-                        {
-                            val = "Configurar m²";
-                            cap = "Costo comercial por superficie";
-                        }
-                    }
-                    else
-                    {
-                        val = kpi.ValueKind == DashboardExecutiveKpiValueKind.Money ? FormatMoney(kpi.MoneyValueUf ?? 0m) : (kpi.TextValue ?? "");
-                        cap = kpi.Caption;
-                    }
-
-                    int pendientes = kpi.Title == "PARTIDAS LISTAS" ? Readiness.Pendientes : 0;
-                    string chip = kpi.Title switch
-                    {
-                        "TOTAL VENTA" => HasVersionComparison
-                            ? $"{VersionDirectCostDeltaPercent:+0.0;-0.0;0.0}% vs v. anterior"
-                            : "Valor oficial",
-                        "PARTIDAS LISTAS" => pendientes > 0 ? $"{pendientes} pendientes" : "Todo listo",
-                        _ when kpi.Title.Contains("m²") => project.MetrosCuadrados > 0 ? $"{project.MetrosCuadrados:N0} m² útiles" : "Configurar m²",
-                        _ => kpi.Accent == DashboardExecutiveKpiAccent.RiskLow ? "Riesgo bajo" : (kpi.TextValue ?? "")
-                    };
-                    string chipKind = kpi.Accent switch
-                    {
-                        DashboardExecutiveKpiAccent.RiskHigh => "danger",
-                        DashboardExecutiveKpiAccent.RiskMedium or DashboardExecutiveKpiAccent.Orange => "warn",
-                        DashboardExecutiveKpiAccent.RiskLow => "up",
-                        _ => "mute"
-                    };
-                    if (kpi.Title == "TOTAL VENTA" && HasVersionComparison)
-                        chipKind = VersionDirectCostDeltaPercent >= 0 ? "up" : "danger";
-                    double gauge = kpi.Title == "PARTIDAS LISTAS" ? PartidasReadyPercent : 0;
-                    string iconKind = kpi.Title == "TOTAL VENTA" ? "total"
-                        : kpi.Title == "PARTIDAS LISTAS" ? "listas"
-                        : kpi.Title.Contains("m²") ? "m2"
-                        : "riesgo";
-
-                    KpiCards.Add(new DashboardKpiCardVm
-                    {
-                        Title = kpi.Title,
-                        Value = val,
-                        Caption = cap,
-                        IsPrimary = kpi.IsPrimary,
-                        Accent = kpi.Accent,
-                        AccentBrush = DashboardKpiBrushes.ForAccent(kpi.Accent),
-                        AccentSoftBrush = DashboardKpiBrushes.ForAccentSoft(kpi.Accent),
-                        ChipLabel = chip,
-                        ChipKind = chipKind,
-                        IconKind = iconKind,
-                        ShowUfUpdateButton = kpi.Title == "TOTAL VENTA" && !isClpPref,
-                        GaugePercent = gauge,
-                        GaugeFillWidth = new GridLength(Math.Max(0.001, gauge), GridUnitType.Star),
-                        GaugeRemainWidth = new GridLength(Math.Max(0.001, 100 - gauge), GridUnitType.Star)
-                    });
-                }
 
                 ProjectClient = string.IsNullOrWhiteSpace(project.Cliente) ? "Sin cliente" : project.Cliente;
                 ProjectTitle = string.IsNullOrWhiteSpace(project.Nombre) ? "Proyecto sin nombre" : project.Nombre;
@@ -502,7 +541,17 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
                         ? $"$ {totalVentaClp / project.MetrosCuadrados:N0}/m²"
                         : $"{PriceConversion.ClpToUf(totalVentaClp / project.MetrosCuadrados, valorUf):N3} UF/m² · $ {(totalVentaClp / project.MetrosCuadrados):N0}/m²"
                     : "Configure m² en datos del proyecto";
-                UpdateCostDistribution(state.Cost.TotalVentaUf, state.Cost.MaterialesUf, state.Cost.ManoObraUf, state.Cost.GastosOperacionalesUf, marginClp);
+
+                var costDistribution = readinessCoordinator.BuildCostDistribution(
+                    state.Cost.TotalVentaUf, state.Cost.MaterialesUf, state.Cost.ManoObraUf, state.Cost.GastosOperacionalesUf, marginClp,
+                    CostMaterials, CostLabor, CostGo, CostMargin);
+                MaterialShareWidth = costDistribution.MaterialShareWidth;
+                LaborShareWidth = costDistribution.LaborShareWidth;
+                GoShareWidth = costDistribution.GoShareWidth;
+                MarginShareWidth = costDistribution.MarginShareWidth;
+                CostShares.Clear();
+                foreach (var cs in costDistribution.Items)
+                    CostShares.Add(cs);
 
                 TopPartidas.Clear();
                 double runningAccum = 0;
@@ -511,7 +560,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
                 {
                     double sharePct = costDirect > 0m ? (double)(row.TotalUf / costDirect * 100m) : 0;
                     runningAccum += sharePct;
-                    string category = GetCategoryForPartida(row.Item, row.Partida);
+                    string category = DashboardReadinessCoordinator.GetCategoryForPartida(row.Item, row.Partida);
                     decimal rowClp = row.TotalUf;
                     decimal rowUf = PriceConversion.ClpToUf(rowClp, valorUf);
                     var itemRow = session.Itemizado.FirstOrDefault(x => string.Equals(x.Item, row.Item, StringComparison.OrdinalIgnoreCase) || string.Equals(x.Descripcion, row.Partida, StringComparison.OrdinalIgnoreCase));
@@ -536,39 +585,14 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
                 OnPropertyChanged(nameof(FilteredTopPartidas));
                 OnPropertyChanged(nameof(HasTopPartidas));
 
-                // 5.º y 6.º KPI: las dos lecturas que faltaban (margen real y concentración de costo).
-                double margenPct = (double)state.Cost.MargenRealPct;
-                var margenAccent = margenPct >= 10d
-                    ? DashboardExecutiveKpiAccent.RiskLow
-                    : (margenPct > 0d ? DashboardExecutiveKpiAccent.RiskMedium : DashboardExecutiveKpiAccent.RiskHigh);
-                KpiCards.Add(new DashboardKpiCardVm
+                KpiCards.Clear();
+                foreach (var card in readinessCoordinator.BuildExecutiveKpis(
+                    state, valorUf, totalVentaClp, HasVersionComparison, VersionDirectCostDeltaPercent,
+                    Readiness.Pendientes, PartidasReadyPercent, MargenRealPctLabel, CostMargin, ParetoSummary))
                 {
-                    Title = "MARGEN REAL",
-                    Value = MargenRealPctLabel,
-                    Caption = $"{CostMargin} · margen sobre la venta neta",
-                    Accent = margenAccent,
-                    AccentBrush = DashboardKpiBrushes.ForAccent(margenAccent),
-                    AccentSoftBrush = DashboardKpiBrushes.ForAccentSoft(margenAccent),
-                    ChipLabel = margenPct >= 10d ? "Saludable" : (margenPct > 0d ? "Ajustado" : "Bajo costo"),
-                    ChipKind = margenPct >= 10d ? "up" : (margenPct > 0d ? "warn" : "danger"),
-                    IconKind = "margen"
-                });
+                    KpiCards.Add(card);
+                }
 
-                var concentracion = ParetoSummary;
-                KpiCards.Add(new DashboardKpiCardVm
-                {
-                    Title = "CONCENTRACIÓN A",
-                    Value = $"{concentracion.PctA:N1}%",
-                    Caption = concentracion.CountA > 0
-                        ? $"{concentracion.CountA} partidas cubren el 80% del costo directo"
-                        : "Aún sin partidas críticas Tipo A",
-                    Accent = DashboardExecutiveKpiAccent.Blue,
-                    AccentBrush = DashboardKpiBrushes.BlueDark,
-                    AccentSoftBrush = DashboardKpiBrushes.BlueSoft,
-                    ChipLabel = concentracion.CountA <= 15 ? "Foco" : "Dispersa",
-                    ChipKind = concentracion.CountA <= 15 ? "mute" : "warn",
-                    IconKind = "concentracion"
-                });
 
                 // Cascada de precio: un único recorrido auditable del costo de ejecución al total.
                 Waterfall = DashboardCockpitComposer.BuildWaterfall(
@@ -611,38 +635,26 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
         }
     }
 
-    private static string GetCategoryForPartida(string item, string name)
-    {
-        string text = (name ?? "").ToLowerInvariant();
-        if (text.Contains("conductor") || text.Contains("cable") || text.Contains("tubería") || text.Contains("tuberia") ||
-            text.Contains("pvc") || text.Contains("canaliz") || text.Contains("artefacto") || text.Contains("led") ||
-            text.Contains("enchufe") || text.Contains("interruptor"))
-        {
-            return "Materiales";
-        }
-        else if (text.Contains("montaje") || text.Contains("conexionado") || text.Contains("instalac") || text.Contains("mano de obra"))
-        {
-            return "Mano de Obra";
-        }
-        else
-        {
-            return "Otros";
-        }
-    }
-
     private void LoadLandingState()
     {
         var recent = recentProjectsService.GetProjects();
         var items = recent
-            .Select(project => BuildRecentProject(project, project.IsMissing
+            .Select(project => DashboardLandingCoordinator.BuildRecentProject(project, project.IsMissing
                 ? DashboardProjectStateKind.Unknown
-                : DashboardProjectStateKind.Draft))
+                : DashboardProjectStateKind.Draft, shell, recentProjectsService, LoadLandingState))
             .ToList();
 
-        RecentProjects.Clear();
-        foreach (var item in items)
-            RecentProjects.Add(item);
+        lock (recentProjectsLock)
+        {
+            RecentProjects.Clear();
+            foreach (var item in items)
+                RecentProjects.Add(item);
+        }
         HasRecentProjects = RecentProjects.Count > 0;
+        filteredRecentProjects?.Refresh();
+        OnPropertyChanged(nameof(PinnedProjectsCount));
+        OnPropertyChanged(nameof(TotalRecentProjectsCount));
+        OnPropertyChanged(nameof(HasFilteredRecentProjects));
 
         UpdateLandingSummary(items);
         LastRefreshTask = RefreshRecentProjectStatesAsync(recent, ++landingLoadGeneration);
@@ -651,67 +663,47 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
     private void UpdateLandingSummary(IReadOnlyList<DashboardRecentProjectVm> items)
     {
         QuickSummaryCards.Clear();
-        AddSummaryCard("Proyectos totales", items.Count.ToString("N0"), "Según la lista de recientes", DashboardKpiBrushes.Blue, DashboardKpiBrushes.BlueSoft);
-        AddSummaryCard("Completos", items.Count(x => x.StateKind == DashboardProjectStateKind.Complete).ToString("N0"), "Listos para entregar", DashboardKpiBrushes.Green, DashboardKpiBrushes.GreenSoft);
-        AddSummaryCard("En progreso", items.Count(x => x.StateKind == DashboardProjectStateKind.InProgress).ToString("N0"), "Trabajo activo", DashboardKpiBrushes.Amber, DashboardKpiBrushes.AmberSoft);
-        AddSummaryCard("Borradores", items.Count(x => x.StateKind is DashboardProjectStateKind.Draft or DashboardProjectStateKind.Unknown).ToString("N0"), "Pendientes de revisar", DashboardKpiBrushes.BlueDark, DashboardKpiBrushes.BlueSoft);
+        foreach (var card in DashboardLandingCoordinator.CreateLandingSummary(items))
+            QuickSummaryCards.Add(card);
     }
 
     private async Task RefreshRecentProjectStatesAsync(IReadOnlyList<RecentProjectInfo> projects, int generation)
     {
         var resolved = await Task.Run(() => projects
-            .Select(project => (Project: project, State: DetermineProjectState(project)))
+            .Select(project => (Project: project, State: DashboardLandingCoordinator.DetermineProjectState(project, formatDetector, projectRepo)))
             .ToList());
 
         if (!ShowEmptyState || generation != landingLoadGeneration)
             return;
 
         var updatedItems = resolved
-            .Select(item => BuildRecentProject(item.Project, item.State))
+            .Select(item => DashboardLandingCoordinator.BuildRecentProject(item.Project, item.State, shell, recentProjectsService, LoadLandingState))
             .ToList();
 
-        RecentProjects.Clear();
-        foreach (var item in updatedItems)
-            RecentProjects.Add(item);
-        HasRecentProjects = RecentProjects.Count > 0;
-        UpdateLandingSummary(updatedItems);
-    }
-
-    private void AddSummaryCard(string title, string value, string caption, Brush accent, Brush accentSoft)
-    {
-        QuickSummaryCards.Add(new DashboardMetricVm
+        void ApplyUpdates()
         {
-            Title = title,
-            Value = value,
-            Caption = caption,
-            AccentBrush = accent,
-            AccentSoftBrush = accentSoft
-        });
-    }
+            lock (recentProjectsLock)
+            {
+                RecentProjects.Clear();
+                foreach (var item in updatedItems)
+                    RecentProjects.Add(item);
+            }
+            HasRecentProjects = RecentProjects.Count > 0;
+            filteredRecentProjects?.Refresh();
+            OnPropertyChanged(nameof(PinnedProjectsCount));
+            OnPropertyChanged(nameof(TotalRecentProjectsCount));
+            OnPropertyChanged(nameof(HasFilteredRecentProjects));
+            UpdateLandingSummary(updatedItems);
+        }
 
-    private DashboardRecentProjectVm BuildRecentProject(RecentProjectInfo project, DashboardProjectStateKind state)
-    {
-        var archive = DashboardLandingCoordinator.DescribeArchiveState(project.IsMissing, state);
-
-        return new DashboardRecentProjectVm
+        if (Application.Current?.Dispatcher is { } dispatcher && !dispatcher.CheckAccess())
         {
-            Name = string.IsNullOrWhiteSpace(project.Name) ? Path.GetFileNameWithoutExtension(project.Path) : project.Name,
-            Path = project.Path,
-            StatusText = archive.Text,
-            StatusCaption = archive.Caption,
-            DisplayDate = project.DisplayDate,
-            IsMissing = project.IsMissing,
-            IsPinned = project.IsPinned,
-            StateKind = state,
-            AccentBrush = archive.Accent,
-            AccentSoftBrush = archive.Soft,
-            StatusForeground = archive.Accent,
-            OpenCommand = new RelayCommand(() => _ = shell.OpenRecentProjectAsync(project.Path)),
-            OpenFolderCommand = new RelayCommand(() => OpenProjectFolder(project.Path)),
-            CopyPathCommand = new RelayCommand(() => CopyProjectPathToClipboard(project.Path)),
-            TogglePinCommand = new RelayCommand(() => TogglePin(project.Path)),
-            RemoveRecentCommand = new RelayCommand(() => RemoveRecent(project.Path))
-        };
+            dispatcher.Invoke(ApplyUpdates);
+        }
+        else
+        {
+            ApplyUpdates();
+        }
     }
 
     private void PopulateQuickTemplates()
@@ -719,299 +711,6 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
         QuickTemplates.Clear();
         foreach (var t in DashboardLandingCoordinator.CreateQuickTemplates(shell))
             QuickTemplates.Add(t);
-    }
-
-    private void OpenProjectFolder(string? path) => DashboardLandingCoordinator.OpenProjectFolder(path);
-
-    private void CopyProjectPathToClipboard(string? path) => DashboardLandingCoordinator.CopyProjectPathToClipboard(path);
-
-    private void TogglePin(string? path) => DashboardLandingCoordinator.TogglePin(recentProjectsService, path, LoadLandingState);
-
-    private void RemoveRecent(string? path) => DashboardLandingCoordinator.RemoveRecent(recentProjectsService, shell, path, LoadLandingState);
-
-    private DashboardProjectStateKind DetermineProjectState(RecentProjectInfo project)
-    {
-        if (project.IsMissing)
-            return DashboardProjectStateKind.Unknown;
-
-        try
-        {
-            var format = formatDetector.Detect(project.Path);
-            // Solo se lee el campo "estado" (SQLite) en vez del snapshot completo (itemizado,
-            // cubicación, materiales, APUs) para no bloquear la UI al listar recientes.
-            string? estadoRaw = format switch
-            {
-                ProjectFileFormat.Sqlite => projectRepo.PeekSQLiteEstadoPresupuesto(project.Path),
-                ProjectFileFormat.LegacyJson => projectRepo
-                    .LoadProjectFile(project.Path, ProjectJsonSerializer.Options).Proyecto?.EstadoPresupuesto,
-                _ => null
-            };
-
-            var estado = estadoRaw?.Trim();
-            if (string.IsNullOrWhiteSpace(estado))
-                return DashboardProjectStateKind.Draft;
-
-            if (estado.Contains("complet", StringComparison.OrdinalIgnoreCase) ||
-                estado.Contains("aprob", StringComparison.OrdinalIgnoreCase))
-                return DashboardProjectStateKind.Complete;
-
-            if (estado.Contains("progres", StringComparison.OrdinalIgnoreCase) ||
-                estado.Contains("curso", StringComparison.OrdinalIgnoreCase) ||
-                estado.Contains("revision", StringComparison.OrdinalIgnoreCase) ||
-                estado.Contains("revisión", StringComparison.OrdinalIgnoreCase))
-            {
-                return DashboardProjectStateKind.InProgress;
-            }
-
-            if (estado.Contains("borr", StringComparison.OrdinalIgnoreCase) ||
-                estado.Contains("draft", StringComparison.OrdinalIgnoreCase))
-            {
-                return DashboardProjectStateKind.Draft;
-            }
-
-            return DashboardProjectStateKind.Draft;
-        }
-        catch
-        {
-            return DashboardProjectStateKind.Unknown;
-        }
-    }
-
-    private void UpdateCostDistribution(decimal totalVenta, decimal materials, decimal labor, decimal go, decimal margin)
-    {
-        var safeTotal = totalVenta <= 0m ? 1m : totalVenta;
-        var matPct = Math.Max(0m, materials / safeTotal * 100m);
-        var moPct = Math.Max(0m, labor / safeTotal * 100m);
-        var goPct = Math.Max(0m, go / safeTotal * 100m);
-        var mgPct = Math.Max(0m, margin / safeTotal * 100m);
-
-        MaterialShareWidth = new GridLength((double)Math.Max(matPct, 0.1m), GridUnitType.Star);
-        LaborShareWidth = new GridLength((double)Math.Max(moPct, 0.1m), GridUnitType.Star);
-        GoShareWidth = new GridLength((double)Math.Max(goPct, 0.1m), GridUnitType.Star);
-        MarginShareWidth = new GridLength((double)Math.Max(mgPct, 0.1m), GridUnitType.Star);
-
-        CostShares.Clear();
-        CostShares.Add(new DashboardCostShareVm
-        {
-            Label = "Materiales",
-            AmountLabel = CostMaterials,
-            PercentageLabel = $"{matPct:N0}%",
-            PercentageValue = (double)matPct,
-            Accent = DashboardExecutiveKpiAccent.Blue,
-            AccentBrush = DashboardKpiBrushes.Blue,
-            AccentSoftBrush = DashboardKpiBrushes.BlueSoft
-        });
-        CostShares.Add(new DashboardCostShareVm
-        {
-            Label = "Mano de obra",
-            AmountLabel = CostLabor,
-            PercentageLabel = $"{moPct:N0}%",
-            PercentageValue = (double)moPct,
-            Accent = DashboardExecutiveKpiAccent.RiskLow,
-            AccentBrush = DashboardKpiBrushes.Green,
-            AccentSoftBrush = DashboardKpiBrushes.GreenSoft
-        });
-        CostShares.Add(new DashboardCostShareVm
-        {
-            Label = "Gastos Op. (Faena)",
-            AmountLabel = CostGo,
-            PercentageLabel = $"{goPct:N0}%",
-            PercentageValue = (double)goPct,
-            Accent = DashboardExecutiveKpiAccent.Orange,
-            AccentBrush = DashboardKpiBrushes.Amber,
-            AccentSoftBrush = DashboardKpiBrushes.AmberSoft
-        });
-        CostShares.Add(new DashboardCostShareVm
-        {
-            Label = "Margen Bruto",
-            AmountLabel = CostMargin,
-            PercentageLabel = $"{mgPct:N0}%",
-            PercentageValue = (double)mgPct,
-            Accent = DashboardExecutiveKpiAccent.Primary,
-            AccentBrush = DashboardKpiBrushes.BlueDark,
-            AccentSoftBrush = DashboardKpiBrushes.BlueSoft
-        });
-    }
-
-    private void BuildWorkflow(FinalReviewSummary review)
-    {
-        var project = session.ProjectInfo;
-        int totalPartidas = session.Itemizado.Count(x => !x.EsTitulo);
-        bool hasName = !string.IsNullOrWhiteSpace(project.Nombre) && project.Nombre != "Proyecto sin nombre";
-        bool s1 = hasName;
-        bool s2 = totalPartidas > 0;
-        bool s3 = review.EmptyPartidas == 0 && totalPartidas > 0;
-        bool s4 = review.MaterialsWithoutPrice == 0 && totalPartidas > 0;
-        // "Revisión" exige que el checklist quede realmente limpio (sin bloqueantes ni críticos);
-        // "Exportar" solo depende del gate real de exportación (sin bloqueantes), igual que en
-        // Revisión final / Exportar. Así ambos pasos pueden completarse en momentos distintos.
-        bool s5 = review.BlockingCount == 0 && review.CriticalCount == 0;
-        bool s6 = review.ReadyToExport;
-
-        var steps = new[]
-        {
-            ("Proyecto",  project.Nombre,                                                     s1, !s1,       ShellRoute.Project),
-            ("Itemizado", $"{totalPartidas:N0} partidas",                                     s2, s1 && !s2, ShellRoute.Itemized),
-            ("Cubicación",$"{Math.Max(0, totalPartidas - review.EmptyPartidas):N0} cubiertas",s3, s2 && !s3, ShellRoute.Takeoff),
-            ("Precios",   review.MaterialsWithoutPrice > 0 ? $"{review.MaterialsWithoutPrice:N0} sin precio" : "Precios vigentes", s4, s3 && !s4, ShellRoute.Prices),
-            ("Revisión",  DashboardCockpitComposer.BlockingLabel(review.BlockingCount),        s5, s4 && !s5, ShellRoute.Review),
-            ("Exportar",  review.ReadyToExport ? "Listo" : "Bloqueado",                      s6, s5 && !s6, ShellRoute.OfferDocuments),
-        };
-
-        WorkflowSteps.Clear();
-        for (int i = 0; i < steps.Length; i++)
-        {
-            var (title, detail, complete, current, route) = steps[i];
-            var r = route;
-            WorkflowSteps.Add(new DashboardWorkflowStepVm
-            {
-                Index = i + 1,
-                Title = title,
-                Detail = detail,
-                IsComplete = complete,
-                IsCurrent = current,
-                IsLast = (i == steps.Length - 1),
-                NavigateCommand = new RelayCommand(() => shell.RequestNavigate(r), () => !ShowEmptyState)
-            });
-        }
-    }
-
-    private void BuildAlerts(FinalReviewSummary review)
-    {
-        Alerts.Clear();
-        foreach (var issue in review.Issues.OrderByDescending(x => x.Severity).Take(12))
-        {
-            var category = issue.Category;
-            Alerts.Add(new DashboardAlertVm
-            {
-                Title = issue.Problem,
-                Detail = issue.Recommendation,
-                SeverityLabel = issue.Severity switch
-                {
-                    FinalReviewSeverity.Blocker => "Bloqueante",
-                    FinalReviewSeverity.Critical => "Crítico",
-                    FinalReviewSeverity.Warning => "Mayor",
-                    _ => "Info"
-                },
-                Category = category,
-                NavigateCommand = new RelayCommand(() =>
-                {
-                    var target = ShellRouteMapper.FromReviewTarget(FinalReviewRouteResolver.Resolve(category));
-                    shell.RequestNavigate(target);
-                })
-            });
-        }
-    }
-
-    private void UpdateNextStep(FinalReviewSummary review)
-    {
-        // Los números de preparación (partidas listas, %, bloqueantes) los fija BuildReadiness
-        // desde el contrato único; acá sólo se elige el siguiente paso del flujo.
-        var current = WorkflowSteps.FirstOrDefault(s => s.IsCurrent)
-                      ?? WorkflowSteps.LastOrDefault(s => !s.IsComplete)
-                      ?? WorkflowSteps.LastOrDefault();
-
-        if (current == null)
-        {
-            NextStepTitle = "Siguiente paso";
-            NextStepDetail = PartidasReadyLabel;
-            PrimaryCtaLabel = "Continuar";
-            primaryCtaRoute = ShellRoute.Takeoff;
-            SubtitleText = "Revise el flujo de producción para avanzar.";
-        }
-        else
-        {
-            NextStepTitle = current.IsComplete && WorkflowSteps.All(s => s.IsComplete)
-                ? "Proyecto listo para exportar"
-                : $"Siguiente paso: {current.Title.ToLowerInvariant()}";
-            NextStepDetail = $"{PartidasReadyLabel} · {DashboardCockpitComposer.BlockingAlertPhrase(review.BlockingCount)}";
-            SubtitleText = review.BlockingCount > 0
-                ? "Hay decisiones pendientes que afectan la oferta."
-                : review.ReadyToExport
-                    ? "El proyecto está listo para cerrar y exportar."
-                    : "El proyecto avanza; continúe con el paso actual del flujo.";
-            PrimaryCtaLabel = current.Title switch
-            {
-                "Proyecto" => "Completar proyecto",
-                "Itemizado" => "Ir al itemizado",
-                "Cubicación" => "Continuar cubicación",
-                "APU/Costos" => "Completar APU",
-                "Revisión" => "Ir a revisión",
-                "Exportar" => "Cerrar oferta",
-                _ => $"Continuar {current.Title.ToLowerInvariant()}"
-            };
-            primaryCtaRoute = current.Title switch
-            {
-                "Proyecto" => ShellRoute.Project,
-                "Itemizado" => ShellRoute.Itemized,
-                "Cubicación" => ShellRoute.Takeoff,
-                "APU/Costos" => ShellRoute.Apu,
-                "Revisión" => ShellRoute.Review,
-                "Exportar" => ShellRoute.OfferDocuments,
-                _ => ShellRoute.Takeoff
-            };
-        }
-
-        var top = review.Issues.OrderByDescending(x => x.Severity).FirstOrDefault();
-        if (top != null)
-        {
-            HasTopAlert = true;
-            TopAlertTitle = top.Problem;
-            TopAlertDetail = top.Recommendation;
-        }
-        else
-        {
-            HasTopAlert = false;
-            TopAlertTitle = "";
-            TopAlertDetail = "";
-        }
-
-        primaryCtaCommand.RaiseCanExecuteChanged();
-    }
-
-    /// <summary>
-    /// Construye el contrato único de preparación (partidas no-título sin vacío crítico y con precio
-    /// vigente) y de él derivan el KPI, su barra de avance, el anillo, el checklist y el veredicto.
-    /// </summary>
-    private void BuildReadiness(FinalReviewSummary review)
-    {
-        int totalPartidas = session.Itemizado.Count(x => !x.EsTitulo);
-        var contract = DashboardReadinessContract.Build(
-            totalPartidas,
-            review.EmptyPartidas,
-            review.MaterialsWithoutPrice,
-            review.BlockingCount,
-            review.CriticalCount);
-
-        Readiness = contract;
-        PartidasReadyLabel = $"{contract.Listas:N0} de {contract.TotalPartidas:N0} partidas listas";
-        PartidasReadyPercent = contract.ListasPercent;
-        BlockingAlertCount = review.BlockingCount;
-        OfferReadinessRingPercent = contract.RingPercent;
-
-        OfferReadinessItems.Clear();
-        foreach (var check in DashboardCockpitComposer.BuildReadinessChecks(contract))
-        {
-            var route = check.Label switch
-            {
-                "Datos del proyecto" => ShellRoute.Project,
-                "Itemizado importado" => ShellRoute.Itemized,
-                "Cubicación" => ShellRoute.Takeoff,
-                _ => ShellRoute.Prices
-            };
-            OfferReadinessItems.Add(new DashboardOfferReadinessItemVm
-            {
-                Label = check.Label,
-                Detail = check.Detail,
-                IsComplete = check.Ok,
-                IsWarning = check.Warn,
-                StatusBrush = check.Ok ? DashboardKpiBrushes.Green : DashboardKpiBrushes.AmberRisk,
-                NavigateCommand = new RelayCommand(() => shell.RequestNavigate(route), () => !ShowEmptyState)
-            });
-        }
-
-        OnPropertyChanged(nameof(IsOfferReady));
-        OnPropertyChanged(nameof(ReadinessBadgeLabel));
     }
 
     /// <summary>
@@ -1028,64 +727,8 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
         VerdictReason = reason;
         VerdictKind = kind;
     }
-
-    private void BuildPriceValidity()
-    {
-        var priced = session.Materiales.Where(m => m.FechaPrecio != default).ToList();
-        if (priced.Count == 0)
-        {
-            PriceValidityLabel = "Sin datos";
-            PriceValidityCaption = "Asigne fechas en banco de precios";
-            PriceValidityPercent = 0;
-            return;
-        }
-
-        int fresh = priced.Count(m => !m.RequiereRevisionPrecio);
-        PriceValidityPercent = Math.Min(100, fresh * 100d / priced.Count);
-        PriceValidityLabel = $"{fresh:N0}/{priced.Count:N0} vigentes";
-        PriceValidityCaption = fresh == priced.Count
-            ? "Precios dentro del umbral de 6 meses"
-            : $"{priced.Count - fresh:N0} requieren revisión";
-    }
-
-    private void BuildVersionComparison()
-    {
-        var versions = session.Versiones
-            .OrderBy(v => v.FechaCreacion)
-            .ThenBy(v => v.Codigo, StringComparer.OrdinalIgnoreCase)
-            .ToList();
-
-        if (versions.Count < 2)
-        {
-            HasVersionComparison = false;
-            VersionComparisonLabel = "Sin versiones comparables";
-            VersionDeltaCaption = "Guarde al menos dos versiones del presupuesto";
-            VersionDirectCostDeltaPercent = 0;
-            return;
-        }
-
-        var previous = versions[^2];
-        var current = versions[^1];
-        HasVersionComparison = true;
-        VersionComparisonLabel = $"{previous.Codigo} → {current.Codigo}";
-
-        if (previous.MontoVentaUf <= 0m)
-        {
-            VersionDeltaCaption = "Versión anterior sin monto registrado";
-            VersionDirectCostDeltaPercent = 0;
-            return;
-        }
-
-        var deltaPct = (current.MontoVentaUf - previous.MontoVentaUf) / previous.MontoVentaUf * 100m;
-        VersionDirectCostDeltaPercent = Math.Min(100, Math.Abs((double)deltaPct));
-        VersionDeltaCaption = deltaPct switch
-        {
-            > 0.05m => $"+{deltaPct:N1}% en monto de venta",
-            < -0.05m => $"{deltaPct:N1}% en monto de venta",
-            _ => "Sin variación relevante entre versiones"
-        };
-    }
 }
+
 
 
 

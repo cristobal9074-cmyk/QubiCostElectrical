@@ -83,10 +83,10 @@ public sealed class ExportViewModelTests
 
     // 6. DocumentSelector tiene exactamente 7 documentos
     [Fact]
-    public void DocumentSelector_HasSevenEntries()
+    public void DocumentSelector_HasTenEntries()
     {
         var vm = new ExportViewModel(WpfAppHost.Current);
-        Assert.Equal(7, vm.DocumentSelector.Documents.Count);
+        Assert.Equal(10, vm.DocumentSelector.Documents.Count);
     }
 
     // 7. ScopeModes tiene exactamente 3 modos
@@ -276,7 +276,7 @@ public sealed class ExportViewModelTests
     [Fact]
     public void DeliveryDocumentItemVm_ExposesProperties()
     {
-        var item = new DeliveryDocumentItemVm("OfferPdf", "PDF de oferta", "Documento principal", "PDF");
+        var item = new DeliveryDocumentItemVm("OfferPdf", "PDF de oferta", "Documento principal", "PDF", isDefaultSelected: true);
 
         Assert.Equal("OfferPdf", item.Id);
         Assert.Equal("PDF de oferta", item.Title);
@@ -428,4 +428,31 @@ public sealed class ExportViewModelTests
         var policy = new ExportPriceFreezePolicy();
         Assert.True(policy.RequiresConfirmation(host.Session.ProjectInfo));
     }
+
+    [Fact]
+    public void OpenPreviewFolderCommand_ReactiveToPreviewOrResults()
+    {
+        WpfTestHost.EnsureInitialized();
+        var vm = new ExportViewModel(WpfAppHost.Current);
+
+        // Initially no preview file and no results -> cannot execute
+        Assert.False(vm.OpenPreviewFolderCommand.CanExecute(null));
+
+        // When preview file path is set -> can execute
+        vm.ExportResult.SetPreview(@"C:\Test\preview.pdf");
+        Assert.True(vm.OpenPreviewFolderCommand.CanExecute(null));
+
+        // When cleared -> cannot execute
+        vm.ExportResult.Clear();
+        Assert.False(vm.OpenPreviewFolderCommand.CanExecute(null));
+
+        // When results with file path are set -> can execute
+        var results = new[]
+        {
+            new DeliveryExportResult("PDF", true, @"C:\Test\output.pdf", null, FileOpenResult.Success)
+        };
+        vm.ExportResult.SetResults(results);
+        Assert.True(vm.OpenPreviewFolderCommand.CanExecute(null));
+    }
 }
+

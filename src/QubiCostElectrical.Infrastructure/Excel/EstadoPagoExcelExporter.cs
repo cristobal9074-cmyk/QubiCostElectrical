@@ -4,7 +4,7 @@ using System.Drawing;
 using System.IO;
 using ClosedXML.Excel;
 
-namespace QubiCostElectrical;
+namespace QubiCostElectrical.Infrastructure;
 
 /// <summary>
 /// Exporta el estado de pago del mes (partidas por capítulo + totales) y el cronograma

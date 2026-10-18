@@ -9,7 +9,7 @@ using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 
-namespace QubiCostElectrical;
+namespace QubiCostElectrical.Infrastructure;
 
 public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
 {
@@ -34,5 +34,17 @@ public sealed partial class QuestPdfProjectExporter : IPdfProjectExporter
     {
         this.budgetCalculation = budgetCalculation;
         this.currencyConversion = currencyConversion;
+    }
+
+    private static string SafeText(string? value)
+        => string.IsNullOrWhiteSpace(value) ? "—" : value.Trim();
+
+    private static void SummaryField(ColumnDescriptor col, string label, string value)
+    {
+        col.Item().PaddingTop(6).Row(row =>
+        {
+            row.ConstantItem(108).Text(t => t.Span(label + ":").FontSize(8).FontColor(CMuted));
+            row.RelativeItem().Text(t => t.Span(value).FontSize(8).FontColor(CText));
+        });
     }
 }

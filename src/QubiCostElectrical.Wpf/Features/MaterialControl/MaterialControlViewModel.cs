@@ -74,8 +74,9 @@ public sealed class MaterialControlViewModel : SessionAwareViewModelBase, IRefre
     private string summaryCountText = "0 materiales";
 
     public MaterialControlViewModel(IShellNavigationHost shell, WpfAppHost host)
-        : this(shell, host.Session, host.ProjectWorkspace, host.Permissions, host.Services.MaterialControl) { }
+        : this(shell, host.Session, host.ProjectWorkspace, host.Permissions, host.MaterialControl) { }
 
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
     public MaterialControlViewModel(
         IShellNavigationHost shell,
         BudgetProjectSession session,

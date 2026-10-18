@@ -4,7 +4,7 @@ using System.Drawing;
 using System.Linq;
 using ClosedXML.Excel;
 
-namespace QubiCostElectrical;
+namespace QubiCostElectrical.Infrastructure;
 
 public static class ClosedXmlExportStyler
 {

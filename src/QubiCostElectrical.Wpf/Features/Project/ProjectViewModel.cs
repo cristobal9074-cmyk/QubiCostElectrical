@@ -58,6 +58,7 @@ public sealed partial class ProjectViewModel : ViewModelBase, IPageWithPendingCh
     private readonly ProjectAuditRecorder audit;
     private readonly IPermissionService permissions;
     private readonly IProjectEditWorkspaceService projectEdit;
+    private readonly IUserPreferencesStore preferencesStore;
     private ProjectEditSnapshot snapshot = new();
     private ProjectEditSnapshot? baseline;
     private string validationSummary = "";

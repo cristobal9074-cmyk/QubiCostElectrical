@@ -17,8 +17,9 @@ namespace QubiCostElectrical.Wpf.Features.Prices;
 public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRefreshablePage, IPageWithPendingChanges
 {
     public PriceBankViewModel(WpfAppHost host, IShellNavigationHost? shell = null)
-        : this(host.Session, host.ProjectWorkspace, host.Permissions, host.Services.MaterialSearch, host.Services.PriceBank, host.Services.PriceBankStore, shell) { }
+        : this(host.Session, host.ProjectWorkspace, host.Permissions, host.MaterialSearch, host.PriceBank, host.PriceBankStore, shell) { }
 
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
     public PriceBankViewModel(BudgetProjectSession session, IProjectWorkspaceService projectWorkspace, IPermissionService permissions, IMaterialSearchService materialSearch, PriceBankApplicationService priceBank, IPriceBankStore store, IShellNavigationHost? shell = null) : base(session)
     {
         this.session = session;
@@ -39,6 +40,7 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
         newEntryCommand = new RelayCommand(CreateNewEntry, () => CanEdit);
         applyProjectPricesCommand = new RelayCommand(ApplyProjectPrices, CanApplyProjectPrices);
         clearFiltersCommand = new RelayCommand(ClearFilters);
+        clearSearchCommand = new RelayCommand(() => SearchText = string.Empty, () => HasSearchText);
         OpenProjectCommand = shell != null
             ? new RelayCommand(() => _ = shell.OpenProjectAsync())
             : new RelayCommand(() => { }, () => false);
@@ -82,6 +84,9 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
         }
     }
 
+    public bool HasSearchText => !string.IsNullOrWhiteSpace(searchText);
+    public bool HasActiveFilters => HasSearchText || (!string.IsNullOrEmpty(selectedCategory) && !string.Equals(selectedCategory, "Todos", StringComparison.OrdinalIgnoreCase));
+
     public string SearchText
     {
         get => searchText;
@@ -90,7 +95,19 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
             if (!SetProperty(ref searchText, value))
                 return;
             cachedNormalizedSearch = materialSearch.Normalize(value ?? "");
-            ScheduleSearchRefresh();
+            OnPropertyChanged(nameof(HasSearchText));
+            OnPropertyChanged(nameof(HasActiveFilters));
+            (ClearSearchCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                searchDebounceTimer?.Stop();
+                entriesView.Refresh();
+                UpdateSummary();
+            }
+            else
+            {
+                ScheduleSearchRefresh();
+            }
         }
     }
 
@@ -101,6 +118,7 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
         {
             if (!SetProperty(ref selectedCategory, value))
                 return;
+            OnPropertyChanged(nameof(HasActiveFilters));
             entriesView.Refresh();
             UpdateSummary();
         }
@@ -180,6 +198,7 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
     public ICommand NewEntryCommand => newEntryCommand;
     public ICommand ApplyProjectPricesCommand => applyProjectPricesCommand;
     public ICommand ClearFiltersCommand => clearFiltersCommand;
+    public ICommand ClearSearchCommand => clearSearchCommand;
 
     public async void Refresh()
     {

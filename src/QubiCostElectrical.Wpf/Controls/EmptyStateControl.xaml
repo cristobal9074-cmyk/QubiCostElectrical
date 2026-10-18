@@ -1,17 +1,54 @@
 <UserControl x:Class="QubiCostElectrical.Wpf.Controls.EmptyStateControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="{StaticResource Radius.Lg}" Padding="32"
-          HorizontalAlignment="Center" VerticalAlignment="Center" MinWidth="360" MaxWidth="560">
+  <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+          CornerRadius="14" Padding="36,28"
+          HorizontalAlignment="Center" VerticalAlignment="Center" MinWidth="380" MaxWidth="520">
+    <Border.Effect>
+      <DropShadowEffect BlurRadius="16" Opacity="0.06" ShadowDepth="3" Direction="270" />
+    </Border.Effect>
     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-      <TextBlock Text="{Binding IconText, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                 FontSize="32" HorizontalAlignment="Center" Margin="0,0,0,6"
-                 Foreground="{DynamicResource Brush.Muted}"
-                 Visibility="{Binding IconText, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource StringNotEmptyToVisibility}}" />
+      <!-- Icon Container -->
+      <Border Width="48" Height="48" CornerRadius="12"
+              Background="{DynamicResource Brush.BlueSoft}" BorderBrush="{DynamicResource Brush.BlueFocus}" BorderThickness="1"
+              HorizontalAlignment="Center" Margin="0,0,0,14">
+        <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+          <Path Data="{Binding IconData, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                Stroke="{DynamicResource Brush.Blue}" StrokeThickness="1.6"
+                Width="22" Height="22" Stretch="Uniform"
+                HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Path.Style>
+              <Style TargetType="Path">
+                <Setter Property="Visibility" Value="Visible" />
+                <Style.Triggers>
+                  <DataTrigger Binding="{Binding IconData, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="{x:Null}">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                  </DataTrigger>
+                  <DataTrigger Binding="{Binding IconText, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource StringNotEmptyToBool}}" Value="True">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </Path.Style>
+          </Path>
+          <TextBlock Text="{Binding IconText, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                     FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"
+                     Foreground="{DynamicResource Brush.Blue}"
+                     Visibility="{Binding IconText, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource StringNotEmptyToVisibility}}" />
+        </Grid>
+      </Border>
+
+      <!-- Title -->
       <TextBlock Text="{Binding Title, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                 Style="{StaticResource Text.ViewTitle}" HorizontalAlignment="Center" Margin="0,0,0,8" />
+                 FontSize="15" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}"
+                 HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,6" />
+
+      <!-- Description -->
       <TextBlock Text="{Binding Description, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                 Style="{StaticResource Text.Body}" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,20" />
+                 FontSize="12" Foreground="{DynamicResource Brush.Muted}" LineHeight="17"
+                 TextWrapping="Wrap" TextAlignment="Center" MaxWidth="400" Margin="0,0,0,18" />
+
+      <!-- Actions -->
       <ContentPresenter Content="{Binding Actions, RelativeSource={RelativeSource AncestorType=UserControl}}"
                         HorizontalAlignment="Center" />
     </StackPanel>

@@ -145,4 +145,32 @@ public static class ItemizadoPdfExporter
             });
         }).GeneratePdf(path);
     }
+
+    public static void ExportWithPrompt(ProjectInfoRow projectInfo, IReadOnlyList<ItemizadoRowVm> rows)
+    {
+        try
+        {
+            var sfd = new Microsoft.Win32.SaveFileDialog
+            {
+                Filter = "Archivo PDF (*.pdf)|*.pdf",
+                FileName = $"Itemizado_{projectInfo.Nombre ?? "Proyecto"}.pdf"
+            };
+
+            if (sfd.ShowDialog() == true)
+            {
+                if (OperationFailureMessages.IsFileLocked(sfd.FileName))
+                {
+                    Infrastructure.WpfDialogService.Error("Archivo en uso", OperationFailureMessages.FileInUseUserMessage);
+                    return;
+                }
+
+                Export(projectInfo, rows, sfd.FileName);
+                Infrastructure.WpfDialogService.Info("Exportación Exitosa", $"Se ha exportado el itemizado valorado a {sfd.FileName}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Infrastructure.WpfDialogService.Error("Error al exportar", OperationFailureMessages.ToUserMessage(ex));
+        }
+    }
 }

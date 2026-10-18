@@ -176,6 +176,7 @@
     </ScrollViewer>
 
     <ctrl:EmptyStateControl Title="Sin proyecto abierto"
+                            IconData="M12 2v20 M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"
                             Description="Abra un proyecto para configurar la cadena económica."
                             Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}}" />
 

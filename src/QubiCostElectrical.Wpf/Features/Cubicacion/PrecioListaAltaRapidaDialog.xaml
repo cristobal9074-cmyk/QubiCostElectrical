@@ -8,7 +8,7 @@
         ResizeMode="NoResize"
         PreviewKeyDown="OnWindowPreviewKeyDown"
         KeyDown="OnWindowKeyDown">
-  <Border Style="{StaticResource Dialog.Chrome}" Margin="16">
+  <Border Style="{StaticResource Dialog.Chrome}">
     <Grid>
       <Grid.RowDefinitions>
         <RowDefinition Height="Auto" />
@@ -16,13 +16,21 @@
         <RowDefinition Height="Auto" />
       </Grid.RowDefinitions>
 
-      <StackPanel Grid.Row="0" Margin="0,0,0,12">
-        <TextBlock Text="Alta rápida de material" Style="{StaticResource Dialog.HeaderTitle}" />
-        <TextBlock Style="{StaticResource Dialog.HeaderSubtitle}"
-                   Text="Familia, precio y mano de obra. El código se genera solo y la M.O. se calcula con Material × % × FA." />
-        <TextBlock FontSize="10.5" Foreground="{DynamicResource Brush.Muted}" Margin="0,4,0,0" TextWrapping="Wrap"
-                   Text="Teclado: parte en Familia (escribe o ↓ para elegir) · Enter pasa al campo siguiente · Ctrl+Enter agrega · Esc cancela." />
-      </StackPanel>
+      <DockPanel Grid.Row="0" Margin="0,0,0,16" LastChildFill="True">
+        <Border Style="{StaticResource Dialog.HeaderIconContainer}" DockPanel.Dock="Left">
+          <Path Data="M 13 2 L 3 14 h 9 l -1 8 l 10 -12 h -9 l 1 -8 Z"
+                Stroke="{DynamicResource Brush.Blue}" StrokeThickness="1.6"
+                StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                Width="16" Height="16" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Border>
+        <StackPanel VerticalAlignment="Center">
+          <TextBlock Text="Alta Rápida de Material" Style="{StaticResource Dialog.HeaderTitle}" />
+          <TextBlock Style="{StaticResource Dialog.HeaderSubtitle}" Margin="0,0,0,2"
+                     Text="Familia, precio y mano de obra. El código se genera solo y la M.O. se calcula con Material × % × FA." />
+          <TextBlock FontSize="10.5" Foreground="{DynamicResource Brush.Ink4}" TextWrapping="Wrap"
+                     Text="Teclado: parte en Familia · Enter pasa al campo siguiente · Ctrl+Enter agrega · Esc cancela." />
+        </StackPanel>
+      </DockPanel>
 
       <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
         <StackPanel>
@@ -157,14 +165,14 @@
         </StackPanel>
       </ScrollViewer>
 
-      <DockPanel Grid.Row="2" Style="{StaticResource Dialog.Footer}" LastChildFill="False">
+      <DockPanel Grid.Row="2" Style="{StaticResource Dialog.Footer}">
         <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center" FontSize="10.5"
-                   Foreground="{DynamicResource Brush.Muted}"
+                   Foreground="{DynamicResource Brush.Ink4}"
                    Text="Enter = siguiente campo · Ctrl+Enter = agregar" />
         <Button DockPanel.Dock="Right" Style="{StaticResource Button.Primary}" Content="Agregar material (Ctrl+Enter)"
-                MinWidth="180" IsDefault="True" Click="OnGuardarClick" />
+                MinWidth="180" Height="34" IsDefault="True" Click="OnGuardarClick" />
         <Button DockPanel.Dock="Right" Style="{StaticResource Button.Secondary}" Content="Cancelar"
-                MinWidth="100" Margin="0,0,8,0" IsCancel="True" />
+                MinWidth="100" Height="34" Margin="0,0,10,0" IsCancel="True" />
       </DockPanel>
     </Grid>
   </Border>

@@ -5,7 +5,7 @@ using System.IO;
 using System.Text;
 using System.Text.Json;
 
-namespace QubiCostElectrical;
+namespace QubiCostElectrical.Infrastructure;
 
 /// <summary>
 /// Persiste <see cref="UserPreferences"/> en JSON dentro de %LOCALAPPDATA%.
@@ -17,8 +17,13 @@ namespace QubiCostElectrical;
 /// - Save() nunca lanza: escribe en un .tmp y luego renombra (escritura atómica).
 /// - Sin dependencias externas; usa sólo System.Text.Json (ya en el proyecto).
 /// </summary>
-public static class UserPreferencesStore
+public class UserPreferencesStore : IUserPreferencesStore
 {
+    UserPreferences IUserPreferencesStore.Load() => Load();
+    void IUserPreferencesStore.Save(UserPreferences prefs) => Save(prefs);
+    string IUserPreferencesStore.PreferencesFilePath => PreferencesFilePath;
+    IDisposable IUserPreferencesStore.UsePreferencesFilePathForTests(string? path) => UsePreferencesFilePathForTests(path);
+
     private const string FileName = "preferences.json";
     private static string? preferencesFilePathOverride;
 

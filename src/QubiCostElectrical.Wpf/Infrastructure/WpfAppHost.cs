@@ -31,6 +31,32 @@ public sealed class WpfAppHost
     public ProjectAuditRecorder Audit { get; }
     public IPermissionService Permissions { get; }
     public IPriceBankStore PriceBankStore => Services.PriceBankStore;
+    public IUserPreferencesStore UserPreferencesStore => Services.UserPreferencesStore;
+    public IBudgetCalculationService BudgetCalculation => Services.BudgetCalculation;
+    public IFinalReviewService FinalReview => Services.FinalReview;
+    public IEconomicCalculationService EconomicCalculation => Services.EconomicCalculation;
+    public IProjectDbContext ProjectDb => Services.ProjectDb;
+    public IMaterialControlService MaterialControl => Services.MaterialControl;
+    public IPurchaseListService PurchaseList => Services.PurchaseList;
+    public IPurchaseListExcelExporter PurchaseListExcel => Services.PurchaseListExcel;
+    public IMaterialSearchService MaterialSearch => Services.MaterialSearch;
+    public IApuService Apu => Services.Apu;
+    public ICubicacionService CubicacionService => Services.Cubicacion;
+    public ICubicacionTakeoffQueryService CubicacionTakeoffQuery => Services.CubicacionTakeoffQuery;
+    public ICubicacionSCReportExcelExporter CubicacionSCReportExcelExporter => Services.CubicacionSCReportExcelExporter;
+    public ICubicacionReportExcelExporter CubicacionReportExcelExporter => Services.CubicacionReportExcelExporter;
+    public ICubicacionReportPdfExporter CubicacionReportPdfExporter => Services.CubicacionReportPdfExporter;
+    public IProjectRepository ProjectRepository => Services.ProjectRepository;
+    public IVersionComparisonService VersionComparison => Services.VersionComparison;
+    public IBudgetRevisionDiffPdfExporter RevisionDiffPdfExporter => Services.RevisionDiffPdfExporter;
+    public IBudgetRevisionDiffExcelExporter RevisionDiffExcelExporter => Services.RevisionDiffExcelExporter;
+    public IItemizadoSpreadsheetReader ItemizadoSpreadsheet => Services.ItemizadoSpreadsheet;
+    public ImportarItemizadoUseCase ImportItemizado => Services.ImportItemizado;
+    public IPdfProjectExporter PdfExporter => Services.PdfExporter;
+    public IOfferLetterPdfExporter OfferLetterPdfExporter => Services.OfferLetterPdfExporter;
+    public IExcelProjectExporter ExcelExporter => Services.ExcelExporter;
+    public IPresentationLetterDocxExporter WordLetterExporter => Services.WordLetterExporter;
+    public PriceBankApplicationService PriceBank => Services.PriceBank;
 
     private WpfAppHost(
         BudgetProjectSession session,
@@ -98,7 +124,7 @@ public sealed class WpfAppHost
         return Current;
     }
 
-    public static WpfAppHost Initialize(string? logsFolderOverride = null, string? priceBankPathOverride = null, AuthService? authOverride = null)
+    public static WpfAppHost Initialize(string? logsFolderOverride = null, string? priceBankPathOverride = null, IAuthService? authOverride = null)
     {
         Logger = new FileLogger(new LogConfiguration(logsFolderOverride));
         var provider = CompositionRoot.Build(priceBankPathOverride, authOverride);

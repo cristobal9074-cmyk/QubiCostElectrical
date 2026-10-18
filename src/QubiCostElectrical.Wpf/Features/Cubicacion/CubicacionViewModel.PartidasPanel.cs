@@ -13,6 +13,7 @@ public sealed partial class CubicacionViewModel
     public ICommand AddPartidaCommand { get; private set; } = null!;
     public ICommand DeletePartidaCommand { get; private set; } = null!;
     public ICommand NavigateToItemizadoCommand { get; private set; } = null!;
+    public ICommand ClearPartidaFilterCommand { get; private set; } = null!;
 
     private void InitializePartidaPanelCommands()
     {
@@ -20,6 +21,7 @@ public sealed partial class CubicacionViewModel
         DeletePartidaCommand = new RelayCommand(DeleteSelectedPartida, () =>
             !session.IsReadOnly && SelectedPartida?.EsPartida == true);
         NavigateToItemizadoCommand = new RelayCommand(() => shell.RequestNavigate(ShellRoute.Itemized));
+        ClearPartidaFilterCommand = new RelayCommand(() => PartidaFilter = string.Empty, () => HasPartidaFilter);
     }
 
     /// <summary>Ctrl++ en el panel PARTIDAS: agrega una partida bajo la selección.</summary>

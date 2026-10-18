@@ -22,7 +22,7 @@ public sealed partial class VersionsViewModel
 
         if (string.Equals(filePath, session.CurrentProjectPath, StringComparison.OrdinalIgnoreCase))
         {
-            WpfDialogService.InfoModal(
+            WpfDialogService.Warning(
                 "Mismo archivo",
                 "El archivo seleccionado es el mismo que está actualmente abierto en la aplicación. Seleccione una versión anterior u otro proyecto para comparar.");
             return;
@@ -34,7 +34,7 @@ public sealed partial class VersionsViewModel
             var externalData = repo.LoadSQLiteSnapshot(filePath);
             if (externalData == null || (externalData.Itemizado.Count == 0 && externalData.Cubicacion.Count == 0))
             {
-                WpfDialogService.InfoModal("Sin datos", "El archivo de proyecto seleccionado no contiene partidas legibles.");
+                WpfDialogService.Warning("Sin datos", "El archivo de proyecto seleccionado no contiene partidas legibles.");
                 return;
             }
 
@@ -124,7 +124,7 @@ public sealed partial class VersionsViewModel
 
         if (string.IsNullOrWhiteSpace(session.CurrentProjectPath))
         {
-            WpfDialogService.InfoModal("Guardar versión", "Guarde el proyecto antes de generar una nueva versión.");
+            WpfDialogService.Warning("Guardar versión", "Guarde el proyecto antes de generar una nueva versión.");
             return;
         }
 

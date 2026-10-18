@@ -15,6 +15,7 @@ public sealed partial class EppViewModel : SessionAwareViewModelBase, IRefreshab
     public EppViewModel(IShellNavigationHost shell, WpfAppHost host)
         : this(shell, host.Session, host.ProjectWorkspace) { }
 
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
     public EppViewModel(IShellNavigationHost shell, BudgetProjectSession session, IProjectWorkspaceService workspace) : base(session)
     {
         this.shell = shell;

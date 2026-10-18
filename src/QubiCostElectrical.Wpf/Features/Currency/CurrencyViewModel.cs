@@ -26,6 +26,7 @@ public sealed class CurrencyViewModel : ViewModelBase, IPageWithPendingChanges, 
 
     public CurrencyViewModel(WpfAppHost host) : this(host.Session, host.UndoService) { }
 
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
     public CurrencyViewModel(BudgetProjectSession session, WpfUndoService undo)
     {
         _session = session;

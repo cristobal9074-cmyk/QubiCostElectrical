@@ -68,7 +68,7 @@ partial class ShellViewModel
                 var userRole = session.ProjectInfo.UsuarioRol;
 
                 projectLifecycle.PrepareWorkspaceForNewOrOpen();
-                var prefs = UserPreferencesStore.Load();
+                var prefs = host.UserPreferencesStore.Load();
                 session.NewProject(userName, userRole, prefs.DefaultGastosGeneralesPct, prefs.DefaultUtilidadPct);
                 session.InitializeProjectParameters(
                     dialog.ProjectName,

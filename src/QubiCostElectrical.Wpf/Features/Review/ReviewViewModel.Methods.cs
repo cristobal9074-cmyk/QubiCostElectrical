@@ -16,10 +16,11 @@ namespace QubiCostElectrical.Wpf.Features.Review;
 
 public sealed partial class ReviewViewModel : SessionAwareViewModelBase, IRefreshablePage
 {
-    // Compat: se elimina cuando se borre WpfAppHost.
+    // Compat: se elimina cuando se complete la migración en tests.
     public ReviewViewModel(IShellNavigationHost shell, WpfAppHost host)
-        : this(shell, host.Session, host.ProjectWorkspace, host.Services.FinalReview) { }
+        : this(shell, host.Session, host.ProjectWorkspace, host.FinalReview) { }
 
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
     public ReviewViewModel(IShellNavigationHost shell, BudgetProjectSession session, IProjectWorkspaceService workspace, IFinalReviewService finalReview) : base(session)
     {
         this.shell = shell;
@@ -29,7 +30,8 @@ public sealed partial class ReviewViewModel : SessionAwareViewModelBase, IRefres
 
         refreshCommand = new RelayCommand(Refresh);
         goToIssueCommand = new RelayCommand(GoToSelectedIssue, CanGoToSelectedIssue);
-        resetFilterCommand = new RelayCommand(ClearCategoryFilter, () => activeCategoryFilter.HasValue);
+        resetFilterCommand = new RelayCommand(ResetFilters, () => HasActiveFilters);
+        clearSearchCommand = new RelayCommand(ClearSearch, () => HasSearchText);
         nextWarRoomIssueCommand = new RelayCommand(NextWarRoomIssue, () => GetWarRoomIssues().Count > 0);
         previousWarRoomIssueCommand = new RelayCommand(PreviousWarRoomIssue, () => GetWarRoomIssues().Count > 0);
         markResolvedLocalCommand = new RelayCommand(MarkResolvedLocal, () => FocusIssue != null);
@@ -160,6 +162,10 @@ public sealed partial class ReviewViewModel : SessionAwareViewModelBase, IRefres
         {
             if (!SetProperty(ref searchText, value))
                 return;
+            OnPropertyChanged(nameof(HasSearchText));
+            OnPropertyChanged(nameof(HasActiveFilters));
+            clearSearchCommand.RaiseCanExecuteChanged();
+            resetFilterCommand.RaiseCanExecuteChanged();
             issuesView.Refresh();
             UpdateSummary();
         }
@@ -172,6 +178,8 @@ public sealed partial class ReviewViewModel : SessionAwareViewModelBase, IRefres
         {
             if (!SetProperty(ref selectedSeverity, value))
                 return;
+            OnPropertyChanged(nameof(HasActiveFilters));
+            resetFilterCommand.RaiseCanExecuteChanged();
             issuesView.Refresh();
             UpdateSummary();
         }
@@ -183,7 +191,11 @@ public sealed partial class ReviewViewModel : SessionAwareViewModelBase, IRefres
         private set => SetProperty(ref filterLabel, value);
     }
 
+    public bool HasSearchText => !string.IsNullOrWhiteSpace(searchText);
     public bool HasActiveFilter => activeCategoryFilter.HasValue;
+    public bool HasActiveFilters => HasSearchText || !string.Equals(selectedSeverity, "Todas", StringComparison.OrdinalIgnoreCase) || activeCategoryFilter.HasValue;
+    public int BlockerCount => Math.Max(0, issues.Count(x => x.Severity == FinalReviewSeverity.Blocker && !locallyResolvedIds.Contains(x.Source.Id)));
+    public bool HasZeroIssues => issues.Count == 0;
 
     public string SummaryText
     {
@@ -233,6 +245,7 @@ public sealed partial class ReviewViewModel : SessionAwareViewModelBase, IRefres
     public ICommand RefreshCommand => refreshCommand;
     public ICommand GoToIssueCommand => goToIssueCommand;
     public ICommand ResetFilterCommand => resetFilterCommand;
+    public ICommand ClearSearchCommand => clearSearchCommand;
     public ICommand GoToExportCommand { get; }
     public ICommand GoToBudgetCommand { get; }
     public ICommand OpenProjectCommand { get; }
@@ -260,6 +273,7 @@ public sealed partial class ReviewViewModel : SessionAwareViewModelBase, IRefres
             ? FinalReviewIssueExtensions.CategoryTextFor(category.Value)
             : "Todas las categor\u00edas";
         OnPropertyChanged(nameof(HasActiveFilter));
+        OnPropertyChanged(nameof(HasActiveFilters));
         resetFilterCommand.RaiseCanExecuteChanged();
         issuesView.Refresh();
         UpdateSummary();
@@ -268,6 +282,29 @@ public sealed partial class ReviewViewModel : SessionAwareViewModelBase, IRefres
     private void ClearCategoryFilter()
     {
         SetCategoryFilter(null);
+    }
+
+    private void ClearSearch()
+    {
+        SearchText = string.Empty;
+    }
+
+    private void ResetFilters()
+    {
+        searchText = string.Empty;
+        selectedSeverity = "Todas";
+        activeCategoryFilter = null;
+        filterLabel = "Todas las categor\u00edas";
+        OnPropertyChanged(nameof(SearchText));
+        OnPropertyChanged(nameof(SelectedSeverity));
+        OnPropertyChanged(nameof(FilterLabel));
+        OnPropertyChanged(nameof(HasSearchText));
+        OnPropertyChanged(nameof(HasActiveFilter));
+        OnPropertyChanged(nameof(HasActiveFilters));
+        clearSearchCommand.RaiseCanExecuteChanged();
+        resetFilterCommand.RaiseCanExecuteChanged();
+        issuesView.Refresh();
+        UpdateSummary();
     }
 
     public void Refresh()
@@ -422,6 +459,10 @@ public sealed partial class ReviewViewModel : SessionAwareViewModelBase, IRefres
             : "A\u00fan hay puntos cr\u00edticos que conviene corregir antes de exportar.";
         OnPropertyChanged(nameof(WarRoomProgressText));
         OnPropertyChanged(nameof(FocusIssueSummary));
+        OnPropertyChanged(nameof(BlockerCount));
+        OnPropertyChanged(nameof(HasZeroIssues));
+        OnPropertyChanged(nameof(HasActiveFilters));
+        resetFilterCommand.RaiseCanExecuteChanged();
     }
 
     private bool FilterIssue(object obj)

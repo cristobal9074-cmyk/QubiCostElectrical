@@ -66,7 +66,7 @@ public sealed class ShellChromeAlertsTests : IDisposable
         host.Session.NewProject("chrome-alerts");
         host.Session.CurrentProjectPath = "chrome-alerts.qce";
         host.Session.Itemizado.Add(new ItemizadoRow { Id = "T1", Item = "1", Descripcion = "Título", EsTitulo = true });
-        host.Session.Itemizado.Add(new ItemizadoRow { Id = "P1", Item = "1.1", ParentId = "T1", Descripcion = "Partida", Unidad = "GL" });
+        host.Session.Itemizado.Add(new ItemizadoRow { Id = "P1", Item = "1.1", ParentId = "T1", Descripcion = "Partida", Unidad = "GL", Cantidad = 1m });
         host.Session.Cubicacion.Add(new CubicacionRow { ItemId = "P1", Codigo = "MAT01", Cantidad = 10m, MatUf = 1m, Unidad = "UN" });
 
         // El chrome ya no recalcula alertas en cada Session.Changed; usa el cache del dashboard.

@@ -13,30 +13,21 @@ namespace QubiCostElectrical.Wpf.Infrastructure;
 /// </summary>
 public static class CompositionRoot
 {
-    public static ServiceProvider Build(string? priceBankPathOverride, AuthService? authOverride = null)
+    public static ServiceProvider Build(string? priceBankPathOverride, IAuthService? authOverride = null)
     {
-        var prefs = UserPreferencesStore.Load();
-        var priceBankPath = priceBankPathOverride
-            ?? ProductPaths.ResolvePriceBankDatabaseFile(prefs.PriceBankDatabasePath);
-
         var services = new ServiceCollection();
-        services.AddSingleton(new PriceBankPath(priceBankPath));
-        services.AddDomainServices();
-        services.AddApplicationServices();
-        services.AddInfrastructureServices();
+        services.AddBackendServices(priceBankPathOverride);
         services.AddWpfServices();
         if (authOverride != null)
-            services.AddSingleton(authOverride);
+            services.AddSingleton<IAuthService>(authOverride);
 
         var provider = services.BuildServiceProvider(new ServiceProviderOptions
         {
             ValidateScopes = true,
         });
 
-        StartupSeeder.SeedPriceBank(provider.GetRequiredService<IPriceBankStore>());
+        BackendComposition.InitializeBackend(provider);
         SessionManager.BindPermissions(provider.GetRequiredService<IPermissionService>());
-        // Fuerza la suscripción de ProjectDbContext a Session.Changed.
-        _ = provider.GetRequiredService<IProjectDbContext>();
 
         return provider;
     }

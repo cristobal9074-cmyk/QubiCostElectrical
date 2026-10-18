@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Drawing;
 
 namespace QubiCostElectrical;
 
@@ -125,8 +124,6 @@ public sealed class UserPreferences
     public bool OnboardingCompleted { get; set; } = false;
     /// <summary>Última versión de onboarding mostrada. Permite reactivar guía si cambia el flujo en V4.</summary>
     public string OnboardingVersion { get; set; } = "";
-
-
 
     // ── Membrete corporativo global ─────────────────────────────────────
     /// <summary>Razón social usada en portadas, PDF y Excel.</summary>

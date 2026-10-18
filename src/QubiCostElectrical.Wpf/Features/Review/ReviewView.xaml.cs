@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Input;
 using System.Windows.Media;
 
 namespace QubiCostElectrical.Wpf.Features.Review;
@@ -11,6 +12,34 @@ public partial class ReviewView : UserControl
     public ReviewView()
     {
         InitializeComponent();
+    }
+
+    private void OnUserControlKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.F && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+        {
+            SearchBox.Focus();
+            SearchBox.SelectAll();
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key == Key.Escape)
+        {
+            if (DataContext is ReviewViewModel vm)
+            {
+                if (vm.HasSearchText)
+                {
+                    vm.ClearSearchCommand.Execute(null);
+                    e.Handled = true;
+                }
+                else if (vm.HasActiveFilters && vm.ResetFilterCommand.CanExecute(null))
+                {
+                    vm.ResetFilterCommand.Execute(null);
+                    e.Handled = true;
+                }
+            }
+        }
     }
 }
 

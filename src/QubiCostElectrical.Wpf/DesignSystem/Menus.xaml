@@ -137,6 +137,13 @@
               <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.ActiveRowBg}" />
               <Setter TargetName="Accent" Property="Background" Value="{DynamicResource Brush.Blue}" />
             </Trigger>
+            <MultiTrigger>
+              <MultiTrigger.Conditions>
+                <Condition Property="IsSelected" Value="True" />
+                <Condition Property="IsMouseOver" Value="True" />
+              </MultiTrigger.Conditions>
+              <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.ActiveRowHoverBg}" />
+            </MultiTrigger>
           </ControlTemplate.Triggers>
         </ControlTemplate>
       </Setter.Value>

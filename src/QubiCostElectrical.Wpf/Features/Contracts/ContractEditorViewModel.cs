@@ -37,8 +37,9 @@ public sealed class ContractEditorViewModel : WorkspacePageViewModelBase
     private readonly IProjectDbContext projectDb;
 
     public ContractEditorViewModel(IShellNavigationHost shell, WpfAppHost host, Contract contract)
-        : this(shell, host.Session, host.ProjectWorkspace, host.Services.ProjectDb, contract) { }
+        : this(shell, host.Session, host.ProjectWorkspace, host.ProjectDb, contract) { }
 
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
     public ContractEditorViewModel(IShellNavigationHost shell, BudgetProjectSession session, IProjectWorkspaceService workspace, IProjectDbContext projectDb, Contract contract)
         : base(session, workspace)
     {

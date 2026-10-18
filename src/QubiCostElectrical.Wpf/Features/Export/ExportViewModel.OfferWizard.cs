@@ -44,7 +44,7 @@ public sealed partial class ExportViewModel
         pickLogoCommand = new RelayCommand(PickLogo, () => !session.IsReadOnly);
         pickClientLogoCommand = new RelayCommand(PickClientLogo, () => !session.IsReadOnly);
         pickSignatureCommand = new RelayCommand(PickSignature, () => !session.IsReadOnly);
-        openPreviewFolderCommand = new RelayCommand(OpenPreviewFolder, () => ExportResult.PreviewFilePath != null);
+        openPreviewFolderCommand = new RelayCommand(OpenPreviewFolder, () => GetExportTargetFolder() != null);
         applyOfferPresetCommand = new RelayCommand<string>(ApplyOfferPreset, _ => HasOpenProject && !session.IsReadOnly);
         selectAllDocumentsCommand = new RelayCommand(SelectAllDocuments, () => HasOpenProject && !session.IsReadOnly);
 
@@ -52,6 +52,7 @@ public sealed partial class ExportViewModel
         DocumentSelector = new DeliveryDocumentSelectorVm(dashboard);
         DocumentSelector.SelectionChanged += (_, _) => OnDocumentSelectionChanged();
         ExportResult = new DeliveryExportResultVm();
+        ExportResult.PropertyChanged += (_, _) => openPreviewFolderCommand.RaiseCanExecuteChanged();
         HookLivePreview();
     }
 
@@ -224,36 +225,28 @@ public sealed partial class ExportViewModel
         WpfDialogService.Info("Oferta", "Configuración de oferta guardada en el proyecto.");
     }
 
-    private void PickLogo()
-    {
-        var path = fileDialog.PromptOpenFile("Imágenes (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg|Todos|*.*");
-        if (path != null)
-            OfferSettings.LogoPath = path;
-    }
+    private void PickLogo() =>
+        OfferSettings.LogoPath = executionCoordinator.PickImage() ?? OfferSettings.LogoPath;
 
-    private void PickClientLogo()
-    {
-        var path = fileDialog.PromptOpenFile("Imágenes (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg|Todos|*.*");
-        if (path != null)
-            OfferSettings.ClientLogoPath = path;
-    }
+    private void PickClientLogo() =>
+        OfferSettings.ClientLogoPath = executionCoordinator.PickImage() ?? OfferSettings.ClientLogoPath;
 
-    private void PickSignature()
+    private void PickSignature() =>
+        OfferSettings.SignatureImagePath = executionCoordinator.PickImage() ?? OfferSettings.SignatureImagePath;
+
+    private string? GetExportTargetFolder()
     {
-        var path = fileDialog.PromptOpenFile("Imágenes (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg|Todos|*.*");
-        if (path != null)
-            OfferSettings.SignatureImagePath = path;
+        if (!string.IsNullOrWhiteSpace(ExportResult.PreviewFilePath))
+            return ExportResult.PreviewFilePath;
+
+        return ExportResult.Results.FirstOrDefault(r => !string.IsNullOrWhiteSpace(r.FilePath))?.FilePath;
     }
 
     private void OpenPreviewFolder()
     {
-        var path = ExportResult.PreviewFilePath;
-        if (path == null)
-            return;
-
-        var folder = System.IO.Path.GetDirectoryName(path);
-        if (folder != null)
-            fileOpener.OpenFolder(folder);
+        var target = GetExportTargetFolder();
+        if (target != null)
+            executionCoordinator.OpenPreviewFolder(target);
     }
 
     private async Task DeliverPackageAsync()
@@ -261,46 +254,23 @@ public sealed partial class ExportViewModel
         if (!CanDeliverPackage() || IsBusy)
             return;
 
-        if (!await EnsureExportAllowedAsync())
-            return;
-
-        var folder = fileDialog.PromptFolder("Selecciona la carpeta de destino para la exportación");
-        if (folder == null)
-            return;
-
         IsBusy = true;
         try
         {
-            SaveOfferSettings();
-            var ctx = DocumentSelector.GetSelectedContext(session);
-            var selectedIds = DocumentSelector.GetSelectedDocumentIds();
-            var baseName = ProjectTextValidator.MakeSafeFileName(ProjectTitle);
-            var results = await previewService.ExportAllAsync(ctx, folder, selectedIds, baseName);
-            ExportResult.SetResults(results);
-
-            DocumentErrors.Clear();
-            foreach (var fail in results.Where(r => !r.IsSuccess))
-                DocumentErrors.Add($"{fail.DocumentType}: {fail.ErrorMessage}");
-
-            var successCount = results.Count(r => r.IsSuccess);
-            var failCount = results.Count(r => !r.IsSuccess);
-            if (failCount == 0)
-                ShowExportSuccessWithFolderAction(
-                    "Oferta y exportación",
-                    $"Todos los documentos ({successCount}) se generaron correctamente en:{Environment.NewLine}{folder}",
-                    folder,
-                    pathIsFolder: true);
-            else
-                ShellNotificationService.Instance.ShowWarning("Oferta y exportación", $"{successCount} documento(s) generado(s), {failCount} con errores.");
-        }
-        catch (Exception ex)
-        {
-            AppLog.Error("Export", "Falló el asistente de oferta y exportación", ex);
-            WpfDialogService.Error("Oferta y exportación", OperationFailureMessages.ToUserMessage(ex));
+            await executionCoordinator.DeliverPackageAsync(
+                EnsureExportAllowedAsync,
+                previewService,
+                DocumentSelector,
+                ExportResult,
+                DocumentErrors,
+                session,
+                ProjectTitle,
+                SaveOfferSettings);
         }
         finally
         {
             IsBusy = false;
+            openPreviewFolderCommand.RaiseCanExecuteChanged();
         }
     }
 }

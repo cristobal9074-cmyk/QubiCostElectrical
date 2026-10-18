@@ -110,7 +110,7 @@
     </Style>
   </Window.Resources>
 
-  <Border Style="{StaticResource Dialog.Chrome}" Margin="16">
+  <Border Style="{StaticResource Dialog.Chrome}">
   <Grid>
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto" />
@@ -535,9 +535,9 @@
           </TextBlock>
         </StackPanel>
         <Button DockPanel.Dock="Right" Style="{StaticResource Button.Primary}" Content="Guardar catálogo"
-                MinWidth="150" IsDefault="True" Click="OnAcceptClick" Padding="14,8" />
+                MinWidth="150" Height="34" IsDefault="True" Click="OnAcceptClick" />
         <Button DockPanel.Dock="Right" Style="{StaticResource Button.Secondary}" Content="Cancelar"
-                MinWidth="100" Margin="0,0,8,0" IsCancel="True" Padding="14,8" />
+                MinWidth="100" Height="34" Margin="0,0,10,0" IsCancel="True" />
       </DockPanel>
     </Border>
   </Grid>

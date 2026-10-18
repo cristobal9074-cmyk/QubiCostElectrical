@@ -25,6 +25,7 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
     private readonly ItemizadoPresenter presenter;
     private readonly IItemizadoWorkspaceService workspace;
     private readonly ItemizadoImportCoordinator importCoordinator;
+    private readonly ItemizadoClipboardPasteCoordinator pasteCoordinator;
     private readonly List<ItemizadoRowVm> allRows = new();
     private readonly Dictionary<string, ItemizadoRowVm> rowsById = new(StringComparer.OrdinalIgnoreCase);
     private readonly ItemizadoBreadcrumbCoordinator breadcrumbCoordinator;
@@ -48,6 +49,9 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
     private readonly HashSet<ItemizadoRowVm> wiredRows = new();
     private EventHandler<ProjectSessionChangedEventArgs>? sessionSavedHandler;
     private ItemizadoTotalsSnapshot totalsSnapshot = ItemizadoTotalsCoordinator.Calculate(Array.Empty<ItemizadoRowVm>(), Array.Empty<ItemizadoRowVm>(), 38_500m, false, "");
+    private ItemizadoHeroKpiSnapshot heroKpiSnapshot = ItemizadoHeroKpiCoordinator.Empty;
+    private bool isHeroKpiBarExpanded = true;
+    private ItemizadoSummaryMetrics lastSummary = new(0, 0, 0, 0, 0, 0m, 0m);
 
     // La vista se suscribe para entrar en modo edición automáticamente sobre la fila
     // recién agregada (Descripción), sin requerir F2 ni clic manual. Solo se dispara
@@ -58,6 +62,7 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
     public ItemizadoViewModel(IShellNavigationHost shell, WpfAppHost host)
         : this(shell, host.Session, host.ProjectWorkspace, host.Audit, host.UndoService, host.Itemizado, host.ItemizadoWorkspace) { }
 
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
     public ItemizadoViewModel(IShellNavigationHost shell, BudgetProjectSession session, IProjectWorkspaceService projectWorkspace, ProjectAuditRecorder audit, WpfUndoService undo, ItemizadoPresenter presenter, IItemizadoWorkspaceService workspace) : base(session)
     {
         this.shell = shell;
@@ -68,6 +73,7 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
         this.presenter = presenter;
         this.workspace = workspace;
         importCoordinator = new ItemizadoImportCoordinator(presenter);
+        pasteCoordinator = new ItemizadoClipboardPasteCoordinator(session, undo, presenter, importCoordinator);
         breadcrumbCoordinator = new ItemizadoBreadcrumbCoordinator(row =>
         {
             SelectedRow = row;
@@ -91,11 +97,16 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
         ClearAllCommand = new RelayCommand(ClearAll, () => !ShowEmptyState && !ShowEmptyItemizado && !session.IsReadOnly);
         OpenProjectCommand = new RelayCommand(() => _ = shell.OpenProjectAsync());
         SetFilterCommand = new RelayCommand<ItemizadoFilterMode>(mode => FilterMode = mode);
+        FilterIncompletosCommand = new RelayCommand(() => FilterMode = ItemizadoFilterMode.Incompletos);
+        FilterTodosCommand = new RelayCommand(() => FilterMode = ItemizadoFilterMode.Todos);
         ClearSearchCommand = new RelayCommand(ClearSearch, () => IsSearchActive);
         ExportPdfCommand = new RelayCommand(ExportPdf, () => !ShowEmptyState);
         ConfigureCommercialModelCommand = new RelayCommand(ConfigureCommercialModel, () => HasSelection && !session.IsReadOnly && SelectedRow?.EsTitulo != true);
         LoadStandardTemplateCommand = new RelayCommand<string>(LoadStandardTemplate, _ => !ShowEmptyState && !session.IsReadOnly);
         ToggleChapterCollapseCommand = new RelayCommand<ItemizadoRowVm>(ToggleChapterCollapse);
+        CollapseAllChaptersCommand = new RelayCommand(CollapseAllChapters, () => !ShowEmptyState && !ShowEmptyItemizado);
+        ExpandAllChaptersCommand = new RelayCommand(ExpandAllChapters, () => !ShowEmptyState && !ShowEmptyItemizado);
+        ToggleHeroKpiBarCommand = new RelayCommand(() => IsHeroKpiBarExpanded = !IsHeroKpiBarExpanded);
         OpenApuCommand = new RelayCommand<ItemizadoRowVm>(row =>
         {
             var target = row ?? SelectedRow;
@@ -238,6 +249,16 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
     public string UfRateCaption => totalsSnapshot.UfRateCaption;
     public bool HasActiveFilter => totalsSnapshot.HasActiveFilter;
 
+    public ItemizadoHeroKpiSnapshot HeroKpi => heroKpiSnapshot;
+
+    public bool IsHeroKpiBarExpanded
+    {
+        get => isHeroKpiBarExpanded;
+        set => SetProperty(ref isHeroKpiBarExpanded, value);
+    }
+
+    public ICommand ToggleHeroKpiBarCommand { get; }
+
     public ICommand ImportExcelCommand { get; }
     public ICommand PasteExcelCommand { get; }
     public ICommand AddPartidaCommand { get; }
@@ -250,11 +271,15 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
     public ICommand ClearAllCommand { get; }
     public ICommand OpenProjectCommand { get; }
     public ICommand SetFilterCommand { get; }
+    public ICommand FilterIncompletosCommand { get; }
+    public ICommand FilterTodosCommand { get; }
     public ICommand ClearSearchCommand { get; }
     public ICommand ExportPdfCommand { get; }
     public ICommand ConfigureCommercialModelCommand { get; }
     public ICommand LoadStandardTemplateCommand { get; }
     public ICommand ToggleChapterCollapseCommand { get; }
+    public ICommand CollapseAllChaptersCommand { get; }
+    public ICommand ExpandAllChaptersCommand { get; }
     public ICommand OpenApuCommand { get; }
     public ICommand CubicarRowCommand { get; }
 
@@ -369,27 +394,7 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
 
         pendingSelectionId = row.Id;
         undo.PushUndoPoint(session, row.EsTitulo ? "Convertir a partida" : "Convertir a título");
-        bool newEsTitulo = !row.EsTitulo;
-
-        if (!newEsTitulo)
-        {
-            if (row.Cantidad <= 0m)
-            {
-                row.Cantidad = row.Model.CantidadOriginal > 0m
-                    ? row.Model.CantidadOriginal
-                    : 1m;
-            }
-            if (string.IsNullOrWhiteSpace(row.Unidad))
-            {
-                row.Unidad = Unidades.GL;
-            }
-        }
-        else
-        {
-            row.Cantidad = 0m;
-        }
-
-        row.EsTitulo = newEsTitulo;
+        row.ToggleTitleState();
         session.MarkDirty(ProjectDirtyScope.Itemizado);
         RefreshAfterStructureChange();
     }
@@ -464,31 +469,5 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
         OnPropertyChanged(nameof(AvancePercent));
     }
 
-    private void ExportPdf()
-    {
-        try
-        {
-            var sfd = new Microsoft.Win32.SaveFileDialog
-            {
-                Filter = "Archivo PDF (*.pdf)|*.pdf",
-                FileName = $"Itemizado_{session.ProjectInfo.Nombre ?? "Proyecto"}.pdf"
-            };
-
-            if (sfd.ShowDialog() == true)
-            {
-                if (OperationFailureMessages.IsFileLocked(sfd.FileName))
-                {
-                    WpfDialogService.Error("Archivo en uso", OperationFailureMessages.FileInUseUserMessage);
-                    return;
-                }
-
-                ItemizadoPdfExporter.Export(session.ProjectInfo, Rows.ToList(), sfd.FileName);
-                WpfDialogService.Info("Exportación Exitosa", $"Se ha exportado el itemizado valorado a {sfd.FileName}");
-            }
-        }
-        catch (Exception ex)
-        {
-            WpfDialogService.Error("Error al exportar", OperationFailureMessages.ToUserMessage(ex));
-        }
-    }
+    private void ExportPdf() => ItemizadoPdfExporter.ExportWithPrompt(session.ProjectInfo, Rows.ToList());
 }

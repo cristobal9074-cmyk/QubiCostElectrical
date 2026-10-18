@@ -342,6 +342,7 @@
               <!-- Mes sin estado -->
               <ctrl:EmptyStateControl
                                       Visibility="{Binding MesEmptyVisible, Converter={StaticResource BoolToVisibility}}"
+                                      IconData="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8"
                                       Title="{Binding MesEmptyTitle}"
                                       Description="{Binding MesEmptyDesc}">
                 <ctrl:EmptyStateControl.Actions>
@@ -651,6 +652,7 @@
 
     <!-- ═══ Estado vacío: sin proyecto ═══ -->
     <ctrl:EmptyStateControl Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}}"
+                            IconData="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8"
                             Title="Sin proyecto abierto"
                             Description="Abra un proyecto para ver los estados de pago de la obra.">
       <ctrl:EmptyStateControl.Actions>

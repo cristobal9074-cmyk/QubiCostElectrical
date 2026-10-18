@@ -9,7 +9,7 @@
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         ShowInTaskbar="False">
-  <Border Style="{StaticResource Dialog.Chrome}" Margin="16">
+  <Border Style="{StaticResource Dialog.Chrome}">
     <Grid>
       <Grid.RowDefinitions>
         <RowDefinition Height="Auto" />
@@ -52,9 +52,9 @@
 
       <DockPanel Grid.Row="2" Style="{StaticResource Dialog.Footer}" LastChildFill="False">
         <Button DockPanel.Dock="Right" Style="{StaticResource Button.Primary}" Content="Cubicar"
-                MinWidth="110" IsDefault="True" Click="OnCubicarClick" />
+                MinWidth="110" Height="34" IsDefault="True" Click="OnCubicarClick" />
         <Button DockPanel.Dock="Right" Style="{StaticResource Button.Secondary}" Content="Omitir"
-                MinWidth="100" Margin="0,0,8,0" IsCancel="True"
+                MinWidth="100" Height="34" Margin="0,0,10,0" IsCancel="True"
                 ToolTip="Dejar el material sin casilla de zona; puede cubicarlo después en la grilla" />
       </DockPanel>
     </Grid>

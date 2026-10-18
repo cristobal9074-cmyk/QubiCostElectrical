@@ -5,6 +5,10 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="1920" d:DesignHeight="950">
+  <UserControl.InputBindings>
+    <KeyBinding Key="S" Modifiers="Control" Command="{Binding SaveCommand}" />
+    <KeyBinding Key="D" Modifiers="Control" Command="{Binding DuplicateCommand}" />
+  </UserControl.InputBindings>
   <UserControl.Resources>
     <Style x:Key="DocumentsCard" TargetType="Border">
       <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
@@ -82,7 +86,10 @@
   <Grid Background="{DynamicResource Brush.Canvas}">
     <ctrl:SkeletonOverlayControl Panel.ZIndex="20" Message="Cargando antecedentes técnicos…"
                                  Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibility}}" />
-    <ctrl:EmptyStateControl Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}}" Title="Sin proyecto abierto" Description="Abra un proyecto para gestionar antecedentes técnicos, planos, addendas y consultas.">
+    <ctrl:EmptyStateControl Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}}"
+                            IconData="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8"
+                            Title="Sin proyecto abierto"
+                            Description="Abra un proyecto para gestionar antecedentes técnicos, planos, addendas y consultas.">
       <ctrl:EmptyStateControl.Actions>
         <Button Style="{StaticResource Button.Primary}" Content="Abrir proyecto..." Command="{Binding OpenProjectCommand}" MinWidth="180" />
       </ctrl:EmptyStateControl.Actions>
@@ -115,7 +122,7 @@
             <Border CornerRadius="4" Background="{DynamicResource Brush.SuccessBg}" BorderBrush="{DynamicResource Brush.SuccessBorder}" BorderThickness="1" Padding="6,2" Margin="10,0,0,0" VerticalAlignment="Center">
               <StackPanel Orientation="Horizontal">
                 <Ellipse Width="5" Height="5" Fill="{DynamicResource Brush.Success}" Margin="0,0,5,0" VerticalAlignment="Center" />
-                <TextBlock Text="Base Técnica Congelada (R3)" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Success}" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding FechaCorteChip}" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Success}" VerticalAlignment="Center" />
               </StackPanel>
             </Border>
           </StackPanel>
@@ -419,10 +426,15 @@
                       <ColumnDefinition Width="Auto" />
                       <ColumnDefinition Width="*" />
                       <ColumnDefinition Width="Auto" />
+                      <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <TextBlock Text="🔍" FontSize="11" Foreground="{DynamicResource Brush.Ink4}" Margin="0,0,8,0" VerticalAlignment="Center" />
                     <TextBox Grid.Column="1" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" BorderThickness="0" Background="Transparent" FontSize="12" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" ToolTip="Buscar por código, descripción, disciplina o revisión" />
-                    <Border Grid.Column="2" Background="{DynamicResource Brush.Line2}" CornerRadius="4" Padding="5,1" VerticalAlignment="Center">
+                    <Button Grid.Column="2" Command="{Binding ClearSearchCommand}" ToolTip="Limpiar búsqueda" Background="Transparent" BorderThickness="0" Cursor="Hand" Padding="4,0" Margin="0,0,4,0" VerticalAlignment="Center"
+                            Visibility="{Binding SearchText, Converter={StaticResource StringNotEmptyToVisibility}}">
+                      <TextBlock Text="✕" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}" />
+                    </Button>
+                    <Border Grid.Column="3" Background="{DynamicResource Brush.Line2}" CornerRadius="4" Padding="5,1" VerticalAlignment="Center">
                       <TextBlock Text="Ctrl K" FontFamily="{StaticResource Font.Mono}" FontSize="9" Foreground="{DynamicResource Brush.Ink4}" />
                     </Border>
                   </Grid>
@@ -659,6 +671,50 @@
                     </StackPanel>
                   </Border>
 
+                  <!-- Technical CAD / Vector Blueprint Placeholder when raster preview is not available -->
+                  <Border Background="{DynamicResource Brush.Canvas}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="8" Margin="0,0,0,12" Padding="14,14">
+                    <Border.Style>
+                      <Style TargetType="Border">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                          <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                              <Condition Binding="{Binding HasPreviewImage}" Value="False" />
+                              <Condition Binding="{Binding SelectedRow.HasFile}" Value="True" />
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Visibility" Value="Visible" />
+                          </MultiDataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </Border.Style>
+                    <Grid>
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                      </Grid.ColumnDefinitions>
+                      <Border Width="44" Height="44" CornerRadius="8" Background="{DynamicResource Brush.BlueSoft}" VerticalAlignment="Center">
+                        <TextBlock Text="📐" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                      </Border>
+                      <StackPanel Grid.Column="1" Margin="12,0,10,0" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                          <Border Background="{DynamicResource Brush.Line2}" CornerRadius="4" Padding="5,1" Margin="0,0,6,0">
+                            <TextBlock Text="{Binding SelectedFileExtensionBadge}" FontFamily="{StaticResource Font.Mono}" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.BlueFocus}" />
+                          </Border>
+                          <TextBlock Text="PLANO / ARCHIVO VINCULADO" FontSize="9" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <TextBlock Text="{Binding SelectedRow.RutaArchivoNombre}" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" Margin="0,3,0,1" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding SelectedFileSizeText}" FontSize="10" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink3}" />
+                      </StackPanel>
+                      <Button Grid.Column="2" Style="{StaticResource Button.Secondary}" Command="{Binding OpenAttachedFileCommand}" Padding="10,6" VerticalAlignment="Center" ToolTip="Abrir archivo directamente en visor nativo o CAD">
+                        <StackPanel Orientation="Horizontal">
+                          <TextBlock Text="↗" Margin="0,0,5,0" />
+                          <TextBlock Text="Ver en Visor" FontSize="11" />
+                        </StackPanel>
+                      </Button>
+                    </Grid>
+                  </Border>
+
                   <!-- Technical Metadata Grid (2 Columns, 3 Rows) -->
                   <Grid Margin="0,8,0,0">
                     <Grid.RowDefinitions>
@@ -723,9 +779,14 @@
                       </Grid.ColumnDefinitions>
                       <StackPanel VerticalAlignment="Center">
                         <TextBlock Text="RUTA EN DISCO" Style="{StaticResource MetaLabel}" Margin="0,0,0,2" />
-                        <TextBlock Text="{Binding SelectedRow.RutaArchivo, FallbackValue='Sin ruta configurada'}" FontFamily="{StaticResource Font.Mono}" FontSize="10.5" Foreground="{DynamicResource Brush.Ink3}" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding SelectedRow.RutaArchivo, FallbackValue='Sin ruta configurada'}" FontFamily="{StaticResource Font.Mono}" FontSize="10.5" Foreground="{DynamicResource Brush.Ink3}" TextTrimming="CharacterEllipsis" ToolTip="{Binding SelectedRow.RutaArchivo}" />
                       </StackPanel>
-                      <Button Grid.Column="1" Style="{StaticResource Button.Secondary}" Content="Adjuntar / Cambiar" Command="{Binding AttachFileCommand}" Margin="10,0,0,0" Padding="10,6" VerticalAlignment="Center" />
+                      <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,0,0">
+                        <Button Style="{StaticResource Button.Secondary}" Command="{Binding CopyFilePathCommand}" ToolTip="Copiar ruta de archivo al portapapeles" Padding="8,6" Margin="0,0,6,0">
+                          <TextBlock Text="📋 Copiar" FontSize="11" />
+                        </Button>
+                        <Button Style="{StaticResource Button.Secondary}" Content="Adjuntar / Cambiar" Command="{Binding AttachFileCommand}" Padding="10,6" />
+                      </StackPanel>
                     </Grid>
                   </Border>
 
@@ -739,19 +800,39 @@
                       <ColumnDefinition Width="*" />
                       <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <Button Grid.Column="0" Style="{StaticResource Button.Secondary}" Command="{Binding OpenAttachedFileCommand}" Margin="0,0,6,0" Padding="12,9">
+                    <Button Grid.Column="0" Style="{StaticResource Button.Secondary}" Command="{Binding OpenAttachedFileCommand}" Margin="0,0,6,0" Padding="12,9" ToolTip="Abrir archivo en su aplicación predeterminada de Windows">
                       <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                         <TextBlock Text="↗" Margin="0,0,6,0" />
                         <TextBlock Text="Abrir archivo" />
                       </StackPanel>
                     </Button>
-                    <Button Grid.Column="1" Style="{StaticResource Button.Secondary}" Command="{Binding OpenContainingFolderCommand}" Margin="6,0,0,0" Padding="12,9">
+                    <Button Grid.Column="1" Style="{StaticResource Button.Secondary}" Command="{Binding OpenContainingFolderCommand}" Margin="6,0,0,0" Padding="12,9" ToolTip="Abrir la carpeta contenedora en el Explorador de Windows">
                       <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                         <TextBlock Text="📁" Margin="0,0,6,0" />
                         <TextBlock Text="Abrir carpeta" />
                       </StackPanel>
                     </Button>
                   </Grid>
+
+                  <Grid Margin="0,8,0,0">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="*" />
+                      <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Button Grid.Column="0" Style="{StaticResource Button.Secondary}" Command="{Binding DuplicateCommand}" Margin="0,0,6,0" Padding="12,9" ToolTip="Crear una copia de este antecedente para una nueva revisión (Ctrl+D)">
+                      <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <TextBlock Text="📋" Margin="0,0,6,0" />
+                        <TextBlock Text="Duplicar versión" />
+                      </StackPanel>
+                    </Button>
+                    <Button Grid.Column="1" Style="{StaticResource Button.Secondary}" Command="{Binding RemoveCommand}" Margin="6,0,0,0" Padding="12,9" ToolTip="Eliminar este antecedente del expediente técnico">
+                      <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <TextBlock Text="🗑" Margin="0,0,6,0" Foreground="{DynamicResource Brush.Danger}" />
+                        <TextBlock Text="Quitar registro" Foreground="{DynamicResource Brush.Danger}" />
+                      </StackPanel>
+                    </Button>
+                  </Grid>
+
                   <Button Style="{StaticResource Button.Primary}" Command="{Binding MarkVigenteCommand}" Content="✔ Marcar Vigente en Expediente" Margin="0,8,0,0" Padding="12,9" />
 
                 </StackPanel>

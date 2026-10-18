@@ -46,8 +46,9 @@ public sealed partial class SolicitudesViewModel : SessionAwareViewModelBase, IR
     public ICommand ExportarHistorialExcelCommand { get; }
 
     public SolicitudesViewModel(IShellNavigationHost shell, WpfAppHost host)
-        : this(shell, host.Session, host.ProjectWorkspace, host.Permissions, host.Services.MaterialControl, host.UndoService) { }
+        : this(shell, host.Session, host.ProjectWorkspace, host.Permissions, host.MaterialControl, host.UndoService) { }
 
+    [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
     public SolicitudesViewModel(
         IShellNavigationHost shell,
         BudgetProjectSession session,

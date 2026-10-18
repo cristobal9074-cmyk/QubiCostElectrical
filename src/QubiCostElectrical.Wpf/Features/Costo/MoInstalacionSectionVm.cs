@@ -190,7 +190,7 @@ public sealed class MoInstalacionSectionVm : ViewModelBase
     {
         if (string.IsNullOrEmpty(project.ModoMoInstalacion))
         {
-            var prefs = UserPreferencesStore.Load();
+            var prefs = WpfAppHost.Current?.UserPreferencesStore?.Load() ?? new UserPreferences();
             project.ModoMoInstalacion = prefs.MoInstalacionPorRendimientoDefault
                 ? MaterialMoResolver.ModoRendimiento
                 : MaterialMoResolver.ModoDirecto;
@@ -268,6 +268,9 @@ public sealed class MoInstalacionSectionVm : ViewModelBase
             faResultado = "FA " + aplicado.IndiceMoFa.ToString("N2", CultureInfo.CurrentCulture)
                 + " aplicado." + ResumenPropagacion(aplicado);
             OnPropertyChanged(nameof(FaResultado));
+            ShellNotificationService.Instance.ShowSuccess(
+                "M.O. Recalibrada",
+                $"FA {aplicado.IndiceMoFa:N2} aplicado con éxito.{ResumenPropagacion(aplicado)}");
         }
 
         runSuppressed(refreshCost);

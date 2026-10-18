@@ -2,13 +2,14 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <UserControl.Resources>
-        <Style x:Key="LandingSidebarActionButton" TargetType="Button">
-            <Setter Property="Height" Value="56" />
-            <Setter Property="Margin" Value="0,0,0,10" />
+        <!-- ── Botones del Sidebar Izquierdo ────────────────────────────────── -->
+        <Style x:Key="LandingSidebarButtonBase" TargetType="Button">
+            <Setter Property="Height" Value="50" />
+            <Setter Property="Margin" Value="0,0,0,8" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
             <Setter Property="Background" Value="{DynamicResource Brush.White8}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource Brush.White18}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource Brush.White16}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
             <Setter Property="Cursor" Value="Hand" />
@@ -16,18 +17,20 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="Bd"
-                    Background="{TemplateBinding Background}"
-                    BorderBrush="{TemplateBinding BorderBrush}"
-                    BorderThickness="{TemplateBinding BorderThickness}"
-                    CornerRadius="14"
-                    Padding="14,0">
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="12"
+                                Padding="12,0"
+                                SnapsToDevicePixels="True">
                             <ContentPresenter HorizontalAlignment="Stretch"
-                                VerticalAlignment="Center"
-                                RecognizesAccessKey="True" />
+                                              VerticalAlignment="Center"
+                                              RecognizesAccessKey="True" />
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.White16}" />
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Brush.White25}" />
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.White25}" />
@@ -41,48 +44,100 @@
             </Setter>
         </Style>
 
-        <Style x:Key="LandingPrimaryActionButton" TargetType="Button" BasedOn="{StaticResource LandingSidebarActionButton}">
+        <!-- Botón Hero "Nuevo proyecto" -->
+        <Style x:Key="LandingHeroButton" TargetType="Button" BasedOn="{StaticResource LandingSidebarButtonBase}">
+            <Setter Property="Height" Value="56" />
             <Setter Property="Background" Value="{DynamicResource Brush.PrimaryButton}" />
             <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue2}" />
             <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
             <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="HeroBd"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="14"
+                                Padding="14,0"
+                                SnapsToDevicePixels="True">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="12" ShadowDepth="3" Direction="270" Color="#1D4ED8" Opacity="0.35" />
+                            </Border.Effect>
+                            <ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="HeroBd" Property="Background" Value="{DynamicResource Brush.Blue2}" />
+                                <Setter TargetName="HeroBd" Property="BorderBrush" Value="{DynamicResource Brush.BrandStroke2}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="HeroBd" Property="Background" Value="{DynamicResource Brush.BlueDark}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
-        <Style x:Key="LandingResourceButton" TargetType="Button" BasedOn="{StaticResource LandingSidebarActionButton}">
-            <Setter Property="Height" Value="48" />
-            <Setter Property="Background" Value="{DynamicResource Brush.White8}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource Brush.White16}" />
+        <!-- Botón Secundario de Navegación del Sidebar -->
+        <Style x:Key="LandingNavButton" TargetType="Button" BasedOn="{StaticResource LandingSidebarButtonBase}">
+            <Setter Property="Height" Value="44" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
             <Setter Property="Foreground" Value="{DynamicResource Brush.HeaderInk}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="NavBd"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="10"
+                                Padding="10,0"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="NavBd" Property="Background" Value="{DynamicResource Brush.White8}" />
+                                <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="NavBd" Property="Background" Value="{DynamicResource Brush.White16}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
-        <Style x:Key="LandingMetricCard" TargetType="Border" BasedOn="{StaticResource Card.Section}">
-            <Setter Property="Padding" Value="14" />
-        </Style>
-
+        <!-- Contenedor de Item de Proyecto Reciente -->
         <Style x:Key="RecentProjectContainer" TargetType="ListBoxItem">
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="Padding" Value="0" />
-            <Setter Property="Margin" Value="0,0,0,10" />
+            <Setter Property="Margin" Value="0,0,0,8" />
             <Setter Property="FocusVisualStyle" Value="{x:Null}" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ListBoxItem">
                         <Border x:Name="Bd"
-                    Background="{DynamicResource Brush.Surface}"
-                    BorderBrush="{DynamicResource Brush.Line}"
-                    BorderThickness="1"
-                    CornerRadius="14"
-                    Padding="14">
+                                Background="{DynamicResource Brush.Surface}"
+                                BorderBrush="{DynamicResource Brush.Line}"
+                                BorderThickness="1"
+                                CornerRadius="12"
+                                Padding="12,10"
+                                SnapsToDevicePixels="True">
                             <ContentPresenter />
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.BlueHover}" />
-                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Brush.BlueIconBg2}" />
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Brush.BlueFocus}" />
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
                                 <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.BlueSelected}" />
-                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Brush.BlueFocus}" />
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter TargetName="Bd" Property="Opacity" Value="0.45" />
@@ -92,400 +147,395 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <!-- Chip de Filtro para Recientes -->
+        <Style x:Key="LandingFilterChipStyle" TargetType="RadioButton">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
+            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="ChipBd" Background="{TemplateBinding Background}" CornerRadius="6" Padding="10,4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="ChipBd" Property="Background" Value="{DynamicResource Brush.Surface}" />
+                                <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </UserControl.Resources>
-    <Grid>
+
+    <Grid Background="{DynamicResource Brush.Canvas}">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="292" />
+            <!-- Columna 0: Sidebar Izquierdo Oscuro (260px) -->
+            <ColumnDefinition Width="260" />
+            <!-- Columna 1: Workspace Central con Proyectos y Plantillas (*) -->
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
+        <!-- ══════════════════════════════════════════════════════════════════════
+             COLUMNA 0 · SIDEBAR DE MARCA Y ACCIONES
+             ══════════════════════════════════════════════════════════════════════ -->
         <Border Grid.Column="0"
-            Background="{DynamicResource Brush.NavyDeep}"
-            BorderBrush="{DynamicResource Brush.NavyDeep2}"
-            BorderThickness="0,0,1,0">
-            <Grid Margin="24,24,24,18">
+                Background="{DynamicResource Brush.NavyDeep}"
+                BorderBrush="{DynamicResource Brush.NavyDeep2}"
+                BorderThickness="0,0,1,0">
+            <Grid Margin="20,22,20,16">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <StackPanel>
-                    <Border Width="64" Height="64" CornerRadius="16" Background="{DynamicResource Brush.PrimaryButton}" Margin="0,0,0,18">
-                        <Viewbox Width="36" Height="36">
-                            <Canvas Width="28" Height="28">
-                                <Polygon Points="14,1 27,7.5 27,20.5 14,27 1,20.5 1,7.5"
-                         Fill="{DynamicResource Brush.BrandDark}"
-                         Stroke="{DynamicResource Brush.Blue3}"
-                         StrokeThickness="1.3" />
-                                <Polygon Points="14,1 27,7.5 14,14 1,7.5"
-                         Fill="{DynamicResource Brush.BrandMid}"
-                         Stroke="{DynamicResource Brush.BrandStroke}"
-                         StrokeThickness="1" />
-                                <Path Data="M16 5 L11 14 L14 14 L12 23 L19 12 L16 12 Z"
-                      Fill="White"
-                      Stroke="{DynamicResource Brush.BrandStroke3}"
-                      StrokeThickness="0.5" />
-                            </Canvas>
-                        </Viewbox>
-                    </Border>
-                    <TextBlock Text="QUBI" Style="{StaticResource Text.HeaderBrand}" FontSize="{StaticResource Font.Size.hero}" />
-                    <TextBlock Text="COST ELECTRICAL" FontSize="{StaticResource Font.Size.sm}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.BlueFaint}" Margin="0,2,0,0" />
-                    <TextBlock Text="Presupuestos eléctricos" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.HeaderLabel}" Margin="0,8,0,0" TextWrapping="Wrap" MaxWidth="220" />
+                <!-- 1. Header con Logo Hexagonal de Marca -->
+                <StackPanel Grid.Row="0">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,16">
+                        <Border Width="44" Height="44" CornerRadius="12" Background="{DynamicResource Brush.PrimaryButton}" Margin="0,0,12,0">
+                            <Viewbox Width="26" Height="26">
+                                <Canvas Width="28" Height="28">
+                                    <Polygon Points="14,1 27,7.5 27,20.5 14,27 1,20.5 1,7.5"
+                                             Fill="{DynamicResource Brush.BrandDark}"
+                                             Stroke="{DynamicResource Brush.Blue3}"
+                                             StrokeThickness="1.3" />
+                                    <Polygon Points="14,1 27,7.5 14,14 1,7.5"
+                                             Fill="{DynamicResource Brush.BrandMid}"
+                                             Stroke="{DynamicResource Brush.BrandStroke}"
+                                             StrokeThickness="1" />
+                                    <Path Data="M16 5 L11 14 L14 14 L12 23 L19 12 L16 12 Z"
+                                          Fill="White"
+                                          Stroke="{DynamicResource Brush.BrandStroke3}"
+                                          StrokeThickness="0.5" />
+                                </Canvas>
+                            </Viewbox>
+                        </Border>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="QUBI COST" Style="{StaticResource Text.HeaderBrand}" FontSize="16" />
+                            <TextBlock Text="ELECTRICAL" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.BrandStroke2}" Margin="0,1,0,0" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <Border Height="1" Background="{DynamicResource Brush.White12}" Margin="0,0,0,16" />
                 </StackPanel>
 
-                <StackPanel Grid.Row="1" Margin="0,28,0,0">
-                    <TextBlock Text="ACCIONES" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderLabel}" Margin="2,0,0,10" />
+                <!-- 2. Acciones Principales y Recursos Centrales -->
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel>
+                        <!-- ACCIONES DIRECTAS -->
+                        <TextBlock Text="ACCIONES PRINCIPALES" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderLabel}" Margin="2,0,0,8" />
 
-                    <Button Style="{StaticResource LandingPrimaryActionButton}"
-                  Command="{Binding NewProjectCommand}"
-                  AutomationProperties.Name="Nuevo proyecto">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="28" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <Border Width="28" Height="28" CornerRadius="8" Background="{DynamicResource Brush.White25}" VerticalAlignment="Center">
-                                <Grid>
-                                    <Rectangle Width="12" Height="2" Fill="{DynamicResource Brush.White}" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    <Rectangle Width="2" Height="12" Fill="{DynamicResource Brush.White}" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                </Grid>
-                            </Border>
-                            <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
-                                <TextBlock Text="Nuevo proyecto" FontSize="{StaticResource Font.Size.kpi}" FontWeight="SemiBold" />
-                                <TextBlock Text="Crear un presupuesto desde cero" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.BlueFaint}" Margin="0,2,0,0" />
-                            </StackPanel>
-                        </Grid>
+                        <!-- Botón Hero: Nuevo Proyecto -->
+                        <Button Style="{StaticResource LandingHeroButton}"
+                                Command="{Binding NewProjectCommand}"
+                                ToolTip="Crear un nuevo presupuesto desde cero (Ctrl+N)"
+                                AutomationProperties.Name="Nuevo proyecto">
+                            <DockPanel LastChildFill="True">
+                                <Border DockPanel.Dock="Left" Width="30" Height="30" CornerRadius="9" Background="{DynamicResource Brush.White25}" Margin="0,0,10,0" VerticalAlignment="Center">
+                                    <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="14" Foreground="{DynamicResource Brush.White}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="Nuevo proyecto" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource Brush.White}" />
+                                    <TextBlock Text="Comenzar presupuesto nuevo" FontSize="10" Foreground="{DynamicResource Brush.BlueFaint}" Margin="0,1,0,0" />
+                                </StackPanel>
+                            </DockPanel>
+                        </Button>
+
+                        <!-- Botón Abrir Archivo -->
+                        <Button Style="{StaticResource LandingSidebarButtonBase}"
+                                Command="{Binding OpenProjectCommand}"
+                                ToolTip="Abrir archivo de presupuesto .qce (Ctrl+O)"
+                                AutomationProperties.Name="Abrir proyecto">
+                            <DockPanel LastChildFill="True">
+                                <Border DockPanel.Dock="Left" Width="28" Height="28" CornerRadius="8" Background="{DynamicResource Brush.White12}" Margin="0,0,10,0" VerticalAlignment="Center">
+                                    <TextBlock Text="&#xE8E5;" FontFamily="Segoe MDL2 Assets" FontSize="13" Foreground="{DynamicResource Brush.White}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="Abrir proyecto…" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.White}" />
+                                    <TextBlock Text="Cargar archivo .qce existente" FontSize="10" Foreground="{DynamicResource Brush.HeaderMuted}" Margin="0,1,0,0" />
+                                </StackPanel>
+                            </DockPanel>
+                        </Button>
+
+                        <!-- Separador -->
+                        <Border Height="1" Background="{DynamicResource Brush.White12}" Margin="0,12,0,14" />
+
+                        <!-- BIBLIOTECA Y HERRAMIENTAS -->
+                        <TextBlock Text="BIBLIOTECA &amp; SISTEMA" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderLabel}" Margin="2,0,0,8" />
+
+                        <Button Style="{StaticResource LandingNavButton}"
+                                Command="{Binding GoToPriceBankCommand}"
+                                ToolTip="Catálogo maestro de materiales y mano de obra"
+                                AutomationProperties.Name="Banco de precios">
+                            <DockPanel LastChildFill="True">
+                                <TextBlock DockPanel.Dock="Left" Text="&#xE8C7;" FontFamily="Segoe MDL2 Assets" FontSize="13" Foreground="{DynamicResource Brush.BrandStroke2}" Margin="2,0,10,0" VerticalAlignment="Center" />
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="Banco de precios" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.White}" />
+                                    <TextBlock Text="Materiales y precios vigentes" FontSize="9.5" Foreground="{DynamicResource Brush.HeaderMuted}" />
+                                </StackPanel>
+                            </DockPanel>
+                        </Button>
+
+                        <Button Style="{StaticResource LandingNavButton}"
+                                Command="{Binding GoToTemplatesCommand}"
+                                ToolTip="Conjuntos y modelos eléctricos reutilizables"
+                                AutomationProperties.Name="Plantillas APU">
+                            <DockPanel LastChildFill="True">
+                                <TextBlock DockPanel.Dock="Left" Text="&#xE896;" FontFamily="Segoe MDL2 Assets" FontSize="13" Foreground="{DynamicResource Brush.BrandStroke2}" Margin="2,0,10,0" VerticalAlignment="Center" />
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="Plantillas APU" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.White}" />
+                                    <TextBlock Text="Conjuntos y modelos normados" FontSize="9.5" Foreground="{DynamicResource Brush.HeaderMuted}" />
+                                </StackPanel>
+                            </DockPanel>
+                        </Button>
+
+                        <Button Style="{StaticResource LandingNavButton}"
+                                Command="{Binding GoToPreferencesCommand}"
+                                ToolTip="Configurar preferencias de usuario y atajos"
+                                AutomationProperties.Name="Preferencias">
+                            <DockPanel LastChildFill="True">
+                                <TextBlock DockPanel.Dock="Left" Text="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="13" Foreground="{DynamicResource Brush.BrandStroke2}" Margin="2,0,10,0" VerticalAlignment="Center" />
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="Preferencias" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.White}" />
+                                    <TextBlock Text="Ajustes y atajos de teclado" FontSize="9.5" Foreground="{DynamicResource Brush.HeaderMuted}" />
+                                </StackPanel>
+                            </DockPanel>
+                        </Button>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- 3. Footer con Salir y Versión -->
+                <StackPanel Grid.Row="2" Margin="0,12,0,0">
+                    <Border Height="1" Background="{DynamicResource Brush.White12}" Margin="0,0,0,12" />
+                    <Button Style="{StaticResource LandingNavButton}"
+                            Height="38"
+                            Command="{Binding ExitApplicationCommand}"
+                            ToolTip="Cerrar la aplicación"
+                            AutomationProperties.Name="Salir">
+                        <DockPanel LastChildFill="True">
+                            <TextBlock DockPanel.Dock="Left" Text="&#xE7E8;" FontFamily="Segoe MDL2 Assets" FontSize="12" Foreground="{DynamicResource Brush.HeaderDim}" Margin="2,0,8,0" VerticalAlignment="Center" />
+                            <TextBlock Text="Cerrar aplicación" FontSize="11" Foreground="{DynamicResource Brush.HeaderMuted}" VerticalAlignment="Center" />
+                        </DockPanel>
                     </Button>
-
-                    <Button Style="{StaticResource LandingSidebarActionButton}"
-                  Command="{Binding OpenProjectCommand}"
-                  AutomationProperties.Name="Abrir proyecto">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="28" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <Border Width="28" Height="28" CornerRadius="8" Background="{DynamicResource Brush.White12}" VerticalAlignment="Center">
-                                <Grid>
-                                    <Rectangle Width="14" Height="10" Stroke="{DynamicResource Brush.White}" StrokeThickness="1.4" RadiusX="1" RadiusY="1" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    <Rectangle Width="9" Height="4" Fill="{DynamicResource Brush.White}" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,8,0,0" />
-                                </Grid>
-                            </Border>
-                            <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
-                                <TextBlock Text="Abrir proyecto…" FontSize="{StaticResource Font.Size.kpi}" FontWeight="SemiBold" />
-                                <TextBlock Text="Continuar un archivo existente" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.HeaderMuted}" Margin="0,2,0,0" />
-                            </StackPanel>
-                        </Grid>
-                    </Button>
-
-                    <TextBlock Text="RECURSOS" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderLabel}" Margin="2,18,0,10" />
-
-                    <Button Style="{StaticResource LandingResourceButton}"
-                  Command="{Binding GoToPriceBankCommand}"
-                  AutomationProperties.Name="Banco de precios">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="28" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <Border Width="28" Height="28" CornerRadius="8" Background="{DynamicResource Brush.White8}" VerticalAlignment="Center">
-                                <Grid>
-                                    <Ellipse Width="13" Height="13" Stroke="{DynamicResource Brush.White}" StrokeThickness="1.4" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    <Rectangle Width="11" Height="2" Fill="{DynamicResource Brush.White}" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,4,0,0" />
-                                </Grid>
-                            </Border>
-                            <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
-                                <TextBlock Text="Banco de precios" FontSize="{StaticResource Font.Size.lg}" FontWeight="SemiBold" />
-                                <TextBlock Text="Buscar y mantener materiales" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.HeaderMuted}" Margin="0,1,0,0" />
-                            </StackPanel>
-                        </Grid>
-                    </Button>
-
-                    <Button Style="{StaticResource LandingResourceButton}"
-                  Command="{Binding GoToTemplatesCommand}"
-                  AutomationProperties.Name="Plantillas APU">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="28" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <Border Width="28" Height="28" CornerRadius="8" Background="{DynamicResource Brush.White8}" VerticalAlignment="Center">
-                                <Grid>
-                                    <Rectangle Width="12" Height="14" Stroke="{DynamicResource Brush.White}" StrokeThickness="1.3" RadiusX="1" RadiusY="1" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    <Line X1="8" Y1="11" X2="19" Y2="11" Stroke="{DynamicResource Brush.White}" StrokeThickness="1" />
-                                    <Line X1="8" Y1="14" X2="17" Y2="14" Stroke="{DynamicResource Brush.White}" StrokeThickness="1" />
-                                </Grid>
-                            </Border>
-                            <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
-                                <TextBlock Text="Plantillas APU" FontSize="{StaticResource Font.Size.lg}" FontWeight="SemiBold" />
-                                <TextBlock Text="Cargar bases y modelos" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.HeaderMuted}" Margin="0,1,0,0" />
-                            </StackPanel>
-                        </Grid>
-                    </Button>
-
-                    <Button Style="{StaticResource LandingResourceButton}"
-                  Command="{Binding GoToPreferencesCommand}"
-                  AutomationProperties.Name="Preferencias">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="28" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <Border Width="28" Height="28" CornerRadius="8" Background="{DynamicResource Brush.White8}" VerticalAlignment="Center">
-                                <Grid>
-                                    <Ellipse Width="13" Height="13" Stroke="{DynamicResource Brush.White}" StrokeThickness="1.3" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    <Ellipse Width="4" Height="4" Fill="{DynamicResource Brush.White}" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                </Grid>
-                            </Border>
-                            <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
-                                <TextBlock Text="Preferencias" FontSize="{StaticResource Font.Size.lg}" FontWeight="SemiBold" />
-                                <TextBlock Text="Personalizar la aplicación" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.HeaderMuted}" Margin="0,1,0,0" />
-                            </StackPanel>
-                        </Grid>
-                    </Button>
-                </StackPanel>
-
-                <StackPanel Grid.Row="2">
-                    <Button Style="{StaticResource LandingResourceButton}"
-                  Command="{Binding ExitApplicationCommand}"
-                  AutomationProperties.Name="Salir">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="28" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <Border Width="28" Height="28" CornerRadius="8" Background="{DynamicResource Brush.White8}" VerticalAlignment="Center">
-                                <Grid>
-                                    <Rectangle Width="10" Height="12" Stroke="{DynamicResource Brush.HeaderMuted}" StrokeThickness="1.3" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,4,0" />
-                                    <Polygon Points="12,8 17,10 12,12" Fill="{DynamicResource Brush.HeaderMuted}" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="4,0,0,0" />
-                                </Grid>
-                            </Border>
-                            <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
-                                <TextBlock Text="Salir" FontSize="{StaticResource Font.Size.lg}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.HeaderMuted}" />
-                                <TextBlock Text="Cerrar la aplicación" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.HeaderDim}" Margin="0,1,0,0" />
-                            </StackPanel>
-                        </Grid>
-                    </Button>
-                    <Border Height="1" Background="{DynamicResource Brush.White18}" Margin="0,14,0,14" />
-                    <TextBlock Text="{Binding VersionLabel}" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink5}" />
+                    <TextBlock Text="{Binding VersionLabel}" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.HeaderDim}" Margin="4,6,0,0" />
                 </StackPanel>
             </Grid>
         </Border>
 
-        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-            <Grid Margin="28,24,28,28">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
+        <!-- ══════════════════════════════════════════════════════════════════════
+             COLUMNA 1 · ÁREA DE TRABAJO PRINCIPAL
+             ══════════════════════════════════════════════════════════════════════ -->
+        <Grid Grid.Column="1" Margin="28,20,28,20">
+            <Grid.RowDefinitions>
+                <!-- Row 0: Header Ejecutivo Superior con Saludo y Proyecto Activo -->
+                <RowDefinition Height="Auto" />
+                <!-- Row 1: Split en 2 Paneles (Izquierda: Recientes | Derecha: Plantillas & KPIs) -->
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
 
-                <StackPanel>
-                    <TextBlock Text="Proyectos" Style="{StaticResource Text.ViewTitle}" FontSize="{StaticResource Font.Size.3xl}" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" />
-                    <TextBlock Text="Abre uno reciente o crea un presupuesto nuevo."
-                     Style="{StaticResource Text.Body}"
-                     FontSize="{StaticResource Font.Size.lg}"
-                     Foreground="{DynamicResource Brush.Ink3}"
-                     Margin="0,6,0,0" />
-                    <Border Margin="0,18,0,0"
-                  HorizontalAlignment="Left"
-                  Background="{DynamicResource Brush.BlueFaint}"
-                  BorderBrush="{DynamicResource Brush.Line}"
-                  BorderThickness="1"
-                  CornerRadius="14"
-                  Padding="14,10"
-                  Visibility="{Binding HasOpenProject, Converter={StaticResource BoolToVisibility}}">
-                        <StackPanel>
-                            <TextBlock Text="Proyecto activo" FontSize="{StaticResource Font.Size.xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink3}" />
-                            <TextBlock Text="{Binding ActiveProjectLabel, Mode=OneWay}"
-                          FontSize="{StaticResource Font.Size.h3}"
-                          FontWeight="SemiBold"
-                          Foreground="{DynamicResource Brush.Ink}"
-                          TextTrimming="CharacterEllipsis"
-                          MaxWidth="420"
-                          Margin="0,2,0,0" />
+            <!-- 1. HEADER DE BIENVENIDA -->
+            <Grid Grid.Row="0" Margin="0,0,0,18">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="{Binding GreetingText, FallbackValue='Centro de Presupuestos'}"
+                               FontSize="22" FontWeight="Bold"
+                               Foreground="{DynamicResource Brush.Ink}" />
+                    <TextBlock Text="Selecciona un proyecto reciente para continuar o crea una nueva oferta normada SEC / RIC."
+                               FontSize="12" Foreground="{DynamicResource Brush.Ink3}" Margin="0,3,0,0" />
+                </StackPanel>
+
+                <!-- Banner reactivo si hay un proyecto abierto en memoria -->
+                <Border Grid.Column="1"
+                        Background="{DynamicResource Brush.BlueSoft}"
+                        BorderBrush="{DynamicResource Brush.BlueFocus}"
+                        BorderThickness="1"
+                        CornerRadius="10"
+                        Padding="12,8"
+                        VerticalAlignment="Center"
+                        Visibility="{Binding HasOpenProject, Converter={StaticResource BoolToVisibility}}">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Width="8" Height="8" CornerRadius="4" Background="{DynamicResource Brush.SuccessBright}" Margin="0,0,8,0" VerticalAlignment="Center" />
+                        <StackPanel VerticalAlignment="Center" Margin="0,0,12,0">
+                            <TextBlock Text="PROYECTO EN MEMORIA" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.BlueDark}" />
+                            <TextBlock Text="{Binding ActiveProjectLabel, Mode=OneWay}" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink}" MaxWidth="260" TextTrimming="CharacterEllipsis" />
                         </StackPanel>
-                    </Border>
-
-                    <!-- Cifras de contexto del equipo: resumen de los proyectos listados -->
-                    <StackPanel Margin="0,22,0,0"
-                                Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}}">
-                        <DockPanel Margin="0,0,0,10">
-                            <TextBlock Text="ESTADO DE LOS PROYECTOS DE ESTE EQUIPO" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderLabel}" />
-                            <TextBlock Text="Clasificación por etapa del presupuesto" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.Ink3}" HorizontalAlignment="Right" />
-                        </DockPanel>
-
-                        <ItemsControl ItemsSource="{Binding QuickSummaryCards}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <UniformGrid Columns="4" />
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border Style="{StaticResource LandingMetricCard}" Margin="0,0,8,0">
-                                        <StackPanel>
-                                            <TextBlock Text="{Binding Title}" FontSize="{StaticResource Font.Size.xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink3}" TextTrimming="CharacterEllipsis" />
-                                            <DockPanel Margin="0,6,0,2">
-                                                <Border DockPanel.Dock="Left" Width="3" CornerRadius="2" Background="{Binding AccentBrush}" Margin="0,4,9,4" />
-                                                <TextBlock Text="{Binding Value}" FontSize="{StaticResource Font.Size.2xl}" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" />
-                                            </DockPanel>
-                                            <TextBlock Text="{Binding Caption}" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.Muted}" TextTrimming="CharacterEllipsis" />
-                                        </StackPanel>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                        <Button Style="{StaticResource Button.Primary}"
+                                Content="Volver al proyecto →"
+                                Command="{Binding ContinueTakeoffCommand}"
+                                Padding="10,4"
+                                Height="26"
+                                FontSize="10.5" />
                     </StackPanel>
-                </StackPanel>
+                </Border>
+            </Grid>
 
-                <!-- Galería de Plantillas Rápidas SEC / RIC -->
-                <StackPanel Grid.Row="1" Margin="0,20,0,0" Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}}">
-                    <DockPanel Margin="0,0,0,10">
-                        <TextBlock Text="PLANTILLAS RÁPIDAS NORMATIVA SEC / RIC" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderLabel}" />
-                        <TextBlock Text="Inicia un presupuesto en 1 clic con estructura normada" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.Ink3}" HorizontalAlignment="Right" />
-                    </DockPanel>
+            <!-- 2. CUERPO PRINCIPAL: RECIENTES + ACCESOS RÁPIDOS -->
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <!-- Columna A: Proyectos Recientes (Corazón del día a día) -->
+                    <ColumnDefinition Width="*" MinWidth="480" />
+                    <ColumnDefinition Width="20" />
+                    <!-- Columna B: Plantillas Normativas RIC & Métricas de Productividad -->
+                    <ColumnDefinition Width="380" MinWidth="320" MaxWidth="440" />
+                </Grid.ColumnDefinitions>
 
-                    <ItemsControl ItemsSource="{Binding QuickTemplates}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <UniformGrid Columns="4" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Button Command="{Binding UseTemplateCommand}"
-                                        Margin="0,0,8,0"
-                                        Padding="0"
-                                        Background="Transparent"
-                                        BorderThickness="0"
-                                        Cursor="Hand">
-                                    <Button.Template>
-                                        <ControlTemplate TargetType="Button">
-                                            <Border x:Name="CardBorder"
-                                                    Background="{DynamicResource Brush.Surface}"
-                                                    BorderBrush="{DynamicResource Brush.Line}"
-                                                    BorderThickness="1"
-                                                    CornerRadius="14"
-                                                    Padding="14"
-                                                    MinHeight="130">
-                                                <Grid>
-                                                    <Grid.RowDefinitions>
-                                                        <RowDefinition Height="Auto" />
-                                                        <RowDefinition Height="Auto" />
-                                                        <RowDefinition Height="*" />
-                                                        <RowDefinition Height="Auto" />
-                                                    </Grid.RowDefinitions>
-
-                                                    <!-- Icon & Badge Header -->
-                                                    <DockPanel Grid.Row="0">
-                                                        <Border Width="34" Height="34" CornerRadius="10" Background="{Binding AccentSoftBrush}" VerticalAlignment="Center">
-                                                            <TextBlock Text="{Binding Icon}" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                                        </Border>
-                                                        <Border HorizontalAlignment="Right" Background="{Binding AccentSoftBrush}" CornerRadius="6" Padding="6,2" VerticalAlignment="Center">
-                                                            <TextBlock Text="{Binding NormaSec}" FontSize="10" FontWeight="Bold" Foreground="{Binding AccentBrush}" />
-                                                        </Border>
-                                                    </DockPanel>
-
-                                                    <!-- Title & Subtitle -->
-                                                    <StackPanel Grid.Row="1" Margin="0,10,0,4">
-                                                        <TextBlock Text="{Binding Title}" FontSize="{StaticResource Font.Size.md}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink}" TextTrimming="CharacterEllipsis" />
-                                                        <TextBlock Text="{Binding Subtitle}" FontSize="11" Foreground="{DynamicResource Brush.Ink3}" Margin="0,1,0,0" />
-                                                    </StackPanel>
-
-                                                    <!-- Description -->
-                                                    <TextBlock Grid.Row="2" Text="{Binding Description}" FontSize="11" Foreground="{DynamicResource Brush.Ink4}" TextWrapping="Wrap" LineHeight="15" Margin="0,2,0,8" />
-
-                                                    <!-- CTA -->
-                                                    <StackPanel Grid.Row="3" Orientation="Horizontal">
-                                                        <TextBlock Text="Usar plantilla" FontSize="11" FontWeight="SemiBold" Foreground="{Binding AccentBrush}" VerticalAlignment="Center" />
-                                                        <TextBlock Text=" →" FontSize="11" FontWeight="SemiBold" Foreground="{Binding AccentBrush}" VerticalAlignment="Center" Margin="2,0,0,0" />
-                                                    </StackPanel>
-                                                </Grid>
-                                            </Border>
-                                            <ControlTemplate.Triggers>
-                                                <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter TargetName="CardBorder" Property="Background" Value="{DynamicResource Brush.BlueHover}" />
-                                                    <Setter TargetName="CardBorder" Property="BorderBrush" Value="{DynamicResource Brush.BlueIconBg2}" />
-                                                </Trigger>
-                                                <Trigger Property="IsPressed" Value="True">
-                                                    <Setter TargetName="CardBorder" Property="Background" Value="{DynamicResource Brush.BlueSelected}" />
-                                                    <Setter TargetName="CardBorder" Property="BorderBrush" Value="{DynamicResource Brush.BlueFocus}" />
-                                                </Trigger>
-                                            </ControlTemplate.Triggers>
-                                        </ControlTemplate>
-                                    </Button.Template>
-                                </Button>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </StackPanel>
-
-                <Border Grid.Row="2" Style="{StaticResource Card.Section}" Margin="0,20,0,20"
-                        Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}}">
+                <!-- ══════════════════════════════════════════════
+                     COLUMNA A: HISTORIAL Y PROYECTOS RECIENTES
+                     ══════════════════════════════════════════════ -->
+                <Border Grid.Column="0"
+                        Background="{DynamicResource Brush.Surface}"
+                        BorderBrush="{DynamicResource Brush.Line}"
+                        BorderThickness="1"
+                        CornerRadius="14"
+                        Padding="16,14">
                     <Grid>
                         <Grid.RowDefinitions>
+                            <!-- Row 0: Barra de herramientas con título, chips y buscador -->
                             <RowDefinition Height="Auto" />
+                            <!-- Row 1: Drop Target Visual de Arrastrar y Soltar -->
                             <RowDefinition Height="Auto" />
+                            <!-- Row 2: Lista de Proyectos con scroll fluido -->
+                            <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
 
-                        <DockPanel Margin="0,0,0,16">
-                            <TextBlock Text="Proyectos recientes" Style="{StaticResource Text.PageTitle}" FontSize="{StaticResource Font.Size.xl}" />
-                        </DockPanel>
+                        <!-- BARRA DE HERRAMIENTAS DE RECIENTES -->
+                        <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,12">
+                            <!-- Lado izquierdo: Título y Selector de Filtro -->
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="Proyectos recientes" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                
+                                <Border Background="{DynamicResource Brush.BlueSoft}" CornerRadius="10" Padding="7,2" Margin="0,0,12,0" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding TotalRecentProjectsCount, FallbackValue='0'}" FontSize="10.5" FontWeight="Bold" Foreground="{DynamicResource Brush.BlueDark}" />
+                                </Border>
 
-                        <Grid Grid.Row="1">
-                            <Grid Visibility="{Binding HasRecentProjects, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
-                                <Border Background="{DynamicResource Brush.BlueFaint}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="14" Padding="28" HorizontalAlignment="Stretch">
-                                    <StackPanel HorizontalAlignment="Center" MaxWidth="460">
-                                        <Border Width="56" Height="56" CornerRadius="18" Background="{DynamicResource Brush.BlueSoft}" HorizontalAlignment="Center">
-                                            <Grid>
-                                                <Rectangle Width="22" Height="16" Stroke="{DynamicResource Brush.Blue}" StrokeThickness="1.5" RadiusX="2" RadiusY="2" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                                <Rectangle Width="12" Height="4" Fill="{DynamicResource Brush.Blue}" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,19,0,0" />
-                                            </Grid>
-                                        </Border>
-                                        <TextBlock Text="Todavía no tienes proyectos recientes"
-                               FontSize="{StaticResource Font.Size.h2}"
-                               FontWeight="SemiBold"
-                               Foreground="{DynamicResource Brush.Ink}"
-                               TextAlignment="Center"
-                               Margin="0,18,0,6" />
-                                        <TextBlock Text="Crea un proyecto nuevo o abre uno existente para comenzar."
-                               FontSize="{StaticResource Font.Size.md}"
-                                Foreground="{DynamicResource Brush.Ink3}"
-                                TextAlignment="Center"
-                                TextWrapping="Wrap"
-                                Margin="0,0,0,18" />
-                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                            <Button Style="{StaticResource Button.Primary}" Content="Nuevo proyecto" Command="{Binding NewProjectCommand}" Margin="0,0,8,0" />
-                                            <Button Style="{StaticResource Button.Secondary}" Content="Abrir proyecto…" Command="{Binding OpenProjectCommand}" />
-                                        </StackPanel>
+                                <!-- Selector de Chips: [ Todos ] · [ 📌 Fijados ] -->
+                                <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="8" Padding="2" VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal">
+                                        <RadioButton Content="Todos"
+                                                     Style="{StaticResource LandingFilterChipStyle}"
+                                                     IsChecked="{Binding IsRecentFilterAll, Mode=TwoWay}"
+                                                     Command="{Binding SetRecentFilterAllCommand}" />
+                                        <RadioButton Content="📌 Fijados"
+                                                     Style="{StaticResource LandingFilterChipStyle}"
+                                                     IsChecked="{Binding IsRecentFilterPinnedOnly, Mode=TwoWay}"
+                                                     Command="{Binding SetRecentFilterPinnedCommand}" />
                                     </StackPanel>
                                 </Border>
-                            </Grid>
+                            </StackPanel>
 
+                            <!-- Lado derecho: Buscador reactivo en vivo -->
+                            <Border DockPanel.Dock="Right"
+                                    Width="220"
+                                    Height="32"
+                                    Background="{DynamicResource Brush.Surface2}"
+                                    BorderBrush="{DynamicResource Brush.Line}"
+                                    BorderThickness="1"
+                                    CornerRadius="8"
+                                    VerticalAlignment="Center">
+                                <DockPanel Margin="8,0">
+                                    <TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="11" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                                    <Button DockPanel.Dock="Right"
+                                            Command="{Binding ClearRecentSearchCommand}"
+                                            Visibility="{Binding HasRecentSearchText, Converter={StaticResource BoolToVisibility}}"
+                                            Background="Transparent"
+                                            BorderThickness="0"
+                                            Padding="2"
+                                            Cursor="Hand"
+                                            ToolTip="Borrar búsqueda">
+                                        <TextBlock Text="✕" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" />
+                                    </Button>
+                                    <TextBox Text="{Binding RecentSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                             Background="Transparent"
+                                             BorderThickness="0"
+                                             VerticalContentAlignment="Center"
+                                             FontSize="11.5"
+                                             Foreground="{DynamicResource Brush.Ink}"
+                                             CaretBrush="{DynamicResource Brush.Blue}"
+                                             Tag="Buscar por nombre o ruta…" />
+                                </DockPanel>
+                            </Border>
+                        </DockPanel>
+
+                        <!-- DROP TARGET VISUAL (Arrastrar y Soltar) -->
+                        <Border Grid.Row="1"
+                                Margin="0,0,0,12"
+                                Height="42"
+                                Background="{DynamicResource Brush.BlueHover}"
+                                BorderBrush="{DynamicResource Brush.BlueFocus}"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                Cursor="Hand">
+                            <Border.InputBindings>
+                                <MouseBinding MouseAction="LeftClick" Command="{Binding OpenProjectCommand}" />
+                            </Border.InputBindings>
+                            <DockPanel LastChildFill="True" Margin="12,0">
+                                <Border DockPanel.Dock="Left" Width="22" Height="22" CornerRadius="6" Background="{DynamicResource Brush.BlueSoft}" Margin="0,0,10,0" VerticalAlignment="Center">
+                                    <TextBlock Text="&#xE8E5;" FontFamily="Segoe MDL2 Assets" FontSize="11" Foreground="{DynamicResource Brush.Blue}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <TextBlock Text="Arrastra y suelta un archivo .qce aquí para abrirlo al instante, o haz clic para explorar"
+                                           FontSize="11" FontWeight="Medium" Foreground="{DynamicResource Brush.BlueDark}" VerticalAlignment="Center" />
+                            </DockPanel>
+                        </Border>
+
+                        <!-- LISTA DE PROYECTOS RECIENTES -->
+                        <Grid Grid.Row="2">
+                            <!-- Empty State si no hay proyectos en la lista -->
+                            <Border Background="{DynamicResource Brush.Surface2}"
+                                    BorderBrush="{DynamicResource Brush.Line}"
+                                    BorderThickness="1"
+                                    CornerRadius="12"
+                                    Padding="24"
+                                    VerticalAlignment="Center"
+                                    HorizontalAlignment="Center"
+                                    MaxWidth="380"
+                                    Visibility="{Binding HasRecentProjects, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
+                                <StackPanel HorizontalAlignment="Center">
+                                    <Border Width="48" Height="48" CornerRadius="14" Background="{DynamicResource Brush.BlueSoft}" HorizontalAlignment="Center" Margin="0,0,0,12">
+                                        <TextBlock Text="&#xE8B7;" FontFamily="Segoe MDL2 Assets" FontSize="20" Foreground="{DynamicResource Brush.Blue}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <TextBlock Text="Sin proyectos recientes" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" TextAlignment="Center" />
+                                    <TextBlock Text="Crea tu primer presupuesto o abre un archivo existente para comenzar a trabajar."
+                                               FontSize="11" Foreground="{DynamicResource Brush.Ink3}" TextAlignment="Center" TextWrapping="Wrap" Margin="0,4,0,14" />
+                                    <Button Style="{StaticResource Button.Primary}" Content="Crear nuevo proyecto" Command="{Binding NewProjectCommand}" HorizontalAlignment="Center" Padding="14,6" />
+                                </StackPanel>
+                            </Border>
+
+                            <!-- ListBox con ItemsSource enlazado a FilteredRecentProjects -->
                             <ListBox x:Name="RecentProjectsList"
-                       ItemsSource="{Binding RecentProjects}"
-                       Visibility="{Binding HasRecentProjects, Converter={StaticResource BoolToVisibility}}"
-                       Background="Transparent"
-                       BorderThickness="0"
-                       ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                       ScrollViewer.VerticalScrollBarVisibility="Disabled"
-                       ItemContainerStyle="{StaticResource RecentProjectContainer}"
-                       SelectionMode="Single"
-                       SelectionChanged="OnRecentProjectsSelectionChanged"
-                       MouseDoubleClick="OnRecentProjectsMouseDoubleClick"
-                       PreviewKeyDown="OnRecentProjectsPreviewKeyDown">
+                                     ItemsSource="{Binding FilteredRecentProjects}"
+                                     Visibility="{Binding HasRecentProjects, Converter={StaticResource BoolToVisibility}}"
+                                     Background="Transparent"
+                                     BorderThickness="0"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                     ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                     ItemContainerStyle="{StaticResource RecentProjectContainer}"
+                                     SelectionMode="Single"
+                                     SelectionChanged="OnRecentProjectsSelectionChanged"
+                                     MouseDoubleClick="OnRecentProjectsMouseDoubleClick"
+                                     PreviewKeyDown="OnRecentProjectsPreviewKeyDown">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
                                         <Grid Background="Transparent">
-                                            <!-- Menú contextual al hacer clic derecho en cualquier parte de la tarjeta -->
+                                            <!-- Menú Contextual al hacer clic derecho -->
                                             <Grid.ContextMenu>
                                                 <ContextMenu>
                                                     <MenuItem Header="Abrir proyecto" Command="{Binding OpenCommand}" FontWeight="SemiBold">
                                                         <MenuItem.Icon>
-                                                            <TextBlock Text="&#xE838;" FontFamily="Segoe MDL2 Assets" FontSize="13" />
+                                                            <TextBlock Text="&#xE8E5;" FontFamily="Segoe MDL2 Assets" FontSize="13" />
                                                         </MenuItem.Icon>
                                                     </MenuItem>
                                                     <Separator />
@@ -501,7 +551,7 @@
                                                             <TextBlock Text="&#xE77A;" FontFamily="Segoe MDL2 Assets" FontSize="13" />
                                                         </MenuItem.Icon>
                                                     </MenuItem>
-                                                    <MenuItem Header="Abrir ubicación en el Explorador" Command="{Binding OpenFolderCommand}">
+                                                    <MenuItem Header="Abrir carpeta en el Explorador" Command="{Binding OpenFolderCommand}">
                                                         <MenuItem.Icon>
                                                             <TextBlock Text="&#xED25;" FontFamily="Segoe MDL2 Assets" FontSize="13" />
                                                         </MenuItem.Icon>
@@ -512,7 +562,7 @@
                                                         </MenuItem.Icon>
                                                     </MenuItem>
                                                     <Separator />
-                                                    <MenuItem Header="Quitar de la lista de recientes" Command="{Binding RemoveRecentCommand}">
+                                                    <MenuItem Header="Quitar de la lista" Command="{Binding RemoveRecentCommand}">
                                                         <MenuItem.Icon>
                                                             <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="13" />
                                                         </MenuItem.Icon>
@@ -521,63 +571,53 @@
                                             </Grid.ContextMenu>
 
                                             <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="64" />
+                                                <ColumnDefinition Width="42" />
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
 
-                                            <!-- Ícono de proyecto -->
-                                            <Border Width="48" Height="48" CornerRadius="14" Background="{Binding AccentSoftBrush}" VerticalAlignment="Center">
-                                                <Grid>
-                                                    <Rectangle Width="20" Height="20" RadiusX="4" RadiusY="4" Stroke="{Binding AccentBrush}" StrokeThickness="1.4" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                                    <Rectangle Width="8" Height="8" Fill="{Binding AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                                </Grid>
+                                            <!-- Ícono de Archivo con acento suave -->
+                                            <Border Width="34" Height="34" CornerRadius="10" Background="{Binding AccentSoftBrush}" VerticalAlignment="Center">
+                                                <TextBlock Text="&#xE8B7;" FontFamily="Segoe MDL2 Assets" FontSize="14" Foreground="{Binding AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                             </Border>
 
-                                            <!-- Nombre y Ruta -->
-                                            <StackPanel Grid.Column="1" Margin="4,2,16,0" VerticalAlignment="Center">
+                                            <!-- Título y Ruta -->
+                                            <StackPanel Grid.Column="1" Margin="10,0,12,0" VerticalAlignment="Center">
                                                 <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="{Binding Name}" FontSize="{StaticResource Font.Size.h3}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink}" TextTrimming="CharacterEllipsis" MaxWidth="520" />
-                                                    <Border Background="{DynamicResource Brush.AmberSoft}" BorderBrush="{DynamicResource Brush.Amber2}" BorderThickness="1" CornerRadius="6" Padding="6,2" Margin="8,0,0,0" VerticalAlignment="Center"
+                                                    <TextBlock Text="{Binding Name}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink}" TextTrimming="CharacterEllipsis" MaxWidth="380" />
+                                                    <Border Background="{DynamicResource Brush.AmberSoft}" BorderBrush="{DynamicResource Brush.Amber2}" BorderThickness="1" CornerRadius="5" Padding="5,1" Margin="6,0,0,0" VerticalAlignment="Center"
                                                             Visibility="{Binding IsPinned, Converter={StaticResource BoolToVisibility}}">
-                                                        <StackPanel Orientation="Horizontal">
-                                                            <TextBlock Text="&#xE840;" FontFamily="Segoe MDL2 Assets" FontSize="9" Margin="0,0,4,0" VerticalAlignment="Center" Foreground="{DynamicResource Brush.Amber}" />
-                                                            <TextBlock Text="Fijado" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Amber}" VerticalAlignment="Center" />
-                                                        </StackPanel>
+                                                        <TextBlock Text="📌 Fijado" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Amber}" />
                                                     </Border>
                                                 </StackPanel>
-                                                <TextBlock Text="{Binding DisplayPath}" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink3}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Path}" Margin="0,3,0,0" MaxWidth="620" />
-                                                <TextBlock Text="{Binding StatusCaption}" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.Muted}" Margin="0,3,0,0" />
+                                                <TextBlock Text="{Binding DisplayPath}" FontSize="10" Foreground="{DynamicResource Brush.Ink3}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Path}" Margin="0,2,0,0" MaxWidth="440" />
                                             </StackPanel>
 
-                                            <!-- Estado, Fecha y Botón de Opciones (···) -->
+                                            <!-- Estado, Fecha y Menú 3 puntos -->
                                             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                                                <StackPanel HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,10,0">
-                                                    <Border Background="{Binding AccentSoftBrush}" CornerRadius="10" Padding="10,4" HorizontalAlignment="Right">
-                                                        <TextBlock Text="{Binding StatusText}" FontSize="{StaticResource Font.Size.xs}" FontWeight="SemiBold" Foreground="{Binding StatusForeground}" />
+                                                <StackPanel HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0">
+                                                    <Border Background="{Binding AccentSoftBrush}" CornerRadius="6" Padding="8,2" HorizontalAlignment="Right">
+                                                        <TextBlock Text="{Binding StatusText}" FontSize="9.5" FontWeight="Bold" Foreground="{Binding StatusForeground}" />
                                                     </Border>
-                                                    <TextBlock Text="{Binding DisplayDate}" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.Ink3}" HorizontalAlignment="Right" Margin="0,6,0,0" />
+                                                    <TextBlock Text="{Binding DisplayDate}" FontSize="9.5" Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Right" Margin="0,3,0,0" />
                                                 </StackPanel>
 
-                                                <!-- Botón 3 puntos -->
+                                                <!-- Botón 3 Puntos (···) -->
                                                 <Button Click="OnProjectOptionsButtonClick"
-                                                        ToolTip="Opciones del proyecto"
-                                                        Width="30" Height="30"
+                                                        ToolTip="Opciones de proyecto"
+                                                        Width="28" Height="28"
                                                         Background="Transparent"
                                                         BorderThickness="0"
                                                         Cursor="Hand"
                                                         VerticalAlignment="Center">
                                                     <Button.Template>
                                                         <ControlTemplate TargetType="Button">
-                                                            <Border x:Name="Bd" Background="Transparent" CornerRadius="8" Padding="4">
-                                                                <TextBlock Text="&#xE712;" FontFamily="Segoe MDL2 Assets" FontSize="12" Foreground="{DynamicResource Brush.Ink3}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                            <Border x:Name="OptBd" Background="Transparent" CornerRadius="6" Padding="4">
+                                                                <TextBlock Text="&#xE712;" FontFamily="Segoe MDL2 Assets" FontSize="11" Foreground="{DynamicResource Brush.Ink3}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                                             </Border>
                                                             <ControlTemplate.Triggers>
                                                                 <Trigger Property="IsMouseOver" Value="True">
-                                                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.Line}" />
-                                                                </Trigger>
-                                                                <Trigger Property="IsPressed" Value="True">
-                                                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+                                                                    <Setter TargetName="OptBd" Property="Background" Value="{DynamicResource Brush.Surface2}" />
                                                                 </Trigger>
                                                             </ControlTemplate.Triggers>
                                                         </ControlTemplate>
@@ -591,7 +631,154 @@
                         </Grid>
                     </Grid>
                 </Border>
+
+                <!-- ══════════════════════════════════════════════
+                     COLUMNA B: PLANTILLAS RIC & MÉTRICAS DE EQUIPO
+                     ══════════════════════════════════════════════ -->
+                <Grid Grid.Column="2">
+                    <Grid.RowDefinitions>
+                        <!-- Row 0: Métricas del Taller (2x2 Grid) -->
+                        <RowDefinition Height="Auto" />
+                        <!-- Row 1: Plantillas Rápidas Normadas SEC/RIC -->
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <!-- MÉTRICAS DE CONTEXTO DEL EQUIPO (2x2) -->
+                    <Border Grid.Row="0"
+                            Background="{DynamicResource Brush.Surface}"
+                            BorderBrush="{DynamicResource Brush.Line}"
+                            BorderThickness="1"
+                            CornerRadius="14"
+                            Padding="14"
+                            Margin="0,0,0,14">
+                        <StackPanel>
+                            <DockPanel Margin="0,0,0,10">
+                                <TextBlock Text="ESTADO DEL HISTORIAL" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderLabel}" />
+                                <TextBlock Text="Clasificación por avance" FontSize="9.5" Foreground="{DynamicResource Brush.Ink4}" HorizontalAlignment="Right" />
+                            </DockPanel>
+
+                            <ItemsControl ItemsSource="{Binding QuickSummaryCards}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <UniformGrid Columns="2" Rows="2" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="{DynamicResource Brush.Surface2}"
+                                                BorderBrush="{DynamicResource Brush.Line}"
+                                                BorderThickness="1"
+                                                CornerRadius="10"
+                                                Padding="10,8"
+                                                Margin="3">
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Title}" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink3}" TextTrimming="CharacterEllipsis" />
+                                                <DockPanel Margin="0,4,0,2">
+                                                    <Border DockPanel.Dock="Left" Width="3" Height="14" CornerRadius="2" Background="{Binding AccentBrush}" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                                    <TextBlock Text="{Binding Value}" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" />
+                                                </DockPanel>
+                                                <TextBlock Text="{Binding Caption}" FontSize="9" Foreground="{DynamicResource Brush.Muted}" TextTrimming="CharacterEllipsis" />
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- PLANTILLAS RÁPIDAS NORMATIVA SEC / RIC -->
+                    <Border Grid.Row="1"
+                            Background="{DynamicResource Brush.Surface}"
+                            BorderBrush="{DynamicResource Brush.Line}"
+                            BorderThickness="1"
+                            CornerRadius="14"
+                            Padding="14">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <DockPanel Grid.Row="0" Margin="0,0,0,10">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="PLANTILLAS RÁPIDAS RIC" FontSize="10.5" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderLabel}" />
+                                        <Border Background="{DynamicResource Brush.BlueSoft}" CornerRadius="5" Padding="5,1" Margin="6,0,0,0">
+                                            <TextBlock Text="RIC N° 01 al 19" FontSize="8.5" FontWeight="Bold" Foreground="{DynamicResource Brush.BlueDark}" />
+                                        </Border>
+                                    </StackPanel>
+                                    <TextBlock Text="Inicia en 1 clic con estructura y alimentadores normados" FontSize="10" Foreground="{DynamicResource Brush.Ink3}" Margin="0,2,0,0" />
+                                </StackPanel>
+                            </DockPanel>
+
+                            <!-- Lista vertical de Plantillas Rápidas -->
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                <ItemsControl ItemsSource="{Binding QuickTemplates}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Button Command="{Binding UseTemplateCommand}"
+                                                    Margin="0,0,0,8"
+                                                    Padding="0"
+                                                    Background="Transparent"
+                                                    BorderThickness="0"
+                                                    Cursor="Hand">
+                                                <Button.Template>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <Border x:Name="TplCard"
+                                                                Background="{DynamicResource Brush.Surface2}"
+                                                                BorderBrush="{DynamicResource Brush.Line}"
+                                                                BorderThickness="1"
+                                                                CornerRadius="10"
+                                                                Padding="10,8">
+                                                            <Grid>
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="34" />
+                                                                    <ColumnDefinition Width="*" />
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                </Grid.ColumnDefinitions>
+
+                                                                <!-- Icono de Plantilla -->
+                                                                <Border Width="28" Height="28" CornerRadius="8" Background="{Binding AccentSoftBrush}" VerticalAlignment="Center">
+                                                                    <TextBlock Text="{Binding Icon}" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                                </Border>
+
+                                                                <!-- Título, Subtítulo y Norma -->
+                                                                <StackPanel Grid.Column="1" Margin="8,0,8,0" VerticalAlignment="Center">
+                                                                    <DockPanel LastChildFill="True">
+                                                                        <Border DockPanel.Dock="Right" Background="{Binding AccentSoftBrush}" CornerRadius="4" Padding="4,1" Margin="4,0,0,0" VerticalAlignment="Center">
+                                                                            <TextBlock Text="{Binding NormaSec}" FontSize="8.5" FontWeight="Bold" Foreground="{Binding AccentBrush}" />
+                                                                        </Border>
+                                                                        <TextBlock Text="{Binding Title}" FontSize="11.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" TextTrimming="CharacterEllipsis" />
+                                                                    </DockPanel>
+                                                                    <TextBlock Text="{Binding Description}" FontSize="9.5" Foreground="{DynamicResource Brush.Ink3}" TextTrimming="CharacterEllipsis" Margin="0,2,0,0" />
+                                                                </StackPanel>
+
+                                                                <!-- Flecha de Acción -->
+                                                                <Border Grid.Column="2" Width="20" Height="20" CornerRadius="10" Background="{DynamicResource Brush.Surface}" VerticalAlignment="Center">
+                                                                    <TextBlock Text="→" FontSize="11" FontWeight="Bold" Foreground="{Binding AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="1,0,0,0" />
+                                                                </Border>
+                                                            </Grid>
+                                                        </Border>
+                                                        <ControlTemplate.Triggers>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter TargetName="TplCard" Property="Background" Value="{DynamicResource Brush.BlueHover}" />
+                                                                <Setter TargetName="TplCard" Property="BorderBrush" Value="{DynamicResource Brush.BlueFocus}" />
+                                                            </Trigger>
+                                                            <Trigger Property="IsPressed" Value="True">
+                                                                <Setter TargetName="TplCard" Property="Background" Value="{DynamicResource Brush.BlueSelected}" />
+                                                            </Trigger>
+                                                        </ControlTemplate.Triggers>
+                                                    </ControlTemplate>
+                                                </Button.Template>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Grid>
+                    </Border>
+                </Grid>
             </Grid>
-        </ScrollViewer>
+        </Grid>
     </Grid>
 </UserControl>

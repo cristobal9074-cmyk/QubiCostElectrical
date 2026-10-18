@@ -2,7 +2,20 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ctrl="clr-namespace:QubiCostElectrical.Wpf.Controls"
-             xmlns:delivery="clr-namespace:QubiCostElectrical.Wpf.Features.Delivery">
+             xmlns:delivery="clr-namespace:QubiCostElectrical.Wpf.Features.Delivery"
+             Focusable="True"
+             KeyDown="OnUserControlKeyDown">
+  <UserControl.InputBindings>
+    <KeyBinding Key="F5" Command="{Binding RefreshCommand}" />
+    <KeyBinding Key="D1" Modifiers="Control" Command="{Binding GoToConfigureStepCommand}" />
+    <KeyBinding Key="D2" Modifiers="Control" Command="{Binding GoToPreviewStepCommand}" />
+    <KeyBinding Key="D3" Modifiers="Control" Command="{Binding GoToExportStepCommand}" />
+    <KeyBinding Key="NumPad1" Modifiers="Control" Command="{Binding GoToConfigureStepCommand}" />
+    <KeyBinding Key="NumPad2" Modifiers="Control" Command="{Binding GoToPreviewStepCommand}" />
+    <KeyBinding Key="NumPad3" Modifiers="Control" Command="{Binding GoToExportStepCommand}" />
+    <KeyBinding Key="E" Modifiers="Control" Command="{Binding DeliverPackageCommand}" />
+    <KeyBinding Key="S" Modifiers="Control" Command="{Binding SaveOfferSettingsCommand}" />
+  </UserControl.InputBindings>
   <UserControl.Resources>
 
     <Style x:Key="Pill" TargetType="Border">
@@ -264,6 +277,7 @@
   <Grid Background="{DynamicResource Brush.Canvas}"
         HorizontalAlignment="Stretch">
     <ctrl:EmptyStateControl Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}}"
+                            IconData="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8"
                             Title="Sin proyecto abierto"
                             Description="Abra un proyecto para configurar la oferta comercial, revisar la vista previa y exportar documentos.">
       <ctrl:EmptyStateControl.Actions>
@@ -311,13 +325,15 @@
         </StackPanel>
 
         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom">
-          <Button Style="{StaticResource Button.Ghost}" Command="{Binding RefreshCommand}" Margin="0,0,10,0">
+          <Button Style="{StaticResource Button.Ghost}" Command="{Binding RefreshCommand}" Margin="0,0,10,0"
+                  ToolTip="Actualizar oferta y vista previa (F5)">
             <StackPanel Orientation="Horizontal">
               <TextBlock Text="&#xE72C;" FontFamily="Segoe MDL2 Assets" FontSize="13" Margin="0,0,7,0" VerticalAlignment="Center" />
-              <TextBlock Text="Actualizar" VerticalAlignment="Center" />
+              <TextBlock Text="Actualizar (F5)" VerticalAlignment="Center" />
             </StackPanel>
           </Button>
-          <Button Style="{StaticResource Button.Ghost}" Command="{Binding GoToFinalReviewCommand}">
+          <Button Style="{StaticResource Button.Ghost}" Command="{Binding GoToFinalReviewCommand}"
+                  ToolTip="Ir al módulo de Revisión y Control de Calidad">
             <StackPanel Orientation="Horizontal">
               <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="13" Margin="0,0,7,0" VerticalAlignment="Center" />
               <TextBlock Text="Ir a Revisión" VerticalAlignment="Center" />
@@ -368,7 +384,8 @@
           </Grid.ColumnDefinitions>
 
           <!-- Paso 1 -->
-          <Button Grid.Column="0" Style="{StaticResource StepButton}" Command="{Binding GoToConfigureStepCommand}">
+          <Button Grid.Column="0" Style="{StaticResource StepButton}" Command="{Binding GoToConfigureStepCommand}"
+                  ToolTip="1. Configurar oferta y membrete (Ctrl+1)">
             <Grid>
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
@@ -459,7 +476,8 @@
           </Border>
 
           <!-- Paso 2 -->
-          <Button Grid.Column="2" Style="{StaticResource StepButton}" Command="{Binding GoToPreviewStepCommand}">
+          <Button Grid.Column="2" Style="{StaticResource StepButton}" Command="{Binding GoToPreviewStepCommand}"
+                  ToolTip="2. Vista previa en vivo del documento (Ctrl+2)">
             <Grid>
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
@@ -550,7 +568,8 @@
           </Border>
 
           <!-- Paso 3 -->
-          <Button Grid.Column="4" Style="{StaticResource StepButton}" Command="{Binding GoToExportStepCommand}">
+          <Button Grid.Column="4" Style="{StaticResource StepButton}" Command="{Binding GoToExportStepCommand}"
+                  ToolTip="3. Exportación y cierre comercial (Ctrl+3)">
             <Grid>
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
@@ -1925,6 +1944,7 @@
                       <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
                       </Grid.ColumnDefinitions>
                       <Border Width="34" Height="34" CornerRadius="9" Background="{DynamicResource Brush.GreenSoft}"
                               HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,14,0">
@@ -1945,6 +1965,11 @@
                           </Style>
                         </TextBlock.Style>
                       </TextBlock>
+                      <Button Grid.Column="2" Style="{StaticResource Button.Secondary}"
+                              Content="Abrir carpeta de destino"
+                              Command="{Binding OpenPreviewFolderCommand}"
+                              Margin="12,0,0,0" Padding="12,6" FontSize="11.5" VerticalAlignment="Center"
+                              ToolTip="Abrir la carpeta con los archivos exportados en el Explorador de Windows" />
                     </Grid>
                   </Border>
 
@@ -2008,13 +2033,15 @@
                   <ColumnDefinition Width="*" />
                   <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <TextBlock Text="Los cambios se guardan en el proyecto al pulsar Guardar."
+                <TextBlock Text="Los cambios se guardan en el proyecto al pulsar Guardar (Ctrl+S)."
                            FontSize="11.5" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                  <Button Style="{StaticResource Button.Ghost}" Content="Guardar configuración"
-                          Command="{Binding SaveOfferSettingsCommand}" Padding="10,6" FontSize="12" Margin="0,0,9,0" />
+                  <Button Style="{StaticResource Button.Ghost}" Content="Guardar (Ctrl+S)"
+                          Command="{Binding SaveOfferSettingsCommand}" Padding="10,6" FontSize="12" Margin="0,0,9,0"
+                          ToolTip="Guardar configuración de oferta en el archivo del proyecto (Ctrl+S)" />
                   <Button Style="{StaticResource Button.Primary}" Content="Continuar a vista previa →"
-                          Command="{Binding GoToPreviewStepCommand}" Padding="12,6" FontSize="12" />
+                          Command="{Binding GoToPreviewStepCommand}" Padding="12,6" FontSize="12"
+                          ToolTip="Continuar al Paso 2: Vista previa (Ctrl+2)" />
                 </StackPanel>
               </Grid>
 
@@ -2029,10 +2056,12 @@
                   <Run Text="." />
                 </TextBlock>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                  <Button Style="{StaticResource Button.Ghost}" Content="← Volver"
-                          Command="{Binding GoToConfigureStepCommand}" Padding="10,6" FontSize="12" Margin="0,0,9,0" />
+                  <Button Style="{StaticResource Button.Ghost}" Content="← Volver (Ctrl+1)"
+                          Command="{Binding GoToConfigureStepCommand}" Padding="10,6" FontSize="12" Margin="0,0,9,0"
+                          ToolTip="Volver al Paso 1: Configurar (Ctrl+1)" />
                   <Button Style="{StaticResource Button.Primary}" Content="Continuar a exportar →"
-                          Command="{Binding GoToExportStepCommand}" Padding="12,6" FontSize="12" />
+                          Command="{Binding GoToExportStepCommand}" Padding="12,6" FontSize="12"
+                          ToolTip="Continuar al Paso 3: Exportar paquete (Ctrl+3)" />
                 </StackPanel>
               </Grid>
 
@@ -2070,9 +2099,11 @@
 
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                   <Button Style="{StaticResource Button.Ghost}" Content="Exportar seleccionados"
-                          Command="{Binding DeliverPackageCommand}" Padding="10,6" FontSize="12" Margin="0,0,9,0" />
-                  <Button Style="{StaticResource Button.Primary}" Content="Generar oferta →"
+                          Command="{Binding DeliverPackageCommand}" Padding="10,6" FontSize="12" Margin="0,0,9,0"
+                          ToolTip="Exportar los documentos seleccionados (Ctrl+E)" />
+                  <Button Style="{StaticResource Button.Primary}" Content="Generar oferta → (Ctrl+E)"
                           Command="{Binding DeliverPackageCommand}" Padding="16,7" FontSize="12"
+                          ToolTip="Generar oferta comercial y entregables (Ctrl+E)"
                           IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBool}}" />
                 </StackPanel>
               </Grid>
@@ -2114,7 +2145,8 @@
                            Margin="0,1,0,0" TextWrapping="Wrap" />
               </StackPanel>
               <Button Grid.Column="1" Style="{StaticResource Button.Ghost}" Content="Actualizar"
-                      Command="{Binding PreviewOfferCommand}" Padding="11,6" FontSize="12" VerticalAlignment="Top" />
+                      Command="{Binding PreviewOfferCommand}" Padding="11,6" FontSize="12" VerticalAlignment="Top"
+                      ToolTip="Actualizar vista previa en vivo (F5)" />
             </Grid>
 
             <Border Grid.Row="1" Background="{DynamicResource Brush.Canvas}" Padding="10,8">

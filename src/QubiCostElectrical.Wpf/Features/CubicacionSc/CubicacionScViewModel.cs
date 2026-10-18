@@ -19,7 +19,8 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
     private readonly ICubicacionSCReportExcelExporter cubScExcel;
     private CuadroScRowVm? selectedCuadro;
     private CircuitoScRowVm? selectedCircuito;
-    private CircuitoSCRow? clipboardCircuito;
+    private readonly CubicacionScExportCoordinator exportCoordinator;
+    private readonly CubicacionScClipboardCoordinator clipboardCoordinator;
     private bool showEmptyState = true;
     private bool isLoading;
     private string statusMessage = "";
@@ -35,10 +36,4 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
     private CubScPerspective currentPerspective = CubScPerspective.Generales;
     public Func<string, bool> ConfirmDelete { get; set; } = msg => WpfDialogService.Confirm("Eliminar tablero", msg, isWarning: true);
     public Func<string, bool> ConfirmDeleteCircuito { get; set; } = msg => WpfDialogService.Confirm("Eliminar circuito", msg, isWarning: true);
-}
-
-public enum CubScPerspective
-{
-    Generales,
-    Deptos
 }

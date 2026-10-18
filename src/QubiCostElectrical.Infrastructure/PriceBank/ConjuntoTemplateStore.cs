@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text.Json;
 using Microsoft.Data.Sqlite;
 
-namespace QubiCostElectrical;
+namespace QubiCostElectrical.Infrastructure;
 
 /// <summary>
 /// Biblioteca global de conjuntos eléctricos (plantillas de takeoff), guardada en

@@ -3,7 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Linq;
 
-namespace QubiCostElectrical;
+namespace QubiCostElectrical.Infrastructure;
 
 public sealed class AuthService : IAuthService, IDisposable
 {

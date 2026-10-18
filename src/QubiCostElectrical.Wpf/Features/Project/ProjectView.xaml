@@ -4,8 +4,12 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:ctrl="clr-namespace:QubiCostElectrical.Wpf.Controls"
+             xmlns:ds="clr-namespace:QubiCostElectrical.Wpf.DesignSystem"
              mc:Ignorable="d"
              d:DesignHeight="780" d:DesignWidth="1180">
+  <UserControl.InputBindings>
+    <KeyBinding Key="S" Modifiers="Control" Command="{Binding SaveCommand}" />
+  </UserControl.InputBindings>
   <UserControl.Resources>
     <!-- ── Sidebar Nav Item Base Style ─────────────────────────────────── -->
     <Style x:Key="ProjectSidebarItem" TargetType="Button">
@@ -49,6 +53,67 @@
 
 
 
+    <!-- Chip de Plantilla Rápida SEC -->
+    <Style x:Key="ProTemplateChip" TargetType="Button">
+      <Setter Property="Height" Value="24" />
+      <Setter Property="Padding" Value="8,2" />
+      <Setter Property="FontSize" Value="10.5" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
+      <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.BlueIconBg2}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Margin" Value="0,0,6,6" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="ChipBd" Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    CornerRadius="5" Padding="{TemplateBinding Padding}">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="ChipBd" Property="Background" Value="{DynamicResource Brush.BlueIconBg2}" />
+                <Setter Property="Foreground" Value="{DynamicResource Brush.BlueHover}" />
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0.45" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style x:Key="ProTemplateChipRed" TargetType="Button" BasedOn="{StaticResource ProTemplateChip}">
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Danger}" />
+      <Setter Property="Background" Value="{DynamicResource Brush.DangerBg}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.DangerBorder}" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="ChipBd" Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    CornerRadius="5" Padding="{TemplateBinding Padding}">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="ChipBd" Property="Background" Value="{DynamicResource Brush.DangerBorder}" />
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0.45" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
     <!-- Segmented Button Base -->
     <Style x:Key="ProSegBtn" TargetType="Button">
       <Setter Property="Height" Value="24" />
@@ -82,6 +147,7 @@
                                  Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibility}}" />
     <ctrl:EmptyStateControl Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}}"
                             d:Visibility="Collapsed"
+                            IconData="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-6l-2-2H5a2 2 0 0 0-2 2z"
                             Title="Sin proyecto abierto"
                             Description="Abra un proyecto para editar datos generales, parámetros comerciales y alcance.">
       <ctrl:EmptyStateControl.Actions>
@@ -260,7 +326,7 @@
                     Command="{Binding GenerateFichaPdfCommand}"
                     Height="32" Padding="12,0" Margin="0,0,8,0" FontSize="11.5">
               <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center" />
+                <Path Data="{StaticResource Geo.FileText}" Style="{StaticResource Icon.Vector.Sm}" Margin="0,0,6,0" VerticalAlignment="Center" />
                 <TextBlock Text="Generar ficha PDF" VerticalAlignment="Center" />
               </StackPanel>
             </Button>
@@ -268,7 +334,7 @@
                     Command="{Binding SaveCommand}"
                     Height="32" Padding="14,0" FontSize="11.5" FontWeight="SemiBold">
               <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center" />
+                <Path Data="{StaticResource Geo.Check}" Style="{StaticResource Icon.Vector.Sm}" Margin="0,0,6,0" VerticalAlignment="Center" />
                 <TextBlock Text="Aplicar cambios" VerticalAlignment="Center" />
               </StackPanel>
             </Button>
@@ -743,14 +809,14 @@
 
                       <!-- Superficie m² -->
                       <StackPanel Grid.Column="0">
-                        <TextBlock Text="SUPERFICIE TOTAL (M²)" Style="{StaticResource Form.Label}" />
-                        <TextBox Text="{Binding MetrosCuadradosText, UpdateSourceTrigger=LostFocus}" Style="{StaticResource Form.TextBox}" />
+                        <TextBlock Text="SUPERFICIE TOTAL" Style="{StaticResource Form.Label}" />
+                        <TextBox Text="{Binding MetrosCuadradosText, UpdateSourceTrigger=LostFocus}" Style="{StaticResource Form.TextBox}" ds:FieldAdornment.Suffix="m²" />
                       </StackPanel>
 
                       <!-- Validez Oferta -->
                       <StackPanel Grid.Column="2">
-                        <TextBlock Text="VALIDEZ OFERTA (DÍAS)" Style="{StaticResource Form.Label}" />
-                        <TextBox Text="{Binding ValidityDaysText, UpdateSourceTrigger=LostFocus}" Style="{StaticResource Form.TextBox}" />
+                        <TextBlock Text="VALIDEZ DE OFERTA" Style="{StaticResource Form.Label}" />
+                        <TextBox Text="{Binding ValidityDaysText, UpdateSourceTrigger=LostFocus}" Style="{StaticResource Form.TextBox}" ds:FieldAdornment.Suffix="días" />
                       </StackPanel>
                     </Grid>
 
@@ -844,19 +910,22 @@
                       <!-- Valor UF -->
                       <StackPanel Grid.Column="0">
                         <TextBlock Text="VALOR UF (CLP)" Style="{StaticResource Form.Label}" />
-                        <TextBox Text="{Binding ValorUfClpText, UpdateSourceTrigger=LostFocus}" Style="{StaticResource Form.TextBox}" />
+                        <TextBox Text="{Binding ValorUfClpText, UpdateSourceTrigger=LostFocus}" Style="{StaticResource Form.TextBox}"
+                                 ds:FieldAdornment.Prefix="$" ds:FieldAdornment.Suffix="CLP" />
                       </StackPanel>
 
                       <!-- Dólar -->
                       <StackPanel Grid.Column="2">
                         <TextBlock Text="DÓLAR USD (CLP)" Style="{StaticResource Form.Label}" />
-                        <TextBox Text="{Binding TipoCambioUsdText, UpdateSourceTrigger=LostFocus}" Style="{StaticResource Form.TextBox}" />
+                        <TextBox Text="{Binding TipoCambioUsdText, UpdateSourceTrigger=LostFocus}" Style="{StaticResource Form.TextBox}"
+                                 ds:FieldAdornment.Prefix="$" ds:FieldAdornment.Suffix="CLP" />
                       </StackPanel>
 
                       <!-- Euro -->
                       <StackPanel Grid.Column="4">
                         <TextBlock Text="EURO EUR (CLP)" Style="{StaticResource Form.Label}" />
-                        <TextBox Text="{Binding TipoCambioEurText, UpdateSourceTrigger=LostFocus}" Style="{StaticResource Form.TextBox}" />
+                        <TextBox Text="{Binding TipoCambioEurText, UpdateSourceTrigger=LostFocus}" Style="{StaticResource Form.TextBox}"
+                                 ds:FieldAdornment.Prefix="$" ds:FieldAdornment.Suffix="CLP" />
                       </StackPanel>
                     </Grid>
 
@@ -879,14 +948,16 @@
 
                       <!-- Gastos Generales -->
                       <StackPanel Grid.Column="0">
-                        <TextBlock Text="GASTOS GENERALES (%)" Style="{StaticResource Form.Label}" />
-                        <TextBox Text="{Binding GastosGeneralesText, UpdateSourceTrigger=LostFocus}" Style="{StaticResource Form.TextBox}" />
+                        <TextBlock Text="GASTOS GENERALES" Style="{StaticResource Form.Label}" />
+                        <TextBox Text="{Binding GastosGeneralesText, UpdateSourceTrigger=LostFocus}" Style="{StaticResource Form.TextBox}"
+                                 ds:FieldAdornment.Suffix="%" />
                       </StackPanel>
 
                       <!-- Utilidad -->
                       <StackPanel Grid.Column="2">
-                        <TextBlock Text="UTILIDAD (%)" Style="{StaticResource Form.Label}" />
-                        <TextBox Text="{Binding UtilidadText, UpdateSourceTrigger=LostFocus}" Style="{StaticResource Form.TextBox}" />
+                        <TextBlock Text="UTILIDAD" Style="{StaticResource Form.Label}" />
+                        <TextBox Text="{Binding UtilidadText, UpdateSourceTrigger=LostFocus}" Style="{StaticResource Form.TextBox}"
+                                 ds:FieldAdornment.Suffix="%" />
                       </StackPanel>
                     </Grid>
 
@@ -902,20 +973,23 @@
 
                       <!-- IVA -->
                       <StackPanel Grid.Column="0">
-                        <TextBlock Text="IVA (%)" Style="{StaticResource Form.Label}" />
-                        <TextBox Text="{Binding IvaPctText, UpdateSourceTrigger=LostFocus}" Style="{StaticResource Form.TextBox}" />
+                        <TextBlock Text="IVA" Style="{StaticResource Form.Label}" />
+                        <TextBox Text="{Binding IvaPctText, UpdateSourceTrigger=LostFocus}" Style="{StaticResource Form.TextBox}"
+                                 ds:FieldAdornment.Suffix="%" />
                       </StackPanel>
 
                       <!-- Riesgo -->
                       <StackPanel Grid.Column="2">
-                        <TextBlock Text="RIESGO (%)" Style="{StaticResource Form.Label}" />
-                        <TextBox Text="{Binding RiesgoText, UpdateSourceTrigger=LostFocus}" Style="{StaticResource Form.TextBox}" />
+                        <TextBlock Text="RIESGO" Style="{StaticResource Form.Label}" />
+                        <TextBox Text="{Binding RiesgoText, UpdateSourceTrigger=LostFocus}" Style="{StaticResource Form.TextBox}"
+                                 ds:FieldAdornment.Suffix="%" />
                       </StackPanel>
 
                       <!-- Descuento -->
                       <StackPanel Grid.Column="4">
-                        <TextBlock Text="DESCUENTO (%)" Style="{StaticResource Form.Label}" />
-                        <TextBox Text="{Binding DescuentoText, UpdateSourceTrigger=LostFocus}" Style="{StaticResource Form.TextBox}" />
+                        <TextBlock Text="DESCUENTO" Style="{StaticResource Form.Label}" />
+                        <TextBox Text="{Binding DescuentoText, UpdateSourceTrigger=LostFocus}" Style="{StaticResource Form.TextBox}"
+                                 ds:FieldAdornment.Suffix="%" />
                       </StackPanel>
                     </Grid>
 
@@ -1080,16 +1154,27 @@
             <StackPanel Visibility="{Binding IsSectionEquipo, Converter={StaticResource BoolToVisibility}}">
               <Border Style="{StaticResource ProCard}">
                 <StackPanel>
-                  <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                    <Border Width="24" Height="24" CornerRadius="6" Background="{DynamicResource Brush.Surface2}"
-                            BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" Margin="0,0,8,0">
-                      <TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" FontSize="11"
-                                 Foreground="{DynamicResource Brush.Ink3}" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                    </Border>
-                    <TextBlock Text="RESPONSABLE DEL PRESUPUESTO" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink2}" VerticalAlignment="Center" />
-                  </StackPanel>
+                  <DockPanel LastChildFill="True" Margin="0,0,0,12">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                      <Border Width="24" Height="24" CornerRadius="6" Background="{DynamicResource Brush.Surface2}"
+                              BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" Margin="0,0,8,0">
+                        <TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" FontSize="11"
+                                   Foreground="{DynamicResource Brush.Ink3}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                      </Border>
+                      <TextBlock Text="RESPONSABLE DEL PRESUPUESTO &amp; CREDENCIALES" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink2}" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <Button DockPanel.Dock="Right" HorizontalAlignment="Right"
+                            Command="{Binding SetCurrentUserAsEstimatorCommand}"
+                            Style="{StaticResource Button.Secondary}" Height="26" Padding="10,0" FontSize="11"
+                            ToolTip="Asigna automáticamente el usuario de la sesión de Windows como estimador del proyecto">
+                      <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" FontSize="11" Margin="0,0,6,0" Foreground="{DynamicResource Brush.Blue}" />
+                        <TextBlock Text="Usar mi usuario de Windows" />
+                      </StackPanel>
+                    </Button>
+                  </DockPanel>
 
-                  <Grid Margin="0,0,0,12">
+                  <Grid Margin="0,0,0,10">
                     <Grid.ColumnDefinitions>
                       <ColumnDefinition Width="*" />
                       <ColumnDefinition Width="12" />
@@ -1105,8 +1190,38 @@
                     </StackPanel>
                   </Grid>
 
-                  <TextBlock Text="Este nombre y cargo identifican al autor en la carátula de la oferta, exportaciones de documentos y en el registro de auditoría."
-                             FontSize="11" Foreground="{DynamicResource Brush.Ink4}" />
+                  <!-- Chips de Selección Rápida de Rol -->
+                  <WrapPanel Margin="0,0,0,12">
+                    <TextBlock Text="ROLES FRECUENTES:" Style="{StaticResource Form.Label}" VerticalAlignment="Center" Margin="0,0,8,6" />
+                    <Button Style="{StaticResource ProTemplateChip}" Content="Estimador Eléctrico" Command="{Binding SetUserRoleCommand}" CommandParameter="Estimador Eléctrico" />
+                    <Button Style="{StaticResource ProTemplateChip}" Content="Jefe de Proyectos Eléctricos" Command="{Binding SetUserRoleCommand}" CommandParameter="Jefe de Proyectos Eléctricos" />
+                    <Button Style="{StaticResource ProTemplateChip}" Content="Ingeniero de Propuestas SEC" Command="{Binding SetUserRoleCommand}" CommandParameter="Ingeniero de Propuestas SEC" />
+                    <Button Style="{StaticResource ProTemplateChip}" Content="Gerente Técnico" Command="{Binding SetUserRoleCommand}" CommandParameter="Gerente Técnico" />
+                  </WrapPanel>
+
+                  <!-- Preview de Credencial Oficial -->
+                  <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="8" Padding="14,10">
+                    <Grid>
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="42" />
+                        <ColumnDefinition Width="*" />
+                      </Grid.ColumnDefinitions>
+                      <Border Grid.Column="0" Width="36" Height="36" CornerRadius="18" Background="{DynamicResource Brush.BlueSoft}"
+                              BorderBrush="{DynamicResource Brush.BlueIconBg2}" BorderThickness="1" HorizontalAlignment="Left" VerticalAlignment="Center">
+                        <TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" FontSize="16" Foreground="{DynamicResource Brush.Blue}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                      </Border>
+                      <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="6,0,0,0">
+                        <TextBlock Text="REPRESENTACIÓN EN CARÁTULA Y EXPEDIENTE TÉCNICO" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}" />
+                        <TextBlock FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink}">
+                          <Run Text="{Binding UsuarioNombre, FallbackValue='Estimador No Asignado'}" />
+                          <Run Text=" · " Foreground="{DynamicResource Brush.Ink4}" />
+                          <Run Text="{Binding UsuarioRol, FallbackValue='Sin cargo asignado'}" Foreground="{DynamicResource Brush.Ink2}" />
+                        </TextBlock>
+                        <TextBlock Text="Aparece en carátulas de dossier PDF, firmas contractuales y registros de auditoría de este archivo .qce."
+                                   FontSize="10.5" Foreground="{DynamicResource Brush.Ink4}" Margin="0,2,0,0" />
+                      </StackPanel>
+                    </Grid>
+                  </Border>
                 </StackPanel>
               </Border>
             </StackPanel>
@@ -1125,38 +1240,101 @@
                 <!-- Panel Incluye -->
                 <Border Grid.Column="0" Style="{StaticResource ProCard}">
                   <StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                      <Border Width="24" Height="24" CornerRadius="6" Background="{DynamicResource Brush.SuccessBg}"
-                              BorderBrush="{DynamicResource Brush.SuccessBorder}" BorderThickness="1" Margin="0,0,8,0">
-                        <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="11"
-                                   Foreground="{DynamicResource Brush.Success}" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                      </Border>
-                      <TextBlock Text="ALCANCE INCLUIDO (INCLUYE)" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink2}" VerticalAlignment="Center" />
-                    </StackPanel>
-                    <TextBlock Text="Partidas, recintos, acometidas y suministros contemplados en la cotización."
-                               FontSize="10.5" Foreground="{DynamicResource Brush.Ink4}" Margin="0,0,0,8" />
+                    <!-- Cabecera con Badge y Acciones -->
+                    <DockPanel LastChildFill="True" Margin="0,0,0,8">
+                      <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Width="24" Height="24" CornerRadius="6" Background="{DynamicResource Brush.SuccessBg}"
+                                BorderBrush="{DynamicResource Brush.SuccessBorder}" BorderThickness="1" Margin="0,0,8,0">
+                          <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="11"
+                                     Foreground="{DynamicResource Brush.Success}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <TextBlock Text="ALCANCE INCLUIDO (INCLUYE)" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink2}" VerticalAlignment="Center" />
+                        <Border CornerRadius="4" Background="{DynamicResource Brush.SuccessBg}" BorderBrush="{DynamicResource Brush.SuccessBorder}" BorderThickness="1"
+                                Padding="5,1" Margin="8,0,0,0" VerticalAlignment="Center">
+                          <TextBlock Text="{Binding ScopeLengthSummary}" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Success}" />
+                        </Border>
+                      </StackPanel>
+                      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Command="{Binding CopyScopeCommand}" Style="{StaticResource Button.Secondary}" Height="24" Padding="8,0" FontSize="10.5" Margin="0,0,4,0" ToolTip="Copiar texto de alcance al portapapeles">
+                          <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="10" Margin="0,0,4,0" VerticalAlignment="Center" />
+                            <TextBlock Text="Copiar" VerticalAlignment="Center" />
+                          </StackPanel>
+                        </Button>
+                        <Button Command="{Binding ClearScopeCommand}" Style="{StaticResource Button.Secondary}" Height="24" Padding="8,0" FontSize="10.5" ToolTip="Vaciar texto de alcance">
+                          <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="10" Margin="0,0,4,0" Foreground="{DynamicResource Brush.Danger}" VerticalAlignment="Center" />
+                            <TextBlock Text="Limpiar" VerticalAlignment="Center" />
+                          </StackPanel>
+                        </Button>
+                      </StackPanel>
+                    </DockPanel>
+
+                    <TextBlock Text="Partidas, canalizaciones y suministros bajo normativa SEC garantizados en la oferta:"
+                               FontSize="10.5" Foreground="{DynamicResource Brush.Ink4}" Margin="0,0,0,6" />
+
+                    <!-- Toolbar de Plantillas Rápidas SEC -->
+                    <WrapPanel Margin="0,0,0,8">
+                      <TextBlock Text="PLANTILLAS SEC:" Style="{StaticResource Form.Label}" VerticalAlignment="Center" Margin="0,0,6,6" />
+                      <Button Style="{StaticResource ProTemplateChip}" Content="+ Habitacional SEC (RIC N°02/03/10)" Command="{Binding LoadScopeResidentialCommand}" ToolTip="Inserta cláusulas estándar para proyectos habitacionales y condominios con tramitación TE1" />
+                      <Button Style="{StaticResource ProTemplateChip}" Content="+ Comercial / Retail (RIC N°04/08/19)" Command="{Binding LoadScopeCommercialCommand}" ToolTip="Inserta cláusulas estándar para locales comerciales, oficinas y retail" />
+                      <Button Style="{StaticResource ProTemplateChip}" Content="+ Industrial / Fuerza (RIC N°02/04/06)" Command="{Binding LoadScopeIndustrialCommand}" ToolTip="Inserta cláusulas de tableros de fuerza, CCM y mallas industriales" />
+                    </WrapPanel>
+
+                    <!-- Caja de Texto de Alcance con Scroll -->
                     <TextBox Text="{Binding ScopeText, UpdateSourceTrigger=PropertyChanged}"
                              Style="{StaticResource Form.TextBox}" AcceptsReturn="True" TextWrapping="Wrap"
-                             MinHeight="140" VerticalScrollBarVisibility="Auto" FontSize="11.5" />
+                             MinHeight="260" MaxHeight="450" VerticalScrollBarVisibility="Auto" FontSize="11.5" />
                   </StackPanel>
                 </Border>
 
                 <!-- Panel No Incluye -->
                 <Border Grid.Column="2" Style="{StaticResource ProCard}">
                   <StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                      <Border Width="24" Height="24" CornerRadius="6" Background="{DynamicResource Brush.DangerBg}"
-                              BorderBrush="{DynamicResource Brush.DangerBorder}" BorderThickness="1" Margin="0,0,8,0">
-                        <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="11"
-                                   Foreground="{DynamicResource Brush.Danger}" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                      </Border>
-                      <TextBlock Text="EXCLUSIONES EXPRESAS (NO INCLUYE)" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink2}" VerticalAlignment="Center" />
-                    </StackPanel>
-                    <TextBlock Text="Obras civiles, derechos municipales, empalmes ajenos o suministros fuera de oferta."
-                               FontSize="10.5" Foreground="{DynamicResource Brush.Ink4}" Margin="0,0,0,8" />
+                    <!-- Cabecera con Badge y Acciones -->
+                    <DockPanel LastChildFill="True" Margin="0,0,0,8">
+                      <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Width="24" Height="24" CornerRadius="6" Background="{DynamicResource Brush.DangerBg}"
+                                BorderBrush="{DynamicResource Brush.DangerBorder}" BorderThickness="1" Margin="0,0,8,0">
+                          <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="11"
+                                     Foreground="{DynamicResource Brush.Danger}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <TextBlock Text="EXCLUSIONES EXPRESAS (NO INCLUYE)" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink2}" VerticalAlignment="Center" />
+                        <Border CornerRadius="4" Background="{DynamicResource Brush.DangerBg}" BorderBrush="{DynamicResource Brush.DangerBorder}" BorderThickness="1"
+                                Padding="5,1" Margin="8,0,0,0" VerticalAlignment="Center">
+                          <TextBlock Text="{Binding ExclusionsLengthSummary}" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Danger}" />
+                        </Border>
+                      </StackPanel>
+                      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Command="{Binding CopyExclusionsCommand}" Style="{StaticResource Button.Secondary}" Height="24" Padding="8,0" FontSize="10.5" Margin="0,0,4,0" ToolTip="Copiar exclusiones al portapapeles">
+                          <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="10" Margin="0,0,4,0" VerticalAlignment="Center" />
+                            <TextBlock Text="Copiar" VerticalAlignment="Center" />
+                          </StackPanel>
+                        </Button>
+                        <Button Command="{Binding ClearExclusionsCommand}" Style="{StaticResource Button.Secondary}" Height="24" Padding="8,0" FontSize="10.5" ToolTip="Vaciar texto de exclusiones">
+                          <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="10" Margin="0,0,4,0" Foreground="{DynamicResource Brush.Danger}" VerticalAlignment="Center" />
+                            <TextBlock Text="Limpiar" VerticalAlignment="Center" />
+                          </StackPanel>
+                        </Button>
+                      </StackPanel>
+                    </DockPanel>
+
+                    <TextBlock Text="Límites contractuales: obras civiles ajenas, derechos de empalme o suministros no presupuestados:"
+                               FontSize="10.5" Foreground="{DynamicResource Brush.Ink4}" Margin="0,0,0,6" />
+
+                    <!-- Toolbar de Plantillas de Exclusiones -->
+                    <WrapPanel Margin="0,0,0,8">
+                      <TextBlock Text="EXCLUSIONES TÍPICAS:" Style="{StaticResource Form.Label}" VerticalAlignment="Center" Margin="0,0,6,6" />
+                      <Button Style="{StaticResource ProTemplateChipRed}" Content="+ Estándar General SEC" Command="{Binding LoadExclusionsStandardCommand}" ToolTip="Inserta exclusiones de obras civiles, derechos de distribuidora eléctrica y luminarias decorativas" />
+                      <Button Style="{StaticResource ProTemplateChipRed}" Content="+ Sin Obras Civiles ni Remates" Command="{Binding LoadExclusionsCivilCommand}" ToolTip="Inserta exclusiones de demolición, picados, zanjas, pintura y andamios" />
+                    </WrapPanel>
+
+                    <!-- Caja de Texto de Exclusiones con Scroll -->
                     <TextBox Text="{Binding ExclusionsText, UpdateSourceTrigger=PropertyChanged}"
                              Style="{StaticResource Form.TextBox}" AcceptsReturn="True" TextWrapping="Wrap"
-                             MinHeight="140" VerticalScrollBarVisibility="Auto" FontSize="11.5" />
+                             MinHeight="260" MaxHeight="450" VerticalScrollBarVisibility="Auto" FontSize="11.5" />
                   </StackPanel>
                 </Border>
               </Grid>
@@ -1175,6 +1353,10 @@
                                  Foreground="{DynamicResource Brush.Ink3}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <TextBlock Text="HISTORIAL DE ACTIVIDAD DEL ARCHIVO (.QCE)" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink2}" VerticalAlignment="Center" />
+                    <Border CornerRadius="4" Background="{DynamicResource Brush.BlueSoft}" BorderBrush="{DynamicResource Brush.BlueIconBg2}" BorderThickness="1"
+                            Padding="6,2" Margin="10,0,0,0" VerticalAlignment="Center">
+                      <TextBlock Text="{Binding AuditCountSummary}" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Blue}" />
+                    </Border>
                   </StackPanel>
 
                   <ItemsControl ItemsSource="{Binding AuditEntries}">

@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 
-namespace QubiCostElectrical;
+namespace QubiCostElectrical.Infrastructure;
 
 internal static class SpreadsheetOperationGuards
 {

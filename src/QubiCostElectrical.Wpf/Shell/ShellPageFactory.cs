@@ -132,7 +132,7 @@ internal static class ShellPageFactory
             case ShellRoute.Preferences:
                 {
                     var vm = ActivatorUtilities.CreateInstance<PreferencesViewModel>(sp);
-                    return (new PreferencesView(appHost) { DataContext = vm }, vm);
+                    return (new PreferencesView { DataContext = vm }, vm);
                 }
             case ShellRoute.ChangeOrders:
                 {

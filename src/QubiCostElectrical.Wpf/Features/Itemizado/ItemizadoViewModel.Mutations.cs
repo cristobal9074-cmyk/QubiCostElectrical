@@ -163,77 +163,18 @@ public sealed partial class ItemizadoViewModel
         StatusMessage = "Itemizado vaciado.";
     }
 
-    private bool CanCubicar() => !session.IsReadOnly
-        && (GetSelectedPartidaIds().Count > 0 || (IsSelectionVisible && SelectedRow != null && (!SelectedRow.EsTitulo || !presenter.HasChildPartidas(SelectedRow.Id))));
+    private bool CanCubicar() =>
+        ItemizadoTakeoffNavigationCoordinator.CanCubicar(session, presenter, allRows, IsSelectionVisible, SelectedRow, PassesCurrentFilter);
 
-    private bool CanDuplicate() => !session.IsReadOnly && IsSelectionVisible && SelectedRow != null && !SelectedRow.EsTitulo && !ShowEmptyState && allRows.Count(r => r.IsSelected) <= 1;
+    private bool CanDuplicate() =>
+        ItemizadoTakeoffNavigationCoordinator.CanDuplicate(session, IsSelectionVisible, SelectedRow, ShowEmptyState, allRows);
 
-    private List<string> GetSelectedPartidaIds()
-        => allRows
-            .Where(x => x.IsSelected && (!x.EsTitulo || !presenter.HasChildPartidas(x.Id)) && PassesCurrentFilter(x))
-            .Select(x => x.Id)
-            .ToList();
+    private List<string> GetSelectedPartidaIds() =>
+        ItemizadoTakeoffNavigationCoordinator.GetSelectedPartidaIds(presenter, allRows, PassesCurrentFilter);
 
-    private async Task CubicarSelectedAsync()
-    {
-        if (session.IsReadOnly)
-            return;
-        var ids = GetSelectedPartidaIds();
-        if (ids.Count == 0 && IsSelectionVisible && SelectedRow != null && (!SelectedRow.EsTitulo || !presenter.HasChildPartidas(SelectedRow.Id)))
-            ids.Add(SelectedRow.Id);
-
-        if (ids.Count == 0)
-        {
-            StatusMessage = "Selecciona al menos una partida para cubicar.";
-            return;
-        }
-
-        var valid = new List<(string Id, ItemizadoCubicacionNavigation Nav)>();
-        string? firstError = null;
-        foreach (var id in ids)
-        {
-            string? validation = presenter.ValidateCubicacionNavigation(id);
-            if (!string.IsNullOrWhiteSpace(validation))
-            {
-                firstError ??= validation;
-                continue;
-            }
-
-            var navigation = presenter.TryBuildCubicacionNavigation(id);
-            if (navigation == null)
-                continue;
-
-            valid.Add((id, navigation));
-        }
-
-        if (SelectedRow != null && SelectedRow.EsTitulo != SelectedRow.Model.EsTitulo)
-        {
-            SelectedRow.IsTitleRow = SelectedRow.Model.EsTitulo;
-            SelectedRow.UpdateModel(SelectedRow.Model);
-        }
-
-        if (valid.Count == 0)
-        {
-            WpfDialogService.Info("Cubicar", firstError ?? "Ninguna de las partidas seleccionadas se puede cubicar.");
-            return;
-        }
-
-        if (valid.Count > 1 &&
-            !WpfDialogService.Confirm(
-                "Cubicar",
-                $"¿Abrir cubicación de {valid.Count:N0} partidas en secuencia?\n\nSe abrirá la primera; el resto quedará en cola con aviso «Siguiente».",
-                isWarning: false))
-            return;
-
-        session.SetPendingTakeoffQueue(
-            valid.Count > 1 ? valid.Skip(1).Select(v => v.Id).ToList() : null);
-
-        var first = valid[0].Nav;
-        session.PendingTakeoffNavigation = new TakeoffNavigationContext(
-            first.ItemId, first.ItemCode, first.Description);
-        session.PendingItemizadoSelectionId = first.ItemId;
-        shell.RequestNavigate(ShellRoute.Takeoff, session.PendingTakeoffNavigation);
-    }
+    private Task CubicarSelectedAsync() =>
+        ItemizadoTakeoffNavigationCoordinator.CubicarSelectedAsync(
+            session, shell, presenter, allRows, IsSelectionVisible, SelectedRow, PassesCurrentFilter, msg => StatusMessage = msg);
 
     private void RaiseCommandStates()
     {
@@ -255,21 +196,7 @@ public sealed partial class ItemizadoViewModel
     private void LoadStandardTemplate(string? templateId) =>
         ItemizadoTemplateCoordinator.LoadTemplate(session, templateId, undo, audit, () => RefreshPresentation(includeCosts: false), msg => StatusMessage = msg);
 
-    private void ConfigureCommercialModel()
-    {
-        if (SelectedRow?.Model is not { } item || item.EsTitulo || session.IsReadOnly) return;
-        var project = session.ProjectInfo;
-        if (!project.AllowPartidaCommercialOverrides) { WpfDialogService.Info("Modelo comercial", "Las excepciones por partida están desactivadas en Proyecto → Comercial."); return; }
-        project.CommercialPartidaRules ??= new List<CommercialPartidaRule>();
-        var existing = project.CommercialPartidaRules.LastOrDefault(x => x.PartidaId == item.PartidaId);
-        var draft = existing?.Clone() ?? new CommercialPartidaRule { PartidaId = item.PartidaId, UseProjectModel = true, Model = project.CommercialModel };
-        var dialog = new CommercialPartidaRuleDialog(item, draft) { Owner = Application.Current?.MainWindow };
-        if (dialog.ShowDialog() != true) return;
-        undo.PushUndoPoint(session, "Modelo comercial de partida");
-        var result = dialog.Result;
-        if (existing == null) project.CommercialPartidaRules.Add(result); else { int index = project.CommercialPartidaRules.IndexOf(existing); project.CommercialPartidaRules[index] = result; }
-        audit.RecordPartidaChange(item.Id, "Modelo comercial", existing?.Model.DisplayName() ?? "Heredado", result.UseProjectModel ? "Heredado" : result.Model.DisplayName());
-        session.MarkDirty("commercial_partida_rule");
-        RefreshPresentation(includeCosts: true); StatusMessage = result.UseProjectModel ? "La partida vuelve a heredar el modelo del proyecto." : $"Modelo comercial aplicado: {result.Model.DisplayName()}.";
-    }
+    private void ConfigureCommercialModel() =>
+        ItemizadoCommercialRuleCoordinator.Configure(
+            session, undo, audit, SelectedRow, () => RefreshPresentation(includeCosts: true), msg => StatusMessage = msg);
 }

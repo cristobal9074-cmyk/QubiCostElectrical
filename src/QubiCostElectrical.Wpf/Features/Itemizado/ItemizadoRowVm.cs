@@ -60,6 +60,23 @@ public sealed class ItemizadoRowVm : ViewModelBase, IGridCellValidationSource
         OnPropertyChanged(string.Empty);
     }
 
+    public void ToggleTitleState()
+    {
+        bool newEsTitulo = !EsTitulo;
+        if (!newEsTitulo)
+        {
+            if (Cantidad <= 0m)
+                Cantidad = model.CantidadOriginal > 0m ? model.CantidadOriginal : 1m;
+            if (string.IsNullOrWhiteSpace(Unidad))
+                Unidad = Unidades.GL;
+        }
+        else
+        {
+            Cantidad = 0m;
+        }
+        EsTitulo = newEsTitulo;
+    }
+
     public event Action<ItemizadoRowVm, string>? BeforeFieldChanging;
     public event Action<ItemizadoRowVm, string>? FieldCommitted;
 

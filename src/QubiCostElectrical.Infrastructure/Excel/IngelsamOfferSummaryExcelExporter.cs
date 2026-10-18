@@ -5,7 +5,7 @@ using System.IO;
 using System.Linq;
 using ClosedXML.Excel;
 
-namespace QubiCostElectrical;
+namespace QubiCostElectrical.Infrastructure;
 
 /// <summary>
 /// Exportador de la Hoja de Resumen de Presupuesto para el Mandante en formato Excel,
