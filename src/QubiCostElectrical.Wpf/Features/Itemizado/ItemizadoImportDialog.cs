@@ -22,11 +22,17 @@ public static class ItemizadoImportDialog
         if (ItemizadoImportValidation.HasDuplicatePartidaCodes(plan.Rows))
             summary += " · códigos WBS duplicados detectados";
 
+        string? warning = null;
+        if (plan.RequiresReplaceConfirmation && plan.CurrentRowCount > 0)
+        {
+            warning = $"ADVERTENCIA: Reemplazar el itemizado actual ({plan.CurrentRowCount:N0} filas) eliminará todas las mediciones de cubicación y los APU asociados.";
+        }
+
         return Show(
             "Importar itemizado",
             summary,
             "Revise el itemizado detectado y confirme la importación.",
-            null,
+            warning,
             rows);
     }
 

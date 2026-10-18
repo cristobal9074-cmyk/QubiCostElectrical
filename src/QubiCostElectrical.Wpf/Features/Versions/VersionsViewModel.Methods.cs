@@ -26,7 +26,9 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
             host.FileDialog,
             host.FileOpener,
             host.Services.ItemizadoSpreadsheet,
-            host.Services.ImportItemizado)
+            host.Services.ImportItemizado,
+            host.Services.ProjectRepository,
+            host.UndoService)
     { }
 
     public VersionsViewModel(
@@ -40,7 +42,9 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
         IFileDialogService? fileDialog = null,
         IFileOpenService? fileOpener = null,
         IItemizadoSpreadsheetReader? spreadsheetReader = null,
-        ImportarItemizadoUseCase? importItemizadoUseCase = null) : base(session)
+        ImportarItemizadoUseCase? importItemizadoUseCase = null,
+        IProjectRepository? projectRepository = null,
+        WpfUndoService? undo = null) : base(session)
     {
         this.shell = shell;
         this.session = session;
@@ -53,6 +57,8 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
         this.fileOpener = fileOpener;
         this.spreadsheetReader = spreadsheetReader;
         this.importItemizadoUseCase = importItemizadoUseCase;
+        this.projectRepository = projectRepository;
+        this.undo = undo;
 
         refreshCommand = new RelayCommand(Refresh);
         newCommand = new RelayCommand(CreateVersion, () => HasProject && !session.IsReadOnly);
@@ -65,6 +71,8 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
         exportExcelCommand = new RelayCommand(ExportExcel, () => HasProject && currentSummary != null && comparisonRows.Count > 0);
         createChangeOrderFromDiffCommand = new RelayCommand(CreateChangeOrderFromDiff, () => HasProject && currentSummary != null && comparisonRows.Count > 0 && !session.IsReadOnly);
         compareWithExcelCommand = new RelayCommand(CompareWithExcel, () => HasProject);
+        compareWithProjectFileCommand = new RelayCommand(CompareWithProjectFile, () => HasProject);
+        saveAsNewVersionCommand = new RelayCommand(SaveAsNewVersion, () => HasProject && !session.IsReadOnly);
         applyAddendaQuantitiesCommand = new RelayCommand(ApplyAddendaQuantities, () => HasProject && !session.IsReadOnly && isAddendaComparison && lastIncomingAddendaItems != null);
         saveAddendaAsVersionCommand = new RelayCommand(SaveAddendaAsVersion, () => HasProject && !session.IsReadOnly && isAddendaComparison && currentSummary != null);
         OpenProjectCommand = new RelayCommand(() => _ = shell.OpenProjectAsync());
@@ -205,6 +213,7 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
             OnPropertyChanged(nameof(IsFilterAdicionales));
             OnPropertyChanged(nameof(IsFilterModificados));
             OnPropertyChanged(nameof(IsFilterDeductivos));
+            OnPropertyChanged(nameof(IsFilterSinCambios));
         }
     }
 
@@ -231,6 +240,13 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
         get => activeFilterMode == RevisionDiffFilterMode.SoloDeductivos;
         set { if (value) ActiveFilterMode = RevisionDiffFilterMode.SoloDeductivos; }
     }
+
+    public bool IsFilterSinCambios
+    {
+        get => activeFilterMode == RevisionDiffFilterMode.SoloSinCambios;
+        set { if (value) ActiveFilterMode = RevisionDiffFilterMode.SoloSinCambios; }
+    }
+
 
     // Búsqueda compartida: filtra el historial de versiones y las filas del comparador.
     public string SearchText
@@ -354,6 +370,45 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
     public string ComparisonDeltaKind => ComparisonDeltaUf > 0m ? "Aumenta"
         : ComparisonDeltaUf < 0m ? "Reduce" : "Neutro";
 
+    public string ComparisonBaselineLabel =>
+        string.IsNullOrWhiteSpace(currentSummary?.BaselineLabel) ? "Versión A (Base)" : currentSummary.BaselineLabel;
+
+    public string ComparisonCurrentLabel =>
+        string.IsNullOrWhiteSpace(currentSummary?.CurrentLabel) ? "Versión B (Actual)" : currentSummary.CurrentLabel;
+
+    public string ComparisonBaselineTotalText =>
+        currentSummary == null ? "—" : (MuestraUf ? $"{currentSummary.BaselineUf:N3} UF" : $"$ {currentSummary.BaselineClp:N0}");
+
+    public string ComparisonCurrentTotalText =>
+        currentSummary == null ? "—" : (MuestraUf ? $"{currentSummary.CurrentUf:N3} UF" : $"$ {currentSummary.CurrentClp:N0}");
+
+    public string ComparisonBaselineCountText =>
+        currentSummary == null ? "0 partidas" : $"{currentSummary.Rows.Count(r => r.DiffKind != RevisionDiffKind.Adicional):N0} partidas base";
+
+    public string ComparisonCurrentCountText =>
+        currentSummary == null ? "0 partidas" : $"{currentSummary.Rows.Count(r => r.DiffKind != RevisionDiffKind.Deductivo):N0} partidas actuales";
+
+    public int ComparisonAddedCount => currentSummary?.AddedCount ?? 0;
+    public int ComparisonChangedCount => currentSummary?.ChangedCount ?? 0;
+    public int ComparisonRemovedCount => currentSummary?.RemovedCount ?? 0;
+    public int ComparisonUnchangedCount => currentSummary?.UnchangedCount ?? 0;
+    public int ComparisonTotalCount => currentSummary?.Rows.Count ?? 0;
+
+    public void NotifyComparisonSummaryChanged()
+    {
+        OnPropertyChanged(nameof(ComparisonBaselineLabel));
+        OnPropertyChanged(nameof(ComparisonCurrentLabel));
+        OnPropertyChanged(nameof(ComparisonBaselineTotalText));
+        OnPropertyChanged(nameof(ComparisonCurrentTotalText));
+        OnPropertyChanged(nameof(ComparisonBaselineCountText));
+        OnPropertyChanged(nameof(ComparisonCurrentCountText));
+        OnPropertyChanged(nameof(ComparisonAddedCount));
+        OnPropertyChanged(nameof(ComparisonChangedCount));
+        OnPropertyChanged(nameof(ComparisonRemovedCount));
+        OnPropertyChanged(nameof(ComparisonUnchangedCount));
+        OnPropertyChanged(nameof(ComparisonTotalCount));
+    }
+
     public string ComparisonModeHint
     {
         get => comparisonModeHint;
@@ -383,6 +438,8 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
     public ICommand ExportExcelCommand => exportExcelCommand;
     public ICommand CreateChangeOrderFromDiffCommand => createChangeOrderFromDiffCommand;
     public ICommand CompareWithExcelCommand => compareWithExcelCommand;
+    public ICommand CompareWithProjectFileCommand => compareWithProjectFileCommand;
+    public ICommand SaveAsNewVersionCommand => saveAsNewVersionCommand;
     public ICommand ApplyAddendaQuantitiesCommand => applyAddendaQuantitiesCommand;
     public ICommand SaveAddendaAsVersionCommand => saveAddendaAsVersionCommand;
     public ICommand OpenProjectCommand { get; }
@@ -420,6 +477,8 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
                 activateCommand.RaiseCanExecuteChanged();
                 renameCommand.RaiseCanExecuteChanged();
                 deleteCommand.RaiseCanExecuteChanged();
+                compareWithProjectFileCommand.RaiseCanExecuteChanged();
+                saveAsNewVersionCommand.RaiseCanExecuteChanged();
                 return;
             }
 
@@ -462,6 +521,8 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
             activateCommand.RaiseCanExecuteChanged();
             renameCommand.RaiseCanExecuteChanged();
             deleteCommand.RaiseCanExecuteChanged();
+            compareWithProjectFileCommand.RaiseCanExecuteChanged();
+            saveAsNewVersionCommand.RaiseCanExecuteChanged();
         }
         finally
         {
@@ -519,9 +580,9 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
         }
 
         return (
-            $"+{summary.TotalAdicionalesUf:N3} UF · +$ {summary.TotalAdicionalesClp:N0}",
-            $"{summary.TotalDeductivosUf:N3} UF · $ {summary.TotalDeductivosClp:N0}",
-            $"{(summary.NetVariationUf >= 0m ? "+" : "")}{summary.NetVariationUf:N3} UF · {(summary.NetVariationClp >= 0m ? "+$ " : "$ ")}{summary.NetVariationClp:N0}");
+            $"+{summary.TotalAdicionalesUf:N3} UF",
+            $"{summary.TotalDeductivosUf:N3} UF",
+            $"{(summary.NetVariationUf >= 0m ? "+" : "")}{summary.NetVariationUf:N3} UF");
     }
 
     private void RefreshComparison()
@@ -629,6 +690,7 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
             : $"Versión A = {summary.BaselineLabel} · Versión B = {summary.CurrentLabel}";
         OnPropertyChanged(nameof(ComparisonDeltaText));
         OnPropertyChanged(nameof(ComparisonDeltaPctText));
+        NotifyComparisonSummaryChanged();
         exportPdfCommand.RaiseCanExecuteChanged();
         exportExcelCommand.RaiseCanExecuteChanged();
         createChangeOrderFromDiffCommand.RaiseCanExecuteChanged();
@@ -637,9 +699,10 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
 
     private void CreateVersion()
     {
+        var suggestion = RevisionNamingHelper.SuggestNextRevision(session.CurrentProjectPath);
         int nextNum = session.Versiones.Count + 1;
-        string codigo = $"V{nextNum}";
-        string nombre = $"Versión {nextNum}";
+        string codigo = session.Versiones.Count == 0 ? suggestion.CurrentRevisionCode : suggestion.NextRevisionCode;
+        string nombre = $"Versión {codigo}";
 
         if (!PromptVersionDialog("Nueva versión", ref codigo, ref nombre))
             return;
@@ -658,6 +721,7 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
             Snapshot = snapshot
         };
 
+        undo?.PushUndoPoint(session, "Nueva versión");
         session.Versiones.Add(version);
         session.ActiveVersionId = version.Id;
         session.MarkDirty(ProjectDirtyScope.Versiones);
@@ -686,6 +750,7 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
         if (!PromptVersionDialog("Renombrar versión", ref codigo, ref nombre))
             return;
 
+        undo?.PushUndoPoint(session, "Renombrar versión");
         version.Codigo = string.IsNullOrWhiteSpace(codigo) ? version.Codigo : codigo.Trim();
         version.Nombre = string.IsNullOrWhiteSpace(nombre) ? version.Nombre : nombre.Trim();
         version.FechaModificacion = AppClock.Now;
@@ -699,12 +764,11 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
         if (version == null)
             return;
 
-        if (!WpfDialogService.Confirm(
-                "Eliminar versión",
-                $"¿Eliminar la versión «{version.Codigo} — {version.Nombre}»?",
-                isWarning: true))
+        if (!ConfirmDeleteVersion(
+                $"¿Eliminar la versión «{version.Codigo} — {version.Nombre}»?"))
             return;
 
+        undo?.PushUndoPoint(session, $"Eliminar versión {version.Codigo}");
         session.Versiones.Remove(version);
         if (string.Equals(session.ActiveVersionId, version.Id, StringComparison.OrdinalIgnoreCase))
             session.ActiveVersionId = session.Versiones.LastOrDefault()?.Id ?? string.Empty;
@@ -760,6 +824,7 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
             RevisionDiffFilterMode.SoloAdicionales => row.DiffKind == RevisionDiffKind.Adicional,
             RevisionDiffFilterMode.SoloModificados => row.DiffKind == RevisionDiffKind.Modificado,
             RevisionDiffFilterMode.SoloDeductivos => row.DiffKind == RevisionDiffKind.Deductivo,
+            RevisionDiffFilterMode.SoloSinCambios => row.DiffKind == RevisionDiffKind.SinCambio,
             _ => true
         };
 
@@ -791,6 +856,12 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
 
         if (string.IsNullOrWhiteSpace(path)) return;
 
+        if (OperationFailureMessages.IsFileLocked(path))
+        {
+            WpfDialogService.ErrorModal("Archivo en uso", OperationFailureMessages.FileInUseUserMessage);
+            return;
+        }
+
         try
         {
             if (pdfExporter != null)
@@ -809,7 +880,7 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
         }
         catch (Exception ex)
         {
-            WpfDialogService.InfoModal("Error al exportar", $"No se pudo generar el informe PDF:\n{ex.Message}");
+            WpfDialogService.ErrorModal("Error al exportar", OperationFailureMessages.ToUserMessage(ex));
         }
     }
 
@@ -826,6 +897,12 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
             ?? WpfDialogService.PromptSaveFile(defaultName);
 
         if (string.IsNullOrWhiteSpace(path)) return;
+
+        if (OperationFailureMessages.IsFileLocked(path))
+        {
+            WpfDialogService.ErrorModal("Archivo en uso", OperationFailureMessages.FileInUseUserMessage);
+            return;
+        }
 
         try
         {
@@ -845,7 +922,7 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
         }
         catch (Exception ex)
         {
-            WpfDialogService.InfoModal("Error al exportar", $"No se pudo generar el libro Excel:\n{ex.Message}");
+            WpfDialogService.ErrorModal("Error al exportar", OperationFailureMessages.ToUserMessage(ex));
         }
     }
 

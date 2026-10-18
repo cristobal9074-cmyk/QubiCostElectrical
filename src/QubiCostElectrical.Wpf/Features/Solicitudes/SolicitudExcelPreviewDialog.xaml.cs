@@ -43,6 +43,12 @@ public partial class SolicitudExcelPreviewDialog : Window
 
         if (dialog.ShowDialog() == true)
         {
+            if (OperationFailureMessages.IsFileLocked(dialog.FileName))
+            {
+                WpfDialogService.ErrorModal("Archivo en uso", OperationFailureMessages.FileInUseUserMessage);
+                return;
+            }
+
             try
             {
                 SolicitudesExcelExporter.Export(
@@ -60,7 +66,7 @@ public partial class SolicitudExcelPreviewDialog : Window
             }
             catch (Exception ex)
             {
-                WpfDialogService.ErrorModal("Error de Exportación", "Error al exportar el archivo Excel: " + ex.Message);
+                WpfDialogService.ErrorModal("Error de Exportación", OperationFailureMessages.ToUserMessage(ex));
             }
         }
     }

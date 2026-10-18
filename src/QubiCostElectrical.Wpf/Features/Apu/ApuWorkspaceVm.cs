@@ -59,4 +59,6 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
     private ApuAutocompleteSuggestionVm? selectedAutocompleteItem;
     private string autocompleteStatusText = "";
     private System.Threading.CancellationTokenSource? autocompleteCts;
+
+    public Func<string, bool> ConfirmOverwriteTemplate { get; set; } = msg => WpfDialogService.Confirm("Reemplazar recursos de APU", msg, isWarning: true);
 }

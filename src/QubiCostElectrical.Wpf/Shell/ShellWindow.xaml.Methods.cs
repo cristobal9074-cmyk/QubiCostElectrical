@@ -78,7 +78,8 @@ public partial class ShellWindow : Window
             NavDropdownItem.Separator(),
             new NavDropdownItem { Label = "Revisión final", Route = ShellRoute.Review },
             new NavDropdownItem { Label = "Oferta y exportación", Route = ShellRoute.OfferDocuments },
-            new NavDropdownItem { Label = "Versiones", Route = ShellRoute.Versions }
+            new NavDropdownItem { Label = "Cambio de versión", Route = ShellRoute.Versions },
+            new NavDropdownItem { Label = "Adicionales de obra", Route = ShellRoute.ChangeOrders }
         ];
         NavMoreGroup.Items =
         [
@@ -122,8 +123,10 @@ public partial class ShellWindow : Window
         NavigationVisuals.SetIsActive(NavFloorSummaryTab, route == ShellRoute.FloorSummary);
         NavigationVisuals.SetIsActive(NavPlanosTab, route == ShellRoute.Documents);
         NavigationVisuals.SetIsActive(NavQuotesTab, route == ShellRoute.Quotes);
-        NavigationVisuals.SetIsActive(NavChangeOrdersTab, route == ShellRoute.ChangeOrders);
+        NavigationVisuals.SetIsActive(NavAdicionalesTab, route == ShellRoute.ChangeOrders);
+        NavigationVisuals.SetIsActive(NavChangeOrdersTab, route == ShellRoute.Versions);
         NavigationVisuals.SetIsActive(NavSolicitudesTab, route == ShellRoute.Solicitudes);
+        NavigationVisuals.SetIsActive(NavMaterialControlTab, route == ShellRoute.MaterialControl);
         NavigationVisuals.SetIsActive(NavCostosExecTab, route == ShellRoute.Costo);
         NavigationVisuals.SetIsActive(NavEstadosPagosTab, route == ShellRoute.EstadosPagos);
 
@@ -159,7 +162,7 @@ public partial class ShellWindow : Window
             NavDropdownItem.Separator(),
             new NavDropdownItem { Label = "Revisión final", Route = ShellRoute.Review },
             new NavDropdownItem { Label = "Oferta y exportación", Route = ShellRoute.OfferDocuments, Badge = ofertaBadge },
-            new NavDropdownItem { Label = "Versiones", Route = ShellRoute.Versions }
+            new NavDropdownItem { Label = "Cambio de versión", Route = ShellRoute.Versions }
         ];
     }
 

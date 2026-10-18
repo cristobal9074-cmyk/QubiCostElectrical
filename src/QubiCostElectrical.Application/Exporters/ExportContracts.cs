@@ -46,6 +46,32 @@ public interface IOfferLetterPdfExporter
     void Export(ExportProjectContext context, string path);
 }
 
+/// <summary>
+/// Genera la hoja de resumen ejecutivo de presupuesto para el mandante en formato Excel
+/// idéntica al formato histórico de Ingelsam (logo, datos clientes, partidas, fórmulas vivas e IVA).
+/// </summary>
+public interface IIngelsamOfferSummaryExcelExporter
+{
+    void Export(ExportProjectContext context, string path);
+}
+
+/// <summary>
+/// Genera el resumen ejecutivo del presupuesto en PDF (hoja de cotización mandante).
+/// </summary>
+public interface IOfferSummaryPdfExporter
+{
+    void Export(ExportProjectContext context, string path);
+}
+
+/// <summary>
+/// Genera el libro Excel de Presupuesto con Partidas Abiertas (formato DETALLE),
+/// con cada partida y su desglose de materiales, cantidades, precios unitarios y fórmulas vivas.
+/// </summary>
+public interface IPartidasAbiertasExcelExporter
+{
+    void Export(ExportProjectContext context, string path);
+}
+
 
 public sealed class ExportCorporateThemeSettings
 {

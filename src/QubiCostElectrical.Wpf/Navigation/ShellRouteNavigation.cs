@@ -9,21 +9,34 @@ public enum ShellLifecyclePhase
 
 public static class ShellRouteNavigation
 {
-    public static ShellLifecyclePhase GetLifecyclePhase(ShellRoute route) => route switch
+    public static ShellLifecyclePhase GetLifecyclePhase(ShellRoute route, ShellLifecyclePhase currentPhase = ShellLifecyclePhase.Presupuesto)
     {
-        ShellRoute.Purchases
-            or ShellRoute.FloorSummary
-            or ShellRoute.ContractWorkspace
-            or ShellRoute.ContractEditor
-            or ShellRoute.ContractVersions => ShellLifecyclePhase.Planificacion,
+        if (route == ShellRoute.Dashboard)
+            return currentPhase;
 
-        ShellRoute.ChangeOrders
-            or ShellRoute.Quotes
-            or ShellRoute.Solicitudes
-            or ShellRoute.EstadosPagos => ShellLifecyclePhase.Ejecucion,
+        if (route is ShellRoute.Versions or ShellRoute.Costo)
+            return currentPhase == ShellLifecyclePhase.Ejecucion ? ShellLifecyclePhase.Ejecucion : ShellLifecyclePhase.Presupuesto;
 
-        _ => ShellLifecyclePhase.Presupuesto
-    };
+        return route switch
+        {
+            ShellRoute.Purchases
+                or ShellRoute.FloorSummary
+                or ShellRoute.ContractWorkspace
+                or ShellRoute.ContractEditor
+                or ShellRoute.ContractVersions => ShellLifecyclePhase.Planificacion,
+
+            ShellRoute.ChangeOrders
+                or ShellRoute.Quotes
+                or ShellRoute.Solicitudes
+                or ShellRoute.MaterialControl
+                or ShellRoute.EstadosPagos => ShellLifecyclePhase.Ejecucion,
+
+            _ => ShellLifecyclePhase.Presupuesto
+        };
+    }
+
+    public static ShellLifecyclePhase GetLifecyclePhase(ShellRoute route)
+        => GetLifecyclePhase(route, ShellLifecyclePhase.Presupuesto);
 
     public static bool IsPresupuestoRoute(ShellRoute route) =>
         GetLifecyclePhase(route) == ShellLifecyclePhase.Presupuesto;
@@ -32,7 +45,12 @@ public static class ShellRouteNavigation
         GetLifecyclePhase(route) == ShellLifecyclePhase.Planificacion;
 
     public static bool IsEjecucionRoute(ShellRoute route) =>
-        GetLifecyclePhase(route) == ShellLifecyclePhase.Ejecucion;
+        route is ShellRoute.ChangeOrders
+            or ShellRoute.Quotes
+            or ShellRoute.Solicitudes
+            or ShellRoute.MaterialControl
+            or ShellRoute.EstadosPagos
+            or ShellRoute.Versions;
 
     public static bool IsProjectRoute(ShellRoute route) =>
         route is ShellRoute.Project or ShellRoute.Documents or ShellRoute.Currency;

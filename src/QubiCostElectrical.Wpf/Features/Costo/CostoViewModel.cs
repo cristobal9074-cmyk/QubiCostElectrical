@@ -20,6 +20,9 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
     private readonly DashboardPresenter dashboard;
     private readonly ICurrencyConversionService currencySvc;
     private readonly ProjectAuditRecorder? audit;
+    private readonly WpfUndoService? undo;
+
+    public Func<string, string, bool> ConfirmAction { get; set; } = (title, msg) => WpfDialogService.Confirm(title, msg, isWarning: true);
 
     private bool showEmptyState = true;
     private bool isLoading;
@@ -32,6 +35,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
     private string totalVentaLabel = "";
     private string totalVentaSubLabel = "";
     private string margenLabel = "";
+    private string margenSubLabel = "";
     private string ufM2Label = "";
     private string ufM2SubLabel = "";
     private string resumenFooterText = "";

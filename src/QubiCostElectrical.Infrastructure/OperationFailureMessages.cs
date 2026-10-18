@@ -43,6 +43,9 @@ public static class OperationFailureMessages
             errorId);
     }
 
+    public const string FileInUseUserMessage =
+        "No se pudo guardar el archivo porque está abierto en otra aplicación (por ejemplo Excel o Adobe Reader) o bloqueado por sincronización en la nube.\n\nQué hacer ahora: Cierra el archivo en la otra aplicación y vuelve a intentar.";
+
     public static bool IsFileInUse(Exception ex)
     {
         for (var current = ex; current != null; current = current.InnerException)
@@ -52,6 +55,33 @@ public static class OperationFailureMessages
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// Comprueba si un archivo existe y está bloqueado por otro proceso (por ejemplo Microsoft Excel o Adobe Acrobat).
+    /// </summary>
+    public static bool IsFileLocked(string filePath)
+    {
+        if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
+            return false;
+
+        try
+        {
+            using var stream = new FileStream(filePath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+            return false;
+        }
+        catch (IOException)
+        {
+            return true;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     private static string AppendErrorId(string message, string? errorId)

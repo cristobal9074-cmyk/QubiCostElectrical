@@ -117,7 +117,19 @@ public sealed class ItemizadoPresenter
     }
 
     public string BuildReplaceConfirmationMessage(int currentRowCount, string actionLabel)
-        => $"Esto reemplazará el itemizado actual ({currentRowCount:N0} filas), borrará la cubicación asociada y eliminará los APU vinculados.\n\n¿Continuar?";
+    {
+        int cubCount = _session.Cubicacion?.Count ?? 0;
+        int apuCount = _session.Apus?.Count ?? 0;
+        var details = new List<string>();
+        if (cubCount > 0) details.Add($"• {cubCount:N0} mediciones de cubicación");
+        if (apuCount > 0) details.Add($"• {apuCount:N0} análisis de precios unitarios (APU)");
+
+        string extra = details.Count > 0
+            ? $"\n\nEsta operación eliminará definitivamente:\n{string.Join("\n", details)}"
+            : "";
+
+        return $"Esto reemplazará el itemizado actual ({currentRowCount:N0} filas).{extra}\n\nSe creará un punto de restauración automático (Deshacer / Ctrl+Z).\n\n¿Desea continuar?";
+    }
 
     public string BuildDeleteConfirmationMessage(string description, int affectedRows)
         => affectedRows > 1

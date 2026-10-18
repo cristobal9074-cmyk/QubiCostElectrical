@@ -33,6 +33,8 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
     private bool suppressSessionReload;
     private bool isAdvancedMode;
     private CubScPerspective currentPerspective = CubScPerspective.Generales;
+    public Func<string, bool> ConfirmDelete { get; set; } = msg => WpfDialogService.Confirm("Eliminar tablero", msg, isWarning: true);
+    public Func<string, bool> ConfirmDeleteCircuito { get; set; } = msg => WpfDialogService.Confirm("Eliminar circuito", msg, isWarning: true);
 }
 
 public enum CubScPerspective

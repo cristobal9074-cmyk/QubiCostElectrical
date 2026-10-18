@@ -253,62 +253,17 @@ internal sealed partial class CubicacionRowMutationService
             return;
         }
 
+        var targetRow = parent.SelectedRow;
         ApplyMaterial(material);
-        (int Offset, string Cantidad)? casilla = SolicitarCasillaDeCubicacion(material);
-        if (casilla is { } elegida)
-            AplicarCasillaDeCubicacion(material.Codigo, elegida.Offset, elegida.Cantidad);
 
+        string partida = parent.SelectedPartida?.Codigo ?? "la partida";
         ShellNotificationService.Instance.ShowSuccess(
             "Material en la cubicación",
-            DescribirMaterialCubicado(material, casilla),
+            $"'{material.Codigo}' quedó asignado a {partida}.",
             actionLabel: "Deshacer",
             action: () => ShellNotificationService.RequestUndo?.Invoke());
-    }
 
-    private string DescribirMaterialCubicado(MaterialRow material, (int Offset, string Cantidad)? casilla)
-    {
-        string partida = parent.SelectedPartida?.Codigo ?? "la partida";
-        if (casilla is not { } elegida)
-            return $"'{material.Codigo}' quedó asignado a {partida}. Sin casilla de zona: cúbíquelo en la grilla.";
-
-        string zona = NombreCasilla(elegida.Offset);
-        return $"'{material.Codigo}' quedó asignado a {partida} y cubicado con {elegida.Cantidad} en {zona}.";
-    }
-
-    private string NombreCasilla(int offset)
-    {
-        var zonas = CubicacionSectorService.ZonasActivasOrdenadas(session);
-        return offset < zonas.Count && !string.IsNullOrWhiteSpace(zonas[offset].Nombre)
-            ? zonas[offset].Nombre.Trim()
-            : $"casilla {offset + 1}";
-    }
-
-    /// <summary>
-    /// Pregunta zona y cantidad para la casilla del material recién creado. Devuelve null si no hay
-    /// UI modal disponible (pruebas, cierre de la app) o si el usuario elige "Omitir": en ese caso el
-    /// material queda igual en la partida y se cubica a mano como antes.
-    /// </summary>
-    private (int Offset, string Cantidad)? SolicitarCasillaDeCubicacion(MaterialRow material)
-    {
-        if (!parent.CanEdit || parent.SelectedRow == null || !ShellWindow.CanShowModalDialog)
-            return null;
-        // El diálogo se abre sobre la ventana principal: sin shell (pruebas, arranque) no hay
-        // pregunta modal y el llamador sigue con el material ya asignado.
-        if (Application.Current?.MainWindow is not ShellWindow shell)
-            return null;
-
-        var dialog = new ZonaCantidadDialog(
-            CubicacionSectorService.ZonasActivasOrdenadas(session),
-            material.Codigo,
-            material.Descripcion,
-            parent.SelectedPartida?.Descripcion)
-        {
-            Owner = shell
-        };
-
-        return dialog.ShowDialog() == true
-            ? (dialog.Offset, dialog.CantidadTexto)
-            : null;
+        parent.NotifyFocusCubicacionZone(targetRow);
     }
 
     /// <summary>

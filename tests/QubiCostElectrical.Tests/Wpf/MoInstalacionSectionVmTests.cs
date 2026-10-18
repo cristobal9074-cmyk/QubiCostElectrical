@@ -21,14 +21,13 @@ public sealed class MoInstalacionSectionVmTests : IDisposable
 
     public void Dispose() => prefsScope.Dispose();
 
-    private static MoInstalacionSectionVm CrearVm(BudgetProjectSession session, bool faAutomatico = false)
+    private static MoInstalacionSectionVm CrearVm(BudgetProjectSession session)
     {
         var vm = new MoInstalacionSectionVm(session,
             canEdit: () => true,
             moDirectaRows: () => Array.Empty<MoDirectaRowVm>(),
             runSuppressed: action => action(),
             refreshCost: () => { });
-        vm.FaAutomatico = faAutomatico;
         return vm;
     }
 
@@ -165,6 +164,7 @@ public sealed class MoInstalacionSectionVmTests : IDisposable
     public void Factores_MuestraDiasHombreYTarifaImplicitaDelPlan()
     {
         var session = new BudgetProjectSession();
+        session.ProjectInfo.MoDirectaClp = 171_990_000m;
         session.ProjectInfo.MoTotalClp = 171_990_000m;
         session.Data.MoDirecta.Add(new MoDirectaRow { Dotacion = 100, DotacionMensual = new List<int> { 100 } });
         session.Data.MoDirecta.Add(new MoDirectaRow { Dotacion = 82, DotacionMensual = new List<int> { 82 } });
@@ -226,10 +226,10 @@ public sealed class MoInstalacionSectionVmTests : IDisposable
     }
 
     /// <summary>Proyecto calibrable: M.O. real 10.000.000 y base de porcentaje 125.000 → FA 79,20.</summary>
-    private static (BudgetProjectSession Session, MoInstalacionSectionVm Vm) SesionCalibrable(bool faAutomatico = false)
+    private static (BudgetProjectSession Session, MoInstalacionSectionVm Vm) SesionCalibrable()
     {
         var session = SesionCalibrableBase();
-        var vm = CrearVm(session, faAutomatico);
+        var vm = CrearVm(session);
         vm.Load(session.ProjectInfo);
         return (session, vm);
     }
@@ -251,28 +251,22 @@ public sealed class MoInstalacionSectionVmTests : IDisposable
         return session;
     }
 
-    // ── Modo automático: el FA se cuadra solo contra el costo real ────────────
+    // ── Modo manual (comportamiento tipo Excel): el FA solo se recalibra al pulsar Calcular FA ────────
 
     /// <summary>
-    /// Con el modo automático activo, abrir el proyecto ya deja el FA calibrado: no hay que pulsar
-    /// nada para que EN PPTO cuadre con COSTO (es el 62,80 que en Excel se tecleaba hasta lograrlo).
+    /// Al cargar el proyecto, el FA vigente se respeta estrictamente y no se recalcula en segundo plano.
     /// </summary>
     [Fact]
-    public void FaAutomatico_CuadraElFaAlCargarSinPulsarNada()
+    public void CargarProyecto_RespetaElFaVigenteSinRecalcular()
     {
         var session = SesionCalibrableBase();
-        var vm = CrearVm(session, faAutomatico: true);
+        session.ProjectInfo.IndiceMoFa = 62.80m;
+        var vm = CrearVm(session);
 
         vm.Load(session.ProjectInfo);
 
-        Assert.Equal(79.20m, session.ProjectInfo.IndiceMoFa);
-        Assert.Equal(CurrencyFormat.Clp(10_000_000m), vm.MoEnPptoLabel);
-        Assert.Equal(vm.MoEnPptoLabel, vm.MoCostoRealLabel);
-        Assert.False(vm.MoDeltaEsAviso);
-        Assert.StartsWith("FA automático", vm.FaResultado);
-        // El catálogo y el itemizado quedan recalibrados con el mismo índice.
-        Assert.Equal(99_000m, session.Materiales.First(m => m.Codigo == "PCT-01").MoClp);
-        Assert.Equal(99_000m, session.Cubicacion.First(r => r.Codigo == "PCT-01").MoClp);
+        Assert.Equal(62.80m, session.ProjectInfo.IndiceMoFa);
+        Assert.Equal(N2(62.80m), vm.IndiceMoFaText);
     }
 
     /// <summary>
@@ -280,75 +274,46 @@ public sealed class MoInstalacionSectionVmTests : IDisposable
     /// Arranca en 0 (sin calibrar) y queda guardado así en el proyecto.
     /// </summary>
     [Fact]
-    public void FaAutomatico_ProyectoNuevo_ArrancaEnCeroSinCalibrar()
+    public void ProyectoNuevo_ArrancaEnCeroSinCalibrar()
     {
         var session = new BudgetProjectSession();
 
-        var vm = CrearVm(session, faAutomatico: true);
+        var vm = CrearVm(session);
         vm.Load(session.ProjectInfo);
 
         Assert.Equal(0m, session.ProjectInfo.IndiceMoFa);
         Assert.Equal("0,00", vm.IndiceMoFaText);
     }
 
-    /// <summary>Con el modo apagado el FA vigente se respeta, aunque no cuadre con la obra.</summary>
+    /// <summary>Pulsar el botón Calcular FA cuadra la fila con la M.O. real.</summary>
     [Fact]
-    public void FaAutomatico_Desactivado_RespetaElFaVigente()
+    public void CalcularFa_AlEjecutarComando_CuadraElFaVigente()
     {
         var session = SesionCalibrableBase();
-        var vm = CrearVm(session, faAutomatico: false);
-
-        vm.Load(session.ProjectInfo);
-
-        Assert.Equal(0m, session.ProjectInfo.IndiceMoFa);
-        Assert.True(vm.MoDeltaEsAviso);
-    }
-
-    /// <summary>Activar el botón cuadra la fila de inmediato, sin pulsar Calcular FA.</summary>
-    [Fact]
-    public void FaAutomatico_AlActivarlo_CuadraElFaVigente()
-    {
-        var session = SesionCalibrableBase();
-        var vm = CrearVm(session, faAutomatico: false);
+        var vm = CrearVm(session);
         vm.Load(session.ProjectInfo);
         Assert.Equal(0m, session.ProjectInfo.IndiceMoFa);
 
-        vm.FaAutomatico = true;
+        vm.CalcularFaCommand.Execute(null);
 
         Assert.Equal(79.20m, session.ProjectInfo.IndiceMoFa);
         Assert.False(vm.MoDeltaEsAviso);
     }
 
     /// <summary>
-    /// Escribir un FA a mano manda sobre el automático: el modo se apaga para no pisar el valor que
-    /// el estimador acaba de fijar, y la pantalla lo dice explícitamente.
+    /// Escribir un FA a mano fija el valor y recalcula la M.O. de los materiales.
     /// </summary>
     [Fact]
-    public void FaAutomatico_EscribirAMano_ApagaElModoYRespetaElValor()
+    public void EscribirFaAMano_RespetaElValorYRecalculaMo()
     {
         var session = SesionCalibrableBase();
-        var vm = CrearVm(session, faAutomatico: true);
+        var vm = CrearVm(session);
         vm.Load(session.ProjectInfo);
 
         vm.IndiceMoFaText = N2(50m);
 
-        Assert.False(vm.FaAutomatico);
         Assert.Equal(50m, session.ProjectInfo.IndiceMoFa);
-        Assert.Contains("Automático quedó desactivado", vm.FaResultado);
         // 50.000 × 2,5 % × 50 = 62.500
         Assert.Equal(62_500m, session.Materiales.First(m => m.Codigo == "PCT-01").MoClp);
-    }
-
-    /// <summary>Sin plan de M.O. el modo automático no puede cuadrar nada y deja el índice intacto.</summary>
-    [Fact]
-    public void FaAutomatico_SinPlanDeManoDeObra_NoTocaElIndice()
-    {
-        var session = new BudgetProjectSession();
-        var vm = CrearVm(session, faAutomatico: true);
-
-        vm.Load(session.ProjectInfo);
-
-        Assert.Equal(MaterialMoResolver.IndiceMoFaDefault, session.ProjectInfo.IndiceMoFa);
-        Assert.True(vm.FaAvisoVisible);
     }
 }

@@ -266,7 +266,8 @@
         <TextBlock Text="Opciones" Style="{StaticResource Text.SectionLabel}" Margin="0,4,0,8" />
         <CheckBox Content="Incluir nota de IVA" IsChecked="{Binding IncludeIvaNote}" Margin="0,0,0,6" />
         <CheckBox Content="Mostrar desglose de Precios Unitarios en Itemizado (desmarcar para Suma Alzada / Llave en mano)" IsChecked="{Binding ShowUnitPricesInItemizado}" Margin="0,0,0,6" />
-        <CheckBox Content="Mostrar gráfico de distribución de costos (Materiales vs MO vs Equipos) en Resumen Ejecutivo" IsChecked="{Binding ShowCostComponentDistribution}" Margin="0,0,0,4" />
+        <CheckBox Content="Mostrar gráfico de distribución de costos (Materiales vs MO vs Equipos) en Resumen Ejecutivo" IsChecked="{Binding ShowCostComponentDistribution}" Margin="0,0,0,6" />
+        <CheckBox Content="Ocultar Gastos Generales y Utilidad en el resumen (mostrar precios enteros en partidas)" IsChecked="{Binding OcultarGgYUtilidadEnResumen}" Margin="0,0,0,4" />
       </StackPanel>
     </TabItem>
 

@@ -176,15 +176,21 @@
           </StackPanel>
         </StackPanel>
         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-          <Button x:Name="ApplyButton" Style="{StaticResource Button.Primary}" FontSize="11.5"
-                  Padding="13,0" Click="OnApply">
+          <Button x:Name="ApplyAverageButton" Style="{StaticResource Button.Primary}" FontSize="11.5"
+                  Padding="13,0" Margin="0,0,8,0" Click="OnApplyAverage"
+                  ToolTip="Aplica el promedio mensual redondeado (ej. 13 pers./mes) a todos los meses de la dotación directa, cuadrando con la fórmula de Excel">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-              <TextBlock Text="Aplicar a dotación" />
+              <TextBlock x:Name="ApplyAverageText" Text="Aplicar promedio" />
               <Path Data="M5 12h14M13 6l6 6-6 6" Width="11" Height="11" Stretch="Uniform"
                     Margin="7,0,0,0" VerticalAlignment="Center"
                     Stroke="{DynamicResource Brush.White}" StrokeThickness="2.2"
                     StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" />
             </StackPanel>
+          </Button>
+          <Button x:Name="ApplyButton" Style="{StaticResource Proj.BtnGhost}" FontSize="11.5"
+                  Padding="12,0" Click="OnApply"
+                  ToolTip="Aplica los totales variables mes a mes a la dotación directa">
+            <TextBlock Text="Aplicar curva mensual" />
           </Button>
           <Button Content="Cerrar" Style="{StaticResource Proj.BtnGhost}" FontSize="11.5"
                   Padding="13,0" Margin="8,0,0,0" IsCancel="True" Click="OnClose" />

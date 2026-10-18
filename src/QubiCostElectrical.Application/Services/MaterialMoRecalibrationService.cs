@@ -28,7 +28,7 @@ public sealed record IndiceMoFaAplicado(
 /// </summary>
 public static class MaterialMoRecalibrationService
 {
-    /// <summary>Recalcula en memoria la M.O. de los materiales en fórmula "Porcentaje" y devuelve los cambios.</summary>
+    /// <summary>Recalcula en memoria la M.O. de los materiales en fórmula "Porcentaje" o "Factor" y devuelve los cambios.</summary>
     public static IReadOnlyList<MaterialMoRecalibrado> Recalibrar(
         IEnumerable<MaterialRow>? materiales,
         ProjectInfoRow? proyecto)
@@ -36,8 +36,15 @@ public static class MaterialMoRecalibrationService
         var cambios = new List<MaterialMoRecalibrado>();
         foreach (var material in materiales ?? Array.Empty<MaterialRow>())
         {
-            if (material == null || !MaterialMoResolver.DebeUsarPorcentaje(material))
+            if (material == null) continue;
+            bool esPct = MaterialMoResolver.DebeUsarPorcentaje(material);
+            bool esFactor = MaterialMoResolver.DebeUsarFactor(material);
+            if (!esPct && !esFactor)
                 continue;
+
+            // Si es fórmula Factor y aún no guardaba su base original, preservarla antes de actualizar MoClp
+            if (esFactor && material.MoFactorBase <= 0m && material.MoClp > 0m)
+                material.MoFactorBase = material.MoClp;
 
             decimal nuevo = MaterialMoResolver.MoClpEfectiva(material, proyecto);
             if (nuevo == material.MoClp)

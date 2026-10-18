@@ -41,6 +41,12 @@ public sealed class OfferPdfSettings
     public decimal ManualNetAmountUf { get; set; }
     public bool ShowUnitPricesInItemizado { get; set; } = true;
     public bool ShowCostComponentDistribution { get; set; } = true;
+    /// <summary>
+    /// Si true, el resumen de la oferta comercial (PDF y Excel) muestra los precios enteros de venta
+    /// en las partidas y oculta el desglose de Gastos Generales y Utilidad al final.
+    /// Si false, muestra los precios de costo directo en las partidas y desglosa GG y UT en el totalizador.
+    /// </summary>
+    public bool OcultarGgYUtilidadEnResumen { get; set; } = true;
 
     public string ScopeText { get; set; } = "Suministro y montaje de tableros eléctricos y sus equipamientos.\r\nSuministro y montaje de alimentadores generales y de distribución.\r\nSuministro y montaje de escalerillas y bandejas porta conductores según proyecto.\r\nMontaje de equipos de iluminación.\r\nCanalización y cableado de distribución de iluminación, enchufes, computación, fuerza y climatización.\r\nCanalización y enlauchado de sistemas de corrientes débiles según proyecto.";
     public string ExclusionsText { get; set; } = "No se incluyen equipos de la compañía eléctrica, celda de medida ni pagos por ningún concepto a la distribuidora de la zona.\r\nNo se incluye el suministro de equipos de iluminación.\r\nNo se incluye suministro ni montaje de tableros de otras especialidades, salvo los indicados en proyecto.\r\nNo se incluye el sistema de cableado estructurado, CCTV, detección de incendio, citofonía, control de acceso ni otros sistemas de corrientes débiles.\r\nNo se incluyen izamientos ni desplazamientos de materiales y equipos (verticales y horizontales), los cuales deben ser considerados por la constructora.\r\nNo se consideran obras civiles: cámaras, excavaciones, retapes, compactados, bases de montaje, calados, pinturas, etc.\r\nNo se consideran los circuitos no proyectados en cuadro de carga ni en diagramas unilineales.";

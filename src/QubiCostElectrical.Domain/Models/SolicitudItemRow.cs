@@ -12,4 +12,8 @@ public sealed class SolicitudItemRow
     public decimal Cantidad { get; set; } = 1;
     public string Link { get; set; } = "";
     public string Observaciones { get; set; } = "";
+    public string SolicitudCodigo { get; set; } = "SM 1";
+    public string Fecha { get; set; } = "";
+    public string SolicitadoPor { get; set; } = "";
+    public string Estado { get; set; } = "Aprobado";
 }

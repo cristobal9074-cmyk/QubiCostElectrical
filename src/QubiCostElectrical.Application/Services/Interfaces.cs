@@ -242,6 +242,17 @@ public interface IPurchaseListService
     IReadOnlyList<MaterialUsageBreakdown> GetMaterialUsage(string codigo, IEnumerable<CubicacionRow> cubicacion, IEnumerable<ItemizadoRow> itemizado);
 }
 
+public interface IMaterialControlService
+{
+    IReadOnlyList<MaterialControlRow> Build(
+        IEnumerable<CubicacionRow> cubicacion,
+        IEnumerable<MaterialRow> materiales,
+        IEnumerable<SolicitudItemRow> solicitudes,
+        decimal toleranciaPct = 5m);
+
+    MaterialControlSummary GetSummary(IReadOnlyList<MaterialControlRow> rows);
+}
+
 public interface IApuService
 {
     ApuRow CrearDesdeItem(ItemizadoRow item);

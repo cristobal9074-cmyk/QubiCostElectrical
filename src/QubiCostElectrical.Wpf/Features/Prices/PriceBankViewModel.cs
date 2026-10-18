@@ -70,4 +70,6 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
 
     /// <summary>Notifica el cambio de política de moneda para que la vista reaplique la grilla.</summary>
     private void NotifyMonedaChanged() => OnPropertyChanged(nameof(MuestraUf));
+
+    public Func<string, bool> ConfirmDeleteAll { get; set; } = msg => WpfDialogService.Confirm("Eliminar todo el banco de precios", msg, isWarning: true);
 }

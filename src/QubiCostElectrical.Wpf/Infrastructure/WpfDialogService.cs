@@ -180,6 +180,9 @@ public static class WpfDialogService
             ProjectLockState.HeartbeatExpired =>
                 $"{holder}{Environment.NewLine}{Environment.NewLine}" +
                 "El bloqueo anterior dejó de responder. Puede tomar el control de edición o abrir en solo lectura.",
+            ProjectLockState.Corrupt =>
+                $"{holder}{Environment.NewLine}{Environment.NewLine}" +
+                "El archivo de bloqueo está dañado o ilegible (posible corte de energía o cierre abrupto previo). Puede tomar el control de edición para desbloquearlo o abrir en solo lectura.",
             _ =>
                 $"{holder}{Environment.NewLine}{Environment.NewLine}" +
                 "No se pudo adquirir el bloqueo de edición exclusivo."

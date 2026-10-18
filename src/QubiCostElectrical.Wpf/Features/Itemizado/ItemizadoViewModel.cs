@@ -43,6 +43,8 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
     private string? pendingSelectionId;
     private readonly Dictionary<string, decimal> costTotalsByItem = new(StringComparer.OrdinalIgnoreCase);
     private bool hasPendingUndoForEdit;
+
+    public Func<string, string, bool> ConfirmReplace { get; set; } = (title, msg) => WpfDialogService.Confirm(title, msg, isWarning: true);
     private readonly HashSet<ItemizadoRowVm> wiredRows = new();
     private EventHandler<ProjectSessionChangedEventArgs>? sessionSavedHandler;
     private ItemizadoTotalsSnapshot totalsSnapshot = ItemizadoTotalsCoordinator.Calculate(Array.Empty<ItemizadoRowVm>(), Array.Empty<ItemizadoRowVm>(), 38_500m, false, "");
@@ -474,13 +476,19 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
 
             if (sfd.ShowDialog() == true)
             {
+                if (OperationFailureMessages.IsFileLocked(sfd.FileName))
+                {
+                    WpfDialogService.Error("Archivo en uso", OperationFailureMessages.FileInUseUserMessage);
+                    return;
+                }
+
                 ItemizadoPdfExporter.Export(session.ProjectInfo, Rows.ToList(), sfd.FileName);
                 WpfDialogService.Info("Exportación Exitosa", $"Se ha exportado el itemizado valorado a {sfd.FileName}");
             }
         }
         catch (Exception ex)
         {
-            WpfDialogService.Error("Error al exportar", $"Ocurrió un error al generar el PDF: {ex.Message}");
+            WpfDialogService.Error("Error al exportar", OperationFailureMessages.ToUserMessage(ex));
         }
     }
 }

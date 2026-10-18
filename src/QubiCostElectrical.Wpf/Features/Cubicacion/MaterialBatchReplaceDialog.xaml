@@ -100,7 +100,7 @@
                         <DataGridTextColumn Header="Partida" Binding="{Binding PartidaItem}" Width="65" />
                         <DataGridTextColumn Header="Nombre Partida" Binding="{Binding PartidaDescripcion}" Width="160" />
                         <DataGridTextColumn Header="Módulo" Binding="{Binding Modulo}" Width="75" />
-                        <DataGridTextColumn Header="Metraje / Cantidad" Binding="{Binding Cantidad, StringFormat={}{0:N2}}" Width="110" />
+                        <DataGridTextColumn Header="Metraje / Cantidad" Binding="{Binding Cantidad, StringFormat={}{0:#,##0.##}}" Width="110" />
                         <DataGridTextColumn Header="Precio Actual" Binding="{Binding PrecioUnitarioActualClp, StringFormat={}$ {0:N0}}" Width="95" />
                         <DataGridTextColumn Header="Nuevo Precio" Binding="{Binding NuevoPrecioUnitarioClp, StringFormat={}$ {0:N0}}" Width="95" />
                         <DataGridTextColumn Header="Variación Costo" Binding="{Binding DeltaClp, StringFormat={}$ {0:N0}}" Width="*" />

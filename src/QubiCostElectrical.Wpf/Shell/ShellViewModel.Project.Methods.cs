@@ -44,6 +44,13 @@ partial class ShellViewModel
 
             var fullPath = dialog.FullPath;
 
+            var targetLock = projectLock.InspectLock(fullPath);
+            if (targetLock.State is ProjectLockState.LocalMachineAlive or ProjectLockState.RemoteRecent)
+            {
+                WpfDialogService.Warning("Nuevo proyecto", $"No se puede reemplazar '{Path.GetFileName(fullPath)}' porque está siendo editado por otro usuario ({targetLock.HolderSummary}).");
+                return;
+            }
+
             if (File.Exists(fullPath))
             {
                 if (!WpfDialogService.Confirm("Archivo existente",
@@ -61,7 +68,8 @@ partial class ShellViewModel
                 var userRole = session.ProjectInfo.UsuarioRol;
 
                 projectLifecycle.PrepareWorkspaceForNewOrOpen();
-                session.NewProject(userName, userRole);
+                var prefs = UserPreferencesStore.Load();
+                session.NewProject(userName, userRole, prefs.DefaultGastosGeneralesPct, prefs.DefaultUtilidadPct);
                 session.InitializeProjectParameters(
                     dialog.ProjectName,
                     dialog.Client,
@@ -370,6 +378,12 @@ partial class ShellViewModel
         }
         catch (Exception ex)
         {
+            if (acquired)
+            {
+                projectLock.ReleaseLock();
+            }
+            session.SetLockReadOnly(false);
+            SyncReadOnlyFromSession();
             AppLog.Error("ProjectWorkspace", $"Falló la apertura del proyecto '{path}'", ex);
             WpfDialogService.Error("Abrir proyecto", OperationFailureMessages.ToUserMessage(ex));
         }
@@ -445,12 +459,15 @@ partial class ShellViewModel
             if (!TryApplyCurrentPageChanges())
                 return;
 
+            autoSave.CancelPendingPersist();
+
             var user = CollaborationSessionBridge.CurrentUserContext();
             session.ProjectInfo.UsuarioNombre = string.IsNullOrWhiteSpace(user.DisplayName) ? user.Email : user.DisplayName;
             session.ProjectInfo.UsuarioRol = permissions.RoleDisplayName;
 
             await projectWorkspace.SaveAsync();
             AutoSaveService.DeleteAutoSave(session.CurrentProjectPath);
+            autoSave.MarkSaved();
             RefreshChrome();
             ShellNotificationService.Instance.ShowSuccess("Proyecto guardado", $"Los cambios se guardaron correctamente ({AppClock.Now:HH:mm:ss}).");
         }

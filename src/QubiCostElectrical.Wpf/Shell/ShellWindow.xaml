@@ -1293,10 +1293,17 @@
           <StackPanel x:Name="PhaseEjecucionPanel" Orientation="Horizontal" Margin="2,0,0,0" Visibility="Collapsed">
             <Button x:Name="NavQuotesTab" Style="{StaticResource Button.NavHome}" Content="Cotizaciones"
                     Tag="{x:Static nav:ShellRoute.Quotes}" Click="OnBudgetTabClick" Margin="2,0,0,0" />
-            <Button x:Name="NavChangeOrdersTab" Style="{StaticResource Button.NavHome}" Content="Órdenes de cambio"
-                    Tag="{x:Static nav:ShellRoute.ChangeOrders}" Click="OnBudgetTabClick" Margin="2,0,0,0" />
+            <Button x:Name="NavAdicionalesTab" Style="{StaticResource Button.NavHome}" Content="Adicionales de obra"
+                    Tag="{x:Static nav:ShellRoute.ChangeOrders}" Click="OnBudgetTabClick" Margin="2,0,0,0"
+                    ToolTip="Adicionales y aumentos de obra: cálculo de partidas adicionales con precios unitarios congelados y partidas extraordinarias." />
+            <Button x:Name="NavChangeOrdersTab" Style="{StaticResource Button.NavHome}" Content="Cambio de versión"
+                    Tag="{x:Static nav:ShellRoute.Versions}" Click="OnBudgetTabClick" Margin="2,0,0,0"
+                    ToolTip="Cambio de versión del presupuesto: comparar revisiones, ítems modificados y guardar nueva versión." />
             <Button x:Name="NavSolicitudesTab" Style="{StaticResource Button.NavHome}" Content="Solicitudes faena"
                     Tag="{x:Static nav:ShellRoute.Solicitudes}" Click="OnBudgetTabClick" Margin="2,0,0,0" />
+            <Button x:Name="NavMaterialControlTab" Style="{StaticResource Button.NavHome}" Content="Control de materiales"
+                    Tag="{x:Static nav:ShellRoute.MaterialControl}" Click="OnBudgetTabClick" Margin="2,0,0,0"
+                    ToolTip="Control de materiales en obra: saldo pendiente vs cubicación y alertas de sobrepedido." />
             <Button x:Name="NavCostosExecTab" Style="{StaticResource Button.NavHome}" Content="Control de costos"
                     Tag="{x:Static nav:ShellRoute.Costo}" Click="OnBudgetTabClick" Margin="2,0,0,0" />
             <Button x:Name="NavEstadosPagosTab" Style="{StaticResource Button.NavHome}" Content="Estados de pago"

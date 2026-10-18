@@ -191,7 +191,7 @@
                 <TextBlock Text="Unidad:" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,4,0"/>
                 <TextBlock Text="{Binding ActiveUnidad}" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink2}" Margin="0,0,12,0"/>
                 <TextBlock Text="Cantidad:" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,4,0"/>
-                <TextBlock Text="{Binding ActiveCantidad, StringFormat=N2}" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink2}" Margin="0,0,12,0"/>
+                <TextBlock Text="{Binding ActiveCantidad, StringFormat=N0}" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink2}" Margin="0,0,12,0"/>
                 <TextBlock Text="Estado:" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,4,0"/>
                 <TextBlock Text="{Binding ActiveEstado}" FontSize="{StaticResource Font.Size.sm}" FontWeight="SemiBold"
                            Foreground="{DynamicResource Brush.Ink2}"/>

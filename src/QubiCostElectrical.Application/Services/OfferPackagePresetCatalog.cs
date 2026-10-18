@@ -19,9 +19,9 @@ public static class OfferPackagePresetCatalog
         return preset.Trim() switch
         {
             Dossier => new[] { "OfferPdf", "OfferLetter" },
-            Mandante => new[] { "OfferPdf", "LetterDocx" },
+            Mandante => new[] { "OfferLetter", "ResumenExcel" },
             Interno => null,
-            Banco => new[] { "OfferPdf", "ControlExcel" },
+            Banco => new[] { "OfferLetter", "ResumenExcel", "ControlExcel" },
             _ => Array.Empty<string>()
         };
     }

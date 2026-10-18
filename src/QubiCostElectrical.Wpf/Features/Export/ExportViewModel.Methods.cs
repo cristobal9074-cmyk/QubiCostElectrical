@@ -769,19 +769,8 @@ public sealed partial class ExportViewModel : SessionAwareViewModelBase, IRefres
         }
     }
 
-    private static string? PromptSave(string title, string defaultName, string filter)
-    {
-        var dialog = new SaveFileDialog
-        {
-            Title = title,
-            Filter = filter,
-            FileName = defaultName,
-            DefaultExt = Path.GetExtension(defaultName),
-            AddExtension = true,
-            OverwritePrompt = true
-        };
-        return dialog.ShowDialog() == true ? dialog.FileName : null;
-    }
+    private string? PromptSave(string title, string defaultName, string filter) =>
+        fileDialog.PromptSaveFile(title, defaultName, filter);
 
     private void ShowExportSuccessWithFolderAction(string title, string message, string path, bool pathIsFolder = false)
     {

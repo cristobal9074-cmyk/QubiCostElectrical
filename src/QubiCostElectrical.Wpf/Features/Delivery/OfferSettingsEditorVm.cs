@@ -57,6 +57,7 @@ public sealed partial class OfferSettingsEditorVm : ObservableObject
     [ObservableProperty] private bool includeIvaNote = true;
     [ObservableProperty] private bool showUnitPricesInItemizado = true;
     [ObservableProperty] private bool showCostComponentDistribution = true;
+    [ObservableProperty] private bool ocultarGgYUtilidadEnResumen = true;
     [ObservableProperty] private string scopeText = "...";
     [ObservableProperty] private string exclusionsText = "...";
     [ObservableProperty] private string commercialConditionsText = "...";
@@ -80,10 +81,23 @@ public sealed partial class OfferSettingsEditorVm : ObservableObject
     [ObservableProperty] private int signatureHeightMm = 16;
     [ObservableProperty] private string defaultsHint = "";
 
+    partial void OnSignatureWidthMmChanged(int value)
+    {
+        if (value > 0)
+            SaveSignatureDimensionsToPreferences(value, SignatureHeightMm);
+    }
+
+    partial void OnSignatureHeightMmChanged(int value)
+    {
+        if (value > 0)
+            SaveSignatureDimensionsToPreferences(SignatureWidthMm, value);
+    }
+
     public void LoadFromSession()
     {
         // Rellena desde las preferencias globales los campos que el proyecto no tiene.
-        LetterheadApplicator.Apply(UserPreferencesStore.Load(), _session.OfferPdfSettings);
+        var prefs = UserPreferencesStore.Load();
+        LetterheadApplicator.Apply(prefs, _session.OfferPdfSettings);
         var settings = _session.OfferPdfSettings;
         CompanyName = settings.CompanyName;
         CompanyRut = settings.CompanyRut;
@@ -108,6 +122,7 @@ public sealed partial class OfferSettingsEditorVm : ObservableObject
         IncludeIvaNote = settings.IncludeIvaNote;
         ShowUnitPricesInItemizado = settings.ShowUnitPricesInItemizado;
         ShowCostComponentDistribution = settings.ShowCostComponentDistribution;
+        OcultarGgYUtilidadEnResumen = settings.OcultarGgYUtilidadEnResumen;
         ScopeText = settings.ScopeText;
         ExclusionsText = settings.ExclusionsText;
         CommercialConditionsText = settings.CommercialConditionsText;
@@ -127,8 +142,17 @@ public sealed partial class OfferSettingsEditorVm : ObservableObject
         SignaturePhone = settings.SignaturePhone;
         SignatureEmail = settings.SignatureEmail;
         SignatureImagePath = settings.SignatureImagePath;
-        SignatureWidthMm = settings.SignatureWidthMm <= 0 ? 46 : settings.SignatureWidthMm;
-        SignatureHeightMm = settings.SignatureHeightMm <= 0 ? 16 : settings.SignatureHeightMm;
+
+        int effectiveWidth = settings.SignatureWidthMm;
+        if (effectiveWidth <= 0 && prefs.ProfessionalSignatureWidthMm > 0)
+            effectiveWidth = prefs.ProfessionalSignatureWidthMm;
+        SignatureWidthMm = effectiveWidth <= 0 ? 46 : effectiveWidth;
+
+        int effectiveHeight = settings.SignatureHeightMm;
+        if (effectiveHeight <= 0 && prefs.ProfessionalSignatureHeightMm > 0)
+            effectiveHeight = prefs.ProfessionalSignatureHeightMm;
+        SignatureHeightMm = effectiveHeight <= 0 ? 16 : effectiveHeight;
+
         DefaultsHint = "";
         LoadPlanos(settings.Planos);
         LoadMarcas(settings.Productos);
@@ -162,6 +186,7 @@ public sealed partial class OfferSettingsEditorVm : ObservableObject
         settings.IncludeIvaNote = IncludeIvaNote;
         settings.ShowUnitPricesInItemizado = ShowUnitPricesInItemizado;
         settings.ShowCostComponentDistribution = ShowCostComponentDistribution;
+        settings.OcultarGgYUtilidadEnResumen = OcultarGgYUtilidadEnResumen;
         settings.ScopeText = ScopeText;
         settings.ExclusionsText = ExclusionsText;
         settings.CommercialConditionsText = CommercialConditionsText;
@@ -183,8 +208,39 @@ public sealed partial class OfferSettingsEditorVm : ObservableObject
         settings.SignatureImagePath = SignatureImagePath;
         settings.SignatureWidthMm = SignatureWidthMm;
         settings.SignatureHeightMm = SignatureHeightMm;
+        if (SignatureWidthMm > 0 && SignatureHeightMm > 0)
+        {
+            SaveSignatureDimensionsToPreferences(SignatureWidthMm, SignatureHeightMm);
+        }
         settings.Planos = ExportPlanos();
         settings.Productos = ExportProductos();
+    }
+
+    private static void SaveSignatureDimensionsToPreferences(int width, int height)
+    {
+        try
+        {
+            var prefs = UserPreferencesStore.Load();
+            bool changed = false;
+            if (width > 0 && prefs.ProfessionalSignatureWidthMm != width)
+            {
+                prefs.ProfessionalSignatureWidthMm = width;
+                changed = true;
+            }
+            if (height > 0 && prefs.ProfessionalSignatureHeightMm != height)
+            {
+                prefs.ProfessionalSignatureHeightMm = height;
+                changed = true;
+            }
+            if (changed)
+            {
+                UserPreferencesStore.Save(prefs);
+            }
+        }
+        catch
+        {
+            // Evitar interrumpir flujo si hay error de I/O en preferencias
+        }
     }
 
     // ── Membrete/firma: guardar como predeterminado global ──────────────
@@ -241,6 +297,7 @@ public sealed partial class OfferSettingsEditorVm : ObservableObject
         settings.IncludeIvaNote = IncludeIvaNote;
         settings.ShowUnitPricesInItemizado = ShowUnitPricesInItemizado;
         settings.ShowCostComponentDistribution = ShowCostComponentDistribution;
+        settings.OcultarGgYUtilidadEnResumen = OcultarGgYUtilidadEnResumen;
         settings.ScopeText = ScopeText;
         settings.ExclusionsText = ExclusionsText;
         settings.CommercialConditionsText = CommercialConditionsText;

@@ -284,9 +284,12 @@ public partial class ManoDeObraView : UserControl
         AddCell(grid, r, 2, row.SueldoBaseStr, bold: isDir || isTotal, TextAlignment.Right, mono: true,
             color: row.IsGrandTotal ? Colors.White : noColor,
             bg: row.IsGrandTotal ? Navy2 : BlueFaint, h: RowH);
-        AddCell(grid, r, 3, row.FraccionStr, bold: false, TextAlignment.Center, mono: true,
-            color: row.IsGrandTotal ? Colors.White : (isDir ? noColor : Amber),
-            bg: row.IsGrandTotal ? Navy2 : (isTotal ? Surface2 : null), h: RowH);
+        if (!isDir && !isTotal)
+            AddFraccionCell(grid, r, row, vm);
+        else
+            AddCell(grid, r, 3, row.FraccionStr, bold: false, TextAlignment.Center, mono: true,
+                color: row.IsGrandTotal ? Colors.White : (isDir ? noColor : Amber),
+                bg: row.IsGrandTotal ? Navy2 : (isTotal ? Surface2 : null), h: RowH);
         AddCell(grid, r, 4, row.LeyesStr, bold: isDir || isTotal, TextAlignment.Right, mono: true,
             color: row.IsGrandTotal ? Color.FromRgb(0x93, 0xC5, 0xFD) : Purple,
             bg: row.IsGrandTotal ? Navy2 : null, h: RowH);
@@ -307,8 +310,9 @@ public partial class ManoDeObraView : UserControl
         }
         else
         {
+            var cargoId = !string.IsNullOrEmpty(row.CargoId) ? row.CargoId : row.Tag;
             for (var i = 0; i < n; i++)
-                AddHeatCell(grid, r, 6 + i, row.Dotaciones[i], maxDot, row.Tag, i, vm, peakSet.Contains(i + 1), !row.EsDirecta);
+                AddHeatCell(grid, r, 6 + i, row.Dotaciones[i], maxDot, cargoId, i, vm, peakSet.Contains(i + 1), !row.EsDirecta);
         }
 
         var totalColor = row.IsGrandTotal ? Colors.White : (isDir ? Green2 : Amber);
@@ -317,21 +321,22 @@ public partial class ManoDeObraView : UserControl
     }
 
     /// <summary>
-    /// Celda editable de la columna Dot. para roles indirectos: fija la dotación de todos los meses
-    /// (Month = -1 en la clave de heatCells; se registra aparte de los overrides mes a mes).
+    /// Celda editable de la columna Dot. para roles indirectos: muestra la dotación o fracción
+    /// (ej: 0,3 o 0.3 o 1) y se confirma al presionar Enter o perder el foco.
     /// </summary>
     private void AddDotPicoCell(Grid grid, int rowIdx, MoTableRow row, ManoDeObraViewModel vm)
     {
-        var cargoId = row.Tag;
+        var cargoId = !string.IsNullOrEmpty(row.CargoId) ? row.CargoId : row.Tag;
         var tag = new HeatCellTag
         {
             CargoId = cargoId,
             Month = -1,
             ValueOnFocus = row.DotPico,
         };
+        var currentText = !string.IsNullOrEmpty(row.DotacionStr) ? row.DotacionStr : row.DotPico.ToString(CultureInfo.InvariantCulture);
         var box = new TextBox
         {
-            Text = row.DotPico.ToString(CultureInfo.InvariantCulture),
+            Text = currentText,
             FontFamily = MonoFont,
             FontSize = CellSz,
             FontWeight = FontWeights.SemiBold,
@@ -344,7 +349,7 @@ public partial class ManoDeObraView : UserControl
             Padding = new Thickness(0),
             IsReadOnly = !vm.CanEdit,
             Tag = tag,
-            ToolTip = "Dotación fija todos los meses. Editarla limpia las ediciones mes a mes de este rol.",
+            ToolTip = "Dotación o dedicación del rol indirecto (ej: 0,3 o 0.3 para 30%, 1 para 100%).",
         };
 
         var border = new Border
@@ -359,6 +364,38 @@ public partial class ManoDeObraView : UserControl
             CornerRadius = new CornerRadius(4),
         };
 
+        void CommitDotPico()
+        {
+            if (!vm.CanEdit) return;
+            var raw = (box.Text ?? "").Trim();
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                box.Text = currentText;
+                return;
+            }
+
+            var clean = raw.Replace("%", "").Trim().Replace(',', '.');
+            if (!decimal.TryParse(clean, NumberStyles.Number, CultureInfo.InvariantCulture, out var val))
+            {
+                box.Text = currentText;
+                return;
+            }
+
+            if (val > 1m && val <= 100m && (raw.Contains('%') || (val >= 5m && !raw.Contains('.') && !raw.Contains(','))))
+            {
+                val /= 100m;
+            }
+
+            if (val <= 1m)
+            {
+                vm.SetCargoFraccion(tag.CargoId, Math.Clamp(val, 0m, 1m));
+            }
+            else
+            {
+                vm.SetIndirectDotPico(tag.CargoId, (int)Math.Round(val));
+            }
+        }
+
         box.GotFocus += (_, _) =>
         {
             tag.ValueOnFocus = int.TryParse(box.Text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var n) ? n : row.DotPico;
@@ -370,6 +407,7 @@ public partial class ManoDeObraView : UserControl
         {
             border.BorderBrush = new SolidColorBrush(Line2);
             border.BorderThickness = new Thickness(0, 0, 0, 1);
+            CommitDotPico();
         };
         box.PreviewMouseLeftButtonDown += (_, e) =>
         {
@@ -379,11 +417,34 @@ public partial class ManoDeObraView : UserControl
             box.SelectAll();
             e.Handled = true;
         };
-        box.TextChanged += (_, _) => OnDotPicoTextChanged(box, tag, vm);
-        box.PreviewKeyDown += (_, e) => OnHeatKeyDown(box, e);
+        box.PreviewKeyDown += (_, e) =>
+        {
+            if (e.Key == Key.Enter)
+            {
+                CommitDotPico();
+                box.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
+                e.Handled = true;
+            }
+            else if (e.Key == Key.Escape)
+            {
+                box.Text = currentText;
+                box.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
+                e.Handled = true;
+            }
+            else
+            {
+                OnHeatKeyDown(box, e);
+            }
+        };
         box.PreviewTextInput += (_, e) =>
         {
-            if (e.Text.Length == 0 || !char.IsDigit(e.Text[0]))
+            if (e.Text.Length == 0)
+            {
+                e.Handled = true;
+                return;
+            }
+            var ch = e.Text[0];
+            if (!char.IsDigit(ch) && ch != ',' && ch != '.' && ch != '%')
             {
                 e.Handled = true;
                 return;
@@ -398,8 +459,12 @@ public partial class ManoDeObraView : UserControl
         DataObject.AddPastingHandler(box, (_, e) =>
         {
             var pasted = e.DataObject.GetData(DataFormats.Text) as string;
-            if (pasted != null && int.TryParse(pasted, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed) && parsed >= 0)
-                return;
+            if (pasted != null)
+            {
+                var clean = pasted.Trim().Replace(',', '.');
+                if (decimal.TryParse(clean, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal parsed) && parsed >= 0)
+                    return;
+            }
             e.CancelCommand();
         });
 
@@ -409,25 +474,109 @@ public partial class ManoDeObraView : UserControl
         grid.Children.Add(border);
     }
 
-    private void OnDotPicoTextChanged(TextBox box, HeatCellTag tag, ManoDeObraViewModel vm)
+    /// <summary>
+    /// Celda editable de la columna Fracc. para roles indirectos: permite ingresar
+    /// fracciones decimales usando coma o punto (ej: 0,3 o 0.3 o 0,5 o 1).
+    /// </summary>
+    private void AddFraccionCell(Grid grid, int rowIdx, MoTableRow row, ManoDeObraViewModel vm)
     {
-        if (heatSyncing || !vm.CanEdit)
-            return;
-        var raw = (box.Text ?? "").Trim();
-        if (raw.Length == 0)
+        var cargoId = !string.IsNullOrEmpty(row.CargoId) ? row.CargoId : row.Tag;
+        var box = new TextBox
         {
-            heatSyncing = true;
-            box.Text = tag.ValueOnFocus.ToString(CultureInfo.InvariantCulture);
-            heatSyncing = false;
-            return;
+            Text = row.FraccionStr,
+            FontFamily = MonoFont,
+            FontSize = CellSz,
+            FontWeight = FontWeights.SemiBold,
+            Foreground = new SolidColorBrush(Amber),
+            CaretBrush = new SolidColorBrush(Amber),
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+            TextAlignment = TextAlignment.Center,
+            VerticalContentAlignment = VerticalAlignment.Center,
+            Padding = new Thickness(0),
+            IsReadOnly = !vm.CanEdit,
+            ToolTip = "Fracción de dedicación a la obra (ej: 0,3 o 0.3). Permite decimales con coma o punto.",
+        };
+
+        var border = new Border
+        {
+            Child = box,
+            Height = RowH,
+            Background = new SolidColorBrush(Color.FromRgb(0xFE, 0xF9, 0xEE)),
+            BorderBrush = new SolidColorBrush(Line2),
+            BorderThickness = new Thickness(0, 0, 0, 1),
+            Cursor = Cursors.IBeam,
+            Margin = new Thickness(1, 2, 1, 2),
+            CornerRadius = new CornerRadius(4),
+        };
+
+        void CommitFraccion()
+        {
+            if (!vm.CanEdit) return;
+            var parsed = MoCargoEditorVm.ParseFraccion(box.Text, row.FraccionObra);
+            vm.SetCargoFraccion(cargoId, parsed);
         }
 
-        if (!int.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out var n)
-            && !int.TryParse(raw, NumberStyles.Integer, CultureInfo.GetCultureInfo("es-CL"), out n))
-            return;
+        box.GotFocus += (_, _) =>
+        {
+            border.BorderBrush = new SolidColorBrush(Blue2);
+            border.BorderThickness = new Thickness(1.5);
+            box.SelectAll();
+        };
+        box.LostFocus += (_, _) =>
+        {
+            border.BorderBrush = new SolidColorBrush(Line2);
+            border.BorderThickness = new Thickness(0, 0, 0, 1);
+            CommitFraccion();
+        };
+        box.PreviewMouseLeftButtonDown += (_, e) =>
+        {
+            if (!vm.CanEdit || box.IsKeyboardFocusWithin)
+                return;
+            box.Focus();
+            box.SelectAll();
+            e.Handled = true;
+        };
+        box.PreviewKeyDown += (_, e) =>
+        {
+            if (e.Key == Key.Enter)
+            {
+                CommitFraccion();
+                box.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
+                e.Handled = true;
+            }
+            else if (e.Key == Key.Escape)
+            {
+                box.Text = row.FraccionStr;
+                box.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
+                e.Handled = true;
+            }
+        };
+        box.PreviewTextInput += (_, e) =>
+        {
+            if (e.Text.Length == 0) return;
+            var ch = e.Text[0];
+            if (!char.IsDigit(ch) && ch != ',' && ch != '.' && ch != '%')
+            {
+                e.Handled = true;
+                return;
+            }
+        };
+        DataObject.AddPastingHandler(box, (_, e) =>
+        {
+            var pasted = e.DataObject.GetData(DataFormats.Text) as string;
+            if (!string.IsNullOrWhiteSpace(pasted))
+            {
+                var clean = pasted.Trim().Replace(',', '.');
+                if (decimal.TryParse(clean, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal d))
+                    return;
+            }
+            e.CancelCommand();
+        });
 
-        vm.StageIndirectDotPico(tag.CargoId, n);
-        ScheduleHeatFlush();
+        Grid.SetRow(border, rowIdx);
+        Grid.SetColumn(border, 3);
+        grid.Children.Add(border);
     }
 
     private void BuildCostTable(ManoDeObraViewModel vm)

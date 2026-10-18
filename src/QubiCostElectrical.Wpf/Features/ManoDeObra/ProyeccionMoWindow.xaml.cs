@@ -50,6 +50,7 @@ public partial class ProyeccionMoWindow : Window
     {
         vm = viewModel;
         InitializeComponent();
+        ApplyAverageButton.Command = vm.ApplyAverageProjectionCommand;
         ApplyButton.Command = vm.TakeProjectionCommand;
         SheetScroll.SizeChanged += (_, _) => FitSheet();
         flushTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(280) };
@@ -91,13 +92,26 @@ public partial class ProyeccionMoWindow : Window
     {
         if (rebuilding)
             return;
-        if (e.PropertyName == nameof(ManoDeObraViewModel.Meses) && !vm.IsApplyingProjection)
+        if ((e.PropertyName == nameof(ManoDeObraViewModel.Meses)
+             || e.PropertyName == nameof(ManoDeObraViewModel.TotalMeses)
+             || e.PropertyName == nameof(ManoDeObraViewModel.TotalMonths)
+             || e.PropertyName == nameof(ManoDeObraViewModel.ProjectionTasks))
+            && !vm.IsApplyingProjection)
+        {
             Rebuild();
+        }
     }
 
     private void OnClose(object sender, RoutedEventArgs e) => Close();
 
     private void OnApply(object sender, RoutedEventArgs e)
+    {
+        if (!vm.ProjectionTasks.Any(t => t.Cantidades.Any(v => v > 0)))
+            return;
+        ShowToast();
+    }
+
+    private void OnApplyAverage(object sender, RoutedEventArgs e)
     {
         if (!vm.ProjectionTasks.Any(t => t.Cantidades.Any(v => v > 0)))
             return;
@@ -724,7 +738,12 @@ public partial class ProyeccionMoWindow : Window
         if (grandTotal != null)
             grandTotal.Text = sum.ToString("N0", Es);
 
-        AverageText.Text = FormatAverage(vm.ProjectionMonthlyAverage());
+        var avg = vm.ProjectionMonthlyAverage();
+        var avgRounded = vm.ProjectionMonthlyAverageRounded();
+        AverageText.Text = FormatAverage(avg);
+        AverageText.ToolTip = $"Promedio exacto: {avg:N2} trabajadores/mes · Redondeado: {avgRounded} trabajadores/mes";
+        if (ApplyAverageText != null)
+            ApplyAverageText.Text = $"Aplicar promedio ({avgRounded} pers.)";
         TotalSumText.Text = sum.ToString("N0", Es);
         MaxValueText.Text = max.ToString(CultureInfo.InvariantCulture);
         var peakMonths = new List<string>();
@@ -807,10 +826,9 @@ public partial class ProyeccionMoWindow : Window
 
     private static string FormatAverage(double value)
     {
-        var rounded = Math.Round(value, 1);
-        return Math.Abs(rounded - Math.Round(rounded)) < 0.05
-            ? Math.Round(rounded).ToString("N0", Es)
-            : rounded.ToString("N1", Es);
+        // Redondeo a entero (ej: 12,9 -> 13, 13,6 -> 14) según requerimiento y fórmula Excel =ROUNDUP(AVERAGE(...), 0)
+        var rounded = (int)Math.Round(value, MidpointRounding.AwayFromZero);
+        return rounded.ToString("N0", Es);
     }
 
     private Brush InkBrush => (Brush)FindResource("Brush.Ink");

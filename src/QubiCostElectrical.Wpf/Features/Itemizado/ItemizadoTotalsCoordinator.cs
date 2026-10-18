@@ -100,8 +100,8 @@ public static class ItemizadoTotalsCoordinator
         return ctx.Currency switch
         {
             Moneda.CLP => ($"$ {clpAmount:N0}", ""),
-            Moneda.USD => ($"US$ {deliveryAmount:N2}", $"$ {clpAmount:N0}"),
-            Moneda.EUR => ($"€ {deliveryAmount:N2}", $"$ {clpAmount:N0}"),
+            Moneda.USD => ($"US$ {deliveryAmount:N0}", $"$ {clpAmount:N0}"),
+            Moneda.EUR => ($"€ {deliveryAmount:N0}", $"$ {clpAmount:N0}"),
             _ => ($"{deliveryAmount:N3} UF", $"$ {clpAmount:N0}")
         };
     }

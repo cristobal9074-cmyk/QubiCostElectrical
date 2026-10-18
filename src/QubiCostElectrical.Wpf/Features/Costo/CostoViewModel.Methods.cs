@@ -17,9 +17,9 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
     private readonly IPriceBankStore? priceBank;
 
     public CostoViewModel(IShellNavigationHost shell, WpfAppHost host)
-        : this(shell, host.Session, host.ProjectWorkspace, host.Dashboard, host.Services.CurrencyConversion, host.Audit, host.PriceBankStore) { }
+        : this(shell, host.Session, host.ProjectWorkspace, host.Dashboard, host.Services.CurrencyConversion, host.Audit, host.PriceBankStore, host.UndoService) { }
 
-    public CostoViewModel(IShellNavigationHost shell, BudgetProjectSession session, IProjectWorkspaceService workspace, DashboardPresenter dashboard, ICurrencyConversionService currencySvc, ProjectAuditRecorder? audit = null, IPriceBankStore? priceBank = null) : base(session)
+    public CostoViewModel(IShellNavigationHost shell, BudgetProjectSession session, IProjectWorkspaceService workspace, DashboardPresenter dashboard, ICurrencyConversionService currencySvc, ProjectAuditRecorder? audit = null, IPriceBankStore? priceBank = null, WpfUndoService? undo = null) : base(session)
     {
         this.shell = shell;
         this.session = session;
@@ -28,6 +28,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         this.currencySvc = currencySvc;
         this.audit = audit;
         this.priceBank = priceBank;
+        this.undo = undo;
         OpenProjectCommand = new RelayCommand(() => _ = shell.OpenProjectAsync());
         goToTakeoffCommand = new RelayCommand(() => shell.RequestNavigate(ShellRoute.Takeoff), () => !ShowEmptyState);
         goToItemizedCommand = new RelayCommand(() => shell.RequestNavigate(ShellRoute.Itemized), () => !ShowEmptyState);
@@ -60,7 +61,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         RemoveNegotiatedDiscountCommand = new RelayCommand<NegotiatedDiscountVm>(RemoveNegotiatedDiscount, _ => CanEdit);
         AddStaffingRoleCommand = new RelayCommand(AddStaffingRole, () => CanEdit);
         RemoveStaffingRoleCommand = new RelayCommand<StaffingRoleVm>(RemoveStaffingRole, _ => CanEdit);
-        MoInstalacion = new(session, () => CanEdit, () => MoDirectaRows, RunSuppressed, RefreshCostOnly, priceBank);
+        MoInstalacion = new(session, () => CanEdit, () => MoDirectaRows, RunSuppressed, RefreshCostOnly, priceBank, undo);
         ClosingPolicySection = new ClosingPolicySectionVm(CommitClosingPolicyType, CommitClosingPolicyParam);
         NegotiationSimulator = new CommercialNegotiationVm(ApplyNegotiatedTargetPrice, () => CanEdit);
         EnsureCoefFactors();
@@ -110,6 +111,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
     public string TotalVentaLabel { get => totalVentaLabel; private set => SetProperty(ref totalVentaLabel, value); }
     public string TotalVentaSubLabel { get => totalVentaSubLabel; private set => SetProperty(ref totalVentaSubLabel, value); }
     public string MargenLabel { get => margenLabel; private set => SetProperty(ref margenLabel, value); }
+    public string MargenSubLabel { get => margenSubLabel; private set => SetProperty(ref margenSubLabel, value); }
     public string UfM2Label { get => ufM2Label; private set => SetProperty(ref ufM2Label, value); }
     public string UfM2SubLabel { get => ufM2SubLabel; private set => SetProperty(ref ufM2SubLabel, value); }
     public string ResumenFooterText { get => resumenFooterText; private set => SetProperty(ref resumenFooterText, value); }
@@ -1504,6 +1506,11 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         if (preset is not { Factores.Count: > 0 })
             return;
 
+        if (!ConfirmAction("Restaurar preset",
+            $"¿Desea restaurar los factores y márgenes guardados ({preset.Etiqueta})?\n\nEsta acción sobrescribirá los valores actuales de las familias."))
+            return;
+
+        undo?.PushUndoPoint(session, $"Restaurar preset de costos «{preset.Etiqueta}»");
         suppressCoefRefresh = true;
         try
         {
@@ -1585,6 +1592,11 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         TotalVentaSubLabel = ventaPair.Primary;
         TotalVentaLabel = ventaPair.Secondary;
         MargenLabel = $"{cost.MargenRealPct:N1} %";
+        decimal margenClp = Math.Max(0m, ventaClp - directoClp);
+        var margenPair = MoneyPair(margenClp);
+        MargenSubLabel = margenPair.Secondary.Length > 0
+            ? $"{margenPair.Primary} ({margenPair.Secondary})"
+            : margenPair.Primary;
         ValorUfDiaLabel = valorUf.ToString("N0", CultureInfo.CurrentCulture);
         UfM2Label = enClp
             ? $"$ {m2Clp:N0}/m²"
@@ -1731,6 +1743,14 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         if (!CanEdit) return;
         var selection = session.Data.ClosingPolicy ??= ClosingPolicySelection.Default();
         if (selection.Policy == policy) return;
+        var policyName = ClosingPolicyOptionVm.All.FirstOrDefault(o => o.Value == policy)?.DisplayName ?? policy.ToString();
+        if (!ConfirmAction("Cambiar política de cierre",
+            $"¿Desea cambiar la política de cierre comercial a «{policyName}»?\n\nEsto afectará la fórmula de cálculo de la venta final y los márgenes del proyecto."))
+        {
+            ClosingPolicySection.SetSilent(selection);
+            return;
+        }
+        undo?.PushUndoPoint(session, $"Cambiar política de cierre a {policyName}");
         audit?.RecordLifecycle("Política de cierre", $"{selection.Policy} → {policy}");
         selection.Policy = policy;
         session.MarkDirty(ProjectDirtyScope.ClosingPolicy);
@@ -1761,7 +1781,12 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         RefreshCostOnly();
     }
 
-    private void ApplyNegotiatedTargetPrice(decimal targetPrice) { CommitClosingPolicyType(ClosingPolicyType.TargetPrice); CommitClosingPolicyParam(nameof(ClosingPolicySelection.TargetPriceClp), targetPrice); }
+    private void ApplyNegotiatedTargetPrice(decimal targetPrice)
+    {
+        undo?.PushUndoPoint(session, "Aplicar precio objetivo negociado");
+        CommitClosingPolicyType(ClosingPolicyType.TargetPrice);
+        CommitClosingPolicyParam(nameof(ClosingPolicySelection.TargetPriceClp), targetPrice);
+    }
 
     private void FillCostRows(
         ObservableCollection<CostoRowVm> rows,
@@ -1877,6 +1902,10 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
     {
         if (!CanEdit)
             return;
+        if (!ConfirmAction("Restablecer factores",
+            "¿Desea restablecer todos los factores de familia a 1.00× y eliminar los descuentos aplicados? Se perderán las personalizaciones actuales."))
+            return;
+        undo?.PushUndoPoint(session, "Restablecer factores de familia");
         suppressCoefRefresh = true;
         try
         {
@@ -1898,15 +1927,19 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
     }
 
     private void LoadCoeficientesEstandar() =>
-        ApplyCoefPreset(ExcelCostosBridge.PresetFactoresEstandar, fallback: 1.30m);
+        ApplyCoefPreset(ExcelCostosBridge.PresetFactoresEstandar, fallback: 1.30m, "Factores Estándar");
 
     private void LoadTipicosCoeficientes() =>
-        ApplyCoefPreset(ExcelCostosBridge.PresetFactoresTipicos, fallback: 1.14m);
+        ApplyCoefPreset(ExcelCostosBridge.PresetFactoresTipicos, fallback: 1.14m, "Factores Típicos");
 
-    private void ApplyCoefPreset(IReadOnlyDictionary<string, decimal> preset, decimal fallback)
+    private void ApplyCoefPreset(IReadOnlyDictionary<string, decimal> preset, decimal fallback, string presetName)
     {
         if (!CanEdit)
             return;
+        if (!ConfirmAction("Aplicar factores predefinidos",
+            $"¿Desea aplicar los factores y márgenes «{presetName}»?\n\nEsta acción sobrescribirá los factores por familia y los porcentajes de gastos generales y utilidad."))
+            return;
+        undo?.PushUndoPoint(session, $"Aplicar preset «{presetName}»");
         suppressCoefRefresh = true;
         try
         {

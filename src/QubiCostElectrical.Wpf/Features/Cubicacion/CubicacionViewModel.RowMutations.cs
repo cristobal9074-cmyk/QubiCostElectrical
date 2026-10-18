@@ -22,6 +22,13 @@ public sealed partial class CubicacionViewModel
     /// <summary>Expuesto para pruebas: baja a la cubicación el material creado en la lista de precios.</summary>
     internal void AplicarMaterialCreado(string? codigo) => rowMutationService.AplicarMaterialCreado(codigo);
 
+    public event Action<CubicacionRowVm>? RequestFocusCubicacionZone;
+
+    internal void NotifyFocusCubicacionZone(CubicacionRowVm row)
+    {
+        RequestFocusCubicacionZone?.Invoke(row);
+    }
+
     internal static MaterialRow FromBankEntry(PriceBankEntry entry)
     {
         // Solo CLP del banco: no copiar MatUf/MoUf stale (p. ej. MoUf=1 con MoClp=1 cuando

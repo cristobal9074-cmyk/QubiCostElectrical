@@ -486,18 +486,24 @@ public sealed class PrecioListaResumenVm : ViewModelBase
         && (priceBankStore.GetByCodigo(codigo.Trim()) != null
             || session.Materiales.Any((MaterialRow m) => CodeHelper.Match(m.Codigo, codigo)));
 
-    public void EliminarMaterial(PrecioListaMaterialVm vm)
+    /// <summary>Cuenta cuántos recursos de cubicación en el proyecto activo hacen referencia a este código.</summary>
+    public int ContarUsosEnCubicacion(string codigo)
     {
-        // Un material creado en este proyecto no tiene fila en el banco global: borrarla sería un
-        // no-op silencioso. Solo se quita del catálogo del .qce.
-        if (!vm.EsSoloProyecto)
+        if (string.IsNullOrWhiteSpace(codigo)) return 0;
+        return session.Cubicacion.Count(c => CodeHelper.Match(c.Codigo, codigo));
+    }
+
+    public void EliminarMaterial(PrecioListaMaterialVm vm, bool deleteFromGlobalBank = false)
+    {
+        // Solo elimina del banco de precios central si se solicitó explícitamente (evita destruir el catálogo maestro)
+        if (deleteFromGlobalBank && !vm.EsSoloProyecto)
             priceBankStore.Delete(vm.Codigo);
 
         MaterialRow? materialRow = session.Materiales.FirstOrDefault((MaterialRow x) => CodeHelper.Match(x.Codigo, vm.Codigo));
         if (materialRow != null)
         {
             session.Materiales.Remove(materialRow);
-            session.MarkDirty("material_delete");
+            session.MarkDirty(ProjectDirtyScope.Materiales);
         }
         allItems.Remove(vm);
         RefreshKpis();

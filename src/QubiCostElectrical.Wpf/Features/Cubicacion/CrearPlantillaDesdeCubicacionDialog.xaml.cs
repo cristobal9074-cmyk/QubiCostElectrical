@@ -318,7 +318,7 @@ public sealed class CrearPlantillaRecursoVm : ViewModelBase
     public string Unidad { get; }
     public decimal CantidadActual { get; }
 
-    public string CantidadDisplay => CantidadActual.ToString("N2", CultureInfo.CurrentCulture);
+    public string CantidadDisplay => CantidadActual % 1 == 0 ? CantidadActual.ToString("N0", CultureInfo.CurrentCulture) : CantidadActual.ToString("#,##0.##", CultureInfo.CurrentCulture);
     public string DescripcionShort => Descripcion.Length > 25 ? Descripcion.Substring(0, 22) + "…" : Descripcion;
 
     public IReadOnlyList<string> RolesDisponibles { get; } = new[] { "Maestro", "Esclavo", "Operación" };

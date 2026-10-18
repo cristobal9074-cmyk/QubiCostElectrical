@@ -10,7 +10,7 @@ namespace QubiCostElectrical.Tests.Domain;
 ///   · VA% solo sobre equipos.
 ///   · costo proyecto = ejecución + riesgo + GG + utilidad aditiva + VA.
 ///   · diferencia por factores = venta − costo proyecto.
-///   · ManoObraDotacionClp reemplaza la MO del motor en ejecución Y en la venta bruta.
+///   · ManoObraDotacionClp reemplaza la MO del motor en ejecución (Costo Directo).
 ///   · GastosOperacionalesClp entra en ejecución Y en la venta bruta (con factores).
 ///   · C-1: venta &lt; costo proyecto ⇒ inconsistencia BLOQUEANTE UtilidadNegativa.
 /// </summary>
@@ -126,12 +126,12 @@ public sealed class BuildExcelCostosTests
     }
 
     [Fact]
-    public void ManoObraDotacion_ReplacesEngineMo_InEjecucionAndBruto()
+    public void ManoObraDotacion_ReplacesEngineMo_InEjecucion()
     {
         // engine MO 200, dotación 260. ejecución = (300+200+100) - 200 + 260 + 50 = 710.
         // baseGgUt = 300 + 260 + 50 = 610. GG 5% = 30.5. UT 8% = 48.8. VA 3% de 100 = 3.
         // costo proyecto = 710 + 30.5 + 48.8 + 3 = 792.3
-        // bruto = SumVenta 900 + GO 50 = 950; ajuste MO: 950 - 200 + 260 = 1010.
+        // bruto = SumVenta 900 + GO 50 = 950 (la venta con factores no se infla con MO de dotación; va al costo).
         var result = BudgetTotalsCalculator.Build(
             Direct(mat: 300m, mo: 200m, eq: 100m, sumVenta: 900m, rowLevel: true),
             Settings(gg: 5m, ut: 8m, va: 3m, go: 50m, moDotacion: 260m));
@@ -140,8 +140,8 @@ public sealed class BuildExcelCostosTests
         Assert.Equal(710m, result.CostoDirectoUf);
         Assert.Equal(610m, result.BaseGgUtUf);
         Assert.Equal(792.3m, result.CostoProyectoUf);
-        Assert.Equal(1_010m, result.TotalVentaUf);
-        Assert.Equal(1_010m - 792.3m, result.DiferenciaFactoresUf);
+        Assert.Equal(950m, result.TotalVentaUf);
+        Assert.Equal(950m - 792.3m, result.DiferenciaFactoresUf);
     }
 
     [Fact]
@@ -197,4 +197,31 @@ public sealed class BuildExcelCostosTests
 
         Assert.DoesNotContain(result.Inconsistencias, i => i.Tipo == "UtilidadNegativa");
     }
+
+    [Fact]
+    public void Pel039A2026_FaAndEnPptoParity_MatchesExcelExactly()
+    {
+        // En Excel PEL039A2026 ABIERTO.xlsx:
+        // Base Materiales (sum of BaseMo × Cantidad) = 1.622.892
+        // Base Equipos (sum of MatClp × 2.5% × Cantidad) = 1.116.100
+        // Base Total = 2.738.992
+        // M.O. Directa del Plan de Obra = $ 171.990.000 (4.004 DD/HH)
+        var lineas = new List<FactorAjusteMoLinea>
+        {
+            new(MoFijaClp: 0m, BasePorcentajeClp: 1_622_892m, Cantidad: 1m),
+            new(MoFijaClp: 0m, BasePorcentajeClp: 1_116_100m, Cantidad: 1m)
+        };
+
+        var resultado = FactorAjusteMoCalculator.Calcular(171_990_000m, lineas);
+
+        Assert.Equal(2_738_992m, resultado.BasePorcentajeClp);
+        Assert.Equal(62.79m, resultado.Fa); // 171.990.000 / 2.738.992 = 62,793
+
+        // EN PPTO con el FA del Excel (62,80)
+        decimal enPpto = resultado.MoItemizadoClp(62.80m);
+        Assert.Equal(172_008_697.60m, enPpto); // ~ 172.008.701 de COSTOS!F192
+        decimal desviacion = FactorAjusteMoResultado.DesviacionPct(enPpto, resultado.MoRealClp);
+        Assert.Equal(0.01m, desviacion); // +0,01%
+    }
 }
+

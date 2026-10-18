@@ -150,11 +150,11 @@
             <DataGridTextColumn Header="Ud." Binding="{Binding Unidad}" Width="50" />
             <DataGridTextColumn Header="Categoría" Binding="{Binding Categoria}" Width="120" />
             <DataGridTextColumn Header="Proveedor" Binding="{Binding Proveedor}" Width="120" />
-            <DataGridTextColumn Header="Cant. neta" Binding="{Binding CantidadNeta, StringFormat={}{0:N2}}" Width="85"
+            <DataGridTextColumn Header="Cant. neta" Binding="{Binding CantidadNeta, StringFormat={}{0:N0}}" Width="85"
                                 HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}" />
             <DataGridTextColumn Header="Tol. %" Binding="{Binding ToleranciaPct, StringFormat={}{0:N1}}" Width="70"
                                 HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}" />
-            <DataGridTextColumn Header="Cant. compra" Binding="{Binding CantidadCompra, StringFormat={}{0:N2}}" Width="95"
+            <DataGridTextColumn Header="Cant. compra" Binding="{Binding CantidadCompra, StringFormat={}{0:N0}}" Width="95"
                                 HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}" />
             <DataGridTextColumn x:Name="PrecioUfColumn" Header="Precio UF" Binding="{Binding MatUfUnitario, StringFormat={}{0:N4}}" Width="85"
                                 HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}" />

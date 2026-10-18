@@ -164,7 +164,7 @@ public static class ClosedXmlExportStyler
 
     public static string UfExcelFormat() => "#,##0.000 \"UF\"";
     public static string ClpExcelFormat() => "$ #,##0";
-    public static string UsdExcelFormat() => "US$ #,##0.00";
+    public static string UsdExcelFormat() => "US$ #,##0";
 
     public static string ProjectCurrencyExcelFormat(string currency)
     {

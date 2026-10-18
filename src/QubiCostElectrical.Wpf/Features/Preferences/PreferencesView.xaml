@@ -177,7 +177,37 @@
                     Click="OnClearSignatureClick"/>
           </Grid>
           <TextBlock Text="Firma escaneada PNG o JPG. Solo se aplica en PDF cuando el proyecto no tiene una propia."
-                     Style="{StaticResource Text.Caption}" Margin="180,0,0,0"/>
+                     Style="{StaticResource Text.Caption}" Margin="180,0,0,8"/>
+
+          <!-- Dimensiones de firma -->
+          <Grid Margin="0,4,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="180"/>
+              <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Dimensiones firma (mm)" Style="{StaticResource Form.Label}" VerticalAlignment="Center" Margin="0"/>
+            <Grid Grid.Column="1">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="*"/>
+              </Grid.ColumnDefinitions>
+              <StackPanel Grid.Column="0">
+                <TextBlock Text="Ancho (mm)" Style="{StaticResource Text.Caption}" Margin="0,0,0,4"/>
+                <TextBox Text="{Binding ProfessionalSignatureWidthMm, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource Form.TextBox}" Height="34" MaxLength="5"
+                         ToolTip="Ancho de la imagen de la firma en los PDF (predeterminado 46 mm)."/>
+              </StackPanel>
+              <StackPanel Grid.Column="2">
+                <TextBlock Text="Alto (mm)" Style="{StaticResource Text.Caption}" Margin="0,0,0,4"/>
+                <TextBox Text="{Binding ProfessionalSignatureHeightMm, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource Form.TextBox}" Height="34" MaxLength="5"
+                         ToolTip="Alto de la imagen de la firma en los PDF (predeterminado 16 mm)."/>
+              </StackPanel>
+            </Grid>
+          </Grid>
+          <TextBlock Text="Tamaño predeterminado de la firma en PDF para todos los proyectos (ej. 46 x 16 mm)."
+                     Style="{StaticResource Text.Caption}" Margin="180,4,0,0"/>
 
         </StackPanel>
       </Border>
@@ -302,6 +332,32 @@
             <TextBlock Text="{Binding PriceBankPathWarning}"
                        Visibility="{Binding PriceBankPathWarning, Converter={StaticResource NullToVisibility}, ConverterParameter=NonEmpty}"
                        Style="{StaticResource Text.Caption}" FontWeight="Bold" Foreground="{DynamicResource Brush.Amber}" Margin="0,6,0,0" TextWrapping="Wrap" />
+          </StackPanel>
+
+          <!-- Márgenes comerciales predeterminados para proyectos -->
+          <StackPanel Margin="0,20,0,0">
+            <TextBlock Text="MÁRGENES COMERCIALES PREDETERMINADOS PARA PROYECTOS" Style="{StaticResource Text.SectionLabel}" Margin="0,0,0,4"/>
+            <TextBlock Text="Porcentajes predeterminados que se aplicarán automáticamente como recomendación a cada nuevo proyecto."
+                       Style="{StaticResource Text.Caption}" Margin="0,0,0,10" TextWrapping="Wrap"/>
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+              <StackPanel Grid.Column="0">
+                <TextBlock Text="Gastos generales predeterminados (%)" Style="{StaticResource Form.Label}" Margin="0,0,0,4"/>
+                <TextBox Text="{Binding DefaultGastosGeneralesPctText, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource Form.TextBox}" Height="36"
+                         ToolTip="Porcentaje de GG inicial para cada nuevo proyecto (ej. 14,0)."/>
+              </StackPanel>
+              <StackPanel Grid.Column="2">
+                <TextBlock Text="Utilidad predeterminada (%)" Style="{StaticResource Form.Label}" Margin="0,0,0,4"/>
+                <TextBox Text="{Binding DefaultUtilidadPctText, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource Form.TextBox}" Height="36"
+                         ToolTip="Porcentaje de Utilidad inicial para cada nuevo proyecto (ej. 18,0)."/>
+              </StackPanel>
+            </Grid>
           </StackPanel>
 
         </StackPanel>

@@ -8,12 +8,18 @@ namespace QubiCostElectrical.Tests.Wpf;
 public sealed class ExportDeliverySupportTests
 {
     [Fact]
-    public void DocumentSelector_HasSevenDocuments_AllSelectedByDefault()
+    public void DocumentSelector_HasTenDocuments_OnlyOfferLetterAndResumenExcelSelectedByDefault()
     {
         var selector = new DeliveryDocumentSelectorVm(WpfAppHost.Current.Dashboard);
 
-        Assert.Equal(7, selector.Documents.Count);
-        Assert.All(selector.Documents, d => Assert.True(d.IsSelected));
+        Assert.Equal(10, selector.Documents.Count);
+        Assert.Equal(4, selector.PrimaryDocuments.Count);
+        Assert.Equal(6, selector.OptionalDocuments.Count);
+
+        var selectedIds = selector.GetSelectedDocumentIds();
+        Assert.Equal(2, selectedIds.Length);
+        Assert.Contains("OfferLetter", selectedIds);
+        Assert.Contains("ResumenExcel", selectedIds);
     }
 
     [Fact]
@@ -21,16 +27,16 @@ public sealed class ExportDeliverySupportTests
     {
         var selector = new DeliveryDocumentSelectorVm(WpfAppHost.Current.Dashboard);
 
-        selector.Documents[1].IsSelected = false; // OfferLetter
-        selector.Documents[3].IsSelected = false; // LetterDocx
+        // Turn on PartidasAbiertasExcel and LetterDocx
+        var partidasDoc = selector.Documents.First(d => d.Id == "PartidasAbiertasExcel");
+        partidasDoc.IsSelected = true;
 
         var ids = selector.GetSelectedDocumentIds();
 
-        Assert.Equal(5, ids.Length);
-        Assert.Contains("OfferPdf", ids);
-        Assert.Contains("ControlExcel", ids);
-        Assert.Contains("MemoriaPdf", ids);
-        Assert.Contains("ReporteCSEC", ids);
+        Assert.Equal(3, ids.Length);
+        Assert.Contains("OfferLetter", ids);
+        Assert.Contains("ResumenExcel", ids);
+        Assert.Contains("PartidasAbiertasExcel", ids);
     }
 
     [Fact]

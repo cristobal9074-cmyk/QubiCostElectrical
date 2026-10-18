@@ -23,6 +23,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddSingleton<ICurrencyConversionService, CurrencyConversionService>();
         services.AddSingleton<IApuService, ApuService>();
         services.AddSingleton<IPurchaseListService, PurchaseListService>();
+        services.AddSingleton<IMaterialControlService, MaterialControlService>();
         services.AddSingleton<IValidationService, ValidationService>();
         services.AddSingleton<ICubicacionService, CubicacionService>();
         services.AddSingleton<ICubicacionTakeoffQueryService, CubicacionTakeoffQueryService>();

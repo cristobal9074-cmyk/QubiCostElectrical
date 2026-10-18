@@ -67,7 +67,7 @@ public static partial class DataGridExcelNavigation
 
     private static List<DataGridColumn> GetNavigableColumns(DataGrid grid, DataGridColumn? currentColumn)
     {
-        var all = grid.Columns.Where(c => c.Visibility == Visibility.Visible).OrderBy(c => c.DisplayIndex).ToList();
+        var all = grid.Columns.Where(c => c.Visibility == Visibility.Visible && c.Header as string != "#").OrderBy(c => c.DisplayIndex).ToList();
         if (_columnScopes.TryGetValue(grid, out var box) && box.Predicate != null
             && (currentColumn == null || box.Predicate(currentColumn)))
         {
@@ -316,6 +316,11 @@ public static partial class DataGridExcelNavigation
             if (e.Key is Key.Delete or Key.Back)
             {
                 if (e.OriginalSource is TextBox)
+                {
+                    return;
+                }
+
+                if (GetHandleDeleteByHost(grid))
                 {
                     return;
                 }
@@ -1018,10 +1023,15 @@ public static partial class DataGridExcelNavigation
         // lo que fuerza un relayout/scroll en CADA tecla aunque la celda ya estuviera a la
         // vista, y se sentía como un "recargue" visible en vez de una navegación fluida. Solo se
         // trae a la vista (con el costo de scroll + foco diferido) cuando realmente hace falta.
+        grid.Focus();
+        Keyboard.Focus(grid);
+
         var realizedCell = TryGetRealizedCell(grid, item, column);
         if (realizedCell != null)
         {
+            realizedCell.IsSelected = true;
             realizedCell.Focus();
+            Keyboard.Focus(realizedCell);
             return;
         }
 
@@ -1469,7 +1479,9 @@ public static partial class DataGridExcelNavigation
                         var cell = presenter.ItemContainerGenerator.ContainerFromIndex(colIndex) as DataGridCell;
                         if (cell != null)
                         {
+                            cell.IsSelected = true;
                             cell.Focus();
+                            Keyboard.Focus(cell);
                             return;
                         }
                     }

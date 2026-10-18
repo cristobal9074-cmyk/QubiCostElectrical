@@ -72,12 +72,18 @@ public sealed class UserPreferences
     /// </summary>
     public bool MoInstalacionPorRendimientoDefault { get; set; } = false;
 
+    // ── Márgenes comerciales predeterminados ─────────────────────────────
+    /// <summary>Porcentaje predeterminado de Gastos Generales para nuevos proyectos (defecto 14,0%).</summary>
+    public decimal DefaultGastosGeneralesPct { get; set; } = 14m;
+
+    /// <summary>Porcentaje predeterminado de Utilidad para nuevos proyectos (defecto 18,0%).</summary>
+    public decimal DefaultUtilidadPct { get; set; } = 18m;
+
     /// <summary>
-    /// Default del modo automático del índice de M.O. (FA): cuando está activo, el FA se recalcula
-    /// solo para que la M.O. del itemizado ("EN PPTO") cuadre con el costo real del plan de obra
-    /// ("COSTO"), igual que el 62,80 calibrado a mano del Excel. Escribir un FA a mano lo desactiva.
+    /// Default del modo automático del índice de M.O. (FA): desactivado por defecto para mantener
+    /// el FA y los precios fijos al eliminar o modificar materiales (paridad con Excel).
     /// </summary>
-    public bool FaAutomatico { get; set; } = true;
+    public bool FaAutomatico { get; set; } = false;
     /// <summary>Últimas N rutas abiertas (max 8), más reciente primero.</summary>
     public List<string> RecentFiles { get; set; } = new();
 

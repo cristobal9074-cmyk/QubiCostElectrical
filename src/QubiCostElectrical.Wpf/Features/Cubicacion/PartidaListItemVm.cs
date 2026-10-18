@@ -130,7 +130,7 @@ public sealed class PartidaListItemVm : ViewModelBase
     }
 
     public string CantidadToolTip => !string.IsNullOrWhiteSpace(cantidadFormula)
-        ? $"Fórmula: {cantidadFormula}\nResultado: {cantidad.ToString("N2", System.Globalization.CultureInfo.CurrentCulture)}"
+        ? $"Fórmula: {cantidadFormula}\nResultado: {(cantidad % 1 == 0 ? cantidad.ToString("N0", System.Globalization.CultureInfo.CurrentCulture) : cantidad.ToString("#,##0.##", System.Globalization.CultureInfo.CurrentCulture))}"
         : "Cantidad oficial de la partida (editable o fórmula tipo Excel ej: +C1+C2 · Enter para guardar)";
 
     public int RecursoCount

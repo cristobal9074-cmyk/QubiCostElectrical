@@ -20,6 +20,7 @@ public sealed class MoInstalacionSectionVm : ViewModelBase
     private readonly Action<Action> runSuppressed;
     private readonly Action refreshCost;
     private readonly IPriceBankStore? priceBank;
+    private readonly WpfUndoService? undo;
     private bool modoMoRendimiento;
     private string tarifaDhClpText = "";
     private bool tarifaDhConLeyes;
@@ -28,7 +29,6 @@ public sealed class MoInstalacionSectionVm : ViewModelBase
     private string faAviso = "";
     private string faResultado = "";
     private string faDerivadoTexto = "";
-    private bool faAutomatico = true;
 
     public MoInstalacionSectionVm(
         BudgetProjectSession session,
@@ -36,7 +36,8 @@ public sealed class MoInstalacionSectionVm : ViewModelBase
         Func<IReadOnlyList<MoDirectaRowVm>> moDirectaRows,
         Action<Action> runSuppressed,
         Action refreshCost,
-        IPriceBankStore? priceBank = null)
+        IPriceBankStore? priceBank = null,
+        WpfUndoService? undo = null)
     {
         this.session = session;
         this.canEdit = canEdit;
@@ -44,9 +45,9 @@ public sealed class MoInstalacionSectionVm : ViewModelBase
         this.runSuppressed = runSuppressed;
         this.refreshCost = refreshCost;
         this.priceBank = priceBank;
+        this.undo = undo;
         DerivarTarifaDhCommand = new RelayCommand(DerivarTarifaDh, () => canEdit());
         CalcularFaCommand = new RelayCommand(CalcularFa, () => canEdit());
-        faAutomatico = UserPreferencesStore.Load().FaAutomatico;
     }
 
     public RelayCommand DerivarTarifaDhCommand { get; }
@@ -113,64 +114,24 @@ public sealed class MoInstalacionSectionVm : ViewModelBase
             if (fa < 0m)
                 return;
 
-            // Un FA escrito a mano manda: el modo automático se apaga para no pisarlo en el próximo
-            // refresco. El usuario puede reactivarlo cuando quiera volver a cuadrar con el plan.
-            bool eraAutomatico = faAutomatico;
-            if (eraAutomatico)
-            {
-                faAutomatico = false;
-                OnPropertyChanged(nameof(FaAutomatico));
-                OnPropertyChanged(nameof(FaModoHint));
-                GuardarPreferenciaFaAutomatico(false);
-            }
-
+            undo?.PushUndoPoint(session, "Modificar FA mano de obra");
             IndiceMoFaAplicado aplicado = AplicarFa(fa);
-            if (eraAutomatico)
-            {
-                faResultado = fa <= 0m
-                    ? "FA 0,00: sin calibrar, la M.O. por % se calcula como Material × % (factor 1). " + ResumenPropagacion(aplicado)
-                    : "FA " + aplicado.IndiceMoFa.ToString("N2", CultureInfo.CurrentCulture)
-                      + " fijado a mano." + ResumenPropagacion(aplicado)
-                      + " El modo Automático quedó desactivado: reactívalo para que el FA se recalcule solo.";
-                OnPropertyChanged(nameof(FaResultado));
-            }
+            faResultado = fa <= 0m
+                ? "FA 0,00: sin calibrar, la M.O. por % se calcula como Material × % (factor 1). " + ResumenPropagacion(aplicado)
+                : "FA " + aplicado.IndiceMoFa.ToString("N2", CultureInfo.CurrentCulture)
+                  + " fijado a mano." + ResumenPropagacion(aplicado);
+            OnPropertyChanged(nameof(FaResultado));
         }
     }
 
     public string MoInstalacionHint => hint;
 
     /// <summary>
-    /// Modo automático del FA: mientras está activo, el índice se recalcula solo para que la M.O.
-    /// del itemizado ("EN PPTO") cuadre con el costo real del plan de obra ("COSTO"), que es la
-    /// brecha que el Excel cerraba tecleando 62,80 a mano. Se guarda como preferencia del usuario y
-    /// se desactiva al escribir un FA a mano, para no pisar el valor que el estimador acaba de fijar.
+    /// El FA es siempre manual/fijo (paridad con el Excel tradicional). Solo se recalibra si el usuario pulsa "Calcular FA".
     /// </summary>
-    public bool FaAutomatico
-    {
-        get => faAutomatico;
-        set
-        {
-            if (!SetProperty(ref faAutomatico, value))
-                return;
+    public bool FaAutomatico => false;
 
-            OnPropertyChanged(nameof(FaModoHint));
-            GuardarPreferenciaFaAutomatico(value);
-            if (!value)
-            {
-                UpdateFaDerivado();
-                return;
-            }
-
-            // Al activarlo, deja la fila FACTORES cuadrada de inmediato.
-            SincronizarFaAutomatico();
-            UpdateFaDerivado();
-        }
-    }
-
-    /// <summary>Etiqueta de estado del modo, para que el usuario vea de un vistazo quién manda.</summary>
-    public string FaModoHint => faAutomatico
-        ? "Automático: el FA se recalcula solo para que EN PPTO cuadre con el costo real."
-        : "Manual: el FA queda como lo dejaste; pulsa Calcular FA para cuadrarlo con el costo real.";
+    public string FaModoHint => "Manual: el FA queda fijo como en el Excel; pulsa 'Calcular FA' si deseas calibrarlo con el costo real.";
 
     /// <summary>
     /// Aviso cuando el FA no puede derivarse: el proyecto no tiene plan de M.O. cargado, así que
@@ -250,10 +211,8 @@ public sealed class MoInstalacionSectionVm : ViewModelBase
         OnPropertyChanged(nameof(FaResultado));
         UpdateHint();
 
-        // Modo automático: al abrir/refrescar el proyecto el FA queda cuadrado con el plan de obra
-        // (EN PPTO = COSTO) sin que el usuario pulse nada. Sin plan de M.O. o sin base de % no hay
-        // nada que cuadrar y el índice se respeta tal cual.
-        SincronizarFaAutomatico();
+        // El FA es fijo y se mantiene tal cual lo fijó el usuario o el catálogo (paridad con Excel COSTOS!E192).
+        // Solo se recalibra si el usuario pulsa explícitamente "Calcular FA".
         UpdateFaDerivado();
     }
 
@@ -277,6 +236,7 @@ public sealed class MoInstalacionSectionVm : ViewModelBase
             return;
         }
 
+        undo?.PushUndoPoint(session, "Calcular FA mano de obra");
         IndiceMoFaAplicado aplicado = AplicarFa(resultado.Fa!.Value);
 
         faResultado = "M.O. real " + CurrencyFormat.Clp(resultado.MoRealClp)
@@ -295,54 +255,6 @@ public sealed class MoInstalacionSectionVm : ViewModelBase
             ? ""
             : " Recalibrado: " + aplicado.MaterialesRecalibrados + " materiales · "
               + aplicado.CubicacionSincronizada + " filas de cubicación.";
-
-    /// <summary>
-    /// Cierra la fila FACTORES sin intervención del usuario: recalcula el FA para que la M.O. del
-    /// itemizado (EN PPTO) iguale el costo real del plan de obra (COSTO) y lo aplica al catálogo,
-    /// al banco de precios y al itemizado. Devuelve true solo si movió el índice.
-    /// </summary>
-    private bool SincronizarFaAutomatico()
-    {
-        if (!faAutomatico || !canEdit())
-            return false;
-
-        var resultado = FactorAjusteMoService.CalcularParaProyecto(session.Data, session.ProjectInfo);
-        if (!resultado.PuedeCalcular)
-            return false;
-
-        // Convergencia exacta: el FA derivado se redondea a 2 decimales y no depende del vigente
-        // (la base es Material × %, no la M.O. ya guardada), así que no hay oscilación entre refrescos.
-        decimal fa = resultado.Fa!.Value;
-        if (fa == MaterialMoResolver.IndiceFa(session.ProjectInfo))
-            return false;
-
-        IndiceMoFaAplicado aplicado = AplicarFa(fa);
-        faResultado = "FA automático " + fa.ToString("N2", CultureInfo.CurrentCulture)
-            + ": EN PPTO " + CurrencyFormat.Clp(resultado.MoItemizadoClp(fa))
-            + " = COSTO " + CurrencyFormat.Clp(resultado.MoRealClp)
-            + " (M.O. real − ya cubierta " + CurrencyFormat.Clp(resultado.MoCubiertaClp)
-            + " ÷ base % " + CurrencyFormat.Clp(resultado.BasePorcentajeClp) + ")."
-            + ResumenPropagacion(aplicado);
-        OnPropertyChanged(nameof(FaResultado));
-        return true;
-    }
-
-    /// <summary>Guarda el modo automático como preferencia global (nunca lanza).</summary>
-    private static void GuardarPreferenciaFaAutomatico(bool valor)
-    {
-        try
-        {
-            var prefs = UserPreferencesStore.Load();
-            if (prefs.FaAutomatico == valor)
-                return;
-            prefs.FaAutomatico = valor;
-            UserPreferencesStore.Save(prefs);
-        }
-        catch (Exception ex)
-        {
-            AppLog.Warning("Costo", "No se pudo guardar el modo automático del FA", ex);
-        }
-    }
 
     /// <summary>Aplica el FA al proyecto y refresca la M.O. de materiales, banco de precios y costo.</summary>
     private IndiceMoFaAplicado AplicarFa(decimal fa)
@@ -488,12 +400,9 @@ public sealed class MoInstalacionSectionVm : ViewModelBase
             decimal vigente = MaterialMoResolver.IndiceFa(session.ProjectInfo);
             string derivado = resultado.Fa!.Value.ToString("N2", CultureInfo.CurrentCulture);
             texto = Math.Abs(vigente - resultado.Fa.Value) < 0.005m
-                ? "FA calibrado: el índice vigente (" + derivado + ") cuadra la M.O. del itemizado (EN PPTO) con el costo real."
-                : faAutomatico
-                    ? "FA automático: se recalcula a " + derivado + " para cuadrar EN PPTO con COSTO (vigente "
-                      + vigente.ToString("N2", CultureInfo.CurrentCulture) + ")."
-                    : "FA del proyecto: " + derivado + " (vigente "
-                      + vigente.ToString("N2", CultureInfo.CurrentCulture) + "). Pulsa Calcular FA para cuadrar la M.O. del itemizado con el costo real.";
+                ? "FA calibrado: el índice vigente (" + derivado + ") cuadra la M.O. del itemizado (EN PPTO) con la M.O. directa real."
+                : "FA derivado del proyecto: " + derivado + " (vigente "
+                  + vigente.ToString("N2", CultureInfo.CurrentCulture) + "). Pulsa 'Calcular FA' si deseas calibrar la M.O. del itemizado con la M.O. directa real.";
         }
 
         if (faDerivadoTexto == texto)
@@ -504,7 +413,7 @@ public sealed class MoInstalacionSectionVm : ViewModelBase
     }
 
     /// <summary>
-    /// El FA ya no es una constante: se deriva de la M.O. real del proyecto. Sin plan de M.O. no
+    /// El FA ya no es una constante: se deriva de la M.O. directa real del proyecto. Sin plan de M.O. no
     /// hay con qué derivarlo, así que se avisa en pantalla en vez de dejar el genérico en silencio.
     /// </summary>
     private void UpdateFaAviso(int materialesPorcentaje)
@@ -512,7 +421,7 @@ public sealed class MoInstalacionSectionVm : ViewModelBase
         decimal moReal = FactorAjusteMoService.ResolverMoRealClp(session.Data, session.ProjectInfo);
         string aviso = moReal <= 0m
             ? "Sin plan de mano de obra en este proyecto: el FA queda en 0 (sin calibrar) y la M.O. por % se calcula con factor 1 (Material × %). "
-              + "Carga dotación y sueldos en Mano de obra: con Automático activo el índice se calibra solo."
+              + "Carga dotación y sueldos en Mano de obra y pulsa 'Calcular FA' para derivar el índice."
             : materialesPorcentaje == 0
                 ? "Ningún material usa M.O. por % (Precio × % × FA): el FA no cambia la M.O. del itemizado."
                 : "";
@@ -526,11 +435,8 @@ public sealed class MoInstalacionSectionVm : ViewModelBase
 
         if (string.IsNullOrEmpty(faResultado) && moReal > 0m && materialesPorcentaje > 0)
         {
-            faResultado = faAutomatico
-                ? "M.O. real del proyecto " + CurrencyFormat.Clp(moReal)
-                  + ". El FA automático mantiene EN PPTO cuadrado con COSTO."
-                : "M.O. real del proyecto " + CurrencyFormat.Clp(moReal)
-                  + ". Pulsa Calcular FA para derivar el índice.";
+            faResultado = "M.O. directa del proyecto " + CurrencyFormat.Clp(moReal)
+                + ". Pulsa 'Calcular FA' si deseas calibrar el índice con el plan de obra.";
             OnPropertyChanged(nameof(FaResultado));
         }
     }

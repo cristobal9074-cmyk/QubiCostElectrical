@@ -26,5 +26,8 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="PriceBank\banco_inicial.csv" />
+    <EmbeddedResource Include="Assets\ingelsam_logo.png" />
+    <EmbeddedResource Include="Assets\ingelsam_firma.png" />
+    <EmbeddedResource Include="Assets\ingelsam_cliente_firma.png" />
   </ItemGroup>
 </Project>

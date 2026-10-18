@@ -206,7 +206,10 @@ public partial class PrecioListaResumenDialog : Window
         var dialog = new PrecioListaEditarDialog(vm, null) { Owner = this };
         dialog.ShowDialog();
         if (!string.IsNullOrWhiteSpace(dialog.CodigoCreado))
+        {
             MaterialCreado = dialog.CodigoCreado;
+            Close();
+        }
     }
 
     private void OnAltaRapidaClick(object sender, RoutedEventArgs e) => AbrirAltaRapida();
@@ -234,7 +237,7 @@ public partial class PrecioListaResumenDialog : Window
     /// <summary>
     /// Alta rápida de material (Ctrl++): abre el formulario que pide familia, precio y si la M.O.
     /// se calcula con Material × % × FA, e ingresa el material en la lista de precios del proyecto.
-    /// Al volver, deja seleccionada la fila recién creada para que se vea dónde quedó.
+    /// Al crearlo, cierra la ventana para volver de inmediato a la cubicación con el material asignado.
     /// </summary>
     private void AbrirAltaRapida()
     {
@@ -248,13 +251,13 @@ public partial class PrecioListaResumenDialog : Window
         var dialog = new PrecioListaAltaRapidaDialog(vm) { Owner = this };
         bool creado = dialog.ShowDialog() == true;
 
-        // Primero la fila nueva y después el foco: al revés, FocusMainGrid volvería la selección al
-        // inicio y el material recién creado quedaría fuera de vista.
-        if (creado)
+        if (creado && !string.IsNullOrWhiteSpace(dialog.CodigoCreado))
         {
             MaterialCreado = dialog.CodigoCreado;
-            SelectRowByCodigo(dialog.CodigoCreado);
+            Close();
+            return;
         }
+
         FocusMainGrid();
     }
 
@@ -281,8 +284,16 @@ public partial class PrecioListaResumenDialog : Window
     private void OnEliminarClick(object sender, RoutedEventArgs e)
     {
         if (sender is not Button { Tag: PrecioListaMaterialVm row }) return;
-        if (!WpfDialogService.Confirm("Eliminar material", $"¿Eliminar '{row.Codigo}' · {row.Descripcion} de la lista de precios?"))
+        int usos = vm.ContarUsosEnCubicacion(row.Codigo);
+        string avisoUso = usos > 0
+            ? $"\n\n⚠️ ATENCIÓN: Este material está utilizado en {usos} fila(s) de la cubicación actual. Si lo eliminas, los recursos mantendrán sus importes actuales pero quedarán desvinculados del catálogo."
+            : "";
+
+        if (!WpfDialogService.Confirm("Eliminar material",
+                $"¿Eliminar '{row.Codigo}' · {row.Descripcion} del catálogo de este proyecto?{avisoUso}",
+                isWarning: usos > 0))
             return;
+
         vm.EliminarMaterial(row);
     }
 

@@ -305,6 +305,7 @@ internal sealed class CubicacionLoadingService
         // se cambia de partida, aunque la partida tenga recursos reales — obliga a un clic
         // extra innecesario. Se preselecciona el primer recurso con datos (no una casilla
         // visual vacía) para que el panel muestre contenido útil de entrada.
-        parent.SelectedRow = parent.Rows.FirstOrDefault(r => r.IsSessionBacked);
+        parent.SelectedRow = parent.Rows.FirstOrDefault(r => r.IsSessionBacked)
+            ?? parent.Rows.FirstOrDefault();
     }
 }

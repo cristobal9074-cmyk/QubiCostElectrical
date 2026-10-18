@@ -23,6 +23,7 @@ public sealed class AppServices
     public ICurrencyConversionService CurrencyConversion => _sp.GetRequiredService<ICurrencyConversionService>();
     public IApuService Apu => _sp.GetRequiredService<IApuService>();
     public IPurchaseListService PurchaseList => _sp.GetRequiredService<IPurchaseListService>();
+    public IMaterialControlService MaterialControl => _sp.GetRequiredService<IMaterialControlService>();
     public IValidationService Validation => _sp.GetRequiredService<IValidationService>();
     public ICubicacionService Cubicacion => _sp.GetRequiredService<ICubicacionService>();
     public ICubicacionTakeoffQueryService CubicacionTakeoffQuery => _sp.GetRequiredService<ICubicacionTakeoffQueryService>();
@@ -38,6 +39,9 @@ public sealed class AppServices
     public IExcelProjectExporter ExcelExporter => _sp.GetRequiredService<IExcelProjectExporter>();
     public IPdfProjectExporter PdfExporter => _sp.GetRequiredService<IPdfProjectExporter>();
     public IOfferLetterPdfExporter OfferLetterPdfExporter => _sp.GetRequiredService<IOfferLetterPdfExporter>();
+    public IIngelsamOfferSummaryExcelExporter IngelsamOfferSummaryExcelExporter => _sp.GetRequiredService<IIngelsamOfferSummaryExcelExporter>();
+    public IPartidasAbiertasExcelExporter PartidasAbiertasExcelExporter => _sp.GetRequiredService<IPartidasAbiertasExcelExporter>();
+    public IOfferSummaryPdfExporter OfferSummaryPdfExporter => _sp.GetRequiredService<IOfferSummaryPdfExporter>();
     public IPresentationLetterDocxExporter WordLetterExporter => _sp.GetRequiredService<IPresentationLetterDocxExporter>();
     public ICubicacionReportExcelExporter CubicacionReportExcelExporter => _sp.GetRequiredService<ICubicacionReportExcelExporter>();
     public ICubicacionReportPdfExporter CubicacionReportPdfExporter => _sp.GetRequiredService<ICubicacionReportPdfExporter>();

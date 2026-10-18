@@ -216,7 +216,7 @@ public sealed partial class BudgetProjectSession
         data.Apus.Clear();
     }
 
-    public void NewProject(string userName, string userRole = "Usuario")
+    public void NewProject(string userName, string userRole = "Usuario", decimal? defaultGastosGeneralesPct = null, decimal? defaultUtilidadPct = null)
     {
         EnsureWritable("crear un nuevo proyecto");
         data = new ProjectFileData
@@ -232,8 +232,10 @@ public sealed partial class BudgetProjectSession
                 FechaModificacion = AppClock.Now,
                 MonedaPresupuesto = "CLP",
                 EstadoPresupuesto = "Borrador",
-                GastosGeneralesPct = 14m,
-                UtilidadPct = 18m,
+                GastosGeneralesPct = defaultGastosGeneralesPct.HasValue && defaultGastosGeneralesPct.Value >= 0m ? defaultGastosGeneralesPct.Value : 14m,
+                UtilidadPct = defaultUtilidadPct.HasValue && defaultUtilidadPct.Value >= 0m ? defaultUtilidadPct.Value : 18m,
+                FerreteriaActiva = true,
+                FerreteriaPct = 5m,
                 IvaPct = 19m,
                 AutoActualizarIndicadores = true,
                 OfertaPdf = new OfferPdfSettings()
@@ -247,6 +249,16 @@ public sealed partial class BudgetProjectSession
         EnsureIntegrity(data);
         SyncCubicacionGgUtFactorsFromVariablesInternal();
         PublishChanged("reset", "Nuevo proyecto");
+    }
+
+    public void ApplyCommercialMargins(decimal gastosGeneralesPct, decimal utilidadPct)
+    {
+        EnsureWritable("actualizar márgenes comerciales");
+        data.Proyecto.GastosGeneralesPct = Math.Max(0m, gastosGeneralesPct);
+        data.Proyecto.UtilidadPct = Math.Max(0m, utilidadPct);
+        MarkDirty(ProjectDirtyScope.ProjectInfo);
+        SyncCubicacionGgUtFactorsFromVariablesInternal();
+        PublishChanged("margins", "Actualización de márgenes comerciales");
     }
 
     public void ApplyItemizadoTemplate(IEnumerable<ItemizadoRow>? templateRows)

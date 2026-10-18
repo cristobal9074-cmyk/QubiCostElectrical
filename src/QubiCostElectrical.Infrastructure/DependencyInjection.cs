@@ -44,6 +44,9 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddSingleton<IExcelProjectExporter, ExcelExportInfrastructure>();
         services.AddSingleton<IPdfProjectExporter, QuestPdfProjectExporter>();
         services.AddSingleton<IOfferLetterPdfExporter, QuestPdfOfferLetterExporter>();
+        services.AddSingleton<IIngelsamOfferSummaryExcelExporter, IngelsamOfferSummaryExcelExporter>();
+        services.AddSingleton<IPartidasAbiertasExcelExporter, PartidasAbiertasExcelExporter>();
+        services.AddSingleton<IOfferSummaryPdfExporter, QuestPdfOfferSummaryExporter>();
         services.AddSingleton<IPresentationLetterDocxExporter, PresentationLetterDocxExporter>();
         services.AddSingleton<ICubicacionReportExcelExporter, CubicacionReportExcelExporter>();
         services.AddSingleton<ICubicacionReportPdfExporter, QuestPdfCubicacionReportExporter>();

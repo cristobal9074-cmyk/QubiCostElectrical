@@ -16,15 +16,16 @@ namespace QubiCostElectrical.Wpf.Features.Quotes;
 public sealed partial class QuotesViewModel : SessionAwareViewModelBase, IRefreshablePage
 {
     public QuotesViewModel(IShellNavigationHost shell, WpfAppHost host)
-        : this(shell, host.Session, host.ProjectWorkspace, host.Services.MaterialSearch, host.Services.PriceBankStore) { }
+        : this(shell, host.Session, host.ProjectWorkspace, host.Services.MaterialSearch, host.Services.PriceBankStore, host.UndoService) { }
 
-    public QuotesViewModel(IShellNavigationHost shell, BudgetProjectSession session, IProjectWorkspaceService workspace, IMaterialSearchService materialSearch, IPriceBankStore store) : base(session)
+    public QuotesViewModel(IShellNavigationHost shell, BudgetProjectSession session, IProjectWorkspaceService workspace, IMaterialSearchService materialSearch, IPriceBankStore store, WpfUndoService? undo = null) : base(session)
     {
         this.shell = shell;
         this.session = session;
         this.workspace = workspace;
         this.materialSearch = materialSearch;
         this.store = store;
+        this.undo = undo;
 
         refreshCommand = new RelayCommand(Refresh);
         clearFiltersCommand = new RelayCommand(ClearFilters);
@@ -483,6 +484,8 @@ public sealed partial class QuotesViewModel : SessionAwareViewModelBase, IRefres
         if (row == null || row.PrecioMejor <= 0m)
             return;
 
+        undo?.PushUndoPoint(session, $"Aplicar precio cotización {row.Codigo}");
+
         if (!TryApplyBestPrice(row))
             return;
 
@@ -493,6 +496,8 @@ public sealed partial class QuotesViewModel : SessionAwareViewModelBase, IRefres
     {
         if (session.IsReadOnly)
             return;
+
+        undo?.PushUndoPoint(session, "Aplicar mejores precios de cotización");
 
         int applied = 0;
         foreach (var row in FilteredComparisonRows.ToList())

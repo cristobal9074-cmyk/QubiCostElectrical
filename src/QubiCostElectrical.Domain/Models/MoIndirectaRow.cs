@@ -7,6 +7,7 @@ public sealed class MoIndirectaRow
 {
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
     public string Cargo { get; set; } = "";
+    public string Tag { get; set; } = "";
     public int Dotacion { get; set; }
     public decimal SueldoMensualClp { get; set; }
     /// <summary>Fracción del sueldo cobrada en esta obra (0..1; 1 = 100%). Retrocompatible: JSON sin el campo = 1.</summary>

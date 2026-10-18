@@ -327,12 +327,16 @@
               <Border BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,1,0">
                 <DockPanel>
                   <Border DockPanel.Dock="Top" Padding="14,10" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.SuccessBorder}" BorderThickness="0,0,0,1">
-                    <StackPanel Orientation="Horizontal">
-                      <TextBlock Text="MO Directa" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" VerticalAlignment="Center" />
-                      <Border Margin="8,0,0,0" Padding="8,2" CornerRadius="10" Background="{DynamicResource Brush.GreenSoft}" VerticalAlignment="Center">
-                        <TextBlock Text="VARIABLE" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Green}" />
-                      </Border>
-                    </StackPanel>
+                    <DockPanel LastChildFill="True">
+                      <Button DockPanel.Dock="Right" Content="+ Agregar puesto" Style="{StaticResource Button.Secondary}"
+                              Command="{Binding AddDirectaCargoCommand}" VerticalAlignment="Center" Padding="10,4" />
+                      <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="MO Directa" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" VerticalAlignment="Center" />
+                        <Border Margin="8,0,0,0" Padding="8,2" CornerRadius="10" Background="{DynamicResource Brush.GreenSoft}" VerticalAlignment="Center">
+                          <TextBlock Text="VARIABLE" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Green}" />
+                        </Border>
+                      </StackPanel>
+                    </DockPanel>
                   </Border>
                   <Border DockPanel.Dock="Bottom" Padding="14,10" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,1,0,0">
                     <DockPanel>
@@ -352,6 +356,7 @@
                               <ColumnDefinition Width="*" />
                               <ColumnDefinition Width="Auto" />
                               <ColumnDefinition Width="100" />
+                              <ColumnDefinition Width="30" />
                             </Grid.ColumnDefinitions>
                             <Border Grid.Column="0" CornerRadius="4" Padding="4,2" Background="{DynamicResource Brush.GreenSoft}"
                                     HorizontalAlignment="Left" VerticalAlignment="Center">
@@ -359,7 +364,11 @@
                                          Foreground="{DynamicResource Brush.Green}" />
                             </Border>
                             <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="8,0">
-                              <TextBlock Text="{Binding Nombre}" FontSize="{StaticResource Font.Size.base}" FontWeight="SemiBold" />
+                              <TextBox Text="{Binding Nombre, UpdateSourceTrigger=LostFocus}"
+                                       FontSize="{StaticResource Font.Size.base}" FontWeight="SemiBold"
+                                       Background="Transparent" BorderThickness="0" Padding="0,2"
+                                       Foreground="{DynamicResource Brush.Ink}"
+                                       ToolTip="Haga clic para editar el nombre del puesto" />
                               <TextBlock Text="{Binding Hint}" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.Muted}" />
                             </StackPanel>
                             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
@@ -374,6 +383,13 @@
                               <TextBlock Text="{Binding ConLeyesLabel}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.md}" FontWeight="SemiBold"
                                          Foreground="{DynamicResource Brush.Ink2}" HorizontalAlignment="Right" />
                             </StackPanel>
+                            <Button Grid.Column="4" Style="{StaticResource Button.Ghost}"
+                                    Command="{Binding DeleteCommand}"
+                                    ToolTip="Eliminar este puesto"
+                                    Width="24" Height="24" Padding="0" Margin="4,0,0,0"
+                                    VerticalAlignment="Center">
+                              <TextBlock Text="✕" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.Muted}" FontWeight="Bold" />
+                            </Button>
                           </Grid>
                         </Border>
                       </DataTemplate>
@@ -386,12 +402,16 @@
               <Border>
                 <DockPanel>
                   <Border DockPanel.Dock="Top" Padding="14,10" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Amber2}" BorderThickness="0,0,0,1">
-                    <StackPanel Orientation="Horizontal">
-                      <TextBlock Text="MO Indirecta" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" VerticalAlignment="Center" />
-                      <Border Margin="8,0,0,0" Padding="8,2" CornerRadius="10" Background="{DynamicResource Brush.AmberSoft}" VerticalAlignment="Center">
-                        <TextBlock Text="FIJA" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Amber}" />
-                      </Border>
-                    </StackPanel>
+                    <DockPanel LastChildFill="True">
+                      <Button DockPanel.Dock="Right" Content="+ Agregar puesto" Style="{StaticResource Button.Secondary}"
+                              Command="{Binding AddIndirectaCargoCommand}" VerticalAlignment="Center" Padding="10,4" />
+                      <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="MO Indirecta" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" VerticalAlignment="Center" />
+                        <Border Margin="8,0,0,0" Padding="8,2" CornerRadius="10" Background="{DynamicResource Brush.AmberSoft}" VerticalAlignment="Center">
+                          <TextBlock Text="FIJA" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Amber}" />
+                        </Border>
+                      </StackPanel>
+                    </DockPanel>
                   </Border>
                   <Border DockPanel.Dock="Bottom" Padding="14,10" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,1,0,0">
                     <DockPanel>
@@ -412,6 +432,7 @@
                               <ColumnDefinition Width="Auto" />
                               <ColumnDefinition Width="Auto" />
                               <ColumnDefinition Width="100" />
+                              <ColumnDefinition Width="30" />
                             </Grid.ColumnDefinitions>
                             <Border Grid.Column="0" CornerRadius="4" Padding="4,2" Background="{DynamicResource Brush.AmberSoft}"
                                     HorizontalAlignment="Left" VerticalAlignment="Center">
@@ -419,7 +440,11 @@
                                          Foreground="{DynamicResource Brush.Amber}" />
                             </Border>
                             <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="8,0">
-                              <TextBlock Text="{Binding Nombre}" FontSize="{StaticResource Font.Size.base}" FontWeight="SemiBold" />
+                              <TextBox Text="{Binding Nombre, UpdateSourceTrigger=LostFocus}"
+                                       FontSize="{StaticResource Font.Size.base}" FontWeight="SemiBold"
+                                       Background="Transparent" BorderThickness="0" Padding="0,2"
+                                       Foreground="{DynamicResource Brush.Ink}"
+                                       ToolTip="Haga clic para editar el nombre del puesto" />
                               <TextBlock Text="{Binding Hint}" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.Muted}" />
                             </StackPanel>
                             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
@@ -444,6 +469,13 @@
                               <TextBlock Text="{Binding ConLeyesLabel}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.md}" FontWeight="SemiBold"
                                          Foreground="{DynamicResource Brush.Ink2}" HorizontalAlignment="Right" />
                             </StackPanel>
+                            <Button Grid.Column="5" Style="{StaticResource Button.Ghost}"
+                                    Command="{Binding DeleteCommand}"
+                                    ToolTip="Eliminar este puesto"
+                                    Width="24" Height="24" Padding="0" Margin="4,0,0,0"
+                                    VerticalAlignment="Center">
+                              <TextBlock Text="✕" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.Muted}" FontWeight="Bold" />
+                            </Button>
                           </Grid>
                         </Border>
                       </DataTemplate>
@@ -465,8 +497,8 @@
                              FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}"
                              VerticalAlignment="Center" Margin="0,0,12,0" />
                   <Button Content="Tomar proyección MO" Style="{StaticResource Button.Secondary}"
-                          Command="{Binding TakeProjectionCommand}" MinWidth="150" Margin="0,0,8,0"
-                          ToolTip="Aplica los totales mensuales de la Proyección MO a la dotación directa de la tabla (reparto por dotación pico) y recalcula costos" />
+                          Command="{Binding ApplyAverageProjectionCommand}" MinWidth="150" Margin="0,0,8,0"
+                          ToolTip="Aplica el promedio mensual redondeado de la Proyección MO (fórmula Excel =REDONDEAR.MAS(PROMEDIO(...);0)) a la dotación directa y recalcula costos" />
                   <Button Name="ProjectionButton" Content="Proyección MO" Style="{StaticResource Button.Secondary}"
                           Click="OnOpenProjection" MinWidth="120" />
                 </StackPanel>

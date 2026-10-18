@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -91,6 +92,8 @@ public sealed partial class PreferencesViewModel
     [ObservableProperty] private string _professionalRole = "";
     [ObservableProperty] private string _professionalRegistroSec = "";
     [ObservableProperty] private string _professionalSignatureImagePath = "";
+    [ObservableProperty] private int _professionalSignatureWidthMm = 46;
+    [ObservableProperty] private int _professionalSignatureHeightMm = 16;
 
     [ObservableProperty]
     private string _logoPath = "";
@@ -127,7 +130,15 @@ public sealed partial class PreferencesViewModel
     [ObservableProperty]
     private bool _autosaveEnabled;
 
+    [ObservableProperty]
+    private string _defaultGastosGeneralesPctText = "14,0";
+
+    [ObservableProperty]
+    private string _defaultUtilidadPctText = "18,0";
+
     partial void OnAutosaveEnabledChanged(bool value) => HasPendingChanges = true;
+    partial void OnDefaultGastosGeneralesPctTextChanged(string value) => HasPendingChanges = true;
+    partial void OnDefaultUtilidadPctTextChanged(string value) => HasPendingChanges = true;
 
     partial void OnIsDarkModeChanged(bool value)
     {
@@ -147,6 +158,8 @@ public sealed partial class PreferencesViewModel
     partial void OnProfessionalRoleChanged(string value) => HasPendingChanges = true;
     partial void OnProfessionalRegistroSecChanged(string value) => HasPendingChanges = true;
     partial void OnProfessionalSignatureImagePathChanged(string value) => HasPendingChanges = true;
+    partial void OnProfessionalSignatureWidthMmChanged(int value) => HasPendingChanges = true;
+    partial void OnProfessionalSignatureHeightMmChanged(int value) => HasPendingChanges = true;
     partial void OnPinMinLengthChanged(int value) => HasPendingChanges = true;
     partial void OnPinMaxLengthChanged(int value) => HasPendingChanges = true;
     partial void OnPinBlockSequencesChanged(bool value) => HasPendingChanges = true;
@@ -341,6 +354,7 @@ public sealed partial class PreferencesViewModel
         ShellShortcutRouting.InvalidateCache();
         HasPendingChanges = false;
         SaveStatus = "Preferencias guardadas correctamente.";
+        AfterPreferencesSaved();
         return true;
     }
 
@@ -359,6 +373,20 @@ public sealed partial class PreferencesViewModel
         ShellShortcutRouting.InvalidateCache();
         HasPendingChanges = false;
         SaveStatus = "Preferencias guardadas correctamente.";
+        AfterPreferencesSaved();
+    }
+
+    private void AfterPreferencesSaved()
+    {
+        if (Workspace.HasOpenProject && !Session.IsReadOnly)
+        {
+            if (WpfDialogService.Confirm(
+                "Márgenes comerciales predeterminados",
+                $"Se guardaron los márgenes predeterminados:\n• Gastos Generales: {_saved.DefaultGastosGeneralesPct:N1}%\n• Utilidad: {_saved.DefaultUtilidadPct:N1}%\n\n¿Deseas aplicar estos nuevos porcentajes al proyecto abierto actualmente?"))
+            {
+                Session.ApplyCommercialMargins(_saved.DefaultGastosGeneralesPct, _saved.DefaultUtilidadPct);
+            }
+        }
     }
 
     public void Discard()
@@ -430,7 +458,19 @@ public sealed partial class PreferencesViewModel
         if (sigError != null) return $"Firma: {sigError}";
         if (PinMinLength < 4 || PinMaxLength > 8 || PinMinLength > PinMaxLength)
             return "Política PIN inválida: longitud mínima 4, máxima 8 y mínimo <= máximo.";
+        if (!TryParsePct(DefaultGastosGeneralesPctText, out var gg) || gg < 0m || gg > 100m)
+            return "Gastos Generales predeterminados debe ser un porcentaje entre 0 y 100.";
+        if (!TryParsePct(DefaultUtilidadPctText, out var ut) || ut < 0m || ut > 100m)
+            return "Utilidad predeterminada debe ser un porcentaje entre 0 y 100.";
         return null;
+    }
+
+    private static bool TryParsePct(string? text, out decimal val)
+    {
+        val = 0m;
+        if (string.IsNullOrWhiteSpace(text)) return false;
+        var cleaned = text.Replace("%", "").Trim().Replace(',', '.');
+        return decimal.TryParse(cleaned, NumberStyles.Any, CultureInfo.InvariantCulture, out val) && val >= 0m;
     }
 
     private void CommitDraftToSaved()
@@ -449,8 +489,14 @@ public sealed partial class PreferencesViewModel
         _saved.ProfessionalRole = ProfessionalRole;
         _saved.ProfessionalRegistroSec = ProfessionalRegistroSec;
         _saved.ProfessionalSignatureImagePath = ProfessionalSignatureImagePath;
+        _saved.ProfessionalSignatureWidthMm = ProfessionalSignatureWidthMm;
+        _saved.ProfessionalSignatureHeightMm = ProfessionalSignatureHeightMm;
         _saved.DarkMode = IsDarkMode;
         _saved.AutosaveEnabled = AutosaveEnabled;
+        if (TryParsePct(DefaultGastosGeneralesPctText, out var gg))
+            _saved.DefaultGastosGeneralesPct = gg;
+        if (TryParsePct(DefaultUtilidadPctText, out var ut))
+            _saved.DefaultUtilidadPct = ut;
         _saved.PinSecurity = new PinSecurityPolicy
         {
             MinLength = PinMinLength,
@@ -480,8 +526,12 @@ public sealed partial class PreferencesViewModel
         ProfessionalRole = _draft.ProfessionalRole;
         ProfessionalRegistroSec = _draft.ProfessionalRegistroSec;
         ProfessionalSignatureImagePath = _draft.ProfessionalSignatureImagePath;
+        ProfessionalSignatureWidthMm = _draft.ProfessionalSignatureWidthMm <= 0 ? 46 : _draft.ProfessionalSignatureWidthMm;
+        ProfessionalSignatureHeightMm = _draft.ProfessionalSignatureHeightMm <= 0 ? 16 : _draft.ProfessionalSignatureHeightMm;
         IsDarkMode = _draft.DarkMode;
         AutosaveEnabled = _draft.AutosaveEnabled;
+        DefaultGastosGeneralesPctText = _draft.DefaultGastosGeneralesPct.ToString("N1", CultureInfo.CurrentCulture);
+        DefaultUtilidadPctText = _draft.DefaultUtilidadPct.ToString("N1", CultureInfo.CurrentCulture);
         PinMinLength = _draft.PinSecurity?.MinLength ?? 4;
         PinMaxLength = _draft.PinSecurity?.MaxLength ?? 6;
         PinBlockSequences = _draft.PinSecurity?.BlockSequences ?? true;
@@ -506,11 +556,15 @@ public sealed partial class PreferencesViewModel
         ProfessionalRole = src.ProfessionalRole,
         ProfessionalRegistroSec = src.ProfessionalRegistroSec,
         ProfessionalSignatureImagePath = src.ProfessionalSignatureImagePath,
+        ProfessionalSignatureWidthMm = src.ProfessionalSignatureWidthMm,
+        ProfessionalSignatureHeightMm = src.ProfessionalSignatureHeightMm,
         MaterialsPageSize = src.MaterialsPageSize,
         FontSize = src.FontSize,
         ThemeName = src.ThemeName,
         DarkMode = src.DarkMode,
         AutosaveEnabled = src.AutosaveEnabled,
+        DefaultGastosGeneralesPct = src.DefaultGastosGeneralesPct,
+        DefaultUtilidadPct = src.DefaultUtilidadPct,
         ExperimentalFeaturesEnabled = src.ExperimentalFeaturesEnabled,
         RecentFiles = new List<string>(src.RecentFiles),
         PriceFeedUrls = new List<string>(src.PriceFeedUrls),

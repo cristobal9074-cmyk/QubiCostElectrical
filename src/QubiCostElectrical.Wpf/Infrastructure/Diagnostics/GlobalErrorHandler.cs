@@ -150,12 +150,14 @@ public static class GlobalErrorHandler
                 $"Proyecto Qubi Cost Electrical (*{ProjectFileTypes.CurrentExtension})|*{ProjectFileTypes.CurrentExtension}");
             if (path != null)
             {
-                _ = host.ProjectWorkspace.SaveAsAsync(path);
+                host.ProjectWorkspace.SaveAsAsync(path).GetAwaiter().GetResult();
+                WpfDialogService.Info("Respaldo completado", $"El proyecto ha sido guardado exitosamente en:\n{path}");
             }
         }
         catch (Exception saveEx)
         {
             logger?.Error("GlobalErrorHandler", "No se pudo ofrecer Guardar como", saveEx);
+            WpfDialogService.Error("Error al guardar", $"No se pudo completar el guardado de emergencia:\n{saveEx.Message}");
         }
     }
 

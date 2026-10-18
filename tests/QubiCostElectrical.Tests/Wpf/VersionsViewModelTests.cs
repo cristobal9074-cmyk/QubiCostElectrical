@@ -657,7 +657,7 @@ public sealed class VersionsViewModelTests
     {
         var info = ShellRouteCatalog.Get(ShellRoute.Versions);
         Assert.Equal("Cierre", info.Group);
-        Assert.Equal("Versiones", info.Title);
+        Assert.Equal("Cambio de versión", info.Title);
     }
 
     [Fact]
@@ -675,5 +675,68 @@ public sealed class VersionsViewModelTests
         // Sin proyecto abierto no debe poder aplicar cantidades ni guardar addenda
         Assert.False(vm.ApplyAddendaQuantitiesCommand.CanExecute(null));
         Assert.False(vm.SaveAddendaAsVersionCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public void Versions_ExternalProjectAndNewVersionCommands_Exposed()
+    {
+        var vm = new VersionsViewModel(new FakeShellHost(), WpfAppHost.Current);
+
+        Assert.NotNull(vm.CompareWithProjectFileCommand);
+        Assert.NotNull(vm.SaveAsNewVersionCommand);
+
+        // Sin proyecto abierto están deshabilitados
+        Assert.False(vm.CompareWithProjectFileCommand.CanExecute(null));
+        Assert.False(vm.SaveAsNewVersionCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public void DeleteVersion_WhenConfirmed_PushesUndoPoint_AndCanUndoToRestoreVersion()
+    {
+        var host = WpfAppHost.Current;
+        host.Session.NewProject("ver-undo-test");
+        host.Session.CurrentProjectPath = "ver-undo-test.qce";
+        var version = MakeVersion("V1", "Base contractual", 1000m);
+        host.Session.Versiones.Add(version);
+        host.Session.ActiveVersionId = version.Id;
+
+        var vm = new VersionsViewModel(new FakeShellHost(), host);
+        vm.ConfirmDeleteVersion = _ => true;
+
+        vm.SelectedVersion = vm.Versions.Single(v => v.Codigo == "V1");
+        vm.DeleteCommand.Execute(null);
+
+        Assert.Empty(host.Session.Versiones);
+        Assert.True(host.UndoService.CanUndo);
+
+        host.UndoService.Undo(host.Session);
+        Assert.Single(host.Session.Versiones);
+        Assert.Equal("V1", host.Session.Versiones[0].Codigo);
+    }
+
+    [Fact]
+    public void DeleteVersion_WhenCancelled_PreservesVersionWithoutUndo()
+    {
+        var host = WpfAppHost.Current;
+        host.Session.NewProject("ver-cancel-test");
+        host.Session.CurrentProjectPath = "ver-cancel-test.qce";
+        var version = MakeVersion("V1", "Base contractual", 1000m);
+        host.Session.Versiones.Add(version);
+        host.Session.ActiveVersionId = version.Id;
+
+        var vm = new VersionsViewModel(new FakeShellHost(), host);
+        bool promptCalled = false;
+        vm.ConfirmDeleteVersion = _ =>
+        {
+            promptCalled = true;
+            return false;
+        };
+
+        vm.SelectedVersion = vm.Versions.Single(v => v.Codigo == "V1");
+        vm.DeleteCommand.Execute(null);
+
+        Assert.True(promptCalled);
+        Assert.Single(host.Session.Versiones);
+        Assert.Equal("V1", host.Session.Versiones[0].Codigo);
     }
 }

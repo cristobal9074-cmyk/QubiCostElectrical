@@ -9,7 +9,7 @@ public sealed class OfferPackagePresetCatalogTests
     {
         var ids = OfferPackagePresetCatalog.ResolveDocumentIds(OfferPackagePresetCatalog.Mandante);
         Assert.NotNull(ids);
-        Assert.Equal(new[] { "OfferPdf", "LetterDocx" }, ids);
+        Assert.Equal(new[] { "OfferLetter", "ResumenExcel" }, ids);
     }
 
     [Fact]
@@ -22,7 +22,7 @@ public sealed class OfferPackagePresetCatalogTests
     public void Banco_OfertaYControl()
     {
         var ids = OfferPackagePresetCatalog.ResolveDocumentIds(OfferPackagePresetCatalog.Banco);
-        Assert.Equal(new[] { "OfferPdf", "ControlExcel" }, ids);
+        Assert.Equal(new[] { "OfferLetter", "ResumenExcel", "ControlExcel" }, ids);
     }
 
     [Fact]

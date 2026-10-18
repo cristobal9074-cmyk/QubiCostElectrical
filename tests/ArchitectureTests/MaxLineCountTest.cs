@@ -19,17 +19,23 @@ public sealed class MaxLineCountTest
     {
         // Baselines de ShellViewModel/Dashboard/Export/Itemizado subidos por inyección por constructor
         // + Command Palette Supercargada (Ctrl+K) y Quick Jump Spotlight (Ctrl+J) + Ciclo de vida (3 Fases)
-        // +9 por la política de moneda única: el ticker y el chip de moneda ocultan la UF cuando el proyecto está en CLP.
-        ["src/QubiCostElectrical.Wpf/Shell/ShellViewModel"] = 1939,
+        // + Márgenes predeterminados de preferencias al crear nuevo proyecto (14-10).
+        // + Blindaje de bloqueo de colaboración huérfano, validación de bloqueo en nuevo proyecto y autosave debounce (17-10).
+        ["src/QubiCostElectrical.Wpf/Shell/ShellViewModel"] = 1970,
         // Buscador in-grid (Ctrl+F) y navegación con soporte a SelectionUnit.Cell + Autofoco inteligente
         // +6 por el pegado Ctrl+V atendido en la propia grilla: el pegado Excel marca PreviewKeyDown
         // como atendido y suprimía el KeyDown que burbujeaba al UserControl, dejando el pegado con
         // lógica de negocio (código → material) muerto.
-        ["src/QubiCostElectrical.Wpf/Features/Cubicacion/CubicacionView.xaml"] = 2206,
+        // +39 por autofoco y digitación directa en celda de código (ResourceGrid PreviewTextInput/Commit).
+        // +35 por posicionamiento automático en la zona de cubicación tras crear material (17-10).
+        // +40 por foco y selección garantizada en celda de código al cambiar de partida con Alt+Up/Down (17-10).
+        ["src/QubiCostElectrical.Wpf/Features/Cubicacion/CubicacionView.xaml"] = 2410,
         // Navegación Excel fluida, autocompletado en combos de catálogo, edición directa, sidebar colapsable con mueca y top bar unificado en Cubicación SC
         ["src/QubiCostElectrical.Wpf/Features/CubicacionSc/CubicacionScView.xaml"] = 1781,
-        // Cockpit Financiero / tableros SC en curso (WIP sin commitear)
-        ["src/QubiCostElectrical.Wpf/Features/CubicacionSc/CubicacionScViewModel"] = 1261,
+        // + Confirmación previa al eliminar tableros SC/Deptos para evitar pérdida de circuitos (17-10).
+        // +7 por protección contra archivos bloqueados en exportaciones (17-10).
+        // + Confirmación previa al eliminar circuito SC para evitar borrado accidental (17-10).
+        ["src/QubiCostElectrical.Wpf/Features/CubicacionSc/CubicacionScViewModel"] = 1300,
         // +~50 por el selector y reactividad de política de cierre + salvaguardas (sello de parámetros,
         // auditoría de cambio de tipo, avisos de política) — feature multi-política de cierre.
         // Rediseño de pantalla unificada (cascada vía CostRows, factores, gastos): WIP sin
@@ -38,7 +44,9 @@ public sealed class MaxLineCountTest
         // (columnas y chips UF se ocultan en el análisis y en la sección de familias), con UF/USD se
         // muestra el par "moneda + equivalente en pesos" en KPIs, familias, ferretería, GO y MO.
         // +26 por comando y apertura de la ventana de gestión de familias desde la sección de presentación.
-        ["src/QubiCostElectrical.Wpf/Features/Costo/CostoViewModel"] = 2115,
+        // +12 por métricas de Cierre Comercial alineadas con Excel (Diferencia con Proyecto, MargenSubLabel) (17-10).
+        // +25 por confirmación y Undo al cambiar política de cierre o aplicar presets de factores de familia (17-10).
+        ["src/QubiCostElectrical.Wpf/Features/Costo/CostoViewModel"] = 2160,
         // WIP sin commitear (turnos/planillas en curso); no crecer más desde aquí.
         // + Botón "Tomar proyección MO": comando que aplica la proyección a la dotación (24 líneas, 06-10).
         // + Renombre de cargos directos con nombre-GUID a "Maestro"/"Ayudante" en SeedCargos (6 líneas, 07-10).
@@ -46,8 +54,11 @@ public sealed class MaxLineCountTest
         //   todos los costos de Recalcular) + SetIndirectDotPico con staging (09-10).
         // +16 por la política de moneda única del proyecto: con CLP la vista de mano de obra fuerza
         // CLP, oculta el conmutador CLP/UF, el chip "VALOR UF" y la equivalencia UF del total, y
-        // calcula la línea de resumen en pesos (MuestraUf).
-        ["src/QubiCostElectrical.Wpf/Features/ManoDeObra/ManoDeObraViewModel"] = 1682,
+        // + Creación de cargos personalizados directos/indirectos con modal y sincronización a proyección (14-10).
+        // + Promedio de proyección redondeado y aplicación con paridad alternada (17-10).
+        // + Soporte Deshacer (Undo) en cargos y persistencia de total cero (17-10).
+        // + Implementación de IPageWithPendingChanges e IPageWithCommitChanges para evitar pérdida silenciosa de dotación al navegar o guardar (17-10).
+        ["src/QubiCostElectrical.Wpf/Features/ManoDeObra/ManoDeObraViewModel"] = 2060,
         // Cockpit Financiero $1000T (Pareto 80/20, distribución continua 4 segmentos, políticas y KPIs ejecutivos)
         // +45 por la política de moneda única del proyecto: KPIs, distribución de costo y top de partidas
         // respetan MonedaPresupuesto (CLP sin UF; UF/USD con equivalente en pesos y sin botón de UF en CLP).
@@ -56,9 +67,10 @@ public sealed class MaxLineCountTest
         // + WIP sin commitear acumulado hasta 1846 (28-09; 847 en Methods tras normalizar whitespace)
         // + M.O. por % del material (2 líneas en FromBankEntry, 06-10).
         // +18 por la política de moneda única del proyecto: MuestraUf/NotifyMonedaChanged ocultan las
-        // columnas UF UNIT / SUBTOTAL UF y las equivalencias UF de la barra de totales cuando el
-        // proyecto está en CLP (la vista reaplica la grilla con ApplyGridMode).
-        ["src/QubiCostElectrical.Wpf/Features/Cubicacion/CubicacionViewModel"] = 1866,
+        // +69 por autocompletar unidad y cantidad según el primer material de la partida (fila y proyecto completo)
+        // +10 por evento RequestFocusCubicacionZone y notificación de foco al crear material (17-10).
+        // +10 por delegación RequestNavigatePartida y navegación relativa con autofoco en código (17-10).
+        ["src/QubiCostElectrical.Wpf/Features/Cubicacion/CubicacionViewModel"] = 2030,
         // Wizard de entrega + política de moneda única del proyecto: el chip de total de la oferta,
         // su tooltip y el manifiesto del paquete omiten la equivalencia UF cuando el proyecto está en CLP.
         ["src/QubiCostElectrical.Wpf/Features/Export/ExportViewModel"] = 1432,
@@ -70,20 +82,24 @@ public sealed class MaxLineCountTest
         // Modelo comercial contractual en filas (APU, P.U. Fijo, Suma Alzada, T&M) y columnas de valorización
         // +21 por la política de moneda única: la moneda de presentación se sincroniza desde MonedaPresupuesto
         // del proyecto (se eliminó el selector propio de UF/CLP/USD de la pantalla y su reactividad).
-        ["src/QubiCostElectrical.Wpf/Features/Itemizado/ItemizadoViewModel"] = 1386,
+        // +5 por protección contra archivos bloqueados en exportación PDF (17-10).
+        // +15 por confirmación enriquecida, backup preventivo y hook ConfirmReplace en importación y pegado (17-10).
+        ["src/QubiCostElectrical.Wpf/Features/Itemizado/ItemizadoViewModel"] = 1410,
         // Autocompletado predictivo IntelliSense (Banco de Precios) y navegación 100% teclado en APU
         // +50 por la política de moneda única del proyecto: KPIs, barra de distribución y totales del
         // APU se formatean en la moneda del proyecto (CLP sin UF; UF/USD con equivalente en pesos),
         // la sugerencia del autocompletado oculta su línea UF en CLP y el precio del recurso se
         // siembra en CLP (ApuRow.*Uf es la moneda base del motor), no en UF.
-        ["src/QubiCostElectrical.Wpf/Features/Apu/ApuWorkspaceVm"] = 1300,
+        // + Confirmación preventiva al reemplazar recursos de APU con plantilla (17-10).
+        ["src/QubiCostElectrical.Wpf/Features/Apu/ApuWorkspaceVm"] = 1325,
         // Ergonomía de planillas, parser resiliente multimoneda y navegación fluida tipo Excel
         // + Celda viva (TextBox embebido): Backspace/Delete/flechas/Home/End son del texto, no
         // de la grilla (fix «al cambiar el valor se elimina la descripción», 08-10).
         // +9 por HandlePasteByHost: la grilla puede declarar que su pegado (código → material,
         // fórmulas, sectores) manda sobre el pegado genérico de casillas, que se adelantaba por
         // enganchar PreviewKeyDown antes que el XAML.
-        ["src/QubiCostElectrical.Wpf/Infrastructure/DataGridExcelNavigation"] = 1640,
+        // +8 por HandleDeleteByHost: delegar Delete/Supr a la vista para retener foco al borrar filas.
+        ["src/QubiCostElectrical.Wpf/Infrastructure/DataGridExcelNavigation"] = 1650,
         // Expediente técnico: previsualización de planos, soporte PDF asíncrono y filtros dinámicos por especialidad
         ["src/QubiCostElectrical.Wpf/Features/Documents/DocumentsViewModel"] = 1350,
         // Rediseño de pantalla Versiones: búsqueda compartida (historial + comparador), filtros
@@ -91,7 +107,10 @@ public sealed class MaxLineCountTest
         // +74 por la política de moneda única del proyecto: MuestraUf + CurrencyFormat presentan
         // Venta / P.U. / Total / Δ en pesos cuando el proyecto está en CLP (las columnas se
         // reetiquetan desde la vista y la mini tabla de recursos deja de mostrar UF).
-        ["src/QubiCostElectrical.Wpf/Features/Versions/VersionsViewModel"] = 1334,
+        // +15 por comandos y atajos de cambio de versión y comparación contra archivos .qce externos.
+        // +15 por protección contra archivos bloqueados en exportación PDF y Excel (17-10).
+        // + Soporte de Deshacer (Undo) al eliminar versiones de presupuesto (17-10).
+        ["src/QubiCostElectrical.Wpf/Features/Versions/VersionsViewModel"] = 1380,
         // Pantalla Estados de pago (cronograma de cobros con anticipo/retención/IVA).
         // +25 por la política de moneda única del proyecto: KPIs, calendario, detalle del mes,
         // totales y resumen se formatean con FormatMoney según MonedaPresupuesto (CLP sin UF).

@@ -32,23 +32,63 @@
     </Grid.RowDefinitions>
 
     <!-- ─── Título ────────────────────────────────────────────────────────── -->
-    <TextBlock Grid.Row="0" Text="Órdenes de cambio"
-               FontSize="20" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}"
-               Margin="0,0,0,12"/>
+    <DockPanel Grid.Row="0" Margin="0,0,0,12">
+      <Border DockPanel.Dock="Right" Background="{DynamicResource Brush.AmberSoft}"
+              BorderBrush="{DynamicResource Brush.AmberBorder}" BorderThickness="1"
+              CornerRadius="6" Padding="10,4" VerticalAlignment="Center">
+        <StackPanel Orientation="Horizontal">
+          <TextBlock Text="🔒 Respeto de Precios Unitarios:" FontSize="11" FontWeight="SemiBold"
+                     Foreground="{DynamicResource Brush.Amber}" Margin="0,0,6,0"/>
+          <TextBlock Text="Partidas de contrato mantienen P.U. congelado" FontSize="11"
+                     Foreground="{DynamicResource Brush.Ink2}"/>
+        </StackPanel>
+      </Border>
+      <StackPanel VerticalAlignment="Center">
+        <TextBlock Text="Adicionales de Obra (Aumentos de Contrato)"
+                   FontSize="20" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}"/>
+        <TextBlock Text="Control de partidas adicionales, modificaciones y partidas extraordinarias en faena."
+                   FontSize="11" Foreground="{DynamicResource Brush.Muted}" Margin="0,2,0,0"/>
+      </StackPanel>
+    </DockPanel>
 
     <!-- ─── Estado vacío — sin proyecto ────────────────────────────────────── -->
     <ctrl:EmptyStateControl Grid.Row="1" Grid.RowSpan="4"
                             Visibility="{Binding HasNoProject, Converter={StaticResource BoolToVisibility}}"
                             Title="Sin proyecto abierto"
-                            Description="Abre o crea un proyecto para gestionar órdenes de cambio." />
+                            Description="Abre o crea un proyecto para gestionar adicionales de obra." />
 
     <!-- ─── Panel resumen ────────────────────────────────────────────────── -->
     <UniformGrid Grid.Row="1" Rows="1" Margin="0,0,0,12"
                  Visibility="{Binding HasNoProject, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
       <Border Style="{StaticResource ChipCard}" Margin="0,0,6,0">
         <StackPanel>
-          <TextBlock Text="{Binding TotalOrdenes}" Style="{StaticResource ChipNum}"/>
-          <TextBlock Text="Total" Style="{StaticResource ChipLbl}"/>
+          <TextBlock Text="{Binding MontoContratoOriginalDisplay}" Style="{StaticResource ChipNum}" FontSize="13"/>
+          <TextBlock Text="Contrato Original" Style="{StaticResource ChipLbl}"/>
+        </StackPanel>
+      </Border>
+      <Border Style="{StaticResource ChipCard}" Margin="0,0,6,0" BorderBrush="{DynamicResource Brush.SuccessBorder}" BorderThickness="1.5">
+        <StackPanel>
+          <DockPanel>
+            <TextBlock Text="{Binding PorcentajeAumentoAprobadoDisplay}" DockPanel.Dock="Right" FontSize="10" FontWeight="Bold"
+                       Foreground="{DynamicResource Brush.Success}" VerticalAlignment="Center"/>
+            <TextBlock Text="{Binding MontoAprobadoDisplay}"
+                       Style="{StaticResource ChipNum}" Foreground="{DynamicResource Brush.Success}" FontSize="13"/>
+          </DockPanel>
+          <TextBlock Text="✓ Aprobados Mandante" Style="{StaticResource ChipLbl}" Foreground="{DynamicResource Brush.Success}"/>
+        </StackPanel>
+      </Border>
+      <Border Style="{StaticResource ChipCard}" Margin="0,0,6,0" BorderBrush="{DynamicResource Brush.AmberBorder}" BorderThickness="1.5">
+        <StackPanel>
+          <TextBlock Text="{Binding MontoPendienteDisplay}"
+                     Style="{StaticResource ChipNum}" FontSize="13" Foreground="{DynamicResource Brush.Amber}"/>
+          <TextBlock Text="⏳ En trámite / ITO" Style="{StaticResource ChipLbl}"/>
+        </StackPanel>
+      </Border>
+      <Border Style="{StaticResource ChipCard}" Margin="0,0,6,0">
+        <StackPanel>
+          <TextBlock Text="{Binding TotalProyectadoObraDisplay}"
+                     Style="{StaticResource ChipNum}" FontSize="13" Foreground="{DynamicResource Brush.Ink}"/>
+          <TextBlock Text="Total Obra Proyectado" Style="{StaticResource ChipLbl}"/>
         </StackPanel>
       </Border>
       <Border Style="{StaticResource ChipCard}" Margin="0,0,6,0">
@@ -57,36 +97,10 @@
           <TextBlock Text="Borrador" Style="{StaticResource ChipLbl}"/>
         </StackPanel>
       </Border>
-      <Border Style="{StaticResource ChipCard}" Margin="0,0,6,0">
-        <StackPanel>
-          <TextBlock Text="{Binding TotalEnRevision}" Style="{StaticResource ChipNum}"/>
-          <TextBlock Text="En revisión" Style="{StaticResource ChipLbl}"/>
-        </StackPanel>
-      </Border>
-      <Border Style="{StaticResource ChipCard}" Margin="0,0,6,0">
-        <StackPanel>
-          <TextBlock Text="{Binding TotalAprobado}" Style="{StaticResource ChipNum}" Foreground="{DynamicResource Brush.Success}"/>
-          <TextBlock Text="Aprobado" Style="{StaticResource ChipLbl}"/>
-        </StackPanel>
-      </Border>
-      <Border Style="{StaticResource ChipCard}" Margin="0,0,6,0">
-        <StackPanel>
-          <TextBlock Text="{Binding TotalRechazado}" Style="{StaticResource ChipNum}" Foreground="{DynamicResource Brush.Danger}"/>
-          <TextBlock Text="Rechazado" Style="{StaticResource ChipLbl}"/>
-        </StackPanel>
-      </Border>
-      <Border Style="{StaticResource ChipCard}" Margin="0,0,6,0">
-        <StackPanel>
-          <TextBlock Text="{Binding MontoAprobadoDisplay}"
-                     Style="{StaticResource ChipNum}" Foreground="{DynamicResource Brush.Success}" FontSize="13"/>
-          <TextBlock Text="Monto aprobado" Style="{StaticResource ChipLbl}"/>
-        </StackPanel>
-      </Border>
       <Border Style="{StaticResource ChipCard}" Margin="0">
         <StackPanel>
-          <TextBlock Text="{Binding MontoPendienteDisplay}"
-                     Style="{StaticResource ChipNum}" FontSize="13"/>
-          <TextBlock Text="Monto pendiente" Style="{StaticResource ChipLbl}"/>
+          <TextBlock Text="{Binding TotalOrdenes}" Style="{StaticResource ChipNum}"/>
+          <TextBlock Text="Total Adicionales" Style="{StaticResource ChipLbl}"/>
         </StackPanel>
       </Border>
     </UniformGrid>
@@ -95,7 +109,7 @@
     <DockPanel Grid.Row="2" Margin="0,0,0,10" LastChildFill="False"
                 Visibility="{Binding HasNoProject, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
     <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
-      <Button Style="{StaticResource Button.Primary}" Content="+ Nueva OC"
+      <Button Style="{StaticResource Button.Primary}" Content="+ Nuevo Adicional"
               Click="OnAddClick" Padding="14,0" Height="30"/>
       <Button Style="{StaticResource Button.Secondary}" Content="Editar" Margin="6,0,0,0"
               IsEnabled="{Binding CanEdit}" Click="OnEditClick" Padding="12,0" Height="30"/>
@@ -115,7 +129,7 @@
               IsEnabled="{Binding CanReabrir}" Click="OnReabrirClick" Padding="10,0" Height="30"/>
     </StackPanel>
     <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
-      <TextBlock Text="Impacto neto acumulado: " FontSize="11" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center"/>
+      <TextBlock Text="Aumento neto acumulado: " FontSize="11" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center"/>
       <TextBlock Text="{Binding ImpactoNetoDisplay}" FontSize="11" FontWeight="Bold"
                  FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center"/>
     </StackPanel>

@@ -88,8 +88,8 @@ public static class PriceConversion
             Moneda.CLP => isUnitPrice
                 ? amountInCurrency.ToString("N0", System.Globalization.CultureInfo.CurrentCulture)
                 : amountInCurrency.ToString("N0", System.Globalization.CultureInfo.CurrentCulture),
-            Moneda.USD => amountInCurrency.ToString("N2", System.Globalization.CultureInfo.CurrentCulture),
-            Moneda.EUR => amountInCurrency.ToString("N2", System.Globalization.CultureInfo.CurrentCulture),
+            Moneda.USD => amountInCurrency.ToString("N0", System.Globalization.CultureInfo.CurrentCulture),
+            Moneda.EUR => amountInCurrency.ToString("N0", System.Globalization.CultureInfo.CurrentCulture),
             // UF: siempre 3 decimales, tanto en precio unitario como en totales.
             _ => amountInCurrency.ToString("N3", System.Globalization.CultureInfo.CurrentCulture)
         };

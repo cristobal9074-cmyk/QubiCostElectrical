@@ -261,6 +261,20 @@ public sealed class CostoViewTabsVm : ViewModelBase
         private set => SetProperty(ref ventaNetaSub, value);
     }
 
+    private string diferenciaFactoresLabel = "—";
+    public string DiferenciaFactoresLabel
+    {
+        get => diferenciaFactoresLabel;
+        private set => SetProperty(ref diferenciaFactoresLabel, value);
+    }
+
+    private string diferenciaFactoresSub = "";
+    public string DiferenciaFactoresSub
+    {
+        get => diferenciaFactoresSub;
+        private set => SetProperty(ref diferenciaFactoresSub, value);
+    }
+
     private string concentracionLabel = "—";
     public string ConcentracionLabel
     {
@@ -339,6 +353,8 @@ public sealed class CostoViewTabsVm : ViewModelBase
         CostoProyectoSub = moneySecondary(cost.CostoProyectoUf);
         VentaNetaLabel = money(cost.TotalVentaNetoUf);
         VentaNetaSub = moneySecondary(cost.TotalVentaNetoUf);
+        DiferenciaFactoresLabel = money(cost.DiferenciaFactoresUf);
+        DiferenciaFactoresSub = moneySecondary(cost.DiferenciaFactoresUf);
 
         BuildConcentracion(familias, money);
 

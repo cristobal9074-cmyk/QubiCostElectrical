@@ -24,7 +24,11 @@ public sealed class MoCargoDef
 
 public sealed class MoCargoEditorVm : ViewModelBase
 {
+    private readonly MoCargoDef def;
     private readonly Action onEditorChanged;
+    private readonly Action<MoCargoEditorVm> onDelete;
+    private string tag = "";
+    private string nombre = "";
     private decimal sueldoBase;
     private decimal fraccionObra;
     private decimal leyesPct;
@@ -32,23 +36,58 @@ public sealed class MoCargoEditorVm : ViewModelBase
     private string fraccionEditText = "";
     private string conLeyesLabel = "";
 
-    public MoCargoEditorVm(MoCargoDef def, string hint, Action onEditorChanged)
+    public MoCargoEditorVm(MoCargoDef def, string hint, Action onEditorChanged, Action<MoCargoEditorVm> onDelete)
     {
-        Id = def.Id;
-        Tag = def.Tag;
-        Nombre = def.Nombre;
-        Hint = hint;
+        this.def = def;
         this.onEditorChanged = onEditorChanged;
+        this.onDelete = onDelete;
+        Id = def.Id;
+        tag = def.Tag;
+        nombre = def.Nombre;
+        Hint = hint;
         sueldoBase = def.SueldoBase;
         sueldoEditText = FormatEdit(def.SueldoBase);
         fraccionObra = ClampFraccion(def.FraccionObra);
         fraccionEditText = FormatFraccion(fraccionObra);
+        DeleteCommand = new RelayCommand(() => onDelete(this));
     }
 
+    public MoCargoDef Def => def;
     public string Id { get; }
-    public string Tag { get; }
-    public string Nombre { get; }
     public string Hint { get; }
+    public ICommand DeleteCommand { get; }
+
+    public string Tag
+    {
+        get => tag;
+        set
+        {
+            var trimmed = (value ?? "").Trim();
+            if (string.IsNullOrWhiteSpace(trimmed) || trimmed == tag)
+                return;
+            if (SetProperty(ref tag, trimmed))
+            {
+                def.Tag = trimmed;
+                onEditorChanged();
+            }
+        }
+    }
+
+    public string Nombre
+    {
+        get => nombre;
+        set
+        {
+            var trimmed = (value ?? "").Trim();
+            if (string.IsNullOrWhiteSpace(trimmed) || trimmed == nombre)
+                return;
+            if (SetProperty(ref nombre, trimmed))
+            {
+                def.Nombre = trimmed;
+                onEditorChanged();
+            }
+        }
+    }
 
     public decimal SueldoBase => sueldoBase;
 
@@ -117,21 +156,23 @@ public sealed class MoCargoEditorVm : ViewModelBase
     private static string FormatEdit(decimal n)
         => Math.Round(n).ToString("N0", CultureInfo.GetCultureInfo("es-CL"));
 
-    private static string FormatFraccion(decimal n)
+    public static string FormatFraccion(decimal n)
         => n.ToString("N2", CultureInfo.GetCultureInfo("es-CL"));
 
-    private static decimal ClampFraccion(decimal n)
+    public static decimal ClampFraccion(decimal n)
         => Math.Clamp(n, 0m, 1m);
 
-    /// <summary>Acepta coma o punto decimal (0,3 / 0.3) y recorta a 0..1. Vacío = conserva el valor actual.</summary>
-    private static decimal ParseFraccion(string? raw, decimal fallback)
+    /// <summary>Acepta coma o punto decimal (0,3 / 0.3), porcentaje (30% o 30) y recorta a 0..1. Vacío = conserva el valor actual.</summary>
+    public static decimal ParseFraccion(string? raw, decimal fallback)
     {
         if (string.IsNullOrWhiteSpace(raw))
             return fallback;
-        var text = raw.Trim().Replace(',', '.');
-        return decimal.TryParse(text, NumberStyles.Number, CultureInfo.InvariantCulture, out var n)
-            ? ClampFraccion(n)
-            : fallback;
+        var text = raw.Trim().Replace("%", "").Trim().Replace(',', '.');
+        if (!decimal.TryParse(text, NumberStyles.Number, CultureInfo.InvariantCulture, out var n))
+            return fallback;
+        if (n > 1m && n <= 100m)
+            n /= 100m;
+        return ClampFraccion(n);
     }
 
     private static decimal ParseMoney(string? raw)
@@ -174,10 +215,13 @@ public sealed class MoTableRow
     public string GroupBadge { get; init; } = "";
     public string GroupBadgeType { get; init; } = "dir";
     public string Tag { get; init; } = "";
+    public string CargoId { get; init; } = "";
     public string Nombre { get; init; } = "";
     public bool EsDirecta { get; init; }
     public int DotPico { get; init; }
+    public string DotacionStr { get; init; } = "";
     public string SueldoBaseStr { get; init; } = "";
+    public decimal FraccionObra { get; init; } = 1m;
     public string FraccionStr { get; init; } = "";
     public string LeyesStr { get; init; } = "";
     public string TotalMensualStr { get; init; } = "";
@@ -205,6 +249,6 @@ public sealed class MoProjectionTaskVm
     public int[] Cantidades { get; set; } = Array.Empty<int>();
 }
 
-public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePage
+public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePage, IPageWithPendingChanges, IPageWithCommitChanges
 {
 }

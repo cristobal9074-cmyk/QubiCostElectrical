@@ -28,7 +28,8 @@ public enum ShellRoute
     ContractWorkspace,
     ContractEditor,
     ContractVersions,
-    EstadosPagos
+    EstadosPagos,
+    MaterialControl
 }
 
 public sealed record ShellRouteInfo(
@@ -54,7 +55,7 @@ public static class ShellRouteCatalog
             [ShellRoute.Quotes] = new(ShellRoute.Quotes, "Precios", "Cotizaciones"),
             [ShellRoute.Purchases] = new(ShellRoute.Purchases, "Precios", "Lista de compra"),
             [ShellRoute.Review] = new(ShellRoute.Review, "Cierre", "Revisión final"),
-            [ShellRoute.Versions] = new(ShellRoute.Versions, "Cierre", "Versiones"),
+            [ShellRoute.Versions] = new(ShellRoute.Versions, "Cierre", "Cambio de versión"),
             [ShellRoute.OfferDocuments] = new(ShellRoute.OfferDocuments, "Cierre", "Oferta y exportación"),
             [ShellRoute.Currency] = new(ShellRoute.Currency, "Proyecto", "Datos del proyecto"),
             [ShellRoute.Preferences] = new(ShellRoute.Preferences, "Configuración", "Preferencias globales"),
@@ -68,7 +69,8 @@ public static class ShellRouteCatalog
             [ShellRoute.ContractWorkspace] = new(ShellRoute.ContractWorkspace, "Cierre", "Contratos"),
             [ShellRoute.ContractEditor] = new(ShellRoute.ContractEditor, "Cierre", "Editor de contrato"),
             [ShellRoute.ContractVersions] = new(ShellRoute.ContractVersions, "Cierre", "Versiones de contrato"),
-            [ShellRoute.EstadosPagos] = new(ShellRoute.EstadosPagos, "Ejecución", "Estados de pago")
+            [ShellRoute.EstadosPagos] = new(ShellRoute.EstadosPagos, "Ejecución", "Estados de pago"),
+            [ShellRoute.MaterialControl] = new(ShellRoute.MaterialControl, "Ejecución", "Control de materiales")
         };
 
     public static ShellRouteInfo Get(ShellRoute route) => Routes[route];

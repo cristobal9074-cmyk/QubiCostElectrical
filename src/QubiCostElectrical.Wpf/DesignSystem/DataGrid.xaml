@@ -137,6 +137,20 @@
     <Setter Property="BorderThickness" Value="2" />
     <Setter Property="BorderBrush" Value="Transparent" />
     <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="DataGridCell">
+          <Border Background="{TemplateBinding Background}"
+                  BorderBrush="{TemplateBinding BorderBrush}"
+                  BorderThickness="{TemplateBinding BorderThickness}"
+                  Padding="{TemplateBinding Padding}"
+                  SnapsToDevicePixels="True">
+            <ContentPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"
+                              VerticalAlignment="Center" />
+          </Border>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
     <Style.Triggers>
       <!-- Base por tipo de celda: Editable vs Fórmula -->
       <Trigger Property="IsReadOnly" Value="True">
@@ -160,20 +174,25 @@
       <Trigger Property="IsSelected" Value="True">
         <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
+        <Setter Property="BorderThickness" Value="2" />
         <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
       </Trigger>
-      <!-- Al editar: sin relleno azul de “selección”; solo contorno de foco (como Excel). -->
+      <!-- Al editar o enfocar: mantener el fondo azul suave y contorno azul exactamente igual que seleccionado para que el marcado de casilla no desaparezca -->
       <Trigger Property="IsEditing" Value="True">
-        <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+        <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
         <Setter Property="BorderThickness" Value="2" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
       </Trigger>
       <Trigger Property="IsKeyboardFocusWithin" Value="True">
+        <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
+        <Setter Property="BorderThickness" Value="2" />
       </Trigger>
       <Trigger Property="IsFocused" Value="True">
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
         <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+        <Setter Property="BorderThickness" Value="2" />
       </Trigger>
     </Style.Triggers>
   </Style>
@@ -218,6 +237,19 @@
         <Setter Property="BorderThickness" Value="1.5" />
       </Trigger>
     </Style.Triggers>
+  </Style>
+
+  <!-- Editor de celda transparente sin borde ni fondo propio para que el marcado azul de la casilla nunca se tape -->
+  <Style x:Key="DataGrid.CellEditTransparent" TargetType="TextBox">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+    <Setter Property="FontFamily" Value="{StaticResource Font.Ui}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.sm}" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="4,0" />
+    <Setter Property="Margin" Value="0" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="SelectionBrush" Value="{DynamicResource Brush.BlueFocus}" />
   </Style>
 
   <!-- Editor de celda de grilla (DataGridTextColumn.EditingElementStyle o el TextBox de un

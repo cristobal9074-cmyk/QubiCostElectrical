@@ -245,16 +245,39 @@ public sealed class MaterialMoResolverTests
         Assert.Equal(50m, MaterialMoResolver.IndiceFa(new ProjectInfoRow { IndiceMoFa = 50m }));
     }
 
-    /// <summary>
-    /// El 62,80 entró a todos los .qce antiguos como default de la app, no como calibración del
-    /// proyecto: al cargar se trata como "sin calibrar" para que no reaparezca en pantalla.
-    /// </summary>
     [Fact]
-    public void NormalizarFaGuardado_FaHeredado_EntraComoSinCalibrar()
+    public void NormalizarFaGuardado_PreservaFaValido()
     {
-        Assert.Equal(0m, MaterialMoResolver.NormalizarFaGuardado(62.80m));
+        Assert.Equal(62.80m, MaterialMoResolver.NormalizarFaGuardado(62.80m));
         Assert.Equal(0m, MaterialMoResolver.NormalizarFaGuardado(0m));
         Assert.Equal(0m, MaterialMoResolver.NormalizarFaGuardado(-5m));
         Assert.Equal(79.20m, MaterialMoResolver.NormalizarFaGuardado(79.20m));
+    }
+
+    [Fact]
+    public void MoClpPorFactor_MultiplicaBasePorFa()
+    {
+        // Base 20 × FA 62.80 = 1.256
+        Assert.Equal(1_256m, MaterialMoResolver.MoClpPorFactor(20m, 62.80m));
+        // Base 135 × FA 62.80 = 8.478
+        Assert.Equal(8_478m, MaterialMoResolver.MoClpPorFactor(135m, 62.80m));
+        // FA 0 o no calibrado usa factor neutro 1
+        Assert.Equal(20m, MaterialMoResolver.MoClpPorFactor(20m, 0m));
+    }
+
+    [Fact]
+    public void MoClpEfectiva_UsaFormulaFactorCuandoEstaActiva()
+    {
+        var mat = new MaterialRow
+        {
+            Codigo = "H07Z1-K2.5",
+            MoFactorBase = 20m,
+            MoClp = 20m,
+            MoFormulaTipo = MaterialMoResolver.MoFormulaFactor
+        };
+        var project = new ProjectInfoRow { IndiceMoFa = 62.80m };
+
+        decimal efectiva = MaterialMoResolver.MoClpEfectiva(mat, project);
+        Assert.Equal(1_256m, efectiva);
     }
 }

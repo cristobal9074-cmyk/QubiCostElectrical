@@ -164,4 +164,55 @@ public sealed class ManoDeObraViewModelTests
         Assert.All(vm.CargosDef.Where(c => c.EsDirecta), c => Assert.Equal(1m, c.FraccionObra));
         Assert.DoesNotContain(vm.IndirectaEditors, e => e.Id == "M1");
     }
+
+    [Fact]
+    public void PersistToSession_ConRecalculoCero_ActualizaMoTotalClpACero()
+    {
+        var (vm, session) = CreateVm();
+        session.ProjectInfo.MoTotalClp = 5000000m;
+        session.ProjectInfo.MoDirectaClp = 3000000m;
+
+        // Limpiar todas las dotaciones para que el costo total sea 0
+        foreach (var def in vm.CargosDef)
+        {
+            for (int m = 0; m < vm.TotalMonths; m++)
+                vm.SetOverride(def.Id, m, 0);
+        }
+
+        Assert.Equal(0m, session.ProjectInfo.MoTotalClp);
+        Assert.Equal(0m, session.ProjectInfo.MoDirectaClp);
+    }
+
+    [Fact]
+    public void PendingChanges_StageOverride_ReflectsHasPendingChanges_AndTryApplyChangesCommits()
+    {
+        var (vm, session) = CreateVm();
+        var pending = (IPageWithPendingChanges)vm;
+        var commit = (IPageWithCommitChanges)vm;
+
+        Assert.False(pending.HasPendingChanges);
+
+        vm.StageOverride("M1", 0, 9);
+        Assert.True(pending.HasPendingChanges);
+
+        var success = commit.TryApplyChanges();
+        Assert.True(success);
+        Assert.False(pending.HasPendingChanges);
+        Assert.Equal(9, session.Data.MoDirecta.Single(r => r.Id == "M1").DotacionMensual[0]);
+    }
+
+    [Fact]
+    public void PendingChanges_TryDiscardChanges_ClearsStagedEdits()
+    {
+        var (vm, session) = CreateVm();
+        var pending = (IPageWithPendingChanges)vm;
+
+        vm.StageOverride("M1", 0, 9);
+        Assert.True(pending.HasPendingChanges);
+
+        var success = pending.TryDiscardChanges();
+        Assert.True(success);
+        Assert.False(pending.HasPendingChanges);
+    }
 }
+

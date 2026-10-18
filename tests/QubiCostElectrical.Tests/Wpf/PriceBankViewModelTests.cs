@@ -113,4 +113,45 @@ public sealed class PriceBankViewModelTests
         Assert.Equal(before.categorias + 1, afterAdd.categorias);
         Assert.Equal(before.proveedores + 1, afterAdd.proveedores);
     }
+
+    [Fact]
+    public void DeleteAll_WhenCancelled_PreservesEntries()
+    {
+        var vm = new PriceBankViewModel(WpfAppHost.Current);
+        int initialCount = vm.Entries.Count;
+        Assert.True(initialCount > 0);
+
+        bool promptCalled = false;
+        vm.ConfirmDeleteAll = msg =>
+        {
+            promptCalled = true;
+            return false;
+        };
+
+        vm.DeleteAllCommand.Execute(null);
+
+        Assert.True(promptCalled);
+        Assert.Equal(initialCount, vm.Entries.Count);
+    }
+
+    [Fact]
+    public void TryCreateBackupBeforeDeleteAll_GeneratesBakFileIfExists()
+    {
+        var vm = new PriceBankViewModel(WpfAppHost.Current);
+        var bakPath = vm.TryCreateBackupBeforeDeleteAll();
+        if (bakPath != null)
+        {
+            try
+            {
+                Assert.True(File.Exists(bakPath));
+                Assert.EndsWith(".bak", bakPath, StringComparison.OrdinalIgnoreCase);
+            }
+            finally
+            {
+                if (File.Exists(bakPath))
+                    File.Delete(bakPath);
+            }
+        }
+    }
 }
+

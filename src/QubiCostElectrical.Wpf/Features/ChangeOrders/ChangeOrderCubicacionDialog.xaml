@@ -1,0 +1,320 @@
+<Window x:Class="QubiCostElectrical.Wpf.Features.ChangeOrders.ChangeOrderCubicacionDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Style="{StaticResource Dialog.Window}"
+        Title="Cubicación de Partida - Adicional de Obra"
+        Width="1020" Height="620"
+        MinWidth="850" MinHeight="480"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResizeWithGrip"
+        ShowInTaskbar="False"
+        FontFamily="{StaticResource Font.Ui}">
+  <Border Style="{StaticResource Dialog.Chrome}" Margin="16">
+    <Grid>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="*"/>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+      </Grid.RowDefinitions>
+
+      <!-- ── 1. Cabecera Informativa ── -->
+      <DockPanel Grid.Row="0" Margin="0,0,0,12">
+        <Border DockPanel.Dock="Right" x:Name="TipoBadgeBorder"
+                Background="{DynamicResource Brush.AmberSoft}"
+                BorderBrush="{DynamicResource Brush.AmberBorder}" BorderThickness="1"
+                CornerRadius="6" Padding="10,5" VerticalAlignment="Center">
+          <TextBlock x:Name="TipoBadgeText" Text="🔒 Partida Contractual (P.U. Congelado)"
+                     FontSize="11" FontWeight="SemiBold"
+                     Foreground="{DynamicResource Brush.Amber}" VerticalAlignment="Center"/>
+        </Border>
+
+        <StackPanel VerticalAlignment="Center">
+          <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+            <TextBlock x:Name="ItemCodeText" Text="Partida 1.1" Style="{StaticResource Dialog.HeaderTitle}" Margin="0,0,10,0"/>
+            <Border Background="{DynamicResource Brush.BlueFaint}" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
+              <TextBlock x:Name="CantidadAdicionalBadge" Text="Δ Cantidad: 10 UN" FontSize="11" FontWeight="Bold"
+                         Foreground="{DynamicResource Brush.Accent}" FontFamily="{StaticResource Font.Mono}"/>
+            </Border>
+          </StackPanel>
+          <TextBlock x:Name="DescripcionPartidaText" Text="Descripción de la partida en el adicional..."
+                     FontSize="12" Foreground="{DynamicResource Brush.Muted}" TextTrimming="CharacterEllipsis"/>
+        </StackPanel>
+      </DockPanel>
+
+      <!-- ── 2. Barra de Herramientas de Cubicación ── -->
+      <Border Grid.Row="1" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}"
+              BorderThickness="1" CornerRadius="6" Padding="8,6" Margin="0,0,0,10">
+        <DockPanel LastChildFill="False">
+          <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+            <Button Content="+ Agregar Material" Style="{StaticResource Button.Primary}"
+                    Height="28" Padding="12,0" Margin="0,0,8,0" FontSize="11"
+                    Click="OnAddMaterialClick"/>
+            <Button x:Name="BtnPrecargarBase" Content="📋 Precargar Materiales del Presupuesto Base"
+                    Style="{StaticResource Button.Secondary}"
+                    Height="28" Padding="12,0" Margin="0,0,8,0" FontSize="11"
+                    ToolTip="Copia los materiales originales de esta partida y los escala a la cantidad adicional"
+                    Click="OnPrecargarBaseClick"/>
+            <Button Content="🔍 Banco de Precios" Style="{StaticResource Button.Secondary}"
+                    Height="28" Padding="12,0" Margin="0,0,8,0" FontSize="11"
+                    ToolTip="Abrir catálogo y banco de precios general para seleccionar materiales"
+                    Click="OnBuscarEnBancoClick"/>
+          </StackPanel>
+
+          <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
+            <TextBlock Text="💡 Ingrese fórmulas en cantidad (ej: 15*3+4). Al escribir el código se auto-completa el precio."
+                       FontSize="11" Foreground="{DynamicResource Brush.Muted}" FontStyle="Italic"/>
+          </StackPanel>
+        </DockPanel>
+      </Border>
+
+      <!-- ── 3. DataGrid de Materiales (Excel Style) ── -->
+      <Border Grid.Row="2" Style="{StaticResource Card.Surface}" Padding="0" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1">
+        <DataGrid x:Name="MaterialesGrid"
+                  AutoGenerateColumns="False"
+                  CanUserAddRows="False"
+                  CanUserDeleteRows="False"
+                  CanUserResizeRows="False"
+                  CanUserSortColumns="False"
+                  SelectionMode="Single"
+                  GridLinesVisibility="Horizontal"
+                  HorizontalGridLinesBrush="{DynamicResource Brush.Line}"
+                  HeadersVisibility="Column"
+                  RowHeight="32"
+                  Background="Transparent"
+                  BorderThickness="0">
+          <DataGrid.Columns>
+            <!-- Tipo (MAT / MO / EQP / SUB) -->
+            <DataGridTemplateColumn Header="Tipo" Width="65">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <Border CornerRadius="4" Padding="4,2" HorizontalAlignment="Center" VerticalAlignment="Center"
+                          Background="{DynamicResource Brush.Surface2}">
+                    <TextBlock Text="{Binding Tipo}" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}"/>
+                  </Border>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+              <DataGridTemplateColumn.CellEditingTemplate>
+                <DataTemplate>
+                  <ComboBox SelectedValue="{Binding Tipo, UpdateSourceTrigger=PropertyChanged}"
+                            SelectedValuePath="Content" FontSize="11">
+                    <ComboBoxItem Content="MAT"/>
+                    <ComboBoxItem Content="MO"/>
+                    <ComboBoxItem Content="EQP"/>
+                    <ComboBoxItem Content="SUB"/>
+                  </ComboBox>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellEditingTemplate>
+            </DataGridTemplateColumn>
+
+            <!-- Código -->
+            <DataGridTemplateColumn Header="Código" Width="120">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <TextBlock Text="{Binding Codigo}" FontFamily="{StaticResource Font.Mono}"
+                             FontWeight="SemiBold" VerticalAlignment="Center" Padding="4,0"/>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+              <DataGridTemplateColumn.CellEditingTemplate>
+                <DataTemplate>
+                  <TextBox Text="{Binding Codigo, UpdateSourceTrigger=LostFocus}"
+                           FontFamily="{StaticResource Font.Mono}" FontWeight="SemiBold"
+                           VerticalContentAlignment="Center"
+                           LostFocus="OnCodigoCellLostFocus"/>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellEditingTemplate>
+            </DataGridTemplateColumn>
+
+            <!-- Descripción -->
+            <DataGridTemplateColumn Header="Descripción del Material / Recurso" Width="*">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <TextBlock Text="{Binding Descripcion}" VerticalAlignment="Center" Padding="4,0" TextTrimming="CharacterEllipsis"/>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+              <DataGridTemplateColumn.CellEditingTemplate>
+                <DataTemplate>
+                  <TextBox Text="{Binding Descripcion, UpdateSourceTrigger=PropertyChanged}"
+                           FontSize="11" VerticalContentAlignment="Center"/>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellEditingTemplate>
+            </DataGridTemplateColumn>
+
+            <!-- Unidad -->
+            <DataGridTemplateColumn Header="Unidad" Width="60">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <TextBlock Text="{Binding Unidad}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+              <DataGridTemplateColumn.CellEditingTemplate>
+                <DataTemplate>
+                  <TextBox Text="{Binding Unidad, UpdateSourceTrigger=PropertyChanged}"
+                           HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellEditingTemplate>
+            </DataGridTemplateColumn>
+
+            <!-- Cantidad / Fórmula -->
+            <DataGridTemplateColumn Header="Cant. / Fórmula" Width="120">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <Border Background="{DynamicResource Brush.BlueFaint}" CornerRadius="4" Padding="6,2" Margin="2">
+                    <TextBlock Text="{Binding CantidadFormula}" FontWeight="Bold"
+                               FontFamily="{StaticResource Font.Mono}" HorizontalAlignment="Right"
+                               VerticalAlignment="Center" Foreground="{DynamicResource Brush.Accent}"/>
+                  </Border>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+              <DataGridTemplateColumn.CellEditingTemplate>
+                <DataTemplate>
+                  <TextBox Text="{Binding CantidadFormula, UpdateSourceTrigger=LostFocus}"
+                           FontFamily="{StaticResource Font.Mono}" FontWeight="Bold"
+                           TextAlignment="Right" VerticalContentAlignment="Center"
+                           LostFocus="OnCantidadCellLostFocus"/>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellEditingTemplate>
+            </DataGridTemplateColumn>
+
+            <!-- Cantidad Evaluada -->
+            <DataGridTextColumn Header="Total Cant." Binding="{Binding Cantidad, StringFormat={}{0:N0}}" Width="80" IsReadOnly="True">
+              <DataGridTextColumn.ElementStyle>
+                <Style TargetType="TextBlock">
+                  <Setter Property="HorizontalAlignment" Value="Right"/>
+                  <Setter Property="VerticalAlignment" Value="Center"/>
+                  <Setter Property="FontFamily" Value="{StaticResource Font.Mono}"/>
+                  <Setter Property="Padding" Value="0,0,4,0"/>
+                </Style>
+              </DataGridTextColumn.ElementStyle>
+            </DataGridTextColumn>
+
+            <!-- Precio Material ($) -->
+            <DataGridTemplateColumn Header="P. Unit Mat ($)" Width="95">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <TextBlock Text="{Binding MatClpText}" FontFamily="{StaticResource Font.Mono}"
+                             HorizontalAlignment="Right" VerticalAlignment="Center" Padding="0,0,4,0"/>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+              <DataGridTemplateColumn.CellEditingTemplate>
+                <DataTemplate>
+                  <TextBox Text="{Binding MatClpText, UpdateSourceTrigger=LostFocus}"
+                           FontFamily="{StaticResource Font.Mono}" TextAlignment="Right" VerticalContentAlignment="Center"/>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellEditingTemplate>
+            </DataGridTemplateColumn>
+
+            <!-- Precio Mano de Obra ($) -->
+            <DataGridTemplateColumn Header="P. Unit MO ($)" Width="95">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <TextBlock Text="{Binding MoClpText}" FontFamily="{StaticResource Font.Mono}"
+                             HorizontalAlignment="Right" VerticalAlignment="Center" Padding="0,0,4,0"/>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+              <DataGridTemplateColumn.CellEditingTemplate>
+                <DataTemplate>
+                  <TextBox Text="{Binding MoClpText, UpdateSourceTrigger=LostFocus}"
+                           FontFamily="{StaticResource Font.Mono}" TextAlignment="Right" VerticalContentAlignment="Center"/>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellEditingTemplate>
+            </DataGridTemplateColumn>
+
+            <!-- Subtotal Fila -->
+            <DataGridTextColumn Header="Subtotal" Binding="{Binding SubtotalDisplay}" Width="105" IsReadOnly="True">
+              <DataGridTextColumn.ElementStyle>
+                <Style TargetType="TextBlock">
+                  <Setter Property="HorizontalAlignment" Value="Right"/>
+                  <Setter Property="VerticalAlignment" Value="Center"/>
+                  <Setter Property="FontFamily" Value="{StaticResource Font.Mono}"/>
+                  <Setter Property="FontWeight" Value="SemiBold"/>
+                  <Setter Property="Foreground" Value="{DynamicResource Brush.Success}"/>
+                  <Setter Property="Padding" Value="0,0,6,0"/>
+                </Style>
+              </DataGridTextColumn.ElementStyle>
+            </DataGridTextColumn>
+
+            <!-- Eliminar -->
+            <DataGridTemplateColumn Width="40">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <Button Content="✕" ToolTip="Quitar material"
+                          Click="OnRemoveMaterialClick"
+                          Foreground="{DynamicResource Brush.Danger}" Background="Transparent"
+                          BorderThickness="0" FontWeight="Bold" FontSize="11"
+                          Width="24" Height="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+          </DataGrid.Columns>
+        </DataGrid>
+      </Border>
+
+      <!-- ── 4. Totales de Cubicación ── -->
+      <Border Grid.Row="3" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}"
+              BorderThickness="1" CornerRadius="8" Padding="14,8" Margin="0,10,0,10">
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+          </Grid.ColumnDefinitions>
+
+          <!-- Acción para partidas extraordinarias -->
+          <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+            <CheckBox x:Name="ChkActualizarPrecioPartida" Content="Actualizar precio unitario de la partida al costo cubicado"
+                      FontSize="11" VerticalAlignment="Center"
+                      ToolTip="Calcula el costo unitario (Total / Cantidad Partida) y lo aplica al precio unitario del adicional"/>
+          </StackPanel>
+
+          <!-- Total Materiales -->
+          <Border Grid.Column="1" Margin="0,0,10,0" Padding="8,4" Background="{DynamicResource Brush.Surface}" CornerRadius="6" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <TextBlock Text="Materiales: " FontSize="10" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center"/>
+              <TextBlock x:Name="TotalMaterialesText" Text="$ 0" FontSize="11" FontWeight="SemiBold"
+                         FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center"/>
+            </StackPanel>
+          </Border>
+
+          <!-- Total MO -->
+          <Border Grid.Column="2" Margin="0,0,10,0" Padding="8,4" Background="{DynamicResource Brush.Surface}" CornerRadius="6" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <TextBlock Text="Mano de Obra: " FontSize="10" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center"/>
+              <TextBlock x:Name="TotalMoText" Text="$ 0" FontSize="11" FontWeight="SemiBold"
+                         FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center"/>
+            </StackPanel>
+          </Border>
+
+          <!-- Costo Directo Total -->
+          <Border Grid.Column="3" Margin="0,0,10,0" Padding="10,4" Background="{DynamicResource Brush.Surface}" CornerRadius="6" BorderBrush="{DynamicResource Brush.SuccessBorder}" BorderThickness="1">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <TextBlock Text="COSTO DIRECTO: " FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center"/>
+              <TextBlock x:Name="TotalCostoDirectoText" Text="$ 0" FontSize="12" FontWeight="Bold"
+                         FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Success}" VerticalAlignment="Center"/>
+            </StackPanel>
+          </Border>
+
+          <!-- Costo Unitario Resultante -->
+          <Border Grid.Column="4" Padding="10,4" Background="{DynamicResource Brush.Surface}" CornerRadius="6" BorderBrush="{DynamicResource Brush.BlueFocus}" BorderThickness="1">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <TextBlock Text="P.U. Cubicado: " FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center"/>
+              <TextBlock x:Name="CostoUnitarioPartidaText" Text="$ 0 / UN" FontSize="12" FontWeight="Bold"
+                         FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Accent}" VerticalAlignment="Center"/>
+            </StackPanel>
+          </Border>
+        </Grid>
+      </Border>
+
+      <!-- ── 5. Botones Footer ── -->
+      <DockPanel Grid.Row="4" Style="{StaticResource Dialog.Footer}" LastChildFill="False">
+        <Button DockPanel.Dock="Left" Content="Cancelar" IsCancel="True"
+                Style="{StaticResource Button.Secondary}" MinWidth="90"/>
+        <Button DockPanel.Dock="Right" Content="✓ Guardar Cubicación" IsDefault="True"
+                Style="{StaticResource Button.Primary}" MinWidth="160" Click="OnGuardarClick"/>
+      </DockPanel>
+    </Grid>
+  </Border>
+</Window>

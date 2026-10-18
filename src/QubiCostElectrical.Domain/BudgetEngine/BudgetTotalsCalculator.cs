@@ -234,14 +234,13 @@ internal static class BudgetTotalsCalculator
         decimal vaEquipos = direct.EquiposUf * policy.SafeValorAgregadoEquiposPct / 100m;
         decimal costoProyecto = baseCosto + gg + utilidadAditiva + vaEquipos;
 
-        // Venta: con factores = presentación cubicación/APU + GO
-        // (+ ajuste MO módulo si reemplaza MO del motor).
+        // Venta: con factores = presentación cubicación/APU + GO (paridad C187 del Excel).
+        // La venta contractual es la suma de líneas con factores + GO. La dotación indirecta
+        // es un costo de la empresa que afecta el costo de ejecución y el margen, no el precio ofertado al cliente.
         decimal bruto;
         if (direct.HasRowLevelMarkups)
         {
             bruto = direct.SumVentaClp + go;
-            if (settings.ManoObraDotacionClp > 0m)
-                bruto = bruto - moEngine + mo;
         }
         else
         {

@@ -179,7 +179,7 @@ public sealed class ItemizadoRowVm : ViewModelBase, IGridCellValidationSource
 
     public string CantidadText
     {
-        get => model.Cantidad.ToString("N2", CultureInfo.CurrentCulture);
+        get => model.Cantidad % 1 == 0 ? model.Cantidad.ToString("N0", CultureInfo.CurrentCulture) : model.Cantidad.ToString("#,##0.##", CultureInfo.CurrentCulture);
         set
         {
             if (string.IsNullOrWhiteSpace(value))

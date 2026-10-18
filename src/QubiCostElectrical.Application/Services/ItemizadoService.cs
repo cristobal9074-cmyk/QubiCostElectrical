@@ -163,12 +163,32 @@ public sealed class ItemizadoService : IItemizadoService
         {
             string parent = ItemizadoHierarchyRules.NormalizeTitleId(x.Id);
             string chapter = parent.Split('.')[0];
-            removedIds.AddRange(itemizado.Where(i =>
-                    string.Equals(i.Id, parent, StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(i.Id, chapter, StringComparison.OrdinalIgnoreCase)
-                    || ItemizadoHierarchyRules.MatchesRemovedId(i.Id, parent)
-                    || (!i.EsTitulo && (i.Id ?? "").StartsWith(chapter + ".", StringComparison.Ordinal)))
-                .Select(i => i.Id));
+            bool isTopLevelChapter = string.IsNullOrWhiteSpace(x.ParentId)
+                && (string.Equals(parent, $"{chapter}.0", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(x.Id, chapter, StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(x.Id, $"{chapter}.0", StringComparison.OrdinalIgnoreCase));
+
+            if (isTopLevelChapter)
+            {
+                removedIds.AddRange(itemizado.Where(i =>
+                        string.Equals(i.Id, parent, StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(i.Id, chapter, StringComparison.OrdinalIgnoreCase)
+                        || ItemizadoHierarchyRules.MatchesRemovedId(i.Id, parent)
+                        || (!i.EsTitulo && (i.Id ?? "").StartsWith(chapter + ".", StringComparison.Ordinal)))
+                    .Select(i => i.Id));
+            }
+            else
+            {
+                removedIds.AddRange(itemizado.Where(i =>
+                        string.Equals(i.Id, x.Id, StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(i.Id, parent, StringComparison.OrdinalIgnoreCase)
+                        || ItemizadoHierarchyRules.MatchesRemovedId(i.Id, x.Id)
+                        || ItemizadoHierarchyRules.MatchesRemovedId(i.Id, parent)
+                        || string.Equals(i.ParentId, x.Id, StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(i.ParentId, parent, StringComparison.OrdinalIgnoreCase))
+                    .Select(i => i.Id));
+            }
+
             itemizado.RemoveAll(i =>
                 removedIds.Contains(i.Id, StringComparer.OrdinalIgnoreCase));
         }

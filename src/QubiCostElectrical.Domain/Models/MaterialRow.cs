@@ -68,9 +68,12 @@ public sealed class MaterialRow
     /// <summary>Rendimiento por día-pareja (columna DIA x PAREJA de LISTA-PR). Informativo; 0 = no aplica.</summary>
     public decimal DiaXPareja { get; set; }
 
-    /// <summary>Fórmula de M.O.: vacío = M.O. fija (MoClp); <see cref="MaterialMoResolver.MoFormulaPorcentaje"/> = Material × MoPorcentajeMaterial × FA.</summary>
+    /// <summary>Fórmula de M.O.: vacío = M.O. fija (MoClp); <see cref="MaterialMoResolver.MoFormulaPorcentaje"/> = Material × MoPorcentajeMaterial × FA; <see cref="MaterialMoResolver.MoFormulaFactor"/> = MoFactorBase × FA.</summary>
     public string MoFormulaTipo { get; set; } = "";
 
     /// <summary>Porcentaje de M.O. sobre el material como número (2.5 = 2,5%). Solo aplica con fórmula "Porcentaje".</summary>
     public decimal MoPorcentajeMaterial { get; set; } = 2.5m;
+
+    /// <summary>Factor base de M.O. (columna F de LISTA-PR): multiplica al FA cuando MoFormulaTipo es "Factor".</summary>
+    public decimal MoFactorBase { get; set; }
 }

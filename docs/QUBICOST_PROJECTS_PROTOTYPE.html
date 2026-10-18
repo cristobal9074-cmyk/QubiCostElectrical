@@ -1,0 +1,1758 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Qubi Cost Projects — Enterprise Construction & Electrical Intelligence Platform</title>
+  <style>
+    :root {
+      --bg-base: #060B11;
+      --bg-shell: #09111C;
+      --bg-surface: #0E1B2C;
+      --bg-surface-elevated: #13243B;
+      --bg-surface-hover: #1A314E;
+      --border-subtle: rgba(255, 255, 255, 0.06);
+      --border-line: #183350;
+      --border-focus: #3B82F6;
+      --ink-primary: #F8FAFC;
+      --ink-secondary: #94A3B8;
+      --ink-tertiary: #64748B;
+      --blue-accent: #3B82F6;
+      --blue-glow: rgba(59, 130, 246, 0.25);
+      --emerald: #10B981;
+      --emerald-glow: rgba(16, 185, 129, 0.2);
+      --amber: #F59E0B;
+      --amber-glow: rgba(245, 158, 11, 0.2);
+      --crimson: #EF4444;
+      --crimson-glow: rgba(239, 68, 68, 0.2);
+      --cyan: #06B6D4;
+      --purple: #8B5CF6;
+      --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: "JetBrains Mono", "SF Mono", Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-ui);
+      background-color: var(--bg-base);
+      color: var(--ink-primary);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      font-size: 13px;
+      -webkit-font-smoothing: antialiased;
+      user-select: none;
+    }
+
+    /* ─── Ultra Enterprise App Header ─── */
+    header.suite-header {
+      background: linear-gradient(180deg, #0F1D2E 0%, #09121E 100%);
+      border-bottom: 1px solid var(--border-line);
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      flex-shrink: 0;
+      z-index: 50;
+    }
+
+    .brand-cluster {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-mark {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 800;
+      font-size: 15px;
+      letter-spacing: -0.4px;
+    }
+
+    .brand-logo-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 12px var(--blue-glow);
+    }
+
+    .brand-badge-pro {
+      background: linear-gradient(90deg, #1E3A8A, #3B82F6);
+      color: #FFF;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 1px 6px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+
+    .project-selector {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-line);
+      border-radius: 6px;
+      padding: 4px 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .project-selector:hover {
+      border-color: var(--blue-accent);
+      background: var(--bg-surface-elevated);
+    }
+
+    .sync-status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--emerald);
+      box-shadow: 0 0 8px var(--emerald);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      50% { transform: scale(1.15); opacity: 1; }
+      100% { transform: scale(0.95); opacity: 0.8; }
+    }
+
+    /* Suite Switcher (Commercial Modules) */
+    .module-nav-container {
+      display: flex;
+      background: #050A10;
+      border: 1px solid var(--border-line);
+      border-radius: 8px;
+      padding: 3px;
+      gap: 3px;
+    }
+
+    .module-tab-btn {
+      padding: 5px 14px;
+      border-radius: 6px;
+      font-size: 11.5px;
+      font-weight: 600;
+      border: none;
+      background: transparent;
+      color: var(--ink-tertiary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .module-tab-btn:hover { color: var(--ink-primary); }
+
+    .module-tab-btn.active {
+      background: var(--bg-surface-elevated);
+      color: var(--blue-accent);
+      border: 1px solid rgba(59, 130, 246, 0.35);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+
+    .user-profile-zone {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .avatar-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 20px;
+      padding: 2px 10px 2px 3px;
+      font-size: 12px;
+      color: var(--ink-secondary);
+    }
+
+    .avatar-img {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #10B981, #047857);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 10px;
+    }
+
+    /* ─── Control Bar / Subheader ─── */
+    .control-ribbon {
+      background: var(--bg-shell);
+      border-bottom: 1px solid var(--border-line);
+      padding: 8px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .view-switcher-group {
+      display: flex;
+      gap: 4px;
+      background: var(--bg-base);
+      border: 1px solid var(--border-line);
+      border-radius: 7px;
+      padding: 2px;
+    }
+
+    .view-btn {
+      background: transparent;
+      border: none;
+      color: var(--ink-secondary);
+      padding: 5px 12px;
+      border-radius: 5px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    .view-btn:hover { color: #FFF; background: var(--bg-surface); }
+    .view-btn.active {
+      background: var(--blue-accent);
+      color: #FFF;
+      box-shadow: 0 2px 8px var(--blue-glow);
+    }
+
+    .action-btn-primary {
+      background: linear-gradient(180deg, #3B82F6 0%, #1D4ED8 100%);
+      border: 1px solid #60A5FA;
+      color: #FFF;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 2px 10px var(--blue-glow);
+      transition: all 0.15s ease;
+    }
+
+    .action-btn-primary:hover {
+      filter: brightness(1.1);
+      transform: translateY(-1px);
+    }
+
+    .action-btn-secondary {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-line);
+      color: var(--ink-secondary);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    .action-btn-secondary:hover {
+      color: var(--ink-primary);
+      border-color: var(--border-focus);
+      background: var(--bg-surface-elevated);
+    }
+
+    /* ─── Main Viewport & Scroll ─── */
+    .viewport {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 14px 18px;
+      gap: 12px;
+      background: var(--bg-base);
+    }
+
+    /* ─── EVM Intelligence Cards (Top 6 Cards) ─── */
+    .kpi-deck {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .metric-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+
+    .metric-card:hover {
+      border-color: rgba(255, 255, 255, 0.15);
+      transform: translateY(-1px);
+    }
+
+    .metric-card::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--border-line);
+    }
+
+    .metric-card.c-green::after { background: var(--emerald); }
+    .metric-card.c-blue::after { background: var(--blue-accent); }
+    .metric-card.c-amber::after { background: var(--amber); }
+    .metric-card.c-cyan::after { background: var(--cyan); }
+    .metric-card.c-purple::after { background: var(--purple); }
+    .metric-card.c-red::after { background: var(--crimson); }
+
+    .metric-head {
+      font-size: 10.5px;
+      color: var(--ink-secondary);
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .metric-value {
+      font-family: var(--font-mono);
+      font-size: 20px;
+      font-weight: 800;
+      color: #FFF;
+      margin: 4px 0 2px 0;
+      font-feature-settings: "tnum";
+    }
+
+    .metric-foot {
+      font-size: 10.5px;
+      color: var(--ink-tertiary);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .badge-pill {
+      font-size: 9.5px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .badge-emerald { background: rgba(16, 185, 129, 0.15); color: var(--emerald); border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge-amber { background: rgba(245, 158, 11, 0.15); color: var(--amber); border: 1px solid rgba(245, 158, 11, 0.3); }
+    .badge-crimson { background: rgba(239, 68, 68, 0.15); color: var(--crimson); border: 1px solid rgba(239, 68, 68, 0.3); }
+    .badge-blue { background: rgba(59, 130, 246, 0.15); color: var(--blue-accent); border: 1px solid rgba(59, 130, 246, 0.3); }
+
+    .bar-track {
+      background: #050A10;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 4px;
+      height: 5px;
+      width: 100%;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .bar-fill.gradient-blue { background: linear-gradient(90deg, #1D4ED8, #3B82F6); }
+    .bar-fill.gradient-emerald { background: linear-gradient(90deg, #059669, #10B981); }
+
+    /* ─── Tab Content Panes ─── */
+    .tab-pane { display: none; }
+    .tab-pane.active { display: flex; flex-direction: column; flex: 1; gap: 12px; }
+
+    /* ─── Grid & Table Architecture ─── */
+    .data-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-line);
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .data-card-header {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border-line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(14, 27, 44, 0.95);
+      flex-shrink: 0;
+    }
+
+    .data-card-title {
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .search-input {
+      background: var(--bg-base);
+      border: 1px solid var(--border-line);
+      color: #FFF;
+      padding: 4px 10px;
+      border-radius: 5px;
+      font-size: 12px;
+      outline: none;
+      font-family: inherit;
+      transition: border-color 0.15s;
+    }
+
+    .search-input:focus { border-color: var(--blue-accent); }
+
+    .table-scroller {
+      overflow: auto;
+      flex: 1;
+    }
+
+    table.enterprise-grid {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      text-align: left;
+    }
+
+    table.enterprise-grid th {
+      background: #09121E;
+      color: var(--ink-secondary);
+      font-weight: 700;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border-line);
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      font-size: 10.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    table.enterprise-grid td {
+      padding: 8px 10px;
+      border-bottom: 1px solid rgba(24, 51, 80, 0.45);
+      color: var(--ink-primary);
+      transition: background 0.1s;
+    }
+
+    table.enterprise-grid tbody tr:hover td {
+      background: var(--bg-surface-hover);
+      cursor: pointer;
+    }
+
+    .num-mono {
+      font-family: var(--font-mono);
+      font-feature-settings: "tnum";
+    }
+
+    /* ─── Interactive Gantt Chart View ─── */
+    .gantt-container {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      height: 380px;
+      border-top: 1px solid var(--border-line);
+      background: var(--bg-base);
+    }
+
+    .gantt-tasks-col {
+      border-right: 1px solid var(--border-line);
+      overflow-y: auto;
+      background: var(--bg-surface);
+    }
+
+    .gantt-task-row {
+      height: 38px;
+      padding: 0 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      font-size: 11.5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .gantt-task-row.active {
+      background: var(--bg-surface-elevated);
+      border-left: 3px solid var(--blue-accent);
+    }
+
+    .gantt-timeline-col {
+      overflow-x: auto;
+      overflow-y: auto;
+      position: relative;
+      background: #070D14;
+    }
+
+    .gantt-header-row {
+      display: flex;
+      height: 28px;
+      border-bottom: 1px solid var(--border-line);
+      background: #0B1522;
+      position: sticky;
+      top: 0;
+      z-index: 4;
+    }
+
+    .gantt-header-cell {
+      width: 70px;
+      flex-shrink: 0;
+      border-right: 1px solid rgba(255,255,255,0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: var(--ink-tertiary);
+      font-weight: 700;
+    }
+
+    .gantt-bars-canvas {
+      position: relative;
+    }
+
+    .gantt-bar-item {
+      position: absolute;
+      height: 22px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      padding: 0 8px;
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #FFF;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+      transition: all 0.2s;
+    }
+
+    .gantt-bar-item:hover { filter: brightness(1.15); transform: translateY(-1px); }
+
+    /* ─── Slide-over Drawer (Inspector) ─── */
+    .slide-over-mask {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(3, 7, 12, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      display: none;
+      justify-content: flex-end;
+    }
+
+    .slide-over-panel {
+      width: 480px;
+      max-width: 90vw;
+      height: 100%;
+      background: var(--bg-surface);
+      border-left: 1px solid var(--border-line);
+      box-shadow: -10px 0 30px rgba(0,0,0,0.7);
+      display: flex;
+      flex-direction: column;
+      animation: slideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); }
+      to { transform: translateX(0); }
+    }
+
+    .drawer-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border-line);
+      background: var(--bg-surface-elevated);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .drawer-body {
+      padding: 18px;
+      overflow-y: auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .inspector-card {
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: 7px;
+      padding: 12px;
+    }
+
+    .inspector-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--ink-secondary);
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* ─── Modal Dialog (60s Terreno Log) ─── */
+    .modal-backdrop {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(3, 7, 12, 0.75);
+      backdrop-filter: blur(5px);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-line);
+      border-radius: 10px;
+      width: 540px;
+      max-width: 95vw;
+      box-shadow: 0 20px 45px rgba(0,0,0,0.8);
+      overflow: hidden;
+      animation: popModal 0.2s ease-out;
+    }
+
+    @keyframes popModal {
+      from { transform: scale(0.96); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .modal-header {
+      padding: 12px 18px;
+      background: var(--bg-surface-elevated);
+      border-bottom: 1px solid var(--border-line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .modal-body {
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .field-row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .input-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--ink-secondary);
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    .camera-dropzone {
+      border: 2px dashed var(--border-line);
+      border-radius: 6px;
+      padding: 14px;
+      text-align: center;
+      color: var(--ink-tertiary);
+      cursor: pointer;
+      background: var(--bg-base);
+      transition: all 0.15s;
+    }
+
+    .camera-dropzone:hover {
+      border-color: var(--blue-accent);
+      color: var(--ink-primary);
+    }
+
+    .modal-footer {
+      padding: 12px 18px;
+      background: #080E17;
+      border-top: 1px solid var(--border-line);
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    /* ─── PDF Report Preview Modal ─── */
+    .pdf-modal-container {
+      width: 820px;
+      max-width: 95vw;
+      height: 85vh;
+      background: #1E293B;
+      border-radius: 8px;
+      border: 1px solid var(--border-line);
+      box-shadow: 0 25px 60px rgba(0,0,0,0.8);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .sheet-paper {
+      background: #FFFFFF;
+      color: #0F172A;
+      flex: 1;
+      overflow-y: auto;
+      padding: 40px;
+      font-family: -apple-system, sans-serif;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    /* ─── Toast Host (WPF ToastHost Style) ─── */
+    .toast-pill {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #0A1E14;
+      border: 1px solid var(--emerald);
+      color: var(--emerald);
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      font-weight: 700;
+      display: none;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+      z-index: 1000;
+      animation: toastIn 0.25s ease-out;
+    }
+
+    @keyframes toastIn {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Enterprise Header -->
+  <header class="suite-header">
+    <div class="brand-cluster">
+      <div class="brand-mark">
+        <div class="brand-logo-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFF" stroke-width="2.5">
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+          </svg>
+        </div>
+        <span>QUBI COST</span>
+        <span class="brand-badge-pro">ENTERPRISE</span>
+      </div>
+
+      <!-- Live Sync Status & Project -->
+      <div class="project-selector" title="Conectado a archivo .qce en red local">
+        <div class="sync-status-dot"></div>
+        <span><strong>PEL039A2026</strong> — Edificio Titanium 24P</span>
+        <span style="color:var(--ink-tertiary)">|</span>
+        <span style="color:var(--cyan); font-family:var(--font-mono); font-size:11px;">Baseline V1.2 (ISO-9001)</span>
+      </div>
+    </div>
+
+    <!-- Commercial Modular Switcher -->
+    <div class="module-nav-container">
+      <button class="module-tab-btn" onclick="alert('Cambiando a Módulo de Cubicación, AutoCAD y APU...')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        Qubi Cost Electrical
+      </button>
+      <button class="module-tab-btn active" title="Módulo Autónomo de Obras">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Qubi Cost Projects
+      </button>
+    </div>
+
+    <div class="user-profile-zone">
+      <div class="avatar-chip">
+        <div class="avatar-img">CT</div>
+        <span>Cristóbal Toro</span>
+        <span class="badge-pill badge-emerald">DIRECTOR OBRA</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Secondary Workspace Ribbon -->
+  <div class="control-ribbon">
+    <div class="view-switcher-group">
+      <button class="view-btn active" onclick="switchMainView('view-overview', this)">
+        📊 Inteligencia EVM & Curva S
+      </button>
+      <button class="view-btn" onclick="switchMainView('view-edt-grid', this)">
+        📋 EDT & Planificación
+      </button>
+      <button class="view-btn" onclick="switchMainView('view-gantt', this)">
+        📅 Carta Gantt Jerárquica
+      </button>
+      <button class="view-btn" onclick="switchMainView('view-mo', this)">
+        👷 Cuadrillas & Rendimiento HH
+      </button>
+      <button class="view-btn" onclick="switchMainView('view-pat', this)">
+        💰 Proyectado al Término (PAT)
+      </button>
+      <button class="view-btn" onclick="switchMainView('view-interferencias', this)">
+        ⚠️ Actas de Bloqueo
+      </button>
+    </div>
+
+    <div style="display:flex; align-items:center; gap:8px;">
+      <button class="action-btn-secondary" onclick="openPdfPreview()">
+        📑 Exportar Reporte Ejecutivo (PDF)
+      </button>
+      <button class="action-btn-primary" onclick="openLogModal()">
+        ⚡ Registrar Avance Hoy (Terreno)
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Viewport -->
+  <main class="viewport">
+
+    <!-- 6 Executive EVM Metrics (The Trillion Dollar Header) -->
+    <div class="kpi-deck">
+      <!-- KPI 1: Real vs Plan -->
+      <div class="metric-card c-emerald">
+        <div class="metric-head">
+          <span>Avance Físico Ponderado</span>
+          <span class="badge-pill badge-emerald">▲ EV</span>
+        </div>
+        <div class="metric-value" id="kpi-progress-text">64.2%</div>
+        <div class="bar-track">
+          <div class="bar-fill gradient-emerald" id="kpi-progress-fill" style="width: 64.2%;"></div>
+        </div>
+        <div class="metric-foot" style="margin-top:4px;">
+          <span>Planificado: <strong>68.0%</strong> (-3.8% delta)</span>
+        </div>
+      </div>
+
+      <!-- KPI 2: SPI (Ingelsam ISO-9001 Standard) -->
+      <div class="metric-card c-amber">
+        <div class="metric-head">
+          <span>Índice SPI (Tiempo)</span>
+          <span class="badge-pill badge-amber" id="kpi-spi-pill">0.94</span>
+        </div>
+        <div class="metric-value" id="kpi-spi-val" style="color:var(--amber);">0.94 SPI</div>
+        <div class="metric-foot">
+          <span>Desvío temporal: <strong>-4 días</strong> en ruta crítica</span>
+        </div>
+      </div>
+
+      <!-- KPI 3: CPI (Cost Performance Index) -->
+      <div class="metric-card c-blue">
+        <div class="metric-head">
+          <span>Índice CPI (Costos)</span>
+          <span class="badge-pill badge-emerald">1.02</span>
+        </div>
+        <div class="metric-value" style="color:var(--emerald);">1.02 CPI</div>
+        <div class="metric-foot">
+          <span>Por cada $1.00 gastado, se rinden <strong>$1.02</strong></span>
+        </div>
+      </div>
+
+      <!-- KPI 4: Valor Ganado vs Real Gastado -->
+      <div class="metric-card c-cyan">
+        <div class="metric-head">
+          <span>Valor Ganado (EV)</span>
+          <span class="badge-pill badge-blue">CLP</span>
+        </div>
+        <div class="metric-value num-mono" id="kpi-ev-text">$ 49.6M</div>
+        <div class="metric-foot">
+          <span>Costo Real (AC): <strong>$ 48.6M</strong> (Ahorro $1.0M)</span>
+        </div>
+      </div>
+
+      <!-- KPI 5: Eficiencia de Cuadrilla (HH) -->
+      <div class="metric-card c-purple">
+        <div class="metric-head">
+          <span>Rendimiento Mano Obra</span>
+          <span class="badge-pill badge-blue">1,820 HH</span>
+        </div>
+        <div class="metric-value num-mono">98.4%</div>
+        <div class="metric-foot">
+          <span>Presupuesto: 1,750 HH | Dotación: <strong>7 operarios</strong></span>
+        </div>
+      </div>
+
+      <!-- KPI 6: Riesgos & Interferencias Civiles -->
+      <div class="metric-card c-red">
+        <div class="metric-head">
+          <span>Interferencias Civiles</span>
+          <span class="badge-pill badge-crimson">2 ACTIVAS</span>
+        </div>
+        <div class="metric-value" style="color:var(--crimson);">5 Días</div>
+        <div class="metric-foot">
+          <span>Shaft central bloqueado por constructora</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── PANE 1: OVERVIEW & INTERACTIVE S-CURVE ─── -->
+    <div id="view-overview" class="tab-pane active">
+      <div class="data-card">
+        <div class="data-card-header">
+          <div class="data-card-title">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+            <span>Análisis Matemático de Curva S y Pronóstico de Cierre (EAC vs BAC)</span>
+          </div>
+          <div style="font-size:11.5px; display:flex; gap:16px;">
+            <span style="display:flex; align-items:center; gap:5px;"><span style="width:10px; height:3px; background:var(--blue-accent);"></span> PV (Valor Planificado)</span>
+            <span style="display:flex; align-items:center; gap:5px;"><span style="width:10px; height:3px; background:var(--emerald);"></span> EV (Valor Ganado Real)</span>
+            <span style="display:flex; align-items:center; gap:5px;"><span style="width:10px; height:3px; background:var(--purple); border-style:dashed;"></span> Proyección EAC</span>
+          </div>
+        </div>
+
+        <div style="padding: 16px; display: grid; grid-template-columns: 2.2fr 1fr; gap: 16px;">
+          <!-- SVG Dynamic Curve -->
+          <div style="background: #050A10; border: 1px solid var(--border-line); border-radius: 8px; padding: 16px; height: 280px; display:flex; flex-direction:column; justify-content:space-between;">
+            <svg viewBox="0 0 540 180" style="width:100%; height:100%;">
+              <line x1="40" y1="20" x2="520" y2="20" stroke="rgba(255,255,255,0.06)" stroke-dasharray="3"/>
+              <line x1="40" y1="65" x2="520" y2="65" stroke="rgba(255,255,255,0.06)" stroke-dasharray="3"/>
+              <line x1="40" y1="110" x2="520" y2="110" stroke="rgba(255,255,255,0.06)" stroke-dasharray="3"/>
+              <line x1="40" y1="155" x2="520" y2="155" stroke="rgba(255,255,255,0.06)" stroke-dasharray="3"/>
+
+              <!-- Planned Curve PV (Blue) -->
+              <path d="M 40 160 Q 180 150, 300 75 T 520 20" fill="none" stroke="#3B82F6" stroke-width="3"/>
+
+              <!-- Real Curve EV (Emerald) -->
+              <path id="svg-ev-path" d="M 40 160 Q 180 152, 305 85" fill="none" stroke="#10B981" stroke-width="3.5"/>
+              <circle id="svg-ev-node" cx="305" cy="85" r="5" fill="#10B981" filter="drop-shadow(0 0 6px #10B981)"/>
+
+              <!-- Today Marker -->
+              <line x1="305" y1="10" x2="305" y2="165" stroke="#F59E0B" stroke-dasharray="4"/>
+              <text x="310" y="25" fill="#F59E0B" font-size="10" font-weight="800">HOY (Semana 14)</text>
+
+              <text x="5" y="24" fill="#64748B" font-size="9.5">100%</text>
+              <text x="12" y="90" fill="#64748B" font-size="9.5">50%</text>
+              <text x="18" y="160" fill="#64748B" font-size="9.5">0%</text>
+            </svg>
+            <div style="display:flex; justify-content:space-between; font-size:10.5px; color:var(--ink-tertiary); padding: 0 35px;">
+              <span>Sem 1</span><span>Sem 4</span><span>Sem 8</span><span>Sem 12</span><span style="color:var(--amber); font-weight:700;">Sem 14</span><span>Sem 18</span><span>Sem 22</span>
+            </div>
+          </div>
+
+          <!-- Executive Insights -->
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <div style="background:var(--bg-surface-elevated); border:1px solid var(--border-line); border-radius:8px; padding:12px;">
+              <div style="font-size:11px; font-weight:700; color:var(--amber); text-transform:uppercase; margin-bottom:6px;">
+                ⚠️ Alerta Predictiva de Ruta Crítica (ISO-9001)
+              </div>
+              <p style="font-size:11.5px; color:var(--ink-secondary); line-height:1.45;">
+                Alimentadores de BT presentan atraso de <strong>4 días</strong>. Si no se libera el shaft antes del 22 de Octubre, se desplazará el hito de energización provisoria hacia la semana 18.
+              </p>
+            </div>
+
+            <div style="background:var(--bg-surface-elevated); border:1px solid var(--border-line); border-radius:8px; padding:12px;">
+              <div style="font-size:11px; font-weight:700; color:var(--emerald); text-transform:uppercase; margin-bottom:6px;">
+                📈 Proyección Económica (EAC vs BAC)
+              </div>
+              <p style="font-size:11.5px; color:var(--ink-secondary); line-height:1.45;">
+                Presupuesto Venta Original (BAC): <strong>$ 77,300,000</strong>.<br>
+                Costo Final Estimado (EAC): <strong>$ 75,900,000</strong>.<br>
+                Margen bruto proyectado: <strong style="color:var(--emerald);">24.8%</strong> (Supera meta contractual de 24.0%).
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── PANE 2: EDT & GRID JERÁRQUICA ─── -->
+    <div id="view-edt-grid" class="tab-pane">
+      <div class="data-card">
+        <div class="data-card-header">
+          <div class="data-card-title">
+            <span>Estructura de Desglose de Trabajo (EDT Eléctrica)</span>
+            <span style="font-size:11px; color:var(--ink-tertiary); font-weight:400;">(Haz clic en cualquier partida para abrir el Inspector)</span>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <input type="text" id="grid-filter-input" onkeyup="filterGrid()" class="search-input" placeholder="🔍 Filtrar por código, partida o protocolo..." style="width:260px;">
+            <select class="search-input" id="grid-fase-select" onchange="filterGrid()">
+              <option value="ALL">Todas las Fases</option>
+              <option value="F1">Fase 1: Malla & Obra Gruesa</option>
+              <option value="F2">Fase 2: Canalizaciones & Ductos</option>
+              <option value="F3">Fase 3: Cableado & Tableros</option>
+              <option value="F4">Fase 4: Iluminación & Puesta en Marcha</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="table-scroller">
+          <table class="enterprise-grid" id="main-grid">
+            <thead>
+              <tr>
+                <th style="width:75px;">Ítem</th>
+                <th style="width:90px;">Fase</th>
+                <th>Descripción Partida Contractual</th>
+                <th class="text-center" style="width:50px;">Unid</th>
+                <th class="text-right" style="width:80px;">Presup.</th>
+                <th class="text-right" style="width:80px;">Ejecutado</th>
+                <th class="text-right" style="width:80px;">Saldo</th>
+                <th class="text-center" style="width:130px;">% Físico</th>
+                <th class="text-right" style="width:75px;">Peso $</th>
+                <th class="text-right" style="width:75px;">Aporte</th>
+                <th>Protocolo Calidad</th>
+                <th class="text-center" style="width:95px;">Alerta</th>
+                <th class="text-center" style="width:75px;">Acción</th>
+              </tr>
+            </thead>
+            <tbody id="grid-tbody">
+              <!-- Item 01.01 -->
+              <tr onclick="inspectTask('01.01', 'Malla de Puesta a Tierra y Soldadura Cuproaluminotérmica', 'gl', 1.0, 1.0, 7.0, 'PR-01 Medición Malla SEC', 'Completado')" data-fase="F1">
+                <td class="num-mono" style="color:var(--cyan);">01.01</td>
+                <td><span style="color:var(--ink-tertiary);">Fase 1</span></td>
+                <td><strong>Malla de Puesta a Tierra y Soldadura Cuproaluminotérmica</strong></td>
+                <td class="text-center">gl</td>
+                <td class="text-right num-mono">1.00</td>
+                <td class="text-right num-mono" style="color:var(--emerald);">1.00</td>
+                <td class="text-right num-mono">0.00</td>
+                <td>
+                  <div style="display:flex; align-items:center; gap:6px;">
+                    <div class="bar-track"><div class="bar-fill gradient-emerald" style="width:100%;"></div></div>
+                    <span class="num-mono" style="font-size:11px;">100%</span>
+                  </div>
+                </td>
+                <td class="text-right num-mono">7.0%</td>
+                <td class="text-right num-mono" style="color:var(--emerald);">7.0%</td>
+                <td><span style="color:var(--cyan);">PR-01 Medición (1.8 Ω)</span></td>
+                <td class="text-center"><span class="badge-pill badge-emerald">Completado</span></td>
+                <td class="text-center"><button class="action-btn-secondary" style="padding:2px 8px; font-size:10px;">Ficha</button></td>
+              </tr>
+
+              <!-- Item 01.02 -->
+              <tr onclick="inspectTask('01.02', 'Bandeja Portaconductor Escalerilla 300x100mm', 'm', 450, 380, 12.0, 'Protocolo Soportería Antisísmica', 'En Plazo')" data-fase="F2">
+                <td class="num-mono" style="color:var(--cyan);">01.02</td>
+                <td><span style="color:var(--ink-tertiary);">Fase 2</span></td>
+                <td><strong>Bandeja Portaconductor Escalerilla 300x100mm</strong></td>
+                <td class="text-center">m</td>
+                <td class="text-right num-mono">450.00</td>
+                <td class="text-right num-mono" id="val-0102-ejec" style="color:var(--emerald);">380.00</td>
+                <td class="text-right num-mono" id="val-0102-saldo">70.00</td>
+                <td>
+                  <div style="display:flex; align-items:center; gap:6px;">
+                    <div class="bar-track"><div class="bar-fill gradient-emerald" id="val-0102-bar" style="width:84.4%;"></div></div>
+                    <span class="num-mono" id="val-0102-pct" style="font-size:11px;">84.4%</span>
+                  </div>
+                </td>
+                <td class="text-right num-mono">12.0%</td>
+                <td class="text-right num-mono" id="val-0102-aporte" style="color:var(--emerald);">10.1%</td>
+                <td><span style="color:var(--ink-secondary);">Soportería Antisísmica</span></td>
+                <td class="text-center"><span class="badge-pill badge-blue">En Plazo</span></td>
+                <td class="text-center"><button class="action-btn-primary" style="padding:2px 8px; font-size:10px;" onclick="event.stopPropagation(); triggerAbonar('01.02', 'Bandeja Portaconductor Escalerilla 300x100mm', 'm', 380, 450);">Abonar</button></td>
+              </tr>
+
+              <!-- Item 02.01 -->
+              <tr onclick="inspectTask('02.01', 'Tubería Conduit Galvanizada C-40 25mm embutida', 'm', 1200, 780, 15.0, 'Revisión Pre-hormigonado losa', 'En Plazo')" data-fase="F2">
+                <td class="num-mono" style="color:var(--cyan);">02.01</td>
+                <td><span style="color:var(--ink-tertiary);">Fase 2</span></td>
+                <td><strong>Tubería Conduit Galvanizada C-40 25mm embutida</strong></td>
+                <td class="text-center">m</td>
+                <td class="text-right num-mono">1,200.00</td>
+                <td class="text-right num-mono" id="val-0201-ejec" style="color:var(--emerald);">780.00</td>
+                <td class="text-right num-mono" id="val-0201-saldo">420.00</td>
+                <td>
+                  <div style="display:flex; align-items:center; gap:6px;">
+                    <div class="bar-track"><div class="bar-fill gradient-blue" id="val-0201-bar" style="width:65.0%;"></div></div>
+                    <span class="num-mono" id="val-0201-pct" style="font-size:11px;">65.0%</span>
+                  </div>
+                </td>
+                <td class="text-right num-mono">15.0%</td>
+                <td class="text-right num-mono" id="val-0201-aporte" style="color:var(--emerald);">9.8%</td>
+                <td><span style="color:var(--ink-secondary);">Pre-hormigón Losa</span></td>
+                <td class="text-center"><span class="badge-pill badge-blue">En Plazo</span></td>
+                <td class="text-center"><button class="action-btn-primary" style="padding:2px 8px; font-size:10px;" onclick="event.stopPropagation(); triggerAbonar('02.01', 'Tubería Conduit Galvanizada C-40 25mm', 'm', 780, 1200);">Abonar</button></td>
+              </tr>
+
+              <!-- Item 02.03 -->
+              <tr onclick="inspectTask('02.03', 'Conductor Superflex Eva 3x120mm + N70mm', 'm', 380, 95, 22.0, 'Ensayo de Aislación Megger 1000V', 'Atrasada')" data-fase="F3" style="background:rgba(239, 68, 68, 0.04);">
+                <td class="num-mono" style="color:var(--crimson);">02.03</td>
+                <td><span style="color:var(--ink-tertiary);">Fase 3</span></td>
+                <td>
+                  <strong>Conductor Superflex Eva 3x120mm + N70mm (Alimentador General)</strong>
+                  <span class="badge-pill badge-crimson" style="margin-left:4px;">Bloqueo civil</span>
+                </td>
+                <td class="text-center">m</td>
+                <td class="text-right num-mono">380.00</td>
+                <td class="text-right num-mono" id="val-0203-ejec" style="color:var(--amber);">95.00</td>
+                <td class="text-right num-mono" id="val-0203-saldo">285.00</td>
+                <td>
+                  <div style="display:flex; align-items:center; gap:6px;">
+                    <div class="bar-track"><div class="bar-fill" id="val-0203-bar" style="width:25.0%; background:var(--amber);"></div></div>
+                    <span class="num-mono" id="val-0203-pct" style="font-size:11px;">25.0%</span>
+                  </div>
+                </td>
+                <td class="text-right num-mono">22.0%</td>
+                <td class="text-right num-mono" id="val-0203-aporte" style="color:var(--amber);">5.5%</td>
+                <td><span style="color:var(--cyan);">Ensayo Megger 1000V</span></td>
+                <td class="text-center"><span class="badge-pill badge-amber">Atrasada</span></td>
+                <td class="text-center"><button class="action-btn-primary" style="padding:2px 8px; font-size:10px;" onclick="event.stopPropagation(); triggerAbonar('02.03', 'Conductor Superflex Eva 3x120mm', 'm', 95, 380);">Abonar</button></td>
+              </tr>
+
+              <!-- Item 03.01 -->
+              <tr onclick="inspectTask('03.01', 'Tableros Generales TDF y TDA (Montaje y Rotulado)', 'un', 6, 3, 18.0, 'Prueba de Torque Dinamométrico', 'En Plazo')" data-fase="F3">
+                <td class="num-mono" style="color:var(--cyan);">03.01</td>
+                <td><span style="color:var(--ink-tertiary);">Fase 3</span></td>
+                <td><strong>Tableros Generales TDF y TDA (Montaje y Rotulado)</strong></td>
+                <td class="text-center">un</td>
+                <td class="text-right num-mono">6.00</td>
+                <td class="text-right num-mono" style="color:var(--emerald);">3.00</td>
+                <td class="text-right num-mono">3.00</td>
+                <td>
+                  <div style="display:flex; align-items:center; gap:6px;">
+                    <div class="bar-track"><div class="bar-fill gradient-blue" style="width:50.0%;"></div></div>
+                    <span class="num-mono" style="font-size:11px;">50.0%</span>
+                  </div>
+                </td>
+                <td class="text-right num-mono">18.0%</td>
+                <td class="text-right num-mono" style="color:var(--emerald);">9.0%</td>
+                <td><span style="color:var(--ink-secondary);">Torque Dinamométrico</span></td>
+                <td class="text-center"><span class="badge-pill badge-blue">En Plazo</span></td>
+                <td class="text-center"><button class="action-btn-primary" style="padding:2px 8px; font-size:10px;" onclick="event.stopPropagation(); triggerAbonar('03.01', 'Tableros Generales TDF y TDA', 'un', 3, 6);">Abonar</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── PANE 3: CARTA GANTT INTERACTIVA ─── -->
+    <div id="view-gantt" class="tab-pane">
+      <div class="data-card">
+        <div class="data-card-header">
+          <div class="data-card-title">
+            <span>Carta Gantt Ejecutiva & Cronograma Temporal (Metodología INGELSAM FO-02)</span>
+          </div>
+          <div style="font-size:11.5px; color:var(--ink-tertiary);">
+            Escala: Semanal | Corte actual: Semana 14
+          </div>
+        </div>
+
+        <div class="gantt-container">
+          <!-- Left Task Names -->
+          <div class="gantt-tasks-col">
+            <div class="gantt-task-row active">
+              <span>01.01 Malla de Puesta a Tierra</span>
+              <span class="badge-pill badge-emerald">100%</span>
+            </div>
+            <div class="gantt-task-row">
+              <span>01.02 Bandejas Portacables</span>
+              <span class="badge-pill badge-emerald">84%</span>
+            </div>
+            <div class="gantt-task-row">
+              <span>02.01 Tuberías Conduit Losa</span>
+              <span class="badge-pill badge-blue">65%</span>
+            </div>
+            <div class="gantt-task-row">
+              <span>02.03 Cableado Alimentadores</span>
+              <span class="badge-pill badge-amber">25% (Atraso)</span>
+            </div>
+            <div class="gantt-task-row">
+              <span>03.01 Montaje Tableros TDF</span>
+              <span class="badge-pill badge-blue">50%</span>
+            </div>
+            <div class="gantt-task-row">
+              <span>04.01 Montaje Luminarias LED</span>
+              <span class="badge-pill" style="background:#1E293B; color:#94A3B8;">0%</span>
+            </div>
+            <div class="gantt-task-row">
+              <span>05.01 Pruebas & Puesta en Servicio</span>
+              <span class="badge-pill" style="background:#1E293B; color:#94A3B8;">0%</span>
+            </div>
+          </div>
+
+          <!-- Right Timeline Canvas -->
+          <div class="gantt-timeline-col">
+            <!-- Header Weeks -->
+            <div class="gantt-header-row">
+              <div class="gantt-header-cell">Sem 1</div>
+              <div class="gantt-header-cell">Sem 3</div>
+              <div class="gantt-header-cell">Sem 5</div>
+              <div class="gantt-header-cell">Sem 7</div>
+              <div class="gantt-header-cell">Sem 9</div>
+              <div class="gantt-header-cell">Sem 11</div>
+              <div class="gantt-header-cell">Sem 13</div>
+              <div class="gantt-header-cell" style="background:rgba(245,158,11,0.15); color:var(--amber); font-weight:800;">Sem 14 (HOY)</div>
+              <div class="gantt-header-cell">Sem 16</div>
+              <div class="gantt-header-cell">Sem 18</div>
+              <div class="gantt-header-cell">Sem 20</div>
+              <div class="gantt-header-cell">Sem 22</div>
+            </div>
+
+            <!-- Gantt Bars Container -->
+            <div class="gantt-bars-canvas" style="height:350px;">
+              <!-- Bar 1 -->
+              <div class="gantt-bar-item" style="top:8px; left:20px; width:130px; background:linear-gradient(90deg, #059669, #10B981);">
+                100% Completado
+              </div>
+              <!-- Bar 2 -->
+              <div class="gantt-bar-item" style="top:46px; left:120px; width:280px; background:linear-gradient(90deg, #1D4ED8, #3B82F6);">
+                Bandejas (84%)
+              </div>
+              <!-- Bar 3 -->
+              <div class="gantt-bar-item" style="top:84px; left:180px; width:310px; background:linear-gradient(90deg, #1D4ED8, #3B82F6);">
+                Conduit losa (65%)
+              </div>
+              <!-- Bar 4 (Delayed) -->
+              <div class="gantt-bar-item" style="top:122px; left:320px; width:220px; background:linear-gradient(90deg, #D97706, #F59E0B); border:1px solid #EF4444;">
+                ⚠️ Alimentador BT (Atrasado)
+              </div>
+              <!-- Bar 5 -->
+              <div class="gantt-bar-item" style="top:160px; left:380px; width:200px; background:linear-gradient(90deg, #1D4ED8, #3B82F6);">
+                Tableros (50%)
+              </div>
+              <!-- Bar 6 -->
+              <div class="gantt-bar-item" style="top:198px; left:520px; width:180px; background:#1E293B; border:1px dashed var(--ink-tertiary);">
+                Luminarias (Por Iniciar)
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── PANE 4: CONTROL MANO DE OBRA (HH) ─── -->
+    <div id="view-mo" class="tab-pane">
+      <div class="data-card">
+        <div class="data-card-header">
+          <div class="data-card-title">
+            <span>Rendimiento de Cuadrillas & Desglose Horas Hombre (Metodología INGELSAM FO-01)</span>
+          </div>
+          <span style="font-size:11.5px; color:var(--emerald);">Dotación Óptima: 7 Técnicos en Terreno</span>
+        </div>
+        <div class="table-scroller">
+          <table class="enterprise-grid">
+            <thead>
+              <tr>
+                <th>Categoría Laboral</th>
+                <th style="width:100px;">Tipo MO</th>
+                <th class="text-center" style="width:70px;">Dotación</th>
+                <th class="text-right" style="width:120px;">Costo Empresa</th>
+                <th class="text-right" style="width:100px;">HH Presupuestadas</th>
+                <th class="text-right" style="width:100px;">HH Reales Terreno</th>
+                <th class="text-right" style="width:100px;">Variación HH</th>
+                <th class="text-center" style="width:110px;">Eficiencia</th>
+                <th class="text-center" style="width:90px;">Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Maestro Mayor / Capataz Eléctrico</strong></td>
+                <td><span class="badge-pill badge-blue">Directa</span></td>
+                <td class="text-center num-mono">1</td>
+                <td class="text-right num-mono">$ 1,450,000</td>
+                <td class="text-right num-mono">344 HH</td>
+                <td class="text-right num-mono" style="color:var(--emerald);">344 HH</td>
+                <td class="text-right num-mono">0 HH</td>
+                <td class="text-center num-mono" style="color:var(--emerald);">100.0%</td>
+                <td class="text-center"><span class="badge-pill badge-emerald">En Meta</span></td>
+              </tr>
+              <tr>
+                <td><strong>Maestro Primera Electricista</strong></td>
+                <td><span class="badge-pill badge-blue">Directa</span></td>
+                <td class="text-center num-mono">3</td>
+                <td class="text-right num-mono">$ 1,176,525</td>
+                <td class="text-right num-mono">1,032 HH</td>
+                <td class="text-right num-mono" style="color:var(--amber);">1,090 HH</td>
+                <td class="text-right num-mono" style="color:var(--crimson);">+58 HH</td>
+                <td class="text-center num-mono" style="color:var(--amber);">94.7%</td>
+                <td class="text-center"><span class="badge-pill badge-amber">Exceso HH</span></td>
+              </tr>
+              <tr>
+                <td><strong>Ayudante Electricista</strong></td>
+                <td><span class="badge-pill badge-blue">Directa</span></td>
+                <td class="text-center num-mono">2</td>
+                <td class="text-right num-mono">$ 812,500</td>
+                <td class="text-right num-mono">688 HH</td>
+                <td class="text-right num-mono" style="color:var(--emerald);">670 HH</td>
+                <td class="text-right num-mono" style="color:var(--emerald);">-18 HH</td>
+                <td class="text-center num-mono" style="color:var(--emerald);">102.7%</td>
+                <td class="text-center"><span class="badge-pill badge-emerald">Eficiente</span></td>
+              </tr>
+              <tr>
+                <td><strong>Administrador / Supervisor Eléctrico</strong></td>
+                <td><span class="badge-pill" style="background:#1E293B; color:#94A3B8;">Indirecta</span></td>
+                <td class="text-center num-mono">1</td>
+                <td class="text-right num-mono">$ 2,800,000</td>
+                <td class="text-right num-mono">172 HH</td>
+                <td class="text-right num-mono">172 HH</td>
+                <td class="text-right num-mono">0 HH</td>
+                <td class="text-center num-mono">100%</td>
+                <td class="text-center"><span class="badge-pill badge-emerald">En Meta</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── PANE 5: PROYECTADO A TÉRMINO (PAT) ─── -->
+    <div id="view-pat" class="tab-pane">
+      <div class="data-card">
+        <div class="data-card-header">
+          <div class="data-card-title">
+            <span>Matriz PAT (Proyectado a Término): Presupuesto Venta vs Costos Reales de Cierre</span>
+          </div>
+          <span style="font-size:11.5px; color:var(--emerald); font-weight:700;">Margen Presupuestado: 24.5% → Margen Final Proyectado: 24.8%</span>
+        </div>
+        <div class="table-scroller">
+          <table class="enterprise-grid">
+            <thead>
+              <tr>
+                <th>Familia de Costo APU</th>
+                <th class="text-right" style="width:130px;">Presupuesto Venta ($)</th>
+                <th class="text-right" style="width:130px;">Gasto Real Acumulado ($)</th>
+                <th class="text-right" style="width:130px;">Saldo por Gastar ($)</th>
+                <th class="text-right" style="width:140px;">Costo Proyectado Término</th>
+                <th class="text-right" style="width:110px;">Desviación ($)</th>
+                <th class="text-center" style="width:110px;">Evaluación</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>1. Materiales Eléctricos</strong> (Conductores, canalizaciones, tableros)</td>
+                <td class="text-right num-mono">$ 38,450,000</td>
+                <td class="text-right num-mono" style="color:var(--emerald);">$ 25,120,000</td>
+                <td class="text-right num-mono">$ 13,100,000</td>
+                <td class="text-right num-mono">$ 38,220,000</td>
+                <td class="text-right num-mono" style="color:var(--emerald);">-$ 230,000</td>
+                <td class="text-center"><span class="badge-pill badge-emerald">Ahorro Compras</span></td>
+              </tr>
+              <tr>
+                <td><strong>2. Mano de Obra</strong> (Cuadrillas de montaje y leyes sociales)</td>
+                <td class="text-right num-mono">$ 21,300,000</td>
+                <td class="text-right num-mono" style="color:var(--amber);">$ 14,800,000</td>
+                <td class="text-right num-mono">$ 7,200,000</td>
+                <td class="text-right num-mono" style="color:var(--amber);">$ 22,000,000</td>
+                <td class="text-right num-mono" style="color:var(--crimson);">+$ 700,000</td>
+                <td class="text-center"><span class="badge-pill badge-amber">Sobrecosto Leve</span></td>
+              </tr>
+              <tr>
+                <td><strong>3. Equipos & Andamios</strong> (Alzacables, megger, andamios normados)</td>
+                <td class="text-right num-mono">$ 4,800,000</td>
+                <td class="text-right num-mono" style="color:var(--emerald);">$ 3,100,000</td>
+                <td class="text-right num-mono">$ 1,600,000</td>
+                <td class="text-right num-mono">$ 4,700,000</td>
+                <td class="text-right num-mono" style="color:var(--emerald);">-$ 100,000</td>
+                <td class="text-center"><span class="badge-pill badge-emerald">Controlado</span></td>
+              </tr>
+              <tr>
+                <td><strong>4. Gastos Generales</strong> (Supervisión, transporte, EPP, seguros)</td>
+                <td class="text-right num-mono">$ 6,200,000</td>
+                <td class="text-right num-mono" style="color:var(--emerald);">$ 4,100,000</td>
+                <td class="text-right num-mono">$ 2,100,000</td>
+                <td class="text-right num-mono">$ 6,200,000</td>
+                <td class="text-right num-mono">$ 0</td>
+                <td class="text-center"><span class="badge-pill badge-emerald">Exacto</span></td>
+              </tr>
+              <tr style="background:rgba(59, 130, 246, 0.08); font-weight:800;">
+                <td style="color:var(--cyan);">CONSOLIDADO TOTAL COSTOS</td>
+                <td class="text-right num-mono">$ 70,750,000</td>
+                <td class="text-right num-mono" style="color:var(--blue-accent);">$ 47,120,000</td>
+                <td class="text-right num-mono">$ 24,000,000</td>
+                <td class="text-right num-mono" style="color:var(--cyan);">$ 71,120,000</td>
+                <td class="text-right num-mono" style="color:var(--amber);">+$ 370,000</td>
+                <td class="text-center"><span class="badge-pill badge-emerald">Margen Protegido</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── PANE 6: INTERFERENCIAS CIVILES & ACTAS ─── -->
+    <div id="view-interferencias" class="tab-pane">
+      <div class="data-card">
+        <div class="data-card-header">
+          <div class="data-card-title">
+            <span>Libro Oficial de Interferencias y Actas de Reclamo Contractual</span>
+          </div>
+          <button class="action-btn-primary" style="font-size:11px; padding:3px 10px;" onclick="alert('Abriendo asistente de Levantamiento de Interferencia con GPS y fotos...')">+ Declarar Nueva Interferencia</button>
+        </div>
+        <div class="table-scroller">
+          <table class="enterprise-grid">
+            <thead>
+              <tr>
+                <th style="width:80px;">Acta Nº</th>
+                <th style="width:90px;">Fecha</th>
+                <th>Causa Raíz de la Interferencia (Tercero / Constructora)</th>
+                <th>Partidas Eléctricas Afectadas</th>
+                <th class="text-center" style="width:90px;">Impacto Días</th>
+                <th class="text-center" style="width:90px;">Estado</th>
+                <th class="text-center" style="width:130px;">Documento Oficial</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="num-mono" style="color:var(--crimson);">INT-001</td>
+                <td class="num-mono">12-Oct-2026</td>
+                <td>
+                  <strong>Falta de tabiquería de yeso-cartón en shaft central</strong><br>
+                  <span style="color:var(--ink-secondary); font-size:11px;">Constructora civil no ha cerrado muros para montaje de canalizaciones verticales.</span>
+                </td>
+                <td>02.03 Cableado Alimentadores BT</td>
+                <td class="text-center num-mono" style="color:var(--crimson);">5 Días</td>
+                <td class="text-center"><span class="badge-pill badge-crimson">Abierta</span></td>
+                <td class="text-center"><button class="action-btn-secondary" style="font-size:10px; padding:2px 8px;" onclick="openPdfPreview()">📥 Ver Acta Firmada</button></td>
+              </tr>
+              <tr>
+                <td class="num-mono" style="color:var(--amber);">INT-002</td>
+                <td class="num-mono">15-Oct-2026</td>
+                <td>
+                  <strong>Inundación por filtración de matriz de agua sanitaria</strong><br>
+                  <span style="color:var(--ink-secondary); font-size:11px;">Subterráneo -1 sin acceso por riesgo de contacto indirecto de cuadrilla.</span>
+                </td>
+                <td>03.01 Tableros Generales TDF</td>
+                <td class="text-center num-mono" style="color:var(--amber);">2 Días</td>
+                <td class="text-center"><span class="badge-pill badge-amber">En Revisión ITO</span></td>
+                <td class="text-center"><button class="action-btn-secondary" style="font-size:10px; padding:2px 8px;" onclick="openPdfPreview()">📥 Ver Acta Firmada</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ─── SLIDE-OVER INSPECTOR (DRAWER) ─── -->
+  <div class="slide-over-mask" id="inspector-mask" onclick="closeInspector()">
+    <div class="slide-over-panel" onclick="event.stopPropagation();">
+      <div class="drawer-header">
+        <div>
+          <span style="font-size:11px; color:var(--cyan); font-weight:800; font-family:var(--font-mono);" id="insp-code">ITEM 01.02</span>
+          <h3 style="font-size:14px; font-weight:700; color:#FFF;" id="insp-title">Bandeja Portaconductor Escalerilla 300x100mm</h3>
+        </div>
+        <button style="background:none; border:none; color:var(--ink-tertiary); font-size:18px; cursor:pointer;" onclick="closeInspector()">✕</button>
+      </div>
+
+      <div class="drawer-body">
+        <!-- Quantities & Progress -->
+        <div class="inspector-card">
+          <div class="inspector-title">Métricas de Ejecución Física</div>
+          <div style="display:grid; grid-template-columns: repeat(3, 1fr); text-align:center; gap:8px;">
+            <div>
+              <div style="font-size:10px; color:var(--ink-tertiary);">TOTAL PTO.</div>
+              <div class="num-mono" style="font-size:16px; font-weight:700;" id="insp-total">450 m</div>
+            </div>
+            <div>
+              <div style="font-size:10px; color:var(--ink-tertiary);">EJECUTADO</div>
+              <div class="num-mono" style="font-size:16px; font-weight:700; color:var(--emerald);" id="insp-ejec">380 m</div>
+            </div>
+            <div>
+              <div style="font-size:10px; color:var(--ink-tertiary);">SALDO PEND.</div>
+              <div class="num-mono" style="font-size:16px; font-weight:700; color:var(--amber);" id="insp-saldo">70 m</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Protocol Checklist -->
+        <div class="inspector-card">
+          <div class="inspector-title">Protocolo de Recepción Técnica (Calidad ISO-9001)</div>
+          <div style="display:flex; flex-direction:column; gap:8px; font-size:12px;">
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+              <input type="checkbox" checked> Fijaciones y soportería antisísmica certificada
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+              <input type="checkbox" checked> Continuidad eléctrica y puente equipotencial de cobre
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+              <input type="checkbox"> Radios de curvatura según catálogo de conductores
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+              <input type="checkbox"> Firma de conformidad ITO en libro de obras
+            </label>
+          </div>
+        </div>
+
+        <!-- Evidence Photos -->
+        <div class="inspector-card">
+          <div class="inspector-title">Evidencia Fotográfica Georreferenciada</div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+            <div style="height:90px; background:#09121E; border:1px solid var(--border-line); border-radius:6px; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:10.5px; color:var(--ink-tertiary);">
+              📷 IMG_20261017_Piso9.jpg<br><span style="color:var(--emerald)">GPS Verificado</span>
+            </div>
+            <div style="height:90px; background:#09121E; border:1px solid var(--border-line); border-radius:6px; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:10.5px; color:var(--ink-tertiary);">
+              📷 IMG_20261017_Shaft.jpg<br><span style="color:var(--emerald)">GPS Verificado</span>
+            </div>
+          </div>
+        </div>
+
+        <button class="action-btn-primary" style="width:100%; justify-content:center;" onclick="triggerAbonarFromInspector()">
+          ⚡ Registrar Nuevo Abono para esta Partida
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── MODAL DIALOG (60S TERRENO LOG) ─── -->
+  <div class="modal-backdrop" id="modal-backdrop">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span>⚡ Ingreso Rápido de Terreno (Modo Móvil 60 Segundos)</span>
+        <span style="cursor:pointer; color:var(--ink-tertiary);" onclick="closeLogModal()">✕</span>
+      </div>
+      <div class="modal-body">
+        <div>
+          <label class="input-label">Partida Contractual</label>
+          <select id="modal-partida-select" class="search-input" style="width:100%; font-weight:700;">
+            <option value="01.02" data-saldo="70" data-unit="m">01.02 — Bandeja Portaconductor Escalerilla 300x100mm (Saldo: 70 m)</option>
+            <option value="02.01" data-saldo="420" data-unit="m">02.01 — Tubería Conduit Galvanizada C-40 25mm (Saldo: 420 m)</option>
+            <option value="02.03" data-saldo="285" data-unit="m">02.03 — Conductor Superflex Eva 3x120mm (Saldo: 285 m)</option>
+            <option value="03.01" data-saldo="3" data-unit="un">03.01 — Tableros Generales TDF y TDA (Saldo: 3 un)</option>
+          </select>
+        </div>
+
+        <div class="field-row-2">
+          <div>
+            <label class="input-label">Cantidad Ejecutada Hoy</label>
+            <input type="number" id="modal-qty-input" class="search-input num-mono" value="25" style="width:100%; font-size:18px; font-weight:800; color:var(--emerald);">
+          </div>
+          <div>
+            <label class="input-label">Cuadrilla Asignada</label>
+            <input type="text" id="modal-crew-input" class="search-input" value="Cuadrilla 1 (3 electricistas)" style="width:100%;">
+          </div>
+        </div>
+
+        <div>
+          <label class="input-label">Sector / Nivel de Trabajo</label>
+          <input type="text" id="modal-sector-input" class="search-input" value="Shaft oriente, Pisos 10 y 11" style="width:100%;">
+        </div>
+
+        <div>
+          <label class="input-label">Evidencia de Terreno</label>
+          <div class="camera-dropzone" onclick="simulateCamera()">
+            <span id="camera-status">📸 Toca para activar la cámara del teléfono o arrastrar foto</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="action-btn-secondary" onclick="closeLogModal()">Cancelar</button>
+        <button class="action-btn-primary" onclick="submitFastLog()">Guardar y Recalcular Avance</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── PDF PREVIEW MODAL ─── -->
+  <div class="modal-backdrop" id="pdf-modal-backdrop" onclick="closePdfPreview()">
+    <div class="pdf-modal-container" onclick="event.stopPropagation();">
+      <div style="background:#0F172A; padding:10px 18px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155;">
+        <span style="font-weight:700; color:#FFF;">Vista Previa de Informe Semanal (Generado con QuestPDF)</span>
+        <button style="background:none; border:none; color:#94A3B8; font-size:16px; cursor:pointer;" onclick="closePdfPreview()">✕</button>
+      </div>
+      <div class="sheet-paper">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px solid #0F172A; padding-bottom:14px; margin-bottom:20px;">
+          <div>
+            <h1 style="font-size:20px; font-weight:900; margin-bottom:4px;">INFORME SEMANAL DE CONTROL DE OBRA</h1>
+            <div style="font-size:12px; color:#475569;">INGELSAM INGENIERÍA ELÉCTRICA — PROYECTO PEL039A2026</div>
+          </div>
+          <div style="text-align:right; font-size:12px; color:#475569;">
+            <strong>Fecha de Emisión:</strong> 17 de Octubre de 2026<br>
+            <strong>Corte:</strong> Semana 14 / 22
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:12px; margin-bottom:24px;">
+          <div style="border:1px solid #CBD5E1; padding:10px; border-radius:4px;">
+            <div style="font-size:10px; color:#64748B;">AVANCE FÍSICO REAL</div>
+            <div style="font-size:18px; font-weight:800; color:#059669;">64.2%</div>
+          </div>
+          <div style="border:1px solid #CBD5E1; padding:10px; border-radius:4px;">
+            <div style="font-size:10px; color:#64748B;">AVANCE PLANIFICADO</div>
+            <div style="font-size:18px; font-weight:800; color:#2563EB;">68.0%</div>
+          </div>
+          <div style="border:1px solid #CBD5E1; padding:10px; border-radius:4px;">
+            <div style="font-size:10px; color:#64748B;">DESEMPEÑO SPI</div>
+            <div style="font-size:18px; font-weight:800; color:#D97706;">0.94</div>
+          </div>
+          <div style="border:1px solid #CBD5E1; padding:10px; border-radius:4px;">
+            <div style="font-size:10px; color:#64748B;">VALOR GANADO</div>
+            <div style="font-size:18px; font-weight:800; color:#0F172A;">$ 49.6M</div>
+          </div>
+        </div>
+
+        <p style="font-size:12px; line-height:1.5; color:#334155; margin-bottom:20px;">
+          <strong>Dictamen de la Oficina Técnica:</strong> La obra presenta una ejecución global de 64.2% con un desempeño controlado en materiales y canalizaciones. Se mantiene alerta en el tendido de alimentadores generales debido a restricciones de acceso en shaft por parte de la constructora civil (Acta INT-001). El margen económico proyectado se encuentra dentro del rango presupuestado con un CPI de 1.02.
+        </p>
+
+        <div style="margin-top:60px; display:grid; grid-template-columns: 1fr 1fr; gap:60px; text-align:center; font-size:12px;">
+          <div style="border-top:1px solid #94A3B8; padding-top:8px;">
+            <strong>Cristóbal Toro</strong><br>Administrador de Obra Eléctrica
+          </div>
+          <div style="border-top:1px solid #94A3B8; padding-top:8px;">
+            <strong>Inspector Técnico (ITO)</strong><br>Constructora Principal
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Host (Feedback) -->
+  <div class="toast-pill" id="global-toast">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+    <span id="toast-message">Registro guardado exitosamente</span>
+  </div>
+
+  <!-- ─── SCRIPT ENGINE ─── -->
+  <script>
+    let photoUploaded = false;
+    let selectedTask = null;
+
+    function switchMainView(paneId, btn) {
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(paneId).classList.add('active');
+      btn.classList.add('active');
+    }
+
+    function openLogModal() {
+      document.getElementById('modal-backdrop').style.display = 'flex';
+    }
+
+    function closeLogModal() {
+      document.getElementById('modal-backdrop').style.display = 'none';
+    }
+
+    function triggerAbonar(code, name, unit, ejec, total) {
+      const sel = document.getElementById('modal-partida-select');
+      sel.value = code;
+      openLogModal();
+    }
+
+    function triggerAbonarFromInspector() {
+      if (selectedTask) {
+        triggerAbonar(selectedTask.code, selectedTask.name, selectedTask.unit, selectedTask.ejec, selectedTask.total);
+        closeInspector();
+      }
+    }
+
+    function inspectTask(code, name, unit, total, ejec, peso, entregable, alertText) {
+      selectedTask = { code, name, unit, total, ejec, peso };
+      document.getElementById('insp-code').innerText = 'PARTIDA ' + code;
+      document.getElementById('insp-title').innerText = name;
+      document.getElementById('insp-total').innerText = total + ' ' + unit;
+      document.getElementById('insp-ejec').innerText = ejec + ' ' + unit;
+      document.getElementById('insp-saldo').innerText = (total - ejec) + ' ' + unit;
+      document.getElementById('inspector-mask').style.display = 'flex';
+    }
+
+    function closeInspector() {
+      document.getElementById('inspector-mask').style.display = 'none';
+    }
+
+    function simulateCamera() {
+      photoUploaded = true;
+      const status = document.getElementById('camera-status');
+      status.innerHTML = '✅ <strong>Foto capturada:</strong> GPS (-33.418, -70.605) • 17-Oct 16:55 • Verificada';
+      status.style.color = 'var(--emerald)';
+    }
+
+    function filterGrid() {
+      const query = document.getElementById('grid-filter-input').value.toLowerCase();
+      const fase = document.getElementById('grid-fase-select').value;
+      const rows = document.querySelectorAll('#grid-tbody tr');
+
+      rows.forEach(r => {
+        const text = r.innerText.toLowerCase();
+        const rFase = r.getAttribute('data-fase');
+        const matchQ = text.includes(query);
+        const matchF = (fase === 'ALL' || rFase === fase);
+        r.style.display = (matchQ && matchF) ? '' : 'none';
+      });
+    }
+
+    function submitFastLog() {
+      const code = document.getElementById('modal-partida-select').value;
+      const qty = parseFloat(document.getElementById('modal-qty-input').value) || 0;
+
+      if (qty <= 0) {
+        alert('Ingrese una cantidad válida.');
+        return;
+      }
+
+      // Update Partida 01.02 dynamically
+      if (code === '01.02') {
+        const newEjec = 380 + qty;
+        const total = 450;
+        const pct = ((newEjec / total) * 100).toFixed(1);
+        const aporte = ((pct / 100) * 12.0).toFixed(1);
+
+        document.getElementById('val-0102-ejec').innerText = newEjec.toFixed(2);
+        document.getElementById('val-0102-saldo').innerText = (total - newEjec).toFixed(2);
+        document.getElementById('val-0102-pct').innerText = pct + '%';
+        document.getElementById('val-0102-bar').style.width = pct + '%';
+        document.getElementById('val-0102-aporte').innerText = aporte + '%';
+      }
+
+      // Recalculate Global EVM
+      const curProg = parseFloat(document.getElementById('kpi-progress-text').innerText);
+      const newProg = (curProg + 0.8).toFixed(1);
+      document.getElementById('kpi-progress-text').innerText = newProg + '%';
+      document.getElementById('kpi-progress-fill').style.width = newProg + '%';
+
+      // Recalculate SPI: EV / PV
+      const newSpi = (parseFloat(newProg) / 68.0).toFixed(2);
+      document.getElementById('kpi-spi-val').innerText = newSpi + ' SPI';
+      document.getElementById('kpi-spi-pill').innerText = newSpi;
+
+      // Update EV amount
+      document.getElementById('kpi-ev-text').innerText = '$ 50.2M';
+
+      // Smooth Curve adjustment in SVG
+      const node = document.getElementById('svg-ev-node');
+      if (node) node.setAttribute('cy', '78');
+
+      closeLogModal();
+      triggerToast(`¡Abono registrado! ${qty} unidades añadidas a ${code}. Avance sube a ${newProg}% y SPI a ${newSpi}.`);
+    }
+
+    function triggerToast(msg) {
+      const t = document.getElementById('global-toast');
+      document.getElementById('toast-message').innerText = msg;
+      t.style.display = 'flex';
+      setTimeout(() => { t.style.display = 'none'; }, 4000);
+    }
+
+    function openPdfPreview() {
+      document.getElementById('pdf-modal-backdrop').style.display = 'flex';
+    }
+
+    function closePdfPreview() {
+      document.getElementById('pdf-modal-backdrop').style.display = 'none';
+    }
+  </script>
+</body>
+</html>

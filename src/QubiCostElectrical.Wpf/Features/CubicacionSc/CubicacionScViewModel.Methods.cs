@@ -597,10 +597,18 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
         if (target == null || !CanEdit)
             return;
 
+        var cuadro = session.CubicacionSC.FirstOrDefault(c => c.Id == target.Id);
+        int circuitCount = cuadro?.Circuitos?.Count ?? 0;
+        string msg = circuitCount > 0
+            ? $"¿Está seguro de que desea eliminar el tablero '{target.Nombre}' con sus {circuitCount} circuitos asociados?\nSe eliminarán todas sus canalizaciones y artefactos."
+            : $"¿Está seguro de que desea eliminar el tablero '{target.Nombre}'?";
+
+        if (!ConfirmDelete(msg))
+            return;
+
         var undoName = IsPerspectiveDeptos ? "Eliminar tablero Deptos" : "Eliminar tablero SC";
         undo.PushUndoPoint(session, undoName);
         pendingUndoForEdit = true;
-        var cuadro = session.CubicacionSC.FirstOrDefault(c => c.Id == target.Id);
         if (cuadro != null)
             session.CubicacionSC.Remove(cuadro);
 
@@ -811,7 +819,18 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
 
     private void RemoveCircuito()
     {
-        if (selectedCuadro == null || selectedCircuito == null)
+        if (selectedCuadro == null || selectedCircuito == null || !CanEdit)
+            return;
+
+        var idLabel = selectedCircuito.Numero > 0
+            ? (string.IsNullOrWhiteSpace(selectedCircuito.Descripcion) ? $"N° {selectedCircuito.Numero}" : $"N° {selectedCircuito.Numero} ('{selectedCircuito.Descripcion}')")
+            : (string.IsNullOrWhiteSpace(selectedCircuito.Descripcion) ? "seleccionado" : $"'{selectedCircuito.Descripcion}'");
+
+        var msg = $"¿Está seguro de que desea eliminar el circuito {idLabel}?";
+        if (selectedCircuito.TieneArtefactos || selectedCircuito.LargoCircuito > 0)
+            msg += "\nSe eliminarán sus mediciones de canalización, conductores y artefactos asociados.";
+
+        if (!ConfirmDeleteCircuito(msg))
             return;
 
         undo.PushUndoPoint(session, "Eliminar circuito SC");
@@ -1174,6 +1193,12 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
 
             if (sfd.ShowDialog() == true)
             {
+                if (OperationFailureMessages.IsFileLocked(sfd.FileName))
+                {
+                    WpfDialogService.Error("Archivo en uso", OperationFailureMessages.FileInUseUserMessage);
+                    return;
+                }
+
                 var exportContext = new ExportProjectContext
                 {
                     Data = session.Data,
@@ -1188,7 +1213,7 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
         }
         catch (Exception ex)
         {
-            ShellNotificationService.Instance.ShowError("Error al exportar Cuadro SEC", ex.Message);
+            ShellNotificationService.Instance.ShowError("Error al exportar Cuadro SEC", OperationFailureMessages.ToUserMessage(ex));
         }
     }
 
@@ -1206,6 +1231,12 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
 
             if (sfd.ShowDialog() == true)
             {
+                if (OperationFailureMessages.IsFileLocked(sfd.FileName))
+                {
+                    WpfDialogService.Error("Archivo en uso", OperationFailureMessages.FileInUseUserMessage);
+                    return;
+                }
+
                 var cuadrosFiltrados = session.CubicacionSC.Where(c => isDepto ? c.EsDepto : !c.EsDepto).ToList();
                 CubicacionScPdfExporter.Export(session.ProjectInfo, cuadrosFiltrados, session.ZonasProyecto, Config, sfd.FileName);
                 ShellNotificationService.Instance.ShowSuccess("PDF exportado", $"Registro C.SC ({subTitle}) guardado en {System.IO.Path.GetFileName(sfd.FileName)}.");
@@ -1213,7 +1244,7 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
         }
         catch (Exception ex)
         {
-            ShellNotificationService.Instance.ShowError("Error al exportar PDF", ex.Message);
+            ShellNotificationService.Instance.ShowError("Error al exportar PDF", OperationFailureMessages.ToUserMessage(ex));
         }
     }
 }

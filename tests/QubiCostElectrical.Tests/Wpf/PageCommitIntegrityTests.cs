@@ -278,6 +278,79 @@ public sealed class PageCommitIntegrityTests
         Assert.IsAssignableFrom<IPageWithCommitChanges>(vm);
     }
 
+    [Fact]
+    public void ApuWorkspaceVm_ApplyTemplate_WhenCancelled_KeepsExistingResourcesIntact()
+    {
+        var host = WpfAppHost.Current;
+        host.Session.NewProject("apu-template-cancel");
+        host.Session.CurrentProjectPath = "apu-template-cancel.qce";
+        host.Session.Itemizado.Add(new ItemizadoRow { Id = "P1", Descripcion = "Partida APU", Unidad = "GL", Cantidad = 1m });
+        host.Session.Apus.Add(new ApuRow
+        {
+            ItemId = "P1",
+            Descripcion = "Partida APU",
+            Unidad = "GL",
+            Recursos = [new ApuRecursoRow { Tipo = ApuTipoRecurso.MAT, Descripcion = "Original Cable", Rendimiento = 1m, PrecioUf = 1m }]
+        });
+
+        var vm = new ApuWorkspaceVm(new FakeShell(), host);
+        vm.ConfirmOverwriteTemplate = _ => false;
+
+        var template = new ApuTemplateRow
+        {
+            Nombre = "Plantilla Nueva",
+            JsonRecursos = System.Text.Json.JsonSerializer.Serialize(new List<ApuRecursoRow>
+            {
+                new() { Tipo = ApuTipoRecurso.MAT, Descripcion = "New Insumo", Rendimiento = 2m, PrecioUf = 2m }
+            })
+        };
+
+        var result = vm.ApplyTemplate(template, reemplazar: true);
+        Assert.False(result);
+        Assert.Single(vm.Recursos);
+        Assert.Equal("Original Cable", vm.Recursos[0].Descripcion);
+    }
+
+    [Fact]
+    public void ApuWorkspaceVm_ApplyTemplate_WhenConfirmed_ReplacesExistingResources()
+    {
+        var host = WpfAppHost.Current;
+        host.Session.NewProject("apu-template-confirm");
+        host.Session.CurrentProjectPath = "apu-template-confirm.qce";
+        host.Session.Itemizado.Add(new ItemizadoRow { Id = "P1", Descripcion = "Partida APU", Unidad = "GL", Cantidad = 1m });
+        host.Session.Apus.Add(new ApuRow
+        {
+            ItemId = "P1",
+            Descripcion = "Partida APU",
+            Unidad = "GL",
+            Recursos = [new ApuRecursoRow { Tipo = ApuTipoRecurso.MAT, Descripcion = "Original Cable", Rendimiento = 1m, PrecioUf = 1m }]
+        });
+
+        var vm = new ApuWorkspaceVm(new FakeShell(), host);
+        bool promptCalled = false;
+        vm.ConfirmOverwriteTemplate = msg =>
+        {
+            promptCalled = true;
+            Assert.Contains("Plantilla Nueva", msg);
+            return true;
+        };
+
+        var template = new ApuTemplateRow
+        {
+            Nombre = "Plantilla Nueva",
+            JsonRecursos = System.Text.Json.JsonSerializer.Serialize(new List<ApuRecursoRow>
+            {
+                new() { Tipo = ApuTipoRecurso.MAT, Descripcion = "New Insumo", Rendimiento = 2m, PrecioUf = 2m }
+            })
+        };
+
+        var result = vm.ApplyTemplate(template, reemplazar: true);
+        Assert.True(result);
+        Assert.True(promptCalled);
+        Assert.Single(vm.Recursos);
+        Assert.Equal("New Insumo", vm.Recursos[0].Descripcion);
+    }
+
     /// <summary>Misma condición que ShellViewModel.TryApplyCurrentPageChanges.</summary>
     private static bool TryApplyCurrentPageChanges(object? currentPageVm)
     {

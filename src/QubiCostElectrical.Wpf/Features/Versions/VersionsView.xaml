@@ -123,7 +123,7 @@
       <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
       <Setter Property="Background" Value="Transparent" />
       <Setter Property="BorderThickness" Value="0" />
-      <Setter Property="Padding" Value="15,8" />
+      <Setter Property="Padding" Value="10,3" />
       <Setter Property="Margin" Value="0" />
       <Setter Property="Cursor" Value="Hand" />
       <Setter Property="Template">
@@ -176,12 +176,12 @@
               </Grid.RowDefinitions>
               <Border Grid.Row="0"
                       HorizontalAlignment="Left"
-                      Margin="0,0,0,14"
-                      Padding="4"
+                      Margin="0,0,0,3"
+                      Padding="2.5"
                       Background="{DynamicResource Brush.ChipBg}"
                       BorderBrush="{DynamicResource Brush.Line}"
                       BorderThickness="1"
-                      CornerRadius="11">
+                      CornerRadius="10">
                 <TabPanel IsItemsHost="True" Background="Transparent" />
               </Border>
               <ContentPresenter Grid.Row="1" ContentSource="SelectedContent" />
@@ -297,6 +297,118 @@
       <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
 
+    <!-- ═══ Estilos de Cabeceras para Comparador A vs B ═══ -->
+    <Style x:Key="Versions.Header.VersionA" TargetType="DataGridColumnHeader" BasedOn="{StaticResource DataGridColumnHeader.Prototype}">
+      <Setter Property="Background" Value="#F8FAFC" />
+      <Setter Property="Foreground" Value="#1E40AF" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="FontSize" Value="10" />
+      <Setter Property="Padding" Value="5,4" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line2}" />
+      <Setter Property="BorderThickness" Value="0,0,1,1" />
+    </Style>
+
+    <Style x:Key="Versions.Header.VersionA.Center" TargetType="DataGridColumnHeader" BasedOn="{StaticResource Versions.Header.VersionA}">
+      <Setter Property="HorizontalContentAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="Versions.Header.VersionA.Numeric" TargetType="DataGridColumnHeader" BasedOn="{StaticResource Versions.Header.VersionA}">
+      <Setter Property="HorizontalContentAlignment" Value="Right" />
+      <Setter Property="Padding" Value="5,4,8,4" />
+    </Style>
+
+    <Style x:Key="Versions.Header.VersionA.Divider" TargetType="DataGridColumnHeader" BasedOn="{StaticResource Versions.Header.VersionA.Numeric}">
+      <Setter Property="BorderThickness" Value="0,0,2,1" />
+      <Setter Property="BorderBrush" Value="#BFDBFE" />
+    </Style>
+
+    <Style x:Key="Versions.Header.Delta" TargetType="DataGridColumnHeader" BasedOn="{StaticResource DataGridColumnHeader.Prototype}">
+      <Setter Property="Background" Value="#F1F5F9" />
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="FontSize" Value="10" />
+      <Setter Property="Padding" Value="5,4" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line2}" />
+      <Setter Property="BorderThickness" Value="0,0,1,1" />
+      <Setter Property="HorizontalContentAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="Versions.Header.Delta.Numeric" TargetType="DataGridColumnHeader" BasedOn="{StaticResource Versions.Header.Delta}">
+      <Setter Property="HorizontalContentAlignment" Value="Right" />
+      <Setter Property="Padding" Value="5,4,8,4" />
+    </Style>
+
+    <Style x:Key="Versions.Header.Delta.Divider" TargetType="DataGridColumnHeader" BasedOn="{StaticResource Versions.Header.Delta.Numeric}">
+      <Setter Property="BorderThickness" Value="0,0,2,1" />
+      <Setter Property="BorderBrush" Value="#CBD5E1" />
+    </Style>
+
+    <Style x:Key="Versions.Header.VersionB" TargetType="DataGridColumnHeader" BasedOn="{StaticResource DataGridColumnHeader.Prototype}">
+      <Setter Property="Background" Value="#F8FAFC" />
+      <Setter Property="Foreground" Value="#047857" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="FontSize" Value="10" />
+      <Setter Property="Padding" Value="5,4" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line2}" />
+      <Setter Property="BorderThickness" Value="0,0,1,1" />
+    </Style>
+
+    <Style x:Key="Versions.Header.VersionB.Center" TargetType="DataGridColumnHeader" BasedOn="{StaticResource Versions.Header.VersionB}">
+      <Setter Property="HorizontalContentAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="Versions.Header.VersionB.Numeric" TargetType="DataGridColumnHeader" BasedOn="{StaticResource Versions.Header.VersionB}">
+      <Setter Property="HorizontalContentAlignment" Value="Right" />
+      <Setter Property="Padding" Value="5,4,8,4" />
+    </Style>
+
+    <!-- ═══ Celdas del Comparador ═══ -->
+    <Style x:Key="Versions.ComparisonCell" TargetType="DataGridCell">
+      <Setter Property="Padding" Value="6,4" />
+      <Setter Property="BorderThickness" Value="0,0,1,1" />
+      <Setter Property="BorderBrush" Value="#F1F5F9" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+      <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+      <Style.Triggers>
+        <Trigger Property="IsMouseOver" Value="True">
+          <Setter Property="Background" Value="{DynamicResource Brush.RowHover}" />
+        </Trigger>
+        <Trigger Property="IsSelected" Value="True">
+          <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+          <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+        </Trigger>
+      </Style.Triggers>
+    </Style>
+
+    <Style x:Key="Versions.ComparisonCell.DividerA" TargetType="DataGridCell" BasedOn="{StaticResource Versions.ComparisonCell}">
+      <Setter Property="BorderThickness" Value="0,0,2,1" />
+      <Setter Property="BorderBrush" Value="#BFDBFE" />
+    </Style>
+
+    <Style x:Key="Versions.ComparisonCell.Divider" TargetType="DataGridCell" BasedOn="{StaticResource Versions.ComparisonCell}">
+      <Setter Property="BorderThickness" Value="0,0,2,1" />
+      <Setter Property="BorderBrush" Value="#CBD5E1" />
+    </Style>
+
+    <!-- ═══ Fila del Comparador (tinte según semáforo) ═══ -->
+    <Style x:Key="Versions.ComparisonRow" TargetType="DataGridRow">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="SnapsToDevicePixels" Value="True" />
+      <Style.Triggers>
+        <DataTrigger Binding="{Binding DiffKind}" Value="Modificado">
+          <Setter Property="Background" Value="#0EF59E0B" />
+        </DataTrigger>
+        <DataTrigger Binding="{Binding DiffKind}" Value="Adicional">
+          <Setter Property="Background" Value="#0E10B981" />
+        </DataTrigger>
+        <DataTrigger Binding="{Binding DiffKind}" Value="Deductivo">
+          <Setter Property="Background" Value="#0EEF4444" />
+        </DataTrigger>
+      </Style.Triggers>
+    </Style>
+
+
   </UserControl.Resources>
 
   <Grid Background="{DynamicResource Brush.Canvas}">
@@ -321,139 +433,71 @@
       </ctrl:EmptyStateControl.Actions>
     </ctrl:EmptyStateControl>
 
-    <Grid Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
+    <Grid Margin="14,2,14,4" Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
       <Grid.RowDefinitions>
-        <RowDefinition Height="Auto" />
         <RowDefinition Height="Auto" />
         <RowDefinition Height="*" />
       </Grid.RowDefinitions>
 
-      <!-- ════ Cabecera ════ -->
-      <DockPanel Grid.Row="0" Margin="0,0,0,16" LastChildFill="False">
+      <!-- ════ Cabecera Slim ════ -->
+      <DockPanel Grid.Row="0" Margin="0,0,0,3" LastChildFill="False">
         <StackPanel DockPanel.Dock="Left">
-          <TextBlock Text="Versiones y comparador de revisiones"
-                     FontSize="23" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" />
+          <TextBlock Text="Cambio de versión y comparador de revisiones"
+                     FontSize="13.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" />
           <TextBlock Text="{Binding StatusMessage}"
-                     FontSize="13" Foreground="{DynamicResource Brush.Ink3}"
-                     TextWrapping="Wrap" MaxWidth="720" Margin="0,5,0,0" />
+                     FontSize="9.5" Foreground="{DynamicResource Brush.Ink3}"
+                     TextWrapping="Wrap" MaxWidth="720" Margin="0,1,0,0" />
         </StackPanel>
 
-        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Bottom">
-          <Border Style="{StaticResource Badge.Warn}" Margin="0,0,10,0" VerticalAlignment="Center"
+        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+          <Border Style="{StaticResource Badge.Warn}" Margin="0,0,8,0" VerticalAlignment="Center"
                   Visibility="{Binding IsReadOnly, Converter={StaticResource BoolToVisibility}}">
-            <TextBlock Text="Solo lectura" FontSize="10.5" FontWeight="SemiBold"
+            <TextBlock Text="Solo lectura" FontSize="9.5" FontWeight="SemiBold"
                        Foreground="{DynamicResource Brush.Amber}" />
           </Border>
-          <Button Style="{StaticResource Button.Secondary}" Width="32" Height="32" Padding="0"
+          <Button Style="{StaticResource Button.Secondary}" Height="24" Padding="7,0" FontSize="10"
+                  Command="{Binding CompareWithProjectFileCommand}"
+                  ToolTip="Seleccionar un archivo .qce en disco para contrastar diferencias con el presupuesto abierto"
+                  Margin="0,0,5,0">
+            <StackPanel Orientation="Horizontal">
+              <Path Style="{StaticResource Versions.Icon.Compare}" Stroke="{DynamicResource Brush.Ink2}" Width="11" Height="11" />
+              <TextBlock Text="Comparar con archivo .qce…" FontSize="10" FontWeight="SemiBold"
+                         Foreground="{DynamicResource Brush.Ink2}" Margin="5,0,0,0" />
+            </StackPanel>
+          </Button>
+          <Button Style="{StaticResource Button.Secondary}" Height="24" Padding="7,0" FontSize="10"
+                  Command="{Binding SaveAsNewVersionCommand}"
+                  ToolTip="Congela la versión previa y guarda el proyecto con la siguiente letra de revisión (ej: Rev B)"
+                  Visibility="{Binding IsReadOnly, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}"
+                  Margin="0,0,5,0">
+            <StackPanel Orientation="Horizontal">
+              <Path Style="{StaticResource Versions.Icon.Save}" Stroke="{DynamicResource Brush.Ink2}" Width="11" Height="11" />
+              <TextBlock Text="Guardar como nueva versión…" FontSize="10" FontWeight="SemiBold"
+                         Foreground="{DynamicResource Brush.Ink2}" Margin="5,0,0,0" />
+            </StackPanel>
+          </Button>
+          <Button Style="{StaticResource Button.Secondary}" Width="24" Height="24" Padding="0"
                   Command="{Binding RefreshCommand}" ToolTip="Actualizar"
-                  Margin="0,0,10,0">
+                  Margin="0,0,5,0">
             <Button.Content>
-              <Path Style="{StaticResource Versions.Icon.Refresh}" Width="16" Height="16"
+              <Path Style="{StaticResource Versions.Icon.Refresh}" Width="12" Height="12"
                     Stroke="{DynamicResource Brush.Ink2}" />
             </Button.Content>
           </Button>
-          <Button Style="{StaticResource Button.Primary}" Height="32" Padding="13,0" FontSize="12.5"
+          <Button Style="{StaticResource Button.Primary}" Height="24" Padding="9,0" FontSize="10"
                   Command="{Binding NewCommand}"
                   Visibility="{Binding IsReadOnly, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
             <StackPanel Orientation="Horizontal">
-              <Path Style="{StaticResource Versions.Icon.Plus}" Stroke="{DynamicResource Brush.White}" />
-              <TextBlock Text="Nueva versión" FontSize="12.5" FontWeight="SemiBold"
-                         Foreground="{DynamicResource Brush.White}" Margin="7,0,0,0" />
+              <Path Style="{StaticResource Versions.Icon.Plus}" Stroke="{DynamicResource Brush.White}" Width="10" Height="10" />
+              <TextBlock Text="Nueva versión" FontSize="10" FontWeight="SemiBold"
+                         Foreground="{DynamicResource Brush.White}" Margin="5,0,0,0" />
             </StackPanel>
           </Button>
         </StackPanel>
       </DockPanel>
 
-      <!-- ════ Tira KPI ════ -->
-      <Border Grid.Row="1" Style="{StaticResource Card.Surface}" Padding="0" Margin="0,0,0,16"
-              VerticalAlignment="Top">
-        <UniformGrid Columns="4">
-
-          <!-- 1 · Variación neta -->
-          <Border Style="{StaticResource Versions.KpiCell}" BorderThickness="0">
-            <StackPanel>
-              <TextBlock Text="VARIACIÓN NETA DEL COMPARADOR" Style="{StaticResource Versions.KpiLabel}" />
-              <TextBlock>
-                <TextBlock.Style>
-                  <Style TargetType="TextBlock" BasedOn="{StaticResource Versions.KpiValue}">
-                    <Style.Triggers>
-                      <DataTrigger Binding="{Binding ComparisonDeltaKind}" Value="Aumenta">
-                        <Setter Property="Foreground" Value="{DynamicResource Brush.SuccessDark}" />
-                      </DataTrigger>
-                      <DataTrigger Binding="{Binding ComparisonDeltaKind}" Value="Reduce">
-                        <Setter Property="Foreground" Value="{DynamicResource Brush.Danger}" />
-                      </DataTrigger>
-                      <DataTrigger Binding="{Binding ComparisonDeltaKind}" Value="Neutro">
-                        <Setter Property="Foreground" Value="{DynamicResource Brush.Ink4}" />
-                      </DataTrigger>
-                    </Style.Triggers>
-                  </Style>
-                </TextBlock.Style>
-                <Run Text="{Binding ComparisonDeltaText, Mode=OneWay}" />
-              </TextBlock>
-              <TextBlock Style="{StaticResource Versions.KpiNote}">
-                <Run Text="{Binding ComparisonDeltaPctText, Mode=OneWay}" FontWeight="SemiBold" />
-                <Run Text="  ·  " />
-                <Run Text="{Binding ComparisonStatusText, Mode=OneWay}" />
-              </TextBlock>
-            </StackPanel>
-          </Border>
-
-          <!-- 2 · Partidas comparadas -->
-          <Border Style="{StaticResource Versions.KpiCell}">
-            <StackPanel>
-              <TextBlock Text="PARTIDAS COMPARADAS" Style="{StaticResource Versions.KpiLabel}" />
-              <TextBlock Text="{Binding ComparisonRows.Count}" Style="{StaticResource Versions.KpiValue}" />
-              <StackPanel Orientation="Horizontal" Margin="0,4,0,0" HorizontalAlignment="Left">
-                <Border Style="{StaticResource Badge.Ok}" Padding="6,2">
-                  <StackPanel Orientation="Horizontal">
-                    <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.Success}" VerticalAlignment="Center" Margin="0,0,5,0" />
-                    <TextBlock Text="{Binding ComparisonAddedText}" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.SuccessDark}" />
-                  </StackPanel>
-                </Border>
-                <Border Style="{StaticResource Badge.Warn}" Padding="6,2" Margin="5,0,0,0">
-                  <StackPanel Orientation="Horizontal">
-                    <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.AmberRisk}" VerticalAlignment="Center" Margin="0,0,5,0" />
-                    <TextBlock Text="{Binding ComparisonChangedText}" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Amber}" />
-                  </StackPanel>
-                </Border>
-                <Border Style="{StaticResource Badge.Bad}" Padding="6,2" Margin="5,0,0,0">
-                  <StackPanel Orientation="Horizontal">
-                    <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.Danger}" VerticalAlignment="Center" Margin="0,0,5,0" />
-                    <TextBlock Text="{Binding ComparisonRemovedText}" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Danger}" />
-                  </StackPanel>
-                </Border>
-              </StackPanel>
-            </StackPanel>
-          </Border>
-
-          <!-- 3 · Versión activa -->
-          <Border Style="{StaticResource Versions.KpiCell}">
-            <StackPanel>
-              <TextBlock Text="VERSIÓN ACTIVA" Style="{StaticResource Versions.KpiLabel}" />
-              <TextBlock Text="{Binding ActiveVersionText}" FontSize="13" />
-              <TextBlock Text="{Binding SummaryText}" Style="{StaticResource Versions.KpiNote}" />
-            </StackPanel>
-          </Border>
-
-          <!-- 4 · Última actualización -->
-          <Border Style="{StaticResource Versions.KpiCell}">
-            <StackPanel>
-              <TextBlock Text="ÚLTIMA ACTUALIZACIÓN" Style="{StaticResource Versions.KpiLabel}" />
-              <TextBlock Text="{Binding SelectedVersion.FechaModificacion, StringFormat='{}{0:dd/MM · HH:mm}', FallbackValue=—}"
-                         FontSize="13.5" />
-              <TextBlock Style="{StaticResource Versions.KpiNote}">
-                <Run Text="por " />
-                <Run Text="{Binding SelectedVersion.CreadoPor, FallbackValue=—, Mode=OneWay}" />
-              </TextBlock>
-            </StackPanel>
-          </Border>
-
-        </UniformGrid>
-      </Border>
-
       <!-- ════ Pestañas ════ -->
-      <TabControl Grid.Row="2" Style="{StaticResource Versions.Tabs}"
+      <TabControl Grid.Row="1" Style="{StaticResource Versions.Tabs}"
                   Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
 
         <!-- ════════ PANEL: VERSIONES ════════ -->
@@ -469,7 +513,101 @@
             </StackPanel>
           </TabItem.Header>
 
-          <Border Style="{StaticResource Card.Surface}" Padding="0">
+          <Grid>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- ════ Tira KPI de Versiones ════ -->
+            <Border Grid.Row="0" Style="{StaticResource Card.Surface}" Padding="0" Margin="0,0,0,10"
+                    VerticalAlignment="Top">
+              <UniformGrid Columns="4">
+
+                <!-- 1 · Variación neta -->
+                <Border Style="{StaticResource Versions.KpiCell}" BorderThickness="0">
+                  <StackPanel>
+                    <TextBlock Text="VARIACIÓN NETA DEL COMPARADOR" Style="{StaticResource Versions.KpiLabel}" />
+                    <TextBlock>
+                      <TextBlock.Style>
+                        <Style TargetType="TextBlock" BasedOn="{StaticResource Versions.KpiValue}">
+                          <Style.Triggers>
+                            <DataTrigger Binding="{Binding ComparisonDeltaKind}" Value="Aumenta">
+                              <Setter Property="Foreground" Value="{DynamicResource Brush.SuccessDark}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding ComparisonDeltaKind}" Value="Reduce">
+                              <Setter Property="Foreground" Value="{DynamicResource Brush.Danger}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding ComparisonDeltaKind}" Value="Neutro">
+                              <Setter Property="Foreground" Value="{DynamicResource Brush.Ink4}" />
+                            </DataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </TextBlock.Style>
+                      <Run Text="{Binding ComparisonDeltaText, Mode=OneWay}" />
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource Versions.KpiNote}">
+                      <Run Text="{Binding ComparisonDeltaPctText, Mode=OneWay}" FontWeight="SemiBold" />
+                      <Run Text="  ·  " />
+                      <Run Text="{Binding ComparisonStatusText, Mode=OneWay}" />
+                    </TextBlock>
+                  </StackPanel>
+                </Border>
+
+                <!-- 2 · Partidas comparadas -->
+                <Border Style="{StaticResource Versions.KpiCell}">
+                  <StackPanel>
+                    <TextBlock Text="PARTIDAS COMPARADAS" Style="{StaticResource Versions.KpiLabel}" />
+                    <TextBlock Text="{Binding ComparisonRows.Count}" Style="{StaticResource Versions.KpiValue}" />
+                    <StackPanel Orientation="Horizontal" Margin="0,4,0,0" HorizontalAlignment="Left">
+                      <Border Style="{StaticResource Badge.Ok}" Padding="6,2">
+                        <StackPanel Orientation="Horizontal">
+                          <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.Success}" VerticalAlignment="Center" Margin="0,0,5,0" />
+                          <TextBlock Text="{Binding ComparisonAddedText}" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.SuccessDark}" />
+                        </StackPanel>
+                      </Border>
+                      <Border Style="{StaticResource Badge.Warn}" Padding="6,2" Margin="5,0,0,0">
+                        <StackPanel Orientation="Horizontal">
+                          <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.AmberRisk}" VerticalAlignment="Center" Margin="0,0,5,0" />
+                          <TextBlock Text="{Binding ComparisonChangedText}" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Amber}" />
+                        </StackPanel>
+                      </Border>
+                      <Border Style="{StaticResource Badge.Bad}" Padding="6,2" Margin="5,0,0,0">
+                        <StackPanel Orientation="Horizontal">
+                          <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.Danger}" VerticalAlignment="Center" Margin="0,0,5,0" />
+                          <TextBlock Text="{Binding ComparisonRemovedText}" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Danger}" />
+                        </StackPanel>
+                      </Border>
+                    </StackPanel>
+                  </StackPanel>
+                </Border>
+
+                <!-- 3 · Versión activa -->
+                <Border Style="{StaticResource Versions.KpiCell}">
+                  <StackPanel>
+                    <TextBlock Text="VERSIÓN ACTIVA" Style="{StaticResource Versions.KpiLabel}" />
+                    <TextBlock Text="{Binding ActiveVersionText}" FontSize="13" />
+                    <TextBlock Text="{Binding SummaryText}" Style="{StaticResource Versions.KpiNote}" />
+                  </StackPanel>
+                </Border>
+
+                <!-- 4 · Última actualización -->
+                <Border Style="{StaticResource Versions.KpiCell}">
+                  <StackPanel>
+                    <TextBlock Text="ÚLTIMA ACTUALIZACIÓN" Style="{StaticResource Versions.KpiLabel}" />
+                    <TextBlock Text="{Binding SelectedVersion.FechaModificacion, StringFormat='{}{0:dd/MM · HH:mm}', FallbackValue=—}"
+                               FontSize="13.5" />
+                    <TextBlock Style="{StaticResource Versions.KpiNote}">
+                      <Run Text="por " />
+                      <Run Text="{Binding SelectedVersion.CreadoPor, FallbackValue=—, Mode=OneWay}" />
+                    </TextBlock>
+                  </StackPanel>
+                </Border>
+
+              </UniformGrid>
+            </Border>
+
+            <Border Grid.Row="1" Style="{StaticResource Card.Surface}" Padding="0">
             <Grid>
               <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
@@ -705,6 +843,7 @@
               </Grid>
             </Grid>
           </Border>
+          </Grid>
         </TabItem>
 
         <!-- ════════ PANEL: COMPARADOR ════════ -->
@@ -723,7 +862,6 @@
           <Border Style="{StaticResource Card.Surface}" Padding="0">
             <Grid>
               <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -765,45 +903,62 @@
               </Border>
 
               <!-- Barra de control del comparador -->
-              <Border Grid.Row="1" Style="{StaticResource Card.Header}" Background="{DynamicResource Brush.Surface2}">
+              <Border Grid.Row="1" Style="{StaticResource Card.Header}" Background="{DynamicResource Brush.Surface2}" Padding="8,2.5">
                 <DockPanel LastChildFill="True">
                   <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <Button Style="{StaticResource Button.Toolbar}" Command="{Binding CompareWithProjectFileCommand}"
+                            ToolTip="Seleccionar un archivo .qce en disco para contrastar diferencias">
+                      <StackPanel Orientation="Horizontal">
+                        <Path Style="{StaticResource Versions.Icon.Compare}" Width="12" Height="12"
+                              Stroke="{DynamicResource Brush.Ink2}" />
+                        <TextBlock Text="Comparar .qce" Margin="4,0,0,0" FontSize="10.5" />
+                      </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource Button.Toolbar}" Command="{Binding SaveAsNewVersionCommand}"
+                            ToolTip="Congelar versión y guardar el proyecto con nueva letra de revisión"
+                            Visibility="{Binding IsReadOnly, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
+                      <StackPanel Orientation="Horizontal">
+                        <Path Style="{StaticResource Versions.Icon.Save}" Width="12" Height="12"
+                              Stroke="{DynamicResource Brush.Ink2}" />
+                        <TextBlock Text="Guardar versión" Margin="4,0,0,0" FontSize="10.5" />
+                      </StackPanel>
+                    </Button>
                     <Button Style="{StaticResource Button.Toolbar}" Command="{Binding CompareWithExcelCommand}"
                             ToolTip="Subir planilla Excel de Aclaración o Addenda para ver el semáforo de cambios">
                       <StackPanel Orientation="Horizontal">
-                        <Path Style="{StaticResource Versions.Icon.Upload}" Width="14" Height="14"
+                        <Path Style="{StaticResource Versions.Icon.Upload}" Width="12" Height="12"
                               Stroke="{DynamicResource Brush.Ink2}" />
-                        <TextBlock Text="Comparar con Excel" Margin="6,0,0,0" />
+                        <TextBlock Text="Comparar con Excel" Margin="4,0,0,0" FontSize="10.5" />
                       </StackPanel>
                     </Button>
                     <Button Style="{StaticResource Button.Toolbar}" Command="{Binding ExportPdfCommand}"
                             ToolTip="Descargar informe PDF">
                       <StackPanel Orientation="Horizontal">
-                        <Path Style="{StaticResource Versions.Icon.File}" Width="14" Height="14"
+                        <Path Style="{StaticResource Versions.Icon.File}" Width="12" Height="12"
                               Stroke="{DynamicResource Brush.Ink2}" />
-                        <TextBlock Text="PDF" Margin="6,0,0,0" />
+                        <TextBlock Text="PDF" Margin="4,0,0,0" FontSize="10.5" />
                       </StackPanel>
                     </Button>
                     <Button Style="{StaticResource Button.Toolbar}" Command="{Binding ExportExcelCommand}"
                             ToolTip="Exportar comparativo a Excel">
                       <StackPanel Orientation="Horizontal">
-                        <Path Style="{StaticResource Versions.Icon.Sheet}" Width="14" Height="14"
+                        <Path Style="{StaticResource Versions.Icon.Sheet}" Width="12" Height="12"
                               Stroke="{DynamicResource Brush.Ink2}" />
-                        <TextBlock Text="Excel" Margin="6,0,0,0" />
+                        <TextBlock Text="Excel" Margin="4,0,0,0" FontSize="10.5" />
                       </StackPanel>
                     </Button>
                     <Button Style="{StaticResource Button.ToolbarPrimary}" Command="{Binding CreateChangeOrderFromDiffCommand}"
                             ToolTip="Generar una Orden de Cambio oficial a partir de las variaciones detectadas">
                       <StackPanel Orientation="Horizontal">
-                        <Path Style="{StaticResource Versions.Icon.Pen}" Width="14" Height="14"
+                        <Path Style="{StaticResource Versions.Icon.Pen}" Width="12" Height="12"
                               Stroke="{DynamicResource Brush.White}" />
-                        <TextBlock Text="Orden de cambio" Margin="6,0,0,0" />
+                        <TextBlock Text="Orden de cambio" Margin="4,0,0,0" FontSize="10.5" />
                       </StackPanel>
                     </Button>
-                    <Button Style="{StaticResource Button.Secondary}" Width="30" Height="30" Padding="0"
+                    <Button Style="{StaticResource Button.Secondary}" Width="24" Height="24" Padding="0"
                             Command="{Binding RefreshComparisonCommand}" ToolTip="Actualizar comparación">
                       <Button.Content>
-                        <Path Style="{StaticResource Versions.Icon.Refresh}" Width="15" Height="15"
+                        <Path Style="{StaticResource Versions.Icon.Refresh}" Width="13" Height="13"
                               Stroke="{DynamicResource Brush.Ink2}" />
                       </Button.Content>
                     </Button>
@@ -813,16 +968,16 @@
                     <CheckBox Style="{StaticResource Form.CheckBox}"
                               Content="Comparar contra el estado actual"
                               IsChecked="{Binding CompareAgainstCurrent, Mode=TwoWay}" />
-                    <StackPanel Orientation="Horizontal" Margin="16,0,0,0"
+                    <StackPanel Orientation="Horizontal" Margin="14,0,0,0"
                                 Visibility="{Binding ShowComparisonVersionSelector, Converter={StaticResource BoolToVisibility}}">
-                      <TextBlock Text="Versión B:" FontSize="11.5" FontWeight="SemiBold"
-                                 Foreground="{DynamicResource Brush.Ink2}" VerticalAlignment="Center" Margin="0,0,8,0" />
-                      <ComboBox Style="{StaticResource Form.ComboBox}" MinWidth="200"
+                      <TextBlock Text="Versión B:" FontSize="11" FontWeight="SemiBold"
+                                 Foreground="{DynamicResource Brush.Ink2}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                      <ComboBox Style="{StaticResource Form.ComboBox}" MinWidth="180" Height="24"
                                 ItemsSource="{Binding ComparisonVersionOptions}"
                                 SelectedItem="{Binding SelectedComparisonVersion, Mode=TwoWay}">
                         <ComboBox.ItemTemplate>
                           <DataTemplate>
-                            <TextBlock>
+                            <TextBlock FontSize="10.5">
                               <Run Text="{Binding Codigo, Mode=OneWay}" />
                               <Run Text=" — " />
                               <Run Text="{Binding Nombre, Mode=OneWay}" />
@@ -834,113 +989,72 @@
                   </StackPanel>
 
                   <TextBlock Text="{Binding ComparisonStatusText}"
-                             FontSize="11.5" Foreground="{DynamicResource Brush.Ink3}"
-                             TextTrimming="CharacterEllipsis" Margin="16,0,12,0"
+                             FontSize="10.5" Foreground="{DynamicResource Brush.Ink3}"
+                             TextTrimming="CharacterEllipsis" Margin="14,0,10,0"
                              VerticalAlignment="Center" />
                 </DockPanel>
               </Border>
 
-              <!-- Ribbon de deltas -->
-              <Border Grid.Row="2" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,0,1">
-                <UniformGrid Columns="4">
-
-                  <Border Style="{StaticResource Versions.DeltaCell}" BorderThickness="0">
-                    <StackPanel>
-                      <StackPanel Orientation="Horizontal">
-                        <Ellipse Width="7" Height="7" Fill="{DynamicResource Brush.Success}" VerticalAlignment="Center" Margin="0,0,7,0" />
-                        <TextBlock Text="ADICIONALES (+)" Style="{StaticResource Versions.DeltaLabel}" />
-                      </StackPanel>
-                      <TextBlock Text="{Binding ComparisonAdicionalesText}" Style="{StaticResource Versions.DeltaValue}"
-                                 Foreground="{DynamicResource Brush.SuccessDark}" />
-                      <TextBlock Text="{Binding ComparisonAddedText}" Style="{StaticResource Versions.DeltaNote}" />
-                    </StackPanel>
-                  </Border>
-
-                  <Border Style="{StaticResource Versions.DeltaCell}">
-                    <StackPanel>
-                      <StackPanel Orientation="Horizontal">
-                        <Ellipse Width="7" Height="7" Fill="{DynamicResource Brush.AmberRisk}" VerticalAlignment="Center" Margin="0,0,7,0" />
-                        <TextBlock Text="MODIFICACIONES" Style="{StaticResource Versions.DeltaLabel}" />
-                      </StackPanel>
-                      <TextBlock Text="{Binding ComparisonChangedText}" Style="{StaticResource Versions.DeltaValue}"
-                                 Foreground="{DynamicResource Brush.AmberRisk}" />
-                      <TextBlock Text="{Binding ComparisonUnchangedText}" Style="{StaticResource Versions.DeltaNote}" />
-                    </StackPanel>
-                  </Border>
-
-                  <Border Style="{StaticResource Versions.DeltaCell}">
-                    <StackPanel>
-                      <StackPanel Orientation="Horizontal">
-                        <Ellipse Width="7" Height="7" Fill="{DynamicResource Brush.Danger}" VerticalAlignment="Center" Margin="0,0,7,0" />
-                        <TextBlock Text="DEDUCTIVOS (-)" Style="{StaticResource Versions.DeltaLabel}" />
-                      </StackPanel>
-                      <TextBlock Text="{Binding ComparisonDeductivosText}" Style="{StaticResource Versions.DeltaValue}"
-                                 Foreground="{DynamicResource Brush.Danger}" />
-                      <TextBlock Text="{Binding ComparisonRemovedText}" Style="{StaticResource Versions.DeltaNote}" />
-                    </StackPanel>
-                  </Border>
-
-                  <Border Style="{StaticResource Versions.DeltaCell}" Background="{DynamicResource Brush.BlueFaint}">
-                    <StackPanel>
-                      <StackPanel Orientation="Horizontal">
-                        <Ellipse Width="7" Height="7" Fill="{DynamicResource Brush.Blue}" VerticalAlignment="Center" Margin="0,0,7,0" />
-                        <TextBlock Text="SALDO NETO" Style="{StaticResource Versions.DeltaLabel}"
-                                   Foreground="{DynamicResource Brush.Blue}" />
-                      </StackPanel>
-                      <TextBlock Text="{Binding ComparisonNetVariationText}" Style="{StaticResource Versions.DeltaValue}" />
-                      <TextBlock Style="{StaticResource Versions.DeltaNote}">
-                        <Run Text="Base para orden de cambio · " />
-                        <Run Text="{Binding ComparisonDeltaPctText, Mode=OneWay}" />
-                      </TextBlock>
-                    </StackPanel>
-                  </Border>
-
-                </UniformGrid>
-              </Border>
-
-              <!-- Filtros del semáforo -->
-              <Border Grid.Row="3" Background="{DynamicResource Brush.Surface}"
-                      BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1" Padding="14,9">
+              <!-- ════════ FILTROS DEL SEMÁFORO Y BÚSQUEDA MINIMALISTA ════════ -->
+              <Border Grid.Row="2" Background="{DynamicResource Brush.Surface}"
+                      BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1" Padding="8,2">
                 <DockPanel LastChildFill="True">
-                  <Grid DockPanel.Dock="Right" Width="240" HorizontalAlignment="Right">
+                  <Grid DockPanel.Dock="Right" Width="210" Height="22" HorizontalAlignment="Right">
                     <TextBox Style="{StaticResource Form.SearchBox}"
-                             Padding="32,7,10,7"
-                             Tag="Buscar partida o ítem"
+                             Padding="24,1,6,1"
+                             FontSize="10"
+                             Tag="Buscar por ítem o partida..."
                              VerticalContentAlignment="Center"
                              Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
-                    <Path Style="{StaticResource Versions.Icon.Search}" Width="14" Height="14"
-                          Stroke="{DynamicResource Brush.Muted}" Margin="11,0,0,0"
+                    <Path Style="{StaticResource Versions.Icon.Search}" Width="11" Height="11"
+                          Stroke="{DynamicResource Brush.Muted}" Margin="7,0,0,0"
                           HorizontalAlignment="Left" VerticalAlignment="Center" IsHitTestVisible="False" />
                   </Grid>
 
                   <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="Semáforo" FontSize="11" FontWeight="SemiBold"
-                               Foreground="{DynamicResource Brush.Ink3}" Margin="0,0,10,0" VerticalAlignment="Center" />
+                    <TextBlock Text="FILTRAR:" FontSize="8.5" FontWeight="ExtraBold"
+                               Foreground="{DynamicResource Brush.Ink3}" Margin="0,0,6,0" VerticalAlignment="Center" />
                     <Border Background="{DynamicResource Brush.ChipBg}" BorderBrush="{DynamicResource Brush.Line}"
-                            BorderThickness="1" CornerRadius="9" Padding="3">
+                            BorderThickness="1" CornerRadius="4" Padding="1.5">
                       <StackPanel Orientation="Horizontal">
-                        <RadioButton Style="{StaticResource FilterChip.Base}" IsChecked="{Binding IsFilterTodos, Mode=TwoWay}">
+                        <RadioButton Style="{StaticResource FilterChip.Base}" IsChecked="{Binding IsFilterTodos, Mode=TwoWay}" Padding="5,1">
                           <StackPanel Orientation="Horizontal">
-                            <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" Margin="0,0,6,0" />
-                            <TextBlock Text="Todas" />
+                            <Ellipse Width="5" Height="5" Fill="#64748B" VerticalAlignment="Center" Margin="0,0,4,0" />
+                            <TextBlock FontSize="9" FontWeight="SemiBold">
+                              <Run Text="Todas (" /><Run Text="{Binding ComparisonTotalCount, Mode=OneWay}" /><Run Text=")" />
+                            </TextBlock>
                           </StackPanel>
                         </RadioButton>
-                        <RadioButton Style="{StaticResource FilterChip.Success}" IsChecked="{Binding IsFilterAdicionales, Mode=TwoWay}">
+                        <RadioButton Style="{StaticResource FilterChip.Warning}" IsChecked="{Binding IsFilterModificados, Mode=TwoWay}" Padding="5,1">
                           <StackPanel Orientation="Horizontal">
-                            <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.Success}" VerticalAlignment="Center" Margin="0,0,6,0" />
-                            <TextBlock Text="Adicionales" />
+                            <Ellipse Width="5" Height="5" Fill="#D97706" VerticalAlignment="Center" Margin="0,0,4,0" />
+                            <TextBlock FontSize="9" FontWeight="SemiBold">
+                              <Run Text="Modificadas (" /><Run Text="{Binding ComparisonChangedCount, Mode=OneWay}" /><Run Text=")" />
+                            </TextBlock>
                           </StackPanel>
                         </RadioButton>
-                        <RadioButton Style="{StaticResource FilterChip.Warning}" IsChecked="{Binding IsFilterModificados, Mode=TwoWay}">
+                        <RadioButton Style="{StaticResource FilterChip.Success}" IsChecked="{Binding IsFilterAdicionales, Mode=TwoWay}" Padding="5,1">
                           <StackPanel Orientation="Horizontal">
-                            <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.AmberRisk}" VerticalAlignment="Center" Margin="0,0,6,0" />
-                            <TextBlock Text="Modificadas" />
+                            <Ellipse Width="5" Height="5" Fill="#059669" VerticalAlignment="Center" Margin="0,0,4,0" />
+                            <TextBlock FontSize="9" FontWeight="SemiBold">
+                              <Run Text="Nuevas (" /><Run Text="{Binding ComparisonAddedCount, Mode=OneWay}" /><Run Text=")" />
+                            </TextBlock>
                           </StackPanel>
                         </RadioButton>
-                        <RadioButton Style="{StaticResource Versions.FilterChipDanger}" IsChecked="{Binding IsFilterDeductivos, Mode=TwoWay}">
+                        <RadioButton Style="{StaticResource Versions.FilterChipDanger}" IsChecked="{Binding IsFilterDeductivos, Mode=TwoWay}" Padding="5,1">
                           <StackPanel Orientation="Horizontal">
-                            <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.Danger}" VerticalAlignment="Center" Margin="0,0,6,0" />
-                            <TextBlock Text="Deductivas" />
+                            <Ellipse Width="5" Height="5" Fill="#DC2626" VerticalAlignment="Center" Margin="0,0,4,0" />
+                            <TextBlock FontSize="9" FontWeight="SemiBold">
+                              <Run Text="Deductivas (" /><Run Text="{Binding ComparisonRemovedCount, Mode=OneWay}" /><Run Text=")" />
+                            </TextBlock>
+                          </StackPanel>
+                        </RadioButton>
+                        <RadioButton Style="{StaticResource FilterChip.Base}" IsChecked="{Binding IsFilterSinCambios, Mode=TwoWay}" Padding="5,1">
+                          <StackPanel Orientation="Horizontal">
+                            <Ellipse Width="5" Height="5" Fill="#94A3B8" VerticalAlignment="Center" Margin="0,0,4,0" />
+                            <TextBlock FontSize="9" FontWeight="SemiBold">
+                              <Run Text="Sin cambios (" /><Run Text="{Binding ComparisonUnchangedCount, Mode=OneWay}" /><Run Text=")" />
+                            </TextBlock>
                           </StackPanel>
                         </RadioButton>
                       </StackPanel>
@@ -949,30 +1063,253 @@
                 </DockPanel>
               </Border>
 
-              <!-- Grilla + cajón + leyenda -->
-              <Grid Grid.Row="4">
+              <!-- ════════ REJILLA MAESTRA INTEGRADA (CUADRE 100% PERFECTO) ════════ -->
+              <Grid Grid.Row="3">
                 <Grid.RowDefinitions>
+                  <RowDefinition Height="Auto" />
                   <RowDefinition Height="*" />
                   <RowDefinition Height="Auto" />
                   <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <DataGrid Grid.Row="0"
+                <!-- ─── FILA SUPERIOR: RESUMEN Y ZONAS CON EL MISMO SISTEMA DE 13 COLUMNAS + SCROLLBAR ─── -->
+                <Grid x:Name="ComparisonHeaderGrid" Grid.Row="0">
+                  <Grid.ColumnDefinitions>
+                    <!-- Zona A (Cols 0-4: 46 + * + 42 + 76 + 90 = 254 + 1fr) -->
+                    <ColumnDefinition Width="46" />
+                    <ColumnDefinition Width="*" MinWidth="160" />
+                    <ColumnDefinition Width="42" />
+                    <ColumnDefinition Width="76" />
+                    <ColumnDefinition Width="90" />
+
+                    <!-- Zona Delta (Cols 5-7: 100 + 110 + 135 = 345) -->
+                    <ColumnDefinition Width="100" />
+                    <ColumnDefinition Width="110" />
+                    <ColumnDefinition Width="135" />
+
+                    <!-- Zona B (Cols 8-12: 46 + * + 42 + 76 + 90 = 254 + 1fr) -->
+                    <ColumnDefinition Width="46" />
+                    <ColumnDefinition Width="*" MinWidth="160" />
+                    <ColumnDefinition Width="42" />
+                    <ColumnDefinition Width="76" />
+                    <ColumnDefinition Width="90" />
+
+                    <!-- Col 13: Espaciador que absorbe exactamente el ScrollBar vertical del DataGrid -->
+                    <ColumnDefinition Width="*" />
+                  </Grid.ColumnDefinitions>
+
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="40" />
+                  </Grid.RowDefinitions>
+
+                  <!-- ─── FILA ÚNICA: RESUMEN EJECUTIVO (40px) ─── -->
+                  <!-- Cuadro Versión A: Cols 0-4 -->
+                  <Border Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="5"
+                          Background="#F8FAFD" BorderBrush="#BFDBFE" BorderThickness="0,0,2,1"
+                          Padding="10,0">
+                    <DockPanel LastChildFill="True">
+                      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding ComparisonBaselineTotalText}"
+                                   FontFamily="{StaticResource Font.Mono}" FontSize="14" FontWeight="Bold"
+                                   Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding ComparisonBaselineCountText}"
+                                   FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink3}"
+                                   Margin="6,0,0,0" VerticalAlignment="Center" />
+                      </StackPanel>
+
+                      <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Width="6" Height="6" CornerRadius="3" Background="#2563EB" Margin="0,0,6,0" VerticalAlignment="Center" />
+                        <TextBlock Text="VERSIÓN A (LÍNEA BASE)" FontSize="9.5" FontWeight="ExtraBold"
+                                   Foreground="#1D4ED8" VerticalAlignment="Center" />
+                        <Border Background="White" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="3"
+                                Padding="5,1" Margin="6,0,0,0" VerticalAlignment="Center">
+                          <TextBlock Text="{Binding ComparisonBaselineLabel}" FontSize="9" FontWeight="Bold"
+                                     FontFamily="{StaticResource Font.Mono}" Foreground="#334155"
+                                     TextTrimming="CharacterEllipsis" MaxWidth="160" />
+                        </Border>
+                      </StackPanel>
+                    </DockPanel>
+                  </Border>
+
+                  <!-- Cuadro Δ NETA: Cols 5-7 (sobre Estado, Δ Cant, Δ Monto) -->
+                  <Border Grid.Row="0" Grid.Column="5" Grid.ColumnSpan="3"
+                          Background="#F8FAFC" BorderBrush="#CBD5E1" BorderThickness="0,0,2,1"
+                          Padding="4,0">
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                      <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <TextBlock Text="Δ NETA:" FontSize="8.5" FontWeight="ExtraBold"
+                                   Foreground="{DynamicResource Brush.Ink3}" Margin="0,0,4,0" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding ComparisonDeltaText}"
+                                   FontFamily="{StaticResource Font.Mono}" FontSize="13" FontWeight="Bold"
+                                   Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" />
+                        <Border Background="#FEF3C7" CornerRadius="2" Padding="3,1" Margin="4,0,0,0" VerticalAlignment="Center">
+                          <TextBlock Text="{Binding ComparisonDeltaPctText}" FontFamily="{StaticResource Font.Mono}"
+                                     FontSize="9" FontWeight="Bold" Foreground="#92400E" />
+                        </Border>
+                      </StackPanel>
+
+                      <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,2,0,0">
+                        <Border Background="#FEF3C7" BorderBrush="#FDE68A" BorderThickness="1" CornerRadius="2"
+                                Padding="4,1" Margin="0,0,3,0">
+                          <TextBlock Text="{Binding ComparisonChangedCount, StringFormat='{}{0} modif.'}"
+                                     FontSize="8" FontWeight="Bold" Foreground="#B45309" />
+                        </Border>
+                        <Border Background="#ECFDF5" BorderBrush="#A7F3D0" BorderThickness="1" CornerRadius="2"
+                                Padding="4,1" Margin="0,0,3,0">
+                          <TextBlock Text="{Binding ComparisonAddedCount, StringFormat='{}{0} nuevas'}"
+                                     FontSize="8" FontWeight="Bold" Foreground="#047857" />
+                        </Border>
+                        <Border Background="#FEF2F2" BorderBrush="#FECACA" BorderThickness="1" CornerRadius="2"
+                                Padding="4,1" Margin="0,0,3,0">
+                          <TextBlock Text="{Binding ComparisonRemovedCount, StringFormat='{}{0} deduct.'}"
+                                     FontSize="8" FontWeight="Bold" Foreground="#DC2626" />
+                        </Border>
+                        <Border Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="2"
+                                Padding="4,1">
+                          <TextBlock Text="{Binding ComparisonUnchangedCount, StringFormat='{}{0} sin cambio'}"
+                                     FontSize="8" FontWeight="SemiBold" Foreground="#64748B" />
+                        </Border>
+                      </StackPanel>
+                    </StackPanel>
+                  </Border>
+
+                  <!-- Cuadro Versión B: Cols 8-12 -->
+                  <Border Grid.Row="0" Grid.Column="8" Grid.ColumnSpan="5"
+                          Background="#F7FCF9" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1"
+                          Padding="10,0">
+                    <DockPanel LastChildFill="True">
+                      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding ComparisonCurrentTotalText}"
+                                   FontFamily="{StaticResource Font.Mono}" FontSize="14" FontWeight="Bold"
+                                   Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding ComparisonCurrentCountText}"
+                                   FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink3}"
+                                   Margin="6,0,0,0" VerticalAlignment="Center" />
+                      </StackPanel>
+
+                      <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Width="6" Height="6" CornerRadius="3" Background="#059669" Margin="0,0,6,0" VerticalAlignment="Center" />
+                        <TextBlock Text="VERSIÓN B (ACTUAL / NUEVA)" FontSize="9.5" FontWeight="ExtraBold"
+                                   Foreground="#047857" VerticalAlignment="Center" />
+                        <Border Background="White" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="3"
+                                Padding="5,1" Margin="6,0,0,0" VerticalAlignment="Center">
+                          <TextBlock Text="{Binding ComparisonCurrentLabel}" FontSize="9" FontWeight="Bold"
+                                     FontFamily="{StaticResource Font.Mono}" Foreground="#334155"
+                                     TextTrimming="CharacterEllipsis" MaxWidth="160" />
+                        </Border>
+                      </StackPanel>
+                    </DockPanel>
+                  </Border>
+
+                  <!-- Espaciador Scrollbar Row 0 -->
+                  <Border Grid.Row="0" Grid.Column="13" Background="{DynamicResource Brush.Surface2}"
+                          BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1" />
+
+                </Grid>
+
+                <!-- Grilla Lado a Lado -->
+                <DataGrid x:Name="ComparisonDataGrid" Grid.Row="1"
                           ItemsSource="{Binding FilteredComparisonRows}"
                           SelectedItem="{Binding SelectedComparisonRow, Mode=TwoWay}"
                           Style="{StaticResource DataGrid.Workspace}"
-                          CellStyle="{StaticResource Versions.Cell}"
+                          CellStyle="{StaticResource Versions.ComparisonCell}"
+                          RowStyle="{StaticResource Versions.ComparisonRow}"
                           IsReadOnly="True"
-                          RowHeight="48">
+                          RowHeight="38"
+                          EnableColumnVirtualization="False"
+                          ScrollViewer.VerticalScrollBarVisibility="Visible">
                   <DataGrid.Columns>
 
-                    <!-- Semáforo -->
-                    <DataGridTemplateColumn Header="Semáforo" Width="130" SortMemberPath="DisplayBadge">
+                    <!-- ═════ GRUPO IZQUIERDO: VERSIÓN A (5 Columnas) ═════ -->
+                    <DataGridTextColumn Header="A · Ítem" Width="46" SortMemberPath="Item"
+                                        Binding="{Binding ItemA}"
+                                        HeaderStyle="{StaticResource Versions.Header.VersionA.Center}">
+                      <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                          <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
+                          <Setter Property="FontSize" Value="10.5" />
+                          <Setter Property="FontWeight" Value="SemiBold" />
+                          <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
+                          <Setter Property="HorizontalAlignment" Value="Center" />
+                          <Setter Property="VerticalAlignment" Value="Center" />
+                        </Style>
+                      </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+
+                    <DataGridTemplateColumn Header="A · Descripción" Width="*" MinWidth="160" SortMemberPath="Descripcion"
+                                            HeaderStyle="{StaticResource Versions.Header.VersionA}">
+                      <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                          <TextBlock Text="{Binding DescripcionA}" FontSize="11" FontWeight="SemiBold"
+                                     Foreground="{DynamicResource Brush.Ink}" TextTrimming="CharacterEllipsis"
+                                     VerticalAlignment="Center">
+                            <TextBlock.Style>
+                              <Style TargetType="TextBlock">
+                                <Style.Triggers>
+                                  <DataTrigger Binding="{Binding IsAdicional}" Value="True">
+                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink4}" />
+                                    <Setter Property="FontStyle" Value="Italic" />
+                                  </DataTrigger>
+                                </Style.Triggers>
+                              </Style>
+                            </TextBlock.Style>
+                          </TextBlock>
+                        </DataTemplate>
+                      </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTextColumn Header="UD" Width="42" SortMemberPath="Unidad"
+                                        Binding="{Binding UnidadA}"
+                                        HeaderStyle="{StaticResource Versions.Header.VersionA.Center}">
+                      <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                          <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
+                          <Setter Property="FontSize" Value="10" />
+                          <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
+                          <Setter Property="HorizontalAlignment" Value="Center" />
+                          <Setter Property="VerticalAlignment" Value="Center" />
+                        </Style>
+                      </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+
+                    <DataGridTextColumn Header="A · Cant." Width="76" SortMemberPath="CantidadBase"
+                                        Binding="{Binding CantidadBaseNumDisplay}"
+                                        HeaderStyle="{StaticResource Versions.Header.VersionA.Numeric}">
+                      <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                          <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
+                          <Setter Property="FontSize" Value="10.5" />
+                          <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}" />
+                          <Setter Property="HorizontalAlignment" Value="Right" />
+                          <Setter Property="VerticalAlignment" Value="Center" />
+                        </Style>
+                      </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+
+                    <DataGridTextColumn x:Name="TotalColumn" Header="A · Total UF" Width="90" SortMemberPath="BaselineUf"
+                                        Binding="{Binding TotalBaseDisplay}"
+                                        HeaderStyle="{StaticResource Versions.Header.VersionA.Divider}"
+                                        CellStyle="{StaticResource Versions.ComparisonCell.DividerA}">
+                      <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                          <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
+                          <Setter Property="FontSize" Value="11" />
+                          <Setter Property="FontWeight" Value="Bold" />
+                          <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+                          <Setter Property="HorizontalAlignment" Value="Right" />
+                          <Setter Property="VerticalAlignment" Value="Center" />
+                        </Style>
+                      </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+
+                    <!-- ═════ GRUPO CENTRAL: VARIACIÓN / SEMÁFORO (3 Columnas) ═════ -->
+                    <DataGridTemplateColumn Header="Estado" Width="100" SortMemberPath="DisplayBadge"
+                                            HeaderStyle="{StaticResource Versions.Header.Delta}">
                       <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                           <Border Style="{StaticResource Versions.SemaforoChip}">
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                              <Ellipse Width="6" Height="6" VerticalAlignment="Center" Margin="0,0,6,0">
+                              <Ellipse Width="5" Height="5" VerticalAlignment="Center" Margin="0,0,4,0">
                                 <Ellipse.Style>
                                   <Style TargetType="Ellipse">
                                     <Setter Property="Fill" Value="{DynamicResource Brush.Muted}" />
@@ -990,7 +1327,7 @@
                                   </Style>
                                 </Ellipse.Style>
                               </Ellipse>
-                              <TextBlock Text="{Binding DisplayBadge}" FontSize="9.5" FontWeight="Bold"
+                              <TextBlock Text="{Binding DisplayBadge}" FontSize="8.5" FontWeight="Bold"
                                          VerticalAlignment="Center">
                                 <TextBlock.Style>
                                   <Style TargetType="TextBlock">
@@ -1015,40 +1352,68 @@
                       </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
 
-                    <!-- Ítem (código) -->
-                    <DataGridTextColumn Header="Ítem" Width="80" SortMemberPath="Item"
-                                        Binding="{Binding Item}">
+                    <DataGridTextColumn Header="Δ Cantidad" Width="110" SortMemberPath="DeltaCantidad"
+                                        Binding="{Binding DeltaCantidadNumDisplay}"
+                                        HeaderStyle="{StaticResource Versions.Header.Delta.Numeric}">
                       <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                           <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
                           <Setter Property="FontSize" Value="10.5" />
-                          <Setter Property="Foreground" Value="{DynamicResource Brush.Ink4}" />
+                          <Setter Property="FontWeight" Value="SemiBold" />
+                          <Setter Property="HorizontalAlignment" Value="Right" />
                           <Setter Property="VerticalAlignment" Value="Center" />
+                          <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
+                          <Style.Triggers>
+                            <DataTrigger Binding="{Binding DiffKind}" Value="Adicional">
+                              <Setter Property="Foreground" Value="{DynamicResource Brush.SuccessDark}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding DiffKind}" Value="Deductivo">
+                              <Setter Property="Foreground" Value="{DynamicResource Brush.Danger}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding DiffKind}" Value="Modificado">
+                              <Setter Property="Foreground" Value="{DynamicResource Brush.Amber}" />
+                            </DataTrigger>
+                          </Style.Triggers>
                         </Style>
                       </DataGridTextColumn.ElementStyle>
                     </DataGridTextColumn>
 
-                    <!-- Partida -->
-                    <DataGridTemplateColumn Header="Partida" Width="*" MinWidth="210" SortMemberPath="Descripcion">
-                      <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                          <StackPanel VerticalAlignment="Center" ToolTip="{Binding DetalleCambio}">
-                            <TextBlock Text="{Binding Descripcion}" FontSize="11.5" FontWeight="SemiBold"
-                                       Foreground="{DynamicResource Brush.Ink}"
-                                       TextTrimming="CharacterEllipsis" />
-                            <TextBlock Text="{Binding DetalleCambio}" FontSize="10.5"
-                                       Foreground="{DynamicResource Brush.Ink4}" Margin="0,2,0,0"
-                                       TextTrimming="CharacterEllipsis" />
-                          </StackPanel>
-                        </DataTemplate>
-                      </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-
-                    <!-- UD -->
-                    <DataGridTextColumn Header="UD" Width="50" Binding="{Binding Unidad}">
+                    <DataGridTextColumn x:Name="DeltaUfColumn" Header="Δ Monto UF" Width="135" SortMemberPath="DeltaUf"
+                                        Binding="{Binding DeltaMontoDisplay}"
+                                        HeaderStyle="{StaticResource Versions.Header.Delta.Divider}"
+                                        CellStyle="{StaticResource Versions.ComparisonCell.Divider}">
                       <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
+                          <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
+                          <Setter Property="FontSize" Value="11" />
+                          <Setter Property="FontWeight" Value="Bold" />
+                          <Setter Property="HorizontalAlignment" Value="Right" />
+                          <Setter Property="VerticalAlignment" Value="Center" />
+                          <Setter Property="Foreground" Value="{DynamicResource Brush.Ink4}" />
+                          <Style.Triggers>
+                            <DataTrigger Binding="{Binding DiffKind}" Value="Adicional">
+                              <Setter Property="Foreground" Value="{DynamicResource Brush.SuccessDark}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding DiffKind}" Value="Deductivo">
+                              <Setter Property="Foreground" Value="{DynamicResource Brush.Danger}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding DiffKind}" Value="Modificado">
+                              <Setter Property="Foreground" Value="{DynamicResource Brush.Amber}" />
+                            </DataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+
+                    <!-- ═════ GRUPO DERECHO: VERSIÓN B (5 Columnas) ═════ -->
+                    <DataGridTextColumn Header="B · Ítem" Width="46" SortMemberPath="Item"
+                                        Binding="{Binding ItemB}"
+                                        HeaderStyle="{StaticResource Versions.Header.VersionB.Center}">
+                      <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                          <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
                           <Setter Property="FontSize" Value="10.5" />
+                          <Setter Property="FontWeight" Value="SemiBold" />
                           <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
                           <Setter Property="HorizontalAlignment" Value="Center" />
                           <Setter Property="VerticalAlignment" Value="Center" />
@@ -1056,152 +1421,98 @@
                       </DataGridTextColumn.ElementStyle>
                     </DataGridTextColumn>
 
-                    <!-- Cantidades -->
-                    <DataGridTemplateColumn Header="Cantidades" Width="145"
-                                            HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}">
+                    <DataGridTemplateColumn Header="B · Descripción" Width="*" MinWidth="160" SortMemberPath="Descripcion"
+                                            HeaderStyle="{StaticResource Versions.Header.VersionB}">
                       <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                          <StackPanel VerticalAlignment="Center" HorizontalAlignment="Right">
-                            <TextBlock FontFamily="{StaticResource Font.Mono}" FontSize="11"
-                                       Foreground="{DynamicResource Brush.Ink2}" TextAlignment="Right">
-                              <Run Text="{Binding CantidadBase, StringFormat={}{0:N2}, Mode=OneWay}" />
-                              <Run Text=" → " />
-                              <Run Text="{Binding CantidadActual, StringFormat={}{0:N2}, Mode=OneWay}" FontWeight="SemiBold" />
-                            </TextBlock>
-                            <TextBlock Text="{Binding DeltaCantidadText}" FontFamily="{StaticResource Font.Mono}"
-                                       FontSize="10.5" FontWeight="SemiBold" TextAlignment="Right"
-                                       Margin="0,1,0,0">
+                          <StackPanel VerticalAlignment="Center" ToolTip="{Binding DetalleCambio}">
+                            <TextBlock Text="{Binding DescripcionB}" FontSize="11" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource Brush.Ink}" TextTrimming="CharacterEllipsis">
                               <TextBlock.Style>
                                 <Style TargetType="TextBlock">
-                                  <Setter Property="Foreground" Value="{DynamicResource Brush.Ink4}" />
                                   <Style.Triggers>
-                                    <DataTrigger Binding="{Binding DiffKind}" Value="Adicional">
-                                      <Setter Property="Foreground" Value="{DynamicResource Brush.SuccessDark}" />
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding DiffKind}" Value="Deductivo">
-                                      <Setter Property="Foreground" Value="{DynamicResource Brush.Danger}" />
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding DiffKind}" Value="Modificado">
-                                      <Setter Property="Foreground" Value="{DynamicResource Brush.Amber}" />
+                                    <DataTrigger Binding="{Binding IsDeductivo}" Value="True">
+                                      <Setter Property="Foreground" Value="{DynamicResource Brush.Ink4}" />
+                                      <Setter Property="FontStyle" Value="Italic" />
                                     </DataTrigger>
                                   </Style.Triggers>
                                 </Style>
                               </TextBlock.Style>
                             </TextBlock>
+                            <TextBlock Text="{Binding DetalleCambio}" FontSize="9.5"
+                                       Foreground="{DynamicResource Brush.Ink4}" Margin="0,1,0,0"
+                                       TextTrimming="CharacterEllipsis" />
                           </StackPanel>
                         </DataTemplate>
                       </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
 
-                    <!-- P.U. UF -->
-                    <DataGridTemplateColumn x:Name="PuColumn" Header="P.U. UF" Width="112"
-                                            HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}">
-                      <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                          <TextBlock Style="{StaticResource Versions.NumCell}" ToolTip="{Binding DeltaPuUfText}">
-                            <Run Text="{Binding PuBaseText, Mode=OneWay}" />
-                            <Run Text=" → " />
-                            <Run Text="{Binding PuActualText, Mode=OneWay}" />
-                          </TextBlock>
-                        </DataTemplate>
-                      </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="UD" Width="42" SortMemberPath="Unidad"
+                                        Binding="{Binding UnidadB}"
+                                        HeaderStyle="{StaticResource Versions.Header.VersionB.Center}">
+                      <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                          <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
+                          <Setter Property="FontSize" Value="10" />
+                          <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
+                          <Setter Property="HorizontalAlignment" Value="Center" />
+                          <Setter Property="VerticalAlignment" Value="Center" />
+                        </Style>
+                      </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
 
-                    <!-- Total UF -->
-                    <DataGridTemplateColumn x:Name="TotalColumn" Header="Total UF" Width="130"
-                                            HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}">
-                      <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                          <TextBlock Style="{StaticResource Versions.NumCell}">
-                            <Run Text="{Binding TotalBaseText, Mode=OneWay}" />
-                            <Run Text=" → " />
-                            <Run Text="{Binding TotalActualText, Mode=OneWay}" />
-                          </TextBlock>
-                        </DataTemplate>
-                      </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="B · Cant." Width="76" SortMemberPath="CantidadActual"
+                                        Binding="{Binding CantidadActualNumDisplay}"
+                                        HeaderStyle="{StaticResource Versions.Header.VersionB.Numeric}">
+                      <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                          <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
+                          <Setter Property="FontSize" Value="10.5" />
+                          <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}" />
+                          <Setter Property="HorizontalAlignment" Value="Right" />
+                          <Setter Property="VerticalAlignment" Value="Center" />
+                        </Style>
+                      </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
 
-                    <!-- Δ UF -->
-                    <DataGridTemplateColumn x:Name="DeltaUfColumn" Header="Δ UF" Width="108"
-                                            HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}">
-                      <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                          <TextBlock FontFamily="{StaticResource Font.Mono}" FontSize="11.5" FontWeight="Bold"
-                                     TextAlignment="Right" HorizontalAlignment="Right" VerticalAlignment="Center"
-                                     Text="{Binding DeltaUfText}">
-                            <TextBlock.Style>
-                              <Style TargetType="TextBlock">
-                                <Setter Property="Foreground" Value="{DynamicResource Brush.Ink4}" />
-                                <Style.Triggers>
-                                  <DataTrigger Binding="{Binding DiffKind}" Value="Adicional">
-                                    <Setter Property="Foreground" Value="{DynamicResource Brush.SuccessDark}" />
-                                  </DataTrigger>
-                                  <DataTrigger Binding="{Binding DiffKind}" Value="Deductivo">
-                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Danger}" />
-                                  </DataTrigger>
-                                  <DataTrigger Binding="{Binding DiffKind}" Value="Modificado">
-                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Amber}" />
-                                  </DataTrigger>
-                                </Style.Triggers>
-                              </Style>
-                            </TextBlock.Style>
-                          </TextBlock>
-                        </DataTemplate>
-                      </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-
-                    <!-- Δ CLP -->
-                    <DataGridTemplateColumn Header="Δ CLP" Width="118"
-                                            HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}">
-                      <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                          <TextBlock FontFamily="{StaticResource Font.Mono}" FontSize="11"
-                                     TextAlignment="Right" HorizontalAlignment="Right" VerticalAlignment="Center"
-                                     Text="{Binding DeltaClpText}">
-                            <TextBlock.Style>
-                              <Style TargetType="TextBlock">
-                                <Setter Property="Foreground" Value="{DynamicResource Brush.Ink4}" />
-                                <Style.Triggers>
-                                  <DataTrigger Binding="{Binding DiffKind}" Value="Adicional">
-                                    <Setter Property="Foreground" Value="{DynamicResource Brush.SuccessDark}" />
-                                  </DataTrigger>
-                                  <DataTrigger Binding="{Binding DiffKind}" Value="Deductivo">
-                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Danger}" />
-                                  </DataTrigger>
-                                  <DataTrigger Binding="{Binding DiffKind}" Value="Modificado">
-                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Amber}" />
-                                  </DataTrigger>
-                                </Style.Triggers>
-                              </Style>
-                            </TextBlock.Style>
-                          </TextBlock>
-                        </DataTemplate>
-                      </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
+                    <DataGridTextColumn x:Name="TotalBColumn" Header="B · Total UF" Width="90" SortMemberPath="CurrentUf"
+                                        Binding="{Binding TotalActualDisplay}"
+                                        HeaderStyle="{StaticResource Versions.Header.VersionB.Numeric}">
+                      <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                          <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
+                          <Setter Property="FontSize" Value="11" />
+                          <Setter Property="FontWeight" Value="Bold" />
+                          <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+                          <Setter Property="HorizontalAlignment" Value="Right" />
+                          <Setter Property="VerticalAlignment" Value="Center" />
+                        </Style>
+                      </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
 
                   </DataGrid.Columns>
                 </DataGrid>
 
-                <!-- Cajón: desglose de recursos de la partida seleccionada -->
-                <Border Grid.Row="1" Background="{DynamicResource Brush.Surface2}"
-                        BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,1,0,0" Padding="14,10"
+                <!-- Cajón: desglose de recursos de la partida seleccionada (compacto) -->
+                <Border Grid.Row="2" Background="{DynamicResource Brush.Surface2}"
+                        BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,1,0,0" Padding="10,6"
                         Visibility="{Binding HasSelectedRowResourceDiffs, Converter={StaticResource BoolToVisibility}}">
                   <StackPanel>
                     <DockPanel LastChildFill="True">
                       <Button DockPanel.Dock="Right" Style="{StaticResource Button.Toolbar}"
                               Command="{Binding GoToItemCommand}" VerticalAlignment="Top" Margin="0,0,0,0">
                         <StackPanel Orientation="Horizontal">
-                          <Path Style="{StaticResource Versions.Icon.ArrowRight}" Width="14" Height="14"
+                          <Path Style="{StaticResource Versions.Icon.ArrowRight}" Width="13" Height="13"
                                 Stroke="{DynamicResource Brush.Ink2}" />
-                          <TextBlock Text="Ir a partida" Margin="6,0,0,0" />
+                          <TextBlock Text="Ir a partida" Margin="5,0,0,0" FontSize="11" />
                         </StackPanel>
                       </Button>
 
                       <StackPanel DockPanel.Dock="Left">
                         <StackPanel Orientation="Horizontal">
-                          <TextBlock Text="Detalle de recursos" FontSize="12" FontWeight="Bold"
+                          <TextBlock Text="Detalle de recursos" FontSize="11" FontWeight="Bold"
                                      Foreground="{DynamicResource Brush.Ink}" />
-                          <TextBlock FontSize="11" Foreground="{DynamicResource Brush.Ink3}" Margin="6,0,0,0"
+                          <TextBlock FontSize="10.5" Foreground="{DynamicResource Brush.Ink3}" Margin="6,0,0,0"
                                      VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="420">
                             <Run Text="·" />
                             <Run Text="{Binding SelectedComparisonRow.Item, Mode=OneWay}" />
@@ -1210,15 +1521,15 @@
                           </TextBlock>
                         </StackPanel>
                         <TextBlock Text="Materiales y mano de obra que explican la variación de la partida seleccionada"
-                                   FontSize="10.5" Foreground="{DynamicResource Brush.Ink4}" Margin="0,2,0,0" />
+                                   FontSize="9.5" Foreground="{DynamicResource Brush.Ink4}" Margin="0,1,0,0" />
                       </StackPanel>
                     </DockPanel>
 
-                    <ScrollViewer MaxHeight="104" Margin="0,8,0,0" VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer MaxHeight="80" Margin="0,5,0,0" VerticalScrollBarVisibility="Auto">
                     <StackPanel>
                       <!-- Cabecera de la mini tabla -->
                       <Border Background="{DynamicResource Brush.ChipBg}" BorderBrush="{DynamicResource Brush.Line}"
-                              BorderThickness="1,1,1,0" CornerRadius="7,7,0,0" Padding="10,6">
+                              BorderThickness="1,1,1,0" CornerRadius="5,5,0,0" Padding="8,4">
                         <Grid>
                           <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="90" />
@@ -1242,11 +1553,11 @@
                       </Border>
 
                       <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}"
-                              BorderThickness="1" CornerRadius="0,0,7,7">
+                              BorderThickness="1" CornerRadius="0,0,5,5">
                         <ItemsControl ItemsSource="{Binding SelectedRowResourceDiffs}">
                           <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                              <Grid Margin="10,6">
+                              <Grid Margin="8,4">
                                 <Grid.ColumnDefinitions>
                                   <ColumnDefinition Width="90" />
                                   <ColumnDefinition Width="*" />
@@ -1257,25 +1568,25 @@
                                   <ColumnDefinition Width="86" />
                                   <ColumnDefinition Width="92" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="{Binding Codigo}" FontSize="10.5"
+                                <TextBlock Grid.Column="0" Text="{Binding Codigo}" FontSize="10"
                                            FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink4}"
                                            VerticalAlignment="Center" />
-                                <TextBlock Grid.Column="1" Text="{Binding Descripcion}" FontSize="11"
+                                <TextBlock Grid.Column="1" Text="{Binding Descripcion}" FontSize="10.5"
                                            FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink2}"
                                            VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,8,0" />
-                                <TextBlock Grid.Column="2" Text="{Binding Unidad}" FontSize="10.5"
+                                <TextBlock Grid.Column="2" Text="{Binding Unidad}" FontSize="10"
                                            Foreground="{DynamicResource Brush.Ink3}" HorizontalAlignment="Center"
                                            VerticalAlignment="Center" />
-                                <TextBlock Grid.Column="3" Text="{Binding CantidadBase, StringFormat={}{0:N2}}"
-                                           Style="{StaticResource Versions.NumCell}" FontSize="10.5" />
-                                <TextBlock Grid.Column="4" Text="{Binding CantidadActual, StringFormat={}{0:N2}}"
-                                           Style="{StaticResource Versions.NumCell}" FontSize="10.5" />
+                                <TextBlock Grid.Column="3" Text="{Binding CantidadBase, StringFormat={}{0:N0}}"
+                                           Style="{StaticResource Versions.NumCell}" FontSize="10" />
+                                <TextBlock Grid.Column="4" Text="{Binding CantidadActual, StringFormat={}{0:N0}}"
+                                           Style="{StaticResource Versions.NumCell}" FontSize="10" />
                                 <TextBlock Grid.Column="5" Text="{Binding DeltaCantidad, StringFormat={}{0:+0.##;-0.##;—}}"
-                                           Style="{StaticResource Versions.NumCell}" FontSize="10.5" FontWeight="SemiBold" />
+                                           Style="{StaticResource Versions.NumCell}" FontSize="10" FontWeight="SemiBold" />
                                 <TextBlock Grid.Column="6" Text="{Binding PrecioUnitarioText}"
-                                           Style="{StaticResource Versions.NumCell}" FontSize="10.5" />
+                                           Style="{StaticResource Versions.NumCell}" FontSize="10" />
                                 <TextBlock Grid.Column="7" Text="{Binding DeltaTotalText}"
-                                           Style="{StaticResource Versions.NumCell}" FontSize="10.5" FontWeight="SemiBold" />
+                                           Style="{StaticResource Versions.NumCell}" FontSize="10" FontWeight="SemiBold" />
                               </Grid>
                             </DataTemplate>
                           </ItemsControl.ItemTemplate>
@@ -1286,9 +1597,9 @@
                   </StackPanel>
                 </Border>
 
-                <!-- Leyenda + pie -->
-                <Border Grid.Row="2" Background="{DynamicResource Brush.Surface2}"
-                        BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,1,0,0" Padding="14,9">
+                <!-- Leyenda + pie (compacto) -->
+                <Border Grid.Row="3" Background="{DynamicResource Brush.Surface2}"
+                        BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,1,0,0" Padding="10,5">
                   <DockPanel LastChildFill="False">
                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
                       <TextBlock Text="{Binding ComparisonModeHint}" FontSize="10.5"

@@ -92,7 +92,7 @@ public partial class HojaCubicacionDialog : Window
         decimal total = 0m;
         foreach (var item in items)
             total += item.Subtotal;
-        string fmt = total.ToString("N2", CultureInfo.CurrentCulture);
+        string fmt = total % 1 == 0 ? total.ToString("N0", CultureInfo.CurrentCulture) : total.ToString("#,##0.##", CultureInfo.CurrentCulture);
         GrandTotalRun.Text = fmt;
         if (HeaderGrandTotalRun != null)
             HeaderGrandTotalRun.Text = fmt;

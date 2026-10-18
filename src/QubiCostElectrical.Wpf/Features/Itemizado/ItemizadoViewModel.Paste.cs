@@ -80,11 +80,16 @@ public sealed partial class ItemizadoViewModel
 
             var plan = outcome.Plan;
             if (plan.RequiresReplaceConfirmation &&
-                !WpfDialogService.Confirm(plan.ActionLabel,
-                    presenter.BuildReplaceConfirmationMessage(plan.CurrentRowCount, plan.ActionLabel), isWarning: true))
+                !ConfirmReplace(plan.ActionLabel,
+                    presenter.BuildReplaceConfirmationMessage(plan.CurrentRowCount, plan.ActionLabel)))
             {
                 StatusMessage = "Importación cancelada.";
                 return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(session.CurrentProjectPath) && System.IO.File.Exists(session.CurrentProjectPath))
+            {
+                _ = SafeSaveService.CreateBackupAsync(session.CurrentProjectPath);
             }
 
             undo.PushUndoPoint(session, "Importar itemizado");
@@ -134,9 +139,14 @@ public sealed partial class ItemizadoViewModel
                 return;
 
             if (outcome.Plan.RequiresReplaceConfirmation &&
-                !WpfDialogService.Confirm(outcome.Plan.ActionLabel,
-                    presenter.BuildReplaceConfirmationMessage(outcome.Plan.CurrentRowCount, outcome.Plan.ActionLabel), isWarning: true))
+                !ConfirmReplace(outcome.Plan.ActionLabel,
+                    presenter.BuildReplaceConfirmationMessage(outcome.Plan.CurrentRowCount, outcome.Plan.ActionLabel)))
                 return;
+
+            if (!string.IsNullOrWhiteSpace(session.CurrentProjectPath) && System.IO.File.Exists(session.CurrentProjectPath))
+            {
+                _ = SafeSaveService.CreateBackupAsync(session.CurrentProjectPath);
+            }
 
             undo.PushUndoPoint(session, "Pegar itemizado");
             presenter.CommitReplace(outcome.Rows);

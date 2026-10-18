@@ -27,15 +27,74 @@ public static class FamilyPresentationDefaults
         or "PROTECCIONES" or "PUESTA A TIERRA";
 
     /// <summary>
-    /// Mapeo canónico natural por defecto para familias de especialidad
+    /// Mapeo canónico natural por defecto para familias y sinónimos de especialidad
     /// cuando el usuario no las ha asignado explícitamente a otra fila de sobreventa en Costos.
+    /// Esto permite que el factor configurado por el usuario para una familia (ej: Canalización)
+    /// aplique automáticamente a sus variantes (Canalizado, Bandejas, etc.) en cualquier proyecto.
     /// </summary>
-    public static string NaturalCanonicalTarget(string? normalized) => normalized switch
+    public static string NaturalCanonicalTarget(string? normalized) => (normalized ?? string.Empty).Trim().ToUpperInvariant() switch
     {
-        "TRANSFORMADORES" or "TRANSFORMADOR" => "EQUIPOS",
-        "GRUPO ELECTROGENO" or "GRUPO ELECTROGENOS" or "GENERADORES" or "GENERADOR" => "EQUIPOS",
-        "DUCTO BARRA" or "DUCTO BARRAS" or "DUCTOBARRA" or "DUCTOBARRAS" => "CANALIZACION",
-        "MEDIA TENSION" or "MEDIA TENSION ELECTRICA" or "MT" => "EQUIPOS",
+        // Canalización y distribución
+        "CANALIZACION" or "CANALIZACIONES" or "CANALIZADO" or "CANALIZADOS"
+            or "BANDEJAS" or "BANDEJA" or "ESCALERILLAS" or "ESCALERILLA"
+            or "TUBERIAS" or "TUBERIA" or "CONDUIT" or "TUBERIAS CONDUIT" or "TUBERIA CONDUIT"
+            or "DUCTOS" or "DUCTO" or "CANALETAS" or "CANALETA"
+            or "DUCTO BARRA" or "DUCTO BARRAS" or "DUCTOBARRA" or "DUCTOBARRAS"
+            => "CANALIZACION",
+
+        // Conductores y alimentadores
+        "CONDUCTORES" or "CONDUCTOR" or "CABLES" or "CABLE" or "ALAMBRES" or "ALAMBRE"
+            or "ALIMENTADORES" or "ALIMENTADOR" or "SUBALIMENTADORES" or "SUBALIMENTADOR"
+            or "CORDONES" or "CORDON"
+            => "CONDUCTORES",
+
+        // Puesta a tierra
+        "PUESTA A TIERRA" or "PUESTAS A TIERRA" or "TIERRA" or "TIERRAS"
+            or "MALLA A TIERRA" or "MALLAS A TIERRA" or "MALLA TIERRA" or "MALLAS DE TIERRA"
+            or "ELECTRODOS" or "BARRA COPPERWELD"
+            => "PUESTA A TIERRA",
+
+        // Tableros
+        "TABLEROS" or "TABLERO" or "GABINETES" or "GABINETE" or "ARMARIOS" or "ARMARIO"
+            or "CELDAS" or "CELDA"
+            => "TABLEROS",
+
+        // Protecciones
+        "PROTECCIONES" or "PROTECCION" or "DISYUNTORES" or "DISYUNTOR"
+            or "AUTOMATICOS" or "AUTOMATICO" or "DIFERENCIALES" or "DIFERENCIAL"
+            or "FUSIBLES" or "FUSIBLE"
+            => "PROTECCIONES",
+
+        // Equipos
+        "EQUIPOS" or "EQUIPO" or "MAQUINARIA" or "MAQUINARIAS"
+            or "TRANSFORMADORES" or "TRANSFORMADOR" or "TRAFO" or "TRAFOS"
+            or "GRUPO ELECTROGENO" or "GRUPO ELECTROGENOS" or "GENERADORES" or "GENERADOR"
+            or "UPS" or "INVERSORES" or "INVERSOR"
+            or "MEDIA TENSION" or "MEDIA TENSION ELECTRICA" or "MT"
+            or "SUBESTACION" or "SUBESTACIONES"
+            => "EQUIPOS",
+
+        // Iluminación
+        "ILUMINACION" or "LUMINARIAS" or "LUMINARIA" or "LAMPARAS" or "LAMPARA"
+            or "FOCOS" or "FOCO" or "PROYECTORES" or "PROYECTOR"
+            or "EQUIPOS DE EMERGENCIA" or "LUCES DE EMERGENCIA"
+            => "ILUMINACION",
+
+        // Enchufes y artefactos
+        "ENCHUFES Y TOMACORRIENTES" or "ENCHUFES" or "ENCHUFE" or "TOMACORRIENTES" or "TOMACORRIENTE"
+            or "INTERRUPTORES" or "INTERRUPTOR" or "PLACAS" or "PLACA"
+            or "ARTEFACTOS" or "ARTEFACTO"
+            => "ENCHUFES Y TOMACORRIENTES",
+
+        // Accesorios y montaje
+        "ACCESORIOS" or "ACCESORIO" or "FERRETERIA"
+            or "CAJAS" or "CAJA" or "CAJAS DE DERIVACION" or "CAJA DE PASO"
+            or "SOPORTES" or "SOPORTE" or "SOPORTACION" or "SOPORTACIONES"
+            or "ABRAZADERAS" or "ABRAZADERA"
+            or "TERMINALES" or "TERMINAL" or "PRENSACABLES" or "PRENSACABLE"
+            or "FIJACIONES" or "PERNOS" or "TORNILLOS"
+            => "ACCESORIOS",
+
         _ => normalized ?? "ACCESORIOS"
     };
 

@@ -254,6 +254,7 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
             if (selectedPartida != null) selectedPartida.IsActiva = false;
             selectedPartida = value;
             if (selectedPartida != null) selectedPartida.IsActiva = true;
+            LoadCubicacionRows();
             OnPropertyChanged(nameof(SelectedPartida)); OnPropertyChanged(nameof(PartidaCodigo)); OnPropertyChanged(nameof(PartidaDescripcion));
             OnPropertyChanged(nameof(PartidaUnidad)); OnPropertyChanged(nameof(PartidaUnidadText)); OnPropertyChanged(nameof(PartidaPositionText));
             OnPropertyChanged(nameof(PartidaCantidadText)); OnPropertyChanged(nameof(PartidaCantidadToolTip)); OnPropertyChanged(nameof(PartidaObservacionesText)); OnPropertyChanged(nameof(ExcluidoCubicacion));
@@ -262,7 +263,6 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
             OnPropertyChanged(nameof(IsReadOnly)); OnPropertyChanged(nameof(PartidaEstadoText));
             NotifyCubicacionSummaryChanged();
             NotifyGlobalValorizacionChanged();
-            LoadCubicacionRows();
             ((RelayCommand)AplicarConjuntoCommand).RaiseCanExecuteChanged(); ((RelayCommand)CrearConjuntoDesdePartidaCommand).RaiseCanExecuteChanged();
             ((RelayCommand)AddRowCommand).RaiseCanExecuteChanged(); ((RelayCommand)InsertRowCommand).RaiseCanExecuteChanged();
             ((RelayCommand)DeletePartidaCommand).RaiseCanExecuteChanged(); ((RelayCommand)AddPartidaCommand).RaiseCanExecuteChanged();
@@ -591,7 +591,7 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
         get
         {
             if (selectedPartida == null) return "";
-            return selectedPartida.Cantidad.ToString("N2", System.Globalization.CultureInfo.CurrentCulture);
+            return selectedPartida.Cantidad % 1 == 0 ? selectedPartida.Cantidad.ToString("N0", System.Globalization.CultureInfo.CurrentCulture) : selectedPartida.Cantidad.ToString("#,##0.##", System.Globalization.CultureInfo.CurrentCulture);
         }
         set
         {
@@ -636,11 +636,24 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
     public bool IsPartidaUnidadMissing => selectedPartida is { HasMissingGlobalUnidad: true };
     public bool IsPartidaCantidadMissing => selectedPartida is { HasMissingGlobalCantidad: true };
     public string AlertaSinValorizacionGlobalMensaje => CubicacionPartidaHelper.GetAlertaMensaje(selectedPartida);
+    public string AlertaSinValorizacionGlobalBadgeText
+    {
+        get
+        {
+            if (selectedPartida == null || !selectedPartida.SinValorizacionGlobal) return "";
+            if (selectedPartida.HasMissingGlobalUnidad && selectedPartida.HasMissingGlobalCantidad)
+                return "Sin unidad ni cantidad";
+            if (selectedPartida.HasMissingGlobalCantidad)
+                return "Sin cantidad global";
+            return "Sin unidad global";
+        }
+    }
 
     public void NotifyGlobalValorizacionChanged()
     {
         OnPropertyChanged(nameof(HasAlertaSinValorizacionGlobal));
         OnPropertyChanged(nameof(AlertaSinValorizacionGlobalMensaje));
+        OnPropertyChanged(nameof(AlertaSinValorizacionGlobalBadgeText));
         OnPropertyChanged(nameof(IsPartidaUnidadMissing));
         OnPropertyChanged(nameof(IsPartidaCantidadMissing));
     }

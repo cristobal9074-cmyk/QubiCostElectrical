@@ -44,7 +44,7 @@ public sealed record ProjectLockInspection(
 {
     public bool IsWritableCandidate => State is ProjectLockState.NotLocked or ProjectLockState.OwnLock or ProjectLockState.LocalMachineDead or ProjectLockState.HeartbeatExpired;
     public bool IsBlocked => State is ProjectLockState.LocalMachineAlive or ProjectLockState.RemoteRecent or ProjectLockState.Corrupt;
-    public bool CanTakeOver => State is ProjectLockState.LocalMachineDead or ProjectLockState.HeartbeatExpired;
+    public bool CanTakeOver => State is ProjectLockState.LocalMachineDead or ProjectLockState.HeartbeatExpired or ProjectLockState.Corrupt;
 
     public string HolderSummary => ProjectLockDescriptions.DescribeHolder(Data, State);
 }

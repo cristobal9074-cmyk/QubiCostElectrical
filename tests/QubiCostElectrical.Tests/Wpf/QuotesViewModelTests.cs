@@ -451,5 +451,11 @@ public sealed class QuotesViewModelTests
         Assert.Equal("ElectroChile", updated.Proveedor);
         Assert.Equal("Cotización ElectroChile", updated.OrigenPrecio);
         Assert.Equal(DateTime.Today, updated.FechaPrecio.Date);
+
+        // Verifica que se registró punto de Deshacer y que revierte el cambio de precio
+        Assert.True(host.UndoService.CanUndo);
+        Assert.Equal("Aplicar precio cotización MAT-01", host.UndoService.LastUndoDescription);
+        Assert.True(host.UndoService.Undo(host.Session));
+        Assert.Equal(1000m, host.Session.Materiales.First(m => m.Codigo == "MAT-01").MatClp);
     }
 }

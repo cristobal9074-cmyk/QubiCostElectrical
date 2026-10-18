@@ -149,6 +149,49 @@ public static class ExcelCostosBridge
         return Math.Round(dotacion * MaterialMoResolver.DiasPorJornal, 0, MidpointRounding.AwayFromZero);
     }
 
+    /// <summary>
+    /// Suma solo la MO directa (sueldos base × dotación × meses) × (1 + leyes%).
+    /// Equivalente al costo directo de MO en Excel (MANO DE OBRA!T23).
+    /// </summary>
+    public static decimal SumMoDirectaConLeyes(
+        IEnumerable<MoDirectaRow>? directa,
+        int fallbackMonths = 0,
+        decimal leyesSocialesPct = 0m)
+    {
+        var dir = directa ?? Enumerable.Empty<MoDirectaRow>();
+        decimal baseMo = SumMoDirecta(dir, fallbackMonths);
+        decimal leyes = MarkupPolicy.ClampPct(leyesSocialesPct) / 100m;
+        return baseMo * (1m + leyes);
+    }
+
+    /// <summary>
+    /// Días-hombre (DD/HH) de la mano de obra directa únicamente: Σ dotación-mes directa × 22 jornadas.
+    /// Exactamente la cuenta de MANO DE OBRA!U23 del Excel original (182 × 22 = 4.004 DD/HH).
+    /// </summary>
+    public static decimal SumDiasHombreDirecta(
+        IEnumerable<MoDirectaRow>? directa,
+        int fallbackMonths = 0)
+    {
+        var dir = directa ?? Enumerable.Empty<MoDirectaRow>();
+        int months = dir.Select(r => r.DotacionMensual?.Count ?? 0).DefaultIfEmpty(0).Max();
+        if (months <= 0)
+            months = Math.Max(0, fallbackMonths);
+
+        decimal dotacion = 0m;
+        foreach (var r in dir)
+        {
+            if (months <= 0)
+            {
+                dotacion += Math.Max(0, r.Dotacion);
+                continue;
+            }
+            for (int i = 0; i < months; i++)
+                dotacion += DotacionDelMes(r.DotacionMensual, i, r.Dotacion);
+        }
+
+        return Math.Round(dotacion * MaterialMoResolver.DiasPorJornal, 0, MidpointRounding.AwayFromZero);
+    }
+
     private static int DotacionDelMes(List<int>? dotacionMensual, int mes, int dotacionBase)
     {
         if (dotacionMensual != null && mes < dotacionMensual.Count && dotacionMensual[mes] >= 0)
@@ -166,14 +209,33 @@ public static class ExcelCostosBridge
         // La política de cierre vive en ProjectFileData (no en ProjectInfoRow): este es el punto
         // único donde el motor la recibe para que mande sobre el precio de venta en todos los consumidores.
         settings.ClosingPolicy = data.ClosingPolicy;
-        // Preferir total del módulo MO (leyes + curva); si no hay, recomputar desde filas.
-        settings.ManoObraDotacionClp = project.MoTotalClp > 0m
+        // Para el costo de ejecución del proyecto en el cierre (paridad COSTOS!I164), la M.O. de dotación es la TOTAL (Directa + Indirecta).
+        // Si el proyecto tiene dotación detallada (filas en MoDirecta/MoIndirecta) y MoTotalClp no incluye la indirecta
+        // (por ejemplo MoTotalClp <= MoDirectaClp habiendo MoIndirecta), la suma de filas manda para no omitir la supervisión.
+        decimal sumFromRows = SumMoDotacionClp(
+            data.MoDirecta,
+            data.MoIndirecta,
+            fallbackMonths: months,
+            leyesSocialesPct: project.LeyesSocialesMoPct);
+
+        bool moTotalOmiteIndirecta = data.MoIndirecta != null && data.MoIndirecta.Count > 0 && project.MoTotalClp <= project.MoDirectaClp;
+        settings.ManoObraDotacionClp = (project.MoTotalClp > 0m && !moTotalOmiteIndirecta && project.MoTotalClp >= sumFromRows)
             ? project.MoTotalClp
-            : SumMoDotacionClp(
-                data.MoDirecta,
-                data.MoIndirecta,
-                fallbackMonths: months,
-                leyesSocialesPct: project.LeyesSocialesMoPct);
+            : (sumFromRows > 0m
+                ? sumFromRows
+                : (project.MoTotalClp > 0m ? project.MoTotalClp : project.MoDirectaClp));
+
+        // La M.O. directa se almacena explícitamente para calibración de FA y comparación de partidas (COSTOS!G192).
+        decimal sumDirecta = SumMoDirectaConLeyes(
+            data.MoDirecta,
+            fallbackMonths: months,
+            leyesSocialesPct: project.LeyesSocialesMoPct);
+
+        settings.ManoObraDirectaDotacionClp = project.MoDirectaClp > 0m
+            ? project.MoDirectaClp
+            : (sumDirecta > 0m
+                ? sumDirecta
+                : settings.ManoObraDotacionClp);
         return settings;
     }
 

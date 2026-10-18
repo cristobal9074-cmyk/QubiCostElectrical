@@ -49,6 +49,7 @@ partial class ShellViewModel
         ShellRoute.Solicitudes => false,
         ShellRoute.FloorSummary => false,
         ShellRoute.EstadosPagos => false,
+        ShellRoute.MaterialControl => false,
         _ => true
     };
 

@@ -325,7 +325,15 @@ public sealed class AutoSaveService : INotifyPropertyChanged, IDisposable
             ProjectFileData snapshot;
             try
             {
-                snapshot = session.CreateSnapshot();
+                var app = System.Windows.Application.Current;
+                if (app?.Dispatcher != null && !app.Dispatcher.CheckAccess())
+                {
+                    snapshot = app.Dispatcher.Invoke(() => session.CreateSnapshot());
+                }
+                else
+                {
+                    snapshot = session.CreateSnapshot();
+                }
             }
             catch (InvalidOperationException)
             {

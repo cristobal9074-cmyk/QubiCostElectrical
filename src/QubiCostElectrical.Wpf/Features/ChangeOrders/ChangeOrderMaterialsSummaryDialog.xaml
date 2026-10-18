@@ -1,0 +1,160 @@
+<Window x:Class="QubiCostElectrical.Wpf.Features.ChangeOrders.ChangeOrderMaterialsSummaryDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Style="{StaticResource Dialog.Window}"
+        Title="Resumen Consolidado de Materiales - Adicional de Obra"
+        Width="880" Height="540"
+        MinWidth="720" MinHeight="420"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResizeWithGrip"
+        ShowInTaskbar="False"
+        FontFamily="{StaticResource Font.Ui}">
+  <Border Style="{StaticResource Dialog.Chrome}" Margin="16">
+    <Grid>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="*"/>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+      </Grid.RowDefinitions>
+
+      <!-- ── 1. Cabecera ── -->
+      <DockPanel Grid.Row="0" Margin="0,0,0,12">
+        <Border DockPanel.Dock="Right" Background="{DynamicResource Brush.BlueFaint}"
+                BorderBrush="{DynamicResource Brush.BlueFocus}" BorderThickness="1"
+                CornerRadius="6" Padding="10,5" VerticalAlignment="Center">
+          <TextBlock x:Name="CountBadgeText" Text="0 recursos consolidados"
+                     FontSize="11" FontWeight="SemiBold"
+                     Foreground="{DynamicResource Brush.Accent}" VerticalAlignment="Center"/>
+        </Border>
+
+        <StackPanel VerticalAlignment="Center">
+          <TextBlock Text="📦 Resumen y Lista de Compra de Materiales" Style="{StaticResource Dialog.HeaderTitle}"/>
+          <TextBlock Text="Consolidado de todos los materiales y recursos cubicados en las partidas de este adicional."
+                     FontSize="11" Foreground="{DynamicResource Brush.Muted}"/>
+        </StackPanel>
+      </DockPanel>
+
+      <!-- ── 2. DataGrid Consolidado ── -->
+      <Border Grid.Row="1" Style="{StaticResource Card.Surface}" Padding="0" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1">
+        <DataGrid x:Name="ConsolidadoGrid"
+                  AutoGenerateColumns="False"
+                  CanUserAddRows="False"
+                  CanUserDeleteRows="False"
+                  IsReadOnly="True"
+                  SelectionMode="Single"
+                  GridLinesVisibility="Horizontal"
+                  HorizontalGridLinesBrush="{DynamicResource Brush.Line}"
+                  HeadersVisibility="Column"
+                  RowHeight="30"
+                  Background="Transparent"
+                  BorderThickness="0">
+          <DataGrid.Columns>
+            <DataGridTextColumn Header="Tipo" Binding="{Binding Tipo}" Width="60">
+              <DataGridTextColumn.ElementStyle>
+                <Style TargetType="TextBlock">
+                  <Setter Property="HorizontalAlignment" Value="Center"/>
+                  <Setter Property="VerticalAlignment" Value="Center"/>
+                  <Setter Property="FontWeight" Value="SemiBold"/>
+                </Style>
+              </DataGridTextColumn.ElementStyle>
+            </DataGridTextColumn>
+
+            <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" Width="120">
+              <DataGridTextColumn.ElementStyle>
+                <Style TargetType="TextBlock">
+                  <Setter Property="FontFamily" Value="{StaticResource Font.Mono}"/>
+                  <Setter Property="FontWeight" Value="SemiBold"/>
+                  <Setter Property="VerticalAlignment" Value="Center"/>
+                  <Setter Property="Padding" Value="4,0"/>
+                </Style>
+              </DataGridTextColumn.ElementStyle>
+            </DataGridTextColumn>
+
+            <DataGridTextColumn Header="Descripción del Material" Binding="{Binding Descripcion}" Width="*">
+              <DataGridTextColumn.ElementStyle>
+                <Style TargetType="TextBlock">
+                  <Setter Property="VerticalAlignment" Value="Center"/>
+                  <Setter Property="Padding" Value="4,0"/>
+                  <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                </Style>
+              </DataGridTextColumn.ElementStyle>
+            </DataGridTextColumn>
+
+            <DataGridTextColumn Header="Unidad" Binding="{Binding Unidad}" Width="65">
+              <DataGridTextColumn.ElementStyle>
+                <Style TargetType="TextBlock">
+                  <Setter Property="HorizontalAlignment" Value="Center"/>
+                  <Setter Property="VerticalAlignment" Value="Center"/>
+                </Style>
+              </DataGridTextColumn.ElementStyle>
+            </DataGridTextColumn>
+
+            <DataGridTextColumn Header="Cant. Total" Binding="{Binding CantidadTotal, StringFormat={}{0:N0}}" Width="95">
+              <DataGridTextColumn.ElementStyle>
+                <Style TargetType="TextBlock">
+                  <Setter Property="HorizontalAlignment" Value="Right"/>
+                  <Setter Property="VerticalAlignment" Value="Center"/>
+                  <Setter Property="FontFamily" Value="{StaticResource Font.Mono}"/>
+                  <Setter Property="FontWeight" Value="Bold"/>
+                  <Setter Property="Foreground" Value="{DynamicResource Brush.Accent}"/>
+                  <Setter Property="Padding" Value="0,0,6,0"/>
+                </Style>
+              </DataGridTextColumn.ElementStyle>
+            </DataGridTextColumn>
+
+            <DataGridTextColumn Header="Subtotal" Binding="{Binding SubtotalDisplay}" Width="120">
+              <DataGridTextColumn.ElementStyle>
+                <Style TargetType="TextBlock">
+                  <Setter Property="HorizontalAlignment" Value="Right"/>
+                  <Setter Property="VerticalAlignment" Value="Center"/>
+                  <Setter Property="FontFamily" Value="{StaticResource Font.Mono}"/>
+                  <Setter Property="FontWeight" Value="Bold"/>
+                  <Setter Property="Foreground" Value="{DynamicResource Brush.Success}"/>
+                  <Setter Property="Padding" Value="0,0,8,0"/>
+                </Style>
+              </DataGridTextColumn.ElementStyle>
+            </DataGridTextColumn>
+          </DataGrid.Columns>
+        </DataGrid>
+      </Border>
+
+      <!-- ── 3. Totales ── -->
+      <Border Grid.Row="2" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}"
+              BorderThickness="1" CornerRadius="8" Padding="14,8" Margin="0,10,0,10">
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+          </Grid.ColumnDefinitions>
+
+          <TextBlock Grid.Column="0" Text="Materiales consolidados requeridos para ejecución"
+                     FontSize="11" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center"/>
+
+          <Border Grid.Column="1" Margin="0,0,10,0" Padding="8,4" Background="{DynamicResource Brush.Surface}" CornerRadius="6" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <TextBlock Text="Materiales: " FontSize="10" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center"/>
+              <TextBlock x:Name="TotalMatText" Text="$ 0" FontSize="11" FontWeight="SemiBold"
+                         FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center"/>
+            </StackPanel>
+          </Border>
+
+          <Border Grid.Column="2" Padding="10,4" Background="{DynamicResource Brush.Surface}" CornerRadius="6" BorderBrush="{DynamicResource Brush.SuccessBorder}" BorderThickness="1">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <TextBlock Text="TOTAL DIRECTO: " FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center"/>
+              <TextBlock x:Name="TotalGeneralText" Text="$ 0" FontSize="12" FontWeight="Bold"
+                         FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Success}" VerticalAlignment="Center"/>
+            </StackPanel>
+          </Border>
+        </Grid>
+      </Border>
+
+      <!-- ── 4. Botones Footer ── -->
+      <DockPanel Grid.Row="3" Style="{StaticResource Dialog.Footer}" LastChildFill="False">
+        <Button DockPanel.Dock="Right" Content="Cerrar" IsCancel="True"
+                Style="{StaticResource Button.Primary}" MinWidth="100"/>
+      </DockPanel>
+    </Grid>
+  </Border>
+</Window>

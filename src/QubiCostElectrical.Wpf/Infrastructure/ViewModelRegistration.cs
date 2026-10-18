@@ -11,6 +11,7 @@ using TemplatesF = QubiCostElectrical.Wpf.Features.Templates;
 using ItemizadoF = QubiCostElectrical.Wpf.Features.Itemizado;
 using FloorSummaryF = QubiCostElectrical.Wpf.Features.FloorSummary;
 using SolicitudesF = QubiCostElectrical.Wpf.Features.Solicitudes;
+using MaterialControlF = QubiCostElectrical.Wpf.Features.MaterialControl;
 using CostoF = QubiCostElectrical.Wpf.Features.Costo;
 using EstadosPagoF = QubiCostElectrical.Wpf.Features.EstadosPago;
 using EppF = QubiCostElectrical.Wpf.Features.Epp;
@@ -55,6 +56,7 @@ internal static class ViewModelRegistration
         s.AddTransient<ChangeOrdersF.ChangeOrdersViewModel>();
         s.AddTransient<FloorSummaryF.FloorSummaryViewModel>();
         s.AddTransient<SolicitudesF.SolicitudesViewModel>();
+        s.AddTransient<MaterialControlF.MaterialControlViewModel>();
         s.AddTransient<CostoF.CostoViewModel>();
         s.AddTransient<EstadosPagoF.EstadosPagoViewModel>();
         s.AddTransient<EppF.EppViewModel>();

@@ -34,7 +34,10 @@ public sealed class CubicacionScViewModelTests
         var host = WpfAppHost.Current;
         host.Session.NewProject(projectName);
         host.Session.CurrentProjectPath = $"{projectName}.qce";
-        return new CubicacionScViewModel(new FakeShell(), host);
+        return new CubicacionScViewModel(new FakeShell(), host)
+        {
+            ConfirmDeleteCircuito = _ => true
+        };
     }
 
     [Fact]
@@ -619,6 +622,7 @@ public sealed class CubicacionScViewModelTests
     public void RemoveCuadro_CuandoEsElUltimo_DejaListaDeCircuitosVacia()
     {
         var vm = CreateWithProject("csc-remove-ultimo-cuadro");
+        vm.ConfirmDelete = _ => true;
 
         vm.RemoveCuadroCommand.Execute(null);
 
@@ -751,5 +755,46 @@ public sealed class CubicacionScViewModelTests
         Assert.Equal(8m, producto);
         Assert.True(CubicacionScArtefactosDialog.TryEvaluarCantidad("12", out var plano));
         Assert.Equal(12m, plano);
+    }
+
+    [Fact]
+    public void RemoveCircuito_WhenConfirmed_RemovesCircuitoAndUpdatesTotals()
+    {
+        var vm = CreateWithProject("csc-delete-confirmed");
+        vm.AddCircuitoCommand.Execute(null);
+        var circuito = vm.SelectedCircuito!;
+        circuito.Numero = 101;
+        bool promptCalled = false;
+        vm.ConfirmDeleteCircuito = msg =>
+        {
+            promptCalled = true;
+            Assert.Contains("101", msg);
+            return true;
+        };
+
+        vm.RemoveCircuitoCommand.Execute(null);
+
+        Assert.True(promptCalled);
+        Assert.DoesNotContain(vm.Circuitos, c => c.Numero == 101);
+    }
+
+    [Fact]
+    public void RemoveCircuito_WhenCancelled_KeepsCircuitoIntact()
+    {
+        var vm = CreateWithProject("csc-delete-cancelled");
+        vm.AddCircuitoCommand.Execute(null);
+        var circuito = vm.SelectedCircuito!;
+        circuito.Numero = 102;
+        bool promptCalled = false;
+        vm.ConfirmDeleteCircuito = msg =>
+        {
+            promptCalled = true;
+            return false; // Cancela la eliminación
+        };
+
+        vm.RemoveCircuitoCommand.Execute(null);
+
+        Assert.True(promptCalled);
+        Assert.Contains(vm.Circuitos, c => c.Numero == 102);
     }
 }

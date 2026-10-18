@@ -861,6 +861,15 @@
                     </Grid>
 
                     <!-- Fila: Márgenes Principales (GG y Utilidad) -->
+                    <DockPanel Margin="0,0,0,4">
+                      <TextBlock Text="MÁRGENES PRINCIPALES" Style="{StaticResource Form.Label}" DockPanel.Dock="Left" VerticalAlignment="Center" Margin="0" />
+                      <Button DockPanel.Dock="Right" HorizontalAlignment="Right"
+                              Command="{Binding ApplyPreferencesDefaultsCommand}"
+                              Style="{StaticResource Button.Secondary}" Padding="8,2" FontSize="11" Height="24"
+                              ToolTip="Restaura los porcentajes de GG y Utilidad según los valores predeterminados guardados en Preferencias">
+                        <TextBlock Text="&#x21BA; Usar valores de Preferencias" FontSize="11" />
+                      </Button>
+                    </DockPanel>
                     <Grid Margin="0,0,0,10">
                       <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
@@ -921,6 +930,11 @@
                         <TextBlock Text=" = (1 + GG) × (1 + Utilidad) sobre costo directo." FontSize="10.5" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" />
                       </StackPanel>
                     </Border>
+
+                    <!-- Opción de presentación GG y Utilidad en el resumen -->
+                    <CheckBox Content="Ocultar Gastos Generales y Utilidad en el resumen (mostrar precios enteros en partidas)"
+                              IsChecked="{Binding OcultarGgYUtilidadEnResumen}"
+                              Margin="0,10,0,0" />
                   </StackPanel>
                 </Border>
               </Grid>

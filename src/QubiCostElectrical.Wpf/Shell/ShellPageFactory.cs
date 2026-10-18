@@ -16,6 +16,7 @@ using TemplatesFeature = QubiCostElectrical.Wpf.Features.Templates;
 using QubiCostElectrical.Wpf.Features.Itemizado;
 using QubiCostElectrical.Wpf.Features.FloorSummary;
 using QubiCostElectrical.Wpf.Features.Solicitudes;
+using QubiCostElectrical.Wpf.Features.MaterialControl;
 using QubiCostElectrical.Wpf.Features.Costo;
 using QubiCostElectrical.Wpf.Features.Epp;
 using QubiCostElectrical.Wpf.Features.ManoDeObra;
@@ -147,6 +148,11 @@ internal static class ShellPageFactory
                 {
                     var vm = Vm<SolicitudesViewModel>();
                     return (new SolicitudesView { DataContext = vm }, vm);
+                }
+            case ShellRoute.MaterialControl:
+                {
+                    var vm = Vm<MaterialControlViewModel>();
+                    return (new MaterialControlView { DataContext = vm }, vm);
                 }
             case ShellRoute.EstadosPagos:
                 {

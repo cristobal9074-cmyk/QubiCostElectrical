@@ -37,13 +37,13 @@ partial class ShellViewModel
     public void SelectPhase(ShellLifecyclePhase phase)
     {
         CurrentPhase = phase;
-        var phaseOfCurrent = ShellRouteNavigation.GetLifecyclePhase(CurrentRoute);
+        var phaseOfCurrent = ShellRouteNavigation.GetLifecyclePhase(CurrentRoute, phase);
         if (CurrentRoute != ShellRoute.Dashboard && phaseOfCurrent != phase)
         {
             var targetRoute = phase switch
             {
                 ShellLifecyclePhase.Planificacion => ShellRoute.Purchases,
-                ShellLifecyclePhase.Ejecucion => ShellRoute.ChangeOrders,
+                ShellLifecyclePhase.Ejecucion => ShellRoute.MaterialControl,
                 _ => ShellRoute.Takeoff
             };
             Navigate(targetRoute);
@@ -147,7 +147,7 @@ partial class ShellViewModel
         CurrentRoute = routeState;
         CurrentView = viewState;
         currentPageVm = vmState;
-        CurrentPhase = ShellRouteNavigation.GetLifecyclePhase(routeState);
+        CurrentPhase = ShellRouteNavigation.GetLifecyclePhase(routeState, CurrentPhase);
         UpdateNavigationHistoryCommands();
         return true;
     }

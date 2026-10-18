@@ -89,6 +89,11 @@ public sealed class BudgetSettings
     public decimal ManoObraDotacionClp { get; set; }
 
     /// <summary>
+    /// MO directa desde módulo Mano de obra (CLP). Usada para calibración de FA y paridad con cubicación (COSTOS!G192).
+    /// </summary>
+    public decimal ManoObraDirectaDotacionClp { get; set; }
+
+    /// <summary>
     /// El APU no es obligatorio y no forma parte del presupuesto por sí mismo.
     /// Es una herramienta secundaria, o una lista de precios cuando el modo toma el precio del APU.
     /// No tener APU nunca bloquea la revisión ni la exportación.
@@ -139,7 +144,9 @@ public sealed class BudgetSettings
                 MonedaPresupuesto = string.IsNullOrWhiteSpace(project.MonedaPresupuesto) ? "CLP" : project.MonedaPresupuesto.Trim().ToUpperInvariant(),
                 ValorUfClp = project.ValorUfClp,
                 TipoCambioUsdClp = project.TipoCambioUsdClp
-            }
+            },
+            ManoObraDotacionClp = project.MoTotalClp > 0m ? project.MoTotalClp : project.MoDirectaClp,
+            ManoObraDirectaDotacionClp = project.MoDirectaClp
         };
 
         // C-1: unificación de rutas de markup. La venta se arma línea a línea con el factor de

@@ -9,9 +9,17 @@ namespace QubiCostElectrical;
 /// </summary>
 public static class OfferSignatureSizing
 {
-    public static float WidthPt(OfferPdfSettings? offer) => MmToPt(offer?.SignatureWidthMm ?? 0, 46, 15, 130);
+    public static float WidthPt(OfferPdfSettings? offer)
+    {
+        int mm = offer?.SignatureWidthMm ?? 0;
+        return MmToPt(mm, 46, 15, 130);
+    }
 
-    public static float HeightPt(OfferPdfSettings? offer) => MmToPt(offer?.SignatureHeightMm ?? 0, 16, 8, 60);
+    public static float HeightPt(OfferPdfSettings? offer)
+    {
+        int mm = offer?.SignatureHeightMm ?? 0;
+        return MmToPt(mm, 16, 8, 60);
+    }
 
     private static float MmToPt(int value, int fallback, int min, int max)
     {

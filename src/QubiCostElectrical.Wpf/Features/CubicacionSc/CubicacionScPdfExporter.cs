@@ -126,7 +126,7 @@ public static class CubicacionScPdfExporter
                             rowIndex++;
 
                             table.Cell().Background(bg).Padding(4).Text(mat.Nombre).FontSize(8.5f);
-                            table.Cell().Background(bg).Padding(4).Text(mat.Cantidad.ToString("N2")).FontSize(8.5f).AlignRight();
+                            table.Cell().Background(bg).Padding(4).Text(mat.Cantidad.ToString("N0")).FontSize(8.5f).AlignRight();
                             table.Cell().Background(bg).Padding(4).Text(mat.Unidad).FontSize(8.5f).AlignCenter();
                         }
                     });
@@ -168,7 +168,7 @@ public static class CubicacionScPdfExporter
                                 tabRowIndex++;
 
                                 table.Cell().Background(bg).Padding(3).Text(mat.Nombre).FontSize(8f);
-                                table.Cell().Background(bg).Padding(3).Text(mat.Cantidad.ToString("N2")).FontSize(8f).AlignRight();
+                                table.Cell().Background(bg).Padding(3).Text(mat.Cantidad.ToString("N0")).FontSize(8f).AlignRight();
                                 table.Cell().Background(bg).Padding(3).Text(mat.Unidad).FontSize(8f).AlignCenter();
                             }
                         });
@@ -212,7 +212,7 @@ public static class CubicacionScPdfExporter
                                 floorRowIndex++;
 
                                 table.Cell().Background(bg).Padding(3).Text(mat.Nombre).FontSize(8f);
-                                table.Cell().Background(bg).Padding(3).Text(mat.Cantidad.ToString("N2")).FontSize(8f).AlignRight();
+                                table.Cell().Background(bg).Padding(3).Text(mat.Cantidad.ToString("N0")).FontSize(8f).AlignRight();
                                 table.Cell().Background(bg).Padding(3).Text(mat.Unidad).FontSize(8f).AlignCenter();
                             }
                         });

@@ -23,6 +23,7 @@ public sealed class CrossModuleBudgetMathParityTests
         session.ProjectInfo.ValorUfClp = 38_500m;
         session.ProjectInfo.GastosGeneralesPct = 10m;
         session.ProjectInfo.UtilidadPct = 15m;
+        session.ProjectInfo.FerreteriaActiva = false;
 
         var cap = new ItemizadoRow { Id = "1.0", Item = "1", Descripcion = "TABLEROS Y FUERZA", EsTitulo = true };
         var p1 = new ItemizadoRow { Id = "1.0.01", ParentId = "1.0", Item = "1.1", Descripcion = "Tablero TDF", Unidad = "UN", Cantidad = 2m };

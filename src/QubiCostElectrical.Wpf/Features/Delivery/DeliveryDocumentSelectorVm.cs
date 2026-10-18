@@ -8,20 +8,23 @@ namespace QubiCostElectrical.Wpf.Features.Delivery;
 
 public sealed class DeliveryDocumentItemVm
 {
-    private bool isSelected = true;
+    private bool isSelected;
 
-    public DeliveryDocumentItemVm(string id, string title, string description, string formatHint)
+    public DeliveryDocumentItemVm(string id, string title, string description, string formatHint, bool isPrimary = false, bool isDefaultSelected = false)
     {
         Id = id;
         Title = title;
         Description = description;
         FormatHint = formatHint;
+        IsPrimary = isPrimary;
+        isSelected = isDefaultSelected;
     }
 
     public string Id { get; }
     public string Title { get; }
     public string Description { get; }
     public string FormatHint { get; }
+    public bool IsPrimary { get; }
 
     public bool IsSelected
     {
@@ -41,21 +44,106 @@ public sealed class DeliveryDocumentSelectorVm
 {
     private readonly DashboardPresenter dashboard;
     public ObservableCollection<DeliveryDocumentItemVm> Documents { get; } = new();
+    public ObservableCollection<DeliveryDocumentItemVm> PrimaryDocuments { get; } = new();
+    public ObservableCollection<DeliveryDocumentItemVm> OptionalDocuments { get; } = new();
     public event EventHandler? SelectionChanged;
 
     public DeliveryDocumentSelectorVm(DashboardPresenter dashboard)
     {
         this.dashboard = dashboard ?? throw new ArgumentNullException(nameof(dashboard));
-        Documents.Add(new DeliveryDocumentItemVm("OfferPdf", "Oferta comercial PDF", "Documento principal con portada, totales, alcance, exclusiones y condiciones.", "PDF"));
-        Documents.Add(new DeliveryDocumentItemVm("OfferLetter", "Carta de oferta PDF", "Carta de oferta formal con logo, planos de proyecto, alcances, condiciones comerciales y valor total. Formato carta formal.", "PDF"));
-        Documents.Add(new DeliveryDocumentItemVm("ControlExcel", "Excel interno de control", "Libro de control con trazabilidad completa, itemizado y cubicación.", "XLSX"));
-        Documents.Add(new DeliveryDocumentItemVm("LetterDocx", "Carta de presentación", "Carta formal DOCX para acompañar la oferta comercial.", "DOCX"));
-        Documents.Add(new DeliveryDocumentItemVm("MemoriaExcel", "Memoria cubicación Excel", "Detalle técnico de cubicación en formato Excel.", "XLSX"));
-        Documents.Add(new DeliveryDocumentItemVm("MemoriaPdf", "Memoria cubicación PDF", "Detalle técnico de cubicación en formato PDF.", "PDF"));
-        Documents.Add(new DeliveryDocumentItemVm("ReporteCSEC", "Reporte técnico C.SEC", "Reporte de tableros, circuitos, parámetros y materiales.", "XLSX"));
 
-        foreach (var doc in Documents)
-            doc.SelectionChanged += (_, _) => SelectionChanged?.Invoke(this, EventArgs.Empty);
+        // Documentos principales para el mandante (por defecto SOLO Carta PDF y Resumen Excel)
+        AddDoc(new DeliveryDocumentItemVm(
+            "OfferLetter",
+            "Carta de oferta PDF",
+            "Carta de oferta formal con logo, planos de proyecto, alcances, condiciones comerciales y valor total.",
+            "PDF",
+            isPrimary: true,
+            isDefaultSelected: true));
+
+        AddDoc(new DeliveryDocumentItemVm(
+            "ResumenExcel",
+            "Resumen presupuesto Excel",
+            "Hoja de resumen para el mandante formato Ingelsam con logo, datos clientes, partidas, fórmulas vivas e IVA.",
+            "XLSX",
+            isPrimary: true,
+            isDefaultSelected: true));
+
+        AddDoc(new DeliveryDocumentItemVm(
+            "PartidasAbiertasExcel",
+            "Presupuesto con partidas abiertas Excel",
+            "Desglose detallado partida por partida con sus materiales, cubicación y fórmulas vivas (formato DETALLE).",
+            "XLSX",
+            isPrimary: true,
+            isDefaultSelected: false));
+
+        AddDoc(new DeliveryDocumentItemVm(
+            "LetterDocx",
+            "Carta de oferta Word",
+            "Carta de oferta formal en formato DOCX editable para el mandante.",
+            "DOCX",
+            isPrimary: true,
+            isDefaultSelected: false));
+
+        // Documentos opcionales y técnicos (desmarcados por defecto)
+        AddDoc(new DeliveryDocumentItemVm(
+            "OfferPdf",
+            "Oferta comercial PDF",
+            "Documento principal con portada, totales, alcance, exclusiones y condiciones.",
+            "PDF",
+            isPrimary: false,
+            isDefaultSelected: false));
+
+        AddDoc(new DeliveryDocumentItemVm(
+            "ResumenPdf",
+            "Resumen presupuesto PDF",
+            "Resumen ejecutivo formal del presupuesto para mandante en formato PDF.",
+            "PDF",
+            isPrimary: false,
+            isDefaultSelected: false));
+
+        AddDoc(new DeliveryDocumentItemVm(
+            "ControlExcel",
+            "Excel interno de control",
+            "Libro de control con trazabilidad completa, itemizado y cubicación.",
+            "XLSX",
+            isPrimary: false,
+            isDefaultSelected: false));
+
+        AddDoc(new DeliveryDocumentItemVm(
+            "MemoriaExcel",
+            "Memoria cubicación Excel",
+            "Detalle técnico de cubicación en formato Excel.",
+            "XLSX",
+            isPrimary: false,
+            isDefaultSelected: false));
+
+        AddDoc(new DeliveryDocumentItemVm(
+            "MemoriaPdf",
+            "Memoria cubicación PDF",
+            "Detalle técnico de cubicación en formato PDF.",
+            "PDF",
+            isPrimary: false,
+            isDefaultSelected: false));
+
+        AddDoc(new DeliveryDocumentItemVm(
+            "ReporteCSEC",
+            "Reporte técnico C.SEC",
+            "Reporte de tableros, circuitos, parámetros y materiales.",
+            "XLSX",
+            isPrimary: false,
+            isDefaultSelected: false));
+    }
+
+    private void AddDoc(DeliveryDocumentItemVm doc)
+    {
+        Documents.Add(doc);
+        if (doc.IsPrimary)
+            PrimaryDocuments.Add(doc);
+        else
+            OptionalDocuments.Add(doc);
+
+        doc.SelectionChanged += (_, _) => SelectionChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public ExportProjectContext GetSelectedContext(BudgetProjectSession session)

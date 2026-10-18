@@ -959,7 +959,19 @@
 
                       <Border Padding="12,2,12,4">
                         <StackPanel>
-                          <ItemsControl ItemsSource="{Binding DocumentSelector.Documents}">
+                          <!-- Sección 1: Entrega Principal -->
+                          <Border Background="{DynamicResource Brush.Surface2}" CornerRadius="6" Padding="8,4" Margin="0,4,0,6">
+                            <StackPanel Orientation="Horizontal">
+                              <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="11"
+                                         Foreground="{DynamicResource Brush.Blue}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                              <TextBlock Text="DOCUMENTOS PRINCIPALES DE ENTREGA" FontSize="10.5" FontWeight="Bold"
+                                         Foreground="{DynamicResource Brush.Blue}" VerticalAlignment="Center" />
+                              <TextBlock Text="· Por defecto para el mandante" FontSize="10" Foreground="{DynamicResource Brush.Muted}"
+                                         VerticalAlignment="Center" Margin="6,0,0,0" />
+                            </StackPanel>
+                          </Border>
+
+                          <ItemsControl ItemsSource="{Binding DocumentSelector.PrimaryDocuments}">
                             <ItemsControl.ItemTemplate>
                               <DataTemplate>
                                 <Border Style="{StaticResource DocRow}">
@@ -986,8 +998,49 @@
                               </DataTemplate>
                             </ItemsControl.ItemTemplate>
                           </ItemsControl>
+
+                          <!-- Sección 2: Documentos Opcionales -->
+                          <Border Background="{DynamicResource Brush.Surface2}" CornerRadius="6" Padding="8,4" Margin="0,12,0,6">
+                            <StackPanel Orientation="Horizontal">
+                              <TextBlock Text="&#xE71E;" FontFamily="Segoe MDL2 Assets" FontSize="11"
+                                         Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                              <TextBlock Text="DOCUMENTOS ADICIONALES Y TÉCNICOS" FontSize="10.5" FontWeight="Bold"
+                                         Foreground="{DynamicResource Brush.Ink2}" VerticalAlignment="Center" />
+                              <TextBlock Text="· Opcionales según necesidad" FontSize="10" Foreground="{DynamicResource Brush.Muted}"
+                                         VerticalAlignment="Center" Margin="6,0,0,0" />
+                            </StackPanel>
+                          </Border>
+
+                          <ItemsControl ItemsSource="{Binding DocumentSelector.OptionalDocuments}">
+                            <ItemsControl.ItemTemplate>
+                              <DataTemplate>
+                                <Border Style="{StaticResource DocRow}">
+                                  <Grid>
+                                    <Grid.ColumnDefinitions>
+                                      <ColumnDefinition Width="Auto" />
+                                      <ColumnDefinition Width="*" />
+                                      <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" Margin="0,0,12,0"
+                                              VerticalAlignment="Center" />
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                      <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="SemiBold"
+                                                 Foreground="{DynamicResource Brush.Ink}" />
+                                      <TextBlock Text="{Binding Description}" FontSize="11.5"
+                                                 Foreground="{DynamicResource Brush.Muted}" Margin="0,1,0,0"
+                                                 TextTrimming="CharacterEllipsis" />
+                                    </StackPanel>
+                                    <Border Grid.Column="2" Style="{StaticResource FmtBadge}" Margin="10,0,0,0">
+                                      <TextBlock Text="{Binding FormatHint}" Style="{StaticResource FmtText}" />
+                                    </Border>
+                                  </Grid>
+                                </Border>
+                              </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                          </ItemsControl>
+
                           <TextBlock Text="{Binding DeliverySummaryText}" FontSize="11.5"
-                                     Foreground="{DynamicResource Brush.Muted}" Margin="0,6,0,0" TextWrapping="Wrap" />
+                                     Foreground="{DynamicResource Brush.Muted}" Margin="0,8,0,0" TextWrapping="Wrap" />
                         </StackPanel>
                       </Border>
                     </StackPanel>
@@ -1371,6 +1424,51 @@
                                     <Setter Property="Visibility" Value="Collapsed" />
                                     <Style.Triggers>
                                       <DataTrigger Binding="{Binding PreviewSwitch.SelectedId}" Value="OfferPdf">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                      </DataTrigger>
+                                    </Style.Triggers>
+                                  </Style>
+                                </Border.Style>
+                                <TextBlock Text="Viendo" FontSize="10.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" />
+                              </Border>
+                            </Grid>
+                          </Button>
+
+                          <Button Command="{Binding PreviewSwitch.SelectCommand}" CommandParameter="ResumenPdf">
+                            <Button.Style>
+                              <Style TargetType="Button" BasedOn="{StaticResource PreviewDocRow}">
+                                <Style.Triggers>
+                                  <DataTrigger Binding="{Binding PreviewSwitch.SelectedId}" Value="ResumenPdf">
+                                    <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+                                    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
+                                  </DataTrigger>
+                                </Style.Triggers>
+                              </Style>
+                            </Button.Style>
+                            <Grid>
+                              <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                              </Grid.ColumnDefinitions>
+                              <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="Resumen presupuesto PDF" FontSize="13" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource Brush.Ink}" />
+                                <TextBlock Text="Hoja de cotización ejecutiva para mandante"
+                                           FontSize="11.5" Foreground="{DynamicResource Brush.Muted}" Margin="0,1,0,0"
+                                           TextTrimming="CharacterEllipsis" />
+                              </StackPanel>
+                              <Border Grid.Column="1" Style="{StaticResource FmtBadge}" Margin="10,0,0,0">
+                                <TextBlock Text="PDF" Style="{StaticResource FmtText}" />
+                              </Border>
+                              <Border Grid.Column="2" Margin="8,0,0,0">
+                                <Border.Style>
+                                  <Style TargetType="Border" BasedOn="{StaticResource Pill}">
+                                    <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+                                    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                      <DataTrigger Binding="{Binding PreviewSwitch.SelectedId}" Value="ResumenPdf">
                                         <Setter Property="Visibility" Value="Visible" />
                                       </DataTrigger>
                                     </Style.Triggers>

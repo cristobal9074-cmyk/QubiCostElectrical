@@ -26,6 +26,7 @@ public sealed class ProjectEditSnapshot
     public string ScopeText { get; set; } = "";
     public string ExclusionsText { get; set; } = "";
     public int ValidityDays { get; set; } = 30;
+    public bool OcultarGgYUtilidadEnResumen { get; set; } = true;
 
     // Markups por familia
     public decimal MarkupConductores { get; set; } = 1.50m;
@@ -64,6 +65,7 @@ public sealed class ProjectEditSnapshot
         ScopeText = ScopeText,
         ExclusionsText = ExclusionsText,
         ValidityDays = ValidityDays,
+        OcultarGgYUtilidadEnResumen = OcultarGgYUtilidadEnResumen,
 
         MarkupConductores = MarkupConductores,
         MarkupCanalizacion = MarkupCanalizacion,
@@ -89,6 +91,7 @@ public sealed class ProjectEditSnapshot
         && ApuCostingMode == other.ApuCostingMode
         && MetrosCuadrados == other.MetrosCuadrados && ScopeText == other.ScopeText
         && ExclusionsText == other.ExclusionsText && ValidityDays == other.ValidityDays
+        && OcultarGgYUtilidadEnResumen == other.OcultarGgYUtilidadEnResumen
         && MarkupConductores == other.MarkupConductores && MarkupCanalizacion == other.MarkupCanalizacion
         && MarkupTableros == other.MarkupTableros && MarkupProtecciones == other.MarkupProtecciones
         && MarkupIluminacion == other.MarkupIluminacion && MarkupEquipos == other.MarkupEquipos
@@ -232,6 +235,8 @@ public sealed class ProjectEditWorkspaceService : IProjectEditWorkspaceService
         project.OfertaPdf.ScopeText = snapshot.ScopeText ?? "";
         project.OfertaPdf.ExclusionsText = snapshot.ExclusionsText ?? "";
         project.OfertaPdf.ValidityDays = snapshot.ValidityDays;
+        project.OfertaPdf.OcultarGgYUtilidadEnResumen = snapshot.OcultarGgYUtilidadEnResumen;
+        project.OcultarGgYUtilidadEnResumen = snapshot.OcultarGgYUtilidadEnResumen;
 
         // Guardar markups por familia en variables
         session.SetFamilyMarkup("Conductores", snapshot.MarkupConductores);
@@ -286,6 +291,7 @@ public sealed class ProjectEditWorkspaceService : IProjectEditWorkspaceService
             ScopeText = project.OfertaPdf.ScopeText,
             ExclusionsText = project.OfertaPdf.ExclusionsText,
             ValidityDays = project.OfertaPdf.ValidityDays,
+            OcultarGgYUtilidadEnResumen = project.OfertaPdf.OcultarGgYUtilidadEnResumen,
 
             MarkupConductores = session.GetFamilyMarkup("Conductores"),
             MarkupCanalizacion = session.GetFamilyMarkup("Canalización"),

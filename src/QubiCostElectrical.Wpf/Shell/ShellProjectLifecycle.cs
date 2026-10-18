@@ -102,7 +102,8 @@ internal sealed class ShellProjectLifecycle
         // reset el primer recálculo del proyecto siguiente servía resultados del anterior.
         budgetCalculation.ResetIncrementalCache();
         clearPageCache();
-        session.NewProject(Environment.UserName);
+        var prefs = UserPreferencesStore.Load();
+        session.NewProject(Environment.UserName, defaultGastosGeneralesPct: prefs.DefaultGastosGeneralesPct, defaultUtilidadPct: prefs.DefaultUtilidadPct);
         projectEdit.Discard();
         documents.DiscardChanges();
         RoleSessionSync.Apply(session, permissions.CurrentRole);

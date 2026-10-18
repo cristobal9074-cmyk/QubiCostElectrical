@@ -120,7 +120,7 @@
                         <DataGridTextColumn Header="Descripción Actual" Binding="{Binding SourceDescripcion}" Width="190" IsReadOnly="True" />
 
                         <!-- Metraje Total -->
-                        <DataGridTextColumn Header="Cant. Total" Binding="{Binding CantidadTotal, StringFormat={}{0:N2}}" Width="75" IsReadOnly="True" />
+                        <DataGridTextColumn Header="Cant. Total" Binding="{Binding CantidadTotal, StringFormat={}{0:N0}}" Width="75" IsReadOnly="True" />
 
                         <!-- P.U. Actual -->
                         <DataGridTextColumn Header="P.U. Actual" Binding="{Binding PrecioActualClp, StringFormat={}$ {0:N0}}" Width="85" IsReadOnly="True" />

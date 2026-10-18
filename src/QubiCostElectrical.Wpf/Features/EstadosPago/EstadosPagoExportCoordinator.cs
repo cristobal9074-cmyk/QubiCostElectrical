@@ -75,7 +75,7 @@ public sealed class EstadosPagoExportCoordinator
         }
         catch (Exception ex)
         {
-            WpfDialogService.ErrorModal("Error al exportar", $"No se pudo generar el archivo:\n{ex.Message}");
+            WpfDialogService.ErrorModal("Error al exportar", OperationFailureMessages.ToUserMessage(ex));
             return;
         }
 

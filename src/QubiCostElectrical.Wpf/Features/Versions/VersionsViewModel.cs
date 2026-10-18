@@ -69,61 +69,10 @@ public enum RevisionDiffFilterMode
     Todos = 0,
     SoloAdicionales = 1,
     SoloModificados = 2,
-    SoloDeductivos = 3
+    SoloDeductivos = 3,
+    SoloSinCambios = 4
 }
 
-public sealed class VersionComparisonRowVm
-{
-    private readonly VersionsCurrencyFormat? currency;
-
-    public VersionComparisonRowVm(BudgetVersionComparisonRow source, VersionsCurrencyFormat? currency = null)
-    {
-        Source = source;
-        this.currency = currency;
-    }
-
-    public BudgetVersionComparisonRow Source { get; }
-    public string ItemId => Source.ItemId;
-    public string Item => Source.Item;
-    public string Descripcion => Source.Descripcion;
-    public decimal BaselineUf => Source.BaselineUf;
-    public decimal CurrentUf => Source.CurrentUf;
-    public decimal DeltaUf => Source.DeltaUf;
-    public decimal DeltaPct => Source.DeltaPct;
-    public string Estado => Source.Estado;
-
-    public string Unidad => Source.Unidad;
-    public decimal CantidadBase => Source.CantidadBase;
-    public decimal CantidadActual => Source.CantidadActual;
-    public decimal DeltaCantidad => Source.DeltaCantidad;
-    public string DeltaCantidadText => DeltaCantidad == 0m ? "—" : (DeltaCantidad > 0m ? $"+{DeltaCantidad:N2}" : $"{DeltaCantidad:N2}");
-
-    public decimal PuUfBase => Source.PuUfBase;
-    public decimal PuUfActual => Source.PuUfActual;
-    public decimal DeltaPuUf => Source.DeltaPuUf;
-    public string DeltaPuUfText => DeltaPuUf == 0m ? "—" : (DeltaPuUf > 0m ? $"+{DeltaPuUf:N3}" : $"{DeltaPuUf:N3}");
-
-    // Baseline/Current/Delta y P.U. vienen en UF reales del motor (CubicacionRow.UfTotal).
-    // Con CLP se presentan en pesos y la UF desaparece de la grilla.
-    public string PuBaseText => currency is null ? $"{PuUfBase:N3}" : currency.FromUf(PuUfBase);
-    public string PuActualText => currency is null ? $"{PuUfActual:N3}" : currency.FromUf(PuUfActual);
-    public string TotalBaseText => currency is null ? $"{BaselineUf:N3}" : currency.FromUf(BaselineUf);
-    public string TotalActualText => currency is null ? $"{CurrentUf:N3}" : currency.FromUf(CurrentUf);
-    public string DeltaUfText => currency is null
-        ? $"{DeltaUf:N3}"
-        : currency.FromUfSigned(DeltaUf);
-
-    public decimal BaselineClp => Source.BaselineClp;
-    public decimal CurrentClp => Source.CurrentClp;
-    public decimal DeltaClp => Source.DeltaClp;
-    public string DeltaClpText => DeltaClp == 0m ? "—" : (DeltaClp > 0m ? $"+$ {DeltaClp:N0}" : $"$ {DeltaClp:N0}");
-
-    public RevisionDiffKind DiffKind => Source.DiffKind;
-    public string DisplayBadge => Source.DisplayBadge;
-    public string DetalleCambio => Source.DetalleCambio;
-    public IReadOnlyList<BudgetVersionResourceDiffRow> ResourceDiffs => Source.ResourceDiffs;
-    public bool HasResourceDiffs => ResourceDiffs != null && ResourceDiffs.Count > 0;
-}
 
 public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefreshablePage
 {
@@ -139,6 +88,10 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
 
     private readonly IItemizadoSpreadsheetReader? spreadsheetReader;
     private readonly ImportarItemizadoUseCase? importItemizadoUseCase;
+    private readonly IProjectRepository? projectRepository;
+    private readonly WpfUndoService? undo;
+
+    public Func<string, bool> ConfirmDeleteVersion { get; set; } = msg => WpfDialogService.Confirm("Eliminar versión", msg, isWarning: true);
 
     private readonly ObservableCollection<VersionRowVm> versions = new();
     private readonly ObservableCollection<VersionComparisonRowVm> comparisonRows = new();
@@ -155,6 +108,8 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
     private readonly RelayCommand exportExcelCommand;
     private readonly RelayCommand createChangeOrderFromDiffCommand;
     private readonly RelayCommand compareWithExcelCommand;
+    private readonly RelayCommand compareWithProjectFileCommand;
+    private readonly RelayCommand saveAsNewVersionCommand;
     private readonly RelayCommand applyAddendaQuantitiesCommand;
     private readonly RelayCommand saveAddendaAsVersionCommand;
 

@@ -162,6 +162,28 @@ public sealed class ItemizadoServiceTests
     }
 
     [Fact]
+    public void DeleteAt_SubTitle_RemovesOnlyItsChildrenAndPreservesSiblings()
+    {
+        var items = new List<ItemizadoRow>
+        {
+            new ItemizadoRow { Id = "1.0", Item = "1,0", Descripcion = "Capítulo 1", EsTitulo = true, NivelJerarquico = 1 },
+            new ItemizadoRow { Id = "1.0.00001", Item = "1,1", Descripcion = "Partida 1.1", ParentId = "1.0" },
+            new ItemizadoRow { Id = "1.2.0", Item = "1,2", Descripcion = "Subtítulo 1.2", EsTitulo = true, ParentId = "1.0", NivelJerarquico = 2 },
+            new ItemizadoRow { Id = "1.2.0.00001", Item = "1,2,1", Descripcion = "Partida 1.2.1", ParentId = "1.2.0" }
+        };
+
+        // Borrar el subtítulo 1.2 (índice 2)
+        var result = _service.DeleteAt(items, new List<CubicacionRow>(), new Dictionary<string, string[]>(), 2);
+
+        // Debe conservar Capítulo 1 y Partida 1.1, eliminando solo Subtítulo 1.2 y Partida 1.2.1
+        Assert.Equal(2, items.Count);
+        Assert.Contains(items, x => x.Id == "1.0");
+        Assert.Contains(items, x => x.Id == "1.0.00001");
+        Assert.DoesNotContain(items, x => x.Id == "1.2.0");
+        Assert.DoesNotContain(items, x => x.Id == "1.2.0.00001");
+    }
+
+    [Fact]
     public void DeleteAt_InvalidIndex_ReturnsMinusOne()
     {
         var items = new List<ItemizadoRow> { Item("1.1", "1.1", "A") };

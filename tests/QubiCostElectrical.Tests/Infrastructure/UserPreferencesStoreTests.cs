@@ -55,4 +55,52 @@ public sealed class UserPreferencesStoreTests
             catch { }
         }
     }
+
+    [Fact]
+    public void SaveAndLoad_RoundTripsSignatureDimensions()
+    {
+        using var scope = UserPreferencesStore.UsePreferencesFilePathForTests(TempPath());
+        string path = UserPreferencesStore.PreferencesFilePath;
+        try
+        {
+            var prefs = new UserPreferences
+            {
+                ProfessionalSignatureWidthMm = 65,
+                ProfessionalSignatureHeightMm = 25
+            };
+
+            UserPreferencesStore.Save(prefs);
+            var loaded = UserPreferencesStore.Load();
+
+            Assert.Equal(65, loaded.ProfessionalSignatureWidthMm);
+            Assert.Equal(25, loaded.ProfessionalSignatureHeightMm);
+
+            var offer = new OfferPdfSettings();
+            LetterheadApplicator.Apply(loaded, offer);
+
+            Assert.Equal(65, offer.SignatureWidthMm);
+            Assert.Equal(25, offer.SignatureHeightMm);
+
+            Assert.Equal(65 * 72f / 25.4f, OfferSignatureSizing.WidthPt(offer), 2);
+            Assert.Equal(25 * 72f / 25.4f, OfferSignatureSizing.HeightPt(offer), 2);
+
+            var offerEmpty = new OfferPdfSettings { SignatureWidthMm = 0, SignatureHeightMm = 0 };
+            float widthPt = OfferSignatureSizing.WidthPt(offerEmpty);
+            float heightPt = OfferSignatureSizing.HeightPt(offerEmpty);
+
+            Assert.Equal(46 * 72f / 25.4f, widthPt, 2);
+            Assert.Equal(16 * 72f / 25.4f, heightPt, 2);
+        }
+        finally
+        {
+            try
+            {
+                if (File.Exists(path)) File.Delete(path);
+                string? dir = Path.GetDirectoryName(path);
+                if (!string.IsNullOrWhiteSpace(dir) && Directory.Exists(dir) && !Directory.EnumerateFileSystemEntries(dir).Any())
+                    Directory.Delete(dir);
+            }
+            catch { }
+        }
+    }
 }

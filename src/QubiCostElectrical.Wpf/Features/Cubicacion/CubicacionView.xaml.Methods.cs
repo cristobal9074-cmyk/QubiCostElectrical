@@ -187,6 +187,7 @@ public partial class CubicacionView : UserControl
         vm.RequestFillDown += HandleFillDown;
         vm.RequestFillRight += HandleFillRight;
         vm.RequestRepeatMeasurement += HandleRepeatMeasurement;
+        vm.RequestFocusCubicacionZone += HandleFocusCubicacionZone;
         vm.RowAdded += OnRowAdded;
         // Seleccionar primer ítem del popup al abrirse
         vm.PropertyChanged += (_, e) =>
@@ -206,23 +207,29 @@ public partial class CubicacionView : UserControl
                 ApplyGridMode();
             }
 
+            if (e.PropertyName == nameof(CubicacionViewModel.SelectedPartida))
+            {
+                ApplyGridMode();
+                if (Vm.SelectedPartida != null)
+                    PartidasList.ScrollIntoView(Vm.SelectedPartida);
+                FocusFirstGridCell();
+            }
+
             if (e.PropertyName == nameof(CubicacionViewModel.SelectedRow))
             {
                 var rowVm = vm.SelectedRow;
                 if (rowVm != null)
                 {
-                    if (ResourceGrid.CurrentCell.Item != rowVm)
+                    DataGridColumn? col = CodigoColumn != null && CodigoColumn.Visibility == Visibility.Visible ? CodigoColumn : null;
+                    col ??= ResourceGrid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible && !c.IsReadOnly)
+                           ?? ResourceGrid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible);
+
+                    if (ResourceGrid.CurrentCell.Item != rowVm || ResourceGrid.CurrentCell.Column != col || ResourceGrid.SelectedCells.Count == 0)
                     {
                         int index = ResourceGrid.Items.IndexOf(rowVm);
-                        if (index >= 0)
+                        if (index >= 0 && col != null)
                         {
-                            DataGridColumn? col = CodigoColumn != null && CodigoColumn.Visibility == Visibility.Visible ? CodigoColumn : null;
-                            col ??= ResourceGrid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible && !c.IsReadOnly)
-                                   ?? ResourceGrid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible);
-                            if (col != null)
-                            {
-                                DataGridExcelNavigation.FocusCell(ResourceGrid, index, col);
-                            }
+                            DataGridExcelNavigation.FocusCell(ResourceGrid, index, col);
                         }
                     }
                 }
@@ -239,10 +246,9 @@ public partial class CubicacionView : UserControl
         if (Vm.SelectedPartida != null)
             PartidasList.ScrollIntoView(Vm.SelectedPartida);
 
-        // Sin foco inicial dentro de la vista, ningún atajo de teclado llega
-        // hasta que el usuario hace clic. Enfocar la grilla al entrar.
+        // Sin foco inicial dentro de la vista, enfocar la grilla y la primera celda (Código)
         if (!IsKeyboardFocusWithin)
-            ResourceGrid.Focus();
+            FocusFirstGridCell();
 
         // Sincronizar desplazamiento horizontal entre la fila de cabecera (ItemRowHost) y las columnas de ResourceGrid
         ResourceGrid.AddHandler(ScrollViewer.ScrollChangedEvent, new ScrollChangedEventHandler((_, args) =>
@@ -653,6 +659,27 @@ public partial class CubicacionView : UserControl
                 }
             }
         }
+
+        // 4. Clic simple en celda editable (ej: CÓDIGO o casillas): entra de inmediato en modo edición
+        // tipo Excel sin requerir doble clic ni F2.
+        if (!Vm.IsReadOnly && !cell.IsEditing && !cell.Column.IsReadOnly)
+        {
+            if (!cell.IsFocused)
+            {
+                cell.Focus();
+            }
+            ResourceGrid.CurrentCell = new DataGridCellInfo(cell);
+            ResourceGrid.BeginEdit();
+        }
+    }
+
+    private void OnResourceGridPreviewTextInput(object sender, TextCompositionEventArgs e)
+    {
+        if (Vm.IsReadOnly) return;
+        if (DataGridExcelNavigation.TryBeginEditFromChar(ResourceGrid, e.Text))
+        {
+            e.Handled = true;
+        }
     }
 
     // Arma al vuelo el menú contextual de una casilla de la matriz de sectores, con la opción
@@ -764,6 +791,22 @@ public partial class CubicacionView : UserControl
                         ResourceGrid.Dispatcher.BeginInvoke(new Action(() => DataGridExcelNavigation.FocusCell(ResourceGrid, nextIdx, col)), System.Windows.Threading.DispatcherPriority.Input);
                     }
                 }
+                else if (sender is TextBox directBox && ResourceGrid.CurrentItem is CubicacionRowVm directRow)
+                {
+                    // Si el usuario escribió un código a mano que no tiene sugerencia en el popup,
+                    // guardar directamente el texto escrito en la fila y confirmar.
+                    directRow.Codigo = directBox.Text;
+                    Vm.AutocompleteVisible = false;
+                    ResourceGrid.CommitEdit(DataGridEditingUnit.Cell, true);
+                    ResourceGrid.CommitEdit(DataGridEditingUnit.Row, true);
+                    e.Handled = true;
+                    int nextIdx = ResourceGrid.SelectedIndex + 1;
+                    var col = CodigoColumn ?? ResourceGrid.CurrentCell.Column;
+                    if (nextIdx > 0 && nextIdx < ResourceGrid.Items.Count && col != null)
+                    {
+                        ResourceGrid.Dispatcher.BeginInvoke(new Action(() => DataGridExcelNavigation.FocusCell(ResourceGrid, nextIdx, col)), System.Windows.Threading.DispatcherPriority.Input);
+                    }
+                }
                 break;
 
             case Key.Tab:
@@ -838,6 +881,11 @@ public partial class CubicacionView : UserControl
                 row.SectorValues[slot] = sectorBox.Text;
                 RecordMeasurement(sectorBox.Text);
             }
+            else if (ReferenceEquals(e.Column, CodigoColumn) && e.EditingElement is TextBox codigoBox)
+            {
+                row.Codigo = codigoBox.Text;
+                RecordMeasurement(codigoBox.Text);
+            }
             else if (ReferenceEquals(e.Column, UnidadColumn) && e.EditingElement is TextBox unidadBox)
             {
                 string resolved = Vm.ResolveUnidadReference(unidadBox.Text);
@@ -856,7 +904,7 @@ public partial class CubicacionView : UserControl
                     var res = QuantityFormulaService.Evaluate(cantBox.Text, vars);
                     if (res.Success)
                     {
-                        cantBox.Text = res.Value.ToString("N2", System.Globalization.CultureInfo.CurrentCulture);
+                        cantBox.Text = res.Value % 1 == 0 ? res.Value.ToString("N0", System.Globalization.CultureInfo.CurrentCulture) : res.Value.ToString("#,##0.##", System.Globalization.CultureInfo.CurrentCulture);
                         row.Cantidad = res.Value;
                     }
                 }
@@ -876,7 +924,7 @@ public partial class CubicacionView : UserControl
         // Si el evento de teclado proviene de un control secundario fuera de las celdas/filas del DataGrid
         // (por ejemplo el TextBox de cabecera de partida UD o CANT en modo Casillas), no debe ser
         // interceptado por los comandos de fila/celda de la grilla (evitando borrar filas o alterar selecciones).
-        if (e.OriginalSource is DependencyObject dep && FindParent<DataGridCell>(dep) == null && FindParent<DataGridRow>(dep) == null)
+        if (e.OriginalSource is DependencyObject dep && dep != ResourceGrid && FindParent<DataGridCell>(dep) == null && FindParent<DataGridRow>(dep) == null)
         {
             return;
         }
@@ -1069,17 +1117,79 @@ public partial class CubicacionView : UserControl
         MoveSelectedPartida(delta);
     }
 
+    private bool IsPartidaHeaderFocused()
+    {
+        var focused = Keyboard.FocusedElement;
+        return focused == UnidadHeaderBox || focused == CantHeaderBox || focused == ObservacionHeaderBox
+            || (focused is TextBox tb && (tb.Tag as string == "PartidaUnidad" || tb.Tag as string == "PartidaCant"));
+    }
+
     private void OnGridSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (_suppressSelectionSync)
             return;
         SyncGridSelectionFromGrid();
+
+        if (ResourceGrid.SelectedCells.Count == 0 && ResourceGrid.Items.Count > 0 && !IsPartidaHeaderFocused())
+        {
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                if (ResourceGrid.SelectedCells.Count == 0 && ResourceGrid.Items.Count > 0 && !IsPartidaHeaderFocused())
+                {
+                    FocusFirstGridCell();
+                }
+            }), System.Windows.Threading.DispatcherPriority.Input);
+        }
     }
 
     private void OnGridCurrentCellChanged(object sender, EventArgs e)
     {
         if (_suppressSelectionSync)
             return;
+
+        if (ResourceGrid.CurrentCell.Column == IndexColumn && ResourceGrid.CurrentCell.Item != null)
+        {
+            var targetCol = CodigoColumn != null && CodigoColumn.Visibility == Visibility.Visible
+                ? CodigoColumn
+                : ResourceGrid.Columns.FirstOrDefault(c => c != IndexColumn && c.Visibility == Visibility.Visible);
+            if (targetCol != null)
+            {
+                var cell = new DataGridCellInfo(ResourceGrid.CurrentCell.Item, targetCol);
+                _suppressSelectionSync = true;
+                try
+                {
+                    ResourceGrid.CurrentCell = cell;
+                    ResourceGrid.SelectedCells.Clear();
+                    ResourceGrid.SelectedCells.Add(cell);
+                }
+                finally
+                {
+                    _suppressSelectionSync = false;
+                }
+                DataGridExcelNavigation.FocusCell(ResourceGrid, ResourceGrid.Items.IndexOf(ResourceGrid.CurrentCell.Item), targetCol);
+                SyncGridSelectionFromGrid();
+                return;
+            }
+        }
+
+        if (ResourceGrid.CurrentCell.IsValid && ResourceGrid.CurrentCell.Column != null && ResourceGrid.CurrentCell.Item != null)
+        {
+            if (ResourceGrid.SelectedCells.Count == 0 ||
+                (ResourceGrid.SelectedCells.Count == 1 && !ResourceGrid.SelectedCells.Contains(ResourceGrid.CurrentCell)))
+            {
+                _suppressSelectionSync = true;
+                try
+                {
+                    ResourceGrid.SelectedCells.Clear();
+                    ResourceGrid.SelectedCells.Add(ResourceGrid.CurrentCell);
+                }
+                finally
+                {
+                    _suppressSelectionSync = false;
+                }
+            }
+        }
+
         SyncGridSelectionFromGrid();
     }
 
@@ -1293,25 +1403,12 @@ public partial class CubicacionView : UserControl
             return;
         }
 
+        if (ReferenceEquals(Vm.SelectedPartida, partida))
+            return;
+
         Vm.SelectedPartida = partida;
         PartidasList.ScrollIntoView(partida);
-        // Scroll a la primera fila de la grilla al cambiar partida y enfocar directamente la columna Código
-        if (ResourceGrid.Items.Count > 0)
-        {
-            var firstItem = ResourceGrid.Items[0];
-            ResourceGrid.ScrollIntoView(firstItem);
-
-            Dispatcher.BeginInvoke(new Action(() =>
-            {
-                DataGridColumn? col = CodigoColumn != null && CodigoColumn.Visibility == Visibility.Visible ? CodigoColumn : null;
-                col ??= ResourceGrid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible && !c.IsReadOnly)
-                       ?? ResourceGrid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible);
-                if (col != null)
-                {
-                    DataGridExcelNavigation.FocusCell(ResourceGrid, 0, col);
-                }
-            }), System.Windows.Threading.DispatcherPriority.Loaded);
-        }
+        FocusFirstGridCell();
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────
@@ -1409,7 +1506,7 @@ public partial class CubicacionView : UserControl
             {
                 Mode = BindingMode.TwoWay,
                 UpdateSourceTrigger = UpdateSourceTrigger.LostFocus,
-                StringFormat = "N2"
+                StringFormat = "#,##0.##"
             };
             // Encabezados nativos invisibles en Detalle (la fila de partida ya hace de encabezado)
             ResourceGrid.HeadersVisibility = DataGridHeadersVisibility.None;
@@ -1448,6 +1545,39 @@ public partial class CubicacionView : UserControl
         ResourceGrid.FrozenColumnCount = 5;
         SetBottomChromeVisible(showTotals: true, showStatus: true);
 
+        // Calculamos cuántas columnas de sectores deben estar visibles:
+        // Solo las zonas activas del proyecto (con nombre), más cualquier slot que tenga datos ingresados.
+        // Si no hay zonas creadas y no hay datos, visibleCount = 0 (no se muestran casillas vacías a la derecha).
+        int activeZoneCount = 0;
+        for (int i = 0; i < Vm.VisibleSectorHeaders.Count; i++)
+        {
+            if (!string.IsNullOrWhiteSpace(Vm.VisibleSectorHeaders[i]))
+                activeZoneCount = i + 1;
+        }
+
+        int maxDataSlot = -1;
+        if (Vm.Rows != null)
+        {
+            foreach (var r in Vm.Rows)
+            {
+                var exprs = r.Source?.QtyExpressions;
+                if (exprs != null)
+                {
+                    for (int s = exprs.Length - 1; s >= 0; s--)
+                    {
+                        if (!string.IsNullOrWhiteSpace(exprs[s]))
+                        {
+                            if (s > maxDataSlot) maxDataSlot = s;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        int visibleCount = Math.Max(activeZoneCount, maxDataSlot + 1);
+        var sectorHeaderStyle = (Style)FindResource("DataGridColumnHeader.CasillasGeneral");
+
         // Si las columnas de sector ya fueron instanciadas, las mostramos instantáneamente
         // actualizando sus etiquetas sin reconstruir 300 columnas en el árbol visual.
         if (_sectorColumns.Count > 0)
@@ -1455,17 +1585,24 @@ public partial class CubicacionView : UserControl
             for (int slot = 0; slot < _sectorColumns.Count; slot++)
             {
                 var column = _sectorColumns[slot];
-                column.Visibility = Visibility.Visible;
-                string headerText = slot < Vm.VisibleSectorHeaders.Count
-                    ? Vm.VisibleSectorHeaders[slot]
-                    : "";
-                if (column.Header is StackPanel sp && sp.Children.Count > 0 && sp.Children[0] is TextBlock tb)
+                bool shouldBeVisible = slot < visibleCount;
+                column.Visibility = shouldBeVisible ? Visibility.Visible : Visibility.Collapsed;
+                if (column.HeaderStyle != sectorHeaderStyle)
+                    column.HeaderStyle = sectorHeaderStyle;
+
+                if (shouldBeVisible)
                 {
-                    if (tb.Text != headerText)
+                    string headerText = slot < Vm.VisibleSectorHeaders.Count
+                        ? Vm.VisibleSectorHeaders[slot]
+                        : "";
+                    if (column.Header is StackPanel sp && sp.Children.Count > 0 && sp.Children[0] is TextBlock tb)
                     {
-                        tb.Text = headerText;
-                        // ToolTip vacío = popup navy sin texto (píldora negra flotante).
-                        sp.ToolTip = string.IsNullOrEmpty(headerText) ? null : headerText;
+                        if (tb.Text != headerText)
+                        {
+                            tb.Text = headerText;
+                            // ToolTip vacío = popup navy sin texto (píldora negra flotante).
+                            sp.ToolTip = string.IsNullOrEmpty(headerText) ? null : headerText;
+                        }
                     }
                 }
             }
@@ -1489,21 +1626,25 @@ public partial class CubicacionView : UserControl
             {
                 int absoluteOffset = slot;
                 string headerText = slot < Vm.VisibleSectorHeaders.Count ? Vm.VisibleSectorHeaders[slot] : "";
+                bool shouldBeVisible = slot < visibleCount;
 
                 var header = new StackPanel
                 {
                     // ToolTip vacío = popup navy sin texto (píldora negra flotante en la grilla).
                     ToolTip = string.IsNullOrEmpty(headerText) ? null : headerText,
-                    HorizontalAlignment = HorizontalAlignment.Center
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center
                 };
                 header.Children.Add(new TextBlock
                 {
                     Text = headerText,
-                    FontSize = 10,
+                    FontSize = 9.5,
                     FontWeight = FontWeights.SemiBold,
-                    MaxWidth = 48,
-                    TextWrapping = TextWrapping.Wrap,
-                    HorizontalAlignment = HorizontalAlignment.Center
+                    MaxWidth = 50,
+                    TextTrimming = TextTrimming.CharacterEllipsis,
+                    TextWrapping = TextWrapping.NoWrap,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center
                 });
 
                 var cellStyle = new Style(typeof(DataGridCell), baseCellStyle);
@@ -1526,11 +1667,13 @@ public partial class CubicacionView : UserControl
                 var column = new DisplayBindingTextColumn
                 {
                     Header = header,
+                    HeaderStyle = sectorHeaderStyle,
                     SectorSlot = absoluteOffset,
                     Width = 52,
                     MinWidth = 52,
                     CanUserResize = false,
                     CanUserSort = false,
+                    Visibility = shouldBeVisible ? Visibility.Visible : Visibility.Collapsed,
                     Binding = new Binding($"SectorValues[{slot}]") { Mode = BindingMode.TwoWay, UpdateSourceTrigger = UpdateSourceTrigger.LostFocus },
                     DisplayBinding = new Binding($"SectorDisplayValues[{slot}]"),
                     ElementStyle = elementStyle,
@@ -1545,8 +1688,8 @@ public partial class CubicacionView : UserControl
 
         // En modo Casillas, seleccionar todo / extender selección desde una casilla de sector
         // (Ctrl+Shift+flecha, Ctrl+E, etc.) no debe arrastrar Código/Descripción/Unidad/Cantidad
-        // (datos del material, no cantidades a operar) — solo las columnas de sectores.
-        DataGridExcelNavigation.SetColumnScope(ResourceGrid, col => !col.IsReadOnly && col != IndexColumn);
+        // (datos del material, no cantidades a operar) — solo las columnas de sectores visibles.
+        DataGridExcelNavigation.SetColumnScope(ResourceGrid, col => !col.IsReadOnly && col != IndexColumn && col.Visibility == Visibility.Visible);
 
         // Al entrar a Casillas, el foco siempre parte en la primera casilla de la tabla de
         // cubicación — ahorra tener que hacer clic manualmente, igual que en Detalle.
@@ -1919,46 +2062,97 @@ public partial class CubicacionView : UserControl
         }, System.Windows.Threading.DispatcherPriority.Input);
     }
 
+    private void HandleFocusCubicacionZone(CubicacionRowVm row)
+    {
+        Dispatcher.BeginInvoke(() =>
+        {
+            if (row == null) return;
+            ResourceGrid.Focus();
+            int rowIndex = ResourceGrid.Items.IndexOf(row);
+            if (rowIndex < 0) return;
+
+            DataGridColumn? targetCol = null;
+            if (Vm.IsSectorMatrixMode && _sectorColumns.Count > 0)
+            {
+                targetCol = _sectorColumns.FirstOrDefault(c => c.Visibility == Visibility.Visible && !c.IsReadOnly)
+                            ?? _sectorColumns.FirstOrDefault(c => c.Visibility == Visibility.Visible);
+            }
+
+            if (targetCol == null && CantidadColumn != null && CantidadColumn.Visibility == Visibility.Visible)
+            {
+                targetCol = CantidadColumn;
+            }
+
+            if (targetCol == null)
+            {
+                targetCol = ResourceGrid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible && !c.IsReadOnly)
+                            ?? ResourceGrid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible);
+            }
+
+            if (targetCol != null)
+            {
+                DataGridExcelNavigation.FocusCell(ResourceGrid, rowIndex, targetCol);
+            }
+        }, System.Windows.Threading.DispatcherPriority.Loaded);
+    }
+
+    public void FocusFirstGridCell()
+    {
+        Dispatcher.BeginInvoke(new Action(() =>
+        {
+            if (ResourceGrid.Items.Count == 0)
+            {
+                ResourceGrid.Focus();
+                Keyboard.Focus(ResourceGrid);
+                return;
+            }
+
+            var item = ResourceGrid.Items[0];
+            if (item is CubicacionRowVm rowVm && Vm.SelectedRow != rowVm)
+            {
+                Vm.SelectedRow = rowVm;
+            }
+
+            DataGridColumn? col = CodigoColumn != null && CodigoColumn.Visibility == Visibility.Visible
+                ? CodigoColumn
+                : null;
+
+            col ??= ResourceGrid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible && !c.IsReadOnly)
+                   ?? ResourceGrid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible);
+
+            if (col == null)
+            {
+                ResourceGrid.Focus();
+                Keyboard.Focus(ResourceGrid);
+                return;
+            }
+
+            _suppressSelectionSync = true;
+            try
+            {
+                ResourceGrid.SelectedCells.Clear();
+                var cellInfo = new DataGridCellInfo(item, col);
+                ResourceGrid.SelectedCells.Add(cellInfo);
+                ResourceGrid.CurrentCell = cellInfo;
+            }
+            finally
+            {
+                _suppressSelectionSync = false;
+            }
+
+            DataGridExcelNavigation.FocusCell(ResourceGrid, 0, col);
+        }), System.Windows.Threading.DispatcherPriority.Loaded);
+    }
+
     private void MoveSelectedPartida(int offset)
     {
-        if (Vm == null || Vm.FilteredPartidas == null || Vm.FilteredPartidas.Count <= 1)
-            return;
-
-        // Confirmar edición activa en el DataGrid antes de cambiar de partida
         if (IsGridEditing())
         {
             ResourceGrid.CommitEdit(DataGridEditingUnit.Cell, true);
             ResourceGrid.CommitEdit(DataGridEditingUnit.Row, true);
         }
 
-        int currentIndex = Vm.SelectedPartida != null ? Vm.FilteredPartidas.IndexOf(Vm.SelectedPartida) : -1;
-        int targetIndex = currentIndex + offset;
-
-        while (targetIndex >= 0 && targetIndex < Vm.FilteredPartidas.Count)
-        {
-            var candidate = Vm.FilteredPartidas[targetIndex];
-            if (candidate.EsPartida)
-            {
-                Vm.SelectedPartida = candidate;
-                PartidasList.ScrollIntoView(candidate);
-
-                Dispatcher.BeginInvoke(new Action(() =>
-                {
-                    if (ResourceGrid.Items.Count > 0)
-                    {
-                        var firstItem = ResourceGrid.Items[0];
-                        var firstCol = ResourceGrid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible && !c.IsReadOnly)
-                                       ?? ResourceGrid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible);
-                        if (firstCol != null)
-                        {
-                            DataGridExcelNavigation.FocusCell(ResourceGrid, 0, firstCol);
-                        }
-                    }
-                }), System.Windows.Threading.DispatcherPriority.Loaded);
-                break;
-            }
-            targetIndex += offset;
-        }
+        Vm?.NavigatePartidaRelative(offset);
     }
 
     private string? _lastEnteredMeasurement;

@@ -19,6 +19,7 @@ public sealed class ProjectWorkspaceService : IProjectWorkspaceService
     private readonly IValidationService validation;
     private readonly IProjectFileFormatDetector formatDetector;
     private readonly ProjectCollaborationLockService? collaborationLock;
+    private readonly SemaphoreSlim saveGate = new(1, 1);
 
     public ProjectWorkspaceService(
         BudgetProjectSession session,
@@ -83,37 +84,45 @@ public sealed class ProjectWorkspaceService : IProjectWorkspaceService
             throw new ArgumentException("Ruta de guardado requerida.", nameof(path));
         Session.EnsureWritable("guardar como");
 
-        path = NormalizeCurrentProjectPath(path);
-        // SaveAs a otra ruta no exige el lease del archivo original; SaveAsync sí.
-        bool requiresLease = string.Equals(path, Session.CurrentProjectPath, StringComparison.OrdinalIgnoreCase);
-        if (requiresLease)
-            EnsureCollaborationLease(path);
-
-        using var writeLease = requiresLease ? collaborationLock?.TryBeginWriteLease(path) : null;
-        if (requiresLease && collaborationLock != null && collaborationLock.RequiresExclusiveLease(path) && writeLease == null)
-            throw new ProjectLockLostException();
-
-        if (requiresLease)
+        await saveGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
         {
-            EnsureCollaborationLease(path);
-            collaborationLock?.TryRefreshLease(path);
+            path = NormalizeCurrentProjectPath(path);
+            // SaveAs a otra ruta no exige el lease del archivo original; SaveAsync sí.
+            bool requiresLease = string.Equals(path, Session.CurrentProjectPath, StringComparison.OrdinalIgnoreCase);
+            if (requiresLease)
+                EnsureCollaborationLease(path);
+
+            using var writeLease = requiresLease ? collaborationLock?.TryBeginWriteLease(path) : null;
+            if (requiresLease && collaborationLock != null && collaborationLock.RequiresExclusiveLease(path) && writeLease == null)
+                throw new ProjectLockLostException();
+
+            if (requiresLease)
+            {
+                EnsureCollaborationLease(path);
+                collaborationLock?.TryRefreshLease(path);
+            }
+
+            // Aviso previo al snapshot: los suscriptores (auditoría) añaden entradas a
+            // ProjectInfo que deben viajar al .qce. Hacerlo después de escribir se pierde.
+            Session.NotifySaving();
+
+            var snapshot = Session.CreateSnapshot();
+            snapshot.Proyecto.FechaModificacion = AppClock.Now;
+
+            await CreateSQLiteBackupIfNeededAsync(path, cancellationToken).ConfigureAwait(false);
+            await repository.SaveSQLiteSnapshotAsync(path, snapshot, cancellationToken).ConfigureAwait(false);
+
+            if (requiresLease)
+                EnsureCollaborationLease(path);
+
+            Session.ApplySnapshot(snapshot, path, markDirty: false);
+            Session.MarkSaved();
         }
-
-        // Aviso previo al snapshot: los suscriptores (auditoría) añaden entradas a
-        // ProjectInfo que deben viajar al .qce. Hacerlo después de escribir se pierde.
-        Session.NotifySaving();
-
-        var snapshot = Session.CreateSnapshot();
-        snapshot.Proyecto.FechaModificacion = AppClock.Now;
-
-        await CreateSQLiteBackupIfNeededAsync(path, cancellationToken).ConfigureAwait(false);
-        await repository.SaveSQLiteSnapshotAsync(path, snapshot, cancellationToken).ConfigureAwait(false);
-
-        if (requiresLease)
-            EnsureCollaborationLease(path);
-
-        Session.ApplySnapshot(snapshot, path, markDirty: false);
-        Session.MarkSaved();
+        finally
+        {
+            saveGate.Release();
+        }
     }
 
     /// <summary>

@@ -83,6 +83,28 @@ public sealed class MaterialMoRecalibrationServiceTests
     }
 
     [Fact]
+    public void Recalibrar_ActualizaMaterialesDeFormulaFactor()
+    {
+        var material = new MaterialRow
+        {
+            Codigo = "H07Z1-K2.5",
+            MoFactorBase = 20m,
+            MoClp = 20m,
+            MoFormulaTipo = MaterialMoResolver.MoFormulaFactor
+        };
+        var proyecto = new ProjectInfoRow { IndiceMoFa = 62.80m };
+
+        var cambios = MaterialMoRecalibrationService.Recalibrar([material], proyecto);
+
+        Assert.Single(cambios);
+        Assert.Equal("H07Z1-K2.5", cambios[0].Codigo);
+        Assert.Equal(20m, cambios[0].AnteriorClp);
+        Assert.Equal(1_256m, cambios[0].NuevoClp); // 20 × 62,80 = 1.256
+        Assert.Equal(1_256m, material.MoClp);
+        Assert.Equal(20m, material.MoFactorBase); // Preserva la base original
+    }
+
+    [Fact]
     public void SincronizarBanco_LlevaElNuevoSnapshotDeMoAlBanco()
     {
         var banco = new FakeBank(

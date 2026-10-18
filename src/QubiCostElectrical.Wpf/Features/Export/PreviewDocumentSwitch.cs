@@ -9,6 +9,7 @@ public sealed class PreviewDocumentSwitch : ObservableObject
 {
     public const string OfferLetterId = "OfferLetter";
     public const string OfferPdfId = "OfferPdf";
+    public const string ResumenPdfId = "ResumenPdf";
 
     private string selectedId = OfferLetterId;
 

@@ -552,18 +552,18 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
 
     // Botón "Eliminar todo": vacía por completo el banco de precios central (compartido entre
     // todos los proyectos). Irreversible — confirmación explícita con el conteo de registros
-    // antes de tocar la base de datos.
+    // antes de tocar la base de datos, con respaldo preventivo automático (.bak).
     private void DeleteAllEntries()
     {
         if (!CanEdit || entries.Count == 0)
             return;
 
         int total = entries.Count;
-        if (!WpfDialogService.Confirm("Eliminar todo el banco de precios",
-                $"Se eliminarán los {total:N0} precios del banco de forma permanente. Esta acción NO se puede deshacer.\n\n¿Continuar?",
-                isWarning: true))
+        if (!ConfirmDeleteAll(
+                $"Se eliminarán los {total:N0} precios del banco de forma permanente. Esta acción NO se puede deshacer.\nSe creará un respaldo de seguridad preventivo antes de continuar.\n\n¿Continuar?"))
             return;
 
+        var bakPath = TryCreateBackupBeforeDeleteAll();
         store.DeleteAll();
         entries.Clear();
         SelectedEntry = null;
@@ -572,9 +572,33 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
         RecomputeEntryStats();
         UpdateSummary();
         ReloadProjectPreview();
-        StatusMessage = $"Se eliminaron {total:N0} precios del banco.";
+        StatusMessage = string.IsNullOrWhiteSpace(bakPath)
+            ? $"Se eliminaron {total:N0} precios del banco."
+            : $"Se eliminaron {total:N0} precios del banco (respaldo: {Path.GetFileName(bakPath)}).";
         ShowEmptyState = true;
         deleteAllCommand.RaiseCanExecuteChanged();
+    }
+
+    internal string? TryCreateBackupBeforeDeleteAll()
+    {
+        try
+        {
+            var dbPath = (store as PriceBankStore)?.DatabasePath;
+            if (!string.IsNullOrWhiteSpace(dbPath) && File.Exists(dbPath))
+            {
+                var dir = Path.GetDirectoryName(dbPath) ?? "";
+                var fileName = Path.GetFileName(dbPath);
+                var bakPath = Path.Combine(dir, $"{fileName}.{AppClock.Now:yyyyMMdd_HHmmss}.bak");
+                File.Copy(dbPath, bakPath, overwrite: true);
+                AppLog.Info("PriceBank", $"Respaldo preventivo del banco de precios creado en: {bakPath}");
+                return bakPath;
+            }
+        }
+        catch (Exception ex)
+        {
+            AppLog.Warning("PriceBank", "No se pudo generar el respaldo preventivo del banco de precios", ex);
+        }
+        return null;
     }
 
     private void DownloadImportTemplate()

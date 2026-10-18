@@ -37,6 +37,9 @@ public sealed class DeliveryPreviewService
     private readonly ICubicacionReportPdfExporter cubReportPdf;
     private readonly ICubicacionSCReportExcelExporter cubScReportExcel;
     private readonly IOfferLetterPdfExporter offerLetterExporter;
+    private readonly IIngelsamOfferSummaryExcelExporter summaryExcelExporter;
+    private readonly IOfferSummaryPdfExporter summaryPdfExporter;
+    private readonly IPartidasAbiertasExcelExporter partidasAbiertasExporter;
 
     public DeliveryPreviewService(
         IFileOpenService fileOpener,
@@ -46,7 +49,10 @@ public sealed class DeliveryPreviewService
         ICubicacionReportExcelExporter cubReportExcel,
         ICubicacionReportPdfExporter cubReportPdf,
         ICubicacionSCReportExcelExporter cubScReportExcel,
-        IOfferLetterPdfExporter offerLetterExporter)
+        IOfferLetterPdfExporter offerLetterExporter,
+        IIngelsamOfferSummaryExcelExporter? summaryExcelExporter = null,
+        IOfferSummaryPdfExporter? summaryPdfExporter = null,
+        IPartidasAbiertasExcelExporter? partidasAbiertasExporter = null)
     {
         this.fileOpener = fileOpener ?? throw new ArgumentNullException(nameof(fileOpener));
         this.pdfExporter = pdfExporter;
@@ -56,6 +62,9 @@ public sealed class DeliveryPreviewService
         this.cubReportPdf = cubReportPdf;
         this.cubScReportExcel = cubScReportExcel;
         this.offerLetterExporter = offerLetterExporter;
+        this.summaryExcelExporter = summaryExcelExporter ?? new IngelsamOfferSummaryExcelExporter();
+        this.summaryPdfExporter = summaryPdfExporter ?? new QuestPdfOfferSummaryExporter();
+        this.partidasAbiertasExporter = partidasAbiertasExporter ?? new PartidasAbiertasExcelExporter();
     }
 
     public async Task<DeliveryExportResult> GeneratePreviewAsync(ExportProjectContext ctx, string documentId = "OfferLetter", bool openExternally = false)
@@ -65,11 +74,17 @@ public sealed class DeliveryPreviewService
         string tempRoot = Path.Combine(Path.GetTempPath(), "QubiCostElectrical", "Preview", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(tempRoot);
 
-        string fileName = documentId == "OfferPdf" ? "Preview-Oferta.pdf" : "Preview-Carta-Oferta.pdf";
+        string fileName = documentId switch
+        {
+            "OfferPdf" => "Preview-Oferta.pdf",
+            "ResumenPdf" => "Preview-Resumen-Presupuesto.pdf",
+            _ => "Preview-Carta-Oferta.pdf"
+        };
         string previewPath = Path.Combine(tempRoot, fileName);
         await Task.Run(() =>
         {
             if (documentId == "OfferPdf") pdfExporter.Export(ctx, previewPath);
+            else if (documentId == "ResumenPdf") summaryPdfExporter.Export(ctx, previewPath);
             else offerLetterExporter.Export(ctx, previewPath);
         });
 
@@ -105,10 +120,16 @@ public sealed class DeliveryPreviewService
                     (c, p) => pdfExporter.Export(c, p)),
                 "OfferLetter" => await ExportFileAsync(ctx, targetFolder, $"{baseName}-Carta-Oferta.pdf",
                     (c, p) => offerLetterExporter.Export(c, p)),
+                "LetterDocx" => await ExportFileAsync(ctx, targetFolder, $"{baseName}-Carta-Oferta.docx",
+                    (c, p) => wordLetterExporter.Export(c, p)),
+                "ResumenExcel" => await ExportFileAsync(ctx, targetFolder, $"{baseName}-Resumen-Presupuesto.xlsx",
+                    (c, p) => summaryExcelExporter.Export(c, p)),
+                "PartidasAbiertasExcel" => await ExportFileAsync(ctx, targetFolder, $"{baseName}-Partidas-Abiertas.xlsx",
+                    (c, p) => partidasAbiertasExporter.Export(c, p)),
+                "ResumenPdf" => await ExportFileAsync(ctx, targetFolder, $"{baseName}-Resumen-Presupuesto.pdf",
+                    (c, p) => summaryPdfExporter.Export(c, p)),
                 "ControlExcel" => await ExportFileAsync(ctx, targetFolder, $"{baseName}-Control.xlsx",
                     (c, p) => excelExporter.Export(c, p)),
-                "LetterDocx" => await ExportFileAsync(ctx, targetFolder, $"{baseName}-Carta.docx",
-                    (c, p) => wordLetterExporter.Export(c, p)),
                 "MemoriaExcel" => await ExportFileAsync(ctx, targetFolder, $"{baseName}-Memoria-Cubicacion.xlsx",
                     (c, p) => cubReportExcel.Export(c, p)),
                 "MemoriaPdf" => await ExportFileAsync(ctx, targetFolder, $"{baseName}-Memoria-Cubicacion.pdf",

@@ -21,31 +21,41 @@ public static class FactorAjusteMoService
     }
 
     /// <summary>
-    /// M.O. real del proyecto: el total del módulo Mano de obra si existe; si no, la dotación
-    /// (directa + indirecta) × sueldo × (1 + leyes sociales), igual que <see cref="ExcelCostosBridge"/>.
+    /// M.O. real directa del proyecto: el total directo del módulo Mano de obra si existe;
+    /// si no, la dotación directa × sueldo × (1 + leyes sociales), igual que el Excel en COSTOS!G192 (MANO DE OBRA!T23).
+    /// No incluye mano de obra indirecta.
     /// </summary>
     public static decimal ResolverMoRealClp(ProjectFileData? data, ProjectInfoRow? proyecto)
     {
         var project = proyecto ?? new ProjectInfoRow();
-        if (project.MoTotalClp > 0m)
-            return project.MoTotalClp;
+        if (project.MoDirectaClp > 0m)
+            return project.MoDirectaClp;
 
         data ??= new ProjectFileData();
         int meses = project.MoDuracionMeses > 0 ? project.MoDuracionMeses : 12;
-        return ExcelCostosBridge.SumMoDotacionClp(
-            data.MoDirecta, data.MoIndirecta, fallbackMonths: meses, leyesSocialesPct: project.LeyesSocialesMoPct);
+        if (data.MoDirecta != null && data.MoDirecta.Count > 0)
+        {
+            return ExcelCostosBridge.SumMoDirectaConLeyes(
+                data.MoDirecta, fallbackMonths: meses, leyesSocialesPct: project.LeyesSocialesMoPct);
+        }
+
+        if (project.MoTotalClp > 0m)
+            return project.MoTotalClp;
+
+        return 0m;
     }
 
     /// <summary>
-    /// Días-hombre del plan de M.O. (columna TOTAL DD/HH del Excel). Sirve para que el estimador
-    /// lea el FA contra la tarifa D/H y verifique que M.O. del itemizado y plan de obra cuadran.
+    /// Días-hombre de la M.O. directa (columna TOTAL DD/HH del Excel en COSTOS!H192 = MANO DE OBRA!U23).
+    /// Sirve para que el estimador lea el FA contra la tarifa D/H directa y verifique que la M.O.
+    /// del itemizado y el plan de obra directa cuadran. No incluye mano de obra indirecta.
     /// </summary>
     public static decimal ResolverDiasHombre(ProjectFileData? data, ProjectInfoRow? proyecto)
     {
         var project = proyecto ?? new ProjectInfoRow();
         data ??= new ProjectFileData();
         int meses = project.MoDuracionMeses > 0 ? project.MoDuracionMeses : 12;
-        return ExcelCostosBridge.SumDiasHombre(data.MoDirecta, data.MoIndirecta, fallbackMonths: meses);
+        return ExcelCostosBridge.SumDiasHombreDirecta(data.MoDirecta, fallbackMonths: meses);
     }
 
     /// <summary>
@@ -95,6 +105,12 @@ public static class FactorAjusteMoService
         {
             decimal matClp = material.MatClp > 0m ? material.MatClp : row.MatClpConFallback;
             return new FactorAjusteMoLinea(0m, matClp * (material.MoPorcentajeMaterial / 100m), row.Cantidad);
+        }
+
+        if (MaterialMoResolver.DebeUsarFactor(material))
+        {
+            decimal baseMo = MaterialMoResolver.BaseMoFactor(material);
+            return new FactorAjusteMoLinea(0m, baseMo, row.Cantidad);
         }
 
         return new FactorAjusteMoLinea(FijaConRespaldo(material.MoClp, row), 0m, row.Cantidad);

@@ -26,6 +26,15 @@ public static partial class DataGridExcelNavigation
     public static void SetHandlePasteByHost(DataGrid grid, bool value) => grid.SetValue(HandlePasteByHostProperty, value);
     public static bool GetHandlePasteByHost(DataGrid grid) => (bool)grid.GetValue(HandlePasteByHostProperty);
 
+    /// <summary>
+    /// Deja Delete / Supr al dueño de la grilla (ej. eliminar fila de material manteniendo foco e indicador).
+    /// </summary>
+    public static readonly DependencyProperty HandleDeleteByHostProperty = DependencyProperty.RegisterAttached(
+        "HandleDeleteByHost", typeof(bool), typeof(DataGridExcelNavigation), new PropertyMetadata(false));
+
+    public static void SetHandleDeleteByHost(DataGrid grid, bool value) => grid.SetValue(HandleDeleteByHostProperty, value);
+    public static bool GetHandleDeleteByHost(DataGrid grid) => (bool)grid.GetValue(HandleDeleteByHostProperty);
+
     private static void OnEnableChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         if (d is not DataGrid grid)

@@ -171,4 +171,33 @@ public sealed class ProjectCollaborationLockServiceTests
             if (File.Exists(path + ".lock")) File.Delete(path + ".lock");
         }
     }
+
+    [Fact]
+    public void InspectLock_AllowsTakeOver_WhenLockIsCorrupt()
+    {
+        var path = Path.GetTempFileName();
+        try
+        {
+            File.Delete(path);
+            // Write corrupt lock file (0 bytes or garbage)
+            File.WriteAllText(path + ".lock", "{ corrupt json / truncated file");
+
+            using var svc = new ProjectCollaborationLockService();
+            var inspection = svc.InspectLock(path);
+            Assert.Equal(ProjectLockState.Corrupt, inspection.State);
+            Assert.True(inspection.CanTakeOver);
+
+            var user = TestUser();
+            var acquired = svc.ForceAcquireExpiredLock(path, user);
+            Assert.True(acquired);
+            Assert.True(svc.OwnsActiveLock(path));
+
+            var newInspection = svc.InspectLock(path);
+            Assert.Equal(ProjectLockState.OwnLock, newInspection.State);
+        }
+        finally
+        {
+            if (File.Exists(path + ".lock")) File.Delete(path + ".lock");
+        }
+    }
 }

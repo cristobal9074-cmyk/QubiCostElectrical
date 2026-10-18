@@ -1582,7 +1582,46 @@ public sealed class CubicacionViewModelTests
         vm.PartidaCantidadText = "+c1+c2+c3";
         Assert.Equal(39m, vm.SelectedPartida?.Cantidad);
         Assert.Equal("+c1+c2+c3", vm.SelectedPartida?.CantidadFormula);
+    }
 
+    [Fact]
+    public async Task AutocompletarUnidadYCantidadActual_SetsUnidadAndCantidadFromFirstMaterial()
+    {
+        var host = WpfAppHost.Current;
+        var path = Path.Combine(Path.GetTempPath(), $"cubicacion-autocompletar-{Guid.NewGuid():N}.qce");
+        host.Session.NewProject("cubicacion-autocompletar");
+        host.Session.Itemizado.Add(new ItemizadoRow
+        {
+            Id = "P1",
+            Item = "1.1",
+            Descripcion = "Alimentador",
+            Unidad = "",
+            Cantidad = 0m
+        });
+        host.Session.Cubicacion.Add(new CubicacionRow
+        {
+            Id = "R1",
+            ItemId = "P1",
+            Codigo = "CAB-01",
+            Descripcion = "Cable Cu 4mm2",
+            Unidad = "m",
+            Cantidad = 75m,
+            MatClp = 1000m
+        });
+        await host.ProjectWorkspace.SaveAsAsync(path);
 
+        var vm = new CubicacionPageVm(new FakeShell(), host);
+        vm.SelectPartida(vm.Partidas.Single(p => p.Id == "P1"));
+
+        Assert.Equal("", vm.SelectedPartida?.Unidad);
+        Assert.Equal(0m, vm.SelectedPartida?.Cantidad);
+        Assert.True(vm.SelectedPartida?.SinValorizacionGlobal);
+
+        vm.AutocompletarUnidadYCantidadCommand.Execute(null);
+
+        Assert.Equal("m", vm.SelectedPartida?.Unidad);
+        Assert.Equal(75m, vm.SelectedPartida?.Cantidad);
+        Assert.False(vm.SelectedPartida?.SinValorizacionGlobal);
+        Assert.Equal("m", vm.PartidaUnidadText);
     }
 }

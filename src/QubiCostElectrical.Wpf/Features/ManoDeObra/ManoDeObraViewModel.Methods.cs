@@ -10,7 +10,7 @@ using QubiCostElectrical.Wpf.Shell;
 
 namespace QubiCostElectrical.Wpf.Features.ManoDeObra;
 
-public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePage
+public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePage, IPageWithPendingChanges, IPageWithCommitChanges
 {
     private static readonly Dictionary<string, decimal> DefaultSueldos = new()
     {
@@ -27,13 +27,16 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
     private readonly IShellNavigationHost shell;
     private readonly BudgetProjectSession session;
     private readonly IProjectWorkspaceService workspace;
+    private readonly WpfUndoService? undo;
     private bool showEmptyState = true;
     private bool canEdit;
     private bool isLoading;
     private bool hasLoaded;
+    private bool hasRecalculated;
     private bool suppressSalaryLoop;
     private int totalMeses = 12;
     private decimal lastTotalMoClp;
+    private decimal lastTotalDirClp;
     private decimal valorUf = PriceConversion.DefaultValorUfClp;
     private decimal leyesSocialesPct = 35m;
     private string curvePreset = "bell";
@@ -93,7 +96,14 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
 
     private readonly List<MoProjectionTaskVm> projectionTasks = new();
 
-    public MoProjectionTaskVm[] ProjectionTasks => projectionTasks.ToArray();
+    public MoProjectionTaskVm[] ProjectionTasks
+    {
+        get
+        {
+            FitProjectionMonths();
+            return projectionTasks.ToArray();
+        }
+    }
 
     public MoCargoDef[] CargosDef { get; private set; } = Array.Empty<MoCargoDef>();
     public MoMesInfo[] Meses { get; private set; } = Array.Empty<MoMesInfo>();
@@ -105,18 +115,22 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
     public int TotalMonths => totalMeses;
 
     public ManoDeObraViewModel(IShellNavigationHost shell, WpfAppHost host)
-        : this(shell, host.Session, host.ProjectWorkspace) { }
+        : this(shell, host.Session, host.ProjectWorkspace, host.UndoService) { }
 
-    public ManoDeObraViewModel(IShellNavigationHost shell, BudgetProjectSession session, IProjectWorkspaceService workspace)
+    public ManoDeObraViewModel(IShellNavigationHost shell, BudgetProjectSession session, IProjectWorkspaceService workspace, WpfUndoService? undo = null)
     {
         this.shell = shell;
         this.session = session;
         this.workspace = workspace;
+        this.undo = undo;
         OpenProjectCommand = new RelayCommand(() => _ = shell.OpenProjectAsync());
         ApplyCommand = new RelayCommand(ExecuteApply, () => CanEdit);
         ResetParamsCommand = new RelayCommand(ExecuteResetParams, () => CanEdit);
         ResetSueldosCommand = new RelayCommand(ExecuteResetSueldos, () => CanEdit);
         TakeProjectionCommand = new RelayCommand(ExecuteTakeProjection, () => CanEdit);
+        ApplyAverageProjectionCommand = new RelayCommand(ExecuteApplyAverageProjection, () => CanEdit);
+        AddDirectaCargoCommand = new RelayCommand(ExecuteAddDirectaCargo, () => CanEdit);
+        AddIndirectaCargoCommand = new RelayCommand(ExecuteAddIndirectaCargo, () => CanEdit);
         SetCurrencyClpCommand = new RelayCommand(() => SetCurrency(false));
         SetCurrencyUfCommand = new RelayCommand(() => SetCurrency(true));
     }
@@ -126,6 +140,9 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
     public ICommand ResetParamsCommand { get; }
     public ICommand ResetSueldosCommand { get; }
     public ICommand TakeProjectionCommand { get; }
+    public ICommand ApplyAverageProjectionCommand { get; }
+    public ICommand AddDirectaCargoCommand { get; }
+    public ICommand AddIndirectaCargoCommand { get; }
     public ICommand SetCurrencyClpCommand { get; }
     public ICommand SetCurrencyUfCommand { get; }
 
@@ -143,6 +160,9 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
                 (ResetParamsCommand as RelayCommand)?.RaiseCanExecuteChanged();
                 (ResetSueldosCommand as RelayCommand)?.RaiseCanExecuteChanged();
                 (TakeProjectionCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                (ApplyAverageProjectionCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                (AddDirectaCargoCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                (AddIndirectaCargoCommand as RelayCommand)?.RaiseCanExecuteChanged();
             }
         }
     }
@@ -302,6 +322,7 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
                 OnPropertyChanged(nameof(LeyesSocialesPct));
                 SeedCargos();
                 LoadProjectionTasks();
+                FitProjectionMonths();
                 syncProjection = ApplySavedProjectionToDirecta();
             }
 
@@ -373,8 +394,10 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
         return placeholder && only.Cantidades.All(v => v == 0);
     }
 
-    private void FitProjectionMonths()
+    public void FitProjectionMonths()
     {
+        if (totalMeses <= 0)
+            return;
         var changed = false;
         foreach (var task in projectionTasks)
         {
@@ -437,8 +460,19 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
         if (!CanEdit)
             return false;
         var task = projectionTasks.FirstOrDefault(t => t.Id == id);
-        if (task == null || monthIndex < 0 || monthIndex >= task.Cantidades.Length)
+        if (task == null || monthIndex < 0)
             return false;
+
+        // Si la tarea tiene menos meses que el índice solicitado (ej: se amplió la duración del proyecto a 14, 20 o 50 meses),
+        // expandir automáticamente el arreglo de cantidades al tamaño necesario.
+        if (monthIndex >= task.Cantidades.Length)
+        {
+            var targetLen = Math.Max(monthIndex + 1, totalMeses);
+            var next = new int[targetLen];
+            Array.Copy(task.Cantidades, next, task.Cantidades.Length);
+            task.Cantidades = next;
+        }
+
         value = Math.Max(0, value);
         if (task.Cantidades[monthIndex] == value)
             return false;
@@ -487,13 +521,10 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
 
     private bool ApplySavedProjectionToDirecta()
     {
-        var months = new List<int>();
-        for (var i = 0; i < totalMeses; i++)
-        {
-            if (ProjectionMonthTotal(i) > 0)
-                months.Add(i);
-        }
-        return months.Count > 0 && WriteProjectionMonths(months);
+        if (totalMeses <= 0)
+            return false;
+        var months = Enumerable.Range(0, totalMeses).ToList();
+        return WriteProjectionMonths(months);
     }
 
     private void PushChangedProjectionMonths(int[] before)
@@ -600,6 +631,12 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
         return sum / totalMeses;
     }
 
+    public int ProjectionMonthlyAverageRounded()
+    {
+        var avg = ProjectionMonthlyAverage();
+        return avg <= 0 ? 0 : (int)Math.Round(avg, MidpointRounding.AwayFromZero);
+    }
+
     public bool ProjectionMonthIsPeak(int monthIndex)
         => monthIndex >= 0 && monthIndex < Meses.Length && Meses[monthIndex].EsPeak;
 
@@ -700,6 +737,217 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
             "Dotación directa actualizada con los totales de la proyección.");
     }
 
+    private void ExecuteApplyAverageProjection()
+    {
+        if (!CanEdit)
+            return;
+        FlushProjectionEdits();
+        if (!projectionTasks.Any(t => t.Cantidades.Any(c => c > 0)))
+        {
+            ShellNotificationService.Instance.ShowWarning(
+                "Proyección MO",
+                "La proyección no tiene trabajadores asignados: carga los meses en el botón Proyección MO.");
+            return;
+        }
+
+        var avgRounded = ProjectionMonthlyAverageRounded();
+        if (avgRounded <= 0)
+            return;
+
+        var directa = CargosDef.Where(c => c.EsDirecta).ToArray();
+        if (directa.Length == 0)
+            return;
+
+        var weights = directa.Select(c => Math.Max(0, c.DotPico)).ToArray();
+        if (weights.All(w => w <= 0))
+            weights = directa.Select(_ => 1).ToArray();
+
+        for (var monthIndex = 0; monthIndex < totalMeses; monthIndex++)
+        {
+            var shares = SplitByWeightWithParity(avgRounded, weights, monthIndex);
+            for (var i = 0; i < directa.Length; i++)
+            {
+                var key = $"{directa[i].Id}_{monthIndex}";
+                cellOverrides[key] = shares[i];
+            }
+        }
+
+        peakHeadcount = avgRounded;
+        OnPropertyChanged(nameof(PeakHeadcount));
+        Recalcular();
+        PersistToSession();
+        ShellNotificationService.Instance.ShowSuccess(
+            "Proyección MO",
+            $"Promedio de proyección ({avgRounded} pers./mes) aplicado a la dotación directa.");
+    }
+
+    private static int[] SplitByWeightWithParity(int total, int[] weights, int parityOffset)
+    {
+        var count = weights.Length;
+        var result = new int[count];
+        if (count == 0 || total <= 0)
+            return result;
+
+        var weightSum = weights.Sum();
+        if (weightSum <= 0)
+        {
+            var each = total / count;
+            var extra = total % count;
+            for (var i = 0; i < count; i++)
+            {
+                var idx = (i + parityOffset) % count;
+                result[idx] = each + (i < extra ? 1 : 0);
+            }
+            return result;
+        }
+
+        var exact = new double[count];
+        var assigned = 0;
+        for (var i = 0; i < count; i++)
+        {
+            exact[i] = total * (weights[i] / (double)weightSum);
+            result[i] = (int)Math.Floor(exact[i]);
+            assigned += result[i];
+        }
+
+        var left = total - assigned;
+        var order = Enumerable.Range(0, count)
+            .OrderByDescending(i => exact[i] - result[i])
+            .ThenBy(i => (i + parityOffset) % count)
+            .ToArray();
+        for (var k = 0; k < left; k++)
+            result[order[k]]++;
+        return result;
+    }
+
+    private void ExecuteAddDirectaCargo()
+    {
+        if (!CanEdit)
+            return;
+
+        var nextIndex = CargosDef.Count(c => c.EsDirecta) + 1;
+        var suggestedTag = "D" + nextIndex;
+        while (CargosDef.Any(c => string.Equals(c.Tag, suggestedTag, StringComparison.OrdinalIgnoreCase)))
+        {
+            nextIndex++;
+            suggestedTag = "D" + nextIndex;
+        }
+
+        var dlg = new AddCargoMoDialog(
+            isDirecta: true,
+            suggestedTag: suggestedTag,
+            defaultSueldo: 750000m,
+            tagExistsCheck: tag => CargosDef.Any(c => string.Equals(c.Tag, tag, StringComparison.OrdinalIgnoreCase)))
+        {
+            Owner = System.Windows.Application.Current?.MainWindow
+        };
+
+        if (dlg.ShowDialog() != true || dlg.Result == null)
+            return;
+
+        var res = dlg.Result;
+        var newDef = new MoCargoDef
+        {
+            Id = Guid.NewGuid().ToString("N"),
+            Nombre = res.Nombre,
+            Tag = res.Tag,
+            EsDirecta = true,
+            DotPico = peakHeadcount,
+            SueldoBase = res.SueldoBase,
+            FraccionObra = 1m
+        };
+
+        undo?.PushUndoPoint(session, $"Agregar puesto directo '{newDef.Nombre}'");
+        CargosDef = CargosDef.Concat(new[] { newDef }).ToArray();
+        RebuildEditors();
+        Recalcular();
+        PersistToSession();
+        OnPropertyChanged(nameof(CargosDef));
+        ShellNotificationService.Instance.ShowSuccess("Mano de Obra", $"Puesto directo '{newDef.Nombre}' agregado exitosamente.");
+    }
+
+    private void ExecuteAddIndirectaCargo()
+    {
+        if (!CanEdit)
+            return;
+
+        var nextIndex = CargosDef.Count(c => !c.EsDirecta) + 1;
+        var suggestedTag = "I" + nextIndex;
+        while (CargosDef.Any(c => string.Equals(c.Tag, suggestedTag, StringComparison.OrdinalIgnoreCase)))
+        {
+            nextIndex++;
+            suggestedTag = "I" + nextIndex;
+        }
+
+        var dlg = new AddCargoMoDialog(
+            isDirecta: false,
+            suggestedTag: suggestedTag,
+            defaultSueldo: 850000m,
+            tagExistsCheck: tag => CargosDef.Any(c => string.Equals(c.Tag, tag, StringComparison.OrdinalIgnoreCase)))
+        {
+            Owner = System.Windows.Application.Current?.MainWindow
+        };
+
+        if (dlg.ShowDialog() != true || dlg.Result == null)
+            return;
+
+        var res = dlg.Result;
+        var newDef = new MoCargoDef
+        {
+            Id = Guid.NewGuid().ToString("N"),
+            Nombre = res.Nombre,
+            Tag = res.Tag,
+            EsDirecta = false,
+            DotPico = res.Dotacion,
+            SueldoBase = res.SueldoBase,
+            FraccionObra = res.FraccionObra
+        };
+
+        undo?.PushUndoPoint(session, $"Agregar puesto indirecto '{newDef.Nombre}'");
+        CargosDef = CargosDef.Concat(new[] { newDef }).ToArray();
+        RebuildEditors();
+        Recalcular();
+        PersistToSession();
+        OnPropertyChanged(nameof(CargosDef));
+        ShellNotificationService.Instance.ShowSuccess("Mano de Obra", $"Puesto indirecto '{newDef.Nombre}' agregado exitosamente.");
+    }
+
+    private void DeleteCargo(MoCargoEditorVm editor)
+    {
+        if (!CanEdit)
+            return;
+
+        var isDirect = editor.Def.EsDirecta;
+        var countInGroup = CargosDef.Count(c => c.EsDirecta == isDirect);
+        if (isDirect && countInGroup <= 1)
+        {
+            WpfDialogService.Warning("Mano de Obra", "Debe existir al menos un puesto en Mano de Obra Directa.");
+            return;
+        }
+
+        var confirm = WpfDialogService.Confirm(
+            "Eliminar puesto",
+            $"¿Está seguro de que desea eliminar el puesto '{editor.Nombre}'?\nSe eliminarán sus dotaciones y cálculos asociados.",
+            isWarning: true);
+
+        if (!confirm)
+            return;
+
+        undo?.PushUndoPoint(session, $"Eliminar puesto '{editor.Nombre}'");
+        CargosDef = CargosDef.Where(c => c.Id != editor.Id).ToArray();
+
+        var prefix = $"{editor.Id}_";
+        var keysToRemove = cellOverrides.Keys.Where(k => k.StartsWith(prefix, StringComparison.Ordinal)).ToList();
+        foreach (var k in keysToRemove)
+            cellOverrides.Remove(k);
+
+        RebuildEditors();
+        Recalcular();
+        PersistToSession();
+        OnPropertyChanged(nameof(CargosDef));
+        ShellNotificationService.Instance.ShowSuccess("Mano de Obra", $"Puesto '{editor.Nombre}' eliminado.");
+    }
+
     private void SetCurrency(bool uf) => ViewInUf = uf;
 
     public bool HasOverride(string cargoId, int monthIdx)
@@ -759,6 +1007,29 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
         PersistToSession();
     }
 
+    // ─── IPageWithPendingChanges / IPageWithCommitChanges ────────────────────
+    public bool HasPendingChanges => staffingEditsPending || dotPicoPending;
+
+    bool IPageWithPendingChanges.HasPendingChanges => HasPendingChanges;
+    bool IPageWithPendingChanges.TryDiscardChanges() => TryDiscardChanges();
+    bool IPageWithCommitChanges.TryApplyChanges() => TryApplyChanges();
+
+    public bool TryDiscardChanges()
+    {
+        dotPicoPending = false;
+        pendingDotCargo = null;
+        staffingEditsPending = false;
+        cellOverrides.Clear();
+        Load();
+        return true;
+    }
+
+    public bool TryApplyChanges()
+    {
+        FlushStaffingEdits();
+        return true;
+    }
+
     private bool dotPicoPending;
     private string? pendingDotCargo;
     private int pendingDotPico;
@@ -794,6 +1065,35 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
             return;
         Recalcular();
         PersistToSession();
+    }
+
+    /// <summary>
+    /// Establece la fracción de obra (dedicación) para un cargo indirecto (ej: 0.3 o 1.0)
+    /// y actualiza su editor, cálculos y persistencia.
+    /// </summary>
+    public void SetCargoFraccion(string cargoId, decimal fraccion)
+    {
+        if (!CanEdit || string.IsNullOrWhiteSpace(cargoId))
+            return;
+        var cargo = CargosDef.FirstOrDefault(c => c.Id == cargoId && !c.EsDirecta);
+        if (cargo == null)
+            return;
+        fraccion = ClampFraccion(fraccion);
+        if (cargo.FraccionObra == fraccion && cargo.DotPico == 1)
+            return;
+        cargo.FraccionObra = fraccion;
+        cargo.DotPico = 1;
+        var editor = IndirectaEditors.FirstOrDefault(e => e.Id == cargoId);
+        if (editor != null)
+        {
+            editor.FraccionEditText = FraccionStr(fraccion);
+            editor.CommitEdit();
+        }
+        else
+        {
+            Recalcular();
+            PersistToSession();
+        }
     }
 
     private void ApplyStagedDotPico()
@@ -848,6 +1148,8 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
             var cargo = CargosDef.FirstOrDefault(c => c.Id == editor.Id);
             if (cargo == null)
                 continue;
+            cargo.Nombre = editor.Nombre;
+            cargo.Tag = editor.Tag;
             cargo.SueldoBase = editor.SueldoBase;
             if (!cargo.EsDirecta)
                 cargo.FraccionObra = ClampFraccion(editor.FraccionObra);
@@ -872,6 +1174,7 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
         {
             Id = c.Id,
             Cargo = c.Nombre,
+            Tag = c.Tag,
             Dotacion = c.DotPico,
             SueldoMensualClp = c.SueldoBase,
             DotacionMensual = BuildMensualList(c.Id, n),
@@ -881,6 +1184,7 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
         {
             Id = c.Id,
             Cargo = c.Nombre,
+            Tag = c.Tag,
             Dotacion = c.DotPico,
             SueldoMensualClp = c.SueldoBase,
             FraccionObra = ClampFraccion(c.FraccionObra),
@@ -890,9 +1194,19 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
         var project = data.Proyecto ?? session.ProjectInfo;
         project.MoDuracionMeses = totalMeses;
         project.LeyesSocialesMoPct = leyesSocialesPct;
-        // Solo sobrescribir el total si ya recalculamos (evita borrar MoTotalClp en SeedCargos).
-        if (lastTotalMoClp > 0m)
+        // Si ya recalculamos, reflejar el valor actual (incluso si es 0); si no, preservar lo existente.
+        if (hasRecalculated)
+        {
             project.MoTotalClp = lastTotalMoClp;
+            project.MoDirectaClp = lastTotalDirClp;
+        }
+        else
+        {
+            if (lastTotalMoClp > 0m)
+                project.MoTotalClp = lastTotalMoClp;
+            if (lastTotalDirClp > 0m)
+                project.MoDirectaClp = lastTotalDirClp;
+        }
         data.Proyecto = project;
 
         // Cadena: MO → cantidades EPP → GO 3.5 en Desglose de costos.
@@ -946,7 +1260,7 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
             var i = 0;
             foreach (var r in data.MoDirecta)
             {
-                var tag = GuessTag(r.Cargo, true, i);
+                var tag = !string.IsNullOrWhiteSpace(r.Tag) ? r.Tag : GuessTag(r.Cargo, true, i);
                 var nombre = MoCargoNameNormalizer.ResolveDirectaNombre(r.Cargo, i);
                 if (MoCargoNameNormalizer.IsGuidLike(r.Cargo)) renamedCargoNames = true;
                 list.Add(new MoCargoDef
@@ -973,7 +1287,7 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
             var i = 0;
             foreach (var r in data.MoIndirecta)
             {
-                var tag = GuessTag(r.Cargo, false, i++);
+                var tag = !string.IsNullOrWhiteSpace(r.Tag) ? r.Tag : GuessTag(r.Cargo, false, i++);
                 list.Add(new MoCargoDef
                 {
                     Id = string.IsNullOrWhiteSpace(r.Id) ? tag : r.Id,
@@ -1057,14 +1371,14 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
 
         foreach (var c in CargosDef.Where(x => x.EsDirecta))
         {
-            var ed = new MoCargoEditorVm(c, "Dotación variable según etapa", OnEditorChanged);
+            var ed = new MoCargoEditorVm(c, "Dotación variable según etapa", OnEditorChanged, DeleteCargo);
             ed.UpdateConLeyes(leyes);
             DirectaEditors.Add(ed);
         }
 
         foreach (var c in CargosDef.Where(x => !x.EsDirecta))
         {
-            var ed = new MoCargoEditorVm(c, "Dotación fija todos los meses", OnEditorChanged);
+            var ed = new MoCargoEditorVm(c, "Dotación fija todos los meses", OnEditorChanged, DeleteCargo);
             ed.UpdateConLeyes(leyes);
             IndirectaEditors.Add(ed);
         }
@@ -1097,7 +1411,7 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
 
         foreach (var c in directa)
         {
-            if (c.Tag is "M1" or "AA" || c.Id is "M1" or "AA")
+            if (c.DotPico <= 0 && peakHeadcount > 0)
                 c.DotPico = peakHeadcount;
         }
 
@@ -1147,9 +1461,7 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
                 }
                 else if (c.EsDirecta)
                 {
-                    var isMaestro = c.Id == "M1" || c.Tag == "M1";
-                    var isAyudante = c.Id == "AA" || c.Tag == "AA";
-                    dotacionPorCargo[c.Id][i] = isMaestro || isAyudante ? head : c.DotPico;
+                    dotacionPorCargo[c.Id][i] = head;
                 }
                 else
                 {
@@ -1205,10 +1517,12 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
 
             dotRows.Add(new MoTableRow
             {
-                Tag = c.Id,
+                Tag = c.Tag,
+                CargoId = c.Id,
                 Nombre = c.Nombre,
                 EsDirecta = true,
                 DotPico = c.DotPico,
+                DotacionStr = c.DotPico.ToString(CultureInfo.InvariantCulture),
                 SueldoBaseStr = Fmt(c.SueldoBase),
                 FraccionStr = "—",
                 LeyesStr = Fmt(c.SueldoBase * leyes),
@@ -1233,6 +1547,7 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
             Tag = "",
             Nombre = "Subtotal MO Directa",
             DotPico = picoDir,
+            DotacionStr = picoDir.ToString(CultureInfo.InvariantCulture),
             SueldoBaseStr = Fmt(directa.Sum(c => c.SueldoBase)),
             FraccionStr = "—",
             LeyesStr = Fmt(directa.Sum(c => c.SueldoBase) * leyes),
@@ -1258,13 +1573,22 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
             for (var i = 0; i < n; i++)
                 totalCargo += baseCobrada * dots[i] * (1 + leyes);
 
+            var dotStr = (c.FraccionObra > 0m && c.FraccionObra < 1m)
+                ? c.FraccionObra.ToString("0.##", CultureInfo.GetCultureInfo("es-CL"))
+                : (c.DotPico * c.FraccionObra).ToString("0.##", CultureInfo.GetCultureInfo("es-CL"));
+            if (string.IsNullOrWhiteSpace(dotStr) || dotStr == "0")
+                dotStr = c.FraccionObra == 0m ? "0" : c.DotPico.ToString(CultureInfo.InvariantCulture);
+
             dotRows.Add(new MoTableRow
             {
-                Tag = c.Id,
+                Tag = c.Tag,
+                CargoId = c.Id,
                 Nombre = c.Nombre,
                 EsDirecta = false,
                 DotPico = c.DotPico,
+                DotacionStr = dotStr,
                 SueldoBaseStr = Fmt(baseCobrada),
+                FraccionObra = c.FraccionObra,
                 FraccionStr = FraccionStr(c.FraccionObra),
                 LeyesStr = Fmt(baseCobrada * leyes),
                 TotalMensualStr = Fmt(baseCobrada * (1 + leyes)),
@@ -1288,6 +1612,7 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
             Tag = "",
             Nombre = "Subtotal MO Indirecta",
             DotPico = picoInd,
+            DotacionStr = picoInd.ToString(CultureInfo.InvariantCulture),
             SueldoBaseStr = Fmt(indirecta.Sum(c => c.SueldoBase * c.FraccionObra)),
             FraccionStr = "—",
             LeyesStr = Fmt(indirecta.Sum(c => c.SueldoBase * c.FraccionObra) * leyes),
@@ -1308,6 +1633,7 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
             Tag = "",
             Nombre = "Total dotación",
             DotPico = grandDots.Length > 0 ? grandDots.Max() : 0,
+            DotacionStr = (grandDots.Length > 0 ? grandDots.Max() : 0).ToString(CultureInfo.InvariantCulture),
             SueldoBaseStr = Fmt(basePorMesDir + basePorMesInd),
             FraccionStr = "—",
             LeyesStr = Fmt((basePorMesDir + basePorMesInd) * leyes),
@@ -1318,6 +1644,8 @@ public sealed partial class ManoDeObraViewModel : ViewModelBase, IRefreshablePag
 
         DotacionRows = dotRows.ToArray();
         lastTotalMoClp = totalMo;
+        lastTotalDirClp = totalDir;
+        hasRecalculated = true;
 
         var costRows = new List<MoCostRow>
         {

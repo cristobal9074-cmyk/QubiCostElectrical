@@ -103,7 +103,7 @@
           </StackPanel>
 
           <!-- Tabs Work Area (Right Pane) -->
-          <TabControl Grid.Column="2" Style="{StaticResource Form.TabControl}">
+          <TabControl Grid.Column="2" Style="{StaticResource Form.TabControl}" SelectedIndex="{Binding SelectedTabIndex, Mode=TwoWay}">
             
             <!-- TAB 1: MATERIALS & TOOLS -->
             <TabItem Header="Materiales y herramientas">
@@ -120,33 +120,37 @@
                       <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <TextBlock Text="Listado de insumos y herramientas" VerticalAlignment="Center" FontWeight="Bold" FontSize="14" Foreground="{DynamicResource Brush.Ink}" />
-                    <Button Grid.Column="1" Style="{StaticResource Button.Primary}" Content="Agregar material" Command="{Binding AddMaterialCommand}" />
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                      <Button Style="{StaticResource Button.Secondary}" Content="🔍 Buscar en lista de compra…" Command="{Binding OpenMaterialPickerCommand}" Margin="0,0,8,0" />
+                      <Button Style="{StaticResource Button.Primary}" Content="Agregar material" Command="{Binding AddMaterialCommand}" />
+                    </StackPanel>
                   </Grid>
                 </Border>
 
                 <Border Grid.Row="1" Style="{StaticResource Card.Surface}" CornerRadius="0,0,8,8" Padding="0">
-                  <DataGrid ItemsSource="{Binding Materiales}"
-                            Style="{StaticResource DataGrid.Workspace}"
+                  <DataGrid x:Name="MaterialesGrid"
+                            ItemsSource="{Binding Materiales}"
+                            Style="{StaticResource DataGrid.Workspace.Excel}"
                             infra:DataGridExcelNavigation.Enable="True"
+                            infra:DataGridExcelNavigation.HandleDeleteByHost="True"
                             AutoGenerateColumns="False"
                             CanUserAddRows="False"
                             CanUserDeleteRows="False"
                             HeadersVisibility="Column"
-                            SelectionMode="Single"
-                            SelectionUnit="FullRow"
-                            BorderThickness="0">
+                            BorderThickness="0"
+                            RowHeight="28"
+                            PreparingCellForEdit="OnGridPreparingCellForEdit"
+                            CellEditEnding="OnGridCellEditEnding"
+                            PreviewTextInput="OnGridPreviewTextInput"
+                            PreviewKeyDown="OnGridPreviewKeyDown"
+                            SelectionChanged="OnGridSelectionChanged"
+                            CurrentCellChanged="OnGridCurrentCellChanged">
                     <DataGrid.Columns>
-                      <DataGridTextColumn Header="Código" Binding="{Binding Codigo, UpdateSourceTrigger=PropertyChanged}" Width="120" />
-                      <DataGridTemplateColumn Header="Descripción Material / Insumo" Width="*">
-                        <DataGridTemplateColumn.CellTemplate>
-                          <DataTemplate>
-                            <TextBox Text="{Binding Descripcion, UpdateSourceTrigger=PropertyChanged}" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" Padding="4,2" />
-                          </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                      </DataGridTemplateColumn>
-                      <DataGridTextColumn Header="U.M." Binding="{Binding Unidad, UpdateSourceTrigger=PropertyChanged}" Width="70" />
-                      <DataGridTextColumn Header="Cantidad" Binding="{Binding Cantidad, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:N0}}" Width="90" />
-                      <DataGridTemplateColumn Header="Enlace / Link" Width="200">
+                      <DataGridTextColumn x:Name="CodigoColumn" Header="Código" Binding="{Binding Codigo, UpdateSourceTrigger=LostFocus}" EditingElementStyle="{StaticResource DataGrid.CellEditTransparent}" Width="130" />
+                      <DataGridTextColumn x:Name="DescripcionColumn" Header="Descripción Material / Insumo" Binding="{Binding Descripcion, UpdateSourceTrigger=LostFocus}" EditingElementStyle="{StaticResource DataGrid.CellEditTransparent}" Width="*" MinWidth="220" />
+                      <DataGridTextColumn x:Name="UnidadColumn" Header="U.M." Binding="{Binding Unidad, UpdateSourceTrigger=LostFocus}" EditingElementStyle="{StaticResource DataGrid.CellEditTransparent}" Width="70" />
+                      <DataGridTextColumn x:Name="CantidadColumn" Header="Cantidad" Binding="{Binding Cantidad, UpdateSourceTrigger=LostFocus, StringFormat={}{0:N0}}" EditingElementStyle="{StaticResource DataGrid.CellEditTransparent}" Width="90" />
+                      <DataGridTemplateColumn Header="Enlace / Link" Width="180">
                         <DataGridTemplateColumn.CellTemplate>
                           <DataTemplate>
                             <Grid>
@@ -165,8 +169,8 @@
                           </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                       </DataGridTemplateColumn>
-                      <DataGridTextColumn Header="Observaciones" Binding="{Binding Observaciones, UpdateSourceTrigger=PropertyChanged}" Width="250" />
-                      <DataGridTemplateColumn Width="70">
+                      <DataGridTextColumn x:Name="ObservacionesColumn" Header="Observaciones" Binding="{Binding Observaciones, UpdateSourceTrigger=LostFocus}" EditingElementStyle="{StaticResource DataGrid.CellEditTransparent}" Width="220" />
+                      <DataGridTemplateColumn x:Name="QuitarColumn" Width="70">
                         <DataGridTemplateColumn.CellTemplate>
                           <DataTemplate>
                             <Button Style="{StaticResource Button.Ghost}" Content="Quitar" 
@@ -256,9 +260,332 @@
                 </Border>
               </Grid>
             </TabItem>
+
+            <!-- TAB 3: HISTORIAL DE SOLICITUDES -->
+            <TabItem Header="Historial de solicitudes">
+              <Grid Margin="0,12,0,0">
+                <Grid.RowDefinitions>
+                  <RowDefinition Height="Auto" />
+                  <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <Border Grid.Row="0" Style="{StaticResource Card.Header}" Background="{DynamicResource Brush.Surface}" CornerRadius="8,8,0,0" BorderThickness="1,1,1,0">
+                  <Grid>
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="*" />
+                      <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Historial de Solicitudes Emitidas del Proyecto" VerticalAlignment="Center" FontWeight="Bold" FontSize="14" Foreground="{DynamicResource Brush.Ink}" />
+                    <TextBlock Grid.Column="1" Text="Registro permanente de pedidos de faena" VerticalAlignment="Center" Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Muted}" />
+                  </Grid>
+                </Border>
+
+                <Border Grid.Row="1" Style="{StaticResource Card.Surface}" CornerRadius="0,0,8,8" Padding="14">
+                  <Grid>
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="300" />
+                      <ColumnDefinition Width="14" />
+                      <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Columna Izquierda: Lista de solicitudes pasadas -->
+                    <Border Grid.Column="0" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="{StaticResource Radius.Md}" Padding="8">
+                      <DockPanel LastChildFill="True">
+                        <TextBlock DockPanel.Dock="Top" Text="SOLICITUDES REGISTRADAS" Style="{StaticResource Text.Caption}" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="6,4,6,8" />
+                        <ListBox ItemsSource="{Binding HistorialSolicitudes}"
+                                 SelectedItem="{Binding SelectedHistorialSolicitud, Mode=TwoWay}"
+                                 Background="Transparent" BorderThickness="0"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                          <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                              <Setter Property="Padding" Value="0" />
+                              <Setter Property="Margin" Value="0,0,0,6" />
+                              <Setter Property="Background" Value="Transparent" />
+                            </Style>
+                          </ListBox.ItemContainerStyle>
+                          <ListBox.ItemTemplate>
+                            <DataTemplate>
+                              <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="{StaticResource Radius.Sm}" Padding="10,8">
+                                <StackPanel>
+                                  <DockPanel LastChildFill="True">
+                                    <TextBlock DockPanel.Dock="Left" Text="{Binding Codigo}" FontWeight="Bold" FontSize="13" Foreground="{DynamicResource Brush.Blue}" />
+                                    <Border DockPanel.Dock="Right" CornerRadius="4" Padding="5,1" VerticalAlignment="Center">
+                                      <Border.Style>
+                                        <Style TargetType="Border">
+                                          <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+                                          <Style.Triggers>
+                                            <DataTrigger Binding="{Binding EsAprobado}" Value="True">
+                                              <Setter Property="Background" Value="#2210B981" />
+                                            </DataTrigger>
+                                          </Style.Triggers>
+                                        </Style>
+                                      </Border.Style>
+                                      <TextBlock Text="{Binding Estado}" FontSize="10" FontWeight="Bold">
+                                        <TextBlock.Style>
+                                          <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
+                                            <Style.Triggers>
+                                              <DataTrigger Binding="{Binding EsAprobado}" Value="True">
+                                                <Setter Property="Foreground" Value="#10B981" />
+                                              </DataTrigger>
+                                            </Style.Triggers>
+                                          </Style>
+                                        </TextBlock.Style>
+                                      </TextBlock>
+                                    </Border>
+                                  </DockPanel>
+
+                                  <TextBlock Text="{Binding SolicitadoPor, StringFormat={}👤 {0}}" Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Ink}" Margin="0,4,0,2" />
+                                  <DockPanel LastChildFill="True">
+                                    <TextBlock DockPanel.Dock="Left" Text="{Binding Fecha, StringFormat={}📅 {0}}" Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Muted}" />
+                                    <TextBlock DockPanel.Dock="Right" Text="{Binding ItemsSummaryText, StringFormat={}📦 {0}}" Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Right" />
+                                  </DockPanel>
+                                </StackPanel>
+                              </Border>
+                            </DataTemplate>
+                          </ListBox.ItemTemplate>
+                        </ListBox>
+                      </DockPanel>
+                    </Border>
+
+                    <!-- Columna Derecha: Detalle de la Solicitud Seleccionada -->
+                    <Border Grid.Column="2" Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="{StaticResource Radius.Md}" Padding="14">
+                      <Grid>
+                        <!-- Estado vacío si no hay selección -->
+                        <Border Visibility="{Binding HasSelectedHistorial, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}"
+                                VerticalAlignment="Center" HorizontalAlignment="Center">
+                          <StackPanel HorizontalAlignment="Center">
+                            <TextBlock Text="📋" FontSize="32" HorizontalAlignment="Center" Margin="0,0,0,8" />
+                            <TextBlock Text="Seleccione una solicitud del historial" FontWeight="Bold" FontSize="13" Foreground="{DynamicResource Brush.Ink}" HorizontalAlignment="Center" />
+                            <TextBlock Text="Haga clic en la lista de la izquierda para ver su detalle de materiales y EPP." Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Muted}" Margin="0,4,0,0" />
+                          </StackPanel>
+                        </Border>
+
+                        <!-- Panel de detalle con grilla -->
+                        <Grid Visibility="{Binding HasSelectedHistorial, Converter={StaticResource BoolToVisibility}}">
+                          <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                          </Grid.RowDefinitions>
+
+                          <!-- Encabezado del Detalle -->
+                          <DockPanel Grid.Row="0" LastChildFill="True" Margin="0,0,0,12">
+                            <StackPanel DockPanel.Dock="Left">
+                              <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding SelectedHistorialSolicitud.Codigo, StringFormat={}Detalle Solicitud: {0}}" FontWeight="Bold" FontSize="15" Foreground="{DynamicResource Brush.Ink}" />
+                                <Border Background="#2210B981" CornerRadius="4" Padding="6,2" Margin="10,0,0,0" VerticalAlignment="Center"
+                                        Visibility="{Binding SelectedHistorialSolicitud.EsAprobado, Converter={StaticResource BoolToVisibility}}">
+                                  <TextBlock Text="✓ APROBADO" FontSize="10" FontWeight="Bold" Foreground="#10B981" />
+                                </Border>
+                              </StackPanel>
+                              <TextBlock Text="{Binding SelectedHistorialSolicitud.SolicitadoPor, StringFormat={}Solicitado por {0}}" Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Muted}" Margin="0,2,0,0" />
+                            </StackPanel>
+
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                              <Button Style="{StaticResource Button.Secondary}" Content="📄 Ver PDF"
+                                      Command="{Binding ExportarHistorialPdfCommand}"
+                                      CommandParameter="{Binding SelectedHistorialSolicitud}"
+                                      Margin="0,0,6,0" Padding="8,4" FontSize="11" />
+                              <Button Style="{StaticResource Button.Secondary}" Content="📊 Excel"
+                                      Command="{Binding ExportarHistorialExcelCommand}"
+                                      CommandParameter="{Binding SelectedHistorialSolicitud}"
+                                      Margin="0,0,6,0" Padding="8,4" FontSize="11" />
+                              <Button Style="{StaticResource Button.Primary}" Content="📋 Reutilizar como borrador"
+                                      Command="{Binding ReutilizarSolicitudCommand}"
+                                      CommandParameter="{Binding SelectedHistorialSolicitud}"
+                                      Padding="10,4" FontSize="11" />
+                            </StackPanel>
+                          </DockPanel>
+
+                          <!-- Grilla de Ítems de la Solicitud Seleccionada -->
+                          <DataGrid Grid.Row="1"
+                                    ItemsSource="{Binding SelectedHistorialSolicitud.Items}"
+                                    Style="{StaticResource DataGrid.Workspace}"
+                                    AutoGenerateColumns="False"
+                                    CanUserAddRows="False"
+                                    CanUserDeleteRows="False"
+                                    IsReadOnly="True"
+                                    HeadersVisibility="Column"
+                                    SelectionMode="Single"
+                                    SelectionUnit="FullRow">
+                            <DataGrid.Columns>
+                              <DataGridTextColumn Header="Tipo" Binding="{Binding Tipo}" Width="70" />
+                              <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" Width="110" FontWeight="SemiBold" />
+                              <DataGridTextColumn Header="Descripción Material / Insumo" Binding="{Binding Descripcion}" Width="*" MinWidth="180" />
+                              <DataGridTextColumn Header="Ud." Binding="{Binding Unidad}" Width="50" HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}" />
+                              <DataGridTextColumn Header="Cantidad" Binding="{Binding Cantidad, StringFormat={}{0:N0}}" Width="80" HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}" />
+                              <DataGridTextColumn Header="Observaciones" Binding="{Binding Observaciones}" Width="180" />
+                            </DataGrid.Columns>
+                          </DataGrid>
+                        </Grid>
+                      </Grid>
+                    </Border>
+                  </Grid>
+                </Border>
+              </Grid>
+            </TabItem>
           </TabControl>
         </Grid>
       </Grid>
     </Border>
+
+    <!-- Popup autocompletado en celdas de Código y Descripción -->
+    <Popup x:Name="AutocompletePopup" StaysOpen="True"
+           IsOpen="{Binding AutocompleteVisible}"
+           Placement="Bottom"
+           AllowsTransparency="True"
+           Focusable="False">
+      <Border Background="{DynamicResource Brush.Surface}"
+              BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+              CornerRadius="6" MaxHeight="320" MinWidth="520" Width="520"
+              SnapsToDevicePixels="True"
+              Focusable="False">
+        <Grid Focusable="False">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+          </Grid.RowDefinitions>
+
+          <ListBox x:Name="AutocompleteList" Grid.Row="0"
+                   ItemsSource="{Binding AutocompleteResults}"
+                   BorderThickness="0" Background="Transparent"
+                   Focusable="False"
+                   PreviewMouseLeftButtonDown="OnAutocompleteMouseLeftButtonDown"
+                   ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <ListBox.ItemContainerStyle>
+              <Style TargetType="ListBoxItem">
+                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                <Setter Property="VerticalContentAlignment" Value="Stretch" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="Margin" Value="2,1" />
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderBrush" Value="Transparent" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                <Setter Property="SnapsToDevicePixels" Value="True" />
+                <Setter Property="Cursor" Value="Hand" />
+                <Setter Property="Template">
+                  <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                      <Border x:Name="Bd"
+                              Background="{TemplateBinding Background}"
+                              BorderBrush="{TemplateBinding BorderBrush}"
+                              BorderThickness="{TemplateBinding BorderThickness}"
+                              CornerRadius="4"
+                              Padding="{TemplateBinding Padding}"
+                              SnapsToDevicePixels="True">
+                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                      </Border>
+                      <ControlTemplate.Triggers>
+                        <Trigger Property="IsSelected" Value="True">
+                          <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+                          <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                          <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.Surface2}" />
+                        </Trigger>
+                      </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                  </Setter.Value>
+                </Setter>
+              </Style>
+            </ListBox.ItemContainerStyle>
+            <ListBox.ItemTemplate>
+              <DataTemplate DataType="{x:Type local:SolicitudAutocompleteSuggestionVm}">
+                <Grid Margin="0" MinHeight="42">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" MinWidth="260" />
+                    <ColumnDefinition Width="150" />
+                  </Grid.ColumnDefinitions>
+
+                  <!-- Sector identificación: código + material -->
+                  <Border Grid.Column="0" Padding="10,5,8,5"
+                          BorderBrush="{DynamicResource Brush.Line}"
+                          BorderThickness="0,0,1,0"
+                          Background="Transparent">
+                    <StackPanel VerticalAlignment="Center">
+                      <DockPanel LastChildFill="True">
+                        <Border DockPanel.Dock="Right" Background="{DynamicResource Brush.Surface2}" CornerRadius="3" Padding="4,1" Margin="6,0,0,0" VerticalAlignment="Center">
+                          <TextBlock Text="{Binding Unidad}" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" />
+                        </Border>
+                        <TextBlock Text="{Binding Codigo}" FontSize="12" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource Brush.Ink}"
+                                   TextTrimming="CharacterEllipsis" />
+                      </DockPanel>
+                      <TextBlock Text="{Binding Descripcion}" FontSize="11"
+                                 Foreground="{DynamicResource Brush.Ink2}"
+                                 TextTrimming="CharacterEllipsis" Margin="0,2,0,0" />
+                    </StackPanel>
+                  </Border>
+
+                  <!-- Sector cubicación / disponibilidad -->
+                  <Border Grid.Column="1" Padding="8,4,8,4"
+                          Background="{DynamicResource Brush.Surface2}">
+                    <Grid VerticalAlignment="Center">
+                      <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                      </Grid.RowDefinitions>
+
+                      <!-- Cubicado -->
+                      <DockPanel Grid.Row="0">
+                        <TextBlock Text="CUB" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Width="32" />
+                        <TextBlock Text="{Binding CantidadCubicadaDisplay}" FontSize="11" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource Brush.Ink}" HorizontalAlignment="Right"
+                                   FontFamily="{StaticResource Font.Mono}" />
+                      </DockPanel>
+
+                      <!-- Disponible -->
+                      <DockPanel Grid.Row="1" Margin="0,2,0,0">
+                        <TextBlock Text="DISP" FontSize="10" FontWeight="Bold" Width="32">
+                          <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                              <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
+                              <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsDisponible}" Value="True">
+                                  <Setter Property="Foreground" Value="{DynamicResource Brush.Green}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding IsAgotado}" Value="True">
+                                  <Setter Property="Foreground" Value="{DynamicResource Brush.Amber}" />
+                                </DataTrigger>
+                              </Style.Triggers>
+                            </Style>
+                          </TextBlock.Style>
+                        </TextBlock>
+                        <TextBlock Text="{Binding CantidadDisponibleDisplay}" FontSize="11" FontWeight="Bold"
+                                   HorizontalAlignment="Right"
+                                   FontFamily="{StaticResource Font.Mono}">
+                          <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                              <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+                              <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsDisponible}" Value="True">
+                                  <Setter Property="Foreground" Value="{DynamicResource Brush.Green}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding IsAgotado}" Value="True">
+                                  <Setter Property="Foreground" Value="{DynamicResource Brush.Amber}" />
+                                </DataTrigger>
+                              </Style.Triggers>
+                            </Style>
+                          </TextBlock.Style>
+                        </TextBlock>
+                      </DockPanel>
+                    </Grid>
+                  </Border>
+                </Grid>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+
+          <Border Grid.Row="1" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,1,0,0" Padding="8,4" Background="{DynamicResource Brush.Surface}">
+            <Grid>
+              <TextBlock Text="↑↓ seleccionar • Enter / Tab aplicar • Esc cerrar" FontSize="11" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
+              <Button HorizontalAlignment="Right" Style="{StaticResource Button.Ghost}" Content="🔍 Ver lista completa…" Command="{Binding OpenMaterialPickerCommand}" FontSize="11" Padding="4,2" />
+            </Grid>
+          </Border>
+        </Grid>
+      </Border>
+    </Popup>
   </Grid>
 </UserControl>

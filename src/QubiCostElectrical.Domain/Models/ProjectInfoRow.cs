@@ -68,6 +68,11 @@ public sealed class ProjectInfoRow
     /// </summary>
     public decimal MoTotalClp { get; set; }
     /// <summary>
+    /// Total MO Directa CLP del módulo Mano de obra (incluye leyes y curva mensual).
+    /// Usado para la calibración del FA y la comparación en FACTORES (COSTOS!G192 del Excel).
+    /// </summary>
+    public decimal MoDirectaClp { get; set; }
+    /// <summary>
     /// Modo del precio de M.O. de instalación por material. <see cref="MaterialMoResolver.ModoDirecto"/>
     /// usa el M.O. directo del catálogo/banco; <see cref="MaterialMoResolver.ModoRendimiento"/> deriva
     /// el precio como TarifaDhClp ÷ RendimientoDh (con fallback automático al directo cuando falta
@@ -88,9 +93,9 @@ public sealed class ProjectInfoRow
     public decimal MermasPct { get; set; } = 0m;
     /// <summary>
     /// Estimación de ferretería de paridad estándar: porcentaje sobre el costo de materiales
-    /// (G30 × E34 / 100). Apagada por defecto para no alterar presupuestos ya calculados.
+    /// (G30 × E34 / 100). Activa por defecto al crear un nuevo presupuesto (5% estándar).
     /// </summary>
-    public bool FerreteriaActiva { get; set; }
+    public bool FerreteriaActiva { get; set; } = true;
     /// <summary>Porcentaje editable de la estimación de ferretería. En el Excel de referencia es 5.</summary>
     public decimal FerreteriaPct { get; set; } = 5m;
     public string ApuCostingMode { get; set; } = "CubicacionMasApuComplementarios";
@@ -125,6 +130,20 @@ public sealed class ProjectInfoRow
     /// </summary>
     public List<string> FamiliasOcultas { get; set; } = new();
     public OfferPdfSettings OfertaPdf { get; set; } = new();
+
+    /// <summary>
+    /// Si true, el resumen de la oferta comercial (PDF y Excel) muestra precios enteros (con GG y UT prorrateados)
+    /// y oculta las líneas de GG y Utilidad al final.
+    /// </summary>
+    public bool OcultarGgYUtilidadEnResumen
+    {
+        get => OfertaPdf?.OcultarGgYUtilidadEnResumen ?? true;
+        set
+        {
+            OfertaPdf ??= new();
+            OfertaPdf.OcultarGgYUtilidadEnResumen = value;
+        }
+    }
     public List<CubicacionCellCommentRow> CubicacionCellComments { get; set; } = new();
     public DateTime LastSQLiteSavedAt { get; set; } = DateTime.MinValue;
     public List<TechnicalValidationRuleRow> TechnicalValidationRules { get; set; } = new();

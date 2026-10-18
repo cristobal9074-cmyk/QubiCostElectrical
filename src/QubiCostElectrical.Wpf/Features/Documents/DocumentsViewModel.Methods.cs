@@ -1101,13 +1101,19 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
 
             if (sfd.ShowDialog() == true)
             {
+                if (OperationFailureMessages.IsFileLocked(sfd.FileName))
+                {
+                    WpfDialogService.Error("Archivo en uso", OperationFailureMessages.FileInUseUserMessage);
+                    return;
+                }
+
                 DocumentsPdfExporter.Export(session.ProjectInfo, FilteredRows.ToList(), sfd.FileName);
                 WpfDialogService.Info("Exportación Exitosa", $"Se ha exportado el registro de antecedentes a {sfd.FileName}");
             }
         }
         catch (Exception ex)
         {
-            WpfDialogService.Error("Error al exportar", $"Ocurrió un error al generar el PDF: {ex.Message}");
+            WpfDialogService.Error("Error al exportar", OperationFailureMessages.ToUserMessage(ex));
         }
     }
 }

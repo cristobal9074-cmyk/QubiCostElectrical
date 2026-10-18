@@ -105,6 +105,32 @@
       <Setter Property="FontWeight" Value="Bold" />
     </Style>
 
+    <!-- ─── Badge de ayuda técnica (?) ──────────────────────────────────── -->
+    <Style x:Key="CostoHelpBadge" TargetType="Border">
+      <Setter Property="Width" Value="14" />
+      <Setter Property="Height" Value="14" />
+      <Setter Property="CornerRadius" Value="7" />
+      <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line2}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="Margin" Value="5,0,0,0" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="Cursor" Value="Help" />
+      <Setter Property="ToolTipService.InitialShowDelay" Value="50" />
+      <Setter Property="ToolTipService.ShowDuration" Value="35000" />
+    </Style>
+
+    <Style x:Key="CostoHelpBadgeText" TargetType="TextBlock">
+      <Setter Property="Text" Value="?" />
+      <Setter Property="FontFamily" Value="{StaticResource Font.Ui}" />
+      <Setter Property="FontSize" Value="9.5" />
+      <Setter Property="FontWeight" Value="Bold" />
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
+      <Setter Property="HorizontalAlignment" Value="Center" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="Margin" Value="0,-1,0,0" />
+    </Style>
+
     <!-- ─── Celdas de la planilla de gastos operacionales ────────────────── -->
     <Style x:Key="GoCellBox" TargetType="TextBox" BasedOn="{StaticResource Form.TextBox}">
       <Setter Property="Padding" Value="6,2" />
@@ -262,62 +288,165 @@
       <Border Grid.Row="1" Style="{StaticResource Card.Surface}" Margin="18,10,18,0" Padding="0" ClipToBounds="True">
         <Grid>
           <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="1.25*" />
-            <ColumnDefinition Width="1.15*" />
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="1.1*" />
+            <ColumnDefinition Width="1.2*" />
+            <ColumnDefinition Width="1.2*" />
             <ColumnDefinition Width="1.15*" />
             <ColumnDefinition Width="1.25*" />
+            <ColumnDefinition Width="1.15*" />
+            <ColumnDefinition Width="1.05*" />
           </Grid.ColumnDefinitions>
 
-          <StackPanel Grid.Column="0" Margin="16,13,14,13">
-            <TextBlock Text="COSTO DE EJECUCIÓN" Style="{StaticResource CostoKpiLabel}" />
+          <StackPanel Grid.Column="0" Margin="14,13,12,13">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <TextBlock Text="COSTO DE EJECUCIÓN" Style="{StaticResource CostoKpiLabel}" />
+              <Border Style="{StaticResource CostoHelpBadge}">
+                <TextBlock Style="{StaticResource CostoHelpBadgeText}" />
+                <Border.ToolTip>
+                  <ToolTip MaxWidth="380">
+                    <StackPanel Margin="3">
+                      <TextBlock Text="COSTO DE EJECUCIÓN (COSTO DIRECTO)" FontWeight="Bold" FontSize="11.5" Foreground="{DynamicResource Brush.Blue}" Margin="0,0,0,4" />
+                      <TextBlock Text="Inversión física directa requerida para materializar las obras según cubicación y especificaciones técnicas. Representa el costo de faena sin recargos comerciales ni gastos de administración central." FontSize="11" TextWrapping="Wrap" Margin="0,0,0,6" />
+                      <Border Height="1" Background="{DynamicResource Brush.Line}" Margin="0,2,0,6" />
+                      <TextBlock Text="COMPOSICIÓN TÉCNICA:" FontWeight="Bold" FontSize="9.5" Foreground="{DynamicResource Brush.Ink3}" Margin="0,0,0,2" />
+                      <TextBlock Text="• Materiales netos valorizados de cubicación y APU&#x0a;• Estimación de ferretería menor e insumos de montaje (3%)&#x0a;• Mano de obra total de faena (Directa + Indirecta con leyes)&#x0a;• Gastos operacionales directos de faena (GO)" FontSize="10" TextWrapping="Wrap" Margin="0,0,0,6" />
+                      <TextBlock Text="CRITERIO PROFESIONAL:" FontWeight="Bold" FontSize="9.5" Foreground="{DynamicResource Brush.Ink3}" Margin="0,0,0,2" />
+                      <TextBlock Text="Constituye el piso financiero mínimo irreductible. Cualquier adjudicación por debajo de este monto genera pérdida líquida directa sobre la operación de la empresa." FontSize="10" TextWrapping="Wrap" Foreground="{DynamicResource Brush.Ink2}" />
+                    </StackPanel>
+                  </ToolTip>
+                </Border.ToolTip>
+              </Border>
+            </StackPanel>
             <TextBlock Text="{Binding CostoDirectoSubLabel}" Style="{StaticResource CostoKpiValue}" />
-            <TextBlock Text="{Binding CostoDirectoLabel}" Style="{StaticResource CostoKpiHint}"
-                       ToolTip="Materiales + mano de obra + equipos + complementarios" />
+            <TextBlock Text="{Binding CostoDirectoLabel}" Style="{StaticResource CostoKpiHint}" />
           </StackPanel>
 
           <Border Grid.Column="1" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="1,0,0,0">
-            <StackPanel Margin="16,13,14,13">
-              <TextBlock Text="COSTO TOTAL PROYECTO" Style="{StaticResource CostoKpiLabel}" />
+            <StackPanel Margin="14,13,12,13">
+              <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="COSTO TOTAL PROYECTO" Style="{StaticResource CostoKpiLabel}" />
+                <Border Style="{StaticResource CostoHelpBadge}">
+                  <TextBlock Style="{StaticResource CostoHelpBadgeText}" />
+                  <Border.ToolTip>
+                    <ToolTip MaxWidth="380">
+                      <StackPanel Margin="3">
+                        <TextBlock Text="COSTO TOTAL PROYECTO (COSTO TÉCNICO)" FontWeight="Bold" FontSize="11.5" Foreground="{DynamicResource Brush.Blue}" Margin="0,0,0,4" />
+                        <TextBlock Text="Costo técnico integral que incorpora la absorción de costos fijos de oficina central corporativa y la rentabilidad mínima exigida al proyecto." FontSize="11" TextWrapping="Wrap" Margin="0,0,0,6" />
+                        <Border Height="1" Background="{DynamicResource Brush.Line}" Margin="0,2,0,6" />
+                        <TextBlock Text="FÓRMULA / COMPOSICIÓN:" FontWeight="Bold" FontSize="9.5" Foreground="{DynamicResource Brush.Ink3}" Margin="0,0,0,2" />
+                        <TextBlock Text="Costo Ejecución + Gastos Generales (GG %) + Utilidad Aditiva (UT %) + Valor Agregado s/ Equipos (VA %) + Imprevistos/Riesgo." FontSize="10" TextWrapping="Wrap" Margin="0,0,0,6" />
+                        <TextBlock Text="CRITERIO PROFESIONAL:" FontWeight="Bold" FontSize="9.5" Foreground="{DynamicResource Brush.Ink3}" Margin="0,0,0,2" />
+                        <TextBlock Text="Equivale al precio de equilibrio en licitaciones por costo más margen (Cost-Plus Markup). Cubre la administración corporativa y la ganancia base presupuestada." FontSize="10" TextWrapping="Wrap" Foreground="{DynamicResource Brush.Ink2}" />
+                      </StackPanel>
+                    </ToolTip>
+                  </Border.ToolTip>
+                </Border>
+              </StackPanel>
               <TextBlock Text="{Binding Tabs.CostoProyectoLabel}" Style="{StaticResource CostoKpiValue}" />
-              <TextBlock Text="{Binding Tabs.CostoProyectoSub}" Style="{StaticResource CostoKpiHint}"
-                         ToolTip="Ejecución + gastos generales + utilidad + valor agregado" />
+              <TextBlock Text="{Binding Tabs.CostoProyectoSub}" Style="{StaticResource CostoKpiHint}" />
             </StackPanel>
           </Border>
 
           <Border Grid.Column="2" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="1,0,0,0">
-            <StackPanel Margin="16,13,14,13">
-              <TextBlock Text="MARGEN REAL" Style="{StaticResource CostoKpiLabel}" />
-              <TextBlock Text="{Binding MargenLabel}" Style="{StaticResource CostoKpiValue}" />
-              <TextBlock Text="sobre venta neta" Style="{StaticResource CostoKpiHint}"
-                         ToolTip="Margen efectivo del cierre comercial" />
+            <StackPanel Margin="14,13,12,13">
+              <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="DIFERENCIA CON PROYECTO" Style="{StaticResource CostoKpiLabel}" />
+                <Border Style="{StaticResource CostoHelpBadge}">
+                  <TextBlock Style="{StaticResource CostoHelpBadgeText}" />
+                  <Border.ToolTip>
+                    <ToolTip MaxWidth="380">
+                      <StackPanel Margin="3">
+                        <TextBlock Text="DIFERENCIA CON EL COSTO DEL PROYECTO" FontWeight="Bold" FontSize="11.5" Foreground="{DynamicResource Brush.Blue}" Margin="0,0,0,4" />
+                        <TextBlock Text="Delta o margen incremental generado por la aplicación de Factores de Presentación por Familia comercial (multiplicadores de catálogo como 1,70 en canalizaciones o 1,50 en tableros)." FontSize="11" TextWrapping="Wrap" Margin="0,0,0,6" />
+                        <Border Height="1" Background="{DynamicResource Brush.Line}" Margin="0,2,0,6" />
+                        <TextBlock Text="FÓRMULA DE CUADRATURA:" FontWeight="Bold" FontSize="9.5" Foreground="{DynamicResource Brush.Ink3}" Margin="0,0,0,2" />
+                        <TextBlock Text="Diferencia = Venta Neta por Factores − Costo Total Proyecto" FontSize="10" FontFamily="{StaticResource Font.Mono}" Margin="0,0,0,6" />
+                        <TextBlock Text="INTERPRETACIÓN COMERCIAL:" FontWeight="Bold" FontSize="9.5" Foreground="{DynamicResource Brush.Ink3}" Margin="0,0,0,2" />
+                        <TextBlock Text="• Positiva (+): La estrategia comercial genera una sobreganancia por encima de la utilidad presupuestada.&#x0a;• Negativa (−): Alerta de insuficiencia: los factores no cubren los gastos generales y la utilidad base requerida." FontSize="10" TextWrapping="Wrap" Foreground="{DynamicResource Brush.Ink2}" />
+                      </StackPanel>
+                    </ToolTip>
+                  </Border.ToolTip>
+                </Border>
+              </StackPanel>
+              <TextBlock Text="{Binding Tabs.DiferenciaFactoresLabel}" Style="{StaticResource CostoKpiValue}" />
+              <TextBlock Text="{Binding Tabs.DiferenciaFactoresSub}" Style="{StaticResource CostoKpiHint}" />
             </StackPanel>
           </Border>
 
           <Border Grid.Column="3" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="1,0,0,0">
-            <StackPanel Margin="16,13,14,13">
-              <TextBlock Text="VENTA UNITARIA" Style="{StaticResource CostoKpiLabel}" />
-              <TextBlock Text="{Binding UfM2Label}" Style="{StaticResource CostoKpiValue}" />
-              <TextBlock Text="{Binding UfM2SubLabel}" Style="{StaticResource CostoKpiHint}" />
+            <StackPanel Margin="14,13,12,13">
+              <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="MARGEN REAL" Style="{StaticResource CostoKpiLabel}" />
+                <Border Style="{StaticResource CostoHelpBadge}">
+                  <TextBlock Style="{StaticResource CostoHelpBadgeText}" />
+                  <Border.ToolTip>
+                    <ToolTip MaxWidth="380">
+                      <StackPanel Margin="3">
+                        <TextBlock Text="MARGEN REAL COMERCIAL" FontWeight="Bold" FontSize="11.5" Foreground="{DynamicResource Brush.Blue}" Margin="0,0,0,4" />
+                        <TextBlock Text="Porcentaje y monto de rentabilidad efectiva global que aporta el contrato a la empresa sobre el valor neto ofertado al mandante." FontSize="11" TextWrapping="Wrap" Margin="0,0,0,6" />
+                        <Border Height="1" Background="{DynamicResource Brush.Line}" Margin="0,2,0,6" />
+                        <TextBlock Text="FÓRMULA DE CÁLCULO:" FontWeight="Bold" FontSize="9.5" Foreground="{DynamicResource Brush.Ink3}" Margin="0,0,0,2" />
+                        <TextBlock Text="Margen % = ((Venta Neta − Costo Ejecución) ÷ Venta Neta) × 100&#x0a;Monto Margen = Venta Neta − Costo Ejecución" FontSize="10" FontFamily="{StaticResource Font.Mono}" Margin="0,0,0,6" />
+                        <TextBlock Text="CRITERIO PROFESIONAL:" FontWeight="Bold" FontSize="9.5" Foreground="{DynamicResource Brush.Ink3}" Margin="0,0,0,2" />
+                        <TextBlock Text="Representa la contribución marginal neta del proyecto. Con este margen la empresa financia sus costos fijos anuales, contingencias y genera la utilidad neta final." FontSize="10" TextWrapping="Wrap" Foreground="{DynamicResource Brush.Ink2}" />
+                      </StackPanel>
+                    </ToolTip>
+                  </Border.ToolTip>
+                </Border>
+              </StackPanel>
+              <TextBlock Text="{Binding MargenLabel}" Style="{StaticResource CostoKpiValue}" />
+              <TextBlock Text="{Binding MargenSubLabel}" Style="{StaticResource CostoKpiHint}" />
             </StackPanel>
           </Border>
 
           <Border Grid.Column="4" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="1,0,0,0">
-            <StackPanel Margin="16,13,14,13">
-              <TextBlock Text="VENTA NETA" Style="{StaticResource CostoKpiLabel}" />
+            <StackPanel Margin="14,13,12,13">
+              <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="VENTA NETA" Style="{StaticResource CostoKpiLabel}" />
+                <Border Style="{StaticResource CostoHelpBadge}">
+                  <TextBlock Style="{StaticResource CostoHelpBadgeText}" />
+                  <Border.ToolTip>
+                    <ToolTip MaxWidth="380">
+                      <StackPanel Margin="3">
+                        <TextBlock Text="VENTA NETA CONTRACTUAL (TOTAL PPTO)" FontWeight="Bold" FontSize="11.5" Foreground="{DynamicResource Brush.Blue}" Margin="0,0,0,4" />
+                        <TextBlock Text="Precio total ofertado al mandante por la totalidad de las partidas y obras contratadas, antes de impuestos (IVA 19%)." FontSize="11" TextWrapping="Wrap" Margin="0,0,0,6" />
+                        <Border Height="1" Background="{DynamicResource Brush.Line}" Margin="0,2,0,6" />
+                        <TextBlock Text="COMPOSICIÓN:" FontWeight="Bold" FontSize="9.5" Foreground="{DynamicResource Brush.Ink3}" Margin="0,0,0,2" />
+                        <TextBlock Text="Suma de precios de venta unitarios de cubicación × cantidades + Gastos Operacionales (GO) − Descuentos comerciales acordados." FontSize="10" TextWrapping="Wrap" Margin="0,0,0,6" />
+                        <TextBlock Text="CRITERIO PROFESIONAL:" FontWeight="Bold" FontSize="9.5" Foreground="{DynamicResource Brush.Ink3}" Margin="0,0,0,2" />
+                        <TextBlock Text="Monto contractual vinculante que se presentará en la Carta Oferta, Estados de Pago y Facturación neta del proyecto." FontSize="10" TextWrapping="Wrap" Foreground="{DynamicResource Brush.Ink2}" />
+                      </StackPanel>
+                    </ToolTip>
+                  </Border.ToolTip>
+                </Border>
+              </StackPanel>
               <TextBlock Text="{Binding Tabs.VentaNetaLabel}" Style="{StaticResource CostoKpiValue}" />
-              <TextBlock Text="{Binding Tabs.VentaNetaSub}" Style="{StaticResource CostoKpiHint}"
-                         ToolTip="Total antes de IVA" />
+              <TextBlock Text="{Binding Tabs.VentaNetaSub}" Style="{StaticResource CostoKpiHint}" />
             </StackPanel>
           </Border>
 
           <Border Grid.Column="5" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="1,0,0,0">
-            <StackPanel Margin="16,13,14,13">
-              <TextBlock Text="CONCENTRACIÓN MATERIALES" Style="{StaticResource CostoKpiLabel}" />
-              <TextBlock Text="{Binding Tabs.ConcentracionLabel}" Style="{StaticResource CostoKpiValue}" />
-              <TextBlock Text="{Binding Tabs.ConcentracionSub}" Style="{StaticResource CostoKpiHint}"
-                         ToolTip="Participación de las tres familias de materiales más costosas (Pareto)" />
+            <StackPanel Margin="14,13,12,13">
+              <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="VENTA UNITARIA" Style="{StaticResource CostoKpiLabel}" />
+                <Border Style="{StaticResource CostoHelpBadge}">
+                  <TextBlock Style="{StaticResource CostoHelpBadgeText}" />
+                  <Border.ToolTip>
+                    <ToolTip MaxWidth="380">
+                      <StackPanel Margin="3">
+                        <TextBlock Text="VENTA PARAMÉTRICA UNITARIA" FontWeight="Bold" FontSize="11.5" Foreground="{DynamicResource Brush.Blue}" Margin="0,0,0,4" />
+                        <TextBlock Text="Ratio de venta normalizado por metro cuadrado de superficie construida o útil del proyecto." FontSize="11" TextWrapping="Wrap" Margin="0,0,0,6" />
+                        <Border Height="1" Background="{DynamicResource Brush.Line}" Margin="0,2,0,6" />
+                        <TextBlock Text="FÓRMULA:" FontWeight="Bold" FontSize="9.5" Foreground="{DynamicResource Brush.Ink3}" Margin="0,0,0,2" />
+                        <TextBlock Text="Venta Neta ÷ Superficie en Metros Cuadrados (m²)" FontSize="10" FontFamily="{StaticResource Font.Mono}" Margin="0,0,0,6" />
+                        <TextBlock Text="BENCHMARKING TÉCNICO:" FontWeight="Bold" FontSize="9.5" Foreground="{DynamicResource Brush.Ink3}" Margin="0,0,0,2" />
+                        <TextBlock Text="Permite contrastar rápidamente la competitividad de la propuesta contra métricas estándar de mercado para obras de similares características." FontSize="10" TextWrapping="Wrap" Foreground="{DynamicResource Brush.Ink2}" />
+                      </StackPanel>
+                    </ToolTip>
+                  </Border.ToolTip>
+                </Border>
+              </StackPanel>
+              <TextBlock Text="{Binding UfM2Label}" Style="{StaticResource CostoKpiValue}" />
+              <TextBlock Text="{Binding UfM2SubLabel}" Style="{StaticResource CostoKpiHint}" />
             </StackPanel>
           </Border>
         </Grid>
@@ -727,7 +856,20 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="74" />
                   </Grid.ColumnDefinitions>
-                  <TextBlock Text="Gastos generales" FontSize="11.5" Foreground="{DynamicResource Brush.Ink2}" VerticalAlignment="Center" />
+                  <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="Gastos generales" FontSize="11.5" Foreground="{DynamicResource Brush.Ink2}" VerticalAlignment="Center" />
+                    <Border Style="{StaticResource CostoHelpBadge}">
+                      <TextBlock Style="{StaticResource CostoHelpBadgeText}" />
+                      <Border.ToolTip>
+                        <ToolTip MaxWidth="320">
+                          <StackPanel Margin="2">
+                            <TextBlock Text="GASTOS GENERALES (GG %)" FontWeight="Bold" FontSize="11" Foreground="{DynamicResource Brush.Blue}" Margin="0,0,0,3" />
+                            <TextBlock Text="Porcentaje asignado para financiar los costos indirectos de administración central corporativa: sueldos directivos, oficina matriz, licitaciones, seguros y costos fijos no imputables directamente a la obra." FontSize="10.5" TextWrapping="Wrap" />
+                          </StackPanel>
+                        </ToolTip>
+                      </Border.ToolTip>
+                    </Border>
+                  </StackPanel>
                   <TextBox Grid.Column="1" Style="{StaticResource CierreNum}" Text="{Binding GastosGeneralesText, UpdateSourceTrigger=LostFocus}" />
                   <TextBlock Grid.ColumnSpan="2" Text="{Binding GastosGeneralesPolicyHint}" Style="{StaticResource CierreHint}" Margin="0,32,0,0" />
                 </Grid>
@@ -746,7 +888,20 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="74" />
                   </Grid.ColumnDefinitions>
-                  <TextBlock Text="{Binding UtilidadPolicyLabel}" FontSize="11.5" Foreground="{DynamicResource Brush.Ink2}" VerticalAlignment="Center" />
+                  <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding UtilidadPolicyLabel}" FontSize="11.5" Foreground="{DynamicResource Brush.Ink2}" VerticalAlignment="Center" />
+                    <Border Style="{StaticResource CostoHelpBadge}">
+                      <TextBlock Style="{StaticResource CostoHelpBadgeText}" />
+                      <Border.ToolTip>
+                        <ToolTip MaxWidth="320">
+                          <StackPanel Margin="2">
+                            <TextBlock Text="UTILIDAD BASE PREVISTA (UT %)" FontWeight="Bold" FontSize="11" Foreground="{DynamicResource Brush.Blue}" Margin="0,0,0,3" />
+                            <TextBlock Text="Retorno económico sobre el capital de trabajo y compensación por el riesgo técnico y financiero que asume la empresa en la ejecución del contrato." FontSize="10.5" TextWrapping="Wrap" />
+                          </StackPanel>
+                        </ToolTip>
+                      </Border.ToolTip>
+                    </Border>
+                  </StackPanel>
                   <TextBox Grid.Column="1" Style="{StaticResource CierreNum}" Text="{Binding UtilidadText, UpdateSourceTrigger=LostFocus}" />
                   <TextBlock Grid.ColumnSpan="2" Text="{Binding UtilidadPolicyHint}" Style="{StaticResource CierreHint}" Margin="0,32,0,0" />
                 </Grid>
@@ -756,7 +911,20 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="74" />
                   </Grid.ColumnDefinitions>
-                  <TextBlock Text="Valor agregado (equipos)" FontSize="11.5" Foreground="{DynamicResource Brush.Ink2}" VerticalAlignment="Center" />
+                  <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="Valor agregado (equipos)" FontSize="11.5" Foreground="{DynamicResource Brush.Ink2}" VerticalAlignment="Center" />
+                    <Border Style="{StaticResource CostoHelpBadge}">
+                      <TextBlock Style="{StaticResource CostoHelpBadgeText}" />
+                      <Border.ToolTip>
+                        <ToolTip MaxWidth="320">
+                          <StackPanel Margin="2">
+                            <TextBlock Text="VALOR AGREGADO SOBRE EQUIPOS (VA %)" FontWeight="Bold" FontSize="11" Foreground="{DynamicResource Brush.Blue}" Margin="0,0,0,3" />
+                            <TextBlock Text="Recargo comercial diferenciado para partidas de equipamiento mayor (transformadores, celdas de MT, grupos electrógenos, etc.) para cubrir logística de compras, pruebas FAT/SAT y garantías sin inflar el costo de instalación." FontSize="10.5" TextWrapping="Wrap" />
+                          </StackPanel>
+                        </ToolTip>
+                      </Border.ToolTip>
+                    </Border>
+                  </StackPanel>
                   <TextBox Grid.Column="1" Style="{StaticResource CierreNum}" Text="{Binding ValorAgregadoEquiposText, UpdateSourceTrigger=LostFocus}" />
                 </Grid>
 
@@ -858,9 +1026,22 @@
                         </DockPanel>
                       </Border>
                     </Popup>
-                    <CheckBox Grid.Column="1" IsChecked="{Binding FerreteriaActiva}" IsEnabled="{Binding CanEdit}"
-                              Content="Estimar ferretería" FontSize="11.5"
-                              Foreground="{DynamicResource Brush.Ink2}" VerticalAlignment="Center" />
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                      <CheckBox IsChecked="{Binding FerreteriaActiva}" IsEnabled="{Binding CanEdit}"
+                                Content="Estimar ferretería" FontSize="11.5"
+                                Foreground="{DynamicResource Brush.Ink2}" VerticalAlignment="Center" />
+                      <Border Style="{StaticResource CostoHelpBadge}">
+                        <TextBlock Style="{StaticResource CostoHelpBadgeText}" />
+                        <Border.ToolTip>
+                          <ToolTip MaxWidth="320">
+                            <StackPanel Margin="2">
+                              <TextBlock Text="PROVISIÓN DE FERRETERÍA MENOR (3%)" FontWeight="Bold" FontSize="11" Foreground="{DynamicResource Brush.Blue}" Margin="0,0,0,3" />
+                              <TextBlock Text="Estimación porcentual sobre materiales para absorber elementos de fijación, tornillería, pernos, rieles, sellos y consumibles de montaje que no se cubican ítem por ítem en planos." FontSize="10.5" TextWrapping="Wrap" />
+                            </StackPanel>
+                          </ToolTip>
+                        </Border.ToolTip>
+                      </Border>
+                    </StackPanel>
                     <TextBox Grid.Column="2" Text="{Binding FerreteriaPctText, UpdateSourceTrigger=LostFocus}">
                       <TextBox.Style>
                         <Style TargetType="TextBox" BasedOn="{StaticResource CierreNum}">
@@ -889,7 +1070,20 @@
                       <ColumnDefinition Width="*" />
                       <ColumnDefinition Width="74" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="Descuento comercial" FontSize="11.5" Foreground="{DynamicResource Brush.Ink2}" VerticalAlignment="Center" />
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                      <TextBlock Text="Descuento comercial" FontSize="11.5" Foreground="{DynamicResource Brush.Ink2}" VerticalAlignment="Center" />
+                      <Border Style="{StaticResource CostoHelpBadge}">
+                        <TextBlock Style="{StaticResource CostoHelpBadgeText}" />
+                        <Border.ToolTip>
+                          <ToolTip MaxWidth="320">
+                            <StackPanel Margin="2">
+                              <TextBlock Text="DESCUENTO COMERCIAL / NEGOCIACIÓN" FontWeight="Bold" FontSize="11" Foreground="{DynamicResource Brush.Blue}" Margin="0,0,0,3" />
+                              <TextBlock Text="Ajuste fino pactado en mesa de negociación final con el mandante sin degradar los precios unitarios técnicos del presupuesto ni alterar los rendimientos de obra." FontSize="10.5" TextWrapping="Wrap" />
+                            </StackPanel>
+                          </ToolTip>
+                        </Border.ToolTip>
+                      </Border>
+                    </StackPanel>
                     <TextBlock Grid.Column="1" Text="{Binding DiscountPct, StringFormat={}{0:0.0} %}" FontFamily="{StaticResource Font.Mono}"
                                FontWeight="SemiBold" FontSize="12.5" HorizontalAlignment="Right" VerticalAlignment="Center" />
                   </Grid>
@@ -1008,9 +1202,20 @@
                   </ItemsControl>
                 </StackPanel>
 
-                <Border Height="1" Background="{DynamicResource Brush.Line2}" Margin="0,12,0,12" />
-
-                <TextBlock Text="M.O. INSTALACIÓN" Style="{StaticResource CierreSec}" Margin="0,0,0,7" />
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,7" VerticalAlignment="Center">
+                  <TextBlock Text="M.O. INSTALACIÓN" Style="{StaticResource CierreSec}" Margin="0" />
+                  <Border Style="{StaticResource CostoHelpBadge}">
+                    <TextBlock Style="{StaticResource CostoHelpBadgeText}" />
+                    <Border.ToolTip>
+                      <ToolTip MaxWidth="320">
+                        <StackPanel Margin="2">
+                          <TextBlock Text="MANO DE OBRA DE INSTALACIÓN" FontWeight="Bold" FontSize="11" Foreground="{DynamicResource Brush.Blue}" Margin="0,0,0,3" />
+                          <TextBlock Text="Define el modelo de cálculo de la mano de obra del itemizado: por rendimiento unitario (Días-Hombre) o calibración por Factor de Ajuste (FA) contra el plan de obra." FontSize="10.5" TextWrapping="Wrap" />
+                        </StackPanel>
+                      </ToolTip>
+                    </Border.ToolTip>
+                  </Border>
+                </StackPanel>
                 <CheckBox IsChecked="{Binding MoInstalacion.ModoMoRendimiento}" Margin="0,0,0,7" FontSize="11" Foreground="{DynamicResource Brush.Ink2}">
                   <TextBlock Text="M.O. por rendimiento (Tarifa D/H ÷ rendimiento del material)" TextWrapping="Wrap" FontSize="11" />
                 </CheckBox>
@@ -1167,20 +1372,14 @@
                   </Grid.ColumnDefinitions>
                   <StackPanel>
                     <TextBlock Text="FACTORES" Style="{StaticResource CierreSec}" Margin="0" />
-                    <TextBlock Text="Compara EN PPTO con COSTO. Con Automático, el FA se recalcula solo hasta cuadrarlos."
+                    <TextBlock Text="Compara EN PPTO con COSTO. Usa 'Calcular FA' cuando desees calibrar la M.O. con el plan de obra."
                                Style="{StaticResource CierreHint}" Margin="0,3,0,0" />
                   </StackPanel>
                   <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <CheckBox IsChecked="{Binding MoInstalacion.FaAutomatico}" Margin="0,0,10,0" FontSize="10.5"
-                              Foreground="{DynamicResource Brush.Ink2}" VerticalAlignment="Center"
-                              IsEnabled="{Binding CanEdit}"
-                              ToolTip="Automático: el FA se recalcula solo para que EN PPTO cuadre con COSTO, cada vez que se refresca el costo. Escribir un FA a mano lo desactiva. Se guarda como preferencia.">
-                      <TextBlock Text="Automático" FontSize="10.5" />
-                    </CheckBox>
                     <Button Content="Calcular FA" Command="{Binding MoInstalacion.CalcularFaCommand}" Style="{StaticResource Button.Primary}"
                             Height="24" Padding="10,0" FontSize="10.5"
                             IsEnabled="{Binding CanEdit}"
-                            ToolTip="FA = (M.O. real del proyecto − M.O. ya cubierta por el catálogo) ÷ Σ (Material × %). Deja EN PPTO igual a COSTO." />
+                            ToolTip="FA = (M.O. real del proyecto − M.O. ya cubierta por el catálogo) ÷ Σ (Material × %). Calibra la M.O. de instalación al costo real del plan de obra." />
                   </StackPanel>
                 </Grid>
 
@@ -1217,11 +1416,6 @@
                              Text="{Binding MoInstalacion.IndiceMoFaText, UpdateSourceTrigger=LostFocus}"
                              IsEnabled="{Binding CanEdit}"
                              ToolTip="FA del proyecto (Excel: COSTOS!E192). 0 = sin calibrar: la M.O. por % del itemizado no suma hasta derivar el índice. Editable a mano; escribir un valor recalibra la M.O. del catálogo, del banco de precios y del itemizado." />
-                    <Border CornerRadius="4" Padding="5,1" Margin="6,0,0,0" VerticalAlignment="Center"
-                            Background="{DynamicResource Brush.BlueFaint}" ToolTip="{Binding MoInstalacion.FaModoHint}"
-                            Visibility="{Binding MoInstalacion.FaAutomatico, Converter={StaticResource BoolToVisibility}}">
-                      <TextBlock Text="AUTO" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" />
-                    </Border>
                     <TextBlock Text="{Binding MoInstalacion.MoTarifaLabel}" FontSize="10.5" Foreground="{DynamicResource Brush.Ink4}"
                                VerticalAlignment="Center" Margin="8,0,0,0" />
                   </StackPanel>

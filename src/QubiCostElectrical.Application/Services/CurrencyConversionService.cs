@@ -101,7 +101,7 @@ public sealed class CurrencyConversionService : ICurrencyConversionService
         return normalized switch
         {
             CurrencyClp => $"$ {value:N0}",
-            CurrencyUsd => $"US$ {value:N2}",
+            CurrencyUsd => $"US$ {value:N0}",
             CurrencyUf => $"{value:N3} UF",
             _ => $"$ {value:N0}"
         };
@@ -130,7 +130,7 @@ public sealed class CurrencyConversionService : ICurrencyConversionService
         return normalized switch
         {
             CurrencyClp => $"$ {value:N0} CLP",
-            CurrencyUsd => $"US$ {value:N2}",
+            CurrencyUsd => $"US$ {value:N0}",
             _ => $"{value:N3} UF"
         };
     }
@@ -143,7 +143,7 @@ public sealed class CurrencyConversionService : ICurrencyConversionService
         return normalized switch
         {
             CurrencyClp => $"$ {value:N0}",
-            CurrencyUsd => $"US$ {value:N2}",
+            CurrencyUsd => $"US$ {value:N0}",
             _ => $"{value:N3} UF"
         };
     }

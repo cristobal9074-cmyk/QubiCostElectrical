@@ -35,10 +35,12 @@ public sealed partial class ProjectViewModel : ViewModelBase, IPageWithPendingCh
         ApplyCommercialProfileCommand = new RelayCommand<string>(ApplyCommercialProfile, _ => !ShowEmptyState && !session.IsReadOnly);
         SetApuCostingModeCommand = new RelayCommand<string>(SetApuCostingMode, _ => !ShowEmptyState && !session.IsReadOnly);
         SelectMonedaCommand = new RelayCommand<string>(SelectMoneda, _ => !ShowEmptyState && !session.IsReadOnly);
+        ApplyPreferencesDefaultsCommand = new RelayCommand(ApplyPreferencesDefaults, () => !ShowEmptyState && !session.IsReadOnly);
     }
 
     public ICommand SetApuCostingModeCommand { get; }
     public ICommand SelectMonedaCommand { get; }
+    public ICommand ApplyPreferencesDefaultsCommand { get; }
 
     public bool ShowEmptyState
     {
@@ -48,6 +50,7 @@ public sealed partial class ProjectViewModel : ViewModelBase, IPageWithPendingCh
             if (!SetProperty(ref showEmptyState, value)) return;
             ((RelayCommand)SaveCommand).RaiseCanExecuteChanged();
             ((RelayCommand)CancelCommand).RaiseCanExecuteChanged();
+            ((RelayCommand)ApplyPreferencesDefaultsCommand).RaiseCanExecuteChanged();
             OnPropertyChanged(nameof(CanEdit));
         }
     }
@@ -178,6 +181,19 @@ public sealed partial class ProjectViewModel : ViewModelBase, IPageWithPendingCh
 
     public string RiesgoText { get => snapshot.RiesgoPct.ToString("N1", CultureInfo.CurrentCulture); set { if (decimal.TryParse(value.Replace(",", "."), NumberStyles.Any, CultureInfo.InvariantCulture, out var v)) snapshot.RiesgoPct = v; OnPropertyChanged(); NotifyDirty(); } }
     public string DescuentoText { get => snapshot.DescuentoPct.ToString("N1", CultureInfo.CurrentCulture); set { if (decimal.TryParse(value.Replace(",", "."), NumberStyles.Any, CultureInfo.InvariantCulture, out var v)) snapshot.DescuentoPct = v; OnPropertyChanged(); NotifyDirty(); } }
+    public bool OcultarGgYUtilidadEnResumen
+    {
+        get => snapshot.OcultarGgYUtilidadEnResumen;
+        set
+        {
+            if (snapshot.OcultarGgYUtilidadEnResumen != value)
+            {
+                snapshot.OcultarGgYUtilidadEnResumen = value;
+                OnPropertyChanged();
+                NotifyDirty();
+            }
+        }
+    }
     public bool AllowPartidaCommercialOverrides { get => snapshot.AllowPartidaCommercialOverrides; set { snapshot.AllowPartidaCommercialOverrides = value; OnPropertyChanged(); NotifyDirty(); } }
     public CommercialCostingModel CommercialModel => snapshot.CommercialModel;
     public string CommercialModelName => snapshot.CommercialModel.DisplayName();
@@ -365,6 +381,21 @@ public sealed partial class ProjectViewModel : ViewModelBase, IPageWithPendingCh
         OnPropertyChanged(nameof(GastosGeneralesText)); OnPropertyChanged(nameof(UtilidadText));
         OnPropertyChanged(nameof(RiesgoText)); OnPropertyChanged(nameof(DescuentoText));
         OnPropertyChanged(nameof(CommercialProfileName)); NotifyDirty();
+    }
+
+    private void ApplyPreferencesDefaults()
+    {
+        if (ShowEmptyState || session.IsReadOnly) return;
+        var prefs = UserPreferencesStore.Load();
+        snapshot.GastosGeneralesPct = prefs.DefaultGastosGeneralesPct;
+        snapshot.UtilidadPct = prefs.DefaultUtilidadPct;
+        OnPropertyChanged(nameof(GastosGeneralesText));
+        OnPropertyChanged(nameof(UtilidadText));
+        OnPropertyChanged(nameof(GastosGeneralesKpi));
+        OnPropertyChanged(nameof(UtilidadKpi));
+        OnPropertyChanged(nameof(MarkupRatioText));
+        OnPropertyChanged(nameof(MarkupSubtext));
+        NotifyDirty();
     }
 
     private void NotifyCommercialModel()
@@ -589,6 +620,12 @@ public sealed partial class ProjectViewModel : ViewModelBase, IPageWithPendingCh
 
         if (dlg.ShowDialog() == true)
         {
+            if (OperationFailureMessages.IsFileLocked(dlg.FileName))
+            {
+                WpfDialogService.Error("Archivo en uso", OperationFailureMessages.FileInUseUserMessage);
+                return;
+            }
+
             try
             {
                 ProjectFichaExporter.Export(snapshot, dlg.FileName, FechaCreacionLabel, FechaModificacionLabel);
@@ -596,7 +633,7 @@ public sealed partial class ProjectViewModel : ViewModelBase, IPageWithPendingCh
             }
             catch (Exception ex)
             {
-                WpfDialogService.Error("Error al generar PDF", ex.Message);
+                WpfDialogService.Error("Error al generar PDF", OperationFailureMessages.ToUserMessage(ex));
             }
         }
     }

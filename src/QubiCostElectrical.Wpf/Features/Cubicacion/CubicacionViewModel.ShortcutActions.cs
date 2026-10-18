@@ -14,6 +14,8 @@ public sealed partial class CubicacionViewModel
     public ICommand OpenQuickJumpCommand { get; private set; } = null!;
     public ICommand OpenBatchReplaceCommand { get; private set; } = null!;
     public ICommand OpenFamilyBatchReplaceCommand { get; private set; } = null!;
+    public ICommand AutocompletarUnidadYCantidadCommand { get; private set; } = null!;
+    public ICommand AutocompletarUnidadYCantidadTodasCommand { get; private set; } = null!;
 
     private void InitializeShortcutCommands()
     {
@@ -23,6 +25,8 @@ public sealed partial class CubicacionViewModel
         OpenQuickJumpCommand = new RelayCommand(OpenQuickJumpPartida);
         OpenBatchReplaceCommand = new RelayCommand(OpenBatchReplace, () => CanEdit);
         OpenFamilyBatchReplaceCommand = new RelayCommand(OpenFamilyBatchReplace, () => CanEdit);
+        AutocompletarUnidadYCantidadCommand = new RelayCommand(AutocompletarUnidadYCantidadActual, () => CanEdit && SelectedPartida?.EsPartida == true);
+        AutocompletarUnidadYCantidadTodasCommand = new RelayCommand(AutocompletarUnidadYCantidadTodas, () => CanEdit);
     }
 
     internal bool TryExecuteShortcut(string actionId)
@@ -163,13 +167,15 @@ public sealed partial class CubicacionViewModel
     /// <summary>La vista enfoca el cuadro de observación.</summary>
     public event Action? RequestFocusMotivoNoCubicar;
 
-    private void NavigatePartidaRelative(int delta)
+    internal void NavigatePartidaRelative(int delta)
     {
         var list = FilteredPartidas.Count > 0 ? FilteredPartidas : Partidas;
         if (list.Count == 0) return;
 
         var current = SelectedPartida;
         var index = current != null ? list.IndexOf(current) : -1;
+        if (index < 0 && current != null)
+            index = list.ToList().FindIndex(p => string.Equals(p.Id, current.Id, StringComparison.OrdinalIgnoreCase));
         if (index < 0) index = 0;
         else index = Math.Clamp(index + delta, 0, list.Count - 1);
 
@@ -435,4 +441,187 @@ public sealed partial class CubicacionViewModel
 
     public void ExecuteRepeatMeasurement(CubicacionRowVm row, int targetSlot, string expression)
         => CubicacionFillHelper.RepeatMeasurement(this, row, targetSlot, expression);
+
+    public void AutocompletarUnidadYCantidadActual()
+    {
+        if (session.IsReadOnly)
+        {
+            ModuleFeedback.NotifyReadOnly("Autocompletar unidad y cantidad", session.ReadOnlyReason);
+            return;
+        }
+
+        if (SelectedPartida == null || !SelectedPartida.EsPartida)
+        {
+            WpfDialogService.Info("Autocompletar unidad y cantidad", "Seleccione una partida para autocompletar su unidad y cantidad.");
+            return;
+        }
+
+        var firstRow = Rows.FirstOrDefault(r => r.HasContent && !string.IsNullOrWhiteSpace(r.Codigo))
+                       ?? Rows.FirstOrDefault(r => r.HasContent)
+                       ?? Rows.FirstOrDefault(r => !string.IsNullOrWhiteSpace(r.Unidad) || r.Cantidad > 0m);
+
+        if (firstRow == null)
+        {
+            WpfDialogService.Info("Autocompletar unidad y cantidad",
+                $"La partida '{SelectedPartida.DisplayLabel}' no tiene materiales cubicados en su tabla.");
+            return;
+        }
+
+        string unidad = !string.IsNullOrWhiteSpace(firstRow.Unidad)
+            ? firstRow.Unidad.Trim()
+            : (Rows.FirstOrDefault(r => !string.IsNullOrWhiteSpace(r.Unidad))?.Unidad?.Trim() ?? "");
+
+        decimal cantidad = firstRow.Cantidad != 0m
+            ? firstRow.Cantidad
+            : (Rows.FirstOrDefault(r => r.Cantidad > 0m)?.Cantidad ?? 0m);
+
+        if (string.IsNullOrWhiteSpace(unidad) && cantidad <= 0m)
+        {
+            WpfDialogService.Info("Autocompletar unidad y cantidad",
+                "El primer material de la partida no tiene definida unidad ni cantidad para autocompletar.");
+            return;
+        }
+
+        suppressSessionReload++;
+        try
+        {
+            undo.PushUndoPoint(session, $"Autocompletar unidad y cantidad en partida {SelectedPartida.Codigo}");
+
+            var item = session.Itemizado.FirstOrDefault(x => string.Equals(x.Id, SelectedPartida.Id, StringComparison.OrdinalIgnoreCase));
+            if (item != null)
+            {
+                if (!string.IsNullOrWhiteSpace(unidad)) item.Unidad = unidad;
+                if (cantidad > 0m) item.Cantidad = cantidad;
+            }
+
+            if (!string.IsNullOrWhiteSpace(unidad))
+            {
+                SelectedPartida.Unidad = unidad;
+            }
+
+            if (cantidad > 0m)
+            {
+                SelectedPartida.Cantidad = cantidad;
+                SelectedPartida.CantidadFormula = "";
+                CubicacionPartidaHelper.SincronizarMaestroDesdePartida(Rows, cantidad, session, ValidateRow);
+            }
+
+            OnPropertyChanged(nameof(PartidaUnidadText));
+            OnPropertyChanged(nameof(PartidaUnidad));
+            OnPropertyChanged(nameof(PartidaCantidadText));
+            OnPropertyChanged(nameof(PartidaCantidadToolTip));
+            NotifyGlobalValorizacionChanged();
+            UpdateFilterCounts();
+            MarkDirty();
+            session.MarkDirty(ProjectDirtyScope.Itemizado);
+            ScheduleRefreshTotals();
+
+            SaveStatusText = $"Autocompletado: UD = '{SelectedPartida.Unidad}', CANT = {SelectedPartida.Cantidad:G29}";
+        }
+        finally
+        {
+            suppressSessionReload--;
+        }
+    }
+
+    public void AutocompletarUnidadYCantidadTodas()
+    {
+        if (session.IsReadOnly)
+        {
+            ModuleFeedback.NotifyReadOnly("Autocompletar unidad y cantidad", session.ReadOnlyReason);
+            return;
+        }
+
+        var candidatePartidas = Partidas
+            .Where(p => p.EsPartida && !p.ExcluidoCubicacion && p.TieneCubicacion && (string.IsNullOrWhiteSpace(p.Unidad) || p.Cantidad <= 0m))
+            .ToList();
+
+        if (candidatePartidas.Count == 0)
+        {
+            WpfDialogService.Info("Autocompletar unidad y cantidad",
+                "No hay partidas pendientes de valorización global con materiales cubicados en el proyecto.");
+            return;
+        }
+
+        bool ok = WpfDialogService.Confirm(
+            "Autocompletar todo el proyecto",
+            $"Se encontraron {candidatePartidas.Count} partida(s) con cubicación que no tienen unidad o cantidad global definida.\n\n¿Desea autocompletar la unidad y cantidad del primer material en todas estas partidas?",
+            isWarning: false);
+
+        if (!ok) return;
+
+        suppressSessionReload++;
+        try
+        {
+            undo.PushUndoPoint(session, $"Autocompletar unidad y cantidad en {candidatePartidas.Count} partidas");
+            int actualizadas = 0;
+
+            foreach (var partidaVm in candidatePartidas)
+            {
+                var item = session.Itemizado.FirstOrDefault(x => string.Equals(x.Id, partidaVm.Id, StringComparison.OrdinalIgnoreCase));
+                var cubRows = session.Cubicacion
+                    .Where(r => string.Equals(r.ItemId, partidaVm.Id, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
+                var firstRow = cubRows.FirstOrDefault(r => (!string.IsNullOrWhiteSpace(r.Codigo) || r.Cantidad != 0m) && !string.IsNullOrWhiteSpace(r.Codigo))
+                               ?? cubRows.FirstOrDefault(r => !string.IsNullOrWhiteSpace(r.Codigo) || r.Cantidad != 0m)
+                               ?? cubRows.FirstOrDefault(r => !string.IsNullOrWhiteSpace(r.Unidad) || r.Cantidad > 0m);
+
+                if (firstRow == null) continue;
+
+                string unidad = !string.IsNullOrWhiteSpace(firstRow.Unidad)
+                    ? firstRow.Unidad.Trim()
+                    : (cubRows.FirstOrDefault(r => !string.IsNullOrWhiteSpace(r.Unidad))?.Unidad?.Trim() ?? "");
+
+                decimal cantidad = firstRow.Cantidad != 0m
+                    ? firstRow.Cantidad
+                    : (cubRows.FirstOrDefault(r => r.Cantidad > 0m)?.Cantidad ?? 0m);
+
+                bool updated = false;
+                if ((string.IsNullOrWhiteSpace(partidaVm.Unidad) || string.Equals(partidaVm.Unidad, "GL", StringComparison.OrdinalIgnoreCase)) && !string.IsNullOrWhiteSpace(unidad))
+                {
+                    if (item != null) item.Unidad = unidad;
+                    partidaVm.Unidad = unidad;
+                    updated = true;
+                }
+                if (partidaVm.Cantidad <= 0m && cantidad > 0m)
+                {
+                    if (item != null) item.Cantidad = cantidad;
+                    partidaVm.Cantidad = cantidad;
+                    partidaVm.CantidadFormula = "";
+                    updated = true;
+                }
+
+                if (updated)
+                {
+                    actualizadas++;
+                    if (SelectedPartida != null && string.Equals(SelectedPartida.Id, partidaVm.Id, StringComparison.OrdinalIgnoreCase))
+                    {
+                        SelectedPartida.Unidad = partidaVm.Unidad;
+                        SelectedPartida.Cantidad = partidaVm.Cantidad;
+                        SelectedPartida.CantidadFormula = "";
+                        CubicacionPartidaHelper.SincronizarMaestroDesdePartida(Rows, partidaVm.Cantidad, session, ValidateRow);
+                        OnPropertyChanged(nameof(PartidaUnidadText));
+                        OnPropertyChanged(nameof(PartidaUnidad));
+                        OnPropertyChanged(nameof(PartidaCantidadText));
+                        OnPropertyChanged(nameof(PartidaCantidadToolTip));
+                        NotifyGlobalValorizacionChanged();
+                    }
+                }
+            }
+
+            UpdateFilterCounts();
+            MarkDirty();
+            session.MarkDirty(ProjectDirtyScope.Itemizado);
+            ScheduleRefreshTotals();
+
+            SaveStatusText = $"Se autocompletaron {actualizadas} partidas.";
+            WpfDialogService.Info("Autocompletar unidad y cantidad",
+                $"Se autocompletaron exitosamente {actualizadas} partida(s) en el proyecto.");
+        }
+        finally
+        {
+            suppressSessionReload--;
+        }
+    }
 }

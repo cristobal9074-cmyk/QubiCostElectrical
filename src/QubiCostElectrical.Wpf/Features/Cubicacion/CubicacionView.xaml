@@ -16,28 +16,38 @@
     </UserControl.InputBindings>
 
     <UserControl.Resources>
-        <!-- Estilo de encabezado integrado para UD y CANT en modo Casillas -->
-        <Style x:Key="DataGridColumnHeader.PartidaHeader" TargetType="DataGridColumnHeader" BasedOn="{StaticResource DataGridColumnHeader.Prototype}">
-            <Setter Property="Padding" Value="4,3" />
-            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-            <Setter Property="VerticalContentAlignment" Value="Stretch" />
+        <!-- Estilo compacto de encabezado para las columnas normales en Casillas -->
+        <Style x:Key="DataGridColumnHeader.CasillasGeneral" TargetType="DataGridColumnHeader" BasedOn="{StaticResource DataGridColumnHeader.Prototype}">
+            <Setter Property="Padding" Value="4,0" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="MaxHeight" Value="28" />
         </Style>
 
-        <!-- Header editable para UD en modo Casillas: título limpio "UD" + caja de edición integrada -->
+        <!-- Estilo de encabezado integrado para UD y CANT en modo Casillas -->
+        <Style x:Key="DataGridColumnHeader.PartidaHeader" TargetType="DataGridColumnHeader" BasedOn="{StaticResource DataGridColumnHeader.Prototype}">
+            <Setter Property="Padding" Value="2,1" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="MaxHeight" Value="28" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+
+        <!-- Header editable para UD en modo Casillas: título limpio "UD" + caja de edición integrada compacta -->
         <DataTemplate x:Key="HeaderTemplate.PartidaUnidad">
-            <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <Grid HorizontalAlignment="Stretch" VerticalAlignment="Center">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
                 <TextBlock Grid.Row="0" Text="UD"
-                           FontSize="9" FontWeight="Bold"
+                           FontSize="7.5" FontWeight="Bold"
                            Foreground="{DynamicResource Brush.Muted}"
                            HorizontalAlignment="Center"
-                           Margin="0,0,0,2" />
+                           Margin="0,0,0,1" />
                 <Border Grid.Row="1"
-                        CornerRadius="3"
-                        MinHeight="20"
+                        CornerRadius="2"
+                        Height="15"
                         VerticalAlignment="Center"
                         ToolTip="Unidad de la partida (editable · Enter para guardar)">
                     <Border.Style>
@@ -55,9 +65,9 @@
                     </Border.Style>
                     <TextBox Tag="PartidaUnidad"
                              Text="{Binding DataContext.PartidaUnidadText, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=LostFocus}"
-                             FontFamily="{StaticResource Font.Ui}" FontSize="11" FontWeight="Bold"
+                             FontFamily="{StaticResource Font.Ui}" FontSize="10" FontWeight="Bold"
                              HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                             Padding="2,0" BorderThickness="0" Background="Transparent"
+                             Padding="0" BorderThickness="0" Background="Transparent"
                              Foreground="{DynamicResource Brush.Ink}"
                              Loaded="OnUnidadHeaderBoxLoaded"
                              GotFocus="OnUnidadHeaderBoxGotFocus" LostFocus="OnUnidadHeaderBoxLostFocus"
@@ -68,21 +78,21 @@
             </Grid>
         </DataTemplate>
 
-        <!-- Header editable para CANT en modo Casillas: título limpio "CANT" + caja de edición con badge verde de fórmula -->
+        <!-- Header editable para CANT en modo Casillas: título limpio "CANT" + caja de edición con badge verde de fórmula compacto -->
         <DataTemplate x:Key="HeaderTemplate.PartidaCantidad">
-            <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <Grid HorizontalAlignment="Stretch" VerticalAlignment="Center">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
                 <TextBlock Grid.Row="0" Text="CANT"
-                           FontSize="9" FontWeight="Bold"
+                           FontSize="7.5" FontWeight="Bold"
                            Foreground="{DynamicResource Brush.Muted}"
                            HorizontalAlignment="Center"
-                           Margin="0,0,0,2" />
+                           Margin="0,0,0,1" />
                 <Border Grid.Row="1"
-                        CornerRadius="3"
-                        MinHeight="20"
+                        CornerRadius="2"
+                        Height="15"
                         VerticalAlignment="Center"
                         ToolTip="{Binding DataContext.PartidaCantidadToolTip, RelativeSource={RelativeSource AncestorType=UserControl}}">
                     <Border.Style>
@@ -100,9 +110,9 @@
                     </Border.Style>
                     <TextBox Tag="PartidaCant"
                              Text="{Binding DataContext.PartidaCantidadText, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=LostFocus}"
-                             FontFamily="{StaticResource Font.Mono}" FontSize="11" FontWeight="Bold"
+                             FontFamily="{StaticResource Font.Mono}" FontSize="10" FontWeight="Bold"
                              HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                             Padding="2,0" BorderThickness="0" Background="Transparent"
+                             Padding="0" BorderThickness="0" Background="Transparent"
                              Foreground="{DynamicResource Brush.Success}"
                              Loaded="OnCantHeaderBoxLoaded"
                              GotFocus="OnCantHeaderBoxGotFocus" LostFocus="OnCantHeaderBoxLostFocus"
@@ -350,6 +360,18 @@
                                  Padding="8,3" MinWidth="250" MaxWidth="850"
                                  ToolTip="Editar nombre/descripción de la partida · Enter para guardar"
                                  PreviewKeyDown="OnPartidaHeaderBoxPreviewKeyDown" />
+                        <!-- Badge sutil integrado: Alerta de partida sin cantidad o sin unidad global -->
+                        <Border Margin="10,0,0,0" Padding="8,3" CornerRadius="12"
+                                Background="#FEF3C7" BorderBrush="#F59E0B" BorderThickness="1"
+                                VerticalAlignment="Center"
+                                ToolTip="{Binding AlertaSinValorizacionGlobalMensaje}"
+                                Visibility="{Binding HasAlertaSinValorizacionGlobal, Converter={StaticResource BoolToVisibility}}">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="⚠️" FontSize="11" Margin="0,0,5,0" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding AlertaSinValorizacionGlobalBadgeText}" FontSize="11" FontWeight="SemiBold"
+                                           Foreground="#92400E" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
                         <Button Style="{StaticResource Button.Toolbar}" Content="Tomar SC"
@@ -408,7 +430,7 @@
                                 Style="{StaticResource Button.Toolbar}"
                                 ToolTip="Buscar en tabla y resaltar coincidencias (Ctrl+F / F3)" />
                         <Button Style="{StaticResource Button.Ghost}" Content="⋯" Height="28" Padding="12,4"
-                    ToolTip="Duplicar, reemplazar, hoja de cubicación y zonas" Click="OnMoreActionsClick">
+                                ToolTip="Duplicar, reemplazar, autocompletar, hoja de cubicación y zonas" Click="OnMoreActionsClick">
                             <Button.ContextMenu>
                                 <ContextMenu>
                                     <MenuItem Header="Duplicar fila (Ctrl+D)" Command="{Binding DuplicateRowCommand}"
@@ -417,6 +439,11 @@
                                               ToolTip="Reemplazar un material en todas las partidas manteniendo intactas las mediciones y fórmulas" />
                                     <MenuItem Header="Cambio de Línea o Familia Masivo… (Ctrl+Shift+H)" Command="{Binding OpenFamilyBatchReplaceCommand}"
                                               ToolTip="Ingeniería de valor: reemplazar familias completas de materiales con auto-mapeo del banco de precios" />
+                                    <Separator />
+                                    <MenuItem Header="Autocompletar unidad y cantidad" Command="{Binding AutocompletarUnidadYCantidadCommand}"
+                                              ToolTip="Asignar a esta partida la unidad y cantidad del primer material cubicado" />
+                                    <MenuItem Header="Autocompletar unidad y cantidad en todo el proyecto…" Command="{Binding AutocompletarUnidadYCantidadTodasCommand}"
+                                              ToolTip="Asignar la unidad y cantidad del primer material a todas las partidas del proyecto que no tengan valorización global" />
                                     <Separator />
                                     <MenuItem Header="Generar / Ver APU de esta partida" Command="{Binding NavigateToApuCommand}"
                                               ToolTip="Abrir herramienta auxiliar de análisis de precios unitarios para la partida activa" />
@@ -433,18 +460,6 @@
                         </Button>
                     </StackPanel>
                 </DockPanel>
-
-                <!-- Alerta: Partida cubicada sin valorización global (falta unidad o cantidad en encabezado) -->
-                <Border Margin="0,8,0,0" Padding="12,8" CornerRadius="6"
-                        Background="#FEF3C7" BorderBrush="#F59E0B" BorderThickness="1"
-                        Visibility="{Binding HasAlertaSinValorizacionGlobal, Converter={StaticResource BoolToVisibility}}">
-                    <DockPanel LastChildFill="True">
-                        <TextBlock Text="⚠️" FontSize="14" Margin="0,0,8,0" VerticalAlignment="Center" />
-                        <TextBlock Text="{Binding AlertaSinValorizacionGlobalMensaje}"
-                                   FontSize="11.5" FontWeight="SemiBold" Foreground="#92400E"
-                                   TextWrapping="Wrap" VerticalAlignment="Center" />
-                    </DockPanel>
-                </Border>
 
                 <!-- Observación colapsable (cerrada por defecto) -->
                 <Expander Margin="0,8,0,0" IsExpanded="False"
@@ -668,18 +683,21 @@
                 ScrollViewer.HorizontalScrollBarVisibility="Auto"
                 ScrollViewer.VerticalScrollBarVisibility="Auto"
                 RowHeight="28"
+                ColumnHeaderHeight="28"
+                ColumnHeaderStyle="{StaticResource DataGridColumnHeader.CasillasGeneral}"
                 FrozenColumnCount="5"
                 BeginningEdit="OnGridBeginningEdit"
                 PreparingCellForEdit="OnGridPreparingCellForEdit"
                 CellEditEnding="OnGridCellEditEnding"
                 PreviewKeyDown="OnGridPreviewKeyDown"
+                PreviewTextInput="OnResourceGridPreviewTextInput"
                 PreviewMouseLeftButtonDown="OnResourceGridPreviewMouseLeftButtonDown"
                 ContextMenuOpening="OnResourceGridContextMenuOpening"
                 SelectionChanged="OnGridSelectionChanged"
                 CurrentCellChanged="OnGridCurrentCellChanged">
                 <DataGrid.Columns>
                     <!-- # / indicador error -->
-                    <DataGridTemplateColumn x:Name="IndexColumn" Header="#" Width="44" CanUserResize="False" CanUserSort="False">
+                    <DataGridTemplateColumn x:Name="IndexColumn" Header="#" Width="44" IsReadOnly="True" CanUserResize="False" CanUserSort="False">
                         <DataGridTemplateColumn.CellStyle>
                             <Style TargetType="DataGridCell" BasedOn="{StaticResource DataGridCell.Excel}">
                                 <Setter Property="Focusable" Value="False" />

@@ -921,7 +921,13 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
         var dialog = new ApuTemplatePickerDialog(templateStore);
         if (dialog.ShowDialog() != true || dialog.SelectedTemplate == null) return;
 
-        var template = dialog.SelectedTemplate;
+        ApplyTemplate(dialog.SelectedTemplate, dialog.Reemplazar);
+    }
+
+    internal bool ApplyTemplate(ApuTemplateRow template, bool reemplazar)
+    {
+        if (!CanEdit || currentApu == null) return false;
+
         List<ApuRecursoRow>? recursos = null;
         try
         {
@@ -937,12 +943,20 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
         if (recursos == null || recursos.Count == 0)
         {
             WpfDialogService.Info("Aplicar plantilla", "La plantilla no tiene recursos.");
-            return;
+            return false;
+        }
+
+        if (reemplazar && currentApu.Recursos.Count > 0)
+        {
+            var partidaDesc = selectedPartida?.Descripcion ?? currentApu.Descripcion ?? "la partida actual";
+            var confirmMsg = $"El APU de '{partidaDesc}' ya contiene {currentApu.Recursos.Count} recurso(s) configurado(s).\n\n¿Está seguro de que desea reemplazarlos y eliminarlos definitivamente para aplicar la plantilla '{template.Nombre}'?";
+            if (!ConfirmOverwriteTemplate(confirmMsg))
+                return false;
         }
 
         undo.PushUndoPoint(session, $"Aplicar plantilla APU");
         pendingUndoForEdit = true;
-        if (dialog.Reemplazar)
+        if (reemplazar)
         {
             currentApu.Recursos.Clear();
             Recursos.Clear();
@@ -955,6 +969,7 @@ public sealed partial class ApuWorkspaceVm : ViewModelBase, IRefreshablePage, IP
             Recursos.Add(CreateRecursoVm(r));
         }
         OnRowEdited();
+        return true;
     }
 
     // ─── Crear conjunto eléctrico desde los recursos del APU actual ──────────

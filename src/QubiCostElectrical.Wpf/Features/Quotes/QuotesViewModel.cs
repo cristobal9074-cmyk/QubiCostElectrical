@@ -95,6 +95,7 @@ public sealed partial class QuotesViewModel : SessionAwareViewModelBase, IRefres
     private readonly IProjectWorkspaceService workspace;
     private readonly IMaterialSearchService materialSearch;
     private readonly IPriceBankStore store;
+    private readonly WpfUndoService? undo;
     private readonly ObservableCollection<QuoteProviderSummaryVm> providerSummaries = new();
     private readonly ObservableCollection<QuoteEntryVm> providerEntries = new();
     private readonly ObservableCollection<QuoteComparisonRowVm> comparisonRows = new();

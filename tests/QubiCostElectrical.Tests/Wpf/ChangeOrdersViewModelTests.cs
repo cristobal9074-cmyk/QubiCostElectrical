@@ -807,4 +807,158 @@ public sealed class ChangeOrdersViewModelTests
 
         Assert.Empty(validationMethods);
     }
+
+    [Fact]
+    public void EditorVm_AddContractualPartida_FreezesPrice_AndCalculatesSubtotal()
+    {
+        var vm = new ChangeOrderEditorViewModel();
+        vm.ConfigureCurrency(muestraUf: false, ufRate: 38_500m);
+
+        var contractualItem = new ChangeOrderPartidaPickerItem
+        {
+            Id = "P-001",
+            Item = "1.2.3",
+            Descripcion = "Alimentador Cu 3x25+1x16mm2",
+            Unidad = "m",
+            CantidadContrato = 150m,
+            PrecioUnitarioClp = 25_000m,
+            PrecioUnitarioUf = 0.6493m,
+            MuestraUf = false
+        };
+
+        vm.AddContractualPartida(contractualItem);
+
+        Assert.Single(vm.Lineas);
+        var line = vm.Lineas[0];
+        Assert.True(line.EsContractual);
+        Assert.True(line.IsPriceReadOnly);
+        Assert.Equal("1.2.3", line.Item);
+        Assert.Equal(150m, line.CantidadBase);
+        Assert.Equal(1m, line.CantidadAdicional);
+        Assert.Equal(151m, line.CantidadNueva);
+        Assert.Equal(25_000m, line.SubtotalClp);
+
+        // Al cambiar cantidad adicional
+        line.CantidadAdicional = 10m;
+        Assert.Equal(160m, line.CantidadNueva);
+        Assert.Equal(250_000m, line.SubtotalClp);
+        Assert.Equal(250_000m, vm.TotalAdicionalClp);
+
+        // Guardar en modelo
+        var target = new ChangeOrderRow { Numero = "AD-01", Titulo = "Aumento alimentador" };
+        vm.Numero = "AD-01";
+        vm.Titulo = "Aumento alimentador";
+        var saved = vm.TrySave(target);
+        Assert.True(saved);
+        Assert.Single(target.Lineas);
+        Assert.Equal("1.2.3", target.Lineas[0].Item);
+        Assert.Equal(10m, target.Lineas[0].CantidadAdicional);
+    }
+
+    [Fact]
+    public void EditorVm_AddExtraordinariaPartida_AllowsCustomPrice_AndUpdatesTotals()
+    {
+        var vm = new ChangeOrderEditorViewModel();
+        vm.ConfigureCurrency(muestraUf: false, ufRate: 38_500m);
+
+        vm.AddExtraordinariaPartida();
+        Assert.Single(vm.Lineas);
+        var line = vm.Lineas[0];
+        Assert.False(line.EsContractual);
+        Assert.False(line.IsPriceReadOnly);
+
+        line.Item = "EXT-01";
+        line.DescripcionPartida = "Nuevo tablero auxiliar de faena";
+        line.CantidadAdicional = 2m;
+        line.PrecioUnitarioClp = 150_000m;
+
+        Assert.Equal(300_000m, line.SubtotalClp);
+        Assert.Equal(300_000m, vm.TotalAdicionalClp);
+    }
+
+    [Fact]
+    public void ChangeOrderMaterialVm_FormulaEvaluation_CalculatesCorrectQuantity()
+    {
+        var vm = new ChangeOrderMaterialVm(() => { })
+        {
+            Codigo = "CAB-THHN-2.5",
+            Descripcion = "Cable THHN 2.5 mm2",
+            Unidad = "m",
+            MatClp = 450m,
+            MoClp = 150m,
+            CantidadFormula = "25 * 3 + 12"
+        };
+
+        vm.EvaluateFormula();
+
+        Assert.Equal(87m, vm.Cantidad);
+        Assert.Equal(600m, vm.UnitarioClp);
+        Assert.Equal(87m * 600m, vm.SubtotalClp);
+    }
+
+    [Fact]
+    public void ChangeOrderLineVm_MaterialesMapping_PreservesListAndBadge()
+    {
+        var line = new ChangeOrderLineVm(() => { })
+        {
+            Item = "1.5",
+            DescripcionPartida = "Circuito Enchufes",
+            EsContractual = true,
+            CantidadAdicional = 5m
+        };
+
+        Assert.Equal(0, line.MaterialesCount);
+        Assert.Equal("📐 Cubicar", line.MaterialesBadgeText);
+
+        var mats = new List<CubicacionRow>
+        {
+            new() { Codigo = "E-01", Descripcion = "Enchufe doble", Cantidad = 10, MatClp = 2500 },
+            new() { Codigo = "C-01", Descripcion = "Caja chuqui", Cantidad = 10, MatClp = 800 }
+        };
+
+        line.SetMateriales(mats);
+        Assert.Equal(2, line.MaterialesCount);
+        Assert.Equal("📐 2 mat", line.MaterialesBadgeText);
+
+        var model = line.ToModel();
+        Assert.Equal(2, model.Materiales.Count);
+
+        var restored = ChangeOrderLineVm.FromModel(model, muestraUf: false, ufRate: 38_500m, () => { });
+        Assert.Equal(2, restored.MaterialesCount);
+        Assert.Equal("E-01", restored.Materiales[0].Codigo);
+    }
+
+    [Fact]
+    public void ChangeOrderRow_MaterialesRoundtrip_JsonSerialization_PreservesAllData()
+    {
+        var oc = new ChangeOrderRow
+        {
+            Numero = "OC-CUB-01",
+            Titulo = "Adicional con cubicación detallada"
+        };
+
+        var line = new ChangeOrderLineRow
+        {
+            Item = "EXT-05",
+            DescripcionPartida = "Alimentador subterráneo",
+            CantidadAdicional = 50m,
+            EsContractual = false,
+            Materiales = new List<CubicacionRow>
+            {
+                new() { Codigo = "CAB-SUPERFLEX", Cantidad = 220, MatClp = 8500, MoClp = 2000 },
+                new() { Codigo = "TUB-PVC-75", Cantidad = 55, MatClp = 4200, MoClp = 1100 }
+            }
+        };
+        oc.Lineas.Add(line);
+
+        var json = JsonSerializer.Serialize(oc);
+        var deserialized = JsonSerializer.Deserialize<ChangeOrderRow>(json);
+
+        Assert.NotNull(deserialized);
+        Assert.Single(deserialized.Lineas);
+        Assert.Equal(2, deserialized.Lineas[0].Materiales.Count);
+        Assert.Equal("CAB-SUPERFLEX", deserialized.Lineas[0].Materiales[0].Codigo);
+        Assert.Equal(220m, deserialized.Lineas[0].Materiales[0].Cantidad);
+    }
 }
+

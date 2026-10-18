@@ -17,12 +17,20 @@ public sealed class ChangeOrderLineRow
     public string Item { get; set; } = "";
     public string DescripcionPartida { get; set; } = "";
     public string TipoCambio { get; set; } = "Modificación";
+    public string Unidad { get; set; } = "UN";
+    public bool EsContractual { get; set; } = true;
     public decimal CantidadBase { get; set; }
+    public decimal CantidadAdicional { get; set; }
     public decimal CantidadNueva { get; set; }
+    public decimal PrecioUnitarioContratoClp { get; set; }
+    public decimal PrecioUnitarioContratoUf { get; set; }
+    public decimal SubtotalClp { get; set; }
+    public decimal SubtotalUf { get; set; }
     public decimal CostoBaseUf { get; set; }
     public decimal CostoNuevoUf { get; set; }
     public decimal DeltaCostoUf { get; set; }
     public string Nota { get; set; } = "";
+    public List<CubicacionRow> Materiales { get; set; } = new();
 }
 
 public sealed class ChangeOrderRow

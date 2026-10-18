@@ -19,6 +19,9 @@ public static class MaterialMoResolver
     /// <summary>Valor de MaterialRow.MoFormulaTipo que activa la fórmula Material × % × FA. Vacío = M.O. fija.</summary>
     public const string MoFormulaPorcentaje = "Porcentaje";
 
+    /// <summary>Valor de MaterialRow.MoFormulaTipo que activa la fórmula BaseMo × FA. Paridad con columna F de LISTA-PR.</summary>
+    public const string MoFormulaFactor = "Factor";
+
     /// <summary>
     /// FA sin calibrar. El 62,80 del Excel no era un valor de la app: era el número que el estimador
     /// escribía para SU proyecto hasta que la M.O. del itemizado cuadraba con el plan de obra. Por eso
@@ -27,9 +30,7 @@ public static class MaterialMoResolver
     public const decimal IndiceMoFaDefault = 0m;
 
     /// <summary>
-    /// Valor heredado que todas las versiones anteriores guardaban en cada proyecto (.qce) por ser el
-    /// default de <see cref="ProjectInfoRow.IndiceMoFa"/>. Al cargar se trata como "sin calibrar":
-    /// no era una decisión del usuario, era la planilla genérica.
+    /// Valor de referencia de la planilla original (COSTOS!E192 = 62,80).
     /// </summary>
     public const decimal IndiceMoFaHeredado = 62.80m;
 
@@ -54,6 +55,20 @@ public static class MaterialMoResolver
         return material.MoPorcentajeMaterial > 0m;
     }
 
+    /// <summary>True si el material está en fórmula "Factor" (M.O. = BaseMo × FA, paridad LISTA-PR).</summary>
+    public static bool DebeUsarFactor(MaterialRow? material)
+    {
+        if (material == null) return false;
+        return string.Equals(material.MoFormulaTipo, MoFormulaFactor, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>Base de M.O. para la fórmula Factor: MoFactorBase o respaldo de MoClp.</summary>
+    public static decimal BaseMoFactor(MaterialRow? material)
+    {
+        if (material == null) return 0m;
+        return material.MoFactorBase > 0m ? material.MoFactorBase : material.MoClp;
+    }
+
     /// <summary>
     /// FA vigente del proyecto. 0 = sin calibrar: la M.O. por % se calcula con factor neutro
     /// (Material × %) hasta que el índice se derive del plan de obra (ver
@@ -63,11 +78,10 @@ public static class MaterialMoResolver
         project != null && project.IndiceMoFa > 0m ? project.IndiceMoFa : IndiceMoFaDefault;
 
     /// <summary>
-    /// Normaliza el índice leído de un .qce: el 62,80 heredado entra como 0 (sin calibrar) porque era
-    /// el default de la app, no una calibración del proyecto. Negativos se aplanan a 0.
+    /// Normaliza el índice leído de un .qce: valores negativos se aplanan a 0.
+    /// Preserva valores calibrados como 62,80.
     /// </summary>
-    public static decimal NormalizarFaGuardado(decimal indiceGuardado) =>
-        indiceGuardado == IndiceMoFaHeredado ? IndiceMoFaDefault : Math.Max(0m, indiceGuardado);
+    public static decimal NormalizarFaGuardado(decimal indiceGuardado) => Math.Max(0m, indiceGuardado);
 
     /// <summary>
     /// M.O. por fórmula de porcentaje: Material × % × FA. Expuesto aparte para que las pantallas
@@ -88,9 +102,21 @@ public static class MaterialMoResolver
     }
 
     /// <summary>
+    /// M.O. por fórmula de factor base: BaseMo × FA.
+    /// Paridad con `=ROUND(VLOOKUP(...) * FA, 0)` de la hoja DETALLE.
+    /// </summary>
+    public static decimal MoClpPorFactor(decimal baseMo, decimal indiceMoFa)
+    {
+        if (baseMo <= 0m)
+            return 0m;
+        decimal fa = indiceMoFa > 0m ? indiceMoFa : 1m;
+        return Math.Round(baseMo * fa, 2, MidpointRounding.AwayFromZero);
+    }
+
+    /// <summary>
     /// M.O. efectiva en CLP por unidad: por rendimiento si el modo lo permite; si no, por
-    /// fórmula de porcentaje (Material × % × FA) si el material la tiene activa; si no,
-    /// el M.O. directo del catálogo.
+    /// fórmula de porcentaje (Material × % × FA) si el material la tiene activa; si no, por
+    /// fórmula de factor (BaseMo × FA); si no, el M.O. directo del catálogo.
     /// </summary>
     public static decimal MoClpEfectiva(MaterialRow? material, ProjectInfoRow? project)
     {
@@ -99,6 +125,8 @@ public static class MaterialMoResolver
             return Math.Round(project!.TarifaDhClp / material.RendimientoDh, 2, MidpointRounding.AwayFromZero);
         if (DebeUsarPorcentaje(material))
             return MoClpPorPorcentaje(material.MatClp, material.MoPorcentajeMaterial, IndiceFa(project));
+        if (DebeUsarFactor(material))
+            return MoClpPorFactor(BaseMoFactor(material), IndiceFa(project));
         return material.MoClp;
     }
 

@@ -235,4 +235,44 @@ public sealed class ProjectWorkspaceServiceRoundtripTests
             }
         }
     }
+
+    [Fact]
+    public async Task SaveAsAsync_ConcurrentCalls_AreSerializedWithoutError()
+    {
+        var services = AppServices.CreateDefault();
+        var session = new BudgetProjectSession();
+        session.NewProject("concurrent-save");
+        session.ProjectInfo.Nombre = "Proyecto Concurrente";
+        session.MarkDirty("test");
+
+        var workspace = new ProjectWorkspaceService(session, services.ProjectRepository, services.Validation);
+        string path = Path.Combine(Path.GetTempPath(), $"qce-concurrent-{Guid.NewGuid():N}.qce");
+
+        try
+        {
+            // Launch multiple SaveAsAsync concurrently
+            var t1 = workspace.SaveAsAsync(path);
+            var t2 = workspace.SaveAsAsync(path);
+            var t3 = workspace.SaveAsAsync(path);
+
+            await Task.WhenAll(t1, t2, t3);
+
+            Assert.True(File.Exists(path));
+            var session2 = new BudgetProjectSession();
+            var workspace2 = new ProjectWorkspaceService(session2, services.ProjectRepository, services.Validation);
+            await workspace2.OpenAsync(path);
+            Assert.Equal("Proyecto Concurrente", session2.ProjectInfo.Nombre);
+        }
+        finally
+        {
+            try
+            {
+                if (File.Exists(path))
+                    File.Delete(path);
+            }
+            catch (Exception)
+            {
+            }
+        }
+    }
 }
