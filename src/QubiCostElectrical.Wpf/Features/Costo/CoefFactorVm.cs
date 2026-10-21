@@ -216,6 +216,7 @@ public sealed class CoefFactorVm : ViewModelBase
             var incoming = value ?? "";
             if (!TryParseDecimal(incoming, out var v) || incoming.TrimEnd().EndsWith(',') || incoming.TrimEnd().EndsWith('.'))
             {
+                valueText = incoming;
                 if (!SuspendPush)
                     OnPropertyChanged(nameof(ValueText));
                 return;

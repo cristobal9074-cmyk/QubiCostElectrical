@@ -562,6 +562,7 @@ public partial class CostoView : UserControl
         if (nextRow < 0 || nextRow >= rows.Count)
             return;
 
+        CommitCoefBox(from);
         var target = nextCol == 0 ? rows[nextRow].Mult : rows[nextRow].Disc;
         if (!target.IsEnabled || ReferenceEquals(target, from))
             return;
