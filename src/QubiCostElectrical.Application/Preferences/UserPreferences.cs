@@ -78,6 +78,15 @@ public sealed class UserPreferences
     /// <summary>Porcentaje predeterminado de Utilidad para nuevos proyectos (defecto 18,0%).</summary>
     public decimal DefaultUtilidadPct { get; set; } = 18m;
 
+    /// <summary>Porcentaje predeterminado de Mermas sobre materiales para nuevos proyectos (defecto 0,0%).</summary>
+    public decimal DefaultMermasPct { get; set; } = 0m;
+
+    /// <summary>Porcentaje predeterminado de Herramientas sobre mano de obra para nuevos proyectos (defecto 0,0%).</summary>
+    public decimal DefaultHerramientasPct { get; set; } = 0m;
+
+    /// <summary>Moneda predeterminada para nuevos proyectos ("CLP", "UF", "USD", "EUR"). Defecto CLP.</summary>
+    public string DefaultMoneda { get; set; } = "CLP";
+
     /// <summary>
     /// Default del modo automático del índice de M.O. (FA): desactivado por defecto para mantener
     /// el FA y los precios fijos al eliminar o modificar materiales (paridad con Excel).

@@ -1,4 +1,4 @@
-<UserControl x:Class="QubiCostElectrical.Wpf.Features.Preferences.PreferencesView"
+﻿<UserControl x:Class="QubiCostElectrical.Wpf.Features.Preferences.PreferencesView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ctrl="clr-namespace:QubiCostElectrical.Wpf.Controls"
@@ -350,30 +350,60 @@
                        Style="{StaticResource Text.Caption}" FontWeight="Bold" Foreground="{DynamicResource Brush.Amber}" Margin="0,6,0,0" TextWrapping="Wrap" />
           </StackPanel>
 
-          <!-- Márgenes comerciales predeterminados para proyectos -->
+          <!-- Parámetros y márgenes predeterminados para proyectos -->
           <StackPanel Margin="0,20,0,0">
-            <TextBlock Text="MÁRGENES COMERCIALES PREDETERMINADOS PARA PROYECTOS" Style="{StaticResource Text.SectionLabel}" Margin="0,0,0,4"/>
-            <TextBlock Text="Porcentajes predeterminados que se aplicarán automáticamente como recomendación a cada nuevo proyecto."
+            <TextBlock Text="PARÁMETROS Y MÁRGENES PREDETERMINADOS PARA NUEVOS PROYECTOS" Style="{StaticResource Text.SectionLabel}" Margin="0,0,0,4"/>
+            <TextBlock Text="Valores corporativos por defecto que precargarán automáticamente cada nuevo presupuesto creado (pueden ajustarse luego en cada proyecto)."
                        Style="{StaticResource Text.Caption}" Margin="0,0,0,10" TextWrapping="Wrap"/>
-            <Grid>
+            <Grid Margin="0,0,0,10">
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="16" />
                 <ColumnDefinition Width="*" />
               </Grid.ColumnDefinitions>
               <StackPanel Grid.Column="0">
-                <TextBlock Text="Gastos generales predeterminados" Style="{StaticResource Form.Label}" Margin="0,0,0,4"/>
+                <TextBlock Text="Gastos Generales predeterminados (GG)" Style="{StaticResource Form.Label}" Margin="0,0,0,4"/>
                 <TextBox Text="{Binding DefaultGastosGeneralesPctText, UpdateSourceTrigger=PropertyChanged}"
                          Style="{StaticResource Form.TextBox}" Height="36"
                          ds:FieldAdornment.Suffix="%"
                          ToolTip="Porcentaje de GG inicial para cada nuevo proyecto (ej. 14,0)."/>
               </StackPanel>
               <StackPanel Grid.Column="2">
-                <TextBlock Text="Utilidad predeterminada" Style="{StaticResource Form.Label}" Margin="0,0,0,4"/>
+                <TextBlock Text="Margen de Utilidad predeterminado" Style="{StaticResource Form.Label}" Margin="0,0,0,4"/>
                 <TextBox Text="{Binding DefaultUtilidadPctText, UpdateSourceTrigger=PropertyChanged}"
                          Style="{StaticResource Form.TextBox}" Height="36"
                          ds:FieldAdornment.Suffix="%"
                          ToolTip="Porcentaje de Utilidad inicial para cada nuevo proyecto (ej. 18,0)."/>
+              </StackPanel>
+            </Grid>
+
+            <Grid Margin="0,0,0,10">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+              <StackPanel Grid.Column="0">
+                <TextBlock Text="Mermas globales (%)" Style="{StaticResource Form.Label}" Margin="0,0,0,4"/>
+                <TextBox Text="{Binding DefaultMermasPctText, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource Form.TextBox}" Height="36"
+                         ds:FieldAdornment.Suffix="%"
+                         ToolTip="Porcentaje de merma sobre materiales inicial para nuevos proyectos."/>
+              </StackPanel>
+              <StackPanel Grid.Column="2">
+                <TextBlock Text="Herramientas (%)" Style="{StaticResource Form.Label}" Margin="0,0,0,4"/>
+                <TextBox Text="{Binding DefaultHerramientasPctText, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource Form.TextBox}" Height="36"
+                         ds:FieldAdornment.Suffix="%"
+                         ToolTip="Porcentaje de herramientas menores sobre mano de obra para nuevos proyectos."/>
+              </StackPanel>
+              <StackPanel Grid.Column="4">
+                <TextBlock Text="Moneda preferida" Style="{StaticResource Form.Label}" Margin="0,0,0,4"/>
+                <ComboBox ItemsSource="{Binding AvailableCurrencies}" SelectedItem="{Binding DefaultMoneda, UpdateSourceTrigger=PropertyChanged}"
+                          Style="{StaticResource Form.ComboBox}" Height="36"
+                          ToolTip="Moneda inicial por defecto al crear nuevos presupuestos."/>
               </StackPanel>
             </Grid>
           </StackPanel>

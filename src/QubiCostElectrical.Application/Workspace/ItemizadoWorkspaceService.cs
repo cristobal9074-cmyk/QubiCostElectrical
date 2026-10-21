@@ -300,7 +300,8 @@ public sealed class ItemizadoWorkspaceService : IItemizadoWorkspaceService
             decimal targetAmount = cost.TotalVentaNetoUf > 0m ? cost.TotalVentaNetoUf : cost.TotalVentaUf;
             var itemizadoMap = (session.Itemizado ?? new List<ItemizadoRow>())
                 .Where(x => !x.EsTitulo)
-                .ToDictionary(x => x.Item, x => x.Id, StringComparer.OrdinalIgnoreCase);
+                .GroupBy(x => x.Item, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(g => g.Key, g => g.First().Id, StringComparer.OrdinalIgnoreCase);
             var offerRows = OfferClienteRowBuilder.Build(session.Itemizado, cost, targetAmount, session.ProjectInfo?.Nombre ?? "Proyecto");
             var dict = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
             foreach (var r in offerRows)

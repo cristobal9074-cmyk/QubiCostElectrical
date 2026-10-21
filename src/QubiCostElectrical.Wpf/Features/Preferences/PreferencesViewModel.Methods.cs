@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -142,6 +142,20 @@ public sealed partial class PreferencesViewModel
     partial void OnAutosaveEnabledChanged(bool value) => HasPendingChanges = true;
     partial void OnDefaultGastosGeneralesPctTextChanged(string value) => HasPendingChanges = true;
     partial void OnDefaultUtilidadPctTextChanged(string value) => HasPendingChanges = true;
+    [ObservableProperty]
+    private string _defaultMermasPctText = "0,0";
+
+    [ObservableProperty]
+    private string _defaultHerramientasPctText = "0,0";
+
+    [ObservableProperty]
+    private string _defaultMoneda = "CLP";
+
+    public IReadOnlyList<string> AvailableCurrencies { get; } = ["CLP", "UF", "USD", "EUR"];
+
+    partial void OnDefaultMermasPctTextChanged(string value) => HasPendingChanges = true;
+    partial void OnDefaultHerramientasPctTextChanged(string value) => HasPendingChanges = true;
+    partial void OnDefaultMonedaChanged(string value) => HasPendingChanges = true;
 
     partial void OnIsDarkModeChanged(bool oldValue, bool newValue)
     {
@@ -387,7 +401,7 @@ public sealed partial class PreferencesViewModel
                 "Márgenes comerciales predeterminados",
                 $"Se guardaron los márgenes predeterminados:\n• Gastos Generales: {_saved.DefaultGastosGeneralesPct:N1}%\n• Utilidad: {_saved.DefaultUtilidadPct:N1}%\n\n¿Deseas aplicar estos nuevos porcentajes al proyecto abierto actualmente?"))
             {
-                Session.ApplyCommercialMargins(_saved.DefaultGastosGeneralesPct, _saved.DefaultUtilidadPct);
+                Session.ApplyCommercialMargins(_saved.DefaultGastosGeneralesPct, _saved.DefaultUtilidadPct, _saved.DefaultMermasPct, _saved.DefaultHerramientasPct);
             }
         }
     }
@@ -465,6 +479,10 @@ public sealed partial class PreferencesViewModel
             return "Gastos Generales predeterminados debe ser un porcentaje entre 0 y 100.";
         if (!TryParsePct(DefaultUtilidadPctText, out var ut) || ut < 0m || ut > 100m)
             return "Utilidad predeterminada debe ser un porcentaje entre 0 y 100.";
+        if (!TryParsePct(DefaultMermasPctText, out var mm) || mm < 0m || mm > 100m)
+            return "Mermas predeterminadas debe ser un porcentaje entre 0 y 100.";
+        if (!TryParsePct(DefaultHerramientasPctText, out var hr) || hr < 0m || hr > 100m)
+            return "Herramientas predeterminadas debe ser un porcentaje entre 0 y 100.";
         return null;
     }
 
@@ -500,6 +518,11 @@ public sealed partial class PreferencesViewModel
             _saved.DefaultGastosGeneralesPct = gg;
         if (TryParsePct(DefaultUtilidadPctText, out var ut))
             _saved.DefaultUtilidadPct = ut;
+        if (TryParsePct(DefaultMermasPctText, out var mm))
+            _saved.DefaultMermasPct = mm;
+        if (TryParsePct(DefaultHerramientasPctText, out var hr))
+            _saved.DefaultHerramientasPct = hr;
+        _saved.DefaultMoneda = string.IsNullOrWhiteSpace(DefaultMoneda) ? "CLP" : DefaultMoneda.Trim().ToUpperInvariant();
         _saved.PinSecurity = new PinSecurityPolicy
         {
             MinLength = PinMinLength,
@@ -535,6 +558,9 @@ public sealed partial class PreferencesViewModel
         AutosaveEnabled = _draft.AutosaveEnabled;
         DefaultGastosGeneralesPctText = _draft.DefaultGastosGeneralesPct.ToString("N1", CultureInfo.CurrentCulture);
         DefaultUtilidadPctText = _draft.DefaultUtilidadPct.ToString("N1", CultureInfo.CurrentCulture);
+        DefaultMermasPctText = _draft.DefaultMermasPct.ToString("N1", CultureInfo.CurrentCulture);
+        DefaultHerramientasPctText = _draft.DefaultHerramientasPct.ToString("N1", CultureInfo.CurrentCulture);
+        DefaultMoneda = string.IsNullOrWhiteSpace(_draft.DefaultMoneda) ? "CLP" : _draft.DefaultMoneda.Trim().ToUpperInvariant();
         PinMinLength = _draft.PinSecurity?.MinLength ?? 4;
         PinMaxLength = _draft.PinSecurity?.MaxLength ?? 6;
         PinBlockSequences = _draft.PinSecurity?.BlockSequences ?? true;
@@ -568,6 +594,9 @@ public sealed partial class PreferencesViewModel
         AutosaveEnabled = src.AutosaveEnabled,
         DefaultGastosGeneralesPct = src.DefaultGastosGeneralesPct,
         DefaultUtilidadPct = src.DefaultUtilidadPct,
+        DefaultMermasPct = src.DefaultMermasPct,
+        DefaultHerramientasPct = src.DefaultHerramientasPct,
+        DefaultMoneda = src.DefaultMoneda,
         ExperimentalFeaturesEnabled = src.ExperimentalFeaturesEnabled,
         RecentFiles = new List<string>(src.RecentFiles),
         PriceFeedUrls = new List<string>(src.PriceFeedUrls),

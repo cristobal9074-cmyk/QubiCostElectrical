@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Threading.Tasks;
 using QubiCostElectrical;
@@ -106,7 +106,7 @@ internal sealed class ShellProjectLifecycle
         budgetCalculation.ResetIncrementalCache();
         clearPageCache();
         var prefs = preferencesStore.Load();
-        session.NewProject(Environment.UserName, defaultGastosGeneralesPct: prefs.DefaultGastosGeneralesPct, defaultUtilidadPct: prefs.DefaultUtilidadPct);
+        session.NewProject(Environment.UserName, defaultGastosGeneralesPct: prefs.DefaultGastosGeneralesPct, defaultUtilidadPct: prefs.DefaultUtilidadPct, defaultMermasPct: prefs.DefaultMermasPct, defaultHerramientasPct: prefs.DefaultHerramientasPct, defaultMoneda: prefs.DefaultMoneda);
         projectEdit.Discard();
         documents.DiscardChanges();
         RoleSessionSync.Apply(session, permissions.CurrentRole);

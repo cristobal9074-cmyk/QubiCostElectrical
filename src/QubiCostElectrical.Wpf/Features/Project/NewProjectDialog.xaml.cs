@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Globalization;
 using System.IO;
@@ -127,6 +127,24 @@ public sealed partial class NewProjectDialog : Window, INotifyPropertyChanged
 
         var docs = System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments);
         FolderBox.Text = Path.Combine(docs, "Presupuestos Electricos");
+        var prefs = UserPreferencesStore.Load();
+        if (!string.IsNullOrWhiteSpace(prefs.DefaultProjectFolder) && Directory.Exists(prefs.DefaultProjectFolder))
+        {
+            FolderBox.Text = prefs.DefaultProjectFolder;
+        }
+
+        if (!string.IsNullOrWhiteSpace(prefs.DefaultMoneda))
+        {
+            for (int i = 0; i < CurrencyBox.Items.Count; i++)
+            {
+                if (CurrencyBox.Items[i] is System.Windows.Controls.ComboBoxItem cbi &&
+                    string.Equals(cbi.Content?.ToString(), prefs.DefaultMoneda, StringComparison.OrdinalIgnoreCase))
+                {
+                    CurrencyBox.SelectedIndex = i;
+                    break;
+                }
+            }
+        }
         try
         {
             Directory.CreateDirectory(FolderBox.Text);

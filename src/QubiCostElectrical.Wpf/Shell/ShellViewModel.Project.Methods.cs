@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -69,7 +69,7 @@ partial class ShellViewModel
 
                 projectLifecycle.PrepareWorkspaceForNewOrOpen();
                 var prefs = host.UserPreferencesStore.Load();
-                session.NewProject(userName, userRole, prefs.DefaultGastosGeneralesPct, prefs.DefaultUtilidadPct);
+                session.NewProject(userName, userRole, prefs.DefaultGastosGeneralesPct, prefs.DefaultUtilidadPct, prefs.DefaultMermasPct, prefs.DefaultHerramientasPct, prefs.DefaultMoneda);
                 session.InitializeProjectParameters(
                     dialog.ProjectName,
                     dialog.Client,

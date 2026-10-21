@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Globalization;
@@ -460,6 +460,8 @@ public sealed partial class ProjectViewModel : ViewModelBase, IPageWithPendingCh
         var prefs = preferencesStore.Load();
         snapshot.GastosGeneralesPct = prefs.DefaultGastosGeneralesPct;
         snapshot.UtilidadPct = prefs.DefaultUtilidadPct;
+        if (prefs.DefaultMermasPct >= 0m) session.ProjectInfo.MermasPct = prefs.DefaultMermasPct;
+        if (prefs.DefaultHerramientasPct >= 0m) session.ProjectInfo.HerramientasPct = prefs.DefaultHerramientasPct;
         OnPropertyChanged(nameof(GastosGeneralesText));
         OnPropertyChanged(nameof(UtilidadText));
         OnPropertyChanged(nameof(GastosGeneralesKpi));

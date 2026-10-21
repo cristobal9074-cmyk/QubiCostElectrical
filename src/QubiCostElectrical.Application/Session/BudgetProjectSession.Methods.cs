@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
@@ -216,7 +216,14 @@ public sealed partial class BudgetProjectSession
         data.Apus.Clear();
     }
 
-    public void NewProject(string userName, string userRole = "Usuario", decimal? defaultGastosGeneralesPct = null, decimal? defaultUtilidadPct = null)
+    public void NewProject(
+        string userName,
+        string userRole = "Usuario",
+        decimal? defaultGastosGeneralesPct = null,
+        decimal? defaultUtilidadPct = null,
+        decimal? defaultMermasPct = null,
+        decimal? defaultHerramientasPct = null,
+        string? defaultMoneda = null)
     {
         EnsureWritable("crear un nuevo proyecto");
         data = new ProjectFileData
@@ -230,10 +237,12 @@ public sealed partial class BudgetProjectSession
                 UsuarioRol = string.IsNullOrWhiteSpace(userRole) ? "Usuario" : userRole,
                 FechaCreacion = AppClock.Now,
                 FechaModificacion = AppClock.Now,
-                MonedaPresupuesto = "CLP",
+                MonedaPresupuesto = string.IsNullOrWhiteSpace(defaultMoneda) ? "CLP" : defaultMoneda.Trim().ToUpperInvariant(),
                 EstadoPresupuesto = "Borrador",
                 GastosGeneralesPct = defaultGastosGeneralesPct.HasValue && defaultGastosGeneralesPct.Value >= 0m ? defaultGastosGeneralesPct.Value : 14m,
                 UtilidadPct = defaultUtilidadPct.HasValue && defaultUtilidadPct.Value >= 0m ? defaultUtilidadPct.Value : 18m,
+                MermasPct = defaultMermasPct.HasValue && defaultMermasPct.Value >= 0m ? defaultMermasPct.Value : 0m,
+                HerramientasPct = defaultHerramientasPct.HasValue && defaultHerramientasPct.Value >= 0m ? defaultHerramientasPct.Value : 0m,
                 FerreteriaActiva = true,
                 FerreteriaPct = 5m,
                 IvaPct = 19m,
@@ -255,11 +264,13 @@ public sealed partial class BudgetProjectSession
         PublishChanged("reset", "Nuevo proyecto");
     }
 
-    public void ApplyCommercialMargins(decimal gastosGeneralesPct, decimal utilidadPct)
+    public void ApplyCommercialMargins(decimal gastosGeneralesPct, decimal utilidadPct, decimal? mermasPct = null, decimal? herramientasPct = null)
     {
         EnsureWritable("actualizar márgenes comerciales");
         data.Proyecto.GastosGeneralesPct = Math.Max(0m, gastosGeneralesPct);
         data.Proyecto.UtilidadPct = Math.Max(0m, utilidadPct);
+        if (mermasPct.HasValue && mermasPct.Value >= 0m) data.Proyecto.MermasPct = mermasPct.Value;
+        if (herramientasPct.HasValue && herramientasPct.Value >= 0m) data.Proyecto.HerramientasPct = herramientasPct.Value;
         MarkDirty(ProjectDirtyScope.ProjectInfo);
         SyncCubicacionGgUtFactorsFromVariablesInternal();
         PublishChanged("margins", "Actualización de márgenes comerciales");
