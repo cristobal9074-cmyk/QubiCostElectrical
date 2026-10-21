@@ -340,7 +340,7 @@ public sealed partial class EstadosPagoViewModel
             ? "Modo edición: escribe el % de avance de cada partida del mes (Enter/Tab/↓ avanzan de fila, ↑ retrocede; el valor se confirma al salir de la celda). Acumulado, retención, anticipo e IVA se recalculan en vivo."
             : "Estado cerrado: los % de avance quedan registrados y alimentan el acumulado de los meses siguientes.";
 
-        var porId = detalle.Filas.ToDictionary(f => f.ItemId, StringComparer.OrdinalIgnoreCase);
+        var porId = detalle.Filas.GroupBy(f => f.ItemId, StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
         foreach (var tpl in seccionesTemplate)
         {
             var filas = new List<EstadoPagoPartidaVm>(tpl.Partidas.Count);

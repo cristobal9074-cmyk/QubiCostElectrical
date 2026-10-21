@@ -155,7 +155,7 @@ public sealed class FamilyBatchReplaceService : IFamilyBatchReplaceService
             decimal valorUf = session.ProjectInfo?.ValorUfClp ?? PriceConversion.DefaultValorUfClp;
             if (valorUf <= 0m) valorUf = PriceConversion.DefaultValorUfClp;
 
-            var itemizadoDict = session.Itemizado.ToDictionary(i => i.Id, StringComparer.OrdinalIgnoreCase);
+            var itemizadoDict = session.Itemizado.GroupBy(i => i.Id, StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
 
             foreach (var apu in session.Apus)
             {
@@ -346,7 +346,7 @@ public sealed class FamilyBatchReplaceService : IFamilyBatchReplaceService
         {
             decimal valorUf = session.ProjectInfo?.ValorUfClp ?? PriceConversion.DefaultValorUfClp;
             if (valorUf <= 0m) valorUf = PriceConversion.DefaultValorUfClp;
-            var itemizadoDict = session.Itemizado.ToDictionary(i => i.Id, StringComparer.OrdinalIgnoreCase);
+            var itemizadoDict = session.Itemizado.GroupBy(i => i.Id, StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
 
             foreach (var apu in session.Apus)
             {
@@ -453,7 +453,7 @@ public sealed class FamilyBatchReplaceService : IFamilyBatchReplaceService
         // 2. Reemplazo en APUs
         if (replaceApu)
         {
-            var itemizadoDict = session.Itemizado.ToDictionary(i => i.Id, StringComparer.OrdinalIgnoreCase);
+            var itemizadoDict = session.Itemizado.GroupBy(i => i.Id, StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
 
             foreach (var apu in session.Apus)
             {

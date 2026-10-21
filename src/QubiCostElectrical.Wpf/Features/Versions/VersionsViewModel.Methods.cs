@@ -950,7 +950,8 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
             // 2. Aplicar cantidades a session.Itemizado
             var itemByCode = session.Itemizado
                 .Where(x => !string.IsNullOrWhiteSpace(x.Item))
-                .ToDictionary(x => x.Item.Trim(), x => x, StringComparer.OrdinalIgnoreCase);
+                .GroupBy(x => x.Item.Trim(), StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
 
             var itemByDesc = new Dictionary<string, ItemizadoRow>(StringComparer.OrdinalIgnoreCase);
             foreach (var it in session.Itemizado)

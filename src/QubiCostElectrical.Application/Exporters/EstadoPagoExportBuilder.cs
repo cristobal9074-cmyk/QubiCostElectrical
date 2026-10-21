@@ -65,7 +65,7 @@ public static class EstadoPagoExportBuilder
         IReadOnlyList<EstadoPagoExportSeccionInput> secciones,
         IReadOnlyList<EstadoPagoPartidaCalc> filas)
     {
-        var porId = filas.ToDictionary(f => f.ItemId, StringComparer.OrdinalIgnoreCase);
+        var porId = filas.GroupBy(f => f.ItemId, StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
         var resultado = new List<EstadoPagoExportSeccion>(secciones.Count);
 
         foreach (var sec in secciones)

@@ -116,7 +116,7 @@ public sealed class MaterialBatchReplaceService : IMaterialBatchReplaceService
             return Array.Empty<MaterialOccurrencePreview>();
 
         string cleanSource = sourceCodeOrDescription.Trim();
-        var partidasDict = session.Itemizado.ToDictionary(i => i.Id, StringComparer.OrdinalIgnoreCase);
+        var partidasDict = session.Itemizado.GroupBy(i => i.Id, StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
         var previews = new List<MaterialOccurrencePreview>();
 
         // 1. Analizar Cubicación
