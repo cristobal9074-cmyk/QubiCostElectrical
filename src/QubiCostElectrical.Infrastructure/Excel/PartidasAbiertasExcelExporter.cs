@@ -216,7 +216,7 @@ public sealed class PartidasAbiertasExcelExporter : IPartidasAbiertasExcelExport
             : (cost.CostoDirectoUf > 0m ? cost.CostoDirectoUf : cost.TotalVentaNetoUf);
 
         var offerRows = OfferClienteRowBuilder.Build(ctx.Itemizado, cost, targetAmount, ctx.ProjectTitle);
-        var offerRowByItem = offerRows.Where(r => !r.EsTitulo).ToDictionary(r => r.Item, r => r, StringComparer.OrdinalIgnoreCase);
+        var offerRowByItem = offerRows.Where(r => !r.EsTitulo && !string.IsNullOrWhiteSpace(r.Item)).GroupBy(r => r.Item, StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
 
         var cubByItemId = ctx.Cubicacion
             .Where(x => !string.IsNullOrWhiteSpace(x.ItemId) && (!string.IsNullOrWhiteSpace(x.Codigo) || x.Cantidad != 0m))

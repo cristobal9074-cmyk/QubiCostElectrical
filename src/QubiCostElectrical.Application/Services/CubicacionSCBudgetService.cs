@@ -80,7 +80,7 @@ public static class CubicacionSCBudgetService
 
         cubicacion.RemoveAll(c => c.ItemId == partida.Id);
 
-        var catalogoByDescripcion = materiales.ToDictionary(m => m.Descripcion, m => m, StringComparer.OrdinalIgnoreCase);
+        var catalogoByDescripcion = materiales.Where(m => !string.IsNullOrWhiteSpace(m.Descripcion)).GroupBy(m => m.Descripcion, StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
         var catalogoByCodigo = materiales
             .Where(m => !string.IsNullOrWhiteSpace(m.Codigo))
             .GroupBy(m => m.Codigo, StringComparer.OrdinalIgnoreCase)
