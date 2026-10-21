@@ -1,0 +1,99 @@
+using System;
+using System.Linq;
+using System.Windows;
+using System.Windows.Media;
+
+namespace QubiCostElectrical.Wpf.Features.Dashboard;
+
+public sealed partial class DashboardViewModel
+{
+    /// <summary>
+    /// Cuadrado de estado del veredicto. Es un indicador de texto con color (no sólo color),
+    /// para que el estado se lea también sin distinguir el matiz.
+    /// </summary>
+    public Brush VerdictSquareBrush => IsVerdictOk
+        ? DashboardKpiBrushes.Green
+        : IsVerdictWarn
+            ? DashboardKpiBrushes.AmberRisk
+            : IsVerdictBad
+                ? DashboardKpiBrushes.DangerDark
+                : DashboardKpiBrushes.Muted;
+
+    /// <summary>Avance del medidor de preparación (columna llena).</summary>
+    public GridLength StatusMeterFill => new(Math.Max(0.001, OfferReadinessRingPercent), GridUnitType.Star);
+
+    /// <summary>Avance del medidor de preparación (columna restante).</summary>
+    public GridLength StatusMeterRemain => new(Math.Max(0.001, 100 - OfferReadinessRingPercent), GridUnitType.Star);
+
+    /// <summary>Porcentaje de preparación, en texto.</summary>
+    public string StatusMeterPercentLabel => $"{OfferReadinessRingPercent:N0}%";
+    /// <summary>
+    /// Arma el panel de cifras clave y la composición del precio. Ambos salen de los mismos
+    /// totales que usa el cierre: no hay una segunda cuenta, sólo otra lectura de la misma.
+    /// </summary>
+    private void BuildKeyFigures(
+        DashboardPageState state,
+        ProjectInfoRow project,
+        decimal valorUf,
+        decimal totalVentaClp,
+        decimal totalVentaUf,
+        bool enClpResumen,
+        Func<decimal, string> formatMoney,
+        Func<decimal, string> formatAxisMoney)
+    {
+        _ = valorUf;
+        _ = formatAxisMoney;
+
+        KeyFigures.Clear();
+        string riesgoLabel = state.Executive.Kpis
+            .FirstOrDefault(k => string.Equals(k.Title, "RIESGO OFERTA", StringComparison.OrdinalIgnoreCase))?.TextValue ?? "";
+        if (string.IsNullOrWhiteSpace(riesgoLabel)) riesgoLabel = "Sin evaluar";
+
+        string totalDeltaText = HasVersionComparison ? VersionDeltaCaption : "";
+        string totalDeltaKind = !HasVersionComparison
+            ? ""
+            : totalDeltaText.StartsWith("-", StringComparison.Ordinal) ? "neg" : "up";
+
+        string totalCaption = string.Join(" · ", new[]
+        {
+            $"{totalVentaUf:N1} UF",
+            CostUfM2,
+            project.MetrosCuadrados > 0 ? $"{project.MetrosCuadrados:N0} m²" : ""
+        }.Where(part => !string.IsNullOrWhiteSpace(part)));
+
+        double margenPct = (double)state.Cost.MargenRealPct;
+        string concentracionCaption = ParetoSummary.CountA > 0
+            ? $"{ParetoSummary.CountA} partidas cubren el 80% del costo directo"
+            : "Aún sin partidas críticas Tipo A";
+
+        foreach (var figure in DashboardKeyFiguresComposer.Build(new DashboardKeyFiguresInput(
+            formatMoney(totalVentaClp),
+            totalDeltaText,
+            totalDeltaKind,
+            totalCaption,
+            MargenRealPctLabel,
+            $"{CostMargin} sobre la venta neta",
+            margenPct >= 10d,
+            $"{Readiness.Listas:N0} / {Readiness.TotalPartidas:N0}",
+            Readiness.Pendientes,
+            PartidasReadyPercent,
+            riesgoLabel,
+            MaterialImpact10PctLabel,
+            "Escenario: +10% en precios de materiales",
+            ParetoSummary.PctA,
+            ParetoSummary.CountA,
+            concentracionCaption)))
+        {
+            KeyFigures.Add(figure);
+        }
+
+        // Composición del precio: el mismo reparto que usa el cierre, en donut.
+        double directosPct = CostShares.Count >= 2
+            ? CostShares[0].PercentageValue + CostShares[1].PercentageValue
+            : 0;
+        Composition = DashboardCompositionComposer.Build(
+            CostShares,
+            enClpResumen ? DashboardMoneyShort.Format(totalVentaClp) : DashboardMoneyShort.FormatUf(totalVentaUf),
+            $"El {directosPct:N0}% del total son materiales y mano de obra directos.");
+    }
+}

@@ -70,11 +70,12 @@ internal sealed class CubicacionAutocompleteService
         autocompleteCts = new CancellationTokenSource();
         var ct = autocompleteCts.Token;
 
-        if (string.IsNullOrWhiteSpace(query) || query.Length < 2)
+        if (string.IsNullOrWhiteSpace(query))
         {
-            parent.AutocompleteQueryText = query ?? "";
+            parent.AutocompleteQueryText = "";
             parent.AutocompleteVisible = false;
-            parent.AutocompleteStatusText = "Escribe al menos 2 caracteres para ver sugerencias.";
+            parent.AutocompleteStatusText = "";
+            parent.AutocompleteResults = new ObservableCollection<AutocompleteSuggestionVm>();
             return;
         }
 
@@ -126,14 +127,26 @@ internal sealed class CubicacionAutocompleteService
 
             // Solo consultar el Banco de Precios si no existe ningún resultado en el proyecto/cubicación
             var results = new List<MaterialRow>(projectResults);
+            bool bankFailed = false;
             if (!ct.IsCancellationRequested && results.Count == 0)
             {
-                var bankMatches = await Task.Run(() => priceBankStore.Search(query), ct);
-                foreach (var entry in bankMatches)
+                try
                 {
-                    if (results.Count >= 15) break;
-                    if (results.Any(m => CodeHelper.Match(m.Codigo, entry.Codigo))) continue;
-                    results.Add(CubicacionViewModel.FromBankEntry(entry));
+                    var bankMatches = await Task.Run(() => priceBankStore.Search(query), ct);
+                    foreach (var entry in bankMatches)
+                    {
+                        if (results.Count >= 15) break;
+                        if (results.Any(m => CodeHelper.Match(m.Codigo, entry.Codigo))) continue;
+                        results.Add(CubicacionViewModel.FromBankEntry(entry));
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch
+                {
+                    bankFailed = true;
                 }
             }
 
@@ -169,13 +182,20 @@ internal sealed class CubicacionAutocompleteService
                 bool exactCodeMatch = sortedResults.Count == 1 &&
                     string.Equals(sortedResults[0].Codigo, trimmed, StringComparison.OrdinalIgnoreCase);
 
-                parent.AutocompleteStatusText = sortedResults.Count > 0
+                parent.AutocompleteStatusText = bankFailed
+                    ? "No se pudo consultar el banco de precios."
+                    : sortedResults.Count > 0
                     ? exactCodeMatch
                         ? "Coincidencia exacta · Enter aplica · Tab confirma y sigue"
                         : $"{sortedResults.Count:N0} sugerencia(s) · Enter aplica · Tab confirma y sigue"
                     : showCreate
                         ? "Sin coincidencias. Puedes crear un material nuevo con este código."
                         : "Sin coincidencias.";
+                if (bankFailed || sortedResults.Count == 0)
+                    ShellActivity.Report(parent.AutocompleteStatusText);
+                else if (ShellActivity.Text.StartsWith("Sin coincidencias", StringComparison.Ordinal)
+                    || ShellActivity.Text.StartsWith("No se pudo consultar", StringComparison.Ordinal))
+                    ShellActivity.Report("");
 
                 if (showCreate)
                     parent.QuickAddCodigoDraft = trimmed;

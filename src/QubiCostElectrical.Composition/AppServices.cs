@@ -53,8 +53,6 @@ public sealed class AppServices
     public IPriceBankStore PriceBankStore => _sp.GetRequiredService<IPriceBankStore>();
     public IUserPreferencesStore UserPreferencesStore => _sp.GetRequiredService<IUserPreferencesStore>();
 
-    public IApuCatalogRepository ApuCatalogRepository => _sp.GetRequiredService<IApuCatalogRepository>();
-    public IApuVersionRepository ApuVersionRepository => _sp.GetRequiredService<IApuVersionRepository>();
     public IApuTemplateStore ApuTemplateStore => _sp.GetRequiredService<IApuTemplateStore>();
     public IConjuntoTemplateStore ConjuntoTemplateStore => _sp.GetRequiredService<IConjuntoTemplateStore>();
     public IEconomicCalculationService EconomicCalculation => _sp.GetRequiredService<IEconomicCalculationService>();

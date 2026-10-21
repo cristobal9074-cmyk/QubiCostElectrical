@@ -53,6 +53,8 @@ public sealed class DashboardPartidaVm
     public string Item { get; init; } = "";
     public string Partida { get; init; } = "";
     public string TotalLabel { get; init; } = "";
+    /// <summary>Importe en la moneda del proyecto, sin el equivalente entre paréntesis.</summary>
+    public string TotalShortLabel { get; init; } = "";
     public string TotalClpLabel { get; init; } = "";
     public string TotalUfLabel { get; init; } = "";
     public double SharePct { get; init; }
@@ -89,16 +91,14 @@ public sealed class DashboardOfferReadinessItemVm
     public ICommand? NavigateCommand { get; init; }
 }
 
-public sealed class DashboardNavItemVm
-{
-    public string Label { get; init; } = "";
-    public string Detail { get; init; } = "";
-}
-
 internal static class DashboardKpiBrushes
 {
     public static Brush Blue => ThemeOrFallback("Brush.Blue", "#2563EB");
     public static Brush BlueDark => ThemeOrFallback("Brush.BlueDark", "#1D4ED8");
+    public static Brush Blue2 => ThemeOrFallback("Brush.Blue2", "#3B82F6");
+    public static Brush Cyan => ThemeOrFallback("Brush.Cyan", "#0891B2");
+    public static Brush Slate => ThemeOrFallback("Brush.Slate", "#64748B");
+    public static Brush Red => ThemeOrFallback("Brush.Red", "#C24141");
     public static Brush Amber => ThemeOrFallback("Brush.Amber", "#B45309");
     public static Brush DangerDark => ThemeOrFallback("Brush.DangerDark", "#B91C1C");
     public static Brush AmberRisk => ThemeOrFallback("Brush.AmberRisk", "#D97706");

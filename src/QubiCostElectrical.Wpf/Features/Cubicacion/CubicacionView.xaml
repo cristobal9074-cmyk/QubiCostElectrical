@@ -42,16 +42,8 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
-                <TextBlock Grid.Row="0" Text="UD"
-                           FontSize="7.5" FontWeight="Bold"
-                           Foreground="{DynamicResource Brush.Muted}"
-                           HorizontalAlignment="Center"
-                           Margin="0,0,0,1" />
-                <Border Grid.Row="1"
-                        CornerRadius="2"
-                        Height="15"
-                        VerticalAlignment="Center"
-                        ToolTip="Unidad de la partida (editable · Enter para guardar)">
+                <TextBlock Grid.Row="0" Text="UD" FontSize="7.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Center" Margin="0,0,0,1" />
+                <Border Grid.Row="1" CornerRadius="2" Height="15" VerticalAlignment="Center" ToolTip="Unidad de la partida, la misma del itemizado. No cambia la unidad de ningún material.">
                     <Border.Style>
                         <Style TargetType="Border">
                             <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
@@ -69,12 +61,9 @@
                              Text="{Binding DataContext.PartidaUnidadText, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=LostFocus}"
                              FontFamily="{StaticResource Font.Ui}" FontSize="10" FontWeight="Bold"
                              HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                             Padding="0" BorderThickness="0" Background="Transparent"
-                             Foreground="{DynamicResource Brush.Ink}"
-                             Loaded="OnUnidadHeaderBoxLoaded"
-                             GotFocus="OnUnidadHeaderBoxGotFocus" LostFocus="OnUnidadHeaderBoxLostFocus"
-                             PreviewKeyDown="OnUnidadHeaderBoxPreviewKeyDown"
-                             TextChanged="OnUnidadHeaderBoxTextChanged"
+                             Padding="0" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource Brush.Ink}"
+                             Loaded="OnUnidadHeaderBoxLoaded" GotFocus="OnUnidadHeaderBoxGotFocus" LostFocus="OnUnidadHeaderBoxLostFocus"
+                             PreviewKeyDown="OnUnidadHeaderBoxPreviewKeyDown" TextChanged="OnUnidadHeaderBoxTextChanged"
                              PreviewMouseLeftButtonDown="OnHeaderTextBoxPreviewMouseLeftButtonDown" />
                 </Border>
             </Grid>
@@ -87,16 +76,8 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
-                <TextBlock Grid.Row="0" Text="CANT"
-                           FontSize="7.5" FontWeight="Bold"
-                           Foreground="{DynamicResource Brush.Muted}"
-                           HorizontalAlignment="Center"
-                           Margin="0,0,0,1" />
-                <Border Grid.Row="1"
-                        CornerRadius="2"
-                        Height="15"
-                        VerticalAlignment="Center"
-                        ToolTip="{Binding DataContext.PartidaCantidadToolTip, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                <TextBlock Grid.Row="0" Text="CANT" FontSize="7.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Center" Margin="0,0,0,1" />
+                <Border Grid.Row="1" CornerRadius="2" Height="15" VerticalAlignment="Center" ToolTip="{Binding DataContext.PartidaCantidadToolTip, RelativeSource={RelativeSource AncestorType=UserControl}}">
                     <Border.Style>
                         <Style TargetType="Border">
                             <Setter Property="Background" Value="{DynamicResource Brush.SuccessBg}" />
@@ -114,12 +95,9 @@
                              Text="{Binding DataContext.PartidaCantidadText, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=LostFocus}"
                              FontFamily="{StaticResource Font.Mono}" FontSize="10" FontWeight="Bold"
                              HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                             Padding="0" BorderThickness="0" Background="Transparent"
-                             Foreground="{DynamicResource Brush.Success}"
-                             Loaded="OnCantHeaderBoxLoaded"
-                             GotFocus="OnCantHeaderBoxGotFocus" LostFocus="OnCantHeaderBoxLostFocus"
-                             PreviewKeyDown="OnCantHeaderBoxPreviewKeyDown"
-                             PreviewTextInput="OnCantHeaderBoxPreviewTextInput"
+                             Padding="0" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource Brush.Success}"
+                             Loaded="OnCantHeaderBoxLoaded" GotFocus="OnCantHeaderBoxGotFocus" LostFocus="OnCantHeaderBoxLostFocus"
+                             PreviewKeyDown="OnCantHeaderBoxPreviewKeyDown" PreviewTextInput="OnCantHeaderBoxPreviewTextInput"
                              PreviewMouseLeftButtonDown="OnHeaderTextBoxPreviewMouseLeftButtonDown" />
                 </Border>
             </Grid>
@@ -138,1166 +116,766 @@
 
         <Grid Background="{DynamicResource Brush.Canvas}"
               Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
-        <Grid.ColumnDefinitions>
-            <!-- Panel izquierdo -->
-            <ColumnDefinition x:Name="LeftColumn" Width="220" MinWidth="160" MaxWidth="360" />
-            <ColumnDefinition Width="18" />
-            <!-- Centro -->
-            <ColumnDefinition MinWidth="400" />
-        </Grid.ColumnDefinitions>
+            <Grid.ColumnDefinitions>
+                <!-- Panel izquierdo -->
+                <ColumnDefinition x:Name="LeftColumn" Width="220" MinWidth="160" MaxWidth="360" />
+                <ColumnDefinition Width="18" />
+                <!-- Centro -->
+                <ColumnDefinition MinWidth="400" />
+            </Grid.ColumnDefinitions>
 
-        <!-- ══════════════════════════════════════════════
-         PANEL IZQUIERDO — Lista de partidas
-         ══════════════════════════════════════════════ -->
-        <Border Grid.Column="0" Background="{DynamicResource Brush.Surface}"
-            BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,1,0"
-            PreviewKeyDown="OnPartidasPanelPreviewKeyDown">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
+            <!-- ══════════════════════════════════════════════
+             PANEL IZQUIERDO — Lista de partidas
+             ══════════════════════════════════════════════ -->
+            <Border Grid.Column="0" Background="{DynamicResource Brush.Surface}"
+                    BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,1,0"
+                    PreviewKeyDown="OnPartidasPanelPreviewKeyDown">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
 
-                <!-- Encabezado izquierdo -->
-                <Border Grid.Row="0" Style="{StaticResource Card.LeftPanelHeader}">
-                    <DockPanel LastChildFill="True">
-                        <TextBlock Text="PARTIDAS" Style="{StaticResource Text.PartidaPanelTitle}" VerticalAlignment="Center" />
-                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Button Style="{StaticResource Button.Ghost}"
-                                    Content="+" FontSize="14" FontWeight="Bold" Padding="6,1" Margin="0,0,2,0"
-                                    Command="{Binding AddPartidaCommand}"
-                                    ToolTip="Agregar nueva partida debajo de la seleccionada (Ctrl++)" />
-                            <Button Style="{StaticResource Button.Ghost}"
-                                    Content="−" FontSize="14" FontWeight="Bold" Padding="6,1" Margin="0,0,4,0"
-                                    Command="{Binding DeletePartidaCommand}"
-                                    ToolTip="Eliminar la partida activa (Ctrl+-)" />
-                            <Button Style="{StaticResource Button.Ghost}"
-                                    Content="Ir (Ctrl+G)" FontSize="10" Padding="6,2" Margin="0,0,4,0"
-                                    Command="{Binding OpenQuickJumpCommand}"
-                                    ToolTip="Buscador Spotlight para saltar rápido a cualquier partida (Ctrl+G)" />
-                            <Button Style="{StaticResource Button.Ghost}"
-                                    Content="‹" FontSize="14" Padding="4,0"
-                                    Command="{Binding CollapseLeftPanelCommand}"
-                                    ToolTip="Contraer panel" />
-                        </StackPanel>
-                    </DockPanel>
-                </Border>
-
-                <!-- Buscador y Filtro Rápido de Estado -->
-                <Border Grid.Row="1" Padding="8,6" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1">
-                    <StackPanel>
-                        <DockPanel LastChildFill="True" Margin="0,0,0,6">
-                            <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center" Margin="8,0,0,0"
-                                       FontSize="9" Foreground="{DynamicResource Brush.Muted}"
-                                       Text="Ctrl++ / Ctrl+-"
-                                       ToolTip="Ctrl++ agregar partida bajo la selección · Ctrl+- eliminar la partida activa" />
-                            <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="6" Padding="6,2" Height="26" VerticalAlignment="Center">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="🔍" FontSize="10" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,5,0" VerticalAlignment="Center" />
-                                    <Grid Grid.Column="1" VerticalAlignment="Center">
-                                        <TextBlock Text="Buscar partida…" FontSize="11" Foreground="{DynamicResource Brush.Muted}"
-                                                   IsHitTestVisible="False" VerticalAlignment="Center"
-                                                   Visibility="{Binding HasPartidaFilter, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}" />
-                                        <TextBox BorderThickness="0" Background="Transparent" VerticalAlignment="Center"
-                                                 FontSize="11" Foreground="{DynamicResource Brush.Ink}"
-                                                 Text="{Binding PartidaFilter, UpdateSourceTrigger=PropertyChanged}"
-                                                 ToolTip="Filtrar partidas por número de ítem o descripción" />
-                                    </Grid>
-                                    <Button Grid.Column="2" Content="✕"
-                                            Command="{Binding ClearPartidaFilterCommand}"
-                                            Visibility="{Binding HasPartidaFilter, Converter={StaticResource BoolToVisibility}}"
-                                            Style="{StaticResource Button.Ghost}"
-                                            FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}"
-                                            Padding="2,0" Margin="3,0,0,0" VerticalAlignment="Center" Cursor="Hand"
-                                            ToolTip="Limpiar filtro de partidas (Esc)" />
-                                </Grid>
-                            </Border>
-                        </DockPanel>
-
-                        <!-- Chips de Estado: [ Todas (149) ] · [ ✓ Listas (102) ] · [ ⚠️ Pendientes (47) ] -->
-                        <Border Background="{DynamicResource Brush.ChipBg}"
-                                BorderBrush="{DynamicResource Brush.Line}"
-                                BorderThickness="1"
-                                CornerRadius="7"
-                                Padding="2">
-                            <UniformGrid Columns="3">
-                                <RadioButton Content="{Binding TotalFilterLabel}"
-                                             IsChecked="{Binding IsPartidaFilterTodos, Mode=TwoWay}"
-                                             GroupName="CubicacionStatusFilter"
-                                             ToolTip="Mostrar todas las partidas"
-                                             Style="{StaticResource FilterChip.Base}" />
-                                <RadioButton Content="{Binding ListasFilterLabel}"
-                                             IsChecked="{Binding IsPartidaFilterListas, Mode=TwoWay}"
-                                             GroupName="CubicacionStatusFilter"
-                                             ToolTip="Filtrar partidas completas (con cubicación lista)"
-                                             Style="{StaticResource FilterChip.Success}" />
-                                <RadioButton Content="{Binding PendientesFilterLabel}"
-                                             IsChecked="{Binding IsPartidaFilterPendientes, Mode=TwoWay}"
-                                             GroupName="CubicacionStatusFilter"
-                                             ToolTip="Filtrar partidas pendientes (sin cubicación o incompletas)"
-                                             Style="{StaticResource FilterChip.Warning}" />
-                            </UniformGrid>
-                        </Border>
-                    </StackPanel>
-                </Border>
-
-                <!-- Lista de partidas -->
-                <ListBox Grid.Row="2" x:Name="PartidasList"
-                 ItemsSource="{Binding FilteredPartidas}"
-                 SelectedItem="{Binding SelectedPartida}"
-                 SelectionChanged="OnPartidaSelectionChanged"
-                 BorderThickness="0" Background="Transparent"
-                 VirtualizingPanel.IsVirtualizing="True"
-                 VirtualizingPanel.VirtualizationMode="Recycling"
-                 VirtualizingPanel.ScrollUnit="Pixel"
-                 VirtualizingPanel.CacheLength="15,15"
-                 VirtualizingPanel.CacheLengthUnit="Item"
-                 ScrollViewer.CanContentScroll="True"
-                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                 ScrollViewer.VerticalScrollBarVisibility="Auto">
-                    <ListBox.ItemContainerStyle>
-                        <Style TargetType="ListBoxItem" BasedOn="{StaticResource ListBoxItem.Partida}">
-                            <Style.Triggers>
-                                <!-- Títulos de sección: no seleccionables, fondo diferente -->
-                                <DataTrigger Binding="{Binding EsPartida}" Value="False">
-                                    <Setter Property="IsEnabled" Value="False" />
-                                    <Setter Property="Padding" Value="4,6,4,2" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </ListBox.ItemContainerStyle>
-                    <ListBox.ItemTemplate>
-                        <DataTemplate DataType="{x:Type local:PartidaListItemVm}">
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
-
-                                <!-- Título/nombre de partida o sección -->
-                                <TextBlock Grid.Row="0"
-                                           Text="{Binding DisplayLabel}"
-                                           FontSize="11"
-                                           TextTrimming="CharacterEllipsis"
-                                           ToolTip="{Binding ExclusionTooltip}"
-                                           Foreground="{DynamicResource Brush.Ink}">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding EsPartida}" Value="False">
-                                                    <Setter Property="FontWeight" Value="Bold" />
-                                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
-                                                    <Setter Property="FontSize" Value="10" />
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding ExcluidoCubicacion}" Value="True">
-                                                    <Setter Property="TextDecorations" Value="Strikethrough" />
-                                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
-                                <!-- Badge de estado (solo partidas, no títulos) -->
-                                <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,2,0,0">
-                                    <StackPanel.Style>
-                                        <Style TargetType="StackPanel">
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding EsPartida}" Value="False">
-                                                    <Setter Property="Visibility" Value="Collapsed" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </StackPanel.Style>
-                                    <!-- Indicador cubicación -->
-                                    <Ellipse Width="6" Height="6" Margin="0,0,4,0" VerticalAlignment="Center">
-                                        <Ellipse.Style>
-                                            <Style TargetType="Ellipse">
-                                                <Setter Property="Fill" Value="{DynamicResource Brush.Muted}" />
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding TieneCubicacion}" Value="True">
-                                                        <Setter Property="Fill" Value="{DynamicResource Brush.Success}" />
-                                                    </DataTrigger>
-                                                    <DataTrigger Binding="{Binding HasIssues}" Value="True">
-                                                        <Setter Property="Fill" Value="{DynamicResource Brush.Warning}" />
-                                                    </DataTrigger>
-                                                    <DataTrigger Binding="{Binding SinValorizacionGlobal}" Value="True">
-                                                        <Setter Property="Fill" Value="{DynamicResource Brush.Warning}" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Ellipse.Style>
-                                    </Ellipse>
-                                    <TextBlock FontSize="9" Foreground="{DynamicResource Brush.Muted}"
-                                               Text="{Binding StatusBadgeText}"
-                                               TextTrimming="CharacterEllipsis"
-                                               MaxWidth="180" />
-                                </StackPanel>
-                            </Grid>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
-            </Grid>
-        </Border>
-
-        <!-- GridSplitter izquierdo. Focusable="False": por defecto un GridSplitter SÍ puede recibir
-         foco de teclado, y si lo recibe, las flechas ←/→ lo mueven y redimensionan el panel —
-         eso hacía que el panel de Partidas se agrandara/achicara solo al usar las flechas en
-         cualquier parte de la pantalla que terminara enfocando el splitter. Se sigue pudiendo
-         redimensionar arrastrando con el mouse, solo se le quita el foco por teclado. -->
-        <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" Focusable="False"
-                  Background="{DynamicResource Brush.Line}" Cursor="SizeWE" Margin="7,0,7,0" />
-
-        <!-- ══════════════════════════════════════════════
-         PANEL CENTRAL
-         ══════════════════════════════════════════════ -->
-        <Grid Grid.Column="2">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" MinHeight="120" />
-                <RowDefinition x:Name="TotalsRow" Height="Auto" />
-                <RowDefinition x:Name="StatusRow" Height="Auto" />
-            </Grid.RowDefinitions>
-
-            <!-- Barra de navegación de sectores -->
-            <Border Grid.Row="0" Style="{StaticResource Bar.Formula}" Padding="14,12">
-                <StackPanel>
-                <DockPanel LastChildFill="False">
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" DockPanel.Dock="Left">
-                        <TextBox x:Name="PartidaCodigoBox"
-                                 Text="{Binding PartidaCodigo, UpdateSourceTrigger=LostFocus}"
-                                 FontFamily="{StaticResource Font.Mono}"
-                                 FontSize="13" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}"
-                                 Background="Transparent" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
-                                 Padding="6,3" Margin="0,0,8,0" MinWidth="55" MaxWidth="120"
-                                 ToolTip="Editar número de ítem de la partida (ej. 1.1) · Enter para guardar"
-                                 PreviewKeyDown="OnPartidaHeaderBoxPreviewKeyDown" />
-                        <TextBox x:Name="PartidaDescripcionBox"
-                                 Text="{Binding PartidaDescripcion, UpdateSourceTrigger=LostFocus}"
-                                 FontSize="14" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}"
-                                 Background="Transparent" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
-                                 Padding="8,3" MinWidth="250" MaxWidth="850"
-                                 ToolTip="Editar nombre/descripción de la partida · Enter para guardar"
-                                 PreviewKeyDown="OnPartidaHeaderBoxPreviewKeyDown" />
-                        <!-- Badge sutil integrado: Alerta de partida sin cantidad o sin unidad global -->
-                        <Border Margin="10,0,0,0" Padding="8,3" CornerRadius="12"
-                                Background="#FEF3C7" BorderBrush="#F59E0B" BorderThickness="1"
-                                VerticalAlignment="Center"
-                                ToolTip="{Binding AlertaSinValorizacionGlobalMensaje}"
-                                Visibility="{Binding HasAlertaSinValorizacionGlobal, Converter={StaticResource BoolToVisibility}}">
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <TextBlock Text="⚠️" FontSize="11" Margin="0,0,5,0" VerticalAlignment="Center" />
-                                <TextBlock Text="{Binding AlertaSinValorizacionGlobalBadgeText}" FontSize="11" FontWeight="SemiBold"
-                                           Foreground="#92400E" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </Border>
-                    </StackPanel>
-                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                        <Button Style="{StaticResource Button.Toolbar}" Content="Tomar SC"
-                                Command="{Binding OpenScTomarCommand}"
-                                ToolTip="Tomar materiales desde Cubicación SC (Alt+L)" />
-                        <Button Style="{StaticResource Button.Toolbar}" Content="Ver / Generar APU"
-                                Command="{Binding NavigateToApuCommand}" Margin="0,0,8,0"
-                                ToolTip="Abrir herramienta auxiliar de APU para esta partida" />
-                        <!-- Selector de Vista: [ Casillas | Detalle ] -->
-                        <Border Background="{DynamicResource Brush.ChipBg}"
-                                BorderBrush="{DynamicResource Brush.Line}"
-                                BorderThickness="1"
-                                CornerRadius="6"
-                                Padding="1.5"
-                                Margin="0,0,8,0"
-                                VerticalAlignment="Center">
-                            <StackPanel Orientation="Horizontal">
-                                <Button Content="Casillas" Height="24" Command="{Binding ShowSectorMatrixCommand}"
-                                        ToolTip="Vista de matriz por sectores (Ctrl+Izquierda/Derecha)">
-                                    <Button.Style>
-                                        <Style TargetType="Button" BasedOn="{StaticResource Button.Ghost}">
-                                            <Setter Property="FontSize" Value="11" />
-                                            <Setter Property="FontWeight" Value="SemiBold" />
-                                            <Setter Property="Padding" Value="10,2" />
-                                            <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsSectorMatrixMode}" Value="True">
-                                                    <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
-                                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Button.Style>
-                                </Button>
-                                <Button Content="Detalle" Height="24" Command="{Binding ShowResourceDetailCommand}"
-                                        ToolTip="Vista detallada de recursos y materiales">
-                                    <Button.Style>
-                                        <Style TargetType="Button" BasedOn="{StaticResource Button.Ghost}">
-                                            <Setter Property="FontSize" Value="11" />
-                                            <Setter Property="FontWeight" Value="SemiBold" />
-                                            <Setter Property="Padding" Value="10,2" />
-                                            <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsDetailMode}" Value="True">
-                                                    <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
-                                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Button.Style>
-                                </Button>
-                            </StackPanel>
-                        </Border>
-
-                        <Button Content="Buscar (Ctrl+F)" Click="OnOpenSearchClick"
-                                Style="{StaticResource Button.Toolbar}"
-                                ToolTip="Buscar en tabla y resaltar coincidencias (Ctrl+F / F3)" />
-                        <Button Style="{StaticResource Button.Ghost}" Content="⋯" Height="28" Padding="12,4"
-                                ToolTip="Duplicar, reemplazar, autocompletar, hoja de cubicación y zonas" Click="OnMoreActionsClick">
-                            <Button.ContextMenu>
-                                <ContextMenu>
-                                    <MenuItem Header="Duplicar fila (Ctrl+D)" Command="{Binding DuplicateRowCommand}"
-                                              ToolTip="Duplicar la fila seleccionada con todas sus mediciones y fórmulas" />
-                                    <MenuItem Header="Buscar y Reemplazar Material… (Ctrl+H)" Command="{Binding OpenBatchReplaceCommand}"
-                                              ToolTip="Reemplazar un material en todas las partidas manteniendo intactas las mediciones y fórmulas" />
-                                    <MenuItem Header="Cambio de Línea o Familia Masivo… (Ctrl+Shift+H)" Command="{Binding OpenFamilyBatchReplaceCommand}"
-                                              ToolTip="Ingeniería de valor: reemplazar familias completas de materiales con auto-mapeo del banco de precios" />
-                                    <Separator />
-                                    <MenuItem Header="Autocompletar unidad y cantidad" Command="{Binding AutocompletarUnidadYCantidadCommand}"
-                                              ToolTip="Asignar a esta partida la unidad y cantidad del primer material cubicado" />
-                                    <MenuItem Header="Autocompletar unidad y cantidad en todo el proyecto…" Command="{Binding AutocompletarUnidadYCantidadTodasCommand}"
-                                              ToolTip="Asignar la unidad y cantidad del primer material a todas las partidas del proyecto que no tengan valorización global" />
-                                    <Separator />
-                                    <MenuItem Header="Generar / Ver APU de esta partida" Command="{Binding NavigateToApuCommand}"
-                                              ToolTip="Abrir herramienta auxiliar de análisis de precios unitarios para la partida activa" />
-                                    <MenuItem Header="Hoja de Cubicación" Command="{Binding OpenHojaCubicacionCommand}"
-                                              ToolTip="Herramienta de apoyo para cubicar: agregue ítems y sume sus mediciones antes de trasladarlas a la partida" />
-                                    <MenuItem Header="Cargar Plantilla…" Command="{Binding AplicarConjuntoCommand}"
-                                              ToolTip="Cargar una plantilla creada en la pestaña Plantillas sobre la partida seleccionada" />
-                                    <MenuItem Header="Guardar como Plantilla…" Command="{Binding CrearConjuntoDesdePartidaCommand}"
-                                              ToolTip="Crear una plantilla reutilizable en tu biblioteca global a partir de los materiales y fórmulas de esta partida" />
-                                    <MenuItem Header="Zonas…" Command="{Binding ManageZonasCommand}"
-                                              ToolTip="Definir las zonas del proyecto (nombres, orden y estado de los sectores)" />
-                                </ContextMenu>
-                            </Button.ContextMenu>
-                        </Button>
-                    </StackPanel>
-                </DockPanel>
-
-                <!-- Observación colapsable (cerrada por defecto) -->
-                <Expander Margin="0,8,0,0" IsExpanded="False"
-                          Visibility="{Binding HasPartida, Converter={StaticResource BoolToVisibility}}">
-                    <Expander.Header>
-                        <TextBlock Text="Observación" FontSize="11" FontWeight="SemiBold"
-                                   Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" />
-                    </Expander.Header>
-                    <Border Margin="0,6,0,0" Padding="8,5" CornerRadius="{StaticResource Radius.Card}"
-                            Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1">
-                    <StackPanel Orientation="Vertical">
+                    <!-- Encabezado izquierdo -->
+                    <Border Grid.Row="0" Style="{StaticResource Card.LeftPanelHeader}">
                         <DockPanel LastChildFill="True">
-                            <TextBlock DockPanel.Dock="Left"
-                                       Text="Justificación:"
-                                       FontSize="11" FontWeight="Bold"
-                                       VerticalAlignment="Center"
-                                       Margin="0,0,8,0"
-                                       Foreground="{DynamicResource Brush.Ink}" />
-                            <Button DockPanel.Dock="Right" Style="{StaticResource Button.Ghost}"
-                                    Content="✕" FontSize="11" Padding="6,2" Margin="4,0,0,0"
-                                    Click="OnClearObservationClick"
-                                    Visibility="{Binding HasPartidaNote, Converter={StaticResource BoolToVisibility}}"
-                                    ToolTip="Eliminar observación de la partida" />
-                            <Button x:Name="RecentObservationsBtn" DockPanel.Dock="Right" Style="{StaticResource Button.Secondary}"
-                                    Content="Memoria ▼" FontSize="10.5" Padding="6,2" Margin="4,0,0,0"
-                                    Click="OnRecentObservationsClick"
-                                    ToolTip="Ver historial de observaciones y justificaciones guardadas" />
-                            <TextBox x:Name="MotivoNoCubicarBox"
-                                     Text="{Binding MotivoNoCubicarText, UpdateSourceTrigger=PropertyChanged}"
-                                     VerticalContentAlignment="Center"
-                                     Padding="6,3"
-                                     FontSize="11.5"
-                                     MinHeight="26"
-                                     BorderThickness="1"
-                                     BorderBrush="{DynamicResource Brush.InputBorder}"
-                                     Background="{DynamicResource Brush.Surface}"
-                                     ToolTip="Observación o justificación formal de la partida · Enter para guardar · Ctrl+Shift+E para enfocar rápido" />
+                            <TextBlock Text="PARTIDAS" Style="{StaticResource Text.PartidaPanelTitle}" VerticalAlignment="Center" />
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button Style="{StaticResource Button.Ghost}" Content="+" FontSize="14" FontWeight="Bold" Padding="6,1" Margin="0,0,2,0"
+                                        Command="{Binding AddPartidaCommand}" ToolTip="Agregar nueva partida debajo de la seleccionada (Ctrl++)" />
+                                <Button Style="{StaticResource Button.Ghost}" Content="−" FontSize="14" FontWeight="Bold" Padding="6,1" Margin="0,0,4,0"
+                                        Command="{Binding DeletePartidaCommand}" ToolTip="Eliminar la partida activa (Ctrl+-)" />
+                                <Button Style="{StaticResource Button.Ghost}" Content="Ir (Ctrl+G)" FontSize="10" Padding="6,2" Margin="0,0,4,0"
+                                        Command="{Binding OpenQuickJumpCommand}" ToolTip="Buscador Spotlight para saltar rápido a cualquier partida (Ctrl+G)" />
+                                <Button Style="{StaticResource Button.Ghost}" Content="‹" FontSize="14" Padding="4,0"
+                                        Command="{Binding CollapseLeftPanelCommand}" ToolTip="Contraer panel" />
+                            </StackPanel>
                         </DockPanel>
+                    </Border>
 
-                        <WrapPanel Orientation="Horizontal" Margin="0,5,0,0">
-                            <TextBlock Text="Rápido:" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" Margin="0,0,6,0" />
-                            <Button Style="{StaticResource Button.Ghost}" Content="Cía. Eléctrica" FontSize="10" Padding="5,1" Margin="0,0,4,2"
-                                    Click="OnChipClick" Tag="Por compañía eléctrica" ToolTip="Asignar 'Por compañía eléctrica'" />
-                            <Button Style="{StaticResource Button.Ghost}" Content="Incluido en ítem..." FontSize="10" Padding="5,1" Margin="0,0,4,2"
-                                    Click="OnChipClick" Tag="Se incluye en ítem" ToolTip="Asignar 'Se incluye en ítem'" />
-                            <Button Style="{StaticResource Button.Ghost}" Content="Por Mandante" FontSize="10" Padding="5,1" Margin="0,0,4,2"
-                                    Click="OnChipClick" Tag="Suministrado por Mandante" ToolTip="Asignar 'Suministrado por Mandante'" />
-                            <Button Style="{StaticResource Button.Ghost}" Content="Valor Proforma" FontSize="10" Padding="5,1" Margin="0,0,4,2"
-                                    Click="OnChipClick" Tag="Valor proforma" ToolTip="Asignar 'Valor proforma'" />
-                            <Button Style="{StaticResource Button.Ghost}" Content="No Considerado" FontSize="10" Padding="5,1" Margin="0,0,4,2"
-                                    Click="OnChipClick" Tag="No considerado en bases técnicas" ToolTip="Asignar 'No considerado en bases técnicas'" />
-                            <Button Style="{StaticResource Button.Ghost}" Content="Opcional" FontSize="10" Padding="5,1" Margin="0,0,4,2"
-                                    Click="OnChipClick" Tag="Alternativa / Opcional" ToolTip="Asignar 'Alternativa / Opcional'" />
-                        </WrapPanel>
-                    </StackPanel>
-                    </Border>
-                </Expander>
-                </StackPanel>
-            </Border>
+                    <!-- Buscador y Filtro Rápido de Estado -->
+                    <Border Grid.Row="1" Padding="8,6" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1">
+                        <StackPanel>
+                            <DockPanel LastChildFill="True" Margin="0,0,0,6">
+                                <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center" Margin="8,0,0,0" FontSize="9"
+                                           Foreground="{DynamicResource Brush.Muted}" Text="Ctrl++ / Ctrl+-"
+                                           ToolTip="Ctrl++ agregar partida bajo la selección · Ctrl+- eliminar la partida activa" />
+                                <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="6" Padding="6,2" Height="26" VerticalAlignment="Center">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="🔍" FontSize="10" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,5,0" VerticalAlignment="Center" />
+                                        <Grid Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Text="Buscar partida…" FontSize="11" Foreground="{DynamicResource Brush.Muted}" IsHitTestVisible="False" VerticalAlignment="Center"
+                                                       Visibility="{Binding HasPartidaFilter, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}" />
+                                            <TextBox BorderThickness="0" Background="Transparent" VerticalAlignment="Center" FontSize="11" Foreground="{DynamicResource Brush.Ink}"
+                                                     Text="{Binding PartidaFilter, UpdateSourceTrigger=PropertyChanged}" ToolTip="Filtrar partidas por número de ítem o descripción" />
+                                        </Grid>
+                                        <Button Grid.Column="2" Content="✕" Command="{Binding ClearPartidaFilterCommand}"
+                                                Visibility="{Binding HasPartidaFilter, Converter={StaticResource BoolToVisibility}}"
+                                                Style="{StaticResource Button.Ghost}" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}"
+                                                Padding="2,0" Margin="3,0,0,0" VerticalAlignment="Center" Cursor="Hand" ToolTip="Limpiar filtro de partidas (Esc)" />
+                                    </Grid>
+                                </Border>
+                            </DockPanel>
 
-            <!-- Fila de la partida (modo Detalle). Es un elemento NORMAL del árbol visual (no un
-           encabezado de DataGrid), así que hereda el DataContext del VM y sus cajas editables
-           (Unidad, Cantidad con fórmula, Observaciones) más su teclado funcionan siempre — a
-           diferencia de meter controles dentro de los encabezados del DataGrid, donde WPF aísla
-           el DataContext y se rompen los bindings y el teclado. Cada celda se alinea al ancho de
-           su columna (BindItemRowCellWidths en el code-behind). En Casillas se oculta y vuelven
-           los encabezados nativos del DataGrid. -->
-            <Border Grid.Row="1" Background="{DynamicResource Brush.ActiveRowBg}" BorderBrush="{DynamicResource Brush.Blue}" BorderThickness="0,0,0,2"
-                    ClipToBounds="True"
-                    Visibility="{Binding IsDetailHeaderVisible, Converter={StaticResource BoolToVisibility}}">
-                <DockPanel x:Name="ItemRowHost" LastChildFill="True" Height="30">
-                    <DockPanel.RenderTransform>
-                        <TranslateTransform X="0" />
-                    </DockPanel.RenderTransform>
-                    <!-- Código de la partida (ej. 2.1) -->
-                    <Border x:Name="ItemRowCodigoCell" DockPanel.Dock="Left" Padding="8,0"
-                  BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0">
-                        <TextBlock Text="{Binding PartidaCodigo}" FontSize="11.5" FontWeight="Bold"
-                       Foreground="{DynamicResource Brush.Blue}" VerticalAlignment="Center" />
+                            <!-- Chips de Estado -->
+                            <Border Background="{DynamicResource Brush.ChipBg}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="7" Padding="2">
+                                <UniformGrid Columns="3">
+                                    <RadioButton Content="{Binding TotalFilterLabel}" IsChecked="{Binding IsPartidaFilterTodos, Mode=TwoWay}"
+                                                 GroupName="CubicacionStatusFilter" ToolTip="Mostrar todas las partidas" Style="{StaticResource FilterChip.Base}" />
+                                    <RadioButton Content="{Binding ListasFilterLabel}" IsChecked="{Binding IsPartidaFilterListas, Mode=TwoWay}"
+                                                 GroupName="CubicacionStatusFilter" ToolTip="Filtrar partidas completas (con cubicación lista)" Style="{StaticResource FilterChip.Success}" />
+                                    <RadioButton Content="{Binding PendientesFilterLabel}" IsChecked="{Binding IsPartidaFilterPendientes, Mode=TwoWay}"
+                                                 GroupName="CubicacionStatusFilter" ToolTip="Filtrar partidas pendientes (sin cubicación o incompletas)" Style="{StaticResource FilterChip.Warning}" />
+                                </UniformGrid>
+                            </Border>
+                        </StackPanel>
                     </Border>
-                    <!-- Descripción / nombre de la partida (ej. Circuitos) -->
-                    <Border x:Name="ItemRowDescCell" DockPanel.Dock="Left" Padding="8,0"
-                  BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0">
-                        <TextBlock Text="{Binding PartidaDescripcion}" FontSize="11.5" FontWeight="Bold"
-                       Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-                    </Border>
-                    <!-- Unidad de la partida — editable (si el itemizado no la trae, se escribe acá) -->
-                    <Border x:Name="ItemRowUiCell" DockPanel.Dock="Left" Padding="1,2"
-                  BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0">
-                        <Border.Style>
-                            <Style TargetType="Border">
-                                <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+
+                    <!-- Lista de partidas -->
+                    <ListBox Grid.Row="2" x:Name="PartidasList"
+                             ItemsSource="{Binding FilteredPartidas}" SelectedItem="{Binding SelectedPartida}"
+                             SelectionChanged="OnPartidaSelectionChanged"
+                             BorderThickness="0" Background="Transparent"
+                             VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"
+                             VirtualizingPanel.ScrollUnit="Pixel" VirtualizingPanel.CacheLength="15,15" VirtualizingPanel.CacheLengthUnit="Item"
+                             ScrollViewer.CanContentScroll="True" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem" BasedOn="{StaticResource ListBoxItem.Partida}">
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsPartidaUnidadMissing}" Value="True">
-                                        <Setter Property="Background" Value="#FEF3C7" />
-                                        <Setter Property="BorderBrush" Value="#F59E0B" />
-                                        <Setter Property="BorderThickness" Value="1,1,1,1" />
+                                    <DataTrigger Binding="{Binding EsPartida}" Value="False">
+                                        <Setter Property="IsEnabled" Value="False" />
+                                        <Setter Property="Padding" Value="4,6,4,2" />
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
-                        </Border.Style>
-                        <TextBox x:Name="UnidadHeaderBox"
-                     Text="{Binding PartidaUnidadText, UpdateSourceTrigger=LostFocus}"
-                     IsReadOnly="{Binding IsReadOnly}"
-                     FontFamily="{StaticResource Font.Ui}" FontSize="11" FontWeight="Bold"
-                     HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                     Padding="0" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource Brush.Ink}"
-                     GotFocus="OnUnidadHeaderBoxGotFocus" LostFocus="OnUnidadHeaderBoxLostFocus"
-                     PreviewKeyDown="OnUnidadHeaderBoxPreviewKeyDown"
-                     TextChanged="OnUnidadHeaderBoxTextChanged"
-                     ToolTip="Unidad de la partida — editable si el itemizado no la trae. Ctrl+←/→ para moverse entre Unidad, Cantidad y Observaciones." />
-                    </Border>
-                    <!-- Cantidad oficial de la partida — número o fórmula tipo Excel (R1+R2...) -->
-                    <Border x:Name="ItemRowCantCell" DockPanel.Dock="Left" Padding="1,2"
-                  BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0">
-                        <Border.Style>
-                            <Style TargetType="Border">
-                                <Setter Property="Background" Value="{DynamicResource Brush.SuccessBg}" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsPartidaCantidadMissing}" Value="True">
-                                        <Setter Property="Background" Value="#FEF3C7" />
-                                        <Setter Property="BorderBrush" Value="#F59E0B" />
-                                        <Setter Property="BorderThickness" Value="1,1,1,1" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Border.Style>
-                        <TextBox x:Name="CantHeaderBox"
-                     Text="{Binding PartidaCantidadText, UpdateSourceTrigger=LostFocus}"
-                     IsReadOnly="{Binding IsReadOnly}"
-                     FontFamily="{StaticResource Font.Mono}" FontSize="12" FontWeight="Bold"
-                     HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                     Padding="0" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource Brush.Success}"
-                     GotFocus="OnCantHeaderBoxGotFocus" LostFocus="OnCantHeaderBoxLostFocus"
-                     PreviewKeyDown="OnCantHeaderBoxPreviewKeyDown"
-                     PreviewTextInput="OnCantHeaderBoxPreviewTextInput"
-                     ToolTip="{Binding PartidaCantidadToolTip}" />
-                    </Border>
-                    <!-- Etiquetas de columna (estos títulos no tienen fila de encabezado aparte en Detalle) -->
-                    <Border x:Name="ItemRowMatCell" DockPanel.Dock="Left" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0"
-                  ToolTip="Precio unitario de material en CLP (lista de precios)">
-                        <TextBlock Text="MAT $" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}"
-                       VerticalAlignment="Center" HorizontalAlignment="Center" />
-                    </Border>
-                    <Border x:Name="ItemRowMoCell" DockPanel.Dock="Left" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0"
-                  ToolTip="Precio unitario de mano de obra en CLP (lista de precios)">
-                        <TextBlock Text="MO $" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}"
-                       VerticalAlignment="Center" HorizontalAlignment="Center" />
-                    </Border>
-                    <Border x:Name="ItemRowTotalCell" DockPanel.Dock="Left" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0"
-                  ToolTip="MAT $ + MO $ (precio unitario total en CLP)">
-                        <TextBlock Text="$ UNIT" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}"
-                       VerticalAlignment="Center" HorizontalAlignment="Center" />
-                    </Border>
-                    <Border x:Name="ItemRowSubtotalCell" DockPanel.Dock="Left" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0"
-                  ToolTip="$ UNIT × cantidad del recurso (CLP)">
-                        <TextBlock Text="SUBTOTAL" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}"
-                       VerticalAlignment="Center" HorizontalAlignment="Center" />
-                    </Border>
-                    <Border x:Name="ItemRowGgUtCell" DockPanel.Dock="Left" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0">
-                        <TextBlock Text="GG+UT" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}"
-                       VerticalAlignment="Center" HorizontalAlignment="Center" />
-                    </Border>
-                    <Border x:Name="ItemRowUfUnitCell" DockPanel.Dock="Left" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0">
-                        <TextBlock Text="UF UNIT" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}"
-                       VerticalAlignment="Center" HorizontalAlignment="Center" />
-                    </Border>
-                    <Border x:Name="ItemRowSubtotalUfCell" DockPanel.Dock="Left" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0">
-                        <TextBlock Text="SUBTOTAL UF" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}"
-                       VerticalAlignment="Center" HorizontalAlignment="Center" />
-                    </Border>
-                    <!-- Observación de la partida — editable, viaja al Resumen/oferta (ámbar) -->
-                    <Border Background="{DynamicResource Brush.AmberSoft}" Padding="4,2">
-                        <TextBox x:Name="ObservacionHeaderBox"
-                     Text="{Binding PartidaObservacionesText, UpdateSourceTrigger=PropertyChanged}"
-                     IsReadOnly="{Binding IsReadOnly}"
-                     FontFamily="{StaticResource Font.Ui}" FontSize="11" FontWeight="SemiBold"
-                     VerticalContentAlignment="Center" Padding="4,0"
-                     BorderThickness="0" Background="Transparent" Foreground="{DynamicResource Brush.Ink}"
-                     GotFocus="OnPartidaFieldGotFocus" PreviewKeyDown="OnPartidaFieldPreviewKeyDown"
-                     ToolTip="Observación de la partida para el Resumen/oferta. Ctrl+←/→ para moverse entre Unidad, Cantidad y Observaciones." />
-                    </Border>
-                </DockPanel>
-            </Border>
-
-            <!-- DataGrid de recursos -->
-            <Grid Grid.Row="2">
-              <!-- Empty state contextual cuando no hay partida seleccionada -->
-              <ctrl:EmptyStateControl
-                  Visibility="{Binding HasPartida, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}"
-                  HorizontalAlignment="Center" VerticalAlignment="Center"
-                  Title="Sin partida seleccionada"
-                  Description="Seleccione una partida en el panel lateral para ver sus mediciones y recursos, o cree una nueva partida.">
-                <ctrl:EmptyStateControl.Actions>
-                  <WrapPanel HorizontalAlignment="Center">
-                    <Button Style="{StaticResource Button.Primary}" Content="Ir a Itemizado" Command="{Binding NavigateToItemizadoCommand}" Margin="4" />
-                    <Button Style="{StaticResource Button.Secondary}" Content="+ Crear Partida" Command="{Binding AddPartidaCommand}" Margin="4" />
-                  </WrapPanel>
-                </ctrl:EmptyStateControl.Actions>
-              </ctrl:EmptyStateControl>
-
-              <DataGrid x:Name="ResourceGrid"
-                Visibility="{Binding HasPartida, Converter={StaticResource BoolToVisibility}}"
-                Style="{StaticResource DataGrid.Workspace.Excel}"
-                infra:DataGridExcelNavigation.Enable="True"
-                infra:DataGridExcelNavigation.HandlePasteByHost="True"
-                ItemsSource="{Binding Rows}"
-                IsReadOnly="{Binding IsReadOnly}"
-                CanUserAddRows="False" CanUserDeleteRows="False"
-                CanUserSortColumns="False" CanUserReorderColumns="False"
-                AutoGenerateColumns="False"
-                EnableRowVirtualization="True"
-                EnableColumnVirtualization="True"
-                VirtualizingPanel.IsVirtualizing="True"
-                VirtualizingPanel.VirtualizationMode="Recycling"
-                VirtualizingPanel.ScrollUnit="Pixel"
-                VirtualizingPanel.CacheLength="20,20"
-                VirtualizingPanel.CacheLengthUnit="Item"
-                ScrollViewer.CanContentScroll="True"
-                ScrollViewer.IsDeferredScrollingEnabled="False"
-                ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                ScrollViewer.VerticalScrollBarVisibility="Auto"
-                RowHeight="28"
-                ColumnHeaderHeight="32"
-                ColumnHeaderStyle="{StaticResource DataGridColumnHeader.CasillasGeneral}"
-                FrozenColumnCount="5"
-                BeginningEdit="OnGridBeginningEdit"
-                PreparingCellForEdit="OnGridPreparingCellForEdit"
-                CellEditEnding="OnGridCellEditEnding"
-                PreviewKeyDown="OnGridPreviewKeyDown"
-                PreviewTextInput="OnResourceGridPreviewTextInput"
-                PreviewMouseLeftButtonDown="OnResourceGridPreviewMouseLeftButtonDown"
-                ContextMenuOpening="OnResourceGridContextMenuOpening"
-                SelectionChanged="OnGridSelectionChanged"
-                CurrentCellChanged="OnGridCurrentCellChanged">
-                <DataGrid.Columns>
-                    <!-- # / indicador error -->
-                    <DataGridTemplateColumn x:Name="IndexColumn" Header="#" Width="44" IsReadOnly="True" CanUserResize="False" CanUserSort="False" HeaderStyle="{StaticResource DataGridColumnHeader.Center}">
-                        <DataGridTemplateColumn.CellStyle>
-                            <Style TargetType="DataGridCell" BasedOn="{StaticResource DataGridCell.Excel}">
-                                <Setter Property="Focusable" Value="False" />
-                                <Setter Property="IsHitTestVisible" Value="False" />
-                                <Setter Property="BorderBrush" Value="Transparent" />
-                                <Setter Property="Background" Value="Transparent" />
-                                <Style.Triggers>
-                                    <Trigger Property="IsSelected" Value="True">
-                                        <Setter Property="BorderBrush" Value="Transparent" />
-                                        <Setter Property="Background" Value="Transparent" />
-                                    </Trigger>
-                                </Style.Triggers>
-                            </Style>
-                        </DataGridTemplateColumn.CellStyle>
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate DataType="{x:Type local:PartidaListItemVm}">
                                 <Grid>
-                                    <!-- Índice correlativo — asignado por el VM, siempre en orden -->
-                                    <TextBlock HorizontalAlignment="Right" VerticalAlignment="Center"
-                             FontSize="11" Foreground="{DynamicResource Brush.Muted}"
-                             Margin="0,0,4,0"
-                             Text="{Binding RowNumberDisplay}">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Grid.Row="0" Text="{Binding DisplayLabel}" FontSize="11" TextTrimming="CharacterEllipsis"
+                                               ToolTip="{Binding ExclusionTooltip}" Foreground="{DynamicResource Brush.Ink}">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
                                                 <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding HasError}" Value="True">
-                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                    <DataTrigger Binding="{Binding EsPartida}" Value="False">
+                                                        <Setter Property="FontWeight" Value="Bold" />
+                                                        <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
+                                                        <Setter Property="FontSize" Value="10" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding ExcluidoCubicacion}" Value="True">
+                                                        <Setter Property="TextDecorations" Value="Strikethrough" />
+                                                        <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
                                         </TextBlock.Style>
                                     </TextBlock>
-                                    <!-- Indicador de error -->
-                                    <TextBlock Text="!" HorizontalAlignment="Center" VerticalAlignment="Center"
-                             FontSize="12" FontWeight="Bold" Foreground="{DynamicResource Brush.Red}"
-                             ToolTip="{Binding ErrorMessage}"
-                             Visibility="{Binding HasError, Converter={StaticResource BoolToVisibility}}" />
-                                </Grid>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                    <!-- Código: se guarda y se puede editar (doble clic) en ambos modos, pero en Detalle
-               la celda queda en blanco — a pedido explícito, solo se lee la descripción del
-               material. En Casillas se sigue viendo igual que siempre. -->
-                    <DataGridTextColumn x:Name="CodigoColumn" Header="CÓDIGO" Binding="{Binding Codigo, UpdateSourceTrigger=LostFocus}" Width="110">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding DataContext.IsDetailMode, RelativeSource={RelativeSource AncestorType=DataGrid}}" Value="True">
-                                        <Setter Property="Foreground" Value="Transparent" />
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding CodigoCellError, Converter={StaticResource StringNotEmptyToBool}}" Value="True">
-                                        <Setter Property="Background" Value="{DynamicResource Brush.RedSoft}" />
-                                        <Setter Property="ToolTip" Value="{Binding CodigoCellError}" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                        <DataGridTextColumn.EditingElementStyle>
-                            <Style TargetType="TextBox">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding CodigoCellError, Converter={StaticResource StringNotEmptyToBool}}" Value="True">
-                                        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Red}" />
-                                        <Setter Property="ToolTip" Value="{Binding CodigoCellError}" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </DataGridTextColumn.EditingElementStyle>
-                    </DataGridTextColumn>
-                    <!-- Descripción -->
-                    <DataGridTextColumn x:Name="DescripcionColumn" Header="DESCRIPCIÓN" Binding="{Binding Descripcion, UpdateSourceTrigger=LostFocus}"
-                              Width="260" MinWidth="180">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding DescripcionCellError, Converter={StaticResource StringNotEmptyToBool}}" Value="True">
-                                        <Setter Property="Background" Value="{DynamicResource Brush.RedSoft}" />
-                                        <Setter Property="ToolTip" Value="{Binding DescripcionCellError}" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                        <DataGridTextColumn.EditingElementStyle>
-                            <Style TargetType="TextBox" BasedOn="{StaticResource DataGrid.CellErrorTextBox}">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding DescripcionCellError, Converter={StaticResource StringNotEmptyToBool}}" Value="True">
-                                        <Setter Property="Tag" Value="error" />
-                                        <Setter Property="ToolTip" Value="{Binding DescripcionCellError}" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </DataGridTextColumn.EditingElementStyle>
-                    </DataGridTextColumn>
-                    <!-- Unidad del recurso. En Casillas el encabezado dice "UD"; en Detalle los encabezados
-               del DataGrid se ocultan y la unidad de la PARTIDA (editable) vive en la fila de
-               partida de arriba. -->
-                    <DataGridTextColumn x:Name="UnidadColumn" Header="UD" Binding="{Binding Unidad, UpdateSourceTrigger=LostFocus}"
-                              Width="48" MinWidth="42" IsReadOnly="True">
-                        <DataGridTextColumn.CellStyle>
-                            <Style TargetType="DataGridCell" BasedOn="{StaticResource DataGridCell.Excel}">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsFormulaPickTarget}" Value="True">
-                                        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
-                                        <Setter Property="BorderThickness" Value="2" />
-                                        <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </DataGridTextColumn.CellStyle>
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding UnidadCellError, Converter={StaticResource StringNotEmptyToBool}}" Value="True">
-                                        <Setter Property="Background" Value="{DynamicResource Brush.RedSoft}" />
-                                        <Setter Property="ToolTip" Value="{Binding UnidadCellError}" />
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding IsFormulaPickTarget}" Value="True">
-                                        <Setter Property="FontWeight" Value="Bold" />
-                                        <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                        <DataGridTextColumn.EditingElementStyle>
-                            <Style TargetType="TextBox" BasedOn="{StaticResource DataGrid.CellErrorTextBox}">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding UnidadCellError, Converter={StaticResource StringNotEmptyToBool}}" Value="True">
-                                        <Setter Property="Tag" Value="error" />
-                                        <Setter Property="ToolTip" Value="{Binding UnidadCellError}" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </DataGridTextColumn.EditingElementStyle>
-                    </DataGridTextColumn>
-
-                    <!-- Cantidad -->
-                    <DataGridTextColumn x:Name="CantidadColumn" Header="CANT fx" Binding="{Binding CantidadDisplay}" Width="74" MinWidth="66" IsReadOnly="True" HeaderStyle="{StaticResource DataGridColumnHeader.Formula}">
-                        <DataGridTextColumn.CellStyle>
-                            <Style TargetType="DataGridCell" BasedOn="{StaticResource DataGridCell.Excel}">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsCantPickTarget}" Value="True">
-                                        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
-                                        <Setter Property="BorderThickness" Value="2" />
-                                        <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </DataGridTextColumn.CellStyle>
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="HorizontalAlignment" Value="Right" />
-                                <Setter Property="Margin" Value="0,0,4,0" />
-                                <Setter Property="Foreground" Value="{DynamicResource Brush.CellFormulaInk}" />
-                                <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
-                                <Setter Property="ToolTip" Value="Cantidad calculada desde la matriz de sectores o fórmula de medición" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding HasFormula}" Value="True">
-                                        <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
-                                        <Setter Property="FontStyle" Value="Italic" />
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding CantidadCellError, Converter={StaticResource StringNotEmptyToBool}}" Value="True">
-                                        <Setter Property="Background" Value="{DynamicResource Brush.RedSoft}" />
-                                        <Setter Property="ToolTip" Value="{Binding CantidadCellError}" />
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding IsCantPickTarget}" Value="True">
-                                        <Setter Property="FontWeight" Value="Bold" />
-                                        <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
-                    <!-- MAT: precio del material en CLP, editable — precargado desde la lista de precios
-               al elegir el material, pero se puede sobreescribir por fila (exclusiva de Detalle). -->
-                    <DataGridTextColumn x:Name="MaterialPriceColumn" Header="MAT $" Binding="{Binding MatClp, UpdateSourceTrigger=LostFocus, StringFormat=N0}"
-                              HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" Width="70">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock" BasedOn="{StaticResource Text.Cell.Editable}">
-                                <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
-                                <Setter Property="ToolTip" Value="Precio unitario de material (editable)" />
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
-                    <!-- MO: mano de obra unitaria en CLP, editable (exclusiva de Detalle) -->
-                    <DataGridTextColumn x:Name="LaborPriceColumn" Header="MO $" Binding="{Binding MoClp, UpdateSourceTrigger=LostFocus, StringFormat=N0}"
-                              HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" Width="70">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock" BasedOn="{StaticResource Text.Cell.Editable}">
-                                <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
-                                <Setter Property="ToolTip" Value="Precio unitario de mano de obra (editable)" />
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
-                    <!-- $ UNIT: MAT + MO en CLP, calculado (exclusiva de Detalle) -->
-                    <DataGridTextColumn x:Name="TotalPriceColumn" Header="$ UNIT fx" Binding="{Binding PrecioUnitClpDisplay}"
-                              HeaderStyle="{StaticResource DataGridColumnHeader.Formula}" Width="80" IsReadOnly="True">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock" BasedOn="{StaticResource Text.Cell.Formula}">
-                                <Setter Property="FontWeight" Value="SemiBold" />
-                                <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
-                                <Setter Property="ToolTip" Value="$ UNIT = MAT $ + MO $ (calculado)" />
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
-                    <!-- SUBTOTAL: $ UNIT × cantidad, en CLP (exclusiva de Detalle) -->
-                    <DataGridTextColumn x:Name="SubtotalColumn" Header="SUBTOTAL $ fx" Binding="{Binding SubtotalClpDisplay}"
-                              HeaderStyle="{StaticResource DataGridColumnHeader.Formula}" Width="96" IsReadOnly="True">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock" BasedOn="{StaticResource Text.Cell.Formula}">
-                                <Setter Property="FontWeight" Value="SemiBold" />
-                                <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
-                                <Setter Property="ToolTip" Value="Subtotal CLP = $ UNIT × Cantidad (calculado)" />
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
-                    <DataGridTextColumn x:Name="GgUtColumn" Header="GG+UT fx" Binding="{Binding GgUtFactor, StringFormat=N2}"
-                              HeaderStyle="{StaticResource DataGridColumnHeader.Formula}" Width="64" IsReadOnly="True">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock" BasedOn="{StaticResource Text.Cell.Formula}">
-                                <Setter Property="Foreground" Value="{DynamicResource Brush.CellFormulaInk}" />
-                                <Setter Property="ToolTip" Value="Factor de Gastos Generales y Utilidad aplicado" />
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
-                    <!-- UF UNIT = REDONDEAR($ UNIT × GG+UT / valor UF ; 3) — el valor UF sale del proyecto
-               (pestaña Moneda). Exclusiva de Detalle. -->
-                    <DataGridTextColumn x:Name="UfUnitColumn" Header="UF UNIT fx" Binding="{Binding UfUnitCalculadoDisplay}"
-                              HeaderStyle="{StaticResource DataGridColumnHeader.Formula}" Width="82" IsReadOnly="True">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock" BasedOn="{StaticResource Text.Cell.Formula}">
-                                <Setter Property="FontWeight" Value="SemiBold" />
-                                <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
-                                <Setter Property="ToolTip" Value="UF UNIT = ($ UNIT × GG+UT) / Valor UF (calculado)" />
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
-                    <!-- SUBTOTAL UF = UF UNIT x CANTIDAD. Exclusiva de Detalle. -->
-                    <DataGridTextColumn x:Name="SubtotalUfColumn" Header="SUBTOTAL UF fx" Binding="{Binding UfSubtotalCalculadoDisplay}"
-                              HeaderStyle="{StaticResource DataGridColumnHeader.Formula}" Width="96" IsReadOnly="True">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock" BasedOn="{StaticResource Text.Cell.Formula}">
-                                <Setter Property="FontWeight" Value="SemiBold" />
-                                <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
-                                <Setter Property="ToolTip" Value="Subtotal UF = UF UNIT × Cantidad (calculado)" />
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
-                    <!-- Observaciones (nota interna del recurso — solo revisión interna, nunca se exporta
-               a la oferta). Placeholder cuando está vacía; sin cursiva cuando tiene contenido.
-               La observación de la PARTIDA (la que va al Resumen/oferta) se edita en la fila de
-               partida de arriba. En Detalle los encabezados del DataGrid están ocultos. -->
-                    <ctrl:DisplayBindingTextColumn x:Name="ObservacionesColumn" Header="OBSERVACIONES"
-                              Binding="{Binding NotaInterna, UpdateSourceTrigger=LostFocus}"
-                              DisplayBinding="{Binding NotaInterna, Converter={StaticResource EmptyToPlaceholder}, ConverterParameter='Nota interna (no sale en la oferta)'}"
-                              Width="*" MinWidth="160">
-                        <DataGridTextColumn.CellStyle>
-                            <Style TargetType="DataGridCell" BasedOn="{StaticResource DataGridCell.Excel}">
-                                <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
-                            </Style>
-                        </DataGridTextColumn.CellStyle>
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
-                                <Setter Property="FontStyle" Value="Italic" />
-                                <Setter Property="FontSize" Value="10.5" />
-                                <Setter Property="TextTrimming" Value="CharacterEllipsis" />
-                                <Setter Property="Margin" Value="6,0" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding NotaInterna, Converter={StaticResource StringNotEmptyToBool}}" Value="True">
-                                        <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
-                                        <Setter Property="FontStyle" Value="Normal" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                    </ctrl:DisplayBindingTextColumn>
-                </DataGrid.Columns>
-
-                <!-- Row style con error -->
-                <DataGrid.RowStyle>
-                    <Style TargetType="DataGridRow" BasedOn="{StaticResource DataGridRow.Excel}">
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding HasError}" Value="True">
-                                <Setter Property="Background" Value="{DynamicResource Brush.RedSoft}" />
-                                <Setter Property="ToolTip" Value="{Binding ErrorMessage}" />
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </DataGrid.RowStyle>
-            </DataGrid>
-
-                <!-- Sin overlay "Partida sin recursos": la grilla ya trae filas vacías
-                     para escribir/pegar al instante (flujo Excel). Acciones siguen en la toolbar. -->
-                <ctrl:SkeletonOverlayControl Panel.ZIndex="10" Message="Cargando partida…"
-                                             Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibility}}" />
-
-                <!-- Buscador Flotante In-Grid (Ctrl+F / F3) -->
-                <ctrl:DataGridSearchOverlay x:Name="ResourceSearchOverlay"
-                                            TargetGrid="{Binding ElementName=ResourceGrid}"
-                                            HorizontalAlignment="Right"
-                                            VerticalAlignment="Top"
-                                            Margin="0,8,18,0"
-                                            Panel.ZIndex="100" />
-            </Grid>
-
-            <!-- Totales -->
-            <Border x:Name="TotalsBar" Grid.Row="3" Background="{DynamicResource Brush.Surface}"
-              BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,1,0,0"
-              Padding="12,8"
-              Visibility="{Binding HasPartida, Converter={StaticResource BoolToVisibility}}">
-                <!-- ScrollViewer horizontal: en ventanas angostas las 5 cajas se vuelven scrolleables
-             en vez de comprimirse hasta truncar el texto (antes era un UniformGrid fijo). -->
-                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                    <StackPanel Orientation="Horizontal">
-                        <!-- Materiales -->
-                        <Border Style="{StaticResource Card.Summary}" Background="{DynamicResource Brush.Surface2}" Margin="4" MinWidth="140">
-                            <StackPanel>
-                                <TextBlock Style="{StaticResource Text.TotalsLabel}" Text="MATERIALES" />
-                                <TextBlock Style="{StaticResource Text.TotalsValue}" Text="{Binding TotalMateriales, StringFormat='$ {0:N0}'}" FontWeight="SemiBold" />
-                                <TextBlock Style="{StaticResource Text.TotalsHint}" Text="{Binding TotalMaterialesUf, StringFormat='{}{0:N3} UF'}"
-                                           Visibility="{Binding MuestraUf, Converter={StaticResource BoolToVisibility}}" />
-                            </StackPanel>
-                        </Border>
-                        <!-- Mano de obra: Σ (MoClp unitario × cantidad) de todos los recursos de la partida, en CLP -->
-                        <Border Style="{StaticResource Card.Summary}" Background="{DynamicResource Brush.Surface2}" Margin="4" MinWidth="140"
-                    ToolTip="Suma de MO $ × cantidad de cada recurso de esta partida (CLP)">
-                            <StackPanel>
-                                <TextBlock Style="{StaticResource Text.TotalsLabel}" Text="MANO DE OBRA" />
-                                <TextBlock Style="{StaticResource Text.TotalsValue}" Text="{Binding TotalManoObra, StringFormat='$ {0:N0}'}" FontWeight="SemiBold" />
-                                <TextBlock Style="{StaticResource Text.TotalsHint}" Text="{Binding TotalManoObraUf, StringFormat='{}{0:N3} UF'}"
-                                           Visibility="{Binding MuestraUf, Converter={StaticResource BoolToVisibility}}" />
-                            </StackPanel>
-                        </Border>
-                        <!-- Costo directo -->
-                        <Border Style="{StaticResource Card.Summary}" Background="{DynamicResource Brush.Surface2}" Margin="4" MinWidth="140">
-                            <StackPanel>
-                                <TextBlock Style="{StaticResource Text.TotalsLabel}" Text="COSTO DIRECTO" />
-                                <TextBlock Style="{StaticResource Text.TotalsValue}" Text="{Binding TotalCostoDirecto, StringFormat='$ {0:N0}'}" Foreground="{DynamicResource Brush.Blue}" FontWeight="SemiBold" />
-                                <TextBlock Style="{StaticResource Text.TotalsHint}" Text="{Binding TotalCostoDirectoUf, StringFormat='{}{0:N3} UF'}" Foreground="{DynamicResource Brush.Blue}"
-                                           Visibility="{Binding MuestraUf, Converter={StaticResource BoolToVisibility}}" />
-                            </StackPanel>
-                        </Border>
-                        <!-- Costo Dir. Unitario -->
-                        <Border Style="{StaticResource Card.Summary}" Background="{DynamicResource Brush.Surface2}" Margin="4" MinWidth="140">
-                            <StackPanel>
-                                <TextBlock Style="{StaticResource Text.TotalsLabel}" Text="COSTO DIR. UNIT." />
-                                <TextBlock Style="{StaticResource Text.TotalsValue}" Text="{Binding PrecioUnitario, StringFormat='$ {0:N0}'}" FontWeight="SemiBold" />
-                                <TextBlock Style="{StaticResource Text.TotalsHint}" Text="{Binding PrecioUnitarioUf, StringFormat='{}{0:N3} UF'}"
-                                           Visibility="{Binding MuestraUf, Converter={StaticResource BoolToVisibility}}" />
-                            </StackPanel>
-                        </Border>
-                        <!-- Costo Dir. Total -->
-                        <Border Style="{StaticResource Card.Kpi.Hero}" Margin="4" MinWidth="140">
-                            <StackPanel>
-                                <TextBlock Style="{StaticResource Text.TotalsLabel}" Text="COSTO DIR. TOTAL" Foreground="{DynamicResource Brush.Blue}" />
-                                <TextBlock Style="{StaticResource Text.TotalsValue}" FontSize="14" FontWeight="Bold"
-                            Foreground="{DynamicResource Brush.Ink}"
-                            Text="{Binding TotalPartida, StringFormat='$ {0:N0}'}" />
-                                <TextBlock Style="{StaticResource Text.TotalsHint}" Text="{Binding TotalPartidaUf, StringFormat='{}{0:N3} UF'}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Blue}"
-                                           Visibility="{Binding MuestraUf, Converter={StaticResource BoolToVisibility}}" />
-                            </StackPanel>
-                        </Border>
-                    </StackPanel>
-                </ScrollViewer>
-            </Border>
-
-            <Border x:Name="StatusBar" Grid.Row="4" Background="{DynamicResource Brush.WorkspaceBar}"
-              BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,1,0,0"
-              Padding="16,4" MinHeight="28"
-              Visibility="{Binding HasPartida, Converter={StaticResource BoolToVisibility}}">
-                <DockPanel>
-                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
-                        <TextBlock Text="{Binding SaveStatusText}" Style="{StaticResource Shell.StatusBarText}"
-                                   Foreground="{DynamicResource Brush.Ink3}" Margin="0,0,10,0" VerticalAlignment="Center" />
-                        <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
-                                CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
-                            <TextBlock Style="{StaticResource Shell.StatusBarText}">
-                                <Run Text="{Binding Rows.Count, Mode=OneWay}" FontWeight="SemiBold" /><Run Text=" recursos" />
-                            </TextBlock>
-                        </Border>
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal">
-                        <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
-                    CornerRadius="4" Padding="6,2" Margin="0,0,10,0"
-                    Visibility="{Binding SelectedRow, Converter={StaticResource NullToVisibility}}">
-                            <TextBlock Style="{StaticResource Shell.StatusBarText}">
-                <Run Text="MO unit " /><Run Text="{Binding SelectedRow.MoClpDisplay, Mode=OneWay}" FontWeight="SemiBold" />
-                <Run Text=" · MO fila " /><Run Text="{Binding SelectedRow.MoSubtotalClpDisplay, Mode=OneWay}" FontWeight="SemiBold" />
-                            </TextBlock>
-                        </Border>
-                        <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Padding="4,2" Margin="0,0,6,0">
-                            <TextBlock Text="Tab" Style="{StaticResource Text.Kbd}" Background="Transparent" Padding="0" />
-                        </Border>
-                        <TextBlock Style="{StaticResource Shell.StatusBarText}" Text="navegar · " />
-                        <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Padding="4,2" Margin="0,0,6,0">
-                            <TextBlock Text="Ctrl+V" Style="{StaticResource Text.Kbd}" Background="Transparent" Padding="0" />
-                        </Border>
-                        <TextBlock Style="{StaticResource Shell.StatusBarText}" Text="pegar · Alt+↑↓ mover filas" />
-                        <StackPanel Orientation="Horizontal" Margin="10,0,0,0"
-                        Visibility="{Binding IsSectorMatrixMode, Converter={StaticResource BoolToVisibility}}">
-                            <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Padding="4,2" Margin="0,0,6,0">
-                                <TextBlock Text="fx" Style="{StaticResource Text.Kbd}" FontStyle="Italic" Background="Transparent" Padding="0" />
-                            </Border>
-                            <TextBlock Style="{StaticResource Shell.StatusBarText}" Text="las casillas admiten fórmulas (2+3, 10/2) · escriba un operador y use ↑↓ para referenciar otra fila (F1, F2…)"
-                         ToolTip="Escriba directamente una operación en cualquier casilla — se calcula sola. Al escribir un operador (+, -, *, /), Arriba/Abajo apunta a otra fila del mismo sector y arma una referencia viva: si esa fila cambia después, el resultado se recalcula solo." />
-                        </StackPanel>
-                    </StackPanel>
-                </DockPanel>
-            </Border>
-        </Grid>
-
-        <!-- Popup autocompletado -->
-        <Popup x:Name="AutocompletePopup" StaysOpen="True"
-           IsOpen="{Binding AutocompleteVisible}"
-           Placement="Bottom"
-           AllowsTransparency="True">
-            <Border Background="{DynamicResource Brush.Surface}"
-              BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
-              CornerRadius="6" MaxHeight="320" MinWidth="480" Width="480">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-
-                    <ListBox x:Name="AutocompleteList" Grid.Row="0"
-                   ItemsSource="{Binding AutocompleteResults}"
-                   BorderThickness="0" Background="Transparent"
-                   PreviewMouseLeftButtonDown="OnAutocompleteMouseLeftButtonDown"
-                   PreviewMouseMove="OnAutocompleteMouseMove"
-                   KeyDown="OnAutocompleteKeyDown"
-                   ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                        <ListBox.ItemContainerStyle>
-                            <Style TargetType="ListBoxItem">
-                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                                <Setter Property="VerticalContentAlignment" Value="Stretch" />
-                                <Setter Property="Padding" Value="0" />
-                                <Setter Property="Margin" Value="3,2" />
-                                <Setter Property="Background" Value="Transparent" />
-                                <Setter Property="BorderBrush" Value="Transparent" />
-                                <Setter Property="BorderThickness" Value="2" />
-                                <Setter Property="FocusVisualStyle" Value="{x:Null}" />
-                                <Setter Property="SnapsToDevicePixels" Value="True" />
-                                <Setter Property="Cursor" Value="Hand" />
-                                <Setter Property="Template">
-                                    <Setter.Value>
-                                        <ControlTemplate TargetType="ListBoxItem">
-                                            <Border x:Name="Bd"
-                              Background="{TemplateBinding Background}"
-                              BorderBrush="{TemplateBinding BorderBrush}"
-                              BorderThickness="{TemplateBinding BorderThickness}"
-                              CornerRadius="4"
-                              Padding="{TemplateBinding Padding}"
-                              SnapsToDevicePixels="True">
-                                                <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
-                                            </Border>
-                                            <ControlTemplate.Triggers>
-                                                <!-- Solo IsSelected: el hover del mouse quieto no pinta azul;
-                             la selección la mueve ↑↓ o un movimiento real del mouse. -->
-                                                <Trigger Property="IsSelected" Value="True">
-                                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
-                                                    <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
-                                                </Trigger>
-                                            </ControlTemplate.Triggers>
-                                        </ControlTemplate>
-                                    </Setter.Value>
-                                </Setter>
-                            </Style>
-                        </ListBox.ItemContainerStyle>
-                        <ListBox.ItemTemplate>
-                            <DataTemplate DataType="{x:Type local:AutocompleteSuggestionVm}">
-                                <!-- Dos sectores fijos: identificación (izq) | precios CLP (der) -->
-                                <Grid Margin="0" MinHeight="44">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" MinWidth="220" />
-                                        <ColumnDefinition Width="128" />
-                                    </Grid.ColumnDefinitions>
-
-                                    <!-- Sector identificación: código + material -->
-                                    <Border Grid.Column="0" Padding="10,6,12,6"
-                          BorderBrush="{DynamicResource Brush.Line}"
-                          BorderThickness="0,0,1,0"
-                          Background="Transparent">
-                                        <StackPanel>
-                                            <DockPanel LastChildFill="True">
-                                                <TextBlock DockPanel.Dock="Right" Text="{Binding Unidad}"
-                                   FontSize="10" Foreground="{DynamicResource Brush.Muted}"
-                                   Margin="8,0,0,0" VerticalAlignment="Center" />
-                                                <TextBlock Text="{Binding Codigo}" FontSize="12" FontWeight="SemiBold"
-                                   Foreground="{DynamicResource Brush.Ink}"
-                                   TextTrimming="CharacterEllipsis" />
-                                            </DockPanel>
-                                            <TextBlock Text="{Binding Descripcion}" FontSize="11"
-                                 Foreground="{DynamicResource Brush.Ink2}"
-                                 TextTrimming="CharacterEllipsis" Margin="0,2,0,0" />
-                                        </StackPanel>
-                                    </Border>
-
-                                    <!-- Sector precios: MAT $ / MO $ alineados -->
-                                    <Border Grid.Column="1" Padding="10,6,10,6"
-                          Background="{DynamicResource Brush.Surface2}">
-                                        <Grid VerticalAlignment="Center">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="44" />
-                                                <ColumnDefinition Width="*" />
-                                            </Grid.ColumnDefinitions>
-                                            <Grid.RowDefinitions>
-                                                <RowDefinition Height="Auto" />
-                                                <RowDefinition Height="Auto" />
-                                            </Grid.RowDefinitions>
-
-                                            <TextBlock Grid.Column="0" Grid.Row="0" Text="MAT $"
-                                 FontSize="11" FontWeight="SemiBold"
-                                 Foreground="{DynamicResource Brush.Muted}" />
-                                            <TextBlock Grid.Column="1" Grid.Row="0"
-                                 Text="{Binding MatClpDisplay, Mode=OneWay}"
-                                 FontSize="11" FontWeight="SemiBold"
-                                 Foreground="{DynamicResource Brush.Ink}"
-                                 HorizontalAlignment="Right"
-                                 FontFamily="{StaticResource Font.Mono}" />
-
-                                            <TextBlock Grid.Column="0" Grid.Row="1" Text="MO $"
-                                 FontSize="10"
-                                 Foreground="{DynamicResource Brush.Muted}"
-                                 Margin="0,3,0,0" />
-                                            <TextBlock Grid.Column="1" Grid.Row="1"
-                                 Text="{Binding MoClpDisplay, Mode=OneWay}"
-                                 FontSize="10"
-                                 Foreground="{DynamicResource Brush.Ink2}"
-                                 HorizontalAlignment="Right"
-                                 FontFamily="{StaticResource Font.Mono}"
-                                 Margin="0,3,0,0" />
-                                        </Grid>
-                                    </Border>
+                                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,2,0,0">
+                                        <StackPanel.Style>
+                                            <Style TargetType="StackPanel">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding EsPartida}" Value="False">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </StackPanel.Style>
+                                        <Ellipse Width="6" Height="6" Margin="0,0,4,0" VerticalAlignment="Center">
+                                            <Ellipse.Style>
+                                                <Style TargetType="Ellipse">
+                                                    <Setter Property="Fill" Value="{DynamicResource Brush.Muted}" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding TieneCubicacion}" Value="True">
+                                                            <Setter Property="Fill" Value="{DynamicResource Brush.Success}" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding HasIssues}" Value="True">
+                                                            <Setter Property="Fill" Value="{DynamicResource Brush.Warning}" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding SinValorizacionGlobal}" Value="True">
+                                                            <Setter Property="Fill" Value="{DynamicResource Brush.Warning}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Ellipse.Style>
+                                        </Ellipse>
+                                        <TextBlock FontSize="9" Foreground="{DynamicResource Brush.Muted}" Text="{Binding StatusBadgeText}" TextTrimming="CharacterEllipsis" MaxWidth="180" />
+                                    </StackPanel>
                                 </Grid>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
-
-                    <Border Grid.Row="1" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,1,0,0" Padding="6,4">
-                        <Button Style="{StaticResource Button.Ghost}" HorizontalAlignment="Stretch"
-                    Content="Crear material nuevo…" Click="OnCreateMaterialClick"
-                    IsEnabled="{Binding CanCreateMaterial}" />
-                    </Border>
                 </Grid>
             </Border>
-        </Popup>
 
-        <!-- Popup autocompletado de unidades de partida (UD) -->
-        <Popup x:Name="UnidadSuggestionsPopup" StaysOpen="False" AllowsTransparency="True" Placement="Bottom">
-            <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}"
-                    BorderThickness="1" CornerRadius="6" Padding="2" MaxHeight="220" MinWidth="140"
-                    SnapsToDevicePixels="True">
-                <ListBox x:Name="UnidadSuggestionsList" BorderThickness="0" Background="Transparent"
-                         PreviewMouseLeftButtonDown="OnUnidadSuggestionClick"
-                         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                    <ListBox.ItemContainerStyle>
-                        <Style TargetType="ListBoxItem">
-                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                            <Setter Property="Padding" Value="6,3" />
-                            <Setter Property="Cursor" Value="Hand" />
-                        </Style>
-                    </ListBox.ItemContainerStyle>
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <DockPanel LastChildFill="True">
-                                <TextBlock Text="{Binding Code}" FontWeight="Bold" FontSize="11" Width="42" Foreground="{DynamicResource Brush.Blue}" />
-                                <TextBlock Text="{Binding Description}" FontSize="11" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" />
-                            </DockPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
-            </Border>
-        </Popup>
+            <!-- GridSplitter izquierdo (Focusable=False para evitar salto de foco involuntario) -->
+            <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" Focusable="False"
+                          Background="{DynamicResource Brush.Line}" Cursor="SizeWE" Margin="7,0,7,0" />
+
+            <!-- ══════════════════════════════════════════════
+             PANEL CENTRAL
+             ══════════════════════════════════════════════ -->
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" MinHeight="120" />
+                    <RowDefinition x:Name="TotalsRow" Height="Auto" />
+                    <RowDefinition x:Name="StatusRow" Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- Barra de navegación de sectores y cabecera de partida activa -->
+                <Border Grid.Row="0" Style="{StaticResource Bar.Formula}" Padding="14,12">
+                    <StackPanel>
+                        <DockPanel LastChildFill="False">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" DockPanel.Dock="Left">
+                                <TextBox x:Name="PartidaCodigoBox" Text="{Binding PartidaCodigo, UpdateSourceTrigger=LostFocus}"
+                                         FontFamily="{StaticResource Font.Mono}" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}"
+                                         Background="Transparent" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+                                         Padding="6,3" Margin="0,0,8,0" MinWidth="55" MaxWidth="120"
+                                         ToolTip="Editar número de ítem de la partida (ej. 1.1) · Enter para guardar"
+                                         PreviewKeyDown="OnPartidaHeaderBoxPreviewKeyDown" />
+                                <TextBox x:Name="PartidaDescripcionBox" Text="{Binding PartidaDescripcion, UpdateSourceTrigger=LostFocus}"
+                                         FontSize="14" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}"
+                                         Background="Transparent" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+                                         Padding="8,3" MinWidth="250" MaxWidth="850"
+                                         ToolTip="Editar nombre/descripción de la partida · Enter para guardar"
+                                         PreviewKeyDown="OnPartidaHeaderBoxPreviewKeyDown" />
+                                <!-- Badge sutil integrado: Alerta de partida sin cantidad o sin unidad global -->
+                                <Border Margin="10,0,0,0" Padding="8,3" CornerRadius="12" Background="#FEF3C7" BorderBrush="#F59E0B" BorderThickness="1"
+                                        VerticalAlignment="Center" ToolTip="{Binding AlertaSinValorizacionGlobalMensaje}"
+                                        Visibility="{Binding HasAlertaSinValorizacionGlobal, Converter={StaticResource BoolToVisibility}}">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="⚠️" FontSize="11" Margin="0,0,5,0" VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding AlertaSinValorizacionGlobalBadgeText}" FontSize="11" FontWeight="SemiBold" Foreground="#92400E" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button Style="{StaticResource Button.Toolbar}" Content="Tomar SC" Command="{Binding OpenScTomarCommand}" ToolTip="Tomar materiales desde Cubicación SC (Alt+L)" />
+                                <Button Style="{StaticResource Button.Toolbar}" Content="Ver / Generar APU" Command="{Binding NavigateToApuCommand}" Margin="0,0,8,0" ToolTip="Abrir herramienta auxiliar de APU para esta partida" />
+                                <!-- Selector de Vista: [ Casillas | Detalle ] -->
+                                <Border Background="{DynamicResource Brush.ChipBg}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="6" Padding="1.5" Margin="0,0,8,0" VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button Content="Casillas" Height="24" Command="{Binding ShowSectorMatrixCommand}" ToolTip="Vista de matriz por sectores (Ctrl+Izquierda/Derecha)">
+                                            <Button.Style>
+                                                <Style TargetType="Button" BasedOn="{StaticResource Button.Ghost}">
+                                                    <Setter Property="FontSize" Value="11" /><Setter Property="FontWeight" Value="SemiBold" /><Setter Property="Padding" Value="10,2" /><Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsSectorMatrixMode}" Value="True">
+                                                            <Setter Property="Background" Value="{DynamicResource Brush.Surface}" /><Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                        <Button Content="Detalle" Height="24" Command="{Binding ShowResourceDetailCommand}" ToolTip="Vista detallada de recursos y materiales">
+                                            <Button.Style>
+                                                <Style TargetType="Button" BasedOn="{StaticResource Button.Ghost}">
+                                                    <Setter Property="FontSize" Value="11" /><Setter Property="FontWeight" Value="SemiBold" /><Setter Property="Padding" Value="10,2" /><Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsDetailMode}" Value="True">
+                                                            <Setter Property="Background" Value="{DynamicResource Brush.Surface}" /><Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                    </StackPanel>
+                                </Border>
+
+                                <Button Content="Buscar (Ctrl+F)" Click="OnOpenSearchClick" Style="{StaticResource Button.Toolbar}" ToolTip="Buscar en tabla y resaltar coincidencias (Ctrl+F / F3)" />
+                                <Button Style="{StaticResource Button.Ghost}" Content="⋯" Height="28" Padding="12,4" ToolTip="Duplicar, reemplazar, autocompletar, hoja de cubicación y zonas" Click="OnMoreActionsClick">
+                                    <Button.ContextMenu>
+                                        <ContextMenu>
+                                            <MenuItem Header="Duplicar fila (Ctrl+D)" Command="{Binding DuplicateRowCommand}" ToolTip="Duplicar la fila seleccionada con todas sus mediciones y fórmulas" />
+                                            <MenuItem Header="Buscar y Reemplazar Material… (Ctrl+H)" Command="{Binding OpenBatchReplaceCommand}" ToolTip="Reemplazar un material en todas las partidas manteniendo intactas las mediciones y fórmulas" />
+                                            <MenuItem Header="Cambio de Línea o Familia Masivo… (Ctrl+Shift+H)" Command="{Binding OpenFamilyBatchReplaceCommand}" ToolTip="Ingeniería de valor: reemplazar familias completas de materiales con auto-mapeo del banco de precios" />
+                                            <Separator />
+                                            <MenuItem Header="Autocompletar unidad y cantidad" Command="{Binding AutocompletarUnidadYCantidadCommand}" ToolTip="Asignar a esta partida la unidad y cantidad del primer material cubicado" />
+                                            <MenuItem Header="Aplicar cantidad a la partida" Command="{Binding AplicarCantidadALaPartidaCommand}" ToolTip="Copia la cantidad global al recurso maestro cuando la partida tiene componentes. No toca el resto de los materiales." />
+                                            <MenuItem Header="Autocompletar unidad y cantidad en todo el proyecto…" Command="{Binding AutocompletarUnidadYCantidadTodasCommand}" ToolTip="Asignar la unidad y cantidad del primer material a todas las partidas del proyecto que no tengan valorización global" />
+                                            <Separator />
+                                            <MenuItem Header="Generar / Ver APU de esta partida" Command="{Binding NavigateToApuCommand}" ToolTip="Abrir herramienta auxiliar de análisis de precios unitarios para la partida activa" />
+                                            <MenuItem Header="Hoja de Cubicación" Command="{Binding OpenHojaCubicacionCommand}" ToolTip="Herramienta de apoyo para cubicar: agregue ítems y sume sus mediciones antes de trasladarlas a la partida" />
+                                            <MenuItem Header="Cargar Plantilla…" Command="{Binding AplicarConjuntoCommand}" ToolTip="Cargar una plantilla creada en la pestaña Plantillas sobre la partida seleccionada" />
+                                            <MenuItem Header="Guardar como Plantilla…" Command="{Binding CrearConjuntoDesdePartidaCommand}" ToolTip="Crear una plantilla reutilizable en tu biblioteca global a partir de los materiales y fórmulas de esta partida" />
+                                            <MenuItem Header="Zonas…" Command="{Binding ManageZonasCommand}" ToolTip="Definir las zonas del proyecto (nombres, orden y estado de los sectores)" />
+                                        </ContextMenu>
+                                    </Button.ContextMenu>
+                                </Button>
+                            </StackPanel>
+                        </DockPanel>
+
+                        <!-- Observación colapsable (cerrada por defecto) -->
+                        <Expander Margin="0,8,0,0" IsExpanded="False" Visibility="{Binding HasPartida, Converter={StaticResource BoolToVisibility}}">
+                            <Expander.Header>
+                                <TextBlock Text="Observación" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" />
+                            </Expander.Header>
+                            <Border Margin="0,6,0,0" Padding="8,5" CornerRadius="{StaticResource Radius.Card}" Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1">
+                                <StackPanel Orientation="Vertical">
+                                    <DockPanel LastChildFill="True">
+                                        <TextBlock DockPanel.Dock="Left" Text="Justificación:" FontSize="11" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{DynamicResource Brush.Ink}" />
+                                        <Button DockPanel.Dock="Right" Style="{StaticResource Button.Ghost}" Content="✕" FontSize="11" Padding="6,2" Margin="4,0,0,0"
+                                                Click="OnClearObservationClick" Visibility="{Binding HasPartidaNote, Converter={StaticResource BoolToVisibility}}" ToolTip="Eliminar observación de la partida" />
+                                        <Button x:Name="RecentObservationsBtn" DockPanel.Dock="Right" Style="{StaticResource Button.Secondary}" Content="Memoria ▼" FontSize="10.5" Padding="6,2" Margin="4,0,0,0"
+                                                Click="OnRecentObservationsClick" ToolTip="Ver historial de observaciones y justificaciones guardadas" />
+                                        <TextBox x:Name="MotivoNoCubicarBox" Text="{Binding MotivoNoCubicarText, UpdateSourceTrigger=PropertyChanged}"
+                                                 VerticalContentAlignment="Center" Padding="6,3" FontSize="11.5" MinHeight="26"
+                                                 BorderThickness="1" BorderBrush="{DynamicResource Brush.InputBorder}" Background="{DynamicResource Brush.Surface}"
+                                                 ToolTip="Observación o justificación formal de la partida · Enter para guardar · Ctrl+Shift+E para enfocar rápido" />
+                                    </DockPanel>
+
+                                    <WrapPanel Orientation="Horizontal" Margin="0,5,0,0">
+                                        <TextBlock Text="Rápido:" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                                        <Button Style="{StaticResource Button.Ghost}" Content="Cía. Eléctrica" FontSize="10" Padding="5,1" Margin="0,0,4,2" Click="OnChipClick" Tag="Por compañía eléctrica" ToolTip="Asignar 'Por compañía eléctrica'" />
+                                        <Button Style="{StaticResource Button.Ghost}" Content="Incluido en ítem..." FontSize="10" Padding="5,1" Margin="0,0,4,2" Click="OnChipClick" Tag="Se incluye en ítem" ToolTip="Asignar 'Se incluye en ítem'" />
+                                        <Button Style="{StaticResource Button.Ghost}" Content="Por Mandante" FontSize="10" Padding="5,1" Margin="0,0,4,2" Click="OnChipClick" Tag="Suministrado por Mandante" ToolTip="Asignar 'Suministrado por Mandante'" />
+                                        <Button Style="{StaticResource Button.Ghost}" Content="Valor Proforma" FontSize="10" Padding="5,1" Margin="0,0,4,2" Click="OnChipClick" Tag="Valor proforma" ToolTip="Asignar 'Valor proforma'" />
+                                        <Button Style="{StaticResource Button.Ghost}" Content="No Considerado" FontSize="10" Padding="5,1" Margin="0,0,4,2" Click="OnChipClick" Tag="No considerado en bases técnicas" ToolTip="Asignar 'No considerado en bases técnicas'" />
+                                        <Button Style="{StaticResource Button.Ghost}" Content="Opcional" FontSize="10" Padding="5,1" Margin="0,0,4,2" Click="OnChipClick" Tag="Alternativa / Opcional" ToolTip="Asignar 'Alternativa / Opcional'" />
+                                    </WrapPanel>
+                                </StackPanel>
+                            </Border>
+                        </Expander>
+                    </StackPanel>
+                </Border>
+
+                <!-- Fila de la partida (modo Detalle) -->
+                <Border Grid.Row="1" Background="{DynamicResource Brush.ActiveRowBg}" BorderBrush="{DynamicResource Brush.Blue}" BorderThickness="0,0,0,2"
+                        ClipToBounds="True" Visibility="{Binding IsDetailHeaderVisible, Converter={StaticResource BoolToVisibility}}">
+                    <DockPanel x:Name="ItemRowHost" LastChildFill="True" Height="30">
+                        <DockPanel.RenderTransform>
+                            <TranslateTransform X="0" />
+                        </DockPanel.RenderTransform>
+                        <!-- Código de la partida (ej. 2.1) -->
+                        <Border x:Name="ItemRowCodigoCell" DockPanel.Dock="Left" Padding="8,0" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0">
+                            <TextBlock Text="{Binding PartidaCodigo}" FontSize="11.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" VerticalAlignment="Center" />
+                        </Border>
+                        <!-- Descripción / nombre de la partida (ej. Circuitos) -->
+                        <Border x:Name="ItemRowDescCell" DockPanel.Dock="Left" Padding="8,0" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0">
+                            <TextBlock Text="{Binding PartidaDescripcion}" FontSize="11.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                        </Border>
+                        <!-- Unidad de la partida — editable -->
+                        <Border x:Name="ItemRowUiCell" DockPanel.Dock="Left" Padding="1,2" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsPartidaUnidadMissing}" Value="True">
+                                            <Setter Property="Background" Value="#FEF3C7" /><Setter Property="BorderBrush" Value="#F59E0B" /><Setter Property="BorderThickness" Value="1,1,1,1" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <TextBox x:Name="UnidadHeaderBox" Text="{Binding PartidaUnidadText, UpdateSourceTrigger=LostFocus}"
+                                     IsReadOnly="{Binding IsReadOnly}" FontFamily="{StaticResource Font.Ui}" FontSize="11" FontWeight="Bold"
+                                     HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource Brush.Ink}"
+                                     GotFocus="OnUnidadHeaderBoxGotFocus" LostFocus="OnUnidadHeaderBoxLostFocus" PreviewKeyDown="OnUnidadHeaderBoxPreviewKeyDown" TextChanged="OnUnidadHeaderBoxTextChanged"
+                                     ToolTip="Unidad de la partida, la misma del itemizado. No cambia la unidad de ningún material." />
+                        </Border>
+                        <!-- Cantidad oficial de la partida — número o fórmula tipo Excel (R1+R2...) -->
+                        <Border x:Name="ItemRowCantCell" DockPanel.Dock="Left" Padding="1,2" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="{DynamicResource Brush.SuccessBg}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsPartidaCantidadMissing}" Value="True">
+                                            <Setter Property="Background" Value="#FEF3C7" /><Setter Property="BorderBrush" Value="#F59E0B" /><Setter Property="BorderThickness" Value="1,1,1,1" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <TextBox x:Name="CantHeaderBox" Text="{Binding PartidaCantidadText, UpdateSourceTrigger=LostFocus}"
+                                     IsReadOnly="{Binding IsReadOnly}" FontFamily="{StaticResource Font.Mono}" FontSize="12" FontWeight="Bold"
+                                     HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource Brush.Success}"
+                                     GotFocus="OnCantHeaderBoxGotFocus" LostFocus="OnCantHeaderBoxLostFocus" PreviewKeyDown="OnCantHeaderBoxPreviewKeyDown" PreviewTextInput="OnCantHeaderBoxPreviewTextInput"
+                                     ToolTip="{Binding PartidaCantidadToolTip}" />
+                        </Border>
+                        <!-- Etiquetas de columna (Detalle) -->
+                        <Border x:Name="ItemRowMatCell" DockPanel.Dock="Left" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0" ToolTip="Precio unitario de material en CLP (lista de precios)">
+                            <TextBlock Text="MAT $" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                        </Border>
+                        <Border x:Name="ItemRowMoCell" DockPanel.Dock="Left" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0" ToolTip="Precio unitario de mano de obra en CLP (lista de precios)">
+                            <TextBlock Text="MO $" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                        </Border>
+                        <Border x:Name="ItemRowTotalCell" DockPanel.Dock="Left" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0" ToolTip="MAT $ + MO $ (precio unitario total en CLP)">
+                            <TextBlock Text="$ UNIT" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                        </Border>
+                        <Border x:Name="ItemRowSubtotalCell" DockPanel.Dock="Left" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0" ToolTip="$ UNIT × cantidad del recurso (CLP)">
+                            <TextBlock Text="SUBTOTAL" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                        </Border>
+                        <Border x:Name="ItemRowGgUtCell" DockPanel.Dock="Left" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0">
+                            <TextBlock Text="GG+UT" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                        </Border>
+                        <Border x:Name="ItemRowUfUnitCell" DockPanel.Dock="Left" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0">
+                            <TextBlock Text="UF UNIT" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                        </Border>
+                        <Border x:Name="ItemRowSubtotalUfCell" DockPanel.Dock="Left" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0">
+                            <TextBlock Text="SUBTOTAL UF" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                        </Border>
+                        <!-- Observación de la partida -->
+                        <Border Background="{DynamicResource Brush.AmberSoft}" Padding="4,2">
+                            <TextBox x:Name="ObservacionHeaderBox" Text="{Binding PartidaObservacionesText, UpdateSourceTrigger=PropertyChanged}"
+                                     IsReadOnly="{Binding IsReadOnly}" FontFamily="{StaticResource Font.Ui}" FontSize="11" FontWeight="SemiBold"
+                                     VerticalContentAlignment="Center" Padding="4,0" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource Brush.Ink}"
+                                     GotFocus="OnPartidaFieldGotFocus" PreviewKeyDown="OnPartidaFieldPreviewKeyDown"
+                                     ToolTip="Observación de la partida para el Resumen/oferta. Ctrl+←/→ para moverse entre Unidad, Cantidad y Observaciones." />
+                        </Border>
+                    </DockPanel>
+                </Border>
+
+                <!-- DataGrid de recursos -->
+                <Grid Grid.Row="2">
+                    <!-- Empty state contextual cuando no hay partida seleccionada -->
+                    <ctrl:EmptyStateControl Visibility="{Binding HasPartida, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}"
+                                            HorizontalAlignment="Center" VerticalAlignment="Center" Title="Sin partida seleccionada"
+                                            Description="Seleccione una partida en el panel lateral para ver sus mediciones y recursos, o cree una nueva partida.">
+                        <ctrl:EmptyStateControl.Actions>
+                            <WrapPanel HorizontalAlignment="Center">
+                                <Button Style="{StaticResource Button.Primary}" Content="Ir a Itemizado" Command="{Binding NavigateToItemizadoCommand}" Margin="4" />
+                                <Button Style="{StaticResource Button.Secondary}" Content="+ Crear Partida" Command="{Binding AddPartidaCommand}" Margin="4" />
+                            </WrapPanel>
+                        </ctrl:EmptyStateControl.Actions>
+                    </ctrl:EmptyStateControl>
+
+                    <DataGrid x:Name="ResourceGrid"
+                              Visibility="{Binding HasPartida, Converter={StaticResource BoolToVisibility}}"
+                              Style="{StaticResource DataGrid.Workspace.Excel}"
+                              infra:DataGridExcelNavigation.Enable="True" infra:DataGridExcelNavigation.HandlePasteByHost="True"
+                              ItemsSource="{Binding Rows}" IsReadOnly="{Binding IsReadOnly}"
+                              CanUserAddRows="False" CanUserDeleteRows="False" CanUserSortColumns="False" CanUserReorderColumns="False"
+                              AutoGenerateColumns="False" EnableRowVirtualization="True" EnableColumnVirtualization="True"
+                              VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"
+                              VirtualizingPanel.IsContainerVirtualizable="True"
+                              VirtualizingPanel.ScrollUnit="Pixel" VirtualizingPanel.CacheLength="10,10" VirtualizingPanel.CacheLengthUnit="Item"
+                              ScrollViewer.CanContentScroll="True" ScrollViewer.IsDeferredScrollingEnabled="False"
+                              ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto"
+                              RowHeight="28" ColumnHeaderHeight="32" ColumnHeaderStyle="{StaticResource DataGridColumnHeader.CasillasGeneral}"
+                              FrozenColumnCount="5"
+                              BeginningEdit="OnGridBeginningEdit" PreparingCellForEdit="OnGridPreparingCellForEdit" CellEditEnding="OnGridCellEditEnding"
+                              PreviewKeyDown="OnGridPreviewKeyDown" PreviewTextInput="OnResourceGridPreviewTextInput"
+                              PreviewMouseLeftButtonDown="OnResourceGridPreviewMouseLeftButtonDown" ContextMenuOpening="OnResourceGridContextMenuOpening"
+                              SelectionChanged="OnGridSelectionChanged" CurrentCellChanged="OnGridCurrentCellChanged">
+                        <DataGrid.Columns>
+                            <!-- # / indicador error -->
+                            <DataGridTemplateColumn x:Name="IndexColumn" Header="#" Width="44" IsReadOnly="True" CanUserResize="False" CanUserSort="False" HeaderStyle="{StaticResource DataGridColumnHeader.Center}">
+                                <DataGridTemplateColumn.CellStyle>
+                                    <Style TargetType="DataGridCell" BasedOn="{StaticResource DataGridCell.Excel}">
+                                        <Setter Property="Focusable" Value="False" /><Setter Property="IsHitTestVisible" Value="False" />
+                                        <Setter Property="BorderBrush" Value="Transparent" /><Setter Property="Background" Value="Transparent" />
+                                        <Style.Triggers>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter Property="BorderBrush" Value="Transparent" /><Setter Property="Background" Value="Transparent" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGridTemplateColumn.CellStyle>
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Grid>
+                                            <TextBlock HorizontalAlignment="Right" VerticalAlignment="Center" FontSize="11" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,4,0" Text="{Binding RowNumberDisplay}">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding HasError}" Value="True">
+                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                            <TextBlock Text="!" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource Brush.Red}"
+                                                       ToolTip="{Binding ErrorMessage}" Visibility="{Binding HasError, Converter={StaticResource BoolToVisibility}}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            <!-- Código -->
+                            <DataGridTextColumn x:Name="CodigoColumn" Header="CÓDIGO" Binding="{Binding Codigo, UpdateSourceTrigger=LostFocus}" Width="110">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding DataContext.IsDetailMode, RelativeSource={RelativeSource AncestorType=DataGrid}}" Value="True">
+                                                <Setter Property="Foreground" Value="Transparent" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding CodigoCellError, Converter={StaticResource StringNotEmptyToBool}}" Value="True">
+                                                <Setter Property="Background" Value="{DynamicResource Brush.RedSoft}" /><Setter Property="ToolTip" Value="{Binding CodigoCellError}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                                <DataGridTextColumn.EditingElementStyle>
+                                    <Style TargetType="TextBox" BasedOn="{StaticResource DataGrid.CellEditTransparent}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding CodigoCellError, Converter={StaticResource StringNotEmptyToBool}}" Value="True">
+                                                <Setter Property="BorderBrush" Value="{DynamicResource Brush.Red}" /><Setter Property="BorderThickness" Value="1" /><Setter Property="ToolTip" Value="{Binding CodigoCellError}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGridTextColumn.EditingElementStyle>
+                            </DataGridTextColumn>
+
+                            <!-- Descripción -->
+                            <DataGridTextColumn x:Name="DescripcionColumn" Header="DESCRIPCIÓN" Binding="{Binding Descripcion, UpdateSourceTrigger=LostFocus}" Width="260" MinWidth="180">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding DescripcionCellError, Converter={StaticResource StringNotEmptyToBool}}" Value="True">
+                                                <Setter Property="Background" Value="{DynamicResource Brush.RedSoft}" /><Setter Property="ToolTip" Value="{Binding DescripcionCellError}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                                <DataGridTextColumn.EditingElementStyle>
+                                    <Style TargetType="TextBox" BasedOn="{StaticResource DataGrid.CellEditTransparent}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding DescripcionCellError, Converter={StaticResource StringNotEmptyToBool}}" Value="True">
+                                                <Setter Property="Tag" Value="error" /><Setter Property="BorderBrush" Value="{DynamicResource Brush.Red}" /><Setter Property="BorderThickness" Value="1" /><Setter Property="ToolTip" Value="{Binding DescripcionCellError}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGridTextColumn.EditingElementStyle>
+                            </DataGridTextColumn>
+
+                            <!-- Unidad del recurso -->
+                            <DataGridTextColumn x:Name="UnidadColumn" Header="UD" Binding="{Binding Unidad, UpdateSourceTrigger=LostFocus}" Width="48" MinWidth="42" IsReadOnly="True">
+                                <DataGridTextColumn.CellStyle>
+                                    <Style TargetType="DataGridCell" BasedOn="{StaticResource DataGridCell.Excel}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsFormulaPickTarget}" Value="True">
+                                                <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" /><Setter Property="BorderThickness" Value="2" /><Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGridTextColumn.CellStyle>
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding UnidadCellError, Converter={StaticResource StringNotEmptyToBool}}" Value="True">
+                                                <Setter Property="Background" Value="{DynamicResource Brush.RedSoft}" /><Setter Property="ToolTip" Value="{Binding UnidadCellError}" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsFormulaPickTarget}" Value="True">
+                                                <Setter Property="FontWeight" Value="Bold" /><Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                                <DataGridTextColumn.EditingElementStyle>
+                                    <Style TargetType="TextBox" BasedOn="{StaticResource DataGrid.CellErrorTextBox}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding UnidadCellError, Converter={StaticResource StringNotEmptyToBool}}" Value="True">
+                                                <Setter Property="Tag" Value="error" /><Setter Property="ToolTip" Value="{Binding UnidadCellError}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGridTextColumn.EditingElementStyle>
+                            </DataGridTextColumn>
+
+                            <!-- Cantidad -->
+                            <DataGridTextColumn x:Name="CantidadColumn" Header="CANT fx" Binding="{Binding CantidadDisplay}" Width="74" MinWidth="66" IsReadOnly="True" HeaderStyle="{StaticResource DataGridColumnHeader.Formula}">
+                                <DataGridTextColumn.CellStyle>
+                                    <Style TargetType="DataGridCell" BasedOn="{StaticResource DataGridCell.Excel}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsCantPickTarget}" Value="True">
+                                                <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" /><Setter Property="BorderThickness" Value="2" /><Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGridTextColumn.CellStyle>
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="HorizontalAlignment" Value="Right" /><Setter Property="Margin" Value="0,0,4,0" /><Setter Property="Foreground" Value="{DynamicResource Brush.CellFormulaInk}" /><Setter Property="FontFamily" Value="{StaticResource Font.Mono}" /><Setter Property="ToolTip" Value="Cantidad calculada desde la matriz de sectores o fórmula de medición" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HasFormula}" Value="True">
+                                                <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" /><Setter Property="FontStyle" Value="Italic" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding CantidadCellError, Converter={StaticResource StringNotEmptyToBool}}" Value="True">
+                                                <Setter Property="Background" Value="{DynamicResource Brush.RedSoft}" /><Setter Property="ToolTip" Value="{Binding CantidadCellError}" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsCantPickTarget}" Value="True">
+                                                <Setter Property="FontWeight" Value="Bold" /><Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+
+                            <!-- Precios y Subtotales (Detalle) -->
+                            <DataGridTextColumn x:Name="MaterialPriceColumn" Header="MAT $" Binding="{Binding MatClp, UpdateSourceTrigger=LostFocus, StringFormat=N0}" HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" Width="70">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource Text.Cell.Editable}">
+                                        <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" /><Setter Property="ToolTip" Value="Precio unitario de material (editable)" />
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn x:Name="LaborPriceColumn" Header="MO $" Binding="{Binding MoClp, UpdateSourceTrigger=LostFocus, StringFormat=N0}" HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" Width="70">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource Text.Cell.Editable}">
+                                        <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" /><Setter Property="ToolTip" Value="Precio unitario de mano de obra (editable)" />
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn x:Name="TotalPriceColumn" Header="$ UNIT fx" Binding="{Binding PrecioUnitClpDisplay}" HeaderStyle="{StaticResource DataGridColumnHeader.Formula}" Width="80" IsReadOnly="True">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource Text.Cell.Formula}">
+                                        <Setter Property="FontWeight" Value="SemiBold" /><Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" /><Setter Property="ToolTip" Value="$ UNIT = MAT $ + MO $ (calculado)" />
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn x:Name="SubtotalColumn" Header="SUBTOTAL $ fx" Binding="{Binding SubtotalClpDisplay}" HeaderStyle="{StaticResource DataGridColumnHeader.Formula}" Width="96" IsReadOnly="True">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource Text.Cell.Formula}">
+                                        <Setter Property="FontWeight" Value="SemiBold" /><Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" /><Setter Property="ToolTip" Value="Subtotal CLP = $ UNIT × Cantidad (calculado)" />
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn x:Name="GgUtColumn" Header="GG+UT fx" Binding="{Binding GgUtFactor, StringFormat=N2}" HeaderStyle="{StaticResource DataGridColumnHeader.Formula}" Width="64" IsReadOnly="True">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource Text.Cell.Formula}">
+                                        <Setter Property="Foreground" Value="{DynamicResource Brush.CellFormulaInk}" /><Setter Property="ToolTip" Value="Factor de Gastos Generales y Utilidad aplicado" />
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn x:Name="UfUnitColumn" Header="UF UNIT fx" Binding="{Binding UfUnitCalculadoDisplay}" HeaderStyle="{StaticResource DataGridColumnHeader.Formula}" Width="82" IsReadOnly="True">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource Text.Cell.Formula}">
+                                        <Setter Property="FontWeight" Value="SemiBold" /><Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" /><Setter Property="ToolTip" Value="UF UNIT = ($ UNIT × GG+UT) / Valor UF (calculado)" />
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn x:Name="SubtotalUfColumn" Header="SUBTOTAL UF fx" Binding="{Binding UfSubtotalCalculadoDisplay}" HeaderStyle="{StaticResource DataGridColumnHeader.Formula}" Width="96" IsReadOnly="True">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource Text.Cell.Formula}">
+                                        <Setter Property="FontWeight" Value="SemiBold" /><Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" /><Setter Property="ToolTip" Value="Subtotal UF = UF UNIT × Cantidad (calculado)" />
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+
+                            <!-- Observaciones (nota interna del recurso) -->
+                            <ctrl:DisplayBindingTextColumn x:Name="ObservacionesColumn" Header="OBSERVACIONES"
+                                                          Binding="{Binding NotaInterna, UpdateSourceTrigger=LostFocus}"
+                                                          DisplayBinding="{Binding NotaInterna, Converter={StaticResource EmptyToPlaceholder}, ConverterParameter='Nota interna (no sale en la oferta)'}"
+                                                          Width="*" MinWidth="160">
+                                <DataGridTextColumn.CellStyle>
+                                    <Style TargetType="DataGridCell" BasedOn="{StaticResource DataGridCell.Excel}">
+                                        <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+                                    </Style>
+                                </DataGridTextColumn.CellStyle>
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" /><Setter Property="FontStyle" Value="Italic" /><Setter Property="FontSize" Value="10.5" /><Setter Property="TextTrimming" Value="CharacterEllipsis" /><Setter Property="Margin" Value="6,0" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding NotaInterna, Converter={StaticResource StringNotEmptyToBool}}" Value="True">
+                                                <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" /><Setter Property="FontStyle" Value="Normal" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </ctrl:DisplayBindingTextColumn>
+                        </DataGrid.Columns>
+
+                        <!-- Row style con error -->
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow" BasedOn="{StaticResource DataGridRow.Excel}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasError}" Value="True">
+                                        <Setter Property="Background" Value="{DynamicResource Brush.RedSoft}" /><Setter Property="ToolTip" Value="{Binding ErrorMessage}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.RowStyle>
+                    </DataGrid>
+
+                    <!-- Skeleton Overlay -->
+                    <ctrl:SkeletonOverlayControl Panel.ZIndex="10" Message="Cargando partida…" Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibility}}" />
+
+                    <!-- Buscador Flotante In-Grid (Ctrl+F / F3) -->
+                    <ctrl:DataGridSearchOverlay x:Name="ResourceSearchOverlay" TargetGrid="{Binding ElementName=ResourceGrid}"
+                                                HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,8,18,0" Panel.ZIndex="100" />
+                </Grid>
+
+                <!-- Totales extraídos a componente dedicado -->
+                <local:CubicacionTotalsBarControl x:Name="TotalsBar" Grid.Row="3"
+                                                  Visibility="{Binding HasPartida, Converter={StaticResource BoolToVisibility}}" />
+
+                <!-- Barra de estado extraída a componente dedicado -->
+                <local:CubicacionStatusBarControl x:Name="StatusBar" Grid.Row="4"
+                                                  Visibility="{Binding HasPartida, Converter={StaticResource BoolToVisibility}}" />
+            </Grid>
+
+            <!-- Popup autocompletado -->
+            <Popup x:Name="AutocompletePopup" StaysOpen="True" IsOpen="{Binding AutocompleteVisible}" Placement="Bottom" AllowsTransparency="True">
+                <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="6" MaxHeight="320" MinWidth="480" Width="480">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <ListBox x:Name="AutocompleteList" Grid.Row="0" ItemsSource="{Binding AutocompleteResults}"
+                                 BorderThickness="0" Background="Transparent"
+                                 PreviewMouseLeftButtonDown="OnAutocompleteMouseLeftButtonDown" PreviewMouseMove="OnAutocompleteMouseMove"
+                                 KeyDown="OnAutocompleteKeyDown" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch" /><Setter Property="VerticalContentAlignment" Value="Stretch" />
+                                    <Setter Property="Padding" Value="0" /><Setter Property="Margin" Value="3,2" />
+                                    <Setter Property="Background" Value="Transparent" /><Setter Property="BorderBrush" Value="Transparent" /><Setter Property="BorderThickness" Value="2" />
+                                    <Setter Property="FocusVisualStyle" Value="{x:Null}" /><Setter Property="SnapsToDevicePixels" Value="True" /><Setter Property="Cursor" Value="Hand" />
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ListBoxItem">
+                                                <Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                                        BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4" Padding="{TemplateBinding Padding}" SnapsToDevicePixels="True">
+                                                    <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsSelected" Value="True">
+                                                        <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+                                                        <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate DataType="{x:Type local:AutocompleteSuggestionVm}">
+                                    <Grid Margin="0" MinHeight="44">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" MinWidth="220" />
+                                            <ColumnDefinition Width="128" />
+                                        </Grid.ColumnDefinitions>
+                                        <!-- Sector identificación: código + material -->
+                                        <Border Grid.Column="0" Padding="10,6,12,6" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,1,0" Background="Transparent">
+                                            <StackPanel>
+                                                <DockPanel LastChildFill="True">
+                                                    <TextBlock DockPanel.Dock="Right" Text="{Binding Unidad}" FontSize="10" Foreground="{DynamicResource Brush.Muted}" Margin="8,0,0,0" VerticalAlignment="Center" />
+                                                    <TextBlock Text="{Binding Codigo}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink}" TextTrimming="CharacterEllipsis" />
+                                                </DockPanel>
+                                                <TextBlock Text="{Binding Descripcion}" FontSize="11" Foreground="{DynamicResource Brush.Ink2}" TextTrimming="CharacterEllipsis" Margin="0,2,0,0" />
+                                            </StackPanel>
+                                        </Border>
+                                        <!-- Sector precios: MAT $ / MO $ alineados -->
+                                        <Border Grid.Column="1" Padding="10,6,10,6" Background="{DynamicResource Brush.Surface2}">
+                                            <Grid VerticalAlignment="Center">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="44" /><ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                                                </Grid.RowDefinitions>
+                                                <TextBlock Grid.Column="0" Grid.Row="0" Text="MAT $" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" />
+                                                <TextBlock Grid.Column="1" Grid.Row="0" Text="{Binding MatClpDisplay, Mode=OneWay}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink}" HorizontalAlignment="Right" FontFamily="{StaticResource Font.Mono}" />
+                                                <TextBlock Grid.Column="0" Grid.Row="1" Text="MO $" FontSize="10" Foreground="{DynamicResource Brush.Muted}" Margin="0,3,0,0" />
+                                                <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding MoClpDisplay, Mode=OneWay}" FontSize="10" Foreground="{DynamicResource Brush.Ink2}" HorizontalAlignment="Right" FontFamily="{StaticResource Font.Mono}" Margin="0,3,0,0" />
+                                            </Grid>
+                                        </Border>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+
+                        <Border Grid.Row="1" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,1,0,0" Padding="6,4">
+                            <Button Style="{StaticResource Button.Ghost}" HorizontalAlignment="Stretch" Content="Crear material nuevo…"
+                                    Click="OnCreateMaterialClick" IsEnabled="{Binding CanCreateMaterial}" />
+                        </Border>
+                    </Grid>
+                </Border>
+            </Popup>
+
+            <!-- Popup autocompletado de unidades de partida (UD) -->
+            <Popup x:Name="UnidadSuggestionsPopup" StaysOpen="False" AllowsTransparency="True" Placement="Bottom">
+                <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="6" Padding="2" MaxHeight="220" MinWidth="140" SnapsToDevicePixels="True">
+                    <ListBox x:Name="UnidadSuggestionsList" BorderThickness="0" Background="Transparent" PreviewMouseLeftButtonDown="OnUnidadSuggestionClick" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" /><Setter Property="Padding" Value="6,3" /><Setter Property="Cursor" Value="Hand" />
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <DockPanel LastChildFill="True">
+                                    <TextBlock Text="{Binding Code}" FontWeight="Bold" FontSize="11" Width="42" Foreground="{DynamicResource Brush.Blue}" />
+                                    <TextBlock Text="{Binding Description}" FontSize="11" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" />
+                                </DockPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Border>
+            </Popup>
         </Grid>
     </Grid>
 </UserControl>

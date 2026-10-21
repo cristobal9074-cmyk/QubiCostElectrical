@@ -11,7 +11,10 @@ namespace QubiCostElectrical.Tests.Fixtures.MigrationCorpus;
 /// </summary>
 public static class PEL039ReferenceProjectFixture
 {
-    public const string LiveDefaultPath = @"C:\Users\cristobal1\Documents\Presupuestos Electricos\PEL039A2026 ABIERTO.qce";
+    // Antes esta clase exponía LiveDefaultPath con la ruta absoluta del archivo de obra
+    // en el disco del usuario. Era código muerto y una vía para que la suite dependiera
+    // (y escribiera) sobre datos reales. El acceso a proyectos de obra vive ahora en
+    // QubiCostElectrical.Tests.Fixtures.LiveProjectGate, cerrado por defecto.
 
     public static ProjectFileData CreateSyntheticReferenceProject()
     {

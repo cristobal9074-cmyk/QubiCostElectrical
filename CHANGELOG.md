@@ -2,6 +2,44 @@
 
 Las versiones siguen el formato `MAJOR.MINOR.PATCH` y corresponden a `Directory.Build.props` + `VersionSuffix`.
 
+## No publicado
+
+### Hermeticidad de la suite de tests y recuperación de presupuestos de obra (2026-10-21)
+- **Incidente corregido**: `FactorAjusteMoServiceTests.SyncAndVerifyPel039A2026Prueba2` era en
+  realidad un script de calibración de un presupuesto real, marcado como `[Fact]`. En cada
+  `dotnet test` reescribía `PEL039A2026 ABIERTO.qce` y `PEL039A2026 PRUEBA NUMERO 2.qce` con
+  `SaveSnapshot` completo: borraba 6 gastos operacionales, forzaba `MoTotalClp`,
+  `MoDirectaClp` e `IndiceMoFa`, y recalculaba el precio de M.O. de los 82 materiales.
+  En CI el test pasaba en verde por accidente (la ruta no existe en el runner, así que hacía
+  early return), lo que ocultaba el problema justo donde debía detectarse.
+- **Suite hermética**: el test destructivo salió de la suite y su lógica vive ahora en
+  `tools/LiveProjectCalibration`, herramienta manual *dry-run* por defecto, con `--apply`
+  explícito y copia `.precalibration` del destino.
+- **Compuerta de acceso a obra real** (`tests/.../Fixtures/LiveProjectGate.cs`): cerrada por
+  defecto, se abre con `QUBI_LIVE_PROJECTS=1` (+ `QUBI_LIVE_PROJECTS_ROOT` y
+  `QUBI_LIVE_EXCEL_ROOT`). Resuelve rutas con `Environment.SpecialFolder`, sin literales de
+  usuario. Los tests que necesitan un `.qce` de obra trabajan sobre copia en temporal.
+- **Guard de build** (`tests/ArchitectureTests/NoLivePathGuardTest.cs`): falla la compilación
+  si reaparece una ruta absoluta de máquina del desarrollador dentro de `tests/`.
+- **Recuperación de datos**: `PEL039A2026 ABIERTO.qce` recuperó sus 8 gastos operacionales
+  (tabla copiada desde el respaldo de la app, conservando 1424 entradas de auditoría) y
+  `PEL039A2026 PRUEBA NUMERO 2.qce` se restauró íntegro desde el respaldo del 19-10 18:13
+  (recupera el material `DT-001 PLANOS ASBUILR`, `MoTotalClp = 260.212.500`,
+  `IndiceMoFa = 63,04` y 1956 entradas de auditoría). Consecuencia: la paridad de margen
+  contra el Excel de referencia volvió al rango esperado (12%–14%; el Excel da 13,05%),
+  tras registrar 9,47% / 9,91% con el estado alterado.
+- Sin cambios en SQLite, migraciones, cálculos ni en las fórmulas de cierre.
+
+### Rediseño del diálogo "Nuevo proyecto" (2026-10-20)
+- **Interfaz nueva en dos columnas**: ventana de 520×680 → 980×720 con hero, pasos visibles (1 · Identidad, 2 · Plantilla, 3 · Archivo) y panel lateral de resumen en vivo (nombre, cliente, ubicación, moneda, plantilla, norma, carpeta y archivo final).
+- **Código de proyecto autogenerado**: `PEL###A{año}` secuencial calculado sobre los `.qce` de la carpeta destino (`NewProjectDialog.GenerateNextProjectCode`), editable, con botones Regenerar/Copiar y aviso ámbar cuando el archivo ya existe.
+- **Nombre de archivo derivado del código**: el archivo se llama `<Código>.qce`; se eliminó el campo "Nombre del archivo" manual para evitar códigos inconsistentes entre carpeta y proyecto.
+- **Plantillas como tarjetas**: selector visual (5 plantillas SEC/RIC) con icono, nombre, subtítulo y número de partidas base, en vez de combo de texto.
+- **Validación viva en el pie**: chips de estado (Nombre / Código único / Carpeta destino) y CTA "Crear y abrir" deshabilitado mientras falte lo esencial; atajo `Ctrl + Enter`.
+- **Valor UF del día**: campo editable que se precarga con `PriceConversion.DefaultValorUfClp` y se actualiza con `mindicador.cl` al abrir; el valor se persiste en `session.ValorUfClp` al crear el proyecto (conversión UF ↔ CLP correcta desde el primer día).
+- **Modelo comercial pasa a sección avanzada colapsable** (6 políticas + parámetro único), con etiqueta de resumen en la cabecera del expander.
+- Sin cambios en SQLite, migraciones, cálculos ni en las fórmulas de cierre.
+
 ## 1.1.1
 
 ### Cierre Comercial GA y Estabilización UI (2026-09-08)

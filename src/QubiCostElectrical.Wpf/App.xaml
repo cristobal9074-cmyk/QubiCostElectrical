@@ -1,4 +1,4 @@
-﻿<Application x:Class="QubiCostElectrical.Wpf.App"
+<Application x:Class="QubiCostElectrical.Wpf.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              ShutdownMode="OnExplicitShutdown">
@@ -6,6 +6,8 @@
     <ResourceDictionary>
       <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="DesignSystem/Theme.xaml" />
+        <ResourceDictionary Source="DesignSystem/ItemizadoResources.xaml" />
+        <ResourceDictionary Source="DesignSystem/DataGrid.xaml" />
       </ResourceDictionary.MergedDictionaries>
     </ResourceDictionary>
   </Application.Resources>

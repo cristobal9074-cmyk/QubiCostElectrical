@@ -13,7 +13,6 @@ namespace QubiCostElectrical;
 public sealed class AppServicesBuilder
 {
     private readonly List<Action<IServiceCollection>> _overrides = new();
-    private string? _priceBankPath;
 
     public AppServicesBuilder WithItemizado(IItemizadoService value)
     {
@@ -24,18 +23,6 @@ public sealed class AppServicesBuilder
     public AppServicesBuilder WithCubicacion(ICubicacionService value)
     {
         _overrides.Add(s => s.AddSingleton(value));
-        return this;
-    }
-
-    public AppServicesBuilder WithPriceBankStore(IPriceBankStore value)
-    {
-        _overrides.Add(s => s.AddSingleton(value));
-        return this;
-    }
-
-    public AppServicesBuilder WithPriceBankPath(string? path)
-    {
-        _priceBankPath = path;
         return this;
     }
 
@@ -55,7 +42,7 @@ public sealed class AppServicesBuilder
     {
         var services = new ServiceCollection();
         services.AddSingleton(new PriceBankPath(
-            ProductPaths.ResolvePriceBankDatabaseFile(_priceBankPath)));
+            ProductPaths.ResolvePriceBankDatabaseFile(null)));
         services.AddDomainServices();
         services.AddApplicationServices();
         services.AddInfrastructureServices();

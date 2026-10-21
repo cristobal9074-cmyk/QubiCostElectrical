@@ -11,13 +11,6 @@ public enum ApuTipoRecurso
     TR
 }
 
-public enum ApuEstadoRevision
-{
-    OK,
-    FaltaPrecio,
-    RevisarRendimiento
-}
-
 public sealed class ApuRecursoRow
 {
     public string Id { get; set; } = Guid.NewGuid().ToString("N");

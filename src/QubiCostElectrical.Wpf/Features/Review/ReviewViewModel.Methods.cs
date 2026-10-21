@@ -29,6 +29,7 @@ public sealed partial class ReviewViewModel : SessionAwareViewModelBase, IRefres
         this.finalReview = finalReview;
 
         refreshCommand = new RelayCommand(Refresh);
+        fixEquipmentClassificationCommand = new RelayCommand(FixEquipmentClassification, CanFixEquipmentClassification);
         goToIssueCommand = new RelayCommand(GoToSelectedIssue, CanGoToSelectedIssue);
         resetFilterCommand = new RelayCommand(ResetFilters, () => HasActiveFilters);
         clearSearchCommand = new RelayCommand(ClearSearch, () => HasSearchText);
@@ -243,6 +244,7 @@ public sealed partial class ReviewViewModel : SessionAwareViewModelBase, IRefres
     }
 
     public ICommand RefreshCommand => refreshCommand;
+    public ICommand FixEquipmentClassificationCommand => fixEquipmentClassificationCommand;
     public ICommand GoToIssueCommand => goToIssueCommand;
     public ICommand ResetFilterCommand => resetFilterCommand;
     public ICommand ClearSearchCommand => clearSearchCommand;
@@ -265,6 +267,34 @@ public sealed partial class ReviewViewModel : SessionAwareViewModelBase, IRefres
     public ICommand NextWarRoomIssueCommand => nextWarRoomIssueCommand;
     public ICommand PreviousWarRoomIssueCommand => previousWarRoomIssueCommand;
     public ICommand MarkResolvedLocalCommand => markResolvedLocalCommand;
+
+    private bool CanFixEquipmentClassification()
+        => workspace.HasOpenProject
+            && !session.IsReadOnly
+            && new ClasificacionEquiposService().Detectar(session.Cubicacion).Count > 0;
+
+    private void FixEquipmentClassification()
+    {
+        var servicio = new ClasificacionEquiposService();
+        var detectadas = servicio.Detectar(session.Cubicacion);
+        if (detectadas.Count == 0)
+            return;
+
+        var costo = servicio.CostoDetectado(session.Cubicacion);
+        var confirmado = WpfDialogService.Confirm(
+            "Corregir clasificación de equipos",
+            $"Se marcarán como EQUIPO {detectadas.Count} línea(s) de familia Tableros/Equipos que siguen como material.\n\n" +
+            $"Afecta {costo:N0} CLP de costo: la ferretería se recalcula solo sobre materiales, la base de gastos generales y utilidad baja y se aplica el valor agregado sobre equipos.\n\n" +
+            "¿Continuar?",
+            isWarning: true);
+        if (!confirmado)
+            return;
+
+        var corregidas = servicio.Corregir(session.Cubicacion);
+        session.MarkDirty(ProjectDirtyScope.Cubicacion);
+        Refresh();
+        StatusMessage = $"{corregidas} línea(s) marcadas como equipo.";
+    }
 
     private void SetCategoryFilter(FinalReviewCategory? category)
     {
@@ -348,6 +378,7 @@ public sealed partial class ReviewViewModel : SessionAwareViewModelBase, IRefres
             BuildCollections(summary);
             UpdateProjectSummary();
             UpdateSummary();
+            fixEquipmentClassificationCommand.RaiseCanExecuteChanged();
         }
         finally
         {
@@ -391,6 +422,20 @@ public sealed partial class ReviewViewModel : SessionAwareViewModelBase, IRefres
             summary.MaterialsWithoutPrice == 0 ? "Precios completos" : $"{summary.MaterialsWithoutPrice:N0} materiales sin precio",
             summary.MaterialsWithoutPrice == 0 ? ChecklistStatus.Pass : ChecklistStatus.Fail,
             summary.MaterialsWithoutPrice, FinalReviewCategory.MaterialWithoutPrice,
+            SetCategoryFilter, () => hasProject));
+        var issueFamilias = summary.Issues.FirstOrDefault(x => x.Category == FinalReviewCategory.FamiliaSinFactorPresentacion);
+        int familiasSinFactor = issueFamilias?.Count ?? 0;
+        checklist.Add(new ChecklistItemVm(
+            familiasSinFactor == 0 ? "Factores de presentación definidos" : $"{familiasSinFactor:N0} familia(s) sin factor de presentación",
+            familiasSinFactor == 0 ? ChecklistStatus.Pass : ChecklistStatus.Warning,
+            familiasSinFactor, FinalReviewCategory.FamiliaSinFactorPresentacion,
+            SetCategoryFilter, () => hasProject));
+        var issueEquipos = summary.Issues.FirstOrDefault(x => x.Category == FinalReviewCategory.EquipoSinClasificar);
+        int equiposSinClasificar = issueEquipos?.Count ?? 0;
+        checklist.Add(new ChecklistItemVm(
+            equiposSinClasificar == 0 ? "Equipos clasificados" : $"{equiposSinClasificar:N0} línea(s) de equipo como material",
+            equiposSinClasificar == 0 ? ChecklistStatus.Pass : ChecklistStatus.Warning,
+            equiposSinClasificar, FinalReviewCategory.EquipoSinClasificar,
             SetCategoryFilter, () => hasProject));
         int incompleteCommercialModels = summary.Issues.Count(x => x.Category == FinalReviewCategory.CommercialModelIncomplete);
         checklist.Add(new ChecklistItemVm(

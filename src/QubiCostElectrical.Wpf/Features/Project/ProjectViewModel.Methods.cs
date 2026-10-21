@@ -119,6 +119,7 @@ public sealed partial class ProjectViewModel : ViewModelBase, IPageWithPendingCh
             OnPropertyChanged(nameof(IsMonedaUf));
             OnPropertyChanged(nameof(IsMonedaClp));
             OnPropertyChanged(nameof(IsMonedaUsd));
+            OnPropertyChanged(nameof(IsMonedaEur));
             NotifyDirty();
         }
     }
@@ -126,6 +127,7 @@ public sealed partial class ProjectViewModel : ViewModelBase, IPageWithPendingCh
     public bool IsMonedaUf => string.Equals(MonedaPresupuesto, "UF", StringComparison.OrdinalIgnoreCase);
     public bool IsMonedaClp => string.Equals(MonedaPresupuesto, "CLP", StringComparison.OrdinalIgnoreCase);
     public bool IsMonedaUsd => string.Equals(MonedaPresupuesto, "USD", StringComparison.OrdinalIgnoreCase);
+    public bool IsMonedaEur => string.Equals(MonedaPresupuesto, "EUR", StringComparison.OrdinalIgnoreCase);
 
     private void SelectMoneda(string? moneda)
     {

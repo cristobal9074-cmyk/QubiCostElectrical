@@ -11,6 +11,7 @@
         Background="Transparent"
         ResizeMode="NoResize"
         ShowInTaskbar="True"
+        Icon="pack://application:,,,/Assets/QubiCostElectrical.ico"
         KeyDown="OnWindowKeyDown">
   <Window.Resources>
     <Style x:Key="LoginField" TargetType="TextBox">
@@ -127,9 +128,9 @@
       <StackPanel>
         <!-- Brand row -->
         <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-          <Image Width="46" Height="46"
-                 Source="pack://application:,,,/Assets/isolate_the_isometric_cube_logo_mark_from_data_image_image_6._remove_the_white.png"
-                 Margin="0,0,12,0" />
+          <Border Width="46" Height="46" Background="Transparent" Margin="0,0,12,0">
+            <Image Source="pack://application:,,,/Assets/brand_logo.png" RenderOptions.BitmapScalingMode="HighQuality" />
+          </Border>
           <StackPanel VerticalAlignment="Center">
             <TextBlock Text="QUBI COST" FontSize="18" FontWeight="ExtraBold" Foreground="{DynamicResource Brush.Ink}" />
             <TextBlock Text="ELECTRICAL" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderNav}" />

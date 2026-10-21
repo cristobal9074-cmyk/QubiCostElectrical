@@ -153,7 +153,11 @@ public sealed partial class CubicacionRowVm : ViewModelBase, IGridCellValidation
         {
             if (!AllowEdit) return;
             if (SetProperty(ref tipo, value))
+            {
                 Source.Tipo = value;
+                // El estimador fijo el tipo a mano: la app deja de derivarlo desde la familia.
+                Source.TipoManual = true;
+            }
         }
     }
 

@@ -9,7 +9,7 @@ namespace QubiCostElectrical.Tests.Application;
 public sealed class PriceBankApplicationServiceTests
 {
     /// <summary>Repositorio en memoria que imita el upsert por código del store SQLite.</summary>
-    internal sealed class FakePriceBankRepository : IPriceBankRepository
+    internal sealed class FakePriceBankStore : IPriceBankStore
     {
         public readonly Dictionary<string, PriceBankEntry> Data = new(StringComparer.OrdinalIgnoreCase);
 
@@ -39,7 +39,7 @@ public sealed class PriceBankApplicationServiceTests
     [Fact]
     public void ImportFromProject_ConsolidatesAndPersists()
     {
-        var repo = new FakePriceBankRepository();
+        var repo = new FakePriceBankStore();
         var svc = new PriceBankApplicationService(repo);
 
         var result = svc.ImportFromProject(new[]
@@ -58,7 +58,7 @@ public sealed class PriceBankApplicationServiceTests
     [Fact]
     public void PreviewProjectUpdates_ListsOnlyNewerChangedPrices()
     {
-        var repo = new FakePriceBankRepository();
+        var repo = new FakePriceBankStore();
         repo.Upsert(new PriceBankEntry { Codigo = "A", MatUf = 20m, MoUf = 2m, FechaPrecio = new DateTime(2026, 6, 1) });
         var svc = new PriceBankApplicationService(repo);
 
@@ -73,7 +73,7 @@ public sealed class PriceBankApplicationServiceTests
     [Fact]
     public void ApplyBankPricesToProject_MutatesMaterialsInPlace()
     {
-        var repo = new FakePriceBankRepository();
+        var repo = new FakePriceBankStore();
         repo.Upsert(new PriceBankEntry { Codigo = "A", MatUf = 20m, MoUf = 2m, FechaPrecio = new DateTime(2026, 6, 1) });
         var svc = new PriceBankApplicationService(repo);
 
@@ -91,7 +91,7 @@ public sealed class PriceBankApplicationServiceTests
     [Fact]
     public void ApplyBankPricesToProject_NoBankData_ChangesNothing()
     {
-        var svc = new PriceBankApplicationService(new FakePriceBankRepository());
+        var svc = new PriceBankApplicationService(new FakePriceBankStore());
         var project = new List<MaterialRow> { Mat("A", 10m, 1m, DateTime.Today) };
         var result = svc.ApplyBankPricesToProject(project, new ProjectInfoRow());
 

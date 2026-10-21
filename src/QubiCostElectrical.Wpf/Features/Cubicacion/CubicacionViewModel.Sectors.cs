@@ -25,9 +25,13 @@ public sealed partial class CubicacionViewModel
         get => isSectorMatrixMode;
         set
         {
-            if (!SetProperty(ref isSectorMatrixMode, value))
+            if (isSectorMatrixMode == value)
+                return;
+            if (!TryCommitOpenCell())
                 return;
 
+            isSectorMatrixMode = value;
+            OnPropertyChanged(nameof(IsSectorMatrixMode));
             OnPropertyChanged(nameof(IsDetailMode));
             OnPropertyChanged(nameof(IsDetailHeaderVisible));
             OnPropertyChanged(nameof(SectorModeDescription));
@@ -64,6 +68,8 @@ public sealed partial class CubicacionViewModel
         => sectorService.PickSectorValueFromHojaCubicacion(row, absoluteOffset);
 
     internal void InitializeSectorRow(CubicacionRowVm row) => sectorService.InitializeSectorRow(row);
+
+    internal void RepairSlaveZones() => sectorService.RepairSlaveZones();
 
     internal CubicacionRowVm CreateRowVm(CubicacionRow row, bool isSessionBacked = true)
         => new(row, isSessionBacked, () => CanEdit);

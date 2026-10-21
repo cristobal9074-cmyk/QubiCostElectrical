@@ -57,8 +57,29 @@
           <DataGridTextColumn Header="CÓDIGO" Binding="{Binding Codigo}" Width="100" HeaderStyle="{StaticResource DataGridColumnHeader.Base}" />
           <DataGridTextColumn Header="DESCRIPCIÓN" Binding="{Binding Descripcion}" Width="*" HeaderStyle="{StaticResource DataGridColumnHeader.Base}" />
           <DataGridTextColumn Header="UNI" Binding="{Binding Unidad}" Width="50" HeaderStyle="{StaticResource DataGridColumnHeader.Center}" />
-          <DataGridTextColumn Header="CANTIDAD" Binding="{Binding CantidadRaw}" Width="90" HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" />
-          <DataGridTextColumn Header="NOTA" Binding="{Binding RejectionReason}" Width="160" HeaderStyle="{StaticResource DataGridColumnHeader.Base}" />
+          <DataGridTextColumn Header="CANTIDAD" Binding="{Binding CantidadRaw}" Width="120" HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}">
+            <DataGridTextColumn.CellStyle>
+              <Style TargetType="DataGridCell">
+                <Style.Triggers>
+                  <DataTrigger Binding="{Binding IsRejected}" Value="True">
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Red}" />
+                    <Setter Property="FontWeight" Value="SemiBold" />
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </DataGridTextColumn.CellStyle>
+          </DataGridTextColumn>
+          <DataGridTextColumn Header="NOTA" Binding="{Binding RejectionReason}" Width="220" HeaderStyle="{StaticResource DataGridColumnHeader.Base}">
+            <DataGridTextColumn.CellStyle>
+              <Style TargetType="DataGridCell">
+                <Style.Triggers>
+                  <DataTrigger Binding="{Binding IsRejected}" Value="True">
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Red}" />
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </DataGridTextColumn.CellStyle>
+          </DataGridTextColumn>
         </DataGrid.Columns>
       </DataGrid>
     </Border>

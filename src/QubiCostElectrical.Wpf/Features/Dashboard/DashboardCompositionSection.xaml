@@ -1,0 +1,116 @@
+<UserControl x:Class="QubiCostElectrical.Wpf.Features.Dashboard.DashboardCompositionSection"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:QubiCostElectrical.Wpf.Features.Dashboard"
+             mc:Ignorable="d">
+
+  <Border Style="{StaticResource Dashboard.Card}">
+    <StackPanel>
+      <DockPanel Margin="16,13,16,0">
+        <StackPanel>
+          <TextBlock Text="Composición del precio" Style="{StaticResource Dashboard.CardTitle}" />
+          <TextBlock Text="Reparto del total venta por naturaleza" Style="{StaticResource Dashboard.CardSub}" />
+        </StackPanel>
+      </DockPanel>
+
+      <StackPanel Margin="16,10,16,16">
+        <DockPanel LastChildFill="True">
+          <!-- Dona -->
+          <StackPanel DockPanel.Dock="Left" Width="200" VerticalAlignment="Top">
+            <Grid Width="200" Height="200">
+              <Ellipse Width="174" Height="174" Stroke="{DynamicResource Brush.Line2}" StrokeThickness="22" />
+              <ItemsControl ItemsSource="{Binding Composition.Segments}" Width="200" Height="200">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate>
+                    <Canvas Width="200" Height="200" />
+                  </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <Path Data="{Binding ArcGeometry}" Stroke="{Binding AccentBrush}" StrokeThickness="22"
+                          StrokeStartLineCap="Flat" StrokeEndLineCap="Flat" Fill="Transparent" />
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Width="124">
+                <TextBlock Text="{Binding Composition.TotalLabel}" FontFamily="{StaticResource Font.Mono}"
+                           FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink}"
+                           HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                <TextBlock Text="{Binding Composition.TotalCaption}" FontSize="9.5" FontWeight="SemiBold"
+                           Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Center" Margin="0,3,0,0" />
+              </StackPanel>
+            </Grid>
+          </StackPanel>
+
+          <!-- Leyenda -->
+          <ItemsControl ItemsSource="{Binding Composition.Segments}" Margin="18,0,0,0"
+                        HorizontalContentAlignment="Stretch"
+                        VerticalAlignment="Center">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Grid Margin="0,0,0,5">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="92" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="42" />
+                  </Grid.ColumnDefinitions>
+                  <Border Grid.Column="0" Width="9" Height="9" CornerRadius="2"
+                          Background="{Binding AccentBrush}" VerticalAlignment="Center" Margin="0,0,9,0" />
+                  <TextBlock Grid.Column="1" Text="{Binding Label}" FontSize="11.5"
+                             Foreground="{DynamicResource Brush.Ink2}" VerticalAlignment="Center"
+                             TextTrimming="CharacterEllipsis" Margin="0,0,8,0" />
+                  <TextBlock Grid.Column="2" Text="{Binding AmountLabel}" FontFamily="{StaticResource Font.Mono}"
+                             FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink}"
+                             VerticalAlignment="Center" />
+                  <TextBlock Grid.Column="3" Text="{Binding ShareLabel}" FontFamily="{StaticResource Font.Mono}"
+                             FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}"
+                             HorizontalAlignment="Right" VerticalAlignment="Center" />
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </DockPanel>
+
+        <!-- Comparación con la versión anterior -->
+        <Border BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,1,0,0" Padding="0,12,0,0" Margin="0,14,0,0">
+          <StackPanel Visibility="{Binding HasVersionComparison, Converter={StaticResource BoolToVisibility}}">
+            <DockPanel Margin="0,0,0,9">
+              <TextBlock DockPanel.Dock="Right" Text="{Binding VersionDeltaCaption}" FontSize="11"
+                         FontWeight="SemiBold" Foreground="{DynamicResource Brush.Amber}" VerticalAlignment="Center" />
+              <TextBlock Text="Comparación con la versión anterior" FontSize="11.5" FontWeight="SemiBold"
+                         Foreground="{DynamicResource Brush.Ink2}" VerticalAlignment="Center" />
+            </DockPanel>
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="96" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="96" />
+              </Grid.ColumnDefinitions>
+              <TextBlock Grid.Column="0" Text="{Binding VersionComparisonLabel}" FontSize="11.5"
+                         Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
+              <Border Grid.Column="1" Height="7" CornerRadius="3.5" Background="{DynamicResource Brush.Line2}"
+                      VerticalAlignment="Center">
+                <Border CornerRadius="3.5" Background="{DynamicResource Brush.Blue}" />
+              </Border>
+              <TextBlock Grid.Column="2" Text="{Binding Composition.TotalLabel}" FontFamily="{StaticResource Font.Mono}"
+                         FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink}"
+                         HorizontalAlignment="Right" VerticalAlignment="Center" />
+            </Grid>
+          </StackPanel>
+        </Border>
+
+        <!-- Lectura -->
+        <StackPanel Orientation="Horizontal" Margin="0,12,0,0"
+                    Visibility="{Binding Composition.HasData, Converter={StaticResource BoolToVisibility}}">
+          <TextBlock Text="&#xE946;" FontFamily="Segoe MDL2 Assets" FontSize="11"
+                     Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" Margin="0,0,7,0" />
+          <TextBlock Text="{Binding Composition.Insight}" FontSize="11" Foreground="{DynamicResource Brush.Muted}"
+                     VerticalAlignment="Center" TextWrapping="Wrap" />
+        </StackPanel>
+      </StackPanel>
+    </StackPanel>
+  </Border>
+</UserControl>

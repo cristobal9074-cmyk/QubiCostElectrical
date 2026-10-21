@@ -15,6 +15,11 @@ public static partial class DataGridExcelNavigation
     private static readonly DependencyProperty HookProperty = DependencyProperty.RegisterAttached(
         "Hook", typeof(bool), typeof(DataGridExcelNavigation), new PropertyMetadata(false));
 
+    public static readonly DependencyProperty FormulaBarHandlesF2Property = DependencyProperty.RegisterAttached(
+        "FormulaBarHandlesF2", typeof(bool), typeof(DataGridExcelNavigation), new PropertyMetadata(false));
+    public static void SetFormulaBarHandlesF2(DataGrid grid, bool value) => grid.SetValue(FormulaBarHandlesF2Property, value);
+    public static bool GetFormulaBarHandlesF2(DataGrid grid) => (bool)grid.GetValue(FormulaBarHandlesF2Property);
+
     /// <summary>
     /// Deja Ctrl+V al dueño de la grilla (código → material, fórmulas, sectores). Sin esto el
     /// pegado genérico marca PreviewKeyDown como atendido, suprime el KeyDown que burbujea y el

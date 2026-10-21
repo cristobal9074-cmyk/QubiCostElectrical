@@ -233,6 +233,7 @@ internal sealed class CubicacionLoadingService
 
     public void LoadCubicacionRows()
     {
+        string? keepRowId = parent.SelectedRow?.Id;
         parent.Rows.Clear();
         parent.SelectedRow = null;
         parent.NotifyCubicacionSummaryChanged();
@@ -291,6 +292,7 @@ internal sealed class CubicacionLoadingService
             parent.Rows.Add(vm);
         }
 
+        parent.RepairSlaveZones();
         parent.ValidateRows();
         parent.IsLoading = false;
         parent.NotifyIsEmptyChanged();
@@ -305,7 +307,8 @@ internal sealed class CubicacionLoadingService
         // se cambia de partida, aunque la partida tenga recursos reales — obliga a un clic
         // extra innecesario. Se preselecciona el primer recurso con datos (no una casilla
         // visual vacía) para que el panel muestre contenido útil de entrada.
-        parent.SelectedRow = parent.Rows.FirstOrDefault(r => r.IsSessionBacked)
+        parent.SelectedRow = parent.Rows.FirstOrDefault(r => string.Equals(r.Id, keepRowId, StringComparison.Ordinal))
+            ?? parent.Rows.FirstOrDefault(r => r.IsSessionBacked)
             ?? parent.Rows.FirstOrDefault();
     }
 }

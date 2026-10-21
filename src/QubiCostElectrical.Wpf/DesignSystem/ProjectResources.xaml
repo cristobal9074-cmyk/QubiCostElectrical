@@ -1,0 +1,159 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- ── Sidebar Nav Item Base Style ─────────────────────────────────── -->
+  <Style x:Key="ProjectSidebarItem" TargetType="Button">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="Height" Value="38" />
+    <Setter Property="Margin" Value="0,2" />
+    <Setter Property="Padding" Value="10,0" />
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                  BorderBrush="{TemplateBinding BorderBrush}"
+                  BorderThickness="{TemplateBinding BorderThickness}"
+                  CornerRadius="8" Padding="{TemplateBinding Padding}">
+            <ContentPresenter VerticalAlignment="Center" />
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.Surface2}" />
+              <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- Card Base Style -->
+  <Style x:Key="ProCard" TargetType="Border">
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="10" />
+    <Setter Property="Padding" Value="16,14" />
+    <Setter Property="Margin" Value="0,0,0,12" />
+  </Style>
+
+  <Style x:Key="ProjectCard" TargetType="Border" BasedOn="{StaticResource ProCard}" />
+
+  <Style x:Key="ProjectCardTitle" TargetType="TextBlock">
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}" />
+    <Setter Property="Margin" Value="0,0,0,12" />
+  </Style>
+
+  <!-- Chip de Plantilla Rápida SEC -->
+  <Style x:Key="ProTemplateChip" TargetType="Button">
+    <Setter Property="Height" Value="24" />
+    <Setter Property="Padding" Value="8,2" />
+    <Setter Property="FontSize" Value="10.5" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.BlueIconBg2}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="Margin" Value="0,0,6,6" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <Border x:Name="ChipBd" Background="{TemplateBinding Background}"
+                  BorderBrush="{TemplateBinding BorderBrush}"
+                  BorderThickness="{TemplateBinding BorderThickness}"
+                  CornerRadius="5" Padding="{TemplateBinding Padding}">
+            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="ChipBd" Property="Background" Value="{DynamicResource Brush.BlueIconBg2}" />
+              <Setter Property="Foreground" Value="{DynamicResource Brush.BlueHover}" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+              <Setter Property="Opacity" Value="0.45" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <Style x:Key="PlantillaSecChip" TargetType="Button" BasedOn="{StaticResource ProTemplateChip}" />
+
+  <Style x:Key="ProTemplateChipRed" TargetType="Button" BasedOn="{StaticResource ProTemplateChip}">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Danger}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.DangerBg}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.DangerBorder}" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <Border x:Name="ChipBd" Background="{TemplateBinding Background}"
+                  BorderBrush="{TemplateBinding BorderBrush}"
+                  BorderThickness="{TemplateBinding BorderThickness}"
+                  CornerRadius="5" Padding="{TemplateBinding Padding}">
+            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="ChipBd" Property="Background" Value="{DynamicResource Brush.DangerBorder}" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+              <Setter Property="Opacity" Value="0.45" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <Style x:Key="PlantillaExclusionChip" TargetType="Button" BasedOn="{StaticResource ProTemplateChipRed}" />
+
+  <!-- Segmented Button Base -->
+  <Style x:Key="ProSegBtn" TargetType="Button">
+    <Setter Property="Height" Value="24" />
+    <Setter Property="Padding" Value="8,0" />
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <Border x:Name="SegBd" Background="{TemplateBinding Background}" CornerRadius="5" Padding="{TemplateBinding Padding}">
+            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <Style x:Key="SegmentedButtonBase" TargetType="Button" BasedOn="{StaticResource ProSegBtn}" />
+
+  <Style x:Key="SegmentedButtonSelected" TargetType="Button" BasedOn="{StaticResource ProSegBtn}">
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+  </Style>
+
+  <Style x:Key="EstadoSegBtn" TargetType="Button" BasedOn="{StaticResource ProSegBtn}" />
+
+  <Style x:Key="ProjectRailItem" TargetType="Button" BasedOn="{StaticResource ProjectSidebarItem}" />
+  <Style x:Key="ProjectRailItemActive" TargetType="Button" BasedOn="{StaticResource ProjectSidebarItem}">
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
+  </Style>
+
+</ResourceDictionary>

@@ -113,15 +113,6 @@ public sealed class DashboardExecutiveService
         return project.IncluirIvaEnTotal ? neto + iva : neto;
     }
 
-    public decimal CalculateMaterialImpactPct(CostBreakdown cost, ProjectInfoRow project, decimal materialVariationPct)
-    {
-        if (cost.TotalVentaUf <= 0m)
-            return 0m;
-
-        decimal adjusted = CalculateMaterialSensitivityTotal(cost, project, materialVariationPct);
-        return (adjusted - cost.TotalVentaUf) / cost.TotalVentaUf * 100m;
-    }
-
     /// <summary>
     /// Venta proyectada del escenario de materiales, anclada en el total oficial del motor.
     /// La curva se corrige por el mismo delta que el motor aplica en 0%, de modo que el punto base

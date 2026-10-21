@@ -177,7 +177,7 @@ internal sealed class CubicacionClipboardCoordinator
                     Tipo = "MAT",
                     Area = "General"
                 };
-                session.Cubicacion.Add(source);
+                CubicacionPartidaOrder.InsertAtSlot(session.Cubicacion, selectedPartida.Id, source, int.MaxValue);
                 targetRow = parent.CreateRowVm(source);
                 parent.InitializeSectorRow(targetRow);
                 parent.Rows.Add(targetRow);
@@ -202,6 +202,7 @@ internal sealed class CubicacionClipboardCoordinator
             parent.NotifyCubicacionSummaryChanged();
             parent.MarkDirty();
             parent.NotifyIsEmptyChanged();
+            parent.AlignVisibleRowsToPartidaOrder();
             System.Windows.Input.CommandManager.InvalidateRequerySuggested();
         }
 
@@ -355,7 +356,7 @@ internal sealed class CubicacionClipboardCoordinator
                 row.Cantidad = querySvc.EvaluateStoredExpressions(session, row);
             }
 
-            session.Cubicacion.Add(row);
+            CubicacionPartidaOrder.InsertAtSlot(session.Cubicacion, selectedPartida.Id, row, int.MaxValue);
             var vm = parent.CreateRowVm(row);
             parent.InitializeSectorRow(vm);
             if (cr.SectorValues.Count > 0)
@@ -389,6 +390,7 @@ internal sealed class CubicacionClipboardCoordinator
         parent.NotifyIsEmptyChanged();
         parent.NotifyCubicacionSummaryChanged();
         parent.UpdatePartidaCount(selectedPartida);
+        parent.AlignVisibleRowsToPartidaOrder();
         parent.ValidateRows();
     }
 }

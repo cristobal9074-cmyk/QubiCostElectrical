@@ -20,16 +20,16 @@ public sealed record PriceBankApplyResult(PriceBankApplyStatus Status, int Appli
 
 /// <summary>
 /// Orquesta el banco de precios reutilizable: combina la lógica pura (<see cref="PriceBankService"/>)
-/// con la persistencia (<see cref="IPriceBankRepository"/>). Es el punto de entrada para la UI.
+/// con la persistencia (<see cref="IPriceBankStore"/>). Es el punto de entrada para la UI.
 /// </summary>
 public sealed class PriceBankApplicationService
 {
-    private readonly IPriceBankRepository _repository;
+    private readonly IPriceBankStore _repository;
     private readonly PriceBankService _domain;
     private readonly ProjectPriceFreezeService _freeze;
 
     public PriceBankApplicationService(
-        IPriceBankRepository repository,
+        IPriceBankStore repository,
         PriceBankService? domain = null,
         ProjectPriceFreezeService? freeze = null)
     {

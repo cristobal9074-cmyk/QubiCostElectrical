@@ -5,6 +5,11 @@ public sealed class CubicacionRow
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
     public string ItemId { get; set; } = "";
     public string Tipo { get; set; } = TipoRecurso.MAT;
+    /// <summary>
+    /// True cuando el estimador fijó el tipo a mano. Mientras sea false, la app vuelve a
+    /// derivar el tipo desde la familia (equipo o material) cada vez que la familia cambia.
+    /// </summary>
+    public bool TipoManual { get; set; }
     public string Codigo { get; set; } = "";
     public string Descripcion { get; set; } = "";
     public string Unidad { get; set; } = "";

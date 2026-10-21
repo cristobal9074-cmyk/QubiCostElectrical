@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 
 namespace QubiCostElectrical;
 
@@ -33,7 +33,7 @@ public static class ProjectStoragePaths
 
     public static string GetAutoSavePathForProject(string projectPath, string fallbackProjectName)
     {
-        string dir = Path.GetDirectoryName(projectPath) ?? AutoSaveDirectory();
+        string dir = AutoSaveDirectory();
         string name = Path.GetFileNameWithoutExtension(projectPath);
         if (string.IsNullOrWhiteSpace(name))
             name = fallbackProjectName;
@@ -46,11 +46,4 @@ public static class ProjectStoragePaths
         return Path.Combine(dir, name + ext + ProjectFileTypes.AutoSaveSuffix);
     }
 
-    public static string GetSqliteSidecarPath(IProjectRepository repository, string projectPath, string fallbackProjectName)
-    {
-        return repository.GetSQLiteDatabasePathForProject(
-            projectPath,
-            SQLiteDirectory(),
-            fallbackProjectName);
-    }
 }

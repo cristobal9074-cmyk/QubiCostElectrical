@@ -38,6 +38,7 @@ internal static class FinalReviewIssueExtensions
         FinalReviewCategory.MedicionSinRegistroPlano => "Medici\u00f3n sin registro de plano",
         FinalReviewCategory.FechaCorteAntecedentesNoDefinida => "Fecha de corte no definida",
         FinalReviewCategory.PartidaSinValorizacionGlobal => "Sin valorización global",
+        FinalReviewCategory.FamiliaSinFactorPresentacion => "Familia sin factor de presentación",
         _ => "Revisi\u00f3n"
     };
 }
@@ -132,6 +133,7 @@ public sealed partial class ReviewViewModel : SessionAwareViewModelBase, IRefres
     private readonly ObservableCollection<string> infos = new();
     private readonly ICollectionView issuesView;
     private readonly RelayCommand refreshCommand;
+    private readonly RelayCommand fixEquipmentClassificationCommand;
     private readonly RelayCommand goToIssueCommand;
     private readonly RelayCommand resetFilterCommand;
     private readonly RelayCommand clearSearchCommand;

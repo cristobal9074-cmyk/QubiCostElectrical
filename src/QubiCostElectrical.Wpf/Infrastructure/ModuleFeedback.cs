@@ -15,10 +15,6 @@ public static class ModuleFeedback
         ShellNotificationService.Instance.ShowWarning(operationTitle, message);
     }
 
-    /// <summary>Resultado de operación dentro del módulo: solo StatusMessage (persistente).</summary>
-    public static void SetModuleStatus(Action<string> setStatusMessage, string message)
-        => setStatusMessage(message);
-
     /// <summary>Éxito global o con acción secundaria: toast.</summary>
     public static void NotifySuccess(string title, string message, Action? secondaryAction = null, string? secondaryLabel = null)
     {

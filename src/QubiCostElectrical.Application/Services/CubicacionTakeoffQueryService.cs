@@ -25,6 +25,12 @@ public interface ICubicacionTakeoffQueryService
         int qtyColumnCount = 300);
     decimal ApplyRounding(CubicacionRow row, decimal value);
     string[] NormalizeExpressions(string[]? expressions, int count);
+
+    /// <summary>
+    /// Evalúa el texto que el usuario todavía no confirmó, con las mismas variables
+    /// y referencias entre casillas que el cálculo guardado. No modifica la fila.
+    /// </summary>
+    QuantityFormulaResult EvaluateCandidateExpression(BudgetProjectSession session, CubicacionRow row, int offset, string? expression);
 }
 
 public sealed partial class CubicacionTakeoffQueryService : ICubicacionTakeoffQueryService

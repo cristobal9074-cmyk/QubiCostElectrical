@@ -49,4 +49,54 @@ public class FamilyPresentationDefaultsTests
         Assert.Equal(1.25m, settings.ResolvePresentationFactor("GENERADOR"));
         Assert.Equal(1.25m, settings.ResolvePresentationFactor("EQUIPOS"));
     }
+
+    [Fact]
+    public void ProyectoConEstandarPropio_UsaEseValorEnLasFamiliasSinConfigurar()
+    {
+        // Estandar 1,00 de los proyectos nuevos: la familia sin configurar vale 1,00.
+        var project = new ProjectInfoRow
+        {
+            PoliticaCostosExcel = true,
+            MarkupFactorPorDefecto = 1.00m
+        };
+
+        var settings = BudgetSettings.FromProject(project);
+
+        Assert.Equal(1.00m, settings.DefaultPresentationFactor);
+        Assert.Equal(1.00m, settings.ResolvePresentationFactor("Conductores"));
+        Assert.Equal(1.00m, settings.ResolvePresentationFactor("CANALIZADO"));
+    }
+
+    [Fact]
+    public void ProyectoSinEstandar_ConservaLaTablaHistoricaDelProducto()
+    {
+        // Los presupuestos ya presupuestados no cambian: sin estandar propio se usa la tabla historica.
+        var project = new ProjectInfoRow
+        {
+            PoliticaCostosExcel = true
+        };
+
+        var settings = BudgetSettings.FromProject(project);
+
+        Assert.Equal(1.14m, settings.DefaultPresentationFactor);
+        Assert.Equal(1.50m, FamilyPresentationDefaults.DefaultMarkup("CONDUCTORES"));
+        Assert.Equal(1.50m, FamilyPresentationDefaults.DefaultMarkup("CONDUCTORES", 0m));
+    }
+
+    [Fact]
+    public void EstandarPropio_NoPisaUnFactorYaConfigurado()
+    {
+        var project = new ProjectInfoRow
+        {
+            PoliticaCostosExcel = true,
+            MarkupFactorPorDefecto = 1.00m
+        };
+        project.Variables["MarkupFactor_CANALIZACION"] = 1.70m;
+
+        var settings = BudgetSettings.FromProject(project);
+
+        Assert.Equal(1.70m, settings.ResolvePresentationFactor("CANALIZACION"));
+        Assert.Equal(1.70m, settings.ResolvePresentationFactor("CANALIZADO"));
+        Assert.Equal(1.00m, settings.ResolvePresentationFactor("TABLEROS"));
+    }
 }

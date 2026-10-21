@@ -46,6 +46,9 @@ internal sealed class CubicacionBaselineCoordinator
 
     public bool TryApplyChanges()
     {
+        if (!parent.TryCommitOpenCell())
+            return false;
+
         if (session.IsReadOnly)
             return !parent.HasPendingChanges;
 

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using Microsoft.Data.Sqlite;
 using QubiCostElectrical;
@@ -90,7 +90,7 @@ public sealed class RealProjectMigrationCorpusTests : IDisposable
         Assert.False(reader.HasRows, "Se encontraron violaciones de llaves foráneas tras la migración.");
 
         // 5. Verificar que se creó el respaldo preventivo en .schema_backups
-        string backupDir = Path.Combine(_tempDir, Path.GetFileName(dbPath) + ".schema_backups");
+        string backupDir = ProductPaths.ProjectBackupDirectory(dbPath);
         Assert.True(Directory.Exists(backupDir), "No se creó el directorio de respaldos preventivos .schema_backups.");
         Assert.NotEmpty(Directory.GetFiles(backupDir, "*.bak"));
     }
@@ -122,34 +122,30 @@ public sealed class RealProjectMigrationCorpusTests : IDisposable
     }
 
     [Fact]
-    public void Migration_ForeignHigherVersion_CLINICAMEDS_EnsuresOwnTablesWithoutCorrupting()
+    public void Migration_FromNewerSchema_RefusesAndLeavesUserVersionUntouched()
     {
-        // Simula bases como CLINICA MEDS.qce que poseen user_version = 60
-        string dbPath = Path.Combine(_tempDir, "clinica_meds_sim.qce");
+        string dbPath = Path.Combine(_tempDir, "future_schema.qce");
         var data = PEL039ReferenceProjectFixture.CreateSyntheticReferenceProject();
-
         MigrationCorpusGenerator.CreateHistoricalDatabase(dbPath, 33, data);
 
-        // Forzar versión a 60
         using (var conn = new SqliteConnection($"Data Source={dbPath}"))
         {
             conn.Open();
             using var cmd = conn.CreateCommand();
             cmd.CommandText = "PRAGMA user_version = 60;";
             cmd.ExecuteNonQuery();
-
-            // Ejecutar migración: debe llamar a EnsureOwnTablesExist y preservar versión 60
-            SQLiteSchemaMigrator.MigrateToLatest(conn);
-
-            cmd.CommandText = "PRAGMA user_version;";
-            Assert.Equal(60, Convert.ToInt32(cmd.ExecuteScalar() ?? 0));
-
-            cmd.CommandText = "PRAGMA integrity_check;";
-            Assert.Equal("ok", Convert.ToString(cmd.ExecuteScalar()));
         }
 
-        var loaded = SQLiteProjectStore.LoadSnapshot(dbPath);
-        Assert.Equal(data.Itemizado.Count, loaded.Itemizado.Count);
+        var ex = Assert.Throws<InvalidDataException>(() => SQLiteProjectStore.LoadSnapshot(dbPath));
+        Assert.Contains("esquema v60", ex.Message, StringComparison.Ordinal);
+
+        using var verify = new SqliteConnection($"Data Source={dbPath};Mode=ReadOnly");
+        verify.Open();
+        using var check = verify.CreateCommand();
+        check.CommandText = "PRAGMA user_version;";
+        Assert.Equal(60, Convert.ToInt32(check.ExecuteScalar() ?? 0));
+        check.CommandText = "PRAGMA integrity_check;";
+        Assert.Equal("ok", Convert.ToString(check.ExecuteScalar()));
     }
 
     [Fact]

@@ -11,7 +11,7 @@ using QubiCostElectrical.Wpf.Shell;
 
 namespace QubiCostElectrical.Wpf.Features.Cubicacion;
 
-public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePage, IPageWithPendingChanges, IPageWithCommitChanges, IDisposable, ISessionChangeAware
+public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePage, IPageWithPendingChanges, IPageWithCommitChanges, IPageWithOpenEditor, IDisposable, ISessionChangeAware
 {
     internal const int MinVisibleRows = 8;
 

@@ -1,11 +1,5 @@
 namespace QubiCostElectrical;
 
-public static class CubicacionZoneLimits
-{
-    public const int LegacyQtyColumnCapacity = 50;
-    public const int RecommendedMaxZones = 12;
-}
-
 /// <summary>Recurso cubicado: identidad del material/MO/EQ sin cantidad ni precio.</summary>
 public sealed class CubicacionRecursoRow
 {

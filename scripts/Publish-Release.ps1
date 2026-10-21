@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$Configuration = "Release",
     [string]$Runtime = "win-x64",
     [switch]$Sign
@@ -34,7 +34,7 @@ if (Test-Path $publishDir) {
 Get-Process VBCSCompiler, dotnet -ErrorAction SilentlyContinue | Where-Object { $_.Id -ne $PID } | Stop-Process -Force -ErrorAction SilentlyContinue
 
 Write-Host "`nPublicando aplicación..." -ForegroundColor Yellow
-dotnet publish $root\src\QubiCostElectrical.Wpf\QubiCostElectrical.Wpf.csproj `
+dotnet publish "$root\src\QubiCostElectrical.Wpf\QubiCostElectrical.Wpf.csproj" `
     --configuration $Configuration `
     --runtime $Runtime `
     --self-contained true `
@@ -45,7 +45,7 @@ dotnet publish $root\src\QubiCostElectrical.Wpf\QubiCostElectrical.Wpf.csproj `
     -p:IncludeNativeLibrariesForSelfExtract=true `
     -p:DebugType=none `
     -p:CopyOutputSymbolsToPublishDirectory=false `
-    --output $publishDir
+    --output "$publishDir"
 if ($LASTEXITCODE -ne 0) { throw "Publish falló" }
 Write-Host "  ✓ Publicado en $publishDir" -ForegroundColor Green
 

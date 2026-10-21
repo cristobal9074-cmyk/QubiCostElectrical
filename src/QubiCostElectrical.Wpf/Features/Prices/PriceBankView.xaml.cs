@@ -37,8 +37,6 @@ public partial class PriceBankView : UserControl
             ? Visibility.Visible
             : Visibility.Collapsed;
 
-        PrecioUfColumn.Visibility = ufVisibility;
-        MoUfColumn.Visibility = ufVisibility;
     }
 
     private void OnMoreActionsClick(object sender, RoutedEventArgs e)

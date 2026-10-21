@@ -22,7 +22,6 @@ public sealed class QuickJumpPartidaItem
     public QuickJumpItemKind Kind { get; init; } = QuickJumpItemKind.Partida;
     public string? SecondaryId { get; init; }
     public string? BadgeText { get; init; }
-    public string? BadgeColor { get; init; }
     public string? Capitulo { get; init; }
 
     public string DisplayLabel => string.IsNullOrWhiteSpace(Codigo)

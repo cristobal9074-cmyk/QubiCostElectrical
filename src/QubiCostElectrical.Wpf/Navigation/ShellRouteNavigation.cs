@@ -58,9 +58,6 @@ public static class ShellRouteNavigation
     public static bool IsCubicacionRoute(ShellRoute route) =>
         route is ShellRoute.Takeoff or ShellRoute.CubicacionSc or ShellRoute.Apu;
 
-    public static bool IsCostosRoute(ShellRoute route) =>
-        route is ShellRoute.Costo or ShellRoute.Epp or ShellRoute.ManoDeObra;
-
     public static bool IsMoreRoute(ShellRoute route) =>
         route is ShellRoute.Templates or ShellRoute.Preferences
             or ShellRoute.FloorSummary;

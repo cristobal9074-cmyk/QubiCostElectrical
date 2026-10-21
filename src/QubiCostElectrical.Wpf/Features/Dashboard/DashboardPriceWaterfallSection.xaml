@@ -1,0 +1,214 @@
+<UserControl x:Class="QubiCostElectrical.Wpf.Features.Dashboard.DashboardPriceWaterfallSection"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:QubiCostElectrical.Wpf.Features.Dashboard"
+             mc:Ignorable="d">
+  <!-- Cascada de precio: del costo de ejecución al total contractual, cada paso auditable. -->
+  <Border Style="{StaticResource Dashboard.Card}">
+    <StackPanel>
+      <DockPanel Margin="16,13,16,0">
+        <StackPanel>
+          <TextBlock Text="Cascada de precio" Style="{StaticResource Dashboard.CardTitle}" />
+          <TextBlock Text="Del costo de ejecución al total contractual, cada paso auditable"
+                     Style="{StaticResource Dashboard.CardSub}" />
+        </StackPanel>
+      </DockPanel>
+
+      <Viewbox Stretch="Uniform" Margin="12,6,12,0">
+        <Canvas Width="{Binding Waterfall.CanvasWidth}" Height="{Binding Waterfall.CanvasHeight}">
+
+          <!-- Grilla del eje -->
+          <ItemsControl ItemsSource="{Binding Waterfall.GridLines}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <Canvas />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemContainerStyle>
+              <Style TargetType="ContentPresenter">
+                <Setter Property="Canvas.Left" Value="{Binding X}" />
+              </Style>
+            </ItemsControl.ItemContainerStyle>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Line X1="0" Y1="{Binding Y1}" X2="0" Y2="{Binding Y2}"
+                      Stroke="{DynamicResource Brush.Line2}" StrokeThickness="1" />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+
+          <!-- Etiquetas del eje -->
+          <ItemsControl ItemsSource="{Binding Waterfall.AxisLabels}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <Canvas />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemContainerStyle>
+              <Style TargetType="ContentPresenter">
+                <Setter Property="Canvas.Left" Value="{Binding X}" />
+                <Setter Property="Canvas.Top" Value="{Binding Y}" />
+              </Style>
+            </ItemsControl.ItemContainerStyle>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <TextBlock Width="120" Margin="-60,0,0,0"
+                           TextAlignment="Center" FontSize="9.5" FontFamily="{StaticResource Font.Mono}"
+                           Foreground="{DynamicResource Brush.Muted}" Text="{Binding Text}" />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+
+          <!-- Filas de la cascada -->
+          <ItemsControl ItemsSource="{Binding Waterfall.Rows}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <Canvas />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemContainerStyle>
+              <Style TargetType="ContentPresenter">
+                <Setter Property="Canvas.Top" Value="{Binding RowTop}" />
+              </Style>
+            </ItemsControl.ItemContainerStyle>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Canvas Width="700" Height="30">
+
+                  <!-- Conector hacia la etapa siguiente -->
+                  <Line X1="{Binding ConnectorX}" Y1="{Binding ConnectorTop}"
+                        X2="{Binding ConnectorX}" Y2="{Binding ConnectorBottom}"
+                        Stroke="{DynamicResource Brush.Line}" StrokeThickness="1" StrokeDashArray="3 3">
+                    <Line.Style>
+                      <Style TargetType="Line">
+                        <Setter Property="Stroke" Value="{DynamicResource Brush.Line}" />
+                        <Setter Property="StrokeThickness" Value="1" />
+                        <Setter Property="StrokeDashArray" Value="3 3" />
+                        <Setter Property="Visibility" Value="Visible" />
+                        <Style.Triggers>
+                          <DataTrigger Binding="{Binding HasConnector}" Value="False">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </Line.Style>
+                  </Line>
+
+                  <!-- Etiqueta de la etapa -->
+                  <TextBlock Canvas.Left="0" Canvas.Top="{Binding LabelTop}" Width="236" TextAlignment="Right"
+                             FontSize="11.5" Foreground="{DynamicResource Brush.Ink2}"
+                             TextTrimming="CharacterEllipsis" Text="{Binding Label}">
+                    <TextBlock.Style>
+                      <Style TargetType="TextBlock">
+                        <Setter Property="FontSize" Value="11.5" />
+                        <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}" />
+                        <Style.Triggers>
+                          <DataTrigger Binding="{Binding IsTotal}" Value="True">
+                            <Setter Property="FontWeight" Value="SemiBold" />
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+                          </DataTrigger>
+                          <DataTrigger Binding="{Binding IsGrandTotal}" Value="True">
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.BlueDark}" />
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </TextBlock.Style>
+                  </TextBlock>
+
+                  <!-- Barra -->
+                  <Rectangle Canvas.Left="{Binding BarX}" Canvas.Top="{Binding BarTop}"
+                             Width="{Binding BarWidth}" Height="{Binding BarHeight}" RadiusX="2" RadiusY="2">
+                    <Rectangle.Style>
+                      <Style TargetType="Rectangle">
+                        <Setter Property="Fill" Value="{DynamicResource Brush.Slate}" />
+                        <Style.Triggers>
+                          <DataTrigger Binding="{Binding ToneKey}" Value="gg">
+                            <Setter Property="Fill" Value="{DynamicResource Brush.Blue2}" />
+                          </DataTrigger>
+                          <DataTrigger Binding="{Binding ToneKey}" Value="fact">
+                            <Setter Property="Fill" Value="{DynamicResource Brush.Cyan}" />
+                          </DataTrigger>
+                          <DataTrigger Binding="{Binding ToneKey}" Value="neg">
+                            <Setter Property="Fill" Value="{DynamicResource Brush.Red}" />
+                          </DataTrigger>
+                          <DataTrigger Binding="{Binding ToneKey}" Value="iva">
+                            <Setter Property="Fill" Value="{DynamicResource Brush.Muted}" />
+                            <Setter Property="Opacity" Value="0.6" />
+                          </DataTrigger>
+                          <DataTrigger Binding="{Binding IsGrandTotal}" Value="True">
+                            <Setter Property="Fill" Value="{DynamicResource Brush.BlueDark}" />
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </Rectangle.Style>
+                  </Rectangle>
+
+                  <!-- Importe -->
+                  <TextBlock Canvas.Left="740" Canvas.Top="{Binding ValueTop}" Width="160" TextAlignment="Right"
+                             FontFamily="{StaticResource Font.Mono}" FontSize="11.5"
+                             TextTrimming="CharacterEllipsis" Text="{Binding SignedAmountLabel}">
+                    <TextBlock.Style>
+                      <Style TargetType="TextBlock">
+                        <Setter Property="FontSize" Value="11.5" />
+                        <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}" />
+                        <Style.Triggers>
+                          <DataTrigger Binding="{Binding IsTotal}" Value="True">
+                            <Setter Property="FontWeight" Value="SemiBold" />
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+                          </DataTrigger>
+                          <DataTrigger Binding="{Binding IsGrandTotal}" Value="True">
+                            <Setter Property="FontSize" Value="13" />
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.BlueDark}" />
+                          </DataTrigger>
+                          <DataTrigger Binding="{Binding IsDimmed}" Value="True">
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </TextBlock.Style>
+                  </TextBlock>
+
+                </Canvas>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+
+        </Canvas>
+      </Viewbox>
+
+      <!-- Leyenda y nota de cierre -->
+      <Border BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,1,0,0" Padding="16,11" Margin="0,8,0,0">
+        <DockPanel LastChildFill="True">
+          <StackPanel DockPanel.Dock="Right" VerticalAlignment="Center">
+            <TextBlock Text="{Binding Waterfall.Subtitle}" FontSize="11" Foreground="{DynamicResource Brush.Muted}"
+                       TextAlignment="Right" MaxWidth="320" TextWrapping="Wrap" />
+          </StackPanel>
+          <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <StackPanel Orientation="Horizontal" Margin="0,0,14,0">
+              <Rectangle Width="9" Height="9" RadiusX="2" RadiusY="2" Fill="{DynamicResource Brush.Slate}" VerticalAlignment="Center" Margin="0,0,6,0" />
+              <TextBlock Text="Costo" FontSize="11" Foreground="{DynamicResource Brush.Ink3}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="0,0,14,0">
+              <Rectangle Width="9" Height="9" RadiusX="2" RadiusY="2" Fill="{DynamicResource Brush.Blue2}" VerticalAlignment="Center" Margin="0,0,6,0" />
+              <TextBlock Text="Recargos" FontSize="11" Foreground="{DynamicResource Brush.Ink3}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="0,0,14,0">
+              <Rectangle Width="9" Height="9" RadiusX="2" RadiusY="2" Fill="{DynamicResource Brush.Cyan}" VerticalAlignment="Center" Margin="0,0,6,0" />
+              <TextBlock Text="Venta neta" FontSize="11" Foreground="{DynamicResource Brush.Ink3}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="0,0,14,0">
+              <Rectangle Width="9" Height="9" RadiusX="2" RadiusY="2" Fill="{DynamicResource Brush.Red}" VerticalAlignment="Center" Margin="0,0,6,0" />
+              <TextBlock Text="Descuento" FontSize="11" Foreground="{DynamicResource Brush.Ink3}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+              <Rectangle Width="9" Height="9" RadiusX="2" RadiusY="2" Fill="{DynamicResource Brush.Muted}" VerticalAlignment="Center" Margin="0,0,6,0" />
+              <TextBlock Text="IVA" FontSize="11" Foreground="{DynamicResource Brush.Ink3}" />
+            </StackPanel>
+          </StackPanel>
+        </DockPanel>
+      </Border>
+    </StackPanel>
+  </Border>
+</UserControl>

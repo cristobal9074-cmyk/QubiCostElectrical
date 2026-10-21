@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace QubiCostElectrical;
 
@@ -29,7 +30,13 @@ public static class ElectricalFamilyCatalog
         "Equipos",
         "Transformadores",
         "Grupo electrógeno",
-        "Ducto barra",
+        "Celdas",
+        "UPS",
+        "Ducto de barra",
+        "Pararrayos",
+        "Obras civiles",
+        "Sistema de remarcación",
+        "Documentación y trámites",
         "Media tensión",
         "Puesta a tierra",
         "Accesorios"
@@ -44,14 +51,25 @@ public static class ElectricalFamilyCatalog
         if (string.IsNullOrWhiteSpace(nombre))
             return "";
 
-        string normalizado = FamilyPresentationDefaults.Normalize(nombre);
+        string compacto = Compactar(FamilyPresentationDefaults.Normalize(nombre));
+        if (compacto.Length == 0)
+            return "";
+
+        if (EsUps(compacto)) return "UPS";
+        if (EsCeldas(compacto)) return "CELDAS";
+        if (EsPararrayos(compacto)) return "PARARRAYOS";
+        if (EsObrasCiviles(compacto)) return "OBRAS CIVILES";
+        if (EsRemarcacion(compacto)) return "SISTEMA DE REMARCACION";
+        if (EsDocumentacion(compacto)) return "DOCUMENTACION Y TRAMITES";
 
         // Unificación de sinónimos y variantes frecuentes en presupuestos eléctricos
-        return normalizado switch
+        return compacto switch
         {
-            "GENERADOR" or "GENERADORES" or "GRUPO ELECTROGENO" or "GRUPOS ELECTROGENOS" => "GRUPO ELECTROGENO",
-            "TRANSFORMADOR" or "TRANSFORMADORES" => "TRANSFORMADORES",
-            "DUCTO BARRA" or "DUCTO BARRAS" or "DUCTOBARRA" or "DUCTOBARRAS" => "DUCTO BARRA",
+            "GENERADOR" or "GENERADORES" or "GRUPO ELECTROGENO" or "GRUPOS ELECTROGENOS"
+                or "GRUPO GENERADOR" or "GRUPOS GENERADORES" => "GRUPO ELECTROGENO",
+            "TRANSFORMADOR" or "TRANSFORMADORES" or "TRAFO" or "TRAFOS" => "TRANSFORMADORES",
+            "DUCTO BARRA" or "DUCTO BARRAS" or "DUCTO DE BARRA" or "DUCTOS DE BARRA"
+                or "DUCTOBARRA" or "DUCTOBARRAS" => "DUCTO BARRA",
             "MEDIA TENSION" or "MEDIA TENSION ELECTRICA" or "MT" => "MEDIA TENSION",
             "CONDUCTOR" or "CONDUCTORES" => "CONDUCTORES",
             "CANALIZACION" or "CANALIZACIONES" => "CANALIZACION",
@@ -62,9 +80,52 @@ public static class ElectricalFamilyCatalog
             "EQUIPO" or "EQUIPOS" => "EQUIPOS",
             "ACCESORIO" or "ACCESORIOS" => "ACCESORIOS",
             "PUESTA A TIERRA" or "PAT" or "TIERRA" => "PUESTA A TIERRA",
-            _ => normalizado
+            _ => compacto
         };
     }
+
+    /// <summary>Deja letras, números y un solo espacio. Así "as-built" y "as built" comparan igual.</summary>
+    private static string Compactar(string texto)
+    {
+        var sb = new StringBuilder(texto.Length);
+        bool espacio = false;
+        foreach (char c in texto)
+        {
+            if (char.IsLetterOrDigit(c))
+            {
+                sb.Append(c);
+                espacio = false;
+            }
+            else if (!espacio && sb.Length > 0)
+            {
+                sb.Append(' ');
+                espacio = true;
+            }
+        }
+
+        return sb.ToString().Trim();
+    }
+
+    private static bool EsUps(string compacto) => compacto is "UPS" or "U P S";
+
+    private static bool EsCeldas(string compacto)
+        => compacto is "CELDA" or "CELDAS" || compacto.StartsWith("CELDAS ", StringComparison.Ordinal) || compacto.StartsWith("CELDA ", StringComparison.Ordinal);
+
+    private static bool EsPararrayos(string compacto)
+        => compacto.StartsWith("PARARRAYO", StringComparison.Ordinal);
+
+    private static bool EsObrasCiviles(string compacto)
+        => compacto is "OBRA CIVIL" or "OBRAS CIVILES"
+           || compacto.StartsWith("OBRA CIVIL ", StringComparison.Ordinal)
+           || compacto.StartsWith("OBRAS CIVILES ", StringComparison.Ordinal);
+
+    private static bool EsRemarcacion(string compacto)
+        => compacto.Contains("REMARCACION", StringComparison.Ordinal);
+
+    private static bool EsDocumentacion(string compacto)
+        => compacto.Contains("DOCUMENTACION", StringComparison.Ordinal)
+           || compacto.Contains("TRAMITE", StringComparison.Ordinal)
+           || compacto.Contains("AS BUILT", StringComparison.Ordinal);
 
     /// <summary>
     /// Combina las familias provistas desde fuentes externas (lista de precio, materiales del proyecto)

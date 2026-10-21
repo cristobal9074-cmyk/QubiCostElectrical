@@ -46,9 +46,21 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
     private string summaryText = "0 materiales";
     private string projectSummary = "Sin proyecto abierto.";
     private bool showEmptyState = true;
+    private bool hasNoFilterResults;
     private bool isGroupedByProvider;
     private CompraMaterialViewModel? selectedRow;
     private MaterialUsageBreakdown? selectedUsage;
+    private int activeTab;
+    private readonly RelayCommand viewTraceabilityCommand;
+    private bool useCategoryDefaults = true;
+    private bool isCustomCategoryEditorVisible;
+    public CategoryToleranceConfig CategoryConfig { get; } = new();
+    public RelayCommand ToggleCategoryEditorCommand { get; }
+    public RelayCommand ResetCategoryTolerancesCommand { get; }
+    public RelayCommand ApplyCategoryTolerancesCommand { get; }
+    private readonly Dictionary<string, decimal> customTolerances = new(StringComparer.OrdinalIgnoreCase);
+    private string selectedTolerancePreset = "Por categoría (Recomendado)";
+    public ObservableCollection<string> TolerancePresetOptions { get; } = new() { "Por categoría (Recomendado)", "Personalizado por categoría", "Plana 5 %", "Plana 10 %", "Sin tolerancia (0 %)" };
 
     public PurchaseListViewModel(IShellNavigationHost shell, WpfAppHost host)
         : this(shell, host.Session, host.ProjectWorkspace, host.Permissions, host.MaterialSearch, host.PurchaseList, host.PurchaseListExcel) { }
@@ -72,6 +84,10 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
         goToOriginCommand = new RelayCommand(GoToOrigin, () => selectedRow != null);
         goToUsageCommand = new RelayCommand(GoToSelectedUsage, () => SelectedUsage != null || selectedRow != null);
         groupByProviderCommand = new RelayCommand(ToggleGroupByProvider);
+        viewTraceabilityCommand = new RelayCommand(OpenTraceabilityTab, () => selectedRow != null);
+        ToggleCategoryEditorCommand = new RelayCommand(() => IsCustomCategoryEditorVisible = !IsCustomCategoryEditorVisible);
+        ResetCategoryTolerancesCommand = new RelayCommand(ResetCategoryTolerances);
+        ApplyCategoryTolerancesCommand = new RelayCommand(ApplyCategoryTolerances);
         OpenProjectCommand = new RelayCommand(() => _ = shell.OpenProjectAsync());
 
         rowsView = CollectionViewSource.GetDefaultView(rows);
@@ -160,6 +176,43 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
         }
     }
 
+    public string SelectedTolerancePreset
+    {
+        get => selectedTolerancePreset;
+        set
+        {
+            if (!SetProperty(ref selectedTolerancePreset, value))
+                return;
+            ApplyTolerancePreset(value);
+        }
+    }
+
+    private void ApplyTolerancePreset(string preset)
+    {
+        customTolerances.Clear();
+        if (preset.StartsWith("Por categor", StringComparison.OrdinalIgnoreCase))
+        {
+            useCategoryDefaults = true;
+        }
+        else if (preset.Contains("5"))
+        {
+            useCategoryDefaults = false;
+            toleranciaPct = 5m;
+        }
+        else if (preset.Contains("10"))
+        {
+            useCategoryDefaults = false;
+            toleranciaPct = 10m;
+        }
+        else if (preset.Contains("0"))
+        {
+            useCategoryDefaults = false;
+            toleranciaPct = 0m;
+        }
+        OnPropertyChanged(nameof(ToleranciaPct));
+        UpdateRows();
+    }
+
     public decimal ToleranciaPct
     {
         get => toleranciaPct;
@@ -228,6 +281,7 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
             if (!SetProperty(ref selectedRow, value))
                 return;
             goToOriginCommand.RaiseCanExecuteChanged();
+            viewTraceabilityCommand.RaiseCanExecuteChanged();
             goToUsageCommand.RaiseCanExecuteChanged();
             UpdateMaterialUsages();
         }
@@ -241,7 +295,57 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
     public ICommand GoToOriginCommand => goToOriginCommand;
     public ICommand GoToUsageCommand => goToUsageCommand;
     public ICommand GroupByProviderCommand => groupByProviderCommand;
+    public ICommand ViewTraceabilityCommand => viewTraceabilityCommand;
     public ICommand OpenProjectCommand { get; }
+
+    public bool HasNoFilterResults
+    {
+        get => hasNoFilterResults;
+        private set => SetProperty(ref hasNoFilterResults, value);
+    }
+
+    public bool IsCustomCategoryEditorVisible
+    {
+        get => isCustomCategoryEditorVisible;
+        set => SetProperty(ref isCustomCategoryEditorVisible, value);
+    }
+
+    private void ResetCategoryTolerances()
+    {
+        CategoryConfig.ResetToDefaults();
+        OnPropertyChanged(nameof(CategoryConfig));
+        customTolerances.Clear();
+        UpdateRows();
+    }
+
+    private void ApplyCategoryTolerances()
+    {
+        customTolerances.Clear();
+        useCategoryDefaults = true;
+        selectedTolerancePreset = "Personalizado por categoría";
+        OnPropertyChanged(nameof(SelectedTolerancePreset));
+        UpdateRows();
+    }
+
+    public int ActiveTab
+    {
+        get => activeTab;
+        set
+        {
+            if (activeTab != value)
+            {
+                activeTab = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    private void OpenTraceabilityTab()
+    {
+        if (selectedRow == null) return;
+        UpdateMaterialUsages();
+        ActiveTab = 1;
+    }
 
     public void Refresh()
     {
@@ -251,11 +355,21 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
 
     private void UpdateRows()
     {
+        foreach (var r in rows)
+            r.ToleranceChanged -= OnRowToleranceChanged;
+
         rows.Clear();
         if (HasProject)
         {
-            foreach (var row in purchaseList.Build(session.Cubicacion, session.Materiales, ToleranciaPct))
+            var built = useCategoryDefaults
+                ? purchaseList.Build(session.Cubicacion, session.Materiales, customTolerances, useCategoryDefaults: true, CategoryConfig)
+                : purchaseList.Build(session.Cubicacion, session.Materiales, customTolerances, useCategoryDefaults: false);
+
+            foreach (var row in built)
+            {
+                row.ToleranceChanged += OnRowToleranceChanged;
                 rows.Add(row);
+            }
         }
 
         BuildCategoryOptions();
@@ -272,6 +386,15 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
                 : $"Lista consolidada con {rows.Count:N0} materiales.";
         exportExcelCommand.RaiseCanExecuteChanged();
         exportRfqCommand.RaiseCanExecuteChanged();
+    }
+
+    private void OnRowToleranceChanged(object? sender, EventArgs e)
+    {
+        if (sender is CompraMaterialViewModel r)
+        {
+            customTolerances[r.Codigo] = r.ToleranciaPct;
+            UpdateSummary();
+        }
     }
 
     private void BuildCategoryOptions()
@@ -337,9 +460,12 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
         decimal totalCompraClp = rowsView.Cast<CompraMaterialViewModel>().Sum(x => x.TotalCompraClp > 0m ? x.TotalCompraClp : x.TotalCompraUf * valorUf);
         int missingPrices = rowsView.Cast<CompraMaterialViewModel>().Count(x => x.MatUfUnitario <= 0m && x.MatClpUnitario <= 0m);
         SummaryText = $"{visible:N0} visibles · {rows.Count:N0} total · {missingPrices:N0} sin precio";
+        HasNoFilterResults = rows.Count > 0 && visible == 0;
         StatusMessage = rows.Count == 0
-            ? "No hay recursos comprables en la cubicación actual."
-            : MuestraUf
+            ? "Todavía no hay materiales en la lista de compra."
+            : HasNoFilterResults
+                ? "Sin coincidencias."
+                : MuestraUf
                 ? $"Lista consolidada: {totalNeto:N3} UF ($ {totalNetoClp:N0}) neto · {totalCompra:N3} UF ($ {totalCompraClp:N0}) compra."
                 : $"Lista consolidada: $ {totalNetoClp:N0} neto · $ {totalCompraClp:N0} compra.";
         exportExcelCommand.RaiseCanExecuteChanged();

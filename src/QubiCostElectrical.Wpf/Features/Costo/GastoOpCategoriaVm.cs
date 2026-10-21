@@ -128,12 +128,6 @@ public sealed class GastoOpCategoriaVm : ViewModelBase
     public string UfLabel => $"{Uf:N3} UF";
     public string PctLabel => $"{Pct:N1}%";
 
-    public void SetValorUf(decimal v)
-    {
-        valorUf = v > 0 ? v : 1m;
-        RecalcFromItems(notify: false);
-    }
-
     public void ToggleExpanded() => IsExpanded = !IsExpanded;
 
     public void AddBlankItem()

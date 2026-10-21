@@ -14,8 +14,8 @@
          (ver MaterialRow.RequiereRevisionPrecio / PriceBankEntryVm.VigenciaKind). -->
     <Style x:Key="VigenciaChipBorder" TargetType="Border">
       <Setter Property="CornerRadius" Value="{StaticResource Radius.Chip}" />
-      <Setter Property="Padding" Value="9,3" />
-      <Setter Property="HorizontalAlignment" Value="Right" />
+      <Setter Property="Padding" Value="10,4" />
+      <Setter Property="HorizontalAlignment" Value="Center" />
       <Setter Property="VerticalAlignment" Value="Center" />
       <Setter Property="Background" Value="{DynamicResource Brush.SuccessBg}" />
       <Style.Triggers>
@@ -25,8 +25,10 @@
       </Style.Triggers>
     </Style>
     <Style x:Key="VigenciaChipText" TargetType="TextBlock">
-      <Setter Property="FontSize" Value="10" />
+      <Setter Property="FontSize" Value="11" />
       <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="HorizontalAlignment" Value="Center" />
       <Setter Property="Foreground" Value="{DynamicResource Brush.Success}" />
       <Style.Triggers>
         <DataTrigger Binding="{Binding VigenciaKind}" Value="Revisar">
@@ -282,22 +284,10 @@
                   </Style>
                 </DataGridTextColumn.ElementStyle>
               </DataGridTextColumn>
-              <DataGridTextColumn x:Name="PrecioUfColumn" Header="Precio UF" Binding="{Binding PrecioUfCalculado, StringFormat={}{0:N4}}" Width="85" IsReadOnly="True"
-                                  HeaderStyle="{StaticResource DataGridColumnHeader.Formula}">
-                <DataGridTextColumn.ElementStyle>
-                  <Style TargetType="TextBlock">
-                    <Setter Property="HorizontalAlignment" Value="Right" />
-                    <Setter Property="VerticalAlignment" Value="Center" />
-                    <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
-                    <Setter Property="Margin" Value="0,0,8,0" />
-                    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
-                    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
-                  </Style>
-                </DataGridTextColumn.ElementStyle>
-              </DataGridTextColumn>
               <DataGridTextColumn Header="Familia" Binding="{Binding Categoria, UpdateSourceTrigger=PropertyChanged}" Width="110">
                 <DataGridTextColumn.ElementStyle>
                   <Style TargetType="TextBlock">
+                    <Setter Property="VerticalAlignment" Value="Center" />
                     <Setter Property="TextTrimming" Value="CharacterEllipsis" />
                     <Setter Property="ToolTip" Value="{Binding Categoria}" />
                   </Style>
@@ -315,42 +305,6 @@
                   </Style>
                 </DataGridTextColumn.ElementStyle>
               </DataGridTextColumn>
-              <DataGridTextColumn x:Name="MoUfColumn" Header="MO UF" Binding="{Binding MoUfCalculado, StringFormat={}{0:N4}}" Width="80" IsReadOnly="True"
-                                  HeaderStyle="{StaticResource DataGridColumnHeader.Formula}">
-                <DataGridTextColumn.ElementStyle>
-                  <Style TargetType="TextBlock">
-                    <Setter Property="HorizontalAlignment" Value="Right" />
-                    <Setter Property="VerticalAlignment" Value="Center" />
-                    <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
-                    <Setter Property="Margin" Value="0,0,8,0" />
-                    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
-                    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
-                  </Style>
-                </DataGridTextColumn.ElementStyle>
-              </DataGridTextColumn>
-              <DataGridCheckBoxColumn Header="M.O. por %" Width="72"
-                                      Binding="{Binding MoEsPorcentaje, UpdateSourceTrigger=PropertyChanged}">
-                <DataGridCheckBoxColumn.ElementStyle>
-                  <Style TargetType="CheckBox">
-                    <Setter Property="VerticalAlignment" Value="Center" />
-                    <Setter Property="HorizontalAlignment" Value="Center" />
-                    <Setter Property="ToolTip" Value="M.O. = Precio × % M.O. × Índice FA — para materiales sin M.O. propia (fórmula del planilla estándar)." />
-                  </Style>
-                </DataGridCheckBoxColumn.ElementStyle>
-              </DataGridCheckBoxColumn>
-              <DataGridTextColumn Header="% M.O." Binding="{Binding MoPorcentajeMaterial, UpdateSourceTrigger=LostFocus, StringFormat={}{0:N2}}" Width="65"
-                                  HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}">
-                <DataGridTextColumn.ElementStyle>
-                  <Style TargetType="TextBlock">
-                    <Setter Property="HorizontalAlignment" Value="Right" />
-                    <Setter Property="VerticalAlignment" Value="Center" />
-                    <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
-                    <Setter Property="Margin" Value="0,0,8,0" />
-                    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
-                    <Setter Property="ToolTip" Value="Porcentaje de M.O. sobre el precio del material (2,50 = 2,5%). Solo aplica con 'M.O. por %' activado." />
-                  </Style>
-                </DataGridTextColumn.ElementStyle>
-              </DataGridTextColumn>
               <DataGridTextColumn Header="Rend. u/D-H" Binding="{Binding RendimientoDh, UpdateSourceTrigger=LostFocus, StringFormat={}{0:N0}}" Width="95"
                                   HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}">
                 <DataGridTextColumn.ElementStyle>
@@ -360,19 +314,6 @@
                     <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
                     <Setter Property="Margin" Value="0,0,8,0" />
                     <Setter Property="TextTrimming" Value="CharacterEllipsis" />
-                  </Style>
-                </DataGridTextColumn.ElementStyle>
-              </DataGridTextColumn>
-              <DataGridTextColumn Header="MO derivada" Binding="{Binding MoDerivadaClp, StringFormat={}{0:N0}}" Width="95" IsReadOnly="True"
-                                  HeaderStyle="{StaticResource DataGridColumnHeader.Formula}">
-                <DataGridTextColumn.ElementStyle>
-                  <Style TargetType="TextBlock">
-                    <Setter Property="HorizontalAlignment" Value="Right" />
-                    <Setter Property="VerticalAlignment" Value="Center" />
-                    <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
-                    <Setter Property="Margin" Value="0,0,8,0" />
-                    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
-                    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
                   </Style>
                 </DataGridTextColumn.ElementStyle>
               </DataGridTextColumn>
@@ -391,7 +332,7 @@
                 <DataGridTemplateColumn.CellTemplate>
                   <DataTemplate>
                     <Border Style="{StaticResource VigenciaChipBorder}" Margin="4,2" ToolTip="{Binding VigenciaLabel}">
-                      <TextBlock Text="{Binding VigenciaLabel}" Style="{StaticResource VigenciaChipText}" TextTrimming="CharacterEllipsis" />
+                      <TextBlock Text="{Binding VigenciaLabel}" Style="{StaticResource VigenciaChipText}" />
                     </Border>
                   </DataTemplate>
                 </DataGridTemplateColumn.CellTemplate>
@@ -406,7 +347,7 @@
                   Visibility="{Binding HasNoFilterResults, Converter={StaticResource BoolToVisibility}}">
             <StackPanel HorizontalAlignment="Center">
               <TextBlock Text="🔍" FontSize="20" HorizontalAlignment="Center" Margin="0,0,0,6" />
-              <TextBlock Text="No se encontraron insumos con este filtro" FontWeight="SemiBold"
+              <TextBlock Text="Sin coincidencias." FontWeight="SemiBold"
                          FontSize="13" Foreground="{DynamicResource Brush.Ink}" HorizontalAlignment="Center" />
               <TextBlock Text="Intente con otro término o categoría" FontSize="11"
                          Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Center" Margin="0,2,0,10" />

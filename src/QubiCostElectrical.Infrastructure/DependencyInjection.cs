@@ -32,11 +32,8 @@ public static class InfrastructureServiceCollectionExtensions
 
         // Banco de precios (BD compartida).
         services.AddSingleton<IPriceBankStore>(sp => new PriceBankStore(Path(sp)));
-        services.AddSingleton<IPriceBankRepository, PriceBankRepository>();
 
-        // Catálogo APU: vive en la BD del banco de precios (catálogo compartido).
-        services.AddSingleton<IApuCatalogRepository>(sp => new SqliteApuCatalogRepository(Path(sp)));
-        services.AddSingleton<IApuVersionRepository>(sp => new SqliteApuVersionRepository(Path(sp)));
+        // Plantillas APU y de conjuntos: viven en la BD del banco de precios.
         services.AddSingleton<IApuTemplateStore>(sp => new ApuTemplateStore(Path(sp)));
         services.AddSingleton<IConjuntoTemplateStore>(sp => new ConjuntoTemplateStore(Path(sp)));
 

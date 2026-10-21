@@ -24,7 +24,7 @@ public sealed class GestionFamiliasViewModelTests
         Assert.True(transf.EnUso);
         Assert.True(transf.EsEstandar);
 
-        var ducto = vm.Familias.FirstOrDefault(f => f.Nombre == "Ducto barra");
+        var ducto = vm.Familias.FirstOrDefault(f => f.Nombre == "Ducto de barra");
         Assert.NotNull(ducto);
         Assert.Equal(1, ducto.MaterialesCount);
 

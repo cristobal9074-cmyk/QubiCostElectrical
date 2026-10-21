@@ -112,12 +112,11 @@ public static class ItemizadoCurrencyCoordinator
             return $"$ {clp:N0}";
 
         decimal converted = ConvertClpToDelivery(clp, ctx);
-        string primary = ctx.Currency switch
+        return ctx.Currency switch
         {
             Moneda.USD => $"US$ {converted:N0}",
             Moneda.EUR => $"€ {converted:N0}",
             _ => $"{converted.ToString($"N{decimals}", System.Globalization.CultureInfo.CurrentCulture)} UF"
         };
-        return $"{primary} ($ {clp:N0})";
     }
 }

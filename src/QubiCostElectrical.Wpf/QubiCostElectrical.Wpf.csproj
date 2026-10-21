@@ -37,11 +37,14 @@
 
   <ItemGroup>
     <Resource Include="Assets\QubiCostElectrical.ico" />
-    <Resource Include="Assets\isolate_the_isometric_cube_logo_mark_from_data_image_image_6._remove_the_white.png" />
-    <Resource Include="Assets\qubi_cost_electrical_refined_logo.png" />
+    <Resource Include="Assets\QubiCostProject.ico" />
+    <Resource Include="Assets\brand_logo.png" />
+    <Resource Include="Assets\project_icon.png" />
+    <None Include="Assets\QubiCostProject.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <Resource Include="Fonts\Inter.ttc" />
     <Resource Include="Fonts\JetBrainsMono-Regular.ttf" />
-    <Resource Include="Fonts\JetBrainsMono-SemiBold.ttf" />
   </ItemGroup>
 
   <ItemGroup>

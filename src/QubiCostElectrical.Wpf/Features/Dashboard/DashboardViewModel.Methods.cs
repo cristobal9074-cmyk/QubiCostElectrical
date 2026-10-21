@@ -37,6 +37,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
         readinessCoordinator = new DashboardReadinessCoordinator(session, shell, currency);
         ufUpdater = new DashboardUfUpdateService(session, undo: null);
         KpiCards = new ObservableCollection<DashboardKpiCardVm>();
+        KeyFigures = new ObservableCollection<DashboardKeyFigureVm>();
         CostShares = new ObservableCollection<DashboardCostShareVm>();
         WorkflowSteps = new ObservableCollection<DashboardWorkflowStepVm>();
         Alerts = new ObservableCollection<DashboardAlertVm>();
@@ -144,6 +145,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
     private static void ExitApplication() => Application.Current.Shutdown();
 
     public ObservableCollection<DashboardKpiCardVm> KpiCards { get; }
+    public ObservableCollection<DashboardKeyFigureVm> KeyFigures { get; }
     public ObservableCollection<DashboardCostShareVm> CostShares { get; }
     public ObservableCollection<DashboardWorkflowStepVm> WorkflowSteps { get; }
     public ObservableCollection<DashboardAlertVm> Alerts { get; }
@@ -400,6 +402,8 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
             if (ShowEmptyState)
             {
                 KpiCards.Clear();
+                KeyFigures.Clear();
+                Composition = DashboardCompositionVm.Empty;
                 CostShares.Clear();
                 WorkflowSteps.Clear();
                 Alerts.Clear();
@@ -572,6 +576,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
                         Item = row.Item,
                         Partida = row.Partida,
                         TotalLabel = FormatDual(rowClp),
+                        TotalShortLabel = FormatMoney(rowClp),
                         TotalClpLabel = FormatClp(rowClp),
                         TotalUfLabel = $"{rowUf:N3} UF",
                         SharePct = Math.Clamp(sharePct, 0, 100),
@@ -580,6 +585,8 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
                     });
                 }
                 ParetoSummary = DashboardParetoSummary.Calculate(TopPartidas, costDirect, valorUf);
+                OnPropertyChanged(nameof(FilteredCockpitPartidasCountLabel));
+                OnPropertyChanged(nameof(FilteredCockpitPartidas));
                 double maxShare = TopPartidas.Count > 0 ? TopPartidas.Max(p => p.SharePct) : 10;
                 ParetoAxisMaxPct = Math.Max(5, Math.Ceiling(maxShare / 5) * 5);
                 OnPropertyChanged(nameof(FilteredTopPartidas));
@@ -595,6 +602,17 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
 
 
                 // Cascada de precio: un único recorrido auditable del costo de ejecución al total.
+                // Eje de la cascada: mismo formato compacto que los importes, en la moneda del
+                // proyecto (las barras y el eje deben hablar del mismo número).
+                string FormatAxisMoney(decimal value)
+                {
+                    if (value <= 0m) return "0";
+                    if (enClpResumen) return DashboardMoneyShort.Format(value);
+                    if (string.Equals(project.MonedaPresupuesto, "UF", StringComparison.OrdinalIgnoreCase))
+                        return DashboardMoneyShort.FormatUf(PriceConversion.ClpToUf(value, valorUf));
+                    return FormatMoney(value);
+                }
+
                 Waterfall = DashboardCockpitComposer.BuildWaterfall(
                     state.Cost,
                     new DashboardWaterfallPolicy(
@@ -605,7 +623,8 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
                         project.DescuentoPct,
                         project.IvaPct <= 0m ? 19m : project.IvaPct,
                         project.IncluirIvaEnTotal),
-                    clp => enClpResumen ? DashboardMoneyShort.Format(clp) : FormatMoney(clp));
+                    clp => enClpResumen ? DashboardMoneyShort.Format(clp) : FormatMoney(clp),
+                    FormatAxisMoney);
 
                 UpdateVerdict(state.Executive.MaterialImpact10Pct);
 
@@ -613,6 +632,10 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
                 foreach (var pt in state.Executive.SensitivityCurve)
                     SensitivityCurve.Add(pt);
                 MaterialImpact10PctLabel = $"+10% → {state.Executive.MaterialImpact10Pct:+0.0;-0.0;0.0}%";
+
+                // Panel de cifras clave y composición del precio.
+                BuildKeyFigures(state, project, valorUf, totalVentaClp, totalVentaUf, enClpResumen,
+                    FormatMoney, FormatAxisMoney);
 
                 RecentAuditEntries.Clear();
                 foreach (var entry in audit.GetRecentEntries(5))

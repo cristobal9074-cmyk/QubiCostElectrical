@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Propuesta — Diálogo “Nuevo proyecto” Qubi Cost Electrical</title>
+<style>
+  :root{
+    --bg:#0b1220; --panel:#101a2e; --panel2:#0e1626; --line:#233250; --ink:#e8eef9; --ink2:#aab7d0;
+    --blue:#3b82f6; --blue2:#1d4ed8; --green:#10b981; --amber:#f59e0b; --red:#ef4444; --violet:#8b5cf6;
+    --radius:14px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  body{background:var(--bg); color:var(--ink); font-family:"Segoe UI", Inter, system-ui, sans-serif; line-height:1.55; padding:40px 24px}
+  .wrap{max-width:1180px; margin:0 auto}
+  header.hero{padding:36px 34px; background:linear-gradient(135deg,#0f1b33 0%,#132747 55%,#17335e 100%); border:1px solid var(--line); border-radius:20px}
+  .kicker{display:inline-block; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:#7fa6ff; font-weight:700; margin-bottom:10px; padding:5px 12px; border:1px solid #2c4a80; border-radius:999px; background:#0d1a33}
+  h1{font-size:30px; font-weight:700; letter-spacing:-.02em}
+  .sub{color:var(--ink2); margin-top:8px; max-width:760px; font-size:14.5px}
+  .meta-row{display:flex; gap:10px; margin-top:18px; flex-wrap:wrap}
+  .chip{font-size:12px; padding:6px 12px; border-radius:999px; border:1px solid var(--line); background:var(--panel); color:var(--ink2)}
+  .chip b{color:var(--ink)}
+
+  section{margin-top:30px}
+  h2{font-size:19px; font-weight:700; letter-spacing:-.01em; margin-bottom:4px}
+  h2 .num{color:#5f83ff; margin-right:8px}
+  .lead{color:var(--ink2); font-size:13.5px; margin-bottom:16px}
+
+  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:12px}
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:16px 18px}
+  .card h3{font-size:13.5px; margin-bottom:6px}
+  .card p{font-size:12.5px; color:var(--ink2)}
+  .tag{display:inline-block; font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; padding:3px 8px; border-radius:6px; margin-bottom:8px}
+  .tag.r{background:#3f1d24; color:#fda4af}      /* crítico */
+  .tag.o{background:#3a2c10; color:#fcd34d}      /* oportunidad */
+  .tag.g{background:#12332a; color:#6ee7b7}      /* respuesta */
+
+  /* ===== Mockup ===== */
+  .mock-stage{background:radial-gradient(1200px 500px at 50% -10%, #16233d 0%, #0b1220 60%); border:1px solid var(--line); border-radius:20px; padding:34px 20px 40px}
+  .caption{text-align:center; color:var(--ink2); font-size:12px; margin-top:12px}
+
+  .dlg{width:880px; max-width:100%; margin:0 auto; background:#ffffff; color:#101828; border-radius:14px; overflow:hidden; box-shadow:0 30px 80px rgba(0,0,0,.55); display:flex; flex-direction:column}
+  .dlg-title{height:38px; background:#101828; color:#fff; display:flex; align-items:center; padding:0 12px; gap:8px; font-size:12.5px; font-weight:600}
+  .dlg-title .win{margin-left:auto; display:flex; gap:18px; color:#93a2bd; font-size:11px}
+
+  .dlg-body{display:grid; grid-template-columns:1fr 300px; gap:0; min-height:560px}
+  .dlg-main{padding:26px 28px 0}
+  .heroRow{display:flex; gap:14px; align-items:flex-start; margin-bottom:18px}
+  .logoBox{width:44px; height:44px; border-radius:12px; background:linear-gradient(135deg,#2563eb,#1d4ed8); display:flex; align-items:center; justify-content:center}
+  .logoBox svg{width:22px; height:22px; stroke:#fff}
+  .heroRow h3{font-size:19px; font-weight:700; letter-spacing:-.01em}
+  .heroRow p{font-size:12.5px; color:#667085; margin-top:2px}
+
+  .steps{display:flex; gap:8px; margin:0 0 18px; font-size:11px; color:#475467}
+  .step{display:flex; align-items:center; gap:6px; padding:5px 11px; border:1px solid #e4e7ec; border-radius:999px}
+  .step.active{border-color:#2563eb; color:#2563eb; font-weight:600; background:#eff6ff}
+  .step .dot{width:16px; height:16px; border-radius:50%; background:#e4e7ec; display:flex; align-items:center; justify-content:center; font-size:9.5px; font-weight:700; color:#475467}
+  .step.active .dot{background:#2563eb; color:#fff}
+  .step-line{width:22px; height:1px; background:#e4e7ec; align-self:center}
+
+  .lbl{font-size:11.5px; font-weight:600; color:#344054; margin:0 0 5px}
+  .lbl .hint{font-weight:400; color:#98a2b3}
+  .field{height:38px; border:1px solid #d0d5dd; border-radius:10px; display:flex; align-items:center; padding:0 12px; font-size:13px; color:#101828; margin-bottom:14px; gap:8px}
+  .field code{font-family:Consolas,monospace; font-weight:600; color:#1d4ed8}
+  .field .suf{color:#98a2b3}
+  .field .ok{margin-left:auto; color:#12b76a; font-size:11px; font-weight:700; display:flex; align-items:center; gap:5px}
+  .field .err{margin-left:auto; color:#f04438; font-size:11px; font-weight:600}
+  .row2{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+
+  .sect{border-top:1px solid #eef2f6; margin:6px 0 14px; padding-top:14px}
+  .sect-head{display:flex; align-items:center; justify-content:space-between; cursor:default}
+  .sect-head b{font-size:12.5px}
+  .sect-head span{font-size:11px; color:#475467}
+  .chev{color:#98a2b3; font-size:10px}
+
+  .tpl-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:12px}
+  .tpl{border:1.5px solid #e4e7ec; border-radius:12px; padding:12px; position:relative}
+  .tpl.sel{border-color:#2563eb; background:#f5f9ff; box-shadow:0 0 0 3px rgba(37,99,235,.08)}
+  .tpl .ico{width:30px; height:30px; border-radius:8px; background:#f2f4f7; display:flex; align-items:center; justify-content:center; margin-bottom:8px}
+  .tpl .ico svg{width:16px; height:16px; stroke:#475467}
+  .tpl.sel .ico{background:#dbeafe}
+  .tpl.sel .ico svg{stroke:#2563eb}
+  .tpl b{font-size:12.5px; display:block}
+  .tpl small{font-size:10.5px; color:#667085; line-height:1.35; display:block; margin-top:3px}
+  .tpl .meta{position:absolute; top:10px; right:10px; font-size:9px; font-weight:700; letter-spacing:.06em; color:#12b76a; background:#ecfdf3; border:1px solid #abefc6; border-radius:6px; padding:2px 6px}
+
+  .foot{border-top:1px solid #e4e7ec; background:#fcfcfd; padding:14px 28px; display:flex; align-items:center}
+  .valid{display:flex; gap:14px; align-items:center; font-size:12px}
+  .vitem{display:flex; align-items:center; gap:6px; color:#475467}
+  .vitem svg{width:14px; height:14px; stroke:#12b76a}
+  .vitem.warn svg{stroke:#f79009}
+  .cta{margin-left:auto; display:flex; gap:10px}
+  .btn2{height:38px; padding:0 18px; border-radius:10px; font-size:13px; font-weight:600; display:flex; align-items:center; gap:8px}
+  .btn-ghost{border:1px solid #d0d5dd; color:#344054; background:#fff}
+  .btn-primary{background:linear-gradient(180deg,#3b82f6,#2563eb); color:#fff; box-shadow:0 1px 2px rgba(16,24,40,.1), inset 0 1px 0 rgba(255,255,255,.16)}
+  .kbd{font-size:9.5px; font-family:Consolas,monospace; background:rgba(255,255,255,.22); border:1px solid rgba(255,255,255,.25); border-radius:5px; padding:2px 6px}
+
+  /* columna derecha (preview) */
+  .summary{background:#f8fafc; border-left:1px solid #eef2f6; padding:22px 20px}
+  .summary h4{font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:#667085; font-weight:700; margin-bottom:12px}
+  .sname{font-size:15px; font-weight:700; letter-spacing:-.01em}
+  .scode{font-family:Consolas,monospace; font-size:12px; color:#1d4ed8; margin-top:2px}
+  .slist{margin-top:16px; display:flex; flex-direction:column; gap:9px}
+  .srow{display:flex; justify-content:space-between; font-size:12px; color:#475467; border-bottom:1px dashed #eef2f6; padding-bottom:8px}
+  .srow b{color:#101828; font-weight:600; max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .path{margin-top:14px; font-size:10.5px; color:#667085; line-height:1.5; background:#f2f4f7; border-radius:8px; padding:9px 10px; font-family:Consolas,monospace}
+  .path b{color:#344054}
+
+  table{width:100%; border-collapse:collapse; font-size:13px}
+  th,td{padding:10px 14px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top}
+  th{font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:#7fa6ff; background:#0d1830}
+  td{color:var(--ink2)}
+  td b{color:var(--ink); font-weight:600}
+  .pill{font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px; white-space:nowrap}
+  .p1{background:#12332a; color:#6ee7b7}
+  .p2{background:#3a2c10; color:#fcd34d}
+  .p3{background:#2a2340; color:#c4b5fd}
+
+  .phase{display:flex; gap:14px; margin-bottom:14px}
+  .phase .ph-num{width:40px; height:40px; border-radius:12px; background:linear-gradient(135deg,#1d4ed8,#2563eb); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:15px; flex-shrink:0}
+  .phase div h3{font-size:14px; margin-bottom:3px}
+  .phase div p{font-size:12.5px; color:var(--ink2)}
+  .phase .esp{color:#fcd34d; font-size:11px; font-weight:700; margin-left:8px}
+
+  footer{margin-top:36px; color:var(--ink2); font-size:12px; text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <span class="kicker">Propuesta de rediseño</span>
+    <h1>Diálogo “Nuevo proyecto” — nivel $100M</h1>
+    <p class="sub">Reconstrucción completa del flujo de creación de proyectos: jerarquía de dos niveles (esencial → avanzado), código de proyecto autogenerado con convención PEL/AC, plantillas normativas SEC/RIC como tarjetas visuales, validación en vivo y preview lateral del proyecto a crear. Todo con los tokens del DesignSystem existente.</p>
+    <div class="meta-row">
+      <span class="chip">Alcance: <b>1 dialogo WPF</b> (NewProjectDialog)</span>
+      <span class="chip">Sin tocar: <b>SQLite, migraciones, cálculos</b></span>
+      <span class="chip">Token design: <b>DesignSystem existente</b></span>
+      <span class="chip">Esfuerzo total: <b>~4 a 6 sesiones</b></span>
+    </div>
+  </header>
+
+  <section>
+    <h2><span class="num">1</span>Diagnóstico del estado actual</h2>
+    <p class="lead">Lo apreciable en el capture de hoy — form plano de 8 campos, jerarquía plana, validación pasiva, plantilla invisible.</p>
+    <div class="grid">
+      <div class="card"><span class="tag r">Crítico</span><h3>Form plano sin jerarquía</h3><p>Ocho campos iguales verticalmente: el usuario no sabe qué es esencial (nombre/cliente) ni qué es avanzado (carpeta destino, ruta del archivo). Se genera scroll y exceso de relleno (nombre “Proyecto nuevo”, selección de la moldura azul).</p></div>
+      <div class="card"><span class="tag r">Crítico</span><h3>Plantilla inválida e invisible</h3><p>La plantilla SEC/RIC es un ComboBox + un panel de texto: compite con número y no muestra qué partidas trae ni el alcance normativo (“General”, “Vivienda”, “Edificio”).</p></div>
+      <div class="card"><span class="tag o">Oportunidad</span><h3>Sin 코드 de proyecto / identidad</h3><p>Tu convención real es PEL039A2026: hoy se teclea a mano y puede duplicarse. El campo es una oportunidad de autogenerar código PROYECTO, validado contra la carpeta destino.</p></div>
+      <div class="card"><span class="tag o">Oportunidad</span><h3>Validación pasiva</h3><p>“Cancelar / Crear proyecto” no indica motivo de que el nombre de carpeta ya existe VG. se crea hoy, sobre-duplicando. El .qce debe avisarse antes (archivo ya existe, carpeta sin permisos…) pero el usuario sólo lo ve atajo y confirmaci�n real.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">2</span>Mockup del nuevo diálogo</h2>
+    <p class="lead">Colores/estilos refieren al design tokens WPF (Dialog.Window, Dialog.Chrome, Button.Primary, DataGrid.Workspace). Se respeta la renovación WPF pura.</p>
+    <div class="mock-stage">
+      <div class="dlg">
+        <div class="dlg-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#93c5fd" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M12 8v8M8 12h8"/></svg>
+          Nuevo proyecto<span class="win">— &nbsp; &#9633; &nbsp; &#215;</span>
+        </div>
+        <div class="dlg-body">
+          <div class="dlg-main">
+            <div class="heroRow">
+              <div class="logoBox"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6M9 11h2M13 11h2"/></svg></div>
+              <div><h3>Crear nuevo proyecto</h3><p>Identity&#183;Ubicaci&#243;n&#183;Plantilla SEC — archivo <b>.qce</b> listo para cubicar.</p></div>
+            </div>
+
+            <div class="steps">
+              <div class="step active"><span class="dot">1</span> Identidad</div><div class="step-line"></div>
+              <div class="step"><span class="dot">2</span> Plantilla</div><div class="step-line"></div>
+              <div class="step"><span class="dot">3</span> Archivo</div>
+            </div>
+
+            <div class="row2">
+              <div>
+                <div class="lbl">Nombre del proyecto</div>
+                <div class="field">Proyecto nuevo</div>
+                <div class="lbl">Cliente</div>
+                <div class="field">Constructora Andes SPA <span class="ok">&#10003; opcional</span></div>
+              </div>
+              <div>
+                <div class="lbl">C&#243;digo del proyecto <span class="hint">(autogenerado)</span></div>
+                <div class="field"><code>PEL040</code><span class="suf">A2026 · editable</span></div>
+                <div class="lbl">Ubicaci&#243;n</div>
+                <div class="field">Providencia, RM <span class="ok">&#10003; opcional</span></div>
+              </div>
+            </div>
+
+            <div class="row2">
+              <div>
+                <div class="lbl">Moneda del presupuesto</div>
+                <div class="field">UF · Unidad de Fomento</div>
+              </div>
+              <div>
+                <div class="lbl">Valor UF al d&#237;a</div>
+                <div class="field">$ 38.704,20 <span class="ok">hoy · editable</span></div>
+              </div>
+            </div>
+
+            <div class="sect">
+              <div class="sect-head"><b>Plantilla de obra (Norma SEC / RIC)</b><span>3 de 8 disponibles</span><span class="chev">▼</span></div>
+              <div class="tpl-grid">
+                <div class="tpl">
+                  <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 7h6M9 11h6M9 15h4"/></svg></div><span class="meta">8 PARTIDAS</span>
+                  <b>Blanco</b><small>Proyecto limpio, importar tabla own or crear partidas.</small>
+                </div>
+                <div class="tpl sel">
+                  <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M3 21h18M6 21V9l6-3 6 3v12M10 13h2M10 17h2"/></svg></div><span class="meta">34 PARTIDAS</span>
+                  <b>Edificio habitacional</b><small>Sectores piso a piso, atierro de tramos, servicios comunes.</small>
+                </div>
+                <div class="tpl">
+                  <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M3 9l9-6 9 6M5 9v12h14V9M9 21v-7h6v7"/></svg></div><span class="meta">48 PARTIDAS</span>
+                  <b>Industrial / Galp&#243;n</b><small>Alimentadores, tableros de distribuci&#243;n, iluminaci&#243;n alta.</small>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <aside class="summary">
+            <h4>Resumen del proyecto</h4>
+            <div class="sname">Proyecto nuevo</div>
+            <div class="scode">PEL040A2026</div>
+            <div class="slist">
+              <div class="srow"><span>Cliente</span><b>Constructora Andes</b></div>
+              <div class="srow"><span>Moneda</span><b>UF (38.704,20)</b></div>
+              <div class="srow"><span>Plantilla</span><b>Edificio habitacional</b></div>
+              <div class="srow"><span>Partidas base</span><b>34 incorporar&#225;n</b></div>
+              <div class="srow"><span>Norma</span><b>SEC / RIC N&#176; 8</b></div>
+            </div>
+            <div class="path"><b>Carpeta destino:</b><br>Documents\Presupuestos El&#233;ctricos<br><b>Archivo:</b> PEL040A2026.qce</div>
+          </aside>
+        </div>
+
+        <div class="foot">
+          <div class="valid">
+            <span class="vitem"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>Nombre OK</span>
+            <span class="vitem"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>C&#243;digo &#250;nico</span>
+            <span class="vitem warn"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>Carpeta destino verificable</span>
+          </div>
+          <div class="cta">
+            <div class="btn2 btn-ghost">Cancelar</div>
+            <div class="btn2 btn-primary">Crear y abrir &nbsp;<span class="kbd">Ctrl+Enter</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">Mockup refiere a los tokens del DesignSystem WPF — no es HTML real de la app, es un mapa visual de la propuesta.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">3</span>Cat&#225;logo de modificaciones</h2>
+    <table>
+      <tr><th>#</th><th>Modificaci&#243;n</th><th>Detalle</th><th>Prioridad</th></tr>
+      <tr><td><b>01</b></td><td>Hero + paso actual</td><td><b>Cabezal</b> con icono de proyecto en caja azul degradada, t&#237;tulo corto y descripci&#243;n; barra de 3 pasos “Identidad · Plantilla · Archivo” con el paso activo resaltado. El resto se colapsa.</td><td><span class="pill p1">Alta</span></td></tr>
+      <tr><td><b>02</b></td><td>C&#243;digo autogenerado PEL###AYYYY</td><td>Con la convenci&#243;n real (PEL040A2026) valor por defecto = &#250;ltimo c&#243;digo de carpeta destino +1; editable + validado en vivo ante duplicados en la carpeta destino y en el &#237;ndice global del proyecto registry.</td><td><span class="pill p1">Alta</span></td></tr>
+      <tr><td><b>03</b></td><td>Plantillas como tarjetas visuales</td><td>Grid de tarjetas (Blanco / Vivienda / Edificio habitacional / Condominio / Comercial / Industrial / Faena minera / Hospitalario) con icono SEC/RIC, nº partidas incluidas y descripci&#243;n de 1-l&#237;nea. Tarjeta activa: anillo azul + cu&#225;ntas partidas “sumar&#225;n”.</td><td><span class="pill p1">Alta</span></td></tr>
+      <tr><td><b>04</b></td><td>Panel de Preview (columna derecha)</td><td>Resumen continuo con nombre, c&#243;digo, cliente, moneda + valor UF diaria, plantilla elegida, nº partidas, norma referencia, ruta completa destino. Siempre fijo a la derecha.</td><td><span class="pill p1">Alta</span></td></tr>
+      <tr><td><b>05</b></td><td>Validaci&#243;n en vivo (barra verde abajo)</td><td>3 checks permanentes: (1) nombre no duplicado en carpeta destino; (2) c&#243;digo &#250;nico; (3) ruta de carpeta disponible/escribible. Cada check tiene icono; con error, bot&#243;n “Crear” deshabilitado + mensaje acc. concreto.</td><td><span class="pill p1">Alta</span></td></tr>
+      <tr><td><b>06</b></td><td>Valor UF autom&#225;tico</td><td>Si moneda es UF, campo “valor UF” con el valor del servicio configurado en Preferencias, editable; el dato va directo al proyecto y evita recomputing.</td><td><span class="pill p2">Media</span></td></tr>
+      <tr><td><b>07</b></td><td>Carpeta destino resumida</td><td>Campo en modo chip con la carpeta cortada (…) y tooltip completo; abre picker; “Recordar como default” checkbox) mejor than escribir la ruta completa visible.</td><td><span class="pill p2">Media</span></td></tr>
+      <tr><td><b>08</b></td><td>Nombre archivo derivado del c&#243;digo</td><td>El campo “Nombre del archivo” desaparece: se deriva autom&#225;ticamente del c&#243;digo del proyecto (&lt;CODE&gt;.qce) eliminando una fuente de errores de duplicaci&#243;n.</td><td><span class="pill p2">Media</span></td></tr>
+      <tr><td><b>09</b></td><td>Secci&#243;n avanzada colapsable</td><td>Formula propiedad facts opcionales: direcci&#243;n modal, fecha estimada, RUT cliente, joignant skipped en el hero. Todo editable luego desde Proyecto.</td><td><span class="pill p3">Baja</span></td></tr>
+      <tr><td><b>10</b></td><td>CTA “Crear y abrir” + atajos</td><td>Bot&#243;n primario con gradiente/sombra token, atajo Ctrl+Enter, Esc cancela; focus inicial en Nombre.</td><td><span class="pill p1">Alta</span></td></tr>
+      <tr><td><b>11</b></td><td>Signature moment al crear</td><td>Transici&#243;n breve “Preparando estructura SEC…” con progreso real (migrador/initializer) y apertura directa al Dashboard del proyecto nuevo con toast de confirmaci&#243;n.</td><td><span class="pill p3">Baja</span></td></tr>
+      <tr><td><b>12</b></td><td>Accesibilidad y foco</td><td>Orden tab, etiquetas acceso, alto contraste tokens existentes, focus visible, tama&#241;o m&#237;nimo 38px componentes.</td><td><span class="pill p2">Media</span></td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2><span class="num">4</span>Plan de implementaci&#243;n</h2>
+    <div class="phase">
+      <div class="ph-num">1</div>
+      <div>
+        <h3>Fase 1 — Estructura y layout <span class="esp">~2h</span></h3>
+        <p>Nuevo layout 2 columnas (main + preview), hero, barra de pasos, hero tokens del DesignSystem; campo nombre-hero m&#225;s c&#243;digo de proyecto placeholder.切 CTAs y kbd.</p>
+      </div>
+    </div>
+    <div class="phase">
+      <div class="ph-num">2</div>
+      <div>
+        <h3>Fase 2 — Identidad + validaciones vivas <span class="esp">~2-3h</span></h3>
+        <p>Convenci&#243;n PEL###A{a&#241;o} autogenerada, detects duplicados contra carpeta destino y proyecto registry; checks visuales y deshabilitaci&#243;n real del CTA; ruta resumida con picker.</p>
+      </div>
+    </div>
+    <div class="phase">
+      <div class="ph-num">3</div>
+      <div>
+        <h3>Fase 3 — Plantillas visuales <span class="esp">~2-3h</span></h3>
+        <p>Cat&#225;logo de plantillas con tarjetas: modelo de datos (reusa ProjectTemplate actual si existe), iconos SVG inline, contador de partidas por plantilla, descripci&#243;n normativa.</p>
+      </div>
+    </div>
+    <div class="phase">
+      <div class="ph-num">4</div>
+      <div>
+        <h3>Fase 4 — Signature moment + pulido <span class="esp">~1-2h</span></h3>
+        <p>UF autom&#225;tica, progreso de creaci&#243;n, toast de apertura directo al dashboard, QA de accesibilidad y foto final. Publicar.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">5</span>Criterios de aceptaci&#243;n</h2>
+    <div class="grid">
+      <div class="card g"><h3>Form two-tier, sin scroll</h3><p>Esenciales arriba; avanzados colapsados; en pantallas 1366×768 se ve todo sin scroll.</p></div>
+      <div class="card g"><h3>C&#243;digo &#250;nico garantizado</h3><p>Al abrir, c&#243;digo propuesto no duplica en la carpeta destino; el usuario puede editarlo y la validaci&#243;n sigue activa.</p></div>
+      <div class="card g"><h3>Plantilla significa algo</h3><p>Se ve exactamente qué partidas sumar&#225;n antes de crear.</p></div>
+      <div class="card g"><h3>Cero sorpresas al crear</h3><p>Archivo resultado = c&#243;digo + nombre choque imposible (validaci&#243;n previa), y el proyecto nuevo abre directo en el Dashboard.</p></div>
+    </div>
+  </section>
+
+  <footer>Qubi Cost Electrical · Propuesta interna de UX · documento de trabajo</footer>
+</div>
+</body>
+</html>

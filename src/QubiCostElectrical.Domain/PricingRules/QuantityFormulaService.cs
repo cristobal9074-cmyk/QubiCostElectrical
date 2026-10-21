@@ -8,9 +8,8 @@ namespace QubiCostElectrical;
 public sealed record QuantityFormulaResult(decimal Value, bool Success, string Error);
 
 /// <summary>
-/// Evaluador liviano para fórmulas de cantidad.
-/// Soporta: +, -, *, /, ^, paréntesis, decimales con punto/coma y variables nombradas.
-/// No ejecuta código externo: solo analiza la expresión matemática permitida.
+/// Evaluador del dialecto cerrado de cantidades. Ver <see cref="QuantityFormulaDialect"/>.
+/// Un token fuera de esa lista vuelve como error. No se traga en un catch genérico ni se publica como cero.
 /// </summary>
 public static class QuantityFormulaService
 {
@@ -20,29 +19,48 @@ public static class QuantityFormulaService
         if (string.IsNullOrWhiteSpace(text))
             return new QuantityFormulaResult(0m, true, "");
 
+        var parser = new Parser(text, variables ?? new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase));
+        decimal value;
         try
         {
-            var parser = new Parser(text, variables ?? new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase));
-            decimal value = parser.ParseExpression();
-            parser.SkipWhiteSpace();
-            if (!parser.IsAtEnd)
-                return new QuantityFormulaResult(0m, false, $"Texto no reconocido cerca de '{parser.PeekRemaining()}'.");
+            value = parser.ParseExpression();
+        }
+        catch (OverflowException)
+        {
+            return new QuantityFormulaResult(0m, false, "Resultado demasiado grande.");
+        }
 
+        if (parser.Error != null)
+            return new QuantityFormulaResult(0m, false, parser.Error);
+        parser.SkipWhiteSpace();
+        if (!parser.IsAtEnd)
+            return new QuantityFormulaResult(0m, false, $"Texto no reconocido cerca de '{parser.PeekRemaining()}'.");
+        return new QuantityFormulaResult(value, true, "");
+    }
 
-            return new QuantityFormulaResult(value, true, "");
-        }
-        catch (DivideByZeroException)
-        {
-            return new QuantityFormulaResult(0m, false, "División por cero.");
-        }
-        catch (FormulaException ex)
-        {
-            return new QuantityFormulaResult(0m, false, ex.Message);
-        }
-        catch (Exception ex)
-        {
-            return new QuantityFormulaResult(0m, false, ex.Message);
-        }
+    /// <summary>
+    /// Comprueba el dialecto sin las cantidades reales del proyecto.
+    /// R1, U1 y las casillas se aceptan; una función que no está en la lista, no.
+    /// </summary>
+    public static QuantityFormulaResult ValidateDialect(string? expression)
+        => Evaluate(expression, QuantityFormulaDialect.StructuralReferences);
+
+    /// <summary>Texto de la barra de fórmulas: las expresiones llevan "=" adelante, como Excel.</summary>
+    public static string FormatForFormulaBar(string? raw)
+    {
+        string text = (raw ?? "").Trim();
+        if (text.Length == 0) return "";
+        if (text.StartsWith("=", StringComparison.Ordinal)) return text;
+        return IsFormulaLike(text) ? "=" + text : text;
+    }
+
+    /// <summary>Quita el "=" de la barra antes de guardar la casilla.</summary>
+    public static string ParseFromFormulaBar(string? barText)
+    {
+        string text = (barText ?? "").Trim();
+        if (text.StartsWith("=", StringComparison.Ordinal))
+            text = text[1..].TrimStart();
+        return text;
     }
 
     public static bool IsFormulaLike(string? expression)
@@ -140,11 +158,20 @@ public static class QuantityFormulaService
         private readonly IReadOnlyDictionary<string, decimal> variables;
         private int pos;
         private int depth;
+        private string? error;
 
         public Parser(string text, IReadOnlyDictionary<string, decimal> variables)
         {
             this.text = text;
             this.variables = variables;
+        }
+
+        public string? Error => error;
+
+        private decimal Fail(string message)
+        {
+            error ??= message;
+            return 0m;
         }
 
         public bool IsAtEnd => pos >= text.Length;
@@ -158,41 +185,49 @@ public static class QuantityFormulaService
 
         public decimal ParseExpression()
         {
-            EnterRecursion();
+            if (error != null) return 0m;
+            if (!EnterRecursion()) return 0m;
             try
             {
                 decimal left = ParseAdditive();
-                while (true)
+                if (error != null) return 0m;
+                while (error == null)
                 {
                     SkipWhiteSpace();
                     if (Match("==") || Match("="))
                     {
                         decimal right = ParseAdditive();
+                        if (error != null) return 0m;
                         left = left == right ? 1m : 0m;
                     }
                     else if (Match("<>") || Match("!="))
                     {
                         decimal right = ParseAdditive();
+                        if (error != null) return 0m;
                         left = left != right ? 1m : 0m;
                     }
                     else if (Match("<="))
                     {
                         decimal right = ParseAdditive();
+                        if (error != null) return 0m;
                         left = left <= right ? 1m : 0m;
                     }
                     else if (Match(">="))
                     {
                         decimal right = ParseAdditive();
+                        if (error != null) return 0m;
                         left = left >= right ? 1m : 0m;
                     }
                     else if (Match('<'))
                     {
                         decimal right = ParseAdditive();
+                        if (error != null) return 0m;
                         left = left < right ? 1m : 0m;
                     }
                     else if (Match('>'))
                     {
                         decimal right = ParseAdditive();
+                        if (error != null) return 0m;
                         left = left > right ? 1m : 0m;
                     }
                     else
@@ -210,48 +245,54 @@ public static class QuantityFormulaService
 
         private decimal ParseAdditive()
         {
+            if (error != null) return 0m;
             decimal value = ParseTerm();
-            while (true)
+            while (error == null)
             {
                 SkipWhiteSpace();
                 if (Match('+')) value += ParseTerm();
                 else if (Match('-')) value -= ParseTerm();
                 else break;
             }
-            return value;
+            return error == null ? value : 0m;
         }
 
         private decimal ParseTerm()
         {
+            if (error != null) return 0m;
             decimal value = ParsePower();
-            while (true)
+            while (error == null)
             {
                 SkipWhiteSpace();
                 if (Match('*')) value *= ParsePower();
                 else if (Match('/'))
                 {
                     decimal divisor = ParsePower();
-                    if (divisor == 0m) throw new DivideByZeroException();
+                    if (error != null) return 0m;
+                    if (divisor == 0m) return Fail("División por cero.");
                     value /= divisor;
                 }
                 else break;
             }
-            return value;
+            return error == null ? value : 0m;
         }
 
         private decimal ParsePower()
         {
+            if (error != null) return 0m;
             decimal value = ParseUnary();
+            if (error != null) return 0m;
             SkipWhiteSpace();
             if (Match('^'))
             {
-                EnterRecursion();
+                if (!EnterRecursion()) return 0m;
                 try
                 {
                     decimal exponent = ParsePower();
+                    if (error != null) return 0m;
                     double pow = Math.Pow((double)value, (double)exponent);
                     if (double.IsNaN(pow) || double.IsInfinity(pow))
-                        throw new FormulaException("Resultado inválido en potencia.");
+                        return Fail("Resultado inválido en potencia.");
                     value = Convert.ToDecimal(pow);
                 }
                 finally
@@ -264,14 +305,16 @@ public static class QuantityFormulaService
 
         private decimal ParseUnary()
         {
+            if (error != null) return 0m;
             SkipWhiteSpace();
             if (Match('+') || Match('-'))
             {
                 bool negate = text[pos - 1] == '-';
-                EnterRecursion();
+                if (!EnterRecursion()) return 0m;
                 try
                 {
                     decimal value = ParseUnary();
+                    if (error != null) return 0m;
                     return negate ? -value : value;
                 }
                 finally
@@ -284,13 +327,15 @@ public static class QuantityFormulaService
 
         private decimal ParsePrimary()
         {
+            if (error != null) return 0m;
             SkipWhiteSpace();
             decimal result;
             if (Match('('))
             {
                 result = ParseExpression();
+                if (error != null) return 0m;
                 SkipWhiteSpace();
-                if (!Match(')')) throw new FormulaException("Falta cerrar paréntesis.");
+                if (!Match(')')) return Fail("Falta cerrar paréntesis.");
             }
             else if (!IsAtEnd && (char.IsLetter(text[pos]) || text[pos] == '_'))
             {
@@ -301,6 +346,7 @@ public static class QuantityFormulaService
                 result = ParseNumber();
             }
 
+            if (error != null) return 0m;
             SkipWhiteSpace();
             while (Match('%'))
             {
@@ -310,15 +356,20 @@ public static class QuantityFormulaService
             return result;
         }
 
-        private void EnterRecursion()
+        private bool EnterRecursion()
         {
             depth++;
             if (depth > MaxRecursionDepth)
-                throw new FormulaException("Fórmula demasiado anidada o compleja.");
+            {
+                Fail("Fórmula demasiado anidada o compleja.");
+                return false;
+            }
+            return true;
         }
 
         private decimal ParseIdentifierOrFunction()
         {
+            if (error != null) return 0m;
             int start = pos;
             pos++;
             while (!IsAtEnd && (char.IsLetterOrDigit(text[pos]) || text[pos] == '_' || text[pos] == '.'))
@@ -328,16 +379,17 @@ public static class QuantityFormulaService
             SkipWhiteSpace();
             if (Match('('))
             {
-                EnterRecursion();
+                if (!EnterRecursion()) return 0m;
                 try
                 {
                     var args = new List<decimal>();
                     SkipWhiteSpace();
                     if (!Match(')'))
                     {
-                        while (true)
+                        while (error == null)
                         {
                             args.Add(ParseExpression());
+                            if (error != null) return 0m;
                             SkipWhiteSpace();
                             if (Match(',') || Match(';'))
                             {
@@ -345,7 +397,7 @@ public static class QuantityFormulaService
                                 continue;
                             }
                             if (Match(')')) break;
-                            throw new FormulaException($"Se esperaba ',' o ')' en la función {name}.");
+                            return Fail($"Se esperaba ',' o ')' en la función {name}.");
                         }
                     }
                     return ExecuteFunction(name, args);
@@ -359,18 +411,24 @@ public static class QuantityFormulaService
             if (variables.TryGetValue(name, out decimal value))
                 return value;
 
-            // Fallback manual por si el diccionario que llega no usa comparador ignore-case.
             foreach (var kv in variables)
             {
                 if (string.Equals(kv.Key, name, StringComparison.OrdinalIgnoreCase))
                     return kv.Value;
             }
 
-            throw new FormulaException($"Variable no definida: {name}.");
+            if (QuantityFormulaDialect.IsFunction(name))
+                return Fail($"Función {name} sin paréntesis. Escriba {name}(...).");
+
+            return Fail($"Variable no definida: {name}.");
         }
 
-        private static decimal ExecuteFunction(string name, List<decimal> args)
+        private decimal ExecuteFunction(string name, List<decimal> args)
         {
+            if (error != null) return 0m;
+            if (!QuantityFormulaDialect.IsFunction(name))
+                return Fail($"Función no reconocida: {name}. No está en el dialecto.");
+
             string upper = name.ToUpperInvariant();
             switch (upper)
             {
@@ -379,20 +437,20 @@ public static class QuantityFormulaService
                     return args.Count > 0 ? args.Sum() : 0m;
                 case "AVERAGE":
                 case "PROMEDIO":
-                    if (args.Count == 0) throw new FormulaException("PROMEDIO requiere al menos un argumento.");
+                    if (args.Count == 0) return Fail("PROMEDIO requiere al menos un argumento.");
                     return args.Average();
                 case "MAX":
                 case "MAXIMO":
-                    if (args.Count == 0) throw new FormulaException("MAX requiere al menos un argumento.");
+                    if (args.Count == 0) return Fail("MAX requiere al menos un argumento.");
                     return args.Max();
                 case "MIN":
                 case "MINIMO":
-                    if (args.Count == 0) throw new FormulaException("MIN requiere al menos un argumento.");
+                    if (args.Count == 0) return Fail("MIN requiere al menos un argumento.");
                     return args.Min();
                 case "ROUND":
                 case "REDONDEAR":
                 {
-                    if (args.Count == 0) throw new FormulaException("REDONDEAR requiere al menos un argumento.");
+                    if (args.Count == 0) return Fail("REDONDEAR requiere al menos un argumento.");
                     int d = args.Count > 1 ? (int)args[1] : 0;
                     return Math.Round(args[0], Math.Clamp(d, 0, 10), MidpointRounding.AwayFromZero);
                 }
@@ -400,7 +458,7 @@ public static class QuantityFormulaService
                 case "REDONDEAR.MAS":
                 case "REDONDEARMAS":
                 {
-                    if (args.Count == 0) throw new FormulaException("REDONDEAR.MAS requiere al menos un argumento.");
+                    if (args.Count == 0) return Fail("REDONDEAR.MAS requiere al menos un argumento.");
                     int d = args.Count > 1 ? (int)args[1] : 0;
                     decimal factor = (decimal)Math.Pow(10, Math.Clamp(d, 0, 10));
                     return Math.Ceiling(args[0] * factor) / factor;
@@ -409,38 +467,39 @@ public static class QuantityFormulaService
                 case "REDONDEAR.MENOS":
                 case "REDONDEARMENOS":
                 {
-                    if (args.Count == 0) throw new FormulaException("REDONDEAR.MENOS requiere al menos un argumento.");
+                    if (args.Count == 0) return Fail("REDONDEAR.MENOS requiere al menos un argumento.");
                     int d = args.Count > 1 ? (int)args[1] : 0;
                     decimal factor = (decimal)Math.Pow(10, Math.Clamp(d, 0, 10));
                     return Math.Floor(args[0] * factor) / factor;
                 }
                 case "INT":
                 case "ENTERO":
-                    if (args.Count == 0) throw new FormulaException("ENTERO requiere un argumento.");
+                    if (args.Count == 0) return Fail("ENTERO requiere un argumento.");
                     return Math.Floor(args[0]);
                 case "ABS":
-                    if (args.Count == 0) throw new FormulaException("ABS requiere un argumento.");
+                    if (args.Count == 0) return Fail("ABS requiere un argumento.");
                     return Math.Abs(args[0]);
                 case "SQRT":
                 case "RAIZ":
-                    if (args.Count == 0) throw new FormulaException("RAIZ requiere un argumento.");
-                    if (args[0] < 0m) throw new FormulaException("RAIZ no admite números negativos.");
+                    if (args.Count == 0) return Fail("RAIZ requiere un argumento.");
+                    if (args[0] < 0m) return Fail("RAIZ no admite números negativos.");
                     return (decimal)Math.Sqrt((double)args[0]);
                 case "POWER":
                 case "POTENCIA":
-                    if (args.Count < 2) throw new FormulaException("POTENCIA requiere base y exponente.");
+                    if (args.Count < 2) return Fail("POTENCIA requiere base y exponente.");
                     return (decimal)Math.Pow((double)args[0], (double)args[1]);
                 case "IF":
                 case "SI":
-                    if (args.Count < 2) throw new FormulaException("SI requiere condición y valor.");
+                    if (args.Count < 2) return Fail("SI requiere condición y valor.");
                     return args[0] != 0m ? args[1] : (args.Count > 2 ? args[2] : 0m);
                 default:
-                    throw new FormulaException($"Función no reconocida: {name}.");
+                    return Fail($"Función no reconocida: {name}. No está en el dialecto.");
             }
         }
 
         private decimal ParseNumber()
         {
+            if (error != null) return 0m;
             SkipWhiteSpace();
             int start = pos;
             bool hasDigit = false;
@@ -471,11 +530,11 @@ public static class QuantityFormulaService
             }
 
             if (!hasDigit)
-                throw new FormulaException($"Se esperaba número, variable o paréntesis cerca de '{PeekRemaining()}'.");
+                return Fail($"Se esperaba número, variable o paréntesis cerca de '{PeekRemaining()}'.");
 
             string raw = text.Substring(start, pos - start).Replace(',', '.');
             if (!decimal.TryParse(raw, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal value))
-                throw new FormulaException($"Número inválido: {raw}.");
+                return Fail($"Número inválido: {raw}.");
 
             return value;
         }
@@ -502,10 +561,5 @@ public static class QuantityFormulaService
             pos += expected.Length;
             return true;
         }
-    }
-
-    private sealed class FormulaException : Exception
-    {
-        public FormulaException(string message) : base(message) { }
     }
 }

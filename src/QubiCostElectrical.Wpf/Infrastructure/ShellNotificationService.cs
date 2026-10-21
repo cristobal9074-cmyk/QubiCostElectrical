@@ -77,18 +77,6 @@ public sealed class ShellNotificationService
     public void ShowError(string title, string message) => Enqueue(title, message, ToastLevel.Error);
     public void ShowError(string title, string message, string? actionLabel = null, Action? action = null) => Enqueue(title, message, ToastLevel.Error, actionLabel, action);
 
-    public void ShowUndo(string description)
-    {
-        string desc = string.IsNullOrWhiteSpace(description) ? "Edición" : description;
-        Enqueue("↩ Deshecho", desc, ToastLevel.Info, customGlyph: "↩", durationSeconds: 3.5);
-    }
-
-    public void ShowRedo(string description)
-    {
-        string desc = string.IsNullOrWhiteSpace(description) ? "Edición" : description;
-        Enqueue("↪ Rehecho", desc, ToastLevel.Info, customGlyph: "↪", durationSeconds: 3.5);
-    }
-
     public void ShowCopied(string message = "Copiado al portapapeles.") =>
         Enqueue("Portapapeles", message, ToastLevel.Success, durationSeconds: 3.0);
 

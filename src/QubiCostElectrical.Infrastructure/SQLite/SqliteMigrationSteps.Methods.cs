@@ -759,4 +759,6 @@ internal static partial class SqliteMigrationSteps
             );
             """);
     }
+
+    // FROZEN_THROUGH: 33 — los pasos 1..33 no se reescriben. El siguiente cambio de base es Migration034.
 }

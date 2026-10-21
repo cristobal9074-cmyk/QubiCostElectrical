@@ -238,6 +238,10 @@ public sealed partial class BudgetProjectSession
                 FerreteriaPct = 5m,
                 IvaPct = 19m,
                 AutoActualizarIndicadores = true,
+                // Estandar del proyecto: las familias nacen sin configurar y con factor 1,00
+                // (precio igual a costo) hasta que el usuario cargue una configuracion guardada.
+                MarkupFactorPorDefecto = 1.00m,
+                UsarFactoresPresentacionFamilia = true,
                 OfertaPdf = new OfferPdfSettings()
             }
         };
@@ -259,16 +263,6 @@ public sealed partial class BudgetProjectSession
         MarkDirty(ProjectDirtyScope.ProjectInfo);
         SyncCubicacionGgUtFactorsFromVariablesInternal();
         PublishChanged("margins", "Actualización de márgenes comerciales");
-    }
-
-    public void ApplyItemizadoTemplate(IEnumerable<ItemizadoRow>? templateRows)
-    {
-        EnsureWritable("aplicar plantilla de itemizado");
-        if (templateRows == null) return;
-        data.Itemizado.Clear();
-        data.Itemizado.AddRange(templateRows);
-        MarkDirty(ProjectDirtyScope.Itemizado);
-        PublishChanged("itemizado", "Plantilla de obra aplicada");
     }
 
     public void InitializeProjectParameters(
@@ -318,7 +312,7 @@ public sealed partial class BudgetProjectSession
             return val;
 
         // Regla única en Domain (FamilyPresentationDefaults) para no duplicar la tabla.
-        return FamilyPresentationDefaults.DefaultMarkup(norm);
+        return FamilyPresentationDefaults.DefaultMarkup(norm, ProjectInfo.MarkupFactorPorDefecto);
     }
 
     public void SetFamilyMarkup(string familyName, decimal value, bool syncTakeoff = true)
@@ -382,9 +376,6 @@ public sealed partial class BudgetProjectSession
 
     private static string NormalizeFamilyName(string? name) => FamilyPresentationDefaults.Normalize(name);
 
-    public void SetReadOnly(bool isReadOnly, string? reason = null) =>
-        SetLockReadOnly(isReadOnly, reason);
-
     public void SetLockReadOnly(bool isReadOnly, string? reason = null)
     {
         accessGate.SetLockReadOnly(isReadOnly, reason);
@@ -398,13 +389,6 @@ public sealed partial class BudgetProjectSession
     }
 
     public void EnsureWritable(string operation) => accessGate.EnsureWritable(operation);
-
-    public ProjectFileData CreateMutableSnapshot()
-    {
-        EnsureIntegrity(data);
-        data.Proyecto.FechaModificacion = AppClock.Now;
-        return data;
-    }
 
     public ProjectFileData CreateSnapshot()
     {
@@ -476,12 +460,10 @@ public sealed partial class BudgetProjectSession
         return new IndiceMoFaAplicado(anterior, indiceMoFa, cambios, sincronizadas);
     }
 
-    public void ApplyCubicacionMedicionesForPartida(string itemId)
+    public bool ApplyCubicacionMedicionesForPartida(string itemId)
     {
         EnsureWritable("editar mediciones de cubicación");
-        var composition = new CubicacionCompositionService();
-        composition.ApplyMedicionesToPartida(data, itemId, data.Mediciones);
-        composition.SyncLegacyFromNormalized(data);
+        return new CubicacionCompositionService().ApplyMedicionesToPartida(data, itemId, data.Mediciones);
     }
 
     private string TouchScope(string scope, bool markDirty = true)

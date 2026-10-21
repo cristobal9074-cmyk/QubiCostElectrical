@@ -189,6 +189,44 @@ public sealed class BudgetEngineCostTests
     }
 
     [Fact]
+    public void Calculate_FilaEquipo_DejaLaMoEnElBucketDeManoObra_ParidadExcel()
+    {
+        // Paridad Excel: el bloque EQUIPOS es material de equipos (COSTOS!G41+) y la M.O. de la
+        // línea sigue siendo M.O. (la define la dotación global). Si la M.O. quedara dentro del
+        // bucket de equipo se sumaría dos veces al costo de ejecución.
+        var engine = new BudgetEngine();
+        var settings = BudgetSettings.FromValues(gastosGeneralesPct: 5m, utilidadPct: 8m, metrosCuadrados: 0m);
+        settings.Markup.PoliticaCostosExcel = true;
+        settings.Markup.ValorAgregadoEquiposPct = 3m;
+        settings.ManoObraDotacionClp = 200m;
+
+        var r = engine.Calculate(new[] { Mat(1m, 100m, 50m, tipo: "EQ") }, settings);
+
+        Assert.Equal(100m, r.EquiposUf);            // solo el material del equipo
+        Assert.Equal(200m, r.ManoObraUf);           // M.O. efectiva = dotación (no la de la línea)
+        Assert.Equal(300m, r.CostoDirectoUf);       // material 100 + dotación 200 (la MO de la línea no se duplica)
+        Assert.Equal(200m, r.BaseGgUtUf);           // Mat + MO + GO: los equipos no entran a la base
+        Assert.Equal(10m, r.GastosGeneralesUf);     // 5% de 200
+        Assert.Equal(16m, r.UtilidadAditivaUf);     // 8% de 200
+        Assert.Equal(3m, r.ValorAgregadoEquiposUf); // 3% solo sobre el material del equipo
+        Assert.Equal(329m, r.CostoProyectoUf);      // 300 + 10 + 16 + 3
+    }
+
+    [Fact]
+    public void Calculate_FilaEquipo_MermaGlobal_NoAplicaSobreEquipos()
+    {
+        // La merma global se calcula sobre materiales: el material de un equipo no es material.
+        var engine = new BudgetEngine();
+        var settings = BudgetSettings.FromValues(0m, 0m, 0m);
+        settings.MermasPct = 5m;
+
+        var r = engine.Calculate(new[] { Mat(1m, 100m, 50m, tipo: "EQ") }, settings);
+
+        Assert.Equal(0m, r.MermasUf);
+        Assert.Equal(150m, r.CostoDirectoUf);
+    }
+
+    [Fact]
     public void Calculate_ManualMode_IgnoresCubicacionAndUsesManualValues()
     {
         var engine = new BudgetEngine();

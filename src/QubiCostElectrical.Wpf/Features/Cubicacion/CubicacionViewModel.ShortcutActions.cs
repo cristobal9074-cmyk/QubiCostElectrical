@@ -16,6 +16,7 @@ public sealed partial class CubicacionViewModel
     public ICommand OpenFamilyBatchReplaceCommand => shortcutActionCoordinator.OpenFamilyBatchReplaceCommand;
     public ICommand AutocompletarUnidadYCantidadCommand => shortcutActionCoordinator.AutocompletarUnidadYCantidadCommand;
     public ICommand AutocompletarUnidadYCantidadTodasCommand => shortcutActionCoordinator.AutocompletarUnidadYCantidadTodasCommand;
+    public ICommand AplicarCantidadALaPartidaCommand => shortcutActionCoordinator.AplicarCantidadALaPartidaCommand;
 
     private void InitializeShortcutCommands()
     {

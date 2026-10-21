@@ -16,11 +16,6 @@ public static class PrecisionPolicy
 
     public const int TasaCambioDecimals = 6;
 
-    public static decimal RoundCantidad(decimal value)
-    {
-        return Math.Round(value, 4, MidpointRounding.ToEven);
-    }
-
     public static decimal RoundPrecioUnitario(decimal value)
     {
         return Math.Round(value, 4, MidpointRounding.ToEven);
@@ -34,16 +29,6 @@ public static class PrecisionPolicy
     public static decimal RoundPorcentaje(decimal value)
     {
         return Math.Round(value, 2, MidpointRounding.ToEven);
-    }
-
-    public static decimal RoundFactor(decimal value)
-    {
-        return Math.Round(value, 6, MidpointRounding.ToEven);
-    }
-
-    public static decimal RoundTasaCambio(decimal value)
-    {
-        return Math.Round(value, 6, MidpointRounding.ToEven);
     }
 
     public static decimal Apply(decimal value, int decimals)

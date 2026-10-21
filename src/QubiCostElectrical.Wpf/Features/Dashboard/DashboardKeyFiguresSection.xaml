@@ -1,0 +1,146 @@
+<UserControl x:Class="QubiCostElectrical.Wpf.Features.Dashboard.DashboardKeyFiguresSection"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:QubiCostElectrical.Wpf.Features.Dashboard"
+             mc:Ignorable="d">
+  <!-- Panel "Cifras clave": la lectura de una línea que resume el presupuesto. -->
+  <Border Style="{StaticResource Dashboard.Panel}" Margin="0,0,0,10">
+    <Grid>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+      </Grid.RowDefinitions>
+
+      <!-- Cabecera -->
+      <Border Grid.Row="0" Style="{StaticResource Dashboard.PanelHead}">
+        <DockPanel LastChildFill="True">
+          <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+            <TextBlock Text="Cierre" Style="{StaticResource Dashboard.FigCaption}" Margin="0,0,5,0" VerticalAlignment="Center" />
+            <TextBlock Text="{Binding ClosingPolicyLabel}" Style="{StaticResource Dashboard.FigCaption}"
+                       Foreground="{DynamicResource Brush.Ink2}" FontWeight="SemiBold" VerticalAlignment="Center" />
+          </StackPanel>
+          <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <TextBlock Text="Cifras clave" FontSize="13.5" FontWeight="SemiBold"
+                       Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" />
+            <TextBlock Text="{Binding ProjectTitle}" Style="{StaticResource Dashboard.FigCaption}"
+                       Margin="12,0,0,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+          </StackPanel>
+        </DockPanel>
+      </Border>
+
+      <!-- Cifras: separadas por una línea fina de 1 px, sin tarjetas propias -->
+      <Grid Grid.Row="1" Background="{DynamicResource Brush.Line}">
+        <ItemsControl ItemsSource="{Binding KeyFigures}" HorizontalContentAlignment="Stretch">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <UniformGrid Rows="1" />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <Border Style="{StaticResource Dashboard.FigCell}">
+                <StackPanel>
+                  <TextBlock Text="{Binding Label}" Style="{StaticResource Dashboard.FigLabel}" TextTrimming="CharacterEllipsis" />
+
+                  <TextBlock Text="{Binding Value}" TextTrimming="CharacterEllipsis">
+                    <TextBlock.Style>
+                      <Style TargetType="TextBlock" BasedOn="{StaticResource Dashboard.FigValue}">
+                        <Style.Triggers>
+                          <DataTrigger Binding="{Binding IsCompactValue}" Value="True">
+                            <Setter Property="FontSize" Value="20" />
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </TextBlock.Style>
+                  </TextBlock>
+
+                  <StackPanel Orientation="Horizontal" Margin="0,8,0,0"
+                              Visibility="{Binding DeltaText, Converter={StaticResource StringToVisibility}}">
+                    <Path Style="{StaticResource Dashboard.FigIcon}" VerticalAlignment="Center" Margin="0,0,5,0" />
+                    <TextBlock Text="{Binding DeltaText}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
+                      <TextBlock.Style>
+                        <Style TargetType="TextBlock" BasedOn="{StaticResource Dashboard.FigDelta}">
+                          <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
+                          <Style.Triggers>
+                            <DataTrigger Binding="{Binding DeltaKind}" Value="up">
+                              <Setter Property="Foreground" Value="{DynamicResource Brush.Green}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding DeltaKind}" Value="warn">
+                              <Setter Property="Foreground" Value="{DynamicResource Brush.Amber}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding DeltaKind}" Value="neg">
+                              <Setter Property="Foreground" Value="{DynamicResource Brush.DangerDark}" />
+                            </DataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </TextBlock.Style>
+                    </TextBlock>
+                  </StackPanel>
+
+                  <Border Style="{StaticResource Dashboard.FigBar}"
+                          Visibility="{Binding HasBar, Converter={StaticResource BoolToVisibility}}">
+                    <Grid>
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="{Binding BarFill}" />
+                        <ColumnDefinition Width="{Binding BarRemain}" />
+                      </Grid.ColumnDefinitions>
+                      <Border Grid.Column="0" CornerRadius="1.5">
+                        <Border.Style>
+                          <Style TargetType="Border">
+                            <Setter Property="Background" Value="{DynamicResource Brush.Blue}" />
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding BarKind}" Value="warn">
+                                <Setter Property="Background" Value="{DynamicResource Brush.AmberRisk}" />
+                              </DataTrigger>
+                              <DataTrigger Binding="{Binding BarKind}" Value="pos">
+                                <Setter Property="Background" Value="{DynamicResource Brush.Green}" />
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </Border.Style>
+                      </Border>
+                    </Grid>
+                  </Border>
+
+                  <TextBlock Text="{Binding Caption}" Style="{StaticResource Dashboard.FigCaption}" />
+                </StackPanel>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </Grid>
+
+      <!-- Veredicto y preparación -->
+      <Border Grid.Row="2" Style="{StaticResource Dashboard.PanelStatus}">
+        <DockPanel LastChildFill="True">
+          <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+            <TextBlock Text="{Binding StatusMeterPercentLabel}" FontFamily="{StaticResource Font.Mono}"
+                       FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink2}"
+                       VerticalAlignment="Center" Margin="0,0,10,0" />
+            <Border Style="{StaticResource Dashboard.StatusMeter}">
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="{Binding StatusMeterFill}" />
+                  <ColumnDefinition Width="{Binding StatusMeterRemain}" />
+                </Grid.ColumnDefinitions>
+                <Border Grid.Column="0" Background="{DynamicResource Brush.Green}" CornerRadius="2" />
+              </Grid>
+            </Border>
+            <Button Style="{StaticResource Button.Secondary}" Content="Ir a revisión"
+                    Command="{Binding GoToReviewCommand}" Margin="14,0,0,0" Padding="12,5" FontSize="11.5" />
+          </StackPanel>
+
+          <Rectangle Style="{StaticResource Dashboard.StatusSquare}" Fill="{Binding VerdictSquareBrush}"
+                     VerticalAlignment="Center" Margin="0,0,10,0" />
+          <TextBlock Text="{Binding VerdictTitle}" FontSize="13" FontWeight="SemiBold"
+                     Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" />
+          <TextBlock Text="{Binding VerdictReason}" Style="{StaticResource Dashboard.FigCaption}"
+                     Margin="12,0,0,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+        </DockPanel>
+      </Border>
+    </Grid>
+  </Border>
+</UserControl>

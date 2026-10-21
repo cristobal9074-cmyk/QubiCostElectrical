@@ -10,6 +10,26 @@ namespace QubiCostElectrical.Tests.Application;
 public sealed class BudgetProjectSessionTests
 {
     [Fact]
+    public void NewProject_NaceConEstandarUno_SinFactoresCongelados()
+    {
+        var session = new BudgetProjectSession();
+        session.NewProject("test", "Tester");
+
+        var project = session.ProjectInfo;
+        Assert.Equal(1.00m, project.MarkupFactorPorDefecto);
+        Assert.True(project.UsarFactoresPresentacionFamilia);
+        Assert.Empty(project.Variables);
+
+        // Las familias nacen sin configurar y valen 1,00 (precio igual a costo).
+        Assert.Equal(1.00m, session.GetFamilyMarkup("Conductores"));
+        Assert.Equal(1.00m, session.GetFamilyMarkup("Canalización"));
+        Assert.Equal(1.00m, session.GetFamilyMarkup("Puesta a tierra"));
+
+        var settings = BudgetSettings.FromProject(project);
+        Assert.Equal(1.00m, settings.DefaultPresentationFactor);
+    }
+
+    [Fact]
     public void ApplySnapshot_PreservesZeroPercentages()
     {
         var session = new BudgetProjectSession();

@@ -23,6 +23,7 @@ public partial class MaterialBatchReplaceDialog : Window
     private MaterialRow? selectedSourceMaterial;
     private MaterialRow? selectedTargetMaterial;
     private bool isInitialized;
+    private bool suppressTargetSearch;
 
     public MaterialBatchReplaceResult? Result { get; private set; }
 
@@ -74,32 +75,43 @@ public partial class MaterialBatchReplaceDialog : Window
 
     private void OnTargetIncludeBankCheckChanged(object sender, RoutedEventArgs e)
     {
-        if (TargetMaterialSearchBox.Text?.Trim().Length >= 2)
-        {
+        if (isInitialized)
             OnTargetSearchTextChanged(TargetMaterialSearchBox, null!);
-        }
     }
+
+    private void OnTargetSearchPreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e) =>
+        SuggestionListKeyboard.Handle(e, TargetSuggestionsList, TargetSearchPopup);
 
     private void OnTargetSearchTextChanged(object sender, TextChangedEventArgs e)
     {
-        string query = TargetMaterialSearchBox.Text?.Trim() ?? "";
-        if (query.Length < 2)
-        {
-            TargetSearchPopup.IsOpen = false;
+        if (suppressTargetSearch || !isInitialized)
             return;
+
+        string query = TargetMaterialSearchBox.Text?.Trim() ?? "";
+        if (selectedTargetMaterial != null)
+        {
+            string chosen = $"{selectedTargetMaterial.Codigo} · {selectedTargetMaterial.Descripcion}";
+            if (!string.Equals(query, chosen, StringComparison.OrdinalIgnoreCase))
+            {
+                selectedTargetMaterial = null;
+                TargetDetailsText.Text = "";
+                RefreshPreview();
+            }
         }
 
         var suggestions = new List<TargetSuggestionItem>();
         var seenCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        bool listAll = query.Length == 0;
 
         // 1. Buscar en Materiales de la Cubicación del proyecto (prioridad estricta)
         var cubMatches = session.Cubicacion
             .Where(c => !string.IsNullOrWhiteSpace(c.Codigo) || !string.IsNullOrWhiteSpace(c.Descripcion))
-            .Where(c => (c.Codigo?.Contains(query, StringComparison.OrdinalIgnoreCase) == true) ||
+            .Where(c => listAll ||
+                        (c.Codigo?.Contains(query, StringComparison.OrdinalIgnoreCase) == true) ||
                         (c.Descripcion?.Contains(query, StringComparison.OrdinalIgnoreCase) == true))
             .GroupBy(c => !string.IsNullOrWhiteSpace(c.Codigo) ? c.Codigo.Trim() : c.Descripcion.Trim(), StringComparer.OrdinalIgnoreCase)
             .Select(g => g.First())
-            .Take(20);
+            .Take(30);
 
         foreach (var c in cubMatches)
         {
@@ -127,7 +139,8 @@ public partial class MaterialBatchReplaceDialog : Window
         }
 
         // 2. Si el usuario activó "Buscar en Banco", buscar en el banco de precios central
-        if (TargetIncludeBankCheck?.IsChecked == true)
+        string? bankNotice = null;
+        if (!listAll && TargetIncludeBankCheck?.IsChecked == true)
         {
             try
             {
@@ -161,12 +174,17 @@ public partial class MaterialBatchReplaceDialog : Window
                         row
                     ));
 
-                    if (suggestions.Count >= 25) break;
+                    if (suggestions.Count >= 30) break;
                 }
             }
-            catch { }
+            catch
+            {
+                bankNotice = "No se pudo consultar el banco de precios. La cubicación no cambió.";
+            }
         }
 
+        TargetSearchStatus.Text = bankNotice
+            ?? (suggestions.Count == 0 ? "Sin coincidencias." : "");
         TargetSuggestionsList.ItemsSource = suggestions;
         TargetSearchPopup.IsOpen = suggestions.Count > 0;
     }
@@ -176,7 +194,10 @@ public partial class MaterialBatchReplaceDialog : Window
         if (TargetSuggestionsList.SelectedItem is TargetSuggestionItem item)
         {
             selectedTargetMaterial = item.Material;
+            suppressTargetSearch = true;
             TargetMaterialSearchBox.Text = $"{item.Codigo} · {item.Descripcion}";
+            suppressTargetSearch = false;
+            TargetSearchStatus.Text = "";
             TargetDetailsText.Text = $"Nuevo precio: $ {selectedTargetMaterial.MatClp:N0} CLP ({selectedTargetMaterial.Unidad})";
             TargetSearchPopup.IsOpen = false;
             RefreshPreview();

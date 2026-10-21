@@ -9,6 +9,12 @@ public enum ItemizadoFilterMode
     SinPrecio
 }
 
+public enum ItemizadoPerspectiveMode
+{
+    Venta,
+    CostoDirecto
+}
+
 public sealed record ItemizadoSummaryMetrics(
     int TotalPartidas,
     int Completas,

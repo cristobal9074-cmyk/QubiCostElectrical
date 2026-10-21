@@ -58,6 +58,13 @@ public sealed class ProjectInfoRow
     /// cambia el método de markup del presupuesto (C3).
     /// </summary>
     public bool UsarFactoresPresentacionFamilia { get; set; }
+    /// <summary>
+    /// Factor de presentación estandar del proyecto para las familias que el usuario no
+    /// configura. Los proyectos nuevos usan 1,00 (precio igual a costo, sin sobreventa) hasta
+    /// que se cargue una configuracion guardada. 0 = usar la tabla historica del producto,
+    /// que conservan los presupuestos ya presupuestados.
+    /// </summary>
+    public decimal MarkupFactorPorDefecto { get; set; }
     /// <summary>Duración de obra en meses para MO de dotación (puente Excel).</summary>
     public int MoDuracionMeses { get; set; } = 12;
     /// <summary>Leyes sociales % sobre sueldos base de MO (puente Excel / módulo M. de obra).</summary>

@@ -16,5 +16,13 @@
     <ResourceDictionary Source="ScrollBars.xaml" />
     <ResourceDictionary Source="StatusBar.xaml" />
     <ResourceDictionary Source="Animations.xaml" />
+    <ResourceDictionary Source="ExportResources.xaml" />
+    <ResourceDictionary Source="CostoResources.xaml" />
+    <ResourceDictionary Source="DashboardResources.xaml" />
+    <ResourceDictionary Source="ShellResources.xaml" />
+    <ResourceDictionary Source="VersionsResources.xaml" />
+    <ResourceDictionary Source="ProjectResources.xaml" />
+    <ResourceDictionary Source="CubicacionScResources.xaml" />
+    <ResourceDictionary Source="ItemizadoResources.xaml" />
   </ResourceDictionary.MergedDictionaries>
 </ResourceDictionary>

@@ -125,9 +125,10 @@ internal sealed class ShellNavigationCoordinator
     {
         if (!tryApplyCurrentPageChanges())
         {
-            WpfDialogService.Warning(
-                "Cambios pendientes",
-                "No se pudieron aplicar los cambios de esta pantalla. Corrija el error antes de salir.");
+            string detail = currentPageVm is IPageWithOpenEditor open && !string.IsNullOrWhiteSpace(open.OpenEditorError)
+                ? open.OpenEditorError
+                : "No se pudieron aplicar los cambios de esta pantalla. Corrija el error antes de salir.";
+            WpfDialogService.Warning("Cambios pendientes", detail);
             return false;
         }
 

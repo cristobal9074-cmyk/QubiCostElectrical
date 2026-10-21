@@ -1,0 +1,422 @@
+<UserControl x:Class="QubiCostElectrical.Wpf.Features.Export.ExportPreviewStepControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <StackPanel>
+
+    <!-- Banner lista -->
+    <Border Margin="0,0,0,10" Padding="16,11"
+            Background="{DynamicResource Brush.SuccessBg}" BorderBrush="{DynamicResource Brush.SuccessBorder}"
+            BorderThickness="1" CornerRadius="10">
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Border Width="34" Height="34" CornerRadius="9" Background="{DynamicResource Brush.GreenSoft}"
+                HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,14,0">
+          <TextBlock Text="&#xE8A7;" FontFamily="Segoe MDL2 Assets" FontSize="15"
+                     Foreground="{DynamicResource Brush.Green}"
+                     HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Border>
+        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+          <TextBlock Text="{Binding PreviewStatusText}" FontWeight="SemiBold"
+                     Foreground="{DynamicResource Brush.Success}" TextWrapping="Wrap" />
+          <TextBlock Text="Se actualiza automáticamente al editar el paso Configurar."
+                     FontSize="12" Foreground="{DynamicResource Brush.Muted}" Margin="0,2,0,0" />
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <!-- A · Documentos previsualizables -->
+    <Border Style="{StaticResource Sect}" Margin="0,0,0,6">
+      <StackPanel>
+        <Border BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,0,1" Padding="10,6">
+          <StackPanel>
+            <StackPanel Orientation="Horizontal">
+              <Border Style="{StaticResource SectNum}">
+                <TextBlock Text="A" FontSize="11" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}"
+                           Foreground="{DynamicResource Brush.Blue}"
+                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+              </Border>
+              <TextBlock Text="Documentos previsualizables" FontSize="13" FontWeight="Bold"
+                         Foreground="{DynamicResource Brush.Ink}" Margin="9,0,0,0" VerticalAlignment="Center" />
+            </StackPanel>
+            <TextBlock Text="Haz clic en un documento para mostrarlo en el panel derecho; se actualiza solo al editar."
+                       FontSize="11.5" Foreground="{DynamicResource Brush.Muted}" Margin="29,1,0,0"
+                       TextWrapping="Wrap" />
+          </StackPanel>
+        </Border>
+
+        <Border Padding="12,2,12,4">
+          <StackPanel>
+            <Button Command="{Binding PreviewSwitch.SelectCommand}" CommandParameter="OfferLetter">
+              <Button.Style>
+                <Style TargetType="Button" BasedOn="{StaticResource PreviewDocRow}">
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding PreviewSwitch.SelectedId}" Value="OfferLetter">
+                      <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+                      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </Button.Style>
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel VerticalAlignment="Center">
+                  <TextBlock Text="Carta de oferta PDF" FontSize="13" FontWeight="SemiBold"
+                             Foreground="{DynamicResource Brush.Ink}" />
+                  <TextBlock Text="Estructura formal con antecedentes, alcances, condiciones y firma"
+                             FontSize="11.5" Foreground="{DynamicResource Brush.Muted}" Margin="0,1,0,0"
+                             TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+                <Border Grid.Column="1" Style="{StaticResource FmtBadge}" Margin="10,0,0,0">
+                  <TextBlock Text="PDF" Style="{StaticResource FmtText}" />
+                </Border>
+                <Border Grid.Column="2" Margin="8,0,0,0">
+                  <Border.Style>
+                    <Style TargetType="Border" BasedOn="{StaticResource Pill}">
+                      <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+                      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
+                      <Setter Property="Visibility" Value="Collapsed" />
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding PreviewSwitch.SelectedId}" Value="OfferLetter">
+                          <Setter Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </Border.Style>
+                  <TextBlock Text="Viendo" FontSize="10.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" />
+                </Border>
+              </Grid>
+            </Button>
+
+            <Button Command="{Binding PreviewSwitch.SelectCommand}" CommandParameter="OfferPdf">
+              <Button.Style>
+                <Style TargetType="Button" BasedOn="{StaticResource PreviewDocRow}">
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding PreviewSwitch.SelectedId}" Value="OfferPdf">
+                      <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+                      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </Button.Style>
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel VerticalAlignment="Center">
+                  <TextBlock Text="Oferta comercial PDF" FontSize="13" FontWeight="SemiBold"
+                             Foreground="{DynamicResource Brush.Ink}" />
+                  <TextBlock Text="Portada, alcance, totales y condiciones"
+                             FontSize="11.5" Foreground="{DynamicResource Brush.Muted}" Margin="0,1,0,0"
+                             TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+                <Border Grid.Column="1" Style="{StaticResource FmtBadge}" Margin="10,0,0,0">
+                  <TextBlock Text="PDF" Style="{StaticResource FmtText}" />
+                </Border>
+                <Border Grid.Column="2" Margin="8,0,0,0">
+                  <Border.Style>
+                    <Style TargetType="Border" BasedOn="{StaticResource Pill}">
+                      <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+                      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
+                      <Setter Property="Visibility" Value="Collapsed" />
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding PreviewSwitch.SelectedId}" Value="OfferPdf">
+                          <Setter Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </Border.Style>
+                  <TextBlock Text="Viendo" FontSize="10.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" />
+                </Border>
+              </Grid>
+            </Button>
+
+            <Button Command="{Binding PreviewSwitch.SelectCommand}" CommandParameter="ResumenPdf">
+              <Button.Style>
+                <Style TargetType="Button" BasedOn="{StaticResource PreviewDocRow}">
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding PreviewSwitch.SelectedId}" Value="ResumenPdf">
+                      <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+                      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </Button.Style>
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel VerticalAlignment="Center">
+                  <TextBlock Text="Resumen presupuesto PDF" FontSize="13" FontWeight="SemiBold"
+                             Foreground="{DynamicResource Brush.Ink}" />
+                  <TextBlock Text="Hoja de cotización ejecutiva para mandante"
+                             FontSize="11.5" Foreground="{DynamicResource Brush.Muted}" Margin="0,1,0,0"
+                             TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+                <Border Grid.Column="1" Style="{StaticResource FmtBadge}" Margin="10,0,0,0">
+                  <TextBlock Text="PDF" Style="{StaticResource FmtText}" />
+                </Border>
+                <Border Grid.Column="2" Margin="8,0,0,0">
+                  <Border.Style>
+                    <Style TargetType="Border" BasedOn="{StaticResource Pill}">
+                      <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+                      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
+                      <Setter Property="Visibility" Value="Collapsed" />
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding PreviewSwitch.SelectedId}" Value="ResumenPdf">
+                          <Setter Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </Border.Style>
+                  <TextBlock Text="Viendo" FontSize="10.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" />
+                </Border>
+              </Grid>
+            </Button>
+
+            <Border Padding="4,8" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,1,0,0">
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel VerticalAlignment="Center">
+                  <TextBlock Text="Resumen ejecutivo" FontSize="13" FontWeight="SemiBold"
+                             Foreground="{DynamicResource Brush.Ink}" />
+                  <TextBlock Text="Sección incluida en la oferta comercial PDF"
+                             FontSize="11.5" Foreground="{DynamicResource Brush.Muted}" Margin="0,1,0,0"
+                             TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+                <Border Grid.Column="1" Style="{StaticResource FmtBadge}" Margin="10,0,0,0">
+                  <TextBlock Text="PDF" Style="{StaticResource FmtText}" />
+                </Border>
+              </Grid>
+            </Border>
+          </StackPanel>
+        </Border>
+      </StackPanel>
+    </Border>
+
+    <!-- B · Verificación rápida -->
+    <Border Style="{StaticResource Sect}" Margin="0,0,0,6">
+      <StackPanel>
+        <Border BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,0,1" Padding="10,6">
+          <StackPanel>
+            <StackPanel Orientation="Horizontal">
+              <Border Style="{StaticResource SectNum}">
+                <TextBlock Text="B" FontSize="11" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}"
+                           Foreground="{DynamicResource Brush.Blue}"
+                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+              </Border>
+              <TextBlock Text="Verificación rápida" FontSize="13" FontWeight="Bold"
+                         Foreground="{DynamicResource Brush.Ink}" Margin="9,0,0,0" VerticalAlignment="Center" />
+            </StackPanel>
+            <TextBlock Text="Comprobaciones del documento antes de exportar."
+                       FontSize="11.5" Foreground="{DynamicResource Brush.Muted}" Margin="29,1,0,0" />
+          </StackPanel>
+        </Border>
+
+        <Border Padding="15,4,15,8">
+          <StackPanel>
+
+            <!-- Logo: presente -->
+            <Border Padding="4,9">
+              <Border.Style>
+                <Style TargetType="Border">
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding OfferSettings.LogoPath}" Value="">
+                      <Setter Property="Visibility" Value="Collapsed" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding OfferSettings.LogoPath}" Value="{x:Null}">
+                      <Setter Property="Visibility" Value="Collapsed" />
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </Border.Style>
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Border Style="{StaticResource OkCircle}">
+                  <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="9"
+                             Foreground="{DynamicResource Brush.White}"
+                             HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+                <TextBlock Grid.Column="1" Text="Logo contratista presente" FontSize="13" FontWeight="SemiBold"
+                           Foreground="{DynamicResource Brush.Ink}" Margin="9,0,0,0" VerticalAlignment="Center" />
+              </Grid>
+            </Border>
+
+            <!-- Logo: ausente -->
+            <Border Padding="4,9">
+              <Border.Style>
+                <Style TargetType="Border">
+                  <Setter Property="Visibility" Value="Collapsed" />
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding OfferSettings.LogoPath}" Value="">
+                      <Setter Property="Visibility" Value="Visible" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding OfferSettings.LogoPath}" Value="{x:Null}">
+                      <Setter Property="Visibility" Value="Visible" />
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </Border.Style>
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Border Style="{StaticResource WarnCircle}">
+                  <TextBlock Text="&#xE74C;" FontFamily="Segoe MDL2 Assets" FontSize="9"
+                             Foreground="{DynamicResource Brush.Amber}"
+                             HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+                <StackPanel Grid.Column="1" Margin="9,0,0,0" VerticalAlignment="Center">
+                  <TextBlock Text="Logo contratista no agregado" FontSize="13" FontWeight="SemiBold"
+                             Foreground="{DynamicResource Brush.Amber}" />
+                  <TextBlock Text="Agrégalo en el paso Configurar (Membretes y firmas)."
+                             FontSize="11.5" Foreground="{DynamicResource Brush.Muted}" Margin="0,1,0,0" />
+                </StackPanel>
+              </Grid>
+            </Border>
+
+            <!-- Totales: ok -->
+            <Border Padding="4,9">
+              <Border.Style>
+                <Style TargetType="Border">
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding HasBlockers}" Value="True">
+                      <Setter Property="Visibility" Value="Collapsed" />
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </Border.Style>
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Border Style="{StaticResource OkCircle}">
+                  <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="9"
+                             Foreground="{DynamicResource Brush.White}"
+                             HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+                <TextBlock Grid.Column="1" Text="Totales coinciden con el presupuesto" FontSize="13"
+                           FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink}"
+                           Margin="9,0,0,0" VerticalAlignment="Center" />
+              </Grid>
+            </Border>
+
+            <!-- Totales: bloqueantes -->
+            <Border Padding="4,9">
+              <Border.Style>
+                <Style TargetType="Border">
+                  <Setter Property="Visibility" Value="Collapsed" />
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding HasBlockers}" Value="True">
+                      <Setter Property="Visibility" Value="Visible" />
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </Border.Style>
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Border Style="{StaticResource WarnCircle}">
+                  <TextBlock Text="&#xE74C;" FontFamily="Segoe MDL2 Assets" FontSize="9"
+                             Foreground="{DynamicResource Brush.Amber}"
+                             HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+                <StackPanel Grid.Column="1" Margin="9,0,0,0" VerticalAlignment="Center">
+                  <TextBlock Text="Hay bloqueantes por resolver" FontSize="13" FontWeight="SemiBold"
+                             Foreground="{DynamicResource Brush.Amber}" />
+                  <TextBlock Text="Resuélvelos en Revisión final antes de exportar."
+                             FontSize="11.5" Foreground="{DynamicResource Brush.Muted}" Margin="0,1,0,0" />
+                </StackPanel>
+              </Grid>
+            </Border>
+
+            <!-- Firma: presente -->
+            <Border Padding="4,9">
+              <Border.Style>
+                <Style TargetType="Border">
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding OfferSettings.SignatureImagePath}" Value="">
+                      <Setter Property="Visibility" Value="Collapsed" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding OfferSettings.SignatureImagePath}" Value="{x:Null}">
+                      <Setter Property="Visibility" Value="Collapsed" />
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </Border.Style>
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Border Style="{StaticResource OkCircle}">
+                  <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="9"
+                             Foreground="{DynamicResource Brush.White}"
+                             HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+                <TextBlock Grid.Column="1" Text="Firma autorizada agregada" FontSize="13" FontWeight="SemiBold"
+                           Foreground="{DynamicResource Brush.Ink}" Margin="9,0,0,0" VerticalAlignment="Center" />
+              </Grid>
+            </Border>
+
+            <!-- Firma: ausente -->
+            <Border Padding="4,9">
+              <Border.Style>
+                <Style TargetType="Border">
+                  <Setter Property="Visibility" Value="Collapsed" />
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding OfferSettings.SignatureImagePath}" Value="">
+                      <Setter Property="Visibility" Value="Visible" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding OfferSettings.SignatureImagePath}" Value="{x:Null}">
+                      <Setter Property="Visibility" Value="Visible" />
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </Border.Style>
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Border Style="{StaticResource WarnCircle}">
+                  <TextBlock Text="&#xE74C;" FontFamily="Segoe MDL2 Assets" FontSize="9"
+                             Foreground="{DynamicResource Brush.Amber}"
+                             HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+                <StackPanel Grid.Column="1" Margin="9,0,0,0" VerticalAlignment="Center">
+                  <TextBlock Text="Firma autorizada no agregada" FontSize="13" FontWeight="SemiBold"
+                             Foreground="{DynamicResource Brush.Amber}" />
+                  <TextBlock Text="Opcional — puedes exportar sin firma."
+                             FontSize="11.5" Foreground="{DynamicResource Brush.Muted}" Margin="0,1,0,0" />
+                </StackPanel>
+              </Grid>
+            </Border>
+
+          </StackPanel>
+        </Border>
+      </StackPanel>
+    </Border>
+
+  </StackPanel>
+</UserControl>

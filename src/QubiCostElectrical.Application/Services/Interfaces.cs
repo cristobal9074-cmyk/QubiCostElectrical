@@ -239,6 +239,7 @@ public interface ICurrencyConversionService
 public interface IPurchaseListService
 {
     IReadOnlyList<CompraMaterialViewModel> Build(IEnumerable<CubicacionRow> cubicacion, IEnumerable<MaterialRow> materiales, decimal toleranciaPct);
+    IReadOnlyList<CompraMaterialViewModel> Build(IEnumerable<CubicacionRow> cubicacion, IEnumerable<MaterialRow> materiales, IReadOnlyDictionary<string, decimal>? customTolerances, bool useCategoryDefaults, CategoryToleranceConfig? categoryConfig = null);
     IReadOnlyList<MaterialUsageBreakdown> GetMaterialUsage(string codigo, IEnumerable<CubicacionRow> cubicacion, IEnumerable<ItemizadoRow> itemizado);
 }
 

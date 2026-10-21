@@ -92,27 +92,28 @@ internal static class CubicacionPartidaHelper
         return dict;
     }
 
-    public static void SincronizarMaestroDesdePartida(
+    public static bool SincronizarMaestroDesdePartida(
         IReadOnlyList<CubicacionRowVm>? rows,
         decimal parsed,
         BudgetProjectSession session,
         Action<CubicacionRowVm> validateRow)
     {
-        if (rows == null || rows.Count == 0) return;
+        if (rows == null || rows.Count == 0) return false;
 
         bool tieneEsclavos = rows.Any(r => r.Source.Esclavo != null);
-        if (!tieneEsclavos) return;
+        if (!tieneEsclavos) return false;
 
         var maestroVm = rows.FirstOrDefault(r => r.Source.Esclavo == null &&
             rows.Any(other => other.Source.Esclavo != null && CodeHelper.Match(other.Source.Esclavo.MaestroCodigo, r.Codigo)))
             ?? rows.FirstOrDefault(r => r.Source.Esclavo == null);
 
-        if (maestroVm == null || maestroVm.HasFormula || maestroVm.Cantidad == parsed) return;
+        if (maestroVm == null || maestroVm.HasFormula || maestroVm.Cantidad == parsed) return false;
 
         maestroVm.Cantidad = parsed;
         maestroVm.RefreshDisplayProperties();
         validateRow(maestroVm);
         session.SyncCubicacionRowComposition(maestroVm.Source);
+        return true;
     }
 
     public static bool TryParsePartidaCantidad(

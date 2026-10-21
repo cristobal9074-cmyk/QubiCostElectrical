@@ -20,42 +20,6 @@ public partial class DashboardView : UserControl
                 vm.Load();
         };
     }
-
-    private void OnTopPartidaDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
-    {
-        if (sender is DataGrid grid && grid.SelectedItem is DashboardPartidaVm partida &&
-            DataContext is DashboardViewModel vm)
-        {
-            if (vm.GoToPartidaCommand.CanExecute(partida))
-                vm.GoToPartidaCommand.Execute(partida);
-        }
-    }
-}
-
-/// <summary>
-/// Convierte un porcentaje 0–100 a StrokeDashArray para el anillo de preparación
-/// (Ellipse 120×120, StrokeThickness=10 → perímetro medio ≈ 34.56 unidades dash).
-/// </summary>
-public sealed class ReadinessToStrokeDashArrayConverter : IValueConverter
-{
-    private static readonly double TotalDash = Math.PI * (120.0 - 10.0) / 10.0;
-
-    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        double pct = 0;
-        if (value is double dbl) pct = dbl;
-        else if (value is decimal dec) pct = (double)dec;
-        else if (value is int i) pct = i;
-        else if (value is float f) pct = f;
-
-        pct = Math.Clamp(pct, 0, 100);
-        double filled = TotalDash * (pct / 100.0);
-        double empty = Math.Max(0.0001, TotalDash - filled);
-        return new DoubleCollection(new[] { filled, empty });
-    }
-
-    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
-        throw new NotImplementedException();
 }
 
 /// <summary>Rank (1..N) → Canvas.Left de la barra del Pareto (plot 760×300, barras 44px, paso 68px).</summary>

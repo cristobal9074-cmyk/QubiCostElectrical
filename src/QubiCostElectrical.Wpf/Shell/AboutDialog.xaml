@@ -26,23 +26,8 @@
               Padding="24,18">
         <DockPanel LastChildFill="True">
           <!-- Isotipo Hexagonal 3D con Rayo Central -->
-          <Border DockPanel.Dock="Left" Width="60" Height="60" CornerRadius="16"
-                  Background="{DynamicResource Brush.BrandDark}" Margin="0,0,18,0"
-                  VerticalAlignment="Center">
-            <Viewbox Width="40" Height="40">
-              <Canvas Width="28" Height="28">
-                <!-- Caras del hexágono 3D -->
-                <Polygon Points="14,1 27,7.5 27,20.5 14,27 1,20.5 1,7.5"
-                         Fill="{DynamicResource Brush.BrandDark}"
-                         Stroke="{DynamicResource Brush.Blue3}" StrokeThickness="1.3"/>
-                <Polygon Points="14,1 27,7.5 14,14 1,7.5"
-                         Fill="{DynamicResource Brush.BrandMid}"
-                         Stroke="{DynamicResource Brush.BrandStroke}" StrokeThickness="1"/>
-                <!-- Rayo Eléctrico Corporativo en Blanco Puro -->
-                <Path Data="M16 5 L11 14 L14 14 L12 23 L19 12 L16 12 Z"
-                      Fill="White" Stroke="{DynamicResource Brush.BrandStroke3}" StrokeThickness="0.5"/>
-              </Canvas>
-            </Viewbox>
+          <Border DockPanel.Dock="Left" Width="60" Height="60" Background="Transparent" Margin="0,0,18,0" VerticalAlignment="Center">
+            <Image Source="pack://application:,,,/Assets/brand_logo.png" RenderOptions.BitmapScalingMode="HighQuality" />
           </Border>
 
           <!-- Títulos y Versión -->

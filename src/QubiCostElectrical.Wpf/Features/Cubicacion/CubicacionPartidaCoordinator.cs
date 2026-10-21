@@ -192,14 +192,13 @@ internal sealed class CubicacionPartidaCoordinator
             using (parent.SuppressSessionReload())
             {
                 undo.PushUndoPoint(session, $"Cambiar unidad partida {parent.SelectedPartida.Codigo}");
-                var item = session.Itemizado.FirstOrDefault(x => string.Equals(x.Id, parent.SelectedPartida.Id, StringComparison.OrdinalIgnoreCase));
-                if (item != null) item.Unidad = clean;
                 parent.SelectedPartida.Unidad = clean;
                 parent.NotifyProperty(nameof(parent.PartidaUnidadText));
                 parent.NotifyProperty(nameof(parent.PartidaUnidad));
                 NotifyGlobalValorizacionChanged();
                 parent.MarkDirty();
                 session.MarkDirty(ProjectDirtyScope.Itemizado);
+                parent.SaveStatusText = $"Unidad de la partida: {clean}. Los materiales no cambian.";
             }
         }
     }
@@ -244,25 +243,26 @@ internal sealed class CubicacionPartidaCoordinator
 
             using (parent.SuppressSessionReload())
             {
-                var item = session.Itemizado.FirstOrDefault(x => string.Equals(x.Id, parent.SelectedPartida.Id, StringComparison.OrdinalIgnoreCase));
-                if (item != null) item.Cantidad = parsed;
-                if (parent.SelectedPartida.Cantidad != parsed)
+                var itemCantidad = parent.SelectedPartida.Cantidad;
+                if (itemCantidad != parsed)
                 {
-                    undo.PushUndoPoint(session, $"Modificar cantidad en Partida {parent.SelectedPartida.Codigo} ({parent.SelectedPartida.Cantidad:G29} → {parsed:G29})");
+                    undo.PushUndoPoint(session, $"Modificar cantidad en Partida {parent.SelectedPartida.Codigo} ({itemCantidad:G29} → {parsed:G29})");
                     parent.SelectedPartida.Cantidad = parsed;
                 }
-                CubicacionPartidaHelper.SincronizarMaestroDesdePartida(parent.Rows, parsed, session, parent.ValidateRow);
                 parent.NotifyProperty(nameof(parent.PartidaCantidadText));
                 parent.NotifyProperty(nameof(parent.PartidaCantidadToolTip));
                 NotifyGlobalValorizacionChanged();
                 parent.MarkDirty();
                 session.MarkDirty(ProjectDirtyScope.Itemizado);
                 parent.ScheduleRefreshTotals();
+                parent.SaveStatusText = string.IsNullOrEmpty(parent.SelectedPartida.CantidadFormula)
+                    ? $"Cantidad de la partida: {parsed:G29}. Las cantidades de los materiales no cambian."
+                    : $"Cantidad de la partida: {parsed:G29} ({parent.SelectedPartida.CantidadFormula}). Las cantidades de los materiales no cambian.";
             }
         }
     }
 
-    public string PartidaCantidadToolTip => parent.SelectedPartida?.CantidadToolTip ?? "Cantidad oficial de la partida (editable o fórmula tipo Excel ej: +C1+C2 · Enter para guardar)";
+    public string PartidaCantidadToolTip => parent.SelectedPartida?.CantidadToolTip ?? "Cantidad oficial de la partida. No modifica las cantidades de cada material.";
 
     public bool HasAlertaSinValorizacionGlobal => parent.SelectedPartida is { SinValorizacionGlobal: true };
     public bool IsPartidaUnidadMissing => parent.SelectedPartida is { HasMissingGlobalUnidad: true };

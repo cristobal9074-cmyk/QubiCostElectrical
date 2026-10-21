@@ -33,6 +33,8 @@ public enum FinalReviewCategory
     , EngineInconsistency
     , FormulaSyntaxError
     , PartidaSinValorizacionGlobal
+    , FamiliaSinFactorPresentacion
+    , EquipoSinClasificar
 }
 
 public sealed record FinalReviewIssue(
@@ -77,6 +79,8 @@ public sealed record FinalReviewIssue(
         FinalReviewCategory.EngineInconsistency => "Inconsistencia de cálculo",
         FinalReviewCategory.FormulaSyntaxError => "Error en fórmula",
         FinalReviewCategory.PartidaSinValorizacionGlobal => "Sin valorización global",
+        FinalReviewCategory.FamiliaSinFactorPresentacion => "Familia sin factor de presentación",
+        FinalReviewCategory.EquipoSinClasificar => "Equipo sin clasificar",
         _ => "Revisión"
     };
 }
@@ -167,6 +171,8 @@ public sealed partial class FinalReviewService : IFinalReviewService
         AddMaterialsWithoutPrice(issues, cubList, materialList, itemById);
         AddAreasNotAssigned(issues, cubList, itemById);
         AddMissingOrIncompleteApus(issues, itemList, cubList, apuList, settings, overriddenItemIds);
+        AddFamiliasSinFactorPresentacion(issues, proyecto, cubList);
+        AddLineasDeEquipoSinClasificar(issues, cubList);
         AddFinancialGuards(issues, proyecto, settings, cubList, apuList, itemList, changeOrders, overriddenItemIds);
         AddPriceTraceabilityWarnings(issues, apuList);
         AddFormulaSyntaxErrors(issues, cubList, itemById);

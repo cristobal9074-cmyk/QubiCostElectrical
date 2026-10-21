@@ -11,6 +11,4 @@ public static class Money
     /// (positivos hacia arriba, negativos hacia abajo).</summary>
     public static decimal Round(decimal clp) => System.Math.Round(clp, 0, System.MidpointRounding.AwayFromZero);
 
-    /// <summary>Redondea un porcentaje a 2 decimales para presentación.</summary>
-    public static decimal RoundPct(decimal pct) => System.Math.Round(pct, 2, System.MidpointRounding.AwayFromZero);
 }

@@ -260,6 +260,7 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
             AppLog.Error("PriceBank", "Falló cargar el banco de precios", ex);
             var userMessage = OperationFailureMessages.ToUserMessage(ex);
             StatusMessage = userMessage;
+            ShellActivity.Report(userMessage);
             WpfDialogService.Error("Banco de precios", userMessage);
         }
         finally
@@ -410,6 +411,23 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
         int filtered = entriesView.Cast<object>().Count();
         SummaryText = $"{filtered:N0} visibles · {entries.Count:N0} total · {cachedCategoryCount:N0} categorías · {cachedProviderCount:N0} proveedores";
         HasNoFilterResults = entries.Count > 0 && filtered == 0;
+        if (HasNoFilterResults)
+        {
+            StatusMessage = "Sin coincidencias.";
+            ShellActivity.Report(StatusMessage);
+        }
+        else if (entries.Count == 0)
+        {
+            StatusMessage = "El banco de precios está vacío.";
+            ShellActivity.Report(StatusMessage);
+        }
+        else
+        {
+            if (StatusMessage is "Sin coincidencias." or "El banco de precios está vacío.")
+                StatusMessage = $"{filtered:N0} visibles de {entries.Count:N0}.";
+            if (ShellActivity.Text is "Sin coincidencias." or "El banco de precios está vacío.")
+                ShellActivity.Report("");
+        }
     }
 
     private void UpdateProjectSummary()

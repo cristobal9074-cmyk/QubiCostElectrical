@@ -118,6 +118,7 @@ public sealed class CubicacionEsclavoPropagationTests
         vm.SetSectorExpressionDirect(masterVm, 0, "12");
         Assert.Equal(12m, masterVm.Cantidad);
         Assert.Equal(24m, slaveVm.Cantidad);
+        Assert.Equal("24", slaveVm.Source.QtyExpressions[0]);
 
         // Borrar la casilla del maestro limpia la del esclavo.
         vm.SetSectorExpressionDirect(masterVm, 0, "");

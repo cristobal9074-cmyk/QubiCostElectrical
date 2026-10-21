@@ -79,7 +79,6 @@ public sealed class ServiceProviderValidationTests
         Assert.NotNull(s.PriceBankStore);
         Assert.NotNull(s.ExcelExporter);
         Assert.NotNull(s.PdfExporter);
-        Assert.NotNull(s.ApuCatalogRepository);
         Assert.NotNull(s.EconomicCalculation);
         Assert.NotNull(s.FinalReview);
     }

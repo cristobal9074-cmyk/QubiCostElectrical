@@ -141,4 +141,31 @@ public sealed class CubicacionTakeoffQueryServiceRowReferenceTests
 
         Assert.Equal(5m, total);
     }
+
+    [Fact]
+    public void CandidatoSinGuardar_CalculaConLaMismaReferenciaEntreCasillas()
+    {
+        var session = CreatePartidaWithRows("P1",
+            ("MAT-A", new[] { "100" }),
+            ("MAT-B", new[] { "" }));
+
+        var svc = new CubicacionTakeoffQueryService();
+        var result = svc.EvaluateCandidateExpression(session, session.Cubicacion[1], offset: 0, "f1c1+50");
+
+        Assert.True(result.Success);
+        Assert.Equal(150m, result.Value);
+        Assert.Equal("", session.Cubicacion[1].QtyExpressions![0]);
+    }
+
+    [Fact]
+    public void CandidatoQueNoCalcula_NoSeAcepta()
+    {
+        var session = CreatePartidaWithRows("P1", ("MAT-A", new[] { "" }));
+        var svc = new CubicacionTakeoffQueryService();
+
+        var result = svc.EvaluateCandidateExpression(session, session.Cubicacion[0], offset: 0, "10/0");
+
+        Assert.False(result.Success);
+        Assert.False(string.IsNullOrWhiteSpace(result.Error));
+    }
 }

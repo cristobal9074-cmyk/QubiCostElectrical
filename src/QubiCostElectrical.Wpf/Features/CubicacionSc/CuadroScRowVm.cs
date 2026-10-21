@@ -119,8 +119,6 @@ public sealed class CuadroScRowVm : ViewModelBase
 
     public bool IsDepto => row.EsDepto;
 
-    public static bool IsCuadroDepto(CuadroCargaSCRow? row) => row?.EsDepto ?? false;
-
     public void NotifyCircuitosActivosChanged()
     {
         OnPropertyChanged(nameof(CircuitosActivos));

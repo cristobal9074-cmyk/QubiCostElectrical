@@ -27,6 +27,8 @@ public partial class CubicacionScView : UserControl, IInGridSearchable
     internal static readonly ConditionalWeakTable<ComboBox, List<string>> ComboMasters = new();
     private readonly HashSet<ComboBox> _cancelledFilterCombos = new();
     private bool _isNavigatingFilterCombo;
+    internal const string CancelledEditTag = "cancelled";
+    private CircuitoScRowVm? activePisosCircuito;
     private CubicacionScViewModel Vm => (CubicacionScViewModel)DataContext;
 
     private void OnOpenSearchClick(object sender, RoutedEventArgs e) => CircuitosSearchOverlay.Open();

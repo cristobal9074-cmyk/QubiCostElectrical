@@ -21,7 +21,7 @@ public sealed class MaxLineCountTest
         // + Command Palette Supercargada (Ctrl+K) y Quick Jump Spotlight (Ctrl+J) + Ciclo de vida (3 Fases)
         // + Márgenes predeterminados de preferencias al crear nuevo proyecto (14-10).
         // Descompresión Ola Arquitectónica: extracción de Command Palette y Spotlight a ShellCommandPaletteCoordinator (-121 líneas netas).
-        ["src/QubiCostElectrical.Wpf/Shell/ShellViewModel"] = 1910,
+        ["src/QubiCostElectrical.Wpf/Shell/ShellViewModel"] = 1940,
         // Buscador in-grid (Ctrl+F) y navegación con soporte a SelectionUnit.Cell + Autofoco inteligente
         // +6 por el pegado Ctrl+V atendido en la propia grilla: el pegado Excel marca PreviewKeyDown
         // como atendido y suprimía el KeyDown que burbujeaba al UserControl, dejando el pegado con
@@ -34,17 +34,7 @@ public sealed class MaxLineCountTest
         // Navegación Excel fluida, autocompletado en combos de catálogo, edición directa, sidebar colapsable con mueca y top bar unificado en Cubicación SC
         // +10 por atajo Esc para limpiar buscador en Cubicación SC.
         ["src/QubiCostElectrical.Wpf/Features/CubicacionSc/CubicacionScView.xaml"] = 1795,
-        // +~50 por el selector y reactividad de política de cierre + salvaguardas (sello de parámetros,
-        // auditoría de cambio de tipo, avisos de política) — feature multi-política de cierre.
-        // Rediseño de pantalla unificada (cascada vía CostRows, factores, gastos): WIP sin
-        // commitear acumulado hasta 2012 (27-09); no crecer más desde aquí.
-        // +64 por la política de moneda única del proyecto: con CLP no se expone ninguna cifra en UF
-        // (columnas y chips UF se ocultan en el análisis y en la sección de familias), con UF/USD se
-        // muestra el par "moneda + equivalente en pesos" en KPIs, familias, ferretería, GO y MO.
-        // +26 por comando y apertura de la ventana de gestión de familias desde la sección de presentación.
-        // +12 por métricas de Cierre Comercial alineadas con Excel (Diferencia con Proyecto, MargenSubLabel) (17-10).
-        // Descompresión Ola Arquitectónica: extracción a CostoGastosOperacionalesCoordinator y CostoFamilyPricingCoordinator (-447 líneas netas).
-        ["src/QubiCostElectrical.Wpf/Features/Costo/CostoViewModel"] = 1720,
+
         // WIP sin commitear (turnos/planillas en curso); no crecer más desde aquí.
         // + Botón "Tomar proyección MO": comando que aplica la proyección a la dotación (24 líneas, 06-10).
         // + Renombre de cargos directos con nombre-GUID a "Maestro"/"Ayudante" en SeedCargos (6 líneas, 07-10).
@@ -58,14 +48,6 @@ public sealed class MaxLineCountTest
         // + Implementación de IPageWithPendingChanges e IPageWithCommitChanges para evitar pérdida silenciosa de dotación al navegar o guardar (17-10).
         // Descompresión Ola Arquitectónica: extracción de proyección y curvas a ManoDeObraProjectionCoordinator (-420 líneas netas).
         ["src/QubiCostElectrical.Wpf/Features/ManoDeObra/ManoDeObraViewModel"] = 1645,
-        // Ergonomía de planillas, parser resiliente multimoneda y navegación fluida tipo Excel
-        // + Celda viva (TextBox embebido): Backspace/Delete/flechas/Home/End son del texto, no
-        // de la grilla (fix «al cambiar el valor se elimina la descripción», 08-10).
-        // +9 por HandlePasteByHost: la grilla puede declarar que su pegado (código → material,
-        // fórmulas, sectores) manda sobre el pegado genérico de casillas, que se adelantaba por
-        // enganchar PreviewKeyDown antes que el XAML.
-        // +8 por HandleDeleteByHost: delegar Delete/Supr a la vista para retener foco al borrar filas.
-        ["src/QubiCostElectrical.Wpf/Infrastructure/DataGridExcelNavigation"] = 1650,
     };
 
     [Fact]

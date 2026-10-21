@@ -464,4 +464,41 @@ public sealed class FinalReviewServiceTests
 
         Assert.DoesNotContain(result.Issues, i => i.Category == FinalReviewCategory.PartidaSinValorizacionGlobal);
     }
+
+    [Fact]
+    public void Build_FamiliaNuevaSinFactor_AdvierteQueElMotorAplicaElValorPorDefecto()
+    {
+        var proyecto = new ProjectInfoRow
+        {
+            PoliticaCostosExcel = true,
+            MarkupFactorPorDefecto = 1.00m
+        };
+        var cub = Cub("P1", "TERM-01", "Terminal nuevo", 10m);
+        cub.Categoria = "Terminales nueva";
+
+        var result = _service.Build(new[] { Partida("P1", "1.1", "Terminales") }, null, new[] { cub }, null, proyecto);
+
+        var issue = result.Issues.SingleOrDefault(i => i.Category == FinalReviewCategory.FamiliaSinFactorPresentacion);
+        Assert.NotNull(issue);
+        Assert.Equal(FinalReviewSeverity.Warning, issue!.Severity);
+        Assert.Equal(1, issue.Count);
+        Assert.Contains("Terminales nueva", issue.Problem);
+    }
+
+    [Fact]
+    public void Build_FamiliasConFactorPropio_NoAdvierte()
+    {
+        var proyecto = new ProjectInfoRow
+        {
+            PoliticaCostosExcel = true,
+            MarkupFactorPorDefecto = 1.00m
+        };
+        proyecto.Variables["MarkupFactor_ACCESORIOS"] = 1.70m;
+        var cub = Cub("P1", "TERM-01", "Terminal", 10m);
+        cub.Categoria = "Terminales";
+
+        var result = _service.Build(new[] { Partida("P1", "1.1", "Terminales") }, null, new[] { cub }, null, proyecto);
+
+        Assert.DoesNotContain(result.Issues, i => i.Category == FinalReviewCategory.FamiliaSinFactorPresentacion);
+    }
 }

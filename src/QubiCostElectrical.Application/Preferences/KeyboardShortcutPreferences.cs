@@ -20,14 +20,6 @@ public static class KeyboardShortcutPreferences
             ?? "";
     }
 
-    public static Dictionary<string, string> BuildEffectiveMap(UserPreferences prefs)
-    {
-        var map = new Dictionary<string, string>(StringComparer.Ordinal);
-        foreach (var def in KeyboardShortcutCatalogRegistry.All)
-            map[def.Id] = GetEffective(def.Id, prefs);
-        return map;
-    }
-
     public static void Sanitize(UserPreferences prefs)
     {
         prefs.KeyboardShortcuts ??= new Dictionary<string, string>(StringComparer.Ordinal);
@@ -59,11 +51,6 @@ public static class KeyboardShortcutPreferences
         if (prefs.KeyboardShortcuts.TryGetValue(CubicacionShortcutCatalog.ResourceDetail, out var detail)
             && string.Equals(detail, "Ctrl+D", StringComparison.OrdinalIgnoreCase))
             prefs.KeyboardShortcuts.Remove(CubicacionShortcutCatalog.ResourceDetail);
-    }
-
-    public static void ResetToDefaults(UserPreferences prefs)
-    {
-        prefs.KeyboardShortcuts = new Dictionary<string, string>(StringComparer.Ordinal);
     }
 
     public static void SetOverride(UserPreferences prefs, string actionId, string gestureText)

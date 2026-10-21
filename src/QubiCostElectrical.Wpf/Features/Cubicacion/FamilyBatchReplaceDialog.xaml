@@ -215,12 +215,15 @@
 
             <!-- 3. Asistente de Búsqueda para Fila Seleccionada -->
             <Border Grid.Row="3" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="{StaticResource Radius.Card}" Padding="10,6" Margin="0,0,0,8">
+                <StackPanel>
                 <DockPanel LastChildFill="True">
                     <TextBlock Text="Asignar reemplazo manual:" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" Margin="0,0,8,0" />
                     <TextBlock x:Name="SelectedRowInfoText" Text="(Seleccione una fila)" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" Margin="0,0,10,0" />
                     <CheckBox x:Name="IncludePriceBankCheck" DockPanel.Dock="Right" Content="Buscar también en Banco de Precios" VerticalAlignment="Center" Margin="10,0,0,0" FontSize="11" Click="OnIncludePriceBankCheckChanged" ToolTip="Por defecto solo busca materiales presentes en la Cubicación del proyecto" />
-                    <TextBox x:Name="RowSearchBox" Height="26" VerticalContentAlignment="Center" Padding="6,2" TextChanged="OnRowSearchTextChanged" Tag="Buscar código o descripción en Cubicación (ej: s17, 9/12)…" />
+                    <TextBox x:Name="RowSearchBox" Height="26" VerticalContentAlignment="Center" Padding="6,2" TextChanged="OnRowSearchTextChanged" PreviewKeyDown="OnRowSearchPreviewKeyDown" Tag="Buscar código o descripción en Cubicación (ej: s17, 9/12)…" />
                 </DockPanel>
+                <TextBlock x:Name="RowSearchStatus" Text="" FontSize="11" Foreground="{DynamicResource Brush.Warning}" Margin="0,2,0,0" TextWrapping="Wrap" />
+                </StackPanel>
             </Border>
             <!-- Popup de sugerencias para fila seleccionada -->
             <Popup x:Name="RowSearchPopup" PlacementTarget="{Binding ElementName=RowSearchBox}" Placement="Bottom" StaysOpen="False" AllowsTransparency="True" MinWidth="480" MaxHeight="240">

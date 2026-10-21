@@ -10,25 +10,23 @@ public sealed class PartidaListItemVm : ViewModelBase
     private int recursoCount;
     private bool excluidoCubicacion;
     private string motivoNoCubicar;
+    private readonly ItemizadoRow source;
 
     public PartidaListItemVm(ItemizadoRow row, int recursoCount = 0, bool hasIssues = false, bool isPureSectionTitle = false)
     {
+        source = row ?? throw new ArgumentNullException(nameof(row));
         Id = row.Id;
         codigo = row.Item ?? "";
         descripcion = row.Descripcion ?? "";
-        unidad = row.Unidad ?? "";
         EsPartida = !isPureSectionTitle;
         excluidoCubicacion = row.ExcluidoCubicacion;
         motivoNoCubicar = row.MotivoNoCubicar ?? "";
         RecursoCount = recursoCount;
-        cantidad = row.Cantidad;
         HasIssues = hasIssues;
     }
 
     private string codigo;
     private string descripcion;
-    private decimal cantidad;
-    private string unidad;
 
     public string Id { get; }
     public string Codigo
@@ -75,16 +73,18 @@ public sealed class PartidaListItemVm : ViewModelBase
     }
     public string Unidad
     {
-        get => unidad;
+        get => source.Unidad ?? "";
         set
         {
-            if (SetProperty(ref unidad, value))
-            {
-                OnPropertyChanged(nameof(SinValorizacionGlobal));
-                OnPropertyChanged(nameof(HasMissingGlobalUnidad));
-                OnPropertyChanged(nameof(StatusBadgeText));
-                OnPropertyChanged(nameof(ExclusionTooltip));
-            }
+            string clean = value ?? "";
+            if (string.Equals(source.Unidad ?? "", clean, StringComparison.Ordinal))
+                return;
+            source.Unidad = clean;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(SinValorizacionGlobal));
+            OnPropertyChanged(nameof(HasMissingGlobalUnidad));
+            OnPropertyChanged(nameof(StatusBadgeText));
+            OnPropertyChanged(nameof(ExclusionTooltip));
         }
     }
     public bool EsPartida { get; }
@@ -105,16 +105,17 @@ public sealed class PartidaListItemVm : ViewModelBase
     }
     public decimal Cantidad
     {
-        get => cantidad;
+        get => source.Cantidad;
         set
         {
-            if (SetProperty(ref cantidad, value))
-            {
-                OnPropertyChanged(nameof(SinValorizacionGlobal));
-                OnPropertyChanged(nameof(HasMissingGlobalCantidad));
-                OnPropertyChanged(nameof(StatusBadgeText));
-                OnPropertyChanged(nameof(ExclusionTooltip));
-            }
+            if (source.Cantidad == value)
+                return;
+            source.Cantidad = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(SinValorizacionGlobal));
+            OnPropertyChanged(nameof(HasMissingGlobalCantidad));
+            OnPropertyChanged(nameof(StatusBadgeText));
+            OnPropertyChanged(nameof(ExclusionTooltip));
         }
     }
 
@@ -130,8 +131,8 @@ public sealed class PartidaListItemVm : ViewModelBase
     }
 
     public string CantidadToolTip => !string.IsNullOrWhiteSpace(cantidadFormula)
-        ? $"Fórmula: {cantidadFormula}\nResultado: {(cantidad % 1 == 0 ? cantidad.ToString("N0", System.Globalization.CultureInfo.CurrentCulture) : cantidad.ToString("#,##0.##", System.Globalization.CultureInfo.CurrentCulture))}"
-        : "Cantidad oficial de la partida (editable o fórmula tipo Excel ej: +C1+C2 · Enter para guardar)";
+        ? $"Fórmula: {cantidadFormula}\nResultado: {(Cantidad % 1 == 0 ? Cantidad.ToString("N0", System.Globalization.CultureInfo.CurrentCulture) : Cantidad.ToString("#,##0.##", System.Globalization.CultureInfo.CurrentCulture))}"
+        : "Cantidad oficial de la partida. No modifica las cantidades de cada material.";
 
     public int RecursoCount
     {

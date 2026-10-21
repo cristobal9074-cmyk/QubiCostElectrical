@@ -59,21 +59,26 @@ public static class CubicacionClipboardService
                 && sectorValues.All(string.IsNullOrWhiteSpace))
                 continue;
 
-            bool cantidadInvalida = false;
-            if (!string.IsNullOrWhiteSpace(cantidadRaw))
+            bool rejected = false;
+            string rejection = "";
+            if (!TryAcceptPastedExpression(cantidadRaw, out string cantidadError))
             {
-                string normalized = cantidadRaw.Replace(",", ".");
-                cantidadInvalida = !decimal.TryParse(normalized, NumberStyles.Any, CultureInfo.InvariantCulture, out _)
-                    && !QuantityFormulaService.IsFormulaLike(cantidadRaw);
-
-                if (cantidadInvalida)
+                rejected = true;
+                rejection = cantidadError;
+            }
+            else
+            {
+                for (int s = 0; s < sectorValues.Length; s++)
                 {
-                    var result = QuantityFormulaService.Evaluate(cantidadRaw);
-                    cantidadInvalida = !result.Success;
+                    if (TryAcceptPastedExpression(sectorValues[s], out string sectorError))
+                        continue;
+                    rejected = true;
+                    rejection = $"Casilla {s + 1}: {sectorError}";
+                    break;
                 }
             }
 
-            if (cantidadInvalida)
+            if (rejected)
             {
                 rows.Add(new CubicacionClipboardRow
                 {
@@ -83,10 +88,10 @@ public static class CubicacionClipboardService
                     CantidadRaw = cantidadRaw,
                     SectorValues = sectorValues,
                     IsRejected = true,
-                    RejectionReason = $"Cantidad inválida: '{cantidadRaw}'"
+                    RejectionReason = rejection
                 });
                 rejectedCount++;
-                warnings.Add($"Fila rechazada — cantidad no reconocida: '{cantidadRaw}'");
+                warnings.Add($"Fila rechazada — {rejection}");
             }
             else
             {
@@ -117,10 +122,41 @@ public static class CubicacionClipboardService
     public static decimal ParseCantidad(string? raw)
     {
         if (string.IsNullOrWhiteSpace(raw)) return 0m;
-        string normalized = raw.Trim().Replace(",", ".");
-        if (decimal.TryParse(normalized, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal parsed))
-            return parsed;
+        if (TryAcceptPastedExpression(raw, out _) && !QuantityFormulaService.IsFormulaLike(raw))
+        {
+            string normalized = raw.Trim().Replace(",", ".");
+            if (decimal.TryParse(normalized, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal parsed))
+                return parsed;
+        }
+
         var result = QuantityFormulaService.Evaluate(raw);
         return result.Success ? result.Value : 0m;
+    }
+
+    /// <summary>
+    /// Número o fórmula del dialecto. Si la función no está en la lista, devuelve el error y no un cero.
+    /// </summary>
+    public static bool TryAcceptPastedExpression(string? raw, out string error)
+    {
+        error = "";
+        if (string.IsNullOrWhiteSpace(raw))
+            return true;
+
+        string text = raw.Trim();
+        if (!QuantityFormulaService.IsFormulaLike(text))
+        {
+            string normalized = text.Replace(",", ".");
+            if (decimal.TryParse(normalized, NumberStyles.Any, CultureInfo.InvariantCulture, out _))
+                return true;
+        }
+
+        var result = QuantityFormulaService.ValidateDialect(text);
+        if (result.Success)
+            return true;
+
+        error = string.IsNullOrWhiteSpace(result.Error)
+            ? "fx · La fórmula no se puede calcular."
+            : result.Error.StartsWith("fx", StringComparison.OrdinalIgnoreCase) ? result.Error : $"fx · {result.Error}";
+        return false;
     }
 }

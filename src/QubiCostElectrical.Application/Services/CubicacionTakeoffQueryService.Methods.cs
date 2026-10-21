@@ -457,4 +457,30 @@ public sealed partial class CubicacionTakeoffQueryService : ICubicacionTakeoffQu
 
         return EvaluateSafe(expression, scoped);
     }
+
+    public QuantityFormulaResult EvaluateCandidateExpression(BudgetProjectSession session, CubicacionRow row, int offset, string? expression)
+    {
+        string text = (expression ?? "").Trim();
+        if (string.IsNullOrEmpty(text) || !QuantityFormulaService.IsFormulaLike(text))
+            return new QuantityFormulaResult(0m, true, "");
+
+        const int qtyColumnCount = 300;
+        var variables = BuildFormulaVariables(session, row.ItemId);
+        var headers = GetHeaders(session, row.ItemId ?? string.Empty, qtyColumnCount);
+        string[]? stored = row.QtyExpressions;
+        if (stored != null && offset > 0)
+        {
+            int limit = Math.Min(stored.Length, offset);
+            for (int i = 0; i < limit; i++)
+            {
+                if (string.IsNullOrWhiteSpace(stored[i]))
+                    continue;
+                var prior = EvaluateSafeWithRowReferences(stored[i], variables, session, row, i, depth: 0, visiting: null);
+                if (prior.Success)
+                    PublishZoneVariable(variables, headers, i, prior.Value);
+            }
+        }
+
+        return EvaluateSafeWithRowReferences(text, variables, session, row, offset, depth: 0, visiting: null);
+    }
 }

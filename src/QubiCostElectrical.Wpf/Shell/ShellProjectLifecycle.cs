@@ -117,11 +117,4 @@ internal sealed class ShellProjectLifecycle
         autoSave.Stop();
         projectLock.ReleaseLock();
     }
-
-    public static void EnsureParentDirectory(string fullPath)
-    {
-        var dir = Path.GetDirectoryName(fullPath);
-        if (!string.IsNullOrWhiteSpace(dir))
-            Directory.CreateDirectory(dir);
-    }
 }

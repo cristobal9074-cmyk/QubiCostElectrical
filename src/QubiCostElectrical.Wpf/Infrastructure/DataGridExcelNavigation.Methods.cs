@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -18,41 +17,26 @@ namespace QubiCostElectrical.Wpf.Infrastructure;
 
 public static partial class DataGridExcelNavigation
 {
-    private static bool _lastEditInitiatedByF2;
-    private static bool _lastEditInitiatedByChar;
-    private static bool _pendingCharEdit;
+    public static bool TryParseFlexibleDecimal(string? raw, out decimal result) =>
+        DataGridCellAccessor.TryParseFlexibleDecimal(raw, out result);
 
-    public static bool TryParseFlexibleDecimal(string? raw, out decimal result)
-    {
-        result = 0m;
-        if (string.IsNullOrWhiteSpace(raw))
-            return false;
+    public static string GetCellText(object? dataContext, DataGridColumn? column) =>
+        DataGridCellAccessor.GetCellText(dataContext, column);
 
-        string clean = raw.Trim();
-        clean = clean.Replace("$", "")
-                     .Replace("€", "")
-                     .Replace("UF", "", StringComparison.OrdinalIgnoreCase)
-                     .Replace("CLP", "", StringComparison.OrdinalIgnoreCase)
-                     .Replace("USD", "", StringComparison.OrdinalIgnoreCase)
-                     .Replace("EUR", "", StringComparison.OrdinalIgnoreCase)
-                     .Replace("%", "")
-                     .Trim();
+    public static void SetCellText(object? dataContext, DataGridColumn? column, string value) =>
+        DataGridCellAccessor.SetCellText(dataContext, column, value);
 
-        if (string.IsNullOrWhiteSpace(clean))
-            return false;
+    public static void ClearSelection(DataGrid grid) =>
+        DataGridCellAccessor.ClearSelection(grid);
 
-        int lastDot = clean.LastIndexOf('.');
-        int lastComma = clean.LastIndexOf(',');
+    public static void CopySelectionToClipboard(DataGrid grid) =>
+        DataGridCellAccessor.CopySelectionToClipboard(grid);
 
-        if (lastDot >= 0 && lastComma >= 0)
-            clean = lastComma > lastDot ? clean.Replace(".", "").Replace(',', '.') : clean.Replace(",", "");
-        else if (lastComma >= 0)
-            clean = clean.Replace(',', '.');
-        else if (lastDot >= 0 && clean.Count(c => c == '.') > 1)
-            clean = clean.Replace(".", "");
+    internal static void BeginBatchUpdate(object? item) =>
+        DataGridCellAccessor.BeginBatchUpdate(item);
 
-        return decimal.TryParse(clean, NumberStyles.Any, CultureInfo.InvariantCulture, out result);
-    }
+    internal static void EndBatchUpdate(object? item) =>
+        DataGridCellAccessor.EndBatchUpdate(item);
 
     public static void SetColumnScope(DataGrid grid, Func<DataGridColumn, bool>? predicate)
     {
@@ -80,7 +64,7 @@ public static partial class DataGridExcelNavigation
 
     public static void Attach(DataGrid grid)
     {
-        grid.PreparingCellForEdit += OnPreparingCellForEdit;
+        grid.PreparingCellForEdit += DataGridCellEditorHandler.OnPreparingCellForEdit;
         // Como en Excel: empezar a escribir en otra celda cancela el modo "copiado".
         grid.BeginningEdit += (_, _) => ClearCopyMarker(grid);
     }
@@ -105,21 +89,21 @@ public static partial class DataGridExcelNavigation
         if (column == null || column.IsReadOnly || grid.IsReadOnly)
             return false;
 
-        _lastEditInitiatedByChar = true;
-        _pendingCharEdit = true;
+        DataGridCellEditorHandler.LastEditInitiatedByChar = true;
+        DataGridCellEditorHandler.PendingCharEdit = true;
         try
         {
             if (!grid.BeginEdit())
             {
-                _lastEditInitiatedByChar = false;
-                _pendingCharEdit = false;
+                DataGridCellEditorHandler.LastEditInitiatedByChar = false;
+                DataGridCellEditorHandler.PendingCharEdit = false;
                 return false;
             }
         }
         catch
         {
-            _lastEditInitiatedByChar = false;
-            _pendingCharEdit = false;
+            DataGridCellEditorHandler.LastEditInitiatedByChar = false;
+            DataGridCellEditorHandler.PendingCharEdit = false;
             throw;
         }
 
@@ -133,11 +117,11 @@ public static partial class DataGridExcelNavigation
             textBox.SetCurrentValue(TextBox.TextProperty, typedText);
             textBox.CaretIndex = textBox.Text.Length;
             textBox.SelectionLength = 0;
-            textBox.PreviewTextInput -= OnEditorPreviewTextInput;
-            textBox.PreviewTextInput += OnEditorPreviewTextInput;
+            textBox.PreviewTextInput -= DataGridCellEditorHandler.OnEditorPreviewTextInput;
+            textBox.PreviewTextInput += DataGridCellEditorHandler.OnEditorPreviewTextInput;
             textBox.Dispatcher.BeginInvoke(new Action(() =>
             {
-                if (_pendingCharEdit || textBox.SelectionLength > 0)
+                if (DataGridCellEditorHandler.PendingCharEdit || textBox.SelectionLength > 0)
                 {
                     textBox.CaretIndex = textBox.Text.Length;
                     textBox.SelectionLength = 0;
@@ -153,11 +137,11 @@ public static partial class DataGridExcelNavigation
                 innerBox.SetCurrentValue(TextBox.TextProperty, typedText);
                 innerBox.CaretIndex = typedText.Length;
                 innerBox.SelectionLength = 0;
-                innerBox.PreviewTextInput -= OnEditorPreviewTextInput;
-                innerBox.PreviewTextInput += OnEditorPreviewTextInput;
+                innerBox.PreviewTextInput -= DataGridCellEditorHandler.OnEditorPreviewTextInput;
+                innerBox.PreviewTextInput += DataGridCellEditorHandler.OnEditorPreviewTextInput;
                 innerBox.Dispatcher.BeginInvoke(new Action(() =>
                 {
-                    if (_pendingCharEdit || innerBox.SelectionLength > 0)
+                    if (DataGridCellEditorHandler.PendingCharEdit || innerBox.SelectionLength > 0)
                     {
                         innerBox.CaretIndex = innerBox.Text.Length;
                         innerBox.SelectionLength = 0;
@@ -197,7 +181,7 @@ public static partial class DataGridExcelNavigation
         {
             if (e.Key == Key.F2)
             {
-                _lastEditInitiatedByF2 = true;
+                DataGridCellEditorHandler.LastEditInitiatedByF2 = true;
                 if (grid.CurrentCell.Column == null)
                 {
                     var firstEditableCol = grid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible && !c.IsReadOnly)
@@ -286,7 +270,7 @@ public static partial class DataGridExcelNavigation
                 else
                 {
                     int count = grid.SelectedCells.Count;
-                    if (count is >= 2 and <= 50 && FillSelection(grid, vertical: e.Key == Key.D)) { e.Handled = true; return; }
+                    if (count is >= 2 and <= 50 && DataGridCellAccessor.FillSelection(grid, vertical: e.Key == Key.D)) { e.Handled = true; return; }
                     if (count > 1 || grid.SelectedItems.Count > 1) { e.Handled = true; return; }
                 }
             }
@@ -440,388 +424,6 @@ public static partial class DataGridExcelNavigation
         }
     }
 
-    private static void OnPreparingCellForEdit(object? sender, DataGridPreparingCellForEditEventArgs e)
-    {
-        if (e.EditingElement is TextBox textBox)
-        {
-            textBox.PreviewKeyDown -= OnEditorPreviewKeyDown;
-            textBox.PreviewKeyDown += OnEditorPreviewKeyDown;
-            textBox.PreviewTextInput -= OnEditorPreviewTextInput;
-            textBox.PreviewTextInput += OnEditorPreviewTextInput;
-
-            if (_lastEditInitiatedByChar || _pendingCharEdit)
-            {
-                _lastEditInitiatedByChar = false;
-                textBox.CaretIndex = textBox.Text.Length;
-                textBox.SelectionLength = 0;
-            }
-            else if (_lastEditInitiatedByF2)
-            {
-                _lastEditInitiatedByF2 = false;
-                textBox.CaretIndex = textBox.Text.Length;
-                textBox.SelectionLength = 0;
-            }
-            else if (e.EditingEventArgs is KeyEventArgs or TextCompositionEventArgs)
-            {
-                textBox.CaretIndex = textBox.Text.Length;
-                textBox.SelectionLength = 0;
-            }
-            else
-            {
-                textBox.SelectAll();
-            }
-        }
-        else if (e.EditingElement is ComboBox comboBox)
-        {
-            comboBox.PreviewKeyDown -= OnComboBoxEditorPreviewKeyDown;
-            comboBox.PreviewKeyDown += OnComboBoxEditorPreviewKeyDown;
-
-            if (comboBox.IsEditable)
-            {
-                comboBox.Loaded -= OnEditableComboBoxLoaded;
-                comboBox.Loaded += OnEditableComboBoxLoaded;
-                comboBox.DropDownOpened -= OnComboBoxDropDownOpened;
-                comboBox.DropDownOpened += OnComboBoxDropDownOpened;
-
-                if (FindVisualChild<TextBox>(comboBox) is { } tb)
-                {
-                    tb.PreviewKeyDown -= OnEditorPreviewKeyDown;
-                    tb.PreviewKeyDown += OnEditorPreviewKeyDown;
-                    tb.PreviewTextInput -= OnEditorPreviewTextInput;
-                    tb.PreviewTextInput += OnEditorPreviewTextInput;
-                    if (_pendingCharEdit)
-                    {
-                        tb.CaretIndex = tb.Text.Length;
-                        tb.SelectionLength = 0;
-                    }
-                }
-            }
-        }
-        else if (e.EditingElement is FrameworkElement fe)
-        {
-            if (FindVisualChild<TextBox>(fe) is { } innerBox)
-            {
-                innerBox.PreviewKeyDown -= OnEditorPreviewKeyDown;
-                innerBox.PreviewKeyDown += OnEditorPreviewKeyDown;
-                innerBox.PreviewTextInput -= OnEditorPreviewTextInput;
-                innerBox.PreviewTextInput += OnEditorPreviewTextInput;
-                if (_lastEditInitiatedByChar || _pendingCharEdit)
-                {
-                    _lastEditInitiatedByChar = false;
-                    innerBox.CaretIndex = innerBox.Text.Length;
-                    innerBox.SelectionLength = 0;
-                }
-                else if (_lastEditInitiatedByF2)
-                {
-                    _lastEditInitiatedByF2 = false;
-                    innerBox.CaretIndex = innerBox.Text.Length;
-                    innerBox.SelectionLength = 0;
-                }
-                else if (e.EditingEventArgs is KeyEventArgs or TextCompositionEventArgs)
-                {
-                    innerBox.CaretIndex = innerBox.Text.Length;
-                    innerBox.SelectionLength = 0;
-                }
-                else
-                {
-                    innerBox.SelectAll();
-                }
-            }
-        }
-    }
-
-    private static void OnEditableComboBoxLoaded(object? sender, RoutedEventArgs e)
-    {
-        if (sender is ComboBox cb)
-        {
-            cb.DropDownOpened -= OnComboBoxDropDownOpened;
-            cb.DropDownOpened += OnComboBoxDropDownOpened;
-
-            if (FindVisualChild<TextBox>(cb) is { } tb)
-            {
-                tb.PreviewKeyDown -= OnEditorPreviewKeyDown;
-                tb.PreviewKeyDown += OnEditorPreviewKeyDown;
-                tb.PreviewTextInput -= OnEditorPreviewTextInput;
-                tb.PreviewTextInput += OnEditorPreviewTextInput;
-                if (_pendingCharEdit)
-                {
-                    tb.CaretIndex = tb.Text.Length;
-                    tb.SelectionLength = 0;
-                }
-            }
-        }
-    }
-
-    private static void OnComboBoxDropDownOpened(object? sender, EventArgs e)
-    {
-        if (sender is ComboBox cb)
-        {
-            if (FindVisualChild<TextBox>(cb) is { } tb)
-            {
-                tb.Dispatcher.BeginInvoke(new Action(() =>
-                {
-                    if (_pendingCharEdit || tb.SelectionLength == tb.Text.Length)
-                    {
-                        tb.CaretIndex = tb.Text.Length;
-                        tb.SelectionLength = 0;
-                    }
-                }), DispatcherPriority.Input);
-            }
-        }
-    }
-
-    private static void OnEditorPreviewTextInput(object sender, TextCompositionEventArgs e)
-    {
-        if (sender is TextBox tb)
-        {
-            if (_pendingCharEdit)
-            {
-                _pendingCharEdit = false;
-                if (tb.SelectionLength > 0)
-                {
-                    tb.CaretIndex = tb.Text.Length;
-                    tb.SelectionLength = 0;
-                }
-            }
-            else if (tb.SelectionLength > 0 && tb.SelectionLength == tb.Text.Length && tb.Text.Length > 0)
-            {
-                // Si WPF seleccionó todo el texto debido a foco o apertura de popup,
-                // evitamos que el tecleo de texto sobrescriba lo escrito.
-                tb.CaretIndex = tb.Text.Length;
-                tb.SelectionLength = 0;
-            }
-        }
-    }
-
-    private static void OnEditorPreviewKeyDown(object sender, KeyEventArgs e)
-    {
-        if (sender is not TextBox textBox)
-            return;
-
-        var parentCombo = FindParent<ComboBox>(textBox);
-        if (parentCombo != null)
-        {
-            // Si el desplegable del ComboBox está abierto, permitir navegar opciones con Up/Down o cerrar con Escape
-            if (parentCombo.IsDropDownOpen && e.Key is Key.Up or Key.Down)
-            {
-                return;
-            }
-            if (parentCombo.IsDropDownOpen && e.Key == Key.Escape)
-            {
-                parentCombo.IsDropDownOpen = false;
-                e.Handled = true;
-                return;
-            }
-        }
-
-        if (_pendingCharEdit)
-        {
-            if (e.Key is Key.Back or Key.Delete or Key.Enter or Key.Return or Key.Tab or Key.Escape or Key.Up or Key.Down or Key.Left or Key.Right)
-            {
-                _pendingCharEdit = false;
-            }
-            else
-            {
-                _pendingCharEdit = false;
-                if (textBox.SelectionLength > 0)
-                {
-                    textBox.CaretIndex = textBox.Text.Length;
-                    textBox.SelectionLength = 0;
-                }
-            }
-        }
-
-        var grid = FindParent<DataGrid>(textBox);
-        var cell = FindParent<DataGridCell>(textBox);
-        if (grid == null)
-            return;
-
-        DataGridColumn? column = cell?.Column ?? grid.CurrentCell.Column;
-        object? activeRow = cell?.DataContext ?? grid.CurrentCell.Item ?? grid.SelectedItem;
-        if (column == null || activeRow == null)
-            return;
-
-        // Bloquear atajos globales dentro del editor de celda
-        if (Keyboard.Modifiers == ModifierKeys.Control && e.Key is Key.B or Key.F or Key.D) { e.Handled = true; return; }
-
-        // Enter: confirmar y mover a la fila de abajo (o arriba con Shift)
-        if (e.Key is Key.Enter or Key.Return)
-        {
-            bool backward = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift;
-            int offset = backward ? -1 : 1;
-            SyncEditorSourceBeforeCommit(textBox, parentCombo, column, activeRow);
-            CommitCellAndRow(grid);
-            grid.Dispatcher.BeginInvoke(new Action(() =>
-            {
-                MoveToRowOffset(grid, column, offset, activeRow);
-            }), DispatcherPriority.Input);
-            e.Handled = true;
-            return;
-        }
-
-        // Tab / Shift+Tab: confirmar y mover columna izquierda/derecha, saltando a la fila
-        // siguiente/anterior al llegar al final — igual que Excel.
-        if (e.Key == Key.Tab)
-        {
-            bool backward = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift;
-            SyncEditorSourceBeforeCommit(textBox, parentCombo, column, activeRow);
-            grid.CommitEdit(DataGridEditingUnit.Cell, true);
-            grid.CommitEdit(DataGridEditingUnit.Row, true);
-            grid.Dispatcher.BeginInvoke(new Action(() =>
-            {
-                MoveToColumnOffset(grid, column, backward ? -1 : 1, wrapRows: true, activeRow);
-            }), DispatcherPriority.Input);
-            e.Handled = true;
-            return;
-        }
-
-        // Up / Down en edición: confirmar y mover arriba/abajo.
-        // Si el usuario está escribiendo una fórmula abierta (ej. '=C1*' o '='), no confirmar
-        // para permitir el Point Mode de selección de celdas con flechas.
-        if (e.Key is Key.Up or Key.Down)
-        {
-            if (IsFormulaOpenInEditor(textBox.Text))
-                return;
-
-            bool ctrlPressed = (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control;
-            SyncEditorSourceBeforeCommit(textBox, parentCombo, column, activeRow);
-            CommitCellAndRow(grid);
-            grid.Dispatcher.BeginInvoke(new Action(() =>
-            {
-                if (ctrlPressed)
-                    MoveToRowDataEdge(grid, column, activeRow, e.Key == Key.Down ? 1 : -1);
-                else
-                    MoveToRowOffset(grid, column, e.Key == Key.Down ? 1 : -1, activeRow);
-            }), DispatcherPriority.Input);
-            e.Handled = true;
-            return;
-        }
-
-        // Left / Right en edición: confirmar y mover a la celda izquierda/derecha
-        if (e.Key is Key.Left or Key.Right && Keyboard.Modifiers == ModifierKeys.None)
-        {
-            if (IsFormulaOpenInEditor(textBox.Text))
-                return;
-
-            if (textBox.SelectionLength == textBox.Text.Length && textBox.Text.Length > 0)
-            {
-                if (e.Key == Key.Left)
-                {
-                    textBox.Select(0, 0);
-                    e.Handled = true;
-                    return;
-                }
-                if (e.Key == Key.Right)
-                {
-                    textBox.Select(textBox.Text.Length, 0);
-                    e.Handled = true;
-                    return;
-                }
-            }
-
-            bool canNavigate = (e.Key == Key.Left && textBox.SelectionStart == 0 && textBox.SelectionLength == 0)
-                || (e.Key == Key.Right && textBox.SelectionStart == textBox.Text.Length && textBox.SelectionLength == 0);
-
-            if (canNavigate)
-            {
-                SyncEditorSourceBeforeCommit(textBox, parentCombo, column, activeRow);
-                grid.CommitEdit(DataGridEditingUnit.Cell, true);
-                grid.CommitEdit(DataGridEditingUnit.Row, true);
-                grid.Dispatcher.BeginInvoke(new Action(() =>
-                {
-                    MoveToColumnOffset(grid, column, e.Key == Key.Right ? 1 : -1, wrapRows: false, activeRow);
-                }), DispatcherPriority.Input);
-                e.Handled = true;
-                return;
-            }
-        }
-    }
-
-    private static void SyncEditorSourceBeforeCommit(TextBox textBox, ComboBox? parentCombo, DataGridColumn column, object? activeRow)
-    {
-        try
-        {
-            textBox.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
-
-            if (parentCombo != null)
-            {
-                if (!string.Equals(parentCombo.Text, textBox.Text, StringComparison.Ordinal))
-                {
-                    parentCombo.Text = textBox.Text;
-                }
-                parentCombo.GetBindingExpression(ComboBox.TextProperty)?.UpdateSource();
-                parentCombo.GetBindingExpression(System.Windows.Controls.Primitives.Selector.SelectedItemProperty)?.UpdateSource();
-            }
-
-            if (activeRow is Features.CubicacionSc.CircuitoScRowVm scRow && scRow.CanEdit)
-            {
-                Features.CubicacionSc.CubicacionScView.CommitCircuitoCellEditor(textBox, parentCombo, column, scRow);
-            }
-        }
-        catch
-        {
-            // Silencioso ante errores de binding o validaciones transitorias
-        }
-    }
-
-    private static bool IsFormulaOpenInEditor(string? text)
-    {
-        if (string.IsNullOrWhiteSpace(text)) return false;
-        string t = text.Trim();
-        if (!t.StartsWith("=") && !t.StartsWith("+"))
-        {
-            if (t.Length > 0)
-            {
-                char lastCh = t[^1];
-                return lastCh is '+' or '-' or '*' or '/' or '^' or '(' or ',' or ';' or ':';
-            }
-            return false;
-        }
-        if (t.Length == 1) return true;
-        char last = t[^1];
-        return last is '=' or '+' or '-' or '*' or '/' or '^' or '%' or '(' or ',' or ';' or ':';
-    }
-
-    private static void OnComboBoxEditorPreviewKeyDown(object sender, KeyEventArgs e)
-    {
-        if (sender is not ComboBox comboBox || comboBox.IsDropDownOpen)
-            return;
-
-        var grid = FindParent<DataGrid>(comboBox);
-        var cell = FindParent<DataGridCell>(comboBox);
-        if (grid == null)
-            return;
-
-        DataGridColumn? column = cell?.Column ?? grid.CurrentCell.Column;
-        object? activeRow = cell?.DataContext ?? grid.CurrentCell.Item ?? grid.SelectedItem;
-        if (column == null || activeRow == null)
-            return;
-
-        if (e.Key is Key.Enter or Key.Return)
-        {
-            bool backward = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift;
-            CommitCellAndRow(grid);
-            grid.Dispatcher.BeginInvoke(new Action(() =>
-            {
-                MoveToRowOffset(grid, column, backward ? -1 : 1, activeRow);
-            }), DispatcherPriority.Input);
-            e.Handled = true;
-            return;
-        }
-
-        if (e.Key == Key.Tab)
-        {
-            bool backward = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift;
-            grid.CommitEdit(DataGridEditingUnit.Cell, true);
-            grid.Dispatcher.BeginInvoke(new Action(() =>
-            {
-                MoveToColumnOffset(grid, column, backward ? -1 : 1, wrapRows: true, activeRow);
-            }), DispatcherPriority.Input);
-            e.Handled = true;
-            return;
-        }
-    }
-
     // Confirma la celda y, además, la fila.
     internal static void CommitCellAndRow(DataGrid grid)
     {
@@ -907,7 +509,7 @@ public static partial class DataGridExcelNavigation
 
     // explícito (no se relee grid.CurrentItem) para no depender de que el cursor de la vista de
     // colección siga sincronizado con la celda que se acaba de editar.
-    private static void MoveToRowDataEdge(DataGrid grid, DataGridColumn column, object? currentRowItem, int direction)
+    public static void MoveToRowDataEdge(DataGrid grid, DataGridColumn column, object? currentRowItem, int direction)
     {
         int currentRow = currentRowItem != null ? grid.Items.IndexOf(currentRowItem) : -1;
         if (currentRow < 0)
@@ -1056,21 +658,6 @@ public static partial class DataGridExcelNavigation
         return presenter.ItemContainerGenerator.ContainerFromIndex(colIndex) as DataGridCell;
     }
 
-    private static readonly System.Collections.Concurrent.ConcurrentDictionary<Type, System.Reflection.MethodInfo?> _beginBatchCache = new();
-    private static readonly System.Collections.Concurrent.ConcurrentDictionary<Type, System.Reflection.MethodInfo?> _endBatchCache = new();
-
-    internal static void BeginBatchUpdate(object? item)
-    {
-        if (item is { } it)
-            _beginBatchCache.GetOrAdd(it.GetType(), t => t.GetMethod("BeginBatchUpdate"))?.Invoke(it, null);
-    }
-
-    internal static void EndBatchUpdate(object? item)
-    {
-        if (item is { } it)
-            _endBatchCache.GetOrAdd(it.GetType(), t => t.GetMethod("EndBatchUpdate"))?.Invoke(it, null);
-    }
-
     private static void SelectAll(DataGrid grid)
     {
         if (grid.SelectionUnit == DataGridSelectionUnit.FullRow)
@@ -1100,20 +687,36 @@ public static partial class DataGridExcelNavigation
         {
             switch (key)
             {
-                case Key.Left: targetCol = FindColumnDataEdgeIndex(grid, columns, grid.CurrentCell.Item, colIndex, -1); break;
-                case Key.Right: targetCol = FindColumnDataEdgeIndex(grid, columns, grid.CurrentCell.Item, colIndex, 1); break;
-                case Key.Up: targetRow = FindRowDataEdgeIndex(grid, grid.CurrentCell.Column, rowIndex, -1); break;
-                case Key.Down: targetRow = FindRowDataEdgeIndex(grid, grid.CurrentCell.Column, rowIndex, 1); break;
+                case Key.Left:
+                    targetCol = FindColumnDataEdgeIndex(grid, columns, grid.CurrentCell.Item, colIndex, -1);
+                    break;
+                case Key.Right:
+                    targetCol = FindColumnDataEdgeIndex(grid, columns, grid.CurrentCell.Item, colIndex, 1);
+                    break;
+                case Key.Up:
+                    targetRow = FindRowDataEdgeIndex(grid, columns[colIndex], rowIndex, -1);
+                    break;
+                case Key.Down:
+                    targetRow = FindRowDataEdgeIndex(grid, columns[colIndex], rowIndex, 1);
+                    break;
             }
         }
         else
         {
             switch (key)
             {
-                case Key.Left: targetCol = Math.Max(0, colIndex - 1); break;
-                case Key.Right: targetCol = Math.Min(columns.Count - 1, colIndex + 1); break;
-                case Key.Up: targetRow = Math.Max(0, rowIndex - 1); break;
-                case Key.Down: targetRow = Math.Min(grid.Items.Count - 1, rowIndex + 1); break;
+                case Key.Left:
+                    targetCol = Math.Max(0, colIndex - 1);
+                    break;
+                case Key.Right:
+                    targetCol = Math.Min(columns.Count - 1, colIndex + 1);
+                    break;
+                case Key.Up:
+                    targetRow = Math.Max(0, rowIndex - 1);
+                    break;
+                case Key.Down:
+                    targetRow = Math.Min(grid.Items.Count - 1, rowIndex + 1);
+                    break;
             }
         }
 
@@ -1132,17 +735,31 @@ public static partial class DataGridExcelNavigation
         int rowMin = Math.Min(anchorRow, targetRow), rowMax = Math.Max(anchorRow, targetRow);
         int colMin = Math.Min(anchorCol, targetCol), colMax = Math.Max(anchorCol, targetCol);
 
-        grid.SelectedCells.Clear();
+        var selection = new List<DataGridCellInfo>();
         for (int r = rowMin; r <= rowMax; r++)
         {
             var item = grid.Items[r];
             for (int c = colMin; c <= colMax; c++)
-                grid.SelectedCells.Add(new DataGridCellInfo(item, columns[c]));
+                selection.Add(new DataGridCellInfo(item, columns[c]));
         }
 
-        grid.CurrentCell = new DataGridCellInfo(targetItem, targetColumn);
-        grid.ScrollIntoView(targetItem, targetColumn);
-        TryFocus(grid, targetItem, targetColumn, 4);
+        var current = new DataGridCellInfo(targetItem, targetColumn);
+        // Asignar CurrentCell deja una sola celda marcada. El rectángulo se vuelve a aplicar después.
+        grid.CurrentCell = current;
+        ApplyCellSelection(grid, selection);
+
+        var realized = TryGetRealizedCell(grid, targetItem, targetColumn);
+        if (realized != null)
+        {
+            realized.Focus();
+            Keyboard.Focus(realized);
+            ApplyCellSelection(grid, selection);
+        }
+        else
+        {
+            grid.ScrollIntoView(targetItem, targetColumn);
+            TryFocus(grid, targetItem, targetColumn, 4, selection, current);
+        }
     }
 
     // Ctrl+Flecha (sin Shift): salta al borde de la grilla en esa dirección, como Excel.
@@ -1180,274 +797,6 @@ public static partial class DataGridExcelNavigation
         }
     }
 
-    // ── Lectura/escritura genérica de celdas por reflexión ─────────────────────────────
-    // Soporta tanto propiedades simples (string/decimal) como cualquier indexador
-    // "NombreDeLista[n]" (ej. "SectorValues[n]" en la matriz de sectores de Cubicación,
-    // "Valores[n]" en la Hoja de Cubicación) — en ese caso, escribir en la lista dispara el
-    // mismo pipeline de negocio (recálculo, undo, validación) que ya usa la edición manual de
-    // celda, porque esas listas son ObservableCollection<string> observadas por el ViewModel.
-    public static string GetCellText(object? dataContext, DataGridColumn? column)
-    {
-        if (dataContext == null || column == null)
-            return string.Empty;
-
-        if (!TryGetBoundPropertyName(column, out var propertyName))
-            return string.Empty;
-
-        if (TryGetIndexedList(dataContext, propertyName, out var list, out var index))
-            return list != null && index >= 0 && index < list.Count ? list[index] ?? "" : "";
-
-        var prop = GetCachedProperty(dataContext.GetType(), propertyName);
-        return prop?.GetValue(dataContext)?.ToString() ?? "";
-    }
-
-    public static void SetCellText(object? dataContext, DataGridColumn? column, string value)
-    {
-        if (dataContext == null || column == null)
-            return;
-
-        if (!TryGetBoundPropertyName(column, out var propertyName))
-            return;
-
-        if (TryGetIndexedList(dataContext, propertyName, out var list, out var index))
-        {
-            if (list != null && index >= 0 && index < list.Count)
-                list[index] = value;
-            return;
-        }
-
-        var prop = GetCachedProperty(dataContext.GetType(), propertyName);
-        if (prop == null || !prop.CanWrite)
-            return;
-
-        Type propType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
-
-        if (propType == typeof(string))
-        {
-            prop.SetValue(dataContext, value);
-        }
-        else if (propType == typeof(decimal))
-        {
-            if (TryParseFlexibleDecimal(value, out var d))
-                prop.SetValue(dataContext, d);
-            else if (string.IsNullOrWhiteSpace(value))
-                prop.SetValue(dataContext, prop.PropertyType == typeof(decimal?) ? null : 0m);
-        }
-        else if (propType == typeof(double))
-        {
-            if (TryParseFlexibleDecimal(value, out var d))
-                prop.SetValue(dataContext, (double)d);
-            else if (string.IsNullOrWhiteSpace(value))
-                prop.SetValue(dataContext, prop.PropertyType == typeof(double?) ? null : 0.0);
-        }
-        else if (propType == typeof(int))
-        {
-            if (TryParseFlexibleDecimal(value, out var d))
-                prop.SetValue(dataContext, (int)Math.Round(d));
-            else if (string.IsNullOrWhiteSpace(value))
-                prop.SetValue(dataContext, prop.PropertyType == typeof(int?) ? null : 0);
-        }
-        else if (propType == typeof(bool))
-        {
-            if (bool.TryParse(value, out var b))
-                prop.SetValue(dataContext, b);
-            else if (value is "1" or "si" or "sí" or "true" or "yes" or "TRUE" or "SI")
-                prop.SetValue(dataContext, true);
-            else if (value is "0" or "no" or "false" or "FALSE" or "NO")
-                prop.SetValue(dataContext, false);
-        }
-    }
-
-    // DataGridBoundColumn.Binding o ClipboardContentBinding (TemplateColumns de conductor/ducto).
-    private static bool TryGetBoundPropertyName(DataGridColumn column, out string propertyName)
-    {
-        propertyName = "";
-        Binding? binding = null;
-        if (column is DataGridBoundColumn boundColumn)
-            binding = boundColumn.Binding as Binding;
-        binding ??= column.ClipboardContentBinding as Binding;
-        if (binding?.Path?.Path is not { Length: > 0 } path)
-            return false;
-        propertyName = path;
-        return true;
-    }
-
-    // Cachea las búsquedas de PropertyInfo por (tipo, nombre) — sin esto, copiar/pegar/limpiar
-    // sobre una fila con muchos sectores repite Type.GetProperty por cada celda tocada, lo que
-    // se siente lento en filas anchas.
-    private static readonly System.Collections.Concurrent.ConcurrentDictionary<(Type, string), System.Reflection.PropertyInfo?> _propertyCache = new();
-
-    private static System.Reflection.PropertyInfo? GetCachedProperty(Type type, string name)
-        => _propertyCache.GetOrAdd((type, name), key => key.Item1.GetProperty(key.Item2));
-
-    private static bool TryGetIndexedList(object dataContext, string propertyPath, out ObservableCollection<string>? list, out int index)
-    {
-        list = null;
-        index = -1;
-        int bracketIndex = propertyPath.IndexOf('[');
-        if (bracketIndex <= 0)
-            return false;
-
-        string listPropertyName = propertyPath.Substring(0, bracketIndex);
-        list = GetCachedProperty(dataContext.GetType(), listPropertyName)?.GetValue(dataContext) as ObservableCollection<string>;
-        index = ParseIndexerIndex(propertyPath);
-        return true;
-    }
-
-    private static int ParseIndexerIndex(string propertyPath)
-    {
-        var parts = propertyPath.Split('[', ']');
-        return parts.Length > 1 && int.TryParse(parts[1], out int index) ? index : -1;
-    }
-
-    // ── Rellenar (Ctrl+D / Ctrl+R, estilo "fill handle" de Excel) ──────────────────────
-    // Devuelve true si al menos un grupo tenía 2+ celdas y se aplicó el relleno.
-    private static bool FillSelection(DataGrid grid, bool vertical)
-    {
-        if (grid.SelectedCells.Count is < 2 or > 50)
-            return false;
-        int totalRows = grid.Items.Count;
-        if (totalRows <= 1)
-            return false;
-        var cells = grid.SelectedCells.Where(c => c.IsValid && c.Column != null && !c.Column.IsReadOnly).ToList();
-        if (cells.Count < 2)
-            return false;
-
-        var distinctRows = cells.Select(c => c.Item).Distinct().ToList();
-        var distinctCols = cells.Select(c => c.Column).Distinct().ToList();
-
-        // SALVAGUARDA ESTRICTA ANTICONGELAMIENTO:
-        // Si toda la grilla está seleccionada (ej. tras Ctrl+A), o si la selección abarca todas las filas,
-        // o si involucra más de 2 columnas distintas o más de 50 celdas, NO aplicar autorrelleno.
-        // Previene la destrucción masiva de datos y cuelgues del Dispatcher.
-        if (distinctRows.Count >= totalRows || distinctCols.Count > 2 || cells.Count > 50)
-            return false;
-
-        bool filledAny = false;
-        var indexByItem = new Dictionary<object, int>(totalRows);
-        for (int i = 0; i < totalRows; i++)
-            if (grid.Items[i] is { } it && !indexByItem.ContainsKey(it)) indexByItem[it] = i;
-
-        var affectedItems = distinctRows;
-        foreach (var item in affectedItems)
-            BeginBatchUpdate(item);
-
-        try
-        {
-            if (vertical)
-            {
-                foreach (var group in cells.GroupBy(c => c.Column))
-                {
-                    var ordered = group
-                        .Select(c => (Item: c.Item, RowIndex: (c.Item != null && indexByItem.TryGetValue(c.Item, out int idx)) ? idx : -1))
-                        .Where(t => t.RowIndex >= 0)
-                        .OrderBy(t => t.RowIndex)
-                        .Select(t => (t.Item, group.Key))
-                        .ToList();
-                    if (FillAlongSequence(ordered))
-                        filledAny = true;
-                }
-            }
-            else
-            {
-                foreach (var group in cells.GroupBy(c => c.Item))
-                {
-                    var ordered = group
-                        .OrderBy(c => c.Column.DisplayIndex)
-                        .Select(c => (group.Key, c.Column))
-                        .ToList();
-                    if (FillAlongSequence(ordered))
-                        filledAny = true;
-                }
-            }
-        }
-        finally
-        {
-            foreach (var item in affectedItems)
-                EndBatchUpdate(item);
-        }
-
-        return filledAny;
-    }
-
-    private static bool FillAlongSequence(IReadOnlyList<(object Item, DataGridColumn Column)> ordered)
-    {
-        if (ordered.Count < 2) return false;
-        string first = GetCellText(ordered[0].Item, ordered[0].Column);
-        string second = GetCellText(ordered[1].Item, ordered[1].Column);
-        bool firstIsNumber = decimal.TryParse(first.Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out var v1);
-        bool secondIsNumber = decimal.TryParse(second.Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out var v2);
-
-        if (firstIsNumber && secondIsNumber)
-        {
-            decimal step = v2 - v1;
-            for (int i = 2; i < ordered.Count; i++)
-                SetCellText(ordered[i].Item, ordered[i].Column, (v1 + step * i).ToString(CultureInfo.InvariantCulture));
-        }
-        else
-        {
-            string seed = !string.IsNullOrWhiteSpace(first) ? first : second;
-            for (int i = 1; i < ordered.Count; i++)
-                SetCellText(ordered[i].Item, ordered[i].Column, seed);
-        }
-        return true;
-    }
-
-    // ── Copiar / pegar estilo Excel ─────────────────────────────────────────────────────
-    public static void ClearSelection(DataGrid grid)
-    {
-        var cells = grid.SelectedCells.Where(c => c.IsValid && c.Column != null && !c.Column.IsReadOnly).ToList();
-        if (cells.Count == 0) return;
-
-        foreach (var group in cells.GroupBy(c => c.Item))
-        {
-            var rowItem = group.Key;
-            BeginBatchUpdate(rowItem);
-            try
-            {
-                foreach (var c in group) SetCellText(c.Item, c.Column, string.Empty);
-            }
-            finally
-            {
-                EndBatchUpdate(rowItem);
-            }
-        }
-    }
-
-    public static void CopySelectionToClipboard(DataGrid grid)
-    {
-        var cells = grid.SelectedCells.Where(c => c.IsValid && c.Column != null).ToList();
-        if (cells.Count == 0)
-            return;
-
-        // Mapear item→índice una sola vez; hacer grid.Items.IndexOf() por celda sería O(n·m)
-        // en una selección grande.
-        var indexByItem = new Dictionary<object, int>(grid.Items.Count);
-        for (int i = 0; i < grid.Items.Count; i++)
-            indexByItem[grid.Items[i]] = i;
-
-        var rows = cells.Select(c => indexByItem.TryGetValue(c.Item, out var idx) ? idx : -1)
-            .Where(i => i >= 0).Distinct().OrderBy(i => i).ToList();
-        var columns = cells.Select(c => c.Column).Distinct().OrderBy(c => c.DisplayIndex).ToList();
-        if (rows.Count == 0 || columns.Count == 0)
-            return;
-
-        var sb = new StringBuilder();
-        for (int r = 0; r < rows.Count; r++)
-        {
-            var item = grid.Items[rows[r]];
-            if (r > 0)
-                sb.Append('\n');
-            sb.Append(string.Join('\t', columns.Select(col => GetCellText(item, col))));
-        }
-
-        Clipboard.SetText(sb.ToString());
-        ShowCopyMarker(grid, cells);
-        ShellNotificationService.Instance.ShowInfo(
-            "Portapapeles",
-            cells.Count == 1 ? "1 celda copiada al portapapeles." : $"{cells.Count:N0} celdas copiadas al portapapeles.");
-    }
-
     // ── Marca visual de "esto es lo que estás copiando" y pegado estilo Excel ────────
     private static void ShowCopyMarker(DataGrid grid, List<DataGridCellInfo> cells) => DataGridClipboardSupport.ShowCopyMarker(grid, cells);
 
@@ -1464,6 +813,15 @@ public static partial class DataGridExcelNavigation
     }
 
     private static void TryFocus(DataGrid grid, object item, DataGridColumn column, int retryCount)
+        => TryFocus(grid, item, column, retryCount, null, default);
+
+    private static void TryFocus(
+        DataGrid grid,
+        object item,
+        DataGridColumn column,
+        int retryCount,
+        List<DataGridCellInfo>? keepSelection,
+        DataGridCellInfo keepCurrent)
     {
         grid.Dispatcher.BeginInvoke(new Action(() =>
         {
@@ -1479,9 +837,9 @@ public static partial class DataGridExcelNavigation
                         var cell = presenter.ItemContainerGenerator.ContainerFromIndex(colIndex) as DataGridCell;
                         if (cell != null)
                         {
-                            cell.IsSelected = true;
                             cell.Focus();
                             Keyboard.Focus(cell);
+                            RestoreSelection(grid, keepSelection, keepCurrent);
                             return;
                         }
                     }
@@ -1489,10 +847,33 @@ public static partial class DataGridExcelNavigation
             }
 
             if (retryCount > 0)
-            {
-                TryFocus(grid, item, column, retryCount - 1);
-            }
+                TryFocus(grid, item, column, retryCount - 1, keepSelection, keepCurrent);
         }), DispatcherPriority.Render);
+    }
+
+    private static void RestoreSelection(DataGrid grid, List<DataGridCellInfo>? keepSelection, DataGridCellInfo keepCurrent)
+    {
+        if (keepSelection == null || keepSelection.Count <= 1)
+            return;
+
+        // Si la grilla ya avanzó a una selección más amplia (ej. el usuario continuó extendiendo con Shift),
+        // no revertir con la instantánea anterior.
+        if (grid.SelectedCells.Count > keepSelection.Count)
+            return;
+
+        if (keepCurrent.IsValid)
+            grid.CurrentCell = keepCurrent;
+        ApplyCellSelection(grid, keepSelection);
+    }
+
+    private static void ApplyCellSelection(DataGrid grid, IReadOnlyList<DataGridCellInfo> selection)
+    {
+        grid.SelectedCells.Clear();
+        foreach (var cell in selection)
+        {
+            if (cell.IsValid)
+                grid.SelectedCells.Add(cell);
+        }
     }
 
     internal static bool IsEditing(DataGrid grid)
@@ -1538,7 +919,7 @@ public static partial class DataGridExcelNavigation
         return null;
     }
 
-    private static T? FindParent<T>(DependencyObject child) where T : class
+    public static T? FindParent<T>(DependencyObject child) where T : class
     {
         var current = child;
         while (current != null)

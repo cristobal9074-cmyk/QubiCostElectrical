@@ -198,6 +198,71 @@ public sealed partial class FinalReviewService : IFinalReviewService
         }
     }
 
+    /// <summary>
+    /// Regla de familias: toda familia usada en la cubicación debe tener un factor de presentación
+    /// propio (o su fila canónica configurada). Si se agrega una familia nueva y nadie le define
+    /// su factor, queda aplicando el valor por defecto y la venta se desvía de la decisión del
+    /// estimador sin que nadie lo note.
+    /// </summary>
+    private static void AddFamiliasSinFactorPresentacion(
+        List<FinalReviewIssue> issues,
+        ProjectInfoRow? proyecto,
+        IEnumerable<CubicacionRow> cubList)
+    {
+        if (proyecto == null)
+            return;
+
+        var settings = BudgetSettings.FromProject(proyecto);
+        if (!(settings.Markup?.FactoresPresentacionPorFamilia ?? false))
+            return;
+
+        var informe = PresentacionFamiliasInforme.Construir(proyecto, cubList);
+        var sinFactor = informe.Familias.Where(f => !f.Configurada).ToList();
+        if (sinFactor.Count == 0)
+            return;
+
+        var detalle = string.Join(", ", sinFactor.Select(f => $"{f.Nombre} ({f.FactorEfectivo:0.00}×)"));
+        var costo = sinFactor.Sum(f => f.CostoClp);
+        issues.Add(new FinalReviewIssue(
+            "PRESENTACION|FAMILIAS",
+            FinalReviewSeverity.Warning,
+            FinalReviewCategory.FamiliaSinFactorPresentacion,
+            "", "", "Factores de presentación", "Familias", "Familias sin factor",
+            sinFactor.Count,
+            $"{sinFactor.Count} familia(s) en uso no tienen factor de presentación configurado: {detalle}. " +
+            $"El motor aplica el valor por defecto del proyecto sobre {costo:N0} CLP de costo.",
+            "Configurar el factor de cada familia en Costos → Factores de presentación (o usar «Fijar factores actuales»)."));
+    }
+
+    /// <summary>
+    /// Regla de equipos: las líneas de familia Tableros/Equipos deben estar clasificadas como
+    /// equipo (bloque EQUIPOS de la hoja de costos). Si quedan como material, la ferretería se
+    /// calcula sobre un base mayor, los gastos generales y utilidad se aplican sobre una base
+    /// inflada y el valor agregado sobre equipos no se aplica.
+    /// </summary>
+    private static void AddLineasDeEquipoSinClasificar(
+        List<FinalReviewIssue> issues,
+        IEnumerable<CubicacionRow> cubList)
+    {
+        var servicio = new ClasificacionEquiposService();
+        var detectadas = servicio.Detectar(cubList);
+        if (detectadas.Count == 0)
+            return;
+
+        var costo = servicio.CostoDetectado(cubList);
+        var detalle = string.Join(", ", detectadas.Take(8).Select(r => $"{r.Codigo} ({r.Categoria})"));
+        var extra = detectadas.Count > 8 ? $" y {detectadas.Count - 8} más" : string.Empty;
+        issues.Add(new FinalReviewIssue(
+            "EQUIPOS|CLASIFICACION",
+            FinalReviewSeverity.Warning,
+            FinalReviewCategory.EquipoSinClasificar,
+            "", "", "Clasificación de equipos", "Equipos", "Líneas de equipo como material",
+            detectadas.Count,
+            $"{detectadas.Count} línea(s) de familia Tableros/Equipos están como material: {detalle}{extra}. " +
+            $"Afecta {costo:N0} CLP de costo: la ferretería se calcula sobre un base mayor, la base de gastos generales y utilidad se infla y no se aplica el valor agregado sobre equipos.",
+            "Usar «Corregir clasificación de equipos» en Revisión (o marcar las líneas como equipo en la cubicación)."));
+    }
+
     private void AddFinancialGuards(List<FinalReviewIssue> issues, ProjectInfoRow? proyecto, BudgetSettings? settings, IReadOnlyList<CubicacionRow> cubList, IReadOnlyList<ApuRow> apuList, IReadOnlyList<ItemizadoRow> itemList, IEnumerable<ChangeOrderRow>? changeOrders, ISet<string> overriddenItemIds)
     {
         proyecto ??= new ProjectInfoRow();

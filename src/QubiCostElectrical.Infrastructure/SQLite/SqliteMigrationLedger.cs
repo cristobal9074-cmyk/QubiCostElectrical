@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using Microsoft.Data.Sqlite;
@@ -113,7 +113,7 @@ internal static class SqliteMigrationLedger
                 checkpoint.ExecuteNonQuery();
             }
 
-            string directory = Path.Combine(Path.GetDirectoryName(databasePath) ?? AppContext.BaseDirectory, Path.GetFileName(databasePath) + ".schema_backups");
+            string directory = ProductPaths.ProjectBackupDirectory(databasePath);
             Directory.CreateDirectory(directory);
 
             string backupPath = Path.Combine(

@@ -37,6 +37,7 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
     private DispatcherTimer? searchDebounceTimer;
     private bool showEmptyState = true;
     private bool showEmptyItemizado;
+    private bool hasNoFilterResults;
     private bool isLoading;
     private string headerSubtitle = "", saveStateLabel = "", statusMessage = "";
     private string summaryPartidas = "0", summaryCompletas = "0", summaryIncompletas = "0", summaryCapitulos = "0", summarySinPrecio = "0", summaryStripText = "", filteredCountLabel = "";
@@ -227,6 +228,7 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
 
     public bool ShowEmptyState { get => showEmptyState; private set { if (SetProperty(ref showEmptyState, value)) RaiseCommandStates(); } }
     public bool ShowEmptyItemizado { get => showEmptyItemizado; private set { if (SetProperty(ref showEmptyItemizado, value)) RaiseCommandStates(); } }
+    public bool HasNoFilterResults { get => hasNoFilterResults; private set => SetProperty(ref hasNoFilterResults, value); }
     public bool IsLoading { get => isLoading; private set => SetProperty(ref isLoading, value); }
     public string HeaderSubtitle { get => headerSubtitle; private set => SetProperty(ref headerSubtitle, value); }
     public string SaveStateLabel { get => saveStateLabel; private set => SetProperty(ref saveStateLabel, value); }
@@ -293,15 +295,12 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
             {
                 OnPropertyChanged(nameof(IsViewCosto));
                 OnPropertyChanged(nameof(ViewPerspectiveLabel));
+                RefreshPresentation(includeCosts: true);
             }
         }
     }
 
-    public bool IsViewCosto
-    {
-        get => !isViewVenta;
-        set => IsViewVenta = !value;
-    }
+    public bool IsViewCosto { get => !isViewVenta; set => IsViewVenta = !value; }
 
     public string ViewPerspectiveLabel => isViewVenta ? "Venta (P.V.)" : "Costo Directo";
 
@@ -315,7 +314,7 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
     public string SelectedDeliveryCurrency
     {
         get => selectedDeliveryCurrency;
-        private set
+        set
         {
             string normalized = (value ?? Moneda.UF).Trim().ToUpperInvariant();
             if (SetProperty(ref selectedDeliveryCurrency, normalized))
@@ -331,10 +330,10 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
         }
     }
 
-    public bool IsCurrencyUf => selectedDeliveryCurrency == Moneda.UF;
-    public bool IsCurrencyClp => selectedDeliveryCurrency == Moneda.CLP;
-    public bool IsCurrencyUsd => selectedDeliveryCurrency == Moneda.USD;
-    public bool IsCurrencyEur => selectedDeliveryCurrency == Moneda.EUR;
+    public bool IsCurrencyUf { get => selectedDeliveryCurrency == Moneda.UF; set { if (value) SelectedDeliveryCurrency = Moneda.UF; } }
+    public bool IsCurrencyClp { get => selectedDeliveryCurrency == Moneda.CLP; set { if (value) SelectedDeliveryCurrency = Moneda.CLP; } }
+    public bool IsCurrencyUsd { get => selectedDeliveryCurrency == Moneda.USD; set { if (value) SelectedDeliveryCurrency = Moneda.USD; } }
+    public bool IsCurrencyEur { get => selectedDeliveryCurrency == Moneda.EUR; set { if (value) SelectedDeliveryCurrency = Moneda.EUR; } }
 
     /// <summary>
     /// Sincroniza la moneda de presentación del Itemizado con la moneda del proyecto

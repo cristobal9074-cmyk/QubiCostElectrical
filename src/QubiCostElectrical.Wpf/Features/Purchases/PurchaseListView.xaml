@@ -15,7 +15,7 @@
                             Description="{Binding EmptyStateDescription}">
       <ctrl:EmptyStateControl.Actions>
         <WrapPanel HorizontalAlignment="Center">
-          <Button Style="{StaticResource Button.Primary}" Content="Abrir proyecto…" Command="{Binding OpenProjectCommand}" MinWidth="180" Margin="4"
+          <Button Style="{StaticResource Button.Primary}" Content="Abrir proyecto..." Command="{Binding OpenProjectCommand}" MinWidth="180" Margin="4"
                   Visibility="{Binding HasProject, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}" />
           <Button Style="{StaticResource Button.Primary}" Content="Actualizar" Command="{Binding RefreshCommand}" Margin="4" MinWidth="140"
                   Visibility="{Binding HasProject, Converter={StaticResource BoolToVisibility}}" />
@@ -25,278 +25,427 @@
       </ctrl:EmptyStateControl.Actions>
     </ctrl:EmptyStateControl>
 
-    <Grid Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
-    <Grid.ColumnDefinitions>
-      <ColumnDefinition Width="*" MinWidth="540" />
-      <ColumnDefinition Width="14" />
-      <ColumnDefinition Width="360" MinWidth="300" MaxWidth="480" />
-    </Grid.ColumnDefinitions>
-
-    <Border Grid.Column="0" Background="{DynamicResource Brush.Surface}"
-            BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
-            CornerRadius="{StaticResource Radius.Lg}" Padding="18">
-      <Grid>
-        <Grid.RowDefinitions>
-          <RowDefinition Height="Auto" />
-          <RowDefinition Height="Auto" />
-          <RowDefinition Height="Auto" />
-          <RowDefinition Height="*" />
-          <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
-
-        <DockPanel Grid.Row="0" LastChildFill="True" Margin="0,0,0,10">
-          <StackPanel DockPanel.Dock="Left">
-            <TextBlock Text="Lista de compra" Style="{StaticResource Text.ViewTitle}" />
-          </StackPanel>
-
-          <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top">
-            <Button Style="{StaticResource Button.Secondary}" Content="Agrupar por proveedor"
-                    Command="{Binding GroupByProviderCommand}" Margin="0,0,6,0"
-                    ToolTip="Agrupa por proveedor; si no hay proveedor, usa categoría." />
-            <Button Style="{StaticResource Button.Secondary}" Content="Actualizar (F5)" Command="{Binding RefreshCommand}" Margin="0,0,6,0"
-                    ToolTip="Recargar y consolidar lista de compras viva desde la cubicación (F5)" />
-            <Button Style="{StaticResource Button.Secondary}" Content="Solicitud RFQ (.xlsx)" Command="{Binding ExportRfqCommand}" Margin="0,0,6,0"
-                    ToolTip="Exportar planilla de cotización para enviar por email a distribuidores (sin costos internos)." />
-            <Button Style="{StaticResource Button.Primary}" Content="Exportar Excel (Ctrl+E)" Command="{Binding ExportExcelCommand}"
-                    ToolTip="Exportar lista de compras consolidada a Excel (Ctrl+E)" />
-          </StackPanel>
-        </DockPanel>
-
-        <Border Grid.Row="1" Style="{StaticResource Card.Section}" Padding="10" Margin="0,0,0,10">
+        <TabControl Style="{StaticResource Form.TabControl}"
+                SelectedIndex="{Binding ActiveTab, Mode=TwoWay}"
+                Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
+      
+      <!-- Subpestaña 1: Lista de compra consolidada -->
+      <TabItem Header="Lista de compra">
+        <Border Background="{DynamicResource Brush.Surface}"
+                BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+                CornerRadius="{StaticResource Radius.Lg}" Padding="18">
           <Grid>
-            <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="2*" />
-              <ColumnDefinition Width="180" />
-              <ColumnDefinition Width="220" />
-              <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="*" />
+              <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
 
-            <Grid Grid.Column="0" Margin="0,0,8,0">
-              <TextBox x:Name="SearchBox"
-                       Style="{StaticResource Form.SearchBox}"
-                       Tag="Buscar material, código o categoría… (Ctrl+F)"
-                       Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                       Padding="26,4,24,4" />
-              <TextBlock Text="🔍"
-                         FontSize="11"
-                         Foreground="{DynamicResource Brush.Muted}"
-                         VerticalAlignment="Center"
-                         HorizontalAlignment="Left"
-                         Margin="8,0,0,0"
-                         IsHitTestVisible="False" />
-              <Button Style="{StaticResource Button.Ghost}"
-                      Content="✕"
-                      Padding="0"
-                      Width="18" Height="18"
-                      FontSize="10"
-                      FontWeight="Bold"
-                      Foreground="{DynamicResource Brush.Muted}"
-                      HorizontalAlignment="Right"
-                      VerticalAlignment="Center"
-                      Margin="0,0,6,0"
-                      Command="{Binding ClearSearchCommand}"
-                      Visibility="{Binding HasSearchText, Converter={StaticResource BoolToVisibility}}"
-                      ToolTip="Limpiar búsqueda (Esc)" />
-            </Grid>
+            <DockPanel Grid.Row="0" LastChildFill="True" Margin="0,0,0,10">
+              <StackPanel DockPanel.Dock="Left">
+                <TextBlock Text="Lista de compra" Style="{StaticResource Text.ViewTitle}" />
+              </StackPanel>
 
-            <ComboBox Grid.Column="1" Style="{StaticResource Form.ComboBox}" ItemsSource="{Binding CategoryOptions}" SelectedItem="{Binding SelectedCategory}" Margin="0,0,8,0"
-                      ToolTip="Filtrar por categoría" />
+              <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top">
+                <Button Style="{StaticResource Button.Secondary}" Content="Agrupar por proveedor"
+                        Command="{Binding GroupByProviderCommand}" Margin="0,0,6,0"
+                        ToolTip="Agrupa por proveedor; si no hay proveedor, usa categoría." />
+                <Button Style="{StaticResource Button.Secondary}" Content="Actualizar (F5)" Command="{Binding RefreshCommand}" Margin="0,0,6,0"
+                        ToolTip="Recargar y consolidar lista de compras viva desde la cubicación (F5)" />
+                <Button Style="{StaticResource Button.Secondary}" Content="Solicitud RFQ (.xlsx)" Command="{Binding ExportRfqCommand}" Margin="0,0,6,0"
+                        ToolTip="Exportar planilla de cotización para enviar por email a distribuidores (sin costos internos)." />
+                <Button Style="{StaticResource Button.Primary}" Content="Exportar Excel (Ctrl+E)" Command="{Binding ExportExcelCommand}"
+                        ToolTip="Exportar lista de compras consolidada a Excel (Ctrl+E)" />
+              </StackPanel>
+            </DockPanel>
 
-            <StackPanel Grid.Column="2" Margin="0,0,8,0">
-              <TextBlock Text="Tolerancia compra" Style="{StaticResource Text.Caption}" Margin="0,0,0,4" />
-              <Slider Minimum="0" Maximum="50" Value="{Binding ToleranciaPct}" TickFrequency="5" IsSnapToTickEnabled="False" />
-            </StackPanel>
+            <Border Grid.Row="1" Style="{StaticResource Card.Section}" Padding="10" Margin="0,0,0,10">
+              <StackPanel>
+                <Grid>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*" />
+                    <ColumnDefinition Width="170" />
+                    <ColumnDefinition Width="220" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
 
-            <Button Grid.Column="3" Style="{StaticResource Button.Ghost}" Content="Limpiar filtros" Command="{Binding ClearFiltersCommand}"
-                    ToolTip="Restablecer búsqueda y categoría (Esc)" />
+                  <Grid Grid.Column="0" Margin="0,0,8,0">
+                    <TextBox x:Name="SearchBox"
+                             Style="{StaticResource Form.SearchBox}"
+                             Tag="Buscar material, código o categoría... (Ctrl+F)"
+                             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                             Padding="28,4,26,4" />
+                    <TextBlock Text="&#x1F50D;"
+                               FontSize="11"
+                               Foreground="{DynamicResource Brush.Muted}"
+                               VerticalAlignment="Center"
+                               HorizontalAlignment="Left"
+                               Margin="9,0,0,0"
+                               IsHitTestVisible="False" />
+                    <Button Style="{StaticResource Button.Ghost}"
+                            Content="X"
+                            Padding="0"
+                            Width="18" Height="18"
+                            FontSize="10"
+                            FontWeight="Bold"
+                            Foreground="{DynamicResource Brush.Muted}"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center"
+                            Margin="0,0,6,0"
+                            Command="{Binding ClearSearchCommand}"
+                            Visibility="{Binding HasSearchText, Converter={StaticResource BoolToVisibility}}"
+                            ToolTip="Limpiar busqueda (Esc)" />
+                  </Grid>
+
+                  <ComboBox Grid.Column="1" Style="{StaticResource Form.ComboBox}"
+                            ItemsSource="{Binding CategoryOptions}"
+                            SelectedItem="{Binding SelectedCategory}"
+                            Margin="0,0,8,0"
+                            ToolTip="Filtrar por categoría de material" />
+
+                  <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="0,0,8,0">
+                    <TextBlock Text="Modo de tolerancia compra" Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,2" />
+                    <ComboBox Style="{StaticResource Form.ComboBox}"
+                              ItemsSource="{Binding TolerancePresetOptions}"
+                              SelectedItem="{Binding SelectedTolerancePreset}"
+                              ToolTip="Aplica tolerancia por categoría física (Cables 10%, PVC 8%, Bandeja 5%, Tableros 0%) o porcentaje plano" />
+                  </StackPanel>
+
+                  <Button Grid.Column="3" Style="{StaticResource Button.Secondary}"
+                          Content="⚙ Ajustar por categoría"
+                          Command="{Binding ToggleCategoryEditorCommand}"
+                          Margin="0,0,8,0"
+                          ToolTip="Abre el panel para definir y editar los porcentajes de merma de cada familia (Cables, PVC, Bandejas, etc.)" />
+
+                  <Button Grid.Column="4" Style="{StaticResource Button.Ghost}" Content="Limpiar filtros" Command="{Binding ClearFiltersCommand}"
+                          ToolTip="Restablecer búsqueda y categoría (Esc)" />
+                </Grid>
+
+                <!-- Panel expandible de configuración rápida de tolerancias por categoría -->
+                <Border Margin="0,10,0,0" Padding="12,10" Background="{DynamicResource Brush.Surface2}"
+                        BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="6"
+                        Visibility="{Binding IsCustomCategoryEditorVisible, Converter={StaticResource BoolToVisibility}}">
+                  <StackPanel>
+                    <DockPanel LastChildFill="True" Margin="0,0,0,8">
+                      <TextBlock Text="Porcentajes de merma / despunte por familia de material:" FontWeight="SemiBold" VerticalAlignment="Center" />
+                      <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+                        <Button Style="{StaticResource Button.Secondary}" Content="Restablecer sugeridos"
+                                Command="{Binding ResetCategoryTolerancesCommand}" Margin="0,0,8,0" Padding="10,4" />
+                        <Button Style="{StaticResource Button.Primary}" Content="Aplicar y recalcular lista"
+                                Command="{Binding ApplyCategoryTolerancesCommand}" Padding="12,4" />
+                      </StackPanel>
+                    </DockPanel>
+
+                    <WrapPanel Orientation="Horizontal">
+                      <!-- Conductores -->
+                      <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Padding="8,4" Margin="0,0,8,6">
+                        <StackPanel Orientation="Horizontal">
+                          <TextBlock Text="Conductores / Cables:" VerticalAlignment="Center" Margin="0,0,6,0" Foreground="{DynamicResource Brush.Muted}" />
+                          <TextBox Width="50" Text="{Binding CategoryConfig.Conductores, StringFormat={}{0:N0}, UpdateSourceTrigger=PropertyChanged}" TextAlignment="Right" Padding="2" />
+                          <TextBlock Text="%" VerticalAlignment="Center" Margin="3,0,0,0" FontWeight="SemiBold" />
+                        </StackPanel>
+                      </Border>
+
+                      <!-- PVC -->
+                      <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Padding="8,4" Margin="0,0,8,6">
+                        <StackPanel Orientation="Horizontal">
+                          <TextBlock Text="Canalización PVC:" VerticalAlignment="Center" Margin="0,0,6,0" Foreground="{DynamicResource Brush.Muted}" />
+                          <TextBox Width="50" Text="{Binding CategoryConfig.CanalizacionPvc, StringFormat={}{0:N0}, UpdateSourceTrigger=PropertyChanged}" TextAlignment="Right" Padding="2" />
+                          <TextBlock Text="%" VerticalAlignment="Center" Margin="3,0,0,0" FontWeight="SemiBold" />
+                        </StackPanel>
+                      </Border>
+
+                      <!-- Bandejas -->
+                      <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Padding="8,4" Margin="0,0,8,6">
+                        <StackPanel Orientation="Horizontal">
+                          <TextBlock Text="Bandejas / Escalerillas:" VerticalAlignment="Center" Margin="0,0,6,0" Foreground="{DynamicResource Brush.Muted}" />
+                          <TextBox Width="50" Text="{Binding CategoryConfig.Bandejas, StringFormat={}{0:N0}, UpdateSourceTrigger=PropertyChanged}" TextAlignment="Right" Padding="2" />
+                          <TextBlock Text="%" VerticalAlignment="Center" Margin="3,0,0,0" FontWeight="SemiBold" />
+                        </StackPanel>
+                      </Border>
+
+                      <!-- Cañerías / EMT -->
+                      <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Padding="8,4" Margin="0,0,8,6">
+                        <StackPanel Orientation="Horizontal">
+                          <TextBlock Text="Canalización EMT / Metálica:" VerticalAlignment="Center" Margin="0,0,6,0" Foreground="{DynamicResource Brush.Muted}" />
+                          <TextBox Width="50" Text="{Binding CategoryConfig.CanalizacionMetalica, StringFormat={}{0:N0}, UpdateSourceTrigger=PropertyChanged}" TextAlignment="Right" Padding="2" />
+                          <TextBlock Text="%" VerticalAlignment="Center" Margin="3,0,0,0" FontWeight="SemiBold" />
+                        </StackPanel>
+                      </Border>
+
+                      <!-- Artefactos -->
+                      <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Padding="8,4" Margin="0,0,8,6">
+                        <StackPanel Orientation="Horizontal">
+                          <TextBlock Text="Artefactos / Iluminación:" VerticalAlignment="Center" Margin="0,0,6,0" Foreground="{DynamicResource Brush.Muted}" />
+                          <TextBox Width="50" Text="{Binding CategoryConfig.Artefactos, StringFormat={}{0:N0}, UpdateSourceTrigger=PropertyChanged}" TextAlignment="Right" Padding="2" />
+                          <TextBlock Text="%" VerticalAlignment="Center" Margin="3,0,0,0" FontWeight="SemiBold" />
+                        </StackPanel>
+                      </Border>
+
+                      <!-- Tableros -->
+                      <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Padding="8,4" Margin="0,0,8,6">
+                        <StackPanel Orientation="Horizontal">
+                          <TextBlock Text="Tableros y Protecciones:" VerticalAlignment="Center" Margin="0,0,6,0" Foreground="{DynamicResource Brush.Muted}" />
+                          <TextBox Width="50" Text="{Binding CategoryConfig.Tableros, StringFormat={}{0:N0}, UpdateSourceTrigger=PropertyChanged}" TextAlignment="Right" Padding="2" />
+                          <TextBlock Text="%" VerticalAlignment="Center" Margin="3,0,0,0" FontWeight="SemiBold" />
+                        </StackPanel>
+                      </Border>
+
+                      <!-- Accesorios -->
+                      <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Padding="8,4" Margin="0,0,8,6">
+                        <StackPanel Orientation="Horizontal">
+                          <TextBlock Text="Accesorios / Cajas:" VerticalAlignment="Center" Margin="0,0,6,0" Foreground="{DynamicResource Brush.Muted}" />
+                          <TextBox Width="50" Text="{Binding CategoryConfig.Accesorios, StringFormat={}{0:N0}, UpdateSourceTrigger=PropertyChanged}" TextAlignment="Right" Padding="2" />
+                          <TextBlock Text="%" VerticalAlignment="Center" Margin="3,0,0,0" FontWeight="SemiBold" />
+                        </StackPanel>
+                      </Border>
+
+                      <!-- General -->
+                      <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Padding="8,4" Margin="0,0,8,6">
+                        <StackPanel Orientation="Horizontal">
+                          <TextBlock Text="Otros / General:" VerticalAlignment="Center" Margin="0,0,6,0" Foreground="{DynamicResource Brush.Muted}" />
+                          <TextBox Width="50" Text="{Binding CategoryConfig.General, StringFormat={}{0:N0}, UpdateSourceTrigger=PropertyChanged}" TextAlignment="Right" Padding="2" />
+                          <TextBlock Text="%" VerticalAlignment="Center" Margin="3,0,0,0" FontWeight="SemiBold" />
+                        </StackPanel>
+                      </Border>
+                    </WrapPanel>
+                  </StackPanel>
+                </Border>
+              </StackPanel>
+            </Border>
+
+            <Border Grid.Row="2" Background="{DynamicResource Brush.BlueSoft}" CornerRadius="{StaticResource Radius.Sm}" Padding="10" Margin="0,0,0,10">
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Style="{StaticResource Card.StatPill}" Margin="0,0,10,0">
+                  <StackPanel>
+                    <TextBlock Text="Proyecto" Style="{StaticResource Text.Caption}" />
+                    <TextBlock Text="{Binding ProjectSummary}" FontWeight="SemiBold" />
+                  </StackPanel>
+                </Border>
+                <Border Grid.Column="1" Style="{StaticResource Card.StatPill}" Margin="0,0,10,0">
+                  <StackPanel>
+                    <TextBlock Text="Lista" Style="{StaticResource Text.Caption}" />
+                    <TextBlock Text="{Binding SummaryText}" FontWeight="SemiBold" />
+                  </StackPanel>
+                </Border>
+                <Border Grid.Column="2" Style="{StaticResource Card.StatPill}" Margin="0,0,10,0">
+                  <StackPanel>
+                    <TextBlock Text="Tolerancia" Style="{StaticResource Text.Caption}" />
+                    <TextBlock Text="{Binding ToleranciaPct, StringFormat={}{0:N1}%}" FontWeight="SemiBold" />
+                  </StackPanel>
+                </Border>
+                <Border Grid.Column="3" Style="{StaticResource Card.StatPill}" Margin="0,0,10,0">
+                  <StackPanel>
+                    <TextBlock Text="Estado" Style="{StaticResource Text.Caption}" />
+                    <TextBlock Text="{Binding StatusMessage}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                  </StackPanel>
+                </Border>
+
+                <TextBlock Grid.Column="4" Text="La lista consolida compras desde la cubicación viva. Clic derecho en un material para ver su trazabilidad de obra."
+                           Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Muted}"
+                           VerticalAlignment="Center" TextWrapping="Wrap" />
+              </Grid>
+            </Border>
+
+            <DataGrid Grid.Row="3"
+                      ItemsSource="{Binding FilteredRows}"
+                      SelectedItem="{Binding SelectedRow, Mode=TwoWay}"
+                      Style="{StaticResource DataGrid.Workspace}"
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      IsReadOnly="False"
+                      HeadersVisibility="Column"
+                      SelectionMode="Single"
+                      SelectionUnit="FullRow"
+                      EnableRowVirtualization="True"
+                      VirtualizingPanel.IsVirtualizing="True"
+                      VirtualizingPanel.IsVirtualizingWhenGrouping="True"
+                      VirtualizingPanel.VirtualizationMode="Recycling"
+                      VirtualizingPanel.ScrollUnit="Pixel"
+                      ScrollViewer.CanContentScroll="True">
+              <DataGrid.ContextMenu>
+                <ContextMenu>
+                  <MenuItem Header="Ver trazabilidad de obra..." Command="{Binding ViewTraceabilityCommand}">
+                    <MenuItem.Icon>
+                      <TextBlock Text="🔍" FontSize="12" />
+                    </MenuItem.Icon>
+                  </MenuItem>
+                  <Separator />
+                  <MenuItem Header="Ir a cubicación de partida"
+                            Command="{Binding GoToOriginCommand}">
+                    <MenuItem.Icon>
+                      <TextBlock Text="🔍" FontSize="12" />
+                    </MenuItem.Icon>
+                  </MenuItem>
+                </ContextMenu>
+              </DataGrid.ContextMenu>
+              <DataGrid.GroupStyle>
+                <GroupStyle>
+                  <GroupStyle.HeaderTemplate>
+                    <DataTemplate>
+                      <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Margin="4,6,4,2"
+                                 Foreground="{DynamicResource Brush.Ink2}" />
+                    </DataTemplate>
+                  </GroupStyle.HeaderTemplate>
+                </GroupStyle>
+              </DataGrid.GroupStyle>
+              <DataGrid.Columns>
+                <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" IsReadOnly="True" Width="110" />
+                <DataGridTextColumn Header="Descripción" Binding="{Binding Descripcion}" IsReadOnly="True" Width="*" MinWidth="220" />
+                <DataGridTextColumn Header="Ud." Binding="{Binding Unidad}" IsReadOnly="True" Width="50" />
+                <DataGridTextColumn Header="Categoría" Binding="{Binding Categoria}" IsReadOnly="True" Width="120" />
+                <DataGridTextColumn Header="Cant. neta" Binding="{Binding CantidadNeta, StringFormat={}{0:N0}}" IsReadOnly="True" Width="85"
+                                    HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}" />
+                <DataGridTextColumn Header="Tol. %" Binding="{Binding ToleranciaPct, UpdateSourceTrigger=LostFocus, StringFormat={}{0:N1}}" Width="70"
+                                    HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}">
+                  <DataGridTextColumn.EditingElementStyle>
+                    <Style TargetType="TextBox" BasedOn="{StaticResource Form.TextBox}">
+                      <Setter Property="HorizontalContentAlignment" Value="Right" />
+                      <Setter Property="Padding" Value="2" />
+                    </Style>
+                  </DataGridTextColumn.EditingElementStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Cant. compra" Binding="{Binding CantidadCompra, StringFormat={}{0:N0}}" IsReadOnly="True" Width="95"
+                                    HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}" />
+                <DataGridTextColumn Header="P. Unit CLP" Binding="{Binding MatClpUnitario, StringFormat={}$ {0:N0}}" IsReadOnly="True" Width="90"
+                                    HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}" />
+                <DataGridTextColumn Header="Total CLP" Binding="{Binding TotalCompraClp, StringFormat={}$ {0:N0}}" IsReadOnly="True" Width="95"
+                                    HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}" />
+                <DataGridTextColumn Header="Líneas" Binding="{Binding Lineas}" IsReadOnly="True" Width="60"
+                                    HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}" />
+              </DataGrid.Columns>
+            </DataGrid>
+
+            <Border Grid.Row="3" Panel.ZIndex="3"
+                    Background="{DynamicResource Brush.Surface}"
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Padding="22,16" CornerRadius="8"
+                    BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+                    Visibility="{Binding HasNoFilterResults, Converter={StaticResource BoolToVisibility}}">
+              <StackPanel>
+                <TextBlock Text="Sin coincidencias." FontWeight="SemiBold" FontSize="14"
+                           Foreground="{DynamicResource Brush.Warning}" HorizontalAlignment="Center" />
+                <TextBlock Text="Borra la búsqueda para ver toda la lista de compra." FontSize="12" Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Center" Margin="0,4,0,0" />
+              </StackPanel>
+            </Border>
+
+            <TextBlock Grid.Row="4" Text="Haga clic derecho en cualquier material para ver su trazabilidad de obra detallada o presione doble clic para ir a cubicación."
+                       Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Muted}" Margin="0,10,0,0" />
           </Grid>
         </Border>
+      </TabItem>
 
-        <Border Grid.Row="2" Background="{DynamicResource Brush.BlueSoft}" CornerRadius="{StaticResource Radius.Sm}" Padding="10" Margin="0,0,0,10">
+      <!-- Subpestaña 2: Trazabilidad de obra ("Dónde se usa este material?") -->
+      <TabItem Header="Trazabilidad de obra">
+        <Border Background="{DynamicResource Brush.Surface}"
+                BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+                CornerRadius="{StaticResource Radius.Lg}" Padding="18">
           <Grid>
-            <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="Auto" />
-              <ColumnDefinition Width="Auto" />
-              <ColumnDefinition Width="Auto" />
-              <ColumnDefinition Width="Auto" />
-              <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="*" />
+              <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
 
-            <Border Style="{StaticResource Card.StatPill}" Margin="0,0,10,0">
-              <StackPanel>
-                <TextBlock Text="Proyecto" Style="{StaticResource Text.Caption}" />
-                <TextBlock Text="{Binding ProjectSummary}" FontWeight="SemiBold" />
-              </StackPanel>
-            </Border>
-            <Border Grid.Column="1" Style="{StaticResource Card.StatPill}" Margin="0,0,10,0">
-              <StackPanel>
-                <TextBlock Text="Lista" Style="{StaticResource Text.Caption}" />
-                <TextBlock Text="{Binding SummaryText}" FontWeight="SemiBold" />
-              </StackPanel>
-            </Border>
-            <Border Grid.Column="2" Style="{StaticResource Card.StatPill}" Margin="0,0,10,0">
-              <StackPanel>
-                <TextBlock Text="Tolerancia" Style="{StaticResource Text.Caption}" />
-                <TextBlock Text="{Binding ToleranciaPct, StringFormat={}{0:N1}%}" FontWeight="SemiBold" />
-              </StackPanel>
-            </Border>
-            <Border Grid.Column="3" Style="{StaticResource Card.StatPill}" Margin="0,0,10,0">
-              <StackPanel>
-                <TextBlock Text="Estado" Style="{StaticResource Text.Caption}" />
-                <TextBlock Text="{Binding StatusMessage}" FontWeight="SemiBold" TextWrapping="Wrap" />
-              </StackPanel>
+            <!-- Encabezado de la trazabilidad -->
+            <Border Grid.Row="0" Background="{DynamicResource Brush.BlueSoft}" CornerRadius="{StaticResource Radius.Sm}" Padding="12" Margin="0,0,0,12">
+              <DockPanel LastChildFill="True">
+                <StackPanel DockPanel.Dock="Left">
+                  <TextBlock Text="Trazabilidad en obra" Style="{StaticResource Text.SectionLabel}" />
+                  <TextBlock Text="{Binding SelectedMaterialHeader}" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" Margin="0,2,0,0" />
+                  <TextBlock Text="{Binding SelectedMaterialTotalText}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Blue}" Margin="0,2,0,0"
+                             Visibility="{Binding HasSelectedUsage, Converter={StaticResource BoolToVisibility}}" />
+                </StackPanel>
+                <Button DockPanel.Dock="Right" Style="{StaticResource Button.Secondary}" Content="← Volver a lista de compra"
+                        Command="{Binding RelativeSource={RelativeSource AncestorType=UserControl}, Path=DataContext.ViewTraceabilityCommand}"
+                        Click="OnBackToListClick"
+                        VerticalAlignment="Center" Padding="12,6" />
+              </DockPanel>
             </Border>
 
-            <TextBlock Grid.Column="4" Text="La lista consolida compras desde la cubicación viva. Seleccione un material para ver sus partidas de origen."
-                       Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Muted}"
-                       VerticalAlignment="Center" TextWrapping="Wrap" />
+            <!-- Estado sin selección -->
+            <Border Grid.Row="1" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+                    CornerRadius="{StaticResource Radius.Md}" Padding="30"
+                    VerticalAlignment="Center" HorizontalAlignment="Center"
+                    Visibility="{Binding HasSelectedUsage, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
+              <StackPanel HorizontalAlignment="Center">
+                <Border Width="48" Height="48" CornerRadius="12" Background="{DynamicResource Brush.BlueSoft}"
+                        BorderBrush="{DynamicResource Brush.BlueFocus}" BorderThickness="1"
+                        HorizontalAlignment="Center" Margin="0,0,0,12">
+                  <Path Data="{StaticResource Geo.Search}" Stroke="{DynamicResource Brush.Blue}"
+                        Style="{StaticResource Icon.Vector}" Width="20" Height="20" />
+                </Border>
+                <TextBlock Text="Sin material seleccionado" FontWeight="SemiBold" FontSize="14" Foreground="{DynamicResource Brush.Ink}" HorizontalAlignment="Center" Margin="0,0,0,4" />
+                <TextBlock Text="Seleccione un material con clic derecho en la pestaña 'Lista de compra' para abrir su desglose exacto de partidas y áreas."
+                           Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" TextAlignment="Center" MaxWidth="360" />
+              </StackPanel>
+            </Border>
+
+            <!-- Grilla a ancho completo de usos en partidas -->
+            <DataGrid Grid.Row="1"
+                      ItemsSource="{Binding MaterialUsages}"
+                      SelectedItem="{Binding SelectedUsage, Mode=TwoWay}"
+                      Style="{StaticResource DataGrid.Workspace}"
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      HeadersVisibility="Column"
+                      SelectionMode="Single"
+                      SelectionUnit="FullRow"
+                      Visibility="{Binding HasSelectedUsage, Converter={StaticResource BoolToVisibility}}">
+              <DataGrid.InputBindings>
+                <MouseBinding Gesture="LeftDoubleClick" Command="{Binding GoToUsageCommand}" />
+              </DataGrid.InputBindings>
+              <DataGrid.Columns>
+                <DataGridTextColumn Header="Ítem" Binding="{Binding ItemNumber}" Width="90" />
+                <DataGridTextColumn Header="Partida de origen" Binding="{Binding PartidaDescripcion}" Width="2*" MinWidth="240">
+                  <DataGridTextColumn.ElementStyle>
+                    <Style TargetType="TextBlock">
+                      <Setter Property="VerticalAlignment" Value="Center" />
+                      <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                      <Setter Property="ToolTip" Value="{Binding PartidaDescripcion}" />
+                    </Style>
+                  </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Área / Sector" Binding="{Binding Area}" Width="*" MinWidth="150">
+                  <DataGridTextColumn.ElementStyle>
+                    <Style TargetType="TextBlock">
+                      <Setter Property="VerticalAlignment" Value="Center" />
+                      <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                      <Setter Property="ToolTip" Value="{Binding Area}" />
+                    </Style>
+                  </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Cantidad requerida" Binding="{Binding Cantidad, StringFormat={}{0:N2}}" Width="140"
+                                    HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}" />
+                <DataGridTextColumn Header="% del Total" Binding="{Binding PorcentajeDelTotal, StringFormat={}{0:N1}%}" Width="110"
+                                    HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}" />
+              </DataGrid.Columns>
+            </DataGrid>
+
+            <!-- Barra inferior con acción directa a cubicación -->
+            <DockPanel Grid.Row="2" Margin="0,14,0,0" LastChildFill="True"
+                       Visibility="{Binding HasSelectedUsage, Converter={StaticResource BoolToVisibility}}">
+              <Button DockPanel.Dock="Right" Style="{StaticResource Button.Primary}" Content="Ir a cubicación de esta partida →"
+                      Command="{Binding GoToUsageCommand}" Padding="14,8" />
+              <TextBlock Text="Haga doble clic en cualquier partida de la lista para ir directamente a su cubicación detallada."
+                         Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
+            </DockPanel>
           </Grid>
         </Border>
-
-        <DataGrid Grid.Row="3"
-                  ItemsSource="{Binding FilteredRows}"
-                  SelectedItem="{Binding SelectedRow, Mode=TwoWay}"
-                  Style="{StaticResource DataGrid.Workspace}"
-                  AutoGenerateColumns="False"
-                  CanUserAddRows="False"
-                  CanUserDeleteRows="False"
-                  IsReadOnly="True"
-                  HeadersVisibility="Column"
-                  SelectionMode="Single"
-                  SelectionUnit="FullRow"
-                  EnableRowVirtualization="True"
-                  VirtualizingPanel.IsVirtualizing="True"
-                  VirtualizingPanel.IsVirtualizingWhenGrouping="True"
-                  VirtualizingPanel.VirtualizationMode="Recycling"
-                  VirtualizingPanel.ScrollUnit="Pixel"
-                  ScrollViewer.CanContentScroll="True">
-          <DataGrid.GroupStyle>
-            <GroupStyle>
-              <GroupStyle.HeaderTemplate>
-                <DataTemplate>
-                  <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Margin="4,6,4,2"
-                             Foreground="{DynamicResource Brush.Ink2}" />
-                </DataTemplate>
-              </GroupStyle.HeaderTemplate>
-            </GroupStyle>
-          </DataGrid.GroupStyle>
-          <DataGrid.Columns>
-            <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" Width="110" />
-            <DataGridTextColumn Header="Descripción" Binding="{Binding Descripcion}" Width="*" MinWidth="220" />
-            <DataGridTextColumn Header="Ud." Binding="{Binding Unidad}" Width="50" />
-            <DataGridTextColumn Header="Categoría" Binding="{Binding Categoria}" Width="120" />
-            <DataGridTextColumn Header="Proveedor" Binding="{Binding Proveedor}" Width="120" />
-            <DataGridTextColumn Header="Cant. neta" Binding="{Binding CantidadNeta, StringFormat={}{0:N0}}" Width="85"
-                                HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}" />
-            <DataGridTextColumn Header="Tol. %" Binding="{Binding ToleranciaPct, StringFormat={}{0:N1}}" Width="70"
-                                HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}" />
-            <DataGridTextColumn Header="Cant. compra" Binding="{Binding CantidadCompra, StringFormat={}{0:N0}}" Width="95"
-                                HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}" />
-            <DataGridTextColumn x:Name="PrecioUfColumn" Header="Precio UF" Binding="{Binding MatUfUnitario, StringFormat={}{0:N4}}" Width="85"
-                                HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}" />
-            <DataGridTextColumn Header="P. Unit CLP" Binding="{Binding MatClpUnitario, StringFormat={}$ {0:N0}}" Width="90"
-                                HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}" />
-            <DataGridTextColumn x:Name="NetoUfColumn" Header="Neto UF" Binding="{Binding TotalNetoUf, StringFormat={}{0:N3}}" Width="90"
-                                HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}" />
-            <DataGridTextColumn x:Name="CompraUfColumn" Header="Compra UF" Binding="{Binding TotalCompraUf, StringFormat={}{0:N3}}" Width="90"
-                                HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}" />
-            <DataGridTextColumn Header="Total CLP" Binding="{Binding TotalCompraClp, StringFormat={}$ {0:N0}}" Width="95"
-                                HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}" />
-            <DataGridTextColumn Header="Líneas" Binding="{Binding Lineas}" Width="60"
-                                HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}" />
-          </DataGrid.Columns>
-        </DataGrid>
-
-        <TextBlock Grid.Row="4" Text="Haga clic en un material para ver su trazabilidad exacta en las partidas del presupuesto a la derecha."
-                   Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Muted}" Margin="0,10,0,0" />
-      </Grid>
-    </Border>
-
-    <!-- Panel Lateral: Trazabilidad viva ("¿Dónde se usa este material?") -->
-    <Border Grid.Column="2" Background="{DynamicResource Brush.Surface}"
-            BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
-            CornerRadius="{StaticResource Radius.Lg}" Padding="16">
-      <Grid>
-        <Grid.RowDefinitions>
-          <RowDefinition Height="Auto" />
-          <RowDefinition Height="Auto" />
-          <RowDefinition Height="*" />
-          <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
-
-        <StackPanel Grid.Row="0" Margin="0,0,0,10">
-          <TextBlock Text="Trazabilidad en obra" Style="{StaticResource Text.SectionLabel}" />
-          <TextBlock Text="¿Dónde se usa este material?" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" Margin="0,2,0,0" />
-          <TextBlock Text="{Binding SelectedMaterialHeader}" Style="{StaticResource Text.Body}" Foreground="{DynamicResource Brush.Muted}" Margin="0,4,0,0" TextWrapping="Wrap" />
-          <TextBlock Text="{Binding SelectedMaterialTotalText}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Blue}" Margin="0,2,0,0"
-                     Visibility="{Binding HasSelectedUsage, Converter={StaticResource BoolToVisibility}}" />
-        </StackPanel>
-
-        <!-- Estado sin selección -->
-        <Border Grid.Row="2" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
-                CornerRadius="{StaticResource Radius.Md}" Padding="20"
-                VerticalAlignment="Center" HorizontalAlignment="Stretch"
-                Visibility="{Binding HasSelectedUsage, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
-          <StackPanel HorizontalAlignment="Center">
-            <Border Width="40" Height="40" CornerRadius="10" Background="{DynamicResource Brush.BlueSoft}"
-                    BorderBrush="{DynamicResource Brush.BlueFocus}" BorderThickness="1"
-                    HorizontalAlignment="Center" Margin="0,0,0,10">
-              <Path Data="{StaticResource Geo.Search}" Stroke="{DynamicResource Brush.Blue}"
-                    Style="{StaticResource Icon.Vector}" Width="16" Height="16" />
-            </Border>
-            <TextBlock Text="Seleccione un material" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource Brush.Ink}" HorizontalAlignment="Center" Margin="0,0,0,4" />
-            <TextBlock Text="Haga clic en cualquier fila de la lista para ver el desglose de partidas y áreas donde se utiliza."
-                       Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" TextAlignment="Center" />
-          </StackPanel>
-        </Border>
-
-        <!-- Lista de usos en partidas -->
-        <DataGrid Grid.Row="2"
-                  ItemsSource="{Binding MaterialUsages}"
-                  SelectedItem="{Binding SelectedUsage, Mode=TwoWay}"
-                  Style="{StaticResource DataGrid.Workspace}"
-                  AutoGenerateColumns="False"
-                  CanUserAddRows="False"
-                  CanUserDeleteRows="False"
-                  HeadersVisibility="Column"
-                  SelectionMode="Single"
-                  SelectionUnit="FullRow"
-                  Visibility="{Binding HasSelectedUsage, Converter={StaticResource BoolToVisibility}}">
-          <DataGrid.InputBindings>
-            <MouseBinding Gesture="LeftDoubleClick" Command="{Binding GoToUsageCommand}" />
-          </DataGrid.InputBindings>
-          <DataGrid.Columns>
-            <DataGridTextColumn Header="Ítem" Binding="{Binding ItemNumber}" Width="55" />
-            <DataGridTextColumn Header="Partida" Binding="{Binding PartidaDescripcion}" Width="*" MinWidth="130">
-              <DataGridTextColumn.ElementStyle>
-                <Style TargetType="TextBlock">
-                  <Setter Property="TextTrimming" Value="CharacterEllipsis" />
-                  <Setter Property="ToolTip" Value="{Binding PartidaDescripcion}" />
-                </Style>
-              </DataGridTextColumn.ElementStyle>
-            </DataGridTextColumn>
-            <DataGridTextColumn Header="Área" Binding="{Binding Area}" Width="90">
-              <DataGridTextColumn.ElementStyle>
-                <Style TargetType="TextBlock">
-                  <Setter Property="TextTrimming" Value="CharacterEllipsis" />
-                  <Setter Property="ToolTip" Value="{Binding Area}" />
-                </Style>
-              </DataGridTextColumn.ElementStyle>
-            </DataGridTextColumn>
-            <DataGridTextColumn Header="Cant." Binding="{Binding Cantidad, StringFormat={}{0:N1}}" Width="60" />
-            <DataGridTextColumn Header="% Total" Binding="{Binding PorcentajeDelTotal, StringFormat={}{0:N1}%}" Width="65" />
-          </DataGrid.Columns>
-        </DataGrid>
-
-        <!-- Acción de navegación directa -->
-        <DockPanel Grid.Row="3" Margin="0,12,0,0" LastChildFill="True"
-                   Visibility="{Binding HasSelectedUsage, Converter={StaticResource BoolToVisibility}}">
-          <Button DockPanel.Dock="Right" Style="{StaticResource Button.Primary}" Content="Ir a cubicación →"
-                  Command="{Binding GoToUsageCommand}" />
-          <TextBlock Text="Doble clic para editar partida" Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
-        </DockPanel>
-      </Grid>
-    </Border>
-    </Grid>
+      </TabItem>
+    </TabControl>
   </Grid>
 </UserControl>

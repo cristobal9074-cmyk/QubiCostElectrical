@@ -246,9 +246,9 @@ public class BudgetTotalsCalculatorTests
         Assert.Equal(3m, result.ValorAgregadoEquiposUf);  // 3% de 100
         // costo proyecto = 650 + 27.5 + 44 + 3 = 724.5
         Assert.Equal(724.5m, result.CostoProyectoUf);
-        // venta = SumVenta + GO = 720 + 50 = 770
-        Assert.Equal(770m, result.TotalVentaUf);
-        Assert.Equal(770m - 724.5m, result.DiferenciaFactoresUf);
+        // venta = detalle 720. El GO queda en el costo.
+        Assert.Equal(720m, result.TotalVentaUf);
+        Assert.Equal(720m - 724.5m, result.DiferenciaFactoresUf);
     }
 
     /// <summary>
@@ -262,13 +262,13 @@ public class BudgetTotalsCalculatorTests
         const decimal eq = 167_929_393m;
         const decimal mo = 236_857_500m;
         const decimal go = 48_062_181m;
-        const decimal ventaExcel = 870_514_944m;
+        const decimal detalleExcel = 870_514_944m - go;
         const decimal ejecucionExcel = 745_776_373m;
         const decimal costoProyectoExcel = 825_934_362m;
-        const decimal diferenciaExcel = 44_580_582m;
+        const decimal diferenciaExcel = detalleExcel - costoProyectoExcel;
 
         var direct = Direct(mat: mat, mo: mo, eq: eq);
-        direct.SumVentaClp = ventaExcel - go; // DETALLE sin GO; el motor suma GO
+        direct.SumVentaClp = detalleExcel;
         direct.HasRowLevelMarkups = true;
 
         var settings = new BudgetSettings
@@ -296,9 +296,9 @@ public class BudgetTotalsCalculatorTests
         Assert.Equal(46_227_758.4m, result.UtilidadAditivaUf);
         Assert.Equal(5_037_881.79m, result.ValorAgregadoEquiposUf);
         Assert.Equal(costoProyectoExcel, Math.Round(result.CostoProyectoUf, MidpointRounding.AwayFromZero));
-        Assert.Equal(ventaExcel, result.TotalVentaUf);
+        Assert.Equal(detalleExcel, result.TotalVentaUf);
         Assert.Equal(diferenciaExcel, Math.Round(result.DiferenciaFactoresUf, MidpointRounding.AwayFromZero));
-        // Margen observado Excel ≈ 14,33 %
-        Assert.InRange(result.MargenRealPct, 14.32m, 14.34m);
+        // Margen = (detalle − ejecución) / detalle. El GO ya no infla la venta.
+        Assert.InRange(result.MargenRealPct, 9.32m, 9.33m);
     }
 }

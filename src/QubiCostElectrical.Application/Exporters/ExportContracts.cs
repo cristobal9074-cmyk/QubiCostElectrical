@@ -1,10 +1,5 @@
 namespace QubiCostElectrical;
 
-public interface IProjectExporter
-{
-    void Export(ProjectFileData data, string path);
-}
-
 public interface IExcelProjectExporter
 {
     void Export(ExportProjectContext context, string path);

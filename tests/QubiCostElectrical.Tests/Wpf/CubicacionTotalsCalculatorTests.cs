@@ -12,8 +12,7 @@ using Xunit;
 namespace QubiCostElectrical.Tests.Wpf;
 
 /// <summary>
-/// Red de regresión para la extracción de CubicacionTotalsCalculator (ver plan en
-/// C:\Users\cristobal1\.claude\plans\glittery-stargazing-hippo.md): estos tests exercitan
+/// Red de regresión para la extracción de CubicacionTotalsCalculator: estos tests exercitan
 /// RefreshTotals()/ScheduleRefreshTotals() a través de la API pública de CubicacionViewModel
 /// — igual antes y después de mover el código internamente, porque el contrato externo
 /// (las 5 propiedades públicas) no cambia. Si el refactor rompe algo, estos tests fallan.

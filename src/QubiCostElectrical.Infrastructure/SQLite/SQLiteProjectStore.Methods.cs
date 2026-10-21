@@ -12,10 +12,51 @@ public static partial class SQLiteProjectStore
     public static void SaveSnapshot(string databasePath, ProjectFileData data)
     {
         if (string.IsNullOrWhiteSpace(databasePath))
-            throw new ArgumentException("Ruta SQLite vacía.", nameof(databasePath));
+            throw new ArgumentException("Ruta SQLite vacia.", nameof(databasePath));
 
-        Directory.CreateDirectory(Path.GetDirectoryName(databasePath) ?? AppContext.BaseDirectory);
+        string targetDir = Path.GetDirectoryName(databasePath) ?? AppContext.BaseDirectory;
+        Directory.CreateDirectory(targetDir);
 
+        if (File.Exists(databasePath))
+        {
+            SaveSnapshotAtomic(databasePath, data);
+            return;
+        }
+
+        SaveSnapshotDirect(databasePath, data);
+    }
+
+    private static void SaveSnapshotAtomic(string databasePath, ProjectFileData data)
+    {
+        string targetDir = Path.GetDirectoryName(databasePath) ?? AppContext.BaseDirectory;
+        string tempPath = Path.Combine(targetDir, $"{Path.GetFileName(databasePath)}.{Guid.NewGuid():N}.tmp");
+
+        try
+        {
+            SaveSnapshotDirect(tempPath, data);
+            ValidateDatabaseIntegrity(tempPath);
+            CheckpointAndTruncateWal(tempPath);
+            SqliteConnection.ClearAllPools();
+            SafeDeleteFile(tempPath + "-wal");
+            SafeDeleteFile(tempPath + "-shm");
+            ReplaceFileWithRetry(tempPath, databasePath);
+            CheckpointAndTruncateWal(databasePath);
+            SqliteConnection.ClearAllPools();
+            SafeDeleteFile(databasePath + "-wal");
+            SafeDeleteFile(databasePath + "-shm");
+        }
+        catch (Exception ex)
+        {
+            SafeDeleteFile(tempPath);
+            SafeDeleteFile(tempPath + "-wal");
+            SafeDeleteFile(tempPath + "-shm");
+            AppLog.Error("SQLite", $"Error durante el guardado atomico en '{databasePath}'", ex);
+            throw;
+        }
+    }
+
+    private static void SaveSnapshotDirect(string databasePath, ProjectFileData data)
+    {
         using var connection = Open(databasePath);
         EnsureSchema(connection);
 
@@ -522,4 +563,86 @@ public static partial class SQLiteProjectStore
 
     private static void EnsureSchema(SqliteConnection connection)
         => SQLiteSchemaMigrator.MigrateToLatest(connection);
+
+    private static void ValidateDatabaseIntegrity(string path)
+    {
+        var builder = new SqliteConnectionStringBuilder
+        {
+            DataSource = path,
+            Mode = SqliteOpenMode.ReadOnly,
+            Pooling = false
+        };
+        using var conn = new SqliteConnection(builder.ToString());
+        conn.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "PRAGMA quick_check;";
+        string? result = Convert.ToString(cmd.ExecuteScalar());
+        if (!string.Equals(result, "ok", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException($"La verificacion de integridad de SQLite fallo: {result}");
+        }
+    }
+
+    private static void CheckpointAndTruncateWal(string path)
+    {
+        try
+        {
+            if (!File.Exists(path)) return;
+            var builder = new SqliteConnectionStringBuilder
+            {
+                DataSource = path,
+                Mode = SqliteOpenMode.ReadWrite,
+                Pooling = false
+            };
+            using var conn = new SqliteConnection(builder.ToString());
+            conn.Open();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "PRAGMA wal_checkpoint(TRUNCATE);";
+            cmd.ExecuteNonQuery();
+        }
+        catch (Exception ex)
+        {
+            AppLog.Warning("SQLite", $"No se pudo ejecutar wal_checkpoint en '{path}'", ex);
+        }
+    }
+
+    private static void ReplaceFileWithRetry(string sourceTemp, string destination)
+    {
+        const int maxAttempts = 5;
+        for (int attempt = 1; attempt <= maxAttempts; attempt++)
+        {
+            try
+            {
+                SqliteConnection.ClearAllPools();
+                File.Replace(sourceTemp, destination, null, ignoreMetadataErrors: true);
+                return;
+            }
+            catch (IOException ex) when (attempt < maxAttempts)
+            {
+                AppLog.Warning("SQLite", $"Intento {attempt}/{maxAttempts} de reemplazo de archivo bloqueado ('{destination}'). Reintentando...", ex);
+                System.Threading.Thread.Sleep(attempt * 150);
+            }
+            catch (UnauthorizedAccessException ex) when (attempt < maxAttempts)
+            {
+                AppLog.Warning("SQLite", $"Intento {attempt}/{maxAttempts} de acceso denegado ('{destination}'). Reintentando...", ex);
+                System.Threading.Thread.Sleep(attempt * 150);
+            }
+        }
+
+        SqliteConnection.ClearAllPools();
+        File.Copy(sourceTemp, destination, overwrite: true);
+        SafeDeleteFile(sourceTemp);
+    }
+
+    private static void SafeDeleteFile(string path)
+    {
+        try
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+        catch
+        {
+        }
+    }
 }

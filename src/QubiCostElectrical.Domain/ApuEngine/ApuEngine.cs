@@ -26,48 +26,6 @@ public sealed class ApuEngine
         };
     }
 
-    public ApuRow CreateFromCubicacion(CubicacionRow cub, string descripcionItem, string unidadItem)
-    {
-        if (cub == null) throw new ArgumentNullException(nameof(cub));
-        return new ApuRow
-        {
-            ItemId = cub.ItemId,
-            Descripcion = descripcionItem ?? string.Empty,
-            Unidad = unidadItem ?? string.Empty,
-            CantidadPartida = cub.Cantidad < 0m ? 0m : cub.Cantidad,
-            FuentePrecio = "Migrado desde cubicación",
-            FechaPrecio = DateTime.Today,
-            Estado = "Revisar rendimiento",
-            Recursos = new List<ApuRecursoRow>
-            {
-                new()
-                {
-                    Tipo = ApuTipoRecurso.MAT,
-                    CodigoMaterial = CodeHelper.Normalize(cub.Codigo),
-                    Descripcion = cub.Descripcion,
-                    Unidad = cub.Unidad,
-                    Rendimiento = 1m,
-                    PrecioUf = cub.MatUf,
-                    FuentePrecio = "Cubicación",
-                    FechaPrecio = DateTime.Today,
-                    Estado = cub.MatUf <= 0m ? "Falta precio" : "OK"
-                },
-                new()
-                {
-                    Tipo = ApuTipoRecurso.MO,
-                    Descripcion = "Mano de obra (migrado)",
-                    Unidad = "HH",
-                    Rendimiento = 1m,
-                    PrecioUf = cub.MoUf,
-                    ValorHHUf = cub.MoUf,
-                    FuentePrecio = "Cubicación",
-                    FechaPrecio = DateTime.Today,
-                    Estado = cub.MoUf <= 0m ? "Falta precio" : "OK"
-                }
-            }
-        };
-    }
-
     public (decimal MaterialUf, decimal ManoObraUf) GetPricesForCubicacion(ApuRow? apu)
     {
         if (apu == null) return (0m, 0m);

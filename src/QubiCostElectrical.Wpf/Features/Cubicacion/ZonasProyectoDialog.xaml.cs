@@ -59,14 +59,6 @@ public partial class ZonasProyectoDialog : Window
             return;
         }
 
-        // Alt+A: Asistente de Edificio
-        if (e.Key == Key.A && (Keyboard.Modifiers & ModifierKeys.Alt) == ModifierKeys.Alt)
-        {
-            OnAsistenteClick(sender, e);
-            e.Handled = true;
-            return;
-        }
-
         // Ctrl+S: Guardar como Preset
         if (e.Key == Key.S && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control && !IsEditingCell())
         {
@@ -226,40 +218,6 @@ public partial class ZonasProyectoDialog : Window
 
         WpfDialogService.Info("Preset Guardado",
             $"La estructura \"{nombre}\" ({zonasNombres.Count} zonas) ha sido guardada en la memoria local de la aplicación y estará disponible en todos sus proyectos.");
-    }
-
-    private void OnAsistenteClick(object sender, RoutedEventArgs e)
-    {
-        ZonasGrid.CancelEdit(DataGridEditingUnit.Cell);
-        ZonasGrid.CancelEdit(DataGridEditingUnit.Row);
-
-        var assistant = new AsistenteEdificioDialog
-        {
-            Owner = this
-        };
-
-        if (assistant.ShowDialog() == true)
-        {
-            bool replace = ViewModel.Rows.Count == 0 || WpfDialogService.Confirm(
-                "Estructura de Edificio Generada",
-                "¿Desea reemplazar todas las zonas actuales por las nuevas generadas?\n\nSi presiona 'No', las zonas se añadirán al final de la lista actual.");
-
-            if (replace)
-            {
-                ViewModel.Rows.Clear();
-            }
-
-            foreach (var nombreZona in assistant.ZonasGeneradas)
-            {
-                ViewModel.AgregarZona(nombreZona);
-            }
-
-            if (ViewModel.Rows.Count > 0)
-            {
-                ZonasGrid.SelectedIndex = 0;
-                ZonasGrid.Focus();
-            }
-        }
     }
 
     private void OnQuitarClick(object sender, RoutedEventArgs e)

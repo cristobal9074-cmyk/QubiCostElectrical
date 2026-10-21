@@ -1,0 +1,326 @@
+<UserControl x:Class="QubiCostElectrical.Wpf.Shell.ShellQuickSearchControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Border Width="720"
+          Background="{DynamicResource Brush.Surface}"
+          BorderBrush="{DynamicResource Brush.Line}"
+          BorderThickness="1"
+          CornerRadius="16"
+          SnapsToDevicePixels="True">
+    <Border.Effect>
+      <DropShadowEffect BlurRadius="28" ShadowDepth="8" Direction="270" Color="{DynamicResource Color.Shadow}" Opacity="0.25" />
+    </Border.Effect>
+    <StackPanel>
+      <!-- 1. BARRA DE BÚSQUEDA INTEGRADA EN EL MODAL -->
+      <Border Background="{DynamicResource Brush.Surface2}"
+              BorderBrush="{DynamicResource Brush.Line}"
+              BorderThickness="0,0,0,1"
+              Padding="14,10"
+              CornerRadius="16,16,0,0">
+        <DockPanel>
+          <!-- Ícono de Lupa Azul de la App -->
+          <Border Width="30" Height="30" CornerRadius="8" Background="{DynamicResource Brush.BlueSoft}" Margin="0,0,10,0" VerticalAlignment="Center">
+            <Path Data="{StaticResource Geo.Search}" Style="{StaticResource Icon.Vector.Md}" Stroke="{DynamicResource Brush.Blue}" />
+          </Border>
+
+          <!-- Botón Limpiar [✕] -->
+          <Button DockPanel.Dock="Right"
+                  Command="{Binding ClearSearchCommand}"
+                  Visibility="{Binding HasSearchText, Converter={StaticResource BoolToVisibility}}"
+                  Background="Transparent"
+                  BorderThickness="0"
+                  Padding="4,2"
+                  Margin="6,0,0,0"
+                  Cursor="Hand"
+                  ToolTip="Borrar texto (Esc)">
+            <Border Background="{DynamicResource Brush.ChipBg}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="10" Width="22" Height="22">
+              <TextBlock Text="✕" FontSize="10" Foreground="{DynamicResource Brush.Ink4}" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+          </Button>
+
+          <!-- Contador de Resultados / Badge Atajo -->
+          <Border DockPanel.Dock="Right"
+                  Background="{DynamicResource Brush.BlueFaint}"
+                  BorderBrush="{DynamicResource Brush.Line}"
+                  BorderThickness="1"
+                  CornerRadius="6"
+                  Padding="8,3"
+                  Margin="8,0,0,0"
+                  VerticalAlignment="Center">
+            <TextBlock Text="{Binding ResultCountLabel, FallbackValue='0 resultados'}"
+                       FontSize="10"
+                       FontWeight="SemiBold"
+                       Foreground="{DynamicResource Brush.BlueDark}" />
+          </Border>
+
+          <!-- Campo de Texto Principal (Grande, Nítido, Alto Contraste) -->
+          <TextBox x:Name="PopupSearchBox"
+                   Style="{StaticResource SpotlightSearchBoxStyle}"
+                   Tag="Escribe para buscar partidas, cubicación, APU, insumos o comandos…"
+                   Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                   VerticalAlignment="Center"
+                   GotKeyboardFocus="OnSearchBoxGotKeyboardFocus"
+                   PreviewKeyDown="OnSearchBoxPreviewKeyDown" />
+        </DockPanel>
+      </Border>
+
+      <!-- 2. SELECTOR DE CATEGORÍAS SEGMENTADO (ESTILO CHIP DE LA APP) -->
+      <Border Background="{DynamicResource Brush.Surface}"
+              BorderBrush="{DynamicResource Brush.Line2}"
+              BorderThickness="0,0,0,1"
+              Padding="14,8">
+        <DockPanel LastChildFill="False">
+          <TextBlock DockPanel.Dock="Right" Text="Tab para alternar filtro" FontSize="9.5" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center" Margin="6,0,0,0" />
+          <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+            <StackPanel Orientation="Horizontal">
+              <Button Content="Todos" Command="{Binding SetPaletteCategoryCommand}" CommandParameter="All">
+                <Button.Style>
+                  <Style TargetType="Button" BasedOn="{StaticResource SpotlightFilterChip}">
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding SelectedPaletteCategory}" Value="All">
+                        <Setter Property="Background" Value="{DynamicResource Brush.Blue}" />
+                        <Setter Property="BorderBrush" Value="{DynamicResource Brush.BlueDark}" />
+                        <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </Button.Style>
+              </Button>
+              <Button Content="📋 Partidas" Command="{Binding SetPaletteCategoryCommand}" CommandParameter="Partidas">
+                <Button.Style>
+                  <Style TargetType="Button" BasedOn="{StaticResource SpotlightFilterChip}">
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding SelectedPaletteCategory}" Value="Partidas">
+                        <Setter Property="Background" Value="{DynamicResource Brush.Blue}" />
+                        <Setter Property="BorderBrush" Value="{DynamicResource Brush.BlueDark}" />
+                        <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </Button.Style>
+              </Button>
+              <Button Content="📐 Cubicación" Command="{Binding SetPaletteCategoryCommand}" CommandParameter="Cubicacion">
+                <Button.Style>
+                  <Style TargetType="Button" BasedOn="{StaticResource SpotlightFilterChip}">
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding SelectedPaletteCategory}" Value="Cubicacion">
+                        <Setter Property="Background" Value="{DynamicResource Brush.Blue}" />
+                        <Setter Property="BorderBrush" Value="{DynamicResource Brush.BlueDark}" />
+                        <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </Button.Style>
+              </Button>
+              <Button Content="📊 APU" Command="{Binding SetPaletteCategoryCommand}" CommandParameter="Apu">
+                <Button.Style>
+                  <Style TargetType="Button" BasedOn="{StaticResource SpotlightFilterChip}">
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding SelectedPaletteCategory}" Value="Apu">
+                        <Setter Property="Background" Value="{DynamicResource Brush.Blue}" />
+                        <Setter Property="BorderBrush" Value="{DynamicResource Brush.BlueDark}" />
+                        <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </Button.Style>
+              </Button>
+              <Button Content="🏛️ Banco Precios" Command="{Binding SetPaletteCategoryCommand}" CommandParameter="Materiales">
+                <Button.Style>
+                  <Style TargetType="Button" BasedOn="{StaticResource SpotlightFilterChip}">
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding SelectedPaletteCategory}" Value="Materiales">
+                        <Setter Property="Background" Value="{DynamicResource Brush.Blue}" />
+                        <Setter Property="BorderBrush" Value="{DynamicResource Brush.BlueDark}" />
+                        <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </Button.Style>
+              </Button>
+              <Button Content="⚡ Tableros SC" Command="{Binding SetPaletteCategoryCommand}" CommandParameter="TablerosSc">
+                <Button.Style>
+                  <Style TargetType="Button" BasedOn="{StaticResource SpotlightFilterChip}">
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding SelectedPaletteCategory}" Value="TablerosSc">
+                        <Setter Property="Background" Value="{DynamicResource Brush.Blue}" />
+                        <Setter Property="BorderBrush" Value="{DynamicResource Brush.BlueDark}" />
+                        <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </Button.Style>
+              </Button>
+              <Button Content="🧭 Módulos" Command="{Binding SetPaletteCategoryCommand}" CommandParameter="Navigation">
+                <Button.Style>
+                  <Style TargetType="Button" BasedOn="{StaticResource SpotlightFilterChip}">
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding SelectedPaletteCategory}" Value="Navigation">
+                        <Setter Property="Background" Value="{DynamicResource Brush.Blue}" />
+                        <Setter Property="BorderBrush" Value="{DynamicResource Brush.BlueDark}" />
+                        <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </Button.Style>
+              </Button>
+              <Button Content="⚙️ Acciones" Command="{Binding SetPaletteCategoryCommand}" CommandParameter="Actions">
+                <Button.Style>
+                  <Style TargetType="Button" BasedOn="{StaticResource SpotlightFilterChip}">
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding SelectedPaletteCategory}" Value="Actions">
+                        <Setter Property="Background" Value="{DynamicResource Brush.Blue}" />
+                        <Setter Property="BorderBrush" Value="{DynamicResource Brush.BlueDark}" />
+                        <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </Button.Style>
+              </Button>
+            </StackPanel>
+          </ScrollViewer>
+        </DockPanel>
+      </Border>
+
+      <!-- 3. LISTA DE RESULTADOS / ESTADO VACÍO -->
+      <Grid MinHeight="160" MaxHeight="380">
+        <!-- Estado Vacío cuando no hay resultados -->
+        <StackPanel Visibility="{Binding HasQuickSearchResults, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Margin="24">
+          <Border Width="42" Height="42" CornerRadius="12" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" HorizontalAlignment="Center" Margin="0,0,0,10">
+            <Path Data="{StaticResource Geo.Search}" Style="{StaticResource Icon.Vector.Lg}" Stroke="{DynamicResource Brush.Ink4}" />
+          </Border>
+          <TextBlock Text="No se encontraron coincidencias" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink2}" HorizontalAlignment="Center" />
+          <TextBlock Text="Prueba con otro término o selecciona 'Todos' para buscar en todo el proyecto" FontSize="10.5" Foreground="{DynamicResource Brush.Ink4}" HorizontalAlignment="Center" Margin="0,4,0,0" />
+        </StackPanel>
+
+        <!-- Lista con resultados -->
+        <ListBox ItemsSource="{Binding QuickSearchResults}"
+                 SelectedItem="{Binding SelectedQuickSearchItem, Mode=TwoWay}"
+                 x:Name="QuickSearchList"
+                 Background="Transparent"
+                 BorderThickness="0"
+                 HorizontalContentAlignment="Stretch"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                 SelectionChanged="OnQuickSearchSelectionChanged"
+                 ItemContainerStyle="{StaticResource SpotlightListBoxItemStyle}"
+                 Padding="8,6"
+                 Visibility="{Binding HasQuickSearchResults, Converter={StaticResource BoolToVisibility}}">
+          <ListBox.ItemTemplate>
+            <DataTemplate>
+              <Button Style="{StaticResource SpotlightItemButtonStyle}"
+                      Click="OnQuickSearchItemClick">
+                <Grid HorizontalAlignment="Stretch">
+                  <Grid.ColumnDefinitions>
+                    <!-- Col 0: Ancho fijo para badges para que todos los títulos inicien alineados -->
+                    <ColumnDefinition Width="116" />
+                    <!-- Col 1: Título y subtítulo expandiéndose -->
+                    <ColumnDefinition Width="*" />
+                    <!-- Col 2: Atajo anclado al extremo derecho -->
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+
+                  <!-- Badge e Icono de Categoría (Pill alineado a la izquierda) -->
+                  <Border Grid.Column="0"
+                          Background="{Binding CategoryBadgeBrush}"
+                          BorderBrush="{Binding CategoryBadgeForeground}"
+                          BorderThickness="1"
+                          CornerRadius="6"
+                          Padding="7,3"
+                          HorizontalAlignment="Left"
+                          VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                      <TextBlock Text="{Binding Icon}"
+                                 FontFamily="Segoe MDL2 Assets"
+                                 FontSize="10.5"
+                                 Foreground="{Binding CategoryBadgeForeground}"
+                                 VerticalAlignment="Center"
+                                 Margin="0,0,5,0" />
+                      <TextBlock Text="{Binding CategoryLabel}"
+                                 FontSize="9.5"
+                                 FontWeight="Bold"
+                                 Foreground="{Binding CategoryBadgeForeground}"
+                                 VerticalAlignment="Center" />
+                    </StackPanel>
+                  </Border>
+
+                  <!-- Textos Principales: Título y Subtítulo -->
+                  <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="10,0,12,0">
+                    <TextBlock Text="{Binding Title}"
+                               FontSize="12.5"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource Brush.Ink}"
+                               TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="{Binding Subtitle}"
+                               Margin="0,2,0,0"
+                               FontSize="10.5"
+                               Foreground="{DynamicResource Brush.Ink3}"
+                               TextTrimming="CharacterEllipsis" />
+                  </StackPanel>
+
+                  <!-- Atajo o Ubicación (Pill anclado a la derecha) -->
+                  <Border Grid.Column="2"
+                          HorizontalAlignment="Right"
+                          VerticalAlignment="Center"
+                          Padding="8,3"
+                          CornerRadius="5"
+                          Background="{DynamicResource Brush.Surface2}"
+                          BorderBrush="{DynamicResource Brush.Line}"
+                          BorderThickness="1">
+                    <TextBlock Text="{Binding Shortcut}"
+                               FontSize="9.5"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource Brush.Ink3}" />
+                  </Border>
+                </Grid>
+              </Button>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+      </Grid>
+
+      <!-- 4. FOOTER CON GUÍA DE ERGONOMÍA -->
+      <Border Background="{DynamicResource Brush.Surface2}"
+              BorderBrush="{DynamicResource Brush.Line}"
+              BorderThickness="0,1,0,0"
+              Padding="14,9"
+              CornerRadius="0,0,16,16">
+        <DockPanel LastChildFill="False">
+          <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <!-- Tecla Enter -->
+            <Border Background="{DynamicResource Brush.ChipBg}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Padding="5,1.5" Margin="0,0,5,0">
+              <TextBlock Text="↵ Enter" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}" />
+            </Border>
+            <TextBlock Text="Ejecutar / Ir" FontSize="10" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center" Margin="0,0,14,0" />
+
+            <!-- Teclas ↑ ↓ -->
+            <Border Background="{DynamicResource Brush.ChipBg}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Padding="5,1.5" Margin="0,0,5,0">
+              <TextBlock Text="↑ ↓" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}" />
+            </Border>
+            <TextBlock Text="Navegar" FontSize="10" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center" Margin="0,0,14,0" />
+
+            <!-- Tecla Tab -->
+            <Border Background="{DynamicResource Brush.ChipBg}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Padding="5,1.5" Margin="0,0,5,0">
+              <TextBlock Text="Tab" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}" />
+            </Border>
+            <TextBlock Text="Alternar categoría" FontSize="10" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center" Margin="0,0,14,0" />
+
+            <!-- Tecla Esc -->
+            <Border Background="{DynamicResource Brush.ChipBg}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Padding="5,1.5" Margin="0,0,5,0">
+              <TextBlock Text="Esc" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}" />
+            </Border>
+            <TextBlock Text="Cerrar" FontSize="10" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center" />
+          </StackPanel>
+
+          <!-- Identidad de Marca -->
+          <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+            <TextBlock Text="⚡ Qubi Cost Spotlight" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Blue}" />
+          </StackPanel>
+        </DockPanel>
+      </Border>
+    </StackPanel>
+  </Border>
+</UserControl>

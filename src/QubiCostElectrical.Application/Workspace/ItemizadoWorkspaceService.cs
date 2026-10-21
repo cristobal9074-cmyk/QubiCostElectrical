@@ -9,7 +9,8 @@ public interface IItemizadoWorkspaceService
     ItemizadoPageState BuildPageState(
         ItemizadoPresenter presenter,
         BudgetProjectSession session,
-        IReadOnlyDictionary<string, decimal>? cachedTotalsByItem = null);
+        IReadOnlyDictionary<string, decimal>? cachedTotalsByItem = null,
+        ItemizadoPerspectiveMode perspective = ItemizadoPerspectiveMode.Venta);
     bool MatchesFilter(ItemizadoRowPresentation row, ItemizadoFilterMode filter);
     bool MatchesSearch(ItemizadoRowPresentation row, string? searchText);
     bool ShouldDisplayInGrid(
@@ -36,7 +37,8 @@ public sealed class ItemizadoWorkspaceService : IItemizadoWorkspaceService
     public ItemizadoPageState BuildPageState(
         ItemizadoPresenter presenter,
         BudgetProjectSession session,
-        IReadOnlyDictionary<string, decimal>? cachedTotalsByItem = null)
+        IReadOnlyDictionary<string, decimal>? cachedTotalsByItem = null,
+        ItemizadoPerspectiveMode perspective = ItemizadoPerspectiveMode.Venta)
     {
         if (presenter is null)
             throw new ArgumentNullException(nameof(presenter));
@@ -52,7 +54,7 @@ public sealed class ItemizadoWorkspaceService : IItemizadoWorkspaceService
         else
         {
             cost = presenter.BuildCostBreakdown();
-            totalsByItem = BuildTotalsByItem(cost, session.ValorUfClp);
+            totalsByItem = BuildTotalsByItem(cost, session, perspective);
         }
         var rows = new List<ItemizadoRowPresentation>();
 
@@ -287,9 +289,31 @@ public sealed class ItemizadoWorkspaceService : IItemizadoWorkspaceService
     /// convierte con la UF del proyecto: exponerlo en pesos aquí inflaría por la tasa UF
     /// tanto la grilla como el pie y los estados de pago, que ya asumen UF.
     /// </summary>
-    private static Dictionary<string, decimal> BuildTotalsByItem(CostBreakdown cost, decimal valorUfClp)
+    private static Dictionary<string, decimal> BuildTotalsByItem(
+        CostBreakdown cost,
+        BudgetProjectSession session,
+        ItemizadoPerspectiveMode perspective)
     {
-        decimal ufRate = valorUfClp > 0m ? valorUfClp : PriceConversion.DefaultValorUfClp;
+        decimal ufRate = session.ValorUfClp > 0m ? session.ValorUfClp : PriceConversion.DefaultValorUfClp;
+        if (perspective == ItemizadoPerspectiveMode.Venta)
+        {
+            decimal targetAmount = cost.TotalVentaNetoUf > 0m ? cost.TotalVentaNetoUf : cost.TotalVentaUf;
+            var itemizadoMap = (session.Itemizado ?? new List<ItemizadoRow>())
+                .Where(x => !x.EsTitulo)
+                .ToDictionary(x => x.Item, x => x.Id, StringComparer.OrdinalIgnoreCase);
+            var offerRows = OfferClienteRowBuilder.Build(session.Itemizado, cost, targetAmount, session.ProjectInfo?.Nombre ?? "Proyecto");
+            var dict = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
+            foreach (var r in offerRows)
+            {
+                if (r.EsTitulo) continue;
+                decimal uf = PriceConversion.ClpToUf(r.TotalUf, ufRate);
+                string key = itemizadoMap.TryGetValue(r.Item, out var id) ? id : r.Item;
+                if (!dict.TryAdd(key, uf))
+                    dict[key] += uf;
+            }
+            return dict;
+        }
+
         return (cost.Origenes ?? new List<CostOriginBreakdown>())
             .GroupBy(x => x.ItemId ?? "", StringComparer.OrdinalIgnoreCase)
             .ToDictionary(

@@ -70,7 +70,6 @@ public sealed record PartidaCompletionSummary(
         return new PartidaCompletionDetail(itemId ?? "", false, 0, 0, 0, 0);
     }
 
-    public int GetPendingCount(string itemId) => GetDetail(itemId).PendingPartidas;
 }
 
 public sealed class PartidaCompletionService : IPartidaCompletionService

@@ -1,0 +1,169 @@
+<UserControl x:Class="QubiCostElectrical.Wpf.Shell.ShellStatusBarControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Border Style="{StaticResource Shell.StatusBar}">
+    <DockPanel LastChildFill="True">
+      <!-- SECCIÓN DERECHA: Métricas vivas y Estado del Sistema -->
+      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+
+        <!-- 1. Estructura del Proyecto (Partidas, Capítulos, Tableros) -->
+        <Border Style="{StaticResource Shell.StatusBarItem}"
+                ToolTip="{Binding ProjectStructureToolTip, Mode=OneWay}"
+                Visibility="{Binding HasOpenProject, Converter={StaticResource BoolToVisibility}}">
+          <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <Path Data="{StaticResource Geo.FileText}" Style="{StaticResource Icon.Vector.Sm}"
+                  Stroke="{DynamicResource Brush.Ink3}" Margin="0,0,5,0" />
+            <TextBlock Style="{StaticResource Shell.StatusBarText}"
+                       Text="{Binding ProjectStructureSummary, Mode=OneWay}"
+                       Foreground="{DynamicResource Brush.Ink2}" />
+          </StackPanel>
+        </Border>
+
+        <Border Style="{StaticResource Shell.StatusBarDivider}"
+                Visibility="{Binding HasOpenProject, Converter={StaticResource BoolToVisibility}}" />
+
+        <!-- 2. Costo Directo Total en Vivo -->
+        <Border Style="{StaticResource Shell.StatusBarItem}"
+                ToolTip="{Binding DirectCostToolTip, Mode=OneWay}"
+                Visibility="{Binding HasOpenProject, Converter={StaticResource BoolToVisibility}}">
+          <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <Border Background="{DynamicResource Brush.BlueSoft}" CornerRadius="4" Padding="5,1" Margin="0,0,4,0">
+              <TextBlock Text="CD" FontSize="9.5" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}"
+                         Foreground="{DynamicResource Brush.Blue}" />
+            </Border>
+            <TextBlock Style="{StaticResource Shell.StatusBarText}"
+                       FontWeight="Bold"
+                       Foreground="{DynamicResource Brush.Ink}"
+                       FontFamily="{StaticResource Font.Mono}"
+                       Text="{Binding TickerCostoDirecto, Mode=OneWay}" />
+          </StackPanel>
+        </Border>
+
+        <Border Style="{StaticResource Shell.StatusBarDivider}"
+                Visibility="{Binding HasOpenProject, Converter={StaticResource BoolToVisibility}}" />
+
+        <!-- 3. Modo Colaborativo (Editor Exclusivo / Solo Lectura) -->
+        <Border Style="{StaticResource Shell.StatusBarItem}"
+                ToolTip="{Binding ReadOnlyBannerText, Mode=OneWay}"
+                Visibility="{Binding HasOpenProject, Converter={StaticResource BoolToVisibility}}">
+          <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <!-- Punto de estado dinámico -->
+            <Ellipse Width="6" Height="6" Margin="0,0,5,0" VerticalAlignment="Center">
+              <Ellipse.Style>
+                <Style TargetType="Ellipse">
+                  <Setter Property="Fill" Value="{DynamicResource Brush.Success}" />
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsReadOnly}" Value="True">
+                      <Setter Property="Fill" Value="{DynamicResource Brush.Blue}" />
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </Ellipse.Style>
+            </Ellipse>
+            <TextBlock FontWeight="SemiBold"
+                       Text="{Binding CollaborationModeLabel, Mode=OneWay}">
+              <TextBlock.Style>
+                <Style TargetType="TextBlock" BasedOn="{StaticResource Shell.StatusBarText}">
+                  <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}" />
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsReadOnly}" Value="True">
+                      <Setter Property="Foreground" Value="{DynamicResource Brush.BlueDark}" />
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </TextBlock.Style>
+            </TextBlock>
+          </StackPanel>
+        </Border>
+
+        <Border Style="{StaticResource Shell.StatusBarDivider}" />
+
+        <!-- 4. Banco de Precios -->
+        <Border Style="{StaticResource Shell.StatusBarItem}"
+                ToolTip="{Binding PriceBankToolTip, Mode=OneWay}">
+          <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <Path Data="{StaticResource Geo.FolderOpen}" Style="{StaticResource Icon.Vector.Sm}"
+                  Stroke="{DynamicResource Brush.Muted}" Margin="0,0,5,0" />
+            <TextBlock Style="{StaticResource Shell.StatusBarText}"
+                       Text="{Binding PriceBankSyncLabel, Mode=OneWay}" />
+          </StackPanel>
+        </Border>
+
+        <Border Style="{StaticResource Shell.StatusBarDivider}" />
+
+        <!-- 5. Usuario y Rol Activo -->
+        <Border Style="{StaticResource Shell.StatusBarItem}"
+                ToolTip="{Binding UserEmail, Mode=OneWay}">
+          <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" FontSize="11"
+                       Foreground="{DynamicResource Brush.Muted}" Margin="0,0,5,0" VerticalAlignment="Center" />
+            <TextBlock Style="{StaticResource Shell.StatusBarText}"
+                       FontWeight="Medium"
+                       Foreground="{DynamicResource Brush.Ink2}"
+                       Text="{Binding UserStatusLabel, Mode=OneWay}" />
+          </StackPanel>
+        </Border>
+
+        <!-- 6. Estado de Guardado / Sincronización -->
+        <Border Style="{StaticResource Shell.StatusBarDivider}"
+                Visibility="{Binding HasOpenProject, Converter={StaticResource BoolToVisibility}}" />
+
+        <Border Style="{StaticResource Shell.StatusBarItem}"
+                ToolTip="{Binding SaveStateToolTip, Mode=OneWay}"
+                Visibility="{Binding HasOpenProject, Converter={StaticResource BoolToVisibility}}">
+          <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <Ellipse Width="6" Height="6" Margin="0,0,5,0" VerticalAlignment="Center">
+              <Ellipse.Style>
+                <Style TargetType="Ellipse">
+                  <Setter Property="Fill" Value="{DynamicResource Brush.Success}" />
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding HasUnsavedChanges}" Value="True">
+                      <Setter Property="Fill" Value="{DynamicResource Brush.AmberRisk}" />
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </Ellipse.Style>
+            </Ellipse>
+            <TextBlock FontSize="11" FontWeight="SemiBold"
+                       Text="{Binding SaveStateText, Mode=OneWay}">
+              <TextBlock.Style>
+                <Style TargetType="TextBlock" BasedOn="{StaticResource Shell.StatusBarText}">
+                  <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding HasUnsavedChanges}" Value="True">
+                      <Setter Property="Foreground" Value="{DynamicResource Brush.AmberRisk}" />
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </TextBlock.Style>
+            </TextBlock>
+          </StackPanel>
+        </Border>
+      </StackPanel>
+
+      <!-- SECCIÓN IZQUIERDA: Estado contextual / Atajos de teclado del módulo -->
+      <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,0">
+        <Border Width="16" Height="16" CornerRadius="4" Background="{DynamicResource Brush.BlueSoft}"
+                VerticalAlignment="Center" Margin="0,0,6,0">
+          <Path Data="{StaticResource Geo.Info}" Style="{StaticResource Icon.Vector.Sm}"
+                Stroke="{DynamicResource Brush.Blue}" Width="9" Height="9" />
+        </Border>
+        <TextBlock Text="{Binding StatusBarMessage, Mode=OneWay}"
+                   TextTrimming="CharacterEllipsis"
+                   VerticalAlignment="Center">
+          <TextBlock.Style>
+            <Style TargetType="TextBlock" BasedOn="{StaticResource Shell.StatusBarText}">
+              <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}" />
+              <Style.Triggers>
+                <DataTrigger Binding="{Binding StatusBarIsAlert}" Value="True">
+                  <Setter Property="Foreground" Value="{DynamicResource Brush.Warning}" />
+                  <Setter Property="FontWeight" Value="SemiBold" />
+                </DataTrigger>
+              </Style.Triggers>
+            </Style>
+          </TextBlock.Style>
+        </TextBlock>
+      </StackPanel>
+    </DockPanel>
+  </Border>
+</UserControl>

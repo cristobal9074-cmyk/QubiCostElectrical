@@ -141,7 +141,7 @@ public sealed class PrecioListaResumenVmTests
         Assert.Contains("Tableros", vm.FamiliasDisponibles);
         Assert.Contains("Transformadores", vm.FamiliasDisponibles);
         Assert.Contains("Grupo electrógeno", vm.FamiliasDisponibles);
-        Assert.Contains("Ducto barra", vm.FamiliasDisponibles);
+        Assert.Contains("Ducto de barra", vm.FamiliasDisponibles);
         Assert.Contains("Media tensión", vm.FamiliasDisponibles);
         Assert.Equal(1, vm.FamiliasDisponibles.Count(f => string.Equals(f, "Tableros", StringComparison.OrdinalIgnoreCase)));
     }

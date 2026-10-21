@@ -20,14 +20,6 @@ public sealed record EconomicConfig
                 select c).ToList().AsReadOnly();
     }
 
-    public IReadOnlyList<EconomicConcept> GetByCategory(EconomicCategory category)
-    {
-        return (from c in Concepts
-                where c.Category == category && c.IsActive
-                orderby c.Order
-                select c).ToList().AsReadOnly();
-    }
-
     public static EconomicConfig CreateDefault()
     {
         List<EconomicConcept> list = new List<EconomicConcept>();
@@ -120,85 +112,4 @@ public sealed record EconomicConfig
         };
     }
 
-    public static EconomicConfig FromLegacyMarkup(MarkupPolicy markup)
-    {
-        if (markup == null)
-        {
-            return CreateDefault();
-        }
-        List<EconomicConcept> list = new List<EconomicConcept>();
-        int num = 1;
-        if (markup.RiesgoPct > 0m)
-        {
-            list.Add(new EconomicConcept
-            {
-                Code = "RISK",
-                Name = "Riesgo",
-                Category = EconomicCategory.Risk,
-                CalculationBase = CalculationBase.DirectCost,
-                Value = markup.RiesgoPct,
-                Order = num++,
-                AffectsFinalPrice = true
-            });
-        }
-        list.Add(new EconomicConcept
-        {
-            Code = "OVERHEAD",
-            Name = "Gastos generales",
-            Category = EconomicCategory.Overhead,
-            CalculationBase = ((!markup.PoliticaCostosExcel) ? CalculationBase.PreviousSubtotal : CalculationBase.DirectCost),
-            Value = markup.GastosGeneralesPct,
-            Order = num++,
-            AffectsFinalPrice = true
-        });
-        if (markup.ValorAgregadoEquiposPct > 0m)
-        {
-            list.Add(new EconomicConcept
-            {
-                Code = "VA_EQUIP",
-                Name = "VA equipos",
-                Category = EconomicCategory.Surcharge,
-                CalculationBase = CalculationBase.Equipment,
-                Value = markup.ValorAgregadoEquiposPct,
-                Order = num++,
-                AffectsFinalPrice = true
-            });
-        }
-        list.Add(new EconomicConcept
-        {
-            Code = "PROFIT",
-            Name = "Utilidad",
-            Category = EconomicCategory.Profit,
-            CalculationBase = CalculationBase.PreviousSubtotal,
-            Value = markup.UtilidadPct,
-            Order = num++,
-            AffectsFinalPrice = true
-        });
-        list.Add(new EconomicConcept
-        {
-            Code = "DISCOUNT",
-            Name = "Descuento",
-            Category = EconomicCategory.Discount,
-            CalculationBase = CalculationBase.PriceBeforeDiscounts,
-            Value = markup.DescuentoPct,
-            Order = num++,
-            AffectsFinalPrice = true
-        });
-        list.Add(new EconomicConcept
-        {
-            Code = "VAT",
-            Name = "IVA",
-            Category = EconomicCategory.Tax,
-            CalculationBase = CalculationBase.PreviousSubtotal,
-            Value = markup.IvaPct,
-            Order = num++,
-            AffectsFinalPrice = true,
-            RoundingDecimals = 2
-        });
-        return new EconomicConfig
-        {
-            Concepts = list.AsReadOnly(),
-            EngineVersion = "1.0.0"
-        };
-    }
 }

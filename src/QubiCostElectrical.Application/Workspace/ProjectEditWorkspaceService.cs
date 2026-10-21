@@ -238,19 +238,26 @@ public sealed class ProjectEditWorkspaceService : IProjectEditWorkspaceService
         project.OfertaPdf.OcultarGgYUtilidadEnResumen = snapshot.OcultarGgYUtilidadEnResumen;
         project.OcultarGgYUtilidadEnResumen = snapshot.OcultarGgYUtilidadEnResumen;
 
-        // Guardar markups por familia en variables
-        session.SetFamilyMarkup("Conductores", snapshot.MarkupConductores);
-        session.SetFamilyMarkup("Canalización", snapshot.MarkupCanalizacion);
-        session.SetFamilyMarkup("Tableros", snapshot.MarkupTableros);
-        session.SetFamilyMarkup("Protecciones", snapshot.MarkupProtecciones);
-        session.SetFamilyMarkup("Iluminación", snapshot.MarkupIluminacion);
-        session.SetFamilyMarkup("Equipos", snapshot.MarkupEquipos);
-        session.SetFamilyMarkup("Enchufes y tomacorrientes", snapshot.MarkupEnchufes);
-        session.SetFamilyMarkup("Puesta a tierra", snapshot.MarkupPuestaTierra);
-        session.SetFamilyMarkup("Accesorios", snapshot.MarkupAccesorios);
+        // Guardar markups por familia en variables. Solo se escribe lo que cambio: si la familia
+        // nunca fue configurada, su valor por defecto no debe quedar congelado como decision.
+        AplicarMarkupSiCambio(session, "Conductores", snapshot.MarkupConductores);
+        AplicarMarkupSiCambio(session, "Canalización", snapshot.MarkupCanalizacion);
+        AplicarMarkupSiCambio(session, "Tableros", snapshot.MarkupTableros);
+        AplicarMarkupSiCambio(session, "Protecciones", snapshot.MarkupProtecciones);
+        AplicarMarkupSiCambio(session, "Iluminación", snapshot.MarkupIluminacion);
+        AplicarMarkupSiCambio(session, "Equipos", snapshot.MarkupEquipos);
+        AplicarMarkupSiCambio(session, "Enchufes y tomacorrientes", snapshot.MarkupEnchufes);
+        AplicarMarkupSiCambio(session, "Puesta a tierra", snapshot.MarkupPuestaTierra);
+        AplicarMarkupSiCambio(session, "Accesorios", snapshot.MarkupAccesorios);
 
         workingCopy = snapshot.Clone();
         session.MarkDirty(ProjectDirtyScope.ProjectInfo);
+    }
+
+    private static void AplicarMarkupSiCambio(BudgetProjectSession session, string familia, decimal valor)
+    {
+        if (session.GetFamilyMarkup(familia) != valor)
+            session.SetFamilyMarkup(familia, valor);
     }
 
     public void Discard() => workingCopy = null;

@@ -117,17 +117,6 @@ public sealed class AntecedentesTecnicosService
         return lines.Count == 0 ? "" : string.Join(Environment.NewLine, lines);
     }
 
-    public string BuildSupuestosDraft(IEnumerable<AntecedenteTecnicoRow>? rows)
-    {
-        var lines = (rows ?? Enumerable.Empty<AntecedenteTecnicoRow>())
-            .Where(x => x.EsSupuesto)
-            .Select(x => string.IsNullOrWhiteSpace(x.Descripcion) ? x.Notas : x.Descripcion)
-            .Where(x => !string.IsNullOrWhiteSpace(x))
-            .ToList();
-
-        return lines.Count == 0 ? "" : string.Join(Environment.NewLine, lines);
-    }
-
     public IReadOnlyList<OfferPlanReferenceRow> GetPlanosVigentesParaOferta(IEnumerable<AntecedenteTecnicoRow>? rows)
     {
         return (rows ?? Enumerable.Empty<AntecedenteTecnicoRow>())

@@ -143,9 +143,9 @@ public sealed partial class PreferencesViewModel
     partial void OnDefaultGastosGeneralesPctTextChanged(string value) => HasPendingChanges = true;
     partial void OnDefaultUtilidadPctTextChanged(string value) => HasPendingChanges = true;
 
-    partial void OnIsDarkModeChanged(bool value)
+    partial void OnIsDarkModeChanged(bool oldValue, bool newValue)
     {
-        DesignSystem.ThemeManager.SetDarkMode(value);
+        DesignSystem.ThemeManager.SetDarkMode(newValue);
         HasPendingChanges = true;
     }
 

@@ -144,14 +144,6 @@
               </StackPanel>
             </Button>
 
-            <!-- Asistente de Edificio -->
-            <Button Style="{StaticResource Button.Secondary}" Padding="10,5" Margin="0,0,6,0" Click="OnAsistenteClick" ToolTip="Generar estructura paramétrica de torres y pisos (Alt+A)">
-              <StackPanel Orientation="Horizontal">
-                <TextBlock Text="🏢" FontSize="11" Margin="0,0,5,0" VerticalAlignment="Center" />
-                <TextBlock Text="Asistente Edificio…" FontWeight="SemiBold" FontSize="11.5" VerticalAlignment="Center" />
-              </StackPanel>
-            </Button>
-
             <!-- Guardar como Preset -->
             <Button Style="{StaticResource Button.Secondary}" Padding="10,5" Margin="0,0,8,0" Click="OnGuardarComoPresetClick" ToolTip="Guardar la estructura actual como preset personalizado en la app (Ctrl+S)">
               <StackPanel Orientation="Horizontal">
@@ -317,17 +309,11 @@
             </Border>
             <TextBlock Text="Sin zonas configuradas en el proyecto" FontSize="14" FontWeight="Bold"
                        Foreground="{DynamicResource Brush.Ink}" HorizontalAlignment="Center" TextAlignment="Center" />
-            <TextBlock Text="Actualmente se usan sectores genéricos. Genere la estructura de pisos con el asistente en un clic o cree zonas manualmente."
+            <TextBlock Text="Actualmente se usan sectores genéricos. Cree zonas manualmente con el botón Nueva Zona."
                        FontSize="11.5" Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Center" TextAlignment="Center"
                        TextWrapping="Wrap" Margin="0,6,0,14" />
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-              <Button Style="{StaticResource Button.Primary}" Padding="14,6" Click="OnAsistenteClick" Margin="0,0,8,0">
-                <StackPanel Orientation="Horizontal">
-                  <TextBlock Text="✨" Margin="0,0,6,0" />
-                  <TextBlock Text="Abrir Asistente de Edificio" FontWeight="SemiBold" />
-                </StackPanel>
-              </Button>
-              <Button Style="{StaticResource Button.Secondary}" Padding="12,6" Click="OnAgregarClick">
+              <Button Style="{StaticResource Button.Primary}" Padding="12,6" Click="OnAgregarClick">
                 <TextBlock Text="+ Nueva Zona" FontWeight="SemiBold" />
               </Button>
             </StackPanel>

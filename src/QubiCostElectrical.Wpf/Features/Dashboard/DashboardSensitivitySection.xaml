@@ -1,0 +1,132 @@
+<UserControl x:Class="QubiCostElectrical.Wpf.Features.Dashboard.DashboardSensitivitySection"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:QubiCostElectrical.Wpf.Features.Dashboard"
+             mc:Ignorable="d">
+  <UserControl.Resources>
+    <local:SensitivityChartConverter x:Key="SensChart" />
+    <local:SensitivityAxisLabelConverter x:Key="SensAxisLabel" />
+    <local:SensitivityPointYConverter x:Key="SensPointY" />
+    <local:SensitivityPointXConverter x:Key="SensPointX" />
+    <local:SensitivityXLabelConverter x:Key="SensXLabel" />
+    <local:SensitivityItemXConverter x:Key="SensItemX" />
+  </UserControl.Resources>
+
+  <!-- Sensibilidad -->
+  <Border Style="{StaticResource Dashboard.Card}">
+    <StackPanel>
+      <DockPanel Margin="16,13,16,0">
+        <StackPanel>
+          <TextBlock Text="Sensibilidad de materiales" Style="{StaticResource Dashboard.CardTitle}" />
+          <TextBlock Text="Venta neta ante variación de precios" Style="{StaticResource Dashboard.CardSub}" />
+        </StackPanel>
+      </DockPanel>
+      <StackPanel Margin="10,8,10,8">
+        <Viewbox Stretch="Uniform" StretchDirection="DownOnly">
+          <Canvas Width="760" Height="280">
+            <!-- gridlines -->
+            <Line X1="60" Y1="20" X2="730" Y2="20" Stroke="{DynamicResource Brush.Line2}" StrokeThickness="1" />
+            <Line X1="60" Y1="63" X2="730" Y2="63" Stroke="{DynamicResource Brush.Line2}" StrokeThickness="1" />
+            <Line X1="60" Y1="106" X2="730" Y2="106" Stroke="{DynamicResource Brush.Line2}" StrokeThickness="1" />
+            <Line X1="60" Y1="149" X2="730" Y2="149" Stroke="{DynamicResource Brush.Line2}" StrokeThickness="1" />
+            <Line X1="60" Y1="192" X2="730" Y2="192" Stroke="{DynamicResource Brush.Line2}" StrokeThickness="1" />
+            <Line X1="60" Y1="235" X2="730" Y2="235" Stroke="{DynamicResource Brush.Line}" StrokeThickness="1" />
+
+            <!-- eje Y (UF) -->
+            <TextBlock Canvas.Left="0" Canvas.Top="13" Width="52" TextAlignment="Right" FontSize="10"
+                       Foreground="{DynamicResource Brush.Muted}"
+                       Text="{Binding SensitivityCurve, Converter={StaticResource SensAxisLabel}, ConverterParameter=0}" />
+            <TextBlock Canvas.Left="0" Canvas.Top="56" Width="52" TextAlignment="Right" FontSize="10"
+                       Foreground="{DynamicResource Brush.Muted}"
+                       Text="{Binding SensitivityCurve, Converter={StaticResource SensAxisLabel}, ConverterParameter=1}" />
+            <TextBlock Canvas.Left="0" Canvas.Top="99" Width="52" TextAlignment="Right" FontSize="10"
+                       Foreground="{DynamicResource Brush.Muted}"
+                       Text="{Binding SensitivityCurve, Converter={StaticResource SensAxisLabel}, ConverterParameter=2}" />
+            <TextBlock Canvas.Left="0" Canvas.Top="142" Width="52" TextAlignment="Right" FontSize="10"
+                       Foreground="{DynamicResource Brush.Muted}"
+                       Text="{Binding SensitivityCurve, Converter={StaticResource SensAxisLabel}, ConverterParameter=3}" />
+            <TextBlock Canvas.Left="0" Canvas.Top="185" Width="52" TextAlignment="Right" FontSize="10"
+                       Foreground="{DynamicResource Brush.Muted}"
+                       Text="{Binding SensitivityCurve, Converter={StaticResource SensAxisLabel}, ConverterParameter=4}" />
+            <TextBlock Canvas.Left="0" Canvas.Top="228" Width="52" TextAlignment="Right" FontSize="10"
+                       Foreground="{DynamicResource Brush.Muted}"
+                       Text="{Binding SensitivityCurve, Converter={StaticResource SensAxisLabel}, ConverterParameter=5}" />
+
+            <!-- línea base (escenario 0%) -->
+            <Line X1="60" X2="730"
+                  Y1="{Binding SensitivityCurve, Converter={StaticResource SensPointY}, ConverterParameter=0}"
+                  Y2="{Binding SensitivityCurve, Converter={StaticResource SensPointY}, ConverterParameter=0}"
+                  Stroke="{DynamicResource Brush.Muted}" StrokeThickness="1.5" StrokeDashArray="4 4" />
+            <TextBlock Canvas.Left="660" FontSize="10" Foreground="{DynamicResource Brush.Muted}"
+                       Text="Total venta base" Margin="0,-17,0,0"
+                       Canvas.Top="{Binding SensitivityCurve, Converter={StaticResource SensPointY}, ConverterParameter=0}" />
+
+            <!-- curva -->
+            <Path Data="{Binding SensitivityCurve, Converter={StaticResource SensChart}, ConverterParameter=area}"
+                  Fill="{DynamicResource Brush.BlueSoft}" Opacity="0.85" />
+            <Path Data="{Binding SensitivityCurve, Converter={StaticResource SensChart}, ConverterParameter=line}"
+                  Stroke="{DynamicResource Brush.Blue}" StrokeThickness="2.4"
+                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" />
+            <Path Data="{Binding SensitivityCurve, Converter={StaticResource SensChart}, ConverterParameter=markers}"
+                  Fill="{DynamicResource Brush.Surface}" Stroke="{DynamicResource Brush.Blue}" StrokeThickness="2" />
+
+            <!-- anotación de impacto +10% -->
+            <Line X1="{Binding SensitivityCurve, Converter={StaticResource SensPointX}, ConverterParameter=10}"
+                  Y1="{Binding SensitivityCurve, Converter={StaticResource SensPointY}, ConverterParameter=10}"
+                  X2="530" Y2="54" Stroke="{DynamicResource Brush.AmberRisk}" StrokeThickness="1" StrokeDashArray="3 3" />
+            <Border Canvas.Left="524" Canvas.Top="24" Background="{DynamicResource Brush.AmberSoft}"
+                    BorderBrush="{DynamicResource Brush.AmberRisk}" BorderThickness="1"
+                    CornerRadius="7" Padding="10,6">
+              <TextBlock Text="{Binding MaterialImpact10PctLabel}" FontSize="11.5" FontWeight="SemiBold"
+                         FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Amber}" />
+            </Border>
+
+            <!-- eje X (variación de materiales) -->
+            <ItemsControl ItemsSource="{Binding SensitivityCurve}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <Canvas />
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemContainerStyle>
+                <Style TargetType="ContentPresenter">
+                  <Setter Property="Canvas.Top" Value="243" />
+                  <Setter Property="Canvas.Left">
+                    <Setter.Value>
+                      <MultiBinding Converter="{StaticResource SensItemX}">
+                        <Binding Path="." />
+                        <Binding Path="DataContext.SensitivityCurve"
+                                 RelativeSource="{RelativeSource AncestorType=ItemsControl}" />
+                      </MultiBinding>
+                    </Setter.Value>
+                  </Setter>
+                </Style>
+              </ItemsControl.ItemContainerStyle>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <TextBlock Width="70" TextAlignment="Center" FontSize="10"
+                             Foreground="{DynamicResource Brush.Muted}"
+                             Text="{Binding Converter={StaticResource SensXLabel}}" />
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- leyenda -->
+            <StackPanel Orientation="Horizontal" Canvas.Left="60" Canvas.Top="264">
+              <StackPanel Orientation="Horizontal" Margin="0,0,20,0">
+                <Ellipse Width="9" Height="9" Fill="{DynamicResource Brush.Blue}" VerticalAlignment="Center" Margin="0,0,7,0" />
+                <TextBlock Text="Total venta proyectada" FontSize="11.5" Foreground="{DynamicResource Brush.Ink3}" />
+              </StackPanel>
+              <StackPanel Orientation="Horizontal">
+                <Ellipse Width="9" Height="9" Fill="{DynamicResource Brush.Muted}" VerticalAlignment="Center" Margin="0,0,7,0" />
+                <TextBlock Text="Total venta base" FontSize="11.5" Foreground="{DynamicResource Brush.Ink3}" />
+              </StackPanel>
+            </StackPanel>
+          </Canvas>
+        </Viewbox>
+      </StackPanel>
+    </StackPanel>
+  </Border>
+</UserControl>

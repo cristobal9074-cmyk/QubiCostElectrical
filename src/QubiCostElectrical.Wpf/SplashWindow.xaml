@@ -30,9 +30,10 @@
       <StackPanel Grid.Row="0"
                   VerticalAlignment="Center"
                   HorizontalAlignment="Center">
-        <Image Width="140" Height="100"
-               Source="pack://application:,,,/Assets/qubi_cost_electrical_refined_logo.png"
-               Margin="0,0,0,16"
+        <Image Width="80" Height="80"
+               Source="pack://application:,,,/Assets/brand_icon_256.png"
+               RenderOptions.BitmapScalingMode="HighQuality"
+               Margin="0,0,0,20"
                HorizontalAlignment="Center" />
 
         <TextBlock Text="QUBI COST"

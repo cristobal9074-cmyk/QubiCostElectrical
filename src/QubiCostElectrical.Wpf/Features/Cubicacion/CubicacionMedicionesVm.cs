@@ -140,8 +140,14 @@ public sealed class CubicacionMedicionesVm : ViewModelBase
 
         if (currentRow != null && Lines.Count > 0)
         {
+            decimal cantidadAntes = currentRow.Cantidad;
             currentRow.Cantidad = Total;
-            session.ApplyCubicacionMedicionesForPartida(currentRow.Source.ItemId);
+            if (!session.ApplyCubicacionMedicionesForPartida(currentRow.Source.ItemId))
+            {
+                currentRow.Cantidad = cantidadAntes;
+                if (owner != null)
+                    owner.SaveStatusText = "La medición no se aplicó. La fila quedó como estaba.";
+            }
         }
     }
 }

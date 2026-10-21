@@ -15,4 +15,6 @@ public sealed partial class CubicacionViewModel
     public void SelectPartida(PartidaListItemVm partida) => loadingService.SelectPartida(partida);
 
     internal void LoadCubicacionRows() => loadingService.LoadCubicacionRows();
+
+    internal void AlignVisibleRowsToPartidaOrder() => rowMutationService.AlignVisibleRowsToPartidaOrder();
 }

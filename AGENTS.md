@@ -23,6 +23,30 @@ dotnet run --project src/QubiCostElectrical.Wpf/QubiCostElectrical.Wpf.csproj
 .\scripts\Verify-ProductIdentity.ps1
 ```
 
+## Reglas de la suite de tests
+
+- **La suite es hermética: nunca lee ni escribe archivos fuera del repositorio.**
+  En concreto, **nunca toca los `.qce` de obra reales** que están en la carpeta de trabajo del
+  usuario. Un test que haya hecho eso (`SyncAndVerifyPel039A2026Prueba2`) reescribía
+  presupuestos de cliente en cada `dotnet test`.
+- **Para leer un proyecto de obra real**, un test debe pasar por
+  `QubiCostElectrical.Tests.Fixtures.LiveProjectGate`. Está **cerrado por defecto** y se
+  habilita con la variable de entorno `QUBI_LIVE_PROJECTS=1` (raíz configurable con
+  `QUBI_LIVE_PROJECTS_ROOT`, libro Excel con `QUBI_LIVE_EXCEL_ROOT`).
+  Aun con la compuerta abierta, el test debe trabajar sobre una **copia en directorio
+  temporal**, nunca sobre el archivo original.
+- **`tests/ArchitectureTests/NoLivePathGuardTest.cs` falla el build** si reaparece una ruta
+  absoluta de máquina del desarrollador dentro de `tests/`. No lo borres: es la red de
+  seguridad que impide repetir el incidente.
+- **La calibración de un proyecto de obra se hace con la herramienta manual**
+  `tools/LiveProjectCalibration`, no con un test. Es *dry-run* por defecto y exige `--apply`
+  para escribir; deja una copia `.precalibration` del destino.
+- **No correr dos procesos de test a la vez en la misma máquina.** Los tests de pegado
+  usan el portapapeles de Windows, que es un recurso global: en paralelo, uno se queda
+  bloqueado y la corrida se cuelga o se trunca. Ejecuta los proyectos de test de a uno:
+  `dotnet test tests/QubiCostElectrical.Tests/QubiCostElectrical.Tests.csproj` y después
+  `dotnet test tests/ArchitectureTests/ArchitectureTests.csproj`.
+
 ## Arquitectura
 
 - **QubiCostElectrical.Domain / Application / Infrastructure:** negocio, SQLite, cálculos, import/export.
@@ -71,10 +95,11 @@ Política en `UserRolePermissions` (Domain). La sesión aplica restricciones ví
 - **Oferta y exportación** (`ShellRoute.OfferDocuments`): flujo único Revisión → Configurar → Vista previa → Exportar (menú Cierre; sin entrada duplicada en barra principal).
 - **Cubicación SC** (`ShellRoute.CubicacionSc`): tableros y circuitos de servicios comunes en presupuesto.
 
-## Documentación histórica
+## Documentación
 
-- Informes de fases WPF archivados en `docs/archive/WPF_PHASE*`.
-- Fuente operativa: este archivo, `docs/PRE_WEEK5_GATE.md` y `docs/WPF_COMPATIBILITY_REPORT.md` (si existe).
+- Fuente de verdad: este archivo y `docs/PRODUCT.md` (si existe).
+- Informes históricos de fases WPF/WinForms purgados (2026-10-20); el detalle de releases vive en `CHANGELOG.md`.
+- Operativa: `docs/RELEASE_PROCESS.md`, `docs/SMOKE_TEST.md`, `docs/UI_SCREEN_CONTRACT.md`.
 
 ## Alcance multiusuario
 
@@ -82,7 +107,7 @@ Política en `UserRolePermissions` (Domain). La sesión aplica restricciones ví
 - `ProjectCollaborationLockService` mantiene bloqueo OS (`FileShare.None`) + metadatos de usuario (nombre, correo, equipo) en `{proyecto}.qce.lock`.
 - Heartbeat cada 30 s; bloqueo expirado (5 min sin respuesta) puede tomarse con confirmación explícita.
 - **No** hay edición simultánea de dos usuarios en el mismo proyecto; **no** hay servidor central ni merge automático.
-- Auditoría persistente en `project_audit_log` (esquema SQLite v21): aperturas, guardados, ediciones por módulo y cambios de partida.
+- Auditoría persistente en `project_audit_log` (esquema metadata-driven; última migración `Migration034` — ver `SQLiteSchemaMigrator`): aperturas, guardados, ediciones por módulo y cambios de partida.
 - Pestaña **Actividad y auditoría** en Proyecto muestra el historial del archivo.
 - Al guardar se actualiza `ProjectInfo.UsuarioNombre` / `UsuarioRol` (último responsable de persistencia).
 - Vendible como **equipo con carpeta de red** (1 editor + N consultores), no como Google Docs ni ERP multiusuario en tiempo real.

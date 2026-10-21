@@ -113,7 +113,7 @@ public sealed class CubicacionPresenter
             errors.Add(cantidadError);
         }
 
-        if (row.MatClpConFallback == 0m && row.MoClpConFallback == 0m && tieneCodigo)
+        if (row.MatClpConFallback == 0m && row.MoClpConFallback == 0m && tieneCodigo && !EsclavoConCantidad(row))
         {
             codigoError = string.IsNullOrWhiteSpace(codigoError) ? "El precio del material es 0." : codigoError + " / El precio del material es 0.";
             errors.Add("Precio unitario es cero.");
@@ -159,4 +159,7 @@ public sealed class CubicacionPresenter
         => !string.IsNullOrWhiteSpace(row.Operacion)
            || !string.IsNullOrWhiteSpace(row.TotalExpression)
            || (row.QtyExpressions != null && row.QtyExpressions.Any(e => !string.IsNullOrWhiteSpace(e)));
+
+    private static bool EsclavoConCantidad(CubicacionRow row)
+        => row.Esclavo != null && row.Cantidad != 0m;
 }

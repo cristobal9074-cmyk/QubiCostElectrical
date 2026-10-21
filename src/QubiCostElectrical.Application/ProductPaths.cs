@@ -1,4 +1,4 @@
-#nullable enable
+﻿#nullable enable
 using System.IO;
 
 namespace QubiCostElectrical;
@@ -33,6 +33,26 @@ public static class ProductPaths
 
     public static string AutoSaveDirectory()
         => Path.Combine(GetLocalAppDataRoot(), "Autosave");
+
+    public static string BackupsDirectory()
+        => Path.Combine(GetLocalAppDataRoot(), "Backups");
+
+    public static string ProjectBackupDirectory(string projectPath)
+    {
+        string fileName = Path.GetFileName(projectPath);
+        if (string.IsNullOrWhiteSpace(fileName))
+            fileName = "ProyectoSinNombre";
+
+        uint hash = 2166136261;
+        string normalized = (projectPath ?? "").Trim().ToLowerInvariant();
+        foreach (char c in normalized)
+        {
+            hash = (hash ^ (uint)c) * 16777619;
+        }
+
+        string folderName = $"{fileName}_{hash:x8}";
+        return Path.Combine(BackupsDirectory(), folderName);
+    }
 
     public static string DatabaseDirectory()
         => Path.Combine(GetLocalAppDataRoot(), "Database");

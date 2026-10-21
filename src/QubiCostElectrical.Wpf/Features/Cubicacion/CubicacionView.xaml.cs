@@ -28,8 +28,10 @@ public partial class CubicacionView : UserControl, IInGridSearchable
     private Point _autocompleteHoverFreezePos;
     private readonly List<DataGridColumn> _sectorColumns = new();
     private bool _suppressSelectionSync;
+    private bool _isSyncingFromGrid;
     private bool _cantEditingStarted;
     private readonly Dictionary<TextBox, bool> _fieldEditingState = new();
+    private readonly CubicacionSectorFormulaController _sectorFormulaController = new();
 
     private void OnOpenSearchClick(object sender, RoutedEventArgs e) => ResourceSearchOverlay.Open();
     private void OnFindExecuted(object sender, ExecutedRoutedEventArgs e) => ResourceSearchOverlay.Open();

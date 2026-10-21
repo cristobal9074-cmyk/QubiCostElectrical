@@ -38,15 +38,6 @@ public sealed class AsyncDebounceRunner : IDisposable
         }
     }
 
-    public void RunNow()
-    {
-        if (!_disposed)
-        {
-            _timer.Stop();
-            _ = RunAsync();
-        }
-    }
-
     private async void OnTick(object? sender, EventArgs e)
     {
         if (!_disposed)

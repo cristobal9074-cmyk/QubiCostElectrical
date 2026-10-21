@@ -434,31 +434,41 @@ public sealed partial class BudgetEngine
             HasRowLevelMarkup = usaFactoresFamilia
         };
 
+        // Paridad Excel: un bucket de costo material (equipo, subcontrato, herramienta, transporte,
+        // merma) recibe SOLO el material de la línea. La M.O. de esa línea sigue en el bucket de mano
+        // de obra, porque en la ruta de costos Excel la M.O. del proyecto la define la dotación
+        // (ManoObraDotacionClp) y el motor solo la resta de la ejecución cuando está en ese bucket.
+        // Si la M.O. quedara dentro del bucket de equipo, se sumaría dos veces al costo de ejecución.
         switch (tipo)
         {
             case "EQ":
             case "EQUIPO":
             case "EQUIPOS":
-                origin.EquiposClp = total;
+                origin.EquiposClp = material;
+                origin.ManoObraClp = manoObra;
                 break;
             case "SC":
             case "SUBCONTRATO":
             case "SUBCONTRATOS":
-                origin.SubcontratosClp = total;
+                origin.SubcontratosClp = material;
+                origin.ManoObraClp = manoObra;
                 break;
             case "HERR":
             case "HERRAMIENTA":
             case "HERRAMIENTAS":
-                origin.HerramientasClp = total;
+                origin.HerramientasClp = material;
+                origin.ManoObraClp = manoObra;
                 break;
             case "TR":
             case "TRANSPORTE":
             case "TRANSPORTES":
-                origin.TransporteClp = total;
+                origin.TransporteClp = material;
+                origin.ManoObraClp = manoObra;
                 break;
             case "MERMA":
             case "MERMAS":
-                origin.MermasClp = total;
+                origin.MermasClp = material;
+                origin.ManoObraClp = manoObra;
                 break;
             case "MO":
             case "HH":
@@ -634,7 +644,9 @@ public sealed partial class BudgetEngine
             .Sum(x => x.ManoObraUf);
         decimal herramientasAuto = herramientasGlobalBase * MarkupPolicy.ClampPct(settings.HerramientasPct) / 100m;
         bool usaFactoresFamilia = settings.Markup?.FactoresPresentacionPorFamilia ?? false;
-        decimal ventaFactor = usaFactoresFamilia ? settings.DefaultPresentationFactor : 0m;
+        // Con factores de presentación la venta es el detalle cubicado. Ferretería, herramientas
+        // y mermas globales son estimaciones de costo (hoja COSTOS), no líneas de venta.
+        decimal ventaFactor = 0m;
         if (herramientasAuto != 0m)
         {
             AddOrigin(result, new CostOriginBreakdown
@@ -798,31 +810,4 @@ public sealed partial class BudgetEngine
             .GroupBy(x => x.ItemId, StringComparer.OrdinalIgnoreCase)
             .ToDictionary(g => g.Key, g => g.First().Area, StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>
-    /// Devuelve los ItemId que tienen TANTO cubicación valorizada COMO APU con materiales o MO,
-    /// en el modo CubicacionMasApuComplementarios. En ese modo, el APU silenciosamente ignora
-    /// sus materiales/MO para esas partidas — lo cual puede ser correcto o un error involuntario.
-    /// </summary>
-    public static IReadOnlyList<string> DetectDoubleCountingRisk(
-        IEnumerable<CubicacionRow>? cubicacion,
-        IEnumerable<ApuRow>? apus,
-        BudgetApuMode mode)
-    {
-        if (mode != BudgetApuMode.CubicacionMasApuComplementarios)
-            return Array.Empty<string>();
-
-        var itemsWithValuedCubicacion = (cubicacion ?? Enumerable.Empty<CubicacionRow>())
-            .Where(HasValuedCubicacionRow)
-            .Select(x => x.ItemId)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-        return (apus ?? Enumerable.Empty<ApuRow>())
-            .Where(a => !string.IsNullOrWhiteSpace(a.ItemId)
-                     && itemsWithValuedCubicacion.Contains(a.ItemId)
-                     // CostoMaterial*/CostoMo* son sumas de PrecioUf de recursos, que ahora son CLP
-                     && (a.CostoMaterialUf > 0m || a.CostoMoUf > 0m || a.CostoHhUf > 0m))
-            .Select(a => a.ItemId)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList();
-    }
 }

@@ -1,50 +1,182 @@
 <UserControl x:Class="QubiCostElectrical.Wpf.Features.Project.ProjectHeaderControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d">
+  <!-- ══════════════════════════════════════════════════════════════════ -->
+  <!-- HEADER EJECUTIVO (Compacto, Prolijo, Nivel Enterprise)           -->
+  <!-- ══════════════════════════════════════════════════════════════════ -->
   <Border Background="{DynamicResource Brush.Surface}"
           BorderBrush="{DynamicResource Brush.Line}"
           BorderThickness="0,0,0,1"
-          Padding="22,14,22,12">
+          Padding="24,10,24,10">
     <Grid>
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="*" />
         <ColumnDefinition Width="Auto" />
       </Grid.ColumnDefinitions>
-      <StackPanel Margin="0,0,16,0">
-        <TextBox Text="{Binding Nombre, UpdateSourceTrigger=PropertyChanged}"
-                 Height="28"
-                 FontSize="{StaticResource Font.Size.hero}"
-                 FontWeight="Bold"
-                 BorderThickness="0,0,0,1.5"
-                 Background="Transparent"
-                 Padding="0"
-                 MaxLength="120"
-                 ToolTip="Nombre del proyecto" />
-        <WrapPanel Margin="0,6,0,0">
-          <Border Style="{StaticResource Meta.Tag}">
-            <TextBlock Text="{Binding EstadoPresupuesto}" Style="{StaticResource Meta.Tag.Text}" />
-          </Border>
-          <Border Style="{StaticResource Meta.Tag.Accent}">
-            <TextBlock Text="{Binding MonedaChip}" Style="{StaticResource Meta.Tag.Text}"
-                       Foreground="{DynamicResource Brush.Blue}" />
-          </Border>
-          <Border Style="{StaticResource Meta.Tag}">
-            <TextBlock Text="{Binding ClienteChip}" Style="{StaticResource Meta.Tag.Text}" />
-          </Border>
-          <TextBlock Style="{StaticResource Text.Caption}" VerticalAlignment="Center" Margin="4,0,0,0">
-            <Run Text="{Binding ArchivoProyectoShortLabel, Mode=OneWay}" />
-            <Run Text=" · " />
-            <Run Text="{Binding FechaModificacionLabel, Mode=OneWay}" />
-          </TextBlock>
-        </WrapPanel>
+
+      <!-- Bloque Identidad & Metadatos -->
+      <Grid Grid.Column="0" Margin="0,0,20,0">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Icono de Proyecto Micro -->
+        <Border Grid.Column="0" Width="34" Height="34" CornerRadius="8"
+                Background="{DynamicResource Brush.BlueSoft}"
+                BorderBrush="{DynamicResource Brush.BlueIconBg2}" BorderThickness="1"
+                Margin="0,2,12,0" VerticalAlignment="Top">
+          <TextBlock Text="&#xE8EC;" FontFamily="Segoe MDL2 Assets" FontSize="15"
+                     Foreground="{DynamicResource Brush.Blue}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Border>
+
+        <StackPanel Grid.Column="1">
+          <!-- Breadcrumb sutil -->
+          <StackPanel Orientation="Horizontal" Margin="0,0,0,1">
+            <TextBlock Text="PROYECTO" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink4}" />
+            <TextBlock Text=" › " FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink5}" />
+            <TextBlock Text="FICHA EJECUTIVA &amp; DATOS GENERALES" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink4}" />
+          </StackPanel>
+
+          <!-- Nombre del Proyecto Inline Editable -->
+          <TextBox Text="{Binding Nombre, UpdateSourceTrigger=PropertyChanged}"
+                   FontSize="16" FontWeight="SemiBold"
+                   BorderThickness="0,0,0,1"
+                   BorderBrush="Transparent"
+                   Background="Transparent"
+                   Padding="0,1,0,3"
+                   Margin="0,0,0,3"
+                   MaxLength="120"
+                   CaretBrush="{DynamicResource Brush.Blue}"
+                   ToolTip="Nombre del proyecto (haga clic para editar)">
+            <TextBox.Style>
+              <Style TargetType="TextBox">
+                <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+                <Style.Triggers>
+                  <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line2}" />
+                  </Trigger>
+                  <Trigger Property="IsFocused" Value="True">
+                    <Setter Property="BorderBrush" Value="{DynamicResource Brush.BlueFocus}" />
+                  </Trigger>
+                </Style.Triggers>
+              </Style>
+            </TextBox.Style>
+          </TextBox>
+
+          <!-- Chips de Contexto Micro -->
+          <WrapPanel VerticalAlignment="Center">
+            <!-- Estado Badge con Dot -->
+            <Border CornerRadius="4" BorderThickness="1" Padding="7,2" Margin="0,0,6,2">
+              <Border.Style>
+                <Style TargetType="Border">
+                  <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+                  <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsEstadoBorrador}" Value="True">
+                      <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+                      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding IsEstadoEnRevision}" Value="True">
+                      <Setter Property="Background" Value="{DynamicResource Brush.AmberSoft}" />
+                      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Amber2}" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding IsEstadoAprobado}" Value="True">
+                      <Setter Property="Background" Value="{DynamicResource Brush.SuccessBg}" />
+                      <Setter Property="BorderBrush" Value="{DynamicResource Brush.SuccessBorder}" />
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </Border.Style>
+              <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Ellipse Width="5" Height="5" Margin="0,0,5,0" VerticalAlignment="Center">
+                  <Ellipse.Style>
+                    <Style TargetType="Ellipse">
+                      <Setter Property="Fill" Value="{DynamicResource Brush.Ink4}" />
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsEstadoEnRevision}" Value="True">
+                          <Setter Property="Fill" Value="{DynamicResource Brush.Amber}" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding IsEstadoAprobado}" Value="True">
+                          <Setter Property="Fill" Value="{DynamicResource Brush.Success}" />
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </Ellipse.Style>
+                </Ellipse>
+                <TextBlock Text="{Binding EstadoPresupuesto}" FontSize="10.5" FontWeight="SemiBold">
+                  <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                      <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}" />
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsEstadoEnRevision}" Value="True">
+                          <Setter Property="Foreground" Value="{DynamicResource Brush.Amber}" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding IsEstadoAprobado}" Value="True">
+                          <Setter Property="Foreground" Value="{DynamicResource Brush.Success}" />
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </TextBlock.Style>
+                </TextBlock>
+              </StackPanel>
+            </Border>
+
+            <!-- Moneda Chip -->
+            <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}"
+                    BorderThickness="1" CornerRadius="4" Padding="7,2" Margin="0,0,6,2">
+              <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="Moneda: " FontSize="10.5" Foreground="{DynamicResource Brush.Ink4}" />
+                <TextBlock Text="{Binding MonedaChip}" FontSize="10.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" />
+              </StackPanel>
+            </Border>
+
+            <!-- Cliente Chip -->
+            <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}"
+                    BorderThickness="1" CornerRadius="4" Padding="7,2" Margin="0,0,8,2">
+              <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="Cliente: " FontSize="10.5" Foreground="{DynamicResource Brush.Ink4}" />
+                <TextBlock Text="{Binding Cliente, FallbackValue='Sin mandante'}" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink2}" />
+              </StackPanel>
+            </Border>
+
+            <!-- Separador vertical micro -->
+            <Border Width="1" Height="12" Background="{DynamicResource Brush.Line}" Margin="0,0,8,2" VerticalAlignment="Center" />
+
+            <!-- Archivo y Modificación -->
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,2">
+              <TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="9.5" Margin="0,0,4,0" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center" />
+              <TextBlock Text="{Binding ArchivoProyectoShortLabel, Mode=OneWay}" FontSize="10.5" FontWeight="Medium" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" />
+              <TextBlock Text=" · " FontSize="10.5" Foreground="{DynamicResource Brush.Ink5}" VerticalAlignment="Center" />
+              <TextBlock Text="&#xE823;" FontFamily="Segoe MDL2 Assets" FontSize="9.5" Margin="0,0,4,0" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center" />
+              <TextBlock Text="{Binding FechaModificacionLabel, Mode=OneWay}" FontSize="10.5" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center" />
+            </StackPanel>
+          </WrapPanel>
+        </StackPanel>
+      </Grid>
+
+      <!-- Acciones de Cabecera (Botones Pro) -->
+      <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+        <Button Style="{StaticResource Button.Secondary}"
+                Command="{Binding GenerateFichaPdfCommand}"
+                Height="32" Padding="12,0" Margin="0,0,8,0" FontSize="11.5">
+          <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <Path Data="{StaticResource Geo.FileText}" Style="{StaticResource Icon.Vector.Sm}" Margin="0,0,6,0" VerticalAlignment="Center" />
+            <TextBlock Text="Generar ficha PDF" VerticalAlignment="Center" />
+          </StackPanel>
+        </Button>
+        <Button Style="{StaticResource Button.Primary}"
+                Command="{Binding SaveCommand}"
+                Height="32" Padding="14,0" FontSize="11.5" FontWeight="SemiBold">
+          <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <Path Data="{StaticResource Geo.Check}" Style="{StaticResource Icon.Vector.Sm}" Margin="0,0,6,0" VerticalAlignment="Center" />
+            <TextBlock Text="Aplicar cambios" VerticalAlignment="Center" />
+          </StackPanel>
+        </Button>
       </StackPanel>
-      <Button Grid.Column="1"
-              AutomationProperties.Name="Generar ficha PDF"
-              Style="{StaticResource Button.Secondary}"
-              Content="Generar ficha PDF"
-              Command="{Binding GenerateFichaPdfCommand}"
-              Height="32"
-              Padding="12,0" />
     </Grid>
   </Border>
 </UserControl>

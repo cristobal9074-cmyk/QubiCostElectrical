@@ -83,6 +83,7 @@ internal sealed class CostoFamilyPricingCoordinator
                 _vm.PrecioFamiliasLibres.Add(chip);
             else
                 row.FamiliasPrecio.Add(chip);
+            PublicarEstadoChip(chip, nombre);
         }
 
         _vm.NotifyHasPrecioFamiliasLibresChanged();
@@ -210,6 +211,25 @@ internal sealed class CostoFamilyPricingCoordinator
             _vm.Session.ProjectInfo.FamiliasOcultas,
             _vm.Session.ProjectInfo.FamiliasPersonalizadas,
             bankCategories).ToList();
+    }
+
+    /// <summary>
+    /// Publica el factor y el origen de cada familia para que el chip diga de donde sale su valor
+    /// (propio, heredado de otra fila, o sin configurar).
+    /// </summary>
+    private void PublicarEstadoChip(PrecioFamiliaChipVm chip, string nombre)
+    {
+        var informe = _vm.InformeFamilias;
+        if (informe == null)
+        {
+            chip.SetEstado(null, false);
+            return;
+        }
+
+        var info = informe.Resolver(nombre);
+        var usada = informe.Familias.Any(f =>
+            string.Equals(f.Nombre, nombre, StringComparison.OrdinalIgnoreCase));
+        chip.SetEstado(info, usada);
     }
 
     public void UpdateCoefChips()

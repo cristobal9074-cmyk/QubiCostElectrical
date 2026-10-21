@@ -155,6 +155,7 @@ public sealed class BudgetSettings
         if (settings.Markup.FactoresPresentacionPorFamilia)
         {
             var vars = project.Variables;
+            decimal porDefecto = project.MarkupFactorPorDefecto;
             if (vars != null)
             {
                 foreach (var kvp in vars)
@@ -162,7 +163,7 @@ public sealed class BudgetSettings
                     if (!kvp.Key.StartsWith("MarkupFactor_", StringComparison.OrdinalIgnoreCase)) continue;
                     var fam = kvp.Key.Substring("MarkupFactor_".Length);
                     if (string.IsNullOrWhiteSpace(fam)) continue;
-                    settings.PresentationFactorsByFamily[fam] = FamilyPresentationDefaults.ResolveFactor(vars, fam);
+                    settings.PresentationFactorsByFamily[fam] = FamilyPresentationDefaults.ResolveFactor(vars, fam, porDefecto);
                 }
             }
             var assigned = project.FamiliasPrecioAsignadas;
@@ -178,12 +179,12 @@ public sealed class BudgetSettings
                     var target = FamilyPresentationDefaults.Normalize(pair.Value);
                     if (!FamilyPresentationDefaults.IsCanonical(target))
                         continue;
-                    settings.PresentationFactorsByFamily[source] = FamilyPresentationDefaults.ResolveFactor(vars, target);
+                    settings.PresentationFactorsByFamily[source] = FamilyPresentationDefaults.ResolveFactor(vars, target, porDefecto);
                 }
             }
 
-            // Familia general ("" → default 1.14 × (1 − disc)): factor por defecto del proyecto.
-            settings.DefaultPresentationFactor = FamilyPresentationDefaults.ResolveFactor(vars, "");
+            // Familia general ("" → default del proyecto × (1 − disc)): factor por defecto.
+            settings.DefaultPresentationFactor = FamilyPresentationDefaults.ResolveFactor(vars, "", porDefecto);
         }
 
         return settings;

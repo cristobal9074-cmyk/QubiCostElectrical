@@ -49,9 +49,6 @@ public partial class PurchaseListView : UserControl
     private void ApplyMonedaPolicy()
     {
         var ufVisibility = vm?.MuestraUf == true ? Visibility.Visible : Visibility.Collapsed;
-        PrecioUfColumn.Visibility = ufVisibility;
-        NetoUfColumn.Visibility = ufVisibility;
-        CompraUfColumn.Visibility = ufVisibility;
     }
 
     private void OnUserControlKeyDown(object sender, KeyEventArgs e)
@@ -73,5 +70,11 @@ public partial class PurchaseListView : UserControl
             e.Handled = true;
             return;
         }
+    }
+
+    private void OnBackToListClick(object sender, RoutedEventArgs e)
+    {
+        if (vm != null)
+            vm.ActiveTab = 0;
     }
 }

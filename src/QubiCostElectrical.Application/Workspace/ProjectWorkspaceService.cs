@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 
 namespace QubiCostElectrical;
 
@@ -416,9 +416,27 @@ public sealed class ProjectWorkspaceService : IProjectWorkspaceService
             $"No se encontró un archivo de proyecto compatible dentro de:\n{path}\n\nAbra el archivo .qce o .pepro directamente.");
     }
 
-    private static string GetMigrationBackupPath(string path) => path + ".bak";
+    private static string GetMigrationBackupPath(string path)
+    {
+        string backupDir = ProductPaths.ProjectBackupDirectory(path);
+        Directory.CreateDirectory(backupDir);
+        string name = Path.GetFileName(path);
+        return Path.Combine(backupDir, $"{name}.migration_{AppClock.Now:yyyyMMdd_HHmmss}.bak");
+    }
 
-    private static string GetJsonBackupPath(string path) => path + ".bak";
+    private static string GetJsonBackupPath(string path)
+    {
+        string localBackupDir = ProductPaths.ProjectBackupDirectory(path);
+        if (Directory.Exists(localBackupDir))
+        {
+            var files = Directory.GetFiles(localBackupDir, "*.bak");
+            if (files.Length > 0)
+            {
+                return files.OrderByDescending(x => File.GetLastWriteTimeUtc(x)).First();
+            }
+        }
+        return path + ".bak";
+    }
 
     private static bool PathsEqual(string left, string right)
     {

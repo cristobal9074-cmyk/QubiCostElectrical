@@ -238,6 +238,32 @@ public sealed class AutoSaveService : INotifyPropertyChanged, IDisposable
         persistDebounceTimer = null;
     }
 
+    /// <summary>
+    /// Confirma el editor abierto antes de escribir el archivo.
+    /// False cancela esa escritura (fórmula que no calcula).
+    /// </summary>
+    public Func<bool>? BeforePersist { get; set; }
+
+    private bool RunBeforePersist()
+    {
+        var gate = BeforePersist;
+        if (gate == null)
+            return true;
+
+        try
+        {
+            var dispatcher = System.Windows.Application.Current?.Dispatcher;
+            if (dispatcher != null && !dispatcher.CheckAccess())
+                return dispatcher.Invoke(gate);
+            return gate();
+        }
+        catch (Exception ex)
+        {
+            logger?.Error("AutoSave", "No se pudo confirmar la celda abierta antes de guardar", ex);
+            return false;
+        }
+    }
+
     /// <summary>Cancela el debounce pendiente (p. ej. al perder el bloqueo SMB).</summary>
     public void CancelPendingPersist()
     {
@@ -262,6 +288,15 @@ public sealed class AutoSaveService : INotifyPropertyChanged, IDisposable
         }
 
         if (!CanPersistToProject()) return;
+
+        if (!RunBeforePersist())
+        {
+            if (!disposed)
+                StatusText = "Fórmula pendiente — no se auto-guardó";
+            if (CanPersistToProject())
+                ArmPersistDebounce();
+            return;
+        }
 
         isPersisting = true;
         try
@@ -322,15 +357,16 @@ public sealed class AutoSaveService : INotifyPropertyChanged, IDisposable
         isWritingSidecar = true;
         try
         {
-            ProjectFileData snapshot;
+            ProjectFileData? snapshot = null;
             try
             {
                 var app = System.Windows.Application.Current;
                 if (app?.Dispatcher != null && !app.Dispatcher.CheckAccess())
                 {
-                    snapshot = app.Dispatcher.Invoke(() => session.CreateSnapshot());
+                    snapshot = app.Dispatcher.Invoke(() =>
+                        RunBeforePersist() ? session.CreateSnapshot() : null);
                 }
-                else
+                else if (RunBeforePersist())
                 {
                     snapshot = session.CreateSnapshot();
                 }
@@ -340,6 +376,10 @@ public sealed class AutoSaveService : INotifyPropertyChanged, IDisposable
                 // Concurrencia transitoria con mutación activa en UI: reintentar en siguiente ciclo
                 return;
             }
+
+            if (snapshot == null)
+                return;
+
             var path = session.CurrentProjectPath;
 
             var autoSavePath = GetAutoSavePath(path);

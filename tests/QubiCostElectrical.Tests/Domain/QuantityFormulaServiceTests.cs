@@ -181,6 +181,22 @@ public sealed class QuantityFormulaServiceTests
     }
 
     [Theory]
+    [InlineData(null, "")]
+    [InlineData("12", "12")]
+    [InlineData("50*5/2+30", "=50*5/2+30")]
+    [InlineData("=50*5/2+30", "=50*5/2+30")]
+    [InlineData("  +50", "=+50")]
+    public void FormatForFormulaBar_PrefixesExpressions(string? raw, string expected)
+        => Assert.Equal(expected, QuantityFormulaService.FormatForFormulaBar(raw));
+
+    [Theory]
+    [InlineData("=50*5/2+30", "50*5/2+30")]
+    [InlineData("12", "12")]
+    [InlineData("  = 8+1 ", "8+1")]
+    public void ParseFromFormulaBar_StripsLeadingEquals(string bar, string expected)
+        => Assert.Equal(expected, QuantityFormulaService.ParseFromFormulaBar(bar));
+
+    [Theory]
     [InlineData(null, false)]
     [InlineData("", false)]
     [InlineData(" ", false)]
@@ -324,5 +340,36 @@ public sealed class QuantityFormulaServiceTests
         var result = QuantityFormulaService.Evaluate(expr, vars);
         Assert.True(result.Success, result.Error);
         Assert.Equal(expected, result.Value);
+    }
+
+    [Fact]
+    public void Dialect_PublicaRedondear_YRechazaLoQueNoEsta()
+    {
+        Assert.Contains(QuantityFormulaDialect.Functions, name => name == "REDONDEAR");
+
+        var accepted = QuantityFormulaService.ValidateDialect("=REDONDEAR(10,5;0)");
+        Assert.True(accepted.Success, accepted.Error);
+        Assert.Equal(11m, accepted.Value);
+
+        var rejected = QuantityFormulaService.ValidateDialect("=BUSCARV(1;2;3;4)");
+        Assert.False(rejected.Success);
+        Assert.Contains("no está en el dialecto", rejected.Error, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(0m, rejected.Value);
+    }
+
+    [Fact]
+    public void ValidateDialect_AceptaReferenciasRUYCasillas()
+    {
+        var result = QuantityFormulaService.ValidateDialect("=R1+U2+F1C1");
+        Assert.True(result.Success, result.Error);
+    }
+
+    [Fact]
+    public void U1_SigueLaCantidadDelRecurso()
+    {
+        var vars = PartidaCantidadVariablesBuilder.Build(new[] { 4m, 7m });
+        var result = QuantityFormulaService.Evaluate("U1+U2", vars);
+        Assert.True(result.Success, result.Error);
+        Assert.Equal(11m, result.Value);
     }
 }

@@ -111,6 +111,10 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
     /// <summary>Cascada de precio: un solo origen de datos para el precio de la oferta.</summary>
     public DashboardWaterfallVm Waterfall { get => waterfall; private set => SetProperty(ref waterfall, value); }
 
+    private DashboardCompositionVm composition = DashboardCompositionVm.Empty;
+    /// <summary>Composición del precio (dona) con su lectura de una línea.</summary>
+    public DashboardCompositionVm Composition { get => composition; private set => SetProperty(ref composition, value); }
+
     private DashboardReadinessContract readiness = DashboardReadinessContract.Empty;
     /// <summary>Contrato único de preparación: KPI, barra, anillo, checklist y veredicto.</summary>
     public DashboardReadinessContract Readiness { get => readiness; private set => SetProperty(ref readiness, value); }

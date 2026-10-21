@@ -1,0 +1,94 @@
+<UserControl x:Class="QubiCostElectrical.Wpf.Features.Versions.VersionsKpiBarControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d">
+  <!-- ════ Tira KPI de Versiones ════ -->
+  <Border Style="{StaticResource Card.Surface}" Padding="0" Margin="0,0,0,10"
+          VerticalAlignment="Top">
+    <UniformGrid Columns="4">
+
+      <!-- 1 · Variación neta -->
+      <Border Style="{StaticResource Versions.KpiCell}" BorderThickness="0">
+        <StackPanel>
+          <TextBlock Text="VARIACIÓN NETA DEL COMPARADOR" Style="{StaticResource Versions.KpiLabel}" />
+          <TextBlock>
+            <TextBlock.Style>
+              <Style TargetType="TextBlock" BasedOn="{StaticResource Versions.KpiValue}">
+                <Style.Triggers>
+                  <DataTrigger Binding="{Binding ComparisonDeltaKind}" Value="Aumenta">
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.SuccessDark}" />
+                  </DataTrigger>
+                  <DataTrigger Binding="{Binding ComparisonDeltaKind}" Value="Reduce">
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Danger}" />
+                  </DataTrigger>
+                  <DataTrigger Binding="{Binding ComparisonDeltaKind}" Value="Neutro">
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink4}" />
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </TextBlock.Style>
+            <Run Text="{Binding ComparisonDeltaText, Mode=OneWay}" />
+          </TextBlock>
+          <TextBlock Style="{StaticResource Versions.KpiNote}">
+            <Run Text="{Binding ComparisonDeltaPctText, Mode=OneWay}" FontWeight="SemiBold" />
+            <Run Text="  ·  " />
+            <Run Text="{Binding ComparisonStatusText, Mode=OneWay}" />
+          </TextBlock>
+        </StackPanel>
+      </Border>
+
+      <!-- 2 · Partidas comparadas -->
+      <Border Style="{StaticResource Versions.KpiCell}">
+        <StackPanel>
+          <TextBlock Text="PARTIDAS COMPARADAS" Style="{StaticResource Versions.KpiLabel}" />
+          <TextBlock Text="{Binding ComparisonRows.Count}" Style="{StaticResource Versions.KpiValue}" />
+          <StackPanel Orientation="Horizontal" Margin="0,4,0,0" HorizontalAlignment="Left">
+            <Border Style="{StaticResource Badge.Ok}" Padding="6,2">
+              <StackPanel Orientation="Horizontal">
+                <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.Success}" VerticalAlignment="Center" Margin="0,0,5,0" />
+                <TextBlock Text="{Binding ComparisonAddedText}" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.SuccessDark}" />
+              </StackPanel>
+            </Border>
+            <Border Style="{StaticResource Badge.Warn}" Padding="6,2" Margin="5,0,0,0">
+              <StackPanel Orientation="Horizontal">
+                <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.AmberRisk}" VerticalAlignment="Center" Margin="0,0,5,0" />
+                <TextBlock Text="{Binding ComparisonChangedText}" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Amber}" />
+              </StackPanel>
+            </Border>
+            <Border Style="{StaticResource Badge.Bad}" Padding="6,2" Margin="5,0,0,0">
+              <StackPanel Orientation="Horizontal">
+                <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.Danger}" VerticalAlignment="Center" Margin="0,0,5,0" />
+                <TextBlock Text="{Binding ComparisonRemovedText}" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Danger}" />
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </StackPanel>
+      </Border>
+
+      <!-- 3 · Versión activa -->
+      <Border Style="{StaticResource Versions.KpiCell}">
+        <StackPanel>
+          <TextBlock Text="VERSIÓN ACTIVA" Style="{StaticResource Versions.KpiLabel}" />
+          <TextBlock Text="{Binding ActiveVersionText}" FontSize="13" />
+          <TextBlock Text="{Binding SummaryText}" Style="{StaticResource Versions.KpiNote}" />
+        </StackPanel>
+      </Border>
+
+      <!-- 4 · Última actualización -->
+      <Border Style="{StaticResource Versions.KpiCell}">
+        <StackPanel>
+          <TextBlock Text="ÚLTIMA ACTUALIZACIÓN" Style="{StaticResource Versions.KpiLabel}" />
+          <TextBlock Text="{Binding SelectedVersion.FechaModificacion, StringFormat='{}{0:dd/MM · HH:mm}', FallbackValue=—}"
+                     FontSize="13.5" />
+          <TextBlock Style="{StaticResource Versions.KpiNote}">
+            <Run Text="por " />
+            <Run Text="{Binding SelectedVersion.CreadoPor, FallbackValue=—, Mode=OneWay}" />
+          </TextBlock>
+        </StackPanel>
+      </Border>
+
+    </UniformGrid>
+  </Border>
+</UserControl>

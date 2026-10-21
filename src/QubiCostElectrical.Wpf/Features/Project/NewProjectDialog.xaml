@@ -3,182 +3,360 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Style="{StaticResource Dialog.Window}"
         Title="Nuevo proyecto"
-        Width="520" Height="680"
-        ShowInTaskbar="False">
+        Width="980" Height="720"
+        MinWidth="900" MinHeight="640"
+        ShowInTaskbar="False"
+        PreviewKeyDown="OnWindowKeyDown">
   <Border Style="{StaticResource Dialog.Chrome}">
-  <Grid>
-    <Grid.RowDefinitions>
-      <RowDefinition Height="Auto" />
-      <RowDefinition Height="*" />
-      <RowDefinition Height="Auto" />
-    </Grid.RowDefinitions>
+    <Grid>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="*" />
+        <RowDefinition Height="Auto" />
+      </Grid.RowDefinitions>
 
-    <DockPanel Grid.Row="0" Margin="0,0,0,16" LastChildFill="True">
-      <Border Style="{StaticResource Dialog.HeaderIconContainer}" DockPanel.Dock="Left">
-        <Path Data="M 4 20 h 16 a 2 2 0 0 0 2 -2 V 8 a 2 2 0 0 0 -2 -2 h -7.93 a 2 2 0 0 1 -1.66 -.9 l -.82 -1.2 A 2 2 0 0 0 7.93 3 H 4 a 2 2 0 0 0 -2 2 v 13 a 2 2 0 0 0 2 2 Z M 12 10 v 6 M 9 13 h 6"
-              Stroke="{DynamicResource Brush.Blue}" StrokeThickness="1.6"
-              StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
-              Width="16" Height="16" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" />
-      </Border>
-      <StackPanel VerticalAlignment="Center">
-        <TextBlock Text="Crear nuevo proyecto" Style="{StaticResource Dialog.HeaderTitle}" />
-        <TextBlock Text="Defina nombre, cliente, plantilla SEC y carpeta destino del archivo .qce."
-                   Style="{StaticResource Dialog.HeaderSubtitle}" Margin="0" />
-        <TextBlock x:Name="ValidationErrorBlock"
-                   Text="{Binding ValidationError, RelativeSource={RelativeSource AncestorType=Window}}"
-                   Foreground="{DynamicResource Brush.DangerDark}"
-                   TextWrapping="Wrap"
-                   Margin="0,4,0,0"
-                   Visibility="Collapsed" />
-      </StackPanel>
-    </DockPanel>
-
-    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-      <StackPanel>
-        <TextBlock Text="Nombre del proyecto" Style="{StaticResource Form.Label}" />
-        <TextBox x:Name="NameBox" Style="{StaticResource Form.TextBox}" Text="Proyecto nuevo" Margin="0,0,0,10" />
-
-        <TextBlock Text="Cliente" Style="{StaticResource Form.Label}" />
-        <Grid Margin="0,0,0,10">
-          <TextBox x:Name="ClientBox" Style="{StaticResource Form.TextBox}" />
-          <TextBlock Text="Nombre del cliente (opcional)" IsHitTestVisible="False" Foreground="{DynamicResource Brush.Muted}"
-                     VerticalAlignment="Center" Margin="8,0,0,0" FontSize="{StaticResource Font.Size.md}">
-            <TextBlock.Style>
-              <Style TargetType="TextBlock">
-                <Setter Property="Visibility" Value="Collapsed" />
-                <Style.Triggers>
-                  <DataTrigger Binding="{Binding Text, ElementName=ClientBox}" Value="">
-                    <Setter Property="Visibility" Value="Visible" />
-                  </DataTrigger>
-                </Style.Triggers>
-              </Style>
-            </TextBlock.Style>
-          </TextBlock>
-        </Grid>
-
-        <TextBlock Text="Ubicación" Style="{StaticResource Form.Label}" />
-        <Grid Margin="0,0,0,10">
-          <TextBox x:Name="LocationBox" Style="{StaticResource Form.TextBox}" />
-          <TextBlock Text="Ciudad o dirección de la obra (opcional)" IsHitTestVisible="False" Foreground="{DynamicResource Brush.Muted}"
-                     VerticalAlignment="Center" Margin="8,0,0,0" FontSize="{StaticResource Font.Size.md}">
-            <TextBlock.Style>
-              <Style TargetType="TextBlock">
-                <Setter Property="Visibility" Value="Collapsed" />
-                <Style.Triggers>
-                  <DataTrigger Binding="{Binding Text, ElementName=LocationBox}" Value="">
-                    <Setter Property="Visibility" Value="Visible" />
-                  </DataTrigger>
-                </Style.Triggers>
-              </Style>
-            </TextBlock.Style>
-          </TextBlock>
-        </Grid>
-
-        <TextBlock Text="Moneda del presupuesto" Style="{StaticResource Form.Label}" />
-        <ComboBox x:Name="CurrencyBox" Style="{StaticResource Form.ComboBox}" SelectedIndex="0" Margin="0,0,0,10">
-          <ComboBoxItem Content="UF" />
-          <ComboBoxItem Content="CLP" />
-          <ComboBoxItem Content="USD" />
-        </ComboBox>
-
-        <TextBlock Text="Plantilla de obra típica (Norma SEC / RIC)" Style="{StaticResource Form.Label}" />
-        <ComboBox x:Name="TemplateBox" Style="{StaticResource Form.ComboBox}" Margin="0,0,0,6"
-                  SelectionChanged="OnTemplateChanged">
-          <ComboBox.ItemTemplate>
-            <DataTemplate>
-              <StackPanel Orientation="Horizontal">
-                <TextBlock Text="{Binding Icono}" Margin="0,0,8,0" FontSize="{StaticResource Font.Size.base}" VerticalAlignment="Center" />
-                <TextBlock Text="{Binding Nombre}" FontWeight="Medium" VerticalAlignment="Center" />
-              </StackPanel>
-            </DataTemplate>
-          </ComboBox.ItemTemplate>
-        </ComboBox>
-        <Border x:Name="TemplateInfoBorder" Margin="0,0,0,10" Padding="10,8" CornerRadius="6"
-                Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1">
-          <StackPanel>
-            <DockPanel LastChildFill="True">
-              <TextBlock x:Name="TemplateNormaBadge" DockPanel.Dock="Right" FontSize="{StaticResource Font.Size.sm}" FontWeight="SemiBold"
-                         Foreground="{DynamicResource Brush.Blue}" VerticalAlignment="Center" />
-              <TextBlock x:Name="TemplateSubtitleBlock" FontWeight="SemiBold" FontSize="{StaticResource Font.Size.md}"
-                         Foreground="{DynamicResource Brush.Ink}" />
-            </DockPanel>
-            <TextBlock x:Name="TemplateDescriptionBlock" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}"
-                       TextWrapping="Wrap" Margin="0,4,0,0" />
-          </StackPanel>
+      <DockPanel Grid.Row="0" Margin="0,0,0,14" LastChildFill="True">
+        <Border Style="{StaticResource Dialog.HeaderIconContainer}" Width="46" Height="46" CornerRadius="12" DockPanel.Dock="Left">
+          <Path Data="M 4 20 h 16 a 2 2 0 0 0 2 -2 V 8 a 2 2 0 0 0 -2 -2 h -7.93 a 2 2 0 0 1 -1.66 -.9 l -.82 -1.2 A 2 2 0 0 0 7.93 3 H 4 a 2 2 0 0 0 -2 2 v 13 a 2 2 0 0 0 2 2 Z M 12 10 v 6 M 9 13 h 6"
+                Stroke="{DynamicResource Brush.Blue}" StrokeThickness="1.5"
+                StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                Width="20" Height="20" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" />
         </Border>
-
-        <TextBlock Text="Carpeta destino" Style="{StaticResource Form.Label}" />
-        <DockPanel Margin="0,0,0,10">
-          <Button x:Name="BrowseFolderBtn" DockPanel.Dock="Right" Content="…"
-                  Style="{StaticResource Button.Secondary}" Width="32" Padding="0" Margin="6,0,0,0" Click="OnBrowseFolder" />
-          <TextBox x:Name="FolderBox" Style="{StaticResource Form.TextBox}" IsReadOnly="True" />
-        </DockPanel>
-
-        <TextBlock Text="Nombre del archivo" Style="{StaticResource Form.Label}" />
-        <TextBox x:Name="FileNameBox" Style="{StaticResource Form.TextBox}" Margin="0,0,0,10" />
-
-        <TextBlock Text="Modelo comercial" Style="{StaticResource Form.Label}" Margin="0,6,0,2" />
-        <TextBlock Text="Cómo se convierte el costo del presupuesto en el precio de venta final. Se puede cambiar después en Costo."
-                   Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" FontSize="{StaticResource Font.Size.md}" Margin="0,0,0,8" />
-
-        <StackPanel x:Name="PolicyCards">
-          <RadioButton x:Name="PolicyCostPlusMarkup" GroupName="ClosingPolicy" IsChecked="True" Margin="0,0,0,6" Checked="OnPolicyChanged">
-            <StackPanel Margin="4,0,0,0">
-              <TextBlock Text="Costo + Markup (motor)" FontWeight="SemiBold" />
-              <TextBlock Text="Úsala cuando: el precio sale del costo con GG y utilidad configurados. Es el modelo por defecto."
-                         Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" FontSize="{StaticResource Font.Size.sm}" />
-            </StackPanel>
-          </RadioButton>
-          <RadioButton x:Name="PolicyTargetPrice" GroupName="ClosingPolicy" Margin="0,0,0,6" Checked="OnPolicyChanged">
-            <StackPanel Margin="4,0,0,0">
-              <TextBlock Text="Precio Objetivo" FontWeight="SemiBold" />
-              <TextBlock Text="Úsala cuando: el mandante fija un precio tope o hay un benchmark de mercado; GG y utilidad quedan como residual."
-                         Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" FontSize="{StaticResource Font.Size.sm}" />
-            </StackPanel>
-          </RadioButton>
-          <RadioButton x:Name="PolicyLumpSumEpc" GroupName="ClosingPolicy" Margin="0,0,0,6" Checked="OnPolicyChanged">
-            <StackPanel Margin="4,0,0,0">
-              <TextBlock Text="Suma Alzada / EPC" FontWeight="SemiBold" />
-              <TextBlock Text="Úsala cuando: precio cerrado e inamovible con todo el riesgo del contratista; se fuerza una contingencia mínima."
-                         Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" FontSize="{StaticResource Font.Size.sm}" />
-            </StackPanel>
-          </RadioButton>
-          <RadioButton x:Name="PolicyCostPlusFee" GroupName="ClosingPolicy" Margin="0,0,0,6" Checked="OnPolicyChanged">
-            <StackPanel Margin="4,0,0,0">
-              <TextBlock Text="Costo + Fee" FontWeight="SemiBold" />
-              <TextBlock Text="Úsala cuando: se traspasa el costo real 1:1 más un fee pactado, sin GG cargados sobre el costo."
-                         Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" FontSize="{StaticResource Font.Size.sm}" />
-            </StackPanel>
-          </RadioButton>
-          <RadioButton x:Name="PolicyUnitPricePure" GroupName="ClosingPolicy" Margin="0,0,0,6" Checked="OnPolicyChanged">
-            <StackPanel Margin="4,0,0,0">
-              <TextBlock Text="Precio Unitario Puro" FontWeight="SemiBold" />
-              <TextBlock Text="Úsala cuando: la venta es la suma de precios unitarios contractuales por partida, con el margen embebido."
-                         Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" FontSize="{StaticResource Font.Size.sm}" />
-            </StackPanel>
-          </RadioButton>
-          <RadioButton x:Name="PolicyGainsharePainshare" GroupName="ClosingPolicy" Margin="0,0,0,6" Checked="OnPolicyChanged">
-            <StackPanel Margin="4,0,0,0">
-              <TextBlock Text="Gainshare / Painshare" FontWeight="SemiBold" />
-              <TextBlock Text="Úsala cuando: hay un costo objetivo pactado y el ahorro o sobrecosto se reparte con el mandante."
-                         Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" FontSize="{StaticResource Font.Size.sm}" />
-            </StackPanel>
-          </RadioButton>
+        <StackPanel VerticalAlignment="Center" Margin="12,0,0,0">
+          <TextBlock Text="Crear nuevo proyecto" Style="{StaticResource Dialog.HeaderTitle}" Margin="0,0,0,2" />
+          <TextBlock Text="Identidad, plantilla y carpeta destino. Todo queda validado antes de crear el archivo .qce."
+                     Style="{StaticResource Dialog.HeaderSubtitle}" Margin="0" />
+          <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+            <Border Background="{DynamicResource Brush.Line}" CornerRadius="999" Padding="10,3" Margin="0,0,6,0">
+              <StackPanel Orientation="Horizontal">
+                <Ellipse x:Name="StepDotIdentidad" Width="7" Height="7" Fill="{DynamicResource Brush.Green}" VerticalAlignment="Center" />
+                <TextBlock Text="1 · Identidad" FontSize="{StaticResource Font.Size.sm}" FontWeight="SemiBold"
+                           Foreground="{DynamicResource Brush.Ink2}" Margin="6,0,0,0" VerticalAlignment="Center" />
+              </StackPanel>
+            </Border>
+            <Border Background="{DynamicResource Brush.Line}" CornerRadius="999" Padding="10,3" Margin="0,0,6,0">
+              <StackPanel Orientation="Horizontal">
+                <Ellipse x:Name="StepDotPlantilla" Width="7" Height="7" Fill="{DynamicResource Brush.Green}" VerticalAlignment="Center" />
+                <TextBlock Text="2 · Plantilla" FontSize="{StaticResource Font.Size.sm}" FontWeight="SemiBold"
+                           Foreground="{DynamicResource Brush.Ink2}" Margin="6,0,0,0" VerticalAlignment="Center" />
+              </StackPanel>
+            </Border>
+            <Border Background="{DynamicResource Brush.Line}" CornerRadius="999" Padding="10,3">
+              <StackPanel Orientation="Horizontal">
+                <Ellipse x:Name="StepDotArchivo" Width="7" Height="7" Fill="{DynamicResource Brush.AmberRisk}" VerticalAlignment="Center" />
+                <TextBlock Text="3 · Archivo" FontSize="{StaticResource Font.Size.sm}" FontWeight="SemiBold"
+                           Foreground="{DynamicResource Brush.Ink2}" Margin="6,0,0,0" VerticalAlignment="Center" />
+              </StackPanel>
+            </Border>
+          </StackPanel>
         </StackPanel>
+      </DockPanel>
 
-        <StackPanel x:Name="PolicyParamPanel" Visibility="Collapsed" Margin="0,4,0,10">
-          <TextBlock x:Name="PolicyParamLabel" Style="{StaticResource Form.Label}" />
-          <TextBox x:Name="PolicyParamBox" Style="{StaticResource Form.TextBox}" />
-        </StackPanel>
-      </StackPanel>
-    </ScrollViewer>
+      <Grid Grid.Row="1">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="292" />
+        </Grid.ColumnDefinitions>
 
-    <DockPanel Grid.Row="2" Style="{StaticResource Dialog.Footer}">
-      <Button DockPanel.Dock="Right" Content="Crear proyecto" IsDefault="True" Style="{StaticResource Button.Primary}"
-              MinWidth="130" Height="34" Click="OnCreate" />
-      <Button DockPanel.Dock="Right" Content="Cancelar" IsCancel="True" Style="{StaticResource Button.Secondary}"
-              MinWidth="90" Height="34" Margin="0,0,10,0" />
-    </DockPanel>
-  </Grid>
+        <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Margin="0,0,16,0">
+          <StackPanel>
+
+            <TextBlock Text="IDENTIDAD" Style="{StaticResource Text.SectionLabel}" Margin="0,4,0,8" />
+            <Grid Margin="0,0,0,10">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="250" />
+              </Grid.ColumnDefinitions>
+              <StackPanel Grid.Column="0">
+                <TextBlock Text="Nombre del proyecto" Style="{StaticResource Form.Label}" />
+                <TextBox x:Name="NameBox" Style="{StaticResource Form.TextBox}" Text="Proyecto nuevo" />
+              </StackPanel>
+              <StackPanel Grid.Column="2">
+                <DockPanel LastChildFill="False">
+                  <TextBlock Text="Código del proyecto" Style="{StaticResource Form.Label}" DockPanel.Dock="Left" Margin="0,0,6,0" />
+                  <Button DockPanel.Dock="Right" x:Name="CopyCodeBtn" Click="OnCopyCode" ToolTip="Copiar código (Ctrl + C)"
+                          Style="{StaticResource Button.Ghost}" MinWidth="0" Height="24" Padding="8,0" Margin="4,0,0,0">
+                    <TextBlock Text="Copiar" FontSize="{StaticResource Font.Size.sm}" />
+                  </Button>
+                  <Button DockPanel.Dock="Right" x:Name="RegenCodeBtn" Click="OnRegenCode" ToolTip="Regenerar código según la carpeta destino"
+                          Style="{StaticResource Button.Ghost}" MinWidth="0" Height="24" Padding="8,0">
+                    <TextBlock Text="Regenerar" FontSize="{StaticResource Font.Size.sm}" />
+                  </Button>
+                </DockPanel>
+                <TextBox x:Name="CodeBox" Style="{StaticResource Form.TextBox}" MaxLength="16" />
+                <TextBlock x:Name="CodeHintBlock" Text="Secuencial autogenerado a partir de los presupuestos de la carpeta destino."
+                           FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" Margin="0,4,0,0" />
+              </StackPanel>
+            </Grid>
+
+            <Grid Margin="0,0,0,10">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="250" />
+              </Grid.ColumnDefinitions>
+              <StackPanel Grid.Column="0">
+                <TextBlock Text="Cliente" Style="{StaticResource Form.Label}" />
+                <TextBox x:Name="ClientBox" Style="{StaticResource Form.TextBox}" />
+              </StackPanel>
+              <StackPanel Grid.Column="2">
+                <TextBlock Text="Moneda del presupuesto" Style="{StaticResource Form.Label}" />
+                <ComboBox x:Name="CurrencyBox" Style="{StaticResource Form.ComboBox}" SelectedIndex="0" SelectionChanged="OnCurrencyChanged">
+                  <ComboBoxItem Content="UF" />
+                  <ComboBoxItem Content="CLP" />
+                  <ComboBoxItem Content="USD" />
+                </ComboBox>
+              </StackPanel>
+            </Grid>
+
+            <Grid x:Name="UfRow" Margin="0,0,0,10">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="250" />
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+              <StackPanel Grid.Column="0">
+                <TextBlock Text="Valor UF del día (CLP)" Style="{StaticResource Form.Label}" />
+                <TextBox x:Name="UfBox" Style="{StaticResource Form.TextBox}" MaxLength="14" />
+              </StackPanel>
+              <TextBlock Grid.Column="2" VerticalAlignment="Bottom" FontSize="{StaticResource Font.Size.sm}"
+                         Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap"
+                         Text="Se consulta mindicador.cl al abrir y el valor puede editarse. Define la conversión UF ↔ CLP del proyecto." />
+            </Grid>
+
+            <StackPanel Margin="0,0,0,10">
+              <TextBlock Text="Ubicación" Style="{StaticResource Form.Label}" />
+              <TextBox x:Name="LocationBox" Style="{StaticResource Form.TextBox}" />
+            </StackPanel>
+
+            <TextBlock Text="PLANTILLA DE OBRA (SEC / RIC)" Style="{StaticResource Text.SectionLabel}" Margin="0,6,0,8" />
+            <ListBox x:Name="TemplateBox"
+                     Background="Transparent" BorderThickness="0" Padding="0"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     SelectionChanged="OnTemplateChanged" Margin="0,0,0,6">
+              <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <UniformGrid Columns="2" />
+                </ItemsPanelTemplate>
+              </ListBox.ItemsPanel>
+              <ListBox.ItemContainerStyle>
+                <Style TargetType="ListBoxItem">
+                  <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                  <Setter Property="Template">
+                    <Setter.Value>
+                      <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="root" Margin="0,0,8,8" Padding="12,10" CornerRadius="10"
+                                Background="{DynamicResource Brush.Surface}"
+                                BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+                                SnapsToDevicePixels="True">
+                          <ContentPresenter VerticalAlignment="Top" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                          <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="root" Property="BorderBrush" Value="{DynamicResource Brush.InputHoverBorder}" />
+                          </Trigger>
+                          <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="root" Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
+                            <Setter TargetName="root" Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+                          </Trigger>
+                        </ControlTemplate.Triggers>
+                      </ControlTemplate>
+                    </Setter.Value>
+                  </Setter>
+                </Style>
+              </ListBox.ItemContainerStyle>
+              <ListBox.ItemTemplate>
+                <DataTemplate>
+                  <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="{Binding Icono}" FontSize="{StaticResource Font.Size.base}" VerticalAlignment="Center" />
+                      <TextBlock Text="{Binding Nombre}" FontWeight="SemiBold" Margin="6,0,0,0" TextWrapping="Wrap" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <TextBlock Text="{Binding Subtitulo}" FontSize="{StaticResource Font.Size.sm}"
+                               Foreground="{DynamicResource Brush.Ink4}" TextTrimming="CharacterEllipsis" Margin="0,3,0,0" />
+                    <Border CornerRadius="5" Background="{DynamicResource Brush.Line}" HorizontalAlignment="Left" Margin="0,7,0,0" Padding="6,1">
+                      <TextBlock FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink3}">
+                        <TextBlock.Style>
+                          <Style TargetType="TextBlock">
+                            <Setter Property="Text" Value="{Binding PartidasCount, StringFormat={}{0} partidas base}" />
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding EsEnBlanco}" Value="True">
+                                <Setter Property="Text" Value="Se parte de cero" />
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </TextBlock.Style>
+                      </TextBlock>
+                    </Border>
+                  </StackPanel>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+
+            <TextBlock Text="CARPETA DESTINO" Style="{StaticResource Text.SectionLabel}" Margin="0,4,0,8" />
+            <DockPanel Margin="0,0,0,4">
+              <Button x:Name="BrowseFolderBtn" DockPanel.Dock="Right" Content="…"
+                      Style="{StaticResource Button.Secondary}" Width="34" Height="34" Padding="0" Margin="6,0,0,0" Click="OnBrowseFolder" />
+              <TextBox x:Name="FolderBox" Style="{StaticResource Form.TextBox}" IsReadOnly="True" />
+            </DockPanel>
+            <TextBlock Text="El archivo se guarda como Código + .qce dentro de esta carpeta."
+                       FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,6" TextWrapping="Wrap" />
+
+            <Expander Margin="0,6,0,0">
+              <Expander.Header>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                  <TextBlock Text="Modelo comercial (avanzado)" FontWeight="SemiBold" />
+                  <TextBlock x:Name="PolicyQuickLabel" Margin="8,0,0,0" Foreground="{DynamicResource Brush.Ink4}"
+                             FontSize="{StaticResource Font.Size.sm}" VerticalAlignment="Center" />
+                </StackPanel>
+              </Expander.Header>
+              <StackPanel Margin="0,10,0,0">
+                <TextBlock Text="Cómo se convierte el costo del presupuesto en el precio de venta final. Se puede cambiar después en Costo."
+                           Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" FontSize="{StaticResource Font.Size.md}" Margin="0,0,0,8" />
+                <StackPanel x:Name="PolicyCards">
+                  <RadioButton x:Name="PolicyCostPlusMarkup" GroupName="ClosingPolicy" IsChecked="True" Margin="0,0,0,6" Checked="OnPolicyChanged">
+                    <StackPanel Margin="4,0,0,0">
+                      <TextBlock Text="Costo + Markup (motor)" FontWeight="SemiBold" />
+                      <TextBlock Text="Úsala cuando: el precio sale del costo con GG y utilidad configurados. Es el modelo por defecto."
+                                 Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" FontSize="{StaticResource Font.Size.sm}" />
+                    </StackPanel>
+                  </RadioButton>
+                  <RadioButton x:Name="PolicyTargetPrice" GroupName="ClosingPolicy" Margin="0,0,0,6" Checked="OnPolicyChanged">
+                    <StackPanel Margin="4,0,0,0">
+                      <TextBlock Text="Precio Objetivo" FontWeight="SemiBold" />
+                      <TextBlock Text="Úsala cuando: el mandante fija un precio tope o hay un benchmark de mercado; GG y utilidad queda como residual."
+                                 Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" FontSize="{StaticResource Font.Size.sm}" />
+                    </StackPanel>
+                  </RadioButton>
+                  <RadioButton x:Name="PolicyLumpSumEpc" GroupName="ClosingPolicy" Margin="0,0,0,6" Checked="OnPolicyChanged">
+                    <StackPanel Margin="4,0,0,0">
+                      <TextBlock Text="Suma Alzada / EPC" FontWeight="SemiBold" />
+                      <TextBlock Text="Úsala cuando: precio cerrado e inamovible con todo el riesgo del contratista; se fuerza una contingencia mínima."
+                                 Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" FontSize="{StaticResource Font.Size.sm}" />
+                    </StackPanel>
+                  </RadioButton>
+                  <RadioButton x:Name="PolicyCostPlusFee" GroupName="ClosingPolicy" Margin="0,0,0,6" Checked="OnPolicyChanged">
+                    <StackPanel Margin="4,0,0,0">
+                      <TextBlock Text="Costo + Fee" FontWeight="SemiBold" />
+                      <TextBlock Text="Úsala cuando: se traspasa el costo real 1:1 más un fee pactado, sin GG cargados sobre el costo."
+                                 Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" FontSize="{StaticResource Font.Size.sm}" />
+                    </StackPanel>
+                  </RadioButton>
+                  <RadioButton x:Name="PolicyUnitPricePure" GroupName="ClosingPolicy" Margin="0,0,0,6" Checked="OnPolicyChanged">
+                    <StackPanel Margin="4,0,0,0">
+                      <TextBlock Text="Precio Unitario Puro" FontWeight="SemiBold" />
+                      <TextBlock Text="Úsala cuando: la venta es la suma de precios unitarios contractuales por partida, con el margen embebido."
+                                 Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" FontSize="{StaticResource Font.Size.sm}" />
+                    </StackPanel>
+                  </RadioButton>
+                  <RadioButton x:Name="PolicyGainsharePainshare" GroupName="ClosingPolicy" Margin="0,0,0,6" Checked="OnPolicyChanged">
+                    <StackPanel Margin="4,0,0,0">
+                      <TextBlock Text="Gainshare / Painshare" FontWeight="SemiBold" />
+                      <TextBlock Text="Úsala cuando: hay un costo objetivo pactado y el ahorro o sobrecosto se reparte con el mandante."
+                                 Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" FontSize="{StaticResource Font.Size.sm}" />
+                    </StackPanel>
+                  </RadioButton>
+                </StackPanel>
+
+                <StackPanel x:Name="PolicyParamPanel" Visibility="Collapsed" Margin="0,4,0,10">
+                  <TextBlock x:Name="PolicyParamLabel" Style="{StaticResource Form.Label}" />
+                  <TextBox x:Name="PolicyParamBox" Style="{StaticResource Form.TextBox}" />
+                </StackPanel>
+              </StackPanel>
+            </Expander>
+          </StackPanel>
+        </ScrollViewer>
+
+        <Border Grid.Column="1" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}"
+                BorderThickness="1,0,0,0" Padding="18,0,18,18">
+          <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+              <TextBlock Text="RESUMEN" Style="{StaticResource Text.SectionLabel}" Margin="0,4,0,10" />
+              <TextBlock x:Name="SummaryNameBlock" Text="Proyecto nuevo" FontSize="{StaticResource Font.Size.lg}"
+                         FontWeight="SemiBold" TextWrapping="Wrap" Foreground="{DynamicResource Brush.Ink}" />
+              <TextBlock x:Name="SummarySubtitleBlock" Text="" Margin="0,2,0,8"
+                         FontSize="{StaticResource Font.Size.md}" Foreground="{DynamicResource Brush.Ink4}" TextWrapping="Wrap" />
+              <Border HorizontalAlignment="Left" CornerRadius="7" Background="{DynamicResource Brush.BlueSoft}" Padding="9,3" Margin="0,0,0,14">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="Código" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" />
+                  <TextBlock x:Name="SummaryCodeBlock" Margin="8,0,0,0" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.base}"
+                             FontWeight="SemiBold" Foreground="{DynamicResource Brush.Blue}" VerticalAlignment="Center" />
+                </StackPanel>
+              </Border>
+
+              <TextBlock Text="Cliente" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink4}" Margin="0,0,0,2" />
+              <TextBlock x:Name="SummaryClientBlock" Text="—" FontSize="{StaticResource Font.Size.base}" Foreground="{DynamicResource Brush.Ink}" TextWrapping="Wrap" Margin="0,0,0,10" />
+
+              <TextBlock Text="Ubicación" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink4}" Margin="0,0,0,2" />
+              <TextBlock x:Name="SummaryLocationBlock" Text="—" FontSize="{StaticResource Font.Size.base}" Foreground="{DynamicResource Brush.Ink}" TextWrapping="Wrap" Margin="0,0,0,10" />
+
+              <TextBlock Text="Moneda" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink4}" Margin="0,0,0,2" />
+              <TextBlock x:Name="SummaryCurrencyBlock" Text="UF" FontSize="{StaticResource Font.Size.base}" Foreground="{DynamicResource Brush.Ink}" Margin="0,0,0,10" />
+
+              <TextBlock Text="Plantilla" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink4}" Margin="0,0,0,2" />
+              <TextBlock x:Name="SummaryTemplateBlock" Text="—" FontSize="{StaticResource Font.Size.base}" Foreground="{DynamicResource Brush.Ink}" TextWrapping="Wrap" Margin="0,0,0,6" />
+              <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                <Border x:Name="SummaryNormaBadge" CornerRadius="5" Background="{DynamicResource Brush.BlueFaint}" Padding="6,1">
+                  <TextBlock x:Name="SummaryNormaBlock" FontSize="{StaticResource Font.Size.sm}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Blue}" />
+                </Border>
+                <TextBlock x:Name="SummaryPartidasBlock" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" Margin="8,0,0,0" />
+              </StackPanel>
+
+              <Border Height="1" Background="{DynamicResource Brush.Line}" Margin="0,2,0,14" />
+
+              <TextBlock Text="ARCHIVO" Style="{StaticResource Text.SectionLabel}" FontSize="{StaticResource Font.Size.sm}" Margin="0,0,0,8" />
+              <TextBlock Text="Carpeta destino" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink4}" Margin="0,0,0,2" />
+              <TextBlock x:Name="SummaryFolderBlock" Text="—" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink2}" TextWrapping="Wrap" Margin="0,0,0,8" />
+              <TextBlock Text="Archivo" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink4}" Margin="0,0,0,2" />
+              <TextBlock x:Name="SummaryFileBlock" FontSize="{StaticResource Font.Size.base}" FontWeight="SemiBold"
+                         Foreground="{DynamicResource Brush.Ink}" TextWrapping="Wrap" />
+
+              <TextBlock Text="El código define el nombre del archivo .qce; puede regenerarse o editarse antes de crear."
+                         FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" Margin="0,14,0,0" />
+            </StackPanel>
+          </ScrollViewer>
+        </Border>
+      </Grid>
+
+      <Border Grid.Row="2" Style="{StaticResource Dialog.FooterBar}">
+        <Grid>
+          <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <TextBlock x:Name="ValidationErrorBlock"
+                       Text="{Binding ValidationError, RelativeSource={RelativeSource AncestorType=Window}}"
+                       Foreground="{DynamicResource Brush.DangerDark}" TextWrapping="Wrap" MaxWidth="300"
+                       VerticalAlignment="Center" Visibility="Collapsed" />
+            <Border x:Name="ChipName" CornerRadius="999" Padding="9,3" Margin="12,0,6,0">
+              <StackPanel Orientation="Horizontal">
+                <Ellipse x:Name="ChipNameDot" Width="7" Height="7" Fill="{DynamicResource Brush.Green}" VerticalAlignment="Center" />
+                <TextBlock x:Name="ChipNameText" Text="Nombre" FontSize="{StaticResource Font.Size.sm}" FontWeight="SemiBold"
+                           Foreground="{DynamicResource Brush.Ink2}" Margin="6,0,0,0" VerticalAlignment="Center" />
+              </StackPanel>
+            </Border>
+            <Border x:Name="ChipCode" CornerRadius="999" Padding="9,3" Margin="0,0,6,0">
+              <StackPanel Orientation="Horizontal">
+                <Ellipse x:Name="ChipCodeDot" Width="7" Height="7" Fill="{DynamicResource Brush.Green}" VerticalAlignment="Center" />
+                <TextBlock x:Name="ChipCodeText" Text="Código único" FontSize="{StaticResource Font.Size.sm}" FontWeight="SemiBold"
+                           Foreground="{DynamicResource Brush.Ink2}" Margin="6,0,0,0" VerticalAlignment="Center" />
+              </StackPanel>
+            </Border>
+            <Border x:Name="ChipFolder" CornerRadius="999" Padding="9,3">
+              <StackPanel Orientation="Horizontal">
+                <Ellipse x:Name="ChipFolderDot" Width="7" Height="7" Fill="{DynamicResource Brush.Green}" VerticalAlignment="Center" />
+                <TextBlock x:Name="ChipFolderText" Text="Carpeta destino" FontSize="{StaticResource Font.Size.sm}" FontWeight="SemiBold"
+                           Foreground="{DynamicResource Brush.Ink2}" Margin="6,0,0,0" VerticalAlignment="Center" />
+              </StackPanel>
+            </Border>
+          </StackPanel>
+          <DockPanel HorizontalAlignment="Right" LastChildFill="False">
+            <Button Content="Cancelar" IsCancel="True" Style="{StaticResource Button.Secondary}"
+                    MinWidth="96" Height="36" Margin="0,0,10,0" />
+            <Button x:Name="CreateBtn" Content="Crear y abrir" IsDefault="True"
+                    Style="{StaticResource Button.Primary}" MinWidth="140" Height="36"
+                    Click="OnCreate" ToolTip="Crear el proyecto y abrirlo (Ctrl + Enter)" />
+          </DockPanel>
+        </Grid>
+      </Border>
+    </Grid>
   </Border>
 </Window>

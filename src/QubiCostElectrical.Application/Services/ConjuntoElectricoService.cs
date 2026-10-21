@@ -30,7 +30,8 @@ public sealed class ConjuntoElectricoService
         ConjuntoElectricoRow conjunto,
         ItemizadoRow partida,
         IEnumerable<MaterialRow>? materiales,
-        bool cantidadesEnCero = false)
+        bool cantidadesEnCero = false,
+        ProjectInfoRow? proyecto = null)
     {
         var result = new ConjuntoExpansionResult();
         if (conjunto == null || partida == null) return result;
@@ -96,6 +97,8 @@ public sealed class ConjuntoElectricoService
                 continue;
             }
 
+            decimal matClp = material?.MatClp ?? 0m;
+            decimal moClp = material == null ? 0m : MaterialMoResolver.MoClpEfectiva(material, proyecto);
             var row = new CubicacionRow
             {
                 Id = Guid.NewGuid().ToString("N"),
@@ -105,11 +108,19 @@ public sealed class ConjuntoElectricoService
                 Descripcion = material?.Descripcion ?? recurso.Descripcion,
                 Unidad = material?.Unidad ?? recurso.Unidad,
                 Cantidad = qty,
-                MatUf = material?.MatUf ?? recurso.PrecioUf,
-                MoUf = material?.MoUf ?? 0m,
+                MatClp = matClp,
+                MoClp = moClp,
+                // Sin precio en pesos se conserva el UF de la plantilla. Con precio del catálogo,
+                // la mano de obra viaja junto con el material y no se queda en cero.
+                MatUf = matClp > 0m || moClp > 0m
+                    ? 0m
+                    : (material?.MatUf > 0m ? material.MatUf : recurso.PrecioUf),
+                MoUf = matClp > 0m || moClp > 0m ? 0m : (material?.MoUf ?? 0m),
                 Area = conjunto.TipoConjunto,
                 Operacion = recurso.Operacion ?? ""
             };
+            if (matClp > 0m || moClp > 0m)
+                row.RecalcularUf(proyecto?.ValorUfClp ?? 0m);
             result.Rows.Add(row);
             creadas.Add((recurso, row));
             if (!string.IsNullOrWhiteSpace(recurso.Id))
@@ -561,6 +572,8 @@ public sealed class ConjuntoElectricoService
                     Descripcion = first.Descripcion,
                     Unidad = first.Unidad,
                     Cantidad = g.Sum(x => x.Cantidad),
+                    MatClp = first.MatClp,
+                    MoClp = first.MoClp,
                     MatUf = first.MatUf,
                     MoUf = first.MoUf,
                     Area = first.Area,

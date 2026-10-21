@@ -62,8 +62,6 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
     public ObservableCollection<AntecedenteRowVm> FilteredRows { get; }
     public ObservableCollection<PlanoEspecialidadFilterItem> EspecialidadesPlanos { get; } = new();
     public ObservableCollection<string> TipoOptions { get; }
-    public ObservableCollection<string> TipoChoices { get; } = new(AntecedenteTecnicoTipo.All);
-    public ObservableCollection<string> DisciplinaChoices { get; } = new(AntecedenteDisciplina.All);
 
     public ImageSource? PreviewImage => previewCoordinator.PreviewImage;
     public bool HasPreviewImage => previewCoordinator.HasPreviewImage;
@@ -944,8 +942,6 @@ public sealed partial class DocumentsViewModel : ViewModelBase, IPageWithPending
         ((RelayCommand)OpenContainingFolderCommand).RaiseCanExecuteChanged();
         ((RelayCommand)CopyFilePathCommand).RaiseCanExecuteChanged();
     }
-
-    public void OnGridEdited() => OnRowEdited();
 
     private void OnRowEdited()
     {

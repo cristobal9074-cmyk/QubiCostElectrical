@@ -1,0 +1,243 @@
+<UserControl x:Class="QubiCostElectrical.Wpf.Features.Dashboard.DashboardFooterCardsSection"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:QubiCostElectrical.Wpf.Features.Dashboard"
+             mc:Ignorable="d">
+  <!-- Fila de cierre: alertas, flujo de emisión y actividad reciente. -->
+  <Grid>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="*" />
+      <ColumnDefinition Width="10" />
+      <ColumnDefinition Width="*" />
+      <ColumnDefinition Width="10" />
+      <ColumnDefinition Width="*" />
+    </Grid.ColumnDefinitions>
+
+    <!-- ================= Alertas de cierre ================= -->
+    <Border Grid.Column="0" Style="{StaticResource Dashboard.Card}">
+      <StackPanel>
+        <DockPanel Margin="16,13,16,0">
+          <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+            <Border Style="{StaticResource Dashboard.Pill}" Background="{DynamicResource Brush.AmberSoft}"
+                    BorderBrush="{DynamicResource Brush.AmberRisk}" TextElement.Foreground="{DynamicResource Brush.Amber}"
+                    Margin="0">
+              <TextBlock FontSize="10.5" FontWeight="Bold">
+                <Run Text="{Binding MajorAlertCount, Mode=OneWay}" /><Run Text=" mayores" />
+              </TextBlock>
+            </Border>
+          </StackPanel>
+          <StackPanel>
+            <TextBlock Text="Alertas de cierre" Style="{StaticResource Dashboard.CardTitle}" />
+            <TextBlock Text="Puntos que frenan la emisión" Style="{StaticResource Dashboard.CardSub}" />
+          </StackPanel>
+        </DockPanel>
+
+        <StackPanel Margin="16,12,16,14">
+          <TextBlock Text="Ninguna abierta." FontSize="12" Foreground="{DynamicResource Brush.Muted}"
+                     Margin="0,0,0,8"
+                     Visibility="{Binding HasAlerts, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}" />
+
+          <ItemsControl ItemsSource="{Binding Alerts}" Visibility="{Binding HasAlerts, Converter={StaticResource BoolToVisibility}}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Border BorderBrush="{DynamicResource Brush.Line}" BorderThickness="3,1,1,1" CornerRadius="7"
+                        Padding="11,9" Margin="0,0,0,8" Background="{DynamicResource Brush.Surface}"
+                        Cursor="Hand">
+                  <Border.Style>
+                    <Style TargetType="Border">
+                      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding SeverityLabel}" Value="Bloqueante">
+                          <Setter Property="Background" Value="{DynamicResource Brush.RedSoft}" />
+                          <Setter Property="BorderBrush" Value="{DynamicResource Brush.DangerDark}" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding SeverityLabel}" Value="Crítico">
+                          <Setter Property="Background" Value="{DynamicResource Brush.RedSoft}" />
+                          <Setter Property="BorderBrush" Value="{DynamicResource Brush.DangerDark}" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding SeverityLabel}" Value="Mayor">
+                          <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+                          <Setter Property="BorderBrush" Value="{DynamicResource Brush.AmberRisk}" />
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </Border.Style>
+                  <Border.InputBindings>
+                    <MouseBinding MouseAction="LeftClick" Command="{Binding NavigateCommand}" />
+                  </Border.InputBindings>
+                  <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="{Binding SeverityLabel}" FontSize="9.5" FontWeight="Bold" Margin="0,0,7,0"
+                                 VerticalAlignment="Center">
+                        <TextBlock.Style>
+                          <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding SeverityLabel}" Value="Bloqueante">
+                                <Setter Property="Foreground" Value="{DynamicResource Brush.DangerDark}" />
+                              </DataTrigger>
+                              <DataTrigger Binding="{Binding SeverityLabel}" Value="Crítico">
+                                <Setter Property="Foreground" Value="{DynamicResource Brush.DangerDark}" />
+                              </DataTrigger>
+                              <DataTrigger Binding="{Binding SeverityLabel}" Value="Mayor">
+                                <Setter Property="Foreground" Value="{DynamicResource Brush.Amber}" />
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </TextBlock.Style>
+                      </TextBlock>
+                      <TextBlock Text="{Binding Title}" FontSize="12.5" FontWeight="SemiBold"
+                                 Foreground="{DynamicResource Brush.Ink}" TextWrapping="Wrap" />
+                    </StackPanel>
+                    <TextBlock Text="{Binding Detail}" FontSize="11.5" Foreground="{DynamicResource Brush.Muted}"
+                               TextWrapping="Wrap" Margin="0,3,0,0" />
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+
+          <Button Style="{StaticResource Button.Secondary}" Content="Ver revisión completa"
+                  Command="{Binding GoToReviewCommand}" FontSize="11.5" Padding="12,5" HorizontalAlignment="Left" />
+        </StackPanel>
+      </StackPanel>
+    </Border>
+
+    <!-- ================= Flujo de cierre ================= -->
+    <Border Grid.Column="2" Style="{StaticResource Dashboard.Card}">
+      <StackPanel>
+        <DockPanel Margin="16,13,16,0">
+          <StackPanel DockPanel.Dock="Right" VerticalAlignment="Center">
+            <Border Style="{StaticResource Dashboard.Pill}" Background="{DynamicResource Brush.BlueSoft}"
+                    BorderBrush="{DynamicResource Brush.Blue}" TextElement.Foreground="{DynamicResource Brush.Blue}" Margin="0">
+              <TextBlock Text="6 etapas" FontSize="10.5" FontWeight="Bold" />
+            </Border>
+          </StackPanel>
+          <StackPanel>
+            <TextBlock Text="Flujo de cierre" Style="{StaticResource Dashboard.CardTitle}" />
+            <TextBlock Text="Etapas hasta emitir la oferta" Style="{StaticResource Dashboard.CardSub}" />
+          </StackPanel>
+        </DockPanel>
+
+        <ItemsControl ItemsSource="{Binding WorkflowSteps}" Margin="16,12,16,14">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <Grid Cursor="Hand" Margin="0,0,0,11">
+                <Grid.InputBindings>
+                  <MouseBinding MouseAction="LeftClick" Command="{Binding NavigateCommand}" />
+                </Grid.InputBindings>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="24" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid Grid.Column="0">
+                  <Border Style="{StaticResource Dashboard.StepDot}" Width="24" Height="24" CornerRadius="12">
+                    <Grid>
+                      <TextBlock Text="{Binding Index}" FontSize="11" FontWeight="Bold"
+                                 HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <TextBlock.Style>
+                          <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Visible" />
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding IsComplete}" Value="True">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </TextBlock.Style>
+                      </TextBlock>
+                      <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="10" FontWeight="Bold"
+                                 HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed">
+                        <TextBlock.Style>
+                          <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding IsComplete}" Value="True">
+                                <Setter Property="Visibility" Value="Visible" />
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </TextBlock.Style>
+                      </TextBlock>
+                    </Grid>
+                  </Border>
+                  <Border Width="2" HorizontalAlignment="Left" Margin="11,26,0,-14"
+                          Background="{DynamicResource Brush.Line2}">
+                    <Border.Style>
+                      <Style TargetType="Border">
+                        <Setter Property="Background" Value="{DynamicResource Brush.Line2}" />
+                        <Style.Triggers>
+                          <DataTrigger Binding="{Binding IsComplete}" Value="True">
+                            <Setter Property="Background" Value="{DynamicResource Brush.GreenSoft}" />
+                          </DataTrigger>
+                          <DataTrigger Binding="{Binding IsLast}" Value="True">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </Border.Style>
+                  </Border>
+                </Grid>
+                <StackPanel Grid.Column="1" Margin="0,2,0,0">
+                  <TextBlock Text="{Binding Title}" Style="{StaticResource Dashboard.StepTitle}" FontSize="12.5" />
+                  <TextBlock Text="{Binding Detail}" FontSize="11" Foreground="{DynamicResource Brush.Muted}" Margin="0,2,0,0" />
+                </StackPanel>
+              </Grid>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+    </Border>
+
+    <!-- ================= Actividad y auditoría ================= -->
+    <Border Grid.Column="4" Style="{StaticResource Dashboard.Card}">
+      <StackPanel>
+        <DockPanel Margin="16,13,16,0">
+          <StackPanel DockPanel.Dock="Right" VerticalAlignment="Center">
+            <Button Style="{StaticResource Button.Link}" Content="Ver todo" FontSize="11.5" Padding="4,2" />
+          </StackPanel>
+          <StackPanel>
+            <TextBlock Text="Actividad y auditoría" Style="{StaticResource Dashboard.CardTitle}" />
+            <TextBlock Text="Últimos cambios sobre este archivo" Style="{StaticResource Dashboard.CardSub}" />
+          </StackPanel>
+        </DockPanel>
+
+        <StackPanel Margin="16,10,16,14">
+          <TextBlock Text="Sin actividad registrada." FontSize="12" Foreground="{DynamicResource Brush.Muted}"
+                     Margin="0,0,0,6"
+                     Visibility="{Binding HasRecentAudit, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}" />
+
+          <ItemsControl ItemsSource="{Binding RecentAuditEntries}" Visibility="{Binding HasRecentAudit, Converter={StaticResource BoolToVisibility}}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Grid Margin="0,0,0,10">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                  </Grid.ColumnDefinitions>
+                  <Border Grid.Column="0" Style="{StaticResource Dashboard.FeedIcon}" Width="26" Height="26"
+                          CornerRadius="7" Margin="0,0,10,0">
+                    <TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="11"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                  </Border>
+                  <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Action}" FontSize="12" FontWeight="Medium"
+                               Foreground="{DynamicResource Brush.Ink2}" TextTrimming="CharacterEllipsis" />
+                    <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                      <TextBlock Text="{Binding OccurredAtLabel}" FontSize="10.5" Foreground="{DynamicResource Brush.Muted}" />
+                      <TextBlock Text=" · " FontSize="10.5" Foreground="{DynamicResource Brush.Muted}" />
+                      <TextBlock Text="{Binding UserDisplayName}" FontSize="10.5" Foreground="{DynamicResource Brush.Muted}"
+                                 TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                  </StackPanel>
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </StackPanel>
+    </Border>
+  </Grid>
+</UserControl>

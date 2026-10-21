@@ -255,20 +255,33 @@ internal sealed class CubicacionSectorService
                 continue;
             if (!CodeHelper.Match(vinculo.MaestroCodigo, maestroCodigo)) continue;
 
-            if (slaveVm.HasFormula)
+            if (offset >= 0 || slaveVm.HasFormula)
             {
-                // Esclavo con zonas: recibe el valor de la casilla editada (o la cantidad
-                // total del maestro en la casilla 0, cuando se editó la columna CANT).
+                // La zona del maestro manda en la misma casilla del esclavo, aunque el esclavo
+                // haya perdido la fórmula al vaciar la celda. La columna CANT, en un esclavo
+                // que ya tiene zonas, sigue escribiendo solo la casilla 0.
                 string text;
+                int slot;
                 if (offset < 0)
+                {
                     text = FormatExpression(ConjuntoElectricoService.ComputeEsclavoValue(maestro.Cantidad, vinculo));
+                    slot = 0;
+                }
                 else if (zoneValue == null)
+                {
                     text = string.Empty;
+                    slot = offset;
+                }
                 else
+                {
                     text = FormatExpression(ConjuntoElectricoService.ComputeEsclavoValue(zoneValue.Value, vinculo));
-                // SetSectorExpressionDirect ya recalcula, revalida, sincroniza composición y
-                // marca la sesión como modificada para el esclavo.
-                SetSectorExpressionDirect(slaveVm, offset < 0 ? 0 : offset, text);
+                    slot = offset;
+                }
+
+                if (SameZoneExpression(slaveVm, slot, text))
+                    continue;
+
+                SetSectorExpressionDirect(slaveVm, slot, text);
             }
             else
             {
@@ -287,6 +300,35 @@ internal sealed class CubicacionSectorService
         parent.ScheduleRefreshTotals();
         parent.NotifyCubicacionSummaryChanged();
         parent.MarkDirty();
+    }
+
+    /// <summary>
+    /// Al abrir la partida, cada esclavo vuelve a tomar la zona de su maestro.
+    /// Si la fórmula de la casilla se había borrado, se escribe de nuevo.
+    /// </summary>
+    public void RepairSlaveZones()
+    {
+        if (session.IsReadOnly)
+            return;
+
+        foreach (var master in parent.Rows.Where(r => r.IsSessionBacked && r.Source.Esclavo == null && r.HasFormula).ToList())
+        {
+            var zoneValues = new Dictionary<int, decimal>();
+            querySvc.EvaluateStoredExpressions(session, master.Source, CubicacionViewModel.MaximumSectorCount, (offset, value) =>
+                zoneValues[offset] = value);
+
+            foreach (var pair in zoneValues)
+                PropagarEsclavos(master, pair.Key, pair.Value);
+        }
+    }
+
+    private static bool SameZoneExpression(CubicacionRowVm row, int slot, string text)
+    {
+        var expressions = row.Source.QtyExpressions;
+        string current = expressions != null && slot >= 0 && slot < expressions.Length
+            ? expressions[slot] ?? string.Empty
+            : string.Empty;
+        return string.Equals(current.Trim(), text.Trim(), StringComparison.Ordinal);
     }
 
     private static string FormatExpression(decimal value)

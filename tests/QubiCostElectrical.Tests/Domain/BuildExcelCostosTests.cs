@@ -11,7 +11,7 @@ namespace QubiCostElectrical.Tests.Domain;
 ///   · costo proyecto = ejecución + riesgo + GG + utilidad aditiva + VA.
 ///   · diferencia por factores = venta − costo proyecto.
 ///   · ManoObraDotacionClp reemplaza la MO del motor en ejecución (Costo Directo).
-///   · GastosOperacionalesClp entra en ejecución Y en la venta bruta (con factores).
+///   · GastosOperacionalesClp entra en ejecución. La venta con factores es el detalle, sin GO.
 ///   · C-1: venta &lt; costo proyecto ⇒ inconsistencia BLOQUEANTE UtilidadNegativa.
 /// </summary>
 public sealed class BuildExcelCostosTests
@@ -112,17 +112,17 @@ public sealed class BuildExcelCostosTests
     [Fact]
     public void WithFactors_DiferenciaFactores_IsVentaMinusCostoProyecto()
     {
-        // bruto = venta row-level 900 + GO 50 = 950.
+        // bruto = venta del detalle 900 (el GO queda en el costo, no en la venta).
         // ejecución = (Mat 300 + MO 200 + EQ 100) - 200 + 200 + 50 = 650; baseGgUt = 300+200+50 = 550.
         // GG 5% = 27.5; UT 8% = 44; VA 3% de 100 = 3. costo proyecto = 650 + 27.5 + 44 + 3 = 724.5.
-        // diferencia = 950 - 724.5 = 225.5
+        // diferencia = 900 - 724.5 = 175.5
         var result = BudgetTotalsCalculator.Build(
             Direct(mat: 300m, mo: 200m, eq: 100m, sumVenta: 900m, rowLevel: true),
             Settings(gg: 5m, ut: 8m, va: 3m, go: 50m));
 
-        Assert.Equal(950m, result.TotalVentaUf);
+        Assert.Equal(900m, result.TotalVentaUf);
         Assert.Equal(724.5m, result.CostoProyectoUf);
-        Assert.Equal(225.5m, result.DiferenciaFactoresUf);
+        Assert.Equal(175.5m, result.DiferenciaFactoresUf);
     }
 
     [Fact]
@@ -131,7 +131,7 @@ public sealed class BuildExcelCostosTests
         // engine MO 200, dotación 260. ejecución = (300+200+100) - 200 + 260 + 50 = 710.
         // baseGgUt = 300 + 260 + 50 = 610. GG 5% = 30.5. UT 8% = 48.8. VA 3% de 100 = 3.
         // costo proyecto = 710 + 30.5 + 48.8 + 3 = 792.3
-        // bruto = SumVenta 900 + GO 50 = 950 (la venta con factores no se infla con MO de dotación; va al costo).
+        // bruto = SumVenta 900 (GO y dotación van al costo, no a la venta).
         var result = BudgetTotalsCalculator.Build(
             Direct(mat: 300m, mo: 200m, eq: 100m, sumVenta: 900m, rowLevel: true),
             Settings(gg: 5m, ut: 8m, va: 3m, go: 50m, moDotacion: 260m));
@@ -140,8 +140,8 @@ public sealed class BuildExcelCostosTests
         Assert.Equal(710m, result.CostoDirectoUf);
         Assert.Equal(610m, result.BaseGgUtUf);
         Assert.Equal(792.3m, result.CostoProyectoUf);
-        Assert.Equal(950m, result.TotalVentaUf);
-        Assert.Equal(950m - 792.3m, result.DiferenciaFactoresUf);
+        Assert.Equal(900m, result.TotalVentaUf);
+        Assert.Equal(900m - 792.3m, result.DiferenciaFactoresUf);
     }
 
     [Fact]
@@ -149,7 +149,7 @@ public sealed class BuildExcelCostosTests
     {
         // Mat 100, sin MO/EQ. GO 80. row-level venta 500.
         // ejecución = 100 - 0 + 0 + 80 = 180. baseGgUt = 100 + 0 + 80 = 180.
-        // bruto = 500 + 80 = 580.
+        // bruto = 500. El GO no se suma a la venta.
         var result = BudgetTotalsCalculator.Build(
             Direct(mat: 100m, sumVenta: 500m, rowLevel: true),
             Settings(go: 80m));
@@ -157,7 +157,7 @@ public sealed class BuildExcelCostosTests
         Assert.Equal(80m, result.GastosOperacionalesUf);
         Assert.Equal(180m, result.CostoDirectoUf);
         Assert.Equal(180m, result.BaseGgUtUf);
-        Assert.Equal(580m, result.TotalVentaUf);
+        Assert.Equal(500m, result.TotalVentaUf);
     }
 
     [Fact]

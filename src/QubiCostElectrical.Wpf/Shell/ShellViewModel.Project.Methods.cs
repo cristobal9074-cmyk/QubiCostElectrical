@@ -77,6 +77,11 @@ partial class ShellViewModel
                     dialog.Currency,
                     dialog.BuildClosingPolicy(),
                     dialog.SelectedTemplate?.CreateInstanceRows());
+                if (string.Equals(dialog.Currency, "UF", StringComparison.OrdinalIgnoreCase)
+                    && dialog.UfValueClp is { } ufClp && ufClp > 0m)
+                {
+                    session.ValorUfClp = ufClp;
+                }
 
                 await projectWorkspace.SaveAsAsync(fullPath);
                 projectLifecycle.AfterProjectMaterialized(
@@ -105,17 +110,13 @@ partial class ShellViewModel
         if (!projectWorkspace.HasOpenProject)
             return true;
 
-        if (currentPageVm is IPageWithPendingChanges pendingChanges && pendingChanges.HasPendingChanges)
+        // También con la página limpia: una fórmula abierta todavía no marcó el proyecto.
+        if (!TryApplyCurrentPageChanges())
         {
-            // Flujo profesional: al cerrar se guarda en silencio (sin Guardar/Descartar).
-            // Descartar sigue disponible vía Undo mientras el proyecto esté abierto.
-            if (!TryApplyCurrentPageChanges())
-            {
-                WpfDialogService.Warning(
-                    "Cerrar proyecto",
-                    "No se pudieron aplicar los cambios de la pantalla actual. Corrija el error antes de cerrar.");
-                return false;
-            }
+            WpfDialogService.Warning(
+                "Cerrar proyecto",
+                PageApplyFailureMessage("No se pudieron aplicar los cambios de la pantalla actual. Corrija el error antes de cerrar."));
+            return false;
         }
 
         // El cierre persiste siempre que el proyecto sea escribible, aunque no haya cambios
@@ -160,7 +161,7 @@ partial class ShellViewModel
         {
             WpfDialogService.Warning(
                 "Salir",
-                "No se pudieron aplicar los cambios de la pantalla actual. Corrija el error antes de cerrar la aplicación.");
+                PageApplyFailureMessage("No se pudieron aplicar los cambios de la pantalla actual. Corrija el error antes de cerrar la aplicación."));
             return false;
         }
 
@@ -457,7 +458,12 @@ partial class ShellViewModel
         try
         {
             if (!TryApplyCurrentPageChanges())
+            {
+                WpfDialogService.Warning(
+                    "Guardar",
+                    PageApplyFailureMessage("Hay una fórmula que no se puede calcular. Corríjala antes de guardar."));
                 return;
+            }
 
             autoSave.CancelPendingPersist();
 
@@ -507,7 +513,12 @@ partial class ShellViewModel
         try
         {
             if (!TryApplyCurrentPageChanges())
+            {
+                WpfDialogService.Warning(
+                    "Guardar como",
+                    PageApplyFailureMessage("Hay una fórmula que no se puede calcular. Corríjala antes de guardar."));
                 return;
+            }
 
             await projectWorkspace.SaveAsAsync(path);
             projectLock.ReleaseLock();

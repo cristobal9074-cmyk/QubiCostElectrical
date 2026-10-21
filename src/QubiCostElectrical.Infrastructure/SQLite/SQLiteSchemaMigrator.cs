@@ -10,6 +10,8 @@ public static class SQLiteSchemaMigrator
 {
     public static int LatestSchemaVersion => ProductVersionInfo.DatabaseSchemaVersion;
 
+    public static int PublishedStepCount => Steps.Count;
+
     private sealed record MigrationStep(int Version, string Name, Action<SqliteConnection, SqliteTransaction> Up);
 
     private static readonly IReadOnlyList<MigrationStep> Steps = new List<MigrationStep>
@@ -56,17 +58,14 @@ public static class SQLiteSchemaMigrator
         int userVersion = SqliteMigratorHelpers.GetUserVersion(connection);
         int currentVersion = userVersion == 0 ? SqliteMigrationLedger.DetectLegacySchemaVersion(connection) : userVersion;
 
-        // Una base con un número de esquema más alto puede venir de una rama distinta de la app
-        // (dos builds que incrementaron su propio contador de forma independiente para features
-        // distintas) — el número no es comparable entre ramas y NO implica que las tablas que
-        // esta build necesita ya existan. No tocamos su versión ni su historial de migraciones
-        // (podría ser una base genuinamente más nueva de la MISMA rama), pero sí garantizamos
-        // que nuestras propias tablas existan: todos nuestros pasos son CREATE/DROP TABLE
-        // IF [NOT] EXISTS, así que aplicarlos es seguro e idempotente sin importar el origen.
+        // Un archivo guardado por una versión más nueva no se abre ni se toca.
+        // La versión nueva abre el archivo viejo. La versión vieja no abre el archivo nuevo.
         if (currentVersion > LatestSchemaVersion)
         {
-            EnsureOwnTablesExist(connection);
-            return;
+            throw new InvalidDataException(
+                $"Este archivo fue guardado con una versión más nueva de Qubi Cost Electrical (esquema v{currentVersion}). "
+                + $"Esta versión soporta hasta el esquema v{LatestSchemaVersion}. "
+                + "Instala la versión más nueva para abrirlo. El archivo no fue modificado.");
         }
 
         bool legacyWithoutPragma = userVersion == 0 && currentVersion > 0;
@@ -139,45 +138,4 @@ public static class SQLiteSchemaMigrator
         }
     }
 
-    /// <summary>
-    /// Aplica cada paso de esta build sin importar el número de esquema ya registrado en la base
-    /// (ver comentario en MigrateToLatest). No toca PRAGMA user_version ni app_meta.schema_version
-    /// — solo asegura la existencia de las tablas propias. Cada paso corre en su propia
-    /// transacción para que un choque puntual (p. ej. otra rama ya usó ese nombre de tabla con
-    /// columnas distintas) no bloquee al resto.
-    /// </summary>
-    private static void EnsureOwnTablesExist(SqliteConnection connection)
-    {
-        foreach (var step in Steps.OrderBy(x => x.Version))
-        {
-            using var transaction = connection.BeginTransaction();
-            try
-            {
-                step.Up(connection, transaction);
-                transaction.Commit();
-            }
-            catch (Exception ex)
-            {
-                transaction.Rollback();
-                AppLog.Warning(
-                    "SQLiteMigración",
-                    $"No se pudo verificar/crear la tabla del paso v{step.Version} ('{step.Name}') sobre una base con esquema de otra rama; se continúa con el resto.",
-                    ex);
-            }
-        }
-    }
-
-    public static int GetCurrentUserVersion(SqliteConnection connection)
-    {
-        return SqliteMigratorHelpers.GetUserVersion(connection);
-    }
-
-    public static string GetSchemaSummary(SqliteConnection connection)
-    {
-        int version = SqliteMigratorHelpers.GetUserVersion(connection);
-        string applied = SqliteMigratorHelpers.TableExists(connection, "schema_migrations")
-            ? SqliteMigratorHelpers.ExecuteScalarText(connection, "SELECT COUNT(*) FROM schema_migrations;")
-            : "0";
-        return $"SQLite schema v{version}/{LatestSchemaVersion} · migraciones aplicadas: {applied}";
-    }
 }

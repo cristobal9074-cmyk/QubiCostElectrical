@@ -25,6 +25,7 @@ public partial class FamilyBatchReplaceDialog : Window
     private FamilyItemMapping? selectedMapping;
     private FamilyConversionPreset? currentPreset;
     private bool isInitialized;
+    private bool suppressRowSearch;
 
     public FamilyBatchReplaceResult? Result { get; private set; }
 
@@ -176,10 +177,8 @@ public partial class FamilyBatchReplaceDialog : Window
 
     private void OnIncludePriceBankCheckChanged(object sender, RoutedEventArgs e)
     {
-        if (RowSearchBox.Text?.Trim().Length >= 2)
-        {
+        if (isInitialized)
             OnRowSearchTextChanged(RowSearchBox, null!);
-        }
     }
 
     private void OnTargetCodeCellLostFocus(object sender, RoutedEventArgs e)
@@ -210,16 +209,16 @@ public partial class FamilyBatchReplaceDialog : Window
         }
     }
 
+    private void OnRowSearchPreviewKeyDown(object sender, KeyEventArgs e) =>
+        SuggestionListKeyboard.Handle(e, RowSearchSuggestionsList, RowSearchPopup);
+
     private void OnRowSearchTextChanged(object sender, TextChangedEventArgs e)
     {
-        if (selectedMapping == null) return;
+        if (suppressRowSearch || !isInitialized || selectedMapping == null)
+            return;
 
         string query = RowSearchBox.Text?.Trim() ?? "";
-        if (query.Length < 2)
-        {
-            RowSearchPopup.IsOpen = false;
-            return;
-        }
+        bool listAll = query.Length == 0;
 
         var matches = new List<FamilyRowSuggestionItem>();
         var seenCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -227,11 +226,12 @@ public partial class FamilyBatchReplaceDialog : Window
         // 1. Buscar en los materiales de la Cubicación del proyecto (prioridad estricta)
         var cubMatches = session.Cubicacion
             .Where(c => !string.IsNullOrWhiteSpace(c.Codigo) || !string.IsNullOrWhiteSpace(c.Descripcion))
-            .Where(c => (c.Codigo?.Contains(query, StringComparison.OrdinalIgnoreCase) == true) ||
+            .Where(c => listAll ||
+                        (c.Codigo?.Contains(query, StringComparison.OrdinalIgnoreCase) == true) ||
                         (c.Descripcion?.Contains(query, StringComparison.OrdinalIgnoreCase) == true))
             .GroupBy(c => !string.IsNullOrWhiteSpace(c.Codigo) ? c.Codigo.Trim() : c.Descripcion.Trim(), StringComparer.OrdinalIgnoreCase)
             .Select(g => g.First())
-            .Take(20);
+            .Take(30);
 
         foreach (var c in cubMatches)
         {
@@ -261,7 +261,8 @@ public partial class FamilyBatchReplaceDialog : Window
         }
 
         // 2. Si el usuario activó "Buscar también en Banco de Precios", agregar resultados externos
-        if (IncludePriceBankCheck?.IsChecked == true)
+        string? bankNotice = null;
+        if (!listAll && IncludePriceBankCheck?.IsChecked == true)
         {
             try
             {
@@ -282,12 +283,17 @@ public partial class FamilyBatchReplaceDialog : Window
                         b
                     ));
 
-                    if (matches.Count >= 25) break;
+                    if (matches.Count >= 30) break;
                 }
             }
-            catch { }
+            catch
+            {
+                bankNotice = "No se pudo consultar el banco de precios. La fila quedó como estaba.";
+            }
         }
 
+        RowSearchStatus.Text = bankNotice
+            ?? (matches.Count == 0 ? "Sin coincidencias." : "");
         RowSearchSuggestionsList.ItemsSource = matches;
         RowSearchPopup.IsOpen = matches.Count > 0;
     }
@@ -313,7 +319,10 @@ public partial class FamilyBatchReplaceDialog : Window
         selectedMapping.Status = b.OrigenPrecio == "Cubicación" ? FamilyMappingStatus.InCubicacion : FamilyMappingStatus.Manual;
 
         RowSearchPopup.IsOpen = false;
+        suppressRowSearch = true;
         RowSearchBox.Text = $"{b.Codigo} · {b.Descripcion}";
+        suppressRowSearch = false;
+        RowSearchStatus.Text = "";
         MappingGrid.Items.Refresh();
         UpdateCockpit();
     }
@@ -351,7 +360,14 @@ public partial class FamilyBatchReplaceDialog : Window
             entry = priceBankStore.GetByCodigo(code) ??
                     priceBankStore.Search(code).FirstOrDefault(x => string.Equals(x.Codigo, code, StringComparison.OrdinalIgnoreCase));
         }
-        catch { }
+        catch
+        {
+            mapping.Status = FamilyMappingStatus.NotFound;
+            RowSearchStatus.Text = "No se pudo consultar el banco de precios. El código quedó escrito, sin precio del banco.";
+            MappingGrid.Items.Refresh();
+            UpdateCockpit();
+            return;
+        }
 
         if (entry != null)
         {

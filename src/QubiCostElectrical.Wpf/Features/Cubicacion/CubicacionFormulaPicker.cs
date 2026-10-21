@@ -22,7 +22,6 @@ internal static class CubicacionFormulaPicker
     private static bool _suppressLostFocusCommit;
 
     public static bool SuppressLostFocusCommit => _suppressLostFocusCommit;
-    public static void SetSuppressLostFocus(bool suppress) => _suppressLostFocusCommit = suppress;
     public static int CantPickIndex => _cantPickIndex;
     public static int UnidadPickIndex => _unidadPickIndex;
     public static TextBox? ActiveUnidadBox => _activeUnidadBox;
@@ -450,38 +449,6 @@ internal static class CubicacionFormulaPicker
         }
     }
 
-    public static bool HandleUnidadPopupKey(KeyEventArgs e, System.Windows.Controls.Primitives.Popup popup, ListBox list, Action<UnidadSuggestion> onApply)
-    {
-        if (!popup.IsOpen) return false;
-        if (e.Key == Key.Down)
-        {
-            list.SelectedIndex = Math.Min(list.SelectedIndex + 1, list.Items.Count - 1);
-            e.Handled = true;
-            return true;
-        }
-        if (e.Key == Key.Up)
-        {
-            list.SelectedIndex = Math.Max(list.SelectedIndex - 1, 0);
-            e.Handled = true;
-            return true;
-        }
-        if (e.Key is Key.Enter or Key.Return or Key.Tab)
-        {
-            if (list.SelectedItem is UnidadSuggestion sug)
-            {
-                onApply(sug);
-                e.Handled = true;
-                return true;
-            }
-        }
-        if (e.Key == Key.Escape)
-        {
-            popup.IsOpen = false;
-            e.Handled = true;
-            return true;
-        }
-        return false;
-    }
 
     public static void CancelUnidadPick(TextBox? box, IReadOnlyList<CubicacionRowVm>? rows, CubicacionViewModel? vm = null, DataGrid? grid = null)
     {
@@ -571,13 +538,6 @@ internal static class CubicacionFormulaPicker
         box.Focus();
     }
 
-    public static bool TryPickCant(TextBox? box, int rowIndex, int sectorSlot, CubicacionViewModel? vm)
-    {
-        if (box == null) return false;
-        PickCantCell(box, rowIndex, vm?.Rows, null, null);
-        return true;
-    }
-
     public static bool TryPickSector(TextBox? focusedTb, int rowIndex, int sectorSlot)
     {
         if (focusedTb == null) return false;
@@ -619,32 +579,6 @@ internal static class CubicacionFormulaPicker
         return null;
     }
 
-    public static bool TryNavigateUpFromFirstRow(DataGrid? grid, KeyEventArgs e, TextBox? unidadBox, TextBox? cantBox, DataGridColumn? cantCol, IReadOnlyList<DataGridColumn>? sectorCols)
-    {
-        if (grid == null || e.Key != Key.Up || (Keyboard.Modifiers & (ModifierKeys.Control | ModifierKeys.Alt | ModifierKeys.Shift)) != ModifierKeys.None)
-            return false;
-
-        int currentRow = grid.CurrentCell.IsValid && grid.CurrentCell.Item != null ? grid.Items.IndexOf(grid.CurrentCell.Item) : grid.SelectedIndex;
-        if (currentRow > 0) return false;
-
-        grid.CommitEdit(DataGridEditingUnit.Cell, true);
-        grid.CommitEdit(DataGridEditingUnit.Row, true);
-
-        var curCol = grid.CurrentCell.Column;
-        bool isQtySide = (cantCol != null && curCol == cantCol) || (sectorCols != null && curCol != null && sectorCols.Contains(curCol));
-        var targetBox = isQtySide ? cantBox : unidadBox;
-        if (targetBox != null)
-        {
-            grid.SelectedCells.Clear();
-            grid.SelectedItem = null;
-            grid.CurrentCell = default;
-            targetBox.Focus();
-            targetBox.SelectAll();
-            e.Handled = true;
-            return true;
-        }
-        return false;
-    }
 
     public static void FocusFirstCubicacionCell(DataGrid? grid, IReadOnlyList<DataGridColumn>? sectorCols, DataGridColumn? cantCol)
     {
@@ -658,206 +592,5 @@ internal static class CubicacionFormulaPicker
         }
     }
 
-    public static bool HandleUnidadNavigation(TextBox tb, KeyEventArgs e, CubicacionViewModel? vm, DataGrid? grid, DataGridColumn? colUnidad, Action focusCant)
-    {
-        if (vm == null) return false;
-        bool isFormula = IsUnidadFormulaMode(tb);
-
-        if (e.Key == Key.Tab)
-        {
-            CommitUnidadPick(tb, vm, grid, force: true);
-            focusCant();
-            e.Handled = true;
-            return true;
-        }
-        if (e.Key == Key.Right)
-        {
-            if (isFormula)
-            {
-                CommitUnidadPick(tb, vm, grid, force: true);
-                focusCant();
-                e.Handled = true;
-                return true;
-            }
-            if (tb.SelectionLength == 0 && tb.CaretIndex < (tb.Text ?? "").Length)
-            {
-                return false;
-            }
-            CommitUnidadPick(tb, vm, grid);
-            focusCant();
-            e.Handled = true;
-            return true;
-        }
-        if (e.Key == Key.Left)
-        {
-            if (isFormula) { e.Handled = true; return true; }
-            if (tb.SelectionLength == 0 && tb.CaretIndex > 0)
-            {
-                return false;
-            }
-            return false;
-        }
-        if (e.Key == Key.Down)
-        {
-            if (isFormula)
-            {
-                int maxRow = (vm.Rows != null && vm.Rows.Count > 0) ? vm.Rows.Count - 1 : 0;
-                int cur = _unidadPickIndex >= 0 ? _unidadPickIndex : GetCurrentUnidadIndex(tb);
-                int next = cur < 0 ? 0 : Math.Min(cur + 1, maxRow);
-                ApplyUnidadPick(tb, next, vm.Rows, grid, colUnidad);
-                e.Handled = true;
-                return true;
-            }
-
-            CommitUnidadPick(tb, vm, grid);
-            FocusGridCell(grid, 0, colUnidad ?? FindColumn(grid, "CÓDIGO"));
-            e.Handled = true;
-            return true;
-        }
-        if (e.Key == Key.Up)
-        {
-            if (isFormula)
-            {
-                int cur = _unidadPickIndex >= 0 ? _unidadPickIndex : GetCurrentUnidadIndex(tb);
-                int next = cur <= 0 ? 0 : cur - 1;
-                ApplyUnidadPick(tb, next, vm.Rows, grid, colUnidad);
-                e.Handled = true;
-                return true;
-            }
-
-            e.Handled = true;
-            return true;
-        }
-        if (e.Key is Key.Enter or Key.Return)
-        {
-            CommitUnidadPick(tb, vm, grid, force: true);
-            focusCant();
-            e.Handled = true;
-            return true;
-        }
-        if (e.Key == Key.Escape)
-        {
-            CancelUnidadPick(tb, vm.Rows, vm, grid);
-            if (!isFormula)
-            {
-                var targetCol = FindColumn(grid, "CÓDIGO") ?? colUnidad;
-                FocusGridCell(grid, 0, targetCol);
-            }
-            e.Handled = true;
-            return true;
-        }
-        return false;
-    }
-
-    public static bool HandleCantNavigation(TextBox tb, KeyEventArgs e, CubicacionViewModel? vm, DataGrid? grid, DataGridColumn? colCant, Action focusUnidad, Action commitCant, Action? focusFirstSector = null, bool isEditingStarted = false)
-    {
-        if (vm == null) return false;
-        if (e.Key == Key.Tab)
-        {
-            if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
-            {
-                commitCant();
-                focusUnidad();
-                e.Handled = true;
-                return true;
-            }
-            commitCant();
-            if (focusFirstSector != null) focusFirstSector();
-            else FocusGridCell(grid, 0, FindColumn(grid, "CÓDIGO") ?? colCant);
-            e.Handled = true;
-            return true;
-        }
-        if (e.Key == Key.Left)
-        {
-            if (_cantPickIndex >= 0)
-            {
-                e.Handled = true;
-                return true;
-            }
-            if (tb.SelectionLength == 0 && tb.CaretIndex > 0)
-            {
-                return false; // permitir que la flecha izquierda mueva el cursor dentro del texto
-            }
-            focusUnidad();
-            e.Handled = true;
-            return true;
-        }
-        if (e.Key == Key.Right)
-        {
-            if (_cantPickIndex >= 0)
-            {
-                e.Handled = true;
-                return true;
-            }
-            if (tb.SelectionLength == 0 && tb.CaretIndex < (tb.Text ?? "").Length)
-            {
-                return false; // permitir que la flecha derecha mueva el cursor dentro del texto
-            }
-            if (focusFirstSector != null)
-            {
-                commitCant();
-                focusFirstSector();
-                e.Handled = true;
-                return true;
-            }
-        }
-        if (e.Key == Key.Down)
-        {
-            string raw = tb.Text ?? "";
-            bool isFormula = IsFormulaMode(tb);
-
-            if (!isFormula && _cantPickIndex < 0)
-            {
-                commitCant();
-                FocusGridCell(grid, 0, colCant ?? FindColumn(grid, "CÓDIGO"));
-                e.Handled = true;
-                return true;
-            }
-
-            int maxRow = (vm.Rows != null && vm.Rows.Count > 0) ? vm.Rows.Count - 1 : 0;
-            int cur = _cantPickIndex >= 0 ? _cantPickIndex : GetCurrentCantIndex(tb);
-            int next = cur < 0 ? 0 : Math.Min(cur + 1, maxRow);
-            ApplyCantPick(tb, next, vm.Rows, grid, colCant);
-            e.Handled = true;
-            return true;
-        }
-        if (e.Key == Key.Up)
-        {
-            string raw = tb.Text ?? "";
-            bool isFormula = IsFormulaMode(tb);
-
-            if (!isFormula && _cantPickIndex < 0)
-            {
-                e.Handled = true;
-                return true;
-            }
-
-            int cur = _cantPickIndex >= 0 ? _cantPickIndex : GetCurrentCantIndex(tb);
-            int next = cur <= 0 ? 0 : cur - 1;
-            ApplyCantPick(tb, next, vm.Rows, grid, colCant);
-            e.Handled = true;
-            return true;
-        }
-        if (e.Key is Key.Enter or Key.Return)
-        {
-            int targetRow = _cantPickIndex >= 0 ? _cantPickIndex : 0;
-            _suppressLostFocusCommit = false;
-            commitCant();
-            var targetCol = FindColumn(grid, "CÓDIGO") ?? colCant;
-            FocusGridCell(grid, targetRow, targetCol);
-            e.Handled = true;
-            return true;
-        }
-        if (e.Key == Key.Escape)
-        {
-            _suppressLostFocusCommit = false;
-            CancelCantPick(tb, vm.Rows, vm, grid);
-            var targetCol = FindColumn(grid, "CÓDIGO") ?? colCant;
-            FocusGridCell(grid, 0, targetCol);
-            e.Handled = true;
-            return true;
-        }
-        return false;
-    }
 }
 

@@ -40,6 +40,70 @@ public sealed class DashboardWaterfallRowVm
     public GridLength BarRemainder { get; init; }
 
     public Brush BarBrush { get; init; } = DashboardKpiBrushes.Blue;
+
+    // --- Geometría del lienzo (1:1 con el lienzo de la vista) -------------------
+    // La cascada se dibuja dentro de un Canvas con escala fija y un Viewbox la ajusta al
+    // ancho disponible. Por eso cada fila trae sus coordenadas absolutas en vez de
+    // proporciones: el resultado es idéntico en cualquier ancho de tarjeta.
+
+    /// <summary>Posición vertical absoluta de la fila dentro del lienzo.</summary>
+    public double RowTop { get; init; }
+
+    /// <summary>Posición vertical de la etiqueta dentro de la fila.</summary>
+    public double LabelTop { get; init; }
+
+    /// <summary>Posición vertical del importe dentro de la fila.</summary>
+    public double ValueTop { get; init; }
+
+    /// <summary>Posición horizontal de la barra dentro del lienzo.</summary>
+    public double BarX { get; init; }
+
+    /// <summary>Ancho de la barra en píxeles de lienzo (mínimo legible).</summary>
+    public double BarWidth { get; init; }
+
+    /// <summary>Posición vertical de la barra dentro de la fila.</summary>
+    public double BarTop { get; init; }
+
+    /// <summary>Alto de la barra.</summary>
+    public double BarHeight { get; init; } = DashboardCockpitComposer.BarHeight;
+
+    /// <summary>X del conector hacia la fila siguiente; -1 cuando la fila siguiente es un total.</summary>
+    public double ConnectorX { get; init; } = -1;
+
+    /// <summary>La fila tiene conector hacia la etapa siguiente.</summary>
+    public bool HasConnector => ConnectorX >= 0;
+
+    /// <summary>Y del conector (borde inferior de la barra).</summary>
+    public double ConnectorTop { get; init; }
+
+    /// <summary>Y inferior del conector (borde superior de la barra siguiente).</summary>
+    public double ConnectorBottom { get; init; }
+}
+
+/// <summary>Una marca del eje de la cascada.</summary>
+public sealed class DashboardWaterfallAxisVm
+{
+    /// <summary>Posición horizontal de la marca.</summary>
+    public double X { get; init; }
+
+    /// <summary>Posición vertical de la marca.</summary>
+    public double Y { get; init; }
+
+    /// <summary>Rótulo de la marca.</summary>
+    public string Text { get; init; } = "";
+}
+
+/// <summary>Una línea de grilla vertical de la cascada.</summary>
+public sealed class DashboardWaterfallGridVm
+{
+    /// <summary>Posición horizontal de la línea.</summary>
+    public double X { get; init; }
+
+    /// <summary>Y superior de la línea.</summary>
+    public double Y1 { get; init; }
+
+    /// <summary>Y inferior de la línea.</summary>
+    public double Y2 { get; init; }
 }
 
 /// <summary>Tonos de la cascada de precio, compartidos por el modelo y la vista.</summary>
@@ -151,5 +215,18 @@ public static class DashboardMoneyShort
             _ => abs.ToString("N0", Cl)
         };
         return (negative ? "−$ " : "$ ") + body;
+    }
+
+    /// <summary>Formato corto en UF ("29,1M UF"): cabe en el centro de la dona y en el eje.</summary>
+    public static string FormatUf(decimal value)
+    {
+        decimal abs = System.Math.Abs(value);
+        string body = abs switch
+        {
+            >= 1_000_000m => (abs / 1_000_000m).ToString("N1", Cl) + "M",
+            >= 1_000m => (abs / 1_000m).ToString("N1", Cl) + "K",
+            _ => abs.ToString("N1", Cl)
+        };
+        return body + " UF";
     }
 }

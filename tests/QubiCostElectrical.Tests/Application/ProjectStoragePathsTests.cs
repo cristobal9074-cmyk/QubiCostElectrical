@@ -1,4 +1,4 @@
-using Xunit;
+﻿using Xunit;
 
 namespace QubiCostElectrical.Tests.Application;
 
@@ -53,7 +53,7 @@ public sealed class ProjectStoragePathsTests
         string path = ProjectStoragePaths.GetAutoSavePathForProject(@"D:\clientes\Edificio Norte.qce", "Proyecto");
 
         Assert.EndsWith("Edificio Norte.qce.autosave", path);
-        Assert.StartsWith(@"D:\clientes", path);
+        Assert.StartsWith(ProductPaths.AutoSaveDirectory(), path);
     }
 
     [Fact]
@@ -62,7 +62,7 @@ public sealed class ProjectStoragePathsTests
         string path = ProjectStoragePaths.GetAutoSavePathForProject(@"D:\clientes\Edificio Norte.pepro", "Proyecto");
 
         Assert.EndsWith("Edificio Norte.pepro.autosave", path);
-        Assert.StartsWith(@"D:\clientes", path);
+        Assert.StartsWith(ProductPaths.AutoSaveDirectory(), path);
     }
 
     [Fact]

@@ -24,7 +24,8 @@ public static class FamilyPresentationDefaults
     public static bool IsCanonical(string? normalized) => normalized is
         "CONDUCTORES" or "CANALIZACION" or "TABLEROS" or "ILUMINACION" or "EQUIPOS"
         or "ACCESORIOS" or "ENCHUFES Y TOMACORRIENTES" or "ENCHUFES"
-        or "PROTECCIONES" or "PUESTA A TIERRA";
+        or "PROTECCIONES" or "PUESTA A TIERRA"
+        or "MOVIMIENTOS" or "COMISIONAMIENTO";
 
     /// <summary>
     /// Mapeo canónico natural por defecto para familias y sinónimos de especialidad
@@ -32,20 +33,26 @@ public static class FamilyPresentationDefaults
     /// Esto permite que el factor configurado por el usuario para una familia (ej: Canalización)
     /// aplique automáticamente a sus variantes (Canalizado, Bandejas, etc.) en cualquier proyecto.
     /// </summary>
-    public static string NaturalCanonicalTarget(string? normalized) => (normalized ?? string.Empty).Trim().ToUpperInvariant() switch
+    public static string NaturalCanonicalTarget(string? normalized)
     {
+        if (string.IsNullOrWhiteSpace(normalized))
+            return normalized ?? "ACCESORIOS";
+
+        var clave = ElectricalFamilyCatalog.ClaveCanonica(normalized);
+        return clave switch
+        {
         // Canalización y distribución
         "CANALIZACION" or "CANALIZACIONES" or "CANALIZADO" or "CANALIZADOS"
             or "BANDEJAS" or "BANDEJA" or "ESCALERILLAS" or "ESCALERILLA"
             or "TUBERIAS" or "TUBERIA" or "CONDUIT" or "TUBERIAS CONDUIT" or "TUBERIA CONDUIT"
             or "DUCTOS" or "DUCTO" or "CANALETAS" or "CANALETA"
-            or "DUCTO BARRA" or "DUCTO BARRAS" or "DUCTOBARRA" or "DUCTOBARRAS"
             => "CANALIZACION",
 
         // Conductores y alimentadores
         "CONDUCTORES" or "CONDUCTOR" or "CABLES" or "CABLE" or "ALAMBRES" or "ALAMBRE"
             or "ALIMENTADORES" or "ALIMENTADOR" or "SUBALIMENTADORES" or "SUBALIMENTADOR"
             or "CORDONES" or "CORDON"
+            or "OBRAS CIVILES"
             => "CONDUCTORES",
 
         // Puesta a tierra
@@ -56,7 +63,6 @@ public static class FamilyPresentationDefaults
 
         // Tableros
         "TABLEROS" or "TABLERO" or "GABINETES" or "GABINETE" or "ARMARIOS" or "ARMARIO"
-            or "CELDAS" or "CELDA"
             => "TABLEROS",
 
         // Protecciones
@@ -70,6 +76,7 @@ public static class FamilyPresentationDefaults
             or "TRANSFORMADORES" or "TRANSFORMADOR" or "TRAFO" or "TRAFOS"
             or "GRUPO ELECTROGENO" or "GRUPO ELECTROGENOS" or "GENERADORES" or "GENERADOR"
             or "UPS" or "INVERSORES" or "INVERSOR"
+            or "CELDAS" or "DUCTO BARRA" or "PARARRAYOS" or "SISTEMA DE REMARCACION"
             or "MEDIA TENSION" or "MEDIA TENSION ELECTRICA" or "MT"
             or "SUBESTACION" or "SUBESTACIONES"
             => "EQUIPOS",
@@ -93,10 +100,12 @@ public static class FamilyPresentationDefaults
             or "ABRAZADERAS" or "ABRAZADERA"
             or "TERMINALES" or "TERMINAL" or "PRENSACABLES" or "PRENSACABLE"
             or "FIJACIONES" or "PERNOS" or "TORNILLOS"
+            or "DOCUMENTACION Y TRAMITES"
             => "ACCESORIOS",
 
-        _ => normalized ?? "ACCESORIOS"
-    };
+        _ => string.IsNullOrEmpty(clave) ? "ACCESORIOS" : clave
+        };
+    }
 
     /// <summary>
     /// Si la familia viene de la lista de precios y el usuario la movió a una fila canónica,
@@ -119,8 +128,19 @@ public static class FamilyPresentationDefaults
         return IsCanonical(natural) ? natural : norm;
     }
 
-    public static decimal DefaultMarkup(string normalizedFamily)
+    /// <summary>
+    /// Markup por defecto de la familia. Con <paramref name="porDefecto"/> mayor que cero el
+    /// proyecto manda (valor estandar 1,00 de los proyectos nuevos); sin ese valor se usa la
+    /// tabla historica del producto, que conserva los proyectos ya presupuestados.
+    /// </summary>
+    public static decimal DefaultMarkup(string normalizedFamily) => DefaultMarkup(normalizedFamily, 0m);
+
+    /// <inheritdoc cref="DefaultMarkup(string)"/>
+    public static decimal DefaultMarkup(string normalizedFamily, decimal porDefecto)
     {
+        if (porDefecto > 0m)
+            return porDefecto;
+
         var target = NaturalCanonicalTarget(normalizedFamily);
         return target switch
         {
@@ -132,16 +152,23 @@ public static class FamilyPresentationDefaults
             "EQUIPOS" => 1.12m,
             "ENCHUFES Y TOMACORRIENTES" or "ENCHUFES" => 1.15m,
             "PUESTA A TIERRA" => 1.20m,
+            "MOVIMIENTOS" or "COMISIONAMIENTO" => 1.50m,
             _ => 1.14m
         };
     }
 
     public static decimal ResolveMarkup(IReadOnlyDictionary<string, decimal>? variables, string? family)
+        => ResolveMarkup(variables, family, 0m);
+
+    /// <inheritdoc cref="ResolveMarkup(IReadOnlyDictionary{string, decimal}, string)"/>
+    public static decimal ResolveMarkup(IReadOnlyDictionary<string, decimal>? variables, string? family, decimal porDefecto)
     {
         var norm = Normalize(family);
         if (variables != null && variables.TryGetValue($"MarkupFactor_{norm}", out var v))
             return v;
-        return DefaultMarkup(norm);
+
+        // Regla única en Domain (FamilyPresentationDefaults) para no duplicar la tabla.
+        return DefaultMarkup(norm, porDefecto);
     }
 
     public static decimal ResolveDiscountPct(IReadOnlyDictionary<string, decimal>? variables, string? family)
@@ -154,7 +181,11 @@ public static class FamilyPresentationDefaults
 
     /// <summary>Factor de presentación efectivo: markup × (1 − descuento%).</summary>
     public static decimal ResolveFactor(IReadOnlyDictionary<string, decimal>? variables, string? family)
+        => ResolveFactor(variables, family, 0m);
+
+    /// <inheritdoc cref="ResolveFactor(IReadOnlyDictionary{string, decimal}, string)"/>
+    public static decimal ResolveFactor(IReadOnlyDictionary<string, decimal>? variables, string? family, decimal porDefecto)
         => ExcelCostosBridge.PresentationFactor(
-            ResolveMarkup(variables, family),
+            ResolveMarkup(variables, family, porDefecto),
             ResolveDiscountPct(variables, family));
 }

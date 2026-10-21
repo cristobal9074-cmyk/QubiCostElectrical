@@ -11,9 +11,27 @@ public sealed class PurchaseListService : IPurchaseListService
         IEnumerable<MaterialRow> materiales,
         decimal toleranciaPct)
     {
-        decimal safeTolerance = Math.Clamp(toleranciaPct, 0m, 100m);
-        decimal factor = 1m + safeTolerance / 100m;
+        return Build(cubicacion, materiales, customTolerances: null, useCategoryDefaults: false, fallbackToleranciaPct: toleranciaPct);
+    }
 
+    public IReadOnlyList<CompraMaterialViewModel> Build(
+        IEnumerable<CubicacionRow> cubicacion,
+        IEnumerable<MaterialRow> materiales,
+        IReadOnlyDictionary<string, decimal>? customTolerances,
+        bool useCategoryDefaults,
+        CategoryToleranceConfig? categoryConfig = null)
+    {
+        return Build(cubicacion, materiales, customTolerances, useCategoryDefaults, fallbackToleranciaPct: 5m, categoryConfig);
+    }
+
+    private IReadOnlyList<CompraMaterialViewModel> Build(
+        IEnumerable<CubicacionRow> cubicacion,
+        IEnumerable<MaterialRow> materiales,
+        IReadOnlyDictionary<string, decimal>? customTolerances,
+        bool useCategoryDefaults,
+        decimal fallbackToleranciaPct,
+        CategoryToleranceConfig? categoryConfig = null)
+    {
         var materialLookup = (materiales ?? Enumerable.Empty<MaterialRow>())
             .Where(x => !string.IsNullOrWhiteSpace(x.Codigo))
             .GroupBy(x => NormalizeCode(x.Codigo), StringComparer.OrdinalIgnoreCase)
@@ -22,7 +40,7 @@ public sealed class PurchaseListService : IPurchaseListService
         return (cubicacion ?? Enumerable.Empty<CubicacionRow>())
             .Where(IsPurchasableMaterial)
             .GroupBy(x => ResolvePurchaseGroupKey(x, materialLookup), StringComparer.OrdinalIgnoreCase)
-            .Select(g => BuildRow(g.Key, g.ToList(), materialLookup, safeTolerance, factor))
+            .Select(g => BuildRow(g.Key, g.ToList(), materialLookup, customTolerances, useCategoryDefaults, fallbackToleranciaPct, categoryConfig))
             .Where(x => x.CantidadNeta != 0m)
             .OrderByDescending(x => x.TotalCompraUf)
             .ThenBy(x => x.Codigo, StringComparer.OrdinalIgnoreCase)
@@ -33,13 +51,43 @@ public sealed class PurchaseListService : IPurchaseListService
         string codigoKey,
         IReadOnlyList<CubicacionRow> rows,
         IReadOnlyDictionary<string, MaterialRow> materialLookup,
-        decimal toleranciaPct,
-        decimal factor)
+        IReadOnlyDictionary<string, decimal>? customTolerances,
+        bool useCategoryDefaults,
+        decimal fallbackToleranciaPct,
+        CategoryToleranceConfig? categoryConfig = null)
     {
         materialLookup.TryGetValue(codigoKey, out var material);
         material ??= rows
             .Select(x => materialLookup.TryGetValue(NormalizeCode(x.Codigo), out var rowMaterial) ? rowMaterial : null)
             .FirstOrDefault(x => x != null);
+
+        string descripcion = material?.Descripcion
+            ?? rows.Select(x => x.Descripcion).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x))
+            ?? "Sin descripción";
+        string unidad = material?.Unidad
+            ?? rows.Select(x => x.Unidad).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x))
+            ?? "";
+        string categoria = material?.Categoria
+            ?? rows.Select(x => x.Area).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x))
+            ?? "General";
+        string proveedor = material?.Proveedor?.Trim() ?? "";
+
+        decimal resolvedTol;
+        if (customTolerances != null && customTolerances.TryGetValue(codigoKey, out var customVal))
+        {
+            resolvedTol = customVal;
+        }
+        else if (useCategoryDefaults)
+        {
+            resolvedTol = categoryConfig != null ? categoryConfig.Resolve(categoria, unidad, descripcion) : MaterialToleranceRules.ResolveTolerancePct(categoria, unidad, descripcion);
+        }
+        else
+        {
+            resolvedTol = fallbackToleranciaPct;
+        }
+
+        decimal safeTolerance = Math.Clamp(resolvedTol, 0m, 100m);
+        decimal factor = 1m + safeTolerance / 100m;
 
         decimal cantidadNeta = rows.Sum(x => x.Cantidad);
         decimal totalNetoUf = rows.Sum(x => x.Cantidad * x.MatUf);
@@ -61,17 +109,6 @@ public sealed class PurchaseListService : IPurchaseListService
         decimal totalCompraUf = cantidadCompra * matUfUnitario;
         decimal totalCompraClp = cantidadCompra * matClpUnitario;
 
-        string descripcion = material?.Descripcion
-            ?? rows.Select(x => x.Descripcion).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x))
-            ?? "Sin descripción";
-        string unidad = material?.Unidad
-            ?? rows.Select(x => x.Unidad).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x))
-            ?? "";
-        string categoria = material?.Categoria
-            ?? rows.Select(x => x.Area).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x))
-            ?? "General";
-        string proveedor = material?.Proveedor?.Trim() ?? "";
-
         return new CompraMaterialViewModel(
             codigoKey,
             descripcion,
@@ -79,7 +116,7 @@ public sealed class PurchaseListService : IPurchaseListService
             categoria,
             proveedor,
             cantidadNeta,
-            toleranciaPct,
+            safeTolerance,
             cantidadCompra,
             matUfUnitario,
             totalNetoUf,

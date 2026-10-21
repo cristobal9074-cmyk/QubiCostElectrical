@@ -1,0 +1,120 @@
+<UserControl x:Class="QubiCostElectrical.Wpf.Features.Project.ProjectScopeControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d">
+  <!-- ───────────────────────────────────────────────────────────── -->
+  <!-- SECCIÓN 3: ALCANCE & EXCLUSIONES                               -->
+  <!-- ───────────────────────────────────────────────────────────── -->
+  <StackPanel Visibility="{Binding IsSectionAlcance, Converter={StaticResource BoolToVisibility}}">
+    <Grid Margin="0,0,0,12">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="14" />
+        <ColumnDefinition Width="*" />
+      </Grid.ColumnDefinitions>
+
+      <!-- Panel Incluye -->
+      <Border Grid.Column="0" Style="{StaticResource ProCard}">
+        <StackPanel>
+          <!-- Cabecera con Badge y Acciones -->
+          <DockPanel LastChildFill="True" Margin="0,0,0,8">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <Border Width="24" Height="24" CornerRadius="6" Background="{DynamicResource Brush.SuccessBg}"
+                      BorderBrush="{DynamicResource Brush.SuccessBorder}" BorderThickness="1" Margin="0,0,8,0">
+                <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="11"
+                           Foreground="{DynamicResource Brush.Success}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+              </Border>
+              <TextBlock Text="ALCANCE INCLUIDO (INCLUYE)" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink2}" VerticalAlignment="Center" />
+              <Border CornerRadius="4" Background="{DynamicResource Brush.SuccessBg}" BorderBrush="{DynamicResource Brush.SuccessBorder}" BorderThickness="1"
+                      Padding="5,1" Margin="8,0,0,0" VerticalAlignment="Center">
+                <TextBlock Text="{Binding ScopeLengthSummary}" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Success}" />
+              </Border>
+            </StackPanel>
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
+              <Button Command="{Binding CopyScopeCommand}" Style="{StaticResource Button.Secondary}" Height="24" Padding="8,0" FontSize="10.5" Margin="0,0,4,0" ToolTip="Copiar texto de alcance al portapapeles">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="10" Margin="0,0,4,0" VerticalAlignment="Center" />
+                  <TextBlock Text="Copiar" VerticalAlignment="Center" />
+                </StackPanel>
+              </Button>
+              <Button Command="{Binding ClearScopeCommand}" Style="{StaticResource Button.Secondary}" Height="24" Padding="8,0" FontSize="10.5" ToolTip="Vaciar texto de alcance">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="10" Margin="0,0,4,0" Foreground="{DynamicResource Brush.Danger}" VerticalAlignment="Center" />
+                  <TextBlock Text="Limpiar" VerticalAlignment="Center" />
+                </StackPanel>
+              </Button>
+            </StackPanel>
+          </DockPanel>
+
+          <TextBlock Text="Partidas, canalizaciones y suministros bajo normativa SEC garantizados en la oferta:"
+                     FontSize="10.5" Foreground="{DynamicResource Brush.Ink4}" Margin="0,0,0,6" />
+
+          <!-- Toolbar de Plantillas Rápidas SEC -->
+          <WrapPanel Margin="0,0,0,8">
+            <TextBlock Text="PLANTILLAS SEC:" Style="{StaticResource Form.Label}" VerticalAlignment="Center" Margin="0,0,6,6" />
+            <Button Style="{StaticResource ProTemplateChip}" Content="+ Habitacional SEC (RIC N°02/03/10)" Command="{Binding LoadScopeResidentialCommand}" ToolTip="Inserta cláusulas estándar para proyectos habitacionales y condominios con tramitación TE1" />
+            <Button Style="{StaticResource ProTemplateChip}" Content="+ Comercial / Retail (RIC N°04/08/19)" Command="{Binding LoadScopeCommercialCommand}" ToolTip="Inserta cláusulas estándar para locales comerciales, oficinas y retail" />
+            <Button Style="{StaticResource ProTemplateChip}" Content="+ Industrial / Fuerza (RIC N°02/04/06)" Command="{Binding LoadScopeIndustrialCommand}" ToolTip="Inserta cláusulas de tableros de fuerza, CCM y mallas industriales" />
+          </WrapPanel>
+
+          <!-- Caja de Texto de Alcance con Scroll -->
+          <TextBox Text="{Binding ScopeText, UpdateSourceTrigger=PropertyChanged}"
+                   Style="{StaticResource Form.TextBox}" AcceptsReturn="True" TextWrapping="Wrap"
+                   MinHeight="260" MaxHeight="450" VerticalScrollBarVisibility="Auto" FontSize="11.5" />
+        </StackPanel>
+      </Border>
+
+      <!-- Panel No Incluye -->
+      <Border Grid.Column="2" Style="{StaticResource ProCard}">
+        <StackPanel>
+          <!-- Cabecera con Badge y Acciones -->
+          <DockPanel LastChildFill="True" Margin="0,0,0,8">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <Border Width="24" Height="24" CornerRadius="6" Background="{DynamicResource Brush.DangerBg}"
+                      BorderBrush="{DynamicResource Brush.DangerBorder}" BorderThickness="1" Margin="0,0,8,0">
+                <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="11"
+                           Foreground="{DynamicResource Brush.Danger}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+              </Border>
+              <TextBlock Text="EXCLUSIONES EXPRESAS (NO INCLUYE)" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink2}" VerticalAlignment="Center" />
+              <Border CornerRadius="4" Background="{DynamicResource Brush.DangerBg}" BorderBrush="{DynamicResource Brush.DangerBorder}" BorderThickness="1"
+                      Padding="5,1" Margin="8,0,0,0" VerticalAlignment="Center">
+                <TextBlock Text="{Binding ExclusionsLengthSummary}" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Danger}" />
+              </Border>
+            </StackPanel>
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
+              <Button Command="{Binding CopyExclusionsCommand}" Style="{StaticResource Button.Secondary}" Height="24" Padding="8,0" FontSize="10.5" Margin="0,0,4,0" ToolTip="Copiar exclusiones al portapapeles">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="10" Margin="0,0,4,0" VerticalAlignment="Center" />
+                  <TextBlock Text="Copiar" VerticalAlignment="Center" />
+                </StackPanel>
+              </Button>
+              <Button Command="{Binding ClearExclusionsCommand}" Style="{StaticResource Button.Secondary}" Height="24" Padding="8,0" FontSize="10.5" ToolTip="Vaciar texto de exclusiones">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="10" Margin="0,0,4,0" Foreground="{DynamicResource Brush.Danger}" VerticalAlignment="Center" />
+                  <TextBlock Text="Limpiar" VerticalAlignment="Center" />
+                </StackPanel>
+              </Button>
+            </StackPanel>
+          </DockPanel>
+
+          <TextBlock Text="Límites contractuales: obras civiles ajenas, derechos de empalme o suministros no presupuestados:"
+                     FontSize="10.5" Foreground="{DynamicResource Brush.Ink4}" Margin="0,0,0,6" />
+
+          <!-- Toolbar de Plantillas de Exclusiones -->
+          <WrapPanel Margin="0,0,0,8">
+            <TextBlock Text="EXCLUSIONES TÍPICAS:" Style="{StaticResource Form.Label}" VerticalAlignment="Center" Margin="0,0,6,6" />
+            <Button Style="{StaticResource ProTemplateChipRed}" Content="+ Estándar General SEC" Command="{Binding LoadExclusionsStandardCommand}" ToolTip="Inserta exclusiones de obras civiles, derechos de distribuidora eléctrica y luminarias decorativas" />
+            <Button Style="{StaticResource ProTemplateChipRed}" Content="+ Sin Obras Civiles ni Remates" Command="{Binding LoadExclusionsCivilCommand}" ToolTip="Inserta exclusiones de demolición, picados, zanjas, pintura y andamios" />
+          </WrapPanel>
+
+          <!-- Caja de Texto de Exclusiones con Scroll -->
+          <TextBox Text="{Binding ExclusionsText, UpdateSourceTrigger=PropertyChanged}"
+                   Style="{StaticResource Form.TextBox}" AcceptsReturn="True" TextWrapping="Wrap"
+                   MinHeight="260" MaxHeight="450" VerticalScrollBarVisibility="Auto" FontSize="11.5" />
+        </StackPanel>
+      </Border>
+    </Grid>
+  </StackPanel>
+</UserControl>

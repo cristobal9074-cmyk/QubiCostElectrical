@@ -106,9 +106,6 @@ public sealed partial class CubicacionViewModel
         return sb.ToString().Normalize(NormalizationForm.FormC);
     }
 
-    public CubicacionClipboardParseResult ParseClipboardText(string text)
-        => CubicacionClipboardService.ParseExcelText(text);
-
     public void ApplyClipboardRows(IEnumerable<CubicacionClipboardRow> rows)
         => clipboardCoordinator.ApplyClipboardRows(rows);
 }

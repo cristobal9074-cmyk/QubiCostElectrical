@@ -13,212 +13,6 @@
     <KeyBinding Key="F" Modifiers="Control" Command="ApplicationCommands.Find" />
   </UserControl.InputBindings>
   <UserControl.Resources>
-    <DataTemplate x:Key="StatusBadgeTemplate">
-      <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" ToolTip="{Binding StatusLabel}">
-        <Ellipse Width="7" Height="7" Margin="0,0,5,0" VerticalAlignment="Center">
-          <Ellipse.Style>
-            <Style TargetType="Ellipse">
-              <Setter Property="Fill" Value="{DynamicResource Brush.Line2}" />
-              <Style.Triggers>
-                <DataTrigger Binding="{Binding IsTitleRow}" Value="True">
-                  <Setter Property="Visibility" Value="Collapsed" />
-                </DataTrigger>
-                <DataTrigger Binding="{Binding StatusKind}" Value="ok">
-                  <Setter Property="Fill" Value="{DynamicResource Brush.Success}" />
-                </DataTrigger>
-                <DataTrigger Binding="{Binding StatusKind}" Value="warn">
-                  <Setter Property="Fill" Value="{DynamicResource Brush.Amber}" />
-                </DataTrigger>
-                <DataTrigger Binding="{Binding StatusKind}" Value="info">
-                  <Setter Property="Fill" Value="{DynamicResource Brush.Blue}" />
-                </DataTrigger>
-                <DataTrigger Binding="{Binding StatusKind}" Value="bad">
-                  <Setter Property="Fill" Value="{DynamicResource Brush.Red}" />
-                </DataTrigger>
-              </Style.Triggers>
-            </Style>
-          </Ellipse.Style>
-        </Ellipse>
-        <TextBlock FontSize="11" FontWeight="Medium" VerticalAlignment="Center">
-          <TextBlock.Style>
-            <Style TargetType="TextBlock">
-              <Setter Property="Text" Value="{Binding StatusShortLabel}" />
-              <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}" />
-              <Style.Triggers>
-                <DataTrigger Binding="{Binding IsTitleRow}" Value="True">
-                  <Setter Property="Visibility" Value="Collapsed" />
-                </DataTrigger>
-                <DataTrigger Binding="{Binding StatusKind}" Value="ok">
-                  <Setter Property="Foreground" Value="{DynamicResource Brush.Success}" />
-                </DataTrigger>
-                <DataTrigger Binding="{Binding StatusKind}" Value="bad">
-                  <Setter Property="Foreground" Value="{DynamicResource Brush.Red}" />
-                </DataTrigger>
-              </Style.Triggers>
-            </Style>
-          </TextBlock.Style>
-        </TextBlock>
-      </StackPanel>
-    </DataTemplate>
-
-    <Style x:Key="NumericCellTextBlock" TargetType="TextBlock">
-      <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
-      <Setter Property="FontSize" Value="{StaticResource Font.Size.sm}" />
-      <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
-      <Setter Property="TextAlignment" Value="Right" />
-      <Setter Property="VerticalAlignment" Value="Center" />
-      <Setter Property="Padding" Value="0,0,6,0" />
-      <Style.Triggers>
-        <DataTrigger Binding="{Binding IsTitleRow}" Value="True">
-          <Setter Property="Visibility" Value="Collapsed" />
-        </DataTrigger>
-      </Style.Triggers>
-    </Style>
-
-    <Style x:Key="TotalCellTextBlock" TargetType="TextBlock" BasedOn="{StaticResource NumericCellTextBlock}">
-      <Setter Property="FontWeight" Value="SemiBold" />
-      <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
-      <Style.Triggers>
-        <DataTrigger Binding="{Binding IsTitleRow}" Value="True">
-          <Setter Property="Visibility" Value="Visible" />
-          <Setter Property="FontWeight" Value="Bold" />
-          <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
-        </DataTrigger>
-      </Style.Triggers>
-    </Style>
-
-    <Style x:Key="ItemCellTextBlock" TargetType="TextBlock">
-      <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
-      <Setter Property="FontSize" Value="{StaticResource Font.Size.sm}" />
-      <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
-      <Setter Property="TextAlignment" Value="Center" />
-      <Style.Triggers>
-        <DataTrigger Binding="{Binding IsTitleRow}" Value="True">
-          <Setter Property="FontWeight" Value="Bold" />
-          <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
-        </DataTrigger>
-        <DataTrigger Binding="{Binding ItemCellError, Converter={StaticResource StringNotEmptyToBool}}" Value="True">
-          <Setter Property="Background" Value="{DynamicResource Brush.RedSoft}" />
-          <Setter Property="ToolTip" Value="{Binding ItemCellError}" />
-        </DataTrigger>
-      </Style.Triggers>
-    </Style>
-    <Style x:Key="ItemCellTextBox" TargetType="TextBox" BasedOn="{StaticResource DataGrid.CellErrorTextBox}">
-      <Setter Property="TextAlignment" Value="Center" />
-      <Style.Triggers>
-        <DataTrigger Binding="{Binding ItemCellError, Converter={StaticResource StringNotEmptyToBool}}" Value="True">
-          <Setter Property="Tag" Value="error" />
-          <Setter Property="ToolTip" Value="{Binding ItemCellError}" />
-        </DataTrigger>
-      </Style.Triggers>
-    </Style>
-    <Style x:Key="DescripcionCellTextBlock" TargetType="TextBlock">
-      <Setter Property="Margin" Value="{Binding IndentMargin}" />
-      <Style.Triggers>
-        <DataTrigger Binding="{Binding IsTitleRow}" Value="True">
-          <Setter Property="FontWeight" Value="Bold" />
-          <Setter Property="FontSize" Value="{StaticResource Font.Size.base}" />
-          <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
-        </DataTrigger>
-        <DataTrigger Binding="{Binding DescripcionCellError, Converter={StaticResource StringNotEmptyToBool}}" Value="True">
-          <Setter Property="Background" Value="{DynamicResource Brush.RedSoft}" />
-          <Setter Property="ToolTip" Value="{Binding DescripcionCellError}" />
-        </DataTrigger>
-      </Style.Triggers>
-    </Style>
-    <Style x:Key="DescripcionCellTextBox" TargetType="TextBox" BasedOn="{StaticResource DataGrid.CellErrorTextBox}">
-      <Setter Property="Margin" Value="{Binding IndentMargin}" />
-      <Style.Triggers>
-        <DataTrigger Binding="{Binding DescripcionCellError, Converter={StaticResource StringNotEmptyToBool}}" Value="True">
-          <Setter Property="Tag" Value="error" />
-          <Setter Property="ToolTip" Value="{Binding DescripcionCellError}" />
-        </DataTrigger>
-      </Style.Triggers>
-    </Style>
-    <Style x:Key="ObservacionesCellTextBox" TargetType="TextBox" BasedOn="{StaticResource DataGrid.CellErrorTextBox}">
-      <Setter Property="Padding" Value="6,0" />
-      <Setter Property="FontSize" Value="11" />
-      <Setter Property="VerticalContentAlignment" Value="Center" />
-    </Style>
-    <Style x:Key="UnidadCellTextBlock" TargetType="TextBlock">
-      <Setter Property="TextAlignment" Value="Center" />
-      <Setter Property="FontSize" Value="{StaticResource Font.Size.sm}" />
-      <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
-      <Style.Triggers>
-        <DataTrigger Binding="{Binding IsTitleRow}" Value="True">
-          <Setter Property="Visibility" Value="Collapsed" />
-        </DataTrigger>
-        <DataTrigger Binding="{Binding UnidadCellError, Converter={StaticResource StringNotEmptyToBool}}" Value="True">
-          <Setter Property="Background" Value="{DynamicResource Brush.RedSoft}" />
-          <Setter Property="ToolTip" Value="{Binding UnidadCellError}" />
-        </DataTrigger>
-      </Style.Triggers>
-    </Style>
-    <Style x:Key="UnidadCellTextBox" TargetType="TextBox" BasedOn="{StaticResource DataGrid.CellErrorTextBox}">
-      <Setter Property="TextAlignment" Value="Center" />
-      <Style.Triggers>
-        <DataTrigger Binding="{Binding UnidadCellError, Converter={StaticResource StringNotEmptyToBool}}" Value="True">
-          <Setter Property="Tag" Value="error" />
-          <Setter Property="ToolTip" Value="{Binding UnidadCellError}" />
-        </DataTrigger>
-      </Style.Triggers>
-    </Style>
-    <Style x:Key="CantidadCellTextBlock" TargetType="TextBlock">
-      <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
-      <Setter Property="FontSize" Value="11" />
-      <Setter Property="FontWeight" Value="SemiBold" />
-      <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
-      <Setter Property="TextAlignment" Value="Right" />
-      <Setter Property="VerticalAlignment" Value="Center" />
-      <Setter Property="Margin" Value="0,0,10,0" />
-      <Style.Triggers>
-        <DataTrigger Binding="{Binding CantidadCellError, Converter={StaticResource StringNotEmptyToBool}}" Value="True">
-          <Setter Property="Background" Value="{DynamicResource Brush.RedSoft}" />
-          <Setter Property="ToolTip" Value="{Binding CantidadCellError}" />
-        </DataTrigger>
-      </Style.Triggers>
-    </Style>
-    <Style x:Key="CantidadCellTextBox" TargetType="TextBox" BasedOn="{StaticResource DataGrid.CellErrorTextBox}">
-      <Setter Property="TextAlignment" Value="Right" />
-      <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
-      <Style.Triggers>
-        <DataTrigger Binding="{Binding CantidadCellError, Converter={StaticResource StringNotEmptyToBool}}" Value="True">
-          <Setter Property="Tag" Value="error" />
-          <Setter Property="ToolTip" Value="{Binding CantidadCellError}" />
-        </DataTrigger>
-      </Style.Triggers>
-    </Style>
-    <Style x:Key="ItemizadoColumnHeader" TargetType="DataGridColumnHeader" BasedOn="{StaticResource DataGridColumnHeader.Prototype}" />
-    <Style x:Key="NumericColumnHeader" TargetType="DataGridColumnHeader" BasedOn="{StaticResource DataGridColumnHeader.Numeric}" />
-    <Style x:Key="CenteredColumnHeader" TargetType="DataGridColumnHeader" BasedOn="{StaticResource DataGridColumnHeader.Center}" />
-    <Style x:Key="ItemizadoDataGridCell" TargetType="DataGridCell">
-      <Setter Property="Padding" Value="8,2" />
-      <Setter Property="VerticalContentAlignment" Value="Center" />
-      <Setter Property="Background" Value="Transparent" />
-      <Setter Property="BorderThickness" Value="1" />
-      <Setter Property="BorderBrush" Value="Transparent" />
-      <Setter Property="FocusVisualStyle" Value="{x:Null}" />
-      <Style.Triggers>
-        <Trigger Property="IsReadOnly" Value="True">
-          <Setter Property="Background" Value="{DynamicResource Brush.CellFormulaBg}" />
-        </Trigger>
-        <MultiTrigger>
-          <MultiTrigger.Conditions>
-            <Condition Property="IsMouseOver" Value="True" />
-            <Condition Property="IsSelected" Value="False" />
-          </MultiTrigger.Conditions>
-          <Setter Property="Background" Value="{DynamicResource Brush.CellEditableHoverBg}" />
-        </MultiTrigger>
-        <Trigger Property="IsSelected" Value="True">
-          <Setter Property="Background" Value="{DynamicResource Brush.BlueSelected}" />
-          <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
-        </Trigger>
-        <Trigger Property="IsFocused" Value="True">
-          <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
-          <Setter Property="BorderThickness" Value="1" />
-        </Trigger>
-      </Style.Triggers>
-    </Style>
     <!-- Menú contextual de fila (clic derecho): se define como recurso con clave, no
          inline en un Setter.Value de Style, porque los manejadores de evento (Click,
          Opened) dentro de un Setter.Value confunden la generación de código del
@@ -250,146 +44,6 @@
       <MenuItem Header="Eliminar" Click="OnRowMenuDeleteClick"
                 ToolTip="Eliminar fila o capítulo (Supr)" />
     </ContextMenu>
-
-    <Style x:Key="OnboardingCardStyle" TargetType="Border">
-      <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
-      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
-      <Setter Property="BorderThickness" Value="1" />
-      <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
-      <Setter Property="Padding" Value="16" />
-      <Setter Property="Margin" Value="4" />
-      <Style.Triggers>
-        <Trigger Property="IsMouseOver" Value="True">
-          <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
-          <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
-        </Trigger>
-      </Style.Triggers>
-    </Style>
-
-    <Style x:Key="OnboardingActionCardStyle" TargetType="Border">
-      <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
-      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
-      <Setter Property="BorderThickness" Value="1" />
-      <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
-      <Setter Property="Padding" Value="16,14" />
-      <Style.Triggers>
-        <Trigger Property="IsMouseOver" Value="True">
-          <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line2}" />
-          <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
-        </Trigger>
-      </Style.Triggers>
-    </Style>
-
-    <Style x:Key="PerspectiveToggleRadioButtonStyle" TargetType="RadioButton">
-      <Setter Property="Background" Value="Transparent" />
-      <Setter Property="BorderThickness" Value="0" />
-      <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
-      <Setter Property="FontWeight" Value="SemiBold" />
-      <Setter Property="FontSize" Value="11" />
-      <Setter Property="Cursor" Value="Hand" />
-      <Setter Property="Template">
-        <Setter.Value>
-          <ControlTemplate TargetType="RadioButton">
-            <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="4" Padding="8,3">
-              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-            </Border>
-            <ControlTemplate.Triggers>
-              <Trigger Property="IsChecked" Value="True">
-                <Setter TargetName="bd" Property="Background" Value="{DynamicResource Brush.Surface}" />
-                <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
-              </Trigger>
-              <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
-              </Trigger>
-            </ControlTemplate.Triggers>
-          </ControlTemplate>
-        </Setter.Value>
-      </Setter>
-    </Style>
-
-    <Style x:Key="SegmentedFilterRadioButtonStyle" TargetType="RadioButton">
-      <Setter Property="Background" Value="Transparent" />
-      <Setter Property="BorderThickness" Value="0" />
-      <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
-      <Setter Property="FontWeight" Value="Medium" />
-      <Setter Property="FontSize" Value="12" />
-      <Setter Property="Cursor" Value="Hand" />
-      <Setter Property="Template">
-        <Setter.Value>
-          <ControlTemplate TargetType="RadioButton">
-            <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="6" Padding="8,4">
-              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-            </Border>
-            <ControlTemplate.Triggers>
-              <Trigger Property="IsChecked" Value="True">
-                <Setter TargetName="bd" Property="Background" Value="{DynamicResource Brush.Surface}" />
-                <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
-                <Setter Property="FontWeight" Value="SemiBold" />
-              </Trigger>
-              <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
-              </Trigger>
-            </ControlTemplate.Triggers>
-          </ControlTemplate>
-        </Setter.Value>
-      </Setter>
-    </Style>
-
-    <Style x:Key="MiniRowActionButton" TargetType="Button">
-      <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
-      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
-      <Setter Property="BorderThickness" Value="1" />
-      <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}" />
-      <Setter Property="FontSize" Value="9.5" />
-      <Setter Property="FontWeight" Value="SemiBold" />
-      <Setter Property="Padding" Value="6,2" />
-      <Setter Property="Height" Value="20" />
-      <Setter Property="Cursor" Value="Hand" />
-      <Setter Property="Template">
-        <Setter.Value>
-          <ControlTemplate TargetType="Button">
-            <Border Background="{TemplateBinding Background}"
-                    BorderBrush="{TemplateBinding BorderBrush}"
-                    BorderThickness="{TemplateBinding BorderThickness}"
-                    CornerRadius="4" Padding="{TemplateBinding Padding}">
-              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-            </Border>
-            <ControlTemplate.Triggers>
-              <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="Background" Value="{DynamicResource Brush.ChipBg}" />
-                <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
-                <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
-              </Trigger>
-            </ControlTemplate.Triggers>
-          </ControlTemplate>
-        </Setter.Value>
-      </Setter>
-    </Style>
-
-    <Style x:Key="MiniRowActionButton.Cubicar" TargetType="Button" BasedOn="{StaticResource MiniRowActionButton}">
-      <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
-      <Setter Property="BorderBrush" Value="{DynamicResource Brush.BrandStroke3}" />
-      <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
-      <Setter Property="Template">
-        <Setter.Value>
-          <ControlTemplate TargetType="Button">
-            <Border Background="{TemplateBinding Background}"
-                    BorderBrush="{TemplateBinding BorderBrush}"
-                    BorderThickness="{TemplateBinding BorderThickness}"
-                    CornerRadius="4" Padding="{TemplateBinding Padding}">
-              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-            </Border>
-            <ControlTemplate.Triggers>
-              <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="Background" Value="{DynamicResource Brush.BlueSelected}" />
-                <Setter Property="BorderBrush" Value="{DynamicResource Brush.BlueFocus}" />
-                <Setter Property="Foreground" Value="{DynamicResource Brush.BlueDark}" />
-              </Trigger>
-            </ControlTemplate.Triggers>
-          </ControlTemplate>
-        </Setter.Value>
-      </Setter>
-    </Style>
   </UserControl.Resources>
 
   <Grid>
@@ -442,10 +96,35 @@
                     <TextBlock Text="TOTAL OFERTA" Style="{StaticResource Text.KpiLabel}" />
                     <TextBlock Text="{Binding TotalPresupuestoUfText}" FontSize="13" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Blue}" />
                   </StackPanel>
-                  <Border Width="1" Background="{DynamicResource Brush.Line2}" Margin="0,2,12,2"
-                          Visibility="{Binding TotalPresupuestoClpText, Converter={StaticResource StringNotEmptyToVisibility}}" />
-                  <StackPanel VerticalAlignment="Center"
-                              Visibility="{Binding TotalPresupuestoClpText, Converter={StaticResource StringNotEmptyToVisibility}}">
+                  <Border Width="1" Background="{DynamicResource Brush.Line2}" Margin="0,2,12,2">
+                    <Border.Style>
+                      <Style TargetType="Border">
+                        <Setter Property="Visibility" Value="Visible" />
+                        <Style.Triggers>
+                          <DataTrigger Binding="{Binding IsCurrencyUf}" Value="True">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                          </DataTrigger>
+                          <DataTrigger Binding="{Binding TotalPresupuestoClpText}" Value="">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </Border.Style>
+                  </Border>
+                  <StackPanel VerticalAlignment="Center">
+                    <StackPanel.Style>
+                      <Style TargetType="StackPanel">
+                        <Setter Property="Visibility" Value="Visible" />
+                        <Style.Triggers>
+                          <DataTrigger Binding="{Binding IsCurrencyUf}" Value="True">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                          </DataTrigger>
+                          <DataTrigger Binding="{Binding TotalPresupuestoClpText}" Value="">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </StackPanel.Style>
                     <TextBlock Text="EQUIVALENTE CLP" Style="{StaticResource Text.KpiLabel}" TextAlignment="Right" />
                     <TextBlock Text="{Binding TotalPresupuestoClpText}" FontSize="11.5" FontWeight="SemiBold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink}" TextAlignment="Right" />
                   </StackPanel>
@@ -510,19 +189,40 @@
               </StackPanel>
             </Border>
 
-            <!-- Moneda de entrega: espejo de la moneda del proyecto (se define en Proyecto) -->
+            <!-- Selector Interactivo de Moneda: [ UF | CLP | USD | EUR ] -->
             <Border Background="{DynamicResource Brush.ChipBg}"
                     BorderBrush="{DynamicResource Brush.Line}"
                     BorderThickness="1"
                     CornerRadius="6"
-                    Padding="8,3"
+                    Padding="1.5"
                     Margin="0,0,8,0"
-                    VerticalAlignment="Center"
-                    ToolTip="La moneda se define en Proyecto → Moneda base del presupuesto. En UF se muestra además el equivalente en CLP.">
-              <TextBlock Text="{Binding SelectedDeliveryCurrency}"
-                         FontSize="11" FontWeight="SemiBold"
-                         Foreground="{DynamicResource Brush.Ink2}"
-                         VerticalAlignment="Center" />
+                    VerticalAlignment="Center">
+              <StackPanel Orientation="Horizontal">
+                <RadioButton Content="UF"
+                             IsChecked="{Binding IsCurrencyUf}"
+                             GroupName="ItemizadoCurrencyDelivery"
+                             Style="{StaticResource PerspectiveToggleRadioButtonStyle}"
+                             Padding="6,2" FontSize="10.5"
+                             ToolTip="Presentar precios y totales exclusivamente en UF" />
+                <RadioButton Content="CLP"
+                             IsChecked="{Binding IsCurrencyClp}"
+                             GroupName="ItemizadoCurrencyDelivery"
+                             Style="{StaticResource PerspectiveToggleRadioButtonStyle}"
+                             Padding="6,2" FontSize="10.5"
+                             ToolTip="Presentar precios y totales en Pesos Chilenos ($ CLP)" />
+                <RadioButton Content="USD"
+                             IsChecked="{Binding IsCurrencyUsd}"
+                             GroupName="ItemizadoCurrencyDelivery"
+                             Style="{StaticResource PerspectiveToggleRadioButtonStyle}"
+                             Padding="6,2" FontSize="10.5"
+                             ToolTip="Presentar precios y totales en Dólares (US$)" />
+                <RadioButton Content="EUR"
+                             IsChecked="{Binding IsCurrencyEur}"
+                             GroupName="ItemizadoCurrencyDelivery"
+                             Style="{StaticResource PerspectiveToggleRadioButtonStyle}"
+                             Padding="6,2" FontSize="10.5"
+                             ToolTip="Presentar precios y totales en Euros (€)" />
+              </StackPanel>
             </Border>
 
             <Border Width="1" Height="20" Background="{DynamicResource Brush.Line}" Margin="0,0,8,0" VerticalAlignment="Center" />
@@ -689,244 +389,14 @@
         </DockPanel>
       </Border>
 
-      <!-- ══════════════════════════════════════════════════════════════════════
-           HERO KPI BAR (RESUMEN EJECUTIVO, PROPORCIÓN MAT/MO Y SALUD DE PARTIDAS)
-           ══════════════════════════════════════════════════════════════════════ -->
-      <Border Background="{DynamicResource Brush.Surface}"
-              BorderBrush="{DynamicResource Brush.Line}"
-              BorderThickness="1"
-              CornerRadius="8"
-              Padding="14,9"
-              Margin="0,0,0,2"
-              Visibility="{Binding IsHeroKpiBarExpanded, Converter={StaticResource BoolToVisibility}}">
-        <Grid>
-          <Grid.ColumnDefinitions>
-            <!-- 0: Costo Directo y Oferta (270px) -->
-            <ColumnDefinition Width="270" />
-            <!-- Divisor -->
-            <ColumnDefinition Width="Auto" />
-            <!-- 1: Proporción Materiales vs Mano de Obra (*) -->
-            <ColumnDefinition Width="*" />
-            <!-- Divisor -->
-            <ColumnDefinition Width="Auto" />
-            <!-- 2: Salud del Presupuesto y Filtros Rápidos (330px) -->
-            <ColumnDefinition Width="330" />
-          </Grid.ColumnDefinitions>
-
-          <!-- ─── 0. RESUMEN FINANCIERO DIRECTO ─── -->
-          <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,14,0">
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,3">
-              <Border Background="{DynamicResource Brush.BlueSoft}" CornerRadius="4" Padding="5,1" Margin="0,0,6,0">
-                <TextBlock Text="COSTO DIRECTO" FontSize="9" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Blue}" />
-              </Border>
-              <TextBlock Text="{Binding HeroKpi.DirectCostText}" FontSize="15" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink}" />
-            </StackPanel>
-
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-              <TextBlock Text="Venta:" FontSize="10.5" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,4,0" />
-              <TextBlock Text="{Binding HeroKpi.TotalOfferText}" FontSize="11" FontWeight="SemiBold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink2}" Margin="0,0,10,0" />
-              <TextBlock Text="Margen:" FontSize="10.5" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,4,0" />
-              <TextBlock Text="{Binding HeroKpi.MarginText}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" />
-            </StackPanel>
-          </StackPanel>
-
-          <!-- Divisor vertical -->
-          <Border Grid.Column="1" Width="1" Background="{DynamicResource Brush.Line}" Margin="0,2,14,2" />
-
-          <!-- ─── 1. PROPORCIÓN MATERIALES VS MANO DE OBRA ─── -->
-          <Grid Grid.Column="2" VerticalAlignment="Center" Margin="0,0,14,0">
-            <Grid.RowDefinitions>
-              <RowDefinition Height="Auto" />
-              <RowDefinition Height="Auto" />
-              <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
-
-            <!-- Encabezados con porcentajes y montos -->
-            <DockPanel Grid.Row="0" LastChildFill="True" Margin="0,0,0,4">
-              <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                <Ellipse Width="7" Height="7" Fill="{DynamicResource Brush.Success}" Margin="0,0,4,0" />
-                <TextBlock Text="Mano de Obra: " FontSize="10" Foreground="{DynamicResource Brush.Muted}" />
-                <TextBlock Text="{Binding HeroKpi.ManoObraPctText}" FontSize="10.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" Margin="0,0,4,0" />
-                <TextBlock Text="{Binding HeroKpi.ManoObraText, StringFormat='({0})'}" FontSize="10" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink3}" />
-              </StackPanel>
-
-              <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <Ellipse Width="7" Height="7" Fill="{DynamicResource Brush.Blue}" Margin="0,0,4,0" />
-                <TextBlock Text="Materiales: " FontSize="10" Foreground="{DynamicResource Brush.Muted}" />
-                <TextBlock Text="{Binding HeroKpi.MaterialesPctText}" FontSize="10.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" Margin="0,0,4,0" />
-                <TextBlock Text="{Binding HeroKpi.MaterialesText, StringFormat='({0})'}" FontSize="10" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink3}" />
-              </StackPanel>
-            </DockPanel>
-
-            <!-- Barra de proporción segmentada bicolor -->
-            <Border Grid.Row="1" Height="8" CornerRadius="4" ClipToBounds="True" Background="{DynamicResource Brush.Surface2}">
-              <Grid>
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="{Binding HeroKpi.MaterialesGridLength}" />
-                  <ColumnDefinition Width="{Binding HeroKpi.ManoObraGridLength}" />
-                  <ColumnDefinition Width="{Binding HeroKpi.OtrosGridLength}" />
-                </Grid.ColumnDefinitions>
-                <Border Grid.Column="0" Background="{DynamicResource Brush.Blue}" ToolTip="Materiales y Ferretería" />
-                <Border Grid.Column="1" Background="{DynamicResource Brush.Success}" ToolTip="Mano de Obra Directa" />
-                <Border Grid.Column="2" Background="{DynamicResource Brush.Line2}" ToolTip="Equipos y Subcontratos" />
-              </Grid>
-            </Border>
-
-            <!-- Subetiqueta explicativa -->
-            <TextBlock Grid.Row="2" Text="Distribución del costo directo entre recursos de materiales y brigadas de mano de obra"
-                       FontSize="9" Foreground="{DynamicResource Brush.Muted}" Margin="0,3,0,0" />
-          </Grid>
-
-          <!-- Divisor vertical -->
-          <Border Grid.Column="3" Width="1" Background="{DynamicResource Brush.Line}" Margin="0,2,14,2" />
-
-          <!-- ─── 2. SALUD DEL PRESUPUESTO Y FILTRO RÁPIDO ─── -->
-          <Grid Grid.Column="4" VerticalAlignment="Center">
-            <Grid.RowDefinitions>
-              <RowDefinition Height="Auto" />
-              <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
-
-            <DockPanel Grid.Row="0" LastChildFill="True" Margin="0,0,0,4">
-              <!-- Badge de estado -->
-              <Border DockPanel.Dock="Right" CornerRadius="10" Padding="8,2" VerticalAlignment="Center">
-                <Border.Style>
-                  <Style TargetType="Border">
-                    <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
-                    <Style.Triggers>
-                      <DataTrigger Binding="{Binding HeroKpi.HealthBadgeKind}" Value="ok">
-                        <Setter Property="Background" Value="{DynamicResource Brush.SuccessSoft}" />
-                      </DataTrigger>
-                      <DataTrigger Binding="{Binding HeroKpi.HealthBadgeKind}" Value="warn">
-                        <Setter Property="Background" Value="{DynamicResource Brush.AmberSoft}" />
-                      </DataTrigger>
-                    </Style.Triggers>
-                  </Style>
-                </Border.Style>
-                <TextBlock FontSize="10" FontWeight="Bold">
-                  <TextBlock.Style>
-                    <Style TargetType="TextBlock">
-                      <Setter Property="Text" Value="{Binding HeroKpi.HealthBadgeText}" />
-                      <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}" />
-                      <Style.Triggers>
-                        <DataTrigger Binding="{Binding HeroKpi.HealthBadgeKind}" Value="ok">
-                          <Setter Property="Foreground" Value="{DynamicResource Brush.Success}" />
-                        </DataTrigger>
-                        <DataTrigger Binding="{Binding HeroKpi.HealthBadgeKind}" Value="warn">
-                          <Setter Property="Foreground" Value="{DynamicResource Brush.AmberRisk}" />
-                        </DataTrigger>
-                      </Style.Triggers>
-                    </Style>
-                  </TextBlock.Style>
-                </TextBlock>
-              </Border>
-
-              <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Text="SALUD DE PARTIDAS" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}" Margin="0,0,6,0" />
-                <TextBlock Text="{Binding HeroKpi.CompletionPct, StringFormat='({0}% listo)'}" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" />
-              </StackPanel>
-            </DockPanel>
-
-            <DockPanel Grid.Row="1" LastChildFill="True">
-              <!-- Botones de filtro rápido -->
-              <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                <Button Style="{StaticResource Button.Secondary}"
-                        Content="Pendientes"
-                        Command="{Binding FilterIncompletosCommand}"
-                        FontSize="9.5" Height="22" Padding="6,1" Margin="0,0,3,0"
-                        ToolTip="Filtrar solo partidas pendientes para completarlas rápido" />
-                <Button Style="{StaticResource Button.Secondary}"
-                        Content="Todas"
-                        Command="{Binding FilterTodosCommand}"
-                        FontSize="9.5" Height="22" Padding="6,1"
-                        ToolTip="Mostrar todas las partidas" />
-              </StackPanel>
-
-              <TextBlock Text="{Binding HeroKpi.HealthDescriptionText}"
-                         FontSize="10" Foreground="{DynamicResource Brush.Muted}"
-                         TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="0,0,6,0" />
-            </DockPanel>
-          </Grid>
-        </Grid>
-      </Border>
+      <!-- Hero KPI Bar (Resumen ejecutivo, proporción Mat/MO y salud de partidas) -->
+      <local:ItemizadoHeroKpiBarControl Visibility="{Binding IsHeroKpiBarExpanded, Converter={StaticResource BoolToVisibility}}"
+                                        Margin="0,0,0,2" />
     </StackPanel>
 
       <!-- Empty Itemizado state: onboarding compacto -->
-      <ScrollViewer Grid.Row="1" Margin="0,0,0,10"
-                    VerticalScrollBarVisibility="Auto"
-                    HorizontalScrollBarVisibility="Disabled"
-                    Visibility="{Binding ShowEmptyItemizado, Converter={StaticResource BoolToVisibility}}">
-        <Border Background="{DynamicResource Brush.Surface}"
-                BorderBrush="{DynamicResource Brush.Line}"
-                BorderThickness="1"
-                CornerRadius="{StaticResource Radius.Lg}"
-                Padding="16,14"
-                MaxWidth="720"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Top"
-                Margin="0,6,0,16">
-          <StackPanel>
-            <TextBlock Text="Comience a estructurar su presupuesto eléctrico"
-                       Style="{StaticResource Text.ViewTitle}"
-                       FontSize="18" FontWeight="Bold"
-                       HorizontalAlignment="Center"
-                       Margin="0,0,0,4" />
-            <TextBlock Text="Cargue una plantilla RIC, importe una tabla o cree la primera partida."
-                       Style="{StaticResource Text.Body}"
-                       Foreground="{DynamicResource Brush.Muted}"
-                       TextWrapping="Wrap"
-                       TextAlignment="Center"
-                       HorizontalAlignment="Center"
-                       Margin="0,0,0,14" />
-
-            <TextBlock Text="Plantillas RIC"
-                       FontSize="11" FontWeight="Bold"
-                       Foreground="{DynamicResource Brush.Muted}"
-                       Margin="0,0,0,8" />
-            <UniformGrid Columns="2" Margin="0,0,0,14">
-              <Button Style="{StaticResource Button.Secondary}" Margin="0,0,6,6"
-                      Content="Edificio residencial (RIC 01-10)"
-                      Command="{Binding LoadStandardTemplateCommand}"
-                      CommandParameter="residential_building"
-                      ToolTip="Cargar estructura para edificio residencial" />
-              <Button Style="{StaticResource Button.Secondary}" Margin="0,0,0,6"
-                      Content="Galpón industrial (RIC 02-13)"
-                      Command="{Binding LoadStandardTemplateCommand}"
-                      CommandParameter="industrial_warehouse"
-                      ToolTip="Cargar estructura para galpón industrial" />
-              <Button Style="{StaticResource Button.Secondary}" Margin="0,0,6,0"
-                      Content="Planta solar / PMGD (RIC 09)"
-                      Command="{Binding LoadStandardTemplateCommand}"
-                      CommandParameter="solar_pv_plant"
-                      ToolTip="Cargar estructura para planta solar" />
-              <Button Style="{StaticResource Button.Secondary}"
-                      Content="Local comercial (RIC 01-11)"
-                      Command="{Binding LoadStandardTemplateCommand}"
-                      CommandParameter="commercial_retail"
-                      ToolTip="Cargar estructura para local comercial" />
-            </UniformGrid>
-
-            <Border Height="1" Background="{DynamicResource Brush.Line}" Margin="0,0,0,12" />
-
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-              <Button Style="{StaticResource Button.Secondary}"
-                      Content="Importar"
-                      Command="{Binding ImportExcelCommand}"
-                      ToolTip="Importar itemizado desde archivo (.xlsx)"
-                      Margin="0,0,8,0" />
-              <Button Style="{StaticResource Button.Secondary}"
-                      Content="Pegar"
-                      Command="{Binding PasteExcelCommand}"
-                      ToolTip="Pegar filas del portapapeles (Ctrl+V)"
-                      Margin="0,0,8,0" />
-              <Button Style="{StaticResource Button.Primary}"
-                      Content="Primera partida"
-                      Command="{Binding AddPartidaCommand}"
-                      ToolTip="Agregar la primera partida del itemizado" />
-            </StackPanel>
-          </StackPanel>
-        </Border>
-      </ScrollViewer>
+      <local:ItemizadoEmptyStateControl Grid.Row="1"
+                                        Visibility="{Binding ShowEmptyItemizado, Converter={StaticResource BoolToVisibility}}" />
 
       <!-- DataGrid Container with In-Grid Search Overlay and Sticky Footer -->
       <Grid Grid.Row="1" Margin="0"
@@ -1040,10 +510,12 @@
                   EnableColumnVirtualization="True"
                   VirtualizingPanel.IsVirtualizing="True"
                   VirtualizingPanel.VirtualizationMode="Recycling"
+                  VirtualizingPanel.IsContainerVirtualizable="True"
                   VirtualizingPanel.ScrollUnit="Pixel"
-                  VirtualizingPanel.CacheLength="20,20"
+                  VirtualizingPanel.CacheLength="10,10"
                   VirtualizingPanel.CacheLengthUnit="Item"
                   ScrollViewer.CanContentScroll="True"
+                  ScrollViewer.IsDeferredScrollingEnabled="False"
                   AutomationProperties.Name="Grilla de itemizado"
                   BeginningEdit="OnGridBeginningEdit"
                   CellEditEnding="OnCellEditEnding"
@@ -1327,6 +799,20 @@
             </DataGridTemplateColumn>
           </DataGrid.Columns>
         </DataGrid>
+
+        <Border Grid.Row="1" Panel.ZIndex="3"
+                Background="{DynamicResource Brush.Surface}"
+                HorizontalAlignment="Center" VerticalAlignment="Center"
+                Padding="22,16" CornerRadius="8"
+                BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+                Visibility="{Binding HasNoFilterResults, Converter={StaticResource BoolToVisibility}}">
+          <StackPanel>
+            <TextBlock Text="Sin coincidencias." FontWeight="SemiBold" FontSize="14"
+                       Foreground="{DynamicResource Brush.Warning}" HorizontalAlignment="Center" />
+            <TextBlock Text="Borra la búsqueda para ver todas las partidas." FontSize="12"
+                       Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Center" Margin="0,4,0,0" />
+          </StackPanel>
+        </Border>
 
         <!-- STICKY FOOTER DE RESUMEN (MODERNO) -->
         <Border Grid.Row="2"

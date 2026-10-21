@@ -31,10 +31,12 @@
     <Setter Property="EnableColumnVirtualization" Value="True" />
     <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True" />
     <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling" />
+    <Setter Property="VirtualizingPanel.IsContainerVirtualizable" Value="True" />
     <Setter Property="VirtualizingPanel.ScrollUnit" Value="Pixel" />
-    <Setter Property="VirtualizingPanel.CacheLength" Value="20,20" />
+    <Setter Property="VirtualizingPanel.CacheLength" Value="10,10" />
     <Setter Property="VirtualizingPanel.CacheLengthUnit" Value="Item" />
     <Setter Property="ScrollViewer.CanContentScroll" Value="True" />
+    <Setter Property="ScrollViewer.IsDeferredScrollingEnabled" Value="False" />
     <Setter Property="FocusVisualStyle" Value="{x:Null}" />
     <Setter Property="KeyboardNavigation.DirectionalNavigation" Value="Contained" />
   </Style>
@@ -97,7 +99,7 @@
   </Style>
 
   <Style x:Key="DataGridCell.Prototype" TargetType="DataGridCell">
-    <Setter Property="Padding" Value="11,10" />
+    <Setter Property="Padding" Value="8,2" />
     <Setter Property="BorderThickness" Value="0,0,1,1" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line2}" />
     <Setter Property="Background" Value="Transparent" />
@@ -159,7 +161,7 @@
 
   <!-- Foco por celda estilo Excel (cubicación y grillas de trabajo) -->
   <Style x:Key="DataGridCell.Excel" TargetType="DataGridCell">
-    <Setter Property="Padding" Value="6,0" />
+    <Setter Property="Padding" Value="4,0" />
     <Setter Property="BorderThickness" Value="2" />
     <Setter Property="BorderBrush" Value="Transparent" />
     <Setter Property="FocusVisualStyle" Value="{x:Null}" />
@@ -197,28 +199,32 @@
         <Setter Property="Background" Value="{DynamicResource Brush.CellEditableHoverBg}" />
       </MultiTrigger>
 
+      <!-- Celda seleccionada (parte de un rango o celda secundaria): fondo azul seleccionado visible -->
       <Trigger Property="IsSelected" Value="True">
-        <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+        <Setter Property="Background" Value="{DynamicResource Brush.BlueSelected}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.BlueFocus}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+      </Trigger>
+
+      <!-- Cursor activo único estilo Excel: solo la celda que tiene el foco real o edición activa lleva el contorno azul de 2px -->
+      <Trigger Property="IsFocused" Value="True">
+        <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
         <Setter Property="BorderThickness" Value="2" />
         <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
       </Trigger>
-      <!-- Al editar o enfocar: mantener el fondo azul suave y contorno azul exactamente igual que seleccionado para que el marcado de casilla no desaparezca -->
       <Trigger Property="IsEditing" Value="True">
-        <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+        <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
         <Setter Property="BorderThickness" Value="2" />
         <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
       </Trigger>
       <Trigger Property="IsKeyboardFocusWithin" Value="True">
-        <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+        <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
         <Setter Property="BorderThickness" Value="2" />
-      </Trigger>
-      <Trigger Property="IsFocused" Value="True">
-        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
-        <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
-        <Setter Property="BorderThickness" Value="2" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
       </Trigger>
     </Style.Triggers>
   </Style>
@@ -257,6 +263,14 @@
   </Style>
 
   <Style x:Key="DataGrid.CellErrorTextBox" TargetType="TextBox">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+    <Setter Property="FontFamily" Value="{StaticResource Font.Ui}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.sm}" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="Margin" Value="0" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
     <Style.Triggers>
       <Trigger Property="Tag" Value="error">
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.Red}" />
@@ -265,14 +279,14 @@
     </Style.Triggers>
   </Style>
 
-  <!-- Editor de celda transparente sin borde ni fondo propio para que el marcado azul de la casilla nunca se tape -->
+  <!-- Editor de celda transparente sin borde ni fondo propio para que el marcado de la casilla sea limpio como Excel -->
   <Style x:Key="DataGrid.CellEditTransparent" TargetType="TextBox">
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
     <Setter Property="FontFamily" Value="{StaticResource Font.Ui}" />
     <Setter Property="FontSize" Value="{StaticResource Font.Size.sm}" />
     <Setter Property="BorderThickness" Value="0" />
-    <Setter Property="Padding" Value="4,0" />
+    <Setter Property="Padding" Value="0" />
     <Setter Property="Margin" Value="0" />
     <Setter Property="VerticalContentAlignment" Value="Center" />
     <Setter Property="SelectionBrush" Value="{DynamicResource Brush.BlueFocus}" />

@@ -14,7 +14,13 @@ public sealed class ElectricalFamilyCatalogTests
 
         Assert.Contains("Transformadores", estandar);
         Assert.Contains("Grupo electrógeno", estandar);
-        Assert.Contains("Ducto barra", estandar);
+        Assert.Contains("Ducto de barra", estandar);
+        Assert.Contains("Celdas", estandar);
+        Assert.Contains("UPS", estandar);
+        Assert.Contains("Pararrayos", estandar);
+        Assert.Contains("Obras civiles", estandar);
+        Assert.Contains("Sistema de remarcación", estandar);
+        Assert.Contains("Documentación y trámites", estandar);
         Assert.Contains("Media tensión", estandar);
         Assert.Contains("Conductores", estandar);
         Assert.Contains("Tableros", estandar);
@@ -29,7 +35,7 @@ public sealed class ElectricalFamilyCatalogTests
         Assert.NotEmpty(resultado);
         Assert.Contains("Transformadores", resultado);
         Assert.Contains("Grupo electrógeno", resultado);
-        Assert.Contains("Ducto barra", resultado);
+        Assert.Contains("Ducto de barra", resultado);
         Assert.Contains("Media tensión", resultado);
     }
 
@@ -72,8 +78,23 @@ public sealed class ElectricalFamilyCatalogTests
 
         Assert.Contains("Control y Automatización", resultado);
         Assert.Contains("Celdas de Media Tensión", resultado);
+        Assert.DoesNotContain("Celdas", resultado);
         Assert.Contains("Transformadores", resultado);
         Assert.Contains("Grupo electrógeno", resultado);
+    }
+
+    [Fact]
+    public void CombinarFamilias_TramitesDelExcel_NoDuplicaLaFamiliaInterna()
+    {
+        var externa = new[] { "TRAMITES CIA ELECTRICA , SEC Y PLANOS AS-BUILT", "Ducto de barra", "Pararrayos" };
+
+        var resultado = ElectricalFamilyCatalog.CombinarFamilias(externa);
+
+        Assert.Equal(1, resultado.Count(f => ElectricalFamilyCatalog.ClaveCanonica(f) == "DOCUMENTACION Y TRAMITES"));
+        Assert.Contains("TRAMITES CIA ELECTRICA , SEC Y PLANOS AS-BUILT", resultado);
+        Assert.DoesNotContain("Documentación y trámites", resultado);
+        Assert.Equal(1, resultado.Count(f => ElectricalFamilyCatalog.ClaveCanonica(f) == "DUCTO BARRA"));
+        Assert.Contains("Ducto de barra", resultado);
     }
 
     [Theory]
@@ -93,7 +114,14 @@ public sealed class ElectricalFamilyCatalogTests
     [InlineData("Transformadores", "EQUIPOS", 1.12)]
     [InlineData("GRUPO ELECTROGENO", "EQUIPOS", 1.12)]
     [InlineData("Generadores", "EQUIPOS", 1.12)]
-    [InlineData("DUCTO BARRA", "CANALIZACION", 1.44)]
+    [InlineData("DUCTO BARRA", "EQUIPOS", 1.12)]
+    [InlineData("Ducto de barra", "EQUIPOS", 1.12)]
+    [InlineData("Celdas de media tensión", "EQUIPOS", 1.12)]
+    [InlineData("UPS", "EQUIPOS", 1.12)]
+    [InlineData("Pararrayos", "EQUIPOS", 1.12)]
+    [InlineData("Sistema de remarcación", "EQUIPOS", 1.12)]
+    [InlineData("Obras civiles", "CONDUCTORES", 1.50)]
+    [InlineData("TRAMITES CIA ELECTRICA , SEC Y PLANOS AS-BUILT", "ACCESORIOS", 1.14)]
     [InlineData("Media Tensión", "EQUIPOS", 1.12)]
     public void FamilyPresentationDefaults_MapeoNaturalCorrecto(string familia, string esperadoCanonica, double markupEsperado)
     {

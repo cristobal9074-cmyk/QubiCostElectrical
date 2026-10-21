@@ -66,8 +66,6 @@ public sealed class ApuAutocompleteEngine
         this.priceBankStore = priceBankStore;
     }
 
-    public void InvalidateIndex() => materialIndex.Clear();
-
     public async Task<IReadOnlyList<ApuAutocompleteSuggestionVm>> SearchAsync(string rawQuery, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(rawQuery) || rawQuery.Trim().Length < 2)

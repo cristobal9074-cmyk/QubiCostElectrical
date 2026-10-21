@@ -95,18 +95,6 @@ public static class PriceConversion
         };
     }
 
-    public static string GetCurrencySymbol(string currency)
-    {
-        string c = (currency ?? Moneda.UF).Trim().ToUpperInvariant();
-        return c switch
-        {
-            Moneda.CLP => "$",
-            Moneda.USD => "US$",
-            Moneda.EUR => "€",
-            _ => "UF"
-        };
-    }
-
     public static string GetCurrencyHeaderLabel(string baseLabel, string currency)
     {
         string c = (currency ?? Moneda.UF).Trim().ToUpperInvariant();

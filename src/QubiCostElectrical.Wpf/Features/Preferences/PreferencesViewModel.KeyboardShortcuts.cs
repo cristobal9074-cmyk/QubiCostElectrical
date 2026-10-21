@@ -304,13 +304,6 @@ public sealed partial class PreferencesViewModel
         HasPendingChanges = true;
     }
 
-    public void ResetAllCubicacionShortcuts()
-    {
-        foreach (var row in CubicacionShortcuts.Where(r => r.IsConfigurable))
-            row.ResetToDefault();
-        HasPendingChanges = true;
-    }
-
     public void ResetAllShellShortcuts()
     {
         foreach (var row in ShellShortcuts.Where(r => r.IsConfigurable))

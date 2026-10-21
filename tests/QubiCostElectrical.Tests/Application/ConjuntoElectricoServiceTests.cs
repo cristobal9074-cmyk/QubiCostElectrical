@@ -606,4 +606,27 @@ public sealed class ConjuntoElectricoServiceTests
         Assert.NotNull(result.Rows[1].Esclavo);
         Assert.Equal("BRG500", result.Rows[1].Esclavo!.MaestroCodigo);
     }
+
+    [Fact]
+    public void ExpandToCubicacion_CopiaMaterialYManoDeObraDelCatalogo()
+    {
+        var conjunto = Conjunto("BANDEJA-500", MatRecurso("TCG500", 1m));
+        var materiales = new[]
+        {
+            new MaterialRow
+            {
+                Codigo = "TCG500",
+                Descripcion = "TAPA CURVA GALV 500 MM",
+                Unidad = "ML",
+                MatClp = 29897m,
+                MoClp = 1280m
+            }
+        };
+
+        var result = _service.ExpandToCubicacion(conjunto, Partida("P1", 1m), materiales, proyecto: new ProjectInfoRow { ValorUfClp = 41000m });
+
+        var row = Assert.Single(result.Rows);
+        Assert.Equal(29897m, row.MatClp);
+        Assert.Equal(1280m, row.MoClp);
+    }
 }

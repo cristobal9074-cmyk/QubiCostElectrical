@@ -146,8 +146,57 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
     internal decimal CurrentValorUf => currentValorUf;
     internal bool SuppressGoRefresh { get => suppressGoRefresh; set => suppressGoRefresh = value; }
     internal bool SuppressCoefRefresh { get => suppressCoefRefresh; set => suppressCoefRefresh = value; }
+    internal bool SuppressNegotiatedDiscountsRefresh { get => suppressNegotiatedDiscountsRefresh; set => suppressNegotiatedDiscountsRefresh = value; }
+    internal bool SuppressStaffingPlanRefresh { get => suppressStaffingPlanRefresh; set => suppressStaffingPlanRefresh = value; }
     internal string FormatMoneyPrimary(decimal clp) => MoneyPrimary(clp);
     internal (string Primary, string Secondary) FormatMoneyPair(decimal clp) => MoneyPair(clp);
+    internal string MoneyTextInternal(decimal clp) => MoneyText(clp);
     internal void NotifyHasPrecioFamiliasLibresChanged() => OnPropertyChanged(nameof(HasPrecioFamiliasLibres));
     internal void NotifyFamiliasChanged() => OnPropertyChanged(nameof(Familias));
+
+    internal IShellNavigationHost Shell => shell;
+    internal IProjectWorkspaceService Workspace => workspace;
+    internal DashboardPresenter Dashboard => dashboard;
+    internal ICurrencyConversionService CurrencySvc => currencySvc;
+    internal ProjectAuditRecorder? Audit => audit;
+    internal WpfUndoService? Undo => undo;
+
+    internal void SetGastosGeneralesSilent(decimal pct)
+    {
+        gastosGeneralesText = pct.ToString("N1", CultureInfo.CurrentCulture);
+        OnPropertyChanged(nameof(GastosGeneralesText));
+    }
+
+    internal void SetUtilidadSilent(decimal pct)
+    {
+        utilidadText = pct.ToString("N1", CultureInfo.CurrentCulture);
+        OnPropertyChanged(nameof(UtilidadText));
+    }
+
+    internal void SetValorAgregadoEquiposSilent(decimal pct)
+    {
+        valorAgregadoEquiposText = pct.ToString("N1", CultureInfo.CurrentCulture);
+        OnPropertyChanged(nameof(ValorAgregadoEquiposText));
+    }
+
+    internal void SetFerreteriaSilent(bool activa, decimal pct)
+    {
+        ferreteriaActiva = activa;
+        OnPropertyChanged(nameof(FerreteriaActiva));
+        ferreteriaPctText = pct.ToString("N1", CultureInfo.CurrentCulture);
+        OnPropertyChanged(nameof(FerreteriaPctText));
+    }
+
+    internal void SetPoliticaCostosExcelSilent(bool value)
+    {
+        politicaCostosExcel = value;
+        OnPropertyChanged(nameof(PoliticaCostosExcel));
+    }
+
+    internal void SetUsarFactoresPresentacionFamiliaSilent(bool value)
+    {
+        usarFactoresPresentacionFamilia = value;
+        OnPropertyChanged(nameof(UsarFactoresPresentacionFamilia));
+    }
 }
+

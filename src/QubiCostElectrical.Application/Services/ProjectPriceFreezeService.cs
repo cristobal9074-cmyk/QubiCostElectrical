@@ -7,8 +7,6 @@ public sealed class ProjectPriceFreezeService
 {
     public bool IsFrozen(ProjectInfoRow? proyecto) => proyecto?.PreciosCongelados == true;
 
-    public bool BlocksAutomaticPriceSync(ProjectInfoRow? proyecto) => IsFrozen(proyecto);
-
     public void Freeze(ProjectFileData data, string usuario)
     {
         if (data == null) throw new ArgumentNullException(nameof(data));
@@ -24,12 +22,6 @@ public sealed class ProjectPriceFreezeService
 
         foreach (var material in data.Materiales.Where(m => !string.IsNullOrWhiteSpace(m.Codigo)))
             material.PrecioCongelado = SnapshotMaterial(material, proyecto, now);
-    }
-
-    public void Unfreeze(ProjectInfoRow proyecto)
-    {
-        if (proyecto == null) throw new ArgumentNullException(nameof(proyecto));
-        proyecto.PreciosCongelados = false;
     }
 
     public PrecioCongeladoRow SnapshotMaterial(MaterialRow material, ProjectInfoRow proyecto, DateTime? congeladoEn = null)

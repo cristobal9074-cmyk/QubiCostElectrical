@@ -15,17 +15,6 @@ public static class ItemizadoHierarchyRules
     public static string NormalizeIdFromItem(string? item) =>
         (item ?? "").Trim().Replace(',', '.');
 
-    public static string FormatItemFromId(string id) =>
-        (id ?? "").Replace('.', ',');
-
-    public static bool IsTitleId(string? id)
-    {
-        if (string.IsNullOrWhiteSpace(id))
-            return false;
-        var parts = id.Split('.', StringSplitOptions.RemoveEmptyEntries);
-        return parts.Length >= 2 && parts[^1] == "0";
-    }
-
     public static string NormalizeTitleId(string? id)
     {
         if (string.IsNullOrWhiteSpace(id))

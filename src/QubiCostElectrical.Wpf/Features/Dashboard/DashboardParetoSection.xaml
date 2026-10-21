@@ -1,0 +1,221 @@
+<UserControl x:Class="QubiCostElectrical.Wpf.Features.Dashboard.DashboardParetoSection"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:QubiCostElectrical.Wpf.Features.Dashboard"
+             mc:Ignorable="d">
+  <UserControl.Resources>
+    <local:ParetoBarLeftConverter x:Key="ParetoBarLeft" />
+    <local:ParetoBarHeightConverter x:Key="ParetoBarHeight" />
+    <local:ParetoPointXConverter x:Key="ParetoPointX" />
+    <local:ParetoPointYConverter x:Key="ParetoPointY" />
+    <local:ParetoCumPointsConverter x:Key="ParetoCumPoints" />
+    <local:ParetoAxisLabelConverter x:Key="ParetoAxisLabel" />
+    <local:ParetoAccumLabelConverter x:Key="ParetoAccumLabel" />
+    <local:ParetoAccumYConverter x:Key="ParetoAccumY" />
+    <local:ParetoAccumXConverter x:Key="ParetoAccumX" />
+  </UserControl.Resources>
+
+  <!-- Pareto -->
+  <Border Style="{StaticResource Dashboard.Card}">
+    <StackPanel>
+      <DockPanel Margin="16,13,16,0">
+        <StackPanel>
+          <TextBlock Text="Concentración del costo · Pareto" Style="{StaticResource Dashboard.CardTitle}" />
+          <TextBlock Text="{Binding ParetoSummary.SummaryHint}" Style="{StaticResource Dashboard.CardSub}" />
+        </StackPanel>
+      </DockPanel>
+
+      <TextBlock Text="Sin partidas valorizadas. Complete cubicación y precios."
+                 FontSize="12" Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap"
+                 Margin="24,18,24,22" HorizontalAlignment="Center"
+                 Visibility="{Binding HasTopPartidas, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}" />
+
+      <StackPanel Margin="10,6,10,16"
+                  Visibility="{Binding HasTopPartidas, Converter={StaticResource BoolToVisibility}}">
+        <Viewbox Stretch="Uniform" StretchDirection="DownOnly">
+          <Canvas Width="760" Height="300">
+            <!-- Ejes y gridlines -->
+            <TextBlock Canvas.Left="45" Canvas.Top="4" Text="Participación %" FontSize="10"
+                       Foreground="{DynamicResource Brush.Muted}" />
+            <TextBlock Canvas.Left="625" Canvas.Top="4" Width="100" TextAlignment="Right"
+                       Text="Acumulado %" FontSize="10" Foreground="{DynamicResource Brush.Muted}" />
+            <Line X1="45" Y1="50" X2="725" Y2="50" Stroke="{DynamicResource Brush.Line2}" StrokeThickness="1" />
+            <Line X1="45" Y1="130" X2="725" Y2="130" Stroke="{DynamicResource Brush.Line2}" StrokeThickness="1" />
+            <Line X1="45" Y1="170" X2="725" Y2="170" Stroke="{DynamicResource Brush.Line2}" StrokeThickness="1" />
+            <Line X1="45" Y1="210" X2="725" Y2="210" Stroke="{DynamicResource Brush.Line2}" StrokeThickness="1" />
+            <Line X1="45" Y1="250" X2="725" Y2="250" Stroke="{DynamicResource Brush.Line}" StrokeThickness="1" />
+
+            <!-- Referencia 80% acumulado -->
+            <Line X1="45" Y1="90" X2="725" Y2="90" Stroke="{DynamicResource Brush.AmberRisk}" StrokeThickness="1" StrokeDashArray="4 3" />
+            <TextBlock Canvas.Left="722" Canvas.Top="76" Text="80% ACUMULADO" FontSize="9.5" FontWeight="Bold"
+                       TextAlignment="Right" Foreground="{DynamicResource Brush.AmberRisk}" />
+
+
+            <TextBlock Canvas.Left="0" Canvas.Top="43" Width="36" TextAlignment="Right" FontSize="10"
+                       Foreground="{DynamicResource Brush.Muted}"
+                       Text="{Binding ParetoAxisMaxPct, Converter={StaticResource ParetoAxisLabel}, ConverterParameter=5}" />
+            <TextBlock Canvas.Left="0" Canvas.Top="83" Width="36" TextAlignment="Right" FontSize="10"
+                       Foreground="{DynamicResource Brush.Muted}"
+                       Text="{Binding ParetoAxisMaxPct, Converter={StaticResource ParetoAxisLabel}, ConverterParameter=4}" />
+            <TextBlock Canvas.Left="0" Canvas.Top="123" Width="36" TextAlignment="Right" FontSize="10"
+                       Foreground="{DynamicResource Brush.Muted}"
+                       Text="{Binding ParetoAxisMaxPct, Converter={StaticResource ParetoAxisLabel}, ConverterParameter=3}" />
+            <TextBlock Canvas.Left="0" Canvas.Top="163" Width="36" TextAlignment="Right" FontSize="10"
+                       Foreground="{DynamicResource Brush.Muted}"
+                       Text="{Binding ParetoAxisMaxPct, Converter={StaticResource ParetoAxisLabel}, ConverterParameter=2}" />
+            <TextBlock Canvas.Left="0" Canvas.Top="203" Width="36" TextAlignment="Right" FontSize="10"
+                       Foreground="{DynamicResource Brush.Muted}"
+                       Text="{Binding ParetoAxisMaxPct, Converter={StaticResource ParetoAxisLabel}, ConverterParameter=1}" />
+            <TextBlock Canvas.Left="0" Canvas.Top="243" Width="36" TextAlignment="Right" FontSize="10"
+                       Foreground="{DynamicResource Brush.Muted}"
+                       Text="{Binding ParetoAxisMaxPct, Converter={StaticResource ParetoAxisLabel}, ConverterParameter=0}" />
+
+            <TextBlock Canvas.Left="735" Canvas.Top="43" Text="100" FontSize="10" Foreground="{DynamicResource Brush.Muted}" />
+            <TextBlock Canvas.Left="735" Canvas.Top="83" Text="80" FontSize="10" Foreground="{DynamicResource Brush.Muted}" />
+            <TextBlock Canvas.Left="735" Canvas.Top="123" Text="60" FontSize="10" Foreground="{DynamicResource Brush.Muted}" />
+            <TextBlock Canvas.Left="735" Canvas.Top="163" Text="40" FontSize="10" Foreground="{DynamicResource Brush.Muted}" />
+            <TextBlock Canvas.Left="735" Canvas.Top="203" Text="20" FontSize="10" Foreground="{DynamicResource Brush.Muted}" />
+            <TextBlock Canvas.Left="735" Canvas.Top="243" Text="0" FontSize="10" Foreground="{DynamicResource Brush.Muted}" />
+
+            <!-- Barras por clase ABC -->
+            <ItemsControl ItemsSource="{Binding TopPartidas}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <Canvas />
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemContainerStyle>
+                <Style TargetType="ContentPresenter">
+                  <Setter Property="Canvas.Left" Value="{Binding Rank, Converter={StaticResource ParetoBarLeft}}" />
+                  <Setter Property="Canvas.Top" Value="50" />
+                  <Setter Property="Width" Value="44" />
+                  <Setter Property="Height" Value="200" />
+                </Style>
+              </ItemsControl.ItemContainerStyle>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Border CornerRadius="3" VerticalAlignment="Bottom">
+                    <Border.Height>
+                      <MultiBinding Converter="{StaticResource ParetoBarHeight}">
+                        <Binding Path="SharePct" />
+                        <Binding Path="DataContext.ParetoAxisMaxPct"
+                                 RelativeSource="{RelativeSource AncestorType=UserControl}" />
+                      </MultiBinding>
+                    </Border.Height>
+                    <Border.Style>
+                      <Style TargetType="Border">
+                        <Setter Property="Background" Value="{DynamicResource Brush.Blue2}" />
+                        <Style.Triggers>
+                          <DataTrigger Binding="{Binding ParetoClass}" Value="B">
+                            <Setter Property="Background" Value="{DynamicResource Brush.Blue}" />
+                          </DataTrigger>
+                          <DataTrigger Binding="{Binding ParetoClass}" Value="C">
+                            <Setter Property="Background" Value="{DynamicResource Brush.Muted}" />
+                            <Setter Property="Opacity" Value="0.75" />
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </Border.Style>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- Etiquetas de ítem rotadas -->
+            <ItemsControl ItemsSource="{Binding TopPartidas}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <Canvas />
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemContainerStyle>
+                <Style TargetType="ContentPresenter">
+                  <Setter Property="Canvas.Left" Value="{Binding Rank, Converter={StaticResource ParetoBarLeft}}" />
+                  <Setter Property="Canvas.Top" Value="256" />
+                </Style>
+              </ItemsControl.ItemContainerStyle>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <TextBlock Text="{Binding Item}" Width="80" Margin="-18,0,0,0" FontSize="10"
+                             Foreground="{DynamicResource Brush.Muted}" TextAlignment="Center"
+                             RenderTransformOrigin="0.5,0.5">
+                    <TextBlock.RenderTransform>
+                      <RotateTransform Angle="-35" />
+                    </TextBlock.RenderTransform>
+                  </TextBlock>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- Curva acumulada -->
+            <Polyline Points="{Binding TopPartidas, Converter={StaticResource ParetoCumPoints}}"
+                      Stroke="{DynamicResource Brush.AmberRisk}" StrokeThickness="2"
+                      StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" />
+            <ItemsControl ItemsSource="{Binding TopPartidas}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <Canvas />
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemContainerStyle>
+                <Style TargetType="ContentPresenter">
+                  <Setter Property="Canvas.Left" Value="{Binding ., Converter={StaticResource ParetoPointX}}" />
+                  <Setter Property="Canvas.Top" Value="{Binding ., Converter={StaticResource ParetoPointY}}" />
+                </Style>
+              </ItemsControl.ItemContainerStyle>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Ellipse Width="7" Height="7" Fill="{DynamicResource Brush.AmberRisk}"
+                           Stroke="{DynamicResource Brush.Surface}" StrokeThickness="1.5"
+                           RenderTransformOrigin="0.5,0.5">
+                    <Ellipse.RenderTransform>
+                      <TranslateTransform X="-3.5" Y="-3.5" />
+                    </Ellipse.RenderTransform>
+                  </Ellipse>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- Rótulo flotante de acumulado -->
+            <TextBlock FontSize="11" FontWeight="SemiBold"
+                       Foreground="{DynamicResource Brush.Green}"
+                       Canvas.Left="{Binding TopPartidas, Converter={StaticResource ParetoAccumX}}"
+                       Canvas.Top="{Binding ParetoSummary, Converter={StaticResource ParetoAccumY}}"
+                       Text="{Binding ParetoSummary, Converter={StaticResource ParetoAccumLabel}}" />
+
+            <!-- Leyenda -->
+            <StackPanel Orientation="Horizontal" Canvas.Left="45" Canvas.Top="284">
+              <StackPanel Orientation="Horizontal" Margin="0,0,18,0">
+                <Ellipse Width="9" Height="9" Fill="{DynamicResource Brush.Blue2}" VerticalAlignment="Center" Margin="0,0,7,0" />
+                <TextBlock FontSize="11" Foreground="{DynamicResource Brush.Ink3}">
+                  <Run Text="Clase A · " /><Run Text="{Binding ParetoSummary.CountA}" /><Run Text=" · " />
+                  <Run Text="{Binding ParetoSummary.PctA, StringFormat={}{0:N1}%}" />
+                </TextBlock>
+              </StackPanel>
+              <StackPanel Orientation="Horizontal" Margin="0,0,18,0">
+                <Ellipse Width="9" Height="9" Fill="{DynamicResource Brush.Blue}" VerticalAlignment="Center" Margin="0,0,7,0" />
+                <TextBlock FontSize="11" Foreground="{DynamicResource Brush.Ink3}">
+                  <Run Text="Clase B · " /><Run Text="{Binding ParetoSummary.CountB}" /><Run Text=" · " />
+                  <Run Text="{Binding ParetoSummary.PctB, StringFormat={}{0:N1}%}" />
+                </TextBlock>
+              </StackPanel>
+              <StackPanel Orientation="Horizontal" Margin="0,0,18,0">
+                <Ellipse Width="9" Height="9" Fill="{DynamicResource Brush.Muted}" Opacity="0.75" VerticalAlignment="Center" Margin="0,0,7,0" />
+                <TextBlock FontSize="11" Foreground="{DynamicResource Brush.Ink3}">
+                  <Run Text="Clase C · " /><Run Text="{Binding ParetoSummary.CountC}" /><Run Text=" · " />
+                  <Run Text="{Binding ParetoSummary.PctC, StringFormat={}{0:N1}%}" />
+                </TextBlock>
+              </StackPanel>
+              <StackPanel Orientation="Horizontal">
+                <Rectangle Width="16" Height="3" RadiusX="1.5" RadiusY="1.5" Fill="{DynamicResource Brush.AmberRisk}" VerticalAlignment="Center" Margin="0,0,7,0" />
+                <TextBlock Text="Acumulado" FontSize="11" Foreground="{DynamicResource Brush.Ink3}" />
+              </StackPanel>
+            </StackPanel>
+          </Canvas>
+        </Viewbox>
+      </StackPanel>
+    </StackPanel>
+  </Border>
+</UserControl>

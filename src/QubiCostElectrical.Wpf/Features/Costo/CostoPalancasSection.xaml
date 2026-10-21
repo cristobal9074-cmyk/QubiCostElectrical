@@ -1,0 +1,283 @@
+<UserControl x:Class="QubiCostElectrical.Wpf.Features.Costo.CostoPalancasSection"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <!-- Palancas -->
+  <Border Style="{StaticResource Card.Surface}" Padding="0" ClipToBounds="True">
+    <Grid>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="*" />
+      </Grid.RowDefinitions>
+      <Border Grid.Row="0" Style="{StaticResource Card.Header}">
+        <StackPanel>
+          <TextBlock Text="PALANCAS" Style="{StaticResource CierreSec}" Margin="0" />
+          <TextBlock Text="Recargos y márgenes aplicados sobre el costo de ejecución." Style="{StaticResource CierreHint}"
+                     Margin="0,3,0,0" />
+        </StackPanel>
+      </Border>
+      <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                    Padding="14,4,14,12">
+        <StackPanel>
+          <Grid Margin="0,0,0,4" IsEnabled="{Binding IsGastosGeneralesEditable}">
+            <Grid.Style>
+              <Style TargetType="Grid">
+                <Style.Triggers>
+                  <DataTrigger Binding="{Binding IsGastosGeneralesEditable}" Value="False">
+                    <Setter Property="Opacity" Value="0.42" />
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </Grid.Style>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="74" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <TextBlock Text="Gastos generales" FontSize="11.5" Foreground="{DynamicResource Brush.Ink2}" VerticalAlignment="Center" />
+              <Border Style="{StaticResource CostoHelpBadge}">
+                <TextBlock Style="{StaticResource CostoHelpBadgeText}" />
+                <Border.ToolTip>
+                  <ToolTip MaxWidth="320">
+                    <StackPanel Margin="2">
+                      <TextBlock Text="GASTOS GENERALES (GG %)" FontWeight="Bold" FontSize="11" Foreground="{DynamicResource Brush.Blue}" Margin="0,0,0,3" />
+                      <TextBlock Text="Porcentaje asignado para financiar los costos indirectos de administración central corporativa: sueldos directivos, oficina matriz, licitaciones, seguros y costos fijos no imputables directamente a la obra." FontSize="10.5" TextWrapping="Wrap" />
+                    </StackPanel>
+                  </ToolTip>
+                </Border.ToolTip>
+              </Border>
+            </StackPanel>
+            <TextBox Grid.Column="1" Style="{StaticResource CierreNum}" Text="{Binding GastosGeneralesText, UpdateSourceTrigger=PropertyChanged}" />
+            <TextBlock Grid.ColumnSpan="2" Text="{Binding GastosGeneralesPolicyHint}" Style="{StaticResource CierreHint}" Margin="0,32,0,0" />
+          </Grid>
+
+          <Grid Margin="0,0,0,4" IsEnabled="{Binding IsUtilidadEditable}">
+            <Grid.Style>
+              <Style TargetType="Grid">
+                <Style.Triggers>
+                  <DataTrigger Binding="{Binding IsUtilidadEditable}" Value="False">
+                    <Setter Property="Opacity" Value="0.42" />
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </Grid.Style>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="74" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <TextBlock Text="{Binding UtilidadPolicyLabel}" FontSize="11.5" Foreground="{DynamicResource Brush.Ink2}" VerticalAlignment="Center" />
+              <Border Style="{StaticResource CostoHelpBadge}">
+                <TextBlock Style="{StaticResource CostoHelpBadgeText}" />
+                <Border.ToolTip>
+                  <ToolTip MaxWidth="320">
+                    <StackPanel Margin="2">
+                      <TextBlock Text="UTILIDAD BASE PREVISTA (UT %)" FontWeight="Bold" FontSize="11" Foreground="{DynamicResource Brush.Blue}" Margin="0,0,0,3" />
+                      <TextBlock Text="Retorno económico sobre el capital de trabajo y compensación por el riesgo técnico y financiero que asume la empresa en la ejecución del contrato." FontSize="10.5" TextWrapping="Wrap" />
+                    </StackPanel>
+                  </ToolTip>
+                </Border.ToolTip>
+              </Border>
+            </StackPanel>
+            <TextBox Grid.Column="1" Style="{StaticResource CierreNum}" Text="{Binding UtilidadText, UpdateSourceTrigger=PropertyChanged}" />
+            <TextBlock Grid.ColumnSpan="2" Text="{Binding UtilidadPolicyHint}" Style="{StaticResource CierreHint}" Margin="0,32,0,0" />
+          </Grid>
+
+          <Grid Margin="0,0,0,8" IsEnabled="{Binding CanEdit}">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="74" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <TextBlock Text="Valor agregado (equipos)" FontSize="11.5" Foreground="{DynamicResource Brush.Ink2}" VerticalAlignment="Center" />
+              <Border Style="{StaticResource CostoHelpBadge}">
+                <TextBlock Style="{StaticResource CostoHelpBadgeText}" />
+                <Border.ToolTip>
+                  <ToolTip MaxWidth="320">
+                    <StackPanel Margin="2">
+                      <TextBlock Text="VALOR AGREGADO SOBRE EQUIPOS (VA %)" FontWeight="Bold" FontSize="11" Foreground="{DynamicResource Brush.Blue}" Margin="0,0,0,3" />
+                      <TextBlock Text="Recargo comercial diferenciado para partidas de equipamiento mayor (transformadores, celdas de MT, grupos electrógenos, etc.) para cubrir logística de compras, pruebas FAT/SAT y garantías sin inflar el costo de instalación." FontSize="10.5" TextWrapping="Wrap" />
+                    </StackPanel>
+                  </ToolTip>
+                </Border.ToolTip>
+              </Border>
+            </StackPanel>
+            <TextBox Grid.Column="1" Style="{StaticResource CierreNum}" Text="{Binding ValorAgregadoEquiposText, UpdateSourceTrigger=PropertyChanged}" />
+          </Grid>
+
+          <Separator Style="{StaticResource Separator.Subtle}" Margin="0,4,0,10" />
+
+          <Grid Margin="0,4,0,8">
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="74" />
+              </Grid.ColumnDefinitions>
+              <Button x:Name="FerreteriaPlus" Command="{Binding ToggleFerreteriaDetalleCommand}"
+                      ToolTip="Ferretería por familia" Margin="0,0,6,0" VerticalAlignment="Center"
+                      Cursor="Hand" FocusVisualStyle="{x:Null}">
+                <Button.Template>
+                  <ControlTemplate TargetType="Button">
+                    <Border Width="16" Height="16" CornerRadius="8" BorderThickness="1"
+                            BorderBrush="{DynamicResource Brush.Line}" Background="Transparent">
+                      <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-1,0,0" />
+                    </Border>
+                  </ControlTemplate>
+                </Button.Template>
+                <TextBlock Text="{Binding FerreteriaDetalleMarca}" FontSize="11" FontWeight="SemiBold"
+                           Foreground="{DynamicResource Brush.Ink3}" />
+              </Button>
+              <Popup IsOpen="{Binding FerreteriaDetalleAbierto, Mode=TwoWay}" PlacementTarget="{Binding ElementName=FerreteriaPlus}"
+                     Placement="Right" HorizontalOffset="8" StaysOpen="False" AllowsTransparency="True" PopupAnimation="Fade">
+                <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}"
+                        BorderThickness="1" CornerRadius="8" Padding="10,8,10,8" Width="420" MaxHeight="320">
+                  <Border.Effect>
+                    <DropShadowEffect BlurRadius="16" ShadowDepth="2" Opacity="0.16" />
+                  </Border.Effect>
+                  <DockPanel>
+                    <TextBlock DockPanel.Dock="Top" Text="{Binding FerreteriaPopupTitulo}" FontSize="12" FontWeight="SemiBold"
+                               Foreground="{DynamicResource Brush.Ink}" Margin="0,0,0,2" />
+                    <TextBlock DockPanel.Dock="Top" Text="{Binding FerreteriaPopupNota}" FontSize="10.5" TextWrapping="Wrap"
+                               Foreground="{DynamicResource Brush.Ink4}" Margin="0,0,0,8" />
+                    <Grid DockPanel.Dock="Top" Margin="0,0,0,4">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="108" />
+                        <ColumnDefinition Width="108" />
+                      </Grid.ColumnDefinitions>
+                      <TextBlock Text="FAMILIA" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}" />
+                      <TextBlock Grid.Column="1" Text="MATERIALES" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}" TextAlignment="Right" />
+                      <TextBlock Grid.Column="2" Text="FERRETERÍA" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink4}" TextAlignment="Right" />
+                    </Grid>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" MaxHeight="230">
+                      <ItemsControl ItemsSource="{Binding FerreteriaFamilias}">
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate>
+                            <Grid>
+                              <Grid.Style>
+                                <Style TargetType="Grid">
+                                  <Setter Property="Margin" Value="0,3" />
+                                  <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsTotal}" Value="True">
+                                      <Setter Property="Margin" Value="0,6,0,0" />
+                                    </DataTrigger>
+                                  </Style.Triggers>
+                                </Style>
+                              </Grid.Style>
+                              <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="108" />
+                                <ColumnDefinition Width="108" />
+                              </Grid.ColumnDefinitions>
+                              <TextBlock Text="{Binding Familia}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center">
+                                <TextBlock.Style>
+                                  <Style TargetType="TextBlock">
+                                    <Setter Property="FontSize" Value="11.5" />
+                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+                                    <Style.Triggers>
+                                      <DataTrigger Binding="{Binding IsTotal}" Value="True">
+                                        <Setter Property="FontWeight" Value="SemiBold" />
+                                      </DataTrigger>
+                                    </Style.Triggers>
+                                  </Style>
+                                </TextBlock.Style>
+                              </TextBlock>
+                              <StackPanel Grid.Column="1" HorizontalAlignment="Right">
+                                <TextBlock Text="{Binding MaterialesLabel}" FontFamily="{StaticResource Font.Mono}" FontSize="11" Foreground="{DynamicResource Brush.Ink}" TextAlignment="Right" />
+                                <TextBlock Text="{Binding MaterialesUfLabel}" FontFamily="{StaticResource Font.Mono}" FontSize="9.5" Foreground="{DynamicResource Brush.Ink4}" TextAlignment="Right" />
+                              </StackPanel>
+                              <StackPanel Grid.Column="2" HorizontalAlignment="Right">
+                                <TextBlock Text="{Binding FerreteriaLabel}" FontFamily="{StaticResource Font.Mono}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink}" TextAlignment="Right" />
+                                <TextBlock Text="{Binding FerreteriaUfLabel}" FontFamily="{StaticResource Font.Mono}" FontSize="9.5" Foreground="{DynamicResource Brush.Ink4}" TextAlignment="Right" />
+                              </StackPanel>
+                            </Grid>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                    </ScrollViewer>
+                  </DockPanel>
+                </Border>
+              </Popup>
+              <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <CheckBox IsChecked="{Binding FerreteriaActiva}" IsEnabled="{Binding CanEdit}"
+                          Content="Estimar ferretería" FontSize="11.5"
+                          Foreground="{DynamicResource Brush.Ink2}" VerticalAlignment="Center" />
+                <Border Style="{StaticResource CostoHelpBadge}">
+                  <TextBlock Style="{StaticResource CostoHelpBadgeText}" />
+                  <Border.ToolTip>
+                    <ToolTip MaxWidth="320">
+                      <StackPanel Margin="2">
+                        <TextBlock Text="PROVISIÓN DE FERRETERÍA MENOR (3%)" FontWeight="Bold" FontSize="11" Foreground="{DynamicResource Brush.Blue}" Margin="0,0,0,3" />
+                        <TextBlock Text="Estimación porcentual sobre materiales para absorber elementos de fijación, tornillería, pernos, rieles, sellos y consumibles de montaje que no se cubican ítem por ítem en planos." FontSize="10.5" TextWrapping="Wrap" />
+                      </StackPanel>
+                    </ToolTip>
+                  </Border.ToolTip>
+                </Border>
+              </StackPanel>
+              <TextBox Grid.Column="2" Text="{Binding FerreteriaPctText, UpdateSourceTrigger=LostFocus}">
+                <TextBox.Style>
+                  <Style TargetType="TextBox" BasedOn="{StaticResource CierreNum}">
+                    <Setter Property="IsEnabled" Value="False" />
+                    <Style.Triggers>
+                      <MultiDataTrigger>
+                        <MultiDataTrigger.Conditions>
+                          <Condition Binding="{Binding CanEdit}" Value="True" />
+                          <Condition Binding="{Binding FerreteriaActiva}" Value="True" />
+                        </MultiDataTrigger.Conditions>
+                        <Setter Property="IsEnabled" Value="True" />
+                      </MultiDataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </TextBox.Style>
+              </TextBox>
+            </Grid>
+          </Grid>
+
+          <Separator Style="{StaticResource Separator.Subtle}" Margin="0,6,0,6" />
+
+          <StackPanel DataContext="{Binding NegotiationSimulator}"
+                      IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}">
+            <Grid Margin="0,0,0,4">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="74" />
+              </Grid.ColumnDefinitions>
+              <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="Descuento comercial" FontSize="11.5" Foreground="{DynamicResource Brush.Ink2}" VerticalAlignment="Center" />
+                <Border Style="{StaticResource CostoHelpBadge}">
+                  <TextBlock Style="{StaticResource CostoHelpBadgeText}" />
+                  <Border.ToolTip>
+                    <ToolTip MaxWidth="320">
+                      <StackPanel Margin="2">
+                        <TextBlock Text="DESCUENTO COMERCIAL / NEGOCIACIÓN" FontWeight="Bold" FontSize="11" Foreground="{DynamicResource Brush.Blue}" Margin="0,0,0,3" />
+                        <TextBlock Text="Ajuste fino pactado en mesa de negociación final con el mandante sin degradar los precios unitarios técnicos del presupuesto ni alterar los rendimientos de obra." FontSize="10.5" TextWrapping="Wrap" />
+                      </StackPanel>
+                    </ToolTip>
+                  </Border.ToolTip>
+                </Border>
+              </StackPanel>
+              <TextBlock Grid.Column="1" Text="{Binding DiscountPct, StringFormat={}{0:0.0} %}" FontFamily="{StaticResource Font.Mono}"
+                         FontWeight="SemiBold" FontSize="12.5" HorizontalAlignment="Right" VerticalAlignment="Center" />
+            </Grid>
+            <TextBlock Text="{Binding NegotiatedPriceClpText}" FontFamily="{StaticResource Font.Mono}" FontSize="10"
+                       Foreground="{DynamicResource Brush.Ink4}" HorizontalAlignment="Right" Margin="0,2,0,0" />
+            <Slider Minimum="0" Maximum="25" SmallChange="0.5" LargeChange="1" TickFrequency="0.5" IsSnapToTickEnabled="True"
+                    Value="{Binding DiscountPct, Mode=TwoWay}" Margin="0,6,0,2" />
+            <UniformGrid Columns="5" Margin="0,4,0,4">
+              <Button Content="0" Command="{Binding SetDiscountPresetCommand}" CommandParameter="0" Style="{StaticResource Button.Ghost}" Height="24" FontSize="10.5" Margin="0,0,4,0" />
+              <Button Content="3" Command="{Binding SetDiscountPresetCommand}" CommandParameter="3" Style="{StaticResource Button.Ghost}" Height="24" FontSize="10.5" Margin="0,0,4,0" />
+              <Button Content="5" Command="{Binding SetDiscountPresetCommand}" CommandParameter="5" Style="{StaticResource Button.Ghost}" Height="24" FontSize="10.5" Margin="0,0,4,0" />
+              <Button Content="7" Command="{Binding SetDiscountPresetCommand}" CommandParameter="7" Style="{StaticResource Button.Ghost}" Height="24" FontSize="10.5" Margin="0,0,4,0" />
+              <Button Content="10" Command="{Binding SetDiscountPresetCommand}" CommandParameter="10" Style="{StaticResource Button.Ghost}" Height="24" FontSize="10.5" />
+            </UniformGrid>
+            <TextBlock Text="{Binding RiskExplanationText}" Style="{StaticResource CierreHint}" />
+          </StackPanel>
+        </StackPanel>
+      </ScrollViewer>
+    </Grid>
+  </Border>
+</UserControl>

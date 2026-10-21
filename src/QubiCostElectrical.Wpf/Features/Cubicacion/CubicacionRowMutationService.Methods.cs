@@ -24,11 +24,12 @@ internal sealed partial class CubicacionRowMutationService
             Tipo = "MAT",
             Area = "General"
         };
-        session.Cubicacion.Add(row);
+        CubicacionPartidaOrder.InsertAtSlot(session.Cubicacion, selectedPartida.Id, row, int.MaxValue);
 
         var vm = parent.CreateRowVm(row);
         parent.InitializeSectorRow(vm);
         parent.Rows.Add(vm);
+        AlignVisibleRowsToPartidaOrder();
         parent.SelectedRow = vm;
         parent.HasPendingUndoForEdit = false;
         parent.MarkDirty();
@@ -60,6 +61,11 @@ internal sealed partial class CubicacionRowMutationService
 
         undo.PushUndoPoint(session, $"Eliminar {toDelete.Count} recurso(s)");
 
+        var clearedSlaves = CubicacionSlaveQuantityRules.ClearWithoutMaster(
+            session.Cubicacion,
+            parent.SelectedPartida?.Id,
+            toDelete.Where(vm => vm.IsSessionBacked).Select(vm => vm.Source).ToList());
+
         foreach (var vm in toDelete)
         {
             if (vm.IsSessionBacked)
@@ -68,12 +74,25 @@ internal sealed partial class CubicacionRowMutationService
             parent.Rows.Remove(vm);
         }
 
+        foreach (var source in clearedSlaves)
+        {
+            var slaveVm = parent.Rows.FirstOrDefault(r => ReferenceEquals(r.Source, source) || string.Equals(r.Id, source.Id, StringComparison.OrdinalIgnoreCase));
+            if (slaveVm == null)
+                continue;
+            slaveVm.Cantidad = 0m;
+            slaveVm.LoadSectorWindow(0);
+            slaveVm.RefreshDisplayProperties();
+            session.SyncCubicacionRowComposition(slaveVm.Source);
+            parent.ValidateRow(slaveVm);
+        }
+
         EnsurePaddingRows();
 
         if (ReferenceEquals(parent.SelectedRow, null) || toDelete.Contains(parent.SelectedRow))
             parent.SelectedRow = parent.Rows.FirstOrDefault();
 
         parent.HasPendingUndoForEdit = false;
+        AlignVisibleRowsToPartidaOrder();
         parent.MarkDirty();
         parent.ScheduleRefreshTotals();
         parent.NotifyIsEmptyChanged();
@@ -98,16 +117,19 @@ internal sealed partial class CubicacionRowMutationService
         if (!src.IsSessionBacked)
             return;
 
+        int pos = CubicacionPartidaOrder.Position(session.Cubicacion, selectedPartida.Id, src.Source);
+        if (pos < 0)
+            return;
+
         undo.PushUndoPoint(session, $"Duplicar {src.Codigo}");
 
         var clone = cubSvc.CloneRowForItem(src.Source, selectedPartida.Id);
-        int idx = session.Cubicacion.IndexOf(src.Source);
-        session.Cubicacion.Insert(idx + 1, clone);
+        CubicacionPartidaOrder.InsertAtSlot(session.Cubicacion, selectedPartida.Id, clone, pos + 1);
 
         var cloneVm = parent.CreateRowVm(clone);
         parent.InitializeSectorRow(cloneVm);
-        int vmIdx = parent.Rows.IndexOf(src);
-        parent.Rows.Insert(vmIdx + 1, cloneVm);
+        parent.Rows.Add(cloneVm);
+        AlignVisibleRowsToPartidaOrder();
         parent.SelectedRow = cloneVm;
         parent.HasPendingUndoForEdit = false;
         parent.MarkDirty();
@@ -125,49 +147,32 @@ internal sealed partial class CubicacionRowMutationService
         var selectedPartida = parent.SelectedPartida;
         if (src == null || selectedPartida == null) return;
 
-        int vmIdx = parent.Rows.IndexOf(src);
-        int newVmIdx = vmIdx + direction;
-        if (newVmIdx < 0 || newVmIdx >= parent.Rows.Count) return;
+        if (!src.IsSessionBacked || !CubicacionPartidaOrder.CanMove(session.Cubicacion, selectedPartida.Id, src.Source, direction))
+            return;
 
-        undo.PushUndoPoint(session, $"Mover {src.Codigo}");
+        undo.PushUndoPoint(session, direction < 0 ? $"Subir {src.Codigo}" : $"Bajar {src.Codigo}");
+        CubicacionPartidaOrder.TryMove(session.Cubicacion, selectedPartida.Id, src.Source, direction);
 
-        // Intercambiar posiciones solo entre índices globales que pertenecen a esta partida:
-        // AddRow siempre agrega al final de session.Cubicacion, por lo que las filas de una
-        // misma partida no son necesariamente contiguas en la lista global. Intercambiar con
-        // el vecino global directo (en vez del vecino dentro de la partida) podía no mover nada
-        // en términos del orden persistido y revertirse silenciosamente al recargar.
-        var partidaIndices = new List<int>();
-        for (int i = 0; i < session.Cubicacion.Count; i++)
-        {
-            if (string.Equals(session.Cubicacion[i].ItemId, selectedPartida.Id, StringComparison.OrdinalIgnoreCase))
-                partidaIndices.Add(i);
-        }
-        int posInPartida = partidaIndices.IndexOf(session.Cubicacion.IndexOf(src.Source));
-        int newPosInPartida = posInPartida + direction;
-        if (posInPartida < 0 || newPosInPartida < 0 || newPosInPartida >= partidaIndices.Count) return;
-
-        int sessionIdx = partidaIndices[posInPartida];
-        int swapWithIdx = partidaIndices[newPosInPartida];
-        (session.Cubicacion[sessionIdx], session.Cubicacion[swapWithIdx]) =
-            (session.Cubicacion[swapWithIdx], session.Cubicacion[sessionIdx]);
-
-        parent.Rows.RemoveAt(vmIdx);
-        parent.Rows.Insert(newVmIdx, src);
+        AlignVisibleRowsToPartidaOrder();
         // SelectedRow ya apuntaba a src (misma referencia): el setter no vuelve a disparar
-        // RightPanel.LoadRow por igualdad de referencia, así que se refresca explícitamente
-        // (relevante para el comentario de celda, cuya posición visual pudo cambiar).
+        // RightPanel.LoadRow por igualdad de referencia, así que se refresca explícitamente.
         parent.SelectedRow = src;
         parent.RightPanel.LoadRow(src);
         parent.HasPendingUndoForEdit = false;
         parent.MarkDirty();
+        parent.SaveStatusText = direction < 0
+            ? "Fila subida dentro de la partida."
+            : "Fila bajada dentro de la partida.";
         RefreshRowNumbers();
     }
 
     public bool CanMoveRow(int direction)
     {
-        if (parent.SelectedRow == null) return false;
-        int idx = parent.Rows.IndexOf(parent.SelectedRow);
-        return direction == -1 ? idx > 0 : idx < parent.Rows.Count - 1;
+        var src = parent.SelectedRow;
+        var selectedPartida = parent.SelectedPartida;
+        if (src == null || !src.IsSessionBacked || selectedPartida == null)
+            return false;
+        return CubicacionPartidaOrder.CanMove(session.Cubicacion, selectedPartida.Id, src.Source, direction);
     }
 
     // Corrige el precio de varias filas de una sola vez (p. ej. tras pegar códigos con un
@@ -341,19 +346,20 @@ internal sealed partial class CubicacionRowMutationService
         // ver EvaluateSafeWithRowReferences). Si una fila visual de más abajo se editaba primero
         // que una de más arriba, antes quedaba "antes" en la lista persistida aunque se viera
         // después en pantalla, y una referencia F2 terminaba apuntando a la fila equivocada.
+        // La posición es el número de filas ya persistidas que se ven antes que esta,
+        // no el índice del vecino en la lista global del proyecto.
         int visualIndex = parent.Rows.IndexOf(row);
-        int insertAt = session.Cubicacion.Count;
-        if (visualIndex >= 0)
+        int slot = 0;
+        if (visualIndex > 0)
         {
-            for (int i = visualIndex + 1; i < parent.Rows.Count; i++)
+            for (int i = 0; i < visualIndex; i++)
             {
-                if (!parent.Rows[i].IsSessionBacked) continue;
-                int idx = session.Cubicacion.IndexOf(parent.Rows[i].Source);
-                if (idx >= 0) { insertAt = idx; break; }
+                if (parent.Rows[i].IsSessionBacked)
+                    slot++;
             }
         }
 
-        session.Cubicacion.Insert(insertAt, row.Source);
+        CubicacionPartidaOrder.InsertAtSlot(session.Cubicacion, row.Source.ItemId, row.Source, slot);
         row.IsSessionBacked = true;
 
         if (!string.IsNullOrWhiteSpace(row.Source.ItemId))
@@ -480,42 +486,17 @@ internal sealed partial class CubicacionRowMutationService
             Area = "General"
         };
 
-        // Encontrar índice en la lista de cubicación del proyecto
-        int sessionIdx = -1;
-        if (src.IsSessionBacked)
-        {
-            sessionIdx = session.Cubicacion.IndexOf(src.Source);
-        }
-        else
-        {
-            // Fila no persistida, insertar después de la última fila activa de esta partida
-            var lastRow = session.Cubicacion.LastOrDefault(x => string.Equals(x.ItemId, selectedPartida.Id, StringComparison.OrdinalIgnoreCase));
-            if (lastRow != null)
-                sessionIdx = session.Cubicacion.IndexOf(lastRow) + 1;
-        }
-
-        if (sessionIdx >= 0 && sessionIdx <= session.Cubicacion.Count)
-        {
-            session.Cubicacion.Insert(sessionIdx, row);
-        }
-        else
-        {
-            session.Cubicacion.Add(row);
-        }
+        int slot = src.IsSessionBacked
+            ? CubicacionPartidaOrder.Position(session.Cubicacion, selectedPartida.Id, src.Source)
+            : int.MaxValue;
+        if (slot < 0)
+            slot = int.MaxValue;
+        CubicacionPartidaOrder.InsertAtSlot(session.Cubicacion, selectedPartida.Id, row, slot);
 
         var vm = parent.CreateRowVm(row, isSessionBacked: true);
         parent.InitializeSectorRow(vm);
-
-        int vmIdx = parent.Rows.IndexOf(src);
-        if (vmIdx >= 0)
-        {
-            parent.Rows.Insert(vmIdx, vm);
-        }
-        else
-        {
-            parent.Rows.Add(vm);
-        }
-
+        parent.Rows.Add(vm);
+        AlignVisibleRowsToPartidaOrder();
         parent.SelectedRow = vm;
         parent.HasPendingUndoForEdit = false;
         parent.MarkDirty();
@@ -523,6 +504,48 @@ internal sealed partial class CubicacionRowMutationService
         parent.NotifyCubicacionSummaryChanged();
         parent.UpdatePartidaCount(selectedPartida);
         RefreshRowNumbers();
+    }
+
+    /// <summary>
+    /// Deja la grilla en el mismo orden que la partida dentro de session.Cubicacion.
+    /// Las casillas vacías quedan al final y no entran en la sesión.
+    /// </summary>
+    public void AlignVisibleRowsToPartidaOrder()
+    {
+        var selectedPartida = parent.SelectedPartida;
+        if (selectedPartida == null || !selectedPartida.EsPartida)
+            return;
+
+        var selected = parent.SelectedRow;
+        var ordered = CubicacionItemIndex.FilterRows(session.Cubicacion, selectedPartida.Id);
+        var backed = new Dictionary<string, CubicacionRowVm>(StringComparer.OrdinalIgnoreCase);
+        var padding = new List<CubicacionRowVm>();
+        foreach (var vm in parent.Rows)
+        {
+            if (vm.IsSessionBacked && !string.IsNullOrWhiteSpace(vm.Id))
+                backed[vm.Id] = vm;
+            else
+                padding.Add(vm);
+        }
+
+        parent.Rows.Clear();
+        foreach (var src in ordered)
+        {
+            if (!backed.TryGetValue(src.Id ?? "", out var vm))
+            {
+                vm = parent.CreateRowVm(src);
+                parent.InitializeSectorRow(vm);
+            }
+
+            parent.Rows.Add(vm);
+        }
+
+        foreach (var pad in padding)
+            parent.Rows.Add(pad);
+
+        EnsurePaddingRows();
+        if (selected != null && parent.Rows.Contains(selected))
+            parent.SelectedRow = selected;
     }
 
     private void EnsurePaddingRows()

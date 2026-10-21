@@ -1,3 +1,4 @@
+using System;
 using QubiCostElectrical;
 using Xunit;
 
@@ -39,7 +40,7 @@ public sealed class CubicacionClipboardServiceTests
 
         Assert.Equal(1, result.RejectedCount);
         Assert.True(result.Rows[0].IsRejected);
-        Assert.Contains(result.Warnings, w => w.Contains("cantidad no reconocida"));
+        Assert.Contains(result.Warnings, w => w.Contains("Fila rechazada", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -79,5 +80,42 @@ public sealed class CubicacionClipboardServiceTests
     {
         Assert.Equal(0m, CubicacionClipboardService.ParseCantidad(null));
         Assert.Equal(0m, CubicacionClipboardService.ParseCantidad("  "));
+    }
+
+    [Fact]
+    public void ParseExcelText_RedondearDelDialecto_NoSeRechaza()
+    {
+        string text = "PVC20\tTubo\tML\t=REDONDEAR(10,5;0)";
+
+        var result = CubicacionClipboardService.ParseExcelText(text);
+
+        Assert.Equal(0, result.RejectedCount);
+        Assert.Equal("=REDONDEAR(10,5;0)", result.Rows[0].CantidadRaw);
+    }
+
+    [Fact]
+    public void ParseExcelText_FuncionFueraDelDialecto_QuedaEnRojoYConservaElTexto()
+    {
+        string text = "PVC20\tTubo\tML\t=BUSCARV(1;2;3;4)";
+
+        var result = CubicacionClipboardService.ParseExcelText(text);
+
+        Assert.Equal(1, result.RejectedCount);
+        Assert.True(result.Rows[0].IsRejected);
+        Assert.Equal("=BUSCARV(1;2;3;4)", result.Rows[0].CantidadRaw);
+        Assert.Contains("no está en el dialecto", result.Rows[0].RejectionReason, StringComparison.OrdinalIgnoreCase);
+        Assert.StartsWith("fx", result.Rows[0].RejectionReason, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void ParseExcelText_CasillaFueraDelDialecto_RechazaLaFila()
+    {
+        string text = "PVC20\tTubo\tML\t4\t=BUSCARV(1;2)";
+
+        var result = CubicacionClipboardService.ParseExcelText(text);
+
+        Assert.True(result.Rows[0].IsRejected);
+        Assert.Contains("Casilla 1", result.Rows[0].RejectionReason, StringComparison.Ordinal);
+        Assert.Equal("4", result.Rows[0].CantidadRaw);
     }
 }

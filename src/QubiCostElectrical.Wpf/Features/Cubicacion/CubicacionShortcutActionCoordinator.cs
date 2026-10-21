@@ -32,6 +32,7 @@ internal sealed class CubicacionShortcutActionCoordinator
     public ICommand OpenFamilyBatchReplaceCommand { get; }
     public ICommand AutocompletarUnidadYCantidadCommand { get; }
     public ICommand AutocompletarUnidadYCantidadTodasCommand { get; }
+    public ICommand AplicarCantidadALaPartidaCommand { get; }
 
     public Action? RequestFillDown { get; set; }
     public Action? RequestFillRight { get; set; }
@@ -65,6 +66,7 @@ internal sealed class CubicacionShortcutActionCoordinator
         OpenFamilyBatchReplaceCommand = new RelayCommand(OpenFamilyBatchReplace, () => _vm.CanEdit);
         AutocompletarUnidadYCantidadCommand = new RelayCommand(AutocompletarUnidadYCantidadActual, () => _vm.CanEdit && _vm.SelectedPartida?.EsPartida == true);
         AutocompletarUnidadYCantidadTodasCommand = new RelayCommand(AutocompletarUnidadYCantidadTodas, () => _vm.CanEdit);
+        AplicarCantidadALaPartidaCommand = new RelayCommand(AplicarCantidadALaPartida, () => _vm.CanEdit && _vm.SelectedPartida?.EsPartida == true);
     }
 
     public bool TryExecuteShortcut(string actionId)
@@ -471,6 +473,33 @@ internal sealed class CubicacionShortcutActionCoordinator
     public void ExecuteRepeatMeasurement(CubicacionRowVm row, int targetSlot, string expression)
         => CubicacionFillHelper.RepeatMeasurement(_vm, row, targetSlot, expression);
 
+    public void AplicarCantidadALaPartida()
+    {
+        if (_session.IsReadOnly)
+        {
+            ModuleFeedback.NotifyReadOnly("Aplicar cantidad a la partida", _session.ReadOnlyReason);
+            return;
+        }
+
+        if (_vm.SelectedPartida == null || !_vm.SelectedPartida.EsPartida)
+        {
+            WpfDialogService.Info("Aplicar cantidad a la partida", "Seleccione una partida.");
+            return;
+        }
+
+        decimal cantidad = _vm.SelectedPartida.Cantidad;
+        bool applied = CubicacionPartidaHelper.SincronizarMaestroDesdePartida(_vm.Rows, cantidad, _session, _vm.ValidateRow);
+        if (!applied)
+        {
+            _vm.SaveStatusText = "La cantidad global queda en la partida. Las cantidades de los materiales no cambian.";
+            return;
+        }
+
+        _vm.MarkDirty();
+        _vm.ScheduleRefreshTotals();
+        _vm.SaveStatusText = $"Cantidad {cantidad:G29} aplicada al recurso maestro. El resto de los materiales no cambió.";
+    }
+
     public void AutocompletarUnidadYCantidadActual()
     {
         if (_session.IsReadOnly)
@@ -531,7 +560,6 @@ internal sealed class CubicacionShortcutActionCoordinator
             {
                 _vm.SelectedPartida.Cantidad = cantidad;
                 _vm.SelectedPartida.CantidadFormula = "";
-                CubicacionPartidaHelper.SincronizarMaestroDesdePartida(_vm.Rows, cantidad, _session, _vm.ValidateRow);
             }
 
             _vm.NotifyProperty(nameof(_vm.PartidaUnidadText));
@@ -620,10 +648,6 @@ internal sealed class CubicacionShortcutActionCoordinator
                     actualizadas++;
                     if (_vm.SelectedPartida != null && string.Equals(_vm.SelectedPartida.Id, partidaVm.Id, StringComparison.OrdinalIgnoreCase))
                     {
-                        _vm.SelectedPartida.Unidad = partidaVm.Unidad;
-                        _vm.SelectedPartida.Cantidad = partidaVm.Cantidad;
-                        _vm.SelectedPartida.CantidadFormula = "";
-                        CubicacionPartidaHelper.SincronizarMaestroDesdePartida(_vm.Rows, partidaVm.Cantidad, _session, _vm.ValidateRow);
                         _vm.NotifyProperty(nameof(_vm.PartidaUnidadText));
                         _vm.NotifyProperty(nameof(_vm.PartidaUnidad));
                         _vm.NotifyProperty(nameof(_vm.PartidaCantidadText));

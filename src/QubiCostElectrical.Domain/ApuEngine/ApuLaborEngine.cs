@@ -44,27 +44,6 @@ public static class ApuLaborEngine
         return desviacion.HasValue && Math.Abs(desviacion.Value) > umbralPct;
     }
 
-    public static void SyncCalendarioFromProject(ApuCondicionesLaboralesRow condiciones, LaborDaySettingsRow? settings)
-    {
-        if (condiciones == null || settings == null) return;
-        if (condiciones.HorasPorJornada <= 0m) condiciones.HorasPorJornada = settings.HorasPorJornada;
-        if (condiciones.DiasPorSemana <= 0m) condiciones.DiasPorSemana = settings.DiasPorSemana;
-        if (string.IsNullOrWhiteSpace(condiciones.CuadrillaReferencia))
-            condiciones.CuadrillaReferencia = settings.CuadrillaDefault;
-    }
-
-    public static void EnsureRendimientoEstimado(ApuRow apu)
-    {
-        if (apu?.CondicionesLaborales == null) return;
-        if (apu.CondicionesLaborales.RendimientoEstimadoHH > 0m) return;
-
-        decimal hh = apu.HHUnitarias;
-        if (hh <= 0m)
-            hh = apu.Recursos.Where(r => r.Tipo is ApuTipoRecurso.MO or ApuTipoRecurso.HH).Sum(r => r.HHUnitarias);
-
-        apu.CondicionesLaborales.RendimientoEstimadoHH = hh;
-    }
-
     private static decimal FactorDificultadPct(string? nivel) => (nivel ?? "").Trim().ToUpperInvariant() switch
     {
         "BAJA" => -5m,

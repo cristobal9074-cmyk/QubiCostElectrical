@@ -9,14 +9,15 @@ public sealed class RevisionNamingHelperTests
     [Fact]
     public void SuggestNextRevision_PelFormat_IncrementsLetterFromAToB()
     {
-        string current = @"C:\Users\cristobal1\Documents\Presupuestos Electricos\PEL039A2026 ABIERTO.qce";
+        string folder = Path.Combine("C:", "Presupuestos", "Obra");
+        string current = Path.Combine(folder, "PEL039A2026 ABIERTO.qce");
         var suggestion = RevisionNamingHelper.SuggestNextRevision(current);
 
         Assert.Equal("Rev A", suggestion.CurrentRevisionCode);
         Assert.Equal("Rev B", suggestion.NextRevisionCode);
         Assert.Equal("PEL039B2026 ABIERTO.qce", suggestion.NextSuggestedFileName);
         Assert.Equal("PEL039B2026", suggestion.NextSuggestedProjectCode);
-        Assert.Equal(Path.Combine(@"C:\Users\cristobal1\Documents\Presupuestos Electricos", "PEL039B2026 ABIERTO.qce"), suggestion.NextSuggestedFilePath);
+        Assert.Equal(Path.Combine(folder, "PEL039B2026 ABIERTO.qce"), suggestion.NextSuggestedFilePath);
     }
 
     [Fact]

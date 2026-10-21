@@ -23,6 +23,7 @@ internal sealed class CubicacionPersistenceService
     private readonly IShellNavigationHost shell;
     private readonly CubicacionPresenter cubicacionPresenter;
     private readonly ConjuntoElectricoService conjuntoService;
+    private readonly IPriceBankStore priceBank;
 
     public CubicacionPersistenceService(
         CubicacionViewModel parent,
@@ -31,7 +32,8 @@ internal sealed class CubicacionPersistenceService
         WpfUndoService undo,
         IShellNavigationHost shell,
         CubicacionPresenter cubicacionPresenter,
-        ConjuntoElectricoService conjuntoService)
+        ConjuntoElectricoService conjuntoService,
+        IPriceBankStore priceBank)
     {
         this.parent = parent;
         this.session = session;
@@ -40,6 +42,7 @@ internal sealed class CubicacionPersistenceService
         this.shell = shell;
         this.cubicacionPresenter = cubicacionPresenter;
         this.conjuntoService = conjuntoService;
+        this.priceBank = priceBank;
     }
 
     public async Task SaveAsync()
@@ -50,6 +53,16 @@ internal sealed class CubicacionPersistenceService
             WpfDialogService.Warning("Guardar", "El proyecto está en solo lectura. Abra una copia escribible para guardar cambios.");
             return;
         }
+        if (!parent.TryCommitOpenCell())
+        {
+            WpfDialogService.Warning(
+                "Guardar",
+                string.IsNullOrWhiteSpace(parent.OpenEditorError)
+                    ? "Hay una fórmula que no se puede calcular. Corríjala antes de guardar."
+                    : parent.OpenEditorError);
+            return;
+        }
+
         parent.SaveStatusText = "Guardando…";
         try
         {
@@ -229,6 +242,7 @@ internal sealed class CubicacionPersistenceService
         int totalAdded = 0;
         var allWarnings = new List<string>();
         bool enCero = !dialog.UsarCantidadPartida;
+        bool trajoDelBanco = false;
 
         foreach (var targetVm in targetPartidaVms)
         {
@@ -245,9 +259,15 @@ internal sealed class CubicacionPersistenceService
 
             // Si UsarCantidadPartida está activo, expande con cantidadesEnCero = false usando la cantidad de la partida.
             // Si está desmarcado, expande en cero para cubicar por casillas (lo de la foto).
-            var result = conjuntoService.ExpandToCubicacion(dialog.SelectedConjunto, partida, session.Materiales, cantidadesEnCero: enCero);
+            var materiales = MaterialesDePlantilla(dialog.SelectedConjunto, ref trajoDelBanco);
+            var result = conjuntoService.ExpandToCubicacion(
+                dialog.SelectedConjunto,
+                partida,
+                materiales,
+                cantidadesEnCero: enCero,
+                proyecto: session.ProjectInfo);
             foreach (var row in result.Rows)
-                session.Cubicacion.Add(row);
+                CubicacionPartidaOrder.InsertAtSlot(session.Cubicacion, targetVm.Id, row, int.MaxValue);
 
             totalAdded += result.Rows.Count;
             if (result.Warnings.Count > 0)
@@ -259,7 +279,11 @@ internal sealed class CubicacionPersistenceService
             p.IsTagged = false;
 
         using (parent.SuppressSessionReload())
+        {
+            if (trajoDelBanco)
+                session.MarkDirty(ProjectDirtyScope.Materiales);
             session.MarkDirty(ProjectDirtyScope.Cubicacion);
+        }
         parent.LoadCubicacionRows();
 
         if (targetPartidaVms.Count > 1)
@@ -285,6 +309,40 @@ internal sealed class CubicacionPersistenceService
             WpfDialogService.Info(
                 "Plantilla aplicada con advertencias",
                 $"{totalAdded} material(es) cargados.\n\n" + string.Join("\n", allWarnings));
+    }
+
+    /// <summary>
+    /// La plantilla busca el precio en la lista del proyecto. Si el código solo está en el banco,
+    /// se incorpora al proyecto para que la fila traiga material y mano de obra y no quede en rojo.
+    /// </summary>
+    private List<MaterialRow> MaterialesDePlantilla(ConjuntoElectricoRow conjunto, ref bool trajoDelBanco)
+    {
+        var materiales = session.Materiales.ToList();
+        foreach (var recurso in conjunto.Recursos ?? new List<ConjuntoRecursoRow>())
+        {
+            if (string.IsNullOrWhiteSpace(recurso.Codigo))
+                continue;
+            if (materiales.Any(m => CodeHelper.Match(m.Codigo, recurso.Codigo)))
+                continue;
+
+            var entry = priceBank.GetByCodigo(recurso.Codigo);
+            if (entry == null)
+                continue;
+
+            var material = CubicacionViewModel.FromBankEntry(entry);
+            material.MoClp = MaterialMoResolver.MoClpEfectiva(material, session.ProjectInfo);
+            material.RecalcularUf(session.ProjectInfo.ValorUfClp);
+            session.Materiales.Add(material);
+            materiales.Add(material);
+            trajoDelBanco = true;
+        }
+
+        if (!trajoDelBanco)
+            return materiales;
+
+        parent.ValidationMaterialesIndex = null;
+        parent.InvalidateAutocompleteMaterialIndex();
+        return materiales;
     }
 
     public void SyncGridRowSelection(IEnumerable<CubicacionRowVm> selected)

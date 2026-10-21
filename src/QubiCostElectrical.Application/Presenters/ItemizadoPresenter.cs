@@ -46,11 +46,6 @@ public sealed class ItemizadoPresenter
             _session.Apus,
             _session.Itemizado);
 
-    public IReadOnlyList<IReadOnlyList<string>> ReadExcelTable(string filePath)
-    {
-        return _services.ItemizadoSpreadsheet.ReadFirstWorksheet(filePath);
-    }
-
     public (ItemizadoImportPlan? Plan, string? Error) TryBuildImportPlan(string filePath, string actionLabel = "Importar itemizado")
     {
         var table = _services.ItemizadoSpreadsheet.ReadFirstWorksheet(filePath);
@@ -138,14 +133,6 @@ public sealed class ItemizadoPresenter
 
     public string BuildClearConfirmationMessage(int rowCount)
         => $"¿Vaciar todo el itemizado ({rowCount:N0} filas)?\n\nEsto también eliminará la cubicación y los APU asociados.";
-
-    public string BuildImportStatusMessage(int partidas, int titulos)
-    {
-        string detail = titulos > 0
-            ? $"{partidas:N0} partidas · {titulos:N0} títulos"
-            : $"{partidas:N0} partidas";
-        return detail;
-    }
 
     public ItemizadoMutationResult AddBelow(int selectedIndex, string desc, string unidad)
     {

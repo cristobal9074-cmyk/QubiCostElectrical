@@ -567,11 +567,13 @@ public partial class CostoView : UserControl
             return;
 
         target.Focus();
+        target.BringIntoView();
     }
 
     private List<(TextBox Mult, TextBox Disc)> CoefRows()
     {
-        if (coefRows is { Count: > 0 } && coefRows[0].Mult.IsLoaded)
+        var all = FindVisualChildren<TextBox>(CoefFactorsList).ToList();
+        if (coefRows is { Count: > 0 } && coefRows.All(r => r.Mult.IsLoaded && all.Contains(r.Mult)))
             return coefRows;
 
         coefRows = new List<(TextBox Mult, TextBox Disc)>();

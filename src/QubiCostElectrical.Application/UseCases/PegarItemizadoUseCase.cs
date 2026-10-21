@@ -277,19 +277,6 @@ public sealed class PegarItemizadoUseCase
         return false;
     }
 
-    public static string GuessUnit(string desc)
-    {
-        string d = (desc ?? "").ToUpperInvariant();
-        if (d.Contains("M2") || d.Contains("M²")) return "m2";
-        if (d.Contains("M3") || d.Contains("M³")) return "m3";
-        if (d.Contains("METRO LINEAL") || d.Contains(" ML ")) return "ml";
-        if (d.Contains("METRO")) return "m";
-        if (d.Contains("KG") || d.Contains("KILOGRAM")) return "kg";
-        if (d.Contains("HH") || d.Contains("HORA-HOMBRE")) return "HH";
-        if (d.Contains("HORA")) return "hr";
-        return "GL";
-    }
-
     private static string BuildColumnMap(int cItem, int cDesc, int cUnidad, int cCant, List<string>? headers)
     {
         string Label(int c) => c >= 0 && headers != null && c < headers.Count

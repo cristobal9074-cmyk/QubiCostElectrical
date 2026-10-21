@@ -56,7 +56,7 @@ public sealed class ProjectPriceFreezeServiceTests
     [Fact]
     public void ApplyBankPrices_BlockedWhenFrozen_UnlessExplicit()
     {
-        var repo = new PriceBankApplicationServiceTests.FakePriceBankRepository();
+        var repo = new PriceBankApplicationServiceTests.FakePriceBankStore();
         repo.Upsert(new PriceBankEntry
         {
             Codigo = "A",

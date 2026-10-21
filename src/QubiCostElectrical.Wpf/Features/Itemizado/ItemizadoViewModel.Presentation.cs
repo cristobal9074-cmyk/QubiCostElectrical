@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using QubiCostElectrical;
+using QubiCostElectrical.Wpf.Infrastructure;
 
 namespace QubiCostElectrical.Wpf.Features.Itemizado;
 
@@ -121,7 +122,7 @@ public sealed partial class ItemizadoViewModel
             if (!syncOnly)
                 SyncRowModels();
 
-            var state = workspace.BuildPageState(presenter, session);
+            var state = workspace.BuildPageState(presenter, session, perspective: isViewVenta ? ItemizadoPerspectiveMode.Venta : ItemizadoPerspectiveMode.CostoDirecto);
             ApplyPresentation(state, includeCosts: true, refreshView: true);
             ShowEmptyItemizado = session.Itemizado.Count == 0;
             UpdateHeader(state);
@@ -273,7 +274,7 @@ public sealed partial class ItemizadoViewModel
     private void RefreshPresentation(bool includeCosts = true)
     {
         if (ShowEmptyState) return;
-        var state = workspace.BuildPageState(presenter, session, includeCosts ? null : costTotalsByItem);
+        var state = workspace.BuildPageState(presenter, session, includeCosts ? null : costTotalsByItem, perspective: isViewVenta ? ItemizadoPerspectiveMode.Venta : ItemizadoPerspectiveMode.CostoDirecto);
         ApplyPresentation(state, includeCosts, refreshView: false);
         UpdateHeader(state);
     }
@@ -406,6 +407,7 @@ public sealed partial class ItemizadoViewModel
         if (ShowEmptyState || ShowEmptyItemizado)
         {
             FilteredCountLabel = "";
+            HasNoFilterResults = false;
             TotalPartidasCount = 0; ListasPartidasCount = 0; PendientesPartidasCount = 0;
             OnPropertyChanged(nameof(TotalFilterLabel)); OnPropertyChanged(nameof(ListasFilterLabel)); OnPropertyChanged(nameof(PendientesFilterLabel));
             return;
@@ -422,6 +424,11 @@ public sealed partial class ItemizadoViewModel
         FilteredCountLabel = filtered
             ? $"{visible:N0} de {total:N0} partidas"
             : $"{total:N0} partidas";
+        HasNoFilterResults = filtered && total > 0 && visible == 0;
+        if (HasNoFilterResults)
+            ShellActivity.Report("Sin coincidencias.");
+        else if (ShellActivity.Text == "Sin coincidencias.")
+            ShellActivity.Report("");
 
         UpdateTotals();
     }

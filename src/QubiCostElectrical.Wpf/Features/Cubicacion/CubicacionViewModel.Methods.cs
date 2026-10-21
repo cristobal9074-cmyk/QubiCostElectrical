@@ -88,7 +88,7 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
         totalsCalculator = new CubicacionTotalsCalculator(this, cubicacionPresenter);
         autocompleteService = new CubicacionAutocompleteService(this, session, materialSearch, priceBankStore);
         sessionCoordinator = new CubicacionSessionCoordinator(this, session);
-        persistenceService = new CubicacionPersistenceService(this, session, projectWorkspace, undo, shell, cubicacionPresenter, conjuntoService);
+        persistenceService = new CubicacionPersistenceService(this, session, projectWorkspace, undo, shell, cubicacionPresenter, conjuntoService, priceBankStore);
         loadingService = new CubicacionLoadingService(this, session, querySvc, cubSvc);
         sectorService = new CubicacionSectorService(this, session, undo, querySvc, cubicacionPresenter);
         rowMutationService = new CubicacionRowMutationService(this, session, undo, cubSvc, cubicacionPresenter, priceBankStore);
@@ -214,6 +214,13 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
             // usuario clickee, incluidos los títulos de sección. Un título nunca debe
             // reemplazar la partida activa ni vaciar la grilla — se ignora la asignación.
             if (value != null && !value.EsPartida) return;
+            if (!TryCommitOpenCell())
+            {
+                SuppressPartidaFocus = true;
+                try { OnPropertyChanged(nameof(SelectedPartida)); }
+                finally { SuppressPartidaFocus = false; }
+                return;
+            }
             if (selectedPartida != null) selectedPartida.IsActiva = false;
             selectedPartida = value;
             if (selectedPartida != null) selectedPartida.IsActiva = true;
@@ -341,7 +348,49 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
     public string SaveStatusText
     {
         get => saveStatusText;
-        internal set => SetProperty(ref saveStatusText, value);
+        internal set
+        {
+            if (!SetProperty(ref saveStatusText, value))
+                return;
+            if (value.StartsWith("Guardado", StringComparison.Ordinal)
+                || value.Contains("No se pudo", StringComparison.OrdinalIgnoreCase)
+                || value.Contains("no se aplicó", StringComparison.OrdinalIgnoreCase)
+                || value.Contains("Sin coincidencias", StringComparison.OrdinalIgnoreCase))
+                ShellActivity.Report(value);
+        }
+    }
+
+    private string formulaStatusText = "";
+
+    public string FormulaStatusText
+    {
+        get => formulaStatusText;
+        private set
+        {
+            if (SetProperty(ref formulaStatusText, value ?? ""))
+                OnPropertyChanged(nameof(HasFormulaStatus));
+        }
+    }
+
+    public bool HasFormulaStatus => formulaStatusText.Length > 0;
+
+    public string FormulaDialectText => QuantityFormulaDialect.Summary;
+
+    internal void ReportFormulaIssue(string? error)
+    {
+        string text = string.IsNullOrWhiteSpace(error) ? "La fórmula no se puede calcular." : error.Trim();
+        if (!text.StartsWith("fx", StringComparison.OrdinalIgnoreCase))
+            text = "fx · " + text;
+        SetOpenEditorError(text);
+        FormulaStatusText = text;
+        SaveStatusText = text;
+    }
+
+    internal void ClearFormulaIssue()
+    {
+        if (formulaStatusText.Length == 0)
+            return;
+        FormulaStatusText = "";
     }
 
     public string PartidaEstadoText => partidaCoordinator.PartidaEstadoText;
@@ -512,6 +561,34 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
     bool IPageWithPendingChanges.HasPendingChanges => hasPendingChanges;
     bool IPageWithPendingChanges.TryDiscardChanges() => TryDiscardChanges();
     bool IPageWithCommitChanges.TryApplyChanges() => TryApplyChanges();
+    bool IPageWithOpenEditor.TryCommitOpenEditor() => TryCommitOpenCell();
+    string IPageWithOpenEditor.OpenEditorError => OpenEditorError;
+
+    /// <summary>La vista lo asigna en su constructor. Sin vista, no hay editor que confirmar.</summary>
+    internal Func<bool>? CommitOpenCellHandler { get; set; }
+
+    internal bool SuppressPartidaFocus { get; private set; }
+
+    internal string OpenEditorError { get; private set; } = "";
+
+    internal void SetOpenEditorError(string? error) => OpenEditorError = error ?? "";
+
+    internal void ClearOpenEditorError() => OpenEditorError = "";
+
+    internal bool TryCommitOpenCell()
+    {
+        var handler = CommitOpenCellHandler;
+        if (handler == null)
+        {
+            ClearOpenEditorError();
+            return true;
+        }
+
+        return handler();
+    }
+
+    internal QuantityFormulaResult EvaluateOpenSectorExpression(CubicacionRowVm row, int offset, string? text)
+        => querySvc.EvaluateCandidateExpression(session, row.Source, offset, text);
 
     public bool TryDiscardChanges() => baselineCoordinator.TryDiscardChanges();
 

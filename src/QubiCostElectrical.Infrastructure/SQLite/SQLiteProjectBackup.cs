@@ -89,12 +89,29 @@ public static class SQLiteProjectBackup
         try
         {
             string dir = BackupDirectory(databasePath);
-            if (!Directory.Exists(dir)) return "";
+            var candidates = new System.Collections.Generic.List<FileInfo>();
 
-            var candidates = Enumerable.Range(1, 50)
-                .Select(i => BackupPath(databasePath, i))
-                .Where(File.Exists)
-                .Select(path => new FileInfo(path))
+            if (Directory.Exists(dir))
+            {
+                candidates.AddRange(Enumerable.Range(1, 50)
+                    .Select(i => BackupPath(databasePath, i))
+                    .Where(File.Exists)
+                    .Select(path => new FileInfo(path)));
+            }
+
+            // Compatibilidad hacia atras: si no hay en AppData, buscar en carpeta legacy si existia
+            string legacyDir = Path.Combine(Path.GetDirectoryName(databasePath) ?? AppContext.BaseDirectory, Path.GetFileName(databasePath) + ".backups");
+            if (Directory.Exists(legacyDir))
+            {
+                candidates.AddRange(Enumerable.Range(1, 50)
+                    .Select(i => Path.Combine(legacyDir, $"{Path.GetFileName(databasePath)}.bak.{i:00}"))
+                    .Where(File.Exists)
+                    .Select(path => new FileInfo(path)));
+            }
+
+            if (candidates.Count == 0) return "";
+
+            candidates = candidates
                 .OrderBy(info => BackupSlotNumber(info.FullName))
                 .ThenByDescending(info => info.LastWriteTimeUtc)
                 .ToList();
@@ -232,9 +249,7 @@ public static class SQLiteProjectBackup
 
     private static string BackupDirectory(string databasePath)
     {
-        string dir = Path.GetDirectoryName(databasePath) ?? AppContext.BaseDirectory;
-        string file = Path.GetFileName(databasePath);
-        return Path.Combine(dir, file + ".backups");
+        return ProductPaths.ProjectBackupDirectory(databasePath);
     }
 
     private static string BackupPath(string databasePath, int slot)

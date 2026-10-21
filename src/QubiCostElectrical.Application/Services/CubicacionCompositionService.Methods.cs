@@ -16,10 +16,84 @@ public sealed partial class CubicacionCompositionService
         if (!data.CubicacionRecursos.Any() && data.Cubicacion.Any(HasLegacyContent))
             DecomposeAllFromLegacy(data);
         else
+        {
             DecomposeOrphanLegacyRows(data);
+            // La grilla es la fuente de lo que el estimador acaba de escribir.
+            // No se vuelve a armar la fila desde el recurso: si el recurso quedó viejo,
+            // el código, la fórmula o el precio desaparecían en el próximo snapshot.
+            PushDivergentLegacyRows(data);
+        }
 
-        SyncLegacyFromNormalized(data);
+        AddMissingLegacyRows(data);
+        FillZeroPricesFromCatalog(data);
         EnsurePartidaApuLinks(data);
+    }
+
+    // Un recurso sin fila visible (archivo que solo trae la lista interna) aparece en la grilla.
+    // Las filas que ya están no se reescriben.
+    private void AddMissingLegacyRows(ProjectFileData data)
+    {
+        var legacyById = new Dictionary<string, CubicacionRow>(StringComparer.OrdinalIgnoreCase);
+        foreach (var row in data.Cubicacion)
+        {
+            if (!string.IsNullOrWhiteSpace(row.Id) && !legacyById.ContainsKey(row.Id))
+                legacyById[row.Id] = row;
+        }
+
+        var valorizacionByRecursoId = new Dictionary<string, CubicacionValorizacionRow>(StringComparer.OrdinalIgnoreCase);
+        foreach (var valorizacion in data.CubicacionValorizaciones)
+        {
+            if (!string.IsNullOrWhiteSpace(valorizacion.RecursoId) && !valorizacionByRecursoId.ContainsKey(valorizacion.RecursoId))
+                valorizacionByRecursoId[valorizacion.RecursoId] = valorizacion;
+        }
+
+        var zonasByRecursoId = new Dictionary<string, List<CubicacionZonaCantidadRow>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var zona in data.CubicacionZonaCantidades)
+        {
+            if (string.IsNullOrWhiteSpace(zona.RecursoId)) continue;
+            if (!zonasByRecursoId.TryGetValue(zona.RecursoId, out var list))
+                zonasByRecursoId[zona.RecursoId] = list = new List<CubicacionZonaCantidadRow>();
+            list.Add(zona);
+        }
+
+        foreach (var recurso in data.CubicacionRecursos.OrderBy(r => r.Orden).ThenBy(r => r.Codigo, StringComparer.OrdinalIgnoreCase))
+        {
+            if (string.IsNullOrWhiteSpace(recurso.Id) || legacyById.ContainsKey(recurso.Id))
+                continue;
+
+            var row = new CubicacionRow { Id = recurso.Id };
+            data.Cubicacion.Add(row);
+            legacyById[recurso.Id] = row;
+            valorizacionByRecursoId.TryGetValue(recurso.Id, out var valorizacion);
+            zonasByRecursoId.TryGetValue(recurso.Id, out var zonas);
+            ComposeLegacyRow(recurso, row, valorizacion, zonas, data.Proyecto?.ValorUfClp ?? 0m);
+        }
+    }
+
+    private static void FillZeroPricesFromCatalog(ProjectFileData data)
+    {
+        if (data.Materiales == null || data.Materiales.Count == 0 || data.Proyecto == null)
+            return;
+
+        foreach (var row in data.Cubicacion)
+        {
+            if (row.MatClp != 0m || row.MoClp != 0m || string.IsNullOrWhiteSpace(row.Codigo))
+                continue;
+
+            var material = data.Materiales.FirstOrDefault(m =>
+                string.Equals(m.Codigo, row.Codigo, StringComparison.OrdinalIgnoreCase));
+            if (material == null || (material.MatClp <= 0m && material.MoClp <= 0m))
+                continue;
+
+            row.MatClp = material.MatClp;
+            row.MoClp = MaterialMoResolver.MoClpEfectiva(material, data.Proyecto);
+            row.RecalcularUf(data.Proyecto.ValorUfClp);
+
+            var valorizacion = data.CubicacionValorizaciones.FirstOrDefault(v =>
+                string.Equals(v.RecursoId, row.Id, StringComparison.OrdinalIgnoreCase));
+            if (valorizacion != null)
+                WriteValorizacionPrices(valorizacion, row.MatClp, row.MoClp, data.Proyecto.ValorUfClp, row.MatUf, row.MoUf);
+        }
     }
 
     public void SyncNormalizedFromLegacyRow(ProjectFileData data, CubicacionRow row)
@@ -44,68 +118,160 @@ public sealed partial class CubicacionCompositionService
         ReplaceZonasFromLegacy(data, row, data.Zonas, recurso.Id);
     }
 
-    public void SyncLegacyFromNormalized(ProjectFileData data)
+    public bool SyncLegacyFromNormalized(ProjectFileData data, Action? beforeCommit = null)
     {
-        if (data == null) return;
+        if (data == null) return true;
         EnsureLists(data);
 
-        try
+        var stamp = TakeSyncStamp(data);
+        var legacyRows = data.Cubicacion.ToArray();
+        var valorizaciones = data.CubicacionValorizaciones.ToArray();
+        var zonaCantidades = data.CubicacionZonaCantidades.ToArray();
+        var recursos = data.CubicacionRecursos.ToArray();
+        var materiales = (data.Materiales ?? new List<MaterialRow>()).ToArray();
+
+        var legacyById = new Dictionary<string, CubicacionRow>(StringComparer.OrdinalIgnoreCase);
+        foreach (var row in legacyRows)
         {
-            var legacyRows = data.Cubicacion.ToArray();
-            var valorizaciones = data.CubicacionValorizaciones.ToArray();
-            var zonaCantidades = data.CubicacionZonaCantidades.ToArray();
-            var recursos = data.CubicacionRecursos.ToArray();
+            if (!string.IsNullOrWhiteSpace(row.Id) && !legacyById.ContainsKey(row.Id))
+                legacyById[row.Id] = row;
+        }
 
-            var legacyById = new Dictionary<string, CubicacionRow>(StringComparer.OrdinalIgnoreCase);
-            foreach (var row in legacyRows)
+        var valorizacionByRecursoId = new Dictionary<string, CubicacionValorizacionRow>(StringComparer.OrdinalIgnoreCase);
+        foreach (var v in valorizaciones)
+        {
+            if (!string.IsNullOrWhiteSpace(v.RecursoId) && !valorizacionByRecursoId.ContainsKey(v.RecursoId))
+                valorizacionByRecursoId[v.RecursoId] = v;
+        }
+
+        var zonasByRecursoId = new Dictionary<string, List<CubicacionZonaCantidadRow>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var z in zonaCantidades)
+        {
+            if (string.IsNullOrWhiteSpace(z.RecursoId)) continue;
+            if (!zonasByRecursoId.TryGetValue(z.RecursoId, out var list))
+                zonasByRecursoId[z.RecursoId] = list = new List<CubicacionZonaCantidadRow>();
+            list.Add(z);
+        }
+
+        var backups = new List<(CubicacionRow Live, RowComposeBackup Backup)>();
+        var added = new List<CubicacionRow>();
+        decimal valorUf = data.Proyecto?.ValorUfClp ?? 0m;
+
+        foreach (var recurso in recursos.OrderBy(r => r.Orden).ThenBy(r => r.Codigo, StringComparer.OrdinalIgnoreCase))
+        {
+            if (string.IsNullOrWhiteSpace(recurso.Id))
+                continue;
+
+            if (!legacyById.TryGetValue(recurso.Id, out var row))
             {
-                if (!legacyById.ContainsKey(row.Id))
-                    legacyById[row.Id] = row;
+                row = new CubicacionRow { Id = recurso.Id };
+                added.Add(row);
+                legacyById[recurso.Id] = row;
+            }
+            else
+            {
+                backups.Add((row, RowComposeBackup.Capture(row)));
             }
 
-            var valorizacionByRecursoId = new Dictionary<string, CubicacionValorizacionRow>(StringComparer.OrdinalIgnoreCase);
-            foreach (var v in valorizaciones)
+            valorizacionByRecursoId.TryGetValue(recurso.Id, out var valorizacion);
+            zonasByRecursoId.TryGetValue(recurso.Id, out var zonasForRecurso);
+            ComposeLegacyRow(recurso, row, valorizacion, zonasForRecurso, valorUf);
+            if (row.MatClp == 0m && row.MoClp == 0m && !string.IsNullOrWhiteSpace(recurso.Codigo))
             {
-                if (!string.IsNullOrWhiteSpace(v.RecursoId) && !valorizacionByRecursoId.ContainsKey(v.RecursoId))
-                    valorizacionByRecursoId[v.RecursoId] = v;
-            }
-
-            var zonasByRecursoId = new Dictionary<string, List<CubicacionZonaCantidadRow>>(StringComparer.OrdinalIgnoreCase);
-            foreach (var z in zonaCantidades)
-            {
-                if (string.IsNullOrWhiteSpace(z.RecursoId)) continue;
-                if (!zonasByRecursoId.TryGetValue(z.RecursoId, out var list))
-                    zonasByRecursoId[z.RecursoId] = list = new List<CubicacionZonaCantidadRow>();
-                list.Add(z);
-            }
-
-            foreach (var recurso in recursos.OrderBy(r => r.Orden).ThenBy(r => r.Codigo, StringComparer.OrdinalIgnoreCase))
-            {
-                if (!legacyById.TryGetValue(recurso.Id, out var row))
+                var material = materiales.FirstOrDefault(m => string.Equals(m.Codigo, recurso.Codigo, StringComparison.OrdinalIgnoreCase));
+                if (material != null && (material.MatClp > 0m || material.MoClp > 0m))
                 {
-                    row = new CubicacionRow { Id = recurso.Id };
-                    data.Cubicacion.Add(row);
-                    legacyById[recurso.Id] = row;
-                }
-
-                valorizacionByRecursoId.TryGetValue(recurso.Id, out var valorizacion);
-                zonasByRecursoId.TryGetValue(recurso.Id, out var zonasForRecurso);
-                ComposeLegacyRow(recurso, row, valorizacion, zonasForRecurso, data.Proyecto.ValorUfClp);
-                if (row.MatClp == 0m && row.MoClp == 0m && !string.IsNullOrWhiteSpace(recurso.Codigo))
-                {
-                    var material = data.Materiales.FirstOrDefault(m => string.Equals(m.Codigo, recurso.Codigo, StringComparison.OrdinalIgnoreCase));
-                    if (material != null && (material.MatClp > 0m || material.MoClp > 0m))
-                    {
-                        row.MatClp = material.MatClp;
-                        row.MoClp = MaterialMoResolver.MoClpEfectiva(material, data.Proyecto);
-                        row.RecalcularUf(data.Proyecto.ValorUfClp);
-                    }
+                    row.MatClp = material.MatClp;
+                    row.MoClp = MaterialMoResolver.MoClpEfectiva(material, data.Proyecto);
+                    row.RecalcularUf(valorUf);
                 }
             }
         }
-        catch (InvalidOperationException)
+
+        beforeCommit?.Invoke();
+        if (!stamp.Matches(data))
         {
-            // Tolerancia a mutación concurrente en UI durante snapshot en segundo plano
+            foreach (var (live, backup) in backups)
+                backup.Restore(live);
+            return false;
+        }
+
+        foreach (var row in added)
+            data.Cubicacion.Add(row);
+        return true;
+    }
+
+    private readonly record struct SyncStamp(int Legacy, int Recursos, int Zonas, int Valorizaciones, int Materiales)
+    {
+        public static SyncStamp Take(ProjectFileData data) => new(
+            data.Cubicacion?.Count ?? 0,
+            data.CubicacionRecursos?.Count ?? 0,
+            data.CubicacionZonaCantidades?.Count ?? 0,
+            data.CubicacionValorizaciones?.Count ?? 0,
+            data.Materiales?.Count ?? 0);
+
+        public bool Matches(ProjectFileData data) => this == Take(data);
+    }
+
+    private static SyncStamp TakeSyncStamp(ProjectFileData data) => SyncStamp.Take(data);
+
+    private readonly record struct RowComposeBackup(
+        string? ItemId,
+        string? Tipo,
+        string? Codigo,
+        string? Descripcion,
+        string? Unidad,
+        string? Area,
+        decimal MatClp,
+        decimal MoClp,
+        decimal MatUf,
+        decimal MoUf,
+        decimal MermaPctOverride,
+        decimal HerramientasPctOverride,
+        decimal RedondeoMultiplo,
+        string? RedondeoModo,
+        string? TotalExpression,
+        string[] QtyExpressions,
+        decimal Cantidad)
+    {
+        public static RowComposeBackup Capture(CubicacionRow row) => new(
+            row.ItemId,
+            row.Tipo,
+            row.Codigo,
+            row.Descripcion,
+            row.Unidad,
+            row.Area,
+            row.MatClp,
+            row.MoClp,
+            row.MatUf,
+            row.MoUf,
+            row.MermaPctOverride,
+            row.HerramientasPctOverride,
+            row.RedondeoMultiplo,
+            row.RedondeoModo,
+            row.TotalExpression,
+            row.QtyExpressions,
+            row.Cantidad);
+
+        public void Restore(CubicacionRow row)
+        {
+            row.ItemId = ItemId ?? "";
+            row.Tipo = Tipo ?? "";
+            row.Codigo = Codigo ?? "";
+            row.Descripcion = Descripcion ?? "";
+            row.Unidad = Unidad ?? "";
+            row.Area = Area ?? "";
+            row.MatClp = MatClp;
+            row.MoClp = MoClp;
+            row.MatUf = MatUf;
+            row.MoUf = MoUf;
+            row.MermaPctOverride = MermaPctOverride;
+            row.HerramientasPctOverride = HerramientasPctOverride;
+            row.RedondeoMultiplo = RedondeoMultiplo;
+            row.RedondeoModo = RedondeoModo ?? "";
+            row.TotalExpression = TotalExpression ?? "";
+            row.QtyExpressions = QtyExpressions;
+            row.Cantidad = Cantidad;
         }
     }
 
@@ -192,10 +358,11 @@ public sealed partial class CubicacionCompositionService
         row.MoUf = valorizacion.MoUf;
     }
 
-    public void ApplyMedicionesToPartida(ProjectFileData data, string itemId, IEnumerable<MeasurementLineRow> lines)
+    public bool ApplyMedicionesToPartida(ProjectFileData data, string itemId, IEnumerable<MeasurementLineRow> lines)
     {
-        if (data == null || string.IsNullOrWhiteSpace(itemId)) return;
+        if (data == null || string.IsNullOrWhiteSpace(itemId)) return true;
         EnsureLists(data);
+        var zonasAntes = data.CubicacionZonaCantidades.ToList();
 
         var mediciones = (lines ?? Enumerable.Empty<MeasurementLineRow>())
             .Where(m => string.Equals(m.ItemId, itemId, StringComparison.OrdinalIgnoreCase))
@@ -240,16 +407,12 @@ public sealed partial class CubicacionCompositionService
             ReplaceZonasFromTotals(data, recurso, scopedTotals);
         }
 
-        SyncLegacyFromNormalized(data);
-    }
+        if (SyncLegacyFromNormalized(data))
+            return true;
 
-    public void ClearComposition(ProjectFileData data)
-    {
-        if (data == null) return;
-        data.CubicacionRecursos?.Clear();
-        data.CubicacionZonaCantidades?.Clear();
-        data.CubicacionValorizaciones?.Clear();
-        data.PartidaApuVinculos?.Clear();
+        data.CubicacionZonaCantidades.Clear();
+        data.CubicacionZonaCantidades.AddRange(zonasAntes);
+        return false;
     }
 
     public void EnsurePartidaApuLinks(ProjectFileData data)
@@ -306,6 +469,125 @@ public sealed partial class CubicacionCompositionService
         data.PartidaApuVinculos ??= new List<PartidaApuVinculoRow>();
         data.Cubicacion ??= new List<CubicacionRow>();
         data.Zonas ??= new List<ZonaProyecto>();
+    }
+
+    private void PushDivergentLegacyRows(ProjectFileData data)
+    {
+        var recursoById = new Dictionary<string, CubicacionRecursoRow>(StringComparer.OrdinalIgnoreCase);
+        foreach (var recurso in data.CubicacionRecursos)
+        {
+            if (!string.IsNullOrWhiteSpace(recurso.Id) && !recursoById.ContainsKey(recurso.Id))
+                recursoById[recurso.Id] = recurso;
+        }
+
+        var zonasByRecursoId = new Dictionary<string, List<CubicacionZonaCantidadRow>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var zona in data.CubicacionZonaCantidades)
+        {
+            if (string.IsNullOrWhiteSpace(zona.RecursoId)) continue;
+            if (!zonasByRecursoId.TryGetValue(zona.RecursoId, out var list))
+                zonasByRecursoId[zona.RecursoId] = list = new List<CubicacionZonaCantidadRow>();
+            list.Add(zona);
+        }
+
+        var valorizacionByRecursoId = new Dictionary<string, CubicacionValorizacionRow>(StringComparer.OrdinalIgnoreCase);
+        foreach (var valorizacion in data.CubicacionValorizaciones)
+        {
+            if (!string.IsNullOrWhiteSpace(valorizacion.RecursoId) && !valorizacionByRecursoId.ContainsKey(valorizacion.RecursoId))
+                valorizacionByRecursoId[valorizacion.RecursoId] = valorizacion;
+        }
+
+        foreach (var row in data.Cubicacion)
+        {
+            if (string.IsNullOrWhiteSpace(row.Id)) continue;
+            if (!recursoById.TryGetValue(row.Id, out var recurso)) continue;
+
+            if (GridIdentityDiffers(recurso, row))
+                UpdateRecursoFromLegacy(recurso, row);
+
+            valorizacionByRecursoId.TryGetValue(row.Id, out var valorizacion);
+            if (GridPriceDiffers(row, valorizacion))
+                UpdateValorizacionFromLegacy(data, row, recurso.Id, data.Proyecto?.ValorUfClp ?? 0m);
+
+            zonasByRecursoId.TryGetValue(row.Id, out var zonas);
+            if (GridQuantityDiffers(row, zonas))
+                ReplaceZonasFromLegacy(data, row, data.Zonas, recurso.Id);
+        }
+    }
+
+    private static bool GridIdentityDiffers(CubicacionRecursoRow recurso, CubicacionRow row)
+    {
+        return !string.Equals(recurso.Codigo ?? "", row.Codigo ?? "", StringComparison.OrdinalIgnoreCase)
+            || !string.Equals(recurso.Descripcion ?? "", row.Descripcion ?? "", StringComparison.Ordinal)
+            || !string.Equals(recurso.Unidad ?? "", row.Unidad ?? "", StringComparison.OrdinalIgnoreCase)
+            || !string.Equals(recurso.ItemId ?? "", row.ItemId ?? "", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool GridPriceDiffers(CubicacionRow row, CubicacionValorizacionRow? valorizacion)
+    {
+        if (valorizacion == null)
+            return row.MatClp != 0m || row.MoClp != 0m || row.MatUf != 0m || row.MoUf != 0m;
+
+        ResolveClpFromLegacyRow(row, out decimal matClp, out decimal moClp);
+        if (matClp != valorizacion.MatClp || moClp != valorizacion.MoClp)
+            return true;
+
+        return matClp == 0m && moClp == 0m
+            && (row.MatUf != valorizacion.MatUf || row.MoUf != valorizacion.MoUf);
+    }
+
+    private static bool GridQuantityDiffers(CubicacionRow row, List<CubicacionZonaCantidadRow>? zonas)
+    {
+        zonas ??= new List<CubicacionZonaCantidadRow>();
+        var legacy = row.QtyExpressions ?? Array.Empty<string>();
+        int maxOffset = -1;
+        foreach (var zona in zonas)
+        {
+            if (zona.ZonaOffset > maxOffset)
+                maxOffset = zona.ZonaOffset;
+        }
+
+        int len = Math.Max(legacy.Length, maxOffset + 1);
+        bool anyLegacyExpression = false;
+        for (int i = 0; i < len; i++)
+        {
+            string left = i < legacy.Length ? (legacy[i] ?? "").Trim() : "";
+            CubicacionZonaCantidadRow? zona = null;
+            foreach (var candidate in zonas)
+            {
+                if (candidate.ZonaOffset == i)
+                {
+                    zona = candidate;
+                    break;
+                }
+            }
+
+            string right = "";
+            if (zona != null)
+            {
+                right = string.IsNullOrWhiteSpace(zona.Expresion)
+                    ? (zona.Cantidad == 0m ? "" : zona.Cantidad.ToString("G", CultureInfo.InvariantCulture))
+                    : zona.Expresion.Trim();
+            }
+
+            if (!string.IsNullOrWhiteSpace(left))
+                anyLegacyExpression = true;
+            if (!string.Equals(left, right, StringComparison.Ordinal))
+                return true;
+        }
+
+        if (anyLegacyExpression)
+            return false;
+
+        decimal sum = 0m;
+        foreach (var zona in zonas)
+            sum += zona.Cantidad;
+
+        // Varias zonas sin expresiones en la grilla son una medición que todavía no se
+        // copió a la fila. No reemplazarlas con el total legacy.
+        if (zonas.Count > 1)
+            return false;
+
+        return row.Cantidad != sum;
     }
 
     private void DecomposeOrphanLegacyRows(ProjectFileData data)

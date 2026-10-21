@@ -1,0 +1,291 @@
+<UserControl x:Class="QubiCostElectrical.Wpf.Features.Export.ExportStepperControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Border Style="{StaticResource Card.Surface}" Padding="0">
+    <Grid>
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="Auto" />
+      </Grid.ColumnDefinitions>
+
+      <!-- Paso 1 -->
+      <Button Grid.Column="0" Style="{StaticResource StepButton}" Command="{Binding GoToConfigureStepCommand}"
+              ToolTip="1. Configurar oferta y membrete (Ctrl+1)">
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+          </Grid.ColumnDefinitions>
+          <Grid Width="26" Height="26" VerticalAlignment="Top">
+            <Border CornerRadius="13" Background="{DynamicResource Brush.BlueSoft}"
+                    Visibility="{Binding IsStep1Active, Converter={StaticResource BoolToVisibility}}" />
+            <Border Width="20" Height="20" CornerRadius="10" HorizontalAlignment="Center" VerticalAlignment="Center"
+                    BorderThickness="1.5" Background="{DynamicResource Brush.Surface2}"
+                    BorderBrush="{DynamicResource Brush.Line}">
+              <Border.Style>
+                <Style TargetType="Border">
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsStep1Active}" Value="True">
+                      <Setter Property="Background" Value="{DynamicResource Brush.Blue}" />
+                      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding IsStep1Completed}" Value="True">
+                      <Setter Property="Background" Value="{DynamicResource Brush.GreenSoft}" />
+                      <Setter Property="BorderBrush" Value="{DynamicResource Brush.SuccessBorder}" />
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </Border.Style>
+              <TextBlock FontSize="11" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock.Style>
+                  <Style TargetType="TextBlock">
+                    <Setter Property="Text" Value="1" />
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding IsStep1Completed}" Value="True">
+                        <Setter Property="Text" Value="&#xE73E;" />
+                        <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
+                        <Setter Property="FontSize" Value="10" />
+                        <Setter Property="Foreground" Value="{DynamicResource Brush.Success}" />
+                      </DataTrigger>
+                      <DataTrigger Binding="{Binding IsStep1Active}" Value="True">
+                        <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </TextBlock.Style>
+              </TextBlock>
+            </Border>
+          </Grid>
+          <StackPanel Grid.Column="1" Margin="9,0,0,0" VerticalAlignment="Top">
+            <StackPanel Orientation="Horizontal" Margin="0,1,0,0">
+              <TextBlock Text="Configurar" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink2}">
+                <TextBlock.Style>
+                  <Style TargetType="TextBlock">
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}" />
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding IsStep1Active}" Value="True">
+                        <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </TextBlock.Style>
+              </TextBlock>
+              <Border Style="{StaticResource Pill}" Background="{DynamicResource Brush.Blue}"
+                      BorderBrush="{DynamicResource Brush.Blue}" Padding="6,2" Margin="7,0,0,0"
+                      Visibility="{Binding IsStep1Active, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock Text="Actual" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.White}" />
+              </Border>
+              <Border Style="{StaticResource Pill}" Background="{DynamicResource Brush.GreenSoft}" Padding="6,2" Margin="7,0,0,0"
+                      Visibility="{Binding IsStep1Completed, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock Text="Listo" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Green}" />
+              </Border>
+            </StackPanel>
+            <TextBlock Text="Documentos, contenido y membrete" FontSize="10.5"
+                       Foreground="{DynamicResource Brush.Muted}" Margin="0,1,0,0"
+                       TextTrimming="CharacterEllipsis" />
+          </StackPanel>
+        </Grid>
+      </Button>
+
+      <Border Grid.Column="1">
+        <Border.Style>
+          <Style TargetType="Border" BasedOn="{StaticResource StepConnector}">
+            <Style.Triggers>
+              <DataTrigger Binding="{Binding IsStep1Completed}" Value="True">
+                <Setter Property="Background" Value="{DynamicResource Brush.Blue}" />
+              </DataTrigger>
+            </Style.Triggers>
+          </Style>
+        </Border.Style>
+      </Border>
+
+      <!-- Paso 2 -->
+      <Button Grid.Column="2" Style="{StaticResource StepButton}" Command="{Binding GoToPreviewStepCommand}"
+              ToolTip="2. Vista previa en vivo del documento (Ctrl+2)">
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+          </Grid.ColumnDefinitions>
+          <Grid Width="26" Height="26" VerticalAlignment="Top">
+            <Border CornerRadius="13" Background="{DynamicResource Brush.BlueSoft}"
+                    Visibility="{Binding IsStep2Active, Converter={StaticResource BoolToVisibility}}" />
+            <Border Width="20" Height="20" CornerRadius="10" HorizontalAlignment="Center" VerticalAlignment="Center"
+                    BorderThickness="1.5" Background="{DynamicResource Brush.Surface2}"
+                    BorderBrush="{DynamicResource Brush.Line}">
+              <Border.Style>
+                <Style TargetType="Border">
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsStep2Active}" Value="True">
+                      <Setter Property="Background" Value="{DynamicResource Brush.Blue}" />
+                      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding IsStep2Completed}" Value="True">
+                      <Setter Property="Background" Value="{DynamicResource Brush.GreenSoft}" />
+                      <Setter Property="BorderBrush" Value="{DynamicResource Brush.SuccessBorder}" />
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </Border.Style>
+              <TextBlock FontSize="11" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock.Style>
+                  <Style TargetType="TextBlock">
+                    <Setter Property="Text" Value="2" />
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding IsStep2Completed}" Value="True">
+                        <Setter Property="Text" Value="&#xE73E;" />
+                        <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
+                        <Setter Property="FontSize" Value="10" />
+                        <Setter Property="Foreground" Value="{DynamicResource Brush.Success}" />
+                      </DataTrigger>
+                      <DataTrigger Binding="{Binding IsStep2Active}" Value="True">
+                        <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </TextBlock.Style>
+              </TextBlock>
+            </Border>
+          </Grid>
+          <StackPanel Grid.Column="1" Margin="9,0,0,0" VerticalAlignment="Top">
+            <StackPanel Orientation="Horizontal" Margin="0,1,0,0">
+              <TextBlock Text="Vista previa" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink2}">
+                <TextBlock.Style>
+                  <Style TargetType="TextBlock">
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}" />
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding IsStep2Active}" Value="True">
+                        <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </TextBlock.Style>
+              </TextBlock>
+              <Border Style="{StaticResource Pill}" Background="{DynamicResource Brush.Blue}"
+                      BorderBrush="{DynamicResource Brush.Blue}" Padding="6,2" Margin="7,0,0,0"
+                      Visibility="{Binding IsStep2Active, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock Text="Actual" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.White}" />
+              </Border>
+              <Border Style="{StaticResource Pill}" Background="{DynamicResource Brush.GreenSoft}" Padding="6,2" Margin="7,0,0,0"
+                      Visibility="{Binding IsStep2Completed, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock Text="Listo" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Green}" />
+              </Border>
+            </StackPanel>
+            <TextBlock Text="Revisa la carta y la oferta antes de exportar" FontSize="10.5"
+                       Foreground="{DynamicResource Brush.Muted}" Margin="0,1,0,0"
+                       TextTrimming="CharacterEllipsis" />
+          </StackPanel>
+        </Grid>
+      </Button>
+
+      <Border Grid.Column="3">
+        <Border.Style>
+          <Style TargetType="Border" BasedOn="{StaticResource StepConnector}">
+            <Style.Triggers>
+              <DataTrigger Binding="{Binding IsStep2Completed}" Value="True">
+                <Setter Property="Background" Value="{DynamicResource Brush.Blue}" />
+              </DataTrigger>
+            </Style.Triggers>
+          </Style>
+        </Border.Style>
+      </Border>
+
+      <!-- Paso 3 -->
+      <Button Grid.Column="4" Style="{StaticResource StepButton}" Command="{Binding GoToExportStepCommand}"
+              ToolTip="3. Exportación y cierre comercial (Ctrl+3)">
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+          </Grid.ColumnDefinitions>
+          <Grid Width="26" Height="26" VerticalAlignment="Top">
+            <Border CornerRadius="13" Background="{DynamicResource Brush.BlueSoft}"
+                    Visibility="{Binding IsStep3Active, Converter={StaticResource BoolToVisibility}}" />
+            <Border Width="20" Height="20" CornerRadius="10" HorizontalAlignment="Center" VerticalAlignment="Center"
+                    BorderThickness="1.5" Background="{DynamicResource Brush.Surface2}"
+                    BorderBrush="{DynamicResource Brush.Line}">
+              <Border.Style>
+                <Style TargetType="Border">
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsStep3Active}" Value="True">
+                      <Setter Property="Background" Value="{DynamicResource Brush.Blue}" />
+                      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </Border.Style>
+              <TextBlock Text="3" FontSize="11" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock.Style>
+                  <Style TargetType="TextBlock">
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding IsStep3Active}" Value="True">
+                        <Setter Property="Foreground" Value="{DynamicResource Brush.White}" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </TextBlock.Style>
+              </TextBlock>
+            </Border>
+          </Grid>
+          <StackPanel Grid.Column="1" Margin="9,0,0,0" VerticalAlignment="Top">
+            <StackPanel Orientation="Horizontal" Margin="0,1,0,0">
+              <TextBlock Text="Exportar" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink2}">
+                <TextBlock.Style>
+                  <Style TargetType="TextBlock">
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}" />
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding IsStep3Active}" Value="True">
+                        <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </TextBlock.Style>
+              </TextBlock>
+              <Border Style="{StaticResource Pill}" Background="{DynamicResource Brush.Blue}"
+                      BorderBrush="{DynamicResource Brush.Blue}" Padding="6,2" Margin="7,0,0,0"
+                      Visibility="{Binding IsStep3Active, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock Text="Actual" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.White}" />
+              </Border>
+            </StackPanel>
+            <TextBlock Text="Alcance, paquetes y generación final" FontSize="10.5"
+                       Foreground="{DynamicResource Brush.Muted}" Margin="0,1,0,0"
+                       TextTrimming="CharacterEllipsis" />
+          </StackPanel>
+        </Grid>
+      </Button>
+
+      <!-- Totales del stepper -->
+      <Border Grid.Column="5" Background="{DynamicResource Brush.Surface2}"
+              BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1,0,0,0"
+              CornerRadius="0,14,14,0" Padding="10,6">
+        <StackPanel Orientation="Horizontal">
+          <StackPanel Margin="0,0,10,0" VerticalAlignment="Center">
+            <TextBlock Text="TOTAL OFERTA" FontSize="8.5" FontWeight="Bold"
+                       Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Right" />
+            <TextBlock Text="{Binding TotalOfertaPillText}" FontSize="14.5" FontWeight="Bold"
+                       Foreground="{DynamicResource Brush.Ink}" HorizontalAlignment="Right"
+                       ToolTip="{Binding TotalOfertaSecondaryTooltip}" />
+            <TextBlock Text="neto" FontSize="9.5" Foreground="{DynamicResource Brush.Ink2}"
+                       HorizontalAlignment="Right" />
+          </StackPanel>
+          <StackPanel VerticalAlignment="Center">
+            <TextBlock Text="DOCUMENTOS" FontSize="8.5" FontWeight="Bold"
+                       Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Right" />
+            <TextBlock Text="{Binding DocumentsSelectionShortText}" FontSize="14.5" FontWeight="Bold"
+                       FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink}"
+                       HorizontalAlignment="Right" />
+            <TextBlock Text="seleccionados" FontSize="9.5" Foreground="{DynamicResource Brush.Ink2}"
+                       HorizontalAlignment="Right" />
+          </StackPanel>
+        </StackPanel>
+      </Border>
+    </Grid>
+  </Border>
+</UserControl>

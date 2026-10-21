@@ -47,7 +47,7 @@ public sealed class CoefFactorVm : ViewModelBase
         set => SetProperty(ref catalogoAbierto, value);
     }
 
-    private string familiasResumen = "";
+    private string familiasResumen = "Sin familias asignadas";
     public string FamiliasResumen
     {
         get => familiasResumen;
@@ -56,9 +56,17 @@ public sealed class CoefFactorVm : ViewModelBase
 
     public void RefrescarResumenFamilias()
     {
-        FamiliasResumen = FamiliasPrecio.Count == 0
-            ? ""
-            : string.Join(", ", FamiliasPrecio.Select(c => c.Nombre));
+        if (FamiliasPrecio.Count == 0)
+        {
+            FamiliasResumen = "Sin familias asignadas";
+            return;
+        }
+
+        var nombres = string.Join(", ", FamiliasPrecio.Select(c => c.Nombre));
+        var sinConfigurar = FamiliasPrecio.Where(c => c.TieneAviso).Select(c => c.Nombre).ToList();
+        FamiliasResumen = sinConfigurar.Count > 0
+            ? $"{nombres} · {sinConfigurar.Count} sin configurar ({string.Join(", ", sinConfigurar)})"
+            : nombres;
     }
 
     public string EffectiveLabel
@@ -103,6 +111,69 @@ public sealed class CoefFactorVm : ViewModelBase
         EffectiveLabel = eff.ToString("0.00", CultureInfo.CurrentCulture) + "×";
     }
 
+    private string origenTexto = "";
+    private string origenToolTip = "";
+    private bool tieneAviso;
+    private string factorAplicadoTexto = "";
+
+    /// <summary>Etiqueta de origen del factor de la fila (vacía cuando está todo en orden).</summary>
+    public string OrigenTexto
+    {
+        get => origenTexto;
+        private set => SetProperty(ref origenTexto, value);
+    }
+
+    /// <summary>Explicación del origen del factor, con el valor que el motor está aplicando.</summary>
+    public string OrigenToolTip
+    {
+        get => origenToolTip;
+        private set => SetProperty(ref origenToolTip, value);
+    }
+
+    /// <summary>True cuando la fila necesita atención (factor sin configurar).</summary>
+    public bool TieneAviso
+    {
+        get => tieneAviso;
+        private set => SetProperty(ref tieneAviso, value);
+    }
+
+    /// <summary>Factor que el motor aplica hoy a las familias de la fila.</summary>
+    public string FactorAplicadoTexto
+    {
+        get => factorAplicadoTexto;
+        private set => SetProperty(ref factorAplicadoTexto, value);
+    }
+
+    /// <summary>Marca el origen del factor de la fila y el valor que el motor aplica.</summary>
+    public void SetEstado(OrigenFactorPresentacion origen, decimal factorAplicado, int familiasSinConfigurar, int familiasTotales = -1)
+    {
+        var factor = factorAplicado.ToString("0.00", CultureInfo.CurrentCulture) + "×";
+        FactorAplicadoTexto = factor;
+        if (familiasTotales == 0)
+        {
+            OrigenTexto = "";
+            TieneAviso = false;
+            OrigenToolTip = $"{Map}: sin familias asignadas en esta fila.";
+            return;
+        }
+
+        switch (origen)
+        {
+            case OrigenFactorPresentacion.SinConfigurar:
+                OrigenTexto = "SIN CONFIGURAR";
+                TieneAviso = true;
+                OrigenToolTip = familiasSinConfigurar > 0
+                    ? $"Nadie configuró el factor de {Map}. Hoy el motor aplica {factor} y {familiasSinConfigurar} familia(s) de esta fila quedan sin definir."
+                    : $"Nadie configuró el factor de {Map}. Hoy el motor aplica {factor}.";
+                break;
+            default:
+                OrigenTexto = "";
+                TieneAviso = false;
+                OrigenToolTip = $"Factor propio de {Map}. El motor aplica {factor}.";
+                break;
+        }
+    }
+
     public string DiscountText
     {
         get => discountText;
@@ -143,9 +214,10 @@ public sealed class CoefFactorVm : ViewModelBase
         set
         {
             var incoming = value ?? "";
-            if (!TryParseDecimal(incoming, out var v))
+            if (!TryParseDecimal(incoming, out var v) || incoming.TrimEnd().EndsWith(',') || incoming.TrimEnd().EndsWith('.'))
             {
-                OnPropertyChanged(nameof(ValueText));
+                if (!SuspendPush)
+                    OnPropertyChanged(nameof(ValueText));
                 return;
             }
 
@@ -208,6 +280,57 @@ public sealed class PrecioFamiliaChipVm
 
     public string Nombre { get; }
     public string Clave { get; }
+
+    /// <summary>Factor que el motor aplica a esta familia.</summary>
+    public string FactorTexto { get; private set; } = "";
+
+    /// <summary>Origen visible de la familia dentro de la fila.</summary>
+    public string AvisoTexto { get; private set; } = "";
+
+    /// <summary>True cuando la familia usada no tiene factor configurado.</summary>
+    public bool TieneAviso { get; private set; }
+
+    /// <summary>Detalle del origen del factor.</summary>
+    public string ToolTip { get; private set; } = "";
+
+    /// <summary>Publica el factor y el origen de la familia en el chip.</summary>
+    public void SetEstado(FamiliaPresentacionInfo? info, bool usadaEnCubicacion)
+    {
+        if (info == null)
+        {
+            FactorTexto = "";
+            AvisoTexto = "";
+            TieneAviso = false;
+            ToolTip = "";
+            return;
+        }
+
+        var factor = info.FactorEfectivo.ToString("0.00", System.Globalization.CultureInfo.CurrentCulture) + "×";
+        FactorTexto = factor;
+        switch (info.Origen)
+        {
+            case OrigenFactorPresentacion.Propio:
+                AvisoTexto = "";
+                TieneAviso = false;
+                ToolTip = $"{Nombre}: factor propio, el motor aplica {factor}.";
+                break;
+            case OrigenFactorPresentacion.Asignada:
+                AvisoTexto = $"= {info.NombreObjetivo}";
+                TieneAviso = false;
+                ToolTip = $"{Nombre}: usa el factor de {info.NombreObjetivo} ({factor}).";
+                break;
+            case OrigenFactorPresentacion.Natural:
+                AvisoTexto = $"hereda {info.NombreObjetivo}";
+                TieneAviso = false;
+                ToolTip = $"{Nombre}: hereda por sinonimia el factor de {info.NombreObjetivo} ({factor}).";
+                break;
+            default:
+                AvisoTexto = usadaEnCubicacion ? "sin configurar" : "";
+                TieneAviso = usadaEnCubicacion;
+                ToolTip = $"{Nombre}: nadie configuró su factor, el motor aplica {factor}.";
+                break;
+        }
+    }
 }
 
 public sealed class PrecioFamiliaPickVm

@@ -92,7 +92,10 @@ public sealed class CubicacionService : ICubicacionService
         // El UF se deriva siempre del CLP con el valor UF vigente del proyecto, nunca se
         // copia el UF del material (puede venir en 0 o calculado con otro valor UF).
         row.RecalcularUf(valorUfClp);
-        row.Tipo = string.Equals(material.Categoria, "Equipo", StringComparison.OrdinalIgnoreCase) ? "EQ" : "MAT";
+        // El tipo sigue a la familia: tableros y equipos son equipo (bloque EQUIPOS de la hoja
+        // de costos), el resto material. Si el estimador lo fijo a mano, se respeta.
+        if (!row.TipoManual)
+            row.Tipo = TipoRecursoFamilia.Resolver(material.Categoria);
     }
 
     public int SyncPricesFromCatalog(IEnumerable<CubicacionRow> cubicacion, IEnumerable<MaterialRow> materiales, decimal valorUfClp, ProjectInfoRow? project = null)
@@ -136,6 +139,9 @@ public sealed class CubicacionService : ICubicacionService
             {
                 row.Categoria = material.Categoria;
                 isCategoryUpdated = true;
+                // La familia manda el tipo de recurso mientras el estimador no lo fije a mano.
+                if (!row.TipoManual)
+                    row.Tipo = TipoRecursoFamilia.Resolver(material.Categoria);
             }
 
             decimal moEfectiva = MaterialMoResolver.MoClpEfectiva(material, project);

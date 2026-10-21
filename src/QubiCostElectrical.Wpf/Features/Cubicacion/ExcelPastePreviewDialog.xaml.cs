@@ -58,7 +58,12 @@ public partial class ExcelPastePreviewDialog : Window
         WarningsList.ItemsSource = result.Warnings;
 
         if (rejected > 0)
-            RejectedText.Text = $"{rejected} fila{(rejected != 1 ? "s" : "")} rechazada{(rejected != 1 ? "s" : "")} — cantidad no válida.";
+        {
+            string? reason = result.Rows.FirstOrDefault(r => r.IsRejected)?.RejectionReason;
+            RejectedText.Text = string.IsNullOrWhiteSpace(reason)
+                ? $"{rejected} fila{(rejected != 1 ? "s" : "")} rechazada{(rejected != 1 ? "s" : "")} — cantidad no válida."
+                : $"{rejected} fila{(rejected != 1 ? "s" : "")} en rojo — {reason}";
+        }
 
         ImportButton.Content = $"Importar {valid} fila{(valid != 1 ? "s" : "")}";
         ImportButton.IsEnabled = valid > 0;

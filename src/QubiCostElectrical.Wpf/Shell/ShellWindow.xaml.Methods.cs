@@ -26,8 +26,10 @@ public partial class ShellWindow : Window
         _requestRedoAction = _viewModel.Redo;
         ShellNotificationService.RequestUndo = _requestUndoAction;
         ShellNotificationService.RequestRedo = _requestRedoAction;
+        InputManager.Current.PreProcessInput += OnPreProcessUndoRedo;
         Closed += (_, _) =>
         {
+            InputManager.Current.PreProcessInput -= OnPreProcessUndoRedo;
             if (ReferenceEquals(ShellNotificationService.RequestUndo, _requestUndoAction))
                 ShellNotificationService.RequestUndo = null;
             if (ReferenceEquals(ShellNotificationService.RequestRedo, _requestRedoAction))
@@ -485,15 +487,73 @@ public partial class ShellWindow : Window
         return QubiCostElectrical.Wpf.Infrastructure.VisualTreeHelperSafe.FindAncestor<System.Windows.Controls.DataGrid>(element) != null;
     }
 
+    // El TextBox de la celda (y la barra de fórmulas) se queda con Ctrl+Z/Ctrl+Y en el
+    // enrutado normal, antes de que esta ventana los vea. Se interceptan aquí, antes de eso.
+    private void OnPreProcessUndoRedo(object sender, PreProcessInputEventArgs e)
+    {
+        if (e.StagingItem.Input is not KeyEventArgs key)
+            return;
+        if (key.RoutedEvent != Keyboard.PreviewKeyDownEvent && key.RoutedEvent != Keyboard.KeyDownEvent)
+            return;
+        if (!FocusIsInThisWindow())
+            return;
+
+        var kind = UndoShortcutKeys.Match(key);
+        if (kind == UndoShortcutKeys.Kind.None)
+            return;
+        if (!_undoShortcutBusy)
+        {
+            if (kind == UndoShortcutKeys.Kind.Undo && !_viewModel.CanUndo)
+                return;
+            if (kind == UndoShortcutKeys.Kind.Redo && !_viewModel.CanRedo)
+                return;
+        }
+
+        e.Cancel();
+        key.Handled = true;
+        // PreviewKeyDown y KeyDown llegan separados. Una sola pulsación deshace una vez.
+        if (_undoShortcutBusy)
+            return;
+        _undoShortcutBusy = true;
+        Dispatcher.BeginInvoke(() => _undoShortcutBusy = false, System.Windows.Threading.DispatcherPriority.Input);
+        CancelActiveDataGridEdit();
+        if (kind == UndoShortcutKeys.Kind.Undo) _viewModel.Undo();
+        else _viewModel.Redo();
+        RestoreDataGridFocus();
+    }
+
+    private bool FocusIsInThisWindow()
+    {
+        if (!IsActive) return false;
+        return Keyboard.FocusedElement is not DependencyObject focused || Window.GetWindow(focused) == this;
+    }
+
     private void OnWindowKeyDown(object sender, KeyEventArgs e)
     {
         bool textBoxHasFocus = Keyboard.FocusedElement is System.Windows.Controls.TextBox or System.Windows.Controls.RichTextBox;
 
-        bool isUndo = e.Key == Key.Z && Keyboard.Modifiers == ModifierKeys.Control;
-        bool isRedo = (e.Key == Key.Y && Keyboard.Modifiers == ModifierKeys.Control)
-                   || (e.Key == Key.Z && Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift));
+        var shortcut = UndoShortcutKeys.Match(e);
+        if (shortcut == UndoShortcutKeys.Kind.Undo && _viewModel.CanUndo)
+        {
+            if (_undoShortcutBusy) { e.Handled = true; return; }
+            CancelActiveDataGridEdit();
+            _viewModel.Undo();
+            RestoreDataGridFocus();
+            e.Handled = true;
+            return;
+        }
 
-        if (isUndo)
+        if (shortcut == UndoShortcutKeys.Kind.Redo && _viewModel.CanRedo)
+        {
+            if (_undoShortcutBusy) { e.Handled = true; return; }
+            CancelActiveDataGridEdit();
+            _viewModel.Redo();
+            RestoreDataGridFocus();
+            e.Handled = true;
+            return;
+        }
+
+        if (shortcut == UndoShortcutKeys.Kind.Undo)
         {
             if (Keyboard.FocusedElement is System.Windows.Controls.TextBox tb && tb.CanUndo)
             {
@@ -507,21 +567,10 @@ public partial class ShellWindow : Window
                 e.Handled = true;
                 return;
             }
-
-            if (_viewModel.CanUndo)
-            {
-                CancelActiveDataGridEdit();
-                _viewModel.Undo();
-                RestoreDataGridFocus();
-                e.Handled = true;
-                return;
-            }
-
-            e.Handled = true;
             return;
         }
 
-        if (isRedo)
+        if (shortcut == UndoShortcutKeys.Kind.Redo)
         {
             if (Keyboard.FocusedElement is System.Windows.Controls.TextBox tb && tb.CanRedo)
             {
@@ -535,17 +584,6 @@ public partial class ShellWindow : Window
                 e.Handled = true;
                 return;
             }
-
-            if (_viewModel.CanRedo)
-            {
-                CancelActiveDataGridEdit();
-                _viewModel.Redo();
-                RestoreDataGridFocus();
-                e.Handled = true;
-                return;
-            }
-
-            e.Handled = true;
             return;
         }
 
@@ -831,7 +869,9 @@ public partial class ShellWindow : Window
         {
             Dispatcher.BeginInvoke(new Action(() =>
             {
-                var searchBox = (root.FindName("PopupSearchBox") as TextBox) ?? TopSearchBox;
+                var searchBox = (root.FindName("PopupSearchBox") as TextBox)
+                    ?? (root as ShellQuickSearchControl)?.SearchBox
+                    ?? TopSearchBox;
                 searchBox.Focus();
                 searchBox.Select(searchBox.Text.Length, 0);
             }), System.Windows.Threading.DispatcherPriority.Input);

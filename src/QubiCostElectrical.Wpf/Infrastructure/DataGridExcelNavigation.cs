@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace QubiCostElectrical.Wpf.Infrastructure;
 
@@ -23,4 +24,23 @@ public static partial class DataGridExcelNavigation
     private static readonly ConditionalWeakTable<DataGrid, ColumnScopeBox> _columnScopes = new();
 
     private sealed class ColumnScopeBox { public Func<DataGridColumn, bool>? Predicate; }
+
+    public static void ResetAnchor(DataGrid grid)
+    {
+        _anchors.Remove(grid);
+        if (grid.CurrentCell.IsValid)
+            _anchors.Add(grid, new AnchorBox { Anchor = grid.CurrentCell });
+    }
+
+    public static bool IsExtendingSelection(DataGrid grid)
+    {
+        if ((Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift)
+            return true;
+        if (_anchors.TryGetValue(grid, out var anchor) && anchor.Anchor.IsValid && grid.CurrentCell.IsValid)
+        {
+            if (anchor.Anchor.Item != grid.CurrentCell.Item || anchor.Anchor.Column != grid.CurrentCell.Column)
+                return grid.SelectedCells.Count > 1;
+        }
+        return false;
+    }
 }

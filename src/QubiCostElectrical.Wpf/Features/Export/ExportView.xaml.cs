@@ -58,6 +58,22 @@ public partial class ExportView : UserControl
                 }
             }
         }
+        else if (e.Key == Key.Right && Keyboard.Modifiers == ModifierKeys.Alt)
+        {
+            if (vm.GoToPreviewStepCommand.CanExecute(null) && vm.CurrentStep == OfferWizardStep.Configure)
+                vm.GoToPreviewStepCommand.Execute(null);
+            else if (vm.GoToExportStepCommand.CanExecute(null))
+                vm.GoToExportStepCommand.Execute(null);
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Left && Keyboard.Modifiers == ModifierKeys.Alt)
+        {
+            if (vm.CurrentStep == OfferWizardStep.Export && vm.GoToPreviewStepCommand.CanExecute(null))
+                vm.GoToPreviewStepCommand.Execute(null);
+            else if (vm.GoToConfigureStepCommand.CanExecute(null))
+                vm.GoToConfigureStepCommand.Execute(null);
+            e.Handled = true;
+        }
         else if (e.Key == Key.F5)
         {
             if (vm.RefreshCommand.CanExecute(null))

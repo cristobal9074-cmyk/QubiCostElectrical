@@ -139,9 +139,11 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
         this.priceBankStore = priceBankStore;
         this.budgetCalculation = budgetCalculation;
         autoSave = new AutoSaveService(session, projectWorkspace);
+        autoSave.BeforePersist = TryCommitOpenEditor;
         autoSavePropertyChangedHandler = (_, _) => Application.Current?.Dispatcher.InvokeAsync(RefreshChrome);
         autoSave.PropertyChanged += autoSavePropertyChangedHandler;
         recentProjects = new RecentProjectsService();
+        ShellActivity.Changed += OnShellActivityChanged;
 
         var pageCache = new ShellPageCache();
         navigation = new ShellNavigationCoordinator(
@@ -192,6 +194,7 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
     {
         if (disposed) return;
         disposed = true;
+        ShellActivity.Changed -= OnShellActivityChanged;
         autoSave.PropertyChanged -= autoSavePropertyChangedHandler;
         session.Changed -= sessionChangedRefreshChromeHandler;
         session.Saved -= sessionSavedHandler;
@@ -489,9 +492,32 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
         ShellRoute.Takeoff => "Alt+↑↓ mover filas · Ctrl+V pegar · Tab/Enter navegar celdas · Ctrl+Izq/Der sectores",
         ShellRoute.Apu => "Enter editar · Supr quitar recurso · Generar APU desde cubicación",
         ShellRoute.Review => "Clic en alerta para ir al módulo · Actualizar recalcula revisión",
-        ShellRoute.OfferDocuments => "Paso a paso: configurar → vista previa → exportar",
+        ShellRoute.OfferDocuments => "Alt+→ siguiente paso · Ctrl+1 configurar · Ctrl+2 vista previa · Ctrl+3 exportar · F5 actualizar",
+        ShellRoute.Prices => "Escribe para filtrar · borrar el texto devuelve la lista · Flechas y Enter recorren la grilla",
+        ShellRoute.Purchases => "Escribe para filtrar · borrar el texto devuelve la lista · Esc limpia",
         _ => "Ctrl+P / Ctrl+K búsqueda · Ctrl+S guardar · F1 atajos"
     };
+
+    public string StatusBarMessage => string.IsNullOrWhiteSpace(ShellActivity.Text) ? StatusBarHint : ShellActivity.Text;
+
+    public bool StatusBarIsAlert => ShellActivity.IsAlert;
+
+    private void OnShellActivityChanged()
+    {
+        var dispatcher = Application.Current?.Dispatcher;
+        if (dispatcher == null || dispatcher.CheckAccess())
+        {
+            OnPropertyChanged(nameof(StatusBarMessage));
+            OnPropertyChanged(nameof(StatusBarIsAlert));
+            return;
+        }
+
+        dispatcher.InvokeAsync(() =>
+        {
+            OnPropertyChanged(nameof(StatusBarMessage));
+            OnPropertyChanged(nameof(StatusBarIsAlert));
+        });
+    }
 
     public void Undo()
     {
@@ -549,6 +575,7 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
             OnPropertyChanged(nameof(ShowContextIdentity));
             OnPropertyChanged(nameof(UseCompactPagePadding));
             OnPropertyChanged(nameof(StatusBarHint));
+            OnPropertyChanged(nameof(StatusBarMessage));
             RefreshWorkflowSteps();
         }
     }
@@ -780,16 +807,6 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
     {
         if (currentPageVm is IRefreshablePage refreshable)
             refreshable.Refresh();
-    }
-
-    private bool TryApplyCurrentPageChanges()
-    {
-        if (currentPageVm is IPageWithPendingChanges pending &&
-            pending.HasPendingChanges &&
-            currentPageVm is IPageWithCommitChanges commitPage)
-            return commitPage.TryApplyChanges();
-
-        return true;
     }
 
     public CommandPaletteCategory SelectedPaletteCategory

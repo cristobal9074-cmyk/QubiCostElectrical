@@ -266,33 +266,6 @@ public sealed class ProjectCollaborationLockService : IDisposable
         currentLockPath = null;
     }
 
-    public void RemoveStaleLock(string projectPath)
-    {
-        var lockPath = GetLockPath(projectPath);
-        try
-        {
-            if (!File.Exists(lockPath))
-                return;
-
-            var data = ReadLockData(lockPath);
-            if (data == null)
-                return;
-
-            if (string.Equals(data.InstanceId, instanceId, StringComparison.OrdinalIgnoreCase))
-                return;
-
-            var inspection = InspectLock(projectPath);
-            if (!inspection.CanTakeOver)
-                return;
-
-            TryRemoveForeignLock(lockPath, data);
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"[ProjectLock] No se pudo eliminar bloqueo obsoleto: {ex.Message}");
-        }
-    }
-
     public void Dispose()
     {
         if (disposed)
