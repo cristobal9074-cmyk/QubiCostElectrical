@@ -3,8 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:product="clr-namespace:QubiCostElectrical;assembly=QubiCostElectrical.Domain"
         Title="Iniciar sesión — QUBI COST Electrical"
-        Width="420"
-        Height="560"
+        Width="460"
+        SizeToContent="Height"
         WindowStyle="None"
         WindowStartupLocation="CenterScreen"
         AllowsTransparency="True"
@@ -114,7 +114,7 @@
   <Grid Background="{DynamicResource Brush.Canvas}">
 
     <!-- Card -->
-    <Border Width="420"
+    <Border Width="440"
             Background="White"
             BorderBrush="{DynamicResource Brush.Line}"
             BorderThickness="1"
