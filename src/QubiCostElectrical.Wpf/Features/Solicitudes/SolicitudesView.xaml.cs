@@ -73,7 +73,7 @@ public partial class SolicitudesView : UserControl
 
             if (MaterialesGrid.Items.Count == 0)
             {
-                AddAndFocusNewMaterial(targetCol);
+                Dispatcher.BeginInvoke(new Action(() => AddAndFocusNewMaterial(targetCol)));
             }
             else
             {
