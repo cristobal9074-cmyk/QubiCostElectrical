@@ -114,6 +114,10 @@ public partial class ShellWindow : Window
             ? Visibility.Collapsed
             : Visibility.Visible;
 
+        DashboardButton.Visibility = phase == ShellLifecyclePhase.Ejecucion
+            ? Visibility.Collapsed
+            : Visibility.Visible;
+
         NavigationVisuals.SetIsActive(PhasePresupuestoButton, phase == ShellLifecyclePhase.Presupuesto);
         NavigationVisuals.SetIsActive(PhasePlanificacionButton, phase == ShellLifecyclePhase.Planificacion);
         NavigationVisuals.SetIsActive(PhaseEjecucionButton, phase == ShellLifecyclePhase.Ejecucion);
