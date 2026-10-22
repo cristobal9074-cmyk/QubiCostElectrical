@@ -8,7 +8,10 @@ namespace QubiCostElectrical.Wpf.Infrastructure;
 
 public static class SingleInstanceHandoffService
 {
-    private const string PipeName = "QubiCostElectrical_SingleInstance_Handoff";
+    private const string PipeNameBase = "QubiCostElectrical_SingleInstance_Handoff";
+    private static readonly Lazy<string> pipeName = new(() =>
+        PipeNameBase + ProductPaths.InstanceNameSuffix());
+    private static string PipeName => pipeName.Value;
     private static CancellationTokenSource? cancellationTokenSource;
     private static Func<string, Task>? openProjectHandler;
     private static readonly IProjectFileFormatDetector formatDetector = new ProjectFileFormatDetector();

@@ -5,8 +5,45 @@ namespace QubiCostElectrical;
 
 public static class ProductPaths
 {
+    private static readonly Lazy<bool> developmentProfile = new(() =>
+        ResolveDevelopmentProfile(
+            Environment.GetEnvironmentVariable(ProductIdentity.DevelopmentProfileEnvironmentVariable),
+            Environment.ProcessPath));
+
+    /// <summary>
+    /// La instalación publicada (Velopack, %LOCALAPPDATA%\...\current\) y la build de desarrollo del
+    /// repositorio (publish\win-x64) deben poder correr a la vez: cada una con su propio mutex,
+    /// su propia tubería de handoff y su propia carpeta de datos. Sin esto, el segundo proceso se
+    /// cierra solo por la instancia única y ambas compiten por auth.db, la sesión y los autosaves.
+    /// </summary>
+    public static bool IsDevelopmentProfile() => developmentProfile.Value;
+
+    public static bool ResolveDevelopmentProfile(string? profileValue, string? executablePath)
+    {
+        if (!string.IsNullOrWhiteSpace(profileValue))
+            return profileValue.Trim().Equals(ProductIdentity.DevelopmentProfileFolderName, StringComparison.OrdinalIgnoreCase);
+
+        if (string.IsNullOrWhiteSpace(executablePath))
+            return false;
+
+        return executablePath.Contains(@"\publish\", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static string InstanceNameSuffix()
+        => IsDevelopmentProfile() ? "_" + ProductIdentity.DevelopmentProfileFolderName : string.Empty;
+
     public static string GetLocalAppDataRoot()
     {
+        if (IsDevelopmentProfile())
+        {
+            string dev = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                ProductIdentity.AppDataFolderName,
+                ProductIdentity.DevelopmentProfileFolderName);
+            Directory.CreateDirectory(dev);
+            return dev;
+        }
+
         string local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         string canonical = Path.Combine(local, ProductIdentity.AppDataFolderName);
         string legacy = Path.Combine(local, ProductIdentity.LegacyAppDataFolderName);

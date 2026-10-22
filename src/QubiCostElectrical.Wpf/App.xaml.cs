@@ -24,7 +24,7 @@ public partial class App : Application
     {
         _startupArgs = e.Args;
 
-        mutex = new Mutex(initiallyOwned: false, name: MutexName);
+        mutex = new Mutex(initiallyOwned: false, name: MutexName + ProductPaths.InstanceNameSuffix());
         if (!mutex.WaitOne(0))
         {
             if (SingleInstanceHandoffService.TryExtractOpenProjectPath(e.Args, out var projectPath))

@@ -51,4 +51,36 @@ public sealed class ProductPathsTests
     {
         Assert.Equal(expected, ProductPaths.IsLikelyCloudSyncPath(path));
     }
+
+    [Theory]
+    [InlineData("dev", @"C:\Users\ana\AppData\Local\QubiCostElectrical\current\QubiCostElectrical.exe", true)]
+    [InlineData("DEV", null, true)]
+    [InlineData("dev", null, true)]
+    [InlineData("prod", @"C:\repo\publish\win-x64\QubiCostElectrical.exe", false)]
+    [InlineData("", @"C:\repo\publish\win-x64\QubiCostElectrical.exe", true)]
+    [InlineData(null, @"C:\repo\publish\win-x64\QubiCostElectrical.exe", true)]
+    [InlineData(null, @"C:\Users\ana\AppData\Local\QubiCostElectrical\current\QubiCostElectrical.exe", false)]
+    [InlineData(null, @"C:\Program Files\Qubi Cost Electrical\QubiCostElectrical.exe", false)]
+    [InlineData(null, null, false)]
+    [InlineData("", null, false)]
+    public void ResolveDevelopmentProfile_DetectsDevBuildWithoutTouchingProdData(
+        string? profileValue, string? executablePath, bool expected)
+    {
+        Assert.Equal(expected, ProductPaths.ResolveDevelopmentProfile(profileValue, executablePath));
+    }
+
+    [Fact]
+    public void ResolveDevelopmentProfile_WinsOverExecutablePath()
+    {
+        Assert.False(ProductPaths.ResolveDevelopmentProfile("prod", @"C:\repo\publish\win-x64\app.exe"));
+        Assert.True(ProductPaths.ResolveDevelopmentProfile("dev", @"C:\Users\ana\AppData\Local\QubiCostElectrical\current\app.exe"));
+    }
+
+    [Fact]
+    public void InstanceNameSuffix_TestProcessIsNotDevelopmentProfile()
+    {
+        // Los tests viven en bin\, no en publish\: deben correr en modo Prod para no aislar nada.
+        Assert.False(ProductPaths.IsDevelopmentProfile());
+        Assert.Equal(string.Empty, ProductPaths.InstanceNameSuffix());
+    }
 }

@@ -10,5 +10,7 @@ public static class ProductIdentity
     public const string ExecutableName = "QubiCostElectrical";
     public const string AppDataFolderName = "QubiCostElectrical";
     public const string LegacyAppDataFolderName = "QubiCostElectricalPRO";
+    public const string DevelopmentProfileFolderName = "dev";
+    public const string DevelopmentProfileEnvironmentVariable = "QUBI_PROFILE";
     public const string ProjectFileDescription = "Proyecto de Qubi Cost Electrical";
 }
