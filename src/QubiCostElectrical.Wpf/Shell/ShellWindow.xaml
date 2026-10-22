@@ -1334,8 +1334,6 @@
             <Button x:Name="NavMaterialControlTab" Style="{StaticResource Button.NavHome}" Content="Control de materiales"
                     Tag="{x:Static nav:ShellRoute.MaterialControl}" Click="OnBudgetTabClick" Margin="2,0,0,0"
                     ToolTip="Control de materiales en obra: saldo pendiente vs cubicación y alertas de sobrepedido." />
-            <Button x:Name="NavCostosExecTab" Style="{StaticResource Button.NavHome}" Content="Control de costos"
-                    Tag="{x:Static nav:ShellRoute.Costo}" Click="OnBudgetTabClick" Margin="2,0,0,0" />
             <Button x:Name="NavEstadosPagosTab" Style="{StaticResource Button.NavHome}" Content="Estados de pago"
                     Tag="{x:Static nav:ShellRoute.EstadosPagos}" Click="OnBudgetTabClick" Margin="2,0,0,0" />
           </StackPanel>

@@ -110,6 +110,10 @@ public partial class ShellWindow : Window
             ? Visibility.Visible
             : Visibility.Collapsed;
 
+        NavMoreGroup.Visibility = phase == ShellLifecyclePhase.Ejecucion
+            ? Visibility.Collapsed
+            : Visibility.Visible;
+
         NavigationVisuals.SetIsActive(PhasePresupuestoButton, phase == ShellLifecyclePhase.Presupuesto);
         NavigationVisuals.SetIsActive(PhasePlanificacionButton, phase == ShellLifecyclePhase.Planificacion);
         NavigationVisuals.SetIsActive(PhaseEjecucionButton, phase == ShellLifecyclePhase.Ejecucion);
@@ -130,7 +134,6 @@ public partial class ShellWindow : Window
         NavigationVisuals.SetIsActive(NavChangeOrdersTab, route == ShellRoute.Versions);
         NavigationVisuals.SetIsActive(NavSolicitudesTab, route == ShellRoute.Solicitudes);
         NavigationVisuals.SetIsActive(NavMaterialControlTab, route == ShellRoute.MaterialControl);
-        NavigationVisuals.SetIsActive(NavCostosExecTab, route == ShellRoute.Costo);
         NavigationVisuals.SetIsActive(NavEstadosPagosTab, route == ShellRoute.EstadosPagos);
 
         RefreshNavBadges();
