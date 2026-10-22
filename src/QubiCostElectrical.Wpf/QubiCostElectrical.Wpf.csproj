@@ -38,9 +38,13 @@
   <ItemGroup>
     <Resource Include="Assets\QubiCostElectrical.ico" />
     <Resource Include="Assets\QubiCostProject.ico" />
+    <Resource Include="Assets\QubiCostSolicitud.ico" />
     <Resource Include="Assets\brand_logo.png" />
     <Resource Include="Assets\project_icon.png" />
     <None Include="Assets\QubiCostProject.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Assets\QubiCostSolicitud.ico">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <Resource Include="Fonts\Inter.ttc" />

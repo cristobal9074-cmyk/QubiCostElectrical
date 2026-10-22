@@ -1,4 +1,4 @@
-<UserControl x:Class="QubiCostElectrical.Wpf.Features.Inicio.InicioView"
+﻿<UserControl x:Class="QubiCostElectrical.Wpf.Features.Inicio.InicioView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <UserControl.Resources>
@@ -565,8 +565,10 @@
                                             </Grid.ColumnDefinitions>
 
                                             <!-- Ícono de Archivo con acento suave -->
-                                            <Border Width="34" Height="34" CornerRadius="10" Background="{Binding AccentSoftBrush}" VerticalAlignment="Center">
-                                                <TextBlock Text="&#xE8B7;" FontFamily="Segoe MDL2 Assets" FontSize="14" Foreground="{Binding AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            <Border Width="34" Height="34" CornerRadius="8" Background="{Binding AccentSoftBrush}" VerticalAlignment="Center" Padding="3">
+                                                <Image Source="pack://application:,,,/Assets/project_icon.png"
+                                                       RenderOptions.BitmapScalingMode="HighQuality"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
                                             </Border>
 
                                             <!-- Título y Ruta -->

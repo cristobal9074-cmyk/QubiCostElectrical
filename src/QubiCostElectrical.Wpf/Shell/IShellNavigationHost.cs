@@ -16,6 +16,7 @@ public interface IShellNavigationHost
     Task OpenProjectAsync();
     Task<bool> CloseProjectAsync();
     Task OpenRecentProjectAsync(string path);
+    Task OpenExternalFileAsync(string path) => OpenRecentProjectAsync(path);
     void RemoveRecentProject(string path);
     Task SaveProjectAsync();
     Task SaveProjectAsAsync();

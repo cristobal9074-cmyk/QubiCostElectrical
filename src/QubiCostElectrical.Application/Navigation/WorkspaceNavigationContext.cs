@@ -21,3 +21,6 @@ public sealed record CubicacionScNavigationContext(
     string? CuadroId = null,
     string? CuadroNombre = null,
     string? CircuitoId = null) : WorkspaceNavigationContext;
+
+public sealed record SolicitudNavigationContext(
+    string? FilePath = null) : WorkspaceNavigationContext;

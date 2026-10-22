@@ -262,6 +262,53 @@ partial class ShellViewModel
         }
     }
 
+    public async Task OpenExternalFileAsync(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path)) return;
+
+        if (path.EndsWith(".qcreq", StringComparison.OrdinalIgnoreCase))
+        {
+            if (!File.Exists(path))
+            {
+                ShowMissingFileWarning(path);
+                return;
+            }
+
+            _pendingSolicitudFilePath = path;
+
+            if (!projectWorkspace.HasOpenProject)
+            {
+                var recentList = recentProjects.GetProjects().ToList();
+                var candidate = recentList.FirstOrDefault(p => !p.IsMissing && File.Exists(p.Path));
+                if (candidate != null)
+                {
+                    await OpenProjectFromPathAsync(candidate.Path);
+                    return;
+                }
+
+                string projectName = "Solicitud";
+                try
+                {
+                    var json = File.ReadAllText(path);
+                    var packet = System.Text.Json.JsonSerializer.Deserialize<QubiCostElectrical.SolicitudPacket>(json);
+                    if (packet != null && !string.IsNullOrWhiteSpace(packet.Obra))
+                        projectName = packet.Obra;
+                }
+                catch { }
+
+                session.NewProject(projectName, permissions.CurrentRole.ToString());
+                session.CurrentProjectPath = path;
+                RefreshChrome();
+            }
+
+            _pendingSolicitudFilePath = null;
+            RequestNavigate(ShellRoute.Solicitudes, new SolicitudNavigationContext(path), force: true);
+            return;
+        }
+
+        await OpenRecentProjectAsync(path);
+    }
+
     public async Task OpenRecentProjectAsync(string path)
     {
         if (IsBusy) return;
@@ -372,10 +419,19 @@ partial class ShellViewModel
             // actualice su layout (cabecera, nav, status bar) antes de que CurrentView cambie.
             RefreshChrome();
 
-            var nextRoute = routeBeforeOpen == ShellRoute.Dashboard && session.Itemizado.Count > 0
-                ? ShellRoute.Itemized
-                : routeBeforeOpen;
-            RequestNavigate(nextRoute, force: true);
+            if (!string.IsNullOrWhiteSpace(_pendingSolicitudFilePath))
+            {
+                var solPath = _pendingSolicitudFilePath;
+                _pendingSolicitudFilePath = null;
+                RequestNavigate(ShellRoute.Solicitudes, new SolicitudNavigationContext(solPath), force: true);
+            }
+            else
+            {
+                var nextRoute = routeBeforeOpen == ShellRoute.Dashboard && session.Itemizado.Count > 0
+                    ? ShellRoute.Itemized
+                    : routeBeforeOpen;
+                RequestNavigate(nextRoute, force: true);
+            }
         }
         catch (Exception ex)
         {

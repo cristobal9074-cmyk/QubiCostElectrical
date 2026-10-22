@@ -13,4 +13,5 @@ namespace QubiCostElectrical.Wpf.Shell;
 
 partial class ShellViewModel
 {
+    private string? _pendingSolicitudFilePath;
 }

@@ -48,6 +48,11 @@ dotnet publish "$root\src\QubiCostElectrical.Wpf\QubiCostElectrical.Wpf.csproj" 
     --output "$publishDir"
 if ($LASTEXITCODE -ne 0) { throw "Publish falló" }
 Write-Host "  ✓ Publicado en $publishDir" -ForegroundColor Green
+# Copiar Assets (iconos y logos) a la carpeta de publicación para Windows Shell y accesos directos
+$pubAssets = Join-Path $publishDir "Assets"
+if (!(Test-Path $pubAssets)) { New-Item -ItemType Directory -Path $pubAssets -Force | Out-Null }
+Copy-Item "$root\src\QubiCostElectrical.Wpf\Assets\*" $pubAssets -Force -Recurse
+Write-Host "  ✓ Assets copiados en $pubAssets" -ForegroundColor Green
 
 if ($Sign) {
     $exe = Join-Path $publishDir "QubiCostElectrical.exe"

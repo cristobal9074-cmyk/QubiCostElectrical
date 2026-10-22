@@ -675,6 +675,153 @@ public sealed partial class SolicitudesViewModel : SessionAwareViewModelBase, IR
         }
     }
 
+    public bool LoadPacketFile(string filePath, bool showSuccessMessage = true)
+    {
+        if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
+            return false;
+
+        try
+        {
+            var ext = Path.GetExtension(filePath).ToLowerInvariant();
+            if (ext == ".qcreq")
+            {
+                var json = File.ReadAllText(filePath);
+                var packet = JsonSerializer.Deserialize<SolicitudPacket>(json);
+                if (packet == null) throw new Exception("El paquete está vacío o corrupto.");
+
+                var expectedHash = ComputeSignature(packet);
+                if (packet.SignatureHash != expectedHash)
+                {
+                    bool proceed = WpfDialogService.Confirm(
+                        "Firma de Integridad Inválida",
+                        "ADVERTENCIA DE SEGURIDAD: El hash de integridad de este archivo de solicitud no coincide. " +
+                        "Esto indica que el archivo pudo haber sido modificado o editado manualmente fuera de Qubi Cost. " +
+                        "\n\n¿Desea importar la solicitud de todas formas?",
+                        isWarning: true);
+
+                    if (!proceed)
+                        return false;
+                }
+
+                WorkName = packet.Obra;
+                RequestedBy = packet.SolicitadoPor;
+                RequestDate = packet.Fecha;
+                if (!string.IsNullOrWhiteSpace(packet.Estado))
+                    StatusLabel = packet.Estado;
+
+                Materiales.Clear();
+                Epps.Clear();
+                if (packet.Items != null)
+                {
+                    foreach (var item in packet.Items)
+                    {
+                        if (string.IsNullOrWhiteSpace(item.SolicitudCodigo)) item.SolicitudCodigo = packet.Correlativo;
+                        if (string.IsNullOrWhiteSpace(item.Fecha)) item.Fecha = packet.Fecha;
+                        if (string.IsNullOrWhiteSpace(item.SolicitadoPor)) item.SolicitadoPor = packet.SolicitadoPor;
+
+                        if (item.Tipo == "Material")
+                            Materiales.Add(new SolicitudItemRowVm(this, item));
+                        else
+                            Epps.Add(new SolicitudItemRowVm(this, item));
+                    }
+                }
+                SaveToSession();
+                if (showSuccessMessage)
+                {
+                    WpfDialogService.Info("Importación Exitosa", $"Se cargó la solicitud del proyecto '{packet.Obra}' enviada por '{packet.SolicitadoPor}'.");
+                }
+                return true;
+            }
+            else if (ext == ".xlsx")
+            {
+                using var workbook = new ClosedXML.Excel.XLWorkbook(filePath);
+                var wsMat = workbook.Worksheets.FirstOrDefault(w => w.Name.Contains("Materiales"));
+                var tempMat = new List<SolicitudItemRow>();
+                if (wsMat != null)
+                {
+                    var cellObra = wsMat.Cell(2, 2).Value.ToString();
+                    var cellSolicitado = wsMat.Cell(3, 2).Value.ToString();
+
+                    if (!string.IsNullOrWhiteSpace(cellObra)) WorkName = cellObra;
+                    if (!string.IsNullOrWhiteSpace(cellSolicitado)) RequestedBy = cellSolicitado;
+
+                    var lastRowUsed = wsMat.LastRowUsed();
+                    int lastRow = lastRowUsed != null ? lastRowUsed.RowNumber() : 5;
+                    for (int r = 6; r <= lastRow; r++)
+                    {
+                        var desc = wsMat.Cell(r, 2).Value.ToString();
+                        if (string.IsNullOrWhiteSpace(desc)) continue;
+
+                        tempMat.Add(new SolicitudItemRow
+                        {
+                            Tipo = "Material",
+                            Codigo = wsMat.Cell(r, 1).Value.ToString(),
+                            Descripcion = desc,
+                            Unidad = wsMat.Cell(r, 3).Value.ToString(),
+                            Cantidad = decimal.TryParse(wsMat.Cell(r, 4).Value.ToString(), out var cant) ? cant : 1,
+                            Link = wsMat.Cell(r, 5).Value.ToString(),
+                            Observaciones = wsMat.Cell(r, 6).Value.ToString(),
+                            SolicitudCodigo = CodigoSolicitud,
+                            Fecha = RequestDate,
+                            SolicitadoPor = RequestedBy
+                        });
+                    }
+                }
+
+                var wsEpp = workbook.Worksheets.FirstOrDefault(w => w.Name.Contains("EPP"));
+                var tempEpp = new List<SolicitudItemRow>();
+                if (wsEpp != null)
+                {
+                    var lastRowUsed = wsEpp.LastRowUsed();
+                    int lastRow = lastRowUsed != null ? lastRowUsed.RowNumber() : 5;
+                    for (int r = 6; r <= lastRow; r++)
+                    {
+                        var desc = wsEpp.Cell(r, 2).Value.ToString();
+                        if (string.IsNullOrWhiteSpace(desc)) continue;
+
+                        tempEpp.Add(new SolicitudItemRow
+                        {
+                            Tipo = "EPP",
+                            Codigo = wsEpp.Cell(r, 1).Value.ToString(),
+                            Descripcion = desc,
+                            Unidad = wsEpp.Cell(r, 3).Value.ToString(),
+                            Cantidad = decimal.TryParse(wsEpp.Cell(r, 4).Value.ToString(), out var cant) ? cant : 1,
+                            Link = wsEpp.Cell(r, 5).Value.ToString(),
+                            Observaciones = wsEpp.Cell(r, 6).Value.ToString(),
+                            SolicitudCodigo = CodigoSolicitud,
+                            Fecha = RequestDate,
+                            SolicitadoPor = RequestedBy
+                        });
+                    }
+                }
+
+                if (tempMat.Count > 0 || tempEpp.Count > 0)
+                {
+                    Materiales.Clear();
+                    Epps.Clear();
+                    foreach (var m in tempMat) Materiales.Add(new SolicitudItemRowVm(this, m));
+                    foreach (var e in tempEpp) Epps.Add(new SolicitudItemRowVm(this, e));
+                    SaveToSession();
+                    if (showSuccessMessage)
+                    {
+                        WpfDialogService.Info("Importación Exitosa", $"Se cargaron {tempMat.Count} materiales y {tempEpp.Count} EPPs desde el archivo.");
+                    }
+                    return true;
+                }
+                else
+                {
+                    throw new Exception("No se encontraron filas válidas para importar en el archivo.");
+                }
+            }
+            return false;
+        }
+        catch (Exception ex)
+        {
+            WpfDialogService.Error("Error de Importación", "No se pudo importar el archivo: " + ex.Message);
+            return false;
+        }
+    }
+
     private void ImportPacket()
     {
         if (session.IsReadOnly) return;
@@ -687,131 +834,7 @@ public sealed partial class SolicitudesViewModel : SessionAwareViewModelBase, IR
 
         if (dialog.ShowDialog() == true)
         {
-            try
-            {
-                var ext = Path.GetExtension(dialog.FileName).ToLowerInvariant();
-                if (ext == ".qcreq")
-                {
-                    var json = File.ReadAllText(dialog.FileName);
-                    var packet = JsonSerializer.Deserialize<SolicitudPacket>(json);
-                    if (packet == null) throw new Exception("El paquete está vacío o corrupto.");
-
-                    var expectedHash = ComputeSignature(packet);
-                    if (packet.SignatureHash != expectedHash)
-                    {
-                        bool proceed = WpfDialogService.Confirm(
-                            "Firma de Integridad Inválida",
-                            "ADVERTENCIA DE SEGURIDAD: El hash de integridad de este archivo de solicitud no coincide. " +
-                            "Esto indica que el archivo pudo haber sido modificado o editado manualmente fuera de Qubi Cost. " +
-                            "\n\n¿Desea importar la solicitud de todas formas?",
-                            isWarning: true);
-
-                        if (!proceed)
-                            return;
-                    }
-
-                    WorkName = packet.Obra;
-                    RequestedBy = packet.SolicitadoPor;
-                    RequestDate = packet.Fecha;
-
-                    Materiales.Clear();
-                    Epps.Clear();
-                    foreach (var item in packet.Items)
-                    {
-                        if (string.IsNullOrWhiteSpace(item.SolicitudCodigo)) item.SolicitudCodigo = packet.Correlativo;
-                        if (string.IsNullOrWhiteSpace(item.Fecha)) item.Fecha = packet.Fecha;
-                        if (string.IsNullOrWhiteSpace(item.SolicitadoPor)) item.SolicitadoPor = packet.SolicitadoPor;
-
-                        if (item.Tipo == "Material")
-                            Materiales.Add(new SolicitudItemRowVm(this, item));
-                        else
-                            Epps.Add(new SolicitudItemRowVm(this, item));
-                    }
-                    SaveToSession();
-                    WpfDialogService.Info("Importación Exitosa", $"Se cargó la solicitud del proyecto '{packet.Obra}' enviada por '{packet.SolicitadoPor}'.");
-                }
-                else if (ext == ".xlsx")
-                {
-                    using var workbook = new ClosedXML.Excel.XLWorkbook(dialog.FileName);
-                    var wsMat = workbook.Worksheets.FirstOrDefault(w => w.Name.Contains("Materiales"));
-                    var tempMat = new List<SolicitudItemRow>();
-                    if (wsMat != null)
-                    {
-                        var cellObra = wsMat.Cell(2, 2).Value.ToString();
-                        var cellSolicitado = wsMat.Cell(3, 2).Value.ToString();
-
-                        if (!string.IsNullOrWhiteSpace(cellObra)) WorkName = cellObra;
-                        if (!string.IsNullOrWhiteSpace(cellSolicitado)) RequestedBy = cellSolicitado;
-
-                        var lastRowUsed = wsMat.LastRowUsed();
-                        int lastRow = lastRowUsed != null ? lastRowUsed.RowNumber() : 5;
-                        for (int r = 6; r <= lastRow; r++)
-                        {
-                            var desc = wsMat.Cell(r, 2).Value.ToString();
-                            if (string.IsNullOrWhiteSpace(desc)) continue;
-
-                            tempMat.Add(new SolicitudItemRow
-                            {
-                                Tipo = "Material",
-                                Codigo = wsMat.Cell(r, 1).Value.ToString(),
-                                Descripcion = desc,
-                                Unidad = wsMat.Cell(r, 3).Value.ToString(),
-                                Cantidad = decimal.TryParse(wsMat.Cell(r, 4).Value.ToString(), out var cant) ? cant : 1,
-                                Link = wsMat.Cell(r, 5).Value.ToString(),
-                                Observaciones = wsMat.Cell(r, 6).Value.ToString(),
-                                SolicitudCodigo = CodigoSolicitud,
-                                Fecha = RequestDate,
-                                SolicitadoPor = RequestedBy
-                            });
-                        }
-                    }
-
-                    var wsEpp = workbook.Worksheets.FirstOrDefault(w => w.Name.Contains("EPP"));
-                    var tempEpp = new List<SolicitudItemRow>();
-                    if (wsEpp != null)
-                    {
-                        var lastRowUsed = wsEpp.LastRowUsed();
-                        int lastRow = lastRowUsed != null ? lastRowUsed.RowNumber() : 5;
-                        for (int r = 6; r <= lastRow; r++)
-                        {
-                            var desc = wsEpp.Cell(r, 2).Value.ToString();
-                            if (string.IsNullOrWhiteSpace(desc)) continue;
-
-                            tempEpp.Add(new SolicitudItemRow
-                            {
-                                Tipo = "EPP",
-                                Codigo = wsEpp.Cell(r, 1).Value.ToString(),
-                                Descripcion = desc,
-                                Unidad = wsEpp.Cell(r, 3).Value.ToString(),
-                                Cantidad = decimal.TryParse(wsEpp.Cell(r, 4).Value.ToString(), out var cant) ? cant : 1,
-                                Link = wsEpp.Cell(r, 5).Value.ToString(),
-                                Observaciones = wsEpp.Cell(r, 6).Value.ToString(),
-                                SolicitudCodigo = CodigoSolicitud,
-                                Fecha = RequestDate,
-                                SolicitadoPor = RequestedBy
-                            });
-                        }
-                    }
-
-                    if (tempMat.Count > 0 || tempEpp.Count > 0)
-                    {
-                        Materiales.Clear();
-                        Epps.Clear();
-                        foreach (var m in tempMat) Materiales.Add(new SolicitudItemRowVm(this, m));
-                        foreach (var e in tempEpp) Epps.Add(new SolicitudItemRowVm(this, e));
-                        SaveToSession();
-                        WpfDialogService.Info("Importación Exitosa", $"Se cargaron {tempMat.Count} materiales y {tempEpp.Count} EPPs desde el archivo.");
-                    }
-                    else
-                    {
-                        throw new Exception("No se encontraron filas válidas para importar en el archivo.");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                WpfDialogService.Error("Error de Importación", "No se pudo importar el archivo: " + ex.Message);
-            }
+            LoadPacketFile(dialog.FileName, showSuccessMessage: true);
         }
     }
 

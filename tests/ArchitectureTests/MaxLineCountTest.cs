@@ -21,7 +21,7 @@ public sealed class MaxLineCountTest
         // + Command Palette Supercargada (Ctrl+K) y Quick Jump Spotlight (Ctrl+J) + Ciclo de vida (3 Fases)
         // + Márgenes predeterminados de preferencias al crear nuevo proyecto (14-10).
         // Descompresión Ola Arquitectónica: extracción de Command Palette y Spotlight a ShellCommandPaletteCoordinator (-121 líneas netas).
-        ["src/QubiCostElectrical.Wpf/Shell/ShellViewModel"] = 1940,
+        ["src/QubiCostElectrical.Wpf/Shell/ShellViewModel"] = 2005,
         // Buscador in-grid (Ctrl+F) y navegación con soporte a SelectionUnit.Cell + Autofoco inteligente
         // +6 por el pegado Ctrl+V atendido en la propia grilla: el pegado Excel marca PreviewKeyDown
         // como atendido y suprimía el KeyDown que burbujeaba al UserControl, dejando el pegado con

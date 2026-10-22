@@ -32,6 +32,7 @@ public sealed class ShellFileDropHandler
 
         return files.Any(f =>
             f.EndsWith(".qce", StringComparison.OrdinalIgnoreCase) ||
+            f.EndsWith(".qcreq", StringComparison.OrdinalIgnoreCase) ||
             f.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase) ||
             f.EndsWith(".xls", StringComparison.OrdinalIgnoreCase));
     }
@@ -43,6 +44,13 @@ public sealed class ShellFileDropHandler
 
         if (e.Data.GetData(DataFormats.FileDrop) is not string[] files || files.Length == 0)
             return;
+
+        var qcreqFile = files.FirstOrDefault(f => f.EndsWith(".qcreq", StringComparison.OrdinalIgnoreCase));
+        if (!string.IsNullOrWhiteSpace(qcreqFile) && File.Exists(qcreqFile))
+        {
+            await viewModel.OpenExternalFileAsync(qcreqFile);
+            return;
+        }
 
         var qceFile = files.FirstOrDefault(f => f.EndsWith(".qce", StringComparison.OrdinalIgnoreCase));
         if (!string.IsNullOrWhiteSpace(qceFile) && File.Exists(qceFile))

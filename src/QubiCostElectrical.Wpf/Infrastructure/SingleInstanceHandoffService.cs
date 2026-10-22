@@ -38,7 +38,7 @@ public static class SingleInstanceHandoffService
             if (!File.Exists(arg))
                 continue;
 
-            if (formatDetector.Detect(arg) != ProjectFileFormat.Unknown)
+            if (formatDetector.Detect(arg) != ProjectFileFormat.Unknown || arg.EndsWith(".qcreq", StringComparison.OrdinalIgnoreCase))
             {
                 path = arg;
                 return true;

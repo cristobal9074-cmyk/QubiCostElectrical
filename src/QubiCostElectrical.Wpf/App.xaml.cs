@@ -162,7 +162,7 @@ public partial class App : Application
         if (Current?.MainWindow?.DataContext is not IShellNavigationHost shell)
             return;
 
-        await shell.OpenRecentProjectAsync(path);
+        await shell.OpenExternalFileAsync(path);
     }
 
     private static class NativeMethods

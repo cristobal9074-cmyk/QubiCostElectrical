@@ -20,6 +20,14 @@ public partial class SolicitudesView : UserControl
 
     private SolicitudesViewModel? Vm => DataContext as SolicitudesViewModel;
 
+    public void ApplyNavContext(SolicitudNavigationContext ctx)
+    {
+        if (!string.IsNullOrWhiteSpace(ctx?.FilePath))
+        {
+            Vm?.LoadPacketFile(ctx.FilePath, showSuccessMessage: false);
+        }
+    }
+
     public SolicitudesView()
     {
         InitializeComponent();

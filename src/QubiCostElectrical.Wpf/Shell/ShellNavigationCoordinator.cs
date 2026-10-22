@@ -11,6 +11,7 @@ using CubicacionFeature = QubiCostElectrical.Wpf.Features.Cubicacion;
 using ContractsFeature = QubiCostElectrical.Wpf.Features.Contracts;
 using ItemizadoFeature = QubiCostElectrical.Wpf.Features.Itemizado;
 using CubicacionScFeature = QubiCostElectrical.Wpf.Features.CubicacionSc;
+using SolicitudesFeature = QubiCostElectrical.Wpf.Features.Solicitudes;
 
 namespace QubiCostElectrical.Wpf.Shell;
 
