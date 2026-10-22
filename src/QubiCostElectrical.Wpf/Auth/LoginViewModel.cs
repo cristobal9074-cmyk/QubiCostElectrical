@@ -1,6 +1,9 @@
+using System;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using QubiCostElectrical;
+using QubiCostElectrical.Infrastructure;
 using QubiCostElectrical.Wpf.Infrastructure;
 
 namespace QubiCostElectrical.Wpf.Auth;
@@ -8,26 +11,38 @@ namespace QubiCostElectrical.Wpf.Auth;
 public class LoginViewModel : ViewModelBase
 {
     private readonly IAuthService _authService;
+    private readonly IRemoteLicenseService _licenseService;
+    private readonly IUserPreferencesStore? _preferencesStore;
+
     private string _email = "";
     private string _pin = "";
-    private bool _rememberMe;
+    private bool _rememberMe = true;
     private string? _errorMessage;
     private bool _isBusy;
     private bool _isFirstUser;
+    private bool _isRegisterMode;
     private string? _displayName;
-    private readonly IUserPreferencesStore? _preferencesStore;
 
-    public LoginViewModel(IAuthService authService, IUserPreferencesStore? preferencesStore = null)
+    public LoginViewModel(
+        IAuthService authService,
+        IRemoteLicenseService? licenseService = null,
+        IUserPreferencesStore? preferencesStore = null)
     {
         _authService = authService;
+        _licenseService = licenseService ?? throw new ArgumentNullException(nameof(licenseService));
         _preferencesStore = preferencesStore ?? WpfAppHost.Current?.UserPreferencesStore;
+
         LoginCommand = new RelayCommand(async () => await LoginAsync(), () => !IsBusy);
+        ToggleModeCommand = new RelayCommand(ToggleMode);
 
         var prefs = _preferencesStore?.Load() ?? new UserPreferences();
-        _email = prefs.LastUserEmail;
+        _email = prefs.LastUserEmail ?? "";
         ProductVersion = $"v{ProductVersionInfo.ProductVersion}";
+    }
 
-        CheckFirstUser();
+    public LoginViewModel(IAuthService authService, IUserPreferencesStore? preferencesStore)
+        : this(authService, null, preferencesStore)
+    {
     }
 
     public string ProductVersion { get; }
@@ -80,14 +95,28 @@ public class LoginViewModel : ViewModelBase
     public bool IsFirstUser
     {
         get => _isFirstUser;
-        set
-        {
-            if (SetProperty(ref _isFirstUser, value))
-                OnPropertyChanged(nameof(ShowFirstUserWizard));
-        }
+        set => SetProperty(ref _isFirstUser, value);
     }
 
-    public bool ShowFirstUserWizard => IsFirstUser;
+    public bool IsRegisterMode
+    {
+        get => _isRegisterMode;
+        set => SetProperty(ref _isRegisterMode, value);
+    }
+
+    public bool IsRegistrationActive => false;
+
+    public string ViewTitleText => "Acceso a la Plataforma";
+
+    public string ViewDescText => "Ingresa tus credenciales autorizadas para acceder a tus presupuestos y cubicaciones.";
+
+    public string SubmitButtonText => "Ingresar al sistema";
+
+    public string SwitchText => "";
+
+    public string SwitchLinkText => "";
+
+    public bool ShowFirstUserWizard => false;
 
     public string? DisplayName
     {
@@ -96,14 +125,13 @@ public class LoginViewModel : ViewModelBase
     }
 
     public ICommand LoginCommand { get; }
+    public ICommand ToggleModeCommand { get; }
 
-    public event System.EventHandler? LoginSucceeded;
+    public event EventHandler? LoginSucceeded;
 
-    private void CheckFirstUser()
+    private void ToggleMode()
     {
-        IsFirstUser = _authService.IsFirstUser();
-        if (IsFirstUser)
-            ErrorMessage = "Bienvenido. Crea tu cuenta de administrador para comenzar.";
+        ErrorMessage = null;
     }
 
     private async Task LoginAsync()
@@ -111,8 +139,7 @@ public class LoginViewModel : ViewModelBase
         if (IsBusy) return;
 
         var email = Email?.Trim().ToLowerInvariant() ?? "";
-        var pin = Pin ?? "";
-        var name = DisplayName?.Trim() ?? "";
+        var password = Pin ?? "";
 
         if (string.IsNullOrWhiteSpace(email))
         {
@@ -120,15 +147,9 @@ public class LoginViewModel : ViewModelBase
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(pin))
+        if (string.IsNullOrWhiteSpace(password))
         {
-            ErrorMessage = "Ingresa tu PIN.";
-            return;
-        }
-
-        if (IsFirstUser && string.IsNullOrWhiteSpace(name))
-        {
-            ErrorMessage = "Ingresa tu nombre.";
+            ErrorMessage = "Ingresa tu contraseña.";
             return;
         }
 
@@ -137,22 +158,74 @@ public class LoginViewModel : ViewModelBase
 
         try
         {
-            Result<UserSession, AuthError> result;
+            // 1. Validar suscripción/licencia contra la API en tiempo real
+            var licenseResult = await _licenseService.VerifyLicenseAsync(email, password);
 
-            if (IsFirstUser)
+            // Caída o falta de internet: si el servidor es inalcanzable (no si rechazó las
+            // credenciales), se permite validar contra las credenciales locales ya registradas
+            // para no dejar al usuario fuera de su propia app.
+            var isOfflineGrace = !licenseResult.IsValid
+                && licenseResult.Reason is "network_error" or "timeout";
+
+            if (!licenseResult.IsValid && !isOfflineGrace)
             {
-                if (pin.Length < 4 || pin.Length > 6)
+                ErrorMessage = licenseResult.ErrorMessage ?? "Acceso denegado.";
+                return;
+            }
+
+            // 2. Si la licencia remota es válida, asegurar usuario en la base de datos local
+            var effectiveName = !string.IsNullOrWhiteSpace(licenseResult.DisplayName)
+                ? licenseResult.DisplayName
+                : email;
+
+            if (isOfflineGrace)
+            {
+                // Sin servidor no se crean ni sincronizan perfiles: solo cuenta local previa.
+                var localUsers = await _authService.GetUsersAsync();
+                if (localUsers.All(u => !string.Equals(u.Email, email, StringComparison.OrdinalIgnoreCase)))
                 {
-                    ErrorMessage = "El PIN debe tener entre 4 y 6 dígitos.";
+                    ErrorMessage = "Sin conexión al servidor de licencias y sin credenciales locales previas. Conéctate a internet para el primer ingreso.";
                     return;
                 }
-                result = await _authService.CreateFirstUserAsync(email, pin, name);
+            }
+            else if (_authService.IsFirstUser())
+            {
+                // El primer usuario del equipo queda con rol Administrador
+                var firstRes = await _authService.CreateFirstUserAsync(email, password, effectiveName, allowLicenseCredential: true);
+                if (!firstRes.IsSuccess)
+                {
+                    ErrorMessage = "Error al inicializar las credenciales locales.";
+                    return;
+                }
             }
             else
             {
-                result = await _authService.LoginAsync(email, pin, RememberMe);
+                var allUsers = await _authService.GetUsersAsync();
+                var localUser = allUsers.FirstOrDefault(u => string.Equals(u.Email, email, StringComparison.OrdinalIgnoreCase));
+
+                if (localUser == null)
+                {
+                    // Crear usuario local sincronizado
+                    var createRes = await _authService.CreateUserAsync(email, password, effectiveName, UserRole.Estimator, null, allowLicenseCredential: true);
+                    if (!createRes.IsSuccess && createRes.Error != AuthAdminError.EmailAlreadyExists)
+                    {
+                        ErrorMessage = "Error al sincronizar el perfil de usuario local.";
+                        return;
+                    }
+                }
+                else
+                {
+                    // Sincronizar contraseña local y reactivar si estaba inactiva
+                    await _authService.ResetUserPinAsync(localUser.Id, password, null, allowLicenseCredential: true);
+                    if (!localUser.IsActive)
+                    {
+                        await _authService.SetUserActiveAsync(localUser.Id, true, email);
+                    }
+                }
             }
 
+            // 3. Autenticación local y creación de sesión
+            var result = await _authService.LoginAsync(email, password, RememberMe);
             if (result.IsSuccess)
             {
                 SessionManager.SetSession(result.Value!);
@@ -167,19 +240,16 @@ public class LoginViewModel : ViewModelBase
             {
                 ErrorMessage = result.Error switch
                 {
-                    AuthError.UserNotFound => "No existe una cuenta con ese correo.",
-                    AuthError.InvalidCredentials => "PIN incorrecto. Verifica e intenta de nuevo.",
-                    AuthError.AccountLocked => "Cuenta bloqueada por muchos intentos fallidos. Intenta en 15 minutos.",
-                    AuthError.AccountInactive => "Esta cuenta está desactivada.",
-                    AuthError.PinTooShort => "El PIN debe tener entre 4 y 6 dígitos.",
-                    AuthError.TokenInvalid => "Error al crear la cuenta.",
-                    _ => "Error al iniciar sesión."
+                    AuthError.AccountLocked => "Cuenta bloqueada temporalmente por intentos fallidos.",
+                    AuthError.AccountInactive => "Cuenta inactiva en este equipo.",
+                    AuthError.InvalidCredentials when isOfflineGrace => "Contraseña local incorrecta (verificación sin conexión).",
+                    _ => "Error al iniciar sesión local."
                 };
             }
         }
-        catch
+        catch (Exception ex)
         {
-            ErrorMessage = "Error de conexión. Verifica la aplicación.";
+            ErrorMessage = $"Error inesperado al iniciar sesión: {ex.Message}";
         }
         finally
         {

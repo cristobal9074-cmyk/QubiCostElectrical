@@ -7,7 +7,9 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.DependencyInjection;
 using QubiCostElectrical;
+using QubiCostElectrical.Infrastructure;
 using QubiCostElectrical.Wpf.Auth;
 using QubiCostElectrical.Wpf.Infrastructure;
 using QubiCostElectrical.Wpf.Navigation;
@@ -406,7 +408,8 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
 
         _ = Application.Current.Dispatcher.BeginInvoke(() =>
         {
-            var login = new LoginWindow(auth);
+            var licenseService = WpfAppHost.Provider?.GetRequiredService<IRemoteLicenseService>();
+            var login = new LoginWindow(auth, licenseService);
             login.WindowStartupLocation = WindowStartupLocation.CenterScreen;
 
             foreach (Window window in Application.Current.Windows)

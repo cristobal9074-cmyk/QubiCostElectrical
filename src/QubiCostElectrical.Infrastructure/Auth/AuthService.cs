@@ -117,11 +117,14 @@ public sealed class AuthService : IAuthService, IDisposable
     }
 
     public Task<Result<UserSession, AuthError>> CreateFirstUserAsync(string email, string pin, string displayName)
+        => CreateFirstUserAsync(email, pin, displayName, false);
+
+    public Task<Result<UserSession, AuthError>> CreateFirstUserAsync(string email, string pin, string displayName, bool allowLicenseCredential)
     {
         if (!IsFirstUser())
             return Task.FromResult(Result<UserSession, AuthError>.Failure(AuthError.TokenInvalid));
 
-        if (!ValidatePin(pin))
+        if (!ValidatePin(pin, allowLicenseCredential))
             return Task.FromResult(Result<UserSession, AuthError>.Failure(AuthError.PinTooShort));
 
         var user = new UserAccount
@@ -157,6 +160,9 @@ public sealed class AuthService : IAuthService, IDisposable
         => CreateUserAsync(email, pin, displayName, role, null);
 
     public Task<Result<AuthUserSummary, AuthAdminError>> CreateUserAsync(string email, string pin, string displayName, UserRole role, string? actorEmail)
+        => CreateUserAsync(email, pin, displayName, role, actorEmail, false);
+
+    public Task<Result<AuthUserSummary, AuthAdminError>> CreateUserAsync(string email, string pin, string displayName, UserRole role, string? actorEmail, bool allowLicenseCredential)
     {
         email = (email ?? "").Trim().ToLowerInvariant();
         displayName = (displayName ?? "").Trim();
@@ -164,7 +170,7 @@ public sealed class AuthService : IAuthService, IDisposable
 
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(displayName))
             return Task.FromResult(Result<AuthUserSummary, AuthAdminError>.Failure(AuthAdminError.InvalidInput));
-        if (!ValidatePin(pin))
+        if (!ValidatePin(pin, allowLicenseCredential))
             return Task.FromResult(Result<AuthUserSummary, AuthAdminError>.Failure(
                 PinSecurityPolicy.IsCompliant(pin, LoadPinPolicy()) ? AuthAdminError.InvalidInput : AuthAdminError.WeakPin));
         if (_store.EmailExists(email))
@@ -225,15 +231,18 @@ public sealed class AuthService : IAuthService, IDisposable
     }
 
     public Task<Result<AuthUserSummary, AuthAdminError>> ResetUserPinAsync(Guid userId, string newPin)
-        => ResetUserPinAsync(userId, newPin, null);
+        => ResetUserPinAsync(userId, newPin, null, false);
 
     public Task<Result<AuthUserSummary, AuthAdminError>> ResetUserPinAsync(Guid userId, string newPin, string? actorEmail)
+        => ResetUserPinAsync(userId, newPin, actorEmail, false);
+
+    public Task<Result<AuthUserSummary, AuthAdminError>> ResetUserPinAsync(Guid userId, string newPin, string? actorEmail, bool allowLicenseCredential)
     {
         var existing = _store.FindById(userId);
         if (existing == null)
             return Task.FromResult(Result<AuthUserSummary, AuthAdminError>.Failure(AuthAdminError.UserNotFound));
 
-        if (!ValidatePin(newPin))
+        if (!ValidatePin(newPin, allowLicenseCredential))
             return Task.FromResult(Result<AuthUserSummary, AuthAdminError>.Failure(
                 string.IsNullOrWhiteSpace(newPin) ? AuthAdminError.InvalidInput : AuthAdminError.WeakPin));
 
@@ -287,7 +296,20 @@ public sealed class AuthService : IAuthService, IDisposable
     {
         try
         {
-            return UserPreferencesStore.Load().PinSecurity ?? PinSecurityPolicy.Default;
+            var configured = UserPreferencesStore.Load().PinSecurity;
+            if (configured == null)
+                return PinSecurityPolicy.Default;
+
+            // La política configurable solo puede endurecer, nunca relajar el piso documentado
+            // (4-6 dígitos, sin secuencias ni repeticiones). Lo personalizable vive en las
+            // credenciales de licencia (IsCredentialCompliant), no en el PIN local.
+            return new PinSecurityPolicy
+            {
+                MinLength = Math.Max(configured.MinLength, 4),
+                MaxLength = Math.Clamp(configured.MaxLength, 4, 6),
+                BlockSequences = true,
+                BlockRepeats = true
+            };
         }
         catch
         {
@@ -295,8 +317,11 @@ public sealed class AuthService : IAuthService, IDisposable
         }
     }
 
-    private static bool ValidatePin(string pin)
+    private static bool ValidatePin(string pin, bool allowLicenseCredential)
     {
+        if (allowLicenseCredential)
+            return PinSecurityPolicy.IsCredentialCompliant(pin);
+
         var policy = LoadPinPolicy();
         if (!PinSecurityPolicy.IsCompliant(pin, policy))
             return false;

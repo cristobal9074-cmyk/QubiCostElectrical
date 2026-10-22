@@ -1,4 +1,4 @@
-namespace QubiCostElectrical;
+﻿namespace QubiCostElectrical;
 
 /// <summary>Política de PIN configurable por instalación (Preferencias globales).</summary>
 public sealed class PinSecurityPolicy
@@ -8,9 +8,13 @@ public sealed class PinSecurityPolicy
     public bool BlockSequences { get; set; } = true;
     public bool BlockRepeats { get; set; } = true;
 
+    /// <summary>Límites de la contraseña de licencia (credencial corporativa remota).</summary>
+    public const int CredentialMinLength = 4;
+    public const int CredentialMaxLength = 128;
+
     public static PinSecurityPolicy Default { get; } = new();
 
-    public static bool IsCompliant(string pin, PinSecurityPolicy? policy)
+    public static bool IsCompliant(string? pin, PinSecurityPolicy? policy)
     {
         policy ??= Default;
         if (string.IsNullOrWhiteSpace(pin))
@@ -35,5 +39,17 @@ public sealed class PinSecurityPolicy
         }
 
         return !(ascending || descending);
+    }
+
+    /// <summary>
+    /// Credencial de licencia remota: puede ser alfanumérica y más larga que un PIN local,
+    /// porque la fuente de verdad es el servidor de licencias y no se guarda en claro.
+    /// El PIN local sigue exigiendo solo dígitos con <see cref="IsCompliant"/>.
+    /// </summary>
+    public static bool IsCredentialCompliant(string? credential)
+    {
+        if (string.IsNullOrWhiteSpace(credential))
+            return false;
+        return credential.Length >= CredentialMinLength && credential.Length <= CredentialMaxLength;
     }
 }

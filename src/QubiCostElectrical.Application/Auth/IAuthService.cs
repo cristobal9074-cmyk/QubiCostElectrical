@@ -38,14 +38,17 @@ public interface IAuthService
     Task<UserSession?> TryRestoreSessionAsync();
     bool IsFirstUser();
     Task<Result<UserSession, AuthError>> CreateFirstUserAsync(string email, string pin, string displayName);
+    Task<Result<UserSession, AuthError>> CreateFirstUserAsync(string email, string pin, string displayName, bool allowLicenseCredential);
     Task<IReadOnlyList<AuthUserSummary>> GetUsersAsync();
     Task<Result<AuthUserSummary, AuthAdminError>> CreateUserAsync(string email, string pin, string displayName, UserRole role);
     Task<Result<AuthUserSummary, AuthAdminError>> CreateUserAsync(string email, string pin, string displayName, UserRole role, string? actorEmail);
+    Task<Result<AuthUserSummary, AuthAdminError>> CreateUserAsync(string email, string pin, string displayName, UserRole role, string? actorEmail, bool allowLicenseCredential);
     Task<Result<AuthUserSummary, AuthAdminError>> SetUserRoleAsync(Guid userId, UserRole role);
     Task<Result<AuthUserSummary, AuthAdminError>> SetUserRoleAsync(Guid userId, UserRole role, string? actorEmail);
     Task<Result<AuthUserSummary, AuthAdminError>> SetUserActiveAsync(Guid userId, bool isActive, string? currentUserEmail);
     Task<Result<AuthUserSummary, AuthAdminError>> ResetUserPinAsync(Guid userId, string newPin);
     Task<Result<AuthUserSummary, AuthAdminError>> ResetUserPinAsync(Guid userId, string newPin, string? actorEmail);
+    Task<Result<AuthUserSummary, AuthAdminError>> ResetUserPinAsync(Guid userId, string newPin, string? actorEmail, bool allowLicenseCredential);
     Task<Result<AuthUserSummary, AuthAdminError>> UnlockUserAsync(Guid userId, string? actorEmail);
     Task<IReadOnlyList<AuthAdminAuditEntry>> GetAdminAuditAsync(int limit = 50);
 }

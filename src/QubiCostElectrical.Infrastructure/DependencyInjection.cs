@@ -62,7 +62,8 @@ public static class InfrastructureServiceCollectionExtensions
         // RewireContractsIfProjectChanged manual de WpfAppHostBuilder.
         services.AddSingleton<IProjectDbContext, ProjectDbContext>();
 
-        // Autenticación (abre su propia BD SQLite de credenciales).
+        // Autenticación y Licencias (abre su propia BD SQLite de credenciales y consulta licencias remotas).
+        services.AddSingleton<IRemoteLicenseService, RemoteLicenseService>();
         services.AddSingleton<AuthService>();
         services.AddSingleton<IAuthService>(sp => sp.GetRequiredService<AuthService>());
 

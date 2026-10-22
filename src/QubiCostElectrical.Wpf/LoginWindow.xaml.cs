@@ -1,5 +1,6 @@
 using System;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using QubiCostElectrical;
 using QubiCostElectrical.Wpf.Auth;
@@ -9,38 +10,79 @@ namespace QubiCostElectrical.Wpf;
 public partial class LoginWindow : Window
 {
     private readonly LoginViewModel _viewModel;
+    private bool _isPasswordVisible;
 
-    public LoginWindow(IAuthService authService, IUserPreferencesStore? preferencesStore = null)
+    public LoginWindow(IAuthService authService, IRemoteLicenseService? licenseService = null, IUserPreferencesStore? preferencesStore = null)
     {
         InitializeComponent();
-        _viewModel = new LoginViewModel(authService, preferencesStore);
+        _viewModel = new LoginViewModel(authService, licenseService, preferencesStore);
         DataContext = _viewModel;
         _viewModel.LoginSucceeded += OnLoginSucceeded;
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
-        UpdateFirstUserVisibility();
+        UpdateVisibility();
+    }
+
+    public LoginWindow(IAuthService authService, IUserPreferencesStore? preferencesStore)
+        : this(authService, null, preferencesStore)
+    {
     }
 
     private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(LoginViewModel.IsFirstUser) ||
-            e.PropertyName == nameof(LoginViewModel.HasError))
+        if (e.PropertyName == nameof(LoginViewModel.HasError))
         {
-            Dispatcher.Invoke(UpdateFirstUserVisibility);
+            Dispatcher.Invoke(UpdateVisibility);
         }
     }
 
-    private void UpdateFirstUserVisibility()
+    private void UpdateVisibility()
     {
-        var isFirst = _viewModel.IsFirstUser;
-        FirstUserBanner.Visibility = isFirst ? Visibility.Visible : Visibility.Collapsed;
-        DisplayNamePanel.Visibility = isFirst ? Visibility.Visible : Visibility.Collapsed;
-        RememberMeCheck.Visibility = isFirst ? Visibility.Collapsed : Visibility.Visible;
         ErrorBanner.Visibility = _viewModel.HasError ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void OnPinChanged(object sender, RoutedEventArgs e)
     {
-        _viewModel.Pin = PinBox.Password;
+        if (!_isPasswordVisible)
+        {
+            _viewModel.Pin = PinBox.Password;
+        }
+    }
+
+    private void OnVisiblePasswordChanged(object sender, TextChangedEventArgs e)
+    {
+        if (_isPasswordVisible)
+        {
+            _viewModel.Pin = VisiblePasswordBox.Text;
+        }
+    }
+
+    private void OnTogglePasswordVisibility(object sender, RoutedEventArgs e)
+    {
+        _isPasswordVisible = !_isPasswordVisible;
+        if (_isPasswordVisible)
+        {
+            VisiblePasswordBox.Text = PinBox.Password;
+            PinBox.Visibility = Visibility.Collapsed;
+            VisiblePasswordBox.Visibility = Visibility.Visible;
+            EyeIcon.Text = "🔒";
+            VisiblePasswordBox.Focus();
+            VisiblePasswordBox.CaretIndex = VisiblePasswordBox.Text.Length;
+        }
+        else
+        {
+            PinBox.Password = VisiblePasswordBox.Text;
+            VisiblePasswordBox.Visibility = Visibility.Collapsed;
+            PinBox.Visibility = Visibility.Visible;
+            EyeIcon.Text = "👁";
+            PinBox.Focus();
+        }
+    }
+
+    private void OnForgotPasswordClick(object sender, RoutedEventArgs e)
+    {
+        HelpBanner.Visibility = HelpBanner.Visibility == Visibility.Visible
+            ? Visibility.Collapsed
+            : Visibility.Visible;
     }
 
     private void OnWindowKeyDown(object sender, KeyEventArgs e)

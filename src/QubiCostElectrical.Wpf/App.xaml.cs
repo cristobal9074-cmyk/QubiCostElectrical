@@ -4,7 +4,9 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using Microsoft.Extensions.DependencyInjection;
 using QubiCostElectrical;
+using QubiCostElectrical.Infrastructure;
 using QubiCostElectrical.Wpf.Auth;
 using QubiCostElectrical.Wpf.Infrastructure;
 using QubiCostElectrical.Wpf.Infrastructure.Diagnostics;
@@ -80,7 +82,8 @@ public partial class App : Application
 
             splash.Close();
 
-            var login = new LoginWindow(_authService, host.UserPreferencesStore);
+            var licenseService = Infrastructure.WpfAppHost.Provider?.GetRequiredService<IRemoteLicenseService>();
+            var login = new LoginWindow(_authService, licenseService, host.UserPreferencesStore);
             login.WindowStartupLocation = WindowStartupLocation.CenterScreen;
 
             if (login.ShowDialog() == true)
