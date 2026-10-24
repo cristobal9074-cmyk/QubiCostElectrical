@@ -1,4 +1,5 @@
 using Velopack;
+using Velopack.Sources;
 
 namespace QubiCostElectrical.Wpf.Infrastructure;
 
@@ -16,13 +17,24 @@ internal sealed class VelopackUpdateService : IUpdateService
         this.releasesSource = releasesSource;
     }
 
+    private IUpdateSource CreateSource()
+    {
+        if (releasesSource.Contains("github.com", StringComparison.OrdinalIgnoreCase))
+        {
+            return new GithubSource(releasesSource, accessToken: null, prerelease: false);
+        }
+        return new SimpleWebSource(releasesSource);
+    }
+
+    private UpdateManager CreateManager() => new(CreateSource());
+
     public string Channel => "win";
 
     public bool IsInstalled
     {
         get
         {
-            try { return new UpdateManager(releasesSource).IsInstalled; }
+            try { return CreateManager().IsInstalled; }
             catch { return false; }
         }
     }
@@ -30,7 +42,7 @@ internal sealed class VelopackUpdateService : IUpdateService
     public async Task<string?> CheckForUpdatesAsync(CancellationToken ct = default)
     {
         UpdateManager mgr;
-        try { mgr = new UpdateManager(releasesSource); }
+        try { mgr = CreateManager(); }
         catch { pending = null; return null; }
         if (!mgr.IsInstalled) { pending = null; return null; }
         pending = await mgr.CheckForUpdatesAsync();
@@ -41,7 +53,7 @@ internal sealed class VelopackUpdateService : IUpdateService
     {
         if (pending is null)
             throw new InvalidOperationException("Llama primero a CheckForUpdatesAsync.");
-        var mgr = new UpdateManager(releasesSource);
+        var mgr = CreateManager();
         await mgr.DownloadUpdatesAsync(pending, p => progress?.Report(p), cancelToken: ct);
     }
 
@@ -49,7 +61,7 @@ internal sealed class VelopackUpdateService : IUpdateService
     {
         if (pending is null)
             throw new InvalidOperationException("Llama primero a DownloadUpdateAsync.");
-        var mgr = new UpdateManager(releasesSource);
+        var mgr = CreateManager();
         mgr.ApplyUpdatesAndRestart(pending);
     }
 }
