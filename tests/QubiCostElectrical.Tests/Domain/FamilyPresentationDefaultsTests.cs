@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Xunit;
 
 namespace QubiCostElectrical.Tests.Domain;
@@ -19,7 +19,9 @@ public class FamilyPresentationDefaultsTests
     [InlineData("Luminarias", "ILUMINACION")]
     [InlineData("Disyuntores", "TABLEROS")]
     [InlineData("Enchufes", "ENCHUFES Y TOMACORRIENTES")]
-    [InlineData("Cajas", "ACCESORIOS")]
+    [InlineData("Cajas", "CANALIZACION")]
+    [InlineData("Soportes", "CANALIZACION")]
+    [InlineData("Abrazaderas", "CANALIZACION")]
     [InlineData("Terminales", "ACCESORIOS")]
     public void NaturalCanonicalTarget_MapsSynonymsToCanonical(string input, string expectedCanonical)
     {

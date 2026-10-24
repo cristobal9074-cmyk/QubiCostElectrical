@@ -40,11 +40,14 @@ public static class FamilyPresentationDefaults
         var clave = ElectricalFamilyCatalog.ClaveCanonica(normalized);
         return clave switch
         {
-        // Canalización y distribución
+        // Canalización y distribución (incluye cajas, soportes y abrazaderas como en matriz Excel Ingelsam M02..M04, M09, M10)
         "CANALIZACION" or "CANALIZACIONES" or "CANALIZADO" or "CANALIZADOS"
             or "BANDEJAS" or "BANDEJA" or "ESCALERILLAS" or "ESCALERILLA"
             or "TUBERIAS" or "TUBERIA" or "CONDUIT" or "TUBERIAS CONDUIT" or "TUBERIA CONDUIT"
             or "DUCTOS" or "DUCTO" or "CANALETAS" or "CANALETA"
+            or "CAJAS" or "CAJA" or "CAJAS DE DERIVACION" or "CAJA DE PASO"
+            or "SOPORTES" or "SOPORTE" or "SOPORTACION" or "SOPORTACIONES"
+            or "ABRAZADERAS" or "ABRAZADERA"
             => "CANALIZACION",
 
         // Conductores, alimentadores y puesta a tierra (en presupuestos electricos van en MATERIALES)
@@ -88,9 +91,6 @@ public static class FamilyPresentationDefaults
 
         // Accesorios y montaje
         "ACCESORIOS" or "ACCESORIO" or "FERRETERIA"
-            or "CAJAS" or "CAJA" or "CAJAS DE DERIVACION" or "CAJA DE PASO"
-            or "SOPORTES" or "SOPORTE" or "SOPORTACION" or "SOPORTACIONES"
-            or "ABRAZADERAS" or "ABRAZADERA"
             or "TERMINALES" or "TERMINAL" or "PRENSACABLES" or "PRENSACABLE"
             or "FIJACIONES" or "PERNOS" or "TORNILLOS"
             or "DOCUMENTACION Y TRAMITES"
