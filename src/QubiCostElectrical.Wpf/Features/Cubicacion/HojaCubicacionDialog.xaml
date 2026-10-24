@@ -173,12 +173,35 @@
                             Click="OnRemoveItemClick" Tag="{Binding}" />
 
                     <!-- Subtotal de Partida -->
-                    <Border DockPanel.Dock="Right" Background="{DynamicResource Brush.GreenSoft}"
-                            BorderBrush="{DynamicResource Brush.Green}" BorderThickness="1"
+                    <Border DockPanel.Dock="Right" BorderThickness="1"
                             CornerRadius="4" Padding="6,1" Margin="6,0,0,0" VerticalAlignment="Center"
-                            ToolTip="Subtotal acumulado de esta partida">
+                            Cursor="Hand" PreviewMouseLeftButtonDown="OnSubtotalBadgeClick" Tag="{Binding}"
+                            ToolTip="Subtotal acumulado de esta partida (clic para transferir en modo selección)">
+                      <Border.Style>
+                        <Style TargetType="Border">
+                          <Setter Property="Background" Value="{DynamicResource Brush.GreenSoft}" />
+                          <Setter Property="BorderBrush" Value="{DynamicResource Brush.Green}" />
+                          <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsPicked}" Value="True">
+                              <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+                              <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
+                            </DataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </Border.Style>
                       <TextBlock Text="{Binding Subtotal, StringFormat={}{0:#,##0.##}}" FontWeight="Bold"
-                                 Foreground="{DynamicResource Brush.Green}" FontFamily="{StaticResource Font.Mono}" FontSize="12" />
+                                 FontFamily="{StaticResource Font.Mono}" FontSize="12">
+                        <TextBlock.Style>
+                          <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.Green}" />
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding IsPicked}" Value="True">
+                                <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </TextBlock.Style>
+                      </TextBlock>
                     </Border>
 
                     <!-- Unidad de medida -->

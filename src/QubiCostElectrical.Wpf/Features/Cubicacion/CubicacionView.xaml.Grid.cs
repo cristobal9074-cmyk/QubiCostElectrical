@@ -57,17 +57,34 @@ public partial class CubicacionView : UserControl
     // celda destino (fila + sector) cambia según dónde se hizo clic.
     private void OnResourceGridContextMenuOpening(object sender, ContextMenuEventArgs e)
     {
-        if (!Vm.IsSectorMatrixMode) return;
         if (e.OriginalSource is not DependencyObject dep) return;
 
         var cell = FindParent<DataGridCell>(dep);
-        int slot = cell != null ? _sectorColumns.IndexOf(cell.Column) : -1;
-        if (cell == null || slot < 0 || cell.DataContext is not CubicacionRowVm row)
+        if (cell == null || cell.DataContext is not CubicacionRowVm row)
             return;
 
-        var menuItem = new MenuItem { Header = "Ir a Hoja de Cubicación", Tag = (row, slot) };
-        menuItem.Click += OnGoToHojaCubicacionClick;
-        cell.ContextMenu = new ContextMenu { ItemsSource = new object[] { menuItem } };
+        int slot = (Vm.IsSectorMatrixMode && cell.Column != null && _sectorColumns.Contains(cell.Column))
+            ? _sectorColumns.IndexOf(cell.Column)
+            : -1;
+
+        if (slot >= 0)
+        {
+            var menuItem = new MenuItem { Header = "Traer sector desde Hoja de Cubicación", Tag = (row, slot) };
+            menuItem.Click += OnGoToHojaCubicacionClick;
+            cell.ContextMenu = new ContextMenu { ItemsSource = new object[] { menuItem } };
+        }
+        else
+        {
+            var menuItem = new MenuItem { Header = "Traer cantidad desde Hoja de Cubicación", Tag = row };
+            menuItem.Click += OnPickQuantityFromHojaCubicacionClick;
+            cell.ContextMenu = new ContextMenu { ItemsSource = new object[] { menuItem } };
+        }
+    }
+
+    private void OnPickQuantityFromHojaCubicacionClick(object sender, RoutedEventArgs e)
+    {
+        if (((FrameworkElement)sender).Tag is not CubicacionRowVm row) return;
+        Vm.PickQuantityFromHojaCubicacion(row);
     }
 
     // "Ir a Hoja de Cubicación" del menú contextual de una casilla de sector: misma acción que

@@ -47,12 +47,41 @@ internal sealed class CubicacionSectorService
         session.HojaCubicacion.Clear();
         session.HojaCubicacion.AddRange(itemsActuales.Select(vm => vm.ToSaved()));
         session.MarkDirty("hoja_cubicacion");
+        parent.HasPendingChanges = true;
+        parent.SaveStatusText = "Cambios sin guardar";
 
         if (pickedValue == null)
             return;
 
         string expression = pickedValue.Value.ToString("0.####", System.Globalization.CultureInfo.InvariantCulture);
         ApplySectorExpression(row, absoluteOffset, expression, pushUndo: true, syncSectorValuesSlot: true);
+    }
+
+    public void PickQuantityFromHojaCubicacion(CubicacionRowVm row)
+    {
+        if (session.IsReadOnly)
+            return;
+
+        var itemsGuardados = session.HojaCubicacion.Select(HojaCubicacionItemVm.FromSaved).ToList();
+        var (pickedValue, itemsActuales) = HojaCubicacionDialog.PickValue(System.Windows.Application.Current.MainWindow, itemsGuardados);
+
+        session.HojaCubicacion.Clear();
+        session.HojaCubicacion.AddRange(itemsActuales.Select(vm => vm.ToSaved()));
+        parent.HasPendingChanges = true;
+        parent.SaveStatusText = "Cambios sin guardar";
+        session.MarkDirty("hoja_cubicacion");
+
+        if (pickedValue == null)
+            return;
+
+        undo.PushUndoPoint(session, "Traer cantidad desde Hoja de Cubicación");
+        parent.EnsureRowInSession(row);
+        row.Cantidad = pickedValue.Value;
+        row.Source.TotalExpression = pickedValue.Value.ToString("0.####", System.Globalization.CultureInfo.InvariantCulture);
+        parent.OnRowEdited(row);
+        parent.HasPendingChanges = true;
+        parent.SaveStatusText = "Cambios sin guardar";
+        parent.MarkDirty();
     }
 
     // Herramienta de cubicación con trazabilidad: se guarda con el proyecto (tabla propia en el
@@ -73,6 +102,8 @@ internal sealed class CubicacionSectorService
         parent.HasPendingChanges = true;
         parent.SaveStatusText = "Cambios sin guardar";
         session.MarkDirty("hoja_cubicacion");
+        parent.HasPendingChanges = true;
+        parent.SaveStatusText = "Cambios sin guardar";
     }
 
     public void ManageZonas()

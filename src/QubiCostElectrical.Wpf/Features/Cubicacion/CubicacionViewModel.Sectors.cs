@@ -64,8 +64,13 @@ public sealed partial class CubicacionViewModel
     // ~/.claude/plans/glittery-stargazing-hippo.md) — este archivo queda como el punto de
     // contacto público que CubicacionView.xaml.cs, CubicacionRightPanelVm y el resto de los
     // partials ya conocen, sin cambiar ninguna firma.
+
+
     public void PickSectorValueFromHojaCubicacion(CubicacionRowVm row, int absoluteOffset)
         => sectorService.PickSectorValueFromHojaCubicacion(row, absoluteOffset);
+
+    public void PickQuantityFromHojaCubicacion(CubicacionRowVm row)
+        => sectorService.PickQuantityFromHojaCubicacion(row);
 
     internal void InitializeSectorRow(CubicacionRowVm row) => sectorService.InitializeSectorRow(row);
 

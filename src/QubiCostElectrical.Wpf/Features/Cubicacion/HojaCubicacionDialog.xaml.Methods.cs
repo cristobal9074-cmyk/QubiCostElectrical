@@ -726,6 +726,9 @@ public partial class HojaCubicacionDialog : Window
                 !string.IsNullOrWhiteSpace(fila.SumaDisplay) &&
                 decimal.TryParse(fila.SumaDisplay.Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal picked))
             {
+                fila.IsPicked = true;
+                if (fila.Owner != null)
+                    fila.Owner.IsPicked = fila.Owner.Filas.Where(f => !f.IsLabelRow).All(f => f.IsPicked);
                 PickedValue = picked;
                 DialogResult = true;
                 Close();
@@ -924,6 +927,12 @@ public partial class HojaCubicacionDialog : Window
         noSumaForLabelRow.Setters.Add(new Setter(Control.ForegroundProperty, Brushes.Transparent));
         sumaCellStyle.Triggers.Add(noSumaForLabelRow);
 
+        var pickedTrigger = new DataTrigger { Binding = new Binding(nameof(HojaCubicacionFilaVm.IsPicked)), Value = true };
+        pickedTrigger.Setters.Add(new Setter(Control.BackgroundProperty, (Brush)Application.Current.FindResource("Brush.BlueSoft")));
+        pickedTrigger.Setters.Add(new Setter(Control.ForegroundProperty, (Brush)Application.Current.FindResource("Brush.Blue")));
+        pickedTrigger.Setters.Add(new Setter(FrameworkElement.ToolTipProperty, "✓ Total transferido y llevado al cubicador"));
+        sumaCellStyle.Triggers.Add(pickedTrigger);
+
         if (IsPickMode)
         {
             sumaCellStyle.Setters.Add(new Setter(FrameworkElement.CursorProperty, Cursors.Hand));
@@ -1057,8 +1066,41 @@ public partial class HojaCubicacionDialog : Window
         return last is '=' or '+' or '-' or '*' or '/' or '^' or '%' or '(' or ',' or ';' or ':';
     }
 
+    private void OnSubtotalBadgeClick(object sender, MouseButtonEventArgs e)
+    {
+        if (!IsPickMode) return;
+        if (sender is FrameworkElement elem && elem.Tag is HojaCubicacionItemVm item && item.Subtotal > 0)
+        {
+            item.IsPicked = true;
+            foreach (var f in item.Filas.Where(f => !f.IsLabelRow))
+                f.IsPicked = true;
+
+            PickedValue = item.Subtotal;
+            DialogResult = true;
+            Close();
+            e.Handled = true;
+        }
+    }
+
     private void OnCloseClick(object sender, RoutedEventArgs e)
     {
+        if (IsPickMode && PickedValue == null)
+        {
+            foreach (var kvp in itemGrids)
+            {
+                if (kvp.Value.SelectedItem is HojaCubicacionFilaVm selectedFila && !selectedFila.IsLabelRow)
+                {
+                    if (decimal.TryParse(selectedFila.SumaDisplay.Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal picked))
+                    {
+                        selectedFila.IsPicked = true;
+                        if (selectedFila.Owner != null)
+                            selectedFila.Owner.IsPicked = selectedFila.Owner.Filas.Where(f => !f.IsLabelRow).All(f => f.IsPicked);
+                        PickedValue = picked;
+                        break;
+                    }
+                }
+            }
+        }
         DialogResult = true;
     }
 }
