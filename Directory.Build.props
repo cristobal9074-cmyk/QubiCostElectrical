@@ -1,9 +1,9 @@
 <Project>
   <PropertyGroup>
-    <VersionPrefix>1.1.2</VersionPrefix>
-    <AssemblyVersion>1.1.2.0</AssemblyVersion>
-    <FileVersion>1.1.2.0</FileVersion>
-    <InformationalVersion>1.1.2</InformationalVersion>
+    <VersionPrefix>1.1.4</VersionPrefix>
+    <AssemblyVersion>1.1.4.0</AssemblyVersion>
+    <FileVersion>1.1.4.0</FileVersion>
+    <InformationalVersion>1.1.4</InformationalVersion>
     <Company>Qubi Cost</Company>
     <Authors>Qubi Cost</Authors>
     <Product>Qubi Cost Electrical</Product>
