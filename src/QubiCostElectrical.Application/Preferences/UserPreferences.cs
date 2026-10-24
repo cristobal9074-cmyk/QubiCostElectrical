@@ -98,6 +98,9 @@ public sealed class UserPreferences
     /// <summary>Rutas de proyectos fijados al inicio con PIN (permanecen arriba).</summary>
     public List<string> PinnedRecentFiles { get; set; } = new();
 
+    /// <summary>Indica si el historial de proyectos recientes fue inicializado o migrado desde instalaciones previas.</summary>
+    public bool RecentProjectsInitialized { get; set; } = false;
+
     /// <summary>Estado expandido/colapsado de cada grupo del sidebar por clave de módulo.</summary>
     public Dictionary<string, bool> SidebarGroupsExpanded { get; set; } = new();
 

@@ -65,14 +65,40 @@ public class UserPreferencesStore : IUserPreferencesStore
         {
             string path = PreferencesFilePath;
             if (!File.Exists(path))
+            {
+                var initialized = CreateInitialPreferences();
+                if (initialized != null)
+                {
+                    Save(initialized);
+                    return initialized;
+                }
                 return new UserPreferences();
+            }
 
             string json = File.ReadAllText(path, Encoding.UTF8);
             if (string.IsNullOrWhiteSpace(json))
                 return new UserPreferences();
 
             var prefs = JsonSerializer.Deserialize<UserPreferences>(json, _opts);
-            return prefs is null ? new UserPreferences() : Sanitize(prefs);
+            var sanitized = prefs is null ? new UserPreferences() : Sanitize(prefs);
+
+            // Si los proyectos recientes aún no se han inicializado o están vacíos (por ejemplo tras una actualización o perfil nuevo),
+            // intentar rescatar de perfil hermano / instalación previa o auto-descubrir de la carpeta de presupuestos (estilo Office 365)
+            if (sanitized.RecentFiles.Count == 0 && !sanitized.RecentProjectsInitialized && preferencesFilePathOverride == null)
+            {
+                if (TryEnrichRecentProjects(sanitized))
+                {
+                    sanitized.RecentProjectsInitialized = true;
+                    Save(sanitized);
+                }
+            }
+            else if (sanitized.RecentFiles.Count > 0 && !sanitized.RecentProjectsInitialized)
+            {
+                sanitized.RecentProjectsInitialized = true;
+                Save(sanitized);
+            }
+
+            return sanitized;
         }
         catch (Exception ex)
         {
@@ -80,6 +106,167 @@ public class UserPreferencesStore : IUserPreferencesStore
             AppLog.Warning("Preferencias", "No se pudieron leer las preferencias; se usan los valores por defecto", ex);
             return new UserPreferences();
         }
+    }
+
+    private static UserPreferences? CreateInitialPreferences()
+    {
+        if (preferencesFilePathOverride != null)
+            return null;
+
+        var prefs = new UserPreferences();
+        if (TryEnrichRecentProjects(prefs))
+        {
+            prefs.RecentProjectsInitialized = true;
+            return prefs;
+        }
+
+        return null;
+    }
+
+    private static bool TryEnrichRecentProjects(UserPreferences prefs)
+    {
+        if (preferencesFilePathOverride != null)
+            return false;
+
+        bool modified = false;
+
+        // 1. Intentar importar de perfiles hermanos o legados si existen
+        foreach (var candidate in GetLegacyPreferencePaths())
+        {
+            if (File.Exists(candidate))
+            {
+                try
+                {
+                    var text = File.ReadAllText(candidate, Encoding.UTF8);
+                    var legacy = JsonSerializer.Deserialize<UserPreferences>(text, _opts);
+                    if (legacy != null && legacy.RecentFiles.Count > 0)
+                    {
+                        foreach (var f in legacy.RecentFiles)
+                        {
+                            if (!string.IsNullOrWhiteSpace(f) && File.Exists(f) && !prefs.RecentFiles.Contains(f, StringComparer.OrdinalIgnoreCase))
+                            {
+                                prefs.RecentFiles.Add(f);
+                                modified = true;
+                            }
+                        }
+                        foreach (var p in legacy.PinnedRecentFiles)
+                        {
+                            if (!string.IsNullOrWhiteSpace(p) && File.Exists(p) && !prefs.PinnedRecentFiles.Contains(p, StringComparer.OrdinalIgnoreCase))
+                            {
+                                prefs.PinnedRecentFiles.Add(p);
+                                modified = true;
+                            }
+                        }
+                        if (string.IsNullOrWhiteSpace(prefs.LastUserEmail) && !string.IsNullOrWhiteSpace(legacy.LastUserEmail))
+                        {
+                            prefs.LastUserEmail = legacy.LastUserEmail;
+                            modified = true;
+                        }
+                    }
+                }
+                catch { }
+            }
+            if (prefs.RecentFiles.Count > 0)
+                break;
+        }
+
+        // 2. Si todavía está vacío, auto-descubrir proyectos locales (.qce) como Office 365
+        if (prefs.RecentFiles.Count == 0)
+        {
+            var discovered = AutoDiscoverProjects(prefs.DefaultProjectFolder);
+            if (discovered.Count > 0)
+            {
+                prefs.RecentFiles.AddRange(discovered);
+                modified = true;
+            }
+        }
+
+        return modified;
+    }
+
+    private static IEnumerable<string> GetLegacyPreferencePaths()
+    {
+        string local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        if (ProductPaths.IsDevelopmentProfile())
+        {
+            yield return Path.Combine(local, ProductIdentity.AppDataFolderName, FileName);
+            yield return Path.Combine(local, "QubiCostElectrical-Development", FileName);
+        }
+        else
+        {
+            yield return Path.Combine(local, "QubiCostElectrical-Development", FileName);
+        }
+        yield return Path.Combine(local, ProductIdentity.LegacyAppDataFolderName, FileName);
+        yield return Path.Combine(local, "PresupuestoElectricoPRO", FileName);
+    }
+
+    private static List<string> AutoDiscoverProjects(string? defaultFolder)
+    {
+        var candidatesFolders = new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(defaultFolder) && Directory.Exists(defaultFolder))
+            candidatesFolders.Add(defaultFolder);
+
+        string myDocs = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+        if (!string.IsNullOrWhiteSpace(myDocs) && Directory.Exists(myDocs))
+        {
+            string p1 = Path.Combine(myDocs, "Presupuestos Electricos");
+            if (Directory.Exists(p1)) candidatesFolders.Add(p1);
+
+            string p2 = Path.Combine(myDocs, "Qubi Cost Electrical");
+            if (Directory.Exists(p2)) candidatesFolders.Add(p2);
+
+            string p3 = Path.Combine(myDocs, "QubiCostElectrical");
+            if (Directory.Exists(p3)) candidatesFolders.Add(p3);
+
+            candidatesFolders.Add(myDocs);
+        }
+
+        var foundFiles = new List<FileInfo>();
+        foreach (var folder in candidatesFolders)
+        {
+            try
+            {
+                var dir = new DirectoryInfo(folder);
+                var files = dir.GetFiles("*.qce", SearchOption.TopDirectoryOnly);
+                foreach (var f in files)
+                {
+                    if (IsCandidateProjectFile(f))
+                        foundFiles.Add(f);
+                }
+            }
+            catch { }
+        }
+
+        return foundFiles
+            .GroupBy(f => f.FullName, StringComparer.OrdinalIgnoreCase)
+            .Select(g => g.First())
+            .OrderByDescending(f => f.LastWriteTimeUtc)
+            .Take(8)
+            .Select(f => f.FullName)
+            .ToList();
+    }
+
+    private static bool IsCandidateProjectFile(FileInfo file)
+    {
+        if (!file.Extension.Equals(".qce", StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        string name = file.Name;
+        if (name.StartsWith(".", StringComparison.Ordinal))
+            return false;
+        if (name.Contains(".autosave", StringComparison.OrdinalIgnoreCase))
+            return false;
+        if (name.Contains(".bak", StringComparison.OrdinalIgnoreCase))
+            return false;
+        if (name.Contains(".pre-", StringComparison.OrdinalIgnoreCase))
+            return false;
+        if (name.Contains(".backup", StringComparison.OrdinalIgnoreCase))
+            return false;
+        if (name.Contains(".sobrescrito", StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        return true;
     }
 
     // ── Guardado ──────────────────────────────────────────────────────────
@@ -199,5 +386,4 @@ public class UserPreferencesStore : IUserPreferencesStore
     {
         public void Dispose() => preferencesFilePathOverride = previous;
     }
-
 }
