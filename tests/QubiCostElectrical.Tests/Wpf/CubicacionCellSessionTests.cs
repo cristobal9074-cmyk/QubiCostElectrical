@@ -170,6 +170,33 @@ public class CubicacionCellSessionTests
     }
 
     [Fact]
+    public void Grid_UpEnFila0_Editando_NoSubeACabecera()
+    {
+        var d = CubicacionCellSession.Decide(Grid(CubicacionKey.Up) with { RowIndex = 0, GridEditing = true, IgnoreShortcut = true });
+        Assert.NotEqual(CubicacionCellAction.FocusHeader, d.Action);
+    }
+
+    [Fact]
+    public void Grid_UpEnFila0_ConAutocompleteAbierto_Pasa()
+    {
+        var d = CubicacionCellSession.Decide(Grid(CubicacionKey.Up) with { RowIndex = 0, AutocompleteOpen = true });
+        Assert.Equal(CubicacionCellAction.PassThrough, d.Action);
+    }
+
+    [Fact]
+    public void CodigoEditor_Up_ConAutocompleteAbierto_MueveAutocompleteHaciaArriba()
+    {
+        var d = CubicacionCellSession.Decide(new CubicacionCellInput
+        {
+            Source = CubicacionInputSource.CodigoEditor,
+            Key = CubicacionKey.Up,
+            AutocompleteOpen = true
+        });
+        Assert.Equal(CubicacionCellAction.MoveAutocomplete, d.Action);
+        Assert.Equal(-1, d.Delta);
+    }
+
+    [Fact]
     public void Grid_UpEnFila2_PrimeroOfreceElAtajo()
     {
         var d = CubicacionCellSession.Decide(Grid(CubicacionKey.Up) with { RowIndex = 2 });

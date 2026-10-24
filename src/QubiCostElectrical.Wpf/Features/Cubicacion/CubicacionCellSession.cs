@@ -232,10 +232,10 @@ public static class CubicacionCellSession
 
     private static CubicacionCellDecision DecideGrid(CubicacionCellInput input)
     {
-        if (input.EventFromOutsideCell)
+        if (input.EventFromOutsideCell || input.AutocompleteOpen)
             return CubicacionCellDecision.Pass;
 
-        if (input.Key == CubicacionKey.Up && input.Modifiers == CubicacionModifiers.None && input.RowIndex <= 0)
+        if (!input.GridEditing && input.Key == CubicacionKey.Up && input.Modifiers == CubicacionModifiers.None && input.RowIndex <= 0)
             return CubicacionCellDecision.Of(
                 CubicacionCellAction.FocusHeader,
                 input.QtyColumn ? CubicacionMoveTarget.CantHeader : CubicacionMoveTarget.UnidadHeader);

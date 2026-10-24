@@ -302,7 +302,8 @@ public partial class CubicacionView
             CanStartSectorPick = editor != null && CubicacionSectorFormulaController.CanStartSectorPick(editor),
             FocusedEditorIsTextBox = editor != null,
             SectorSlot = column == null ? -1 : _sectorColumns.IndexOf(column),
-            OnCodigoColumn = ReferenceEquals(column, CodigoColumn)
+            OnCodigoColumn = ReferenceEquals(column, CodigoColumn),
+            AutocompleteOpen = Vm.AutocompleteVisible
         };
     }
 
