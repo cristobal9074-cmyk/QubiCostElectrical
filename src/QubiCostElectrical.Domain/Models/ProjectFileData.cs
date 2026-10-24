@@ -96,6 +96,7 @@ public sealed class HojaCubicacionFila
     public List<string> Valores { get; set; } = new();
     public bool IsLabelRow { get; set; }
     public bool IsPicked { get; set; }
+    public string? PickedTargetKey { get; set; }
 }
 
 /// <summary>Un ítem (partida) a cubicar dentro de la Hoja de Cubicación — herramienta de apoyo
@@ -108,6 +109,7 @@ public sealed class HojaCubicacionItem
     public string Titulo { get; set; } = "";
     public string Unidad { get; set; } = "ml";
     public bool IsPicked { get; set; }
+    public string? PickedTargetKey { get; set; }
     public int Orden { get; set; }
     public List<HojaCubicacionFila> Filas { get; set; } = new();
 }

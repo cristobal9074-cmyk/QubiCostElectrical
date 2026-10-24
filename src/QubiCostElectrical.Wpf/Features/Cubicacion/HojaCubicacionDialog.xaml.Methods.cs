@@ -18,9 +18,9 @@ namespace QubiCostElectrical.Wpf.Features.Cubicacion;
 public partial class HojaCubicacionDialog : Window
 {
     public static (decimal? PickedValue, List<HojaCubicacionItemVm> Items) PickValue(
-        Window? owner, IEnumerable<HojaCubicacionItemVm>? existingItems)
+        Window? owner, IEnumerable<HojaCubicacionItemVm>? existingItems, string? targetKey = null)
     {
-        var dialog = new HojaCubicacionDialog(existingItems) { Owner = owner, IsPickMode = true };
+        var dialog = new HojaCubicacionDialog(existingItems) { Owner = owner, IsPickMode = true, TargetKey = targetKey };
         dialog.ApplyPickModeChrome();
         dialog.ShowDialog();
         return (dialog.PickedValue, dialog.Items.ToList());
@@ -118,25 +118,16 @@ public partial class HojaCubicacionDialog : Window
         grid.PreviewMouseLeftButtonDown -= OnItemGridPreviewMouseLeftButtonDown;
         grid.PreviewMouseLeftButtonDown += OnItemGridPreviewMouseLeftButtonDown;
 
+        grid.PreviewMouseRightButtonDown -= OnItemGridPreviewMouseRightButtonDown;
+        grid.PreviewMouseRightButtonDown += OnItemGridPreviewMouseRightButtonDown;
+        grid.ContextMenuOpening -= OnItemGridContextMenuOpening;
+        grid.ContextMenuOpening += OnItemGridContextMenuOpening;
+
         Dispatcher.BeginInvoke(new Action(() =>
         {
             if (grid.Items.Count > 0 && grid.Columns.Count > 2)
                 DataGridExcelNavigation.FocusCell(grid, 0, grid.Columns[2]);
         }), System.Windows.Threading.DispatcherPriority.Loaded);
-    }
-
-    private sealed class FormulaPointModeState
-    {
-        public DataGrid Grid { get; set; } = null!;
-        public HojaCubicacionItemVm Item { get; set; } = null!;
-        public TextBox Editor { get; set; } = null!;
-        public int EditRowIndex { get; set; }
-        public int EditColIndex { get; set; }
-        public int TargetRowIndex { get; set; }
-        public int TargetColIndex { get; set; }
-        public int PrefixLength { get; set; }
-        public bool IsActive { get; set; }
-        public bool IsFormulaBar { get; set; }
     }
 
     private FormulaPointModeState? _pointMode;
@@ -183,18 +174,10 @@ public partial class HojaCubicacionDialog : Window
 
         switch (key)
         {
-            case Key.Left:
-                targetCol--;
-                break;
-            case Key.Right:
-                targetCol++;
-                break;
-            case Key.Up:
-                targetRow--;
-                break;
-            case Key.Down:
-                targetRow++;
-                break;
+            case Key.Left: targetCol--; break;
+            case Key.Right: targetCol++; break;
+            case Key.Up: targetRow--; break;
+            case Key.Down: targetRow++; break;
         }
 
         if (targetCol < 2) targetCol = 2;
@@ -583,36 +566,7 @@ public partial class HojaCubicacionDialog : Window
     }
 
     private static void UpdateFormulaPreview(TextBlock? previewBlock, string raw)
-    {
-        if (previewBlock == null) return;
-        string text = (raw ?? "").Trim();
-        if (string.IsNullOrEmpty(text))
-        {
-            previewBlock.Text = "";
-            return;
-        }
-
-        try
-        {
-            var singleRow = new List<string> { text };
-            var eval = HojaCubicacionFormulaEngine.EvaluateRow(singleRow);
-            if (eval.Cells.Count > 0 && eval.Cells[0].Success)
-            {
-                previewBlock.Text = $"= {eval.Cells[0].DisplayText}";
-                previewBlock.Foreground = (Brush)Application.Current.FindResource("Brush.Green");
-            }
-            else if (eval.Cells.Count > 0)
-            {
-                previewBlock.Text = eval.Cells[0].DisplayText;
-                previewBlock.Foreground = (Brush)Application.Current.FindResource("Brush.Red");
-            }
-        }
-        catch
-        {
-            previewBlock.Text = "¡ERROR!";
-            previewBlock.Foreground = (Brush)Application.Current.FindResource("Brush.Red");
-        }
-    }
+        => HojaCubicacionGridHelpers.UpdateFormulaPreview(previewBlock, raw);
 
     private void OnFormulaBarKeyDown(object sender, KeyEventArgs e)
     {
@@ -685,32 +639,7 @@ public partial class HojaCubicacionDialog : Window
         if (itemRoot == null) return;
         var inputBox = FindDescendantByName<TextBox>(itemRoot, "FormulaBarInput");
         if (inputBox == null || !inputBox.IsEnabled) return;
-
-        var menu = new ContextMenu();
-
-        void AddMenuItem(string header, string template, int cursorOffset)
-        {
-            var mi = new MenuItem { Header = header };
-            mi.Click += (_, _) =>
-            {
-                inputBox.Focus();
-                inputBox.Text = template;
-                inputBox.CaretIndex = cursorOffset;
-            };
-            menu.Items.Add(mi);
-        }
-
-        AddMenuItem("SUMA(rango) — Sumar serie o rango continuo", "=SUMA(C:E)", 6);
-        AddMenuItem("PROMEDIO(rango) — Promedio de celdas", "=PROMEDIO(C:E)", 10);
-        AddMenuItem("MIN(rango) — Valor mínimo", "=MIN(C:E)", 5);
-        AddMenuItem("MAX(rango) — Valor máximo", "=MAX(C:E)", 5);
-        AddMenuItem("REDONDEAR(celda; dec) — Redondeo con decimales", "=REDONDEAR(C; 2)", 11);
-        AddMenuItem("PORCENTAJE (%) — ej. C*15%", "* 15%", 0);
-        AddMenuItem("CONTAR(rango) — Contar celdas con datos", "=CONTAR(C:E)", 8);
-
-        menu.PlacementTarget = btn;
-        menu.Placement = PlacementMode.Bottom;
-        menu.IsOpen = true;
+        HojaCubicacionGridHelpers.ShowFxMenu(btn, inputBox);
     }
 
     // ── Shift+clic: selección rectangular ──
@@ -726,10 +655,7 @@ public partial class HojaCubicacionDialog : Window
                 !string.IsNullOrWhiteSpace(fila.SumaDisplay) &&
                 decimal.TryParse(fila.SumaDisplay.Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal picked))
             {
-                fila.IsPicked = true;
-                if (fila.Owner != null)
-                    fila.Owner.IsPicked = fila.Owner.Filas.Where(f => !f.IsLabelRow).All(f => f.IsPicked);
-                PickedValue = picked;
+                MarkAsPicked(fila, picked);
                 DialogResult = true;
                 Close();
                 e.Handled = true;
@@ -828,62 +754,16 @@ public partial class HojaCubicacionDialog : Window
     }
 
     private static DataGridCellInfo? HitTestCell(DataGrid grid, Point point)
-    {
-        var hit = VisualTreeHelper.HitTest(grid, point)?.VisualHit;
-        if (hit == null) return null;
-
-        var cell = hit as DataGridCell ?? FindAncestor<DataGridCell>(hit);
-        if (cell?.Column == null) return null;
-
-        var row = FindAncestor<DataGridRow>(cell);
-        if (row == null) return null;
-
-        return new DataGridCellInfo(row.Item, cell.Column);
-    }
+        => HojaCubicacionGridHelpers.HitTestCell(grid, point);
 
     private static void SelectCellRange(DataGrid grid, DataGridCellInfo anchor, DataGridCellInfo current)
-    {
-        var columns = grid.Columns.Where(c => c.Visibility == Visibility.Visible).OrderBy(c => c.DisplayIndex).ToList();
-        int anchorRow = grid.Items.IndexOf(anchor.Item);
-        int currentRow = grid.Items.IndexOf(current.Item);
-        int anchorCol = columns.IndexOf(anchor.Column);
-        int currentCol = columns.IndexOf(current.Column);
-        if (anchorRow < 0 || currentRow < 0 || anchorCol < 0 || currentCol < 0) return;
-
-        int rowMin = Math.Min(anchorRow, currentRow);
-        int rowMax = Math.Max(anchorRow, currentRow);
-        int colMin = Math.Min(anchorCol, currentCol);
-        int colMax = Math.Max(anchorCol, currentCol);
-
-        grid.SelectedCells.Clear();
-        for (int r = rowMin; r <= rowMax; r++)
-        {
-            var item = grid.Items[r];
-            for (int c = colMin; c <= colMax; c++)
-                grid.SelectedCells.Add(new DataGridCellInfo(item, columns[c]));
-        }
-
-        grid.CurrentCell = current;
-    }
+        => HojaCubicacionGridHelpers.SelectCellRange(grid, anchor, current);
 
     private static T? FindAncestor<T>(DependencyObject child) where T : DependencyObject
-    {
-        return QubiCostElectrical.Wpf.Infrastructure.VisualTreeHelperSafe.FindAncestor<T>(child);
-    }
+        => HojaCubicacionGridHelpers.FindAncestor<T>(child);
 
     private static T? FindDescendantByName<T>(DependencyObject root, string? name) where T : FrameworkElement
-    {
-        int count = VisualTreeHelper.GetChildrenCount(root);
-        for (int i = 0; i < count; i++)
-        {
-            var child = VisualTreeHelper.GetChild(root, i);
-            if (child is T match && (name == null || match.Name == name))
-                return match;
-            var found = FindDescendantByName<T>(child, name);
-            if (found != null) return found;
-        }
-        return null;
-    }
+        => HojaCubicacionGridHelpers.FindDescendantByName<T>(root, name);
 
     private void BuildColumns(DataGrid grid, HojaCubicacionItemVm item)
     {
@@ -918,9 +798,9 @@ public partial class HojaCubicacionDialog : Window
             IsReadOnly = true
         };
         var sumaCellStyle = new Style(typeof(DataGridCell), (Style)Application.Current.FindResource("DataGridCell.Excel"));
-        sumaCellStyle.Setters.Add(new Setter(Control.BackgroundProperty, (Brush)Application.Current.FindResource("Brush.GreenSoft")));
-        sumaCellStyle.Setters.Add(new Setter(Control.ForegroundProperty, (Brush)Application.Current.FindResource("Brush.Green")));
-        sumaCellStyle.Setters.Add(new Setter(Control.FontWeightProperty, FontWeights.Bold));
+        sumaCellStyle.Setters.Add(new Setter(Control.BackgroundProperty, (Brush)Application.Current.FindResource("Brush.Surface2")));
+        sumaCellStyle.Setters.Add(new Setter(Control.ForegroundProperty, (Brush)Application.Current.FindResource("Brush.Ink")));
+        sumaCellStyle.Setters.Add(new Setter(Control.FontWeightProperty, FontWeights.SemiBold));
 
         var noSumaForLabelRow = new DataTrigger { Binding = new Binding(nameof(HojaCubicacionFilaVm.IsLabelRow)), Value = true };
         noSumaForLabelRow.Setters.Add(new Setter(Control.BackgroundProperty, Brushes.Transparent));
@@ -928,15 +808,16 @@ public partial class HojaCubicacionDialog : Window
         sumaCellStyle.Triggers.Add(noSumaForLabelRow);
 
         var pickedTrigger = new DataTrigger { Binding = new Binding(nameof(HojaCubicacionFilaVm.IsPicked)), Value = true };
-        pickedTrigger.Setters.Add(new Setter(Control.BackgroundProperty, (Brush)Application.Current.FindResource("Brush.BlueSoft")));
-        pickedTrigger.Setters.Add(new Setter(Control.ForegroundProperty, (Brush)Application.Current.FindResource("Brush.Blue")));
-        pickedTrigger.Setters.Add(new Setter(FrameworkElement.ToolTipProperty, "✓ Total transferido y llevado al cubicador"));
+        pickedTrigger.Setters.Add(new Setter(Control.BackgroundProperty, (Brush)Application.Current.FindResource("Brush.Green")));
+        pickedTrigger.Setters.Add(new Setter(Control.ForegroundProperty, Brushes.White));
+        pickedTrigger.Setters.Add(new Setter(Control.FontWeightProperty, FontWeights.Bold));
+        pickedTrigger.Setters.Add(new Setter(FrameworkElement.ToolTipProperty, "✓ Total transferido al presupuesto (clic derecho para desmarcar)"));
         sumaCellStyle.Triggers.Add(pickedTrigger);
 
         if (IsPickMode)
         {
             sumaCellStyle.Setters.Add(new Setter(FrameworkElement.CursorProperty, Cursors.Hand));
-            sumaCellStyle.Setters.Add(new Setter(FrameworkElement.ToolTipProperty, "Clic para usar este valor en presupuesto"));
+            sumaCellStyle.Setters.Add(new Setter(FrameworkElement.ToolTipProperty, "Clic para usar este valor en presupuesto (se marcará en verde)"));
             var hover = new Trigger { Property = UIElement.IsMouseOverProperty, Value = true };
             hover.Setters.Add(new Setter(Control.BackgroundProperty, (Brush)Application.Current.FindResource("Brush.Green")));
             hover.Setters.Add(new Setter(Control.ForegroundProperty, Brushes.White));
@@ -1049,21 +930,173 @@ public partial class HojaCubicacionDialog : Window
     }
 
     private static bool IsFormulaOpenForCellReference(string text)
+        => HojaCubicacionGridHelpers.IsFormulaOpenForCellReference(text);
+
+    private void MarkAsPicked(HojaCubicacionFilaVm fila, decimal picked)
     {
-        if (string.IsNullOrWhiteSpace(text)) return false;
-        string t = text.Trim();
-        if (!t.StartsWith("=") && !t.StartsWith("+"))
+        if (!string.IsNullOrEmpty(TargetKey))
         {
-            if (t.Length > 0)
+            foreach (var it in items)
             {
-                char lastCh = t[^1];
-                return lastCh is '+' or '-' or '*' or '/' or '^' or '(' or ',' or ';' or ':';
+                if (it.PickedTargetKey == TargetKey)
+                {
+                    it.IsPicked = false;
+                    it.PickedTargetKey = null;
+                }
+                foreach (var f in it.Filas)
+                {
+                    if (f.PickedTargetKey == TargetKey)
+                    {
+                        f.IsPicked = false;
+                        f.PickedTargetKey = null;
+                    }
+                }
             }
-            return false;
         }
-        if (t.Length == 1) return true;
-        char last = t[^1];
-        return last is '=' or '+' or '-' or '*' or '/' or '^' or '%' or '(' or ',' or ';' or ':';
+
+        fila.IsPicked = true;
+        fila.PickedTargetKey = TargetKey;
+        if (fila.Owner != null)
+        {
+            fila.Owner.IsPicked = fila.Owner.Filas.Where(f => !f.IsLabelRow).All(f => f.IsPicked);
+        }
+        PickedValue = picked;
+    }
+
+    private void MarkItemAsPicked(HojaCubicacionItemVm item)
+    {
+        if (!string.IsNullOrEmpty(TargetKey))
+        {
+            foreach (var it in items)
+            {
+                if (it.PickedTargetKey == TargetKey)
+                {
+                    it.IsPicked = false;
+                    it.PickedTargetKey = null;
+                }
+                foreach (var f in it.Filas)
+                {
+                    if (f.PickedTargetKey == TargetKey)
+                    {
+                        f.IsPicked = false;
+                        f.PickedTargetKey = null;
+                    }
+                }
+            }
+        }
+
+        item.IsPicked = true;
+        item.PickedTargetKey = TargetKey;
+        foreach (var f in item.Filas.Where(f => !f.IsLabelRow))
+        {
+            f.IsPicked = true;
+            f.PickedTargetKey = TargetKey;
+        }
+
+        PickedValue = item.Subtotal;
+    }
+
+    private void OnClearAllPickedClick(object sender, RoutedEventArgs e)
+    {
+        foreach (var it in items)
+        {
+            it.IsPicked = false;
+            it.PickedTargetKey = null;
+            foreach (var f in it.Filas)
+            {
+                f.IsPicked = false;
+                f.PickedTargetKey = null;
+            }
+        }
+    }
+
+    private void OnItemGridPreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        var grid = (DataGrid)sender;
+        var hit = HitTestCell(grid, e.GetPosition(grid));
+        if (hit?.Item is HojaCubicacionFilaVm fila)
+        {
+            grid.SelectedItem = fila;
+        }
+    }
+
+    private void OnItemGridContextMenuOpening(object sender, ContextMenuEventArgs e)
+    {
+        var grid = (DataGrid)sender;
+        if (grid.SelectedItem is not HojaCubicacionFilaVm fila || fila.IsLabelRow)
+        {
+            e.Handled = true;
+            return;
+        }
+
+        var item = fila.Owner;
+        var menu = new ContextMenu();
+
+        if (fila.IsPicked)
+        {
+            var miUnpick = new MenuItem { Header = "✖ Desmarcar fila (quitar marca de tomado)" };
+            miUnpick.Click += (_, _) =>
+            {
+                fila.IsPicked = false;
+                fila.PickedTargetKey = null;
+                if (item != null)
+                    item.IsPicked = item.Filas.Where(f => !f.IsLabelRow).All(f => f.IsPicked);
+            };
+            menu.Items.Add(miUnpick);
+        }
+        else
+        {
+            var miPick = new MenuItem { Header = "✓ Marcar fila como tomada (verde)" };
+            miPick.Click += (_, _) =>
+            {
+                fila.IsPicked = true;
+                if (item != null)
+                    item.IsPicked = item.Filas.Where(f => !f.IsLabelRow).All(f => f.IsPicked);
+            };
+            menu.Items.Add(miPick);
+        }
+
+        if (item != null)
+        {
+            menu.Items.Add(new Separator());
+            var miUnpickAll = new MenuItem { Header = "✖ Desmarcar todas las filas de esta partida" };
+            miUnpickAll.Click += (_, _) =>
+            {
+                item.IsPicked = false;
+                item.PickedTargetKey = null;
+                foreach (var f in item.Filas)
+                {
+                    f.IsPicked = false;
+                    f.PickedTargetKey = null;
+                }
+            };
+            menu.Items.Add(miUnpickAll);
+
+            var miPickAll = new MenuItem { Header = "✓ Marcar todas las filas de esta partida como tomadas" };
+            miPickAll.Click += (_, _) =>
+            {
+                item.IsPicked = true;
+                foreach (var f in item.Filas.Where(f => !f.IsLabelRow))
+                    f.IsPicked = true;
+            };
+            menu.Items.Add(miPickAll);
+        }
+
+        if (IsPickMode && !string.IsNullOrWhiteSpace(fila.SumaDisplay) &&
+            decimal.TryParse(fila.SumaDisplay.Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal val))
+        {
+            menu.Items.Add(new Separator());
+            var miUse = new MenuItem { Header = $"🎯 Transferir este total ({fila.SumaDisplay}) al presupuesto", FontWeight = FontWeights.Bold };
+            miUse.Click += (_, _) =>
+            {
+                MarkAsPicked(fila, val);
+                DialogResult = true;
+                Close();
+            };
+            menu.Items.Add(miUse);
+        }
+
+        grid.ContextMenu = menu;
     }
 
     private void OnSubtotalBadgeClick(object sender, MouseButtonEventArgs e)
@@ -1071,11 +1104,7 @@ public partial class HojaCubicacionDialog : Window
         if (!IsPickMode) return;
         if (sender is FrameworkElement elem && elem.Tag is HojaCubicacionItemVm item && item.Subtotal > 0)
         {
-            item.IsPicked = true;
-            foreach (var f in item.Filas.Where(f => !f.IsLabelRow))
-                f.IsPicked = true;
-
-            PickedValue = item.Subtotal;
+            MarkItemAsPicked(item);
             DialogResult = true;
             Close();
             e.Handled = true;
@@ -1092,10 +1121,7 @@ public partial class HojaCubicacionDialog : Window
                 {
                     if (decimal.TryParse(selectedFila.SumaDisplay.Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal picked))
                     {
-                        selectedFila.IsPicked = true;
-                        if (selectedFila.Owner != null)
-                            selectedFila.Owner.IsPicked = selectedFila.Owner.Filas.Where(f => !f.IsLabelRow).All(f => f.IsPicked);
-                        PickedValue = picked;
+                        MarkAsPicked(selectedFila, picked);
                         break;
                     }
                 }

@@ -42,7 +42,8 @@ internal sealed class CubicacionSectorService
             return;
 
         var itemsGuardados = session.HojaCubicacion.Select(HojaCubicacionItemVm.FromSaved).ToList();
-        var (pickedValue, itemsActuales) = HojaCubicacionDialog.PickValue(System.Windows.Application.Current.MainWindow, itemsGuardados);
+        string targetKey = $"row:{row.Source.Id}:sec:{absoluteOffset}";
+        var (pickedValue, itemsActuales) = HojaCubicacionDialog.PickValue(System.Windows.Application.Current.MainWindow, itemsGuardados, targetKey);
 
         session.HojaCubicacion.Clear();
         session.HojaCubicacion.AddRange(itemsActuales.Select(vm => vm.ToSaved()));
@@ -63,7 +64,8 @@ internal sealed class CubicacionSectorService
             return;
 
         var itemsGuardados = session.HojaCubicacion.Select(HojaCubicacionItemVm.FromSaved).ToList();
-        var (pickedValue, itemsActuales) = HojaCubicacionDialog.PickValue(System.Windows.Application.Current.MainWindow, itemsGuardados);
+        string targetKey = $"row:{row.Source.Id}:qty";
+        var (pickedValue, itemsActuales) = HojaCubicacionDialog.PickValue(System.Windows.Application.Current.MainWindow, itemsGuardados, targetKey);
 
         session.HojaCubicacion.Clear();
         session.HojaCubicacion.AddRange(itemsActuales.Select(vm => vm.ToSaved()));

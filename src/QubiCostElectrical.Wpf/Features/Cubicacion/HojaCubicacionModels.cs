@@ -48,6 +48,7 @@ public sealed class HojaCubicacionFilaVm : INotifyPropertyChanged
     private decimal suma;
     private string sumaDisplay = "";
     private bool isPicked;
+    private string? pickedTargetKey;
 
     public HojaCubicacionFilaVm(string descripcion, int columnCount, bool isLabelRow = false)
     {
@@ -95,6 +96,12 @@ public sealed class HojaCubicacionFilaVm : INotifyPropertyChanged
     {
         get => isPicked;
         set { if (isPicked != value) { isPicked = value; Raise(nameof(IsPicked)); } }
+    }
+
+    public string? PickedTargetKey
+    {
+        get => pickedTargetKey;
+        set { if (pickedTargetKey != value) { pickedTargetKey = value; Raise(nameof(PickedTargetKey)); } }
     }
 
     public decimal Suma
@@ -156,6 +163,7 @@ public sealed class HojaCubicacionItemVm : INotifyPropertyChanged
     private string unidad;
     private bool isCollapsed;
     private bool isPicked;
+    private string? pickedTargetKey;
 
     public HojaCubicacionItemVm(string codigo, string titulo, string unidad, int columnCount)
         : this(codigo, titulo, unidad, columnCount, createDefaultRows: true)
@@ -193,7 +201,8 @@ public sealed class HojaCubicacionItemVm : INotifyPropertyChanged
 
         var item = new HojaCubicacionItemVm(saved.Codigo ?? "", saved.Titulo ?? "", saved.Unidad ?? "ml", columnCount, createDefaultRows: false)
         {
-            IsPicked = saved.IsPicked
+            IsPicked = saved.IsPicked,
+            PickedTargetKey = saved.PickedTargetKey
         };
 
         if (saved.Filas.Count == 0)
@@ -219,18 +228,25 @@ public sealed class HojaCubicacionItemVm : INotifyPropertyChanged
         Titulo = Titulo,
         Unidad = Unidad,
         IsPicked = IsPicked,
+        PickedTargetKey = PickedTargetKey,
         Filas = Filas.Select(f => new HojaCubicacionFila
         {
             Descripcion = f.Descripcion,
             IsLabelRow = f.IsLabelRow,
             IsPicked = f.IsPicked,
+            PickedTargetKey = f.PickedTargetKey,
             Valores = f.Valores.ToList()
         }).ToList()
     };
 
     private HojaCubicacionFilaVm AddFilaFromSaved(HojaCubicacionFila saved, int columnCount)
     {
-        var fila = new HojaCubicacionFilaVm(saved.Descripcion ?? "", columnCount, saved.IsLabelRow) { Owner = this, IsPicked = saved.IsPicked };
+        var fila = new HojaCubicacionFilaVm(saved.Descripcion ?? "", columnCount, saved.IsLabelRow)
+        {
+            Owner = this,
+            IsPicked = saved.IsPicked,
+            PickedTargetKey = saved.PickedTargetKey
+        };
         var savedValores = saved.Valores ?? new List<string>();
         for (int i = 0; i < columnCount && i < savedValores.Count; i++)
             fila.Valores[i] = savedValores[i] ?? "";
@@ -261,6 +277,12 @@ public sealed class HojaCubicacionItemVm : INotifyPropertyChanged
     {
         get => isPicked;
         set { if (isPicked != value) { isPicked = value; Raise(nameof(IsPicked)); } }
+    }
+
+    public string? PickedTargetKey
+    {
+        get => pickedTargetKey;
+        set { if (pickedTargetKey != value) { pickedTargetKey = value; Raise(nameof(PickedTargetKey)); } }
     }
 
     public bool IsCollapsed

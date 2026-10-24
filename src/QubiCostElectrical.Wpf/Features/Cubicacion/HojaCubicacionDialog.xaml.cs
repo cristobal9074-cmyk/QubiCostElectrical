@@ -42,6 +42,10 @@ public partial class HojaCubicacionDialog : Window
     /// El resto de la hoja sigue totalmente editable mientras tanto.</summary>
     public bool IsPickMode { get; private init; }
 
+    /// <summary>Identificador del destino que solicita el valor (ej. ID de fila de presupuesto).
+    /// Permite reemplazar y desmarcar automáticamente cualquier selección previa hecha para este mismo destino.</summary>
+    public string? TargetKey { get; set; }
+
     /// <summary>Valor de la celda Suma que el usuario eligió en modo selección, o null si cerró
     /// sin elegir nada (Esc / botón Cerrar / X).</summary>
     public decimal? PickedValue { get; private set; }

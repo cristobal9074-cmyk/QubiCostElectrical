@@ -133,12 +133,17 @@
     <!-- Banner Modo Selección (solo visible cuando se abre para elegir valor) -->
     <Border Grid.Row="1" x:Name="PickModeBanner" Visibility="Collapsed" Background="{DynamicResource Brush.GreenSoft}"
             BorderBrush="{DynamicResource Brush.Green}" BorderThickness="1" CornerRadius="6"
-            Padding="8,4" Margin="0,0,0,8">
-      <StackPanel Orientation="Horizontal">
-        <TextBlock Text="🎯" FontSize="12" VerticalAlignment="Center" Margin="0,0,6,0" />
-        <TextBlock Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Green}" FontWeight="Bold" VerticalAlignment="Center"
-                   Text="Modo selección activo: haz clic en cualquier casilla de la columna Suma para transferir su valor al presupuesto." />
-      </StackPanel>
+            Padding="8,5" Margin="0,0,0,8">
+      <DockPanel LastChildFill="True">
+        <Button DockPanel.Dock="Right" Content="Desmarcar todo" Style="{StaticResource Button.Ghost}"
+                Height="22" Padding="6,0" FontSize="11" Click="OnClearAllPickedClick"
+                ToolTip="Quita la marca de 'tomado' de todas las filas y partidas" />
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+          <TextBlock Text="🎯" FontSize="12" VerticalAlignment="Center" Margin="0,0,6,0" />
+          <TextBlock Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Green}" FontWeight="Bold" VerticalAlignment="Center"
+                     Text="Modo selección: Clic en la columna Suma para transferir cantidad (se marcará en verde claro). Clic derecho en cualquier fila para desmarcarla." />
+        </StackPanel>
+      </DockPanel>
     </Border>
 
     <!-- Lista de Partidas de Cubicación -->
@@ -179,12 +184,12 @@
                             ToolTip="Subtotal acumulado de esta partida (clic para transferir en modo selección)">
                       <Border.Style>
                         <Style TargetType="Border">
-                          <Setter Property="Background" Value="{DynamicResource Brush.GreenSoft}" />
-                          <Setter Property="BorderBrush" Value="{DynamicResource Brush.Green}" />
+                          <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+                          <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
                           <Style.Triggers>
                             <DataTrigger Binding="{Binding IsPicked}" Value="True">
-                              <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
-                              <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
+                              <Setter Property="Background" Value="{DynamicResource Brush.GreenSoft}" />
+                              <Setter Property="BorderBrush" Value="{DynamicResource Brush.Green}" />
                             </DataTrigger>
                           </Style.Triggers>
                         </Style>
@@ -193,10 +198,10 @@
                                  FontFamily="{StaticResource Font.Mono}" FontSize="12">
                         <TextBlock.Style>
                           <Style TargetType="TextBlock">
-                            <Setter Property="Foreground" Value="{DynamicResource Brush.Green}" />
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
                             <Style.Triggers>
                               <DataTrigger Binding="{Binding IsPicked}" Value="True">
-                                <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
+                                <Setter Property="Foreground" Value="{DynamicResource Brush.Green}" />
                               </DataTrigger>
                             </Style.Triggers>
                           </Style>
@@ -299,6 +304,17 @@
                             <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
                             <Setter Property="FontWeight" Value="SemiBold" />
                           </DataTrigger>
+                          <!-- Fila tomada / transferida: fondo verde claro suave para toda la fila -->
+                          <DataTrigger Binding="{Binding IsPicked}" Value="True">
+                            <Setter Property="Background" Value="{DynamicResource Brush.GreenSoft}" />
+                          </DataTrigger>
+                          <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                              <Condition Binding="{Binding IsPicked}" Value="True" />
+                              <Condition Binding="{Binding RelativeSource={RelativeSource Self}, Path=IsMouseOver}" Value="True" />
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Background" Value="{DynamicResource Brush.GreenSoft}" />
+                          </MultiDataTrigger>
                         </Style.Triggers>
                       </Style>
                     </DataGrid.RowStyle>
