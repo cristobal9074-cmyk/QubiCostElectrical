@@ -700,14 +700,14 @@ export default {
 
     // --- 4. Landing Page Corporativa de Descarga (/) ---
     if (!path || path === "" || path === "index.html") {
-      return new Response(getLandingHtml("v1.1.1"), {
+      return new Response(getLandingHtml("v1.1.2"), {
         status: 200,
         headers: { "Content-Type": "text/html; charset=utf-8" }
       });
     }
 
     // --- 5. Descarga de Instalador y deltas desde GitHub Privado ---
-    const releasesApiUrl = "https://api.github.com/repos/" + repo + "/releases/tags/v1.1.1";
+    const releasesApiUrl = "https://api.github.com/repos/" + repo + "/releases/latest";
     const releaseRes = await fetch(releasesApiUrl, {
       headers: {
         "Authorization": "token " + token,
