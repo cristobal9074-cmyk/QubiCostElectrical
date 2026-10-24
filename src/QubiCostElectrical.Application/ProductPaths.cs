@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 using System.IO;
 
 namespace QubiCostElectrical;
@@ -32,18 +32,13 @@ public static class ProductPaths
     public static string InstanceNameSuffix()
         => IsDevelopmentProfile() ? "_" + ProductIdentity.DevelopmentProfileFolderName : string.Empty;
 
-    public static string GetLocalAppDataRoot()
+    /// <summary>
+    /// Carpeta canónica de datos de usuario (%LOCALAPPDATA%\QubiCostElectrical).
+    /// Compartida entre perfiles (DEV y PROD) y versiones para catálogos de negocio
+    /// que no deben bifurcarse (banco de precios, plantillas, respaldos).
+    /// </summary>
+    public static string CanonicalLocalAppDataRoot()
     {
-        if (IsDevelopmentProfile())
-        {
-            string dev = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                ProductIdentity.AppDataFolderName,
-                ProductIdentity.DevelopmentProfileFolderName);
-            Directory.CreateDirectory(dev);
-            return dev;
-        }
-
         string local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         string canonical = Path.Combine(local, ProductIdentity.AppDataFolderName);
         string legacy = Path.Combine(local, ProductIdentity.LegacyAppDataFolderName);
@@ -66,6 +61,21 @@ public static class ProductPaths
 
         Directory.CreateDirectory(canonical);
         return canonical;
+    }
+
+    public static string GetLocalAppDataRoot()
+    {
+        if (IsDevelopmentProfile())
+        {
+            string dev = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                ProductIdentity.AppDataFolderName,
+                ProductIdentity.DevelopmentProfileFolderName);
+            Directory.CreateDirectory(dev);
+            return dev;
+        }
+
+        return CanonicalLocalAppDataRoot();
     }
 
     public static string AutoSaveDirectory()
@@ -103,8 +113,15 @@ public static class ProductPaths
     public static string LicenseFile()
         => Path.Combine(GetLocalAppDataRoot(), "license.qclic");
 
+    /// <summary>
+    /// Ubicación del catálogo maestro de precios. Siempre reside en la carpeta canónica
+    /// para que DEV, PROD y futuras actualizaciones compartan exactamente los mismos materiales.
+    /// </summary>
     public static string PriceBankDatabaseFile()
-        => Path.Combine(GetLocalAppDataRoot(), "banco_precios.db");
+        => Path.Combine(CanonicalLocalAppDataRoot(), "banco_precios.db");
+
+    public static string PriceBankBackupFile()
+        => Path.Combine(CanonicalLocalAppDataRoot(), "Backups", "banco_precios.bak");
 
     public static string ResolvePriceBankDatabaseFile(string? overridePath)
     {
