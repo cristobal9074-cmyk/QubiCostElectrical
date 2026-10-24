@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Qubi Cost Electrical — Tomar desde Cubicación de Circuitos</title>
+<style>
+  :root{
+    --navy:#101C30; --navy2:#14263C; --navy3:#1C324C;
+    --blue:#2563B0; --blue2:#3B82F6; --blue-dark:#1D4ED8;
+    --blue-soft:#EAF1FF; --blue-faint:#EDF3FA; --blue-hover:#F0F5FF;
+    --ink:#101A26; --ink2:#3C4A5C; --ink3:#5C6A7C; --ink4:#7B8798; --ink5:#94A1B0;
+    --line:#E3E8EF; --line-soft:#EDF0F4; --canvas:#F5F7FA;
+    --green:#15803D; --green-soft:#EAF8EF; --green-brd:#CDEBD8;
+    --amber:#9A6A10; --amber-soft:#FBF1DD;
+    --red:#C24141; --red-soft:#FFF0F0;
+    --violet:#6B4FA8; --violet-soft:#EFEAFA;
+    --cyan:#0891B2; --pink:#EC4899; --orange:#EA7317;
+    --r-sm:6px; --r-md:9px; --r-lg:12px; --r-xl:16px;
+    --shadow-modal:0 40px 120px rgba(6,14,26,.55), 0 0 0 1px rgba(255,255,255,.06);
+    --font: "Segoe UI Variable Text","Segoe UI",Inter,system-ui,-apple-system,sans-serif;
+    --mono: "Cascadia Mono","JetBrains Mono",Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; font-family:var(--font); color:var(--ink);
+    background:#0B1220; overflow:hidden;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  }
+  button{font-family:inherit}
+  .num{font-variant-numeric:tabular-nums}
+
+  /* ===== Backdrop: app under the panel ===== */
+  .app-bg{position:fixed; inset:0; display:flex; flex-direction:column; filter:saturate(.9)}
+  .bg-top{height:56px; background:linear-gradient(90deg,var(--navy),var(--navy2)); display:flex; align-items:center; gap:18px; padding:0 18px; color:#fff}
+  .bg-logo{display:flex; align-items:center; gap:10px; font-weight:700; letter-spacing:.4px; font-size:13px}
+  .bg-logo .mark{width:24px;height:24px;border:2px solid #60A5FA;border-radius:6px;display:grid;place-items:center;color:#BFDBFE;font-size:11px}
+  .bg-logo small{display:block;font-size:7.5px;letter-spacing:2.4px;color:#8FB4E8;font-weight:600}
+  .bg-proj{margin-left:6px; padding:5px 12px; border-radius:7px; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12); font-size:11px; color:#D6E4F7}
+  .bg-search{flex:1; max-width:360px; height:32px; border-radius:7px; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12); display:flex; align-items:center; padding:0 12px; color:#8FB4E8; font-size:11px; gap:8px}
+  .bg-right{margin-left:auto; display:flex; gap:10px; align-items:center}
+  .bg-pill{height:30px; padding:0 12px; border-radius:7px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.1); font-size:11px; color:#D6E4F7; display:flex; align-items:center; gap:6px}
+  .bg-pill.primary{background:var(--blue); border-color:var(--blue)}
+  .bg-nav{height:44px; background:#fff; border-bottom:1px solid var(--line); display:flex; align-items:end; gap:2px; padding:0 18px}
+  .bg-nav span{font-size:12px; color:var(--ink3); padding:0 14px; height:44px; display:flex; align-items:center}
+  .bg-nav span.on{color:var(--ink); font-weight:600; box-shadow:inset 0 -2px 0 var(--blue)}
+  .bg-body{flex:1; display:flex; background:var(--canvas); min-height:0}
+  .bg-side{width:282px; background:#fff; border-right:1px solid var(--line); padding:14px 12px; display:flex; flex-direction:column; gap:10px}
+  .bg-side .lbl{font-size:10px; font-weight:700; letter-spacing:.1em; color:var(--ink4)}
+  .bg-item{height:38px; border-radius:7px; display:flex; align-items:center; gap:8px; padding:0 10px; font-size:11.5px; color:var(--ink2)}
+  .bg-item.on{background:var(--blue-faint); color:var(--blue); font-weight:600}
+  .bg-item i{width:6px;height:6px;border-radius:50%;background:#CBD5E1;display:block}
+  .bg-main{flex:1; padding:14px 18px; min-width:0}
+  .bg-toolbar{height:46px; background:#fff; border:1px solid var(--line); border-radius:10px; display:flex; align-items:center; gap:10px; padding:0 12px; margin-bottom:12px}
+  .bg-toolbar .chip{height:26px; padding:0 10px; border-radius:6px; border:1px solid var(--line); font-size:11px; color:var(--ink3); display:flex; align-items:center}
+  .bg-grid{background:#fff; border:1px solid var(--line); border-radius:10px; overflow:hidden}
+  .bg-grid .hd{height:38px; display:grid; grid-template-columns:70px 1fr 110px 110px 130px; align-items:center; padding:0 14px; font-size:10px; font-weight:700; color:var(--ink4); letter-spacing:.08em; border-bottom:1px solid var(--line); background:#FBFCFE}
+  .bg-row{height:40px; display:grid; grid-template-columns:70px 1fr 110px 110px 130px; align-items:center; padding:0 14px; border-bottom:1px solid var(--line-soft); font-size:11.5px; color:var(--ink2)}
+  .bg-row .bar{height:7px; border-radius:4px; background:#EEF2F7}
+  .bg-row.sel{background:var(--blue-faint)}
+  .scrim{position:fixed; inset:0; background:rgba(7,14,25,.58)}
+
+  /* ===== Modal ===== */
+  .overlay{position:fixed; inset:0; display:grid; place-items:center; padding:28px; z-index:10}
+  .panel{
+    width:min(1380px, 97vw); height:min(860px, 93vh);
+    background:#fff; border-radius:var(--r-xl); box-shadow:var(--shadow-modal);
+    display:flex; flex-direction:column; overflow:hidden; position:relative;
+    animation:rise .22s cubic-bezier(.2,.8,.2,1);
+  }
+  @keyframes rise{from{opacity:0; transform:translateY(10px) scale(.995)} to{opacity:1; transform:none}}
+
+  /* Header */
+  .head{display:flex; align-items:flex-start; gap:16px; padding:20px 22px 16px; border-bottom:1px solid var(--line)}
+  .head-icon{width:44px;height:44px;border-radius:11px;background:linear-gradient(150deg,#2B5AA0,#1D4ED8); display:grid; place-items:center; flex:none; box-shadow:0 6px 14px rgba(37,99,176,.28)}
+  .head-icon svg{width:22px;height:22px}
+  .head-txt{min-width:0}
+  .eyebrow{font-size:9.5px; font-weight:700; letter-spacing:.14em; color:var(--blue); text-transform:uppercase; margin-bottom:5px}
+  .head h1{margin:0; font-size:20px; line-height:1.2; font-weight:650; letter-spacing:-.015em; color:var(--ink)}
+  .head p{margin:5px 0 0; font-size:12px; line-height:1.45; color:var(--ink3); max-width:560px}
+  .head-right{margin-left:auto; display:flex; align-items:flex-start; gap:14px}
+  .dest{border:1px solid var(--line); border-radius:var(--r-md); padding:9px 12px; min-width:300px; background:#FCFDFE}
+  .dest .lbl{font-size:8.5px; font-weight:700; letter-spacing:.11em; color:var(--ink4); text-transform:uppercase; display:flex; align-items:center; gap:6px}
+  .dest .name{font-size:12px; font-weight:600; color:var(--ink); margin-top:3px; display:flex; align-items:center; gap:7px}
+  .dest .name .code{font-family:var(--mono); font-size:10.5px; color:var(--blue); background:var(--blue-soft); border-radius:4px; padding:1px 5px}
+  .unit{font-size:9.5px; font-weight:700; color:var(--ink3); background:#F1F4F8; border-radius:4px; padding:2px 6px; letter-spacing:.04em}
+  .dest .sub{font-size:10.5px; color:var(--ink4); margin-top:3px; display:flex; gap:8px; align-items:center}
+  .link{color:var(--blue); font-size:11px; font-weight:600; text-decoration:none; cursor:pointer}
+  .link:hover{text-decoration:underline}
+  .icon-btn{width:32px;height:32px;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--ink4);display:grid;place-items:center;cursor:pointer}
+  .icon-btn:hover{background:#F2F5F9; color:var(--ink2)}
+  .icon-btn:focus-visible{outline:none; box-shadow:0 0 0 3px rgba(59,130,246,.25)}
+
+  /* Toolbar */
+  .toolbar{display:flex; align-items:center; gap:10px; padding:10px 22px; border-bottom:1px solid var(--line); background:#FCFDFE}
+  .tabs{display:flex; gap:2px; padding:3px; background:#F1F4F8; border-radius:8px}
+  .tab{border:0; background:transparent; color:var(--ink3); font-size:11.5px; font-weight:600; padding:6px 12px; border-radius:6px; cursor:pointer; white-space:nowrap}
+  .tab:hover{color:var(--ink2)}
+  .tab.on{background:#fff; color:var(--ink); box-shadow:0 1px 2px rgba(16,26,38,.10), 0 0 0 1px rgba(16,26,38,.04)}
+  .search{margin-left:6px; flex:0 1 300px; height:34px; border:1px solid var(--line); border-radius:8px; background:#fff; display:flex; align-items:center; gap:8px; padding:0 10px; color:var(--ink4)}
+  .search:focus-within{border-color:#B9CDF0; box-shadow:0 0 0 3px rgba(59,130,246,.16)}
+  .search input{border:0; outline:0; flex:1; font:inherit; font-size:12px; color:var(--ink); background:transparent; min-width:0}
+  .search input::placeholder{color:var(--ink5)}
+  .kbd{font-family:var(--mono); font-size:9px; color:var(--ink4); border:1px solid var(--line); border-bottom-width:2px; border-radius:4px; padding:1px 5px; background:#fff}
+  .tool-right{margin-left:auto; display:flex; align-items:center; gap:8px}
+  .lock{height:30px; display:flex; align-items:center; gap:7px; padding:0 10px; border-radius:7px; background:var(--green-soft); border:1px solid var(--green-brd); color:var(--green); font-size:10.5px; font-weight:700; letter-spacing:.01em; cursor:default}
+  .lock .dot{width:6px;height:6px;border-radius:50%;background:#22C55E; box-shadow:0 0 0 3px rgba(34,197,94,.16)}
+  .btn{height:32px; border-radius:7px; border:1px solid var(--line); background:#fff; color:var(--ink2); font-size:11.5px; font-weight:600; padding:0 11px; display:inline-flex; align-items:center; gap:7px; cursor:pointer; white-space:nowrap}
+  .btn:hover{background:#F7F9FC; border-color:#D6DDE7}
+  .btn:focus-visible{outline:none; box-shadow:0 0 0 3px rgba(59,130,246,.25)}
+  .btn.ghost{border-color:transparent; background:transparent}
+  .btn.ghost:hover{background:#F2F5F9}
+  .btn.primary{background:var(--blue); border-color:var(--blue); color:#fff; box-shadow:0 1px 2px rgba(29,78,216,.28)}
+  .btn.primary:hover{background:#1F569B; border-color:#1F569B}
+  .btn.primary:disabled{background:#C9D6E8; border-color:#C9D6E8; color:#fff; box-shadow:none; cursor:not-allowed}
+  .btn svg{width:14px;height:14px}
+
+  /* Body */
+  .body{flex:1; display:grid; grid-template-columns:minmax(0,1fr) 344px; min-height:0}
+  .main{min-width:0; display:flex; flex-direction:column; min-height:0}
+
+  /* Criterion strip */
+  .criterion{display:flex; align-items:center; gap:9px; padding:8px 22px; background:#F7FBF8; border-bottom:1px solid #E6F2EA; font-size:11px; color:var(--ink2)}
+  .criterion .ic{width:18px;height:18px;border-radius:50%;background:var(--green-soft);border:1px solid var(--green-brd);display:grid;place-items:center;color:var(--green);flex:none}
+  .criterion b{color:var(--green); font-weight:700}
+  .criterion .muted{color:var(--ink4)}
+  .criterion .right{margin-left:auto; display:flex; align-items:center; gap:12px; color:var(--ink4); font-size:10.5px}
+
+  /* Category chips */
+  .chips{display:flex; align-items:center; gap:6px; padding:10px 22px; border-bottom:1px solid var(--line-soft); overflow-x:auto; scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{height:28px; padding:0 10px; border-radius:999px; border:1px solid var(--line); background:#fff; color:var(--ink3); font-size:11px; font-weight:600; display:inline-flex; align-items:center; gap:7px; cursor:pointer; white-space:nowrap}
+  .chip:hover{border-color:#CDD7E4; color:var(--ink2)}
+  .chip.on{background:var(--ink); border-color:var(--ink); color:#fff}
+  .chip .dot{width:6px;height:6px;border-radius:50%;background:currentColor; opacity:.55}
+  .chip.on .dot{opacity:.9}
+  .chip .n{font-size:9.5px; font-weight:700; color:var(--ink4); background:#F1F4F8; border-radius:999px; padding:1px 6px; min-width:18px; text-align:center}
+  .chip.on .n{background:rgba(255,255,255,.16); color:#fff}
+  .chip.cat-tuberia .dot{background:var(--blue2)} .chip.cat-conductor .dot{background:var(--violet)}
+  .chip.cat-cajas .dot{background:var(--amber)} .chip.cat-flexible .dot{background:var(--cyan)}
+  .chip.cat-sensores .dot{background:#22C55E} .chip.cat-senaletica .dot{background:var(--orange)}
+
+  /* Table */
+  .table-wrap{flex:1; overflow:auto; min-height:0}
+  table.sel-table{width:100%; border-collapse:separate; border-spacing:0; table-layout:fixed}
+  .sel-table thead th{position:sticky; top:0; z-index:2; background:#FBFCFE; border-bottom:1px solid var(--line); padding:9px 10px; text-align:left; font-size:9.5px; font-weight:700; letter-spacing:.08em; color:var(--ink4); text-transform:uppercase; white-space:nowrap}
+  .sel-table thead th.c{margin:0; text-align:center}
+  .sel-table thead th.r{text-align:right}
+  .sel-table td{padding:0 10px; border-bottom:1px solid var(--line-soft); height:53px; vertical-align:middle}
+  .sel-table tbody tr{cursor:pointer}
+  .sel-table tbody tr:hover{background:#FAFCFF}
+  .sel-table tbody tr.sel{background:var(--blue-faint)}
+  .sel-table tbody tr.sel td:first-child{box-shadow:inset 3px 0 0 var(--blue2)}
+  .sel-table tbody tr:last-child td{border-bottom:0}
+  .sel-table td.c{text-align:center}
+  .sel-table td.r{text-align:right}
+  .chk{appearance:none; width:16px; height:16px; border:1.5px solid #C6D0DD; border-radius:4px; background:#fff; cursor:pointer; position:relative; vertical-align:middle; transition:.12s}
+  .chk:hover{border-color:#9FB1C7}
+  .chk:checked{background:var(--blue); border-color:var(--blue)}
+  .chk:checked::after{content:""; position:absolute; left:4px; top:1.5px; width:5px; height:8px; border:2px solid #fff; border-top:0; border-left:0; transform:rotate(45deg)}
+  .chk:indeterminate{background:var(--blue); border-color:var(--blue)}
+  .chk:indeterminate::after{content:""; position:absolute; left:3px; top:6px; width:8px; height:2px; background:#fff; border-radius:2px}
+  .chk:focus-visible{outline:none; box-shadow:0 0 0 3px rgba(59,130,246,.25)}
+  .mat{display:flex; align-items:center; gap:10px; min-width:0}
+  .cat-dot{width:8px;height:8px;border-radius:50%;flex:none; box-shadow:0 0 0 3px rgba(16,26,38,.04)}
+  .mat .txt{min-width:0}
+  .mat .name{font-size:12px; font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .mat .src{font-size:10px; color:var(--ink4); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; align-items:center; gap:5px}
+  .mat .src .sep{opacity:.5}
+  .unit-cell{font-size:10px; font-weight:700; color:var(--ink3); background:#F2F5F9; border-radius:4px; padding:2px 6px; letter-spacing:.03em}
+  .total{font-size:12.5px; font-weight:650; color:var(--ink); font-variant-numeric:tabular-nums}
+  .zcell{display:inline-flex; align-items:center; justify-content:center; min-width:64px; height:28px; padding:0 8px; border:1px solid #E6EBF2; border-radius:6px; background:#fff; font-family:var(--mono); font-size:11px; color:var(--ink2); font-variant-numeric:tabular-nums; transition:.12s}
+  tr:hover .zcell{border-color:#D3DDEB; background:#FCFDFF}
+  .zcell.zero{color:#B3BECA; background:#FAFBFD; border-color:#EEF1F5}
+  .zcell.editing{padding:0; border-color:var(--blue2); box-shadow:0 0 0 3px rgba(59,130,246,.16)}
+  .zcell input{width:100%; height:26px; border:0; outline:0; background:transparent; text-align:center; font:inherit; color:var(--ink)}
+  .zcell.dim{opacity:.35; pointer-events:none; background:#F7F9FC}
+  .sel-table td.z{width:86px}
+  .empty{padding:48px 20px; text-align:center; color:var(--ink4); font-size:12px}
+  .empty .ico{width:42px;height:42px;margin:0 auto 10px;border-radius:12px;background:#F2F5F9;display:grid;place-items:center;color:var(--ink4)}
+
+  /* Right rail */
+  .rail{border-left:1px solid var(--line); background:#FAFBFD; display:flex; flex-direction:column; min-height:0}
+  .rail-head{padding:14px 16px 10px; display:flex; align-items:center; gap:8px; border-bottom:1px solid var(--line-soft)}
+  .rail-head h2{margin:0; font-size:12.5px; font-weight:700; color:var(--ink); letter-spacing:.01em}
+  .count-badge{min-width:20px; height:18px; padding:0 6px; border-radius:999px; background:var(--blue); color:#fff; font-size:10px; font-weight:700; display:inline-flex; align-items:center; justify-content:center}
+  .rail-head .link{margin-left:auto; font-size:10.5px}
+  .rail-scroll{flex:1; overflow:auto; min-height:0}
+  .rail-sec{padding:12px 16px; border-bottom:1px solid var(--line-soft)}
+  .rail-sec .lbl{font-size:9px; font-weight:700; letter-spacing:.11em; color:var(--ink4); text-transform:uppercase; margin-bottom:8px}
+  .dest-mini{border:1px solid #D9E4F6; background:linear-gradient(180deg,#F4F8FF,#EDF4FF); border-radius:9px; padding:9px 10px}
+  .dest-mini .p{font-size:10px; color:var(--ink4)}
+  .dest-mini .t{font-size:12px; font-weight:650; color:var(--ink); margin-top:3px; line-height:1.35}
+  .dest-mini .m{display:flex; align-items:center; gap:6px; margin-top:6px; font-size:10px; color:var(--ink4)}
+  .zchips{display:flex; flex-wrap:wrap; gap:6px}
+  .zchip{height:26px; padding:0 9px; border-radius:6px; border:1px solid var(--line); background:#fff; color:var(--ink3); font-size:10.5px; font-weight:600; display:inline-flex; align-items:center; gap:6px; cursor:pointer}
+  .zchip .box{width:12px;height:12px;border:1.5px solid #C6D0DD; border-radius:3px; display:grid; place-items:center; background:#fff}
+  .zchip.on{border-color:#BFD3F2; background:var(--blue-hover); color:var(--blue)}
+  .zchip.on .box{background:var(--blue); border-color:var(--blue)}
+  .zchip.on .box::after{content:""; width:3px; height:6px; border:1.5px solid #fff; border-top:0; border-left:0; transform:rotate(45deg); margin-top:-1px}
+  .zchip .q{font-family:var(--mono); font-size:9.5px; color:var(--ink4); font-weight:400}
+  .zchip.off{opacity:.65}
+  .picked{display:flex; flex-direction:column; gap:6px; max-height:214px; overflow:auto; padding-right:2px}
+  .pick{border:1px solid var(--line); background:#fff; border-radius:8px; padding:7px 9px}
+  .pick .top{display:flex; align-items:center; gap:6px; font-size:11px; font-weight:600; color:var(--ink)}
+  .pick .top .x{margin-left:auto; color:var(--ink5); cursor:pointer; font-size:12px; line-height:1}
+  .pick .top .x:hover{color:var(--red)}
+  .pick .zrow{display:flex; gap:8px; margin-top:4px; font-size:9.5px; color:var(--ink4)}
+  .pick .zrow b{font-family:var(--mono); font-weight:600; color:var(--ink2)}
+  .pick .zrow span{display:inline-flex; gap:3px; align-items:center}
+  .pick-empty{border:1px dashed #D6DEE9; border-radius:8px; padding:14px 12px; text-align:center; font-size:11px; color:var(--ink4); line-height:1.5}
+  .modes{display:flex; flex-direction:column; gap:6px}
+  .mode{display:flex; gap:8px; align-items:flex-start; padding:8px 9px; border:1px solid var(--line); background:#fff; border-radius:8px; cursor:pointer}
+  .mode:hover{border-color:#D3DDEB}
+  .mode.on{border-color:#BFD3F2; background:var(--blue-hover)}
+  .mode input{appearance:none; width:14px;height:14px;border:1.5px solid #C6D0DD;border-radius:50%; margin:1px 0 0; flex:none; position:relative; background:#fff}
+  .mode.on input{border-color:var(--blue)}
+  .mode.on input::after{content:""; position:absolute; inset:2.5px; border-radius:50%; background:var(--blue)}
+  .mode .tt{font-size:11px; font-weight:650; color:var(--ink)}
+  .mode .dd{font-size:9.8px; color:var(--ink4); margin-top:1px; line-height:1.35}
+  .rail-foot{padding:12px 16px; border-top:1px solid var(--line); background:#fff}
+  .cta{width:100%; height:38px; border:0; border-radius:8px; background:var(--blue); color:#fff; font-size:12.5px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer; box-shadow:0 6px 14px rgba(37,99,176,.22)}
+  .cta:hover{background:#1F569B}
+  .cta:disabled{background:#C9D6E8; box-shadow:none; cursor:not-allowed}
+  .cta-note{margin-top:7px; font-size:10px; color:var(--ink4); text-align:center; line-height:1.4}
+  .rail-foot .cancel{width:100%; margin-top:6px; height:30px; border:0; background:transparent; color:var(--ink3); font-size:11px; font-weight:600; border-radius:6px; cursor:pointer}
+  .rail-foot .cancel:hover{background:#F2F5F9}
+
+  /* By-origin / by-zone views */
+  .view{padding:16px 22px 24px; overflow:auto; flex:1; min-height:0}
+  .group{border:1px solid var(--line); border-radius:10px; background:#fff; margin-bottom:10px; overflow:hidden}
+  .group-hd{display:flex; align-items:center; gap:10px; padding:10px 12px; background:#FBFCFE; border-bottom:1px solid var(--line-soft)}
+  .group-hd .badge{font-size:9px; font-weight:700; letter-spacing:.08em; color:var(--blue); background:var(--blue-soft); border-radius:4px; padding:2px 6px}
+  .group-hd .t{font-size:12px; font-weight:650}
+  .group-hd .meta{margin-left:auto; font-size:10.5px; color:var(--ink4)}
+  .g-row{display:grid; grid-template-columns:minmax(0,1fr) 64px 84px 3fr; gap:10px; align-items:center; padding:8px 12px; border-bottom:1px solid var(--line-soft); font-size:11.5px}
+  .g-row:last-child{border-bottom:0}
+  .g-row .nm{font-weight:600; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .g-row .u{color:var(--ink4); font-size:10px; font-weight:700}
+  .g-row .tot{text-align:right; font-family:var(--mono); font-size:11px; color:var(--ink2)}
+  .zone-grid{display:grid; gap:8px; text-align:center; font-family:var(--mono); font-size:10px; color:var(--ink3)}
+  .zone-grid span{background:#F7F9FC; border:1px solid #EDF1F6; border-radius:4px; padding:3px 2px}
+  .zone-grid span.dim{opacity:.35}
+  .zone-cards{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px}
+  .zcard{border:1px solid var(--line); border-radius:12px; background:#fff; overflow:hidden}
+  .zcard-hd{padding:12px 14px; border-bottom:1px solid var(--line-soft); display:flex; align-items:center; gap:8px}
+  .zcard-hd .n{width:22px;height:22px;border-radius:6px;background:var(--blue-soft);color:var(--blue);display:grid;place-items:center;font-size:10px;font-weight:800}
+  .zcard-hd .t{font-size:12px; font-weight:700}
+  .zcard-hd .c{margin-left:auto; font-size:9.5px; color:var(--ink4)}
+  .zline{display:flex; align-items:center; gap:8px; padding:8px 14px; border-bottom:1px solid var(--line-soft); font-size:11px}
+  .zline:last-child{border-bottom:0}
+  .zline .dot{width:6px;height:6px;border-radius:50%;flex:none}
+  .zline .nm{color:var(--ink2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .zline .v{margin-left:auto; font-family:var(--mono); font-size:10.5px; color:var(--ink); font-weight:600; white-space:nowrap}
+
+  /* toast */
+  .toast{position:fixed; left:50%; bottom:34px; transform:translate(-50%,20px); background:var(--ink); color:#fff; border-radius:9px; padding:11px 14px; font-size:12px; display:flex; align-items:center; gap:9px; opacity:0; pointer-events:none; transition:.2s; z-index:30; box-shadow:0 14px 40px rgba(6,14,26,.35)}
+  .toast.show{opacity:1; transform:translate(-50%,0)}
+  .toast .ok{width:18px;height:18px;border-radius:50%;background:#1E7A4B;display:grid;place-items:center}
+  .reopen{position:fixed; right:26px; bottom:24px; z-index:20; height:38px; padding:0 14px; border-radius:8px; border:1px solid rgba(255,255,255,.2); background:rgba(255,255,255,.1); color:#fff; font-size:12px; font-weight:600; display:none; cursor:pointer; backdrop-filter:blur(6px)}
+  .reopen.show{display:inline-flex; align-items:center; gap:8px}
+
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:#CBD5E1; border:3px solid transparent; background-clip:content-box; border-radius:10px}
+  ::-webkit-scrollbar-thumb:hover{background:#AEBCCB; border:3px solid transparent; background-clip:content-box}
+  ::-webkit-scrollbar-track{background:transparent}
+</style>
+</head>
+<body>
+
+<!-- ============ App backdrop ============ -->
+<div class="app-bg" aria-hidden="true">
+  <div class="bg-top">
+    <div class="bg-logo"><div class="mark">Q</div><div>QUBI COST<small>ELECTRICAL</small></div></div>
+    <div class="bg-proj">Proyecto activo · PEL039A2026 ABIERTO</div>
+    <div class="bg-search">Buscar en todo el proyecto <span class="kbd" style="margin-left:auto">Ctrl+K</span></div>
+    <div class="bg-right">
+      <div class="bg-pill">Sin autoguardado</div>
+      <div class="bg-pill">Guardar</div>
+      <div class="bg-pill primary">Cerrar oferta</div>
+    </div>
+  </div>
+  <div class="bg-nav">
+    <span>Resumen</span><span>Proyecto</span><span>Itemizado</span><span class="on">Cubicación</span><span>Precios</span><span>Cierre y Costos</span>
+  </div>
+  <div class="bg-body">
+    <div class="bg-side">
+      <div class="lbl">PARTIDAS · 69</div>
+      <div class="bg-item"><i></i>1,1 Ductos y cajas acometida</div>
+      <div class="bg-item"><i></i>1,2 Malla tierra, conexión BPC</div>
+      <div class="bg-item"><i></i>1,3 Alimentador general empalme</div>
+      <div class="bg-item"><i></i>1,4 Alimentador grupo generador</div>
+      <div class="bg-item"><i></i>1,5 Alimentador bombas agua potable</div>
+      <div class="bg-item"><i></i>1,6 Alimentador sentina</div>
+    </div>
+    <div class="bg-main">
+      <div class="bg-toolbar">
+        <div class="chip">Buscar (Ctrl+F)</div><div class="chip">Casillas</div><div class="chip">Detalle</div>
+        <div class="chip" style="margin-left:auto">Recursos 9</div>
+      </div>
+      <div class="bg-grid">
+        <div class="hd"><span>#</span><span>CÓDIGO / DESCRIPCIÓN</span><span>UD</span><span>CANT.</span><span>ZONAS</span></div>
+        <div class="bg-row"><span>1</span><span class="bar" style="width:62%"></span><span>ML</span><span class="bar" style="width:48%"></span><span class="bar" style="width:70%"></span></div>
+        <div class="bg-row"><span>2</span><span class="bar" style="width:74%"></span><span>ML</span><span class="bar" style="width:38%"></span><span class="bar" style="width:55%"></span></div>
+        <div class="bg-row sel"><span>3</span><span class="bar" style="width:52%"></span><span>UN</span><span class="bar" style="width:30%"></span><span class="bar" style="width:62%"></span></div>
+        <div class="bg-row"><span>4</span><span class="bar" style="width:68%"></span><span>ML</span><span class="bar" style="width:44%"></span><span class="bar" style="width:58%"></span></div>
+        <div class="bg-row"><span>5</span><span class="bar" style="width:44%"></span><span>UN</span><span class="bar" style="width:26%"></span><span class="bar" style="width:48%"></span></div>
+        <div class="bg-row"><span>6</span><span class="bar" style="width:58%"></span><span>ML</span><span class="bar" style="width:34%"></span><span class="bar" style="width:68%"></span></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="scrim"></div>
+
+<!-- ============ Panel ============ -->
+<div class="overlay">
+  <section class="panel" role="dialog" aria-modal="true" aria-labelledby="dlg-title">
+    <header class="head">
+      <div class="head-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3 3 7.5 12 12l9-4.5L12 3Z"/><path d="m3 12 9 4.5L21 12"/><path d="m3 16.5 9 4.5 9-4.5"/>
+        </svg>
+      </div>
+      <div class="head-txt">
+        <div class="eyebrow">Cubicación · Servicios comunes</div>
+        <h1 id="dlg-title">Tomar desde Cubicación de Circuitos</h1>
+        <p>Materiales medidos en tableros y circuitos, con su desglose por zona. Solo se listan circuitos cubicados.</p>
+      </div>
+      <div class="head-right">
+        <div class="dest">
+          <div class="lbl">PARTIDA DESTINO <span style="color:#B3BECA">·</span> <a class="link" style="font-size:9px">Cambiar</a></div>
+          <div class="name"><span class="code">1,1</span> Ductos y cajas acometida eléctrica.</div>
+          <div class="sub">Unidad de la partida <span class="unit">ML</span> <span style="color:#CBD5E1">·</span> 0 recursos actuales</div>
+        </div>
+        <button class="icon-btn" id="btn-close" title="Cerrar (Esc)" aria-label="Cerrar panel">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="toolbar">
+      <div class="tabs" role="tablist" aria-label="Vistas">
+        <button class="tab on" data-view="materiales" role="tab" aria-selected="true">Materiales</button>
+        <button class="tab" data-view="origen" role="tab" aria-selected="false">Por origen</button>
+        <button class="tab" data-view="zona" role="tab" aria-selected="false">Por zona</button>
+      </div>
+      <label class="search" for="q">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+        <input id="q" type="text" placeholder="Buscar material, cuadro o circuito…" autocomplete="off" spellcheck="false">
+        <span class="kbd">/</span>
+      </label>
+      <div class="tool-right">
+        <span class="lock" title="Solo circuitos con medidas ingresadas. Se excluyen artefactos sin cantidad y luminarias no cubicadas.">
+          <span class="dot"></span> Solo lo cubicado
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
+        </span>
+        <button class="btn ghost" id="btn-refresh" title="Volver a leer Cubicación de Circuitos">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/></svg>
+          Actualizar
+        </button>
+      </div>
+    </div>
+
+    <div class="body">
+      <div class="main">
+        <div class="criterion">
+          <span class="ic">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4.5 4.5L19 7"/></svg>
+          </span>
+          <span><b>Solo lo cubicado.</b> <span class="muted">12 circuitos con medidas de 48 · no se listan luminarias ni artefactos sin cantidad.</span></span>
+          <span class="right"><a class="link">Ver criterio</a></span>
+        </div>
+
+        <div class="chips" id="chips"></div>
+
+        <div class="table-wrap" id="view-materiales">
+          <table class="sel-table" aria-label="Materiales cubicados en servicios comunes">
+            <colgroup>
+              <col style="width:44px"><col><col style="width:64px"><col style="width:92px"><col style="width:86px"><col style="width:86px"><col style="width:86px">
+            </colgroup>
+            <thead>
+              <tr>
+                <th class="c"><input type="checkbox" class="chk" id="chk-all" aria-label="Seleccionar todo lo visible"></th>
+                <th>Material</th>
+                <th class="c">Unidad</th>
+                <th class="r">Total</th>
+                <th class="c" data-z="0">Piso 1</th>
+                <th class="c" data-z="1">Piso 2</th>
+                <th class="c" data-z="2">Piso 3</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+          <div class="empty" id="empty" style="display:none">
+            <div class="ico">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+            </div>
+            No hay materiales cubicados que coincidan con el filtro.<br><span style="color:#94A1B0">Prueba con otra categoría o limpia la búsqueda.</span>
+          </div>
+        </div>
+
+        <div class="view" id="view-origen" style="display:none"></div>
+        <div class="view" id="view-zona" style="display:none"></div>
+      </div>
+
+      <aside class="rail">
+        <div class="rail-head">
+          <h2>Selección</h2><span class="count-badge" id="sel-count">0</span>
+          <a class="link" id="btn-clear">Limpiar</a>
+        </div>
+        <div class="rail-scroll">
+          <div class="rail-sec">
+            <div class="lbl">Se agregará a</div>
+            <div class="dest-mini">
+              <div class="p">Partida 1,1 · 0 recursos</div>
+              <div class="t">Ductos y cajas acometida eléctrica.</div>
+              <div class="m">Unidad <span class="unit">ML</span> <span style="color:#CBD5E1">·</span> Zonas del proyecto: 3</div>
+            </div>
+          </div>
+
+          <div class="rail-sec">
+            <div class="lbl">Zonas a incluir</div>
+            <div class="zchips" id="zchips"></div>
+          </div>
+
+          <div class="rail-sec">
+            <div class="lbl">Materiales seleccionados</div>
+            <div class="picked" id="picked"></div>
+          </div>
+
+          <div class="rail-sec" style="border-bottom:0">
+            <div class="lbl">Al agregar</div>
+            <div class="modes" id="modes">
+              <label class="mode on" data-mode="append">
+                <input type="radio" name="mode" checked>
+                <span><span class="tt">Agregar al final</span><span class="dd">Crea una fila nueva por material, con cantidades por zona.</span></span>
+              </label>
+              <label class="mode" data-mode="replace">
+                <input type="radio" name="mode">
+                <span><span class="tt">Reemplazar filas de SC</span><span class="dd">Actualiza solo las filas que ya trajiste antes de Servicios Comunes.</span></span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="rail-foot">
+          <button class="cta" id="btn-add" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            <span id="cta-label">Agregar materiales</span>
+          </button>
+          <div class="cta-note" id="cta-note">Selecciona materiales para continuar.</div>
+          <button class="cancel" id="btn-cancel">Cancelar</button>
+        </div>
+      </aside>
+    </div>
+  </section>
+</div>
+
+<button class="reopen" id="reopen">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+  Abrir panel de SC
+</button>
+
+<div class="toast" id="toast">
+  <span class="ok"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4.5 4.5L19 7"/></svg></span>
+  <span id="toast-text"></span>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const ZONES = ["Piso 1","Piso 2","Piso 3"];
+  const CATS = {
+    "Tubería":  "#3B82F6",
+    "Conductor":"#6B4FA8",
+    "Cajas":    "#C98A1B",
+    "Flexible": "#0891B2",
+    "Sensores": "#22C55E",
+    "Señalética":"#EA7317"
+  };
+
+  // Datos de ejemplo: solo materiales derivados de circuitos con medidas ingresadas.
+  const materials = [
+    { id:"tub20",  name:"TUBERIA PVC 20",              cat:"Tubería",   unit:"ML", zones:[120,104,88], src:"CTOS GENERALES", circuits:"C1, C4" },
+    { id:"tub25",  name:"TUBERIA PVC 25",              cat:"Tubería",   unit:"ML", zones:[60,48,40],   src:"CTOS GENERALES", circuits:"C2" },
+    { id:"thhn12", name:"CONDUCTOR THHN 12 AWG",       cat:"Conductor", unit:"ML", zones:[360,312,264],src:"CTOS GENERALES", circuits:"C1, C4" },
+    { id:"thhn14", name:"CONDUCTOR THHN 14 AWG",       cat:"Conductor", unit:"ML", zones:[110,94,84],  src:"CTOS GENERALES", circuits:"C3" },
+    { id:"caja58", name:"CAJA 5/8 PVC",                cat:"Cajas",     unit:"UN", zones:[18,16,12],   src:"CTOS GENERALES", circuits:"C1, C2" },
+    { id:"caja10", name:"CAJA 100×100",                cat:"Cajas",     unit:"UN", zones:[5,4,3],      src:"DEPTO 101",      circuits:"C1" },
+    { id:"cajam",  name:"CAJA METÁLICA SALIDA BANDEJA",cat:"Cajas",     unit:"UN", zones:[8,6,4],      src:"CTOS GENERALES", circuits:"C5" },
+    { id:"flex20", name:"TERMINAL FLEXIBLE 20",        cat:"Flexible",  unit:"UN", zones:[18,16,12],   src:"CTOS GENERALES", circuits:"C1" },
+    { id:"sensor", name:"SENSOR DE MOVIMIENTO",        cat:"Sensores",  unit:"UN", zones:[3,3,2],      src:"CTOS GENERALES", circuits:"C6" },
+    { id:"senal",  name:"SEÑALÉTICA EMERGENCIA",       cat:"Señalética",unit:"UN", zones:[2,2,1],      src:"DEPTO 101",      circuits:"C2" }
+  ];
+
+  const state = {
+    view:"materiales",
+    cat:"Todas",
+    q:"",
+    zones:[true,true,true],
+    selected:new Set(["tub20","thhn12"]),
+    mode:"append"
+  };
+
+  const $ = (s,r=document)=>r.querySelector(s);
+  const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
+  const fmt = n => new Intl.NumberFormat("es-CL").format(n);
+  const totalOf = m => m.zones.reduce((a,b)=>a+b,0);
+  const catOf = m => CATS[m.cat] || "#64748B";
+
+  function filtered(){
+    const q = state.q.trim().toLowerCase();
+    return materials.filter(m=>{
+      if(state.cat!=="Todas" && m.cat!==state.cat) return false;
+      if(!q) return true;
+      return (m.name+" "+m.src+" "+m.circuits+" "+m.cat).toLowerCase().includes(q);
+    });
+  }
+
+  function renderChips(){
+    const counts = { "Todas": materials.length };
+    materials.forEach(m=>counts[m.cat]=(counts[m.cat]||0)+1);
+    const host = $("#chips");
+    host.innerHTML = "";
+    const cats = ["Todas", ...Object.keys(CATS)];
+    cats.forEach(cat=>{
+      const n = counts[cat]||0;
+      if(!n && cat!=="Todas") return;
+      const b = document.createElement("button");
+      const cls = cat==="Todas" ? "" : "cat-"+slug(cat);
+      b.className = "chip "+cls+(state.cat===cat?" on":"");
+      b.innerHTML = `<span class="dot"></span>${cat}<span class="n">${n}</span>`;
+      b.addEventListener("click",()=>{ state.cat=cat; renderChips(); renderAll(); });
+      host.appendChild(b);
+    });
+  }
+  const slug = s => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+
+  function zoneClass(i){ return state.zones[i] ? "" : " dim"; }
+  function zcell(m,i){
+    const v = m.zones[i];
+    return `<span class="zcell${v===0?" zero":""}${zoneClass(i)}" data-id="${m.id}" data-z="${i}" title="Doble clic para editar">${v===0?"—":fmt(v)}</span>`;
+  }
+
+  function renderTable(){
+    const rows = filtered();
+    const tb = $("#tbody");
+    tb.innerHTML = "";
+    $("#empty").style.display = rows.length ? "none" : "block";
+    rows.forEach(m=>{
+      const tr = document.createElement("tr");
+      tr.dataset.id = m.id;
+      if(state.selected.has(m.id)) tr.classList.add("sel");
+      tr.innerHTML = `
+        <td class="c"><input type="checkbox" class="chk" ${state.selected.has(m.id)?"checked":""} aria-label="Seleccionar ${m.name}"></td>
+        <td>
+          <div class="mat">
+            <span class="cat-dot" style="background:${catOf(m)}"></span>
+            <span class="txt">
+              <div class="name">${m.name}</div>
+              <div class="src">${m.src}<span class="sep">·</span>${m.circuits}<span class="sep">·</span>${m.cat}</div>
+            </span>
+          </div>
+        </td>
+        <td class="c"><span class="unit-cell">${m.unit}</span></td>
+        <td class="r"><span class="total">${fmt(totalOf(m))}</span></td>
+        <td class="c">${zcell(m,0)}</td>
+        <td class="c">${zcell(m,1)}</td>
+        <td class="c">${zcell(m,2)}</td>`;
+      tr.addEventListener("click",e=>{
+        if(e.target.closest("input, .zcell")) return;
+        toggle(m.id);
+      });
+      tr.querySelector("input").addEventListener("change",e=>{
+        e.stopPropagation();
+        setSelected(m.id, e.target.checked);
+      });
+      tr.querySelectorAll(".zcell").forEach(cell=>{
+        cell.addEventListener("dblclick",e=>{ e.stopPropagation(); editZone(cell,m); });
+      });
+      tb.appendChild(tr);
+    });
+    syncSelectAll(rows);
+  }
+
+  function editZone(cell, m){
+    if(cell.classList.contains("editing")) return;
+    const i = +cell.dataset.z;
+    const old = m.zones[i];
+    cell.classList.add("editing");
+    const input = document.createElement("input");
+    input.type = "number";
+    input.min = "0";
+    input.step = "0.01";
+    input.value = old;
+    cell.textContent = "";
+    cell.appendChild(input);
+    input.focus();
+    input.select();
+    const commit = ()=>{
+      const val = Math.max(0, Number(input.value||0));
+      m.zones[i] = val;
+      renderAll();
+    };
+    input.addEventListener("blur",commit,{once:true});
+    input.addEventListener("keydown",e=>{
+      if(e.key==="Enter"){ input.blur(); }
+      if(e.key==="Escape"){ input.value = old; input.blur(); }
+      e.stopPropagation();
+    });
+  }
+
+  function syncSelectAll(rows){
+    const all = $("#chk-all");
+    const vis = rows.map(r=>r.id);
+    const on = vis.filter(id=>state.selected.has(id)).length;
+    all.checked = vis.length>0 && on===vis.length;
+    all.indeterminate = on>0 && on<vis.length;
+  }
+
+  function setSelected(id, on){
+    if(on) state.selected.add(id); else state.selected.delete(id);
+    renderAll();
+  }
+  function toggle(id){ setSelected(id, !state.selected.has(id)); }
+
+  function renderOrigin(){
+    const host = $("#view-origen");
+    const groups = {};
+    filtered().forEach(m=>{ (groups[m.src] ||= []).push(m); });
+    host.innerHTML = "";
+    Object.entries(groups).forEach(([src,items])=>{
+      const el = document.createElement("div");
+      el.className = "group";
+      const ml = items.reduce((a,m)=>a+totalOf(m),0);
+      el.innerHTML = `
+        <div class="group-hd">
+          <span class="badge">CUADRO</span>
+          <span class="t">${src}</span>
+          <span class="meta">${items.length} materiales · ${items.reduce((a,m)=>a+m.zones.filter(v=>v>0).length,0)} zonas con metraje</span>
+        </div>
+        ${items.map(m=>`
+          <div class="g-row">
+            <span class="nm"><span class="cat-dot" style="display:inline-block;background:${catOf(m)};margin-right:7px"></span>${m.name}</span>
+            <span class="u">${m.unit}</span>
+            <span class="tot">${fmt(totalOf(m))}</span>
+            <span class="zone-grid" style="grid-template-columns:repeat(3,1fr)">
+              ${m.zones.map((v,i)=>`<span class="${state.zones[i]?"":"dim"}">${v===0?"—":fmt(v)}</span>`).join("")}
+            </span>
+          </div>`).join("")}`;
+      host.appendChild(el);
+    });
+    if(!Object.keys(groups).length) host.innerHTML = `<div class="empty">Sin resultados.</div>`;
+  }
+
+  function renderZone(){
+    const host = $("#view-zona");
+    host.innerHTML = "";
+    ZONES.forEach((z,zi)=>{
+      const items = filtered().filter(m=>state.zones[zi] && m.zones[zi]>0);
+      const el = document.createElement("div");
+      el.className = "zcard";
+      const byCat = {};
+      items.forEach(m=>{
+        const key = m.cat+"|"+m.unit;
+        (byCat[key] ||= {cat:m.cat, unit:m.unit, qty:0});
+        byCat[key].qty += m.zones[zi];
+      });
+      const lines = Object.values(byCat).map(x=>`
+        <div class="zline">
+          <span class="dot" style="background:${CATS[x.cat]||"#64748B"}"></span>
+          <span class="nm">${x.cat}</span>
+          <span class="v">${fmt(x.qty)} ${x.unit}</span>
+        </div>`).join("");
+      el.innerHTML = `
+        <div class="zcard-hd">
+          <span class="n">${zi+1}</span><span class="t">${z}</span>
+          <span class="c">${items.length} materiales</span>
+        </div>
+        ${lines || `<div class="zline"><span class="nm" style="color:#94A1B0">Zona excluida</span></div>`}`;
+      host.appendChild(el);
+    });
+  }
+
+  function renderZones(){
+    const host = $("#zchips");
+    host.innerHTML = "";
+    ZONES.forEach((z,i)=>{
+      const qty = materials.filter(m=>state.selected.has(m.id)).reduce((a,m)=>a+m.zones[i],0);
+      const b = document.createElement("button");
+      b.className = "zchip "+(state.zones[i]?"on":"off");
+      b.innerHTML = `<span class="box"></span>${z}<span class="q">${fmt(qty)}</span>`;
+      b.addEventListener("click",()=>{
+        state.zones[i] = !state.zones[i];
+        renderAll();
+      });
+      host.appendChild(b);
+    });
+  }
+
+  function renderPicked(){
+    const host = $("#picked");
+    const sel = materials.filter(m=>state.selected.has(m.id));
+    host.innerHTML = "";
+    if(!sel.length){
+      host.innerHTML = `<div class="pick-empty">Aún no has seleccionado materiales.<br>Usa las casillas o haz clic en una fila.</div>`;
+      return;
+    }
+    sel.forEach(m=>{
+      const el = document.createElement("div");
+      el.className = "pick";
+      el.innerHTML = `
+        <div class="top">
+          <span class="cat-dot" style="background:${catOf(m)}"></span>${m.name}
+          <span class="x" title="Quitar" data-id="${m.id}">×</span>
+        </div>
+        <div class="zrow">
+          ${m.zones.map((v,i)=>`<span><b>${ZONES[i].replace("Piso ","Z")}</b> ${fmt(v)}</span>`).join("")}
+          <span style="margin-left:auto;color:#5C6A7C"><b>${fmt(totalOf(m))}</b> ${m.unit}</span>
+        </div>`;
+      el.querySelector(".x").addEventListener("click",e=>{ e.stopPropagation(); setSelected(m.id,false); });
+      host.appendChild(el);
+    });
+  }
+
+  function renderCta(){
+    const n = state.selected.size;
+    $("#sel-count").textContent = n;
+    const btn = $("#btn-add");
+    btn.disabled = n===0;
+    $("#cta-label").textContent = n===0 ? "Agregar materiales" : (n===1 ? "Agregar 1 material" : `Agregar ${n} materiales`);
+    const activeZ = state.zones.filter(Boolean).length;
+    const modeTxt = state.mode==="append" ? "Se crearán" : "Se actualizarán";
+    $("#cta-note").textContent = n===0
+      ? "Selecciona materiales para continuar."
+      : `${modeTxt} ${n} ${n===1?"fila":"filas"} · ${activeZ} ${activeZ===1?"zona":"zonas"} · cantidades editables después.`;
+  }
+
+  function renderAll(){
+    if(state.view==="materiales") renderTable();
+    if(state.view==="origen") renderOrigin();
+    if(state.view==="zona") renderZone();
+    renderZones();
+    renderPicked();
+    renderCta();
+  }
+
+  // events
+  $("#q").addEventListener("input",e=>{ state.q = e.target.value; renderAll(); });
+  $("#chk-all").addEventListener("change",e=>{
+    const vis = filtered().map(m=>m.id);
+    if(e.target.checked) vis.forEach(id=>state.selected.add(id));
+    else vis.forEach(id=>state.selected.delete(id));
+    renderAll();
+  });
+  $("#btn-clear").addEventListener("click",()=>{ state.selected.clear(); renderAll(); });
+  $("#btn-refresh").addEventListener("click",()=>toast("Datos actualizados desde Cubicación de Circuitos."));
+  $$("#modes .mode").forEach(el=>{
+    el.addEventListener("click",()=>{
+      state.mode = el.dataset.mode;
+      $$("#modes .mode").forEach(x=>x.classList.toggle("on", x===el));
+      el.querySelector("input").checked = true;
+      renderCta();
+    });
+  });
+  $$(".tab").forEach(t=>{
+    t.addEventListener("click",()=>{
+      state.view = t.dataset.view;
+      $$(".tab").forEach(x=>{ const on=x===t; x.classList.toggle("on",on); x.setAttribute("aria-selected",on); });
+      $("#view-materiales").style.display = state.view==="materiales" ? "" : "none";
+      $("#view-origen").style.display = state.view==="origen" ? "" : "none";
+      $("#view-zona").style.display = state.view==="zona" ? "" : "none";
+      renderAll();
+    });
+  });
+  $("#btn-add").addEventListener("click",()=>{
+    const n = state.selected.size;
+    const z = state.zones.filter(Boolean).length;
+    toast(`${n} ${n===1?"material agregado":"materiales agregados"} a la partida 1,1 · ${z} ${z===1?"zona":"zonas"}.`);
+  });
+  $("#btn-cancel").addEventListener("click",closePanel);
+  $("#btn-close").addEventListener("click",closePanel);
+  $("#reopen").addEventListener("click",()=>{
+    $(".overlay").style.display = "";
+    $("#reopen").classList.remove("show");
+  });
+  document.addEventListener("keydown",e=>{
+    if(e.key==="Escape") closePanel();
+    if(e.key==="/" && document.activeElement.tagName!=="INPUT"){ e.preventDefault(); $("#q").focus(); }
+  });
+
+  function closePanel(){
+    $(".overlay").style.display = "none";
+    $("#reopen").classList.add("show");
+  }
+  let toastTimer;
+  function toast(msg){
+    const t = $("#toast");
+    $("#toast-text").textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>t.classList.remove("show"), 2800);
+  }
+
+  renderChips();
+  renderAll();
+})();
+</script>
+</body>
+</html>

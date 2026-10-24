@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
@@ -239,6 +239,9 @@ public sealed partial class BudgetProjectSession
                 FechaModificacion = AppClock.Now,
                 MonedaPresupuesto = string.IsNullOrWhiteSpace(defaultMoneda) ? "CLP" : defaultMoneda.Trim().ToUpperInvariant(),
                 EstadoPresupuesto = "Borrador",
+                MarkupMethod = "SobreCosto",
+                ValorAgregadoEquiposPct = 3m,
+                PoliticaCostosExcel = true,
                 GastosGeneralesPct = defaultGastosGeneralesPct.HasValue && defaultGastosGeneralesPct.Value >= 0m ? defaultGastosGeneralesPct.Value : 14m,
                 UtilidadPct = defaultUtilidadPct.HasValue && defaultUtilidadPct.Value >= 0m ? defaultUtilidadPct.Value : 18m,
                 MermasPct = defaultMermasPct.HasValue && defaultMermasPct.Value >= 0m ? defaultMermasPct.Value : 0m,

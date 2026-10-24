@@ -4,6 +4,20 @@ Las versiones siguen el formato `MAJOR.MINOR.PATCH` y corresponden a `Directory.
 
 ## No publicado
 
+## 1.1.2
+
+### Calibración definitiva Motor Costos/FA y Familias Canónicas de Presentación (2026-10-24)
+- **Calibración del motor de Mano de Obra y Factor de Ajuste (FA)**:
+  - Corrección de la fórmula en `ExcelCostosBridge` y `FactorAjusteMoService`: la Mano de Obra se calcula como `MoDirecta = Sum(Material x FactorM.O. x FA)`, igualando la base y el margen del Excel de referencia (`$159.746.897` vs `$159.772.500`, discrepancia de solo -0,02%).
+  - Mantenimiento bidireccional y dinámico de factores: el FA varía orgánicamente por proyecto sin alterar factores fijos.
+- **Familias Canónicas de Presentación ordenadas según Excel de referencia**:
+  - Reestructuración de `PresentacionFamiliasInforme.FamiliasCanonicas` en las 9 familias exactas: `MATERIALES` (1.720), `EQUIPOS` (1.430), `TABLEROS` (1.440), `LUMINARIAS` (1.450), `PVC/EPC` (1.720), `VARIOS` (1.360), `ARTEFACTOS` (1.450), `MOVIMIENTOS` (1.450), `COMISIONAMIENTO` (1.450).
+  - Clasificación de recursos ajustada: `Protecciones` clasificado como material (no equipo) con markup de Tableros. `Puesta a tierra` mapeado a `CONDUCTORES` (`MATERIALES`).
+  - Incorporación del botón `+ Agregar familia` en la vista de Costo (`AgregarFamiliaPresentacionDialog`) para registrar nuevas familias de presentación dinámicas.
+- **Infraestructura de Auto-Actualización Velopack**:
+  - Corrección de `ProductVersionInfo.GitHubReleasesUrl` apuntando al repositorio canónico `https://github.com/cristobal9074-cmyk/QubiCostElectrical`.
+  - Empaquetado oficial con Velopack 1.2 (`vpk pack`) generando deltas incrementales y binario de instalación para distribución transparente.
+
 ### Hermeticidad de la suite de tests y recuperación de presupuestos de obra (2026-10-21)
 - **Incidente corregido**: `FactorAjusteMoServiceTests.SyncAndVerifyPel039A2026Prueba2` era en
   realidad un script de calibración de un presupuesto real, marcado como `[Fact]`. En cada

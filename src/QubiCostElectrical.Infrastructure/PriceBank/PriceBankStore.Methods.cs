@@ -17,7 +17,7 @@ public sealed partial class PriceBankStore : IPriceBankStore
     public string DatabasePath => databasePath;
 
     private const string SelectColumns =
-        "codigo, descripcion, unidad, categoria, mat_uf, mo_uf, moneda, proveedor, marca, fecha_precio, origen_precio, proyecto_origen, actualizado_en, mat_clp, mo_clp, rendimiento_dh, dia_pareja, mo_formula_tipo, mo_porcentaje_material";
+        "codigo, descripcion, unidad, categoria, mat_uf, mo_uf, moneda, proveedor, marca, fecha_precio, origen_precio, proyecto_origen, actualizado_en, mat_clp, mo_clp, rendimiento_dh, dia_pareja, mo_formula_tipo, mo_porcentaje_material, mo_factor_base";
 
     // orden ASC preserva el orden de llegada (import/creación) en vez de reordenar alfabético —
     // pedido explícito del usuario: la lista se ve "tal cual como está en el Excel".
@@ -265,8 +265,8 @@ public sealed partial class PriceBankStore : IPriceBankStore
         using var cmd = cn.CreateCommand();
         cmd.Transaction = tx;
         cmd.CommandText = """
-            INSERT INTO price_bank (codigo, descripcion, unidad, categoria, mat_uf, mo_uf, moneda, proveedor, marca, fecha_precio, origen_precio, proyecto_origen, actualizado_en, mat_clp, mo_clp, rendimiento_dh, dia_pareja, mo_formula_tipo, mo_porcentaje_material, orden)
-            VALUES ($codigo, $descripcion, $unidad, $categoria, $mat, $mo, $moneda, $proveedor, $marca, $fecha, $origen, $proyecto, $actualizado, $matclp, $moclp, $rend, $pareja, $formulamo, $pormo,
+            INSERT INTO price_bank (codigo, descripcion, unidad, categoria, mat_uf, mo_uf, moneda, proveedor, marca, fecha_precio, origen_precio, proyecto_origen, actualizado_en, mat_clp, mo_clp, rendimiento_dh, dia_pareja, mo_formula_tipo, mo_porcentaje_material, mo_factor_base, orden)
+            VALUES ($codigo, $descripcion, $unidad, $categoria, $mat, $mo, $moneda, $proveedor, $marca, $fecha, $origen, $proyecto, $actualizado, $matclp, $moclp, $rend, $pareja, $formulamo, $pormo, $factorbase,
                 COALESCE($orden, (SELECT orden FROM price_bank WHERE codigo = $codigo), (SELECT COALESCE(MAX(orden), 0) + 1 FROM price_bank)))
             ON CONFLICT(codigo) DO UPDATE SET
                 descripcion = excluded.descripcion,
@@ -287,6 +287,7 @@ public sealed partial class PriceBankStore : IPriceBankStore
                 dia_pareja = excluded.dia_pareja,
                 mo_formula_tipo = excluded.mo_formula_tipo,
                 mo_porcentaje_material = excluded.mo_porcentaje_material,
+                mo_factor_base = excluded.mo_factor_base,
                 orden = CASE WHEN $orden IS NOT NULL THEN excluded.orden ELSE price_bank.orden END;
             """;
         cmd.Parameters.AddWithValue("$codigo", (entry.Codigo ?? "").Trim().ToUpperInvariant());
@@ -301,6 +302,7 @@ public sealed partial class PriceBankStore : IPriceBankStore
         cmd.Parameters.AddWithValue("$pareja", entry.DiaXPareja);
         cmd.Parameters.AddWithValue("$formulamo", entry.MoFormulaTipo ?? "");
         cmd.Parameters.AddWithValue("$pormo", entry.MoPorcentajeMaterial);
+        cmd.Parameters.AddWithValue("$factorbase", entry.MoFactorBase);
         cmd.Parameters.AddWithValue("$moneda", string.IsNullOrWhiteSpace(entry.MonedaPrecio) ? "CLP" : entry.MonedaPrecio);
         cmd.Parameters.AddWithValue("$proveedor", entry.Proveedor ?? "");
         cmd.Parameters.AddWithValue("$marca", entry.Marca ?? "");
@@ -340,7 +342,8 @@ public sealed partial class PriceBankStore : IPriceBankStore
         RendimientoDh = ReadDecimal(r, 15),
         DiaXPareja = ReadDecimal(r, 16),
         MoFormulaTipo = ReadText(r, 17),
-        MoPorcentajeMaterial = ReadDecimal(r, 18)
+        MoPorcentajeMaterial = ReadDecimal(r, 18),
+        MoFactorBase = r.FieldCount > 19 ? ReadDecimal(r, 19) : 0m
     };
 
     private SqliteConnection Open()
@@ -565,7 +568,28 @@ public sealed partial class PriceBankStore : IPriceBankStore
             }
             catch (Exception ex)
             {
-                AppLog.Critical("BancoPrecios", "Falló la migración v5 (fórmula M.O. %) del banco de precios; se revierte", ex);
+                AppLog.Critical("BancoPrecios", "Fallo migracion v5", ex);
+                tx.Rollback();
+                throw;
+            }
+        }
+
+        if (version < 6)
+        {
+            using var tx = cn.BeginTransaction();
+            try
+            {
+                Execute(cn, tx, """
+                    ALTER TABLE price_bank ADD COLUMN mo_factor_base REAL NOT NULL DEFAULT 0;
+                    UPDATE price_bank SET mo_factor_base = mo_clp WHERE (mo_formula_tipo = 'Factor' OR mo_formula_tipo = '') AND mo_clp > 0 AND mo_factor_base = 0;
+                    UPDATE price_bank SET mo_formula_tipo = 'Factor' WHERE (mo_formula_tipo IS NULL OR mo_formula_tipo = '') AND mo_clp > 0;
+                    """);
+                Execute(cn, tx, "PRAGMA user_version = 6;");
+                tx.Commit();
+            }
+            catch (Exception ex)
+            {
+                AppLog.Critical("BancoPrecios", "Falló la migración v6 (mo_factor_base) del banco de precios; se revierte", ex);
                 tx.Rollback();
                 throw;
             }
@@ -587,6 +611,7 @@ public sealed partial class PriceBankStore : IPriceBankStore
         ("dia_pareja", "ALTER TABLE price_bank ADD COLUMN dia_pareja REAL NOT NULL DEFAULT 0"),
         ("mo_formula_tipo", "ALTER TABLE price_bank ADD COLUMN mo_formula_tipo TEXT NOT NULL DEFAULT ''"),
         ("mo_porcentaje_material", "ALTER TABLE price_bank ADD COLUMN mo_porcentaje_material REAL NOT NULL DEFAULT 2.5"),
+        ("mo_factor_base", "ALTER TABLE price_bank ADD COLUMN mo_factor_base REAL NOT NULL DEFAULT 0"),
     ];
 
     private static void EnsureRequiredColumns(SqliteConnection cn)

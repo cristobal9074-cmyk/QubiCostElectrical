@@ -165,7 +165,7 @@ public class LoginViewModel : ViewModelBase
             // credenciales), se permite validar contra las credenciales locales ya registradas
             // para no dejar al usuario fuera de su propia app.
             var isOfflineGrace = !licenseResult.IsValid
-                && licenseResult.Reason is "network_error" or "timeout";
+                && licenseResult.Reason is "network_error" or "timeout" or "http_error" or "unknown";
 
             if (!licenseResult.IsValid && !isOfflineGrace)
             {

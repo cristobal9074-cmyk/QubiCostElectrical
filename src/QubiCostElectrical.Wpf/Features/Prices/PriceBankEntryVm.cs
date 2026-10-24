@@ -213,6 +213,21 @@ public sealed class PriceBankEntryVm : ViewModelBase
         }
     }
 
+    /// <summary>Base de M.O. para la fórmula Factor (multiplica al FA).</summary>
+    public decimal MoFactorBase
+    {
+        get => source.MoFactorBase;
+        set
+        {
+            if (!AllowEdit) return;
+            if (source.MoFactorBase == value) return;
+            source.MoFactorBase = value;
+            MarkChanged();
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(MoDerivadaClp));
+        }
+    }
+
     /// <summary>Porcentaje de M.O. sobre el material como número (2.5 = 2,5%). Columna % M.O.</summary>
     public decimal MoPorcentajeMaterial
     {
@@ -258,6 +273,12 @@ public sealed class PriceBankEntryVm : ViewModelBase
             if (string.Equals(source.MoFormulaTipo, MaterialMoResolver.MoFormulaPorcentaje, StringComparison.OrdinalIgnoreCase)
                 && source.MoPorcentajeMaterial > 0m)
                 return Math.Round(source.MatClp * (source.MoPorcentajeMaterial / 100m) * indiceMoFa, 2, MidpointRounding.AwayFromZero);
+            if (string.Equals(source.MoFormulaTipo, MaterialMoResolver.MoFormulaFactor, StringComparison.OrdinalIgnoreCase))
+            {
+                decimal baseMo = source.MoFactorBase > 0m ? source.MoFactorBase : source.MoClp;
+                decimal fa = indiceMoFa > 0m ? indiceMoFa : 1m;
+                return Math.Round(baseMo * fa, 2, MidpointRounding.AwayFromZero);
+            }
             return source.MoClp;
         }
     }

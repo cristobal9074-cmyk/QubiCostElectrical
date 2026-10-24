@@ -50,6 +50,9 @@ public sealed class PriceBankEntry
     /// <summary>Fórmula de M.O.: vacío = M.O. fija (MoClp); <see cref="MaterialMoResolver.MoFormulaPorcentaje"/> = Material × MoPorcentajeMaterial × FA.</summary>
     public string MoFormulaTipo { get; set; } = "";
 
+    /// <summary>Base de mano de obra para fórmula Factor (columna F de LISTA-PR). Multiplica al FA.</summary>
+    public decimal MoFactorBase { get; set; }
+
     /// <summary>Porcentaje de M.O. sobre el material como número (2.5 = 2,5%). Solo aplica con fórmula "Porcentaje".</summary>
     public decimal MoPorcentajeMaterial { get; set; } = 2.5m;
 

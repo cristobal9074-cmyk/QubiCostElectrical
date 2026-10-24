@@ -43,13 +43,13 @@ public sealed class ProjectInfoRow
     public bool AutoActualizarIndicadores { get; set; } = true;
     public string EstadoPresupuesto { get; set; } = "Borrador";
     public List<BudgetStatusHistoryRow> HistorialEstados { get; set; } = new();
-    public string MarkupMethod { get; set; } = "SobreVenta";
+    public string MarkupMethod { get; set; } = "SobreCosto";
     public decimal GastosGeneralesPct { get; set; } = 14m;
     public decimal UtilidadPct { get; set; } = 18m;
     /// <summary>Valor agregado sobre equipos (paridad estándar). Persistido en JSON de project_info.</summary>
-    public decimal ValorAgregadoEquiposPct { get; set; } = 0m;
+    public decimal ValorAgregadoEquiposPct { get; set; } = 3m;
     /// <summary>Si true, motor usa bases GG/UT de paridad estándar.</summary>
-    public bool PoliticaCostosExcel { get; set; }
+    public bool PoliticaCostosExcel { get; set; } = true;
     /// <summary>
     /// Fuerza la venta línea a línea con el factor de presentación por familia
     /// (markup × (1 − descuento%)) en vez del markup global GG/Utilidad. Independiente de

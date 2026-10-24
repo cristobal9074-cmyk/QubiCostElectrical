@@ -41,7 +41,58 @@ public static class ProjectSnapshotIntegrity
         EnsureConjuntos(value.ConjuntosElectricos);
         EnsureCubicacionSC(value.CubicacionSC);
         EnsureMaterialesClp(value.Materiales, value.Proyecto.ValorUfClp);
+        EnsureMaterialesFormulas(value);
         EnsureCubicacionClp(value);
+    }
+
+    private static void EnsureMaterialesFormulas(ProjectFileData data)
+    {
+        bool tienePlanMo = (data.MoDirecta != null && data.MoDirecta.Count > 0)
+            || (data.MoIndirecta != null && data.MoIndirecta.Count > 0)
+            || (data.Proyecto?.MoDirectaClp > 0m)
+            || (data.Proyecto?.MoTotalClp > 0m);
+
+        if (data.Proyecto != null)
+        {
+            if (tienePlanMo && !data.Proyecto.PoliticaCostosExcel)
+            {
+                data.Proyecto.PoliticaCostosExcel = true;
+                if (string.Equals(data.Proyecto.MarkupMethod, "SobreVenta", StringComparison.OrdinalIgnoreCase))
+                    data.Proyecto.MarkupMethod = "SobreCosto";
+            }
+        }
+
+        if (data.Materiales != null)
+        {
+            foreach (var m in data.Materiales)
+            {
+                if (m == null) continue;
+                if (string.Equals(m.MoFormulaTipo, MaterialMoResolver.MoFormulaPorcentaje, StringComparison.OrdinalIgnoreCase))
+                    continue;
+                if (string.Equals(m.MoFormulaTipo, MaterialMoResolver.MoFormulaDirecto, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                if (string.Equals(m.MoFormulaTipo, MaterialMoResolver.MoFormulaFactor, StringComparison.OrdinalIgnoreCase))
+                {
+                    if (m.MoFactorBase <= 0m && m.MoClp > 0m)
+                        m.MoFactorBase = m.MoClp;
+                    continue;
+                }
+
+                if (m.MoFactorBase > 0m)
+                {
+                    m.MoFormulaTipo = MaterialMoResolver.MoFormulaFactor;
+                    continue;
+                }
+
+                if (string.IsNullOrWhiteSpace(m.MoFormulaTipo) && m.MoClp > 0m)
+                {
+                    m.MoFormulaTipo = MaterialMoResolver.MoFormulaFactor;
+                    m.MoFactorBase = m.MoClp;
+                    continue;
+                }
+            }
+        }
     }
 
     private static void EnsureCubicacionClp(ProjectFileData data)

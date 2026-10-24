@@ -411,4 +411,65 @@ public sealed class FactorAjusteMoServiceTests
 
         Assert.Equal(171_990_000m, sumaDirecta);
     }
+
+    [Fact]
+    public void SaraDelCampo_Fa_Y_Margen_CuadraConExcel()
+    {
+        // En Sara del campo (PEL037A2026 ABIERTO.xlsx):
+        // Mano de obra directa en MANO DE OBRA!T22 = $159.705.000 CLP
+        // Suma de base de M.O. x Cantidad en el presupuesto = $7.503.803,52 CLP
+        // FA exacto = 159.705.000 / 7.503.803,52 = 21,2832 (tecleado en Excel como 21.3)
+        var data = Proyecto(moDirectaClp: 159_705_000m, moTotalClp: 279_110_000m);
+        data.Proyecto.GastosGeneralesPct = 5m;
+        data.Proyecto.UtilidadPct = 8m;
+        data.Proyecto.ValorAgregadoEquiposPct = 3m;
+        data.Proyecto.PoliticaCostosExcel = true;
+
+        // Simulamos partidas con materiales que usan base factor y porcentaje
+        // 1) Conductor THHN 2.5: base 70, cantidad 10.000 ml -> base = 700.000
+        data.Materiales.Add(new MaterialRow
+        {
+            Codigo = "THHN2.5",
+            MatClp = 215m,
+            MoClp = 70m,
+            MoFactorBase = 70m,
+            MoFormulaTipo = MaterialMoResolver.MoFormulaFactor
+        });
+        data.Cubicacion.Add(new CubicacionRow { Codigo = "THHN2.5", Cantidad = 10_000m });
+
+        // 2) Tablero TDF: Material $1.000.000, 2.5%, cantidad 5 -> base = 125.000
+        data.Materiales.Add(new MaterialRow
+        {
+            Codigo = "TDF-01",
+            MatClp = 1_000_000m,
+            MoFormulaTipo = MaterialMoResolver.MoFormulaPorcentaje,
+            MoPorcentajeMaterial = 2.5m
+        });
+        data.Cubicacion.Add(new CubicacionRow { Codigo = "TDF-01", Cantidad = 5m });
+
+        // 3) Resto del presupuesto proporcional: base = 7.503.803,52 - 825.000 = 6.678.803,52
+        decimal baseResto = 7_503_803.52m - 825_000m;
+        data.Materiales.Add(new MaterialRow
+        {
+            Codigo = "RESTO-PROYECTO",
+            MatClp = 500m,
+            MoClp = baseResto,
+            MoFactorBase = baseResto,
+            MoFormulaTipo = MaterialMoResolver.MoFormulaFactor
+        });
+        data.Cubicacion.Add(new CubicacionRow { Codigo = "RESTO-PROYECTO", Cantidad = 1m });
+
+        var resultado = FactorAjusteMoService.CalcularParaProyecto(data, data.Proyecto);
+
+        Assert.True(resultado.PuedeCalcular);
+        // Base total = 7.503.803,52
+        Assert.Equal(7_503_803.52m, resultado.BasePorcentajeClp);
+        // FA = 159.705.000 / 7.503.803,52 = 21.28
+        Assert.Equal(21.28m, resultado.Fa);
+
+        // Al resolver M.O. efectiva con ese FA:
+        // THHN 2.5 pasa de base 70 a 70 * 21.28 = 1.489,60 CLP
+        decimal moEfectiva = MaterialMoResolver.MoClpPorFactor(data.Materiales[0].MoFactorBase, resultado.Fa!.Value);
+        Assert.Equal(1489.60m, moEfectiva);
+    }
 }

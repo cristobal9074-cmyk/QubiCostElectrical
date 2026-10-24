@@ -10,7 +10,7 @@
 - **Ejecutable:** `QubiCostElectrical.exe`
 - **Formato de proyecto:** `.qce` (SQLite)
 - **UI:** WPF (`src/QubiCostElectrical.Wpf`) — WinForms retirado
-- **Versión vigente:** ver `Directory.Build.props` y `docs/PRODUCT.md` (`1.1.1`)
+- **Versión vigente:** ver `Directory.Build.props` y `docs/PRODUCT.md` (`1.1.2`)
 
 ## Comandos
 
@@ -119,8 +119,12 @@ Política en `UserRolePermissions` (Domain). La sesión aplica restricciones ví
 - Lógica de negocio en Domain/Application, nunca en code-behind de vistas.
 - No reintroducir nombres `PresupuestoElectrico` en scripts operativos ni UI visible.
 - Documentación histórica en `docs/WPF_*` puede mencionar WinForms; la fuente de verdad operativa es este archivo y `CLAUDE.md`.
-- **Publicación y Pruebas del Usuario:**
-  - El usuario abre y prueba la aplicación exclusivamente a través del acceso directo en el escritorio: `C:\Users\cristobal1\Desktop\Qubi Cost Electrical.lnk` (que apunta a `publish\win-x64\QubiCostElectrical.exe`).
-  - **SIEMPRE que se realicen cambios de código, se DEBE compilar y publicar en `publish\win-x64`** para que el usuario pruebe la versión correcta.
-  - El proyecto activo que el usuario utiliza como referencia para validar es: `C:\Users\cristobal1\Documents\Presupuestos Electricos\PEL039A2026 ABIERTO.qce`.
-
+- **Entornos DEV y PROD en la misma máquina (Regla Estricta):**
+  - **DEV (Entorno de desarrollo y pruebas activas):**
+    - Acceso directo en el escritorio: `C:\Users\cristobal1\Desktop\Qubi Cost Electrical (Dev).lnk` (apunta a `publish\win-x64\QubiCostElectrical.exe`).
+    - **SIEMPRE que se realicen cambios de código, se DEBE compilar y publicar únicamente en `publish\win-x64`** para que el usuario pruebe la versión de desarrollo desde el acceso directo (Dev).
+  - **PROD (Instalación oficial de producción para pruebas reales de lanzamiento):**
+    - Acceso directo en el escritorio: `C:\Users\cristobal1\Desktop\Qubi Cost Electrical.lnk` (apunta a `C:\Users\cristobal1\AppData\Local\QubiCostElectrical\current\QubiCostElectrical.exe`).
+    - El usuario mantiene esta versión oficial instalada para hacer las pruebas reales dentro de la app de lanzamiento para usuarios.
+    - **REGLA ABSOLUTA:** **NUNCA modificar, sobrescribir, copiar archivos ni tocar `AppData\Local\QubiCostElectrical\current\`.** La versión PROD solo se actualiza mediante releases oficiales empaquetados con Velopack (`build-release.ps1`), nunca copiando binarios de desarrollo manualmente.
+  - El proyecto activo que el usuario utiliza como referencia para validar es: `C:\Users\cristobal1\Documents\Presupuestos Electricos\PEL037A2026.qce` (o `PEL039A2026 ABIERTO.qce`).

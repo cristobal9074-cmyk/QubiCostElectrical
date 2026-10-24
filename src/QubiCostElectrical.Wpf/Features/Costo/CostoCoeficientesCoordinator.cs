@@ -24,12 +24,12 @@ internal sealed class CostoCoeficientesCoordinator
     private static readonly string[] FamiliasBase =
     {
         "Conductores",
-        "Canalización",
+        "Equipos",
         "Tableros",
         "Iluminación",
-        "Equipos",
-        "Enchufes y tomacorrientes",
+        "Canalización",
         "Accesorios",
+        "Enchufes y tomacorrientes",
         "Movimientos",
         "Comisionamiento"
     };
@@ -45,7 +45,7 @@ internal sealed class CostoCoeficientesCoordinator
         _vm.InformeFamilias = informe;
 
         var deseados = informe.Buckets
-            .Where(b => EsFilaVisible(b))
+            .Where(b => EsFilaVisible(b, _vm.Session.ProjectInfo))
             .ToList();
 
         foreach (var row in _vm.CoefFactors.ToList())
@@ -89,11 +89,14 @@ internal sealed class CostoCoeficientesCoordinator
         }
     }
 
-    private static bool EsFilaVisible(BucketPresentacionInfo bucket)
+    private static bool EsFilaVisible(BucketPresentacionInfo bucket, ProjectInfoRow? project)
     {
         if (bucket.Familias.Count > 0)
             return true;
         if (bucket.Configurada)
+            return true;
+        if (project?.FamiliasPersonalizadas?.Any(p =>
+            string.Equals(FamilyPresentationDefaults.Normalize(p), bucket.Clave, StringComparison.OrdinalIgnoreCase)) == true)
             return true;
         return FamiliasBase.Any(f =>
             string.Equals(FamilyPresentationDefaults.Normalize(f), bucket.Clave, StringComparison.OrdinalIgnoreCase));

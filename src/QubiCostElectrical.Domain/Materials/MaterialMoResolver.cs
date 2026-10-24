@@ -22,6 +22,9 @@ public static class MaterialMoResolver
     /// <summary>Valor de MaterialRow.MoFormulaTipo que activa la fórmula BaseMo × FA. Paridad con columna F de LISTA-PR.</summary>
     public const string MoFormulaFactor = "Factor";
 
+    /// <summary>Valor explícito para indicar que el material cotiza con M.O. fija en pesos (sin FA).</summary>
+    public const string MoFormulaDirecto = "Directo";
+
     /// <summary>
     /// FA sin calibrar. El 62,80 del Excel no era un valor de la app: era el número que el estimador
     /// escribía para SU proyecto hasta que la M.O. del itemizado cuadraba con el plan de obra. Por eso
@@ -60,6 +63,37 @@ public static class MaterialMoResolver
     {
         if (material == null) return false;
         return string.Equals(material.MoFormulaTipo, MoFormulaFactor, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Normaliza la fórmula de M.O. de un material para que su comportamiento sea explícito y predecible.
+    /// Preserva 'Porcentaje' y 'Directo'; si tiene base numérica de factor la asegura.
+    /// </summary>
+    public static void NormalizarFormulaMaterial(MaterialRow? material)
+    {
+        if (material == null) return;
+        if (string.Equals(material.MoFormulaTipo, MoFormulaPorcentaje, StringComparison.OrdinalIgnoreCase))
+            return;
+        if (string.Equals(material.MoFormulaTipo, MoFormulaDirecto, StringComparison.OrdinalIgnoreCase))
+            return;
+        if (string.Equals(material.MoFormulaTipo, MoFormulaFactor, StringComparison.OrdinalIgnoreCase))
+        {
+            if (material.MoFactorBase <= 0m && material.MoClp > 0m)
+                material.MoFactorBase = material.MoClp;
+            return;
+        }
+
+        if (material.MoFactorBase > 0m)
+        {
+            material.MoFormulaTipo = MoFormulaFactor;
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(material.MoFormulaTipo) && material.MoClp > 0m)
+        {
+            material.MoFormulaTipo = MoFormulaFactor;
+            material.MoFactorBase = material.MoClp;
+        }
     }
 
     /// <summary>Base de M.O. para la fórmula Factor: MoFactorBase o respaldo de MoClp.</summary>

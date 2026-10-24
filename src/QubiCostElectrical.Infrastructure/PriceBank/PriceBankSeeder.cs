@@ -259,7 +259,22 @@ public static class PriceBankSeeder
         if (!string.IsNullOrWhiteSpace(formulaRaw))
         {
             bool activo = IsTruthy(formulaRaw);
-            entry.MoFormulaTipo = activo ? MaterialMoResolver.MoFormulaPorcentaje : "";
+            entry.MoFormulaTipo = activo ? MaterialMoResolver.MoFormulaPorcentaje : (string.Equals(NormalizeHeader(formulaRaw), "factor", StringComparison.OrdinalIgnoreCase) ? MaterialMoResolver.MoFormulaFactor : "DIRECTO_OFF");
+        }
+
+        if (string.Equals(entry.MoFormulaTipo, MaterialMoResolver.MoFormulaPorcentaje, StringComparison.OrdinalIgnoreCase))
+        {
+            entry.MoFactorBase = 0m;
+        }
+        else if (entry.MoFormulaTipo != "DIRECTO_OFF" && entry.MoClp > 0m)
+        {
+            entry.MoFormulaTipo = MaterialMoResolver.MoFormulaFactor;
+            entry.MoFactorBase = entry.MoClp;
+        }
+        else
+        {
+            entry.MoFormulaTipo = "";
+            entry.MoFactorBase = 0m;
         }
 
         return entry;

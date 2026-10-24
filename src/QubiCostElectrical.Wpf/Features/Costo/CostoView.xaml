@@ -465,6 +465,7 @@
                           IsEnabled="{Binding CanEdit}"
                           ToolTip="FA = (M.O. real del proyecto − M.O. ya cubierta por el catálogo) ÷ Σ (Material × %). Calibra la M.O. de instalación al costo real del plan de obra." />
                   <Button Content="Gestionar familias" Command="{Binding AbrirGestionFamiliasCommand}" Style="{StaticResource Button.Secondary}" Height="22" Padding="8,0" Margin="0,0,4,0" FontSize="11" ToolTip="Ver, crear, renombrar y dar de baja familias del catálogo eléctrico" />
+                  <Button Content="+ Agregar familia" Command="{Binding AgregarFamiliaPresentacionCommand}" Style="{StaticResource Button.Secondary}" Height="22" Padding="8,0" Margin="0,0,4,0" FontSize="11" IsEnabled="{Binding CanEdit}" ToolTip="Agregar una nueva familia de presentación personalizada" />
                   <Button Content="Estándar" Command="{Binding LoadCoeficientesEstandarCommand}" Style="{StaticResource Button.Secondary}" Height="22" Padding="8,0" Margin="0,0,4,0" FontSize="11" />
                   <Button Content="Típicos" Command="{Binding LoadTipicosCoeficientesCommand}" Style="{StaticResource Button.Secondary}" Height="22" Padding="8,0" Margin="0,0,4,0" FontSize="11" />
                   <Button Content="Reset 1,00×" Command="{Binding ResetCoeficientesCommand}" Style="{StaticResource Button.Ghost}" Height="22" Padding="8,0" FontSize="11" />

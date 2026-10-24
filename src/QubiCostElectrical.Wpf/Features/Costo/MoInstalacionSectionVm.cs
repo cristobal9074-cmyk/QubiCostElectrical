@@ -209,12 +209,14 @@ public sealed class MoInstalacionSectionVm : ViewModelBase
         OnPropertyChanged(nameof(IndiceMoFaText));
         faResultado = "";
         OnPropertyChanged(nameof(FaResultado));
+        if (ProjectLegacyFormulaMigrator.Sync(session.Materiales, priceBank)) session.MarkDirty(ProjectDirtyScope.Materiales);
         UpdateHint();
 
         // El FA es fijo y se mantiene tal cual lo fijó el usuario o el catálogo (paridad con Excel COSTOS!E192).
         // Solo se recalibra si el usuario pulsa explícitamente "Calcular FA".
         UpdateFaDerivado();
     }
+
 
     /// <summary>
     /// Deriva el FA del proyecto: FA = (M.O. real − M.O. ya cubierta por el catálogo/rendimiento)
@@ -225,6 +227,8 @@ public sealed class MoInstalacionSectionVm : ViewModelBase
     {
         if (!canEdit())
             return;
+
+        if (ProjectLegacyFormulaMigrator.Sync(session.Materiales, priceBank)) session.MarkDirty(ProjectDirtyScope.Materiales);
 
         var resultado = FactorAjusteMoService.CalcularParaProyecto(session.Data, session.ProjectInfo);
         if (!resultado.PuedeCalcular)
@@ -320,12 +324,14 @@ public sealed class MoInstalacionSectionVm : ViewModelBase
     private void UpdateHint()
     {
         int conPorcentaje = session.Materiales.Count(m => MaterialMoResolver.DebeUsarPorcentaje(m));
-        string porcentajeSuffix = conPorcentaje > 0
-            ? " · " + conPorcentaje + " materiales con M.O. por % (Precio × % × FA)"
+        int conFactor = session.Materiales.Count(m => MaterialMoResolver.DebeUsarFactor(m));
+        int totalCalibrables = conPorcentaje + conFactor;
+        string formulaSuffix = totalCalibrables > 0
+            ? $" · {conFactor} materiales Base×FA · {conPorcentaje} materiales %×FA"
             : "";
         if (!modoMoRendimiento)
         {
-            hint = "M.O. directa del catálogo (comportamiento histórico)." + porcentajeSuffix;
+            hint = "M.O. directa del catálogo (comportamiento histórico)." + formulaSuffix;
         }
         else
         {
@@ -334,10 +340,10 @@ public sealed class MoInstalacionSectionVm : ViewModelBase
                 ? "Sin rendimientos en el catálogo: se usa M.O. directa."
                 : conRend + " materiales con rendimiento · " + (session.ProjectInfo.TarifaDhClp > 0m
                     ? session.ProjectInfo.TarifaDhClp.ToString("N0", CultureInfo.CurrentCulture) + " CLP/D-H"
-                    : "tarifa sin definir (fallback a directo)")) + porcentajeSuffix;
+                    : "tarifa sin definir (fallback a directo)")) + formulaSuffix;
         }
         OnPropertyChanged(nameof(MoInstalacionHint));
-        UpdateFaAviso(conPorcentaje);
+        UpdateFaAviso(totalCalibrables);
         UpdateFaDerivado();
         UpdateFactores();
     }
@@ -419,14 +425,14 @@ public sealed class MoInstalacionSectionVm : ViewModelBase
     /// El FA ya no es una constante: se deriva de la M.O. directa real del proyecto. Sin plan de M.O. no
     /// hay con qué derivarlo, así que se avisa en pantalla en vez de dejar el genérico en silencio.
     /// </summary>
-    private void UpdateFaAviso(int materialesPorcentaje)
+    private void UpdateFaAviso(int materialesCalibrables)
     {
         decimal moReal = FactorAjusteMoService.ResolverMoRealClp(session.Data, session.ProjectInfo);
         string aviso = moReal <= 0m
             ? "Sin plan de mano de obra en este proyecto: el FA queda en 0 (sin calibrar) y la M.O. por % se calcula con factor 1 (Material × %). "
               + "Carga dotación y sueldos en Mano de obra y pulsa 'Calcular FA' para derivar el índice."
-            : materialesPorcentaje == 0
-                ? "Ningún material usa M.O. por % (Precio × % × FA): el FA no cambia la M.O. del itemizado."
+            : materialesCalibrables == 0
+                ? "Ningún material usa fórmula dependiente del FA (Factor Base o %): el FA no cambia la M.O. del itemizado."
                 : "";
 
         if (faAviso != aviso)
@@ -436,7 +442,7 @@ public sealed class MoInstalacionSectionVm : ViewModelBase
             OnPropertyChanged(nameof(FaAvisoVisible));
         }
 
-        if (string.IsNullOrEmpty(faResultado) && moReal > 0m && materialesPorcentaje > 0)
+        if (string.IsNullOrEmpty(faResultado) && moReal > 0m && materialesCalibrables > 0)
         {
             faResultado = "M.O. directa del proyecto " + CurrencyFormat.Clp(moReal)
                 + ". Pulsa 'Calcular FA' si deseas calibrar el índice con el plan de obra.";

@@ -243,30 +243,30 @@ public static class ExcelCostosBridge
     public static IReadOnlyDictionary<string, decimal> PresetFactoresEstandar { get; } =
         new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase)
         {
-            ["Conductores"] = 1.57m,
-            ["Canalización"] = 1.57m,
-            ["Tableros"] = 1.30m,
-            ["Iluminación"] = 1.30m,
-            ["Equipos"] = 1.30m,
-            ["Accesorios"] = 1.30m,
-            ["Enchufes y tomacorrientes"] = 1.30m,
-            ["Protecciones"] = 1.30m,
-            ["Puesta a tierra"] = 1.30m,
+            ["Conductores"] = 1.72m,
+            ["Equipos"] = 1.43m,
+            ["Tableros"] = 1.44m,
+            ["Iluminación"] = 1.45m,
+            ["Canalización"] = 1.72m,
+            ["Accesorios"] = 1.36m,
+            ["Enchufes y tomacorrientes"] = 1.45m,
+            ["Movimientos"] = 1.45m,
+            ["Comisionamiento"] = 1.45m,
         };
 
     /// <summary>Típicos genéricos (promedio histórico de varios proyectos).</summary>
     public static IReadOnlyDictionary<string, decimal> PresetFactoresTipicos { get; } =
         new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase)
         {
-            ["Conductores"] = 1.50m,
-            ["Canalización"] = 1.44m,
-            ["Tableros"] = 1.10m,
-            ["Iluminación"] = 1.17m,
-            ["Equipos"] = 1.12m,
-            ["Accesorios"] = 1.14m,
-            ["Enchufes y tomacorrientes"] = 1.05m,
-            ["Protecciones"] = 1.12m,
-            ["Puesta a tierra"] = 1.20m,
+            ["Conductores"] = 1.72m,
+            ["Equipos"] = 1.43m,
+            ["Tableros"] = 1.44m,
+            ["Iluminación"] = 1.45m,
+            ["Canalización"] = 1.72m,
+            ["Accesorios"] = 1.36m,
+            ["Enchufes y tomacorrientes"] = 1.45m,
+            ["Movimientos"] = 1.45m,
+            ["Comisionamiento"] = 1.45m,
         };
 
     public static void ApplyPoliticaEstandar(ProjectInfoRow project)

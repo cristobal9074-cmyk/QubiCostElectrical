@@ -14,7 +14,9 @@ public sealed class RemoteLicenseService : IRemoteLicenseService
 
     public RemoteLicenseService(string? endpointUrl = null)
     {
-        _endpointUrl = endpointUrl ?? $"{ProductVersionInfo.GitHubReleasesUrl}/api/verify-license";
+        _endpointUrl = endpointUrl
+            ?? Environment.GetEnvironmentVariable("QUBI_LICENSE_URL")
+            ?? "https://qubicost-updates.cristobal9074.workers.dev/api/verify-license";
     }
 
     public async Task<RemoteLicenseVerificationResult> VerifyLicenseAsync(string email, string password, CancellationToken cancellationToken = default)
@@ -28,6 +30,7 @@ public sealed class RemoteLicenseService : IRemoteLicenseService
             var payload = new
             {
                 email = normalizedEmail,
+                password,
                 passwordHash
             };
 

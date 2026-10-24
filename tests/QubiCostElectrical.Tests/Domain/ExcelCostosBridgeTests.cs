@@ -84,11 +84,11 @@ public class ExcelCostosBridgeTests
     }
 
     [Fact]
-    public void PresetEstandar_HasMatAndPvcAt157()
+    public void PresetEstandar_HasMatAndPvcAt172()
     {
-        Assert.Equal(1.57m, ExcelCostosBridge.PresetFactoresEstandar["Conductores"]);
-        Assert.Equal(1.57m, ExcelCostosBridge.PresetFactoresEstandar["Canalización"]);
-        Assert.Equal(1.30m, ExcelCostosBridge.PresetFactoresEstandar["Equipos"]);
+        Assert.Equal(1.72m, ExcelCostosBridge.PresetFactoresEstandar["Conductores"]);
+        Assert.Equal(1.72m, ExcelCostosBridge.PresetFactoresEstandar["Canalización"]);
+        Assert.Equal(1.43m, ExcelCostosBridge.PresetFactoresEstandar["Equipos"]);
     }
 
     [Fact]

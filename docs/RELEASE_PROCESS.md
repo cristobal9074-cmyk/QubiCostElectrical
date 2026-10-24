@@ -33,11 +33,11 @@ git status --porcelain
 Fuente única de verdad:
 
 ```xml
-<VersionPrefix>1.1.1</VersionPrefix>
-<InformationalVersion>1.1.1</InformationalVersion>
+<VersionPrefix>1.1.2</VersionPrefix>
+<InformationalVersion>1.1.2</InformationalVersion>
 ```
 
-Usar `Directory.Build.props` como fuente única de verdad; para este repositorio, la versión informacional vigente es `1.1.1`.
+Usar `Directory.Build.props` como fuente única de verdad; para este repositorio, la versión informacional vigente es `1.1.2`.
 
 ### 3. Validación pre-release
 
@@ -55,13 +55,13 @@ Editar `Directory.Build.props` y actualizar `CLAUDE.md` + `CHANGELOG.md`.
 
 ```powershell
 git add Directory.Build.props CHANGELOG.md CLAUDE.md
-git commit -m "release: bump to 1.1.1"
+git commit -m "release: bump to 1.1.2"
 ```
 
 ### 6. Tag semántico
 
 ```powershell
-git tag v1.1.1
+git tag v1.1.2
 ```
 
 Convención: `v` + versión publicada. Evitar ejemplos `-rc.*` si no corresponden al release real del repositorio.

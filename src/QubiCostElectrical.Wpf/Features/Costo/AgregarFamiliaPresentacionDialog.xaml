@@ -1,0 +1,65 @@
+<Window x:Class="QubiCostElectrical.Wpf.Features.Costo.AgregarFamiliaPresentacionDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Style="{StaticResource Dialog.Window}"
+        Title="Agregar Familia de Presentación"
+        Width="460" SizeToContent="Height" MinWidth="420"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Loaded="OnWindowLoaded"
+        KeyDown="OnWindowKeyDown">
+  <Border Style="{StaticResource Dialog.Chrome}">
+    <Grid>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="*" />
+        <RowDefinition Height="Auto" />
+      </Grid.RowDefinitions>
+
+      <!-- Encabezado -->
+      <DockPanel Grid.Row="0" Margin="0,0,0,16" LastChildFill="True">
+        <Border Style="{StaticResource Dialog.HeaderIconContainer}" DockPanel.Dock="Left">
+          <Path Data="M 20.59 13.41 l -7.17 7.17 a 2 2 0 0 1 -2.83 0 L 2 12 V 2 h 10 l 8.59 8.59 a 2 2 0 0 1 0 2.82 Z M 7 7 h.01"
+                Stroke="{DynamicResource Brush.Blue}" StrokeThickness="1.6"
+                StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                Width="16" Height="16" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Border>
+        <StackPanel VerticalAlignment="Center">
+          <TextBlock Text="Agregar Familia de Presentación" Style="{StaticResource Dialog.HeaderTitle}" />
+          <TextBlock Text="Crea una nueva familia comercial para configurar su factor de sobreventa en el presupuesto."
+                     Style="{StaticResource Dialog.HeaderSubtitle}" Margin="0" />
+        </StackPanel>
+      </DockPanel>
+
+      <!-- Formulario -->
+      <StackPanel Grid.Row="1" Margin="0,0,0,16">
+        <!-- Nombre de la familia -->
+        <TextBlock Text="Nombre de la familia *" Style="{StaticResource Form.Label}" />
+        <TextBox x:Name="NombreBox" Style="{StaticResource Form.TextBox}"
+                 Margin="0,0,0,12" />
+
+        <!-- Factor inicial -->
+        <TextBlock Text="Factor de presentación inicial (ej. 1,45) *" Style="{StaticResource Form.Label}" />
+        <TextBox x:Name="FactorBox" Style="{StaticResource Form.TextBox}"
+                 FontFamily="{StaticResource Font.Mono}" Text="1,45"
+                 Margin="0,0,0,12" />
+
+        <!-- Nota informativa / Mensaje de error -->
+        <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}"
+                BorderThickness="1" CornerRadius="{StaticResource Radius.Card}" Padding="12,8">
+          <TextBlock x:Name="MensajeErrorText" FontSize="{StaticResource Font.Size.xs}"
+                     Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap"
+                     Text="El factor se multiplicará por el costo de los materiales que pertenezcan o se asignen a esta familia." />
+        </Border>
+      </StackPanel>
+
+      <!-- Botones de acción -->
+      <DockPanel Grid.Row="2" Style="{StaticResource Dialog.Footer}">
+        <Button DockPanel.Dock="Right" Style="{StaticResource Button.Primary}" Content="Agregar familia"
+                MinWidth="130" Height="34" IsDefault="True" Click="OnAcceptClick" />
+        <Button DockPanel.Dock="Right" Style="{StaticResource Button.Secondary}" Content="Cancelar"
+                MinWidth="90" Height="34" Margin="0,0,10,0" IsCancel="True" />
+      </DockPanel>
+    </Grid>
+  </Border>
+</Window>

@@ -107,7 +107,8 @@ public static class FactorAjusteMoService
             return new FactorAjusteMoLinea(0m, matClp * (material.MoPorcentajeMaterial / 100m), row.Cantidad);
         }
 
-        if (MaterialMoResolver.DebeUsarFactor(material))
+        if (MaterialMoResolver.DebeUsarFactor(material)
+            || (string.IsNullOrWhiteSpace(material.MoFormulaTipo) && material.MoFactorBase > 0m))
         {
             decimal baseMo = MaterialMoResolver.BaseMoFactor(material);
             return new FactorAjusteMoLinea(0m, baseMo, row.Cantidad);

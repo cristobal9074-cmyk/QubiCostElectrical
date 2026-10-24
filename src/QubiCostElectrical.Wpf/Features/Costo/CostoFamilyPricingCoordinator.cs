@@ -123,6 +123,39 @@ internal sealed class CostoFamilyPricingCoordinator
         _vm.NotifyFamiliasChanged();
     }
 
+    public void AgregarFamiliaPresentacion()
+    {
+        if (!_vm.CanEdit)
+            return;
+
+        var familiasExistentes = _vm.CoefFactors.Select(f => f.FamilyKey).ToList();
+        var dialog = new AgregarFamiliaPresentacionDialog(familiasExistentes);
+        var owner = Application.Current?.MainWindow;
+        if (owner != null)
+            dialog.Owner = owner;
+
+        if (dialog.ShowDialog() != true)
+            return;
+
+        var nombre = dialog.FamiliaNombre;
+        var factor = dialog.FactorInicial;
+        var clave = FamilyPresentationDefaults.Normalize(nombre);
+
+        _vm.Session.ProjectInfo.FamiliasPersonalizadas ??= new List<string>();
+        if (!_vm.Session.ProjectInfo.FamiliasPersonalizadas.Any(p =>
+            string.Equals(FamilyPresentationDefaults.Normalize(p), clave, StringComparison.OrdinalIgnoreCase)))
+        {
+            _vm.Session.ProjectInfo.FamiliasPersonalizadas.Add(nombre);
+        }
+
+        _vm.Session.SetFamilyMarkup(nombre, factor);
+        _vm.Session.MarkDirty(ProjectDirtyScope.ProjectInfo);
+
+        _vm.RefreshCostOnly();
+        RebuildPrecioFamiliaChips();
+        _vm.NotifyFamiliasChanged();
+    }
+
     public void AbrirCatalogoFamilias(CoefFactorVm? fila)
     {
         if (fila == null || !_vm.IsFactoresFamiliaEditable)

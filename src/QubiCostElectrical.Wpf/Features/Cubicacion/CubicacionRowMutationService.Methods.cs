@@ -411,6 +411,7 @@ internal sealed partial class CubicacionRowMutationService
                 {
                     material.MatClp = bankMaterial.MatClp;
                     material.MoClp = bankMaterial.MoClp;
+                    material.MoFactorBase = bankMaterial.MoFactorBase;
                     material.MoFormulaTipo = bankMaterial.MoFormulaTipo;
                     material.MoPorcentajeMaterial = bankMaterial.MoPorcentajeMaterial;
                     material.FechaPrecio = bankMaterial.FechaPrecio;

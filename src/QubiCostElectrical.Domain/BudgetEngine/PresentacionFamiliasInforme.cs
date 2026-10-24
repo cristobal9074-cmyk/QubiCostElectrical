@@ -97,18 +97,16 @@ public sealed class InformePresentacionFamilias
 /// <summary>Reglas de presentación por familia: resolución de factor, origen e impacto.</summary>
 public static class PresentacionFamiliasInforme
 {
-    /// <summary>Filas canónicas siempre disponibles.</summary>
+    /// <summary>Filas canónicas siempre disponibles (mismo orden que la hoja COSTOS de Excel).</summary>
     public static readonly IReadOnlyList<string> FamiliasCanonicas = new[]
     {
         "Conductores",
-        "Canalización",
-        "Tableros",
-        "Protecciones",
-        "Iluminación",
         "Equipos",
-        "Enchufes y tomacorrientes",
-        "Puesta a tierra",
+        "Tableros",
+        "Iluminación",
+        "Canalización",
         "Accesorios",
+        "Enchufes y tomacorrientes",
         "Movimientos",
         "Comisionamiento"
     };
@@ -118,11 +116,9 @@ public static class PresentacionFamiliasInforme
         ["Conductores"] = "MATERIALES",
         ["Canalización"] = "PVC/EPC",
         ["Tableros"] = "TABLEROS",
-        ["Protecciones"] = "PROTECCIONES",
         ["Iluminación"] = "LUMINARIAS",
         ["Equipos"] = "EQUIPOS",
         ["Enchufes y tomacorrientes"] = "ARTEFACTOS",
-        ["Puesta a tierra"] = "PUESTA A TIERRA",
         ["Accesorios"] = "VARIOS",
         ["Movimientos"] = "MOVIMIENTOS",
         ["Comisionamiento"] = "COMISIONAMIENTO"
@@ -180,6 +176,41 @@ public static class PresentacionFamiliasInforme
             };
         }
 
+        if (project.FamiliasPersonalizadas != null)
+        {
+            foreach (var custom in project.FamiliasPersonalizadas)
+            {
+                if (string.IsNullOrWhiteSpace(custom)) continue;
+                var clave = FamilyPresentationDefaults.Normalize(custom);
+                if (!buckets.ContainsKey(clave))
+                {
+                    buckets[clave] = new BucketPresentacionInfo
+                    {
+                        Nombre = custom.Trim(),
+                        Clave = clave,
+                        Etiqueta = custom.Trim().ToUpperInvariant()
+                    };
+                }
+            }
+        }
+
+        foreach (var key in variables.Keys)
+        {
+            if (key.StartsWith("MarkupFactor_", StringComparison.OrdinalIgnoreCase))
+            {
+                var clave = key.Substring("MarkupFactor_".Length);
+                if (!string.IsNullOrWhiteSpace(clave) && !buckets.ContainsKey(clave))
+                {
+                    buckets[clave] = new BucketPresentacionInfo
+                    {
+                        Nombre = clave,
+                        Clave = clave,
+                        Etiqueta = clave.ToUpperInvariant()
+                    };
+                }
+            }
+        }
+
         foreach (var info in familias)
         {
             if (!buckets.TryGetValue(info.ClaveObjetivo, out var bucket))
@@ -213,8 +244,18 @@ public static class PresentacionFamiliasInforme
                 : (settings.TryResolvePresentationFactor(bucket.Nombre, out var f) ? f : settings.DefaultPresentationFactor);
         }
 
+        int IndiceCanonica(BucketPresentacionInfo b)
+        {
+            for (int i = 0; i < FamiliasCanonicas.Count; i++)
+            {
+                if (string.Equals(FamilyPresentationDefaults.Normalize(FamiliasCanonicas[i]), b.Clave, StringComparison.OrdinalIgnoreCase))
+                    return i;
+            }
+            return 1000;
+        }
+
         informe.Buckets = buckets.Values
-            .OrderByDescending(b => b.CostoClp)
+            .OrderBy(b => IndiceCanonica(b))
             .ThenBy(b => b.Nombre, StringComparer.CurrentCultureIgnoreCase)
             .ToList();
 

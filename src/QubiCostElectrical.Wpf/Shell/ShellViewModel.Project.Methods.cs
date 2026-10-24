@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -395,6 +395,7 @@ partial class ShellViewModel
             budgetCalculation.ResetIncrementalCache();
             ClearPageCache();
             TryApplyCachedUfValue();
+            ProjectLegacyFormulaMigrator.MigrateAndRecalibrate(session, priceBankStore);
             undo.Clear();
             projectEdit.Discard();
             documents.DiscardChanges();
@@ -445,6 +446,7 @@ partial class ShellViewModel
             WpfDialogService.Error("Abrir proyecto", OperationFailureMessages.ToUserMessage(ex));
         }
     }
+
 
     /// <summary>
     /// Si existe un .autosave más reciente que el .qce, ofrece restaurarlo a la sesión

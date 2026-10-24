@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using QubiCostElectrical;
 using Xunit;
@@ -110,19 +110,19 @@ public sealed class ElectricalFamilyCatalogTests
     }
 
     [Theory]
-    [InlineData("TRANSFORMADORES", "EQUIPOS", 1.12)]
-    [InlineData("Transformadores", "EQUIPOS", 1.12)]
-    [InlineData("GRUPO ELECTROGENO", "EQUIPOS", 1.12)]
-    [InlineData("Generadores", "EQUIPOS", 1.12)]
-    [InlineData("DUCTO BARRA", "EQUIPOS", 1.12)]
-    [InlineData("Ducto de barra", "EQUIPOS", 1.12)]
-    [InlineData("Celdas de media tensión", "EQUIPOS", 1.12)]
-    [InlineData("UPS", "EQUIPOS", 1.12)]
-    [InlineData("Pararrayos", "EQUIPOS", 1.12)]
-    [InlineData("Sistema de remarcación", "EQUIPOS", 1.12)]
-    [InlineData("Obras civiles", "CONDUCTORES", 1.50)]
-    [InlineData("TRAMITES CIA ELECTRICA , SEC Y PLANOS AS-BUILT", "ACCESORIOS", 1.14)]
-    [InlineData("Media Tensión", "EQUIPOS", 1.12)]
+    [InlineData("TRANSFORMADORES", "EQUIPOS", 1.43)]
+    [InlineData("Transformadores", "EQUIPOS", 1.43)]
+    [InlineData("GRUPO ELECTROGENO", "EQUIPOS", 1.43)]
+    [InlineData("Generadores", "EQUIPOS", 1.43)]
+    [InlineData("DUCTO BARRA", "EQUIPOS", 1.43)]
+    [InlineData("Ducto de barra", "EQUIPOS", 1.43)]
+    [InlineData("Celdas de media tensión", "EQUIPOS", 1.43)]
+    [InlineData("UPS", "EQUIPOS", 1.43)]
+    [InlineData("Pararrayos", "EQUIPOS", 1.43)]
+    [InlineData("Sistema de remarcación", "EQUIPOS", 1.43)]
+    [InlineData("Obras civiles", "CONDUCTORES", 1.72)]
+    [InlineData("TRAMITES CIA ELECTRICA , SEC Y PLANOS AS-BUILT", "ACCESORIOS", 1.36)]
+    [InlineData("Media Tensión", "EQUIPOS", 1.43)]
     public void FamilyPresentationDefaults_MapeoNaturalCorrecto(string familia, string esperadoCanonica, double markupEsperado)
     {
         string norm = FamilyPresentationDefaults.Normalize(familia);

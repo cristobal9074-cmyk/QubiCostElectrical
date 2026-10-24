@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Xunit;
 
 namespace QubiCostElectrical.Tests.Domain;
@@ -12,12 +12,12 @@ public class FamilyPresentationDefaultsTests
     [InlineData("Conduit", "CANALIZACION")]
     [InlineData("Cables", "CONDUCTORES")]
     [InlineData("Alimentadores", "CONDUCTORES")]
-    [InlineData("Malla a tierra", "PUESTA A TIERRA")]
-    [InlineData("Tierras", "PUESTA A TIERRA")]
+    [InlineData("Malla a tierra", "CONDUCTORES")]
+    [InlineData("Tierras", "CONDUCTORES")]
     [InlineData("Generador", "EQUIPOS")]
     [InlineData("Transformador", "EQUIPOS")]
     [InlineData("Luminarias", "ILUMINACION")]
-    [InlineData("Disyuntores", "PROTECCIONES")]
+    [InlineData("Disyuntores", "TABLEROS")]
     [InlineData("Enchufes", "ENCHUFES Y TOMACORRIENTES")]
     [InlineData("Cajas", "ACCESORIOS")]
     [InlineData("Terminales", "ACCESORIOS")]
@@ -78,9 +78,9 @@ public class FamilyPresentationDefaultsTests
 
         var settings = BudgetSettings.FromProject(project);
 
-        Assert.Equal(1.14m, settings.DefaultPresentationFactor);
-        Assert.Equal(1.50m, FamilyPresentationDefaults.DefaultMarkup("CONDUCTORES"));
-        Assert.Equal(1.50m, FamilyPresentationDefaults.DefaultMarkup("CONDUCTORES", 0m));
+        Assert.Equal(1.36m, settings.DefaultPresentationFactor);
+        Assert.Equal(1.72m, FamilyPresentationDefaults.DefaultMarkup("CONDUCTORES"));
+        Assert.Equal(1.72m, FamilyPresentationDefaults.DefaultMarkup("CONDUCTORES", 0m));
     }
 
     [Fact]

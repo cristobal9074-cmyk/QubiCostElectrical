@@ -531,6 +531,7 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
                     projectMat.Codigo = savedCode;
                 projectMat.MatClp = SelectedEntry.PrecioClp;
                 projectMat.MoClp = SelectedEntry.MoClp;
+                projectMat.MoFactorBase = SelectedEntry.MoFactorBase;
                 projectMat.RendimientoDh = SelectedEntry.RendimientoDh;
                 projectMat.DiaXPareja = SelectedEntry.DiaXPareja;
                 projectMat.MoFormulaTipo = SelectedEntry.MoFormulaTipo;
@@ -851,6 +852,7 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
         Categoria = entry.Categoria ?? "",
         MatClp = entry.MatClp,
         MoClp = entry.MoClp,
+        MoFactorBase = entry.MoFactorBase,
         RendimientoDh = entry.RendimientoDh,
         DiaXPareja = entry.DiaXPareja,
         MoFormulaTipo = entry.MoFormulaTipo,

@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Qubi Cost Electrical — Tomar de SC (teclado)</title>
+<style>
+  :root{
+    --navy:#101C30; --navy2:#14263C;
+    --blue:#2563B0; --blue2:#3B82F6; --blue-soft:#EAF1FF; --blue-faint:#EDF3FA;
+    --ink:#101A26; --ink2:#3C4A5C; --ink3:#5C6A7C; --ink4:#7B8798; --ink5:#94A1B0;
+    --line:#E3E8EF; --line-soft:#EDF0F4; --canvas:#F5F7FA;
+    --green:#15803D; --green-soft:#EAF8EF; --green-brd:#CDEBD8;
+    --amber:#9A6A10; --red:#C24141;
+    --violet:#6B4FA8; --cyan:#0891B2; --orange:#EA7317;
+    --font:"Segoe UI Variable Text","Segoe UI",Inter,system-ui,sans-serif;
+    --mono:"Cascadia Mono","JetBrains Mono",Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;font-family:var(--font);color:var(--ink);background:#0B1220;overflow:hidden;-webkit-font-smoothing:antialiased}
+  button{font-family:inherit}
+  .num{font-variant-numeric:tabular-nums}
+
+  /* backdrop */
+  .app-bg{position:fixed;inset:0;display:flex;flex-direction:column;filter:saturate(.9)}
+  .bg-top{height:56px;background:linear-gradient(90deg,var(--navy),var(--navy2));display:flex;align-items:center;gap:18px;padding:0 18px;color:#fff}
+  .bg-logo{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.4px;font-size:13px}
+  .bg-logo .mark{width:24px;height:24px;border:2px solid #60A5FA;border-radius:6px;display:grid;place-items:center;color:#BFDBFE;font-size:11px}
+  .bg-logo small{display:block;font-size:7.5px;letter-spacing:2.4px;color:#8FB4E8;font-weight:600}
+  .bg-proj{margin-left:6px;padding:5px 12px;border-radius:7px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);font-size:11px;color:#D6E4F7}
+  .bg-search{flex:1;max-width:360px;height:32px;border-radius:7px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;padding:0 12px;color:#8FB4E8;font-size:11px;gap:8px}
+  .bg-right{margin-left:auto;display:flex;gap:10px;align-items:center}
+  .bg-pill{height:30px;padding:0 12px;border-radius:7px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);font-size:11px;color:#D6E4F7;display:flex;align-items:center;gap:6px}
+  .bg-pill.primary{background:var(--blue);border-color:var(--blue)}
+  .bg-nav{height:44px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:end;gap:2px;padding:0 18px}
+  .bg-nav span{font-size:12px;color:var(--ink3);padding:0 14px;height:44px;display:flex;align-items:center}
+  .bg-nav span.on{color:var(--ink);font-weight:600;box-shadow:inset 0 -2px 0 var(--blue)}
+  .bg-body{flex:1;display:flex;background:var(--canvas);min-height:0}
+  .bg-side{width:282px;background:#fff;border-right:1px solid var(--line);padding:14px 12px;display:flex;flex-direction:column;gap:10px}
+  .bg-side .lbl{font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--ink4)}
+  .bg-item{height:38px;border-radius:7px;display:flex;align-items:center;gap:8px;padding:0 10px;font-size:11.5px;color:var(--ink2)}
+  .bg-item.on{background:var(--blue-faint);color:var(--blue);font-weight:600}
+  .bg-item i{width:6px;height:6px;border-radius:50%;background:#CBD5E1;display:block}
+  .bg-main{flex:1;padding:14px 18px;min-width:0}
+  .bg-toolbar{height:46px;background:#fff;border:1px solid var(--line);border-radius:10px;display:flex;align-items:center;gap:10px;padding:0 12px;margin-bottom:12px}
+  .bg-toolbar .chip{height:26px;padding:0 10px;border-radius:6px;border:1px solid var(--line);font-size:11px;color:var(--ink3);display:flex;align-items:center}
+  .bg-grid{background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .bg-grid .hd{height:38px;display:grid;grid-template-columns:70px 1fr 110px 110px 130px;align-items:center;padding:0 14px;font-size:10px;font-weight:700;color:var(--ink4);letter-spacing:.08em;border-bottom:1px solid var(--line);background:#FBFCFE}
+  .bg-row{height:40px;display:grid;grid-template-columns:70px 1fr 110px 110px 130px;align-items:center;padding:0 14px;border-bottom:1px solid var(--line-soft);font-size:11.5px;color:var(--ink2)}
+  .bg-row .bar{height:7px;border-radius:4px;background:#EEF2F7}
+  .bg-row.sel{background:var(--blue-faint)}
+  .scrim{position:fixed;inset:0;background:rgba(7,14,25,.6)}
+
+  /* panel */
+  .overlay{position:fixed;inset:0;display:grid;place-items:center;padding:24px;z-index:10}
+  .panel{width:min(1400px,97vw);height:min(880px,94vh);background:#fff;border-radius:16px;box-shadow:0 40px 120px rgba(6,14,26,.55),0 0 0 1px rgba(255,255,255,.06);display:flex;flex-direction:column;overflow:hidden;animation:rise .2s cubic-bezier(.2,.8,.2,1)}
+  @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .head{display:flex;align-items:flex-start;gap:16px;padding:18px 22px 14px;border-bottom:1px solid var(--line)}
+  .head-icon{width:44px;height:44px;border-radius:11px;background:linear-gradient(150deg,#2B5AA0,#1D4ED8);display:grid;place-items:center;flex:none;box-shadow:0 6px 14px rgba(37,99,176,.28)}
+  .head-icon svg{width:22px;height:22px}
+  .eyebrow{font-size:9.5px;font-weight:700;letter-spacing:.14em;color:var(--blue);text-transform:uppercase;margin-bottom:5px}
+  .head h1{margin:0;font-size:20px;line-height:1.2;font-weight:650;letter-spacing:-.015em}
+  .head p{margin:5px 0 0;font-size:12px;color:var(--ink3);max-width:600px;line-height:1.45}
+  .head-right{margin-left:auto;display:flex;align-items:flex-start;gap:12px}
+  .dest{border:1px solid var(--line);border-radius:9px;padding:9px 12px;min-width:300px;background:#FCFDFE}
+  .dest .lbl{font-size:8.5px;font-weight:700;letter-spacing:.11em;color:var(--ink4);text-transform:uppercase}
+  .dest .name{font-size:12px;font-weight:600;margin-top:3px;display:flex;align-items:center;gap:7px}
+  .dest .code{font-family:var(--mono);font-size:10.5px;color:var(--blue);background:var(--blue-soft);border-radius:4px;padding:1px 5px}
+  .dest .sub{font-size:10.5px;color:var(--ink4);margin-top:4px;display:flex;align-items:center;gap:6px}
+  .unit{font-size:9.5px;font-weight:700;color:var(--ink3);background:#F1F4F8;border-radius:4px;padding:2px 6px;letter-spacing:.04em}
+  .icon-btn{width:32px;height:32px;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--ink4);display:grid;place-items:center;cursor:pointer}
+  .icon-btn:hover{background:#F2F5F9;color:var(--ink2)}
+  .icon-btn:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(59,130,246,.28)}
+
+  /* toolbar */
+  .toolbar{display:flex;align-items:center;gap:10px;padding:9px 22px;border-bottom:1px solid var(--line);background:#FCFDFE}
+  .tabs{display:flex;gap:2px;padding:3px;background:#F1F4F8;border-radius:8px}
+  .tab{border:0;background:transparent;color:var(--ink3);font-size:11.5px;font-weight:600;padding:6px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px}
+  .tab:hover{color:var(--ink2)}
+  .tab.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(16,26,38,.1),0 0 0 1px rgba(16,26,38,.04)}
+  .tab .k{font-family:var(--mono);font-size:8.5px;color:var(--ink5);border:1px solid var(--line);border-radius:3px;padding:0 4px;background:#fff}
+  .tab.on .k{color:var(--ink4)}
+  .search{flex:0 1 310px;height:34px;border:1px solid var(--line);border-radius:8px;background:#fff;display:flex;align-items:center;gap:8px;padding:0 10px;color:var(--ink4)}
+  .search:focus-within{border-color:#B9CDF0;box-shadow:0 0 0 3px rgba(59,130,246,.16)}
+  .search input{border:0;outline:0;flex:1;font:inherit;font-size:12px;color:var(--ink);background:transparent;min-width:0}
+  .search input::placeholder{color:var(--ink5)}
+  .kbd{font-family:var(--mono);font-size:9px;color:var(--ink4);border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:1px 5px;background:#fff;white-space:nowrap}
+  .tool-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+  .kbmode{height:30px;display:flex;align-items:center;gap:7px;padding:0 10px;border-radius:7px;background:#F4F7FC;border:1px solid #DEE7F3;color:#41566D;font-size:10.5px;font-weight:650}
+  .kbmode svg{width:13px;height:13px;color:var(--blue)}
+  .lock{height:30px;display:flex;align-items:center;gap:7px;padding:0 10px;border-radius:7px;background:var(--green-soft);border:1px solid var(--green-brd);color:var(--green);font-size:10.5px;font-weight:700}
+  .lock .dot{width:6px;height:6px;border-radius:50%;background:#22C55E;box-shadow:0 0 0 3px rgba(34,197,94,.16)}
+  .btn{height:32px;border-radius:7px;border:1px solid var(--line);background:#fff;color:var(--ink2);font-size:11.5px;font-weight:600;padding:0 11px;display:inline-flex;align-items:center;gap:7px;cursor:pointer;white-space:nowrap}
+  .btn:hover{background:#F7F9FC;border-color:#D6DDE7}
+  .btn:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(59,130,246,.25)}
+  .btn.ghost{border-color:transparent;background:transparent}
+  .btn.ghost:hover{background:#F2F5F9}
+  .btn svg{width:14px;height:14px}
+
+  /* body */
+  .body{flex:1;display:grid;grid-template-columns:minmax(0,1fr) 344px;min-height:0}
+  .main{min-width:0;display:flex;flex-direction:column;min-height:0}
+  .criterion{display:flex;align-items:center;gap:9px;padding:8px 22px;background:#F7FBF8;border-bottom:1px solid #E6F2EA;font-size:11px;color:var(--ink2)}
+  .criterion .ic{width:18px;height:18px;border-radius:50%;background:var(--green-soft);border:1px solid var(--green-brd);display:grid;place-items:center;color:var(--green);flex:none}
+  .criterion b{color:var(--green);font-weight:700}
+  .criterion .muted{color:var(--ink4)}
+  .criterion .right{margin-left:auto;color:var(--ink4);font-size:10.5px;display:flex;align-items:center;gap:10px}
+  .chips{display:flex;align-items:center;gap:6px;padding:9px 22px;border-bottom:1px solid var(--line-soft);overflow-x:auto;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{height:28px;padding:0 10px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--ink3);font-size:11px;font-weight:600;display:inline-flex;align-items:center;gap:7px;cursor:pointer;white-space:nowrap}
+  .chip:hover{border-color:#CDD7E4;color:var(--ink2)}
+  .chip:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(59,130,246,.25)}
+  .chip.on{background:var(--ink);border-color:var(--ink);color:#fff}
+  .chip .dot{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.55}
+  .chip .n{font-size:9.5px;font-weight:700;color:var(--ink4);background:#F1F4F8;border-radius:999px;padding:1px 6px;min-width:18px;text-align:center}
+  .chip.on .n{background:rgba(255,255,255,.16);color:#fff}
+  .chip.cat-tuberia .dot{background:var(--blue2)} .chip.cat-conductor .dot{background:var(--violet)}
+  .chip.cat-cajas .dot{background:#C98A1B} .chip.cat-flexible .dot{background:var(--cyan)}
+  .chip.cat-sensores .dot{background:#22C55E} .chip.cat-senaletica .dot{background:var(--orange)}
+
+  /* table */
+  .table-wrap{flex:1;overflow:auto;min-height:0;outline:none}
+  .table-wrap:focus-visible{box-shadow:inset 0 0 0 2px rgba(59,130,246,.35)}
+  table.sel-table{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed}
+  .sel-table thead th{position:sticky;top:0;z-index:2;background:#FBFCFE;border-bottom:1px solid var(--line);padding:9px 10px;text-align:left;font-size:9.5px;font-weight:700;letter-spacing:.08em;color:var(--ink4);text-transform:uppercase;white-space:nowrap}
+  .sel-table thead th.c{text-align:center}.sel-table thead th.r{text-align:right}
+  .sel-table td{padding:0 10px;border-bottom:1px solid var(--line-soft);height:52px;vertical-align:middle}
+  .sel-table tbody tr{cursor:pointer;transition:background .1s}
+  .sel-table tbody tr:hover{background:#FAFCFF}
+  .sel-table tbody tr.sel{background:var(--blue-faint)}
+  .sel-table tbody tr.active{background:#F3F8FF;box-shadow:inset 3px 0 0 var(--blue2);outline:2px solid rgba(59,130,246,.5);outline-offset:-2px}
+  .sel-table tbody tr.sel.active{background:#E8F1FF}
+  .sel-table tbody tr.taken{opacity:.62}
+  .sel-table td.c{text-align:center}.sel-table td.r{text-align:right}
+  .chk{appearance:none;width:16px;height:16px;border:1.5px solid #C6D0DD;border-radius:4px;background:#fff;cursor:pointer;position:relative;vertical-align:middle}
+  .chk:hover{border-color:#9FB1C7}
+  .chk:checked{background:var(--blue);border-color:var(--blue)}
+  .chk:checked::after{content:"";position:absolute;left:4px;top:1.5px;width:5px;height:8px;border:2px solid #fff;border-top:0;border-left:0;transform:rotate(45deg)}
+  .chk:indeterminate{background:var(--blue);border-color:var(--blue)}
+  .chk:indeterminate::after{content:"";position:absolute;left:3px;top:6px;width:8px;height:2px;background:#fff;border-radius:2px}
+  .chk:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(59,130,246,.25)}
+  .mat{display:flex;align-items:center;gap:10px;min-width:0}
+  .cat-dot{width:8px;height:8px;border-radius:50%;flex:none;box-shadow:0 0 0 3px rgba(16,26,38,.04)}
+  .mat .txt{min-width:0;flex:1}
+  .mat .line{display:flex;align-items:center;gap:7px;min-width:0}
+  .mat .name{font-size:12px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mat .src{font-size:10px;color:var(--ink4);margin-top:2px;display:flex;align-items:center;gap:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mat .src .sep{opacity:.5}
+  .taken-pill{font-size:8.5px;font-weight:700;letter-spacing:.04em;color:var(--green);background:var(--green-soft);border:1px solid var(--green-brd);border-radius:999px;padding:1px 6px;white-space:nowrap;display:inline-flex;align-items:center;gap:3px}
+  .unit-cell{font-size:10px;font-weight:700;color:var(--ink3);background:#F2F5F9;border-radius:4px;padding:2px 6px}
+  .total{font-size:12.5px;font-weight:650;font-variant-numeric:tabular-nums}
+  .zcell{display:inline-flex;align-items:center;justify-content:center;min-width:62px;height:27px;padding:0 8px;border:1px solid #E6EBF2;border-radius:6px;background:#fff;font-family:var(--mono);font-size:11px;color:var(--ink2);font-variant-numeric:tabular-nums;transition:.1s}
+  .zcell.zero{color:#B3BECA;background:#FAFBFD;border-color:#EEF1F5}
+  .zcell.dim{opacity:.32;pointer-events:none;background:#F7F9FC}
+  .zcell.zcur{border-color:var(--blue2);box-shadow:0 0 0 3px rgba(59,130,246,.18);background:#fff;color:var(--ink);font-weight:700}
+  .zcell.editing{padding:0;border-color:var(--blue2);box-shadow:0 0 0 3px rgba(59,130,246,.2)}
+  .zcell input{width:100%;height:25px;border:0;outline:0;background:transparent;text-align:center;font:inherit;color:var(--ink)}
+  .sel-table td.z{width:86px}
+  .empty{padding:48px 20px;text-align:center;color:var(--ink4);font-size:12px}
+
+  /* zone cursor hint */
+  .kbhint{display:none;align-items:center;gap:8px;padding:6px 22px;background:#F1F7FF;border-bottom:1px solid #DCE9FB;font-size:10.5px;color:#3C5A7E}
+  .kbhint.show{display:flex}
+  .kbhint b{color:var(--blue);font-weight:700}
+  .kbhint .sp{margin-left:auto;display:flex;gap:12px;color:#6B819C}
+  .kbhint .sp span{display:inline-flex;align-items:center;gap:5px}
+
+  /* rail */
+  .rail{border-left:1px solid var(--line);background:#FAFBFD;display:flex;flex-direction:column;min-height:0}
+  .rail-head{padding:13px 16px 9px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line-soft)}
+  .rail-head h2{margin:0;font-size:12.5px;font-weight:700}
+  .count-badge{min-width:20px;height:18px;padding:0 6px;border-radius:999px;background:var(--blue);color:#fff;font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+  .link{margin-left:auto;color:var(--blue);font-size:10.5px;font-weight:600;text-decoration:none;cursor:pointer;background:none;border:0;padding:2px 0}
+  .link:hover{text-decoration:underline}
+  .link:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(59,130,246,.25);border-radius:4px}
+  .rail-scroll{flex:1;overflow:auto;min-height:0}
+  .rail-sec{padding:11px 16px;border-bottom:1px solid var(--line-soft)}
+  .rail-sec .lbl{font-size:9px;font-weight:700;letter-spacing:.11em;color:var(--ink4);text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+  .dest-mini{border:1px solid #D9E4F6;background:linear-gradient(180deg,#F4F8FF,#EDF4FF);border-radius:9px;padding:9px 10px}
+  .dest-mini .p{font-size:10px;color:var(--ink4)}
+  .dest-mini .t{font-size:12px;font-weight:650;margin-top:3px;line-height:1.35}
+  .dest-mini .m{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:10px;color:var(--ink4)}
+  .zchips{display:flex;flex-wrap:wrap;gap:6px}
+  .zchip{height:26px;padding:0 9px;border-radius:6px;border:1px solid var(--line);background:#fff;color:var(--ink3);font-size:10.5px;font-weight:600;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+  .zchip .box{width:12px;height:12px;border:1.5px solid #C6D0DD;border-radius:3px;display:grid;place-items:center;background:#fff}
+  .zchip.on{border-color:#BFD3F2;background:#F0F5FF;color:var(--blue)}
+  .zchip.on .box{background:var(--blue);border-color:var(--blue)}
+  .zchip.on .box::after{content:"";width:3px;height:6px;border:1.5px solid #fff;border-top:0;border-left:0;transform:rotate(45deg);margin-top:-1px}
+  .zchip .q{font-family:var(--mono);font-size:9.5px;color:var(--ink4);font-weight:400}
+  .zchip.off{opacity:.62}
+  .zchip:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(59,130,246,.28)}
+  .picked{display:flex;flex-direction:column;gap:6px;max-height:206px;overflow:auto;padding-right:2px}
+  .pick{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 9px}
+  .pick .top{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600}
+  .pick .top .x{margin-left:auto;color:var(--ink5);cursor:pointer;font-size:13px;line-height:1;background:none;border:0;padding:2px}
+  .pick .top .x:hover{color:var(--red)}
+  .pick .top .x:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(59,130,246,.25);border-radius:4px}
+  .pick .zrow{display:flex;gap:8px;margin-top:4px;font-size:9.5px;color:var(--ink4)}
+  .pick .zrow b{font-family:var(--mono);font-weight:600;color:var(--ink2)}
+  .pick .zrow span{display:inline-flex;gap:3px;align-items:center}
+  .pick-empty{border:1px dashed #D6DEE9;border-radius:8px;padding:13px 12px;text-align:center;font-size:11px;color:var(--ink4);line-height:1.5}
+  .modes{display:flex;flex-direction:column;gap:6px}
+  .mode{display:flex;gap:8px;align-items:flex-start;padding:8px 9px;border:1px solid var(--line);background:#fff;border-radius:8px;cursor:pointer}
+  .mode:hover{border-color:#D3DDEB}
+  .mode.on{border-color:#BFD3F2;background:#F0F5FF}
+  .mode input{appearance:none;width:14px;height:14px;border:1.5px solid #C6D0DD;border-radius:50%;margin:1px 0 0;flex:none;position:relative;background:#fff}
+  .mode.on input{border-color:var(--blue)}
+  .mode.on input::after{content:"";position:absolute;inset:2.5px;border-radius:50%;background:var(--blue)}
+  .mode .tt{font-size:11px;font-weight:650}
+  .mode .dd{font-size:9.8px;color:var(--ink4);margin-top:1px;line-height:1.35}
+  .rail-foot{padding:11px 16px;border-top:1px solid var(--line);background:#fff}
+  .cta{width:100%;height:38px;border:0;border-radius:8px;background:var(--blue);color:#fff;font-size:12.5px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;box-shadow:0 6px 14px rgba(37,99,176,.22)}
+  .cta:hover{background:#1F569B}
+  .cta:disabled{background:#C9D6E8;box-shadow:none;cursor:not-allowed}
+  .cta:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(59,130,246,.35)}
+  .cta .kb{font-family:var(--mono);font-size:8.5px;font-weight:600;background:rgba(255,255,255,.16);border-radius:3px;padding:1px 4px;display:inline-flex;gap:2px}
+  .cta-note{margin-top:7px;font-size:10px;color:var(--ink4);text-align:center;line-height:1.45}
+  .rail-foot .cancel{width:100%;margin-top:5px;height:28px;border:0;background:transparent;color:var(--ink3);font-size:11px;font-weight:600;border-radius:6px;cursor:pointer}
+  .rail-foot .cancel:hover{background:#F2F5F9}
+
+  /* command bar */
+  .cmdbar{height:46px;border-top:1px solid var(--line);background:#FBFCFE;display:flex;align-items:center;gap:14px;padding:0 18px;flex:none;color:var(--ink3);font-size:10.5px}
+  .cmdgroup{display:flex;align-items:center;gap:14px;min-width:0;overflow:hidden}
+  .ck{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+  .ck .kbd{font-size:8.5px;padding:1px 4px;color:var(--ink3);background:#fff}
+  .cmd-right{margin-left:auto;display:flex;align-items:center;gap:12px;white-space:nowrap}
+  .pos{color:var(--ink4);font-size:10px}
+  .pos b{color:var(--ink2);font-weight:650}
+  .taken-count{color:var(--green);font-size:10px;font-weight:650;display:inline-flex;align-items:center;gap:5px}
+  .taken-count .d{width:6px;height:6px;border-radius:50%;background:#22C55E}
+  .help-btn{height:26px;padding:0 9px;border-radius:6px;border:1px solid var(--line);background:#fff;color:var(--ink3);font-size:10px;font-weight:600;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+  .help-btn:hover{background:#F2F5F9}
+  .help-btn:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(59,130,246,.25)}
+
+  /* views */
+  .view{padding:15px 22px 24px;overflow:auto;flex:1;min-height:0}
+  .group{border:1px solid var(--line);border-radius:10px;background:#fff;margin-bottom:10px;overflow:hidden}
+  .group-hd{display:flex;align-items:center;gap:10px;padding:10px 12px;background:#FBFCFE;border-bottom:1px solid var(--line-soft)}
+  .group-hd .badge{font-size:9px;font-weight:700;letter-spacing:.08em;color:var(--blue);background:var(--blue-soft);border-radius:4px;padding:2px 6px}
+  .group-hd .t{font-size:12px;font-weight:650}
+  .group-hd .meta{margin-left:auto;font-size:10.5px;color:var(--ink4)}
+  .g-row{display:grid;grid-template-columns:minmax(0,1fr) 60px 86px 3fr;gap:10px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line-soft);font-size:11.5px}
+  .g-row:last-child{border-bottom:0}
+  .g-row .nm{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .g-row .u{color:var(--ink4);font-size:10px;font-weight:700}
+  .g-row .tot{text-align:right;font-family:var(--mono);font-size:11px;color:var(--ink2)}
+  .zone-grid{display:grid;gap:8px;text-align:center;font-family:var(--mono);font-size:10px;color:var(--ink3)}
+  .zone-grid span{background:#F7F9FC;border:1px solid #EDF1F6;border-radius:4px;padding:3px 2px}
+  .zone-grid span.dim{opacity:.35}
+  .zone-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+  .zcard{border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden}
+  .zcard-hd{padding:11px 13px;border-bottom:1px solid var(--line-soft);display:flex;align-items:center;gap:8px}
+  .zcard-hd .n{width:22px;height:22px;border-radius:6px;background:var(--blue-soft);color:var(--blue);display:grid;place-items:center;font-size:10px;font-weight:800}
+  .zcard-hd .t{font-size:12px;font-weight:700}
+  .zcard-hd .c{margin-left:auto;font-size:9.5px;color:var(--ink4)}
+  .zline{display:flex;align-items:center;gap:8px;padding:8px 13px;border-bottom:1px solid var(--line-soft);font-size:11px}
+  .zline:last-child{border-bottom:0}
+  .zline .dot{width:6px;height:6px;border-radius:50%;flex:none}
+  .zline .nm{color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .zline .v{margin-left:auto;font-family:var(--mono);font-size:10.5px;font-weight:600;white-space:nowrap}
+
+  /* toast + reopen */
+  .toast{position:fixed;left:50%;bottom:30px;transform:translate(-50%,20px);background:var(--ink);color:#fff;border-radius:9px;padding:10px 14px;font-size:12px;display:flex;align-items:center;gap:9px;opacity:0;pointer-events:none;transition:.2s;z-index:40;box-shadow:0 14px 40px rgba(6,14,26,.35)}
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+  .toast .ok{width:18px;height:18px;border-radius:50%;background:#1E7A4B;display:grid;place-items:center}
+  .reopen{position:fixed;right:26px;bottom:24px;z-index:20;height:38px;padding:0 14px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);color:#fff;font-size:12px;font-weight:600;display:none;cursor:pointer;backdrop-filter:blur(6px)}
+  .reopen.show{display:inline-flex;align-items:center;gap:8px}
+
+  /* help overlay */
+  .help{position:fixed;inset:0;z-index:50;display:none;place-items:center;background:rgba(7,14,25,.5);backdrop-filter:blur(3px)}
+  .help.show{display:grid}
+  .help-card{width:min(760px,92vw);max-height:86vh;overflow:auto;background:#fff;border-radius:14px;box-shadow:0 30px 90px rgba(6,14,26,.45);padding:20px 22px}
+  .help-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px}
+  .help-top h3{margin:0;font-size:16px;font-weight:700}
+  .help-top p{margin:4px 0 0;font-size:11.5px;color:var(--ink4)}
+  .help-close{margin-left:auto}
+  .help-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .help-col h4{margin:0 0 8px;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink4)}
+  .hk{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--line-soft);font-size:11.5px;color:var(--ink2)}
+  .hk:last-child{border-bottom:0}
+  .hk .keys{margin-left:auto;display:flex;gap:4px}
+  .help-foot{margin-top:16px;padding-top:12px;border-top:1px solid var(--line);font-size:10.5px;color:var(--ink4);display:flex;align-items:center;gap:8px}
+
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:#CBD5E1;border:3px solid transparent;background-clip:content-box;border-radius:10px}
+  ::-webkit-scrollbar-thumb:hover{background:#AEBCCB;border:3px solid transparent;background-clip:content-box}
+  ::-webkit-scrollbar-track{background:transparent}
+</style>
+</head>
+<body>
+
+<!-- backdrop -->
+<div class="app-bg" aria-hidden="true">
+  <div class="bg-top">
+    <div class="bg-logo"><div class="mark">Q</div><div>QUBI COST<small>ELECTRICAL</small></div></div>
+    <div class="bg-proj">Proyecto activo · PEL039A2026 ABIERTO</div>
+    <div class="bg-search">Buscar en todo el proyecto <span class="kbd" style="margin-left:auto">Ctrl+K</span></div>
+    <div class="bg-right"><div class="bg-pill">Sin autoguardado</div><div class="bg-pill">Guardar</div><div class="bg-pill primary">Cerrar oferta</div></div>
+  </div>
+  <div class="bg-nav"><span>Resumen</span><span>Proyecto</span><span>Itemizado</span><span class="on">Cubicación</span><span>Precios</span><span>Cierre y Costos</span></div>
+  <div class="bg-body">
+    <div class="bg-side">
+      <div class="lbl">PARTIDAS · 69</div>
+      <div class="bg-item"><i></i>1,1 Ductos y cajas acometida</div>
+      <div class="bg-item"><i></i>1,2 Malla tierra, conexión BPC</div>
+      <div class="bg-item"><i></i>1,3 Alimentador general empalme</div>
+      <div class="bg-item"><i></i>1,4 Alimentador grupo generador</div>
+      <div class="bg-item"><i></i>1,5 Alimentador bombas agua potable</div>
+    </div>
+    <div class="bg-main">
+      <div class="bg-toolbar"><div class="chip">Buscar (Ctrl+F)</div><div class="chip">Casillas</div><div class="chip">Detalle</div><div class="chip" style="margin-left:auto">Recursos 9</div></div>
+      <div class="bg-grid">
+        <div class="hd"><span>#</span><span>CÓDIGO / DESCRIPCIÓN</span><span>UD</span><span>CANT.</span><span>ZONAS</span></div>
+        <div class="bg-row"><span>1</span><span class="bar" style="width:62%"></span><span>ML</span><span class="bar" style="width:48%"></span><span class="bar" style="width:70%"></span></div>
+        <div class="bg-row"><span>2</span><span class="bar" style="width:74%"></span><span>ML</span><span class="bar" style="width:38%"></span><span class="bar" style="width:55%"></span></div>
+        <div class="bg-row sel"><span>3</span><span class="bar" style="width:52%"></span><span>UN</span><span class="bar" style="width:30%"></span><span class="bar" style="width:62%"></span></div>
+        <div class="bg-row"><span>4</span><span class="bar" style="width:68%"></span><span>ML</span><span class="bar" style="width:44%"></span><span class="bar" style="width:58%"></span></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="scrim"></div>
+
+<!-- panel -->
+<div class="overlay" id="overlay">
+  <section class="panel" role="dialog" aria-modal="true" aria-labelledby="dlg-title">
+    <header class="head">
+      <div class="head-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3 7.5 12 12l9-4.5L12 3Z"/><path d="m3 12 9 4.5L21 12"/><path d="m3 16.5 9 4.5 9-4.5"/></svg>
+      </div>
+      <div>
+        <div class="eyebrow">Cubicación · Servicios comunes</div>
+        <h1 id="dlg-title">Tomar desde Cubicación de Circuitos</h1>
+        <p>Solo materiales medidos. Muévete con <span class="kbd">↑</span> <span class="kbd">↓</span>, toma con <span class="kbd">Espacio</span> y agrega con <span class="kbd">Ctrl</span>+<span class="kbd">Enter</span>. Sin mouse.</p>
+      </div>
+      <div class="head-right">
+        <div class="dest">
+          <div class="lbl">PARTIDA DESTINO</div>
+          <div class="name"><span class="code">1,1</span> Ductos y cajas acometida eléctrica.</div>
+          <div class="sub">Unidad <span class="unit">ML</span> <span style="color:#CBD5E1">·</span> 0 recursos actuales</div>
+        </div>
+        <button class="icon-btn" id="btn-close" title="Cerrar (Esc)" aria-label="Cerrar panel">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="toolbar">
+      <div class="tabs" role="tablist" aria-label="Vistas">
+        <button class="tab on" data-view="materiales" role="tab" aria-selected="true">Materiales <span class="k">Alt+1</span></button>
+        <button class="tab" data-view="origen" role="tab" aria-selected="false">Por origen <span class="k">Alt+2</span></button>
+        <button class="tab" data-view="zona" role="tab" aria-selected="false">Por zona <span class="k">Alt+3</span></button>
+      </div>
+      <label class="search" for="q">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+        <input id="q" type="text" placeholder="Filtrar por material, cuadro o circuito…" autocomplete="off" spellcheck="false" aria-label="Filtrar materiales">
+        <span class="kbd">/</span>
+      </label>
+      <div class="tool-right">
+        <span class="kbmode" title="Todo el panel se opera con teclado">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M6 14h.01M18 14h.01M9 14h6"/></svg>
+          Teclado activo
+        </span>
+        <span class="lock" title="Solo circuitos con medidas ingresadas. Se excluyen luminarias y artefactos sin cantidad.">
+          <span class="dot"></span> Solo lo cubicado
+        </span>
+        <button class="btn ghost" id="btn-refresh" title="Actualizar datos (F5)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/></svg>
+          Actualizar
+        </button>
+      </div>
+    </div>
+
+    <div class="body">
+      <div class="main">
+        <div class="criterion">
+          <span class="ic"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4.5 4.5L19 7"/></svg></span>
+          <span><b>Solo lo cubicado.</b> <span class="muted">12 circuitos con medidas de 48 · no se listan luminarias ni artefactos sin cantidad.</span></span>
+          <span class="right"><span class="kbd">F1</span> criterio y atajos</span>
+        </div>
+
+        <div class="chips" id="chips"></div>
+
+        <div class="kbhint" id="kbhint">
+          <span>Zona <b id="kbhint-zone">Piso 1</b> · escribe la cantidad y <span class="kbd">Enter</span> para confirmar</span>
+          <span class="sp"><span><span class="kbd">←</span><span class="kbd">→</span> mover</span><span><span class="kbd">Esc</span> salir</span></span>
+        </div>
+
+        <div class="table-wrap" id="table-wrap" tabindex="0" aria-label="Tabla de materiales. Usa flechas para navegar, espacio para tomar.">
+          <table class="sel-table" aria-label="Materiales cubicados">
+            <colgroup><col style="width:44px"><col><col style="width:62px"><col style="width:90px"><col style="width:84px"><col style="width:84px"><col style="width:84px"></colgroup>
+            <thead>
+              <tr>
+                <th class="c"><input type="checkbox" class="chk" id="chk-all" aria-label="Seleccionar todo lo visible"></th>
+                <th>Material</th><th class="c">Unidad</th><th class="r">Total</th>
+                <th class="c">Piso 1</th><th class="c">Piso 2</th><th class="c">Piso 3</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+          <div class="empty" id="empty" style="display:none">No hay materiales que coincidan. <span style="color:#94A1B0">Prueba otra categoría o limpia la búsqueda.</span></div>
+        </div>
+
+        <div class="view" id="view-origen" style="display:none"></div>
+        <div class="view" id="view-zona" style="display:none"></div>
+      </div>
+
+      <aside class="rail">
+        <div class="rail-head">
+          <h2>Selección</h2><span class="count-badge" id="sel-count">0</span>
+          <button class="link" id="btn-clear">Limpiar</button>
+        </div>
+        <div class="rail-scroll">
+          <div class="rail-sec">
+            <div class="lbl">Se agregará a</div>
+            <div class="dest-mini">
+              <div class="p">Partida 1,1 · 0 recursos</div>
+              <div class="t">Ductos y cajas acometida eléctrica.</div>
+              <div class="m">Unidad <span class="unit">ML</span> <span style="color:#CBD5E1">·</span> 3 zonas</div>
+            </div>
+          </div>
+          <div class="rail-sec">
+            <div class="lbl">Zonas a incluir <span class="kbd" style="font-size:8px">Z</span></div>
+            <div class="zchips" id="zchips"></div>
+          </div>
+          <div class="rail-sec">
+            <div class="lbl">Materiales marcados</div>
+            <div class="picked" id="picked"></div>
+          </div>
+          <div class="rail-sec" style="border-bottom:0">
+            <div class="lbl">Al agregar</div>
+            <div class="modes" id="modes">
+              <label class="mode on" data-mode="append">
+                <input type="radio" name="mode" checked>
+                <span><span class="tt">Agregar al final</span><span class="dd">Una fila nueva por material, con cantidades por zona.</span></span>
+              </label>
+              <label class="mode" data-mode="replace">
+                <input type="radio" name="mode">
+                <span><span class="tt">Reemplazar filas de SC</span><span class="dd">Actualiza solo lo que ya trajiste antes de SC.</span></span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="rail-foot">
+          <button class="cta" id="btn-add" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            <span id="cta-label">Agregar materiales</span>
+            <span class="kb">Ctrl+↵</span>
+          </button>
+          <div class="cta-note" id="cta-note">Selecciona con Espacio o toma directo con Enter.</div>
+          <button class="cancel" id="btn-cancel">Cancelar (Esc)</button>
+        </div>
+      </aside>
+    </div>
+
+    <div class="cmdbar">
+      <div class="cmdgroup">
+        <span class="ck"><span class="kbd">↑</span><span class="kbd">↓</span> Navegar</span>
+        <span class="ck"><span class="kbd">Espacio</span> Tomar</span>
+        <span class="ck"><span class="kbd">Enter</span> Tomar y seguir</span>
+        <span class="ck"><span class="kbd">Ctrl</span>+<span class="kbd">Enter</span> Agregar marcados</span>
+        <span class="ck"><span class="kbd">→</span> Zonas</span>
+        <span class="ck"><span class="kbd">/</span> Buscar</span>
+      </div>
+      <div class="cmd-right">
+        <span class="pos" id="pos">Fila <b>1</b> de <b>10</b></span>
+        <span class="taken-count" id="taken-count"><span class="d"></span>0 en la partida</span>
+        <button class="help-btn" id="btn-help"><span class="kbd">?</span> Atajos</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<button class="reopen" id="reopen">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+  Abrir panel de SC
+</button>
+
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <span class="ok"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4.5 4.5L19 7"/></svg></span>
+  <span id="toast-text"></span>
+</div>
+
+<!-- help -->
+<div class="help" id="help" role="dialog" aria-modal="true" aria-labelledby="help-title">
+  <div class="help-card">
+    <div class="help-top">
+      <div>
+        <h3 id="help-title">Todo con el teclado</h3>
+        <p>Este panel está diseñado para tomar cantidades sin soltar el teclado.</p>
+      </div>
+      <button class="icon-btn help-close" id="help-close" title="Cerrar (Esc)" aria-label="Cerrar ayuda">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="help-grid">
+      <div class="help-col">
+        <h4>Tomar materiales</h4>
+        <div class="hk"><span>Mover por la lista</span><span class="keys"><span class="kbd">↑</span><span class="kbd">↓</span></span></div>
+        <div class="hk"><span>Marcar / desmarcar y avanzar</span><span class="keys"><span class="kbd">Espacio</span></span></div>
+        <div class="hk"><span>Tomar la fila y seguir</span><span class="keys"><span class="kbd">Enter</span></span></div>
+        <div class="hk"><span>Agregar todos los marcados</span><span class="keys"><span class="kbd">Ctrl</span><span class="kbd">Enter</span></span></div>
+        <div class="hk"><span>Marcar todo lo visible</span><span class="keys"><span class="kbd">Ctrl</span><span class="kbd">A</span></span></div>
+        <div class="hk"><span>Primera / última fila</span><span class="keys"><span class="kbd">Inicio</span><span class="kbd">Fin</span></span></div>
+      </div>
+      <div class="help-col">
+        <h4>Zonas y filtros</h4>
+        <div class="hk"><span>Entrar / mover por zonas</span><span class="keys"><span class="kbd">←</span><span class="kbd">→</span></span></div>
+        <div class="hk"><span>Editar cantidad de la zona</span><span class="keys"><span class="kbd">0-9</span></span></div>
+        <div class="hk"><span>Confirmar / cancelar edición</span><span class="keys"><span class="kbd">Enter</span><span class="kbd">Esc</span></span></div>
+        <div class="hk"><span>Incluir / excluir zona</span><span class="keys"><span class="kbd">Z</span><span class="kbd">Espacio</span></span></div>
+        <div class="hk"><span>Buscar</span><span class="keys"><span class="kbd">/</span></span></div>
+        <div class="hk"><span>Vistas Materiales / Origen / Zona</span><span class="keys"><span class="kbd">Alt</span><span class="kbd">1-3</span></span></div>
+      </div>
+    </div>
+    <div class="help-foot"><span class="kbd">Esc</span> cierra esta ayuda, luego limpia la búsqueda y finalmente el panel. <span style="margin-left:auto">Qubi Cost Electrical</span></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const ZONES = ["Piso 1","Piso 2","Piso 3"];
+  const CATS = {
+    "Tubería":"#3B82F6","Conductor":"#6B4FA8","Cajas":"#C98A1B",
+    "Flexible":"#0891B2","Sensores":"#22C55E","Señalética":"#EA7317"
+  };
+
+  // Solo materiales derivados de circuitos con medidas ingresadas.
+  const materials = [
+    { id:"tub20",  name:"TUBERIA PVC 20",               cat:"Tubería",   unit:"ML", zones:[120,104,88], src:"CTOS GENERALES", circuits:"C1, C4" },
+    { id:"tub25",  name:"TUBERIA PVC 25",               cat:"Tubería",   unit:"ML", zones:[60,48,40],   src:"CTOS GENERALES", circuits:"C2" },
+    { id:"thhn12", name:"CONDUCTOR THHN 12 AWG",        cat:"Conductor", unit:"ML", zones:[360,312,264],src:"CTOS GENERALES", circuits:"C1, C4" },
+    { id:"thhn14", name:"CONDUCTOR THHN 14 AWG",        cat:"Conductor", unit:"ML", zones:[110,94,84],  src:"CTOS GENERALES", circuits:"C3" },
+    { id:"caja58", name:"CAJA 5/8 PVC",                 cat:"Cajas",     unit:"UN", zones:[18,16,12],   src:"CTOS GENERALES", circuits:"C1, C2" },
+    { id:"caja10", name:"CAJA 100×100",                 cat:"Cajas",     unit:"UN", zones:[5,4,3],      src:"DEPTO 101",      circuits:"C1" },
+    { id:"cajam",  name:"CAJA METÁLICA SALIDA BANDEJA", cat:"Cajas",     unit:"UN", zones:[8,6,4],      src:"CTOS GENERALES", circuits:"C5" },
+    { id:"flex20", name:"TERMINAL FLEXIBLE 20",         cat:"Flexible",  unit:"UN", zones:[18,16,12],   src:"CTOS GENERALES", circuits:"C1" },
+    { id:"sensor", name:"SENSOR DE MOVIMIENTO",         cat:"Sensores",  unit:"UN", zones:[3,3,2],      src:"CTOS GENERALES", circuits:"C6" },
+    { id:"senal",  name:"SEÑALÉTICA EMERGENCIA",        cat:"Señalética",unit:"UN", zones:[2,2,1],      src:"DEPTO 101",      circuits:"C2" }
+  ];
+
+  const state = {
+    view:"materiales", cat:"Todas", q:"",
+    zones:[true,true,true],
+    selected:new Set(["tub20","thhn12"]),
+    taken:new Set(),
+    mode:"append",
+    focus:0, zcur:-1
+  };
+
+  const $  = (s,r=document)=>r.querySelector(s);
+  const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
+  const fmt = n => new Intl.NumberFormat("es-CL").format(n);
+  const totalOf = m => m.zones.reduce((a,b)=>a+b,0);
+  const catColor = m => CATS[m.cat] || "#64748B";
+  const slug = s => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+
+  function filtered(){
+    const q = state.q.trim().toLowerCase();
+    return materials.filter(m=>{
+      if(state.cat!=="Todas" && m.cat!==state.cat) return false;
+      if(!q) return true;
+      return (m.name+" "+m.src+" "+m.circuits+" "+m.cat).toLowerCase().includes(q);
+    });
+  }
+  function rows(){ return filtered(); }
+  function clampFocus(){
+    const n = rows().length;
+    if(n===0){ state.focus = -1; state.zcur = -1; return; }
+    if(state.focus<0) state.focus = 0;
+    if(state.focus>=n) state.focus = n-1;
+  }
+  function activeRow(){ const r=rows(); return state.focus>=0 ? r[state.focus] : null; }
+
+  function renderChips(){
+    const counts = { "Todas": materials.length };
+    materials.forEach(m=>counts[m.cat]=(counts[m.cat]||0)+1);
+    const host = $("#chips"); host.innerHTML="";
+    ["Todas",...Object.keys(CATS)].forEach(cat=>{
+      const n = counts[cat]||0;
+      if(!n && cat!=="Todas") return;
+      const b = document.createElement("button");
+      b.className = "chip "+(cat==="Todas"?"":"cat-"+slug(cat))+(state.cat===cat?" on":"");
+      b.innerHTML = `<span class="dot"></span>${cat}<span class="n">${n}</span>`;
+      b.addEventListener("click",()=>{ state.cat=cat; state.focus=0; state.zcur=-1; renderAll(); $("#table-wrap").focus(); });
+      host.appendChild(b);
+    });
+  }
+
+  function zcellHTML(m,i,rowActive){
+    const v = m.zones[i];
+    const cur = rowActive && state.zcur===i ? " zcur" : "";
+    const dim = state.zones[i] ? "" : " dim";
+    return `<span class="zcell${v===0?" zero":""}${dim}${cur}" data-id="${m.id}" data-z="${i}">${v===0?"—":fmt(v)}</span>`;
+  }
+
+  function renderTable(){
+    clampFocus();
+    const list = rows();
+    const tb = $("#tbody"); tb.innerHTML="";
+    $("#empty").style.display = list.length ? "none" : "block";
+
+    list.forEach((m,idx)=>{
+      const tr = document.createElement("tr");
+      tr.dataset.id = m.id;
+      tr.tabIndex = -1;
+      if(state.selected.has(m.id)) tr.classList.add("sel");
+      if(idx===state.focus) tr.classList.add("active");
+      if(state.taken.has(m.id)) tr.classList.add("taken");
+      const isTaken = state.taken.has(m.id);
+      tr.innerHTML = `
+        <td class="c"><input type="checkbox" class="chk" ${state.selected.has(m.id)?"checked":""} ${isTaken?"disabled":""} aria-label="Marcar ${m.name}"></td>
+        <td>
+          <div class="mat">
+            <span class="cat-dot" style="background:${catColor(m)}"></span>
+            <span class="txt">
+              <div class="line">
+                <span class="name">${m.name}</span>
+                ${isTaken?'<span class="taken-pill">En la partida</span>':''}
+              </div>
+              <div class="src">${m.src}<span class="sep">·</span>${m.circuits}<span class="sep">·</span>${m.cat}</div>
+            </span>
+          </div>
+        </td>
+        <td class="c"><span class="unit-cell">${m.unit}</span></td>
+        <td class="r"><span class="total">${fmt(totalOf(m))}</span></td>
+        <td class="c">${zcellHTML(m,0,idx===state.focus)}</td>
+        <td class="c">${zcellHTML(m,1,idx===state.focus)}</td>
+        <td class="c">${zcellHTML(m,2,idx===state.focus)}</td>`;
+      tr.addEventListener("click",e=>{
+        if(e.target.closest("input,.zcell")) return;
+        state.focus = idx; state.zcur = -1;
+        $("#table-wrap").focus();
+        renderAll();
+      });
+      tr.querySelector("input").addEventListener("change",e=>{
+        e.stopPropagation();
+        if(state.taken.has(m.id)) return;
+        state.focus = idx;
+        setSelected(m.id, e.target.checked);
+      });
+      tr.querySelectorAll(".zcell").forEach(cell=>{
+        cell.addEventListener("dblclick",e=>{ e.stopPropagation(); state.focus=idx; state.zcur=+cell.dataset.z; renderAll(); startEdit(); });
+      });
+      tb.appendChild(tr);
+    });
+
+    syncSelectAll(list);
+    if(state.focus>=0){
+      const el = tb.children[state.focus];
+      if(el) el.scrollIntoView({block:"nearest"});
+    }
+  }
+
+  function syncSelectAll(list){
+    const all = $("#chk-all");
+    const vis = list.filter(m=>!state.taken.has(m.id)).map(m=>m.id);
+    const on = vis.filter(id=>state.selected.has(id)).length;
+    all.checked = vis.length>0 && on===vis.length;
+    all.indeterminate = on>0 && on<vis.length;
+  }
+
+  function setSelected(id,on){
+    if(on) state.selected.add(id); else state.selected.delete(id);
+    renderAll();
+  }
+
+  function renderZones(){
+    const host = $("#zchips"); host.innerHTML="";
+    ZONES.forEach((z,i)=>{
+      const qty = materials.filter(m=>state.selected.has(m.id)).reduce((a,m)=>a+m.zones[i],0);
+      const b = document.createElement("button");
+      b.className = "zchip "+(state.zones[i]?"on":"off");
+      b.innerHTML = `<span class="box"></span>${z}<span class="q">${fmt(qty)}</span>`;
+      b.addEventListener("click",()=>{ state.zones[i]=!state.zones[i]; renderAll(); });
+      host.appendChild(b);
+    });
+  }
+
+  function renderPicked(){
+    const host = $("#picked"); host.innerHTML="";
+    const sel = materials.filter(m=>state.selected.has(m.id) && !state.taken.has(m.id));
+    if(!sel.length){
+      host.innerHTML = `<div class="pick-empty">Sin marcas todavía.<br><span style="color:#7B8798">Espacio marca y avanza. Enter toma directo.</span></div>`;
+      return;
+    }
+    sel.forEach(m=>{
+      const el = document.createElement("div");
+      el.className="pick";
+      el.innerHTML = `
+        <div class="top"><span class="cat-dot" style="background:${catColor(m)}"></span>${m.name}
+          <button class="x" title="Quitar" aria-label="Quitar ${m.name}">×</button>
+        </div>
+        <div class="zrow">
+          ${m.zones.map((v,i)=>`<span><b>Z${i+1}</b> ${fmt(v)}</span>`).join("")}
+          <span style="margin-left:auto;color:#5C6A7C"><b>${fmt(totalOf(m))}</b> ${m.unit}</span>
+        </div>`;
+      el.querySelector(".x").addEventListener("click",()=>setSelected(m.id,false));
+      host.appendChild(el);
+    });
+  }
+
+  function renderCta(){
+    const n = state.selected.size;
+    $("#sel-count").textContent = n;
+    $("#taken-count").innerHTML = `<span class="d"></span>${state.taken.size} en la partida`;
+    const btn = $("#btn-add");
+    btn.disabled = n===0;
+    $("#cta-label").textContent = n===0 ? "Agregar materiales" : (n===1?"Agregar 1 material":`Agregar ${n} materiales`);
+    const az = state.zones.filter(Boolean).length;
+    $("#cta-note").textContent = n===0
+      ? "Selecciona con Espacio o toma directo con Enter."
+      : `${state.mode==="append"?"Se crearán":"Se actualizarán"} ${n} ${n===1?"fila":"filas"} · ${az} ${az===1?"zona":"zonas"} · editables después.`;
+    const list = rows();
+    $("#pos").innerHTML = list.length ? `Fila <b>${state.focus+1}</b> de <b>${list.length}</b>` : "Sin resultados";
+  }
+
+  function renderHint(){
+    const on = state.zcur>=0 && state.view==="materiales";
+    $("#kbhint").classList.toggle("show", on);
+    if(on) $("#kbhint-zone").textContent = ZONES[state.zcur];
+  }
+
+  function renderOrigin(){
+    const host=$("#view-origen"); host.innerHTML="";
+    const groups={};
+    rows().forEach(m=>{ (groups[m.src] ||= []).push(m); });
+    Object.entries(groups).forEach(([src,items])=>{
+      const el=document.createElement("div"); el.className="group";
+      el.innerHTML=`
+        <div class="group-hd"><span class="badge">CUADRO</span><span class="t">${src}</span>
+          <span class="meta">${items.length} materiales · ${items.reduce((a,m)=>a+m.zones.filter(v=>v>0).length,0)} zonas con metraje</span></div>
+        ${items.map(m=>`
+          <div class="g-row">
+            <span class="nm"><span class="cat-dot" style="display:inline-block;background:${catColor(m)};margin-right:7px"></span>${m.name}</span>
+            <span class="u">${m.unit}</span>
+            <span class="tot">${fmt(totalOf(m))}</span>
+            <span class="zone-grid" style="grid-template-columns:repeat(3,1fr)">
+              ${m.zones.map((v,i)=>`<span class="${state.zones[i]?"":"dim"}">${v===0?"—":fmt(v)}</span>`).join("")}
+            </span>
+          </div>`).join("")}`;
+      host.appendChild(el);
+    });
+    if(!Object.keys(groups).length) host.innerHTML='<div class="empty">Sin resultados.</div>';
+  }
+
+  function renderZoneView(){
+    const host=$("#view-zona"); host.innerHTML="";
+    ZONES.forEach((z,zi)=>{
+      const items = rows().filter(m=>state.zones[zi] && m.zones[zi]>0);
+      const by={};
+      items.forEach(m=>{ const k=m.cat+"|"+m.unit; (by[k] ||= {cat:m.cat,unit:m.unit,qty:0}); by[k].qty+=m.zones[zi]; });
+      const lines=Object.values(by).map(x=>`
+        <div class="zline"><span class="dot" style="background:${CATS[x.cat]||"#64748B"}"></span>
+          <span class="nm">${x.cat}</span><span class="v">${fmt(x.qty)} ${x.unit}</span></div>`).join("");
+      const el=document.createElement("div"); el.className="zcard";
+      el.innerHTML=`<div class="zcard-hd"><span class="n">${zi+1}</span><span class="t">${z}</span>
+        <span class="c">${items.length} materiales</span></div>${lines||'<div class="zline"><span class="nm" style="color:#94A1B0">Zona excluida</span></div>'}`;
+      host.appendChild(el);
+    });
+  }
+
+  function renderAll(){
+    if(state.view==="materiales") renderTable();
+    else if(state.view==="origen") renderOrigin();
+    else renderZoneView();
+    renderZones(); renderPicked(); renderCta(); renderHint();
+  }
+
+  /* ---- acciones ---- */
+  function toggleFocused(){
+    const m = activeRow(); if(!m || state.taken.has(m.id)) return;
+    if(state.selected.has(m.id)) state.selected.delete(m.id); else state.selected.add(m.id);
+    state.zcur = -1;
+    if(state.focus < rows().length-1) state.focus++;
+    renderAll();
+  }
+
+  function takeFocused(){
+    const m = activeRow(); if(!m) return;
+    if(state.taken.has(m.id)){ toast("Ya está en la partida."); return; }
+    state.taken.add(m.id); state.selected.delete(m.id);
+    toast(`${m.name} agregada · ${state.zones.filter(Boolean).length} zonas.`);
+    if(state.focus < rows().length-1) state.focus++;
+    state.zcur = -1;
+    renderAll();
+  }
+
+  function takeSelected(){
+    let list = materials.filter(m=>state.selected.has(m.id) && !state.taken.has(m.id));
+    if(!list.length){ takeFocused(); return; }
+    list.forEach(m=>{ state.taken.add(m.id); state.selected.delete(m.id); });
+    toast(`${list.length} ${list.length===1?"material agregado":"materiales agregados"} a la partida 1,1.`);
+    state.zcur = -1;
+    renderAll();
+  }
+
+  function selectAllVisible(){
+    const list = rows().filter(m=>!state.taken.has(m.id));
+    const allOn = list.every(m=>state.selected.has(m.id));
+    list.forEach(m=> allOn ? state.selected.delete(m.id) : state.selected.add(m.id));
+    renderAll();
+  }
+
+  function startEdit(initial){
+    if(state.view!=="materiales" || state.zcur<0) return;
+    const m = activeRow(); if(!m || state.taken.has(m.id)) return;
+    const i = state.zcur;
+    const wrap = $("#table-wrap");
+    const rowEl = wrap.querySelector(`tr[data-id="${m.id}"]`);
+    if(!rowEl) return;
+    const cell = rowEl.querySelector(`.zcell[data-z="${i}"]`);
+    if(!cell) return;
+    cell.classList.add("editing");
+    cell.textContent="";
+    const input=document.createElement("input");
+    input.type="text"; input.inputMode="decimal";
+    input.value = initial !== undefined ? String(initial) : (m.zones[i] || "");
+    cell.appendChild(input);
+    input.focus(); input.select();
+    const commit=()=>{
+      const raw = input.value.replace(",",".").trim();
+      const val = raw==="" ? 0 : Math.max(0, Number(raw)||0);
+      m.zones[i]=val;
+      renderAll();
+      wrap.focus();
+    };
+    input.addEventListener("blur",commit,{once:true});
+    input.addEventListener("keydown",e=>{
+      if(e.key==="Enter"){ e.preventDefault(); input.blur(); }
+      if(e.key==="Escape"){ e.preventDefault(); input.value=String(m.zones[i]); input.blur(); }
+      e.stopPropagation();
+    });
+  }
+
+  /* ---- eventos ---- */
+  $("#q").addEventListener("input",e=>{ state.q=e.target.value; state.focus=0; state.zcur=-1; renderAll(); });
+  $("#q").addEventListener("keydown",e=>{
+    if(e.key==="ArrowDown"){ e.preventDefault(); $("#table-wrap").focus(); }
+  });
+  $("#chk-all").addEventListener("change",e=>{
+    const list = rows().filter(m=>!state.taken.has(m.id));
+    if(e.target.checked) list.forEach(m=>state.selected.add(m.id));
+    else list.forEach(m=>state.selected.delete(m.id));
+    renderAll();
+  });
+  $("#btn-clear").addEventListener("click",()=>{ state.selected.clear(); renderAll(); });
+  $("#btn-refresh").addEventListener("click",()=>toast("Datos actualizados desde Cubicación de Circuitos."));
+  $$("#modes .mode").forEach(el=>{
+    el.addEventListener("click",()=>{
+      state.mode = el.dataset.mode;
+      $$("#modes .mode").forEach(x=>x.classList.toggle("on",x===el));
+      el.querySelector("input").checked=true;
+      renderCta();
+    });
+  });
+  $$(".tab").forEach(t=>{
+    t.addEventListener("click",()=>switchView(t.dataset.view));
+  });
+  $("#btn-add").addEventListener("click",takeSelected);
+  $("#btn-cancel").addEventListener("click",closePanel);
+  $("#btn-close").addEventListener("click",closePanel);
+  $("#btn-help").addEventListener("click",openHelp);
+  $("#help-close").addEventListener("click",closeHelp);
+  $("#help").addEventListener("click",e=>{ if(e.target.id==="help") closeHelp(); });
+  $("#reopen").addEventListener("click",()=>{ $("#overlay").style.display=""; $("#reopen").classList.remove("show"); $("#table-wrap").focus(); });
+
+  function switchView(view){
+    state.view=view; state.zcur=-1;
+    $$(".tab").forEach(x=>{ const on=x.dataset.view===view; x.classList.toggle("on",on); x.setAttribute("aria-selected",on); });
+    $("#table-wrap").style.display = view==="materiales" ? "" : "none";
+    $("#view-origen").style.display = view==="origen" ? "" : "none";
+    $("#view-zona").style.display = view==="zona" ? "" : "none";
+    $("#kbhint").classList.remove("show");
+    renderAll();
+    if(view==="materiales") $("#table-wrap").focus();
+  }
+
+  document.addEventListener("keydown",e=>{
+    const key = e.key;
+    const tag = (document.activeElement && document.activeElement.tagName) || "";
+    const inField = tag==="INPUT" || tag==="TEXTAREA";
+
+    // ayuda
+    if(key==="?" || key==="F1"){ e.preventDefault(); openHelp(); return; }
+    if($("#help").classList.contains("show")){
+      if(key==="Escape"){ e.preventDefault(); closeHelp(); }
+      return;
+    }
+    // pestañas
+    if(e.altKey && (key==="1"||key==="2"||key==="3")){
+      e.preventDefault();
+      switchView(key==="1"?"materiales":key==="2"?"origen":"zona");
+      return;
+    }
+    // buscar
+    if(key==="/" && !inField){ e.preventDefault(); $("#q").focus(); $("#q").select(); return; }
+    // actualizar
+    if(key==="F5"){ e.preventDefault(); toast("Datos actualizados desde Cubicación de Circuitos."); return; }
+    // escape
+    if(key==="Escape"){
+      if(inField && document.activeElement.id==="q"){
+        if($("#q").value){ $("#q").value=""; state.q=""; renderAll(); }
+        else $("#table-wrap").focus();
+        e.preventDefault(); return;
+      }
+      closePanel(); return;
+    }
+    // atajos globales
+    if(!inField){
+      if((e.ctrlKey||e.metaKey) && key.toLowerCase()==="a"){ e.preventDefault(); selectAllVisible(); return; }
+      if((e.ctrlKey||e.metaKey) && key==="Enter"){ e.preventDefault(); takeSelected(); return; }
+      if(key.toLowerCase()==="z" && !e.ctrlKey && !e.metaKey && !e.altKey){
+        e.preventDefault(); const first=$("#zchips .zchip"); if(first) first.focus(); return;
+      }
+    }
+
+    // navegación de tabla
+    const tableFocused = document.activeElement === $("#table-wrap");
+    if(!tableFocused) return;
+    if(state.view!=="materiales") return;
+
+    const list = rows();
+    if(!list.length) return;
+    const last = list.length-1;
+
+    switch(key){
+      case "ArrowDown": e.preventDefault(); state.zcur=-1; state.focus=Math.min(last,state.focus+1); renderAll(); break;
+      case "ArrowUp": e.preventDefault(); state.zcur=-1; state.focus=Math.max(0,state.focus-1); renderAll(); break;
+      case "Home": e.preventDefault(); state.zcur=-1; state.focus=0; renderAll(); break;
+      case "End": e.preventDefault(); state.zcur=-1; state.focus=last; renderAll(); break;
+      case "PageDown": e.preventDefault(); state.zcur=-1; state.focus=Math.min(last,state.focus+10); renderAll(); break;
+      case "PageUp": e.preventDefault(); state.zcur=-1; state.focus=Math.max(0,state.focus-10); renderAll(); break;
+      case " ":
+        e.preventDefault();
+        if(state.zcur>=0) startEdit();
+        else toggleFocused();
+        break;
+      case "Enter":
+        e.preventDefault();
+        if(state.zcur>=0) startEdit(); else takeFocused();
+        break;
+      case "ArrowRight":
+        e.preventDefault();
+        state.zcur = Math.min(2, state.zcur+1);
+        renderAll();
+        break;
+      case "ArrowLeft":
+        e.preventDefault();
+        state.zcur = state.zcur<=0 ? -1 : state.zcur-1;
+        renderAll();
+        break;
+      default:
+        if(state.zcur>=0 && /^[0-9.,]$/.test(key)){
+          e.preventDefault(); startEdit(key);
+        }
+    }
+  });
+
+  // mantener foco en tabla si se hace clic dentro
+  $("#table-wrap").addEventListener("mousedown",()=>{ /* focus handled by click */ });
+  $("#table-wrap").addEventListener("focus",()=>{ if(state.zcur<0) renderAll(); });
+
+  function closePanel(){
+    $("#overlay").style.display="none";
+    $("#reopen").classList.add("show");
+  }
+  function openHelp(){ $("#help").classList.add("show"); $("#help-close").focus(); }
+  function closeHelp(){ $("#help").classList.remove("show"); $("#table-wrap").focus(); }
+
+  let toastTimer;
+  function toast(msg){
+    const t=$("#toast"); $("#toast-text").textContent=msg;
+    t.classList.add("show"); clearTimeout(toastTimer);
+    toastTimer=setTimeout(()=>t.classList.remove("show"),2600);
+  }
+
+  // init
+  renderChips();
+  renderAll();
+  setTimeout(()=>$("#table-wrap").focus(),30);
+})();
+</script>
+</body>
+</html>

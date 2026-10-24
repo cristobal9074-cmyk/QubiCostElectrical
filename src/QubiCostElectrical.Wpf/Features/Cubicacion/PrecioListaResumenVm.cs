@@ -428,9 +428,13 @@ public sealed class PrecioListaResumenVm : ViewModelBase
         // que el motor ya aplica, y la fórmula queda en el material para que siga viva si cambia el FA.
         bool porPorcentaje = string.Equals(moFormulaTipo, MaterialMoResolver.MoFormulaPorcentaje, StringComparison.OrdinalIgnoreCase)
             && moPorcentajeMaterial > 0m;
+        bool porFactor = string.Equals(moFormulaTipo, MaterialMoResolver.MoFormulaFactor, StringComparison.OrdinalIgnoreCase);
+
         decimal moEfectiva = porPorcentaje
             ? MaterialMoResolver.MoClpPorPorcentaje(matClp, moPorcentajeMaterial, MaterialMoResolver.IndiceFa(session.ProjectInfo))
-            : moClp;
+            : (porFactor
+                ? MaterialMoResolver.MoClpPorFactor(moClp, MaterialMoResolver.IndiceFa(session.ProjectInfo))
+                : moClp);
 
         var materialRow = new MaterialRow
         {
@@ -440,7 +444,8 @@ public sealed class PrecioListaResumenVm : ViewModelBase
             Categoria = (categoria ?? ""),
             MatClp = matClp,
             MoClp = moEfectiva,
-            MoFormulaTipo = porPorcentaje ? MaterialMoResolver.MoFormulaPorcentaje : "",
+            MoFactorBase = porFactor ? moClp : 0m,
+            MoFormulaTipo = porPorcentaje ? MaterialMoResolver.MoFormulaPorcentaje : (porFactor ? MaterialMoResolver.MoFormulaFactor : (moFormulaTipo ?? "")),
             MoPorcentajeMaterial = moPorcentajeMaterial,
             Proveedor = (proveedor ?? ""),
             FechaPrecio = ((fechaPrecio == default(DateTime)) ? DateTime.Today : fechaPrecio),

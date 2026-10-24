@@ -16,7 +16,10 @@ public static class TipoRecursoFamilia
     /// <summary>True cuando la familia (o su sinonimia canónica) es de equipos.</summary>
     public static bool EsFamiliaEquipo(string? familia)
     {
-        var objetivo = FamilyPresentationDefaults.NaturalCanonicalTarget(FamilyPresentationDefaults.Normalize(familia));
+        var norm = FamilyPresentationDefaults.Normalize(familia);
+        if (ElectricalFamilyCatalog.ClaveCanonica(norm) == "PROTECCIONES")
+            return false;
+        var objetivo = FamilyPresentationDefaults.NaturalCanonicalTarget(norm);
         return objetivo is "TABLEROS" or "EQUIPOS";
     }
 

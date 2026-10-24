@@ -33,7 +33,7 @@ dotnet run --project src/QubiCostElectrical.Wpf/QubiCostElectrical.Wpf.csproj
 
 | Componente | Versión |
 |---|---|
-| Producto | 1.1.1 |
+| Producto | 1.1.2 |
 | Base de datos SQLite | 33 |
 | Formato de proyecto | 6 |
 | Motor de cálculo | 5 |
@@ -59,7 +59,7 @@ dotnet run --project src/QubiCostElectrical.Wpf/QubiCostElectrical.Wpf.csproj
 - Siempre responder en español
 - No agregar features fuera del alcance pedido
 - Preferir editar archivos existentes antes de crear nuevos
-- Tras builds con cambios: actualizar acceso directo con `scripts/Update-DesktopShortcut.ps1 -Build`
+- Tras builds con cambios: compilar y publicar únicamente en `publish/win-x64` para probar con `Qubi Cost Electrical (Dev).lnk`. NUNCA tocar la instalación oficial de producción en `AppData/Local/QubiCostElectrical/current`.
 
 ## Skill routing
 

@@ -205,7 +205,7 @@ public sealed class PriceBankStoreTests
                 cn2.Open();
                 using var v = cn2.CreateCommand();
                 v.CommandText = "PRAGMA user_version;";
-                Assert.Equal(5, Convert.ToInt32(v.ExecuteScalar()));
+                Assert.Equal(PriceBankStore.LatestSchemaVersion, Convert.ToInt32(v.ExecuteScalar()));
             }
         }
         finally
@@ -304,7 +304,7 @@ public sealed class PriceBankStoreTests
                 cn2.Open();
                 using var v = cn2.CreateCommand();
                 v.CommandText = "PRAGMA user_version;";
-                Assert.Equal(5, Convert.ToInt32(v.ExecuteScalar()));
+                Assert.Equal(PriceBankStore.LatestSchemaVersion, Convert.ToInt32(v.ExecuteScalar()));
             }
         }
         finally
@@ -312,6 +312,74 @@ public sealed class PriceBankStoreTests
             foreach (var suffix in new[] { "", "-wal", "-shm" })
             {
                 try { File.Delete(db + suffix); } catch { /* archivo temporal */ }
+            }
+        }
+    }
+
+    [Fact]
+    public void Constructor_DbV5_MigraAV6_AnadeColumnaMoFactorBase()
+    {
+        string db = Path.Combine(Path.GetTempPath(), $"test_v5_to_v6_{Guid.NewGuid():N}.db");
+        try
+        {
+            using (var cn = new SqliteConnection($"Data Source={db}"))
+            {
+                cn.Open();
+                using var cmd = cn.CreateCommand();
+                cmd.CommandText = """
+                    CREATE TABLE price_bank (
+                        codigo TEXT PRIMARY KEY,
+                        descripcion TEXT NOT NULL DEFAULT '',
+                        unidad TEXT NOT NULL DEFAULT '',
+                        categoria TEXT NOT NULL DEFAULT '',
+                        mat_uf REAL NOT NULL DEFAULT 0,
+                        mo_uf REAL NOT NULL DEFAULT 0,
+                        moneda TEXT NOT NULL DEFAULT 'CLP',
+                        proveedor TEXT NOT NULL DEFAULT '',
+                        marca TEXT NOT NULL DEFAULT '',
+                        fecha_precio TEXT NOT NULL DEFAULT '',
+                        origen_precio TEXT NOT NULL DEFAULT '',
+                        proyecto_origen TEXT NOT NULL DEFAULT '',
+                        actualizado_en TEXT NOT NULL DEFAULT '',
+                        mat_clp REAL NOT NULL DEFAULT 0,
+                        mo_clp REAL NOT NULL DEFAULT 0,
+                        orden INTEGER NOT NULL DEFAULT 0,
+                        rendimiento_dh REAL NOT NULL DEFAULT 0,
+                        dia_pareja REAL NOT NULL DEFAULT 0,
+                        mo_formula_tipo TEXT NOT NULL DEFAULT '',
+                        mo_porcentaje_material REAL NOT NULL DEFAULT 0
+                    );
+                    PRAGMA user_version = 5;
+                    """;
+                cmd.ExecuteNonQuery();
+            }
+
+            var store = new PriceBankStore(db);
+            store.Upsert(new PriceBankEntry
+            {
+                Codigo = "V6-1",
+                MoFormulaTipo = MaterialMoResolver.MoFormulaFactor,
+                MoFactorBase = 190m
+            });
+
+            var reloaded = store.GetByCodigo("V6-1");
+            Assert.NotNull(reloaded);
+            Assert.Equal(MaterialMoResolver.MoFormulaFactor, reloaded!.MoFormulaTipo);
+            Assert.Equal(190m, reloaded.MoFactorBase);
+
+            using (var cn2 = new SqliteConnection($"Data Source={db}"))
+            {
+                cn2.Open();
+                using var v = cn2.CreateCommand();
+                v.CommandText = "PRAGMA user_version;";
+                Assert.Equal(6, Convert.ToInt32(v.ExecuteScalar()));
+            }
+        }
+        finally
+        {
+            foreach (var suffix in new[] { "", "-wal", "-shm" })
+            {
+                try { File.Delete(db + suffix); } catch { /* ignore */ }
             }
         }
     }

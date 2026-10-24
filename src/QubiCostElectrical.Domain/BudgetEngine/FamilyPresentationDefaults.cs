@@ -24,7 +24,6 @@ public static class FamilyPresentationDefaults
     public static bool IsCanonical(string? normalized) => normalized is
         "CONDUCTORES" or "CANALIZACION" or "TABLEROS" or "ILUMINACION" or "EQUIPOS"
         or "ACCESORIOS" or "ENCHUFES Y TOMACORRIENTES" or "ENCHUFES"
-        or "PROTECCIONES" or "PUESTA A TIERRA"
         or "MOVIMIENTOS" or "COMISIONAMIENTO";
 
     /// <summary>
@@ -48,28 +47,22 @@ public static class FamilyPresentationDefaults
             or "DUCTOS" or "DUCTO" or "CANALETAS" or "CANALETA"
             => "CANALIZACION",
 
-        // Conductores y alimentadores
+        // Conductores, alimentadores y puesta a tierra (en presupuestos electricos van en MATERIALES)
         "CONDUCTORES" or "CONDUCTOR" or "CABLES" or "CABLE" or "ALAMBRES" or "ALAMBRE"
             or "ALIMENTADORES" or "ALIMENTADOR" or "SUBALIMENTADORES" or "SUBALIMENTADOR"
             or "CORDONES" or "CORDON"
             or "OBRAS CIVILES"
-            => "CONDUCTORES",
-
-        // Puesta a tierra
-        "PUESTA A TIERRA" or "PUESTAS A TIERRA" or "TIERRA" or "TIERRAS"
+            or "PUESTA A TIERRA" or "PUESTAS A TIERRA" or "TIERRA" or "TIERRAS"
             or "MALLA A TIERRA" or "MALLAS A TIERRA" or "MALLA TIERRA" or "MALLAS DE TIERRA"
             or "ELECTRODOS" or "BARRA COPPERWELD"
-            => "PUESTA A TIERRA",
+            => "CONDUCTORES",
 
-        // Tableros
+        // Tableros y protecciones
         "TABLEROS" or "TABLERO" or "GABINETES" or "GABINETE" or "ARMARIOS" or "ARMARIO"
-            => "TABLEROS",
-
-        // Protecciones
-        "PROTECCIONES" or "PROTECCION" or "DISYUNTORES" or "DISYUNTOR"
+            or "PROTECCIONES" or "PROTECCION" or "DISYUNTORES" or "DISYUNTOR"
             or "AUTOMATICOS" or "AUTOMATICO" or "DIFERENCIALES" or "DIFERENCIAL"
             or "FUSIBLES" or "FUSIBLE"
-            => "PROTECCIONES",
+            => "TABLEROS",
 
         // Equipos
         "EQUIPOS" or "EQUIPO" or "MAQUINARIA" or "MAQUINARIAS"
@@ -144,16 +137,15 @@ public static class FamilyPresentationDefaults
         var target = NaturalCanonicalTarget(normalizedFamily);
         return target switch
         {
-            "CONDUCTORES" => 1.50m,
-            "CANALIZACION" => 1.44m,
-            "TABLEROS" => 1.10m,
-            "PROTECCIONES" => 1.12m,
-            "ILUMINACION" => 1.17m,
-            "EQUIPOS" => 1.12m,
-            "ENCHUFES Y TOMACORRIENTES" or "ENCHUFES" => 1.15m,
-            "PUESTA A TIERRA" => 1.20m,
-            "MOVIMIENTOS" or "COMISIONAMIENTO" => 1.50m,
-            _ => 1.14m
+            "CONDUCTORES" => 1.72m,
+            "CANALIZACION" => 1.72m,
+            "TABLEROS" => 1.44m,
+            "ILUMINACION" => 1.45m,
+            "EQUIPOS" => 1.43m,
+            "ACCESORIOS" => 1.36m,
+            "ENCHUFES Y TOMACORRIENTES" or "ENCHUFES" => 1.45m,
+            "MOVIMIENTOS" or "COMISIONAMIENTO" => 1.45m,
+            _ => 1.45m
         };
     }
 

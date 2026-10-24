@@ -84,7 +84,7 @@ public sealed class SqliteAuthStore : IDisposable
         cmd.Parameters.AddWithValue("@display_name", user.DisplayName);
         cmd.Parameters.AddWithValue("@role", user.Role.ToString());
         cmd.Parameters.AddWithValue("@is_active", user.IsActive ? 1 : 0);
-        cmd.Parameters.AddWithValue("@created_at", user.CreatedAt.ToString("O"));
+        cmd.Parameters.AddWithValue("@created_at", user.CreatedAt.ToString("O", System.Globalization.CultureInfo.InvariantCulture));
         cmd.ExecuteNonQuery();
     }
 

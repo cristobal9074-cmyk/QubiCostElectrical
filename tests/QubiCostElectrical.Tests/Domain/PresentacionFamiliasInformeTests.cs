@@ -123,15 +123,15 @@ public sealed class PresentacionFamiliasInformeTests
     }
 
     [Fact]
-    public void FilaPuestaATierraApareceCuandoElProyectoLaUsa()
+    public void FilaPersonalizadaApareceCuandoElProyectoLaConfigura()
     {
-        var proyecto = Proyecto(("PUESTA A TIERRA", 1.7m));
-        var cubicacion = new[] { Row("Malla a tierra", "M1", 1m, 2_000m) };
+        var proyecto = Proyecto(("CLIMATIZACION", 1.7m));
+        var cubicacion = new[] { Row("Climatización", "CL1", 1m, 2_000m) };
 
         var informe = PresentacionFamiliasInforme.Construir(proyecto, cubicacion);
 
-        var fila = informe.Buckets.Single(b => b.Clave == "PUESTA A TIERRA");
-        Assert.Contains(fila.Familias, f => f.Nombre == "Malla a tierra");
+        var fila = informe.Buckets.Single(b => b.Clave == "CLIMATIZACION");
+        Assert.Contains(fila.Familias, f => f.Nombre == "Climatización");
         Assert.True(fila.Configurada);
         Assert.Equal(1.7m, fila.FactorAplicado);
     }
@@ -152,7 +152,7 @@ public sealed class PresentacionFamiliasInformeTests
     [Fact]
     public void ElFactorDelInformeCoincideConElDelMotorParaCadaFamilia()
     {
-        var proyecto = Proyecto(("CONDUCTORES", 1.7m), ("CANALIZACION", 1.7m), ("PUESTA A TIERRA", 1.7m));
+        var proyecto = Proyecto(("CONDUCTORES", 1.7m), ("CANALIZACION", 1.7m));
         proyecto.FamiliasPrecioAsignadas = new Dictionary<string, string> { ["CANALIZADO"] = "Canalización" };
         var cubicacion = new[]
         {

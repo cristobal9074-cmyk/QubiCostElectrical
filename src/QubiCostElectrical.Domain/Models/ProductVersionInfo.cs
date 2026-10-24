@@ -18,7 +18,7 @@ public static class ProductVersionInfo
     /// URL del repositorio GitHub donde se publican los releases de Velopack.
     /// Cambiar antes de distribuir: "https://github.com/USUARIO/REPO"
     /// </summary>
-    public const string GitHubReleasesUrl = "https://github.com/smingspa/presupuesto-electrico-pro";
+    public const string GitHubReleasesUrl = "https://github.com/cristobal9074-cmyk/QubiCostElectrical";
 
     public static string TechnicalSummary =>
         $"Producto {ProductVersionLabel} · DB {DatabaseSchemaVersion} · Proyecto {ProjectFormatVersion} · Motor {CalculationEngineVersion}";

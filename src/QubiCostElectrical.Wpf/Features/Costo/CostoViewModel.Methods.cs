@@ -59,6 +59,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
         AbrirCatalogoFamiliasCommand = new RelayCommand<CoefFactorVm>(AbrirCatalogoFamilias);
         ElegirFamiliaPrecioCommand = new RelayCommand<PrecioFamiliaPickVm>(ElegirFamiliaPrecio);
         AbrirGestionFamiliasCommand = new RelayCommand(AbrirGestionFamilias, () => CanEdit);
+        AgregarFamiliaPresentacionCommand = new RelayCommand(AgregarFamiliaPresentacion, () => CanEdit);
         OpenViaticosCommand = new RelayCommand<GastoOpCategoriaVm>(OpenViaticos, c => CanEdit && c is { IsViaticosCategory: true });
         OpenViaticosBarCommand = new RelayCommand(
             () => OpenViaticos(GastosOperacionales.FirstOrDefault(c => c.IsViaticosCategory)),
@@ -195,6 +196,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
                 LoadCoeficientesEstandarCommand.RaiseCanExecuteChanged();
                 LoadTipicosCoeficientesCommand.RaiseCanExecuteChanged();
                 AbrirGestionFamiliasCommand.RaiseCanExecuteChanged();
+                AgregarFamiliaPresentacionCommand.RaiseCanExecuteChanged();
                 SaveCostosPresetCommand.RaiseCanExecuteChanged();
                 RestoreCostosPresetCommand.RaiseCanExecuteChanged();
                 ApplyCoeficientesCommand.RaiseCanExecuteChanged();
@@ -424,6 +426,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
     public RelayCommand<CoefFactorVm> AbrirCatalogoFamiliasCommand { get; }
     public RelayCommand<PrecioFamiliaPickVm> ElegirFamiliaPrecioCommand { get; }
     public RelayCommand AbrirGestionFamiliasCommand { get; }
+    public RelayCommand AgregarFamiliaPresentacionCommand { get; }
     private bool analisisAbierto;
     public bool AnalisisAbierto
     {
@@ -746,6 +749,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
     public void MovePrecioFamilia(PrecioFamiliaChipVm? chip, string? targetFamilyKey) => _familyPricingCoordinator.MovePrecioFamilia(chip, targetFamilyKey);
     internal void RebuildPrecioFamiliaChips() => _familyPricingCoordinator.RebuildPrecioFamiliaChips();
     private void AbrirGestionFamilias() => _familyPricingCoordinator.AbrirGestionFamilias();
+    private void AgregarFamiliaPresentacion() => _familyPricingCoordinator.AgregarFamiliaPresentacion();
     private void AbrirCatalogoFamilias(CoefFactorVm? fila) => _familyPricingCoordinator.AbrirCatalogoFamilias(fila);
     private void ElegirFamiliaPrecio(PrecioFamiliaPickVm? pick) => _familyPricingCoordinator.ElegirFamiliaPrecio(pick);
     internal void UpdateCoefChips() => _familyPricingCoordinator.UpdateCoefChips();
@@ -760,7 +764,7 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
     private void RemoveStaffingRole(StaffingRoleVm? item) => _closingPolicyCoordinator.RemoveStaffingRole(item);
 
     // ─── Presets y Coeficientes ───────────────────────────────────────────────
-    private void SyncCoefFactors() => _coeficientesCoordinator.SyncCoefFactors();
+    internal void SyncCoefFactors() => _coeficientesCoordinator.SyncCoefFactors();
     private void SaveCostosPreset() => _coeficientesCoordinator.SaveCostosPreset();
     private void RestoreCostosPreset() => _coeficientesCoordinator.RestoreCostosPreset();
     private void LoadConfigFromOtherProject() => _coeficientesCoordinator.LoadConfigFromOtherProject();
