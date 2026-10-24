@@ -4,6 +4,13 @@ Las versiones siguen el formato `MAJOR.MINOR.PATCH` y corresponden a `Directory.
 
 ## No publicado
 
+## 1.1.3
+
+### Verificación y Validación de Auto-Actualizaciones Velopack (2026-10-24)
+- **Validación del canal oficial de auto-actualizaciones in-app**:
+  - Verificación del ciclo completo de detección, descarga y aplicación de paquetes delta vía GitHub Releases.
+  - Sincronización continua de versiones e integridad del repositorio de releases.
+
 ## 1.1.2
 
 ### Calibración definitiva Motor Costos/FA y Familias Canónicas de Presentación (2026-10-24)
