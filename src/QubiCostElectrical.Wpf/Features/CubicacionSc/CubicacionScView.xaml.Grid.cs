@@ -478,10 +478,6 @@ public partial class CubicacionScView
         => CircuitosGrid.CurrentCell.IsValid
            && ReferenceEquals(CircuitosGrid.CurrentCell.Column, ColUbicacion);
 
-    private bool IsArtefactosColumnFocused()
-        => CircuitosGrid.CurrentCell.IsValid
-           && ReferenceEquals(CircuitosGrid.CurrentCell.Column, ColArtefactos);
-
     // Navegación estilo Excel + atajos de circuito.
     // Ctrl+C en N°/fila = copia circuito · Ctrl+V = pega SOBRE el circuito activo (no agrega).
     // Ctrl+D = duplica (agrega fila), salvo rango vertical 2+ filas → relleno Excel.
@@ -575,16 +571,6 @@ public partial class CubicacionScView
                 }
             }
 
-            if ((e.Key is Key.Enter or Key.Space or Key.F4) && IsArtefactosColumnFocused())
-            {
-                var c = GetTargetCircuito();
-                if (c != null && scVm != null && scVm.OpenArtefactosCommand.CanExecute(c))
-                {
-                    scVm.OpenArtefactosCommand.Execute(c);
-                    e.Handled = true;
-                    return;
-                }
-            }
         }
 
         if (!editing && scVm != null && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)

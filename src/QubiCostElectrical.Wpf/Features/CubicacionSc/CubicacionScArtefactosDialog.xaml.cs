@@ -72,7 +72,7 @@ public partial class CubicacionScArtefactosDialog : Window
         foreach (var a in todos.Where(a => !ids.Contains(a.ZonaId ?? "")))
             a.ZonaId = "";
 
-        Titulo.Text = $"Artefactos · Circuito {circuito.Numero}";
+        Titulo.Text = $"Elementos y accesorios · Circuito {circuito.Numero}";
         FloorsHost.Visibility = Zonas.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
         Subtitulo.Text = Zonas.Count > 1
             ? "Pisos de este circuito"

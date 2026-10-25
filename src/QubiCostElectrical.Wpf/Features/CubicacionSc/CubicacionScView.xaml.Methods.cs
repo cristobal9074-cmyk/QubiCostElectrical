@@ -371,20 +371,17 @@ public partial class CubicacionScView : UserControl
         double wBandeja = W(ColCondBand) + W(ColSeccBand) + W(ColTotBand);
         BandColTramoBandeja.Width = new GridLength(wBandeja, GridUnitType.Pixel);
 
-        double wPvc = W(ColTipoPvc) + W(ColDuctoPvc) + W(ColCondPvc) + W(ColSeccPvc) + W(ColTotPvc);
+        double wPvc = W(ColTipoPvc) + W(ColDuctoPvc) + W(ColTotalDucto)
+            + W(ColCondPvc) + W(ColSeccPvc) + W(ColTotPvc);
         BandColTramoPvc.Width = new GridLength(wPvc, GridUnitType.Pixel);
 
-        double wMontaje = W(ColLuminaria);
-        BandColMontaje.Width = new GridLength(wMontaje, GridUnitType.Pixel);
-
-        double wCajas = W(ColCaja58) + W(ColCaja100) + W(ColCaja65);
-        BandColCajas.Width = new GridLength(wCajas, GridUnitType.Pixel);
+        BandColMontaje.Width = new GridLength(0, GridUnitType.Pixel);
+        BandColCajas.Width = new GridLength(0, GridUnitType.Pixel);
 
         double wTmf = W(ColTmfCant) + W(ColTmfMed);
         BandColTmf.Width = new GridLength(wTmf, GridUnitType.Pixel);
 
-        double wArtefactos = W(ColArtefactos);
-        BandColArtefactos.Width = new GridLength(wArtefactos, GridUnitType.Pixel);
+        BandColArtefactos.Width = new GridLength(W(ColArtefactos), GridUnitType.Pixel);
     }
 
     private double _lastTotalGridWidth = -1;
@@ -422,11 +419,34 @@ public partial class CubicacionScView : UserControl
 
         if (ColUbicacion != null) ColUbicacion.Visibility = deptoColVis;
         if (ColLBand != null) ColLBand.Visibility = deptoColVis;
-        if (ColCondBand != null) ColCondBand.Visibility = bandejaAdvVis;
-        if (ColSeccBand != null) ColSeccBand.Visibility = bandejaAdvVis;
+        if (ColCondBand != null) ColCondBand.Visibility = deptoColVis;
+        if (ColSeccBand != null) ColSeccBand.Visibility = deptoColVis;
         if (ColTotBand != null) ColTotBand.Visibility = deptoColVis;
+        if (ColTipoPvc != null) ColTipoPvc.Visibility = deptoColVis;
+        if (ColDuctoPvc != null) ColDuctoPvc.Visibility = deptoColVis;
+        if (ColTotalDucto != null) ColTotalDucto.Visibility = deptoColVis;
+        if (ColCondPvc != null) ColCondPvc.Visibility = deptoColVis;
+        if (ColSeccPvc != null) ColSeccPvc.Visibility = deptoColVis;
+        if (ColTotPvc != null) ColTotPvc.Visibility = deptoColVis;
         if (ColTmfCant != null) ColTmfCant.Visibility = deptoColVis;
         if (ColTmfMed != null) ColTmfMed.Visibility = deptoColVis;
+        if (ColArtefactos != null) ColArtefactos.Visibility = deptoColVis;
+
+        // Orden funcional solicitado para la planilla SC. Los elementos y accesorios
+        // permanecen como una acción auxiliar al final, fuera de las 17 columnas.
+        var orderedColumns = new DataGridColumn?[]
+        {
+            NumeroColumn, ColSist, ColAlim, ColUbicacion, ColLBand, ColLPvc,
+            ColTipoPvc, ColDuctoPvc, ColTotalDucto,
+            ColCondBand, ColSeccBand, ColTotBand,
+            ColCondPvc, ColSeccPvc, ColTotPvc,
+            ColTmfCant, ColTmfMed, ColArtefactos
+        };
+        for (int i = 0; i < orderedColumns.Length; i++)
+        {
+            if (orderedColumns[i] != null)
+                orderedColumns[i]!.DisplayIndex = i;
+        }
 
         if (BandBorderUbicacion != null) BandBorderUbicacion.Visibility = deptoColVis;
         if (BandBorderTramoBandeja != null) BandBorderTramoBandeja.Visibility = deptoColVis;

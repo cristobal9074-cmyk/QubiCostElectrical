@@ -13,6 +13,13 @@
                 <Button Style="{StaticResource Button.ToolbarPrimary}" Content="+ Circuito" Command="{Binding AddCircuitoCommand}"
                         ToolTip="Agregar nuevo circuito repitiendo parámetros (Ctrl+)" Height="28" Padding="10,0" Margin="0,0,5,0" />
 
+                <!-- Elementos y accesorios del circuito seleccionado, fuera de la grilla principal -->
+                <Button Style="{StaticResource Button.Toolbar}" Content="+ Elementos"
+                        Command="{Binding OpenArtefactosCommand}"
+                        CommandParameter="{Binding SelectedCircuito}"
+                        ToolTip="Agregar elementos y accesorios al circuito seleccionado (Alt+A)"
+                        Height="28" Padding="9,0" Margin="0,0,5,0" />
+
                 <!-- Acciones de tablero -->
                 <Button Style="{StaticResource Button.Toolbar}" Content="+ Tablero" Command="{Binding AddCuadroCommand}"
                         ToolTip="Crear nuevo tablero" Height="28" Padding="9,0" Margin="0,0,5,0" />

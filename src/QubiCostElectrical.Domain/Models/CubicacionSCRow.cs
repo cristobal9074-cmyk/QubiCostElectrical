@@ -81,6 +81,26 @@ public sealed class CircuitoSCRow
     // Largo total del circuito = suma de ambos tramos (para reportes que necesitan el metraje).
     public decimal LargoTotal => LargoBandeja + LargoTuberia;
     public int TotalCajas => (int)Math.Round(Cajas58 + Cajas100x100 + Cajas100x65);
+    public bool TieneElementosConPunto => Artefactos.Any(a =>
+        a.Cantidad > 0m && !string.IsNullOrWhiteSpace(a.Nombre));
+    public decimal TotalElementosConPunto => TieneElementosConPunto
+        ? Artefactos.Where(a => a.Cantidad > 0m && !string.IsNullOrWhiteSpace(a.Nombre)).Sum(a => a.Cantidad)
+        : 0m;
+    public decimal TotalCajasEfectivas => TieneElementosConPunto ? TotalElementosConPunto : TotalCajas;
+    // Cada salida mediante terminal flexible desde el tramo de bandeja requiere una caja
+    // metálica propia. La cantidad sigue la misma cantidad efectiva que alimenta el flexible:
+    // una por elemento/salida cuando existe, y al menos una para un circuito legacy.
+    public int CajasSalidaBandeja
+    {
+        get
+        {
+            if (!EsActivo || LargoBandeja <= 0m || LargoTuberia <= 0m)
+                return 0;
+
+            int salidas = (int)Math.Round(TotalCajasEfectivas, MidpointRounding.AwayFromZero);
+            return Math.Max(1, salidas);
+        }
+    }
 
     /// <summary>
     /// Copia profunda del circuito (artefactos + tramos por piso) con Id nuevo y número indicado.

@@ -523,13 +523,13 @@
                                     </DataGridTemplateColumn.CellEditingTemplate>
                                 </DataGridTemplateColumn>
 
-                                <!-- ALIM (Chip coloreado) -->
+                                <!-- ALIM: cantidad automática de conductores -->
                                 <DataGridTemplateColumn x:Name="ColAlim" Header="ALIM" Width="38*" MinWidth="38" CanUserResize="False"
-                                                        ClipboardContentBinding="{Binding Fase}">
+                                                        ClipboardContentBinding="{Binding NumConductores}">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <Border Style="{StaticResource FaseChipBorder}" HorizontalAlignment="Center">
-                                                <TextBlock Text="{Binding Fase}" Style="{StaticResource FaseChipText}" />
+                                                <TextBlock Text="{Binding NumConductores, StringFormat=N0}" Style="{StaticResource FaseChipText}" />
                                             </Border>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
@@ -796,7 +796,7 @@
                                 </DataGridTextColumn>
 
                                 <!-- L. PVC (M) — color verde -->
-                                <DataGridTextColumn x:Name="ColLPvc" Header="L.PVC"
+                                <DataGridTextColumn x:Name="ColLPvc" Header="L. PVC"
                                     Binding="{Binding LargoTuberia, UpdateSourceTrigger=LostFocus, StringFormat=N0}"
                                     Width="50*" MinWidth="48" CanUserResize="False"
                                     EditingElementStyle="{StaticResource DataGrid.CellEditTextBox}">
@@ -812,9 +812,9 @@
                                 </DataGridTextColumn>
 
                                 <!-- Conductor Bandeja: lista desplegable con filtro (catálogo TiposConductor) -->
-                                <DataGridTemplateColumn x:Name="ColCondBand" Header="CONDUCTOR" Width="80*" MinWidth="76" CanUserResize="False"
+                                <DataGridTemplateColumn x:Name="ColCondBand" Header="CONDUCTOR BAND" Width="80*" MinWidth="76" CanUserResize="False"
                                         ClipboardContentBinding="{Binding ConductorDistribucion}"
-                                        Visibility="{Binding DataContext.ShowColBandejaAdvanced, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}">
+                                        Visibility="{Binding DataContext.ShowColBandeja, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <TextBlock Text="{Binding ConductorDistribucion}"
@@ -836,9 +836,9 @@
                                 </DataGridTemplateColumn>
 
                                 <!-- Sección Bandeja: catálogo SeccionesConductor -->
-                                <DataGridTemplateColumn x:Name="ColSeccBand" Header="SECCIÓN" Width="70*" MinWidth="66" CanUserResize="False"
+                                <DataGridTemplateColumn x:Name="ColSeccBand" Header="SECCIÓN BAND" Width="70*" MinWidth="66" CanUserResize="False"
                                         ClipboardContentBinding="{Binding SeccionDistribucion}"
-                                        Visibility="{Binding DataContext.ShowColBandejaAdvanced, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}">
+                                        Visibility="{Binding DataContext.ShowColBandeja, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <TextBlock Text="{Binding SeccionDistribucion}"
@@ -859,8 +859,8 @@
                                     </DataGridTemplateColumn.CellEditingTemplate>
                                 </DataGridTemplateColumn>
 
-                                <!-- Total Band (M) — calculado rosa -->
-                                <DataGridTextColumn x:Name="ColTotBand" Header="TOTAL (M)"
+                                <!-- Total conductor bandeja — calculado rosa -->
+                                <DataGridTextColumn x:Name="ColTotBand" Header="TOTAL CONDUCTOR BAND"
                                     Binding="{Binding LargoDistribucion, StringFormat=N0}"
                                     Width="58*" MinWidth="56" CanUserResize="False" IsReadOnly="True"
                                     Visibility="{Binding DataContext.ShowColBandeja, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}">
@@ -876,8 +876,8 @@
                                 </DataGridTextColumn>
 
                                 <!-- Tipo tubería / canalización: catálogo TiposTuberia -->
-                                <DataGridTemplateColumn x:Name="ColTipoPvc" Header="TIPO" Width="60*" MinWidth="56" CanUserResize="False"
-                                        Visibility="{Binding DataContext.IsAdvancedMode, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}"
+                                <DataGridTemplateColumn x:Name="ColTipoPvc" Header="TIPO TUB" Width="60*" MinWidth="56" CanUserResize="False"
+                                        Visibility="{Binding DataContext.IsPerspectiveGenerales, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}"
                                         ClipboardContentBinding="{Binding TipoTuberia}">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
@@ -900,9 +900,9 @@
                                 </DataGridTemplateColumn>
 
                                 <!-- Ducto Ø: lista desplegable con filtro (catálogo DiametrosTuberia) -->
-                                <DataGridTemplateColumn x:Name="ColDuctoPvc" Header="DIAM  Ø" Width="54*" MinWidth="52" CanUserResize="False"
+                                <DataGridTemplateColumn x:Name="ColDuctoPvc" Header="DIAM Ø" Width="54*" MinWidth="52" CanUserResize="False"
                                         ClipboardContentBinding="{Binding SeccionTuberia}"
-                                        Visibility="{Binding DataContext.IsAdvancedMode, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}">
+                                        Visibility="{Binding DataContext.IsPerspectiveGenerales, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <TextBlock Text="{Binding SeccionTuberia}"
@@ -923,10 +923,26 @@
                                     </DataGridTemplateColumn.CellEditingTemplate>
                                 </DataGridTemplateColumn>
 
+                                <!-- Total ducto: corresponde exactamente al largo ingresado en L. PVC -->
+                                <DataGridTextColumn x:Name="ColTotalDucto" Header="TOTAL DUCTO"
+                                    Binding="{Binding TotalDucto, StringFormat=N0}"
+                                    Width="62*" MinWidth="58" CanUserResize="False" IsReadOnly="True"
+                                    Visibility="{Binding DataContext.IsPerspectiveGenerales, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="HorizontalAlignment" Value="Right" />
+                                            <Setter Property="VerticalAlignment" Value="Center" />
+                                            <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+                                            <Setter Property="FontWeight" Value="SemiBold" />
+                                            <Setter Property="Margin" Value="0,0,4,0" />
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+
                                 <!-- Conductor PVC: catálogo TiposConductor -->
-                                <DataGridTemplateColumn x:Name="ColCondPvc" Header="CONDUCTOR" Width="78*" MinWidth="72" CanUserResize="False"
+                                <DataGridTemplateColumn x:Name="ColCondPvc" Header="CONDUCTOR PVC" Width="78*" MinWidth="72" CanUserResize="False"
                                         ClipboardContentBinding="{Binding ConductorDerivacion}"
-                                        Visibility="{Binding DataContext.IsAdvancedMode, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}">
+                                        Visibility="{Binding DataContext.IsPerspectiveGenerales, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <TextBlock Text="{Binding ConductorDerivacion}"
@@ -948,9 +964,9 @@
                                 </DataGridTemplateColumn>
 
                                 <!-- Sección PVC: catálogo SeccionesConductor -->
-                                <DataGridTemplateColumn x:Name="ColSeccPvc" Header="SECCION" Width="66*" MinWidth="60" CanUserResize="False"
+                                <DataGridTemplateColumn x:Name="ColSeccPvc" Header="SECCIÓN PVC" Width="66*" MinWidth="60" CanUserResize="False"
                                         ClipboardContentBinding="{Binding SeccionDerivacion}"
-                                        Visibility="{Binding DataContext.IsAdvancedMode, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}">
+                                        Visibility="{Binding DataContext.IsPerspectiveGenerales, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <TextBlock Text="{Binding SeccionDerivacion}"
@@ -971,8 +987,8 @@
                                     </DataGridTemplateColumn.CellEditingTemplate>
                                 </DataGridTemplateColumn>
 
-                                <!-- Total PVC (M) — calculado verde -->
-                                <DataGridTextColumn x:Name="ColTotPvc" Header="TOTAL (M)"
+                                <!-- Total conductor PVC — calculado verde -->
+                                <DataGridTextColumn x:Name="ColTotPvc" Header="TOTAL CONDUCTOR PVC"
                                     Binding="{Binding LargoDerivacion, StringFormat=N0}"
                                     Width="58*" MinWidth="56" CanUserResize="False" IsReadOnly="True">
                                     <DataGridTextColumn.ElementStyle>
@@ -986,68 +1002,8 @@
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
 
-                                <!-- Montaje -->
-                                <DataGridTextColumn x:Name="ColLuminaria" Header="LUMIN."
-                                    Binding="{Binding MontajesAlumbrado, UpdateSourceTrigger=LostFocus}"
-                                    Width="54*" MinWidth="52" CanUserResize="False"
-                                    Visibility="{Binding DataContext.IsAdvancedMode, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}"
-                                    EditingElementStyle="{StaticResource DataGrid.CellEditTextBox}">
-                                    <DataGridTextColumn.ElementStyle>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="HorizontalAlignment" Value="Center" />
-                                            <Setter Property="VerticalAlignment" Value="Center" />
-                                            <Setter Property="ToolTip" Value="Luminaria / Montaje" />
-                                        </Style>
-                                    </DataGridTextColumn.ElementStyle>
-                                </DataGridTextColumn>
-
-                                <!-- Caja 5/8" -->
-                                <DataGridTextColumn x:Name="ColCaja58" Header='5/8"'
-                                    Binding="{Binding Cajas58, UpdateSourceTrigger=LostFocus}"
-                                    Width="42*" MinWidth="40" CanUserResize="False"
-                                    Visibility="{Binding DataContext.IsAdvancedMode, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}"
-                                    EditingElementStyle="{StaticResource DataGrid.CellEditTextBox}">
-                                    <DataGridTextColumn.ElementStyle>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="HorizontalAlignment" Value="Center" />
-                                            <Setter Property="VerticalAlignment" Value="Center" />
-                                            <Setter Property="ToolTip" Value="Caja octogonal 5/8&quot;" />
-                                        </Style>
-                                    </DataGridTextColumn.ElementStyle>
-                                </DataGridTextColumn>
-
-                                <!-- Caja A11 (100×100) -->
-                                <DataGridTextColumn x:Name="ColCaja100" Header="A11"
-                                    Binding="{Binding Cajas100x100, UpdateSourceTrigger=LostFocus}"
-                                    Width="42*" MinWidth="40" CanUserResize="False"
-                                    Visibility="{Binding DataContext.IsAdvancedMode, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}"
-                                    EditingElementStyle="{StaticResource DataGrid.CellEditTextBox}">
-                                    <DataGridTextColumn.ElementStyle>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="HorizontalAlignment" Value="Center" />
-                                            <Setter Property="VerticalAlignment" Value="Center" />
-                                            <Setter Property="ToolTip" Value="Caja de distribución A11 (100×100)" />
-                                        </Style>
-                                    </DataGridTextColumn.ElementStyle>
-                                </DataGridTextColumn>
-
-                                <!-- Caja A01 (100×65) -->
-                                <DataGridTextColumn x:Name="ColCaja65" Header="A01"
-                                    Binding="{Binding Cajas100x65, UpdateSourceTrigger=LostFocus}"
-                                    Width="42*" MinWidth="40" CanUserResize="False"
-                                    Visibility="{Binding DataContext.IsAdvancedMode, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}"
-                                    EditingElementStyle="{StaticResource DataGrid.CellEditTextBox}">
-                                    <DataGridTextColumn.ElementStyle>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="HorizontalAlignment" Value="Center" />
-                                            <Setter Property="VerticalAlignment" Value="Center" />
-                                            <Setter Property="ToolTip" Value="Cantidad de cajas A01 (100×65). En departamentos se edita; un circuito nuevo parte en 0." />
-                                        </Style>
-                                    </DataGridTextColumn.ElementStyle>
-                                </DataGridTextColumn>
-
-                                <!-- TMF Cant. — dorado, solo lectura, calculado automáticamente -->
-                                <DataGridTextColumn x:Name="ColTmfCant" Header="CANT"
+                                <!-- Terminal flexible: cantidad de salidas -->
+                                <DataGridTextColumn x:Name="ColTmfCant" Header="TERM. FLEXIBLE — CANT."
                                     Binding="{Binding TmfCantidad}"
                                     Width="40*" MinWidth="38" CanUserResize="False" IsReadOnly="True"
                                     Visibility="{Binding DataContext.ShowColTmf, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}">
@@ -1061,8 +1017,8 @@
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
 
-                                <!-- TMF Medida — dorado, solo lectura, calculado automáticamente -->
-                                <DataGridTextColumn x:Name="ColTmfMed" Header="DIAM  Ø"
+                                <!-- Terminal flexible: diámetro heredado de DIAM Ø -->
+                                <DataGridTextColumn x:Name="ColTmfMed" Header="TERM. FLEXIBLE — DIAM Ø"
                                     Binding="{Binding TmfMedida}"
                                     Width="50*" MinWidth="48" CanUserResize="False" IsReadOnly="True"
                                     Visibility="{Binding DataContext.ShowColTmf, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}">
@@ -1076,17 +1032,20 @@
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
 
-                                <!-- ARTEFACTOS: botón que abre el diálogo de agregado rápido por zona -->
-                                <DataGridTemplateColumn x:Name="ColArtefactos" Header="ARTEFACTOS" Width="105*" MinWidth="88" CanUserResize="False">
+                                <!-- Elementos y accesorios: acción auxiliar fuera de las 17 columnas de cálculo -->
+                                <DataGridTemplateColumn x:Name="ColArtefactos" Header="ELEMENTOS Y ACCESORIOS"
+                                                        Width="150*" MinWidth="132" CanUserResize="False">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <Button Style="{StaticResource Button.Secondary}"
-                              Margin="2,1" Padding="4,1" FontSize="{StaticResource Font.Size.2xs}"
-                              HorizontalAlignment="Stretch"
-                              Content="{Binding ArtefactosResumen}"
-                              Command="{Binding DataContext.OpenArtefactosCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                              CommandParameter="{Binding}"
-                              IsHitTestVisible="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
+                                                    Margin="2,1" Padding="5,1"
+                                                    FontSize="{StaticResource Font.Size.2xs}"
+                                                    HorizontalAlignment="Stretch"
+                                                    Content="{Binding ArtefactosResumen}"
+                                                    Command="{Binding DataContext.OpenArtefactosCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}"
+                                                    IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    ToolTip="Abrir elementos y accesorios (Alt+A)" />
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
@@ -1113,4 +1072,3 @@
                                      Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibility}}" />
     </Grid>
 </UserControl>
-

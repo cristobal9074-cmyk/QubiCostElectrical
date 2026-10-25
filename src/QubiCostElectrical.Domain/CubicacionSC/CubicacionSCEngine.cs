@@ -45,9 +45,11 @@ public static class CubicacionSCEngine
 
                 var flex = config.Flexibles.FirstOrDefault(f =>
                     string.Equals(f.Diametro, c.SeccionTuberia, StringComparison.OrdinalIgnoreCase));
-                if (flex != null && c.TotalCajas > 0 && flex.MetrosPorCaja > 0m)
-                    yield return new(flex.TipoFlexible, c.TotalCajas * flex.MetrosPorCaja, "ML");
+                if (flex != null && c.TotalCajasEfectivas > 0m && flex.MetrosPorCaja > 0m)
+                    yield return new(flex.TipoFlexible, c.TotalCajasEfectivas * flex.MetrosPorCaja, "ML");
             }
+
+            yield return new("CAJA METÁLICA SALIDA BANDEJA", c.CajasSalidaBandeja, "UN");
 
             foreach (var a in c.Artefactos)
                 yield return new(a.Nombre, a.Cantidad, "UN");
@@ -57,13 +59,20 @@ public static class CubicacionSCEngine
             yield return new("CINTA LED", c.CintaLedMts, "ML");
             yield return new("MONTAJE LUMINARIA", c.MontajesAlumbrado, "UN");
 
-            string nombreCaja58 = isDepto ? "CAJA 5/8\"" : "CAJA 5/8";
-            string nombreCaja100 = isDepto ? "CAJA A11 (100X100)" : "CAJA 100X100";
-            string nombreCaja65 = isDepto ? "CAJA A01 (100X65)" : "CAJA 100X65";
+            if (c.TieneElementosConPunto)
+            {
+                yield return new(CajaParaCanalizacion(c.TipoTuberia), c.TotalElementosConPunto, "UN");
+            }
+            else
+            {
+                string nombreCaja58 = isDepto ? "CAJA 5/8\"" : "CAJA 5/8";
+                string nombreCaja100 = isDepto ? "CAJA A11 (100X100)" : "CAJA 100X100";
+                string nombreCaja65 = isDepto ? "CAJA A01 (100X65)" : "CAJA 100X65";
 
-            yield return new(nombreCaja58, c.Cajas58, "UN");
-            yield return new(nombreCaja100, c.Cajas100x100, "UN");
-            yield return new(nombreCaja65, c.Cajas100x65, "UN");
+                yield return new(nombreCaja58, c.Cajas58, "UN");
+                yield return new(nombreCaja100, c.Cajas100x100, "UN");
+                yield return new(nombreCaja65, c.Cajas100x65, "UN");
+            }
         }
         else if (c.EsReservaEquipada)
         {
@@ -73,6 +82,17 @@ public static class CubicacionSCEngine
                 foreach (var a in c.Artefactos)
                     yield return new(a.Nombre, a.Cantidad, "UN");
         }
+    }
+
+    private static string CajaParaCanalizacion(string? tipoTuberia)
+    {
+        if (string.Equals(tipoTuberia, "PVCLH", StringComparison.OrdinalIgnoreCase))
+            return "CAJA 5/8 LH";
+        if (string.Equals(tipoTuberia, "PVC", StringComparison.OrdinalIgnoreCase))
+            return "CAJA 5/8";
+        if (string.Equals(tipoTuberia, "EMT", StringComparison.OrdinalIgnoreCase))
+            return "CAJA METÁLICA A01";
+        return "CAJA SEGÚN CANALIZACIÓN";
     }
 
     private static void AddMaterial(IDictionary<string, MaterialSC> totals, MaterialSC m)
@@ -418,7 +438,7 @@ public static class CubicacionSCEngine
         return cuadros
             .Where(t => !t.EsDepto)
             .SelectMany(t => t.Circuitos)
-            .Any(c => c.EsActivo && c.TotalCajas > 0 &&
+            .Any(c => c.EsActivo && c.TotalCajasEfectivas > 0 &&
                       config.Flexibles.All(f =>
                           !string.Equals(f.Diametro, c.SeccionTuberia, StringComparison.OrdinalIgnoreCase)));
     }

@@ -689,11 +689,14 @@ public sealed partial class CircuitoScRowVm : ViewModelBase
         }
     }
 
-    // El terminal flexible aplica al tramo de tubería: hay TMF si ese tramo tiene metraje.
-    public int TmfCantidad => row.LargoTuberia > 0 ? 1 : 0;
+    // Cada salida efectiva del tramo PVC requiere un terminal flexible.
+    public int TmfCantidad => row.LargoTuberia > 0
+        ? (int)Math.Round(row.TotalCajasEfectivas, MidpointRounding.AwayFromZero)
+        : 0;
     public string TmfMedida => row.LargoTuberia > 0 ? SeccionTuberia : "—";
 
     public int TotalCajas => row.TotalCajas;
+    public decimal TotalDucto => row.MetrosTuberia;
 
     public decimal LargoDerivacion => row.LargoDerivacion;
     public decimal LargoDistribucion => row.LargoDistribucion;
@@ -710,6 +713,7 @@ public sealed partial class CircuitoScRowVm : ViewModelBase
                 row.MetrosTuberia = value;
                 row.LargoCircuito = row.MetrosBandeja + row.MetrosTuberia;
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(TotalDucto));
                 OnPropertyChanged(nameof(LargoDerivacion));
                 OnPropertyChanged(nameof(TmfCantidad));
                 OnPropertyChanged(nameof(TmfMedida));
@@ -737,7 +741,7 @@ public sealed partial class CircuitoScRowVm : ViewModelBase
 
     public ObservableCollection<ArtefactoScRowVm> Artefactos { get; }
 
-    // Resumen para el botón de la columna ARTEFACTOS de la grilla: total de unidades y en
+    // Resumen para el botón de la columna ELEMENTOS Y ACCESORIOS de la grilla: total de unidades y en
     // cuántas zonas del proyecto están repartidas, para el control por piso.
     public bool TieneArtefactos => row.Artefactos.Count > 0;
     public int ArtefactosCantidadTotal => (int)Math.Round(row.Artefactos.Sum(a => a.Cantidad));
@@ -747,10 +751,10 @@ public sealed partial class CircuitoScRowVm : ViewModelBase
             .Distinct()
             .Count();
 
-    // Texto del botón de la columna ARTEFACTOS × ZONA.
+    // Texto del botón de la columna ELEMENTOS Y ACCESORIOS × ZONA.
     public string ArtefactosResumen => TieneArtefactos
         ? $"{ArtefactosCantidadTotal} u · {ArtefactosZonasConteo} z"
-        : "+ Artefactos";
+        : "+ Elementos";
 
     public void AddArtefacto(string nombre, string categoria, decimal cantidad)
     {
@@ -788,6 +792,7 @@ public sealed partial class CircuitoScRowVm : ViewModelBase
         OnPropertyChanged(nameof(ArtefactosCantidadTotal));
         OnPropertyChanged(nameof(ArtefactosZonasConteo));
         OnPropertyChanged(nameof(ArtefactosResumen));
+        OnPropertyChanged(nameof(TmfCantidad));
     }
 
     /// <summary>

@@ -312,6 +312,7 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
             ((RelayCommand)CopyCircuitoCommand).RaiseCanExecuteChanged();
             ((RelayCommand)DuplicateCircuitoCommand).RaiseCanExecuteChanged();
             ((RelayCommand)AddArtefactoCommand).RaiseCanExecuteChanged();
+            ((RelayCommand<CircuitoScRowVm>)OpenArtefactosCommand).RaiseCanExecuteChanged();
             ((RelayCommand<ArtefactoScRowVm>)RemoveArtefactoCommand).RaiseCanExecuteChanged();
             ((RelayCommand)PasteCircuitoCommand).RaiseCanExecuteChanged();
         }
@@ -1023,14 +1024,14 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
         {
             if (showEmptyState) return "0 un / 0.0 m";
             var activeCircs = session.CubicacionSC.SelectMany(cuadro => cuadro.Circuitos).Where(c => c.EsActivo).ToList();
-            int totalCajas = activeCircs.Sum(c => c.TotalCajas);
+            decimal totalCajas = activeCircs.Sum(c => c.TotalCajasEfectivas);
             decimal totalTerminales = 0;
             foreach (var c in activeCircs)
             {
                 var flex = Config.Flexibles.FirstOrDefault(f => string.Equals(f.Diametro, c.SeccionTuberia, StringComparison.OrdinalIgnoreCase));
-                if (flex != null && c.TotalCajas > 0 && flex.MetrosPorCaja > 0m)
+                if (flex != null && c.TotalCajasEfectivas > 0m && flex.MetrosPorCaja > 0m)
                 {
-                    totalTerminales += c.TotalCajas * flex.MetrosPorCaja;
+                    totalTerminales += c.TotalCajasEfectivas * flex.MetrosPorCaja;
                 }
             }
             return $"{totalCajas} un / {totalTerminales:N1} m";

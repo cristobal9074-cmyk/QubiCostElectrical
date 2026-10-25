@@ -103,6 +103,76 @@ public sealed class CubicacionSCEngineTests
     }
 
     [Fact]
+    public void Circuito_ConFlexible_AgregaCajaMetalicaDeSalidaDeBandeja()
+    {
+        var c = ActiveCircuito("20mm");
+        c.MetrosBandeja = 8m;
+        c.MetrosTuberia = 5m;
+        var cuadro = new CuadroCargaSCRow();
+        cuadro.Circuitos.Add(c);
+
+        var result = CubicacionSCEngine.Aggregate(new[] { cuadro }, DefaultConfig());
+
+        Assert.Equal(1m, result["CAJA METÁLICA SALIDA BANDEJA"].Cantidad);
+    }
+
+    [Fact]
+    public void Circuito_ConVariasSalidas_AgregaUnaCajaMetalicaPorSalida()
+    {
+        var c = ActiveCircuito("20mm");
+        c.MetrosBandeja = 8m;
+        c.MetrosTuberia = 5m;
+        c.Artefactos.Add(new ArtefactoSCRow { Nombre = "Enchufe", Categoria = "Enchufe", Cantidad = 4m });
+
+        var cuadro = new CuadroCargaSCRow();
+        cuadro.Circuitos.Add(c);
+
+        var result = CubicacionSCEngine.Aggregate(new[] { cuadro }, DefaultConfig());
+
+        Assert.Equal(4m, result["CAJA METÁLICA SALIDA BANDEJA"].Cantidad);
+        Assert.Equal(2m, result["TUBERIA FLEXIBLE 20mm"].Cantidad);
+    }
+
+    [Fact]
+    public void Circuito_SoloPVC_NoAgregaCajaDeSalidaDeBandeja()
+    {
+        var c = ActiveCircuito("20mm");
+        c.MetrosBandeja = 0m;
+        c.MetrosTuberia = 5m;
+
+        var cuadro = new CuadroCargaSCRow();
+        cuadro.Circuitos.Add(c);
+
+        var result = CubicacionSCEngine.Aggregate(new[] { cuadro }, DefaultConfig());
+
+        Assert.DoesNotContain("CAJA METÁLICA SALIDA BANDEJA", result.Keys);
+    }
+
+    [Theory]
+    [InlineData("PVC", "CAJA 5/8")]
+    [InlineData("PVCLH", "CAJA 5/8 LH")]
+    [InlineData("EMT", "CAJA METÁLICA A01")]
+    public void Elementos_GeneranCajaCompatibleConLaCanalizacion(string tipoTuberia, string cajaEsperada)
+    {
+        var c = ActiveCircuito("20mm");
+        c.TipoTuberia = tipoTuberia;
+        c.Cajas100x65 = 0m;
+        c.Artefactos.Add(new ArtefactoSCRow
+        {
+            Nombre = "ENCH S10",
+            Categoria = "Enchufe",
+            Cantidad = 10m
+        });
+        var cuadro = new CuadroCargaSCRow();
+        cuadro.Circuitos.Add(c);
+
+        var result = CubicacionSCEngine.Aggregate(new[] { cuadro }, DefaultConfig());
+
+        Assert.Equal(10m, result[cajaEsperada].Cantidad);
+        Assert.DoesNotContain(result.Keys, key => key == "CAJA 5/8" && tipoTuberia == "EMT");
+    }
+
+    [Fact]
     public void Artefactos_DeDistintasZonas_SeAcumulanEnElTotalDeMaterial()
     {
         var c = ActiveCircuito("20mm");
