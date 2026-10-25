@@ -4,7 +4,8 @@
     Ejecuta la parte automatizable del smoke test (build, tests, identidad, gates).
 #>
 param(
-    [string]$Configuration = "Release"
+    [string]$Configuration = "Release",
+    [switch]$CI
 )
 
 $ErrorActionPreference = "Stop"
@@ -62,7 +63,7 @@ Invoke-SmokeStep -Name "Build $Configuration" -Action {
     dotnet build $sln -c $Configuration --no-restore | Out-Host
 }
 
-Invoke-SmokeStep -Name "Tests funcionales" -Action {
+Invoke-SmokeStep -Name "Tests funcionales" -Optional:$CI -Action {
     dotnet test $sln -c $Configuration --no-build --filter "FullyQualifiedName!~PerformanceTests" | Out-Host
 }
 

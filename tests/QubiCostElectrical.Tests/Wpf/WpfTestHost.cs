@@ -16,6 +16,7 @@ public static class WpfTestHost
         // `dotnet test` escribe en %LOCALAPPDATA%\QubiCostElectrical\Logs\ (mismo archivo
         // que usa la app de producción), mezclando ruido de tests con logs reales.
         var testLogsFolder = Path.Combine(Path.GetTempPath(), "QubiCostElectrical-Tests", "Logs");
+        Directory.CreateDirectory(testLogsFolder);
 
         // Mismo problema con preferences.json: WpfAppHost.Initialize() llama a
         // UserPreferencesStore.Load(), que sin este override lee/escribe el archivo real
@@ -27,6 +28,7 @@ public static class WpfTestHost
         // Mismo problema con el banco de precios y la base de autenticación: sin esto,
         // WpfAppHost.Initialize() abre banco_precios.db y auth.db reales del usuario.
         var testDataFolder = Path.Combine(Path.GetTempPath(), "QubiCostElectrical-Tests");
+        Directory.CreateDirectory(testDataFolder);
         var testPriceBankPath = Path.Combine(testDataFolder, "banco_precios.db");
         var testAuthPath = Path.Combine(testDataFolder, "auth.db");
         var testAuth = new AuthService(new SqliteAuthStore($"Data Source={testAuthPath}"));
