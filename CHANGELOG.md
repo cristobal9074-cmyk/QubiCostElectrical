@@ -4,6 +4,11 @@ Las versiones siguen el formato `MAJOR.MINOR.PATCH` y corresponden a `Directory.
 
 ## No publicado
 
+## 1.1.5
+
+### En desarrollo (2026-10-25)
+- Apertura del ciclo de desarrollo v1.1.5.
+
 ## 1.1.4
 
 ### Modo Zona Libre y Matriz de Cubicación de 400 Casillas Continuas (2026-10-25)
