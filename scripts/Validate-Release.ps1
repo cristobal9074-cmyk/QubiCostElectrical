@@ -72,7 +72,8 @@ if (-not $SkipBuild) {
 
     Write-Host "`n[7/7] Ejecutando pruebas..." -ForegroundColor Yellow
     Stop-StaleTestHosts
-    dotnet test $sln --configuration Release --no-build
+    $testsCsproj = Join-Path $root "tests\QubiCostElectrical.Tests\QubiCostElectrical.Tests.csproj"
+    dotnet test $testsCsproj --configuration Release --no-build
     if ($LASTEXITCODE -ne 0) { throw "Tests fallaron" }
     dotnet test $architectureTests --configuration Release
     if ($LASTEXITCODE -ne 0) { throw "ArchitectureTests fallaron" }
