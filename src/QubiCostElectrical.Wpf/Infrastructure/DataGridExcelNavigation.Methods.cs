@@ -609,6 +609,17 @@ public static partial class DataGridExcelNavigation
         if (column == null || column.DisplayIndex < 0 || column.Visibility != Visibility.Visible)
             return;
 
+        // Si la columna es congelada o la primera desplazable inmediata tras el corte (ej. C1 al lado de CANT),
+        // asegurarse de que el ScrollViewer horizontal no quede desfasado ocultando parte de la primera casilla.
+        if (grid.FrozenColumnCount > 0 && column.DisplayIndex <= grid.FrozenColumnCount)
+        {
+            var sv = FindVisualChild<ScrollViewer>(grid);
+            if (sv != null && sv.HorizontalOffset > 0)
+            {
+                sv.ScrollToHorizontalOffset(0);
+            }
+        }
+
         var item = grid.Items[rowIndex];
         DataGridSelection.SeleccionarFila(grid, item, column);
 

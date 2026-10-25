@@ -323,10 +323,52 @@
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
                                 <Button Style="{StaticResource Button.Toolbar}" Content="Tomar SC" Command="{Binding OpenScTomarCommand}" ToolTip="Tomar materiales desde Cubicación SC (Alt+L)" />
                                 <Button Style="{StaticResource Button.Toolbar}" Content="Ver / Generar APU" Command="{Binding NavigateToApuCommand}" Margin="0,0,8,0" ToolTip="Abrir herramienta auxiliar de APU para esta partida" />
-                                <!-- Selector de Vista: [ Casillas | Detalle ] -->
+                                <!-- Herramienta de Modo de Cubicación (opcional: persistente para el proyecto/app) -->
+                                <Border Background="{DynamicResource Brush.ChipBg}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="6" Padding="1.5" Margin="0,0,10,0" VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal">
+                                        <!-- Zona Libre -->
+                                        <Button Height="24" Command="{Binding SetZonaLibreModeCommand}" ToolTip="Modo Zona Libre: Cubicación directa continua sin desglose de pisos (queda guardado para futuros presupuestos)">
+                                            <Button.Style>
+                                                <Style TargetType="Button" BasedOn="{StaticResource Button.Ghost}">
+                                                    <Setter Property="FontSize" Value="10.5" /><Setter Property="FontWeight" Value="SemiBold" /><Setter Property="Padding" Value="8,2" /><Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsZonaLibreMode}" Value="True">
+                                                            <Setter Property="Background" Value="{DynamicResource Brush.Surface}" /><Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="🌐" FontSize="10" Margin="0,0,3,0" VerticalAlignment="Center" />
+                                                <TextBlock Text="Zona Libre" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </Button>
+
+                                        <!-- Por Zonas -->
+                                        <Button Height="24" Command="{Binding SetPorZonasModeCommand}" ToolTip="Modo Por Zonas: Matriz desglosada por pisos, subterráneos y sectores del proyecto (queda guardado para futuros presupuestos)">
+                                            <Button.Style>
+                                                <Style TargetType="Button" BasedOn="{StaticResource Button.Ghost}">
+                                                    <Setter Property="FontSize" Value="10.5" /><Setter Property="FontWeight" Value="SemiBold" /><Setter Property="Padding" Value="8,2" /><Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsPorZonasMode}" Value="True">
+                                                            <Setter Property="Background" Value="{DynamicResource Brush.Surface}" /><Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="🏢" FontSize="10" Margin="0,0,3,0" VerticalAlignment="Center" />
+                                                <TextBlock Text="Por Zonas" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Selector principal de Vista: [ Cubicación | Detalle ] -->
                                 <Border Background="{DynamicResource Brush.ChipBg}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="6" Padding="1.5" Margin="0,0,8,0" VerticalAlignment="Center">
                                     <StackPanel Orientation="Horizontal">
-                                        <Button Content="Casillas" Height="24" Command="{Binding ShowSectorMatrixCommand}" ToolTip="Vista de matriz por sectores (Ctrl+Izquierda/Derecha)">
+                                        <!-- Cubicación -->
+                                        <Button Content="Cubicación" Height="24" Command="{Binding ShowSectorMatrixCommand}" ToolTip="Vista de cubicación por casillas (Alt+A)">
                                             <Button.Style>
                                                 <Style TargetType="Button" BasedOn="{StaticResource Button.Ghost}">
                                                     <Setter Property="FontSize" Value="11" /><Setter Property="FontWeight" Value="SemiBold" /><Setter Property="Padding" Value="10,2" /><Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
@@ -338,12 +380,14 @@
                                                 </Style>
                                             </Button.Style>
                                         </Button>
-                                        <Button Content="Detalle" Height="24" Command="{Binding ShowResourceDetailCommand}" ToolTip="Vista detallada de recursos y materiales">
+
+                                        <!-- Detalle -->
+                                        <Button Content="Detalle" Height="24" Command="{Binding ShowResourceDetailCommand}" ToolTip="Vista detallada de recursos, precios unitarios y subtotales (Alt+D)">
                                             <Button.Style>
                                                 <Style TargetType="Button" BasedOn="{StaticResource Button.Ghost}">
                                                     <Setter Property="FontSize" Value="11" /><Setter Property="FontWeight" Value="SemiBold" /><Setter Property="Padding" Value="10,2" /><Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
                                                     <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding IsDetailMode}" Value="True">
+                                                        <DataTrigger Binding="{Binding IsSectorMatrixMode}" Value="False">
                                                             <Setter Property="Background" Value="{DynamicResource Brush.Surface}" /><Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
                                                         </DataTrigger>
                                                     </Style.Triggers>

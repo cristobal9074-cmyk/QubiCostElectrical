@@ -7,5 +7,5 @@ namespace QubiCostElectrical;
 
 public sealed partial class CubicacionCompositionService
 {
-    private const int MaxCubicacionSectors = 300;
+    private const int MaxCubicacionSectors = 400;
 }

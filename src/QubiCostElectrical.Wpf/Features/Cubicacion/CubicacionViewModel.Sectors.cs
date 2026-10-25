@@ -1,22 +1,19 @@
+using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Windows.Input;
+using QubiCostElectrical;
 using QubiCostElectrical.Wpf.Infrastructure;
 
 namespace QubiCostElectrical.Wpf.Features.Cubicacion;
 
 public sealed partial class CubicacionViewModel
 {
-    public const int MaximumSectorCount = 300;
-    // Antes 15: la matriz mostraba una "ventana" de 15 casillas a la vez y saltar más allá
-    // recargaba todo (headers, valores de cada fila) — se sentía como cambiar de zona en vez
-    // de desplazarse por una sola hoja de cálculo continua. Ahora las 300 columnas existen
-    // siempre como columnas reales de la grilla y WPF las virtualiza
-    // (EnableColumnVirtualization), así que mover el foco o hacer scroll no dispara ningún
-    // recálculo — igual que desplazarse por una hoja de Excel ancha. Ya no hay concepto de
-    // "ventana visible": los offsets de sector (0-299) se usan directos en toda la clase.
+    public const int MaximumSectorCount = 400;
     public const int SectorWindowSize = MaximumSectorCount;
 
     private bool isSectorMatrixMode = true;
+    private bool isZonaLibreMode = false;
 
     public ObservableCollection<string> VisibleSectorHeaders { get; } = new();
 
@@ -31,22 +28,43 @@ public sealed partial class CubicacionViewModel
                 return;
 
             isSectorMatrixMode = value;
+            RefreshSectorWindow();
+
             OnPropertyChanged(nameof(IsSectorMatrixMode));
             OnPropertyChanged(nameof(IsDetailMode));
             OnPropertyChanged(nameof(IsDetailHeaderVisible));
+            OnPropertyChanged(nameof(CanAddExtraCasillas));
             OnPropertyChanged(nameof(SectorModeDescription));
         }
     }
 
-    public bool IsDetailMode => !IsSectorMatrixMode;
+    public bool IsDetailMode => !isSectorMatrixMode;
     public bool IsDetailHeaderVisible => IsDetailMode && HasPartida;
 
-    public string SectorModeDescription => IsSectorMatrixMode
-        ? "300 casillas · desplazate con las flechas o el scroll horizontal"
-        : "Costos, precios y atributos del recurso";
+    public bool IsZonaLibreMode
+    {
+        get => isZonaLibreMode;
+        set
+        {
+            if (isZonaLibreMode == value)
+                return;
+            SetCubicacionMode(value);
+        }
+    }
+
+    public bool IsPorZonasMode => !isZonaLibreMode;
+    public bool CanAddExtraCasillas => isSectorMatrixMode && isZonaLibreMode;
+
+    public string SectorModeDescription => !isSectorMatrixMode
+        ? "Costos, precios y atributos del recurso"
+        : (isZonaLibreMode
+            ? "Modo Zona Libre · Ingrese cantidades directamente sin desglose de pisos ni sectores"
+            : "400 casillas de pisos y sectores · Desplácese con flechas o scroll horizontal");
 
     public ICommand ShowSectorMatrixCommand { get; private set; } = null!;
     public ICommand ShowResourceDetailCommand { get; private set; } = null!;
+    public ICommand SetZonaLibreModeCommand { get; private set; } = null!;
+    public ICommand SetPorZonasModeCommand { get; private set; } = null!;
     public ICommand ManageZonasCommand { get; private set; } = null!;
     public ICommand OpenHojaCubicacionCommand { get; private set; } = null!;
 
@@ -54,17 +72,45 @@ public sealed partial class CubicacionViewModel
     {
         ShowSectorMatrixCommand = new RelayCommand(() => IsSectorMatrixMode = true);
         ShowResourceDetailCommand = new RelayCommand(() => IsSectorMatrixMode = false);
+        SetZonaLibreModeCommand = new RelayCommand(() => SetCubicacionMode(true));
+        SetPorZonasModeCommand = new RelayCommand(() => SetCubicacionMode(false));
         ManageZonasCommand = new RelayCommand(() => sectorService.ManageZonas(), () => !session.IsReadOnly);
         OpenHojaCubicacionCommand = new RelayCommand(() => sectorService.OpenHojaCubicacion());
 
+        string defaultPref = preferencesStore?.Load()?.DefaultCubicacionMode ?? "Libre";
+        bool preferZonas = string.Equals(defaultPref, "Zonas", StringComparison.OrdinalIgnoreCase);
+        bool hasActiveZones = session.ZonasProyecto?.Any(z => z != null && z.Activa) == true;
+
+        isZonaLibreMode = !(preferZonas || hasActiveZones);
+        isSectorMatrixMode = true;
         RefreshSectorWindow();
     }
 
-    // Lógica movida a CubicacionSectorService (ver
-    // ~/.claude/plans/glittery-stargazing-hippo.md) — este archivo queda como el punto de
-    // contacto público que CubicacionView.xaml.cs, CubicacionRightPanelVm y el resto de los
-    // partials ya conocen, sin cambiar ninguna firma.
+    private void SetCubicacionMode(bool libre)
+    {
+        if (isZonaLibreMode == libre)
+            return;
+        if (!TryCommitOpenCell())
+            return;
 
+        isZonaLibreMode = libre;
+        try
+        {
+            var prefs = preferencesStore?.Load();
+            if (prefs != null)
+            {
+                prefs.DefaultCubicacionMode = libre ? "Libre" : "Zonas";
+                preferencesStore?.Save(prefs);
+            }
+        }
+        catch { }
+
+        RefreshSectorWindow();
+        OnPropertyChanged(nameof(IsZonaLibreMode));
+        OnPropertyChanged(nameof(IsPorZonasMode));
+        OnPropertyChanged(nameof(CanAddExtraCasillas));
+        OnPropertyChanged(nameof(SectorModeDescription));
+    }
 
     public void PickSectorValueFromHojaCubicacion(CubicacionRowVm row, int absoluteOffset)
         => sectorService.PickSectorValueFromHojaCubicacion(row, absoluteOffset);

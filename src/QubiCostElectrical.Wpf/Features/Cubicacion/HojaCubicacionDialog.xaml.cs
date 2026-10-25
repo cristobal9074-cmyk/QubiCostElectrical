@@ -22,7 +22,7 @@ public partial class HojaCubicacionDialog : Window
 {
     // Como una hoja de Excel real: cada ítem nuevo parte con 300 columnas de datos disponibles
     // (C en adelante), no solo las 2-3 que se necesitan al principio.
-    private const int DefaultColumnCount = 300;
+    private const int DefaultColumnCount = 400;
 
     private readonly ObservableCollection<HojaCubicacionItemVm> items = new();
     private readonly Dictionary<HojaCubicacionItemVm, DataGrid> itemGrids = new();

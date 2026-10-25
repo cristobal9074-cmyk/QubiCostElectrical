@@ -22,6 +22,7 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
     private readonly IShellNavigationHost shell;
     private readonly IMaterialSearchService materialSearch;
     private readonly IPriceBankStore priceBankStore;
+    private readonly IUserPreferencesStore? preferencesStore;
     private readonly IProjectWorkspaceService projectWorkspace;
     private readonly WpfUndoService undo;
     private readonly CubicacionPresenter cubicacionPresenter;

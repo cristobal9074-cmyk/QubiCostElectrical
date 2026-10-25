@@ -4,6 +4,23 @@ Las versiones siguen el formato `MAJOR.MINOR.PATCH` y corresponden a `Directory.
 
 ## No publicado
 
+## 1.1.4
+
+### Modo Zona Libre y Matriz de Cubicación de 400 Casillas Continuas (2026-10-25)
+- **Capacidad ampliada a 400 columnas de cubicación**:
+  - El motor de fórmulas (CubicacionTakeoffQueryService), composición (CubicacionCompositionService), persistencia de mediciones y panel de distribución admiten ahora hasta 400 casillas (C1 a C400).
+- **Modo Zona Libre con auto-expansión continua tipo Excel**:
+  - Diseñado para usuarios que no requieren desglose por pisos o zonas preconfiguradas.
+  - Carga liviana inicial en 25 casillas y auto-expansión dinámica en bloques de 15 columnas al avanzar con el teclado o pegar datos, manteniendo siempre estable la posición del cursor y el foco.
+- **Herramienta de Modo de Cubicación persistente**:
+  - Selector [ 🌐 Zona Libre | 🏢 Por Zonas ] independiente del flujo de trabajo diario.
+  - Guarda la preferencia en el equipo (DefaultCubicacionMode) para abrir futuros presupuestos directamente en el modo preferido.
+- **Selector de vista principal clásico restaurado**:
+  - Conmutador [ Cubicación | Detalle ] restaurado a su funcionamiento original de 2 estados.
+  - Atajos Alt+A (Cubicación) y Alt+D (Detalle) operan de forma limpia y exclusiva sobre la vista.
+- **Correcciones de usabilidad y visualización**:
+  - Resuelto el corte o compresión horizontal de la columna C1 al volver desde otras vistas.
+  - Eliminado el recuadro azul no deseado en la columna UD al ingresar fórmulas de sector con referencias de celdas.
 ## 1.1.3
 
 ### Verificación y Validación de Auto-Actualizaciones Velopack (2026-10-24)

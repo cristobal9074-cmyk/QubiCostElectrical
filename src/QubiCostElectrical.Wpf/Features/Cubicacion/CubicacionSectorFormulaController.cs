@@ -50,7 +50,6 @@ internal sealed class CubicacionSectorFormulaController
             {
                 if (rowIndex >= 0 && rowIndex < vm.Rows.Count)
                 {
-                    vm.Rows[rowIndex].IsFormulaPickTarget = false;
                     vm.Rows[rowIndex].ClearFormulaPickTargetOffsets();
                 }
             }
@@ -167,7 +166,6 @@ internal sealed class CubicacionSectorFormulaController
             if (referencedByRow.ContainsKey(rowIndex)) continue;
             if (rowIndex >= 0 && rowIndex < vm.Rows.Count)
             {
-                vm.Rows[rowIndex].IsFormulaPickTarget = false;
                 vm.Rows[rowIndex].ClearFormulaPickTargetOffsets();
             }
         }
@@ -175,7 +173,6 @@ internal sealed class CubicacionSectorFormulaController
         foreach (var (rowIndex, offsets) in referencedByRow)
         {
             var row = vm.Rows[rowIndex];
-            row.IsFormulaPickTarget = true;
             row.ClearFormulaPickTargetOffsets();
             foreach (var offset in offsets)
                 row.AddFormulaPickTargetOffset(offset);

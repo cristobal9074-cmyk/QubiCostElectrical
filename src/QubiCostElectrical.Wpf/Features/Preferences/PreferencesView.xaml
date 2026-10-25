@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="QubiCostElectrical.Wpf.Features.Preferences.PreferencesView"
+<UserControl x:Class="QubiCostElectrical.Wpf.Features.Preferences.PreferencesView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ctrl="clr-namespace:QubiCostElectrical.Wpf.Controls"
@@ -404,6 +404,24 @@
                 <ComboBox ItemsSource="{Binding AvailableCurrencies}" SelectedItem="{Binding DefaultMoneda, UpdateSourceTrigger=PropertyChanged}"
                           Style="{StaticResource Form.ComboBox}" Height="36"
                           ToolTip="Moneda inicial por defecto al crear nuevos presupuestos."/>
+              </StackPanel>
+            </Grid>
+
+            <Grid Margin="0,12,0,0">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+              <StackPanel>
+                <TextBlock Text="Modo de cubicación predeterminado" Style="{StaticResource Form.Label}" Margin="0,0,0,4"/>
+                <ComboBox SelectedValue="{Binding DefaultCubicacionMode, UpdateSourceTrigger=PropertyChanged}"
+                          SelectedValuePath="Tag"
+                          Style="{StaticResource Form.ComboBox}" Height="36"
+                          ToolTip="Determina cómo se abre la cubicación: Zona Libre (cantidad directa en cada fila) o Por Zonas (desglose de pisos y sectores).">
+                  <ComboBoxItem Content="🌐 Zona Libre (Cubicación directa en la columna de cantidad)" Tag="Libre" />
+                  <ComboBoxItem Content="🏢 Por Zonas (Matriz de pisos, subterráneos y sectores)" Tag="Zonas" />
+                </ComboBox>
+                <TextBlock Text="Aplica al crear presupuestos nuevos o abrir la cubicación (también puedes alternarlo en cualquier momento con 1 clic en la barra superior de cubicación)."
+                           FontSize="11" Foreground="{DynamicResource Brush.Muted}" Margin="0,4,0,0" TextWrapping="Wrap"/>
               </StackPanel>
             </Grid>
           </StackPanel>

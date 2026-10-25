@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -151,11 +151,15 @@ public sealed partial class PreferencesViewModel
     [ObservableProperty]
     private string _defaultMoneda = "CLP";
 
+    [ObservableProperty]
+    private string _defaultCubicacionMode = "Libre";
+
     public IReadOnlyList<string> AvailableCurrencies { get; } = ["CLP", "UF", "USD", "EUR"];
 
     partial void OnDefaultMermasPctTextChanged(string value) => HasPendingChanges = true;
     partial void OnDefaultHerramientasPctTextChanged(string value) => HasPendingChanges = true;
     partial void OnDefaultMonedaChanged(string value) => HasPendingChanges = true;
+    partial void OnDefaultCubicacionModeChanged(string value) => HasPendingChanges = true;
 
     partial void OnIsDarkModeChanged(bool oldValue, bool newValue)
     {
@@ -523,6 +527,7 @@ public sealed partial class PreferencesViewModel
         if (TryParsePct(DefaultHerramientasPctText, out var hr))
             _saved.DefaultHerramientasPct = hr;
         _saved.DefaultMoneda = string.IsNullOrWhiteSpace(DefaultMoneda) ? "CLP" : DefaultMoneda.Trim().ToUpperInvariant();
+        _saved.DefaultCubicacionMode = string.IsNullOrWhiteSpace(DefaultCubicacionMode) ? "Libre" : DefaultCubicacionMode.Trim();
         _saved.PinSecurity = new PinSecurityPolicy
         {
             MinLength = PinMinLength,
@@ -561,6 +566,7 @@ public sealed partial class PreferencesViewModel
         DefaultMermasPctText = _draft.DefaultMermasPct.ToString("N1", CultureInfo.CurrentCulture);
         DefaultHerramientasPctText = _draft.DefaultHerramientasPct.ToString("N1", CultureInfo.CurrentCulture);
         DefaultMoneda = string.IsNullOrWhiteSpace(_draft.DefaultMoneda) ? "CLP" : _draft.DefaultMoneda.Trim().ToUpperInvariant();
+        DefaultCubicacionMode = string.IsNullOrWhiteSpace(_draft.DefaultCubicacionMode) ? "Libre" : _draft.DefaultCubicacionMode.Trim();
         PinMinLength = _draft.PinSecurity?.MinLength ?? 4;
         PinMaxLength = _draft.PinSecurity?.MaxLength ?? 6;
         PinBlockSequences = _draft.PinSecurity?.BlockSequences ?? true;
@@ -597,6 +603,7 @@ public sealed partial class PreferencesViewModel
         DefaultMermasPct = src.DefaultMermasPct,
         DefaultHerramientasPct = src.DefaultHerramientasPct,
         DefaultMoneda = src.DefaultMoneda,
+        DefaultCubicacionMode = src.DefaultCubicacionMode,
         ExperimentalFeaturesEnabled = src.ExperimentalFeaturesEnabled,
         RecentFiles = new List<string>(src.RecentFiles),
         PriceFeedUrls = new List<string>(src.PriceFeedUrls),

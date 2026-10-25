@@ -92,6 +92,12 @@ public sealed class UserPreferences
     /// el FA y los precios fijos al eliminar o modificar materiales (paridad con Excel).
     /// </summary>
     public bool FaAutomatico { get; set; } = false;
+
+    /// <summary>
+    /// Modo de cubicación predeterminado para nuevos presupuestos y sesiones:
+    /// "Libre" (zona libre / cantidad directa) o "Zonas" (casillas por piso/sector). Defecto: "Libre".
+    /// </summary>
+    public string DefaultCubicacionMode { get; set; } = "Libre";
     /// <summary>Últimas N rutas abiertas (max 8), más reciente primero.</summary>
     public List<string> RecentFiles { get; set; } = new();
 

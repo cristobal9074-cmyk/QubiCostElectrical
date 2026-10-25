@@ -27,6 +27,7 @@ public partial class CubicacionView : UserControl, IInGridSearchable
     private bool _autocompleteHoverArmed;
     private Point _autocompleteHoverFreezePos;
     private readonly List<DataGridColumn> _sectorColumns = new();
+    private int _zonaLibreVisibleCount = 25;
     private bool _suppressSelectionSync;
     private bool _isSyncingFromGrid;
     private bool _cantEditingStarted;

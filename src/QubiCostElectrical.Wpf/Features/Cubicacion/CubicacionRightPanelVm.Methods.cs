@@ -16,7 +16,7 @@ public sealed partial class CubicacionRightPanelVm : ViewModelBase
         Mediciones = new CubicacionMedicionesVm(session, parent);
 
         // Inicializar los 300 ítems una sola vez para la lista maestra
-        for (int i = 0; i < 300; i++)
+        for (int i = 0; i < CubicacionViewModel.MaximumSectorCount; i++)
         {
             allZonesMaster.Add(new ZoneDistributionItem(this, i + 1, "", string.Empty));
         }
@@ -194,7 +194,7 @@ public sealed partial class CubicacionRightPanelVm : ViewModelBase
             .ToList();
 
         // 1. Actualizar los 300 ítems en la lista maestra
-        for (int i = 0; i < 300; i++)
+        for (int i = 0; i < CubicacionViewModel.MaximumSectorCount; i++)
         {
             string expr = i < QtyExpressions.Length ? QtyExpressions[i] : "";
             string headerName;
@@ -214,7 +214,7 @@ public sealed partial class CubicacionRightPanelVm : ViewModelBase
         if (zonasActivas.Count > 0)
         {
             // Caso con zonas de proyecto: Mostrar zonas activas + cualquier zona inactiva que tenga contenido actual
-            for (int i = 0; i < 300; i++)
+            for (int i = 0; i < CubicacionViewModel.MaximumSectorCount; i++)
             {
                 bool esZonaActiva = i < zonasActivas.Count;
                 bool tieneContenido = i < QtyExpressions.Length && !string.IsNullOrWhiteSpace(QtyExpressions[i]);
@@ -229,7 +229,7 @@ public sealed partial class CubicacionRightPanelVm : ViewModelBase
         {
             // Caso sin zonas configuradas: Mostrar las primeras 15 zonas vacías por defecto,
             // pero si hay contenido guardado más allá de las 15, mostrar también esos campos.
-            for (int i = 0; i < 300; i++)
+            for (int i = 0; i < CubicacionViewModel.MaximumSectorCount; i++)
             {
                 bool esRangoPorDefecto = i < 15;
                 bool tieneContenido = i < QtyExpressions.Length && !string.IsNullOrWhiteSpace(QtyExpressions[i]);
@@ -274,7 +274,7 @@ public sealed partial class CubicacionRightPanelVm : ViewModelBase
         QtyHeaders = Array.Empty<string>();
 
         // Limpiar lista maestra y ajustar vista rápida a los primeros 15 vacíos
-        for (int i = 0; i < 300; i++)
+        for (int i = 0; i < CubicacionViewModel.MaximumSectorCount; i++)
         {
             allZonesMaster[i].Update("", string.Empty);
         }

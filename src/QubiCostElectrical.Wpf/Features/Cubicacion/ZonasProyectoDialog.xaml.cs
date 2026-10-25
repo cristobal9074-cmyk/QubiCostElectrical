@@ -12,6 +12,7 @@ namespace QubiCostElectrical.Wpf.Features.Cubicacion;
 public partial class ZonasProyectoDialog : Window
 {
     public ZonasProyectoViewModel ViewModel { get; }
+    private string? _pendingInitialText;
 
     public ZonasProyectoDialog(IEnumerable<ZonaProyecto> zonas)
     {
@@ -67,19 +68,41 @@ public partial class ZonasProyectoDialog : Window
             return;
         }
 
-        // Insert o Ctrl+N: Nueva zona
-        if (e.Key == Key.Insert || (e.Key == Key.N && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control))
+        // Ctrl + o NumPad + o Insert o Ctrl+N: Nueva zona correlativa
+        bool isCtrlPlus = (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control &&
+                          (e.Key == Key.OemPlus || e.Key == Key.Add);
+        bool isInsertOrCtrlN = (e.Key == Key.Insert && !SearchBox.IsFocused) ||
+                               (e.Key == Key.N && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control && !SearchBox.IsFocused);
+
+        if (isCtrlPlus || isInsertOrCtrlN)
         {
-            if (!IsEditingCell())
+            if (IsEditingCell())
             {
-                OnAgregarClick(sender, e);
-                e.Handled = true;
-                return;
+                ZonasGrid.CommitEdit(DataGridEditingUnit.Row, true);
             }
+            OnAgregarClick(sender, e);
+            e.Handled = true;
+            return;
         }
 
-        // Reordenar con Alt+Up / Alt+Down o Ctrl+Up / Ctrl+Down
-        if ((Keyboard.Modifiers & (ModifierKeys.Alt | ModifierKeys.Control)) != ModifierKeys.None)
+        // Ctrl - o NumPad - o Supr/Delete: Quitar zona seleccionada
+        bool isCtrlMinus = (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control &&
+                           (e.Key == Key.OemMinus || e.Key == Key.Subtract);
+        bool isDelete = e.Key == Key.Delete && !IsEditingCell() && SearchBox.IsFocused == false;
+
+        if (isCtrlMinus || isDelete)
+        {
+            if (IsEditingCell())
+            {
+                ZonasGrid.CancelEdit(DataGridEditingUnit.Row);
+            }
+            EjecutarQuitarZona();
+            e.Handled = true;
+            return;
+        }
+
+        // Reordenar con Alt+Up / Alt+Down
+        if ((Keyboard.Modifiers & ModifierKeys.Alt) == ModifierKeys.Alt)
         {
             if (e.Key == Key.Up && ViewModel.CanMoveUp)
             {
@@ -97,15 +120,13 @@ public partial class ZonasProyectoDialog : Window
             }
         }
 
-        // Supr / Delete: Quitar zona si no se está editando celda
-        if (e.Key == Key.Delete && !IsEditingCell() && SearchBox.IsFocused == false)
+        // Escape: Si el popup de rangos está abierto, cerrarlo
+        if (e.Key == Key.Escape && RangoPisosPopup.IsOpen)
         {
-            if (ViewModel.SelectedRow != null)
-            {
-                ViewModel.QuitarZona();
-                e.Handled = true;
-                return;
-            }
+            RangoPisosPopup.IsOpen = false;
+            ZonasGrid.Focus();
+            e.Handled = true;
+            return;
         }
 
         // Escape: Si hay búsqueda, limpiar búsqueda y enfocar grid; si no, cerrar diálogo
@@ -129,19 +150,238 @@ public partial class ZonasProyectoDialog : Window
         return row?.IsEditing == true;
     }
 
+    private List<ZonaEditRowVm> GetVisibleRows()
+    {
+        return ZonasGrid.Items.OfType<ZonaEditRowVm>().ToList();
+    }
+
+    private void EjecutarQuitarZona()
+    {
+        var current = ViewModel.SelectedRow;
+        if (current == null) return;
+
+        var visible = GetVisibleRows();
+        int currentIndex = visible.IndexOf(current);
+        ViewModel.QuitarZona();
+
+        var updatedVisible = GetVisibleRows();
+        if (updatedVisible.Count > 0)
+        {
+            int nextIndex = Math.Clamp(currentIndex, 0, updatedVisible.Count - 1);
+            var nextRow = updatedVisible[nextIndex];
+            ViewModel.SelectedRow = nextRow;
+            ZonasGrid.SelectedItem = nextRow;
+            ZonasGrid.ScrollIntoView(nextRow);
+        }
+        ZonasGrid.Focus();
+    }
+
     private void OnAgregarClick(object sender, RoutedEventArgs e)
     {
         var row = ViewModel.AgregarZona(string.Empty);
+        ViewModel.SelectedRow = row;
         ZonasGrid.SelectedItem = row;
         ZonasGrid.ScrollIntoView(row);
+
         Dispatcher.InvokeAsync(() =>
         {
-            if (ZonasGrid.Columns.Count > 1)
-            {
-                ZonasGrid.CurrentCell = new DataGridCellInfo(row, ZonasGrid.Columns[1]);
-                ZonasGrid.BeginEdit();
-            }
+            BeginEditNombre();
         }, System.Windows.Threading.DispatcherPriority.Background);
+    }
+
+    /// <summary>
+    /// Type-to-edit: si el usuario escribe una letra o número mientras navega por la grilla,
+    /// entra inmediatamente en modo de edición con ese carácter pre-cargado.
+    /// </summary>
+    private void OnZonasGridPreviewTextInput(object sender, TextCompositionEventArgs e)
+    {
+        if (IsEditingCell() || SearchBox.IsFocused) return;
+        if (string.IsNullOrEmpty(e.Text) || char.IsControl(e.Text[0])) return;
+
+        var visible = GetVisibleRows();
+        if (ViewModel.SelectedRow == null)
+        {
+            if (visible.Count > 0)
+            {
+                ViewModel.SelectedRow = visible[0];
+            }
+            else
+            {
+                var newRow = ViewModel.AgregarZona(e.Text);
+                ViewModel.SelectedRow = newRow;
+                ZonasGrid.SelectedItem = newRow;
+                BeginEditNombre(e.Text);
+                e.Handled = true;
+                return;
+            }
+        }
+
+        BeginEditNombre(e.Text);
+        e.Handled = true;
+    }
+
+    /// <summary>
+    /// Navegación rápida con teclado dentro de la grilla:
+    /// Enter comitea y baja de fila (o crea siguiente piso si está en la última fila).
+    /// Flechas Arriba/Abajo comitean y cambian de fila sin trabas.
+    /// </summary>
+    private void OnZonasGridPreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter)
+        {
+            if (IsEditingCell())
+            {
+                ZonasGrid.CommitEdit(DataGridEditingUnit.Row, true);
+                e.Handled = true;
+
+                var current = ViewModel.SelectedRow;
+                if (current == null) return;
+
+                var visible = GetVisibleRows();
+                int currentIndex = visible.IndexOf(current);
+                if (currentIndex >= 0 && currentIndex < visible.Count - 1)
+                {
+                    var nextRow = visible[currentIndex + 1];
+                    ViewModel.SelectedRow = nextRow;
+                    ZonasGrid.SelectedItem = nextRow;
+                    ZonasGrid.ScrollIntoView(nextRow);
+                    Dispatcher.InvokeAsync(() => BeginEditNombre(), System.Windows.Threading.DispatcherPriority.Background);
+                }
+                else if (currentIndex == visible.Count - 1)
+                {
+                    // Al final de la grilla, Enter crea el siguiente piso correlativo inmediatamente
+                    OnAgregarClick(sender, e);
+                }
+            }
+            else
+            {
+                BeginEditNombre();
+                e.Handled = true;
+            }
+            return;
+        }
+
+        if (e.Key == Key.F2 && !IsEditingCell())
+        {
+            BeginEditNombre();
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key == Key.Up && IsEditingCell())
+        {
+            ZonasGrid.CommitEdit(DataGridEditingUnit.Row, true);
+            var current = ViewModel.SelectedRow;
+            if (current != null)
+            {
+                var visible = GetVisibleRows();
+                int currentIndex = visible.IndexOf(current);
+                if (currentIndex > 0)
+                {
+                    var prevRow = visible[currentIndex - 1];
+                    ViewModel.SelectedRow = prevRow;
+                    ZonasGrid.SelectedItem = prevRow;
+                    ZonasGrid.ScrollIntoView(prevRow);
+                    Dispatcher.InvokeAsync(() => BeginEditNombre(), System.Windows.Threading.DispatcherPriority.Background);
+                }
+            }
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key == Key.Down && IsEditingCell())
+        {
+            ZonasGrid.CommitEdit(DataGridEditingUnit.Row, true);
+            var current = ViewModel.SelectedRow;
+            if (current != null)
+            {
+                var visible = GetVisibleRows();
+                int currentIndex = visible.IndexOf(current);
+                if (currentIndex >= 0 && currentIndex < visible.Count - 1)
+                {
+                    var nextRow = visible[currentIndex + 1];
+                    ViewModel.SelectedRow = nextRow;
+                    ZonasGrid.SelectedItem = nextRow;
+                    ZonasGrid.ScrollIntoView(nextRow);
+                    Dispatcher.InvokeAsync(() => BeginEditNombre(), System.Windows.Threading.DispatcherPriority.Background);
+                }
+            }
+            e.Handled = true;
+            return;
+        }
+    }
+
+    private void BeginEditNombre(string? initialText = null)
+    {
+        var visible = GetVisibleRows();
+        if (ViewModel.SelectedRow == null && visible.Count > 0)
+        {
+            ViewModel.SelectedRow = visible[0];
+        }
+
+        if (ViewModel.SelectedRow == null) return;
+
+        _pendingInitialText = initialText;
+        var row = ViewModel.SelectedRow;
+        ZonasGrid.SelectedItem = row;
+        ZonasGrid.ScrollIntoView(row);
+
+        if (ZonasGrid.Columns.Count > 1)
+        {
+            ZonasGrid.CurrentCell = new DataGridCellInfo(row, ZonasGrid.Columns[1]);
+            ZonasGrid.BeginEdit();
+        }
+    }
+
+    private void OnZonaNombreInputLoaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is TextBox tb)
+        {
+            if (_pendingInitialText != null)
+            {
+                tb.Text = _pendingInitialText;
+                tb.CaretIndex = tb.Text.Length;
+                _pendingInitialText = null;
+            }
+            else
+            {
+                tb.SelectAll();
+            }
+            tb.Focus();
+        }
+    }
+
+    private void OnRangoPisosClick(object sender, RoutedEventArgs e)
+    {
+        RangoPisosPopup.IsOpen = true;
+        TxtRangoHasta.Focus();
+        TxtRangoHasta.SelectAll();
+    }
+
+    private void OnRangoPisosCancelarClick(object sender, RoutedEventArgs e)
+    {
+        RangoPisosPopup.IsOpen = false;
+        ZonasGrid.Focus();
+    }
+
+    private void OnGenerarRangoConfirmClick(object sender, RoutedEventArgs e)
+    {
+        string prefijo = string.IsNullOrWhiteSpace(CmbRangoPrefijo.Text) ? "Piso " : CmbRangoPrefijo.Text;
+        if (!int.TryParse(TxtRangoDesde.Text.Trim(), out int desde))
+            desde = 1;
+        if (!int.TryParse(TxtRangoHasta.Text.Trim(), out int hasta))
+            hasta = 10;
+
+        bool reemplazar = ChkRangoReemplazar.IsChecked == true;
+        ViewModel.GenerarRangoPisos(prefijo, desde, hasta, reemplazar);
+
+        RangoPisosPopup.IsOpen = false;
+
+        if (ViewModel.Rows.Count > 0)
+        {
+            ZonasGrid.SelectedIndex = 0;
+            ZonasGrid.Focus();
+        }
     }
 
     private void OnPresetsIndustriaClick(object sender, RoutedEventArgs e)
@@ -222,8 +462,7 @@ public partial class ZonasProyectoDialog : Window
 
     private void OnQuitarClick(object sender, RoutedEventArgs e)
     {
-        if (ViewModel.SelectedRow != null)
-            ViewModel.QuitarZona();
+        EjecutarQuitarZona();
     }
 
     private void OnSubirClick(object sender, RoutedEventArgs e)

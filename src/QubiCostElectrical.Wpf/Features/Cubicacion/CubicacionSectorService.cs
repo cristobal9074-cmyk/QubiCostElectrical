@@ -175,14 +175,19 @@ internal sealed class CubicacionSectorService
 
     private string ResolveSectorHeader(int offset)
     {
+        if (parent.IsZonaLibreMode)
+        {
+            return $"C{offset + 1}";
+        }
+
         var zones = ZonasActivasOrdenadas(session);
 
         if (offset < zones.Count && !string.IsNullOrWhiteSpace(zones[offset].Nombre))
             return zones[offset].Nombre.Trim();
 
-        var selectedPartida = parent.SelectedPartida;
-        if (selectedPartida != null &&
-            session.QtyHeadersByItem.TryGetValue(selectedPartida.Id, out var headers) &&
+        var selectedPartidaPorZonas = parent.SelectedPartida;
+        if (selectedPartidaPorZonas != null &&
+            session.QtyHeadersByItem.TryGetValue(selectedPartidaPorZonas.Id, out var headers) &&
             headers != null && offset < headers.Length &&
             !string.IsNullOrWhiteSpace(headers[offset]))
         {

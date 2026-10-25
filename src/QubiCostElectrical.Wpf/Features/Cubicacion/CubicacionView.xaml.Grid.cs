@@ -260,7 +260,19 @@ public partial class CubicacionView : UserControl
         }
     }
 
-    private void OnGridPreviewKeyDown(object sender, KeyEventArgs e) => DispatchCell(ReadGridKey(e), e);
+    private void OnGridPreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (Vm.IsZonaLibreMode && (e.Key == Key.Right || e.Key == Key.Tab))
+        {
+            var col = ResourceGrid.CurrentCell.Column;
+            if (col != null && _sectorColumns.Contains(col))
+            {
+                int slot = _sectorColumns.IndexOf(col);
+                EnsureSectorColumnVisible(slot + 1);
+            }
+        }
+        DispatchCell(ReadGridKey(e), e);
+    }
 
     private static bool MatchesConfiguredShortcut(KeyEventArgs e, params string[] actionIds) =>
         CubicacionShortcutRouting.Matches(e, actionIds);
@@ -349,6 +361,15 @@ public partial class CubicacionView : UserControl
                         _suppressSelectionSync = false;
                     }
                 }
+            }
+        }
+
+        if (Vm.IsZonaLibreMode && ResourceGrid.CurrentCell.Column != null)
+        {
+            int slot = _sectorColumns.IndexOf(ResourceGrid.CurrentCell.Column);
+            if (slot >= 0)
+            {
+                EnsureSectorColumnVisible(slot);
             }
         }
 

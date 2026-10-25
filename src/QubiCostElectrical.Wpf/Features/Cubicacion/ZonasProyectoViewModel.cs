@@ -77,11 +77,76 @@ public sealed class ZonasProyectoViewModel : INotifyPropertyChanged
 
     public ZonaEditRowVm AgregarZona(string nombre = "")
     {
+        if (string.IsNullOrWhiteSpace(nombre))
+        {
+            nombre = SugerirSiguienteNombreZona();
+        }
+
         var row = new ZonaEditRowVm(Guid.NewGuid().ToString("N"), nombre, true);
         row.PropertyChanged += OnRowPropertyChanged;
         Rows.Add(row);
         SelectedRow = row;
         return row;
+    }
+
+    /// <summary>
+    /// Deduce de forma inteligente el siguiente nombre secuencial según la última zona existente
+    /// (ej. Piso 1 → Piso 2, Subterráneo 1 → Subterráneo 2, Subterráneo -1 → Subterráneo -2).
+    /// </summary>
+    public string SugerirSiguienteNombreZona()
+    {
+        if (Rows.Count == 0)
+            return "Piso 1";
+
+        var ultima = Rows[^1].Nombre.Trim();
+        if (string.IsNullOrWhiteSpace(ultima))
+            return $"Piso {Rows.Count + 1}";
+
+        // Patrón Subterráneo con número negativo: ej. "Subterráneo -1" → "Subterráneo -2"
+        var matchSubNeg = System.Text.RegularExpressions.Regex.Match(ultima, @"^(.*?)(-\d+)$");
+        if (matchSubNeg.Success && int.TryParse(matchSubNeg.Groups[2].Value, out int numNeg))
+        {
+            return $"{matchSubNeg.Groups[1].Value}{numNeg - 1}";
+        }
+
+        // Patrón general: termina en número (ej. "Piso 1", "Piso 12", "Nivel 3", "Torre A - Piso 4")
+        var matchNum = System.Text.RegularExpressions.Regex.Match(ultima, @"^(.*?)(\d+)$");
+        if (matchNum.Success && int.TryParse(matchNum.Groups[2].Value, out int num))
+        {
+            return $"{matchNum.Groups[1].Value}{num + 1}";
+        }
+
+        if (ultima.Equals("Subterráneo", StringComparison.OrdinalIgnoreCase) ||
+            ultima.Equals("Subterraneo", StringComparison.OrdinalIgnoreCase))
+            return "Subterráneo -1";
+
+        return $"Piso {Rows.Count + 1}";
+    }
+
+    /// <summary>
+    /// Genera rápidamente una serie de pisos o niveles (ej. Pisos 1 al 20, o Subterráneos 1 al 3).
+    /// </summary>
+    public void GenerarRangoPisos(string prefijo, int desde, int hasta, bool reemplazarExistentes)
+    {
+        if (reemplazarExistentes)
+        {
+            Rows.Clear();
+        }
+
+        if (desde <= hasta)
+        {
+            for (int i = desde; i <= hasta; i++)
+            {
+                AgregarZona($"{prefijo}{i}");
+            }
+        }
+        else
+        {
+            for (int i = desde; i >= hasta; i--)
+            {
+                AgregarZona($"{prefijo}{i}");
+            }
+        }
     }
 
     public void QuitarZona(ZonaEditRowVm? row = null)

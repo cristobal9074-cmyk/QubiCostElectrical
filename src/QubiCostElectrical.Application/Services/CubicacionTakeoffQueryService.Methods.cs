@@ -42,7 +42,7 @@ public sealed partial class CubicacionTakeoffQueryService : ICubicacionTakeoffQu
         return variables;
     }
 
-    public decimal EvaluateStoredExpressions(BudgetProjectSession session, CubicacionRow row, int qtyColumnCount = 300)
+    public decimal EvaluateStoredExpressions(BudgetProjectSession session, CubicacionRow row, int qtyColumnCount = 400)
         => EvaluateStoredExpressionsWithCallback(session, row, qtyColumnCount, null);
 
     public decimal EvaluateStoredExpressions(BudgetProjectSession session, CubicacionRow row, int qtyColumnCount, Action<int, decimal> onZoneComputed)
@@ -54,7 +54,7 @@ public sealed partial class CubicacionTakeoffQueryService : ICubicacionTakeoffQu
         return EvaluateStoredExpressionsCore(session, row, qtyColumnCount, null, headers, null, onZoneComputed);
     }
 
-    public void RecalculateAll(BudgetProjectSession session, int qtyColumnCount = 300)
+    public void RecalculateAll(BudgetProjectSession session, int qtyColumnCount = 400)
     {
         var baseVariablesCache = new Dictionary<string, Dictionary<string, decimal>>(StringComparer.OrdinalIgnoreCase);
         var headersCache = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase);
@@ -84,7 +84,7 @@ public sealed partial class CubicacionTakeoffQueryService : ICubicacionTakeoffQu
         }
     }
 
-    public void RecalculateForItem(BudgetProjectSession session, string itemId, int qtyColumnCount = 300)
+    public void RecalculateForItem(BudgetProjectSession session, string itemId, int qtyColumnCount = 400)
     {
         var itemRows = CubicacionItemIndex.FilterRows(session.Cubicacion, itemId);
         RecalculateItemRows(session, itemId, itemRows, qtyColumnCount);
@@ -94,7 +94,7 @@ public sealed partial class CubicacionTakeoffQueryService : ICubicacionTakeoffQu
         BudgetProjectSession session,
         string itemId,
         IReadOnlyDictionary<string, List<CubicacionRow>> index,
-        int qtyColumnCount = 300)
+        int qtyColumnCount = 400)
     {
         var itemRows = CubicacionItemIndex.GetRows(index, itemId);
         RecalculateItemRows(session, itemId, itemRows, qtyColumnCount);
@@ -303,17 +303,17 @@ public sealed partial class CubicacionTakeoffQueryService : ICubicacionTakeoffQu
             {
                 result[i] = stored != null && i < stored.Length && stored[i] != null
                     ? stored[i]
-                    : (i < DefaultHeaders300.Length ? DefaultHeaders300[i] : $"Zona {i + 1}");
+                    : (i < DefaultHeaders.Length ? DefaultHeaders[i] : $"Zona {i + 1}");
             }
             return result;
         }
 
-        if (count == 300)
-            return DefaultHeaders300;
+        if (count == 400)
+            return DefaultHeaders;
 
         var defaults = new string[count];
         for (int i = 0; i < count; i++)
-            defaults[i] = i < DefaultHeaders300.Length ? DefaultHeaders300[i] : $"Zona {i + 1}";
+            defaults[i] = i < DefaultHeaders.Length ? DefaultHeaders[i] : $"Zona {i + 1}";
         return defaults;
     }
 
@@ -464,7 +464,7 @@ public sealed partial class CubicacionTakeoffQueryService : ICubicacionTakeoffQu
         if (string.IsNullOrEmpty(text) || !QuantityFormulaService.IsFormulaLike(text))
             return new QuantityFormulaResult(0m, true, "");
 
-        const int qtyColumnCount = 300;
+        const int qtyColumnCount = 400;
         var variables = BuildFormulaVariables(session, row.ItemId);
         var headers = GetHeaders(session, row.ItemId ?? string.Empty, qtyColumnCount);
         string[]? stored = row.QtyExpressions;

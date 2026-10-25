@@ -119,6 +119,55 @@ public sealed class ZonasProyectoViewModelTests
     }
 
     [Fact]
+    public void SugerirSiguienteNombreZona_AutoIncrementsCorrelativeFloorNumbers()
+    {
+        var vm = new ZonasProyectoViewModel();
+
+        // 1. Sin zonas: sugiere Piso 1
+        Assert.Equal("Piso 1", vm.SugerirSiguienteNombreZona());
+
+        // 2. Si la última es Piso 1: sugiere Piso 2
+        vm.AgregarZona("Piso 1");
+        Assert.Equal("Piso 2", vm.SugerirSiguienteNombreZona());
+
+        // 3. Si la última es Piso 2: sugiere Piso 3
+        vm.AgregarZona("Piso 2");
+        Assert.Equal("Piso 3", vm.SugerirSiguienteNombreZona());
+
+        // 4. Subterráneo con signo negativo
+        vm.AgregarZona("Subterráneo -1");
+        Assert.Equal("Subterráneo -2", vm.SugerirSiguienteNombreZona());
+
+        // 5. Nombres compuestos con prefijo
+        vm.AgregarZona("Torre B - Nivel 4");
+        Assert.Equal("Torre B - Nivel 5", vm.SugerirSiguienteNombreZona());
+    }
+
+    [Fact]
+    public void GenerarRangoPisos_CreatesSequentialFloorsAccurately()
+    {
+        var vm = new ZonasProyectoViewModel();
+
+        // Generar Pisos 1 al 5
+        vm.GenerarRangoPisos("Piso ", 1, 5, reemplazarExistentes: true);
+
+        Assert.Equal(5, vm.Rows.Count);
+        Assert.Equal("Piso 1", vm.Rows[0].Nombre);
+        Assert.Equal("Piso 2", vm.Rows[1].Nombre);
+        Assert.Equal("Piso 3", vm.Rows[2].Nombre);
+        Assert.Equal("Piso 4", vm.Rows[3].Nombre);
+        Assert.Equal("Piso 5", vm.Rows[4].Nombre);
+
+        // Generar Subterráneos -3 al -1 anexando
+        vm.GenerarRangoPisos("Subterráneo ", -3, -1, reemplazarExistentes: false);
+
+        Assert.Equal(8, vm.Rows.Count);
+        Assert.Equal("Subterráneo -3", vm.Rows[5].Nombre);
+        Assert.Equal("Subterráneo -2", vm.Rows[6].Nombre);
+        Assert.Equal("Subterráneo -1", vm.Rows[7].Nombre);
+    }
+
+    [Fact]
     public void ObtenerZonasResultantes_ProducesOrderedList()
     {
         var vm = new ZonasProyectoViewModel();

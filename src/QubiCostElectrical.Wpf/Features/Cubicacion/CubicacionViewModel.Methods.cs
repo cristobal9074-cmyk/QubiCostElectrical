@@ -56,7 +56,7 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
     public CubicacionViewModel(IShellNavigationHost shell, WpfAppHost host)
         : this(shell, host.Session, host.ProjectWorkspace, host.Cubicacion, host.Itemizado, host.UndoService,
                host.CubicacionService, host.CubicacionTakeoffQuery, host.ProjectRepository,
-               host.MaterialSearch, host.PriceBankStore)
+               host.MaterialSearch, host.PriceBankStore, host.UserPreferencesStore)
     { }
 
     [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
@@ -71,7 +71,8 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
         ICubicacionTakeoffQueryService querySvc,
         IProjectRepository repo,
         IMaterialSearchService materialSearch,
-        IPriceBankStore priceBankStore)
+        IPriceBankStore priceBankStore,
+        IUserPreferencesStore? preferencesStore = null)
     {
         this.shell = shell;
         this.session = session;
@@ -84,6 +85,7 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
         this.repo = repo;
         this.materialSearch = materialSearch;
         this.priceBankStore = priceBankStore;
+        this.preferencesStore = preferencesStore;
         conjuntoService = new ConjuntoElectricoService();
         totalsCalculator = new CubicacionTotalsCalculator(this, cubicacionPresenter);
         autocompleteService = new CubicacionAutocompleteService(this, session, materialSearch, priceBankStore);

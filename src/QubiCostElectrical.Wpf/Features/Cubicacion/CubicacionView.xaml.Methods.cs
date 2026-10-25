@@ -155,6 +155,9 @@ public partial class CubicacionView : UserControl
             }
 
             if (e.PropertyName is nameof(CubicacionViewModel.IsSectorMatrixMode)
+                or nameof(CubicacionViewModel.IsZonaLibreMode)
+                or nameof(CubicacionViewModel.IsPorZonasMode)
+                or nameof(CubicacionViewModel.IsDetailMode)
                 or nameof(CubicacionViewModel.VisibleSectorHeaders)
                 or nameof(CubicacionViewModel.MuestraUf))
             {
@@ -297,7 +300,7 @@ public partial class CubicacionView : UserControl
 
     private void ApplyGridMode()
     {
-        if (!Vm.IsSectorMatrixMode)
+        if (Vm.IsDetailMode)
         {
             // Ocultar columnas de sector instantáneamente sin destruirlas
             foreach (var column in _sectorColumns)
@@ -352,8 +355,10 @@ public partial class CubicacionView : UserControl
             return;
         }
 
-        // Modo Casillas: queda EXACTAMENTE como estaba. Encabezados nativos visibles, "#", "UD",
-        // "CANT", panel DETALLE, totales y estado; se ocultan las columnas exclusivas de Detalle.
+        bool switchingFromDetail = ResourceGrid.Columns.Contains(MaterialPriceColumn);
+
+        // Modo Casillas (Zona Libre o Por Zonas): encabezados nativos visibles, "#", "UD",
+        // "CANT", matriz de casillas para cubicar, panel DETALLE, totales y estado.
         ResourceGrid.Columns.Remove(MaterialPriceColumn);
         ResourceGrid.Columns.Remove(LaborPriceColumn);
         ResourceGrid.Columns.Remove(TotalPriceColumn);
@@ -378,9 +383,49 @@ public partial class CubicacionView : UserControl
         ResourceGrid.FrozenColumnCount = 5;
         SetBottomChromeVisible(showTotals: true, showStatus: true);
 
-        // Calculamos cuántas columnas de sectores deben estar visibles:
-        // Solo las zonas activas del proyecto (con nombre), más cualquier slot que tenga datos ingresados.
-        // Si no hay zonas creadas y no hay datos, visibleCount = 0 (no se muestran casillas vacías a la derecha).
+        if (_sectorColumns.Count > 0)
+        {
+            UpdateSectorColumnsVisibility();
+            if (switchingFromDetail)
+            {
+                ResetGridHorizontalScroll();
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    ResetGridHorizontalScroll();
+                    if (Vm.IsSectorMatrixMode && ResourceGrid.Items.Count > 0)
+                    {
+                        var firstCol = ResourceGrid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible && !c.IsReadOnly)
+                                       ?? ResourceGrid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible);
+                        if (firstCol != null)
+                            DataGridExcelNavigation.FocusCell(ResourceGrid, 0, firstCol);
+                    }
+                }), System.Windows.Threading.DispatcherPriority.Input);
+            }
+            return;
+        }
+
+        ResetGridHorizontalScroll();
+        int visibleCount = CalculateSectorVisibleCount();
+        var sectorHeaderStyle = (Style)FindResource("DataGridColumnHeader.CasillasGeneral");
+        InstantiateSectorColumns(visibleCount, sectorHeaderStyle);
+
+        DataGridExcelNavigation.SetColumnScope(ResourceGrid, col => !col.IsReadOnly && col != IndexColumn && col.Visibility == Visibility.Visible);
+
+        Dispatcher.BeginInvoke(new Action(() =>
+        {
+            ResetGridHorizontalScroll();
+            if (Vm.IsSectorMatrixMode && ResourceGrid.Items.Count > 0)
+            {
+                var firstCol = ResourceGrid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible && !c.IsReadOnly)
+                               ?? ResourceGrid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible);
+                if (firstCol != null)
+                    DataGridExcelNavigation.FocusCell(ResourceGrid, 0, firstCol);
+            }
+        }), System.Windows.Threading.DispatcherPriority.Input);
+    }
+
+    private int CalculateSectorVisibleCount()
+    {
         int activeZoneCount = 0;
         for (int i = 0; i < Vm.VisibleSectorHeaders.Count; i++)
         {
@@ -408,138 +453,160 @@ public partial class CubicacionView : UserControl
             }
         }
 
-        int visibleCount = Math.Max(activeZoneCount, maxDataSlot + 1);
+        if (maxDataSlot >= 0 && maxDataSlot + 1 > _zonaLibreVisibleCount)
+            _zonaLibreVisibleCount = Math.Min(CubicacionViewModel.MaximumSectorCount, maxDataSlot + 11);
+
+        return Vm.IsZonaLibreMode
+            ? Math.Clamp(_zonaLibreVisibleCount, 25, CubicacionViewModel.MaximumSectorCount)
+            : Math.Max(activeZoneCount, maxDataSlot + 1);
+    }
+
+    private void UpdateSectorColumnsVisibility()
+    {
+        if (_sectorColumns.Count == 0) return;
+
+        int visibleCount = CalculateSectorVisibleCount();
         var sectorHeaderStyle = (Style)FindResource("DataGridColumnHeader.CasillasGeneral");
 
-        // Si las columnas de sector ya fueron instanciadas, las mostramos instantáneamente
-        // actualizando sus etiquetas sin reconstruir 300 columnas en el árbol visual.
-        if (_sectorColumns.Count > 0)
+        for (int slot = 0; slot < _sectorColumns.Count; slot++)
         {
-            for (int slot = 0; slot < _sectorColumns.Count; slot++)
-            {
-                var column = _sectorColumns[slot];
-                bool shouldBeVisible = slot < visibleCount;
+            var column = _sectorColumns[slot];
+            bool shouldBeVisible = slot < visibleCount;
+            if (column.Visibility != (shouldBeVisible ? Visibility.Visible : Visibility.Collapsed))
                 column.Visibility = shouldBeVisible ? Visibility.Visible : Visibility.Collapsed;
-                if (column.HeaderStyle != sectorHeaderStyle)
-                    column.HeaderStyle = sectorHeaderStyle;
 
-                if (shouldBeVisible)
+            if (column.HeaderStyle != sectorHeaderStyle)
+                column.HeaderStyle = sectorHeaderStyle;
+
+            if (shouldBeVisible)
+            {
+                string headerText = slot < Vm.VisibleSectorHeaders.Count
+                    ? Vm.VisibleSectorHeaders[slot]
+                    : "";
+                if (column.Header is StackPanel sp && sp.Children.Count > 0 && sp.Children[0] is TextBlock tb)
                 {
-                    string headerText = slot < Vm.VisibleSectorHeaders.Count
-                        ? Vm.VisibleSectorHeaders[slot]
-                        : "";
-                    if (column.Header is StackPanel sp && sp.Children.Count > 0 && sp.Children[0] is TextBlock tb)
+                    if (tb.Text != headerText)
                     {
-                        if (tb.Text != headerText)
-                        {
-                            tb.Text = headerText;
-                            // ToolTip vacío = popup navy sin texto (píldora negra flotante).
-                            sp.ToolTip = string.IsNullOrEmpty(headerText) ? null : headerText;
-                        }
+                        tb.Text = headerText;
+                        sp.ToolTip = string.IsNullOrEmpty(headerText) ? null : headerText;
                     }
                 }
             }
         }
-        else
+
+        DataGridExcelNavigation.SetColumnScope(ResourceGrid, col => !col.IsReadOnly && col != IndexColumn && col.Visibility == Visibility.Visible);
+    }
+
+    private void InstantiateSectorColumns(int visibleCount, Style sectorHeaderStyle)
+    {
+        var elementStyle = new Style(typeof(TextBlock));
+        elementStyle.Setters.Add(new Setter(TextBlock.HorizontalAlignmentProperty, HorizontalAlignment.Right));
+        elementStyle.Setters.Add(new Setter(FrameworkElement.MarginProperty, new Thickness(3, 0, 7, 0)));
+
+        var baseTransparentEditStyle = (Style)FindResource("DataGrid.CellEditTransparent");
+        var editingStyle = new Style(typeof(TextBox), baseTransparentEditStyle);
+        editingStyle.Setters.Add(new Setter(TextBox.HorizontalContentAlignmentProperty, HorizontalAlignment.Right));
+        editingStyle.Setters.Add(new Setter(TextBox.PaddingProperty, new Thickness(2, 0, 4, 0)));
+        editingStyle.Setters.Add(new Setter(Control.BorderThicknessProperty, new Thickness(0)));
+        editingStyle.Setters.Add(new Setter(Control.BackgroundProperty, System.Windows.Media.Brushes.Transparent));
+
+        var baseCellStyle = (Style)FindResource("DataGridCell.Excel");
+        var surf2Brush = (System.Windows.Media.Brush)FindResource("Brush.Surface2");
+        var blueSoftBrush = (System.Windows.Media.Brush)FindResource("Brush.BlueSoft");
+        var blueBrush = (System.Windows.Media.Brush)FindResource("Brush.Blue");
+
+        for (int slot = 0; slot < CubicacionViewModel.SectorWindowSize; slot++)
         {
-            var elementStyle = new Style(typeof(TextBlock));
-            elementStyle.Setters.Add(new Setter(TextBlock.HorizontalAlignmentProperty, HorizontalAlignment.Right));
-            elementStyle.Setters.Add(new Setter(FrameworkElement.MarginProperty, new Thickness(3, 0, 7, 0)));
+            int absoluteOffset = slot;
+            string headerText = slot < Vm.VisibleSectorHeaders.Count ? Vm.VisibleSectorHeaders[slot] : "";
+            bool shouldBeVisible = slot < visibleCount;
 
-            var baseTransparentEditStyle = (Style)FindResource("DataGrid.CellEditTransparent");
-            var editingStyle = new Style(typeof(TextBox), baseTransparentEditStyle);
-            editingStyle.Setters.Add(new Setter(TextBox.HorizontalContentAlignmentProperty, HorizontalAlignment.Right));
-            editingStyle.Setters.Add(new Setter(TextBox.PaddingProperty, new Thickness(2, 0, 4, 0)));
-            editingStyle.Setters.Add(new Setter(Control.BorderThicknessProperty, new Thickness(0)));
-            editingStyle.Setters.Add(new Setter(Control.BackgroundProperty, System.Windows.Media.Brushes.Transparent));
-
-            var baseCellStyle = (Style)FindResource("DataGridCell.Excel");
-            var surf2Brush = (System.Windows.Media.Brush)FindResource("Brush.Surface2");
-            var blueSoftBrush = (System.Windows.Media.Brush)FindResource("Brush.BlueSoft");
-            var blueBrush = (System.Windows.Media.Brush)FindResource("Brush.Blue");
-
-            for (int slot = 0; slot < CubicacionViewModel.SectorWindowSize; slot++)
+            var header = new StackPanel
             {
-                int absoluteOffset = slot;
-                string headerText = slot < Vm.VisibleSectorHeaders.Count ? Vm.VisibleSectorHeaders[slot] : "";
-                bool shouldBeVisible = slot < visibleCount;
+                ToolTip = string.IsNullOrEmpty(headerText) ? null : headerText,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            header.Children.Add(new TextBlock
+            {
+                Text = headerText,
+                FontSize = 9.5,
+                FontWeight = FontWeights.SemiBold,
+                MaxWidth = 50,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                TextWrapping = TextWrapping.NoWrap,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
+            });
 
-                var header = new StackPanel
+            var cellStyle = new Style(typeof(DataGridCell), baseCellStyle);
+            cellStyle.Setters.Add(new Setter(Control.BackgroundProperty, surf2Brush));
+
+            var pickTrigger = new DataTrigger
+            {
+                Binding = new Binding(nameof(CubicacionRowVm.FormulaPickTargetOffsets))
                 {
-                    // ToolTip vacío = popup navy sin texto (píldora negra flotante en la grilla).
-                    ToolTip = string.IsNullOrEmpty(headerText) ? null : headerText,
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    VerticalAlignment = VerticalAlignment.Center
-                };
-                header.Children.Add(new TextBlock
-                {
-                    Text = headerText,
-                    FontSize = 9.5,
-                    FontWeight = FontWeights.SemiBold,
-                    MaxWidth = 50,
-                    TextTrimming = TextTrimming.CharacterEllipsis,
-                    TextWrapping = TextWrapping.NoWrap,
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    VerticalAlignment = VerticalAlignment.Center
-                });
+                    Converter = SectorPickOffsetEqualsConverter.Instance,
+                    ConverterParameter = absoluteOffset
+                },
+                Value = true
+            };
+            pickTrigger.Setters.Add(new Setter(Control.BackgroundProperty, blueSoftBrush));
+            pickTrigger.Setters.Add(new Setter(Control.BorderBrushProperty, blueBrush));
+            pickTrigger.Setters.Add(new Setter(Control.BorderThicknessProperty, new Thickness(2)));
+            cellStyle.Triggers.Add(pickTrigger);
 
-                var cellStyle = new Style(typeof(DataGridCell), baseCellStyle);
-                cellStyle.Setters.Add(new Setter(Control.BackgroundProperty, surf2Brush));
+            var column = new DisplayBindingTextColumn
+            {
+                Header = header,
+                HeaderStyle = sectorHeaderStyle,
+                SectorSlot = absoluteOffset,
+                Width = 52,
+                MinWidth = 52,
+                CanUserResize = false,
+                CanUserSort = false,
+                Visibility = shouldBeVisible ? Visibility.Visible : Visibility.Collapsed,
+                Binding = new Binding($"SectorValues[{slot}]") { Mode = BindingMode.TwoWay, UpdateSourceTrigger = UpdateSourceTrigger.LostFocus },
+                DisplayBinding = new Binding($"SectorDisplayValues[{slot}]"),
+                ElementStyle = elementStyle,
+                EditingElementStyle = editingStyle,
+                CellStyle = cellStyle
+            };
 
-                var pickTrigger = new DataTrigger
-                {
-                    Binding = new Binding(nameof(CubicacionRowVm.FormulaPickTargetOffsets))
-                    {
-                        Converter = SectorPickOffsetEqualsConverter.Instance,
-                        ConverterParameter = absoluteOffset
-                    },
-                    Value = true
-                };
-                pickTrigger.Setters.Add(new Setter(Control.BackgroundProperty, blueSoftBrush));
-                pickTrigger.Setters.Add(new Setter(Control.BorderBrushProperty, blueBrush));
-                pickTrigger.Setters.Add(new Setter(Control.BorderThicknessProperty, new Thickness(2)));
-                cellStyle.Triggers.Add(pickTrigger);
+            ResourceGrid.Columns.Add(column);
+            _sectorColumns.Add(column);
+        }
+    }
 
-                var column = new DisplayBindingTextColumn
-                {
-                    Header = header,
-                    HeaderStyle = sectorHeaderStyle,
-                    SectorSlot = absoluteOffset,
-                    Width = 52,
-                    MinWidth = 52,
-                    CanUserResize = false,
-                    CanUserSort = false,
-                    Visibility = shouldBeVisible ? Visibility.Visible : Visibility.Collapsed,
-                    Binding = new Binding($"SectorValues[{slot}]") { Mode = BindingMode.TwoWay, UpdateSourceTrigger = UpdateSourceTrigger.LostFocus },
-                    DisplayBinding = new Binding($"SectorDisplayValues[{slot}]"),
-                    ElementStyle = elementStyle,
-                    EditingElementStyle = editingStyle,
-                    CellStyle = cellStyle
-                };
+    internal void EnsureSectorColumnVisible(int slot)
+    {
+        if (!Vm.IsZonaLibreMode || slot < 0) return;
+        if (slot >= _zonaLibreVisibleCount - 3 && _zonaLibreVisibleCount < CubicacionViewModel.MaximumSectorCount)
+        {
+            _zonaLibreVisibleCount = Math.Min(CubicacionViewModel.MaximumSectorCount, Math.Max(slot + 10, _zonaLibreVisibleCount + 15));
+            UpdateSectorColumnsVisibility();
+        }
+    }
 
-                ResourceGrid.Columns.Add(column);
-                _sectorColumns.Add(column);
-            }
+
+    private void ResetGridHorizontalScroll()
+    {
+        var sv = DataGridExcelNavigation.FindVisualChild<ScrollViewer>(ResourceGrid);
+        sv?.ScrollToHorizontalOffset(0);
+        if (ItemRowHost.RenderTransform is TranslateTransform tt)
+        {
+            tt.X = 0;
         }
 
-        // En modo Casillas, seleccionar todo / extender selección desde una casilla de sector
-        // (Ctrl+Shift+flecha, Ctrl+E, etc.) no debe arrastrar Código/Descripción/Unidad/Cantidad
-        // (datos del material, no cantidades a operar) — solo las columnas de sectores visibles.
-        DataGridExcelNavigation.SetColumnScope(ResourceGrid, col => !col.IsReadOnly && col != IndexColumn && col.Visibility == Visibility.Visible);
-
-        // Al entrar a Casillas, el foco siempre parte en la primera casilla de la tabla de
-        // cubicación — ahorra tener que hacer clic manualmente, igual que en Detalle.
-        // BeginInvoke porque las columnas recién se están terminando de armar en este mismo tick.
         Dispatcher.BeginInvoke(new Action(() =>
         {
-            if (Vm.IsSectorMatrixMode && ResourceGrid.Items.Count > 0)
+            var scrollViewer = DataGridExcelNavigation.FindVisualChild<ScrollViewer>(ResourceGrid);
+            scrollViewer?.ScrollToHorizontalOffset(0);
+            if (ItemRowHost.RenderTransform is TranslateTransform transform)
             {
-                var firstCol = ResourceGrid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible && !c.IsReadOnly)
-                               ?? ResourceGrid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible);
-                if (firstCol != null)
-                    DataGridExcelNavigation.FocusCell(ResourceGrid, 0, firstCol);
+                transform.X = 0;
             }
-        }), System.Windows.Threading.DispatcherPriority.Input);
+        }), System.Windows.Threading.DispatcherPriority.Loaded);
     }
 
     // TotalsBar siempre en CLP (MATERIALES / MANO DE OBRA / …). En Detalle se mantiene visible
