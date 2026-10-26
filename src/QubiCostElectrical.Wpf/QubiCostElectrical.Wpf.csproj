@@ -49,7 +49,7 @@
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.*" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.11" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.14" />
     <PackageReference Include="PDFtoImage" Version="5.1.1" />
     <PackageReference Include="Velopack" Version="0.*" />
   </ItemGroup>
