@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Qubi Cost® Electrical 2026 — Asistente de Instalación Oficial</title>
+  <title>Qubi Cost® Electrical 2026 — Asistente de Instalación y Configuración</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     /* ═════════════════════════════════════════════════════════════════════
        INSTALADOR PROFESIONAL: QUBI COST® ELECTRICAL 2026
-       Arquitectura CAD / Ingeniería de Software de Alta Precisión
+       Identidad Oficial de la App + Plano CAD Isométrico Defuminado
        ═════════════════════════════════════════════════════════════════════ */
     :root {
       --brand-navy: #101C30;
@@ -49,10 +49,10 @@
       overflow-x: hidden;
     }
 
-    /* ── Ventana Maestra de Instalación (Proporción CAD de Alta Gama) ── */
+    /* ── Ventana Maestra de Instalación ── */
     .installer-window {
-      width: 920px;
-      height: 690px;
+      width: 940px;
+      height: 700px;
       background: #FFFFFF;
       border-radius: 4px;
       box-shadow: 0 30px 90px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.1);
@@ -63,7 +63,7 @@
       border: 1px solid #334155;
     }
 
-    /* ── 1. Barra de Título Corporativa Qubi Cost ── */
+    /* ── 1. Barra de Título con Icono Real de la App (.ico) ── */
     .titlebar {
       height: 34px;
       background: var(--brand-navy);
@@ -77,16 +77,16 @@
     .titlebar-brand {
       display: flex;
       align-items: center;
-      gap: 9px;
+      gap: 10px;
       font-size: 12.5px;
       font-weight: 600;
       letter-spacing: 0.2px;
     }
     .titlebar-app-icon {
-      width: 18px;
-      height: 18px;
-      border-radius: 3px;
+      width: 19px;
+      height: 19px;
       object-fit: contain;
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
     }
     .window-controls {
       display: flex;
@@ -120,6 +120,8 @@
       align-items: center;
       justify-content: space-between;
       border-bottom: 1px solid #E2E8F0;
+      position: relative;
+      z-index: 20;
     }
     .header-text h1 {
       font-size: 26px;
@@ -157,43 +159,38 @@
       font-weight: 600;
     }
 
-    /* Logo Oficial Qubi Cost en Cabecera */
+    /* Logo Oficial de la App en Cabecera (Idéntico a ShellWindow) */
     .header-logo-box {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 11px;
       background: #F8FAFC;
-      padding: 6px 14px;
+      padding: 6px 16px 6px 12px;
       border-radius: 6px;
       border: 1px solid #E2E8F0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
     }
-    .header-logo-img {
-      width: 36px;
-      height: 36px;
-      border-radius: 6px;
+    .header-app-logo {
+      width: 38px;
+      height: 38px;
       object-fit: contain;
-      box-shadow: 0 2px 6px rgba(37, 99, 176, 0.25);
     }
     .logo-brand-titles {
       display: flex;
       flex-direction: column;
     }
     .logo-brand-titles .brand-name {
-      font-size: 16px;
+      font-size: 15.5px;
       font-weight: 800;
-      letter-spacing: -0.4px;
+      letter-spacing: 0.5px;
       color: var(--brand-navy);
       line-height: 1.1;
     }
-    .logo-brand-titles .brand-name span {
+    .logo-brand-titles .brand-sub {
+      font-size: 11.5px;
+      font-weight: 600;
       color: var(--brand-blue);
-    }
-    .logo-brand-titles .brand-tag {
-      font-size: 10px;
-      font-weight: 700;
-      color: var(--brand-cyan);
-      letter-spacing: 1px;
-      text-transform: uppercase;
+      letter-spacing: 0.2px;
     }
 
     /* ── 3. Escenario Central Dividido ── */
@@ -205,7 +202,7 @@
       overflow: hidden;
     }
 
-    /* Cinta Vertical de Acabado Eléctrico Profesional */
+    /* Cinta Vertical "CONFIGURACIÓN" con Azul Qubi Cost */
     .left-ribbon {
       width: 28px;
       background: linear-gradient(180deg, var(--brand-blue) 0%, var(--brand-navy) 100%);
@@ -228,15 +225,16 @@
 
     /* Columna de Componentes con Acordeones y Checkboxes */
     .components-column {
-      width: 505px;
+      width: 510px;
       padding: 16px 20px 14px 18px;
       display: flex;
       flex-direction: column;
       gap: 12px;
       overflow-y: auto;
       z-index: 8;
-      background: rgba(255, 255, 255, 0.96);
-      backdrop-filter: blur(4px);
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(8px);
+      border-right: 1px solid rgba(226, 232, 240, 0.8);
     }
     .components-column::-webkit-scrollbar {
       width: 7px;
@@ -357,59 +355,54 @@
       justify-content: space-between;
     }
 
-    /* ── Escenario Derecho: Arte 3D Oficial Qubi Cost de Ingeniería ── */
+    /* ── Escenario Derecho: Plano CAD Eléctrico Defuminado ── */
     .artwork-stage {
       flex: 1;
       position: relative;
-      background: radial-gradient(circle at 70% 45%, #F0F9FF 0%, #E0F2FE 45%, #BAE6FD 100%);
+      background: #FFFFFF;
       overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
     }
 
-    /* Grilla milimétrica CAD / Blueprint */
+    /* Grilla milimétrica técnica suave */
     .technical-grid {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
       background-image: 
-        linear-gradient(rgba(37, 99, 176, 0.08) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(37, 99, 176, 0.08) 1px, transparent 1px);
+        linear-gradient(rgba(37, 99, 176, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(37, 99, 176, 0.05) 1px, transparent 1px);
       background-size: 20px 20px;
       pointer-events: none;
+      z-index: 1;
     }
 
-    /* Escultura 3D Central con el Cubo y Rayo Oficial de Qubi Cost */
-    .qubicost-art-container {
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-    }
-
-    .main-art-cube {
-      width: 250px;
-      height: 250px;
-      object-fit: contain;
-      filter: drop-shadow(0 20px 35px rgba(16, 28, 48, 0.35));
-      animation: floatArt 6s ease-in-out infinite alternate;
-      z-index: 5;
-    }
-
-    @keyframes floatArt {
-      0% { transform: translateY(0px) rotate(0deg); }
-      100% { transform: translateY(-8px) rotate(1deg); }
-    }
-
-    /* Trazados de Circuitos Eléctricos y Conduits Isométricos */
-    .circuits-svg {
+    /* Imagen CAD Eléctrica Defuminada (Transparencia / Fusión suave) */
+    .cad-blueprint-defuminada {
       position: absolute;
-      top: 0; left: 0; width: 100%; height: 100%;
+      right: -10px;
+      top: -10px;
+      width: 105%;
+      height: 105%;
+      object-fit: cover;
+      object-position: center right;
       pointer-events: none;
+      opacity: 0.55;
+      filter: contrast(1.15) brightness(1.02);
+      /* Defuminado suave hacia el panel de componentes en el borde izquierdo */
+      mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.2) 15%, rgba(0,0,0,0.9) 55%, rgba(0,0,0,1) 100%);
+      -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.2) 15%, rgba(0,0,0,0.9) 55%, rgba(0,0,0,1) 100%);
+      z-index: 2;
+    }
+
+    /* Destello sutil azul técnico */
+    .cad-glow-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: radial-gradient(circle at 75% 45%, rgba(14, 165, 233, 0.12) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 3;
     }
 
     /* Sello de Especificación Técnica Oficial */
@@ -417,23 +410,23 @@
       position: absolute;
       bottom: 14px;
       right: 18px;
-      background: rgba(255, 255, 255, 0.92);
+      background: rgba(255, 255, 255, 0.94);
       border: 1px solid #94A3B8;
-      padding: 8px 12px;
-      font-size: 10.5px;
+      padding: 8px 14px;
+      font-size: 11px;
       color: #1E293B;
       line-height: 1.4;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.08);
       border-radius: 4px;
-      backdrop-filter: blur(6px);
+      backdrop-filter: blur(8px);
       z-index: 10;
     }
     .cad-spec-stamp strong {
       color: var(--brand-blue);
-      font-size: 11px;
+      font-size: 11.5px;
     }
 
-    /* ── 4. Consola Inferior (Idéntica a AutoCAD con selección de ambas rutas) ── */
+    /* ── 4. Consola Inferior (Selección de ambas rutas con estilo profesional) ── */
     .bottom-bar {
       background: linear-gradient(180deg, #F8FAFC 0%, #E2E8F0 100%);
       border-top: 1px solid #CBD5E1;
@@ -441,6 +434,8 @@
       display: flex;
       flex-direction: column;
       gap: 10px;
+      position: relative;
+      z-index: 20;
     }
 
     .path-selection-row {
@@ -554,7 +549,7 @@
       box-shadow: 0 3px 8px rgba(37, 99, 176, 0.5);
     }
 
-    /* ── 5. Modal de Diálogo "Examinar Carpeta" de Windows ── */
+    /* ── 5. Modal Simulado "Examinar Carpeta" de Windows ── */
     .dialog-backdrop {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -624,7 +619,7 @@
       gap: 8px;
     }
 
-    /* ── 6. Capa de Progreso en Vivo ── */
+    /* ── 6. Capa de Progreso en Vivo al Presionar Instalar ── */
     .installing-screen {
       position: absolute;
       top: 34px; left: 0; right: 0; bottom: 0;
@@ -668,10 +663,10 @@
   <!-- ── Ventana Maestra del Instalador Qubi Cost Electrical ── -->
   <div class="installer-window" id="installerWindow">
 
-    <!-- 1. Barra de Título Corporativa Qubi Cost -->
+    <!-- 1. Barra de Título con Icono Oficial .ico de la App -->
     <div class="titlebar">
       <div class="titlebar-brand">
-        <img src="brand_icon_256.png" alt="Qubi Cost Icon" class="titlebar-app-icon">
+        <img src="app_logo_from_ico.png" alt="Qubi Cost Icon" class="titlebar-app-icon">
         <span>Qubi Cost® Electrical 2026 — Asistente de Instalación y Configuración</span>
       </div>
       <div class="window-controls">
@@ -681,7 +676,7 @@
       </div>
     </div>
 
-    <!-- 2. Cabecera Blanca con Logo Oficial y Breadcrumb -->
+    <!-- 2. Cabecera Blanca con Logo Real de la App y Breadcrumb -->
     <div class="header-zone">
       <div class="header-text">
         <h1>
@@ -694,12 +689,12 @@
         </div>
       </div>
 
-      <!-- Logotipo Oficial de la Aplicación -->
+      <!-- Logotipo Oficial Idéntico al Header de la App (ShellWindow) -->
       <div class="header-logo-box">
-        <img src="brand_icon_256.png" alt="Qubi Cost Logo" class="header-logo-img">
+        <img src="app_logo_from_ico.png" alt="Qubi Cost Logo Oficial" class="header-app-logo">
         <div class="logo-brand-titles">
-          <div class="brand-name">QUBI<span>COST</span></div>
-          <div class="brand-tag">ELECTRICAL SUITE</div>
+          <div class="brand-name">QUBI COST</div>
+          <div class="brand-sub">Electrical</div>
         </div>
       </div>
     </div>
@@ -811,25 +806,16 @@
 
       </div>
 
-      <!-- Lado Derecho: Arte Visual 3D Oficial con el Logo de la App -->
+      <!-- Lado Derecho: Plano Isométrico Eléctrico CAD Defuminado -->
       <div class="artwork-stage">
         <!-- Grilla milimétrica técnica -->
         <div class="technical-grid"></div>
 
-        <!-- Trazados vectoriales de ingeniería eléctrica y alimentadores -->
-        <svg class="circuits-svg" viewBox="0 0 400 450" fill="none">
-          <path d="M50 80 H 220 V 180 H 340" stroke="rgba(37, 99, 176, 0.3)" stroke-width="2" stroke-dasharray="6 4"/>
-          <path d="M120 40 V 220 H 280 V 380" stroke="rgba(14, 165, 233, 0.35)" stroke-width="2"/>
-          <circle cx="220" cy="180" r="5" fill="#2563B0"/>
-          <circle cx="280" cy="220" r="4" fill="#0EA5E9"/>
-          <circle cx="120" cy="40" r="4" fill="#F59E0B"/>
-          <circle cx="340" cy="180" r="4" fill="#22C55E"/>
-        </svg>
+        <!-- Imagen CAD Eléctrica Defuminada (Fusión suave solicitada) -->
+        <img src="cad_electrical_bim.jpg" alt="Plano CAD Isométrico Eléctrico" class="cad-blueprint-defuminada">
 
-        <!-- Cubo Isométrico 3D Oficial de Qubi Cost -->
-        <div class="qubicost-art-container">
-          <img src="brand_logo.png" alt="Qubi Cost 3D Brand Logo" class="main-art-cube">
-        </div>
+        <!-- Destello sutil azul técnico -->
+        <div class="cad-glow-overlay"></div>
 
         <!-- Sello de Especificación Técnica Oficial -->
         <div class="cad-spec-stamp">
@@ -912,7 +898,7 @@
     <!-- ── 6. Capa de Progreso en Vivo al Presionar Instalar ── -->
     <div class="installing-screen" id="installingScreen">
       <div class="installing-card">
-        <img src="brand_icon_256.png" alt="Qubi Cost Logo" style="width: 52px; height: 52px; margin-bottom: 12px;">
+        <img src="app_logo_from_ico.png" alt="Qubi Cost Logo" style="width: 52px; height: 52px; margin-bottom: 12px;">
         <h2 style="font-size: 19px; font-weight: 700; color: #0F172A; margin-bottom: 6px;">
           Instalando Qubi Cost® Electrical 2026
         </h2>
