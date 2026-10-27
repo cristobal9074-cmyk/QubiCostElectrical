@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Qubi Cost® Electrical 2026 — Asistente de Instalación</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    /* ═════════════════════════════════════════════════════════════════════
+       FUSIÓN 1:1 AUTODESK® AUTOCAD® 2016 + QUBI COST® ELECTRICAL 2026
+       ═════════════════════════════════════════════════════════════════════ */
+    :root {
+      --win-red: #D32029;            /* Rojo clásico Autodesk */
+      --win-navy: #101C30;           /* Azul corporativo Qubi Cost */
+      --cad-blue: #0096D6;           /* Azul técnico AutoCAD / Cinta lateral */
+      --cad-blue-dark: #0077AB;
+      --text-main: #222222;
+      --text-muted: #555555;
+      --text-light: #777777;
+      --border-gray: #CCCCCC;
+      --input-border: #7F9DB9;
+      --console-bg: #F0F0F0;
+      --btn-grad-start: #FFFFFF;
+      --btn-grad-end: #E1E1E1;
+      --btn-border: #707070;
+      --btn-focus-glow: #0078D7;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #181E29 radial-gradient(circle at 50% 30%, #222E42 0%, #0F141E 100%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      overflow-x: hidden;
+    }
+
+    /* ── Barra Superior de Control de Modo (Para Alternar y Comparar con la imagen original) ── */
+    .top-toolbar {
+      width: 900px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      padding: 8px 16px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 6px;
+      backdrop-filter: blur(8px);
+      color: #E2E8F0;
+      font-size: 13px;
+    }
+    .top-toolbar .badge {
+      background: var(--cad-blue);
+      color: #FFFFFF;
+      font-weight: 700;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 3px;
+      letter-spacing: 0.5px;
+    }
+    .toolbar-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .theme-toggle-btn {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #FFFFFF;
+      padding: 5px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }
+    .theme-toggle-btn:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    /* ── Ventana Maestra de Instalación (Proporción exacta AutoCAD 2016: 858 x 671) ── */
+    .installer-window {
+      width: 870px;
+      height: 680px;
+      background: #FFFFFF;
+      border-radius: 2px;
+      box-shadow: 0 25px 70px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid #444444;
+    }
+
+    /* ── 1. Barra de Título Oficial (Rojo AutoCAD conmutable a Navy Qubi Cost) ── */
+    .titlebar {
+      height: 31px;
+      background: var(--win-red);
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-left: 10px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+      transition: background 0.3s ease;
+    }
+    .titlebar.navy-theme {
+      background: var(--win-navy);
+      border-bottom: 1px solid #1E293B;
+    }
+    .titlebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.1px;
+    }
+    .titlebar-icon-box {
+      width: 17px;
+      height: 17px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .titlebar-icon-box svg {
+      width: 15px;
+      height: 15px;
+      fill: #FFFFFF;
+    }
+    .window-controls {
+      display: flex;
+      height: 100%;
+    }
+    .win-control-btn {
+      width: 44px;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #FFFFFF;
+      cursor: pointer;
+      font-size: 11px;
+      transition: background 0.1s;
+    }
+    .win-control-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    .win-control-btn.btn-close:hover {
+      background: #B91C1C;
+    }
+
+    /* ── 2. Cabecera Blanca con Logo y Breadcrumb ── */
+    .header-zone {
+      padding: 16px 28px 10px 24px;
+      background: #FFFFFF;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      border-bottom: 1px solid #E5E5E5;
+    }
+    .header-text h1 {
+      font-size: 26px;
+      color: #1A1A1A;
+      font-weight: 300;
+      letter-spacing: 0.4px;
+      display: flex;
+      align-items: baseline;
+      gap: 7px;
+      line-height: 1.1;
+    }
+    .header-text h1 strong {
+      font-weight: 800;
+      color: #000000;
+    }
+    .header-text h1 span.accent {
+      color: var(--cad-blue);
+      font-weight: 800;
+    }
+    .header-breadcrumb {
+      margin-top: 5px;
+      font-size: 12.5px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .header-breadcrumb .sep {
+      color: #999999;
+      font-size: 11px;
+    }
+    .header-breadcrumb .step-active {
+      color: #1A1A1A;
+      font-weight: 600;
+    }
+
+    .header-logo-box {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-top: 2px;
+    }
+    .logo-cad-mark {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .logo-cad-text {
+      font-size: 19px;
+      font-weight: 800;
+      color: #1A1A1A;
+      letter-spacing: -0.5px;
+    }
+    .logo-cad-text span {
+      color: var(--cad-blue);
+    }
+
+    /* ── 3. Escenario Central (Cinta Lateral, Árbol de Componentes y Escultura 3D) ── */
+    .middle-stage {
+      flex: 1;
+      display: flex;
+      position: relative;
+      background: #FFFFFF;
+      overflow: hidden;
+    }
+
+    /* Cinta azul vertical exacta de AutoCAD ("INSTALADO" / "CONFIGURACIÓN") */
+    .left-ribbon {
+      width: 25px;
+      background: var(--cad-blue);
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 1px 0 3px rgba(0,0,0,0.15);
+      z-index: 10;
+      flex-shrink: 0;
+    }
+    .left-ribbon span {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    /* Columna de Componentes con Acordeones y Checkboxes */
+    .components-column {
+      width: 480px;
+      padding: 14px 18px 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      overflow-y: auto;
+      z-index: 8;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(2px);
+    }
+    .components-column::-webkit-scrollbar {
+      width: 7px;
+    }
+    .components-column::-webkit-scrollbar-thumb {
+      background: #B0B0B0;
+      border-radius: 4px;
+    }
+
+    /* Fila de Componente */
+    .comp-item {
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .comp-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      cursor: pointer;
+    }
+    .comp-status-tick {
+      color: #107C41;
+      font-size: 16px;
+      font-weight: bold;
+      line-height: 1;
+      margin-top: 1px;
+    }
+    .comp-checkbox {
+      width: 15px;
+      height: 15px;
+      margin-top: 2px;
+      cursor: pointer;
+      accent-color: var(--cad-blue);
+    }
+    .comp-body {
+      flex: 1;
+    }
+    .comp-title-line {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .comp-title-main {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1A1A1A;
+    }
+    .comp-badge {
+      font-size: 9.5px;
+      font-weight: 700;
+      background: #E0F2FE;
+      color: #0369A1;
+      padding: 1px 5px;
+      border-radius: 2px;
+      border: 1px solid #BAE6FD;
+    }
+    .comp-desc-text {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      line-height: 1.4;
+      margin-top: 2px;
+    }
+    .comp-expander-arrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 10.5px;
+      color: #777777;
+      margin-top: 3px;
+      cursor: pointer;
+      transition: color 0.15s;
+    }
+    .comp-expander-arrow:hover {
+      color: var(--cad-blue);
+    }
+    .comp-expander-arrow svg {
+      width: 10px;
+      height: 10px;
+      transition: transform 0.2s ease;
+      fill: #777777;
+    }
+    .comp-expander-arrow.expanded svg {
+      transform: rotate(180deg);
+      fill: var(--cad-blue);
+    }
+
+    /* Panel Plegable con Detalle de Configuración */
+    .comp-drawer {
+      display: none;
+      margin-top: 6px;
+      margin-left: 24px;
+      padding: 8px 12px;
+      background: #F4F6F9;
+      border: 1px solid #DCE2E9;
+      border-radius: 3px;
+      font-size: 11px;
+      color: #475569;
+      line-height: 1.45;
+    }
+    .comp-drawer.visible {
+      display: block;
+    }
+
+    /* Divisor Metálico Idéntico a AutoCAD: "Componentes compartidos" */
+    .cad-metallic-bar {
+      background: linear-gradient(180deg, #E6E6E6 0%, #D4D4D4 30%, #BEBEBE 60%, #D9D9D9 100%);
+      border: 1px solid #AEAEAE;
+      border-radius: 1px;
+      color: #222222;
+      font-size: 12.5px;
+      font-weight: 700;
+      padding: 3px 10px;
+      margin: 6px 0 2px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0,0,0,0.1);
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* ── Escenario Derecho: Escultura 3D Auténtica + Grilla Técnica ── */
+    .artwork-stage {
+      flex: 1;
+      position: relative;
+      background: #FFFFFF;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    /* Grilla milimétrica CAD de fondo */
+    .technical-grid {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-image: 
+        linear-gradient(rgba(0, 150, 214, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 150, 214, 0.05) 1px, transparent 1px);
+      background-size: 16px 16px;
+      pointer-events: none;
+    }
+
+    /* Escultura 3D extraída de la imagen de AutoCAD */
+    .cad-sculpture-img {
+      position: absolute;
+      right: 0;
+      top: 0;
+      height: 100%;
+      width: auto;
+      object-fit: cover;
+      pointer-events: none;
+      filter: contrast(1.05);
+      mask-image: linear-gradient(to left, rgba(0,0,0,1) 75%, rgba(0,0,0,0) 100%);
+      -webkit-mask-image: linear-gradient(to left, rgba(0,0,0,1) 75%, rgba(0,0,0,0) 100%);
+    }
+
+    /* Overlay de Circuitos Eléctricos y Trazados de Ingeniería sobre la escultura */
+    .circuit-overlay {
+      position: absolute;
+      right: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    /* Sello técnico de ingeniería de software */
+    .cad-spec-stamp {
+      position: absolute;
+      bottom: 12px;
+      right: 18px;
+      background: rgba(255, 255, 255, 0.88);
+      border: 1px solid #CBD5E1;
+      padding: 6px 10px;
+      font-size: 10px;
+      color: #334155;
+      line-height: 1.35;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+      border-radius: 2px;
+      backdrop-filter: blur(4px);
+    }
+    .cad-spec-stamp strong {
+      color: var(--cad-blue-dark);
+      font-size: 10.5px;
+    }
+
+    /* ── 4. Consola Inferior (Idéntica a AutoCAD con Selección de Carpetas) ── */
+    .bottom-bar {
+      background: linear-gradient(180deg, #F9F9F9 0%, #EDEDED 100%);
+      border-top: 1px solid #CCCCCC;
+      padding: 10px 24px 10px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .path-selection-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .path-label-text {
+      width: 140px;
+      font-size: 12px;
+      color: #333333;
+      flex-shrink: 0;
+    }
+    .path-input-box {
+      flex: 1;
+      height: 25px;
+      background: #FFFFFF;
+      border: 1px solid var(--input-border);
+      border-radius: 1px;
+      padding: 0 8px;
+      font-size: 11.5px;
+      color: #111111;
+      outline: none;
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+    }
+    .path-input-box:focus {
+      border-color: var(--cad-blue);
+      box-shadow: 0 0 3px rgba(0, 150, 214, 0.5);
+    }
+    .btn-browse {
+      height: 25px;
+      padding: 0 14px;
+      background: linear-gradient(180deg, #FFFFFF 0%, #E3E3E3 100%);
+      border: 1px solid #707070;
+      border-radius: 2px;
+      font-size: 11.5px;
+      color: #222222;
+      cursor: pointer;
+      transition: all 0.1s;
+    }
+    .btn-browse:hover {
+      background: linear-gradient(180deg, #F0F0F0 0%, #D5D5D5 100%);
+      border-color: #555555;
+    }
+    .btn-browse:active {
+      background: #D0D0D0;
+    }
+
+    /* Fila de Métricas de Disco y Enlaces */
+    .actions-and-info-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 4px;
+      border-top: 1px solid #DDDDDD;
+      margin-top: 2px;
+    }
+    .disk-space-label {
+      font-size: 11.5px;
+      color: var(--text-muted);
+    }
+    .disk-space-label strong {
+      color: #1A1A1A;
+    }
+
+    .help-links {
+      font-size: 11px;
+      color: #666666;
+      display: flex;
+      gap: 8px;
+    }
+    .help-links a {
+      color: #0066CC;
+      text-decoration: none;
+    }
+    .help-links a:hover {
+      text-decoration: underline;
+    }
+
+    /* Botones de Navegación Estilo AutoCAD */
+    .wizard-buttons {
+      display: flex;
+      gap: 7px;
+    }
+    .btn-cad {
+      min-width: 84px;
+      height: 26px;
+      padding: 0 14px;
+      background: linear-gradient(180deg, #FFFFFF 0%, #E3E3E3 100%);
+      border: 1px solid #707070;
+      border-radius: 2px;
+      font-size: 11.5px;
+      color: #222222;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.1s;
+    }
+    .btn-cad:hover {
+      background: linear-gradient(180deg, #F2F2F2 0%, #D5D5D5 100%);
+      border-color: #555555;
+    }
+    .btn-cad.primary-install {
+      background: linear-gradient(180deg, #FFFFFF 0%, #DDEBFA 60%, #C4DCF7 100%);
+      border: 1px solid #0078D7;
+      box-shadow: 0 0 0 1px #0078D7, inset 0 1px 0 rgba(255,255,255,0.9);
+      font-weight: 600;
+    }
+    .btn-cad.primary-install:hover {
+      background: linear-gradient(180deg, #FFFFFF 0%, #CEE4FA 60%, #A9D1F5 100%);
+      box-shadow: 0 0 4px rgba(0, 120, 215, 0.6), 0 0 0 1px #0078D7;
+    }
+
+    /* ── 5. Modal de Diálogo "Examinar Carpeta" de Windows ── */
+    .dialog-backdrop {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.45);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    .dialog-box {
+      width: 440px;
+      background: #FFFFFF;
+      border: 1px solid #707070;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .dialog-titlebar {
+      height: 28px;
+      background: #2B579A;
+      color: #FFFFFF;
+      font-size: 12px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 10px;
+    }
+    .dialog-content {
+      padding: 16px;
+      font-size: 12px;
+    }
+    .folder-tree {
+      margin-top: 8px;
+      height: 180px;
+      border: 1px solid #CCCCCC;
+      background: #FAFAFA;
+      padding: 8px;
+      overflow-y: auto;
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+    }
+    .folder-tree-item {
+      padding: 3px 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      border-radius: 2px;
+    }
+    .folder-tree-item:hover {
+      background: #E5F3FF;
+    }
+    .folder-tree-item.selected {
+      background: #CCE8FF;
+      font-weight: 600;
+    }
+    .dialog-footer {
+      background: #F0F0F0;
+      padding: 10px 14px;
+      border-top: 1px solid #E0E0E0;
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    /* ── 6. Capa de Progreso en Vivo ── */
+    .installing-screen {
+      position: absolute;
+      top: 31px; left: 0; right: 0; bottom: 0;
+      background: #FFFFFF;
+      z-index: 90;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+    }
+    .installing-card {
+      width: 580px;
+      border: 1px solid #D1D5DB;
+      background: #F8FAFC;
+      border-radius: 6px;
+      padding: 30px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+      text-align: center;
+    }
+    .cad-progress-trough {
+      width: 100%;
+      height: 20px;
+      background: #E2E8F0;
+      border: 1px solid #94A3B8;
+      border-radius: 2px;
+      overflow: hidden;
+      margin: 18px 0 10px;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.15);
+    }
+    .cad-progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(180deg, #38BDF8 0%, #0096D6 50%, #0077AB 100%);
+      transition: width 0.15s ease-out;
+    }
+
+    /* ── Modo Comparativa (Side-by-side con la imagen que subió el usuario) ── */
+    .comparison-drawer {
+      display: none;
+      width: 900px;
+      margin-top: 16px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px dashed rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
+      padding: 16px;
+      color: #FFFFFF;
+    }
+    .comparison-drawer img {
+      width: 100%;
+      border-radius: 4px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Barra de Herramientas Superior: Alternar Temas y Comparar ── -->
+  <div class="top-toolbar">
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span class="badge">FUSIÓN 1:1</span>
+      <span><strong>Asistente de Instalación Qubi Cost® Electrical 2026</strong> (Basado en el diseño técnico oficial de AutoCAD® 2016)</span>
+    </div>
+    <div class="toolbar-actions">
+      <button class="theme-toggle-btn" onclick="toggleTitlebarTheme()">
+        🎨 Alternar Barra (Rojo CAD / Azul Qubi Cost)
+      </button>
+      <button class="theme-toggle-btn" onclick="toggleComparison()">
+        👁️ Ver Imagen Original de Referencia
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Ventana Maestra del Instalador ── -->
+  <div class="installer-window" id="installerWindow">
+
+    <!-- 1. Barra de Título (Rojo oficial Autodesk o Azul Qubi Cost) -->
+    <div class="titlebar" id="appTitlebar">
+      <div class="titlebar-brand">
+        <div class="titlebar-icon-box">
+          <!-- Icono técnico -->
+          <svg viewBox="0 0 24 24">
+            <polygon points="12,2 2,7 12,12 22,7" fill="#FFFFFF"/>
+            <polygon points="2,12 12,17 22,12" fill="#FFFFFF" opacity="0.8"/>
+            <polygon points="2,17 12,22 22,17" fill="#FFFFFF" opacity="0.6"/>
+          </svg>
+        </div>
+        <span id="titlebarText">Autodesk® AutoCAD® 2016  —  Edición Qubi Cost® Electrical</span>
+      </div>
+      <div class="window-controls">
+        <div class="win-control-btn" title="Minimizar">&#9472;</div>
+        <div class="win-control-btn" title="Maximizar">&#9633;</div>
+        <div class="win-control-btn btn-close" onclick="alert('Instalación cancelada por el usuario.')" title="Cerrar">&#10005;</div>
+      </div>
+    </div>
+
+    <!-- 2. Cabecera Blanca con Tipografía Técnica y Breadcrumb -->
+    <div class="header-zone">
+      <div class="header-text">
+        <h1>
+          QUBI COST® <strong>ELECTRICAL</strong> <span class="accent">2026</span>
+        </h1>
+        <div class="header-breadcrumb">
+          <span>Instalar</span>
+          <span class="sep">&gt;</span>
+          <span class="step-active">Configurar instalación y directorios</span>
+        </div>
+      </div>
+
+      <!-- Logotipo Vectorial con estilo Autodesk -->
+      <div class="header-logo-box">
+        <div class="logo-cad-mark">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+            <path d="M6 16L16 6L26 16L16 26L6 16Z" fill="#0096D6" opacity="0.9"/>
+            <path d="M16 6V26" stroke="#FFFFFF" stroke-width="2"/>
+            <path d="M6 16H26" stroke="#FFFFFF" stroke-width="2"/>
+          </svg>
+        </div>
+        <div class="logo-cad-text">QUBI<span>COST</span></div>
+      </div>
+    </div>
+
+    <!-- 3. Escenario Central Dividido -->
+    <div class="middle-stage">
+
+      <!-- Cinta Azul Vertical "CONFIGURACIÓN" (Idéntica a "INSTALADO" de AutoCAD) -->
+      <div class="left-ribbon">
+        <span>CONFIGURACIÓN</span>
+      </div>
+
+      <!-- Panel Izquierdo: Lista de Componentes y Acordeones -->
+      <div class="components-column">
+
+        <!-- Item 1: Qubi Cost Electrical 2026 (Núcleo Principal) -->
+        <div class="comp-item">
+          <div class="comp-header">
+            <span class="comp-status-tick">&#10004;</span>
+            <input type="checkbox" class="comp-checkbox" checked onclick="event.stopPropagation()">
+            <div class="comp-body">
+              <div class="comp-title-line">
+                <span class="comp-title-main">Qubi Cost® Electrical 2026</span>
+                <span class="comp-badge">v1.1.6</span>
+              </div>
+              <div class="comp-desc-text">
+                Agilice la cubicación de servicios comunes (Doble Tubería), APU, ofertas comerciales y presupuesto eléctrico profesional con motor .NET 10 nativo.
+              </div>
+              <div class="comp-expander-arrow" onclick="toggleDrawer('drawerCore', this)">
+                <svg viewBox="0 0 10 6"><path d="M1 1L5 5L9 1" stroke="#555555" stroke-width="1.5" fill="none"/></svg>
+                <span>Configuración de acceso directo y arquitectura</span>
+              </div>
+              <div class="comp-drawer" id="drawerCore">
+                <label style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px; cursor: pointer;">
+                  <input type="checkbox" checked> Crear acceso directo en el Escritorio (Qubi Cost Electrical.lnk)
+                </label>
+                <label style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px; cursor: pointer;">
+                  <input type="checkbox" checked> Asociar extensión de presupuesto (.qce) con el programa
+                </label>
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                  <input type="checkbox" checked> Optimizar compilación ReadyToRun (R2R) para inicio instantáneo
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Item 2: Banco Canónico de Precios -->
+        <div class="comp-item">
+          <div class="comp-header">
+            <span class="comp-status-tick">&#10004;</span>
+            <input type="checkbox" class="comp-checkbox" checked onclick="event.stopPropagation()">
+            <div class="comp-body">
+              <div class="comp-title-line">
+                <span class="comp-title-main">Banco Canónico de Precios™</span>
+              </div>
+              <div class="comp-desc-text">
+                Catálogo integral con canalizaciones PVC/PVCLH, líneas de artefactos Magic/Matix, conductores EVA/H07Z1-K y rendimientos canónicos de mano de obra.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Barra Divisoria Metálica Estilo AutoCAD: "Componentes compartidos" -->
+        <div class="cad-metallic-bar">
+          <span>Componentes compartidos y almacenamiento</span>
+        </div>
+
+        <!-- Item 3: Almacén de Proyectos y Red SMB -->
+        <div class="comp-item">
+          <div class="comp-header">
+            <span class="comp-status-tick">&#10004;</span>
+            <input type="checkbox" class="comp-checkbox" checked onclick="event.stopPropagation()">
+            <div class="comp-body">
+              <div class="comp-title-line">
+                <span class="comp-title-main">Módulo de Proyectos SQLite .QCE</span>
+              </div>
+              <div class="comp-desc-text">
+                Almacén local y soporte multiusuario para carpetas de red compartidas (SMB/UNC) con control de bloqueos exclusivos y auditoría de cambios.
+              </div>
+              <div class="comp-expander-arrow" onclick="toggleDrawer('drawerNetwork', this)">
+                <svg viewBox="0 0 10 6"><path d="M1 1L5 5L9 1" stroke="#555555" stroke-width="1.5" fill="none"/></svg>
+                <span>Opciones de colaboración en red</span>
+              </div>
+              <div class="comp-drawer" id="drawerNetwork">
+                • Bloqueo a nivel de sistema operativo (<code>FileShare.None</code>) para prevenir sobreescrituras accidentales.<br>
+                • Heartbeat de presencia cada 30 s para liberar bloqueos huérfanos.<br>
+                • Registro en <code>project_audit_log</code> de aperturas y guardados.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Item 4: Certificado Authenticode -->
+        <div class="comp-item">
+          <div class="comp-header">
+            <span class="comp-status-tick">&#10004;</span>
+            <input type="checkbox" class="comp-checkbox" checked onclick="event.stopPropagation()">
+            <div class="comp-body">
+              <div class="comp-title-line">
+                <span class="comp-title-main">Certificado Digital Authenticode (Editor Verificado)</span>
+              </div>
+              <div class="comp-desc-text">
+                Registra la clave de firma digital en Windows (TrustedPublisher) para eliminar advertencias de SmartScreen y permitir auto-actualizaciones seguras.
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Lado Derecho: Arte Visual 3D Auténtico de la Imagen -->
+      <div class="artwork-stage">
+        <!-- Grilla milimétrica técnica -->
+        <div class="technical-grid"></div>
+
+        <!-- Escultura de AutoCAD extraída de la imagen de referencia -->
+        <img src="autodesk_sculpture.png" alt="Escultura 3D Técnica de Ingeniería" class="cad-sculpture-img" onerror="this.style.display='none'; document.getElementById('svgFallback').style.display='block';">
+
+        <!-- Fallback SVG de alto detalle en caso de abrirse fuera de la carpeta -->
+        <svg id="svgFallback" style="display: none; position: absolute; right: 0; top: 0; width: 360px; height: 100%; pointer-events: none;" viewBox="0 0 400 450">
+          <path d="M380,20 C240,60 160,180 220,320 C260,400 350,440 380,500" stroke="#0096D6" stroke-width="4" fill="none" opacity="0.6"/>
+          <path d="M360,40 C220,80 140,200 200,340 C240,420 330,460 360,520" stroke="#38BDF8" stroke-width="2.5" fill="none" opacity="0.8"/>
+          <polygon points="180,160 280,100 380,160 280,220" fill="rgba(0, 150, 214, 0.25)" stroke="#0096D6" stroke-width="2"/>
+          <polygon points="180,160 280,220 280,320 180,260" fill="rgba(0, 119, 171, 0.4)" stroke="#0077AB" stroke-width="2"/>
+        </svg>
+
+        <!-- Overlay Vectorial de Circuito Eléctrico de Potencia -->
+        <svg class="circuit-overlay" viewBox="0 0 350 450" fill="none">
+          <!-- Líneas de alimentadores eléctricos sutiles -->
+          <line x1="80" y1="90" x2="260" y2="90" stroke="rgba(0, 150, 214, 0.4)" stroke-width="1.5" stroke-dasharray="4 3"/>
+          <line x1="260" y1="90" x2="310" y2="140" stroke="rgba(0, 150, 214, 0.4)" stroke-width="1.5" stroke-dasharray="4 3"/>
+          <circle cx="260" cy="90" r="3" fill="#0096D6"/>
+          <circle cx="310" cy="140" r="3" fill="#0096D6"/>
+        </svg>
+
+        <!-- Sello de Certificación y Especificación Técnica -->
+        <div class="cad-spec-stamp">
+          <strong>QUBI COST® ENGINEERING</strong><br>
+          Paquete Oficial de Despliegue 2026<br>
+          Arquitectura x64 · SQLite 3 Canónico
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 4. Consola Inferior (Idéntica a AutoCAD con selección de ambas rutas) -->
+    <div class="bottom-bar">
+
+      <!-- Fila 1: Ruta de instalación del programa -->
+      <div class="path-selection-row">
+        <label class="path-label-text">Ruta de instalación:</label>
+        <input type="text" id="inputAppPath" class="path-input-box" value="C:\Program Files\Qubi Cost Electrical">
+        <button class="btn-browse" onclick="openFolderPicker('app')">Examinar...</button>
+      </div>
+
+      <!-- Fila 2: Carpeta de guardado de presupuestos y proyectos .qce (Requerimiento especial) -->
+      <div class="path-selection-row">
+        <label class="path-label-text">Carpeta de proyectos:</label>
+        <input type="text" id="inputProjPath" class="path-input-box" value="C:\Users\cristobal1\Documents\Presupuestos Electricos">
+        <button class="btn-browse" onclick="openFolderPicker('proj')">Examinar...</button>
+      </div>
+
+      <!-- Fila 3: Espacio en disco, enlaces y botones de acción -->
+      <div class="actions-and-info-row">
+        <div class="disk-space-label">
+          Espacio en disco: <strong>245 MB necesarios</strong> / <strong>482 GB disponibles</strong>
+        </div>
+
+        <div class="help-links">
+          <a href="#" onclick="alert('Manual de instalación: Copia los binarios y configura los registros locales de Windows.'); return false;">Ayuda para la instalación</a>
+          <span>|</span>
+          <a href="#" onclick="alert('Requisitos mínimos: Windows 10/11 x64, .NET 10 Runtime (incluido), 4 GB RAM.'); return false;">Requisitos del sistema</a>
+          <span>|</span>
+          <a href="#" onclick="alert('Léame: Qubi Cost Electrical 1.1.6 incluye módulo de Doble Tubería SC y firma Authenticode.'); return false;">Léame</a>
+        </div>
+
+        <div class="wizard-buttons">
+          <button class="btn-cad" onclick="alert('Retrocediendo al paso anterior.')">Atrás</button>
+          <button class="btn-cad primary-install" onclick="startInstallation()">Instalar</button>
+          <button class="btn-cad" onclick="alert('Instalación cancelada.')">Cancelar</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── 5. Modal Simulado "Examinar Carpeta" de Windows ── -->
+    <div class="dialog-backdrop" id="folderPickerBackdrop">
+      <div class="dialog-box">
+        <div class="dialog-titlebar">
+          <span id="dialogTitle">Buscar carpeta</span>
+          <span style="cursor: pointer; padding: 0 4px;" onclick="closeFolderPicker()">✕</span>
+        </div>
+        <div class="dialog-content">
+          <p style="margin-bottom: 8px; color: #444;" id="dialogPrompt">Seleccione la carpeta de destino:</p>
+          <div class="folder-tree">
+            <div class="folder-tree-item" onclick="selectFolder(this, 'C:\\Program Files')">📁 Este equipo &gt; Disco local (C:) &gt; Program Files</div>
+            <div class="folder-tree-item selected" onclick="selectFolder(this, 'C:\\Program Files\\Qubi Cost Electrical')">📁 &nbsp;&nbsp; 📂 Qubi Cost Electrical (Recomendado)</div>
+            <div class="folder-tree-item" onclick="selectFolder(this, 'C:\\Users\\cristobal1\\Documents\\Presupuestos Electricos')">📁 Este equipo &gt; Documentos &gt; 📂 Presupuestos Electricos</div>
+            <div class="folder-tree-item" onclick="selectFolder(this, 'D:\\Proyectos Electricos\\2026')">📁 Disco secundario (D:) &gt; 📂 Proyectos Electricos</div>
+            <div class="folder-tree-item" onclick="selectFolder(this, '\\\\Servidor-NAS\\Presupuestos')">🌐 Red Local (SMB) &gt; 📂 \\Servidor-NAS\Presupuestos</div>
+          </div>
+          <div style="margin-top: 10px; display: flex; align-items: center; gap: 6px;">
+            <span>Carpeta:</span>
+            <input type="text" id="dialogSelectedFolder" style="flex: 1; height: 24px; padding: 0 6px; border: 1px solid #999; font-size: 11px;" value="C:\Program Files\Qubi Cost Electrical">
+          </div>
+        </div>
+        <div class="dialog-footer">
+          <button class="btn-cad" onclick="confirmFolderSelection()">Aceptar</button>
+          <button class="btn-cad" onclick="closeFolderPicker()">Cancelar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 6. Capa de Progreso en Vivo al Presionar Instalar ── -->
+    <div class="installing-screen" id="installingScreen">
+      <div class="installing-card">
+        <h2 style="font-size: 18px; font-weight: 700; color: #1E293B; margin-bottom: 6px;">
+          Instalando Qubi Cost® Electrical 2026
+        </h2>
+        <p style="font-size: 12.5px; color: #64748B;" id="installStatusText">
+          Iniciando copia de archivos binarios y librerías x64...
+        </p>
+
+        <div class="cad-progress-trough">
+          <div class="cad-progress-bar" id="cadProgressBar"></div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; font-size: 11.5px; color: #64748B; margin-top: 6px;">
+          <span id="percentNumber">0%</span>
+          <span id="detailFileText">Extrayendo: QubiCostElectrical.Wpf.dll</span>
+        </div>
+
+        <div id="finishArea" style="display: none; margin-top: 22px;">
+          <div style="background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 4px; padding: 12px; margin-bottom: 14px; text-align: left; font-size: 12px; color: #065F46;">
+            <strong>✔ Instalación completada con éxito</strong><br>
+            • Certificado Authenticode verificado en <code>TrustedPublisher</code>.<br>
+            • Directorio de proyectos configurado en: <span id="finalProjDir">C:\Users\cristobal1\Documents\Presupuestos Electricos</span><br>
+            • Acceso directo creado en el Escritorio.
+          </div>
+          <button class="btn-cad primary-install" style="width: 100%; height: 34px; font-size: 13px;" onclick="alert('Iniciando Qubi Cost Electrical 2026...'); location.reload();">
+            Finalizar e Iniciar Qubi Cost Electrical
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Contenedor para Comparar con la Imagen Original de AutoCAD ── -->
+  <div class="comparison-drawer" id="comparisonDrawer">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+      <h3 style="font-size: 14px; font-weight: 700;">Captura Original de Referencia (AutoCAD 2016):</h3>
+      <span style="font-size: 12px; color: #94A3B8;">Compara la barra, la cinta lateral azul, la división metálica, la escultura y la consola inferior</span>
+    </div>
+    <img src="autocad_reference.png" alt="Captura Original de Referencia">
+  </div>
+
+  <!-- ── Lógica Interactiva en JavaScript ── -->
+  <script>
+    let activePickerTarget = 'app';
+
+    // Desplegar y contraer acordeones
+    function toggleDrawer(id, arrowBtn) {
+      const drawer = document.getElementById(id);
+      const isVisible = drawer.classList.contains('visible');
+      drawer.classList.toggle('visible', !isVisible);
+      arrowBtn.classList.toggle('expanded', !isVisible);
+    }
+
+    // Alternar tema entre Rojo AutoCAD y Azul Corporativo Qubi Cost
+    function toggleTitlebarTheme() {
+      const titlebar = document.getElementById('appTitlebar');
+      const text = document.getElementById('titlebarText');
+      if (titlebar.classList.contains('navy-theme')) {
+        titlebar.classList.remove('navy-theme');
+        text.innerText = "Autodesk® AutoCAD® 2016  —  Edición Qubi Cost® Electrical";
+      } else {
+        titlebar.classList.add('navy-theme');
+        text.innerText = "Qubi Cost® Electrical 2026 — Instalador Oficial";
+      }
+    }
+
+    // Mostrar/ocultar comparativa con la imagen original
+    function toggleComparison() {
+      const drawer = document.getElementById('comparisonDrawer');
+      drawer.style.display = drawer.style.display === 'block' ? 'none' : 'block';
+    }
+
+    // Modal Examinar Carpeta
+    function openFolderPicker(target) {
+      activePickerTarget = target;
+      const backdrop = document.getElementById('folderPickerBackdrop');
+      const title = document.getElementById('dialogTitle');
+      const prompt = document.getElementById('dialogPrompt');
+      const currentVal = target === 'app' ? 
+        document.getElementById('inputAppPath').value : 
+        document.getElementById('inputProjPath').value;
+
+      title.innerText = target === 'app' ? "Buscar carpeta de instalación" : "Buscar carpeta de proyectos .qce";
+      prompt.innerText = target === 'app' ? 
+        "Seleccione la carpeta donde se instalarán los ejecutables de Qubi Cost:" : 
+        "Seleccione la carpeta donde se guardarán y abrirán sus presupuestos eléctricos:";
+
+      document.getElementById('dialogSelectedFolder').value = currentVal;
+      backdrop.style.display = 'flex';
+    }
+
+    function selectFolder(element, path) {
+      document.querySelectorAll('.folder-tree-item').forEach(el => el.classList.remove('selected'));
+      element.classList.add('selected');
+      document.getElementById('dialogSelectedFolder').value = path;
+    }
+
+    function confirmFolderSelection() {
+      const selected = document.getElementById('dialogSelectedFolder').value;
+      if (activePickerTarget === 'app') {
+        document.getElementById('inputAppPath').value = selected;
+      } else {
+        document.getElementById('inputProjPath').value = selected;
+      }
+      closeFolderPicker();
+    }
+
+    function closeFolderPicker() {
+      document.getElementById('folderPickerBackdrop').style.display = 'none';
+    }
+
+    // Simulación del proceso real de instalación
+    function startInstallation() {
+      const screen = document.getElementById('installingScreen');
+      screen.style.display = 'flex';
+
+      const bar = document.getElementById('cadProgressBar');
+      const percent = document.getElementById('percentNumber');
+      const status = document.getElementById('installStatusText');
+      const fileText = document.getElementById('detailFileText');
+      const finish = document.getElementById('finishArea');
+      const finalProj = document.getElementById('finalProjDir');
+
+      finalProj.innerText = document.getElementById('inputProjPath').value;
+
+      const steps = [
+        { pct: 15, msg: "Desempaquetando librerías WPF y ensamblados...", file: "QubiCostElectrical.Wpf.dll" },
+        { pct: 35, msg: "Copiando motor de base de datos SQLite y migraciones...", file: "e_sqlite3.dll" },
+        { pct: 55, msg: "Configurando Banco Canónico de Precios 2026...", file: "canonical_database.db" },
+        { pct: 75, msg: "Instalando Certificado Authenticode en TrustedPublisher...", file: "CertificateTrustRegistrar.Register()" },
+        { pct: 90, msg: "Estableciendo carpeta predeterminada de presupuestos .qce...", file: "preferences.json" },
+        { pct: 100, msg: "Creando acceso directo en el Escritorio y finalizando...", file: "Qubi Cost Electrical.lnk" }
+      ];
+
+      let currentStep = 0;
+      const interval = setInterval(() => {
+        if (currentStep < steps.length) {
+          const s = steps[currentStep];
+          bar.style.width = s.pct + "%";
+          percent.innerText = s.pct + "%";
+          status.innerText = s.msg;
+          fileText.innerText = s.file;
+          currentStep++;
+        } else {
+          clearInterval(interval);
+          status.innerText = "¡Instalación completada con éxito!";
+          finish.style.display = 'block';
+        }
+      }, 550);
+    }
+  </script>
+</body>
+</html>
