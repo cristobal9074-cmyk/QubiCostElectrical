@@ -1,4 +1,4 @@
-﻿param(
+param(
     [string]$Configuration = "Release",
     [string]$Runtime = "win-x64",
     [switch]$Sign
@@ -23,6 +23,17 @@ if ($suffixMatch.Success -and $suffixMatch.Groups[1].Value) {
     $version = "$version-$($suffixMatch.Groups[1].Value)"
 }
 Write-Host "Versión: $version" -ForegroundColor Yellow
+
+# ── 1.1 Sincronizar versión en version.json del Instalador ─────────────────────
+$versionJsonPath = Join-Path $root "docs\mockups\version.json"
+if (Test-Path (Split-Path $versionJsonPath)) {
+    @{
+        version     = $version
+        productName = "Qubi Cost® Electrical"
+        releaseDate = (Get-Date -Format "yyyy-MM-dd")
+    } | ConvertTo-Json -Depth 3 | Set-Content -LiteralPath $versionJsonPath -Encoding utf8
+    Write-Host "  ✓ Versión del instalador sincronizada en version.json ($version)" -ForegroundColor Green
+}
 
 # ── 2. Limpiar publicación anterior ──────────────────────────────────────────
 if (Test-Path $publishDir) {

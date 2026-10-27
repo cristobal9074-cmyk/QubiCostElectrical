@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Qubi Cost® Electrical 2026 — Asistente de Instalación y Configuración</title>
+  <title>Qubi Cost® Electrical — Asistente de Instalación y Configuración</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     /* ═════════════════════════════════════════════════════════════════════
-       INSTALADOR PROFESIONAL: QUBI COST® ELECTRICAL 2026
-       Identidad Oficial de la App + Plano CAD Isométrico Defuminado
+       INSTALADOR PROFESIONAL: QUBI COST® ELECTRICAL
+       Versión Dinámica Automatizada + Plano CAD Isométrico Defuminado
        ═════════════════════════════════════════════════════════════════════ */
     :root {
       --brand-navy: #101C30;
@@ -378,7 +378,7 @@
       z-index: 1;
     }
 
-    /* Imagen CAD Eléctrica Defuminada (Transparencia / Fusión suave) */
+    /* Imagen CAD Eléctrica Defuminada */
     .cad-blueprint-defuminada {
       position: absolute;
       right: -10px;
@@ -390,7 +390,6 @@
       pointer-events: none;
       opacity: 0.55;
       filter: contrast(1.15) brightness(1.02);
-      /* Defuminado suave hacia el panel de componentes en el borde izquierdo */
       mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.2) 15%, rgba(0,0,0,0.9) 55%, rgba(0,0,0,1) 100%);
       -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.2) 15%, rgba(0,0,0,0.9) 55%, rgba(0,0,0,1) 100%);
       z-index: 2;
@@ -667,7 +666,7 @@
     <div class="titlebar">
       <div class="titlebar-brand">
         <img src="app_logo_from_ico.png" alt="Qubi Cost Icon" class="titlebar-app-icon">
-        <span>Qubi Cost® Electrical 2026 — Asistente de Instalación y Configuración</span>
+        <span>Qubi Cost® Electrical — Asistente de Instalación y Configuración</span>
       </div>
       <div class="window-controls">
         <div class="win-control-btn" title="Minimizar">&#9472;</div>
@@ -680,7 +679,7 @@
     <div class="header-zone">
       <div class="header-text">
         <h1>
-          QUBI COST® <strong>ELECTRICAL</strong> <span class="edition">2026</span>
+          QUBI COST® <strong>ELECTRICAL</strong> <span class="edition" id="versionBadgeHeader">v1.1.6</span>
         </h1>
         <div class="header-breadcrumb">
           <span>Instalación</span>
@@ -710,15 +709,15 @@
       <!-- Panel Izquierdo: Lista de Componentes y Acordeones -->
       <div class="components-column">
 
-        <!-- Item 1: Qubi Cost Electrical 2026 (Núcleo Principal) -->
+        <!-- Item 1: Qubi Cost Electrical (Núcleo Principal) -->
         <div class="comp-item">
           <div class="comp-header">
             <span class="comp-status-tick">&#10004;</span>
             <input type="checkbox" class="comp-checkbox" checked onclick="event.stopPropagation()">
             <div class="comp-body">
               <div class="comp-title-line">
-                <span class="comp-title-main">Qubi Cost® Electrical 2026</span>
-                <span class="comp-badge">v1.1.6</span>
+                <span class="comp-title-main">Qubi Cost® Electrical</span>
+                <span class="comp-badge" id="versionBadgeComponent">v1.1.6</span>
               </div>
               <div class="comp-desc-text">
                 Motor de cubicación para Servicios Comunes (Doble Tubería), APU dinámicos, ofertas y presupuestos eléctricos profesionales en .NET 10 x64.
@@ -811,7 +810,7 @@
         <!-- Grilla milimétrica técnica -->
         <div class="technical-grid"></div>
 
-        <!-- Imagen CAD Eléctrica Defuminada (Fusión suave solicitada) -->
+        <!-- Imagen CAD Eléctrica Defuminada -->
         <img src="cad_electrical_bim.jpg" alt="Plano CAD Isométrico Eléctrico" class="cad-blueprint-defuminada">
 
         <!-- Destello sutil azul técnico -->
@@ -820,7 +819,7 @@
         <!-- Sello de Especificación Técnica Oficial -->
         <div class="cad-spec-stamp">
           <strong>QUBI COST® ELECTRICAL SUITE</strong><br>
-          Edición Oficial de Despliegue 2026<br>
+          Edición Oficial de Despliegue <span id="stampVersionText">v1.1.6</span><br>
           Arquitectura x64 · SQLite 3 Canónico
         </div>
       </div>
@@ -855,7 +854,7 @@
           <span>|</span>
           <a href="#" onclick="alert('Requisitos: Windows 10/11 x64, .NET 10 Runtime incluido, 4 GB RAM.'); return false;">Requisitos del sistema</a>
           <span>|</span>
-          <a href="#" onclick="alert('Licencia: Qubi Cost Electrical 1.1.6 — Todos los derechos reservados.'); return false;">Léame</a>
+          <a href="#" onclick="alert('Licencia: Qubi Cost Electrical — Todos los derechos reservados.'); return false;">Léame</a>
         </div>
 
         <div class="wizard-buttons">
@@ -880,7 +879,7 @@
             <div class="folder-tree-item" onclick="selectFolder(this, 'C:\\Program Files')">📁 Este equipo &gt; Disco local (C:) &gt; Program Files</div>
             <div class="folder-tree-item selected" onclick="selectFolder(this, 'C:\\Program Files\\Qubi Cost Electrical')">📁 &nbsp;&nbsp; 📂 Qubi Cost Electrical (Recomendado)</div>
             <div class="folder-tree-item" onclick="selectFolder(this, 'C:\\Users\\cristobal1\\Documents\\Presupuestos Electricos')">📁 Este equipo &gt; Documentos &gt; 📂 Presupuestos Electricos</div>
-            <div class="folder-tree-item" onclick="selectFolder(this, 'D:\\Proyectos Electricos\\2026')">📁 Disco secundario (D:) &gt; 📂 Proyectos Electricos</div>
+            <div class="folder-tree-item" onclick="selectFolder(this, 'D:\\Proyectos Electricos')">📁 Disco secundario (D:) &gt; 📂 Proyectos Electricos</div>
             <div class="folder-tree-item" onclick="selectFolder(this, '\\\\Servidor-NAS\\Presupuestos')">🌐 Red Local (SMB) &gt; 📂 \\Servidor-NAS\Presupuestos</div>
           </div>
           <div style="margin-top: 12px; display: flex; align-items: center; gap: 8px;">
@@ -900,7 +899,7 @@
       <div class="installing-card">
         <img src="app_logo_from_ico.png" alt="Qubi Cost Logo" style="width: 52px; height: 52px; margin-bottom: 12px;">
         <h2 style="font-size: 19px; font-weight: 700; color: #0F172A; margin-bottom: 6px;">
-          Instalando Qubi Cost® Electrical 2026
+          Instalando Qubi Cost® Electrical <span id="progressVersionText">v1.1.6</span>
         </h2>
         <p style="font-size: 13px; color: #64748B;" id="installStatusText">
           Iniciando copia de archivos binarios y librerías x64...
@@ -922,7 +921,7 @@
             • Directorio de presupuestos configurado en: <span id="finalProjDir" style="font-weight: 600;">C:\Users\cristobal1\Documents\Presupuestos Electricos</span><br>
             • Acceso directo oficial creado en el Escritorio.
           </div>
-          <button class="btn-cad primary-install" style="width: 100%; height: 38px; font-size: 13px;" onclick="alert('Iniciando Qubi Cost Electrical 2026...'); location.reload();">
+          <button class="btn-cad primary-install" style="width: 100%; height: 38px; font-size: 13px;" onclick="alert('Iniciando Qubi Cost Electrical...'); location.reload();">
             Finalizar e Iniciar Qubi Cost Electrical
           </button>
         </div>
@@ -931,9 +930,54 @@
 
   </div>
 
-  <!-- ── Lógica Interactiva en JavaScript ── -->
+  <!-- ── Lógica Dinámica Automatizada para Versiones ── -->
   <script>
     let activePickerTarget = 'app';
+    let currentAppVersion = '1.1.6';
+
+    // ── Carga dinámica de versión desde version.json o URL ?v=x.x.x ──
+    async function loadDynamicVersion() {
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const queryVer = urlParams.get('v');
+        if (queryVer) {
+          applyVersion(queryVer);
+          return;
+        }
+
+        const resp = await fetch('version.json?t=' + Date.now());
+        if (resp.ok) {
+          const data = await resp.json();
+          if (data && data.version) {
+            applyVersion(data.version);
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn('Usando versión por defecto:', currentAppVersion);
+      }
+      applyVersion(currentAppVersion);
+    }
+
+    function applyVersion(ver) {
+      currentAppVersion = ver;
+      const formatted = ver.startsWith('v') ? ver : 'v' + ver;
+      
+      const vHeader = document.getElementById('versionBadgeHeader');
+      if (vHeader) vHeader.innerText = formatted;
+
+      const vComp = document.getElementById('versionBadgeComponent');
+      if (vComp) vComp.innerText = formatted;
+
+      const vStamp = document.getElementById('stampVersionText');
+      if (vStamp) vStamp.innerText = formatted;
+
+      const vProg = document.getElementById('progressVersionText');
+      if (vProg) vProg.innerText = formatted;
+    }
+
+    // Inicializar versión al cargar la página
+    loadDynamicVersion();
 
     function toggleDrawer(id, arrowBtn) {
       const drawer = document.getElementById(id);
@@ -996,7 +1040,7 @@
       const steps = [
         { pct: 15, msg: "Desempaquetando librerías WPF y ensamblados...", file: "QubiCostElectrical.Wpf.dll" },
         { pct: 35, msg: "Copiando motor de base de datos SQLite y migraciones...", file: "e_sqlite3.dll" },
-        { pct: 55, msg: "Configurando Banco Canónico de Precios 2026...", file: "canonical_database.db" },
+        { pct: 55, msg: "Configurando Banco Canónico de Precios...", file: "canonical_database.db" },
         { pct: 75, msg: "Instalando Certificado Authenticode en TrustedPublisher...", file: "CertificateTrustRegistrar.Register()" },
         { pct: 90, msg: "Estableciendo carpeta predeterminada de presupuestos .qce...", file: "preferences.json" },
         { pct: 100, msg: "Creando acceso directo en el Escritorio y finalizando...", file: "Qubi Cost Electrical.lnk" }
