@@ -27,6 +27,7 @@ public sealed class CircuitoSCRow
     // el metraje efectivo es la suma de los tramos (MetrosBandejaEfectivo/MetrosTuberiaEfectivo).
     public decimal MetrosBandeja { get; set; }
     public decimal MetrosTuberia { get; set; }
+    public decimal MetrosTuberia2 { get; set; }
 
     // Desglose por piso: cuando un circuito abarca varios pisos (ej. "-1 al 10"), cada piso lleva
     // su propio metraje de bandeja y tubería. Vacío = circuito de un solo largo (usa Metros*).
@@ -40,6 +41,8 @@ public sealed class CircuitoSCRow
     public string TipoRecorrido { get; set; } = "Tubería";
     public string TipoTuberia { get; set; } = "PVCLH";
     public string SeccionTuberia { get; set; } = "20mm";
+    public string TipoTuberia2 { get; set; } = "PVCLH";
+    public string SeccionTuberia2 { get; set; } = "20mm";
     public string TipoBandeja { get; set; } = "";
     public decimal AnchoBandeja { get; set; }
     public string ConductorDerivacion { get; set; } = "H07V-U";
@@ -74,12 +77,15 @@ public sealed class CircuitoSCRow
     // redondeado a entero (sin decimales .0): Total M PVC = L. PVC × conductores; Total M Band =
     // L. Band × conductores. Como un circuito se canaliza por tubería O por bandeja (TipoRecorrido),
     // solo uno de los dos largos es distinto de cero, así que solo aporta el conductor de ese tramo.
-    public decimal LargoDerivacion => EsActivo ? Math.Round(LargoTuberia * NumConductores * FactorMerma, 0, MidpointRounding.AwayFromZero) : 0m;
+    public decimal MetrosAltura => EsActivo ? Artefactos.Sum(a => a.Cantidad * a.AlturaBajada) : 0m;
+    public decimal LargoTuberia => EsActivo ? (MetrosTuberiaEfectivo + MetrosAltura) : 0m;
+    public decimal LargoTuberia2 => EsActivo ? MetrosTuberia2 : 0m;
+    public decimal LargoTuberiaTotal => LargoTuberia + LargoTuberia2;
+    public decimal LargoDerivacion => EsActivo ? Math.Round(LargoTuberiaTotal * NumConductores * FactorMerma, 0, MidpointRounding.AwayFromZero) : 0m;
     public decimal LargoDistribucion => EsActivo ? Math.Round(LargoBandeja * NumConductores * FactorMerma, 0, MidpointRounding.AwayFromZero) : 0m;
-    public decimal LargoTuberia => EsActivo ? MetrosTuberiaEfectivo : 0m;
     public decimal LargoBandeja => EsActivo ? MetrosBandejaEfectivo : 0m;
     // Largo total del circuito = suma de ambos tramos (para reportes que necesitan el metraje).
-    public decimal LargoTotal => LargoBandeja + LargoTuberia;
+    public decimal LargoTotal => LargoBandeja + LargoTuberia + LargoTuberia2;
     public int TotalCajas => (int)Math.Round(Cajas58 + Cajas100x100 + Cajas100x65);
     public bool TieneElementosConPunto => Artefactos.Any(a =>
         a.Cantidad > 0m && !string.IsNullOrWhiteSpace(a.Nombre));
@@ -118,6 +124,7 @@ public sealed class CircuitoSCRow
         LargoCircuito = LargoCircuito,
         MetrosBandeja = MetrosBandeja,
         MetrosTuberia = MetrosTuberia,
+        MetrosTuberia2 = MetrosTuberia2,
         PisosTramos = PisosTramos.Select(t => new CircuitoPisoTramo
         {
             ZonaId = t.ZonaId,
@@ -128,6 +135,8 @@ public sealed class CircuitoSCRow
         TipoRecorrido = TipoRecorrido,
         TipoTuberia = TipoTuberia,
         SeccionTuberia = SeccionTuberia,
+        TipoTuberia2 = TipoTuberia2,
+        SeccionTuberia2 = SeccionTuberia2,
         TipoBandeja = TipoBandeja,
         AnchoBandeja = AnchoBandeja,
         ConductorDerivacion = ConductorDerivacion,
@@ -145,6 +154,7 @@ public sealed class CircuitoSCRow
             Categoria = a.Categoria,
             Cantidad = a.Cantidad,
             ZonaId = a.ZonaId,
+            AlturaBajada = a.AlturaBajada,
         }).ToList(),
         SensoresMovimiento = SensoresMovimiento,
         Senaleticas = Senaleticas,
@@ -165,6 +175,7 @@ public sealed class CircuitoPisoTramo
     public string ZonaNombre { get; set; } = "";
     public decimal MetrosBandeja { get; set; }
     public decimal MetrosTuberia { get; set; }
+    public decimal MetrosTuberia2 { get; set; }
 }
 
 public sealed class ArtefactoSCRow
@@ -180,6 +191,8 @@ public sealed class ArtefactoSCRow
     // función, que se pueden reasignar). Se persiste dentro del JSON de CuadroCargaSCRow, así
     // que agregar este campo es retrocompatible sin migración de esquema SQLite.
     public string ZonaId { get; set; } = "";
+    // Altura de bajada vertical a este artefacto (m), ej: 2.20 m para enchufes, 1.30 m para interruptores.
+    public decimal AlturaBajada { get; set; } = 0m;
 }
 
 public sealed class CuadroCargaSCRow
@@ -201,6 +214,7 @@ public sealed class CuadroCargaSCRow
 public sealed class SistemaSC
 {
     public string Nombre { get; set; } = "";
+    public string Descripcion { get; set; } = "";
     public decimal NumConductores { get; set; } = 3m;
     public decimal MermaPct { get; set; } = 0m;
 }
@@ -218,8 +232,10 @@ public sealed class FlexibleMapSC
 [System.Text.Json.Serialization.JsonConverter(typeof(ArtefactoCatalogoItemJsonConverter))]
 public sealed class ArtefactoCatalogoItem
 {
+    public string Tag { get; set; } = "";
     public string Nombre { get; set; } = "";
     public string Categoria { get; set; } = "Otro";
+    public decimal AlturaBajada { get; set; } = 0m;
 }
 
 /// <summary>
@@ -246,8 +262,15 @@ public sealed class ArtefactoCatalogoItemJsonConverter : System.Text.Json.Serial
             reader.Read();
             switch (propertyName)
             {
+                case "Tag" or "tag": item.Tag = reader.GetString() ?? ""; break;
                 case "Nombre" or "nombre": item.Nombre = reader.GetString() ?? ""; break;
                 case "Categoria" or "categoria": item.Categoria = reader.GetString() ?? "Otro"; break;
+                case "AlturaBajada" or "alturaBajada" or "Altura" or "altura":
+                    if (reader.TokenType == System.Text.Json.JsonTokenType.Number)
+                        item.AlturaBajada = reader.GetDecimal();
+                    else if (decimal.TryParse(reader.GetString(), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var alt))
+                        item.AlturaBajada = alt;
+                    break;
                 default: reader.Skip(); break;
             }
         }
@@ -257,8 +280,10 @@ public sealed class ArtefactoCatalogoItemJsonConverter : System.Text.Json.Serial
     public override void Write(System.Text.Json.Utf8JsonWriter writer, ArtefactoCatalogoItem value, System.Text.Json.JsonSerializerOptions options)
     {
         writer.WriteStartObject();
+        if (!string.IsNullOrWhiteSpace(value.Tag)) writer.WriteString("Tag", value.Tag);
         writer.WriteString("Nombre", value.Nombre);
         writer.WriteString("Categoria", value.Categoria);
+        if (value.AlturaBajada > 0m) writer.WriteNumber("AlturaBajada", value.AlturaBajada);
         writer.WriteEndObject();
     }
 }
@@ -278,6 +303,7 @@ public sealed class CubicacionScConfig
     public List<string> TiposTuberia { get; set; } = new();
     public List<string> DiametrosTuberia { get; set; } = new();
     public List<string> TiposConductor { get; set; } = new();
+    public List<SeccionesConductorSC> SeccionesConductorDetalle { get; set; } = new();
     public List<string> SeccionesConductor { get; set; } = new();
     public List<string> TiposCaja { get; set; } = new();
     public List<SistemaSC> Sistemas { get; set; } = new();
@@ -310,9 +336,9 @@ public sealed class CubicacionScConfig
         // MermaPct sin aplicar en silencio.
         Sistemas = new()
         {
-            new SistemaSC { Nombre = "M", NumConductores = 3m, MermaPct = 5m },
-            new SistemaSC { Nombre = "T", NumConductores = 5m, MermaPct = 8m },
-            new SistemaSC { Nombre = "EM", NumConductores = 3m, MermaPct = 5m },
+            new SistemaSC { Nombre = "M", Descripcion = "MONOFASICO", NumConductores = 3m, MermaPct = 5m },
+            new SistemaSC { Nombre = "T", Descripcion = "TRIFASICO", NumConductores = 5m, MermaPct = 8m },
+            new SistemaSC { Nombre = "EM", Descripcion = "EMERGENCIA", NumConductores = 3m, MermaPct = 5m },
         },
         Flexibles = new()
         {
@@ -323,33 +349,39 @@ public sealed class CubicacionScConfig
         },
         Artefactos = new()
         {
-            new ArtefactoCatalogoItem { Nombre = "INT 9/12", Categoria = "Interruptor" },
-            new ArtefactoCatalogoItem { Nombre = "INT 9/15", Categoria = "Interruptor" },
-            new ArtefactoCatalogoItem { Nombre = "INT 9/24", Categoria = "Interruptor" },
-            new ArtefactoCatalogoItem { Nombre = "INT 9/32", Categoria = "Interruptor" },
-            new ArtefactoCatalogoItem { Nombre = "INT 9/12+IDRO", Categoria = "Interruptor" },
-            new ArtefactoCatalogoItem { Nombre = "INT 9/15+IDRO", Categoria = "Interruptor" },
-            new ArtefactoCatalogoItem { Nombre = "INT 9/24+IDRO", Categoria = "Interruptor" },
-            new ArtefactoCatalogoItem { Nombre = "INT 9/32+IDRO", Categoria = "Interruptor" },
-            new ArtefactoCatalogoItem { Nombre = "ENCH S10", Categoria = "Enchufe" },
-            new ArtefactoCatalogoItem { Nombre = "ENCH D10", Categoria = "Enchufe" },
-            new ArtefactoCatalogoItem { Nombre = "ENCH T10", Categoria = "Enchufe" },
-            new ArtefactoCatalogoItem { Nombre = "ENCH S16", Categoria = "Enchufe" },
-            new ArtefactoCatalogoItem { Nombre = "ENCH D16", Categoria = "Enchufe" },
-            new ArtefactoCatalogoItem { Nombre = "ENCH T16", Categoria = "Enchufe" },
-            new ArtefactoCatalogoItem { Nombre = "ENCH S10+IDRO", Categoria = "Enchufe" },
-            new ArtefactoCatalogoItem { Nombre = "ENCH D10+IDRO", Categoria = "Enchufe" },
-            new ArtefactoCatalogoItem { Nombre = "ENCH T10+IDRO", Categoria = "Enchufe" },
-            new ArtefactoCatalogoItem { Nombre = "ENCH S16+IDRO", Categoria = "Enchufe" },
-            new ArtefactoCatalogoItem { Nombre = "ENCH D16+IDRO", Categoria = "Enchufe" },
-            new ArtefactoCatalogoItem { Nombre = "ENCH T16+IDRO", Categoria = "Enchufe" },
-            new ArtefactoCatalogoItem { Nombre = "ENCH MONO", Categoria = "Enchufe" },
-            new ArtefactoCatalogoItem { Nombre = "ENCH TRIFA", Categoria = "Enchufe" },
-            new ArtefactoCatalogoItem { Nombre = "Downlight LED 12W", Categoria = "Luminaria" },
-            new ArtefactoCatalogoItem { Nombre = "Cinta LED perimetral", Categoria = "Luminaria" },
-            new ArtefactoCatalogoItem { Nombre = "Señalética de salida", Categoria = "Señalética" },
-            new ArtefactoCatalogoItem { Nombre = "Sensor de movimiento", Categoria = "Sensor" },
-            new ArtefactoCatalogoItem { Nombre = "Montaje luminaria", Categoria = "Montaje" },
+            new ArtefactoCatalogoItem { Nombre = "INT 9/12", Categoria = "Interruptor", AlturaBajada = 1.30m },
+            new ArtefactoCatalogoItem { Nombre = "INT 9/15", Categoria = "Interruptor", AlturaBajada = 1.30m },
+            new ArtefactoCatalogoItem { Nombre = "INT 9/24", Categoria = "Interruptor", AlturaBajada = 1.30m },
+            new ArtefactoCatalogoItem { Nombre = "INT 9/32", Categoria = "Interruptor", AlturaBajada = 1.30m },
+            new ArtefactoCatalogoItem { Nombre = "INT 9/12+IDRO", Categoria = "Interruptor", AlturaBajada = 1.30m },
+            new ArtefactoCatalogoItem { Nombre = "INT 9/15+IDRO", Categoria = "Interruptor", AlturaBajada = 1.30m },
+            new ArtefactoCatalogoItem { Nombre = "INT 9/24+IDRO", Categoria = "Interruptor", AlturaBajada = 1.30m },
+            new ArtefactoCatalogoItem { Nombre = "INT 9/32+IDRO", Categoria = "Interruptor", AlturaBajada = 1.30m },
+            new ArtefactoCatalogoItem { Nombre = "ENCH S10", Categoria = "Enchufe", AlturaBajada = 2.20m },
+            new ArtefactoCatalogoItem { Nombre = "ENCH D10", Categoria = "Enchufe", AlturaBajada = 2.20m },
+            new ArtefactoCatalogoItem { Nombre = "ENCH T10", Categoria = "Enchufe", AlturaBajada = 2.20m },
+            new ArtefactoCatalogoItem { Nombre = "ENCH S16", Categoria = "Enchufe", AlturaBajada = 2.20m },
+            new ArtefactoCatalogoItem { Nombre = "ENCH D16", Categoria = "Enchufe", AlturaBajada = 2.20m },
+            new ArtefactoCatalogoItem { Nombre = "ENCH T16", Categoria = "Enchufe", AlturaBajada = 2.20m },
+            new ArtefactoCatalogoItem { Nombre = "ENCH S10+IDRO", Categoria = "Enchufe", AlturaBajada = 2.20m },
+            new ArtefactoCatalogoItem { Nombre = "ENCH D10+IDRO", Categoria = "Enchufe", AlturaBajada = 2.20m },
+            new ArtefactoCatalogoItem { Nombre = "ENCH T10+IDRO", Categoria = "Enchufe", AlturaBajada = 2.20m },
+            new ArtefactoCatalogoItem { Nombre = "ENCH S16+IDRO", Categoria = "Enchufe", AlturaBajada = 2.20m },
+            new ArtefactoCatalogoItem { Nombre = "ENCH D16+IDRO", Categoria = "Enchufe", AlturaBajada = 2.20m },
+            new ArtefactoCatalogoItem { Nombre = "ENCH T16+IDRO", Categoria = "Enchufe", AlturaBajada = 2.20m },
+            new ArtefactoCatalogoItem { Nombre = "ENCH MONO", Categoria = "Enchufe", AlturaBajada = 2.20m },
+            new ArtefactoCatalogoItem { Nombre = "ENCH TRIFA", Categoria = "Enchufe", AlturaBajada = 2.20m },
+            new ArtefactoCatalogoItem { Tag = "DW12", Nombre = "Downlight LED 12W", Categoria = "Luminaria", AlturaBajada = 0m },
+            new ArtefactoCatalogoItem { Nombre = "Cinta LED perimetral", Categoria = "Luminaria", AlturaBajada = 0m },
+            new ArtefactoCatalogoItem { Nombre = "Señalética de salida", Categoria = "Señalética", AlturaBajada = 0m },
+            new ArtefactoCatalogoItem { Nombre = "Sensor de movimiento", Categoria = "Sensor", AlturaBajada = 0m },
+            new ArtefactoCatalogoItem { Tag = "MDL", Nombre = "Montaje luminaria", Categoria = "Montaje", AlturaBajada = 0m },
         },
     };
+}
+
+public sealed class SeccionesConductorSC
+{
+    public string Seccion { get; set; } = "";
+    public decimal Mm2 { get; set; }
 }

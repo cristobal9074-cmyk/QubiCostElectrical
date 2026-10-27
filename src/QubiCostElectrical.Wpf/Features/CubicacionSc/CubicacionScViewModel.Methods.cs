@@ -8,6 +8,7 @@ using QubiCostElectrical;
 using QubiCostElectrical.Wpf.Features.Dashboard;
 using QubiCostElectrical.Wpf.Infrastructure;
 using QubiCostElectrical.Wpf.Shell;
+using QubiCostElectrical.Wpf.Features.Cubicacion;
 
 namespace QubiCostElectrical.Wpf.Features.CubicacionSc;
 
@@ -28,7 +29,7 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
     public event Action? RequestCommitGridEdit;
 
     public CubicacionScViewModel(IShellNavigationHost shell, WpfAppHost host)
-        : this(shell, host.Session, host.ProjectWorkspace, host.UndoService, host.CubicacionSCReportExcelExporter) { }
+        : this(shell, host.Session, host.ProjectWorkspace, host.UndoService, host.CubicacionSCReportExcelExporter, host.PriceBankStore) { }
 
     [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
     public CubicacionScViewModel(
@@ -36,15 +37,20 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
         BudgetProjectSession session,
         IProjectWorkspaceService workspace,
         WpfUndoService undo,
-        ICubicacionSCReportExcelExporter? cubScExcel = null) : base(session)
+        ICubicacionSCReportExcelExporter? cubScExcel = null,
+        IPriceBankStore? priceBankStore = null) : base(session)
     {
         this.shell = shell;
         this.workspace = workspace;
         this.undo = undo;
         this.session = session;
+        this.priceBankStore = priceBankStore;
         this.cubScExcel = cubScExcel ?? new CubicacionSCTechnicalReportExcelExporter();
         this.exportCoordinator = new CubicacionScExportCoordinator(this.cubScExcel);
         this.clipboardCoordinator = new CubicacionScClipboardCoordinator();
+        this.CatalogoDrawer = new CubicacionScCatalogoDrawerCoordinator(this, session);
+        this.ArtefactosDrawer = new CubicacionScArtefactosDrawerCoordinator(this, session);
+        this.CambioLineaDrawer = new CubicacionScCambioLineaDrawerCoordinator(this, session, undo);
 
         AddCuadroCommand = new RelayCommand(AddCuadro, () => !showEmptyState && CanEdit);
         RemoveCuadroCommand = new RelayCommand<object>(RemoveCuadro, param => CanEdit && (param is CuadroScRowVm || selectedCuadro != null));
@@ -58,26 +64,18 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
         ApplyCommand = new RelayCommand(ApplyChanges, () => HasPendingChanges && CanEdit);
         OpenProjectCommand = new RelayCommand(() => _ = shell.OpenProjectAsync());
         OpenCatalogoCommand = new RelayCommand(AbrirCatalogo, () => !showEmptyState && CanEdit);
-        OpenArtefactosCommand = new RelayCommand<CircuitoScRowVm>(AbrirArtefactos, c => c != null && CanEdit);
+        OpenArtefactosCommand = new RelayCommand<CircuitoScRowVm>(AbrirArtefactos, _ => !showEmptyState && CanEdit);
         OpenResumenCommand = new RelayCommand(AbrirResumen, () => !showEmptyState);
         ExportPdfCommand = new RelayCommand(ExportPdf, () => !showEmptyState);
         BalancearFasesCommand = new RelayCommand(BalancearFases, () => selectedCuadro != null && CanEdit);
         ExportarCuadroSecCommand = new RelayCommand(ExportarCuadroSec, () => !showEmptyState);
         ClearSearchCommand = new RelayCommand(() => SearchText = string.Empty, () => HasSearchText);
-        SaveCommand = new RelayCommand(async () =>
-        {
-            TryApplyChanges();
-            await workspace.SaveAsync();
-            StatusMessage = "Cambios guardados.";
-        }, () => !showEmptyState && CanEdit);
+        SaveCommand = new RelayCommand(async () => { TryApplyChanges(); await workspace.SaveAsync(); StatusMessage = "Cambios guardados."; }, () => !showEmptyState && CanEdit);
         SelectPerspectiveCommand = new RelayCommand<string>(SelectPerspective);
+        ToggleSegundoDuctoCommand = new RelayCommand(ToggleSegundoDucto);
         MoveCuadroPerspectiveCommand = new RelayCommand<CuadroScRowVm>(MoveCuadroToOtherPerspective, _ => CanEdit);
-        ToggleAdvancedModeCommand = new RelayCommand(() =>
-        {
-            isAdvancedMode = !isAdvancedMode;
-            OnPropertyChanged(nameof(IsAdvancedMode));
-            OnPropertyChanged(nameof(AdvancedModeLabel));
-        });
+        ToggleAdvancedModeCommand = new RelayCommand(() => { isAdvancedMode = !isAdvancedMode; OnPropertyChanged(nameof(IsAdvancedMode)); OnPropertyChanged(nameof(AdvancedModeLabel)); });
+        OpenFamilyBatchReplaceCommand = new RelayCommand(OpenFamilyBatchReplace, () => CanEdit);
 
         Refresh();
     }
@@ -97,6 +95,30 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
     public bool ShowColBandeja => IsPerspectiveGenerales;
     public bool ShowColBandejaAdvanced => IsPerspectiveGenerales && isAdvancedMode;
     public bool ShowColTmf => IsPerspectiveGenerales;
+
+    private bool showSegundoDucto;
+    public bool ShowSegundoDucto
+    {
+        get => showSegundoDucto;
+        set
+        {
+            if (SetProperty(ref showSegundoDucto, value))
+            {
+                OnPropertyChanged(nameof(ShowColSegundoDucto));
+                OnPropertyChanged(nameof(SegundoDuctoButtonGlyph));
+                OnPropertyChanged(nameof(SegundoDuctoButtonToolTip));
+            }
+        }
+    }
+
+    public bool ShowColSegundoDucto => ShowSegundoDucto;
+    public string SegundoDuctoButtonGlyph => ShowSegundoDucto ? "-" : "+";
+    public string SegundoDuctoButtonToolTip => ShowSegundoDucto ? "Ocultar segundo ducto" : "Agregar segundo ducto (Tuberia 2)";
+
+    private void ToggleSegundoDucto()
+    {
+        ShowSegundoDucto = !ShowSegundoDucto;
+    }
 
     public void SelectPerspective(string? perspective)
     {
@@ -118,6 +140,7 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
         OnPropertyChanged(nameof(ShowColBandeja));
         OnPropertyChanged(nameof(ShowColBandejaAdvanced));
         OnPropertyChanged(nameof(ShowColTmf));
+        OnPropertyChanged(nameof(ShowColSegundoDucto));
 
         if (selectedCuadro == null || (currentPerspective == CubScPerspective.Deptos ? !selectedCuadro.IsDepto : selectedCuadro.IsDepto))
         {
@@ -213,8 +236,9 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
     public ObservableCollection<string> SeccionesConductor => seccionesConductor;
     public ObservableCollection<string> ArtefactosCatalogo => artefactosCatalogo;
 
-    private void RefreshCatalogCollections()
+    public void RefreshCatalogCollections()
     {
+        CatalogoDrawer?.RefreshData();
         // Códigos de sistemas de circuito desde el catálogo del proyecto (A, E, CL, CO...)
         var sistemasCircuito = Config.SistemasCircuito;
         if (sistemasCircuito == null || sistemasCircuito.Count == 0)
@@ -289,6 +313,10 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
                 return;
             LoadCircuitos();
             OnPropertyChanged(nameof(HasSelectedCuadro));
+            if (selectedCuadro != null && selectedCuadro.Source.Circuitos.Any(c => c.MetrosTuberia2 > 0))
+            {
+                ShowSegundoDucto = true;
+            }
             OnPropertyChanged(nameof(HasPendingChanges));
             OnPropertyChanged(nameof(CircuitosFiltrados));
             OnPropertyChanged(nameof(KpiPotenciaText));
@@ -308,6 +336,11 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
         set
         {
             if (!SetProperty(ref selectedCircuito, value)) return;
+            CatalogoDrawer?.NotifyActiveCircuitChanged();
+            if (ArtefactosDrawer?.IsOpen == true && value != null && ArtefactosDrawer.ActiveCircuit != value)
+            {
+                ArtefactosDrawer.OpenForCircuit(value);
+            }
             ((RelayCommand)RemoveCircuitoCommand).RaiseCanExecuteChanged();
             ((RelayCommand)CopyCircuitoCommand).RaiseCanExecuteChanged();
             ((RelayCommand)DuplicateCircuitoCommand).RaiseCanExecuteChanged();
@@ -441,11 +474,7 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
     public bool CanEdit => !session.IsReadOnly;
     public bool IsGridReadOnly => session.IsReadOnly;
     public bool HasPendingChanges { get; private set; }
-    public bool IsLoading
-    {
-        get => isLoading;
-        private set => SetProperty(ref isLoading, value);
-    }
+    public bool IsLoading { get => isLoading; private set => SetProperty(ref isLoading, value); }
 
     public ICommand AddCuadroCommand { get; }
     public ICommand RemoveCuadroCommand { get; }
@@ -466,6 +495,16 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
     public ICommand ExportarCuadroSecCommand { get; }
     public ICommand ClearSearchCommand { get; }
     public ICommand SaveCommand { get; }
+    public ICommand ToggleSegundoDuctoCommand { get; }
+    public ICommand OpenFamilyBatchReplaceCommand { get; }
+
+    private void OpenFamilyBatchReplace()
+    {
+        if (session.IsReadOnly) { ModuleFeedback.NotifyReadOnly("Cambio de línea", session.ReadOnlyReason); return; }
+        if (CatalogoDrawer.IsOpen) CatalogoDrawer.IsOpen = false;
+        if (ArtefactosDrawer.IsOpen) ArtefactosDrawer.IsOpen = false;
+        CambioLineaDrawer.Toggle();
+    }
 
     public void Refresh()
     {
@@ -841,42 +880,32 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
     // en vez de una pestaña nueva — pedido explícito del usuario.
     private void AbrirCatalogo()
     {
-        var owner = System.Windows.Application.Current?.Windows.OfType<System.Windows.Window>()
-            .FirstOrDefault(w => w.IsActive);
-        var dialog = new CubicacionScCatalogoDialog(Config, session.ProjectInfo.Nombre) { Owner = owner };
-        if (dialog.ShowDialog() != true || dialog.Result == null)
-            return;
-
-        session.CubicacionScConfig = dialog.Result;
-        RefreshCatalogCollections();
-        // Recarga los circuitos para que su constructor re-sincronice N° conductores / merma con el
-        // catálogo nuevo (los VM anteriores capturaban el config viejo).
-        LoadCircuitos();
-        MarkDirty();
-        StatusMessage = "Catálogo actualizado. Use Guardar en la barra superior para persistir el archivo.";
+        if (ArtefactosDrawer.IsOpen) ArtefactosDrawer.IsOpen = false;
+        if (CambioLineaDrawer.IsOpen) CambioLineaDrawer.IsOpen = false;
+        CatalogoDrawer.Toggle();
     }
 
-    // Alt+A / botón Artefactos: diálogo del circuito. Si la ubicación tiene varios pisos,
-    // solo muestra esos pisos. Elegir un artefacto pregunta la cantidad antes de guardarla.
+    // Alt+A / botón Artefactos: abre el panel lateral acoplado (drawer) del circuito.
     private void AbrirArtefactos(CircuitoScRowVm? vm)
     {
-        if (vm == null || !CanEdit)
+        if (CatalogoDrawer.IsOpen) CatalogoDrawer.IsOpen = false;
+        if (CambioLineaDrawer.IsOpen) CambioLineaDrawer.IsOpen = false;
+        var target = vm ?? selectedCircuito ?? Circuitos.FirstOrDefault();
+        if (target == null || !CanEdit)
             return;
 
-        var owner = System.Windows.Application.Current?.Windows.OfType<System.Windows.Window>()
-            .FirstOrDefault(w => w.IsActive);
-        var dialog = new CubicacionScArtefactosDialog(vm.Source, session.ZonasProyecto, Config) { Owner = owner };
-        if (dialog.ShowDialog() != true)
+        if (selectedCircuito != target)
+        {
+            SelectedCircuito = target;
+        }
+
+        if (ArtefactosDrawer.IsOpen && ArtefactosDrawer.ActiveCircuit == target)
+        {
+            ArtefactosDrawer.IsOpen = false;
             return;
+        }
 
-        // Registra en el catálogo del proyecto los artefactos nuevos creados al vuelo.
-        foreach (var nombre in dialog.NombresNuevos)
-            ResolveCategoriaYRegistrar(nombre);
-
-        vm.ReloadArtefactos();
-        SincronizarGrillaConSesion();
-        MarkDirty();
-        StatusMessage = "Artefactos por zona actualizados. Use Guardar en la barra superior para persistir el archivo.";
+        ArtefactosDrawer.OpenForCircuit(target);
     }
 
     /// <summary>
@@ -909,11 +938,18 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
     private void AbrirResumen()
     {
         if (showEmptyState) return;
-        if (SincronizarGrillaConSesion())
-            MarkDirty();
-        var owner = System.Windows.Application.Current?.Windows.OfType<System.Windows.Window>()
-            .FirstOrDefault(w => w.IsActive);
-        new CubicacionScResumenDialog(session.CubicacionSC, session.ZonasProyecto, Config, IsPerspectiveDeptos) { Owner = owner }.ShowDialog();
+        try
+        {
+            if (SincronizarGrillaConSesion())
+                MarkDirty();
+            var owner = System.Windows.Application.Current?.Windows.OfType<System.Windows.Window>()
+                .FirstOrDefault(w => w.IsActive);
+            new CubicacionScResumenDialog(session.CubicacionSC, session.ZonasProyecto, Config, IsPerspectiveDeptos) { Owner = owner }.ShowDialog();
+        }
+        finally
+        {
+            RequestRestoreActiveCell?.Invoke();
+        }
     }
 
     private void ApplyChanges()
@@ -937,7 +973,11 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
         ((RelayCommand)ApplyCommand).RaiseCanExecuteChanged();
     }
 
-    private void MarkDirty()
+    public void NotifyCatalogoDrawerOpenChanged() => OnPropertyChanged(nameof(IsCatalogoDrawerOpen));
+    public void NotifyArtefactosDrawerOpenChanged() => OnPropertyChanged(nameof(IsArtefactosDrawerOpen));
+    public void SetStatusMessage(string msg) => StatusMessage = msg;
+
+    public void MarkDirty()
     {
         if (session.IsReadOnly)
             return;

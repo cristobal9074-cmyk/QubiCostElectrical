@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace QubiCostElectrical;
 
@@ -13,22 +15,128 @@ public enum FamilyMappingStatus
     NotFound
 }
 
-public sealed class FamilyItemMapping
+public sealed class FamilyItemMapping : INotifyPropertyChanged
 {
-    public bool IsSelected { get; set; } = true;
-    public string SourceCodigo { get; set; } = "";
-    public string SourceDescripcion { get; set; } = "";
-    public string SourceUnidad { get; set; } = "";
-    public string SourceCategoria { get; set; } = "";
-    public decimal CantidadTotal { get; set; }
-    public decimal PrecioActualClp { get; set; }
+    public event PropertyChangedEventHandler? PropertyChanged;
+    private void OnPropertyChanged(string propertyName) =>
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+
+    private bool isSelected = true;
+    public bool IsSelected
+    {
+        get => isSelected;
+        set { if (isSelected != value) { isSelected = value; OnPropertyChanged(nameof(IsSelected)); } }
+    }
+
+    private string sourceCodigo = "";
+    public string SourceCodigo
+    {
+        get => sourceCodigo;
+        set { if (sourceCodigo != value) { sourceCodigo = value; OnPropertyChanged(nameof(SourceCodigo)); } }
+    }
+
+    private string sourceDescripcion = "";
+    public string SourceDescripcion
+    {
+        get => sourceDescripcion;
+        set { if (sourceDescripcion != value) { sourceDescripcion = value; OnPropertyChanged(nameof(SourceDescripcion)); } }
+    }
+
+    private string sourceUnidad = "";
+    public string SourceUnidad
+    {
+        get => sourceUnidad;
+        set { if (sourceUnidad != value) { sourceUnidad = value; OnPropertyChanged(nameof(SourceUnidad)); } }
+    }
+
+    private string sourceCategoria = "";
+    public string SourceCategoria
+    {
+        get => sourceCategoria;
+        set { if (sourceCategoria != value) { sourceCategoria = value; OnPropertyChanged(nameof(SourceCategoria)); } }
+    }
+
+    private decimal cantidadTotal;
+    public decimal CantidadTotal
+    {
+        get => cantidadTotal;
+        set
+        {
+            if (cantidadTotal != value)
+            {
+                cantidadTotal = value;
+                OnPropertyChanged(nameof(CantidadTotal));
+                OnPropertyChanged(nameof(SubtotalActualClp));
+                OnPropertyChanged(nameof(NuevoSubtotalClp));
+                OnPropertyChanged(nameof(DeltaClp));
+            }
+        }
+    }
+
+    private decimal precioActualClp;
+    public decimal PrecioActualClp
+    {
+        get => precioActualClp;
+        set
+        {
+            if (precioActualClp != value)
+            {
+                precioActualClp = value;
+                OnPropertyChanged(nameof(PrecioActualClp));
+                OnPropertyChanged(nameof(SubtotalActualClp));
+                OnPropertyChanged(nameof(DeltaClp));
+                OnPropertyChanged(nameof(DeltaUnitarioClp));
+            }
+        }
+    }
+
     public decimal SubtotalActualClp => CantidadTotal * PrecioActualClp;
 
-    public string TargetCodigo { get; set; } = "";
-    public string TargetDescripcion { get; set; } = "";
-    public string TargetUnidad { get; set; } = "";
-    public string TargetCategoria { get; set; } = "";
-    public decimal NuevoPrecioClp { get; set; }
+    private string targetCodigo = "";
+    public string TargetCodigo
+    {
+        get => targetCodigo;
+        set { if (targetCodigo != value) { targetCodigo = value; OnPropertyChanged(nameof(TargetCodigo)); } }
+    }
+
+    private string targetDescripcion = "";
+    public string TargetDescripcion
+    {
+        get => targetDescripcion;
+        set { if (targetDescripcion != value) { targetDescripcion = value; OnPropertyChanged(nameof(TargetDescripcion)); } }
+    }
+
+    private string targetUnidad = "";
+    public string TargetUnidad
+    {
+        get => targetUnidad;
+        set { if (targetUnidad != value) { targetUnidad = value; OnPropertyChanged(nameof(TargetUnidad)); } }
+    }
+
+    private string targetCategoria = "";
+    public string TargetCategoria
+    {
+        get => targetCategoria;
+        set { if (targetCategoria != value) { targetCategoria = value; OnPropertyChanged(nameof(TargetCategoria)); } }
+    }
+
+    private decimal nuevoPrecioClp;
+    public decimal NuevoPrecioClp
+    {
+        get => nuevoPrecioClp;
+        set
+        {
+            if (nuevoPrecioClp != value)
+            {
+                nuevoPrecioClp = value;
+                OnPropertyChanged(nameof(NuevoPrecioClp));
+                OnPropertyChanged(nameof(NuevoSubtotalClp));
+                OnPropertyChanged(nameof(DeltaClp));
+                OnPropertyChanged(nameof(DeltaUnitarioClp));
+            }
+        }
+    }
+
     public decimal NuevoSubtotalClp => CantidadTotal * NuevoPrecioClp;
     public decimal DeltaClp => NuevoSubtotalClp - SubtotalActualClp;
     public decimal DeltaUnitarioClp => NuevoPrecioClp - PrecioActualClp;
@@ -38,7 +146,21 @@ public sealed class FamilyItemMapping
     public decimal TargetMoClp { get; set; }
     public decimal TargetMoUf { get; set; }
 
-    public FamilyMappingStatus Status { get; set; } = FamilyMappingStatus.NoChange;
+    private FamilyMappingStatus status = FamilyMappingStatus.NoChange;
+    public FamilyMappingStatus Status
+    {
+        get => status;
+        set
+        {
+            if (status != value)
+            {
+                status = value;
+                OnPropertyChanged(nameof(Status));
+                OnPropertyChanged(nameof(StatusDisplay));
+            }
+        }
+    }
+
     public string StatusDisplay => Status switch
     {
         FamilyMappingStatus.InCubicacion => "En Cubicación",
@@ -149,7 +271,7 @@ public sealed class FamilyBatchReplaceService : IFamilyBatchReplaceService
             mapping.OccurrencesCount++;
         }
 
-        // 2. Escanear APUs (solo si no es scanCubicacionOnly)
+        // 2. Escanear APUs (si no es scanCubicacionOnly)
         if (!scanCubicacionOnly)
         {
             decimal valorUf = session.ProjectInfo?.ValorUfClp ?? PriceConversion.DefaultValorUfClp;
@@ -195,12 +317,103 @@ public sealed class FamilyBatchReplaceService : IFamilyBatchReplaceService
                     mapping.OccurrencesCount++;
                 }
             }
+
+            // 3. Escanear Cubicación SC (Circuitos, tuberías y artefactos)
+            if (session.CubicacionSC != null)
+            {
+                foreach (var cuadro in session.CubicacionSC)
+                {
+                    foreach (var c in cuadro.Circuitos)
+                    {
+                        if (!c.EsActivo) continue;
+
+                        // Tubería 1
+                        if (c.LargoTuberia > 0m && !string.IsNullOrWhiteSpace(c.TipoTuberia))
+                        {
+                            string code = $"TUBERIA {c.TipoTuberia} {c.SeccionTuberia}".Trim();
+                            if (MatchesFilter(c.TipoTuberia, code, cleanPattern))
+                            {
+                                AddOrUpdateScMapping(itemsMap, session, code, code, "ML", c.LargoTuberia);
+                            }
+                        }
+
+                        // Tubería 2
+                        if (c.LargoTuberia2 > 0m && !string.IsNullOrWhiteSpace(c.TipoTuberia2))
+                        {
+                            string code2 = $"TUBERIA {c.TipoTuberia2} {c.SeccionTuberia2}".Trim();
+                            if (MatchesFilter(c.TipoTuberia2, code2, cleanPattern))
+                            {
+                                AddOrUpdateScMapping(itemsMap, session, code2, code2, "ML", c.LargoTuberia2);
+                            }
+                        }
+
+                        // Artefactos
+                        foreach (var a in c.Artefactos)
+                        {
+                            if (a.Cantidad > 0m && !string.IsNullOrWhiteSpace(a.Nombre))
+                            {
+                                if (MatchesFilter(null, a.Nombre, cleanPattern))
+                                {
+                                    AddOrUpdateScMapping(itemsMap, session, a.Nombre.Trim(), a.Nombre.Trim(), "UN", a.Cantidad);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         return itemsMap.Values
             .OrderBy(m => m.SourceCodigo)
             .ThenBy(m => m.SourceDescripcion)
             .ToList();
+    }
+
+    private static void AddOrUpdateScMapping(
+        Dictionary<string, FamilyItemMapping> map,
+        BudgetProjectSession session,
+        string key,
+        string descripcion,
+        string unidad,
+        decimal cantidad)
+    {
+        if (!map.TryGetValue(key, out var mapping))
+        {
+            decimal precio = 0m;
+            // Buscar precio de referencia en catálogo de materiales o cubicación
+            var existingMat = session.Materiales.FirstOrDefault(m =>
+                string.Equals(m.Codigo?.Trim(), key, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(m.Descripcion?.Trim(), descripcion, StringComparison.OrdinalIgnoreCase));
+            if (existingMat != null)
+            {
+                precio = existingMat.MatClp > 0m ? existingMat.MatClp : existingMat.MatClpConFallback;
+            }
+            else
+            {
+                var existingCub = session.Cubicacion.FirstOrDefault(c =>
+                    string.Equals(c.Codigo?.Trim(), key, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(c.Descripcion?.Trim(), descripcion, StringComparison.OrdinalIgnoreCase));
+                if (existingCub != null)
+                {
+                    precio = existingCub.PrecioUnitClp;
+                }
+            }
+
+            mapping = new FamilyItemMapping
+            {
+                SourceCodigo = key,
+                SourceDescripcion = descripcion,
+                SourceUnidad = unidad,
+                SourceCategoria = "Cubicación SC",
+                PrecioActualClp = precio,
+                CantidadTotal = 0m,
+                OccurrencesCount = 0
+            };
+            map[key] = mapping;
+        }
+
+        mapping.CantidadTotal += cantidad;
+        mapping.OccurrencesCount++;
     }
 
     public void AutoMapWithPriceBank(
@@ -218,13 +431,18 @@ public sealed class FamilyBatchReplaceService : IFamilyBatchReplaceService
         string srcPrefix = sourcePrefix?.Trim() ?? string.Empty;
         string tgtPrefix = targetPrefix?.Trim() ?? string.Empty;
 
-        // Diccionario de materiales de la Cubicación del proyecto si hay sesión
         Dictionary<string, CubicacionRow>? cubicacionByCode = null;
+        Dictionary<string, MaterialRow>? materialesByCode = null;
         if (session != null)
         {
             cubicacionByCode = session.Cubicacion
                 .Where(c => !string.IsNullOrWhiteSpace(c.Codigo))
                 .GroupBy(c => c.Codigo.Trim(), StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+
+            materialesByCode = session.Materiales
+                .Where(m => !string.IsNullOrWhiteSpace(m.Codigo))
+                .GroupBy(m => m.Codigo.Trim(), StringComparer.OrdinalIgnoreCase)
                 .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
         }
 
@@ -232,17 +450,52 @@ public sealed class FamilyBatchReplaceService : IFamilyBatchReplaceService
         {
             string targetCode = "";
 
-            // 1. Verificar si hay un override explícito
-            if (explicitOverrides != null && explicitOverrides.TryGetValue(mapping.SourceCodigo, out var explicitCode))
+            // 1. Override explícito por código o descripción exactos
+            if (explicitOverrides != null)
             {
-                targetCode = explicitCode;
+                if (explicitOverrides.TryGetValue(mapping.SourceCodigo, out var explicitCode) ||
+                    explicitOverrides.TryGetValue(mapping.SourceDescripcion, out explicitCode))
+                {
+                    targetCode = explicitCode;
+                }
+                else
+                {
+                    // Buscar coincidencia parcial en claves de override
+                    foreach (var kvp in explicitOverrides)
+                    {
+                        if (!string.IsNullOrWhiteSpace(kvp.Key) &&
+                            (mapping.SourceCodigo.Contains(kvp.Key, StringComparison.OrdinalIgnoreCase) ||
+                             mapping.SourceDescripcion.Contains(kvp.Key, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            targetCode = !string.IsNullOrWhiteSpace(mapping.SourceCodigo)
+                                ? Regex.Replace(mapping.SourceCodigo, Regex.Escape(kvp.Key), kvp.Value, RegexOptions.IgnoreCase)
+                                : kvp.Value;
+                            break;
+                        }
+                    }
+                }
             }
-            // 2. Reemplazo por prefijo
-            else if (!string.IsNullOrEmpty(srcPrefix) && mapping.SourceCodigo.StartsWith(srcPrefix, StringComparison.OrdinalIgnoreCase))
+
+            // 2. Reemplazo por prefijo o subcadena
+            if (string.IsNullOrWhiteSpace(targetCode) && !string.IsNullOrEmpty(srcPrefix))
             {
-                targetCode = tgtPrefix + mapping.SourceCodigo.Substring(srcPrefix.Length);
+                if (mapping.SourceCodigo.StartsWith(srcPrefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    targetCode = tgtPrefix + mapping.SourceCodigo.Substring(srcPrefix.Length);
+                }
+                else if (mapping.SourceCodigo.Contains(srcPrefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    targetCode = Regex.Replace(mapping.SourceCodigo, Regex.Escape(srcPrefix), tgtPrefix, RegexOptions.IgnoreCase);
+                }
+                else if (mapping.SourceDescripcion.Contains(srcPrefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    string baseCode = !string.IsNullOrWhiteSpace(mapping.SourceCodigo) ? mapping.SourceCodigo : mapping.SourceDescripcion;
+                    targetCode = Regex.Replace(baseCode, Regex.Escape(srcPrefix), tgtPrefix, RegexOptions.IgnoreCase);
+                }
             }
-            else if (!string.IsNullOrWhiteSpace(mapping.TargetCodigo))
+
+            // 3. Respaldo a TargetCodigo existente
+            if (string.IsNullOrWhiteSpace(targetCode) && !string.IsNullOrWhiteSpace(mapping.TargetCodigo))
             {
                 targetCode = mapping.TargetCodigo;
             }
@@ -252,7 +505,7 @@ public sealed class FamilyBatchReplaceService : IFamilyBatchReplaceService
 
             mapping.TargetCodigo = targetCode;
 
-            // 3. Buscar primero en la Cubicación del proyecto activo
+            // 4. Buscar en la Cubicación del proyecto
             if (cubicacionByCode != null && cubicacionByCode.TryGetValue(targetCode, out var cubRow))
             {
                 mapping.TargetDescripcion = cubRow.Descripcion ?? "";
@@ -267,21 +520,35 @@ public sealed class FamilyBatchReplaceService : IFamilyBatchReplaceService
                 continue;
             }
 
-            // 4. Si no está en cubicación, buscar en el Banco de Precios
+            // 5. Buscar en catálogo de Materiales del proyecto
+            if (materialesByCode != null && materialesByCode.TryGetValue(targetCode, out var matRow))
+            {
+                mapping.TargetDescripcion = matRow.Descripcion ?? "";
+                mapping.TargetUnidad = !string.IsNullOrWhiteSpace(matRow.Unidad) ? matRow.Unidad : mapping.SourceUnidad;
+                mapping.TargetCategoria = matRow.Categoria ?? "";
+                mapping.NuevoPrecioClp = matRow.MatClp > 0m ? matRow.MatClp : matRow.MatClpConFallback;
+                mapping.TargetMatUf = matRow.MatUf;
+                mapping.TargetMoClp = matRow.MoClp;
+                mapping.TargetMoUf = matRow.MoUf;
+                mapping.TargetProveedor = matRow.Proveedor ?? "";
+                mapping.Status = FamilyMappingStatus.InCubicacion;
+                continue;
+            }
+
+            // 6. Buscar en Banco de Precios
             PriceBankEntry? bankEntry = null;
             try
             {
                 bankEntry = priceBankStore.GetByCodigo(targetCode);
                 if (bankEntry == null)
                 {
-                    // Intento de búsqueda insensible a mayúsculas/espacios
                     bankEntry = priceBankStore.Search(targetCode)
                         .FirstOrDefault(e => string.Equals(e.Codigo?.Trim(), targetCode.Trim(), StringComparison.OrdinalIgnoreCase));
                 }
             }
             catch
             {
-                // Silently handle if price store has issues
+                // Fallback safe
             }
 
             if (bankEntry != null)
@@ -298,7 +565,19 @@ public sealed class FamilyBatchReplaceService : IFamilyBatchReplaceService
             }
             else
             {
-                mapping.Status = FamilyMappingStatus.NotFound;
+                // 7. No encontrado en banco ni catálogo: generar descripción automática y conservar precio base para edición
+                if (!string.IsNullOrEmpty(srcPrefix) && mapping.SourceDescripcion.Contains(srcPrefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    mapping.TargetDescripcion = Regex.Replace(mapping.SourceDescripcion, Regex.Escape(srcPrefix), tgtPrefix, RegexOptions.IgnoreCase);
+                }
+                else
+                {
+                    mapping.TargetDescripcion = targetCode;
+                }
+
+                mapping.TargetUnidad = mapping.SourceUnidad;
+                mapping.NuevoPrecioClp = mapping.PrecioActualClp; // Línea base: conserva el precio actual para que no quede en $0
+                mapping.Status = FamilyMappingStatus.Manual;
             }
         }
     }
@@ -319,7 +598,7 @@ public sealed class FamilyBatchReplaceService : IFamilyBatchReplaceService
         decimal totalNuevo = 0m;
 
         var selectedDict = list
-            .Where(m => !string.IsNullOrWhiteSpace(m.TargetCodigo))
+            .Where(m => !string.IsNullOrWhiteSpace(m.TargetCodigo) || !string.IsNullOrWhiteSpace(m.TargetDescripcion))
             .ToDictionary(m => !string.IsNullOrWhiteSpace(m.SourceCodigo) ? m.SourceCodigo.Trim() : m.SourceDescripcion.Trim(),
                           StringComparer.OrdinalIgnoreCase);
 
@@ -397,8 +676,7 @@ public sealed class FamilyBatchReplaceService : IFamilyBatchReplaceService
 
         var activeMappings = mappings
             .Where(m => m.IsSelected &&
-                        !string.IsNullOrWhiteSpace(m.TargetCodigo) &&
-                        (m.Status == FamilyMappingStatus.InBank || m.Status == FamilyMappingStatus.Manual))
+                        (!string.IsNullOrWhiteSpace(m.TargetCodigo) || !string.IsNullOrWhiteSpace(m.TargetDescripcion)))
             .ToList();
 
         if (activeMappings.Count == 0)
@@ -432,17 +710,17 @@ public sealed class FamilyBatchReplaceService : IFamilyBatchReplaceService
                     costoAnterior += subActual;
                     costoNuevo += subNuevo;
 
-                    r.Codigo = mapping.TargetCodigo;
-                    r.Descripcion = mapping.TargetDescripcion;
+                    r.Codigo = !string.IsNullOrWhiteSpace(mapping.TargetCodigo) ? mapping.TargetCodigo : r.Codigo;
+                    r.Descripcion = (!string.IsNullOrWhiteSpace(mapping.TargetDescripcion) ? mapping.TargetDescripcion : r.Descripcion) ?? "";
                     if (!string.IsNullOrWhiteSpace(mapping.TargetUnidad))
                         r.Unidad = mapping.TargetUnidad;
                     if (!string.IsNullOrWhiteSpace(mapping.TargetCategoria))
                         r.Categoria = mapping.TargetCategoria;
 
                     r.MatClp = mapping.NuevoPrecioClp;
-                    r.MoClp = mapping.TargetMoClp;
+                    r.MoClp = mapping.TargetMoClp > 0m ? mapping.TargetMoClp : r.MoClp;
                     r.MatUf = mapping.TargetMatUf > 0m ? mapping.TargetMatUf : (valorUf > 0m ? mapping.NuevoPrecioClp / valorUf : 0m);
-                    r.MoUf = mapping.TargetMoUf;
+                    r.MoUf = mapping.TargetMoUf > 0m ? mapping.TargetMoUf : r.MoUf;
 
                     rowsCubMod++;
                     affectedPartidas.Add(r.ItemId);
@@ -471,8 +749,8 @@ public sealed class FamilyBatchReplaceService : IFamilyBatchReplaceService
                         costoAnterior += cantTotal * recPrecioActual;
                         costoNuevo += cantTotal * mapping.NuevoPrecioClp;
 
-                        rec.CodigoMaterial = mapping.TargetCodigo;
-                        rec.Descripcion = mapping.TargetDescripcion;
+                        rec.CodigoMaterial = !string.IsNullOrWhiteSpace(mapping.TargetCodigo) ? mapping.TargetCodigo : rec.CodigoMaterial;
+                        rec.Descripcion = (!string.IsNullOrWhiteSpace(mapping.TargetDescripcion) ? mapping.TargetDescripcion : rec.Descripcion) ?? "";
                         if (!string.IsNullOrWhiteSpace(mapping.TargetUnidad))
                             rec.Unidad = mapping.TargetUnidad;
 
@@ -487,7 +765,93 @@ public sealed class FamilyBatchReplaceService : IFamilyBatchReplaceService
             }
         }
 
-        // 3. Sincronizar catálogo de materiales del proyecto
+        // 3. Reemplazo en Cubicación SC (Tuberías y Artefactos)
+        if (session.CubicacionSC != null && session.CubicacionSC.Count > 0)
+        {
+            foreach (var cuadro in session.CubicacionSC)
+            {
+                foreach (var c in cuadro.Circuitos)
+                {
+                    // TipoTuberia
+                    if (!string.IsNullOrWhiteSpace(c.TipoTuberia))
+                    {
+                        if (mappingMap.TryGetValue(c.TipoTuberia, out var mTub) && !string.IsNullOrWhiteSpace(mTub.TargetCodigo))
+                        {
+                            c.TipoTuberia = mTub.TargetCodigo;
+                            affectedPartidas.Add(cuadro.Id);
+                        }
+                        else
+                        {
+                            foreach (var m in activeMappings)
+                            {
+                                if (!string.IsNullOrWhiteSpace(m.SourceCodigo) &&
+                                    (string.Equals(c.TipoTuberia, m.SourceCodigo, StringComparison.OrdinalIgnoreCase) ||
+                                     c.TipoTuberia.Contains(m.SourceCodigo, StringComparison.OrdinalIgnoreCase)))
+                                {
+                                    string tgt = !string.IsNullOrWhiteSpace(m.TargetCodigo) ? m.TargetCodigo : m.TargetDescripcion;
+                                    c.TipoTuberia = Regex.Replace(c.TipoTuberia, Regex.Escape(m.SourceCodigo), tgt, RegexOptions.IgnoreCase);
+                                    affectedPartidas.Add(cuadro.Id);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    // TipoTuberia2
+                    if (!string.IsNullOrWhiteSpace(c.TipoTuberia2))
+                    {
+                        if (mappingMap.TryGetValue(c.TipoTuberia2, out var mTub2) && !string.IsNullOrWhiteSpace(mTub2.TargetCodigo))
+                        {
+                            c.TipoTuberia2 = mTub2.TargetCodigo;
+                            affectedPartidas.Add(cuadro.Id);
+                        }
+                        else
+                        {
+                            foreach (var m in activeMappings)
+                            {
+                                if (!string.IsNullOrWhiteSpace(m.SourceCodigo) &&
+                                    (string.Equals(c.TipoTuberia2, m.SourceCodigo, StringComparison.OrdinalIgnoreCase) ||
+                                     c.TipoTuberia2.Contains(m.SourceCodigo, StringComparison.OrdinalIgnoreCase)))
+                                {
+                                    string tgt = !string.IsNullOrWhiteSpace(m.TargetCodigo) ? m.TargetCodigo : m.TargetDescripcion;
+                                    c.TipoTuberia2 = Regex.Replace(c.TipoTuberia2, Regex.Escape(m.SourceCodigo), tgt, RegexOptions.IgnoreCase);
+                                    affectedPartidas.Add(cuadro.Id);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    // Artefactos
+                    foreach (var a in c.Artefactos)
+                    {
+                        if (string.IsNullOrWhiteSpace(a.Nombre)) continue;
+
+                        if (mappingMap.TryGetValue(a.Nombre, out var mArt))
+                        {
+                            a.Nombre = !string.IsNullOrWhiteSpace(mArt.TargetDescripcion) ? mArt.TargetDescripcion : mArt.TargetCodigo;
+                            affectedPartidas.Add(cuadro.Id);
+                        }
+                        else
+                        {
+                            foreach (var m in activeMappings)
+                            {
+                                if (!string.IsNullOrWhiteSpace(m.SourceCodigo) &&
+                                    a.Nombre.Contains(m.SourceCodigo, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    string tgt = !string.IsNullOrWhiteSpace(m.TargetDescripcion) ? m.TargetDescripcion : m.TargetCodigo;
+                                    a.Nombre = Regex.Replace(a.Nombre, Regex.Escape(m.SourceCodigo), tgt, RegexOptions.IgnoreCase);
+                                    affectedPartidas.Add(cuadro.Id);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 4. Sincronizar catálogo de materiales del proyecto
         foreach (var mapping in activeMappings)
         {
             string key = !string.IsNullOrWhiteSpace(mapping.SourceCodigo) ? mapping.SourceCodigo.Trim() : mapping.SourceDescripcion.Trim();
@@ -497,23 +861,30 @@ public sealed class FamilyBatchReplaceService : IFamilyBatchReplaceService
 
             if (existingCat != null)
             {
-                existingCat.Codigo = mapping.TargetCodigo;
-                existingCat.Descripcion = mapping.TargetDescripcion;
+                existingCat.Codigo = !string.IsNullOrWhiteSpace(mapping.TargetCodigo) ? mapping.TargetCodigo : existingCat.Codigo;
+                existingCat.Descripcion = (!string.IsNullOrWhiteSpace(mapping.TargetDescripcion) ? mapping.TargetDescripcion : existingCat.Descripcion) ?? "";
                 if (!string.IsNullOrWhiteSpace(mapping.TargetUnidad))
                     existingCat.Unidad = mapping.TargetUnidad;
                 if (!string.IsNullOrWhiteSpace(mapping.TargetCategoria))
                     existingCat.Categoria = mapping.TargetCategoria;
 
                 existingCat.MatClp = mapping.NuevoPrecioClp;
-                existingCat.MoClp = mapping.TargetMoClp;
+                existingCat.MoClp = mapping.TargetMoClp > 0m ? mapping.TargetMoClp : existingCat.MoClp;
                 existingCat.MatUf = mapping.TargetMatUf > 0m ? mapping.TargetMatUf : (valorUf > 0m ? mapping.NuevoPrecioClp / valorUf : 0m);
-                existingCat.MoUf = mapping.TargetMoUf;
+                existingCat.MoUf = mapping.TargetMoUf > 0m ? mapping.TargetMoUf : existingCat.MoUf;
                 if (!string.IsNullOrWhiteSpace(mapping.TargetProveedor))
                     existingCat.Proveedor = mapping.TargetProveedor;
             }
         }
 
-        session.MarkDirty("family_batch_replace");
+        session.SyncCubicacionPricesFromMateriales();
+        session.SyncCubicacionGgUtFactorsFromVariables();
+        session.MarkDirty(
+            ProjectDirtyScope.Cubicacion,
+            ProjectDirtyScope.Apu,
+            ProjectDirtyScope.Itemizado,
+            ProjectDirtyScope.CubicacionSc,
+            ProjectDirtyScope.Materiales);
 
         return new FamilyBatchReplaceResult(
             PartidasActualizadas: affectedPartidas.Count,

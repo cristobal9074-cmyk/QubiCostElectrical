@@ -537,9 +537,6 @@
                 <DataTrigger Binding="{Binding IsSearchMatch}" Value="True">
                   <Setter Property="Background" Value="{DynamicResource Brush.AmberSoft}" />
                 </DataTrigger>
-                <Trigger Property="IsSelected" Value="True">
-                  <Setter Property="Background" Value="{DynamicResource Brush.BlueSelected}" />
-                </Trigger>
                 <DataTrigger Binding="{Binding IsChapterStyle}" Value="True">
                   <Setter Property="FontWeight" Value="SemiBold" />
                   <Setter Property="Background" Value="{DynamicResource Brush.ChapterRowBg}" />
@@ -547,6 +544,9 @@
                   <Setter Property="BorderThickness" Value="0,1,0,1" />
                   <Setter Property="Height" Value="34" />
                 </DataTrigger>
+                <Trigger Property="IsSelected" Value="True">
+                  <Setter Property="Background" Value="{DynamicResource Brush.BlueSelected}" />
+                </Trigger>
               </Style.Triggers>
             </Style>
           </DataGrid.RowStyle>

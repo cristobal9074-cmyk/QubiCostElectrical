@@ -17,6 +17,7 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
     private readonly WpfUndoService undo;
     private readonly BudgetProjectSession session;
     private readonly ICubicacionSCReportExcelExporter cubScExcel;
+    private readonly IPriceBankStore? priceBankStore;
     private CuadroScRowVm? selectedCuadro;
     private CircuitoScRowVm? selectedCircuito;
     private readonly CubicacionScExportCoordinator exportCoordinator;
@@ -34,6 +35,14 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
     private bool suppressSessionReload;
     private bool isAdvancedMode;
     private CubScPerspective currentPerspective = CubScPerspective.Generales;
+    public CubicacionScCatalogoDrawerCoordinator CatalogoDrawer { get; }
+    public bool IsCatalogoDrawerOpen => CatalogoDrawer?.IsOpen ?? false;
+    public CubicacionScArtefactosDrawerCoordinator ArtefactosDrawer { get; }
+    public bool IsArtefactosDrawerOpen => ArtefactosDrawer?.IsOpen ?? false;
+    public CubicacionScCambioLineaDrawerCoordinator CambioLineaDrawer { get; }
+    public bool IsCambioLineaDrawerOpen => CambioLineaDrawer?.IsOpen ?? false;
+    public Action? RequestRestoreActiveCell { get; set; }
+
     public Func<string, bool> ConfirmDelete { get; set; } = msg => WpfDialogService.Confirm("Eliminar tablero", msg, isWarning: true);
     public Func<string, bool> ConfirmDeleteCircuito { get; set; } = msg => WpfDialogService.Confirm("Eliminar circuito", msg, isWarning: true);
 }

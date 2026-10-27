@@ -36,12 +36,17 @@ public static class CubicacionSCEngine
     {
         if (c.EsActivo)
         {
-            yield return new($"TUBERIA {c.TipoTuberia} {c.SeccionTuberia}", c.LargoTuberia, "ML");
-            yield return new($"CONDUCTOR {c.ConductorDerivacion} {c.SeccionDerivacion}", c.LargoDerivacion, "ML");
+            if (c.LargoTuberia > 0m)
+                yield return new($"TUBERIA {c.TipoTuberia} {c.SeccionTuberia}", c.LargoTuberia, "ML");
+            if (c.LargoTuberia2 > 0m)
+                yield return new($"TUBERIA {c.TipoTuberia2} {c.SeccionTuberia2}", c.LargoTuberia2, "ML");
+            if (c.LargoDerivacion > 0m)
+                yield return new($"CONDUCTOR {c.ConductorDerivacion} {c.SeccionDerivacion}", c.LargoDerivacion, "ML");
 
             if (!isDepto)
             {
-                yield return new($"CONDUCTOR {c.ConductorDistribucion} {c.SeccionDistribucion}", c.LargoDistribucion, "ML");
+                if (c.LargoDistribucion > 0m)
+                    yield return new($"CONDUCTOR {c.ConductorDistribucion} {c.SeccionDistribucion}", c.LargoDistribucion, "ML");
 
                 var flex = config.Flexibles.FirstOrDefault(f =>
                     string.Equals(f.Diametro, c.SeccionTuberia, StringComparison.OrdinalIgnoreCase));
@@ -49,29 +54,40 @@ public static class CubicacionSCEngine
                     yield return new(flex.TipoFlexible, c.TotalCajasEfectivas * flex.MetrosPorCaja, "ML");
             }
 
-            yield return new("CAJA METÁLICA SALIDA BANDEJA", c.CajasSalidaBandeja, "UN");
+            if (c.CajasSalidaBandeja > 0m)
+            if (c.CajasSalidaBandeja > 0m)
+                yield return new("CAJA METÁLICA SALIDA BANDEJA", c.CajasSalidaBandeja, "UN");
 
             foreach (var a in c.Artefactos)
-                yield return new(a.Nombre, a.Cantidad, "UN");
+                if (a.Cantidad > 0m && !string.IsNullOrWhiteSpace(a.Nombre))
+                    yield return new(a.Nombre, a.Cantidad, "UN");
 
-            yield return new("SENSOR DE MOVIMIENTO", c.SensoresMovimiento, "UN");
-            yield return new("SEÑALETICA EMERGENCIA", c.Senaleticas, "UN");
-            yield return new("CINTA LED", c.CintaLedMts, "ML");
-            yield return new("MONTAJE LUMINARIA", c.MontajesAlumbrado, "UN");
+            if (c.SensoresMovimiento > 0m)
+                yield return new("SENSOR DE MOVIMIENTO", c.SensoresMovimiento, "UN");
+            if (c.Senaleticas > 0m)
+            if (c.Senaleticas > 0m)
+                yield return new("SEÑALETICA EMERGENCIA", c.Senaleticas, "UN");
+            if (c.CintaLedMts > 0m)
+                yield return new("CINTA LED", c.CintaLedMts, "ML");
+            if (c.MontajesAlumbrado > 0m)
+                yield return new("MONTAJE LUMINARIA", c.MontajesAlumbrado, "UN");
 
-            if (c.TieneElementosConPunto)
-            {
-                yield return new(CajaParaCanalizacion(c.TipoTuberia), c.TotalElementosConPunto, "UN");
-            }
-            else
+            if (c.TotalCajas > 0)
             {
                 string nombreCaja58 = isDepto ? "CAJA 5/8\"" : "CAJA 5/8";
                 string nombreCaja100 = isDepto ? "CAJA A11 (100X100)" : "CAJA 100X100";
                 string nombreCaja65 = isDepto ? "CAJA A01 (100X65)" : "CAJA 100X65";
 
-                yield return new(nombreCaja58, c.Cajas58, "UN");
-                yield return new(nombreCaja100, c.Cajas100x100, "UN");
-                yield return new(nombreCaja65, c.Cajas100x65, "UN");
+                if (c.Cajas58 > 0)
+                    yield return new(nombreCaja58, c.Cajas58, "UN");
+                if (c.Cajas100x100 > 0)
+                    yield return new(nombreCaja100, c.Cajas100x100, "UN");
+                if (c.Cajas100x65 > 0)
+                    yield return new(nombreCaja65, c.Cajas100x65, "UN");
+            }
+            else if (c.TieneElementosConPunto && c.TotalElementosConPunto > 0)
+            {
+                yield return new(CajaParaCanalizacion(c.TipoTuberia), c.TotalElementosConPunto, "UN");
             }
         }
         else if (c.EsReservaEquipada)
@@ -80,7 +96,8 @@ public static class CubicacionSCEngine
                 yield return new("INT 9/12", 1m, "UN");
             else
                 foreach (var a in c.Artefactos)
-                    yield return new(a.Nombre, a.Cantidad, "UN");
+                    if (a.Cantidad > 0m && !string.IsNullOrWhiteSpace(a.Nombre))
+                        yield return new(a.Nombre, a.Cantidad, "UN");
         }
     }
 
@@ -194,24 +211,38 @@ public static class CubicacionSCEngine
             foreach (var tramo in c.PisosTramos)
             {
                 var label = TramoLabel(tramo);
-                yield return (label, new($"TUBERIA {c.TipoTuberia} {c.SeccionTuberia}", tramo.MetrosTuberia, "ML"));
-                yield return (label, new($"CONDUCTOR {c.ConductorDerivacion} {c.SeccionDerivacion}",
-                    Math.Round(tramo.MetrosTuberia * factor, 0, MidpointRounding.AwayFromZero), "ML"));
-                if (!isDepto)
+                if (tramo.MetrosTuberia > 0m)
                 {
-                    yield return (label, new($"CONDUCTOR {c.ConductorDistribucion} {c.SeccionDistribucion}",
-                        Math.Round(tramo.MetrosBandeja * factor, 0, MidpointRounding.AwayFromZero), "ML"));
+                    yield return (label, new($"TUBERIA {c.TipoTuberia} {c.SeccionTuberia}", tramo.MetrosTuberia, "ML"));
+                    var deriv = Math.Round(tramo.MetrosTuberia * factor, 0, MidpointRounding.AwayFromZero);
+                    if (deriv > 0m)
+                        yield return (label, new($"CONDUCTOR {c.ConductorDerivacion} {c.SeccionDerivacion}", deriv, "ML"));
+                }
+                if (!isDepto && tramo.MetrosBandeja > 0m)
+                {
+                    var dist = Math.Round(tramo.MetrosBandeja * factor, 0, MidpointRounding.AwayFromZero);
+                    if (dist > 0m)
+                        yield return (label, new($"CONDUCTOR {c.ConductorDistribucion} {c.SeccionDistribucion}", dist, "ML"));
                 }
             }
-            // Materiales no dependientes del largo → al primer tramo del circuito.
+            if (c.MetrosTuberia2 > 0m)
+            {
+                yield return (primerTramo, new($"TUBERIA {c.TipoTuberia2} {c.SeccionTuberia2}", c.MetrosTuberia2, "ML"));
+                var deriv2 = Math.Round(c.MetrosTuberia2 * factor, 0, MidpointRounding.AwayFromZero);
+                if (deriv2 > 0m)
+                    yield return (primerTramo, new($"CONDUCTOR {c.ConductorDerivacion} {c.SeccionDerivacion}", deriv2, "ML"));
+            }
+            // Materiales no dependientes del largo -> al primer tramo del circuito.
             foreach (var m in CircuitoMateriales(c, config, isDepto).Where(m => !EsTuberia(m.Nombre) && !EsConductor(m.Nombre)))
-                yield return (primerTramo, m);
+                if (m.Cantidad > 0m)
+                    yield return (primerTramo, m);
         }
         else
         {
             var piso = string.IsNullOrWhiteSpace(c.Ubicacion) ? SinPisoKey : c.Ubicacion.Trim();
             foreach (var m in CircuitoMateriales(c, config, isDepto))
-                yield return (piso, m);
+                if (m.Cantidad > 0m)
+                    yield return (piso, m);
         }
     }
 
@@ -224,7 +255,8 @@ public static class CubicacionSCEngine
     public static IReadOnlyList<MaterialConZonasSC> AggregateConZonas(
         IEnumerable<CuadroCargaSCRow> cuadros,
         CubicacionScConfig config,
-        IReadOnlyList<ZonaProyecto>? zonas = null)
+        IReadOnlyList<ZonaProyecto>? zonas = null,
+        Func<CircuitoSCRow, bool>? circuitPredicate = null)
     {
         ArgumentNullException.ThrowIfNull(cuadros);
         ArgumentNullException.ThrowIfNull(config);
@@ -237,8 +269,10 @@ public static class CubicacionSCEngine
             foreach (var circuito in cuadro.Circuitos)
             {
                 if (!circuito.EsActivo && !circuito.EsReservaEquipada) continue;
+                if (circuitPredicate != null && !circuitPredicate(circuito)) continue;
                 foreach (var (pisoLabel, mat) in CircuitoMaterialesPorPiso(circuito, config, isDepto))
                 {
+                    if (mat.Cantidad <= 0m || string.IsNullOrWhiteSpace(mat.Nombre)) continue;
                     if (!porMaterial.TryGetValue(mat.Nombre, out var porZona))
                     {
                         porZona = porMaterial[mat.Nombre] = new(StringComparer.OrdinalIgnoreCase);
@@ -257,8 +291,9 @@ public static class CubicacionSCEngine
         var resultado = new List<MaterialConZonasSC>();
         foreach (var (nombre, porZona) in porMaterial)
         {
-            var unidad = porZona.Values.First().Unidad;
             var total = porZona.Values.Sum(z => z.Cantidad);
+            if (total <= 0m) continue;
+            var unidad = porZona.Values.First().Unidad;
             var categoria = GetCategoriaFromNombre(nombre);
             var zonasList = new List<(string ZonaNombre, decimal Cantidad)>();
 

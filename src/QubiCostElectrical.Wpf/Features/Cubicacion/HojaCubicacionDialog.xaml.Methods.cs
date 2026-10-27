@@ -89,13 +89,6 @@ public partial class HojaCubicacionDialog : Window
 
     private void RefreshGrandTotal()
     {
-        decimal total = 0m;
-        foreach (var item in items)
-            total += item.Subtotal;
-        string fmt = total % 1 == 0 ? total.ToString("N0", CultureInfo.CurrentCulture) : total.ToString("#,##0.##", CultureInfo.CurrentCulture);
-        GrandTotalRun.Text = fmt;
-        if (HeaderGrandTotalRun != null)
-            HeaderGrandTotalRun.Text = fmt;
     }
 
     private void OnItemGridLoaded(object sender, RoutedEventArgs e)
@@ -120,8 +113,13 @@ public partial class HojaCubicacionDialog : Window
 
         grid.PreviewMouseRightButtonDown -= OnItemGridPreviewMouseRightButtonDown;
         grid.PreviewMouseRightButtonDown += OnItemGridPreviewMouseRightButtonDown;
+        grid.PreviewMouseDoubleClick -= OnItemGridMouseDoubleClick;
+        grid.PreviewMouseDoubleClick += OnItemGridMouseDoubleClick;
         grid.ContextMenuOpening -= OnItemGridContextMenuOpening;
         grid.ContextMenuOpening += OnItemGridContextMenuOpening;
+        grid.CellEditEnding -= OnItemGridCellEditEnding;
+        grid.CellEditEnding += OnItemGridCellEditEnding;
+        DataGridAutoFillCoordinator.Attach(grid, () => { item.RefreshAllDisplays(); RefreshGrandTotal(); });
 
         Dispatcher.BeginInvoke(new Action(() =>
         {
@@ -131,6 +129,9 @@ public partial class HojaCubicacionDialog : Window
     }
 
     private FormulaPointModeState? _pointMode;
+    private bool _isExplicitCellEditMode;
+
+    private void OnItemGridMouseDoubleClick(object sender, MouseButtonEventArgs e) => _isExplicitCellEditMode = true;
 
     private void HandlePointModeArrowKey(
         DataGrid grid,
@@ -303,6 +304,13 @@ public partial class HojaCubicacionDialog : Window
         }
     }
 
+    private void OnItemGridCellEditEnding(object? sender, DataGridCellEditEndingEventArgs e)
+    {
+        _isExplicitCellEditMode = false;
+        if (e.EditAction == DataGridEditAction.Commit && sender is DataGrid grid && grid.DataContext is HojaCubicacionItemVm item)
+            grid.Dispatcher.BeginInvoke(() => { item.RefreshAllDisplays(); RefreshGrandTotal(); }, System.Windows.Threading.DispatcherPriority.Background);
+    }
+
     private void OnItemGridPreviewKeyDown(object sender, KeyEventArgs e)
     {
         if (sender is not DataGrid grid || grid.DataContext is not HojaCubicacionItemVm item) return;
@@ -353,6 +361,7 @@ public partial class HojaCubicacionDialog : Window
         {
             if (grid.CurrentCell.Column != null && !grid.CurrentCell.Column.IsReadOnly)
             {
+                _isExplicitCellEditMode = true;
                 grid.BeginEdit();
                 e.Handled = true;
                 return;
@@ -371,6 +380,31 @@ public partial class HojaCubicacionDialog : Window
                 e.Handled = true;
                 return;
             }
+
+            if (Keyboard.Modifiers == ModifierKeys.None)
+            {
+                if (e.Key is Key.Up or Key.Down)
+                {
+                    CommitAndNavigate(grid, item, e.Key == Key.Down ? 1 : -1, 0);
+                    e.Handled = true;
+                    return;
+                }
+
+                if (e.Key is Key.Left or Key.Right)
+                {
+                    bool canNav = !_isExplicitCellEditMode
+                        || editor.SelectionLength == editor.Text.Length
+                        || (e.Key == Key.Right && editor.SelectionStart == editor.Text.Length && editor.SelectionLength == 0)
+                        || (e.Key == Key.Left && editor.SelectionStart == 0 && editor.SelectionLength == 0);
+
+                    if (canNav)
+                    {
+                        CommitAndNavigate(grid, item, 0, e.Key == Key.Right ? 1 : -1, wrapRows: false);
+                        e.Handled = true;
+                        return;
+                    }
+                }
+            }
         }
 
         // Delete / Backspace cuando no se edita texto: borrar celdas seleccionadas
@@ -387,103 +421,20 @@ public partial class HojaCubicacionDialog : Window
         // Enter / Shift+Enter: confirmar y mover arriba/abajo
         if (e.Key is Key.Enter or Key.Return)
         {
-            if (_pointMode != null && _pointMode.Grid == grid)
-            {
-                _pointMode.IsActive = false;
-                _pointMode = null;
-            }
-
-            if (DataGridExcelNavigation.IsEditing(grid))
-            {
-                grid.CommitEdit(DataGridEditingUnit.Cell, true);
-                grid.CommitEdit(DataGridEditingUnit.Row, true);
-                item.RefreshAllDisplays();
-                RefreshGrandTotal();
-
-                var currentColumn = grid.CurrentCell.Column
-                    ?? grid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible && !c.IsReadOnly)
-                    ?? grid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible);
-                object? currentItem = grid.CurrentCell.Item ?? grid.SelectedItem;
-
-                if (currentColumn != null && currentItem != null)
-                {
-                    int offset = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift ? -1 : 1;
-                    grid.Dispatcher.BeginInvoke(new Action(() =>
-                    {
-                        DataGridExcelNavigation.MoveToRowOffset(grid, currentColumn, offset, currentItem);
-                    }), System.Windows.Threading.DispatcherPriority.Input);
-                }
-                e.Handled = true;
-                return;
-            }
-
-            if (editor == null)
-            {
-                var currentColumn = grid.CurrentCell.Column
-                    ?? grid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible && !c.IsReadOnly)
-                    ?? grid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible);
-                object? currentItem = grid.CurrentCell.Item ?? grid.SelectedItem;
-
-                if (currentColumn != null && currentItem != null)
-                {
-                    int offset = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift ? -1 : 1;
-                    DataGridExcelNavigation.MoveToRowOffset(grid, currentColumn, offset, currentItem);
-                    e.Handled = true;
-                    return;
-                }
-            }
+            int offset = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift ? -1 : 1;
+            CommitAndNavigate(grid, item, offset, 0);
+            e.Handled = true;
+            return;
         }
 
         // Tab / Shift+Tab: avanzar / retroceder columna
         if (e.Key == Key.Tab)
         {
-            if (_pointMode != null && _pointMode.Grid == grid)
-            {
-                _pointMode.IsActive = false;
-                _pointMode = null;
-            }
-
-            if (DataGridExcelNavigation.IsEditing(grid))
-            {
-                grid.CommitEdit(DataGridEditingUnit.Cell, true);
-                grid.CommitEdit(DataGridEditingUnit.Row, true);
-                item.RefreshAllDisplays();
-                RefreshGrandTotal();
-
-                var currentColumn = grid.CurrentCell.Column
-                    ?? grid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible && !c.IsReadOnly)
-                    ?? grid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible);
-                object? currentItem = grid.CurrentCell.Item ?? grid.SelectedItem;
-
-                if (currentColumn != null && currentItem != null)
-                {
-                    int offset = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift ? -1 : 1;
-                    grid.Dispatcher.BeginInvoke(new Action(() =>
-                    {
-                        DataGridExcelNavigation.MoveToColumnOffset(grid, currentColumn, offset, wrapRows: true, currentItem);
-                    }), System.Windows.Threading.DispatcherPriority.Input);
-                }
-                e.Handled = true;
-                return;
-            }
-
-            if (editor == null)
-            {
-                var currentColumn = grid.CurrentCell.Column
-                    ?? grid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible && !c.IsReadOnly)
-                    ?? grid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible);
-                object? currentItem = grid.CurrentCell.Item ?? grid.SelectedItem;
-
-                if (currentColumn != null && currentItem != null)
-                {
-                    int offset = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift ? -1 : 1;
-                    DataGridExcelNavigation.MoveToColumnOffset(grid, currentColumn, offset, wrapRows: true, currentItem);
-                    e.Handled = true;
-                    return;
-                }
-            }
+            int offset = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift ? -1 : 1;
+            CommitAndNavigate(grid, item, 0, offset, wrapRows: true);
+            e.Handled = true;
+            return;
         }
-
         // Agregar/quitar fila con Ctrl+Plus / Ctrl+Minus
         if (editor == null && Keyboard.Modifiers == ModifierKeys.Control &&
             e.Key is Key.Add or Key.OemPlus)
@@ -520,6 +471,45 @@ public partial class HojaCubicacionDialog : Window
                 DataGridExcelNavigation.TryPasteIntoSelection(grid, text, _ => false);
             e.Handled = true;
             return;
+        }
+    }
+
+    private void CommitAndNavigate(DataGrid grid, HojaCubicacionItemVm item, int rowOffset, int colOffset, bool wrapRows = false)
+    {
+        if (_pointMode != null && _pointMode.Grid == grid)
+        {
+            _pointMode.IsActive = false;
+            _pointMode = null;
+        }
+
+        bool wasEditing = DataGridExcelNavigation.IsEditing(grid) || Keyboard.FocusedElement is TextBox;
+        if (wasEditing)
+        {
+            grid.CommitEdit(DataGridEditingUnit.Cell, true);
+            grid.CommitEdit(DataGridEditingUnit.Row, true);
+            item.RefreshAllDisplays();
+            RefreshGrandTotal();
+        }
+
+        var col = grid.CurrentCell.Column
+            ?? grid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible && !c.IsReadOnly)
+            ?? grid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible);
+        object? curItem = grid.CurrentCell.Item ?? grid.SelectedItem;
+
+        if (col != null && curItem != null)
+        {
+            void Move()
+            {
+                if (rowOffset != 0)
+                    DataGridExcelNavigation.MoveToRowOffset(grid, col, rowOffset, curItem);
+                else if (colOffset != 0)
+                    DataGridExcelNavigation.MoveToColumnOffset(grid, col, colOffset, wrapRows, curItem);
+            }
+
+            if (wasEditing)
+                grid.Dispatcher.BeginInvoke(new Action(Move), System.Windows.Threading.DispatcherPriority.Input);
+            else
+                Move();
         }
     }
 

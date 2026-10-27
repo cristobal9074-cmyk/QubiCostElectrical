@@ -519,6 +519,29 @@ internal sealed partial class CubicacionRowMutationService
 
         var selected = parent.SelectedRow;
         var ordered = CubicacionItemIndex.FilterRows(session.Cubicacion, selectedPartida.Id);
+
+        // Si las filas de sesion ya coinciden en cantidad y orden con session.Cubicacion,
+        // no vaciar parent.Rows: Rows.Clear() destruye las celdas de WPF, borra la seleccion
+        // y desactiva el cursor/marcador de la grilla.
+        bool alreadyInOrder = true;
+        int checkIdx = 0;
+        foreach (var src in ordered)
+        {
+            if (checkIdx >= parent.Rows.Count || !string.Equals(parent.Rows[checkIdx].Id, src.Id, StringComparison.OrdinalIgnoreCase))
+            {
+                alreadyInOrder = false;
+                break;
+            }
+            checkIdx++;
+        }
+        if (alreadyInOrder && checkIdx == parent.Rows.Count(r => r.IsSessionBacked))
+        {
+            EnsurePaddingRows();
+            if (selected != null && parent.Rows.Contains(selected))
+                parent.SelectedRow = selected;
+            return;
+        }
+
         var backed = new Dictionary<string, CubicacionRowVm>(StringComparer.OrdinalIgnoreCase);
         var padding = new List<CubicacionRowVm>();
         foreach (var vm in parent.Rows)

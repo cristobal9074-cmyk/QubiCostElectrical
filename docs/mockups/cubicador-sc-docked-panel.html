@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Qubi Cost Electrical — Cubicación Pro + Inspector SC por Circuitos</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+    :root {
+      --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+    body { font-family: var(--font-sans); }
+    .font-mono { font-family: var(--font-mono); }
+    
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.12); border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.25); }
+
+    @keyframes row-flash {
+      0% { background-color: rgba(16, 185, 129, 0.35); }
+      100% { background-color: rgba(16, 185, 129, 0.08); }
+    }
+    .flash-transferred {
+      animation: row-flash 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .keyboard-cursor {
+      outline: 1.5px solid #3b82f6 !important;
+      outline-offset: -1.5px;
+      background: rgba(59, 130, 246, 0.14) !important;
+    }
+
+    .pill-active {
+      background: #2563eb !important;
+      color: #ffffff !important;
+      border-color: #3b82f6 !important;
+      font-weight: 700 !important;
+    }
+  </style>
+</head>
+<body class="h-full bg-[#070b14] text-slate-200 antialiased overflow-hidden select-none flex flex-col text-xs font-sans">
+
+  <!-- ========================================================================= -->
+  <!-- 1. TOP GLOBAL SHELL BAR                                                   -->
+  <!-- ========================================================================= -->
+  <header class="h-12 bg-[#090e1a] border-b border-white/[0.08] px-4 flex items-center justify-between shrink-0 z-30">
+    <div class="flex items-center gap-3">
+      <div class="w-7 h-7 rounded bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 font-extrabold text-xs">
+        ⚡
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="font-bold tracking-tight text-white text-[13px]">QUBI COST</span>
+        <span class="text-[9.5px] font-mono text-slate-400 bg-white/[0.05] border border-white/[0.08] px-1.5 py-0.5 rounded">v1.1.5</span>
+        <span class="text-slate-600">/</span>
+        <span class="text-slate-300 font-medium text-xs">PEL039A2026 PRUEBA NUMERO 2</span>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2 text-[11px] font-mono text-slate-400 bg-black/40 border border-white/[0.06] px-3 py-1 rounded-md">
+        <span>Presupuesto</span>
+        <span class="text-slate-600">›</span>
+        <span class="text-slate-300 font-semibold">Cubicación</span>
+        <span class="text-slate-600">›</span>
+        <span class="text-blue-400 font-bold">1.- Instalaciones Eléctricas</span>
+      </div>
+
+      <button id="toggle-panel-btn" onclick="toggleInspector()" class="px-3 py-1 rounded-md bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center gap-1.5 transition shadow-sm active:scale-95 border border-blue-400/30">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-300"></span>
+        <span>Tomar SC</span>
+        <kbd class="text-[9px] font-mono bg-black/30 px-1 py-0.5 rounded text-blue-200 ml-1">Alt+L</kbd>
+      </button>
+    </div>
+  </header>
+
+  <!-- ========================================================================= -->
+  <!-- 2. WORKSPACE AREA: Grilla de Partida + Inspector Docked a la Derecha      -->
+  <!-- ========================================================================= -->
+  <main class="flex-1 flex overflow-hidden relative">
+
+    <!-- ─────────────────────────────────────────────────────────────────────── -->
+    <!-- ÁREA IZQUIERDA: MATRIZ DE CUBICACIÓN                                   -->
+    <!-- ─────────────────────────────────────────────────────────────────────── -->
+    <section class="flex-1 flex flex-col min-w-0 bg-[#080d19] border-r border-white/[0.08]">
+      
+      <!-- Toolbar sobria -->
+      <div class="h-10 bg-[#0a101f] border-b border-white/[0.07] px-4 flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-3">
+          <span class="text-[11px] font-bold text-slate-300 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+            Partida 1: Instalaciones Eléctricas
+          </span>
+          <span class="text-slate-600">|</span>
+          <span class="text-[11px] text-slate-400">Total calculado: <strong class="text-emerald-400 font-mono" id="partida-total-label">120,00 ml</strong></span>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <div class="flex bg-black/30 p-0.5 rounded border border-white/[0.06] text-[10.5px]">
+            <button class="px-2 py-0.5 rounded text-slate-400 hover:text-white">Zona Libre</button>
+            <button class="px-2 py-0.5 rounded bg-white/[0.08] text-white font-semibold">Por Zonas</button>
+          </div>
+          <span class="text-[10px] text-slate-500 font-mono">Fila activa: <span class="text-blue-400 font-bold" id="active-row-indicator">Fila 1</span></span>
+        </div>
+      </div>
+
+      <!-- Tabla de Cubicación -->
+      <div class="flex-1 overflow-auto">
+        <table class="w-full text-left border-collapse font-mono text-[11.5px]" id="takeoff-grid">
+          <thead class="bg-[#0b1222] text-slate-400 font-semibold sticky top-0 border-b border-white/[0.08] z-10 text-[10.5px]">
+            <tr>
+              <th class="py-2 px-3 w-10 text-center text-slate-500">#</th>
+              <th class="py-2 px-3 w-32 text-slate-300">CÓDIGO</th>
+              <th class="py-2 px-4 font-sans font-semibold text-slate-200">DESCRIPCIÓN DEL RECURSO</th>
+              <th class="py-2 px-2 w-12 text-center text-slate-400">UD</th>
+              <th class="py-2 px-3 w-28 text-right font-bold text-emerald-400 bg-emerald-950/20">CANT</th>
+              <th class="py-2 px-3 w-28 text-center text-blue-400 bg-blue-950/20 border-l border-r border-white/[0.06]">ZONA 1</th>
+              <th class="py-2 px-3 w-24 text-center text-slate-500 font-sans">SISTEMA SC</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-white/[0.04]" id="takeoff-rows-container">
+            <!-- Fila 1 -->
+            <tr id="grid-row-1" onclick="focusGridRow(1)" class="cursor-pointer transition hover:bg-white/[0.03] bg-blue-950/25 ring-1 ring-inset ring-blue-500/40">
+              <td class="py-2 px-3 text-center text-blue-400 font-bold">1</td>
+              <td class="py-2 px-3 text-blue-300 font-medium" id="code-row-1">T-PVC-25</td>
+              <td class="py-2 px-4 font-sans text-slate-200" id="desc-row-1">TUBERÍA PVC 25 MM CONDUIT CLASE 1</td>
+              <td class="py-2 px-2 text-center text-slate-400" id="unit-row-1">ml</td>
+              <td class="py-2 px-3 text-right font-bold text-emerald-400 bg-emerald-950/10" id="cant-row-1">120,00</td>
+              <td class="py-2 px-3 text-center text-slate-200 bg-blue-950/10 border-l border-r border-white/[0.06]" id="zone-row-1">120</td>
+              <td class="py-2 px-3 text-center text-[10px] font-sans" id="origin-row-1">
+                <span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">General ✓</span>
+              </td>
+            </tr>
+
+            <!-- Fila 2 -->
+            <tr id="grid-row-2" onclick="focusGridRow(2)" class="cursor-pointer transition hover:bg-white/[0.03]">
+              <td class="py-2 px-3 text-center text-slate-500 font-bold">2</td>
+              <td class="py-2 px-3 text-slate-400" id="code-row-2">—</td>
+              <td class="py-2 px-4 font-sans text-slate-400 italic" id="desc-row-2">(Vacía · Selecciona filtro arriba a la derecha y presiona Enter)</td>
+              <td class="py-2 px-2 text-center text-slate-500" id="unit-row-2">—</td>
+              <td class="py-2 px-3 text-right font-bold text-slate-500 bg-emerald-950/05" id="cant-row-2">—</td>
+              <td class="py-2 px-3 text-center text-slate-500 bg-blue-950/05 border-l border-r border-white/[0.06]" id="zone-row-2">—</td>
+              <td class="py-2 px-3 text-center text-[10px] font-sans text-slate-600" id="origin-row-2">—</td>
+            </tr>
+
+            <!-- Fila 3 -->
+            <tr id="grid-row-3" onclick="focusGridRow(3)" class="cursor-pointer transition hover:bg-white/[0.03]">
+              <td class="py-2 px-3 text-center text-slate-500 font-bold">3</td>
+              <td class="py-2 px-3 text-slate-400" id="code-row-3">—</td>
+              <td class="py-2 px-4 font-sans text-slate-400 italic" id="desc-row-3">(Vacía)</td>
+              <td class="py-2 px-2 text-center text-slate-500" id="unit-row-3">—</td>
+              <td class="py-2 px-3 text-right font-bold text-slate-500 bg-emerald-950/05" id="cant-row-3">—</td>
+              <td class="py-2 px-3 text-center text-slate-500 bg-blue-950/05 border-l border-r border-white/[0.06]" id="zone-row-3">—</td>
+              <td class="py-2 px-3 text-center text-[10px] font-sans text-slate-600" id="origin-row-3">—</td>
+            </tr>
+
+            <!-- Fila 4 -->
+            <tr id="grid-row-4" onclick="focusGridRow(4)" class="cursor-pointer transition hover:bg-white/[0.03]">
+              <td class="py-2 px-3 text-center text-slate-500 font-bold">4</td>
+              <td class="py-2 px-3 text-slate-400" id="code-row-4">—</td>
+              <td class="py-2 px-4 font-sans text-slate-400 italic" id="desc-row-4">(Vacía)</td>
+              <td class="py-2 px-2 text-center text-slate-500" id="unit-row-4">—</td>
+              <td class="py-2 px-3 text-right font-bold text-slate-500 bg-emerald-950/05" id="cant-row-4">—</td>
+              <td class="py-2 px-3 text-center text-slate-500 bg-blue-950/05 border-l border-r border-white/[0.06]" id="zone-row-4">—</td>
+              <td class="py-2 px-3 text-center text-[10px] font-sans text-slate-600" id="origin-row-4">—</td>
+            </tr>
+
+            <!-- Fila 5 -->
+            <tr id="grid-row-5" onclick="focusGridRow(5)" class="cursor-pointer transition hover:bg-white/[0.03]">
+              <td class="py-2 px-3 text-center text-slate-500 font-bold">5</td>
+              <td class="py-2 px-3 text-slate-400" id="code-row-5">—</td>
+              <td class="py-2 px-4 font-sans text-slate-400 italic" id="desc-row-5">(Vacía)</td>
+              <td class="py-2 px-2 text-center text-slate-500" id="unit-row-5">—</td>
+              <td class="py-2 px-3 text-right font-bold text-slate-500 bg-emerald-950/05" id="cant-row-5">—</td>
+              <td class="py-2 px-3 text-center text-slate-500 bg-blue-950/05 border-l border-r border-white/[0.06]" id="zone-row-5">—</td>
+              <td class="py-2 px-3 text-center text-[10px] font-sans text-slate-600" id="origin-row-5">—</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="h-7 bg-[#070b14] border-t border-white/[0.07] px-4 flex items-center justify-between text-[10.5px] font-mono text-slate-400 shrink-0">
+        <div>Control teclado: Usa <kbd class="px-1 py-0.2 bg-white/[0.08] rounded text-slate-300">↑</kbd> <kbd class="px-1 py-0.2 bg-white/[0.08] rounded text-slate-300">↓</kbd> en el panel para navegar y <kbd class="px-1 py-0.2 bg-white/[0.08] rounded text-slate-300">Enter</kbd> para inyectar</div>
+        <div class="text-blue-400">Foco: Inspector SC</div>
+      </div>
+    </section>
+
+    <!-- ─────────────────────────────────────────────────────────────────────── -->
+    <!-- ÁREA DERECHA (EL CUADRO ROJO): INSPECTOR MINIMALISTA DOCKED SC         -->
+    <!-- ─────────────────────────────────────────────────────────────────────── -->
+    <aside id="sc-inspector-panel" class="w-[560px] bg-[#090e1b] flex flex-col shrink-0 border-l border-white/[0.1] shadow-2xl transition-all duration-200 relative">
+      
+      <!-- HEADER MINIMALISTA -->
+      <div class="h-11 px-4 border-b border-white/[0.08] flex items-center justify-between shrink-0 bg-[#0a101f]">
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+          <span class="font-bold text-slate-100 text-xs tracking-tight">CUBICACIÓN SC · TOMAR MATERIALES</span>
+          <span class="text-[9.5px] font-mono text-blue-400 bg-blue-500/10 border border-blue-500/20 px-1.5 py-0.5 rounded font-bold">Alt+L</span>
+        </div>
+        
+        <div class="flex items-center gap-2">
+          <button onclick="toggleInspector()" title="Cerrar panel (Esc)" class="text-slate-400 hover:text-white p-1 rounded hover:bg-white/[0.08] transition">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- ===================================================================== -->
+      <!-- SELECTOR PRINCIPAL: FILTRO POR TIPO DE CIRCUITO (Luminarias, Enchufes, Clima, etc.) -->
+      <!-- ===================================================================== -->
+      <div class="p-2.5 bg-[#0b1222] border-b border-white/[0.08] shrink-0 space-y-2">
+        <div class="flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-slate-400 font-semibold px-0.5">
+          <span>Filtrar por Uso / Sistema:</span>
+          <span class="text-blue-400 font-bold" id="system-item-count">Mostrando: Todos los circuitos</span>
+        </div>
+
+        <!-- Barra de Pills / Filtro de Circuitos -->
+        <div class="grid grid-cols-6 gap-1 text-[10.5px] font-medium" id="system-filter-pills">
+          <button onclick="filterByCircuitSystem('ALL', this)" class="system-pill pill-active py-1 px-1.5 rounded bg-white/[0.06] hover:bg-white/[0.1] text-slate-200 border border-white/[0.08] text-center transition flex flex-col items-center gap-0.5" title="Todos los circuitos">
+            <span class="text-xs">🌐</span>
+            <span class="truncate w-full font-bold">Todos</span>
+          </button>
+          
+          <button onclick="filterByCircuitSystem('A', this)" class="system-pill py-1 px-1.5 rounded bg-white/[0.04] hover:bg-white/[0.1] text-slate-300 border border-white/[0.06] text-center transition flex flex-col items-center gap-0.5" title="Circuito de Alumbrado y Luminarias (Tipo A)">
+            <span class="text-xs">💡</span>
+            <span class="truncate w-full">Luminarias</span>
+          </button>
+
+          <button onclick="filterByCircuitSystem('E', this)" class="system-pill py-1 px-1.5 rounded bg-white/[0.04] hover:bg-white/[0.1] text-slate-300 border border-white/[0.06] text-center transition flex flex-col items-center gap-0.5" title="Circuitos de Enchufes y Fuerza Normal (Tipo E)">
+            <span class="text-xs">🔌</span>
+            <span class="truncate w-full">Enchufes</span>
+          </button>
+
+          <button onclick="filterByCircuitSystem('C', this)" class="system-pill py-1 px-1.5 rounded bg-white/[0.04] hover:bg-white/[0.1] text-slate-300 border border-white/[0.06] text-center transition flex flex-col items-center gap-0.5" title="Circuitos de Computación y UPS (Tipo C)">
+            <span class="text-xs">💻</span>
+            <span class="truncate w-full">Computación</span>
+          </button>
+
+          <button onclick="filterByCircuitSystem('CL', this)" class="system-pill py-1 px-1.5 rounded bg-white/[0.04] hover:bg-white/[0.1] text-slate-300 border border-white/[0.06] text-center transition flex flex-col items-center gap-0.5" title="Circuitos de Climatización y Aire Acondicionado (Tipo CL)">
+            <span class="text-xs">❄️</span>
+            <span class="truncate w-full">Clima</span>
+          </button>
+
+          <button onclick="filterByCircuitSystem('F', this)" class="system-pill py-1 px-1.5 rounded bg-white/[0.04] hover:bg-white/[0.1] text-slate-300 border border-white/[0.06] text-center transition flex flex-col items-center gap-0.5" title="Fuerza, Bombas y Motores (Tipo F)">
+            <span class="text-xs">⚙️</span>
+            <span class="truncate w-full">Fuerza</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- SEARCH BAR RÁPIDA -->
+      <div class="px-3 py-2 border-b border-white/[0.06] bg-[#080d18] flex items-center justify-between gap-2 shrink-0">
+        <div class="flex items-center gap-2 bg-[#0d1424] border border-white/[0.08] focus-within:border-blue-500/70 rounded-md px-2.5 py-1.5 text-xs transition flex-1">
+          <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <input type="text" id="inspector-search" oninput="onFilterChange()" placeholder="Filtrar por texto, código o calibre..." class="bg-transparent border-none outline-none text-slate-100 placeholder-slate-500 text-xs w-full font-mono">
+        </div>
+
+        <!-- Botón para transferir todo el sistema activo en lote -->
+        <button onclick="transferEntireActiveSystem()" class="px-2.5 py-1.5 rounded bg-blue-600/20 hover:bg-blue-600 border border-blue-500/30 hover:border-blue-500 text-blue-300 hover:text-white font-bold text-[10.5px] transition flex items-center gap-1 shrink-0" title="Transferir todos los materiales de este sistema a las filas libres">
+          <span>+ Inyectar todo</span>
+        </button>
+      </div>
+
+      <!-- TARGET BANNER CONTEXTUAL -->
+      <div class="px-3 py-1.5 bg-blue-950/20 border-b border-blue-900/30 flex items-center justify-between text-[11px] shrink-0">
+        <div class="text-slate-300">
+          Inyectando en: <strong class="text-blue-300 font-mono" id="target-row-title">Fila #1 (T-PVC-25)</strong>
+        </div>
+        <div class="text-[10px] text-slate-400 font-mono">
+          <kbd class="px-1 py-0.2 bg-blue-600 text-white rounded font-bold">↵ Enter</kbd> Llevar
+        </div>
+      </div>
+
+      <!-- LISTA DE MATERIALES AGRUPADOS POR TIPO (CONDUCTORES, CANALIZACIÓN, ACCESORIOS, ETC.) -->
+      <div class="flex-1 overflow-y-auto divide-y divide-white/[0.04]" id="sc-items-scroll">
+
+        <!-- ================= GRUPO 1: CONDUCTORES ================= -->
+        <div class="material-group" data-group-id="conductores">
+          <div onclick="toggleGroupCollapse('conductores')" class="px-3 py-1.5 bg-[#0b1222] hover:bg-[#0e172c] cursor-pointer flex items-center justify-between text-[11px] font-bold text-slate-300 border-t border-b border-white/[0.05] sticky top-0 z-10">
+            <div class="flex items-center gap-2">
+              <span class="text-blue-400 group-arrow" id="arrow-conductores">▾</span>
+              <span>⚡ CONDUCTORES Y LÍNEAS</span>
+              <span class="text-[10px] font-mono font-normal text-slate-400" id="badge-conductores">(4 ítems)</span>
+            </div>
+            <span class="text-[9.5px] font-mono text-slate-400 hover:text-blue-300 px-1.5 py-0.5 rounded bg-white/[0.04] transition">Plegar</span>
+          </div>
+
+          <div class="divide-y divide-white/[0.03]" id="items-container-conductores">
+            
+            <!-- Conductor Alumbrado (A) -->
+            <div class="sc-item px-3 py-2 hover:bg-white/[0.04] cursor-pointer flex items-center justify-between gap-3 transition" data-system="A" data-code="COND-EVA-1.5-R" data-desc="CONDUCTOR EVA 1,5 MM² LIBRE DE HALÓGENO ROJO (LUMINARIAS)" data-unit="ml" data-qty="180" onclick="selectAndInject(this)">
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-2">
+                  <span class="font-mono font-semibold text-blue-300 text-[11px]">COND-EVA-1.5-R</span>
+                  <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">💡 Luminarias (A)</span>
+                </div>
+                <div class="text-slate-200 text-xs font-medium truncate mt-0.5">CONDUCTOR EVA 1,5 MM² ROJO (CIRCUITOS ALUMBRADO)</div>
+              </div>
+              <div class="text-right shrink-0 flex items-center gap-2.5">
+                <span class="font-mono font-bold text-slate-100 text-xs">180,00 <span class="text-[10px] font-normal text-slate-400">ml</span></span>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-white/[0.06] text-slate-300 hover:bg-blue-600 hover:text-white transition font-bold border border-white/[0.08]">↵</span>
+              </div>
+            </div>
+
+            <!-- Conductor Enchufes (E) -->
+            <div class="sc-item px-3 py-2 hover:bg-white/[0.04] cursor-pointer flex items-center justify-between gap-3 transition" data-system="E" data-code="COND-EVA-2.5-R" data-desc="CONDUCTOR EVA 2,5 MM² LIBRE DE HALÓGENO ROJO (ENCHUFES)" data-unit="ml" data-qty="360" onclick="selectAndInject(this)">
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-2">
+                  <span class="font-mono font-semibold text-blue-300 text-[11px]">COND-EVA-2.5-R</span>
+                  <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30">🔌 Enchufes (E)</span>
+                </div>
+                <div class="text-slate-200 text-xs font-medium truncate mt-0.5">CONDUCTOR EVA 2,5 MM² ROJO (CIRCUITOS ENCHUFES)</div>
+              </div>
+              <div class="text-right shrink-0 flex items-center gap-2.5">
+                <span class="font-mono font-bold text-slate-100 text-xs">360,00 <span class="text-[10px] font-normal text-slate-400">ml</span></span>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-white/[0.06] text-slate-300 hover:bg-blue-600 hover:text-white transition font-bold border border-white/[0.08]">↵</span>
+              </div>
+            </div>
+
+            <!-- Conductor Computación / UPS (C) -->
+            <div class="sc-item px-3 py-2 hover:bg-white/[0.04] cursor-pointer flex items-center justify-between gap-3 transition" data-system="C" data-code="COND-EVA-2.5-AZ" data-desc="CONDUCTOR EVA 2,5 MM² AZUL FUERZA LIMPIA / COMPUTACIÓN" data-unit="ml" data-qty="140" onclick="selectAndInject(this)">
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-2">
+                  <span class="font-mono font-semibold text-blue-300 text-[11px]">COND-EVA-2.5-AZ</span>
+                  <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">💻 Computación (C)</span>
+                </div>
+                <div class="text-slate-200 text-xs font-medium truncate mt-0.5">CONDUCTOR EVA 2,5 MM² AZUL UPS (RACKS Y PUESTOS)</div>
+              </div>
+              <div class="text-right shrink-0 flex items-center gap-2.5">
+                <span class="font-mono font-bold text-slate-100 text-xs">140,00 <span class="text-[10px] font-normal text-slate-400">ml</span></span>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-white/[0.06] text-slate-300 hover:bg-blue-600 hover:text-white transition font-bold border border-white/[0.08]">↵</span>
+              </div>
+            </div>
+
+            <!-- Conductor Clima (CL) -->
+            <div class="sc-item px-3 py-2 hover:bg-white/[0.04] cursor-pointer flex items-center justify-between gap-3 transition" data-system="CL" data-code="COND-EVA-4.0-N" data-desc="CONDUCTOR EVA 4,0 MM² NEGRO ALIMENTADOR CLIMA" data-unit="ml" data-qty="120" onclick="selectAndInject(this)">
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-2">
+                  <span class="font-mono font-semibold text-blue-300 text-[11px]">COND-EVA-4.0-N</span>
+                  <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-sky-500/20 text-sky-300 border border-sky-500/30">❄️ Clima (CL)</span>
+                </div>
+                <div class="text-slate-200 text-xs font-medium truncate mt-0.5">CONDUCTOR EVA 4,0 MM² NEGRO EQUIPOS HVAC</div>
+              </div>
+              <div class="text-right shrink-0 flex items-center gap-2.5">
+                <span class="font-mono font-bold text-slate-100 text-xs">120,00 <span class="text-[10px] font-normal text-slate-400">ml</span></span>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-white/[0.06] text-slate-300 hover:bg-blue-600 hover:text-white transition font-bold border border-white/[0.08]">↵</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ================= GRUPO 2: CANALIZACIONES ================= -->
+        <div class="material-group" data-group-id="canalizaciones">
+          <div onclick="toggleGroupCollapse('canalizaciones')" class="px-3 py-1.5 bg-[#0b1222] hover:bg-[#0e172c] cursor-pointer flex items-center justify-between text-[11px] font-bold text-slate-300 border-t border-b border-white/[0.05] sticky top-0 z-10">
+            <div class="flex items-center gap-2">
+              <span class="text-blue-400 group-arrow" id="arrow-canalizaciones">▾</span>
+              <span>🔌 CANALIZACIONES Y TUBERÍAS</span>
+              <span class="text-[10px] font-mono font-normal text-slate-400" id="badge-canalizaciones">(3 ítems)</span>
+            </div>
+            <span class="text-[9.5px] font-mono text-slate-400 hover:text-blue-300 px-1.5 py-0.5 rounded bg-white/[0.04] transition">Plegar</span>
+          </div>
+
+          <div class="divide-y divide-white/[0.03]" id="items-container-canalizaciones">
+            <!-- Tubería Luminarias (A) -->
+            <div class="sc-item px-3 py-2 hover:bg-white/[0.04] cursor-pointer flex items-center justify-between gap-3 transition" data-system="A" data-code="T-PVCLH-20" data-desc="TUBERÍA CONDUIT PVCLH 20 MM LUMINARIAS" data-unit="ml" data-qty="60" onclick="selectAndInject(this)">
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-2">
+                  <span class="font-mono font-semibold text-blue-300 text-[11px]">T-PVCLH-20</span>
+                  <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">💡 Luminarias (A)</span>
+                </div>
+                <div class="text-slate-200 text-xs font-medium truncate mt-0.5">TUBERÍA CONDUIT PVCLH 20 MM (CIRCUITOS ALUMBRADO)</div>
+              </div>
+              <div class="text-right shrink-0 flex items-center gap-2.5">
+                <span class="font-mono font-bold text-slate-100 text-xs">60,00 <span class="text-[10px] font-normal text-slate-400">ml</span></span>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-white/[0.06] text-slate-300 hover:bg-blue-600 hover:text-white transition font-bold border border-white/[0.08]">↵</span>
+              </div>
+            </div>
+
+            <!-- Tubería Enchufes (E) -->
+            <div class="sc-item px-3 py-2 hover:bg-white/[0.04] cursor-pointer flex items-center justify-between gap-3 transition" data-system="E" data-code="T-PVC-25" data-desc="TUBERÍA PVC 25 MM CONDUIT CLASE 1 (ENCHUFES)" data-unit="ml" data-qty="120" onclick="selectAndInject(this)">
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-2">
+                  <span class="font-mono font-semibold text-blue-300 text-[11px]">T-PVC-25</span>
+                  <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30">🔌 Enchufes (E)</span>
+                </div>
+                <div class="text-slate-200 text-xs font-medium truncate mt-0.5">TUBERÍA PVC 25 MM CONDUIT CLASE 1</div>
+              </div>
+              <div class="text-right shrink-0 flex items-center gap-2.5">
+                <span class="font-mono font-bold text-emerald-400 text-xs">120,00 <span class="text-[10px] font-normal text-slate-400">ml</span></span>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-white/[0.06] text-slate-300 hover:bg-blue-600 hover:text-white transition font-bold border border-white/[0.08]">↵</span>
+              </div>
+            </div>
+
+            <!-- Bandeja Clima / Fuerza (CL/F) -->
+            <div class="sc-item px-3 py-2 hover:bg-white/[0.04] cursor-pointer flex items-center justify-between gap-3 transition" data-system="CL" data-code="BAN-200X50" data-desc="BANDEJA PORTACONDUCTORES 200x50 MM (CLIMATIZACIÓN)" data-unit="ml" data-qty="85" onclick="selectAndInject(this)">
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-2">
+                  <span class="font-mono font-semibold text-blue-300 text-[11px]">BAN-200X50</span>
+                  <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-sky-500/20 text-sky-300 border border-sky-500/30">❄️ Clima (CL)</span>
+                </div>
+                <div class="text-slate-200 text-xs font-medium truncate mt-0.5">BANDEJA PORTACONDUCTORES 200x50 MM RANURADA</div>
+              </div>
+              <div class="text-right shrink-0 flex items-center gap-2.5">
+                <span class="font-mono font-bold text-slate-100 text-xs">85,00 <span class="text-[10px] font-normal text-slate-400">ml</span></span>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-white/[0.06] text-slate-300 hover:bg-blue-600 hover:text-white transition font-bold border border-white/[0.08]">↵</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= GRUPO 3: CAJAS Y ACCESORIOS ================= -->
+        <div class="material-group" data-group-id="accesorios">
+          <div onclick="toggleGroupCollapse('accesorios')" class="px-3 py-1.5 bg-[#0b1222] hover:bg-[#0e172c] cursor-pointer flex items-center justify-between text-[11px] font-bold text-slate-300 border-t border-b border-white/[0.05] sticky top-0 z-10">
+            <div class="flex items-center gap-2">
+              <span class="text-blue-400 group-arrow" id="arrow-accesorios">▾</span>
+              <span>📦 CAJAS Y ACCESORIOS</span>
+              <span class="text-[10px] font-mono font-normal text-slate-400" id="badge-accesorios">(3 ítems)</span>
+            </div>
+            <span class="text-[9.5px] font-mono text-slate-400 hover:text-blue-300 px-1.5 py-0.5 rounded bg-white/[0.04] transition">Plegar</span>
+          </div>
+
+          <div class="divide-y divide-white/[0.03]" id="items-container-accesorios">
+            <!-- Caja Luminarias (A) -->
+            <div class="sc-item px-3 py-2 hover:bg-white/[0.04] cursor-pointer flex items-center justify-between gap-3 transition" data-system="A" data-code="ACC-CAJA-58" data-desc="CAJA 5/8 CHUQUI CENTROS DE LUZ" data-unit="un" data-qty="28" onclick="selectAndInject(this)">
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-2">
+                  <span class="font-mono font-semibold text-blue-300 text-[11px]">ACC-CAJA-58</span>
+                  <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">💡 Luminarias (A)</span>
+                </div>
+                <div class="text-slate-200 text-xs font-medium truncate mt-0.5">CAJA 5/8" EMBUTIDA CHUQUI (CENTROS DE ILUMINACIÓN)</div>
+              </div>
+              <div class="text-right shrink-0 flex items-center gap-2.5">
+                <span class="font-mono font-bold text-slate-100 text-xs">28,00 <span class="text-[10px] font-normal text-slate-400">un</span></span>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-white/[0.06] text-slate-300 hover:bg-blue-600 hover:text-white transition font-bold border border-white/[0.08]">↵</span>
+              </div>
+            </div>
+
+            <!-- Caja Enchufes (E) -->
+            <div class="sc-item px-3 py-2 hover:bg-white/[0.04] cursor-pointer flex items-center justify-between gap-3 transition" data-system="E" data-code="ACC-CAJA-CHUQUI" data-desc="CAJA CHUQUI EMBUTIDA ENCHUFES NORMALES" data-unit="un" data-qty="35" onclick="selectAndInject(this)">
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-2">
+                  <span class="font-mono font-semibold text-blue-300 text-[11px]">ACC-CAJA-CHUQUI</span>
+                  <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30">🔌 Enchufes (E)</span>
+                </div>
+                <div class="text-slate-200 text-xs font-medium truncate mt-0.5">CAJA DE DERIVACIÓN CHUQUI (TOMAS DE CORRIENTE)</div>
+              </div>
+              <div class="text-right shrink-0 flex items-center gap-2.5">
+                <span class="font-mono font-bold text-slate-100 text-xs">35,00 <span class="text-[10px] font-normal text-slate-400">un</span></span>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-white/[0.06] text-slate-300 hover:bg-blue-600 hover:text-white transition font-bold border border-white/[0.08]">↵</span>
+              </div>
+            </div>
+
+            <!-- Caja Computación (C) -->
+            <div class="sc-item px-3 py-2 hover:bg-white/[0.04] cursor-pointer flex items-center justify-between gap-3 transition" data-system="C" data-code="ACC-CAJA-DOBLE" data-desc="CAJA DOBLE 100x100 CORRIENTES DÉBILES / RED" data-unit="un" data-qty="16" onclick="selectAndInject(this)">
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-2">
+                  <span class="font-mono font-semibold text-blue-300 text-[11px]">ACC-CAJA-DOBLE</span>
+                  <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">💻 Computación (C)</span>
+                </div>
+                <div class="text-slate-200 text-xs font-medium truncate mt-0.5">CAJA 100x100 MM MODULAR PUESTOS DE RED Y UPS</div>
+              </div>
+              <div class="text-right shrink-0 flex items-center gap-2.5">
+                <span class="font-mono font-bold text-slate-100 text-xs">16,00 <span class="text-[10px] font-normal text-slate-400">un</span></span>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-white/[0.06] text-slate-300 hover:bg-blue-600 hover:text-white transition font-bold border border-white/[0.08]">↵</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= GRUPO 4: PROTECCIONES ================= -->
+        <div class="material-group" data-group-id="protecciones">
+          <div onclick="toggleGroupCollapse('protecciones')" class="px-3 py-1.5 bg-[#0b1222] hover:bg-[#0e172c] cursor-pointer flex items-center justify-between text-[11px] font-bold text-slate-300 border-t border-b border-white/[0.05] sticky top-0 z-10">
+            <div class="flex items-center gap-2">
+              <span class="text-blue-400 group-arrow" id="arrow-protecciones">▾</span>
+              <span>🛡️ PROTECCIONES Y TABLEROS</span>
+              <span class="text-[10px] font-mono font-normal text-slate-400" id="badge-protecciones">(4 ítems)</span>
+            </div>
+            <span class="text-[9.5px] font-mono text-slate-400 hover:text-blue-300 px-1.5 py-0.5 rounded bg-white/[0.04] transition">Plegar</span>
+          </div>
+
+          <div class="divide-y divide-white/[0.03]" id="items-container-protecciones">
+            <!-- Disyuntor Alumbrado (A) -->
+            <div class="sc-item px-3 py-2 hover:bg-white/[0.04] cursor-pointer flex items-center justify-between gap-3 transition" data-system="A" data-code="PROT-1X10A" data-desc="DISYUNTOR AUTOMÁTICO 1x10A 6kA CURVA C" data-unit="un" data-qty="2" onclick="selectAndInject(this)">
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-2">
+                  <span class="font-mono font-semibold text-blue-300 text-[11px]">PROT-1X10A</span>
+                  <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">💡 Luminarias (A)</span>
+                </div>
+                <div class="text-slate-200 text-xs font-medium truncate mt-0.5">DISYUNTOR AUTOMÁTICO 1x10A 6kA CURVA C (ILUMINACIÓN)</div>
+              </div>
+              <div class="text-right shrink-0 flex items-center gap-2.5">
+                <span class="font-mono font-bold text-slate-100 text-xs">2,00 <span class="text-[10px] font-normal text-slate-400">un</span></span>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-white/[0.06] text-slate-300 hover:bg-blue-600 hover:text-white transition font-bold border border-white/[0.08]">↵</span>
+              </div>
+            </div>
+
+            <!-- Disyuntor Enchufes (E) -->
+            <div class="sc-item px-3 py-2 hover:bg-white/[0.04] cursor-pointer flex items-center justify-between gap-3 transition" data-system="E" data-code="PROT-1X16A" data-desc="DISYUNTOR AUTOMÁTICO 1x16A 6kA CURVA C" data-unit="un" data-qty="3" onclick="selectAndInject(this)">
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-2">
+                  <span class="font-mono font-semibold text-blue-300 text-[11px]">PROT-1X16A</span>
+                  <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30">🔌 Enchufes (E)</span>
+                </div>
+                <div class="text-slate-200 text-xs font-medium truncate mt-0.5">DISYUNTOR AUTOMÁTICO 1x16A 6kA CURVA C (ENCHUFES)</div>
+              </div>
+              <div class="text-right shrink-0 flex items-center gap-2.5">
+                <span class="font-mono font-bold text-slate-100 text-xs">3,00 <span class="text-[10px] font-normal text-slate-400">un</span></span>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-white/[0.06] text-slate-300 hover:bg-blue-600 hover:text-white transition font-bold border border-white/[0.08]">↵</span>
+              </div>
+            </div>
+
+            <!-- Disyuntor Clima (CL) -->
+            <div class="sc-item px-3 py-2 hover:bg-white/[0.04] cursor-pointer flex items-center justify-between gap-3 transition" data-system="CL" data-code="PROT-3X25A" data-desc="DISYUNTOR TRIFÁSICO 3x25A CURVA D CLIMATIZACIÓN" data-unit="un" data-qty="1" onclick="selectAndInject(this)">
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-2">
+                  <span class="font-mono font-semibold text-blue-300 text-[11px]">PROT-3X25A</span>
+                  <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-sky-500/20 text-sky-300 border border-sky-500/30">❄️ Clima (CL)</span>
+                </div>
+                <div class="text-slate-200 text-xs font-medium truncate mt-0.5">DISYUNTOR TRIFÁSICO 3x25A CURVA D (COMPRESOR CLIMA)</div>
+              </div>
+              <div class="text-right shrink-0 flex items-center gap-2.5">
+                <span class="font-mono font-bold text-slate-100 text-xs">1,00 <span class="text-[10px] font-normal text-slate-400">un</span></span>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-white/[0.06] text-slate-300 hover:bg-blue-600 hover:text-white transition font-bold border border-white/[0.08]">↵</span>
+              </div>
+            </div>
+
+            <!-- Disyuntor Fuerza (F) -->
+            <div class="sc-item px-3 py-2 hover:bg-white/[0.04] cursor-pointer flex items-center justify-between gap-3 transition" data-system="F" data-code="PROT-3X40A" data-desc="DISYUNTOR 3x40A 10kA BOMBAS DE AGUA" data-unit="un" data-qty="1" onclick="selectAndInject(this)">
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-2">
+                  <span class="font-mono font-semibold text-blue-300 text-[11px]">PROT-3X40A</span>
+                  <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-orange-500/20 text-orange-300 border border-orange-500/30">⚙️ Fuerza (F)</span>
+                </div>
+                <div class="text-slate-200 text-xs font-medium truncate mt-0.5">DISYUNTOR GENERAL TABLERO BOMBAS DE AGUA 3x40A</div>
+              </div>
+              <div class="text-right shrink-0 flex items-center gap-2.5">
+                <span class="font-mono font-bold text-slate-100 text-xs">1,00 <span class="text-[10px] font-normal text-slate-400">un</span></span>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-white/[0.06] text-slate-300 hover:bg-blue-600 hover:text-white transition font-bold border border-white/[0.08]">↵</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- FOOTER DE ESTADO Y AYUDA DE TECLADO -->
+      <div class="h-9 px-4 border-t border-white/[0.08] bg-[#070b14] flex items-center justify-between text-[10.5px] text-slate-400 shrink-0 font-mono">
+        <div class="flex items-center gap-3">
+          <span><kbd class="px-1 py-0.5 bg-white/[0.08] text-slate-300 rounded font-semibold">↑</kbd> <kbd class="px-1 py-0.5 bg-white/[0.08] text-slate-300 rounded font-semibold">↓</kbd> Mover</span>
+          <span><kbd class="px-1 py-0.5 bg-blue-600 text-white rounded font-bold">Enter</kbd> Llevar</span>
+          <span><kbd class="px-1 py-0.5 bg-white/[0.08] text-slate-300 rounded font-semibold">Esc</kbd> Salir</span>
+        </div>
+        <div class="text-emerald-400 font-bold" id="transfer-count-badge">Transferidos: 1 / 14</div>
+      </div>
+    </aside>
+
+  </main>
+
+  <!-- ========================================================================= -->
+  <!-- TOAST MINIMALISTA DE CONFIRMACIÓN                                         -->
+  <!-- ========================================================================= -->
+  <div id="toast-notify" class="fixed bottom-6 right-6 bg-slate-900/95 border border-emerald-500/40 shadow-xl rounded-lg px-3.5 py-2 flex items-center gap-2.5 text-xs text-white z-50 opacity-0 pointer-events-none transition-all duration-200 transform translate-y-2">
+    <div class="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-[10px]">✓</div>
+    <div class="font-mono text-[11px]" id="toast-text">Material transferido a Fila 1</div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- INTERACTIVE CONTROLLER (Filtro por Circuitos, Teclado, Inyección)         -->
+  <!-- ========================================================================= -->
+  <script>
+    let isInspectorOpen = true;
+    let currentGridRow = 1;
+    let selectedScIndex = 0;
+    let activeCircuitSystem = 'ALL';
+    const maxGridRows = 5;
+
+    // Obtener todos los items visibles respetando el filtro de circuito y texto
+    function getVisibleItems() {
+      return Array.from(document.querySelectorAll('.sc-item')).filter(el => {
+        return !el.classList.contains('hidden') && el.offsetParent !== null;
+      });
+    }
+
+    // Actualizar cursor de selección en el inspector SC
+    function updateSelectionHighlight() {
+      const items = getVisibleItems();
+      items.forEach((item, idx) => {
+        if (idx === selectedScIndex) {
+          item.classList.add('keyboard-cursor');
+          item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        } else {
+          item.classList.remove('keyboard-cursor');
+        }
+      });
+    }
+
+    // Toggle abrir/cerrar inspector
+    function toggleInspector() {
+      const panel = document.getElementById('sc-inspector-panel');
+      const btn = document.getElementById('toggle-panel-btn');
+      isInspectorOpen = !isInspectorOpen;
+
+      if (isInspectorOpen) {
+        panel.style.width = '560px';
+        btn.classList.add('bg-blue-600');
+        setTimeout(() => document.getElementById('inspector-search').focus(), 150);
+      } else {
+        panel.style.width = '0px';
+        btn.classList.remove('bg-blue-600');
+      }
+    }
+
+    // Filtrar por Tipo de Circuito (Luminarias, Enchufes, Computación, Clima, Fuerza)
+    function filterByCircuitSystem(systemCode, buttonEl) {
+      activeCircuitSystem = systemCode;
+
+      // Actualizar estilo visual de los botones pills
+      document.querySelectorAll('.system-pill').forEach(btn => {
+        btn.classList.remove('pill-active');
+      });
+      buttonEl.classList.add('pill-active');
+
+      const systemLabels = {
+        'ALL': 'Todos los circuitos',
+        'A': '💡 Luminarias (Alumbrado)',
+        'E': '🔌 Enchufes (Fuerza)',
+        'C': '💻 Computación (UPS)',
+        'CL': '❄️ Clima (HVAC)',
+        'F': '⚙️ Fuerza y Motores'
+      };
+
+      document.getElementById('system-item-count').innerText = `Filtro: ${systemLabels[systemCode] || systemCode}`;
+
+      applyCombinedFilters();
+    }
+
+    // Aplicar filtros combinados: Sistema de Circuito + Búsqueda por texto
+    function applyCombinedFilters() {
+      const q = document.getElementById('inspector-search').value.toLowerCase().trim();
+      const items = document.querySelectorAll('.sc-item');
+      let visibleCount = 0;
+
+      // Conteo por grupos
+      const groupCounts = { conductores: 0, canalizaciones: 0, accesorios: 0, protecciones: 0 };
+
+      items.forEach(item => {
+        const itemSystem = item.getAttribute('data-system');
+        const code = item.getAttribute('data-code').toLowerCase();
+        const desc = item.getAttribute('data-desc').toLowerCase();
+
+        // Chequear coincidencia de sistema
+        const matchesSystem = (activeCircuitSystem === 'ALL' || itemSystem === activeCircuitSystem);
+        // Chequear coincidencia de texto
+        const matchesText = (!q || code.includes(q) || desc.includes(q));
+
+        if (matchesSystem && matchesText) {
+          item.classList.remove('hidden');
+          visibleCount++;
+
+          // Identificar grupo contenedor
+          const group = item.closest('.material-group');
+          if (group) {
+            const gId = group.getAttribute('data-group-id');
+            if (groupCounts[gId] !== undefined) groupCounts[gId]++;
+          }
+        } else {
+          item.classList.add('hidden');
+        }
+      });
+
+      // Actualizar contadores de grupo y ocultar grupos vacíos si corresponde
+      Object.keys(groupCounts).forEach(gId => {
+        const badge = document.getElementById(`badge-${gId}`);
+        if (badge) badge.innerText = `(${groupCounts[gId]} ítems)`;
+      });
+
+      selectedScIndex = 0;
+      updateSelectionHighlight();
+    }
+
+    function onFilterChange() {
+      applyCombinedFilters();
+    }
+
+    // Inyectar material en la fila activa de la grilla
+    function injectRow(code, desc, unit, qty, systemLabel) {
+      if (currentGridRow > maxGridRows) currentGridRow = 1;
+
+      const codeEl = document.getElementById(`code-row-${currentGridRow}`);
+      const descEl = document.getElementById(`desc-row-${currentGridRow}`);
+      const unitEl = document.getElementById(`unit-row-${currentGridRow}`);
+      const cantEl = document.getElementById(`cant-row-${currentGridRow}`);
+      const zoneEl = document.getElementById(`zone-row-${currentGridRow}`);
+      const originEl = document.getElementById(`origin-row-${currentGridRow}`);
+      const rowEl = document.getElementById(`grid-row-${currentGridRow}`);
+
+      if (codeEl && descEl && unitEl && cantEl && zoneEl && rowEl) {
+        codeEl.innerText = code;
+        codeEl.classList.remove('text-slate-400');
+        codeEl.classList.add('text-blue-300', 'font-medium');
+
+        descEl.innerText = desc;
+        descEl.classList.remove('text-slate-400', 'italic');
+        descEl.classList.add('text-slate-200');
+
+        unitEl.innerText = unit;
+        unitEl.classList.remove('text-slate-500');
+        unitEl.classList.add('text-slate-400');
+
+        cantEl.innerText = qty.toLocaleString('es-CL', { minimumFractionDigits: 2 });
+        cantEl.classList.remove('text-slate-500');
+        cantEl.classList.add('text-emerald-400');
+
+        zoneEl.innerText = qty.toString();
+        zoneEl.classList.remove('text-slate-500');
+        zoneEl.classList.add('text-slate-200');
+
+        if (originEl) {
+          originEl.innerHTML = `<span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">${systemLabel || 'SC'} ✓</span>`;
+        }
+
+        rowEl.classList.add('flash-transferred');
+        setTimeout(() => rowEl.classList.remove('flash-transferred'), 1000);
+
+        showToast(`Inyectado ${code} (${qty} ${unit}) en Fila ${currentGridRow}`);
+
+        // Avanzar a la siguiente fila de la grilla
+        focusGridRow(currentGridRow + 1);
+      }
+    }
+
+    // Inyectar todo el sistema activo en lote
+    function transferEntireActiveSystem() {
+      const items = getVisibleItems();
+      if (items.length === 0) {
+        showToast("No hay ítems en el filtro actual");
+        return;
+      }
+      items.forEach(item => {
+        const code = item.getAttribute('data-code');
+        const desc = item.getAttribute('data-desc');
+        const unit = item.getAttribute('data-unit');
+        const qty = parseFloat(item.getAttribute('data-qty'));
+        const sys = item.getAttribute('data-system');
+        injectRow(code, desc, unit, qty, sys);
+      });
+      showToast(`¡Transferidos todos los ítems del filtro activo!`);
+    }
+
+    // Selección por clic directo
+    function selectAndInject(element) {
+      const code = element.getAttribute('data-code');
+      const desc = element.getAttribute('data-desc');
+      const unit = element.getAttribute('data-unit');
+      const qty = parseFloat(element.getAttribute('data-qty'));
+      const sys = element.getAttribute('data-system');
+
+      const items = getVisibleItems();
+      selectedScIndex = items.indexOf(element);
+      updateSelectionHighlight();
+
+      injectRow(code, desc, unit, qty, sys);
+    }
+
+    // Enfocar fila en la grilla
+    function focusGridRow(rowIdx) {
+      if (rowIdx > maxGridRows) rowIdx = 1;
+      currentGridRow = rowIdx;
+
+      for (let i = 1; i <= maxGridRows; i++) {
+        const row = document.getElementById(`grid-row-${i}`);
+        if (row) {
+          row.classList.remove('bg-blue-950/25', 'ring-1', 'ring-inset', 'ring-blue-500/40');
+        }
+      }
+
+      const activeRow = document.getElementById(`grid-row-${rowIdx}`);
+      if (activeRow) {
+        activeRow.classList.add('bg-blue-950/25', 'ring-1', 'ring-inset', 'ring-blue-500/40');
+      }
+
+      document.getElementById('active-row-indicator').innerText = `Fila ${rowIdx}`;
+      document.getElementById('target-row-title').innerText = `Fila #${rowIdx}`;
+    }
+
+    // Plegar / desplegar grupos
+    function toggleGroupCollapse(groupId) {
+      const container = document.getElementById(`items-container-${groupId}`);
+      const arrow = document.getElementById(`arrow-${groupId}`);
+      if (container.classList.contains('hidden')) {
+        container.classList.remove('hidden');
+        arrow.innerText = '▾';
+      } else {
+        container.classList.add('hidden');
+        arrow.innerText = '▸';
+      }
+      selectedScIndex = 0;
+      updateSelectionHighlight();
+    }
+
+    // Toast flotante
+    function showToast(msg) {
+      const toast = document.getElementById('toast-notify');
+      document.getElementById('toast-text').innerText = msg;
+      toast.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-2');
+      toast.classList.add('opacity-100', 'translate-y-0');
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'pointer-events-none', 'translate-y-2');
+        toast.classList.remove('opacity-100', 'translate-y-0');
+      }, 2200);
+    }
+
+    // NAVEGACIÓN TOTAL POR TECLADO
+    window.addEventListener('keydown', (e) => {
+      if (e.altKey && (e.key === 'l' || e.key === 'L')) {
+        e.preventDefault();
+        toggleInspector();
+        return;
+      }
+
+      if (!isInspectorOpen) return;
+
+      const items = getVisibleItems();
+      if (items.length === 0) return;
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        selectedScIndex = (selectedScIndex + 1) % items.length;
+        updateSelectionHighlight();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        selectedScIndex = (selectedScIndex - 1 + items.length) % items.length;
+        updateSelectionHighlight();
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        const currentItem = items[selectedScIndex];
+        if (currentItem) {
+          selectAndInject(currentItem);
+        }
+      } else if (e.key === 'Escape') {
+        const searchInput = document.getElementById('inspector-search');
+        if (searchInput.value.length > 0) {
+          searchInput.value = '';
+          applyCombinedFilters();
+        } else {
+          toggleInspector();
+        }
+      }
+    });
+
+    updateSelectionHighlight();
+  </script>
+</body>
+</html>

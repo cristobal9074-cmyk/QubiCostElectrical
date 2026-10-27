@@ -148,11 +148,33 @@
                             </DataGridTemplateColumn.CellEditingTemplate>
                         </DataGridTemplateColumn>
 
-                        <!-- Destino: Descripción Nueva -->
-                        <DataGridTextColumn Header="Nueva Descripción" Binding="{Binding TargetDescripcion}" Width="190" IsReadOnly="True" />
+                        <!-- Destino: Descripción Nueva (Editable) -->
+                        <DataGridTemplateColumn Header="Nueva Descripción" Width="200">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding TargetDescripcion}" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" Padding="4,2" TextTrimming="CharacterEllipsis" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                            <DataGridTemplateColumn.CellEditingTemplate>
+                                <DataTemplate>
+                                    <TextBox Text="{Binding TargetDescripcion, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellEditingTemplate>
+                        </DataGridTemplateColumn>
 
-                        <!-- Nuevo P.U. -->
-                        <DataGridTextColumn Header="Nuevo P.U." Binding="{Binding NuevoPrecioClp, StringFormat={}$ {0:N0}}" Width="85" IsReadOnly="True" />
+                        <!-- Nuevo P.U. (Editable) -->
+                        <DataGridTemplateColumn Header="Nuevo P.U." Width="95">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding NuevoPrecioClp, StringFormat={}$ {0:N0}}" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" VerticalAlignment="Center" HorizontalAlignment="Right" Padding="4,2" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                            <DataGridTemplateColumn.CellEditingTemplate>
+                                <DataTemplate>
+                                    <TextBox Text="{Binding NuevoPrecioClp, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:N0}}" HorizontalContentAlignment="Right" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellEditingTemplate>
+                        </DataGridTemplateColumn>
 
                         <!-- Delta Unitario -->
                         <DataGridTextColumn Header="Δ P.U." Binding="{Binding DeltaUnitarioClp, StringFormat={}$ {0:N0}}" Width="75" IsReadOnly="True" />

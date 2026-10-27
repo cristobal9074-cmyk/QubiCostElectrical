@@ -40,6 +40,11 @@ public static partial class DataGridExcelNavigation
     public static void SetHandleDeleteByHost(DataGrid grid, bool value) => grid.SetValue(HandleDeleteByHostProperty, value);
     public static bool GetHandleDeleteByHost(DataGrid grid) => (bool)grid.GetValue(HandleDeleteByHostProperty);
 
+    public static readonly DependencyProperty HandleCellEditorByHostProperty = DependencyProperty.RegisterAttached(
+        "HandleCellEditorByHost", typeof(bool), typeof(DataGridExcelNavigation), new PropertyMetadata(false));
+    public static void SetHandleCellEditorByHost(DataGrid grid, bool value) => grid.SetValue(HandleCellEditorByHostProperty, value);
+    public static bool GetHandleCellEditorByHost(DataGrid grid) => (bool)grid.GetValue(HandleCellEditorByHostProperty);
+
     private static void OnEnableChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         if (d is not DataGrid grid)
@@ -52,6 +57,7 @@ public static partial class DataGridExcelNavigation
 
             Attach(grid);
             grid.PreviewKeyDown += OnAttachedPreviewKeyDown;
+            grid.IsKeyboardFocusWithinChanged += OnGridKeyboardFocusWithinChanged;
             grid.SetValue(HookProperty, true);
             return;
         }
@@ -60,6 +66,7 @@ public static partial class DataGridExcelNavigation
             return;
 
         grid.PreviewKeyDown -= OnAttachedPreviewKeyDown;
+        grid.IsKeyboardFocusWithinChanged -= OnGridKeyboardFocusWithinChanged;
         grid.ClearValue(HookProperty);
     }
 
@@ -67,5 +74,22 @@ public static partial class DataGridExcelNavigation
     {
         if (sender is DataGrid grid)
             HandlePreviewKeyDown(grid, e);
+    }
+
+    private static void OnGridKeyboardFocusWithinChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        if (e.NewValue is true && sender is DataGrid g)
+        {
+            if (Keyboard.FocusedElement is not DataGridCell && Keyboard.FocusedElement is not TextBox && Keyboard.FocusedElement is not ComboBox)
+            {
+                g.Dispatcher.BeginInvoke(new System.Action(() =>
+                {
+                    if (g.IsKeyboardFocusWithin && Keyboard.FocusedElement is not DataGridCell && Keyboard.FocusedElement is not TextBox && Keyboard.FocusedElement is not ComboBox)
+                    {
+                        EnsureActiveCell(g);
+                    }
+                }), System.Windows.Threading.DispatcherPriority.Input);
+            }
+        }
     }
 }

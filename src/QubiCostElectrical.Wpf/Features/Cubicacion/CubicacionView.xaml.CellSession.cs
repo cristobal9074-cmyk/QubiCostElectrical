@@ -1,4 +1,4 @@
-using System.Linq;
+﻿using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -500,8 +500,13 @@ public partial class CubicacionView
         UnidadSuggestionsList.SelectedIndex = next;
     }
 
-    private void ApplyAutocompleteSelection()
+        private void ApplyAutocompleteSelection()
     {
+        if (IsCreateMaterialSelected)
+        {
+            TriggerCreateMaterial();
+            return;
+        }
         var target = AutocompleteList.SelectedItem as AutocompleteSuggestionVm ?? Vm.AutocompleteFirstItem;
         if (target == null)
             return;
@@ -510,8 +515,13 @@ public partial class CubicacionView
         MoveCodigoEditorDown();
     }
 
-    private void ApplyAutocompleteTab()
+        private void ApplyAutocompleteTab()
     {
+        if (IsCreateMaterialSelected)
+        {
+            TriggerCreateMaterial();
+            return;
+        }
         if (AutocompleteList.SelectedItem is AutocompleteSuggestionVm first)
             Vm.ApplyMaterialCommand.Execute(first.Material);
         else if (Vm.AutocompleteFirstItemIsExactMatch && Vm.AutocompleteFirstItem is { } fallback)

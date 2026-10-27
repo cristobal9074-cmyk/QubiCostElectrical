@@ -17,6 +17,7 @@ public partial class CubicacionScView : UserControl
         DataContext = viewModel;
         viewModel.CircuitoAdded += OnCircuitoAdded;
         viewModel.CircuitoRemoving += OnCircuitoRemoving;
+        viewModel.RequestRestoreActiveCell += EnsureActiveCellSelected;
         viewModel.RequestClearGridSelection += () =>
         {
             CircuitosGrid?.SelectedCells.Clear();
@@ -81,22 +82,51 @@ public partial class CubicacionScView : UserControl
                 Dispatcher.BeginInvoke(new Action(EnsureActiveCellSelected), System.Windows.Threading.DispatcherPriority.Loaded);
                 Dispatcher.BeginInvoke(new Action(UpdateColumnsVisibility), System.Windows.Threading.DispatcherPriority.Loaded);
             }
+            if (e.PropertyName == nameof(CubicacionScViewModel.IsCatalogoDrawerOpen))
+            {
+                if (viewModel.IsCatalogoDrawerOpen)
+                {
+                    Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        CatalogoDrawerPanel?.FocusNavigation();
+                        if (CatalogoDrawerPanel != null)
+                        {
+                            CatalogoDrawerPanel.ScrollSelectedCategoryIntoView();
+
+                            CatalogoDrawerPanel.ScrollSelectedItemIntoView();
+                        }
+                    }), System.Windows.Threading.DispatcherPriority.Input);
+                }
+                else
+                {
+                    Dispatcher.BeginInvoke(new Action(EnsureActiveCellSelected), System.Windows.Threading.DispatcherPriority.Input);
+                }
+            }
+            if (e.PropertyName == nameof(CubicacionScViewModel.IsArtefactosDrawerOpen))
+            {
+                if (viewModel.IsArtefactosDrawerOpen)
+                {
+                    Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        ArtefactosDrawerPanel?.FocusSearch();
+                    }), System.Windows.Threading.DispatcherPriority.Input);
+                }
+                else
+                {
+                    Dispatcher.BeginInvoke(new Action(EnsureActiveCellSelected), System.Windows.Threading.DispatcherPriority.Input);
+                }
+            }
+            if (e.PropertyName is nameof(CubicacionScViewModel.ShowSegundoDucto) or nameof(CubicacionScViewModel.ShowColSegundoDucto))
+            {
+                UpdateColumnsVisibility();
+                Dispatcher.BeginInvoke(new Action(SyncBandColumnWidths), System.Windows.Threading.DispatcherPriority.Loaded);
+            }
             if (e.PropertyName is nameof(CubicacionScViewModel.IsAdvancedMode))
             {
                 UpdateColumnsVisibility();
                 Dispatcher.BeginInvoke(new Action(UpdateColumnsVisibility), System.Windows.Threading.DispatcherPriority.Loaded);
             }
         };
-
-        CircuitosGrid.SelectedCellsChanged += (_, _) =>
-        {
-            if (CircuitosGrid.SelectedCells.Count == 0 && CircuitosGrid.Items.Count > 0)
-            {
-                Dispatcher.BeginInvoke(new Action(EnsureActiveCellSelected), System.Windows.Threading.DispatcherPriority.Input);
-            }
-        };
-
-        PreviewKeyDown += UserControl_PreviewKeyDown;
     }
 
     private void UserControl_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -105,6 +135,77 @@ public partial class CubicacionScView : UserControl
         bool alt = (Keyboard.Modifiers & ModifierKeys.Alt) == ModifierKeys.Alt;
         bool shift = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift;
 
+        // Ctrl+Shift+H: Cambio masivo de familia / línea
+        if (ctrl && shift && e.Key == Key.H)
+        {
+            if (DataContext is CubicacionScViewModel scVmH && scVmH.OpenFamilyBatchReplaceCommand.CanExecute(null))
+            {
+                scVmH.OpenFamilyBatchReplaceCommand.Execute(null);
+                e.Handled = true;
+                return;
+            }
+        }
+
+        // Alt+C: alternar o abrir Catálogo lateral
+        if (alt && !ctrl && (e.SystemKey == Key.C || e.Key == Key.C))
+        {
+            if (DataContext is CubicacionScViewModel scVmAltC && scVmAltC.OpenCatalogoCommand.CanExecute(null))
+            {
+                scVmAltC.OpenCatalogoCommand.Execute(null);
+                e.Handled = true;
+                return;
+            }
+        }
+
+        // Alt+A: alternar o abrir Artefactos lateral
+        if (alt && !ctrl && (e.SystemKey == Key.A || e.Key == Key.A))
+        {
+            if (DataContext is CubicacionScViewModel scVmAltA)
+            {
+                var target = scVmAltA.SelectedCircuito ?? ResolveCurrentOrSelectedCircuito() ?? scVmAltA.Circuitos.FirstOrDefault();
+                if (scVmAltA.OpenArtefactosCommand.CanExecute(target))
+                {
+                    scVmAltA.OpenArtefactosCommand.Execute(target);
+                    Dispatcher.BeginInvoke(new Action(FocusArtefactosSearch), System.Windows.Threading.DispatcherPriority.Input);
+                    e.Handled = true;
+                    return;
+                }
+            }
+        }
+
+        // Alt+D: alternar circuito Disponible / Activo en cualquier momento
+        if (alt && !ctrl && (e.SystemKey == Key.D || e.Key == Key.D))
+        {
+            if (TryToggleCircuitoDisponible())
+            {
+                e.Handled = true;
+                return;
+            }
+        }
+
+        // Escape con Catálogo C.SC abierto: cerrar siempre el catálogo y volver a la grilla
+        if (e.Key == Key.Escape && DataContext is CubicacionScViewModel scVmCatalogo && scVmCatalogo.IsCatalogoDrawerOpen)
+        {
+            scVmCatalogo.CatalogoDrawer.IsOpen = false;
+            EnsureActiveCellSelected();
+            e.Handled = true;
+            return;
+        }
+        // Escape con Artefactos C.SC abierto: cancelar cantidad o cerrar drawer
+        if (e.Key == Key.Escape && DataContext is CubicacionScViewModel scVmArtefactos && scVmArtefactos.IsArtefactosDrawerOpen)
+        {
+            if (scVmArtefactos.ArtefactosDrawer.IsQuantityMode)
+            {
+                scVmArtefactos.ArtefactosDrawer.CancelQuantity();
+            }
+            else
+            {
+                scVmArtefactos.ArtefactosDrawer.IsOpen = false;
+                EnsureActiveCellSelected();
+            }
+            e.Handled = true;
+            return;
+        }
         if (e.Key == Key.Escape && DataContext is CubicacionScViewModel scVmEsc && scVmEsc.HasSearchText)
         {
             if (scVmEsc.ClearSearchCommand.CanExecute(null)) scVmEsc.ClearSearchCommand.Execute(null);
@@ -116,6 +217,13 @@ public partial class CubicacionScView : UserControl
         {
             bool isPlus = e.Key is Key.Add or Key.OemPlus || (shift && e.Key is Key.OemPlus or Key.Oem1 or Key.OemQuestion);
             bool isMinus = !shift && e.Key is Key.Subtract or Key.OemMinus;
+
+            if (isPlus && scVm.IsCatalogoDrawerOpen)
+            {
+                CatalogoDrawerPanel?.FocusNewItem();
+                e.Handled = true;
+                return;
+            }
 
             if (isPlus && scVm.AddCircuitoCommand.CanExecute(null))
             {
@@ -365,13 +473,14 @@ public partial class CubicacionScView : UserControl
 
         BandColUbicacion.Width = new GridLength(W(ColUbicacion), GridUnitType.Pixel);
 
-        double wMedidas = W(ColLBand) + W(ColLPvc);
+        double wMedidas = W(ColLBand) + W(ColLPvc) + W(ColLPvc2);
         BandColMedidasEntrada.Width = new GridLength(wMedidas, GridUnitType.Pixel);
 
         double wBandeja = W(ColCondBand) + W(ColSeccBand) + W(ColTotBand);
         BandColTramoBandeja.Width = new GridLength(wBandeja, GridUnitType.Pixel);
 
         double wPvc = W(ColTipoPvc) + W(ColDuctoPvc) + W(ColTotalDucto)
+            + W(ColTipoPvc2) + W(ColDuctoPvc2) + W(ColTotalDucto2)
             + W(ColCondPvc) + W(ColSeccPvc) + W(ColTotPvc);
         BandColTramoPvc.Width = new GridLength(wPvc, GridUnitType.Pixel);
 
@@ -414,31 +523,49 @@ public partial class CubicacionScView : UserControl
         bool isGenerales = vm == null || vm.IsPerspectiveGenerales;
         bool isAdv = vm != null && vm.IsAdvancedMode;
 
-        var deptoColVis = isGenerales ? Visibility.Visible : Visibility.Collapsed;
-        var bandejaAdvVis = (isGenerales && isAdv) ? Visibility.Visible : Visibility.Collapsed;
+        // Columnas exclusivas de Servicios Comunes / Generales (no aplican a Departamentos)
+        var generalesOnlyVis = isGenerales ? Visibility.Visible : Visibility.Collapsed;
 
-        if (ColUbicacion != null) ColUbicacion.Visibility = deptoColVis;
-        if (ColLBand != null) ColLBand.Visibility = deptoColVis;
-        if (ColCondBand != null) ColCondBand.Visibility = deptoColVis;
-        if (ColSeccBand != null) ColSeccBand.Visibility = deptoColVis;
-        if (ColTotBand != null) ColTotBand.Visibility = deptoColVis;
-        if (ColTipoPvc != null) ColTipoPvc.Visibility = deptoColVis;
-        if (ColDuctoPvc != null) ColDuctoPvc.Visibility = deptoColVis;
-        if (ColTotalDucto != null) ColTotalDucto.Visibility = deptoColVis;
-        if (ColCondPvc != null) ColCondPvc.Visibility = deptoColVis;
-        if (ColSeccPvc != null) ColSeccPvc.Visibility = deptoColVis;
-        if (ColTotPvc != null) ColTotPvc.Visibility = deptoColVis;
-        if (ColTmfCant != null) ColTmfCant.Visibility = deptoColVis;
-        if (ColTmfMed != null) ColTmfMed.Visibility = deptoColVis;
-        if (ColArtefactos != null) ColArtefactos.Visibility = deptoColVis;
+        // Ubicación / Pisos (solo en Generales)
+        if (ColUbicacion != null) ColUbicacion.Visibility = generalesOnlyVis;
+
+        // Tramo Bandeja (solo en Generales)
+        if (ColLBand != null) ColLBand.Visibility = generalesOnlyVis;
+        if (ColCondBand != null) ColCondBand.Visibility = generalesOnlyVis;
+        if (ColSeccBand != null) ColSeccBand.Visibility = generalesOnlyVis;
+        if (ColTotBand != null) ColTotBand.Visibility = generalesOnlyVis;
+
+        // Terminal Flexible (solo en Generales)
+        if (ColTmfCant != null) ColTmfCant.Visibility = generalesOnlyVis;
+        if (ColTmfMed != null) ColTmfMed.Visibility = generalesOnlyVis;
+
+        // Tramo PVC / Conduit (visible SIEMPRE: en Generales y Deptos)
+        if (ColTipoPvc != null) ColTipoPvc.Visibility = Visibility.Visible;
+        if (ColDuctoPvc != null) ColDuctoPvc.Visibility = Visibility.Visible;
+        if (ColTotalDucto != null) ColTotalDucto.Visibility = Visibility.Visible;
+        if (ColCondPvc != null) ColCondPvc.Visibility = Visibility.Visible;
+        if (ColSeccPvc != null) ColSeccPvc.Visibility = Visibility.Visible;
+        if (ColTotPvc != null) ColTotPvc.Visibility = Visibility.Visible;
+
+        // Elementos y accesorios (visible SIEMPRE: en Generales y Deptos)
+        if (ColArtefactos != null) ColArtefactos.Visibility = Visibility.Visible;
+
+        // Segundo Ducto (opcional con el botón +)
+        var segundoDuctoVis = (vm != null && vm.ShowSegundoDucto) ? Visibility.Visible : Visibility.Collapsed;
+        if (ColLPvc2 != null) ColLPvc2.Visibility = segundoDuctoVis;
+        if (ColTipoPvc2 != null) ColTipoPvc2.Visibility = segundoDuctoVis;
+        if (ColDuctoPvc2 != null) ColDuctoPvc2.Visibility = segundoDuctoVis;
+        if (ColTotalDucto2 != null) ColTotalDucto2.Visibility = segundoDuctoVis;
 
         // Orden funcional solicitado para la planilla SC. Los elementos y accesorios
         // permanecen como una acción auxiliar al final, fuera de las 17 columnas.
         var orderedColumns = new DataGridColumn?[]
         {
-            NumeroColumn, ColSist, ColAlim, ColUbicacion, ColLBand, ColLPvc,
-            ColTipoPvc, ColDuctoPvc, ColTotalDucto,
+            NumeroColumn, ColSist, ColAlim, ColUbicacion,
+            ColLBand, ColLPvc, ColLPvc2,
             ColCondBand, ColSeccBand, ColTotBand,
+            ColTipoPvc, ColDuctoPvc, ColTotalDucto,
+            ColTipoPvc2, ColDuctoPvc2, ColTotalDucto2,
             ColCondPvc, ColSeccPvc, ColTotPvc,
             ColTmfCant, ColTmfMed, ColArtefactos
         };
@@ -448,9 +575,10 @@ public partial class CubicacionScView : UserControl
                 orderedColumns[i]!.DisplayIndex = i;
         }
 
-        if (BandBorderUbicacion != null) BandBorderUbicacion.Visibility = deptoColVis;
-        if (BandBorderTramoBandeja != null) BandBorderTramoBandeja.Visibility = deptoColVis;
-        if (BandBorderTmf != null) BandBorderTmf.Visibility = deptoColVis;
+        if (BandBorderUbicacion != null) BandBorderUbicacion.Visibility = generalesOnlyVis;
+        if (BandBorderTramoBandeja != null) BandBorderTramoBandeja.Visibility = generalesOnlyVis;
+        if (BandBorderTmf != null) BandBorderTmf.Visibility = generalesOnlyVis;
+        if (BandBorderTramoPvc != null) BandBorderTramoPvc.Visibility = Visibility.Visible;
 
         if (BandLabelMedidasEntrada != null)
         {
@@ -458,5 +586,10 @@ public partial class CubicacionScView : UserControl
         }
 
         SyncBandColumnWidths();
+    }
+
+    public void FocusArtefactosSearch()
+    {
+        ArtefactosDrawerPanel?.FocusSearch();
     }
 }

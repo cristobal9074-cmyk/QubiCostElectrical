@@ -1,0 +1,323 @@
+<UserControl x:Class="QubiCostElectrical.Wpf.Features.CubicacionSc.CubicacionScCambioLineaDrawerControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:QubiCostElectrical.Wpf.Features.CubicacionSc"
+             mc:Ignorable="d"
+             Background="#FFFFFF"
+             BorderBrush="{DynamicResource Brush.Line}"
+             BorderThickness="1,0,0,0"
+             Focusable="True" FocusVisualStyle="{x:Null}">
+
+    <UserControl.Resources>
+        <!-- Estilo de botón de conversión rápido (Píldora grande) -->
+        <Style x:Key="ConversionCardStyle" TargetType="Button">
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Background" Value="#FFFFFF" />
+            <Setter Property="BorderBrush" Value="#E2E8F0" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="10,8" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bdr"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="8"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bdr" Property="BorderBrush" Value="#94A3B8" />
+                                <Setter TargetName="bdr" Property="Background" Value="#F8FAFC" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <DockPanel LastChildFill="True">
+
+            <!-- ── A. HEADER LIMPIO Y DIRECTO ── -->
+            <Border DockPanel.Dock="Top" Background="#FFFFFF" BorderBrush="#F1F5F9" BorderThickness="0,0,0,1" Padding="16,12">
+                <DockPanel LastChildFill="True">
+                    <Button DockPanel.Dock="Right"
+                            Command="{Binding CloseDrawerCommand}"
+                            Width="28" Height="28"
+                            Cursor="Hand"
+                            Style="{StaticResource Button.Ghost}"
+                            ToolTip="Cerrar panel (Esc)">
+                        <TextBlock Text="✕" FontSize="13" FontWeight="Bold" Foreground="#64748B" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Button>
+
+                    <StackPanel Orientation="Vertical">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="Cambio Masivo de Línea" FontSize="13" FontWeight="Bold" Foreground="#0F172A" />
+                            <Border Background="#F1F5F9" CornerRadius="4" Padding="6,1" Margin="8,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="RÁPIDO" FontSize="9" FontWeight="Bold" Foreground="#475569" />
+                            </Border>
+                        </StackPanel>
+                        <TextBlock Text="Reemplaza una línea completa de productos en 1 clic." FontSize="11" Foreground="#64748B" Margin="0,2,0,0" />
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+            <!-- ── D. FOOTER CON BOTÓN PRINCIPAL GRANDE ── -->
+            <Border DockPanel.Dock="Bottom" Background="#FFFFFF" BorderBrush="#F1F5F9" BorderThickness="0,1,0,0" Padding="14,10">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Button Grid.Column="0"
+                            Command="{Binding CloseDrawerCommand}"
+                            Content="Cancelar"
+                            Padding="12,8"
+                            Background="Transparent"
+                            BorderBrush="Transparent"
+                            Foreground="#64748B"
+                            FontWeight="SemiBold"
+                            FontSize="11"
+                            Cursor="Hand"
+                            Margin="0,0,8,0" />
+
+                    <Button Grid.Column="1"
+                            Command="{Binding ApplyCommand}"
+                            Height="36"
+                            Cursor="Hand"
+                            Background="#2563EB"
+                            BorderBrush="#1D4ED8"
+                            BorderThickness="1"
+                            Foreground="#FFFFFF"
+                            FontWeight="Bold"
+                            FontSize="11"
+                            ToolTip="Aplica los cambios en Cubicación SC, partidas y APUs">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="btnBdr" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <TextBlock Text="⚡ " FontSize="12" />
+                                        <TextBlock Text="CAMBIAR LÍNEA AHORA" FontWeight="Bold" FontSize="11" />
+                                    </StackPanel>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="btnBdr" Property="Background" Value="#1D4ED8" />
+                                    </Trigger>
+                                    <Trigger Property="IsEnabled" Value="False">
+                                        <Setter TargetName="btnBdr" Property="Background" Value="#94A3B8" />
+                                        <Setter TargetName="btnBdr" Property="BorderBrush" Value="#94A3B8" />
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- ── B. SECCIÓN 1: SELECCIÓN DE PRESET ── -->
+            <Border DockPanel.Dock="Top" Background="#F8FAFC" BorderBrush="#F1F5F9" BorderThickness="0,0,0,1" Padding="14,12">
+                <StackPanel>
+                    <TextBlock Text="1. Elige la conversión:" FontSize="10" FontWeight="Bold" Foreground="#64748B" Margin="0,0,0,8" />
+
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Card 1: PVC a PVCLH -->
+                        <Button Grid.Row="0" Grid.Column="0"
+                                Command="{Binding SelectPresetCommand}"
+                                CommandParameter="pvc_pvclh"
+                                Style="{StaticResource ConversionCardStyle}"
+                                Margin="0,0,4,6">
+                            <StackPanel>
+                                <DockPanel LastChildFill="True">
+                                    <Ellipse DockPanel.Dock="Right" Width="8" Height="8" Margin="4,0,0,0">
+                                        <Ellipse.Style>
+                                            <Style TargetType="Ellipse">
+                                                <Setter Property="Fill" Value="#CBD5E1" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsPvcSelected}" Value="True">
+                                                        <Setter Property="Fill" Value="#2563EB" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Ellipse.Style>
+                                    </Ellipse>
+                                    <TextBlock Text="PVC ➔ PVCLH" FontWeight="Bold" FontSize="11" Foreground="#0F172A" />
+                                </DockPanel>
+                                <TextBlock Text="Conduit libre de halógenos" FontSize="9.5" Foreground="#64748B" Margin="0,2,0,0" />
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Card 2: Magic a Matix -->
+                        <Button Grid.Row="0" Grid.Column="1"
+                                Command="{Binding SelectPresetCommand}"
+                                CommandParameter="magic_matix"
+                                Style="{StaticResource ConversionCardStyle}"
+                                Margin="4,0,0,6">
+                            <StackPanel>
+                                <DockPanel LastChildFill="True">
+                                    <Ellipse DockPanel.Dock="Right" Width="8" Height="8" Margin="4,0,0,0">
+                                        <Ellipse.Style>
+                                            <Style TargetType="Ellipse">
+                                                <Setter Property="Fill" Value="#CBD5E1" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsMagicSelected}" Value="True">
+                                                        <Setter Property="Fill" Value="#2563EB" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Ellipse.Style>
+                                    </Ellipse>
+                                    <TextBlock Text="Magic ➔ Matix" FontWeight="Bold" FontSize="11" Foreground="#0F172A" />
+                                </DockPanel>
+                                <TextBlock Text="Artefactos Bticino modulares" FontSize="9.5" Foreground="#64748B" Margin="0,2,0,0" />
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Card 3: EVA a H07Z1-K -->
+                        <Button Grid.Row="1" Grid.Column="0"
+                                Command="{Binding SelectPresetCommand}"
+                                CommandParameter="eva_h07z1k"
+                                Style="{StaticResource ConversionCardStyle}"
+                                Margin="0,0,4,0">
+                            <StackPanel>
+                                <DockPanel LastChildFill="True">
+                                    <Ellipse DockPanel.Dock="Right" Width="8" Height="8" Margin="4,0,0,0">
+                                        <Ellipse.Style>
+                                            <Style TargetType="Ellipse">
+                                                <Setter Property="Fill" Value="#CBD5E1" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsEvaSelected}" Value="True">
+                                                        <Setter Property="Fill" Value="#2563EB" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Ellipse.Style>
+                                    </Ellipse>
+                                    <TextBlock Text="EVA ➔ H07Z1-K" FontWeight="Bold" FontSize="11" Foreground="#0F172A" />
+                                </DockPanel>
+                                <TextBlock Text="Cables libres de halógenos" FontSize="9.5" Foreground="#64748B" Margin="0,2,0,0" />
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Card 4: Personalizado -->
+                        <Button Grid.Row="1" Grid.Column="1"
+                                Command="{Binding SelectPresetCommand}"
+                                CommandParameter="custom"
+                                Style="{StaticResource ConversionCardStyle}"
+                                Margin="4,0,0,0">
+                            <StackPanel>
+                                <DockPanel LastChildFill="True">
+                                    <TextBlock DockPanel.Dock="Right" Text="✏️" FontSize="10" />
+                                    <TextBlock Text="Personalizado" FontWeight="Bold" FontSize="11" Foreground="#0F172A" />
+                                </DockPanel>
+                                <TextBlock Text="Escribe tu propia regla" FontSize="9.5" Foreground="#64748B" Margin="0,2,0,0" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+
+                    <!-- Campos de personalización (visible solo cuando IsCustomSelected) -->
+                    <Border Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="10,8" Margin="0,8,0,0"
+                            Visibility="{Binding IsCustomSelected, Converter={StaticResource BoolToVisibility}}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Margin="0,0,4,0">
+                                <TextBlock Text="Texto actual a buscar:" FontSize="9.5" FontWeight="Bold" Foreground="#64748B" Margin="0,0,0,2" />
+                                <TextBox Text="{Binding CustomSourceText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                         Padding="6,4" FontSize="11" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Margin="4,0,0,0">
+                                <TextBlock Text="Reemplazar por:" FontSize="9.5" FontWeight="Bold" Foreground="#64748B" Margin="0,0,0,2" />
+                                <TextBox Text="{Binding CustomTargetText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                         Padding="6,4" FontSize="11" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </Border>
+
+            <!-- ── C. SECCIÓN 2: LISTA DE MATERIALES AFECTADOS ── -->
+            <Grid Background="#FFFFFF" Margin="14,10">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <DockPanel Grid.Row="0" LastChildFill="True" Margin="0,0,0,8">
+                    <Border DockPanel.Dock="Right" Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="12" Padding="8,2">
+                        <TextBlock Text="{Binding ItemsBadgeText}" FontSize="10" FontWeight="Bold" Foreground="#1D4ED8" />
+                    </Border>
+
+                    <TextBlock Text="2. Materiales que se cambiarán:" FontSize="10" FontWeight="Bold" Foreground="#64748B" VerticalAlignment="Center" />
+                </DockPanel>
+
+                <!-- Lista de items con scroll -->
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <ItemsControl ItemsSource="{Binding Items}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="10,8" Margin="0,0,0,6">
+                                    <DockPanel LastChildFill="True">
+                                        <Border DockPanel.Dock="Right" Background="#ECFDF5" BorderBrush="#A7F3D0" BorderThickness="1" CornerRadius="4" Padding="6,1" VerticalAlignment="Center" Margin="8,0,0,0">
+                                            <TextBlock Text="{Binding Status}" FontSize="9.5" FontWeight="Bold" Foreground="#047857" />
+                                        </Border>
+
+                                        <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,8,0" />
+
+                                        <StackPanel Orientation="Vertical">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding SourceDescription}" FontSize="11" FontWeight="Bold" Foreground="#0F172A" />
+                                                <TextBlock Text=" ➔ " FontSize="11" FontWeight="Bold" Foreground="#2563EB" Margin="4,0" />
+                                                <TextBlock Text="{Binding TargetDescription}" FontSize="11" FontWeight="Bold" Foreground="#1D4ED8" />
+                                            </StackPanel>
+                                            <TextBlock Text="{Binding Detail}" FontSize="9.5" Foreground="#64748B" Margin="0,2,0,0" />
+                                        </StackPanel>
+                                    </DockPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+
+                <!-- Ámbitos donde se aplicará -->
+                <Border Grid.Row="2" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="8,6" Margin="0,8,0,0">
+                    <DockPanel LastChildFill="True">
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                            <Border Background="#FFFFFF" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="4" Padding="6,1" Margin="2,0">
+                                <TextBlock Text="Cubicación SC" FontSize="9.5" FontWeight="Bold" Foreground="#1D4ED8" />
+                            </Border>
+                            <Border Background="#FFFFFF" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="4" Padding="6,1" Margin="2,0">
+                                <TextBlock Text="Partidas" FontSize="9.5" FontWeight="SemiBold" Foreground="#475569" />
+                            </Border>
+                            <Border Background="#FFFFFF" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="4" Padding="6,1" Margin="2,0">
+                                <TextBlock Text="APUs" FontSize="9.5" FontWeight="SemiBold" Foreground="#475569" />
+                            </Border>
+                        </StackPanel>
+                        <TextBlock Text="Se aplicará en:" FontSize="10" Foreground="#64748B" VerticalAlignment="Center" />
+                    </DockPanel>
+                </Border>
+            </Grid>
+
+        </DockPanel>
+    </Grid>
+</UserControl>

@@ -45,11 +45,25 @@ public static class DataGridCellAccessor
         int lastComma = clean.LastIndexOf(',');
 
         if (lastDot >= 0 && lastComma >= 0)
+        {
             clean = lastComma > lastDot ? clean.Replace(".", "").Replace(',', '.') : clean.Replace(",", "");
+        }
+        else if (lastDot >= 0)
+        {
+            int decimals = clean.Length - lastDot - 1;
+            // X.000 (3 dígitos después del punto) y no empieza con "0." -> separador de miles formato chileno/español
+            if (clean.Count(c => c == '.') > 1 || (decimals == 3 && !clean.StartsWith("0.")))
+                clean = clean.Replace(".", "");
+        }
         else if (lastComma >= 0)
-            clean = clean.Replace(',', '.');
-        else if (lastDot >= 0 && clean.Count(c => c == '.') > 1)
-            clean = clean.Replace(".", "");
+        {
+            int decimals = clean.Length - lastComma - 1;
+            // X,000 (3 dígitos después de la coma) y no empieza con "0," -> separador de miles formato inglés / N0
+            if (clean.Count(c => c == ',') > 1 || (decimals == 3 && !clean.StartsWith("0,")))
+                clean = clean.Replace(",", "");
+            else
+                clean = clean.Replace(',', '.');
+        }
 
         return decimal.TryParse(clean, NumberStyles.Any, CultureInfo.InvariantCulture, out result);
     }

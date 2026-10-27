@@ -330,4 +330,117 @@ public sealed class FamilyBatchReplaceServiceTests
         Assert.Equal(3300m, m12.NuevoPrecioClp);
         Assert.Equal(FamilyMappingStatus.InCubicacion, m12.Status);
     }
+
+    [Fact]
+    public void AutoMapWithPriceBank_MagicToMatix_FallbackPreservesPriceAndSetsManualStatus()
+    {
+        var session = CreateTestSession();
+        var service = new FamilyBatchReplaceService();
+        var emptyBank = new FakePriceBankStore();
+
+        var scanned = service.ScanMatchingMaterials(session, "magic");
+        var preset = FamilyConversionPresetStore.GetFactoryPresets().First(p => p.Id == "factory_magic_to_matix");
+
+        service.AutoMapWithPriceBank(
+            scanned,
+            sourcePrefix: preset.SourcePrefix,
+            targetPrefix: preset.TargetPrefix,
+            priceBankStore: emptyBank,
+            explicitOverrides: preset.ItemOverrides,
+            session: session);
+
+        var m12 = scanned.First(m => m.SourceCodigo == "magic9/12");
+        Assert.Equal("matix9/12", m12.TargetCodigo);
+        // Cuando no está en banco ni cubicación, se genera propuesta y se mantiene el precio base sin quedar en 
+        Assert.Equal(2500m, m12.NuevoPrecioClp);
+        Assert.Equal(FamilyMappingStatus.Manual, m12.Status);
+    }
+
+    [Fact]
+    public void ExecuteReplacement_UpdatesCubicacionSC_PvcToPvclhAndArtefactos()
+    {
+        var session = CreateTestSession();
+        var cuadro = new CuadroCargaSCRow
+        {
+            Id = "tab_1",
+            Nombre = "TDA-1",
+            Circuitos = new List<CircuitoSCRow>
+            {
+                new CircuitoSCRow
+                {
+                    Numero = 1,
+                    TipoTuberia = "PVC",
+                    TipoTuberia2 = "PVC",
+                    MetrosTuberia = 30m,
+                    MetrosTuberia2 = 10m,
+                    Artefactos = new List<ArtefactoSCRow>
+                    {
+                        new() { Nombre = "magic9/12", Cantidad = 4m }
+                    }
+                }
+            }
+        };
+        session.CubicacionSC.Add(cuadro);
+
+        var service = new FamilyBatchReplaceService();
+        var scanned = service.ScanMatchingMaterials(session, "PVC");
+        Assert.NotEmpty(scanned);
+
+        var mappings = new List<FamilyItemMapping>
+        {
+            new FamilyItemMapping
+            {
+                SourceCodigo = "PVC",
+                SourceDescripcion = "PVC",
+                TargetCodigo = "PVCLH",
+                TargetDescripcion = "PVCLH",
+                NuevoPrecioClp = 1200m,
+                IsSelected = true
+            },
+            new FamilyItemMapping
+            {
+                SourceCodigo = "magic9/12",
+                SourceDescripcion = "Interruptor simple Magic 9/12",
+                TargetCodigo = "matix9/12",
+                TargetDescripcion = "Interruptor simple Matix 9/12",
+                NuevoPrecioClp = 2900m,
+                IsSelected = true
+            }
+        };
+
+        var result = service.ExecuteReplacement(session, null, mappings, replaceCubicacion: true, replaceApu: false);
+
+        var circuito = session.CubicacionSC[0].Circuitos[0];
+        Assert.Equal("PVCLH", circuito.TipoTuberia);
+        Assert.Equal("PVCLH", circuito.TipoTuberia2);
+        Assert.Equal("Interruptor simple Matix 9/12", circuito.Artefactos[0].Nombre);
+    }
+
+    [Fact]
+    public void FamilyItemMapping_PropertyChanged_RecalculatesDeltasLive()
+    {
+        var mapping = new FamilyItemMapping
+        {
+            SourceCodigo = "PVC-20",
+            CantidadTotal = 100m,
+            PrecioActualClp = 1000m
+        };
+
+        var changedProps = new List<string>();
+        mapping.PropertyChanged += (s, e) => { if (e.PropertyName != null) changedProps.Add(e.PropertyName); };
+
+        Assert.Equal(100000m, mapping.SubtotalActualClp);
+        Assert.Equal(0m, mapping.NuevoSubtotalClp);
+
+        // Cambiar precio nuevo en vivo
+        mapping.NuevoPrecioClp = 1500m;
+
+        Assert.Equal(150000m, mapping.NuevoSubtotalClp);
+        Assert.Equal(50000m, mapping.DeltaClp);
+        Assert.Equal(500m, mapping.DeltaUnitarioClp);
+        Assert.Contains("NuevoPrecioClp", changedProps);
+        Assert.Contains("NuevoSubtotalClp", changedProps);
+        Assert.Contains("DeltaClp", changedProps);
+        Assert.Contains("DeltaUnitarioClp", changedProps);
+    }
 }

@@ -295,9 +295,14 @@ public partial class ItemizadoView : UserControl, IInGridSearchable
             return;
         }
 
-        if (e.Key == Key.Delete && Keyboard.Modifiers == ModifierKeys.None && !IsGridEditing())
+        bool isCtrlMinus = (Keyboard.Modifiers == ModifierKeys.Control) && (e.Key is Key.OemMinus or Key.Subtract);
+        if ((e.Key == Key.Delete && Keyboard.Modifiers == ModifierKeys.None || isCtrlMinus) && !IsGridEditing())
         {
-            Vm.HandleDeleteKey();
+            var selectedRows = ItemGrid.SelectedItems.OfType<ItemizadoRowVm>().ToList();
+            if (selectedRows.Count == 0 && Vm.SelectedRow != null)
+                selectedRows.Add(Vm.SelectedRow);
+
+            Vm.DeleteSelectedRows(selectedRows);
             e.Handled = true;
             return;
         }
@@ -473,8 +478,11 @@ public partial class ItemizadoView : UserControl, IInGridSearchable
 
     private void OnRowMenuDeleteClick(object sender, RoutedEventArgs e)
     {
-        if (Vm?.DeleteCommand.CanExecute(null) == true)
-            Vm.DeleteCommand.Execute(null);
+        var selectedRows = ItemGrid.SelectedItems.OfType<ItemizadoRowVm>().ToList();
+        if (selectedRows.Count == 0 && Vm?.SelectedRow != null)
+            selectedRows.Add(Vm.SelectedRow);
+
+        Vm?.DeleteSelectedRows(selectedRows);
     }
 
     private void OnRowMenuToggleEsTituloClick(object sender, RoutedEventArgs e)

@@ -132,4 +132,38 @@ public sealed class AplicarIndiceMoFaTests
 
         Assert.Equal(1_170m, session.Materiales[1].MoClp);
     }
+
+    [Fact]
+    public void AplicarIndiceMoFa_MaterialConFormulaFactor_RecalibraConNuevoFa()
+    {
+        var session = new BudgetProjectSession();
+        session.ProjectInfo.IndiceMoFa = 62.80m;
+        var mat = new MaterialRow
+        {
+            Codigo = "H07Z1-K1.5",
+            Descripcion = "COND. H07Z1-K 1.5 mmÂ²",
+            MatClp = 273m,
+            MoFactorBase = 20m,
+            MoFormulaTipo = MaterialMoResolver.MoFormulaFactor,
+            MoClp = 1256m
+        };
+        session.Materiales.Add(mat);
+        var cub = new CubicacionRow
+        {
+            Codigo = "H07Z1-K1.5",
+            Descripcion = "COND. H07Z1-K 1.5 mmÂ²",
+            MatClp = 273m,
+            MoClp = 1256m,
+            Cantidad = 10m
+        };
+        session.Cubicacion.Add(cub);
+
+        var aplicado = session.AplicarIndiceMoFa(80.00m);
+
+        Assert.Equal(80.00m, session.ProjectInfo.IndiceMoFa);
+        Assert.Equal(1600m, mat.MoClp);
+        Assert.Equal(1600m, cub.MoClp);
+        Assert.Equal(1, aplicado.MaterialesRecalibrados);
+        Assert.Equal(1, aplicado.CubicacionSincronizada);
+    }
 }

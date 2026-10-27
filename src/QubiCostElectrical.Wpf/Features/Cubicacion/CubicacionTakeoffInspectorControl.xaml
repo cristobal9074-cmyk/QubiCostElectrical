@@ -1,0 +1,496 @@
+<UserControl x:Class="QubiCostElectrical.Wpf.Features.Cubicacion.CubicacionTakeoffInspectorControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:QubiCostElectrical.Wpf.Features.Cubicacion"
+             xmlns:infra="clr-namespace:QubiCostElectrical.Wpf.Infrastructure"
+             Background="{DynamicResource Brush.Surface}"
+             BorderBrush="{DynamicResource Brush.Line}"
+             BorderThickness="1,0,0,0"
+             Focusable="True"
+             PreviewKeyDown="OnTakeoffInspectorPreviewKeyDown">
+
+    <UserControl.Resources>
+        <!-- Pestaña de partida estilo chip segmentado -->
+        <Style x:Key="PartidaTabButtonStyle" TargetType="Button">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Margin" Value="0,0,6,0" />
+            <Setter Property="Padding" Value="9,4" />
+            <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="5"
+                                Padding="{TemplateBinding Padding}"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.RowHover}" />
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="#93C5FD" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                    <Setter Property="Background" Value="#EFF6FF" />
+                    <Setter Property="BorderBrush" Value="#2563EB" />
+                    <Setter Property="BorderThickness" Value="1.5" />
+                    <Setter Property="Foreground" Value="#1D4ED8" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Botón de acción en barra de herramientas -->
+        <Style x:Key="MiniToolbarButtonStyle" TargetType="Button">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Height" Value="25" />
+            <Setter Property="Padding" Value="8,0" />
+            <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.RowHover}" />
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Brush.BlueFocus}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Botón primario para inyectar subtotal -->
+        <Style x:Key="InjectPrimaryButtonStyle" TargetType="Button">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Height" Value="26" />
+            <Setter Property="Padding" Value="10,0" />
+            <Setter Property="Background" Value="#2563EB" />
+            <Setter Property="BorderBrush" Value="#1D4ED8" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="#FFFFFF" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="5"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#1D4ED8" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- TextBox limpio y compacto acorde al Design System -->
+        <Style x:Key="CleanInputTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Height" Value="25" />
+            <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+            <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource Brush.InputBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="6,2" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="FontFamily" Value="{StaticResource Font.Ui}" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="Bd"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4">
+                            <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Brush.BlueFocus}" />
+                                <Setter TargetName="Bd" Property="BorderThickness" Value="1.5" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Estilo de fila para la grilla -->
+        <Style x:Key="TakeoffGridRowStyle" TargetType="DataGridRow" BasedOn="{StaticResource DataGridRow.Excel}">
+            <Setter Property="MinHeight" Value="27" />
+            <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsLabelRow}" Value="True">
+                    <Setter Property="Background" Value="#F8FAFC" />
+                    <Setter Property="FontWeight" Value="SemiBold" />
+                    <Setter Property="Foreground" Value="#475569" />
+                </DataTrigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource Brush.RowHover}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <!-- 0: Header (Título, badge, cerrar) -->
+            <RowDefinition Height="Auto" />
+            <!-- 1: Pestañas de Partidas de Cubicación -->
+            <RowDefinition Height="Auto" />
+            <!-- 2: Barra de celda destino en presupuesto -->
+            <RowDefinition Height="Auto" />
+            <!-- 3: Barra de herramientas y metadatos de la partida activa -->
+            <RowDefinition Height="Auto" />
+            <!-- 4: Grilla DataGrid de la partida activa -->
+            <RowDefinition Height="*" />
+            <!-- 5: Footer con atajos de teclado -->
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- ══════════════════════════════════════════════
+             0. HEADER DEL INSPECTOR (EXECUTIVE STYLE)
+             ══════════════════════════════════════════════ -->
+        <Border Grid.Row="0"
+                Background="{DynamicResource Brush.Surface2}"
+                BorderBrush="{DynamicResource Brush.Line}"
+                BorderThickness="0,0,0,1"
+                Padding="12,9">
+            <DockPanel LastChildFill="True">
+                <Button DockPanel.Dock="Right"
+                        Style="{StaticResource Button.Ghost}"
+                        Content="✕"
+                        Command="{Binding CloseInspectorCommand}"
+                        ToolTip="Cerrar panel (Esc)"
+                        FontSize="12"
+                        FontWeight="Bold"
+                        Padding="6,2"
+                        Margin="6,0,0,0"
+                        VerticalAlignment="Center" />
+
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,6,0">
+                    <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="5" Padding="8,3" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Total Hoja: " FontSize="10.5" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding GrandTotal, StringFormat={}{0:N2}}" FontSize="11.5" FontWeight="Bold" Foreground="#059669" FontFamily="{StaticResource Font.Mono}" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Width="24" Height="24" CornerRadius="5" Background="#EFF6FF" BorderBrush="#DBEAFE" BorderThickness="1" Margin="0,0,8,0" VerticalAlignment="Center">
+                        <Path Data="M3 3h18v18H3z M3 9h18 M3 15h18 M9 3v18 M15 3v18"
+                              Stroke="#2563EB" StrokeThickness="1.5"
+                              HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Width="13" Height="13"/>
+                    </Border>
+                    <TextBlock Text="Hoja de Cubicación" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" />
+                    <Border Margin="8,0,0,0" Padding="5,1.5" CornerRadius="4" Background="#E0E7FF" BorderBrush="#C7D2FE" BorderThickness="1" VerticalAlignment="Center">
+                        <TextBlock Text="Alt+T" FontSize="9.5" FontWeight="Bold" Foreground="#3730A3" />
+                    </Border>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- ══════════════════════════════════════════════
+             1. SELECTOR DE PARTIDAS DE CUBICACIÓN
+             ══════════════════════════════════════════════ -->
+        <Border Grid.Row="1"
+                Background="{DynamicResource Brush.WorkspaceBar}"
+                BorderBrush="{DynamicResource Brush.Line}"
+                BorderThickness="0,0,0,1"
+                Padding="10,6,10,6">
+            <DockPanel LastChildFill="True">
+                <Button DockPanel.Dock="Right"
+                        Command="{Binding AddPartidaCommand}"
+                        Style="{StaticResource MiniToolbarButtonStyle}"
+                        Margin="6,0,0,0"
+                        ToolTip="Agregar una nueva partida a la Hoja de Cubicación"
+                        VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="+" FontWeight="Bold" Foreground="#2563EB" Margin="0,0,4,0" VerticalAlignment="Center" />
+                        <TextBlock Text="Partida" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                    <ItemsControl ItemsSource="{Binding Items}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type local:HojaCubicacionItemVm}">
+                                <Button Style="{StaticResource PartidaTabButtonStyle}"
+                                        Click="OnPartidaTabButtonClick"
+                                        Tag="{Binding}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding Codigo}" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" FontSize="10.5" Margin="0,0,5,0" VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding Titulo}" FontSize="11" FontWeight="Medium" TextTrimming="CharacterEllipsis" MaxWidth="130" VerticalAlignment="Center" />
+                                        <TextBlock Text="·" Margin="5,0" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
+                                        <Border Background="#F1F5F9" CornerRadius="3" Padding="4,0" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Subtotal, StringFormat={}{0:N1}}" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" FontSize="10" Foreground="#059669" VerticalAlignment="Center" />
+                                        </Border>
+                                    </StackPanel>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </DockPanel>
+        </Border>
+
+        <!-- ══════════════════════════════════════════════
+             2. BARRA DE INFORMACIÓN DE CELDA DESTINO
+             ══════════════════════════════════════════════ -->
+        <Border Grid.Row="2"
+                Background="#FAFBFC"
+                BorderBrush="{DynamicResource Brush.Line}"
+                BorderThickness="0,0,0,1"
+                Padding="12,7">
+            <DockPanel LastChildFill="True">
+                <Button DockPanel.Dock="Right"
+                        Command="{Binding ClearPickedCommand}"
+                        Content="Desmarcar todo"
+                        Style="{StaticResource Button.Ghost}"
+                        FontSize="10.5"
+                        Foreground="{DynamicResource Brush.Muted}"
+                        Padding="6,2"
+                        Margin="6,0,0,0"
+                        ToolTip="Quitar marcas de transferencia previas"
+                        VerticalAlignment="Center" />
+
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- Chip indicador de tipo de destino -->
+                    <Border CornerRadius="4" Padding="6,1.5" Margin="0,0,8,0" VerticalAlignment="Center">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="#EFF6FF" />
+                                <Setter Property="BorderBrush" Value="#BFDBFE" />
+                                <Setter Property="BorderThickness" Value="1" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsSectorTarget}" Value="False">
+                                        <Setter Property="Background" Value="#F0FDF4" />
+                                        <Setter Property="BorderBrush" Value="#BBF7D0" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="🎯 " FontSize="10.5" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding TargetSectorName}" FontSize="10.5" FontWeight="Bold" VerticalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#1D4ED8" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsSectorTarget}" Value="False">
+                                                <Setter Property="Foreground" Value="#15803D" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Fila seleccionada -->
+                    <TextBlock Text="{Binding TargetRowText}"
+                               FontSize="11"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource Brush.Ink}"
+                               TextTrimming="CharacterEllipsis"
+                               ToolTip="{Binding TargetRowText}"
+                               VerticalAlignment="Center" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- ══════════════════════════════════════════════
+             3. BARRA DE EDICIÓN Y ACCIONES DE LA PARTIDA
+             ══════════════════════════════════════════════ -->
+        <Border Grid.Row="3"
+                Background="{DynamicResource Brush.Surface}"
+                BorderBrush="{DynamicResource Brush.Line}"
+                BorderThickness="0,0,0,1"
+                Padding="12,8">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- Fila superior: Identificación de la partida -->
+                <DockPanel Grid.Row="0" LastChildFill="True" Margin="0,0,0,6">
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Background="#F8FAFC" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="5" Padding="7,3" Margin="0,0,6,0" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Subtotal: " FontSize="10.5" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding SelectedItem.Subtotal, StringFormat={}{0:N2}}" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" FontSize="11.5" Foreground="#2563EB" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+
+                        <Button Style="{StaticResource InjectPrimaryButtonStyle}"
+                                Command="{Binding TransferSubtotalCommand}"
+                                ToolTip="Inyectar este subtotal completo directo a la celda seleccionada en el presupuesto">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Inyectar Subtotal" Margin="0,0,4,0" VerticalAlignment="Center" />
+                                <TextBlock Text="↵" FontSize="11" Opacity="0.9" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="Partida:" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,6,0" VerticalAlignment="Center" />
+
+                        <TextBox Style="{StaticResource CleanInputTextBoxStyle}"
+                                 Text="{Binding SelectedItem.Codigo, UpdateSourceTrigger=PropertyChanged}"
+                                 Width="48" FontFamily="{StaticResource Font.Mono}" FontWeight="Bold" HorizontalContentAlignment="Center"
+                                 Margin="0,0,6,0" ToolTip="Código de partida (ej. 1.1)" VerticalAlignment="Center" />
+
+                        <TextBox Style="{StaticResource CleanInputTextBoxStyle}"
+                                 Text="{Binding SelectedItem.Titulo, UpdateSourceTrigger=PropertyChanged}"
+                                 Width="200" FontWeight="SemiBold"
+                                 Margin="0,0,6,0" ToolTip="Título o descripción de la partida" VerticalAlignment="Center" />
+
+                        <ComboBox SelectedValue="{Binding SelectedItem.Unidad, UpdateSourceTrigger=PropertyChanged}"
+                                  SelectedValuePath="Content"
+                                  Width="56" Height="25" FontSize="10.5" FontFamily="{StaticResource Font.Mono}"
+                                  ToolTip="Unidad de medida">
+                            <ComboBoxItem Content="ml" />
+                            <ComboBoxItem Content="un" />
+                            <ComboBoxItem Content="gl" />
+                            <ComboBoxItem Content="m2" />
+                            <ComboBoxItem Content="kg" />
+                        </ComboBox>
+                    </StackPanel>
+                </DockPanel>
+
+                <!-- Fila inferior: Botones + Fila, + Col Sector, fx Fórmulas -->
+                <DockPanel Grid.Row="1" LastChildFill="True">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Style="{StaticResource MiniToolbarButtonStyle}"
+                                Command="{Binding AddFilaCommand}"
+                                Margin="0,0,6,0" ToolTip="Agregar una nueva fila de cálculo numérico">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="+" FontWeight="Bold" Foreground="#2563EB" Margin="0,0,4,0" VerticalAlignment="Center" />
+                                <TextBlock Text="Fila" FontSize="11" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+
+                        <Button Style="{StaticResource MiniToolbarButtonStyle}"
+                                Command="{Binding AddColumnaCommand}"
+                                Margin="0,0,8,0" ToolTip="Agregar columna adicional de sector o zona">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="+" FontWeight="Bold" Foreground="#2563EB" Margin="0,0,4,0" VerticalAlignment="Center" />
+                                <TextBlock Text="Col Sector" FontSize="11" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+
+                        <Border Background="#F8FAFC" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Padding="6,2" VerticalAlignment="Center" ToolTip="Soporta expresiones aritméticas y fórmulas como =C+D*2, =SUMA(C:E)">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="fx" FontWeight="Bold" Foreground="#64748B" Margin="0,0,4,0" VerticalAlignment="Center" />
+                                <TextBlock Text="Fórmulas Excel" FontSize="10.5" FontFamily="{StaticResource Font.Mono}" Foreground="#64748B" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </DockPanel>
+            </Grid>
+        </Border>
+
+        <!-- ══════════════════════════════════════════════
+             4. MATRIZ DATAGRID DINÁMICA DE LA PARTIDA
+             ══════════════════════════════════════════════ -->
+        <Border Grid.Row="4" Background="{DynamicResource Brush.Surface}">
+            <DataGrid x:Name="TakeoffGrid"
+                      Style="{StaticResource DataGrid.Workspace.Excel}"
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      CanUserReorderColumns="False"
+                      CanUserResizeRows="False"
+                      GridLinesVisibility="All"
+                      HeadersVisibility="Column"
+                      HorizontalGridLinesBrush="{DynamicResource Brush.Line2}"
+                      VerticalGridLinesBrush="{DynamicResource Brush.Line2}"
+                      RowHeaderWidth="0"
+                      RowHeight="27"
+                      FontSize="11"
+                      SelectionUnit="Cell"
+                      SelectionMode="Single"
+                      ColumnHeaderStyle="{StaticResource DataGridColumnHeader.Prototype}"
+                      RowStyle="{StaticResource TakeoffGridRowStyle}"
+                      Background="{DynamicResource Brush.Surface}"
+                      BorderThickness="0"
+                      PreviewKeyDown="OnTakeoffGridPreviewKeyDown"
+                      PreviewMouseLeftButtonDown="OnTakeoffGridPreviewMouseLeftButtonDown" />
+        </Border>
+
+        <!-- ══════════════════════════════════════════════
+             5. FOOTER CON ATAJOS Y CIERRE
+             ══════════════════════════════════════════════ -->
+        <Border Grid.Row="5"
+                Background="{DynamicResource Brush.Surface2}"
+                BorderBrush="{DynamicResource Brush.Line}"
+                BorderThickness="0,1,0,0"
+                Padding="12,8">
+            <DockPanel LastChildFill="True">
+                <Button DockPanel.Dock="Right"
+                        Style="{StaticResource Button.Ghost}"
+                        Content="Cerrar (Esc)"
+                        Command="{Binding CloseInspectorCommand}"
+                        FontSize="11"
+                        FontWeight="SemiBold"
+                        Foreground="{DynamicResource Brush.Ink3}"
+                        Padding="8,3"
+                        VerticalAlignment="Center" />
+
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Background="#ECFDF5" BorderBrush="#BBF7D0" BorderThickness="1" CornerRadius="3" Padding="4,1" Margin="0,0,5,0" VerticalAlignment="Center">
+                        <TextBlock Text="Suma" FontSize="9.5" FontWeight="Bold" Foreground="#15803D" />
+                    </Border>
+                    <TextBlock Text="→ Pasa a CANT" FontSize="10.5" Foreground="{DynamicResource Brush.Ink3}" Margin="0,0,12,0" VerticalAlignment="Center" />
+
+                    <Border Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="3" Padding="4,1" Margin="0,0,5,0" VerticalAlignment="Center">
+                        <TextBlock Text="Celda" FontSize="9.5" FontWeight="Bold" Foreground="#1D4ED8" />
+                    </Border>
+                    <TextBlock Text="→ Pasa al Sector" FontSize="10.5" Foreground="{DynamicResource Brush.Ink3}" Margin="0,0,12,0" VerticalAlignment="Center" />
+
+                    <TextBlock Text="F2: Editar" FontSize="10.5" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+    </Grid>
+</UserControl>

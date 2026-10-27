@@ -105,9 +105,9 @@ internal static class HojaCubicacionGridHelpers
     {
         if (string.IsNullOrEmpty(text)) return false;
         string t = text.Trim();
-        if (!t.StartsWith("=", StringComparison.Ordinal))
+        if (!t.StartsWith("=", StringComparison.Ordinal) && !t.StartsWith("+", StringComparison.Ordinal))
         {
-            if (char.IsLetter(t[0]))
+            if (t.Length > 0 && char.IsLetter(t[0]))
             {
                 char lastCh = t[^1];
                 return lastCh is '+' or '-' or '*' or '/' or '^' or '(' or ',' or ';' or ':';

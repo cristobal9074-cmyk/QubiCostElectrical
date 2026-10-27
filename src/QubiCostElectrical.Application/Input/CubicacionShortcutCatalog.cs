@@ -11,6 +11,7 @@ public static class CubicacionShortcutCatalog
     public const string RowMoveDown = "cubicacion.row.moveDown";
     public const string PrecioLista = "cubicacion.precioLista";
     public const string ScTomar = "cubicacion.scTomar";
+    public const string HojaCubicacion = "cubicacion.hojaCubicacion";
     public const string Itemizado = "cubicacion.itemizado";
     public const string Plantilla = "cubicacion.plantilla";
     public const string SectorMatrix = "cubicacion.sectorMatrix";
@@ -36,6 +37,7 @@ public static class CubicacionShortcutCatalog
         new(RowMoveDown, Scope, "Bajar recurso", "Alt+Shift+Down", "Mueve la fila seleccionada hacia abajo."),
         new(PrecioLista, Scope, "Precio lista", "Alt+V", "Abre el resumen de precios de lista del proyecto."),
         new(ScTomar, Scope, "Tomar de SC", "Alt+L", "Toma cantidades desde servicios comunes."),
+        new(HojaCubicacion, Scope, "Hoja de Cubicación", "Alt+T", "Abre la Hoja de Cubicación acoplada para transferir mediciones o sectores."),
         new(Itemizado, Scope, "Ir a partida (itemizado)", "Alt+S", "Abre el navegador de partidas del itemizado."),
         new(Plantilla, Scope, "Cargar plantilla", "Alt+Z", "Aplica conjunto eléctrico a la partida activa."),
         new(SectorMatrix, Scope, "Alternar vista casillas/detalle", "Alt+A", "Conmuta entre la matriz de sectores y la vista detalle."),

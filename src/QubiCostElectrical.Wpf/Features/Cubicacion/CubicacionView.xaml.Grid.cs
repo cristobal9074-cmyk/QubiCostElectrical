@@ -114,8 +114,9 @@ public partial class CubicacionView : UserControl
 
     private void OnGridPreparingCellForEdit(object sender, DataGridPreparingCellForEditEventArgs e)
     {
-        if ((ReferenceEquals(e.Column, CodigoColumn) || ReferenceEquals(e.Column, DescripcionColumn)) && e.EditingElement is TextBox tb)
+                if ((ReferenceEquals(e.Column, CodigoColumn) || ReferenceEquals(e.Column, DescripcionColumn)) && e.EditingElement is TextBox tb)
         {
+            IsCreateMaterialSelected = false;
             _codigoEditor = tb;
             tb.TextChanged += OnCodigoEditorTextChanged;
             tb.PreviewKeyDown += OnCodigoEditorPreviewKeyDown;
@@ -133,9 +134,34 @@ public partial class CubicacionView : UserControl
         }
     }
 
+        private bool _isCreateMaterialSelected;
+    private bool IsCreateMaterialSelected
+    {
+        get => _isCreateMaterialSelected;
+        set
+        {
+            _isCreateMaterialSelected = value;
+            if (CreateMaterialButton != null)
+            {
+                CreateMaterialButton.Tag = value ? "Selected" : null;
+            }
+        }
+    }
+
+    private void OnCreateMaterialMouseEnter(object sender, MouseEventArgs e)
+    {
+        IsCreateMaterialSelected = true;
+        AutocompleteList.SelectedIndex = -1;
+    }
+
+    private void OnCreateMaterialMouseLeave(object sender, MouseEventArgs e)
+    {
+        IsCreateMaterialSelected = false;
+    }
+
     private void OnCodigoEditorTextChanged(object sender, TextChangedEventArgs e)
     {
-        // Escribir código o descripción = modo teclado: el mouse quieto no debe robar el ítem marcado.
+        IsCreateMaterialSelected = false;
         FreezeAutocompleteHover();
         if (sender is TextBox tb && ResourceGrid.CurrentItem is CubicacionRowVm row)
         {
@@ -150,6 +176,14 @@ public partial class CubicacionView : UserControl
     {
         if (sender is not TextBox tb)
             return;
+
+        if (IsCreateMaterialSelected && (e.Key is Key.Enter or Key.Return or Key.Tab))
+        {
+            e.Handled = true;
+            TriggerCreateMaterial();
+            return;
+        }
+
         DispatchCell(new CubicacionCellInput
         {
             Source = CubicacionInputSource.CodigoEditor,
@@ -165,13 +199,53 @@ public partial class CubicacionView : UserControl
     private void MoveAutocompleteSelection(int delta)
     {
         int count = AutocompleteList.Items.Count;
-        if (count == 0) return;
-
         FreezeAutocompleteHover();
+
+        if (count == 0)
+        {
+            if (delta > 0)
+            {
+                IsCreateMaterialSelected = true;
+            }
+            else if (delta < 0)
+            {
+                IsCreateMaterialSelected = false;
+            }
+            return;
+        }
+
         int current = AutocompleteList.SelectedIndex;
-        int next = Math.Clamp(current + delta, 0, count - 1);
-        AutocompleteList.SelectedIndex = next;
-        AutocompleteList.ScrollIntoView(AutocompleteList.SelectedItem);
+        if (delta > 0)
+        {
+            if (IsCreateMaterialSelected)
+            {
+                return;
+            }
+            if (current < count - 1)
+            {
+                AutocompleteList.SelectedIndex = current + 1;
+                AutocompleteList.ScrollIntoView(AutocompleteList.SelectedItem);
+            }
+            else
+            {
+                AutocompleteList.SelectedIndex = -1;
+                IsCreateMaterialSelected = true;
+            }
+        }
+        else if (delta < 0)
+        {
+            if (IsCreateMaterialSelected)
+            {
+                IsCreateMaterialSelected = false;
+                AutocompleteList.SelectedIndex = count - 1;
+                AutocompleteList.ScrollIntoView(AutocompleteList.SelectedItem);
+            }
+            else if (current > 0)
+            {
+                AutocompleteList.SelectedIndex = current - 1;
+                AutocompleteList.ScrollIntoView(AutocompleteList.SelectedItem);
+            }
+        }
     }
 
     /// <summary>
@@ -187,8 +261,9 @@ public partial class CubicacionView : UserControl
     {
         _sectorFormulaController.OnCellEditEnding(Vm);
 
-        if ((ReferenceEquals(e.Column, CodigoColumn) || ReferenceEquals(e.Column, DescripcionColumn)) && e.EditingElement is TextBox tb)
+                if ((ReferenceEquals(e.Column, CodigoColumn) || ReferenceEquals(e.Column, DescripcionColumn)) && e.EditingElement is TextBox tb)
         {
+            IsCreateMaterialSelected = false;
             tb.TextChanged -= OnCodigoEditorTextChanged;
             tb.PreviewKeyDown -= OnCodigoEditorPreviewKeyDown;
             if (ReferenceEquals(_codigoEditor, tb))
@@ -262,6 +337,13 @@ public partial class CubicacionView : UserControl
 
     private void OnGridPreviewKeyDown(object sender, KeyEventArgs e)
     {
+        if (e.Key == Key.Escape && Vm.IsScInspectorOpen)
+        {
+            Vm.IsScInspectorOpen = false;
+
+            e.Handled = true;
+            return;
+        }
         if (Vm.IsZonaLibreMode && (e.Key == Key.Right || e.Key == Key.Tab))
         {
             var col = ResourceGrid.CurrentCell.Column;
@@ -299,11 +381,11 @@ public partial class CubicacionView : UserControl
             return;
         SyncGridSelectionFromGrid();
 
-        if (ResourceGrid.SelectedCells.Count == 0 && ResourceGrid.Items.Count > 0 && !IsPartidaHeaderFocused())
+        if (ResourceGrid.SelectedCells.Count == 0 && ResourceGrid.Items.Count > 0 && !IsPartidaHeaderFocused() && !Vm.IsScInspectorOpen && Vm.SelectedRow == null)
         {
             Dispatcher.BeginInvoke(new Action(() =>
             {
-                if (ResourceGrid.SelectedCells.Count == 0 && ResourceGrid.Items.Count > 0 && !IsPartidaHeaderFocused())
+                if (ResourceGrid.SelectedCells.Count == 0 && ResourceGrid.Items.Count > 0 && !IsPartidaHeaderFocused() && !Vm.IsScInspectorOpen && Vm.SelectedRow == null)
                 {
                     FocusFirstGridCell();
                 }
@@ -393,8 +475,12 @@ public partial class CubicacionView : UserControl
             Vm.SyncGridRowSelection(selected);
 
             CubicacionRowVm? activeRow = ResourceGrid.CurrentCell.Item as CubicacionRowVm
-                ?? ResourceGrid.SelectedItem as CubicacionRowVm;
-            Vm.SelectedRow = activeRow;
+                ?? ResourceGrid.SelectedItem as CubicacionRowVm
+                ?? selected.FirstOrDefault();
+            if (activeRow != null)
+            {
+                Vm.SelectedRow = activeRow;
+            }
 
             // Al cambiar de celda activa, cerrar el autocompletado para evitar molestias visuales
             Vm.AutocompleteVisible = false;
@@ -411,15 +497,17 @@ public partial class CubicacionView : UserControl
         if (!Clipboard.ContainsText()) return;
         var text = Clipboard.GetText();
 
+        var targetCell = ResourceGrid.CurrentCell;
+        var targetRow = targetCell.Item as CubicacionRowVm ?? ResourceGrid.SelectedItem as CubicacionRowVm;
+        var targetCol = targetCell.Column ?? ResourceGrid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible && !c.IsReadOnly);
+
         if (!showPreview && Vm.TryPasteAnchored(ResourceGrid, text))
         {
             DataGridExcelNavigation.ClearCopyMarker(ResourceGrid);
+            RestorePastedGridFocus(targetRow, targetCol);
             return;
         }
 
-        // El ancla no cae en Código/Descripción/UD/Cantidad (esas ya las maneja
-        // TryPasteAnchored arriba, con su propia lógica de negocio): pegado genérico
-        // estilo Excel, usado sobre todo por la matriz de sectores (S1, S2, TA-P2…).
         if (!showPreview)
         {
             bool pasted = false;
@@ -443,14 +531,36 @@ public partial class CubicacionView : UserControl
             if (pasted)
             {
                 DataGridExcelNavigation.ClearCopyMarker(ResourceGrid);
+                RestorePastedGridFocus(targetRow, targetCol);
                 return;
             }
         }
 
         Vm.PasteClipboardDirect(text, showPreview);
         DataGridExcelNavigation.ClearCopyMarker(ResourceGrid);
+        RestorePastedGridFocus(targetRow, targetCol);
     }
 
+    private void RestorePastedGridFocus(CubicacionRowVm? targetRow, DataGridColumn? targetCol)
+    {
+        Dispatcher.BeginInvoke(new Action(() =>
+        {
+            var item = targetRow != null && Vm.Rows.Contains(targetRow)
+                ? targetRow
+                : (ResourceGrid.CurrentCell.IsValid && ResourceGrid.CurrentCell.Item is CubicacionRowVm cur ? cur : Vm.SelectedRow ?? Vm.Rows.FirstOrDefault());
+
+            var col = targetCol ?? ResourceGrid.CurrentCell.Column ?? CodigoColumn ?? ResourceGrid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible);
+
+            if (item != null && col != null)
+            {
+                int rIdx = ResourceGrid.Items.IndexOf(item);
+                if (rIdx >= 0)
+                {
+                    DataGridExcelNavigation.FocusCell(ResourceGrid, rIdx, col);
+                }
+            }
+        }), System.Windows.Threading.DispatcherPriority.Input);
+    }
     private void OnPasteToolbarClick(object sender, RoutedEventArgs e)
         => OnPasteClick(sender, e, showPreview: true);
 
@@ -461,8 +571,48 @@ public partial class CubicacionView : UserControl
         OnPasteClick(sender, e, showPreview: false);
     }
 
+    private void OnCreateMaterialPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        e.Handled = true;
+        TriggerCreateMaterial();
+    }
+
     private void OnCreateMaterialClick(object sender, RoutedEventArgs e)
-        => Vm.BeginQuickAddMaterial();
+    {
+        TriggerCreateMaterial();
+    }
+
+        private void TriggerCreateMaterial()
+    {
+        IsCreateMaterialSelected = false;
+        string? query = Vm.AutocompleteQueryText;
+        if (string.IsNullOrWhiteSpace(query) && Keyboard.FocusedElement is TextBox activeBox)
+        {
+            query = activeBox.Text;
+        }
+
+        bool isCodigo = ReferenceEquals(ResourceGrid.CurrentCell.Column, CodigoColumn);
+        bool isDescripcion = ReferenceEquals(ResourceGrid.CurrentCell.Column, DescripcionColumn)
+                             || (!isCodigo && !string.IsNullOrWhiteSpace(query));
+
+        string? codigo = isCodigo ? query : null;
+        string? descripcion = isDescripcion ? query : null;
+
+        if (Vm.SelectedRow == null && ResourceGrid.CurrentCell.Item is CubicacionRowVm currentItem)
+        {
+            Vm.SelectedRow = currentItem;
+        }
+
+        string? unidad = Vm.SelectedRow?.Unidad;
+
+        // Ocultar el popup de autocompletado antes de abrir el diálogo
+        Vm.AutocompleteVisible = false;
+        AutocompletePopup.IsOpen = false;
+
+        ResourceGrid.CommitEdit(DataGridEditingUnit.Cell, true);
+
+        Vm.BeginQuickAddMaterial(codigo, descripcion, unidad);
+    }
 
     private void OnTipoSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
@@ -524,10 +674,14 @@ public partial class CubicacionView : UserControl
         AutocompleteList.ScrollIntoView(suggestion);
     }
 
-    private void OnAutocompleteKeyDown(object sender, KeyEventArgs e)
+        private void OnAutocompleteKeyDown(object sender, KeyEventArgs e)
     {
-        if (AutocompleteList.Items.Count == 0)
+        if (IsCreateMaterialSelected && (e.Key is Key.Enter or Key.Return or Key.Tab))
+        {
+            e.Handled = true;
+            TriggerCreateMaterial();
             return;
+        }
 
         switch (e.Key)
         {
@@ -540,6 +694,12 @@ public partial class CubicacionView : UserControl
                 e.Handled = true;
                 break;
             case Key.Enter:
+                if (IsCreateMaterialSelected)
+                {
+                    TriggerCreateMaterial();
+                    e.Handled = true;
+                    return;
+                }
                 var targetListEnter = AutocompleteList.SelectedItem as AutocompleteSuggestionVm
                     ?? Vm.AutocompleteFirstItem;
                 if (targetListEnter != null)
@@ -550,6 +710,12 @@ public partial class CubicacionView : UserControl
                 }
                 break;
             case Key.Tab:
+                if (IsCreateMaterialSelected)
+                {
+                    TriggerCreateMaterial();
+                    e.Handled = true;
+                    return;
+                }
                 if (AutocompleteList.SelectedItem is AutocompleteSuggestionVm material)
                 {
                     Vm.ApplyMaterialCommand.Execute(material.Material);
@@ -562,6 +728,7 @@ public partial class CubicacionView : UserControl
                 }
                 break;
             case Key.Escape:
+                IsCreateMaterialSelected = false;
                 Vm.AutocompleteVisible = false;
                 _codigoEditor?.Focus();
                 e.Handled = true;

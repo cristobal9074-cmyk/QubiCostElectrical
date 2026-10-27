@@ -430,10 +430,11 @@ public sealed class PrecioListaResumenVm : ViewModelBase
             && moPorcentajeMaterial > 0m;
         bool porFactor = string.Equals(moFormulaTipo, MaterialMoResolver.MoFormulaFactor, StringComparison.OrdinalIgnoreCase);
 
+        decimal faVigente = MaterialMoResolver.IndiceFa(session.ProjectInfo);
         decimal moEfectiva = porPorcentaje
-            ? MaterialMoResolver.MoClpPorPorcentaje(matClp, moPorcentajeMaterial, MaterialMoResolver.IndiceFa(session.ProjectInfo))
+            ? MaterialMoResolver.MoClpPorPorcentaje(matClp, moPorcentajeMaterial, faVigente)
             : (porFactor
-                ? MaterialMoResolver.MoClpPorFactor(moClp, MaterialMoResolver.IndiceFa(session.ProjectInfo))
+                ? MaterialMoResolver.MoClpPorFactor(moClp, faVigente)
                 : moClp);
 
         var materialRow = new MaterialRow

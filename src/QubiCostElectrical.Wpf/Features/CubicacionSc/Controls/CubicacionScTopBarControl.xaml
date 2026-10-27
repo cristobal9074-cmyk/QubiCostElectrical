@@ -77,6 +77,12 @@
                                     <TextBlock Text="📦" FontSize="12" VerticalAlignment="Center" />
                                 </MenuItem.Icon>
                             </MenuItem>
+                            <Separator />
+                            <MenuItem Header="Cambio de Línea o Familia Masivo… (Ctrl+Shift+H)" Command="{Binding OpenFamilyBatchReplaceCommand}">
+                                <MenuItem.Icon>
+                                    <TextBlock Text="🔄" FontSize="12" VerticalAlignment="Center" />
+                                </MenuItem.Icon>
+                            </MenuItem>
                         </ContextMenu>
                     </Button.ContextMenu>
                 </Button>
@@ -216,7 +222,7 @@
 
                 <!-- Herramientas -->
                 <Button Style="{StaticResource Button.Toolbar}" Content="Resumen" Command="{Binding OpenResumenCommand}" Height="28" Padding="9,0" Margin="0,0,4,0" />
-                <Button Style="{StaticResource Button.Toolbar}" Content="Catálogo" Command="{Binding OpenCatalogoCommand}" Height="28" Padding="9,0" />
+                <Button Style="{StaticResource Button.Toolbar}" Content="Catálogo C.SC" Command="{Binding OpenCatalogoCommand}" Height="28" Padding="9,0" ToolTip="Abrir/Cerrar Catálogo C.SC (Alt+C)" />
             </StackPanel>
         </DockPanel>
     </Border>

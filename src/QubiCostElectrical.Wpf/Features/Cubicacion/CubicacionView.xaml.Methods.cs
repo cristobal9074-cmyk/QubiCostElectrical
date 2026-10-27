@@ -58,8 +58,21 @@ public partial class CubicacionView : UserControl
 
         ResourceGrid.ScrollIntoView(row, column);
         ResourceGrid.UpdateLayout();
-        ResourceGrid.SelectedItem = row;
-        ResourceGrid.CurrentCell = new DataGridCellInfo(row, column);
+        if (ResourceGrid.SelectionUnit == DataGridSelectionUnit.FullRow)
+        {
+            ResourceGrid.SelectedItem = row;
+        }
+        var cellInfo = new DataGridCellInfo(row, column);
+        ResourceGrid.CurrentCell = cellInfo;
+        ResourceGrid.SelectedCells.Clear();
+        ResourceGrid.SelectedCells.Add(cellInfo);
+
+        if (Vm.IsScInspectorOpen)
+        {
+            // Si el inspector lateral de SC esta abierto, no robar el foco ni forzar modo edicion
+            return;
+        }
+
         ResourceGrid.Focus();
 
         if (!ResourceGrid.BeginEdit())
@@ -136,6 +149,7 @@ public partial class CubicacionView : UserControl
         BindItemRowCellWidths();
         ApplyGridMode();
         Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
         vm.RequestFocusMotivoNoCubicar += FocusMotivoNoCubicarBox;
         vm.RequestFillDown += HandleFillDown;
         vm.RequestFillRight += HandleFillRight;
@@ -174,6 +188,36 @@ public partial class CubicacionView : UserControl
                 FocusFirstGridCell();
             }
 
+
+            if (e.PropertyName == nameof(CubicacionViewModel.IsScInspectorOpen))
+            {
+                if (vm.IsScInspectorOpen)
+                {
+                    Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        ScInspectorPanel?.Focus();
+                    }), System.Windows.Threading.DispatcherPriority.Input);
+                }
+                else
+                {
+                    Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        var row = vm.SelectedRow;
+                        if (row != null)
+                        {
+                            int index = ResourceGrid.Items.IndexOf(row);
+                            DataGridColumn? col = CodigoColumn != null && CodigoColumn.Visibility == Visibility.Visible ? CodigoColumn : null;
+                            col ??= ResourceGrid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible && !c.IsReadOnly)
+                                   ?? ResourceGrid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible);
+                            if (index >= 0 && col != null)
+                            {
+                                DataGridExcelNavigation.FocusCell(ResourceGrid, index, col);
+                            }
+                        }
+                    }), System.Windows.Threading.DispatcherPriority.Input);
+                }
+            }
+
             if (e.PropertyName == nameof(CubicacionViewModel.SelectedRow))
             {
                 if (_isSyncingFromGrid)
@@ -195,7 +239,18 @@ public partial class CubicacionView : UserControl
                     int index = ResourceGrid.Items.IndexOf(rowVm);
                     if (index >= 0 && col != null)
                     {
-                        DataGridExcelNavigation.FocusCell(ResourceGrid, index, col);
+                        if (vm.IsScInspectorOpen)
+                        {
+                            // Actualizar la celda visual en la grilla sin robar el foco del inspector
+                            ResourceGrid.ScrollIntoView(rowVm, col);
+                            ResourceGrid.CurrentCell = new DataGridCellInfo(rowVm, col);
+                            ResourceGrid.SelectedCells.Clear();
+                            ResourceGrid.SelectedCells.Add(ResourceGrid.CurrentCell);
+                        }
+                        else
+                        {
+                            DataGridExcelNavigation.FocusCell(ResourceGrid, index, col);
+                        }
                     }
                 }
                 else
@@ -206,8 +261,26 @@ public partial class CubicacionView : UserControl
         };
     }
 
-    private void OnLoaded(object sender, RoutedEventArgs e)
+        private void OnLoaded(object sender, RoutedEventArgs e)
     {
+        var parentWin = Window.GetWindow(this);
+        if (parentWin != null)
+        {
+            parentWin.Deactivated -= OnParentWindowDeactivated;
+            parentWin.Activated -= OnParentWindowActivated;
+            parentWin.Deactivated += OnParentWindowDeactivated;
+            parentWin.Activated -= OnParentWindowActivated;
+            parentWin.Activated += OnParentWindowActivated;
+            parentWin.StateChanged -= OnParentWindowStateChanged;
+            parentWin.StateChanged += OnParentWindowStateChanged;
+        }
+
+        if (Application.Current != null)
+        {
+            Application.Current.Deactivated -= OnParentWindowDeactivated;
+            Application.Current.Deactivated += OnParentWindowDeactivated;
+        }
+
         if (Vm.SelectedPartida != null)
             PartidasList.ScrollIntoView(Vm.SelectedPartida);
 
@@ -223,6 +296,94 @@ public partial class CubicacionView : UserControl
                 tt.X = -args.HorizontalOffset;
             }
         }));
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        var parentWin = Window.GetWindow(this);
+        if (parentWin != null)
+        {
+            parentWin.Deactivated -= OnParentWindowDeactivated;
+            parentWin.Activated -= OnParentWindowActivated;
+            parentWin.StateChanged -= OnParentWindowStateChanged;
+        }
+
+        if (Application.Current != null)
+        {
+            Application.Current.Deactivated -= OnParentWindowDeactivated;
+        }
+
+        ClosePopups();
+    }
+
+        private void OnParentWindowActivated(object? sender, EventArgs e) => RestoreGridCellFocus();
+
+    public void RestoreGridCellFocus()
+    {
+        if (ResourceGrid == null || ResourceGrid.Items.Count == 0 || !IsVisible)
+            return;
+
+        Dispatcher.BeginInvoke(new Action(() =>
+        {
+            if (Keyboard.FocusedElement is TextBox tb && tb.IsVisible && tb.IsKeyboardFocusWithin)
+                return;
+
+            ResourceGrid.Focus();
+            var targetItem = ResourceGrid.CurrentCell.IsValid && ResourceGrid.CurrentCell.Item != null
+                ? ResourceGrid.CurrentCell.Item
+                : ResourceGrid.SelectedItem ?? Vm.SelectedRow ?? ResourceGrid.Items[0];
+
+            var targetCol = ResourceGrid.CurrentCell.IsValid && ResourceGrid.CurrentCell.Column != null
+                ? ResourceGrid.CurrentCell.Column
+                : CodigoColumn ?? ResourceGrid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible);
+
+            if (targetItem != null && targetCol != null)
+            {
+                ResourceGrid.CurrentCell = new DataGridCellInfo(targetItem, targetCol);
+                ResourceGrid.ScrollIntoView(targetItem, targetCol);
+                ResourceGrid.UpdateLayout();
+
+                if (ResourceGrid.ItemContainerGenerator.ContainerFromItem(targetItem) is DataGridRow row)
+                {
+                    row.Focus();
+                    var presenter = DataGridExcelNavigation.FindVisualChild<DataGridCellsPresenter>(row);
+                    if (presenter != null)
+                    {
+                        int colIndex = ResourceGrid.Columns.IndexOf(targetCol);
+                        if (colIndex >= 0 && presenter.ItemContainerGenerator.ContainerFromIndex(colIndex) is DataGridCell cell)
+                        {
+                            cell.Focus();
+                        }
+                    }
+                }
+            }
+        }), System.Windows.Threading.DispatcherPriority.Input);
+    }
+
+    private void OnParentWindowDeactivated(object? sender, EventArgs e) => ClosePopups();
+
+    private void OnParentWindowStateChanged(object? sender, EventArgs e)
+    {
+        if (sender is Window win && win.WindowState == WindowState.Minimized)
+        {
+            ClosePopups();
+        }
+    }
+
+    private void ClosePopups()
+    {
+        if (Vm != null)
+        {
+            Vm.AutocompleteVisible = false;
+        }
+        if (AutocompletePopup != null)
+        {
+            AutocompletePopup.IsOpen = false;
+        }
+        if (UnidadSuggestionsPopup != null)
+        {
+            UnidadSuggestionsPopup.IsOpen = false;
+        }
     }
 
     // Alinea cada celda de la fila de partida (modo Detalle) con el ancho real de su columna del

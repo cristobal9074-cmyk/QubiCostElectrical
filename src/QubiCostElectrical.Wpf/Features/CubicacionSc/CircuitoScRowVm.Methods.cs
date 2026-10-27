@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Windows.Input;
 using QubiCostElectrical;
 using QubiCostElectrical.Wpf.Infrastructure;
 
@@ -31,6 +32,7 @@ public sealed partial class CircuitoScRowVm : ViewModelBase
         // Solo tiene efecto si la alim existe en el catálogo; si no, deja los valores tal cual.
         if (config.Sistemas.Any(s => string.Equals(s.Nombre, row.Sistema, StringComparison.OrdinalIgnoreCase)))
             CubicacionSCEngine.ApplySistema(row, row.Sistema, config);
+        ToggleDisponibleCommand = new RelayCommand(ToggleDisponible, () => AllowEdit);
         Artefactos = new ObservableCollection<ArtefactoScRowVm>(
             row.Artefactos.Select(a => new ArtefactoScRowVm(a, canEdit, onChanged)));
     }
@@ -41,6 +43,22 @@ public sealed partial class CircuitoScRowVm : ViewModelBase
 
     /// <summary>Expuesto para code-behind (LostFocus/combos) antes de mutar.</summary>
     public bool CanEdit => AllowEdit;
+
+    public bool EsDisponible => string.Equals(row.Estado, "Disponible", StringComparison.OrdinalIgnoreCase);
+    public ICommand ToggleDisponibleCommand { get; private set; } = null!;
+    public void ToggleDisponible()
+    {
+        if (!AllowEdit) return;
+        row.Estado = EsDisponible ? "Activo" : "Disponible";
+        OnPropertyChanged(nameof(EsDisponible));
+        OnPropertyChanged(nameof(Estado));
+        OnPropertyChanged(nameof(TotalDucto));
+        OnPropertyChanged(nameof(TotalDucto2));
+        OnPropertyChanged(nameof(LargoDerivacion));
+        OnPropertyChanged(nameof(LargoDistribucion));
+        onEstadoChanged?.Invoke();
+        NotifyModelChanged();
+    }
 
     private void NotifyModelChanged() => onChanged?.Invoke();
 
@@ -517,6 +535,39 @@ public sealed partial class CircuitoScRowVm : ViewModelBase
         }
     }
 
+    public string TipoTuberia2
+    {
+        get => row.TipoTuberia2;
+        set
+        {
+            if (!AllowEdit) return;
+            if (row.TipoTuberia2 == value) return;
+            row.TipoTuberia2 = value;
+            OnPropertyChanged();
+            NotifyModelChanged();
+        }
+    }
+
+    public string SeccionTuberia2
+    {
+        get => row.SeccionTuberia2;
+        set
+        {
+            if (!AllowEdit)
+            {
+                OnPropertyChanged();
+                return;
+            }
+            var normalizado = NormalizeDiametro(value);
+            if (row.SeccionTuberia2 != normalizado)
+            {
+                row.SeccionTuberia2 = normalizado;
+                NotifyModelChanged();
+            }
+            OnPropertyChanged();
+        }
+    }
+
     private string NormalizeDiametro(string? input)
     {
         if (string.IsNullOrWhiteSpace(input)) return row.SeccionTuberia;
@@ -697,6 +748,7 @@ public sealed partial class CircuitoScRowVm : ViewModelBase
 
     public int TotalCajas => row.TotalCajas;
     public decimal TotalDucto => row.MetrosTuberia;
+    public decimal TotalDucto2 => row.EsActivo ? row.LargoTuberia2 : 0m;
 
     public decimal LargoDerivacion => row.LargoDerivacion;
     public decimal LargoDistribucion => row.LargoDistribucion;
@@ -721,6 +773,23 @@ public sealed partial class CircuitoScRowVm : ViewModelBase
             }
         }
     }
+    public decimal LargoTuberia2
+    {
+        get => row.LargoTuberia2;
+        set
+        {
+            if (!AllowEdit) return;
+            if (row.MetrosTuberia2 != value)
+            {
+                row.MetrosTuberia2 = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(TotalDucto2));
+                OnPropertyChanged(nameof(LargoDerivacion));
+                NotifyModelChanged();
+            }
+        }
+    }
+
     // L. Band → metraje del tramo de bandeja (Total M Band = este largo × conductores).
     public decimal LargoBandeja
     {
@@ -756,11 +825,11 @@ public sealed partial class CircuitoScRowVm : ViewModelBase
         ? $"{ArtefactosCantidadTotal} u · {ArtefactosZonasConteo} z"
         : "+ Elementos";
 
-    public void AddArtefacto(string nombre, string categoria, decimal cantidad)
+    public void AddArtefacto(string nombre, string categoria, decimal cantidad, decimal alturaBajada = 0m)
     {
         if (!AllowEdit) return;
         if (string.IsNullOrWhiteSpace(nombre)) return;
-        var artefacto = new ArtefactoSCRow { Nombre = nombre.Trim(), Categoria = categoria, Cantidad = cantidad <= 0 ? 1 : cantidad };
+        var artefacto = new ArtefactoSCRow { Nombre = nombre.Trim(), Categoria = categoria, Cantidad = cantidad <= 0 ? 1 : cantidad, AlturaBajada = alturaBajada };
         row.Artefactos.Add(artefacto);
         Artefactos.Add(new ArtefactoScRowVm(artefacto, canEdit, onChanged));
         NotifyArtefactosResumen();
@@ -820,6 +889,9 @@ public sealed partial class CircuitoScRowVm : ViewModelBase
         row.TipoRecorrido = template.TipoRecorrido;
         row.TipoTuberia = template.TipoTuberia;
         row.SeccionTuberia = template.SeccionTuberia;
+        row.TipoTuberia2 = template.TipoTuberia2;
+        row.SeccionTuberia2 = template.SeccionTuberia2;
+        row.MetrosTuberia2 = template.MetrosTuberia2;
         row.TipoBandeja = template.TipoBandeja;
         row.AnchoBandeja = template.AnchoBandeja;
         row.ConductorDerivacion = template.ConductorDerivacion;
@@ -860,6 +932,10 @@ public sealed partial class CircuitoScRowVm : ViewModelBase
         OnPropertyChanged(nameof(SeccionDerivacion));
         OnPropertyChanged(nameof(TipoTuberia));
         OnPropertyChanged(nameof(SeccionTuberia));
+        OnPropertyChanged(nameof(TipoTuberia2));
+        OnPropertyChanged(nameof(SeccionTuberia2));
+        OnPropertyChanged(nameof(LargoTuberia2));
+        OnPropertyChanged(nameof(TotalDucto2));
         OnPropertyChanged(nameof(MontajesAlumbrado));
         OnPropertyChanged(nameof(Cajas58));
         OnPropertyChanged(nameof(Cajas100x100));

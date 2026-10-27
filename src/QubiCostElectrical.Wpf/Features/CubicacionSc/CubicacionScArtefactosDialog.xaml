@@ -53,7 +53,7 @@
                   <Condition Property="IsSelected" Value="True" />
                   <Condition Property="IsMouseOver" Value="True" />
                 </MultiTrigger.Conditions>
-                <Setter TargetName="b" Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+                  <Setter TargetName="b" Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
               </MultiTrigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
@@ -140,12 +140,25 @@
                    Focusable="False"
                    MouseLeftButtonUp="OnSugerenciaClick"
                    ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <ListBox.ContextMenu>
+              <ContextMenu>
+                <MenuItem Header="✏️ Editar Tag rápido (ej: MDL)..." Click="OnEditarTagSugerenciaClick" />
+              </ContextMenu>
+            </ListBox.ContextMenu>
             <ListBox.ItemTemplate>
               <DataTemplate>
-                <StackPanel>
-                  <TextBlock Text="{Binding Nombre}" FontSize="{StaticResource Font.Size.md}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink}" />
-                  <TextBlock Text="{Binding Detalle}" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.Muted}" />
-                </StackPanel>
+                <DockPanel LastChildFill="True">
+                  <Border DockPanel.Dock="Right"
+                          Visibility="{Binding HasTag, Converter={StaticResource BoolToVisibility}}"
+                          Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="4"
+                          Padding="6,2" VerticalAlignment="Center" Margin="6,0,0,0">
+                    <TextBlock Text="{Binding Tag}" FontSize="10" FontWeight="Bold" Foreground="#1D4ED8" FontFamily="{StaticResource Font.Mono}" />
+                  </Border>
+                  <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Nombre}" FontSize="{StaticResource Font.Size.md}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink}" />
+                    <TextBlock Text="{Binding Detalle}" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.Muted}" />
+                  </StackPanel>
+                </DockPanel>
               </DataTemplate>
             </ListBox.ItemTemplate>
           </ListBox>

@@ -450,17 +450,18 @@
                   <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
                     <CheckBox Style="{StaticResource Form.CheckBox}"
                               Content="Comparar contra el estado actual"
-                              IsChecked="{Binding CompareAgainstCurrent, Mode=TwoWay}" />
+                              IsChecked="{Binding CompareAgainstCurrent, Mode=TwoWay}"
+                              ToolTip="Activar para comparar contra el presupuesto activo en edición" />
                     <StackPanel Orientation="Horizontal" Margin="14,0,0,0"
                                 Visibility="{Binding ShowComparisonVersionSelector, Converter={StaticResource BoolToVisibility}}">
-                      <TextBlock Text="Versión B:" FontSize="11" FontWeight="SemiBold"
+                      <TextBlock Text="Versión B:" FontSize="10.5" FontWeight="SemiBold"
                                  Foreground="{DynamicResource Brush.Ink2}" VerticalAlignment="Center" Margin="0,0,6,0" />
-                      <ComboBox Style="{StaticResource Form.ComboBox}" MinWidth="180" Height="24"
+                      <ComboBox Style="{StaticResource Form.ComboBox}" MinWidth="150" Height="24"
                                 ItemsSource="{Binding ComparisonVersionOptions}"
                                 SelectedItem="{Binding SelectedComparisonVersion, Mode=TwoWay}">
                         <ComboBox.ItemTemplate>
                           <DataTemplate>
-                            <TextBlock FontSize="10.5">
+                            <TextBlock FontSize="10">
                               <Run Text="{Binding Codigo, Mode=OneWay}" />
                               <Run Text=" — " />
                               <Run Text="{Binding Nombre, Mode=OneWay}" />
@@ -469,12 +470,12 @@
                         </ComboBox.ItemTemplate>
                       </ComboBox>
                     </StackPanel>
+                    <TextBlock Text="{Binding ComparisonStatusText}"
+                               ToolTip="{Binding ComparisonModeHint}"
+                               FontSize="10.5" Foreground="{DynamicResource Brush.Ink3}"
+                               TextTrimming="CharacterEllipsis" Margin="14,0,10,0"
+                               VerticalAlignment="Center" />
                   </StackPanel>
-
-                  <TextBlock Text="{Binding ComparisonStatusText}"
-                             FontSize="10.5" Foreground="{DynamicResource Brush.Ink3}"
-                             TextTrimming="CharacterEllipsis" Margin="14,0,10,0"
-                             VerticalAlignment="Center" />
                 </DockPanel>
               </Border>
 
@@ -596,31 +597,43 @@
                   </Grid.ColumnDefinitions>
 
                   <Grid.RowDefinitions>
-                    <RowDefinition Height="40" />
+                    <RowDefinition Height="46" />
                   </Grid.RowDefinitions>
 
-                  <!-- ─── FILA ÚNICA: RESUMEN EJECUTIVO (40px) ─── -->
+                  <!-- ─── FILA ÚNICA: RESUMEN EJECUTIVO (46px) ─── -->
                   <!-- Cuadro Versión A: Cols 0-4 -->
                   <Border Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="5"
                           Background="#F8FAFD" BorderBrush="#BFDBFE" BorderThickness="0,0,2,1"
                           Padding="10,0">
                     <DockPanel LastChildFill="True">
-                      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
                         <TextBlock Text="{Binding ComparisonBaselineTotalText}"
-                                   FontFamily="{StaticResource Font.Mono}" FontSize="14" FontWeight="Bold"
+                                   FontFamily="{StaticResource Font.Mono}" FontSize="13.5" FontWeight="Bold"
                                    Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" />
                         <TextBlock Text="{Binding ComparisonBaselineCountText}"
-                                   FontFamily="{StaticResource Font.Mono}" FontSize="10.5"
+                                   FontFamily="{StaticResource Font.Mono}" FontSize="10"
                                    Foreground="{DynamicResource Brush.Ink3}" Margin="6,2,0,0" VerticalAlignment="Center" />
                       </StackPanel>
-                      <StackPanel VerticalAlignment="Center">
-                        <StackPanel Orientation="Horizontal">
-                          <TextBlock Text="VERSIÓN A (BASE)" FontSize="9" FontWeight="ExtraBold" Foreground="#1E40AF" />
-                          <TextBlock Text="{Binding ComparisonBaselineVersionLabel}" FontSize="9" FontWeight="SemiBold"
-                                     Foreground="{DynamicResource Brush.Ink3}" Margin="6,0,0,0" />
-                        </StackPanel>
-                        <TextBlock Text="{Binding ComparisonBaselineVersionSub}" FontSize="10" Foreground="{DynamicResource Brush.Ink2}"
-                                   FontWeight="SemiBold" Margin="0,1,0,0" TextTrimming="CharacterEllipsis" />
+                      <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Background="#DBEAFE" CornerRadius="3" Padding="5,3" Margin="0,0,8,0" VerticalAlignment="Center">
+                          <TextBlock Text="VERSIÓN A (BASE)" FontSize="8.5" FontWeight="ExtraBold" Foreground="#1E40AF" />
+                        </Border>
+                        <ComboBox Style="{StaticResource Form.ComboBox}"
+                                  Height="26" MinHeight="26" Padding="8,2,24,2"
+                                  MinWidth="170" MaxWidth="300"
+                                  ItemsSource="{Binding Versions}"
+                                  SelectedItem="{Binding SelectedVersion, Mode=TwoWay}"
+                                  ToolTip="Seleccionar versión base (A) para la comparación">
+                          <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                              <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding Codigo, Mode=OneWay}" FontWeight="Bold" FontSize="10.5" Foreground="{DynamicResource Brush.Ink}" />
+                                <TextBlock Text=" — " FontSize="10.5" Foreground="{DynamicResource Brush.Ink3}" />
+                                <TextBlock Text="{Binding Nombre, Mode=OneWay}" FontSize="10.5" Foreground="{DynamicResource Brush.Ink}" TextTrimming="CharacterEllipsis" MaxWidth="190" />
+                              </StackPanel>
+                            </DataTemplate>
+                          </ComboBox.ItemTemplate>
+                        </ComboBox>
                       </StackPanel>
                     </DockPanel>
                   </Border>
@@ -631,7 +644,7 @@
                           Padding="8,0">
                     <DockPanel LastChildFill="True">
                       <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock FontFamily="{StaticResource Font.Mono}" FontSize="14" FontWeight="Bold" VerticalAlignment="Center">
+                        <TextBlock FontFamily="{StaticResource Font.Mono}" FontSize="13.5" FontWeight="Bold" VerticalAlignment="Center">
                           <TextBlock.Style>
                             <Style TargetType="TextBlock">
                               <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
@@ -647,7 +660,7 @@
                           </TextBlock.Style>
                           <Run Text="{Binding ComparisonDeltaText, Mode=OneWay}" />
                         </TextBlock>
-                        <TextBlock FontFamily="{StaticResource Font.Mono}" FontSize="10.5" FontWeight="SemiBold"
+                        <TextBlock FontFamily="{StaticResource Font.Mono}" FontSize="10" FontWeight="SemiBold"
                                    Margin="6,2,0,0" VerticalAlignment="Center">
                           <TextBlock.Style>
                             <Style TargetType="TextBlock">
@@ -666,8 +679,17 @@
                         </TextBlock>
                       </StackPanel>
                       <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="VARIACIÓN NETA" FontSize="9" FontWeight="ExtraBold" Foreground="{DynamicResource Brush.Ink2}" />
-                        <TextBlock Text="{Binding ComparisonStatusText}" FontSize="10" Foreground="{DynamicResource Brush.Ink3}"
+                        <StackPanel Orientation="Horizontal">
+                          <TextBlock Text="VARIACIÓN NETA" FontSize="8.5" FontWeight="ExtraBold" Foreground="{DynamicResource Brush.Ink2}" />
+                          <Button Style="{StaticResource Button.Ghost}"
+                                  Width="18" Height="18" Padding="0" Margin="6,0,0,0"
+                                  Command="{Binding SwapVersionsCommand}"
+                                  Visibility="{Binding CanSwapVersions, Converter={StaticResource BoolToVisibility}}"
+                                  ToolTip="Intercambiar Versión A y Versión B (⇄)">
+                            <TextBlock Text="⇄" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink2}" />
+                          </Button>
+                        </StackPanel>
+                        <TextBlock Text="{Binding ComparisonStatusText}" FontSize="9.5" Foreground="{DynamicResource Brush.Ink3}"
                                    FontWeight="SemiBold" Margin="0,1,0,0" TextTrimming="CharacterEllipsis" />
                       </StackPanel>
                     </DockPanel>
@@ -678,22 +700,45 @@
                           Background="#F8FAFD" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,1"
                           Padding="10,0">
                     <DockPanel LastChildFill="True">
-                      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
                         <TextBlock Text="{Binding ComparisonTargetTotalText}"
-                                   FontFamily="{StaticResource Font.Mono}" FontSize="14" FontWeight="Bold"
+                                   FontFamily="{StaticResource Font.Mono}" FontSize="13.5" FontWeight="Bold"
                                    Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" />
                         <TextBlock Text="{Binding ComparisonTargetCountText}"
-                                   FontFamily="{StaticResource Font.Mono}" FontSize="10.5"
+                                   FontFamily="{StaticResource Font.Mono}" FontSize="10"
                                    Foreground="{DynamicResource Brush.Ink3}" Margin="6,2,0,0" VerticalAlignment="Center" />
                       </StackPanel>
-                      <StackPanel VerticalAlignment="Center">
-                        <StackPanel Orientation="Horizontal">
-                          <TextBlock Text="VERSIÓN B (DESTINO)" FontSize="9" FontWeight="ExtraBold" Foreground="#047857" />
-                          <TextBlock Text="{Binding ComparisonTargetVersionLabel}" FontSize="9" FontWeight="SemiBold"
-                                     Foreground="{DynamicResource Brush.Ink3}" Margin="6,0,0,0" />
-                        </StackPanel>
-                        <TextBlock Text="{Binding ComparisonTargetVersionSub}" FontSize="10" Foreground="{DynamicResource Brush.Ink2}"
-                                   FontWeight="SemiBold" Margin="0,1,0,0" TextTrimming="CharacterEllipsis" />
+                      <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Background="#D1FAE5" CornerRadius="3" Padding="5,3" Margin="0,0,8,0" VerticalAlignment="Center">
+                          <TextBlock Text="VERSIÓN B (DESTINO)" FontSize="8.5" FontWeight="ExtraBold" Foreground="#047857" />
+                        </Border>
+                        <ComboBox Style="{StaticResource Form.ComboBox}"
+                                  Height="26" MinHeight="26" Padding="8,2,24,2"
+                                  MinWidth="180" MaxWidth="320"
+                                  ItemsSource="{Binding TargetVersionOptions}"
+                                  SelectedItem="{Binding SelectedTargetOption, Mode=TwoWay}"
+                                  ToolTip="Seleccionar versión destino (B) para la comparación">
+                          <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                              <StackPanel Orientation="Horizontal">
+                                <Ellipse Width="6" Height="6" VerticalAlignment="Center" Margin="0,0,6,0">
+                                  <Ellipse.Style>
+                                    <Style TargetType="Ellipse">
+                                      <Setter Property="Fill" Value="#10B981" />
+                                      <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsCurrentState}" Value="true">
+                                          <Setter Property="Fill" Value="#2563EB" />
+                                        </DataTrigger>
+                                      </Style.Triggers>
+                                    </Style>
+                                  </Ellipse.Style>
+                                </Ellipse>
+                                <TextBlock Text="{Binding DisplayText, Mode=OneWay}" FontSize="10.5" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource Brush.Ink}" TextTrimming="CharacterEllipsis" MaxWidth="210" />
+                              </StackPanel>
+                            </DataTemplate>
+                          </ComboBox.ItemTemplate>
+                        </ComboBox>
                       </StackPanel>
                     </DockPanel>
                   </Border>

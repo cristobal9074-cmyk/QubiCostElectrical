@@ -562,11 +562,23 @@ public sealed partial class CubicacionRowVm : ViewModelBase, IGridCellValidation
                     // EFECTIVO (derivado); no se propaga al catálogo para no pisar el M.O.
                     // directo del material.
                     bool moDirecto = !MaterialMoResolver.DebeUsarRendimiento(material, session.ProjectInfo)
-                                  && !MaterialMoResolver.DebeUsarPorcentaje(material);
-                    if (material.MatClp != MatClp || (moDirecto && material.MoClp != MoClp))
+                                  && !MaterialMoResolver.DebeUsarPorcentaje(material)
+                                  && !MaterialMoResolver.DebeUsarFactor(material);
+                    bool matChanged = material.MatClp != MatClp;
+                    bool moChanged = moDirecto && material.MoClp != MoClp;
+
+                    if (matChanged || moChanged)
                     {
                         material.MatClp = MatClp;
                         if (moDirecto) material.MoClp = MoClp;
+                        material.RecalcularUf(valorUfClp);
+                        session.MarkDirty(ProjectDirtyScope.Materiales);
+                    }
+                    else if (MaterialMoResolver.DebeUsarFactor(material) && material.MoClp != MoClp && MoClp > 0m)
+                    {
+                        decimal fa = MaterialMoResolver.IndiceFa(session.ProjectInfo);
+                        material.MoFactorBase = fa > 0m ? Math.Round(MoClp / fa, 4) : MoClp;
+                        material.MoClp = MoClp;
                         material.RecalcularUf(valorUfClp);
                         session.MarkDirty(ProjectDirtyScope.Materiales);
                     }
@@ -581,6 +593,7 @@ public sealed partial class CubicacionRowVm : ViewModelBase, IGridCellValidation
                         MatClp = MatClp,
                         MoClp = MoClp
                     };
+                    MaterialMoResolver.NormalizarFormulaMaterial(material);
                     material.RecalcularUf(valorUfClp);
                     session.Materiales.Add(material);
                     session.MarkDirty(ProjectDirtyScope.Materiales);

@@ -48,6 +48,10 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
 
     // Panel contextual
     public CubicacionRightPanelVm RightPanel { get; }
+    public CubicacionScInspectorCoordinator ScInspector { get; }
+    public CubicacionTakeoffInspectorCoordinator TakeoffInspector { get; }
+    public bool IsTakeoffInspectorOpen { get => TakeoffInspector.IsInspectorOpen; set => TakeoffInspector.IsInspectorOpen = value; }
+    public bool IsScInspectorOpen { get => ScInspector.IsInspectorOpen; set => ScInspector.IsInspectorOpen = value; }
 
     public event Action<string>? RowAdded;
     internal void NotifyRowAdded(string rowId) => RowAdded?.Invoke(rowId);
@@ -94,12 +98,14 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
         loadingService = new CubicacionLoadingService(this, session, querySvc, cubSvc);
         sectorService = new CubicacionSectorService(this, session, undo, querySvc, cubicacionPresenter);
         rowMutationService = new CubicacionRowMutationService(this, session, undo, cubSvc, cubicacionPresenter, priceBankStore);
-        clipboardCoordinator = new CubicacionClipboardCoordinator(this, session, undo, cubicacionPresenter, querySvc);
+        clipboardCoordinator = new CubicacionClipboardCoordinator(this, session, undo, cubicacionPresenter, querySvc, priceBankStore);
         baselineCoordinator = new CubicacionBaselineCoordinator(this, session);
         navigationCoordinator = new CubicacionNavigationCoordinator(this, session, shell);
         partidaCoordinator = new CubicacionPartidaCoordinator(this, session, undo);
 
         RightPanel = new CubicacionRightPanelVm(session, this);
+        ScInspector = new CubicacionScInspectorCoordinator(session, this);
+        TakeoffInspector = new CubicacionTakeoffInspectorCoordinator(session, this);
         Partidas = new ObservableCollection<PartidaListItemVm>();
         Rows = new ObservableCollection<CubicacionRowVm>();
         // Un solo punto de entrada para propagar el valor de UF del proyecto a cada fila que se
@@ -196,7 +202,8 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
             session.Cubicacion,
             session.Materiales,
             session.ProjectInfo.ValorUfClp,
-            session.CubicacionValorizaciones);
+            session.CubicacionValorizaciones,
+            session.ProjectInfo);
         if (updated == 0) return;
 
         foreach (var row in Rows)
@@ -250,6 +257,7 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
             if (SetProperty(ref selectedRow, value))
             {
                 RightPanel.LoadRow(value);
+                ScInspector.UpdateTargetRowText();
             }
         }
     }

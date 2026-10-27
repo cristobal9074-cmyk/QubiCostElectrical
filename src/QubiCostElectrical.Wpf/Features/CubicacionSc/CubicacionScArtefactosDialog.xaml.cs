@@ -24,17 +24,34 @@ public sealed class ArtefactoZonaItem : ViewModelBase
 {
     public string Nombre { get; set; } = "";
     public string Categoria { get; set; } = "Otro";
+    public string Detalle { get; set; } = "";
+    private string tag = "";
+    public string Tag { get => tag; set { tag = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasTag)); } }
+    public bool HasTag => !string.IsNullOrWhiteSpace(tag);
     public string ZonaId { get; set; } = "";
     private decimal cantidad = 1;
-    public decimal Cantidad { get => cantidad; set { cantidad = value; OnPropertyChanged(); } }
+    public decimal Cantidad { get => cantidad; set { cantidad = value; OnPropertyChanged(); OnPropertyChanged(nameof(CantidadDisplay)); } }
+    public string CantidadDisplay => Cantidad == decimal.Truncate(Cantidad) ? decimal.Truncate(Cantidad).ToString(CultureInfo.InvariantCulture) : Cantidad.ToString("0.##", CultureInfo.InvariantCulture);
+    private decimal alturaBajada;
+    public decimal AlturaBajada { get => alturaBajada; set { alturaBajada = value; OnPropertyChanged(); OnPropertyChanged(nameof(AlturaBajadaDisplay)); } }
+    public string AlturaBajadaDisplay => AlturaBajada > 0 ? $"{AlturaBajada:0.##}m" : "0m";
 }
 
-public sealed class ArtefactoSugerencia
+public sealed class ArtefactoSugerencia : ViewModelBase
 {
-    public string Nombre { get; set; } = "";
-    public string Categoria { get; set; } = "Otro";
-    public string Detalle { get; set; } = "";
-    public bool EsNuevo { get; set; }
+    private string nombre = "";
+    public string Nombre { get => nombre; set => SetProperty(ref nombre, value); }
+    private string categoria = "Otro";
+    public string Categoria { get => categoria; set => SetProperty(ref categoria, value); }
+    private string detalle = "";
+    public string Detalle { get => detalle; set => SetProperty(ref detalle, value); }
+    private string tag = "";
+    public string Tag { get => tag; set { if (SetProperty(ref tag, value)) OnPropertyChanged(nameof(HasTag)); } }
+    public bool HasTag => !string.IsNullOrWhiteSpace(tag);
+    private bool esNuevo;
+    public bool EsNuevo { get => esNuevo; set => SetProperty(ref esNuevo, value); }
+    private decimal alturaBajada;
+    public decimal AlturaBajada { get => alturaBajada; set => SetProperty(ref alturaBajada, value); }
 }
 
 public partial class CubicacionScArtefactosDialog : Window
@@ -63,7 +80,11 @@ public partial class CubicacionScArtefactosDialog : Window
         DataContext = this;
 
         foreach (var a in circuito.Artefactos)
-            todos.Add(new ArtefactoZonaItem { Nombre = a.Nombre, Categoria = a.Categoria, ZonaId = a.ZonaId ?? "", Cantidad = a.Cantidad });
+        {
+            var artCfg = config.Artefactos.FirstOrDefault(x => string.Equals(x.Nombre, a.Nombre, StringComparison.OrdinalIgnoreCase));
+            var alt = a.AlturaBajada > 0 ? a.AlturaBajada : (artCfg?.AlturaBajada ?? 0m);
+            todos.Add(new ArtefactoZonaItem { Nombre = a.Nombre, Categoria = a.Categoria, ZonaId = a.ZonaId ?? "", Cantidad = a.Cantidad, AlturaBajada = alt });
+        }
 
         foreach (var piso in ResolverPisos(circuito, zonasProyecto, todos.Select(a => a.ZonaId)))
             Zonas.Add(new ZonaArtefactoUi { Id = piso.Id, Nombre = piso.Nombre });
@@ -198,12 +219,64 @@ public partial class CubicacionScArtefactosDialog : Window
     {
         var q = (SearchBox.Text ?? "").Trim();
         Sugerencias.Clear();
-        foreach (var a in config.Artefactos.Where(a => q.Length == 0 || a.Nombre.Contains(q, StringComparison.OrdinalIgnoreCase)).Take(8))
-            Sugerencias.Add(new ArtefactoSugerencia { Nombre = a.Nombre, Categoria = a.Categoria, Detalle = a.Categoria });
 
-        bool existe = config.Artefactos.Any(a => string.Equals(a.Nombre, q, StringComparison.OrdinalIgnoreCase));
+        var query = config.Artefactos.AsEnumerable();
+        if (q.Length > 0)
+        {
+            query = query
+                .Select(a => new
+                {
+                    Item = a,
+                    TagExact = !string.IsNullOrWhiteSpace(a.Tag) && string.Equals(a.Tag, q, StringComparison.OrdinalIgnoreCase),
+                    TagStarts = !string.IsNullOrWhiteSpace(a.Tag) && a.Tag.StartsWith(q, StringComparison.OrdinalIgnoreCase),
+                    TagContains = !string.IsNullOrWhiteSpace(a.Tag) && a.Tag.IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0,
+                    NameContains = a.Nombre.IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0
+                })
+                .Where(x => x.TagContains || x.NameContains)
+                .OrderByDescending(x => x.TagExact)
+                .ThenByDescending(x => x.TagStarts)
+                .ThenByDescending(x => x.TagContains)
+                .Select(x => x.Item);
+        }
+
+        foreach (var a in query.Take(8))
+        {
+            var tagDisplay = !string.IsNullOrWhiteSpace(a.Tag) ? a.Tag : (a.Nombre.Length <= 4 ? a.Nombre : "");
+            Sugerencias.Add(new ArtefactoSugerencia
+            {
+                Tag = tagDisplay,
+                Nombre = a.Nombre,
+                Categoria = a.Categoria,
+                Detalle = string.IsNullOrWhiteSpace(tagDisplay) ? a.Categoria : $"{a.Categoria} • Tag: {tagDisplay}",
+                AlturaBajada = a.AlturaBajada
+            });
+        }
+
+        bool existe = config.Artefactos.Any(a => string.Equals(a.Nombre, q, StringComparison.OrdinalIgnoreCase) || (!string.IsNullOrWhiteSpace(a.Tag) && string.Equals(a.Tag, q, StringComparison.OrdinalIgnoreCase)));
         if (q.Length > 0 && !existe)
-            Sugerencias.Add(new ArtefactoSugerencia { Nombre = q, Categoria = "Otro", Detalle = "crear nuevo", EsNuevo = true });
+        {
+            var parts = q.Split(new[] { ':', '-' }, 2, StringSplitOptions.TrimEntries);
+            string newTag = "";
+            string newNombre = q;
+            if (parts.Length == 2 && parts[0].Length <= 6)
+            {
+                newTag = parts[0].ToUpperInvariant();
+                newNombre = parts[1];
+            }
+            else if (q.Length <= 4)
+            {
+                newTag = q.ToUpperInvariant();
+            }
+
+            Sugerencias.Add(new ArtefactoSugerencia
+            {
+                Tag = newTag,
+                Nombre = newNombre,
+                Categoria = "Otro",
+                Detalle = string.IsNullOrWhiteSpace(newTag) ? "crear nuevo material" : $"crear nuevo con tag [{newTag}]",
+                EsNuevo = true
+            });
+        }
 
         if (sugerenciaIndex >= Sugerencias.Count) sugerenciaIndex = 0;
         SyncLists();
@@ -261,6 +334,14 @@ public partial class CubicacionScArtefactosDialog : Window
 
         if (Keyboard.Modifiers == ModifierKeys.Control && e.Key == Key.Right) { ShiftZona(1); e.Handled = true; return; }
         if (Keyboard.Modifiers == ModifierKeys.Control && e.Key == Key.Left) { ShiftZona(-1); e.Handled = true; return; }
+
+        // F2: Editar Tag rápido de la sugerencia seleccionada
+        if (e.Key == Key.F2 && sugerenciaIndex >= 0 && sugerenciaIndex < Sugerencias.Count)
+        {
+            EditarTagSugerencia(Sugerencias[sugerenciaIndex]);
+            e.Handled = true;
+            return;
+        }
 
         if (e.Key == Key.Down) { MoveHighlight(1); e.Handled = true; return; }
         if (e.Key == Key.Up) { MoveHighlight(-1); e.Handled = true; return; }
@@ -377,11 +458,65 @@ public partial class CubicacionScArtefactosDialog : Window
         }
         else
         {
-            todos.Add(new ArtefactoZonaItem { Nombre = nombre, Categoria = categoria, ZonaId = zonaActiva.Id, Cantidad = qty });
+                        var artCfg = config.Artefactos.FirstOrDefault(x => string.Equals(x.Nombre, nombre, StringComparison.OrdinalIgnoreCase));
+            var alt = artCfg?.AlturaBajada ?? (pendiente?.AlturaBajada ?? 0m);
+            todos.Add(new ArtefactoZonaItem { Nombre = nombre, Categoria = categoria, ZonaId = zonaActiva.Id, Cantidad = qty, AlturaBajada = alt });
         }
 
         if (esNuevo && qty > 0)
+        {
             nombresNuevos.Add(nombre);
+            if (!config.Artefactos.Any(a => string.Equals(a.Nombre, nombre, StringComparison.OrdinalIgnoreCase)))
+            {
+                config.Artefactos.Add(new ArtefactoCatalogoItem
+                {
+                    Nombre = nombre,
+                    Categoria = categoria,
+                    Tag = sugerencia.Tag ?? ""
+                });
+            }
+        }
+    }
+
+    private void OnEditarTagSugerenciaClick(object sender, RoutedEventArgs e)
+    {
+        if (SugerenciasList.SelectedItem is ArtefactoSugerencia s)
+        {
+            EditarTagSugerencia(s);
+        }
+        else if (sugerenciaIndex >= 0 && sugerenciaIndex < Sugerencias.Count)
+        {
+            EditarTagSugerencia(Sugerencias[sugerenciaIndex]);
+        }
+    }
+
+    private void EditarTagSugerencia(ArtefactoSugerencia sugerencia)
+    {
+        if (string.IsNullOrWhiteSpace(sugerencia.Nombre)) return;
+
+        var art = config.Artefactos.FirstOrDefault(a => string.Equals(a.Nombre, sugerencia.Nombre, StringComparison.OrdinalIgnoreCase));
+        var currentTag = art?.Tag ?? sugerencia.Tag ?? "";
+
+        var input = WpfDialogService.PromptText("Editar Tag Rápido", $"Tag abreviado para '{sugerencia.Nombre}' (ej: MDL, DW12, CLED):", currentTag);
+        if (input == null) return; // cancelado por el usuario
+
+        var newTag = input.Trim().ToUpperInvariant();
+        if (art != null)
+        {
+            art.Tag = newTag;
+        }
+        else
+        {
+            config.Artefactos.Add(new ArtefactoCatalogoItem
+            {
+                Nombre = sugerencia.Nombre,
+                Categoria = sugerencia.Categoria,
+                Tag = newTag
+            });
+        }
+
+        sugerencia.Tag = newTag;
+        RefreshSugerencias();
     }
 
     private ArtefactoZonaItem? BuscarEnZona(string nombre) =>
@@ -446,7 +581,7 @@ public partial class CubicacionScArtefactosDialog : Window
 
         circuito.Artefactos.Clear();
         foreach (var a in todos.Where(a => a.Cantidad > 0))
-            circuito.Artefactos.Add(new ArtefactoSCRow { Nombre = a.Nombre.Trim(), Categoria = a.Categoria, Cantidad = a.Cantidad, ZonaId = a.ZonaId ?? "" });
+            circuito.Artefactos.Add(new ArtefactoSCRow { Nombre = a.Nombre.Trim(), Categoria = a.Categoria, Cantidad = a.Cantidad, ZonaId = a.ZonaId ?? "", AlturaBajada = a.AlturaBajada });
         DialogResult = true;
     }
 }

@@ -92,6 +92,13 @@ public sealed class HojaCubicacionFilaVm : INotifyPropertyChanged
     /// o vacío si la celda no tiene datos — nunca "0" de relleno.</summary>
     public ObservableCollection<string> ValoresDisplay { get; }
 
+    private bool isSelected;
+    public bool IsSelected
+    {
+        get => isSelected;
+        set { if (isSelected != value) { isSelected = value; Raise(nameof(IsSelected)); } }
+    }
+
     public bool IsPicked
     {
         get => isPicked;
@@ -271,6 +278,13 @@ public sealed class HojaCubicacionItemVm : INotifyPropertyChanged
     {
         get => unidad;
         set { unidad = value ?? ""; Raise(nameof(Unidad)); }
+    }
+
+    private bool isSelected;
+    public bool IsSelected
+    {
+        get => isSelected;
+        set { if (isSelected != value) { isSelected = value; Raise(nameof(IsSelected)); } }
     }
 
     public bool IsPicked

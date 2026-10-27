@@ -49,6 +49,50 @@ public sealed class CubicacionSCEngineTests
     }
 
     [Fact]
+    public void Circuito_ConArtefactosConAltura_CalculaMetrosAltura_YAgregaTuberiaYConductor()
+    {
+        var c = ActiveCircuito("20mm");
+        c.MetrosTuberia = 10m;
+        c.Artefactos.Add(new ArtefactoSCRow { Nombre = "ENCH S10", Cantidad = 10m, AlturaBajada = 2.20m });
+        c.Artefactos.Add(new ArtefactoSCRow { Nombre = "INT 9/12", Cantidad = 2m, AlturaBajada = 1.30m });
+        Assert.Equal(24.6m, c.MetrosAltura);
+        Assert.Equal(34.6m, c.LargoTuberia);
+        Assert.Equal(104m, c.LargoDerivacion);
+        var cuadro = new CuadroCargaSCRow();
+        cuadro.Circuitos.Add(c);
+        var result = CubicacionSCEngine.Aggregate(new[] { cuadro }, DefaultConfig());
+        Assert.True(result.ContainsKey("TUBERIA PVCLH 20mm"));
+        Assert.Equal(34.6m, result["TUBERIA PVCLH 20mm"].Cantidad);
+        Assert.True(result.ContainsKey("CONDUCTOR H07V-U 4mm2"));
+        Assert.Equal(104m, result["CONDUCTOR H07V-U 4mm2"].Cantidad);
+    }
+
+    [Fact]
+    public void Circuito_ConDosTiposDeTuberia_CalculaAmbasTuberias_YConductorSobreTotal()
+    {
+        var c = ActiveCircuito("20mm");
+        c.TipoTuberia = "PVCLH";
+        c.SeccionTuberia = "20mm";
+        c.MetrosTuberia = 15m;
+        c.TipoTuberia2 = "EMT";
+        c.SeccionTuberia2 = "25mm";
+        c.MetrosTuberia2 = 10m;
+        Assert.Equal(15m, c.LargoTuberia);
+        Assert.Equal(10m, c.LargoTuberia2);
+        Assert.Equal(25m, c.LargoTuberiaTotal);
+        Assert.Equal(75m, c.LargoDerivacion);
+        var cuadro = new CuadroCargaSCRow();
+        cuadro.Circuitos.Add(c);
+        var result = CubicacionSCEngine.Aggregate(new[] { cuadro }, DefaultConfig());
+        Assert.True(result.ContainsKey("TUBERIA PVCLH 20mm"));
+        Assert.Equal(15m, result["TUBERIA PVCLH 20mm"].Cantidad);
+        Assert.True(result.ContainsKey("TUBERIA EMT 25mm"));
+        Assert.Equal(10m, result["TUBERIA EMT 25mm"].Cantidad);
+        Assert.True(result.ContainsKey("CONDUCTOR H07V-U 4mm2"));
+        Assert.Equal(75m, result["CONDUCTOR H07V-U 4mm2"].Cantidad);
+    }
+
+    [Fact]
     public void Circuito_PorTuberia_AgregaTuberiaYConductorPvc()
     {
         var cuadro = new CuadroCargaSCRow();

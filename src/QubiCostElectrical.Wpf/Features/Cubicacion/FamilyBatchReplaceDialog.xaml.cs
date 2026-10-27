@@ -111,14 +111,20 @@ public partial class FamilyBatchReplaceDialog : Window
     private void ScanAndDisplayItems(string? pattern = null)
     {
         string query = pattern ?? FilterBox.Text?.Trim() ?? string.Empty;
-        var scanned = batchService.ScanMatchingMaterials(session, query, category: null, scanCubicacionOnly: true);
+        var scanned = batchService.ScanMatchingMaterials(session, query, category: null, scanCubicacionOnly: false);
 
         displayedMappings.Clear();
         foreach (var item in scanned)
         {
+            item.PropertyChanged += OnMappingPropertyChanged;
             displayedMappings.Add(item);
         }
 
+        UpdateCockpit();
+    }
+
+    private void OnMappingPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
         UpdateCockpit();
     }
 
@@ -383,7 +389,10 @@ public partial class FamilyBatchReplaceDialog : Window
         }
         else
         {
-            mapping.Status = FamilyMappingStatus.NotFound;
+            mapping.TargetDescripcion = code;
+            mapping.TargetUnidad = mapping.SourceUnidad;
+            mapping.NuevoPrecioClp = mapping.PrecioActualClp;
+            mapping.Status = FamilyMappingStatus.Manual;
         }
 
         MappingGrid.Items.Refresh();
@@ -430,8 +439,7 @@ public partial class FamilyBatchReplaceDialog : Window
         }
 
         int activeItems = displayedMappings.Count(m => m.IsSelected &&
-                                                      !string.IsNullOrWhiteSpace(m.TargetCodigo) &&
-                                                      (m.Status == FamilyMappingStatus.InBank || m.Status == FamilyMappingStatus.Manual));
+                                                      (!string.IsNullOrWhiteSpace(m.TargetCodigo) || !string.IsNullOrWhiteSpace(m.TargetDescripcion)));
 
         ExecuteButton.IsEnabled = activeItems > 0 && (inCubicacion || inApu);
         CreateVariantButton.IsEnabled = ExecuteButton.IsEnabled;

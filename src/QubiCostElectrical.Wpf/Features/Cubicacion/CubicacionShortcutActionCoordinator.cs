@@ -135,6 +135,9 @@ internal sealed class CubicacionShortcutActionCoordinator
                     return true;
                 }
                 return false;
+            case CubicacionShortcutCatalog.HojaCubicacion:
+                _vm.OpenHojaCubicacionCommand.Execute(null);
+                return true;
             case CubicacionShortcutCatalog.ScTomar:
                 if (OpenScTomarCommand.CanExecute(null))
                 {
@@ -251,45 +254,9 @@ internal sealed class CubicacionShortcutActionCoordinator
             return;
         }
 
-        var dialog = new ResumenScTomarDialog(cuadros, config, _session.ZonasProyecto) { Owner = Application.Current.MainWindow };
-        if (dialog.ShowDialog() != true || dialog.Result == null)
-            return;
-
-        var row = _vm.SelectedRow;
-        if (row == null) return;
-
-        if (row.HasContent &&
-            !WpfDialogService.Confirm(
-                "Tomar de SC",
-                "La fila ya tiene contenido. ¿Deseas sobrescribirla con los datos de Servicios Comunes?",
-                isWarning: true))
-            return;
-
-        var material = dialog.Result;
-        row.Codigo = material.Nombre;
-        row.Descripcion = material.Nombre;
-        row.Unidad = material.Unidad;
-        row.Tipo = "MAT";
-
-        var zonas = _session.ZonasProyecto.Where(z => z.Activa).OrderBy(z => z.Orden).ToList();
-        row.BeginBatchUpdate();
-        for (var i = 0; i < material.ZonaQties.Count && i < zonas.Count; i++)
-        {
-            var zonaQty = material.ZonaQties[i];
-            var zonaNombre = zonas[i].Nombre;
-            if (!string.Equals(zonaQty.ZonaNombre, zonaNombre, StringComparison.OrdinalIgnoreCase))
-                continue;
-
-            if (decimal.TryParse(zonaQty.Text, out var qty) && qty > 0m)
-                _vm.SetSectorExpressionDirect(row, i, qty.ToString("0.##"));
-        }
-        row.EndBatchUpdate();
-        row.RefreshDisplayProperties();
-        _vm.RightPanel.LoadRow(row);
-        _vm.ValidateRow(row);
-        _vm.MarkDirty();
-        _vm.NotifyCubicacionSummaryChanged();
+        _vm.ScInspector.ToggleInspector();
     }
+
 
     private void OpenCubicacionItemizado()
     {

@@ -291,7 +291,13 @@ public static class HojaCubicacionFormulaEngine
         return false;
     }
 
-    public static string FormatDecimal(decimal value) => value.ToString("0.####", CultureInfo.CurrentCulture);
+    public static string FormatDecimal(decimal value)
+    {
+        decimal rounded = Math.Round(value, 2, MidpointRounding.AwayFromZero);
+        return rounded % 1 == 0
+            ? rounded.ToString("0", CultureInfo.CurrentCulture)
+            : rounded.ToString("0.##", CultureInfo.CurrentCulture);
+    }
 
     private static bool TryParseLiteral(string raw, out decimal value)
     {

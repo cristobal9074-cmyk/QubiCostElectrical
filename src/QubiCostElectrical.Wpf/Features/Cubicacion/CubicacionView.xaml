@@ -122,6 +122,8 @@
                 <ColumnDefinition Width="18" />
                 <!-- Centro -->
                 <ColumnDefinition MinWidth="400" />
+                <!-- Inspector lateral SC / Hoja de Cubicacion -->
+                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
             <!-- ══════════════════════════════════════════════
@@ -321,99 +323,133 @@
                                 </Border>
                             </StackPanel>
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                                <Button Style="{StaticResource Button.Toolbar}" Content="Tomar SC" Command="{Binding OpenScTomarCommand}" ToolTip="Tomar materiales desde Cubicación SC (Alt+L)" />
-                                <Button Style="{StaticResource Button.Toolbar}" Content="Ver / Generar APU" Command="{Binding NavigateToApuCommand}" Margin="0,0,8,0" ToolTip="Abrir herramienta auxiliar de APU para esta partida" />
-                                <!-- Herramienta de Modo de Cubicación (opcional: persistente para el proyecto/app) -->
-                                <Border Background="{DynamicResource Brush.ChipBg}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="6" Padding="1.5" Margin="0,0,10,0" VerticalAlignment="Center">
+                                <!-- GRUPO 1: Selector principal de Vista [ Cubicacion (Matriz) | Detalle de Recursos ] -->
+                                <Border Background="{DynamicResource Brush.ChipBg}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="6" Padding="1" Margin="0,0,5,0" VerticalAlignment="Center">
                                     <StackPanel Orientation="Horizontal">
-                                        <!-- Zona Libre -->
-                                        <Button Height="24" Command="{Binding SetZonaLibreModeCommand}" ToolTip="Modo Zona Libre: Cubicación directa continua sin desglose de pisos (queda guardado para futuros presupuestos)">
+                                        <!-- Cubicacion (Matriz) -->
+                                        <Button Width="28" Height="24" Command="{Binding ShowSectorMatrixCommand}" ToolTip="Vista Cubicaci&#243;n por Matriz (Alt+A)&#x0a;Planilla de casillas y sectores (S1, S2, TA-P2...)">
                                             <Button.Style>
                                                 <Style TargetType="Button" BasedOn="{StaticResource Button.Ghost}">
-                                                    <Setter Property="FontSize" Value="10.5" /><Setter Property="FontWeight" Value="SemiBold" /><Setter Property="Padding" Value="8,2" /><Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding IsZonaLibreMode}" Value="True">
-                                                            <Setter Property="Background" Value="{DynamicResource Brush.Surface}" /><Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Button.Style>
-                                            <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="🌐" FontSize="10" Margin="0,0,3,0" VerticalAlignment="Center" />
-                                                <TextBlock Text="Zona Libre" VerticalAlignment="Center" />
-                                            </StackPanel>
-                                        </Button>
-
-                                        <!-- Por Zonas -->
-                                        <Button Height="24" Command="{Binding SetPorZonasModeCommand}" ToolTip="Modo Por Zonas: Matriz desglosada por pisos, subterráneos y sectores del proyecto (queda guardado para futuros presupuestos)">
-                                            <Button.Style>
-                                                <Style TargetType="Button" BasedOn="{StaticResource Button.Ghost}">
-                                                    <Setter Property="FontSize" Value="10.5" /><Setter Property="FontWeight" Value="SemiBold" /><Setter Property="Padding" Value="8,2" /><Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding IsPorZonasMode}" Value="True">
-                                                            <Setter Property="Background" Value="{DynamicResource Brush.Surface}" /><Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Button.Style>
-                                            <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="🏢" FontSize="10" Margin="0,0,3,0" VerticalAlignment="Center" />
-                                                <TextBlock Text="Por Zonas" VerticalAlignment="Center" />
-                                            </StackPanel>
-                                        </Button>
-                                    </StackPanel>
-                                </Border>
-
-                                <!-- Selector principal de Vista: [ Cubicación | Detalle ] -->
-                                <Border Background="{DynamicResource Brush.ChipBg}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="6" Padding="1.5" Margin="0,0,8,0" VerticalAlignment="Center">
-                                    <StackPanel Orientation="Horizontal">
-                                        <!-- Cubicación -->
-                                        <Button Content="Cubicación" Height="24" Command="{Binding ShowSectorMatrixCommand}" ToolTip="Vista de cubicación por casillas (Alt+A)">
-                                            <Button.Style>
-                                                <Style TargetType="Button" BasedOn="{StaticResource Button.Ghost}">
-                                                    <Setter Property="FontSize" Value="11" /><Setter Property="FontWeight" Value="SemiBold" /><Setter Property="Padding" Value="10,2" /><Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
+                                                    <Setter Property="Padding" Value="0" />
+                                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding IsSectorMatrixMode}" Value="True">
-                                                            <Setter Property="Background" Value="{DynamicResource Brush.Surface}" /><Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+                                                            <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+                                                            <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
                                             </Button.Style>
+                                            <Path Data="{StaticResource Geo.Grid}" Style="{StaticResource Icon.Vector.Md}" />
                                         </Button>
 
                                         <!-- Detalle -->
-                                        <Button Content="Detalle" Height="24" Command="{Binding ShowResourceDetailCommand}" ToolTip="Vista detallada de recursos, precios unitarios y subtotales (Alt+D)">
+                                        <Button Width="28" Height="24" Command="{Binding ShowResourceDetailCommand}" ToolTip="Vista Detalle de Recursos (Alt+D)&#x0a;Desglose completo con precios unitarios y subtotales">
                                             <Button.Style>
                                                 <Style TargetType="Button" BasedOn="{StaticResource Button.Ghost}">
-                                                    <Setter Property="FontSize" Value="11" /><Setter Property="FontWeight" Value="SemiBold" /><Setter Property="Padding" Value="10,2" /><Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
+                                                    <Setter Property="Padding" Value="0" />
+                                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding IsSectorMatrixMode}" Value="False">
-                                                            <Setter Property="Background" Value="{DynamicResource Brush.Surface}" /><Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+                                                            <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+                                                            <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
                                             </Button.Style>
+                                            <Path Data="{StaticResource Geo.List}" Style="{StaticResource Icon.Vector.Md}" />
                                         </Button>
                                     </StackPanel>
                                 </Border>
 
-                                <Button Content="Buscar (Ctrl+F)" Click="OnOpenSearchClick" Style="{StaticResource Button.Toolbar}" ToolTip="Buscar en tabla y resaltar coincidencias (Ctrl+F / F3)" />
-                                <Button Style="{StaticResource Button.Ghost}" Content="⋯" Height="28" Padding="12,4" ToolTip="Duplicar, reemplazar, autocompletar, hoja de cubicación y zonas" Click="OnMoreActionsClick">
+                                <!-- Separador CAD -->
+                                <Rectangle Width="1" Height="16" Fill="{DynamicResource Brush.Line}" Margin="2,0,5,0" VerticalAlignment="Center" />
+
+                                <!-- GRUPO 2: Modo de Cubicacion [ Zona Libre | Por Zonas ] -->
+                                <Border Background="{DynamicResource Brush.ChipBg}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="6" Padding="1" Margin="0,0,5,0" VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal">
+                                        <!-- Zona Libre -->
+                                        <Button Width="28" Height="24" Command="{Binding SetZonaLibreModeCommand}" ToolTip="Modo Zona Libre&#x0a;Cubicaci&#243;n directa continua sin desglose por pisos">
+                                            <Button.Style>
+                                                <Style TargetType="Button" BasedOn="{StaticResource Button.Ghost}">
+                                                    <Setter Property="Padding" Value="0" />
+                                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsZonaLibreMode}" Value="True">
+                                                            <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+                                                            <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                            <Path Data="{StaticResource Geo.Globe}" Style="{StaticResource Icon.Vector.Md}" />
+                                        </Button>
+
+                                        <!-- Por Zonas -->
+                                        <Button Width="28" Height="24" Command="{Binding SetPorZonasModeCommand}" ToolTip="Modo Por Zonas&#x0a;Matriz desglosada por pisos, subterr&#225;neos y sectores">
+                                            <Button.Style>
+                                                <Style TargetType="Button" BasedOn="{StaticResource Button.Ghost}">
+                                                    <Setter Property="Padding" Value="0" />
+                                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsPorZonasMode}" Value="True">
+                                                            <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+                                                            <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                            <Path Data="{StaticResource Geo.Building}" Style="{StaticResource Icon.Vector.Md}" />
+                                        </Button>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Separador CAD -->
+                                <Rectangle Width="1" Height="16" Fill="{DynamicResource Brush.Line}" Margin="2,0,5,0" VerticalAlignment="Center" />
+
+                                <!-- GRUPO 3: Herramientas Principales -->
+                                <!-- Tomar SC -->
+                                <Button Style="{StaticResource Button.ToolbarIcon}" Command="{Binding OpenScTomarCommand}" ToolTip="Tomar de Cubicaci&#243;n SC (Alt+L)&#x0a;Importar alimentadores, circuitos y tableros calculados">
+                                    <Path Data="{StaticResource Geo.Bolt}" Style="{StaticResource Icon.Vector.Md}" Stroke="{DynamicResource Brush.SuccessBright}" />
+                                </Button>
+
+                                <!-- Ver / Generar APU -->
+                                <Button Style="{StaticResource Button.ToolbarIcon}" Command="{Binding NavigateToApuCommand}" ToolTip="An&#225;lisis de Precio Unitario (APU)&#x0a;Abrir herramienta auxiliar de APU para esta partida">
+                                    <Path Data="{StaticResource Geo.Cube}" Style="{StaticResource Icon.Vector.Md}" Stroke="{DynamicResource Brush.Warning}" />
+                                </Button>
+
+                                <!-- Hoja Cubicacion -->
+                                <Button Style="{StaticResource Button.ToolbarIcon}" Command="{Binding OpenHojaCubicacionCommand}" ToolTip="Hoja de Cubicaci&#243;n (Alt+T)&#x0a;Herramienta de apoyo para cubicar: agregue &#237;tems y sume sus mediciones antes de trasladarlas a la partida">
+                                    <Path Data="{StaticResource Geo.FileText}" Style="{StaticResource Icon.Vector.Md}" Stroke="{DynamicResource Brush.Blue}" />
+                                </Button>
+
+                                <!-- Separador CAD -->
+                                <Rectangle Width="1" Height="16" Fill="{DynamicResource Brush.Line}" Margin="2,0,5,0" VerticalAlignment="Center" />
+
+                                <!-- GRUPO 4: Buscar &amp; Opciones -->
+                                <!-- Buscar -->
+                                <Button Style="{StaticResource Button.ToolbarIcon}" Click="OnOpenSearchClick" ToolTip="Buscar en tabla (Ctrl+F)&#x0a;Filtrar y resaltar coincidencias en la partida activa">
+                                    <Path Data="{StaticResource Geo.Search}" Style="{StaticResource Icon.Vector.Md}" />
+                                </Button>
+
+                                <!-- Mas Acciones (...) -->
+                                <Button Style="{StaticResource Button.ToolbarIcon}" Margin="0" ToolTip="M&#225;s opciones de partida&#x0a;Duplicar, reemplazar, autocompletar y zonas" Click="OnMoreActionsClick">
+                                    <Path Data="{StaticResource Geo.MoreHorizontal}" Style="{StaticResource Icon.Vector.Md}" />
                                     <Button.ContextMenu>
                                         <ContextMenu>
-                                            <MenuItem Header="Duplicar fila (Ctrl+D)" Command="{Binding DuplicateRowCommand}" ToolTip="Duplicar la fila seleccionada con todas sus mediciones y fórmulas" />
-                                            <MenuItem Header="Buscar y Reemplazar Material… (Ctrl+H)" Command="{Binding OpenBatchReplaceCommand}" ToolTip="Reemplazar un material en todas las partidas manteniendo intactas las mediciones y fórmulas" />
-                                            <MenuItem Header="Cambio de Línea o Familia Masivo… (Ctrl+Shift+H)" Command="{Binding OpenFamilyBatchReplaceCommand}" ToolTip="Ingeniería de valor: reemplazar familias completas de materiales con auto-mapeo del banco de precios" />
+                                            <MenuItem Header="Duplicar fila (Ctrl+D)" Command="{Binding DuplicateRowCommand}" ToolTip="Duplicar la fila seleccionada con todas sus mediciones y f&#243;rmulas" />
+                                            <MenuItem Header="Buscar y Reemplazar Material... (Ctrl+H)" Command="{Binding OpenBatchReplaceCommand}" ToolTip="Reemplazar un material en todas las partidas manteniendo intactas las mediciones y f&#243;rmulas" />
+                                            <MenuItem Header="Cambio de L&#237;nea o Familia Masivo... (Ctrl+Shift+H)" Command="{Binding OpenFamilyBatchReplaceCommand}" ToolTip="Ingenier&#237;a de valor: reemplazar familias completas de materiales con auto-mapeo del banco de precios" />
                                             <Separator />
                                             <MenuItem Header="Autocompletar unidad y cantidad" Command="{Binding AutocompletarUnidadYCantidadCommand}" ToolTip="Asignar a esta partida la unidad y cantidad del primer material cubicado" />
                                             <MenuItem Header="Aplicar cantidad a la partida" Command="{Binding AplicarCantidadALaPartidaCommand}" ToolTip="Copia la cantidad global al recurso maestro cuando la partida tiene componentes. No toca el resto de los materiales." />
-                                            <MenuItem Header="Autocompletar unidad y cantidad en todo el proyecto…" Command="{Binding AutocompletarUnidadYCantidadTodasCommand}" ToolTip="Asignar la unidad y cantidad del primer material a todas las partidas del proyecto que no tengan valorización global" />
+                                            <MenuItem Header="Autocompletar unidad y cantidad en todo el proyecto..." Command="{Binding AutocompletarUnidadYCantidadTodasCommand}" ToolTip="Asignar la unidad y cantidad del primer material a todas las partidas del proyecto que no tengan valorizaci&#243;n global" />
                                             <Separator />
-                                            <MenuItem Header="Generar / Ver APU de esta partida" Command="{Binding NavigateToApuCommand}" ToolTip="Abrir herramienta auxiliar de análisis de precios unitarios para la partida activa" />
-                                            <MenuItem Header="Hoja de Cubicación" Command="{Binding OpenHojaCubicacionCommand}" ToolTip="Herramienta de apoyo para cubicar: agregue ítems y sume sus mediciones antes de trasladarlas a la partida" />
-                                            <MenuItem Header="Cargar Plantilla…" Command="{Binding AplicarConjuntoCommand}" ToolTip="Cargar una plantilla creada en la pestaña Plantillas sobre la partida seleccionada" />
-                                            <MenuItem Header="Guardar como Plantilla…" Command="{Binding CrearConjuntoDesdePartidaCommand}" ToolTip="Crear una plantilla reutilizable en tu biblioteca global a partir de los materiales y fórmulas de esta partida" />
-                                            <MenuItem Header="Zonas…" Command="{Binding ManageZonasCommand}" ToolTip="Definir las zonas del proyecto (nombres, orden y estado de los sectores)" />
+                                            <MenuItem Header="Generar / Ver APU de esta partida" Command="{Binding NavigateToApuCommand}" ToolTip="Abrir herramienta auxiliar de an&#225;lisis de precios unitarios para la partida activa" />
+                                            <MenuItem Header="Hoja de Cubicaci&#243;n (Alt+T)" Command="{Binding OpenHojaCubicacionCommand}" ToolTip="Herramienta de apoyo para cubicar: agregue &#237;tems y sume sus mediciones antes de trasladarlas a la partida" />
+                                            <MenuItem Header="Cargar Plantilla..." Command="{Binding AplicarConjuntoCommand}" ToolTip="Cargar una plantilla creada en la pesta&#241;a Plantillas sobre la partida seleccionada" />
+                                            <MenuItem Header="Guardar como Plantilla..." Command="{Binding CrearConjuntoDesdePartidaCommand}" ToolTip="Crear una plantilla reutilizable en tu biblioteca global a partir de los materiales y f&#243;rmulas de esta partida" />
+                                            <MenuItem Header="Zonas..." Command="{Binding ManageZonasCommand}" ToolTip="Definir las zonas del proyecto (nombres, orden y estado de los sectores)" />
                                         </ContextMenu>
                                     </Button.ContextMenu>
                                 </Button>
@@ -818,6 +854,13 @@
                                                   Visibility="{Binding HasPartida, Converter={StaticResource BoolToVisibility}}" />
             </Grid>
 
+            <!-- Inspector lateral SC (Alt+L) -->
+
+            <Grid Grid.Column="3"
+                  Visibility="{Binding IsScInspectorOpen, Converter={StaticResource BoolToVisibility}, FallbackValue=Collapsed}">
+                <local:CubicacionScInspectorControl x:Name="ScInspectorPanel" DataContext="{Binding ScInspector}" Width="480" />
+            </Grid>
+
             <!-- Popup autocompletado -->
             <Popup x:Name="AutocompletePopup" StaysOpen="True" IsOpen="{Binding AutocompleteVisible}" Placement="Bottom" AllowsTransparency="True">
                 <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="6" MaxHeight="320" MinWidth="480" Width="480">
@@ -893,8 +936,26 @@
                         </ListBox>
 
                         <Border Grid.Row="1" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,1,0,0" Padding="6,4">
-                            <Button Style="{StaticResource Button.Ghost}" HorizontalAlignment="Stretch" Content="Crear material nuevo…"
-                                    Click="OnCreateMaterialClick" IsEnabled="{Binding CanCreateMaterial}" />
+                            <Button x:Name="CreateMaterialButton" HorizontalAlignment="Stretch" Content="Crear material nuevo..."
+                                    Height="32" Cursor="Hand"
+                                    Click="OnCreateMaterialClick"
+                                    MouseEnter="OnCreateMaterialMouseEnter"
+                                    MouseLeave="OnCreateMaterialMouseLeave"
+                                    IsEnabled="{Binding CanCreateMaterial}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource Button.Ghost}">
+                                        <Style.Triggers>
+                                            <Trigger Property="Tag" Value="Selected">
+                                                <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+                                                <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
+                                                <Setter Property="BorderThickness" Value="1.5" />
+                                                <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
+                                                <Setter Property="FontWeight" Value="SemiBold" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
                         </Border>
                     </Grid>
                 </Border>

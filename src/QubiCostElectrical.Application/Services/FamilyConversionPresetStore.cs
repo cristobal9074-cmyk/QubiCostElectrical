@@ -52,10 +52,27 @@ public sealed class FamilyConversionPresetStore : IFamilyConversionPresetStore
     public IReadOnlyList<FamilyConversionPreset> GetAllPresets()
     {
         var presets = LoadFromDisk();
+        var factory = GetFactoryPresets().ToList();
         if (presets.Count == 0)
         {
-            presets = GetFactoryPresets().ToList();
+            presets = factory;
             SaveToDisk(presets);
+        }
+        else
+        {
+            bool updated = false;
+            foreach (var f in factory)
+            {
+                if (!presets.Any(p => string.Equals(p.Id, f.Id, StringComparison.OrdinalIgnoreCase)))
+                {
+                    presets.Add(f);
+                    updated = true;
+                }
+            }
+            if (updated)
+            {
+                SaveToDisk(presets);
+            }
         }
         return presets;
     }
@@ -129,6 +146,64 @@ public sealed class FamilyConversionPresetStore : IFamilyConversionPresetStore
 
     public static IEnumerable<FamilyConversionPreset> GetFactoryPresets()
     {
+        yield return new FamilyConversionPreset
+        {
+            Id = "factory_magic_to_matix",
+            Name = "Bticino Magic ➔ Bticino Matix",
+            Description = "Sustituye la línea clásica Magic por la serie modular Matix de Bticino",
+            SourcePrefix = "magic",
+            TargetPrefix = "matix",
+            IsFactory = true,
+            ItemOverrides = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["magic9/12"] = "matix9/12",
+                ["magic9/15"] = "matix9/15",
+                ["magic9/24"] = "matix9/24",
+                ["magices16"] = "matixes16",
+                ["magic503"] = "matix503",
+                ["magic504"] = "matix504",
+                ["INT 9/12 MAGIC"] = "INT 9/12 MATIX",
+                ["INT 9/15 MAGIC"] = "INT 9/15 MATIX",
+                ["INT 9/24 MAGIC"] = "INT 9/24 MATIX",
+                ["ENCHUFE MAGIC"] = "ENCHUFE MATIX",
+                ["PLACA MAGIC"] = "PLACA MATIX"
+            }
+        };
+
+        yield return new FamilyConversionPreset
+        {
+            Id = "factory_pvc_to_pvclh",
+            Name = "Canalización PVC ➔ Conduit PVCLH",
+            Description = "Reemplaza tuberías y accesorios de PVC tradicional por Conduit PVCLH",
+            SourcePrefix = "PVC",
+            TargetPrefix = "PVCLH",
+            IsFactory = true,
+            ItemOverrides = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["PVC-16"] = "PVCLH-16",
+                ["PVC-20"] = "PVCLH-20",
+                ["PVC-25"] = "PVCLH-25",
+                ["PVC-32"] = "PVCLH-32",
+                ["PVC-40"] = "PVCLH-40",
+                ["PVC-50"] = "PVCLH-50",
+                ["PVC 16MM"] = "PVCLH 16MM",
+                ["PVC 20MM"] = "PVCLH 20MM",
+                ["PVC 25MM"] = "PVCLH 25MM",
+                ["PVC 32MM"] = "PVCLH 32MM",
+                ["PVC 40MM"] = "PVCLH 40MM",
+                ["PVC 50MM"] = "PVCLH 50MM",
+                ["TUBERIA PVC 16MM"] = "TUBERIA PVCLH 16MM",
+                ["TUBERIA PVC 20MM"] = "TUBERIA PVCLH 20MM",
+                ["TUBERIA PVC 25MM"] = "TUBERIA PVCLH 25MM",
+                ["TUBERIA PVC 32MM"] = "TUBERIA PVCLH 32MM",
+                ["CURVA-PVC-20"] = "CURVA-PVCLH-20",
+                ["CURVA-PVC-25"] = "CURVA-PVCLH-25",
+                ["UNION-PVC-20"] = "UNION-PVCLH-20",
+                ["UNION-PVC-25"] = "UNION-PVCLH-25",
+                ["PVC"] = "PVCLH"
+            }
+        };
+
         yield return new FamilyConversionPreset
         {
             Id = "factory_magic_to_sinthesi",

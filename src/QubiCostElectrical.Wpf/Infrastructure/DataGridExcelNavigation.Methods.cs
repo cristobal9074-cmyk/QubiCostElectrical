@@ -590,10 +590,58 @@ public static partial class DataGridExcelNavigation
             }
         }
 
-        if (targetRow < 0 || targetRow >= grid.Items.Count)
-            return;
+        if (targetRow < 0)
+        {
+            if (wrapRows && grid.Items.Count > 0)
+            {
+                targetRow = grid.Items.Count - 1;
+                targetIndex = columns.Count - 1;
+            }
+            else
+            {
+                return;
+            }
+        }
+        else if (targetRow >= grid.Items.Count)
+        {
+            if (wrapRows && grid.Items.Count > 0)
+            {
+                targetRow = 0;
+                targetIndex = 0;
+            }
+            else
+            {
+                return;
+            }
+        }
 
         FocusCell(grid, targetRow, columns[targetIndex]);
+    }
+
+    public static void EnsureActiveCell(DataGrid grid)
+    {
+        if (grid == null || grid.Items.Count == 0) return;
+
+        if (grid.CurrentCell.IsValid && grid.CurrentCell.Column != null && grid.CurrentCell.Item != null && grid.Items.Contains(grid.CurrentCell.Item))
+        {
+            int rIdx = grid.Items.IndexOf(grid.CurrentCell.Item);
+            if (rIdx >= 0)
+            {
+                FocusCell(grid, rIdx, grid.CurrentCell.Column);
+                return;
+            }
+        }
+
+        var targetRow = grid.SelectedItem ?? grid.Items[0];
+        var targetCol = grid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible && !c.IsReadOnly)
+                     ?? grid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible);
+        if (targetCol == null) return;
+
+        int rowIdx = grid.Items.IndexOf(targetRow);
+        if (rowIdx >= 0)
+        {
+            FocusCell(grid, rowIdx, targetCol);
+        }
     }
 
     public static void FocusCell(DataGrid grid, int rowIndex, DataGridColumn column)
@@ -869,7 +917,8 @@ public static partial class DataGridExcelNavigation
 
         // Si la grilla ya avanzó a una selección más amplia (ej. el usuario continuó extendiendo con Shift),
         // no revertir con la instantánea anterior.
-        if (grid.SelectedCells.Count > keepSelection.Count)
+        int curCount = grid.SelectionUnit == DataGridSelectionUnit.FullRow ? grid.SelectedItems.Count : grid.SelectedCells.Count;
+        if (curCount > keepSelection.Count)
             return;
 
         if (keepCurrent.IsValid)
@@ -879,6 +928,20 @@ public static partial class DataGridExcelNavigation
 
     private static void ApplyCellSelection(DataGrid grid, IReadOnlyList<DataGridCellInfo> selection)
     {
+        if (grid.SelectionUnit == DataGridSelectionUnit.FullRow)
+        {
+            if (grid.SelectionMode == DataGridSelectionMode.Extended)
+            {
+                grid.SelectedItems.Clear();
+                var distinctItems = selection.Select(c => c.Item).Where(it => it != null).Distinct();
+                foreach (var item in distinctItems)
+                {
+                    grid.SelectedItems.Add(item);
+                }
+            }
+            return;
+        }
+
         grid.SelectedCells.Clear();
         foreach (var cell in selection)
         {

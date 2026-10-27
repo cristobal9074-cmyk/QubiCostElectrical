@@ -98,6 +98,8 @@ public static class CubicacionSCBudgetService
                 Descripcion = kv.Key,
                 Unidad = mat?.Unidad is { Length: > 0 } u ? u : kv.Value.Unidad,
                 Cantidad = Math.Round(kv.Value.Cantidad, 2),
+                MatClp = mat?.MatClp ?? 0m,
+                MoClp = mat?.MoClp ?? 0m,
                 MatUf = mat?.MatUf ?? 0m,
                 MoUf = mat?.MoUf ?? 0m,
                 Area = "C.SC"

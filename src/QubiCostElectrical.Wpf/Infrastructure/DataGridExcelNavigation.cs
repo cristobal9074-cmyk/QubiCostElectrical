@@ -39,7 +39,13 @@ public static partial class DataGridExcelNavigation
         if (_anchors.TryGetValue(grid, out var anchor) && anchor.Anchor.IsValid && grid.CurrentCell.IsValid)
         {
             if (anchor.Anchor.Item != grid.CurrentCell.Item || anchor.Anchor.Column != grid.CurrentCell.Column)
-                return grid.SelectedCells.Count > 1;
+            {
+                int count = grid.SelectionUnit == DataGridSelectionUnit.FullRow ? grid.SelectedItems.Count : grid.SelectedCells.Count;
+                return count > 1;
+
+            }
+
+
         }
         return false;
     }

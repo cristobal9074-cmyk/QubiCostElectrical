@@ -18,6 +18,9 @@ internal static class DataGridCellEditorHandler
 
     public static void OnPreparingCellForEdit(object? sender, DataGridPreparingCellForEditEventArgs e)
     {
+        if (sender is not DataGrid grid || DataGridExcelNavigation.GetHandleCellEditorByHost(grid) || grid.DataContext?.GetType().Name == "HojaCubicacionItemVm")
+            return;
+
         if (e.EditingElement is TextBox textBox)
         {
             textBox.PreviewKeyDown -= OnEditorPreviewKeyDown;

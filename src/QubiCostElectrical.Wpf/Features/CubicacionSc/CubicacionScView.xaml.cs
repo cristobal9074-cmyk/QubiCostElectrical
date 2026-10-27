@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -24,9 +24,7 @@ public partial class CubicacionScView : UserControl, IInGridSearchable
     public bool IsGridSearchOpen => CircuitosSearchOverlay.IsOpen;
 
     // Catálogo maestro por ComboBox (no usar Tag: Tag lleva el nombre de propiedad a confirmar).
-    internal static readonly ConditionalWeakTable<ComboBox, List<string>> ComboMasters = new();
     private readonly HashSet<ComboBox> _cancelledFilterCombos = new();
-    private bool _isNavigatingFilterCombo;
     internal const string CancelledEditTag = "cancelled";
     private CircuitoScRowVm? activePisosCircuito;
     private CubicacionScViewModel Vm => (CubicacionScViewModel)DataContext;

@@ -81,4 +81,8 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
     private decimal comparisonDeltaPct;
     private string comparisonModeHint = "Versión A = seleccionada · Versión B = estado actual";
     private string searchText = "";
+    partial void OnComparisonVersionOptionsUpdated();
+    partial void OnComparisonSummaryChangedExtra();
+    partial void OnCompareAgainstCurrentChanged();
+    partial void OnSelectedComparisonVersionChanged();
 }

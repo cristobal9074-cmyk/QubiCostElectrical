@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Qubi Cost Electrical — Cambio de Línea (Minimalista &amp; Profesional)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap');
+    :root {
+      --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+    body { font-family: var(--font-sans); }
+    .font-mono { font-family: var(--font-mono); }
+
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.25); border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.4); }
+
+    .pill-active {
+      background-color: #0f172a !important;
+      color: #ffffff !important;
+      border-color: #0f172a !important;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    }
+  </style>
+</head>
+<body class="h-full bg-[#f8fafc] text-slate-800 antialiased overflow-hidden select-none flex flex-col text-xs font-sans">
+
+  <!-- ========================================================================= -->
+  <!-- 1. TOP GLOBAL SHELL HEADER (CLEAN & SUBTLE)                               -->
+  <!-- ========================================================================= -->
+  <header class="h-10 bg-[#0f172a] text-white px-4 flex items-center justify-between shrink-0 border-b border-slate-800">
+    <div class="flex items-center gap-3">
+      <div class="w-5 h-5 rounded bg-blue-600 flex items-center justify-center text-white font-bold text-xs">
+        ⚡
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="font-bold tracking-tight text-white text-xs">QUBI COST ELECTRICAL</span>
+        <span class="text-slate-500">/</span>
+        <span class="text-slate-300 font-medium text-xs">PEL039A2026 PRUEBA NUMERO 2.qce</span>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <button onclick="toggleDrawer()" class="px-3 py-1 rounded-md bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs flex items-center gap-1.5 transition">
+        <span>🔄</span>
+        <span>Cambiar Línea de Materiales</span>
+        <span class="font-mono text-[10px] text-blue-200 bg-blue-900/50 px-1 py-0.2 rounded">Ctrl+Shift+H</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ========================================================================= -->
+  <!-- 2. MAIN WORKSPACE WITH DOCKED SPLIT VIEW                                   -->
+  <!-- ========================================================================= -->
+  <main class="flex-1 flex overflow-hidden relative">
+
+    <!-- ── LEFT: GRID SPREADSHEET (CUBICACIÓN SC) ── -->
+    <div class="flex-1 flex flex-col min-w-0 bg-white overflow-hidden">
+      
+      <!-- Sub-bar -->
+      <div class="h-10 bg-slate-50 border-b border-slate-200 px-4 flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-2">
+          <div class="inline-flex rounded-md p-0.5 bg-slate-200 font-semibold text-[11px]">
+            <span class="px-3 py-1 rounded bg-white text-slate-900 shadow-xs font-bold">CTOS GENERALES</span>
+            <span class="px-3 py-1 rounded text-slate-600 font-medium">DEPTOS</span>
+          </div>
+          <span class="text-slate-400">|</span>
+          <span class="font-bold text-slate-700">Tablero: <span class="font-mono text-blue-700 font-bold">TDA-01</span></span>
+        </div>
+        <span class="text-slate-400 text-[11px]">Grilla de Circuitos Activa</span>
+      </div>
+
+      <!-- Clean Grid View -->
+      <div class="flex-1 overflow-auto p-4 bg-slate-100/50">
+        <div class="bg-white rounded-lg border border-slate-200 shadow-xs overflow-hidden">
+          <table class="w-full text-[11.5px] border-collapse">
+            <thead>
+              <tr class="bg-slate-50 text-slate-600 font-semibold uppercase text-[10px] tracking-wider border-b border-slate-200 text-left">
+                <th class="py-2.5 px-3 w-12 text-center">N°</th>
+                <th class="py-2.5 px-3">Descripción</th>
+                <th class="py-2.5 px-3 w-20 text-center">L. Band</th>
+                <th class="py-2.5 px-3 w-20 text-center text-emerald-800 font-bold">L. PVC</th>
+                <th class="py-2.5 px-3 w-36 text-center">Tipo Tubería</th>
+                <th class="py-2.5 px-3 w-36 text-center">Línea Artefactos</th>
+                <th class="py-2.5 px-3 w-28 text-center">Conductores</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <tr class="hover:bg-slate-50 transition">
+                <td class="p-2.5 text-center font-bold text-slate-400">01</td>
+                <td class="p-2.5 font-medium text-slate-800">Alumbrado Hall Acceso</td>
+                <td class="p-2.5 text-center text-slate-400 font-mono">0.0</td>
+                <td class="p-2.5 text-center font-mono font-bold text-emerald-700 bg-emerald-50/40">38.5</td>
+                <td class="p-2.5 text-center">
+                  <span class="circuit-pipe px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-semibold font-mono text-[10.5px]">PVC 20mm</span>
+                </td>
+                <td class="p-2.5 text-center">
+                  <span class="circuit-art px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-medium">Bticino Magic (4)</span>
+                </td>
+                <td class="p-2.5 text-center font-mono text-slate-600">3 × 1.5mm</td>
+              </tr>
+              <tr class="hover:bg-slate-50 transition">
+                <td class="p-2.5 text-center font-bold text-slate-400">02</td>
+                <td class="p-2.5 font-medium text-slate-800">Enchufes Recepción y Estar</td>
+                <td class="p-2.5 text-center text-slate-400 font-mono">0.0</td>
+                <td class="p-2.5 text-center font-mono font-bold text-emerald-700 bg-emerald-50/40">45.0</td>
+                <td class="p-2.5 text-center">
+                  <span class="circuit-pipe px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-semibold font-mono text-[10.5px]">PVC 20mm</span>
+                </td>
+                <td class="p-2.5 text-center">
+                  <span class="circuit-art px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-medium">Bticino Magic (8)</span>
+                </td>
+                <td class="p-2.5 text-center font-mono text-slate-600">3 × 2.5mm</td>
+              </tr>
+              <tr class="hover:bg-slate-50 transition">
+                <td class="p-2.5 text-center font-bold text-slate-400">03</td>
+                <td class="p-2.5 font-medium text-slate-800">Alumbrado Pasillo y Ascensores</td>
+                <td class="p-2.5 text-center text-slate-400 font-mono">12.0</td>
+                <td class="p-2.5 text-center font-mono font-bold text-emerald-700 bg-emerald-50/40">24.0</td>
+                <td class="p-2.5 text-center">
+                  <span class="circuit-pipe px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-semibold font-mono text-[10.5px]">PVC 25mm</span>
+                </td>
+                <td class="p-2.5 text-center">
+                  <span class="circuit-art px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-medium">Bticino Magic (6)</span>
+                </td>
+                <td class="p-2.5 text-center font-mono text-slate-600">3 × 1.5mm</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- 3. RIGHT DOCKED PANEL: CAMBIO DE LÍNEA (SUPER SIMPLE & MINIMALISTA)       -->
+    <!-- ========================================================================= -->
+    <aside id="drawer" class="w-[480px] bg-white border-l border-slate-200 shadow-xl flex flex-col shrink-0 z-20">
+      
+      <!-- ── A. HEADER LIMPIO Y DIRECTO ── -->
+      <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+        <div>
+          <div class="flex items-center gap-2">
+            <h2 class="text-sm font-bold text-slate-900">Cambio Masivo de Línea</h2>
+            <span class="px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-mono text-[9px] font-bold">RÁPIDO</span>
+          </div>
+          <p class="text-[11px] text-slate-500 mt-0.5">Reemplaza una línea completa de productos en todo el proyecto en 1 clic.</p>
+        </div>
+
+        <button onclick="toggleDrawer()" class="w-7 h-7 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center font-bold text-sm transition">
+          ✕
+        </button>
+      </div>
+
+      <!-- ── B. PASO 1: ELIGE QUÉ LÍNEA QUIERES CAMBIAR (PILLS RÁPIDAS) ── -->
+      <div class="p-4 border-b border-slate-100 bg-slate-50/50">
+        <label class="block text-[10.5px] font-bold uppercase tracking-wider text-slate-500 mb-2">
+          1. Elige la conversión:
+        </label>
+
+        <!-- Botones grandes super claros -->
+        <div class="grid grid-cols-2 gap-2">
+          <!-- Preset 1: PVC a PVCLH -->
+          <button onclick="selectPreset('pvc_pvclh')" id="btn-pvc" class="preset-pill p-2.5 rounded-xl border border-slate-200 bg-white hover:border-slate-300 text-left transition flex flex-col justify-between pill-active">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-900">PVC ➔ PVCLH</span>
+              <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+            </div>
+            <span class="text-[10px] text-slate-500 mt-1">Tuberías Conduit a Libre de Halógenos</span>
+          </button>
+
+          <!-- Preset 2: Magic a Matix -->
+          <button onclick="selectPreset('magic_matix')" id="btn-magic" class="preset-pill p-2.5 rounded-xl border border-slate-200 bg-white hover:border-slate-300 text-left transition flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-700">Magic ➔ Matix</span>
+              <span class="w-2 h-2 rounded-full bg-slate-300"></span>
+            </div>
+            <span class="text-[10px] text-slate-500 mt-1">Artefactos Bticino tradicionales a modulares</span>
+          </button>
+
+          <!-- Preset 3: EVA a H07Z1-K -->
+          <button onclick="selectPreset('eva_h07z1k')" id="btn-eva" class="preset-pill p-2.5 rounded-xl border border-slate-200 bg-white hover:border-slate-300 text-left transition flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-700">EVA ➔ H07Z1-K</span>
+              <span class="w-2 h-2 rounded-full bg-slate-300"></span>
+            </div>
+            <span class="text-[10px] text-slate-500 mt-1">Conductores tradicionales a libres de halógenos</span>
+          </button>
+
+          <!-- Preset 4: Personalizado -->
+          <button onclick="selectPreset('custom')" id="btn-custom" class="preset-pill p-2.5 rounded-xl border border-slate-200 bg-white hover:border-slate-300 text-left transition flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-700">Personalizado</span>
+              <span class="text-slate-400 text-xs">✏️</span>
+            </div>
+            <span class="text-[10px] text-slate-500 mt-1">Escribe tu propio cambio (De ➔ A)</span>
+          </button>
+        </div>
+
+        <!-- Custom Inputs (Oculto por defecto, visible solo si elige personalizado) -->
+        <div id="custom-inputs" class="hidden mt-3 p-3 rounded-xl bg-white border border-slate-200 grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500 mb-1">Palabra o código actual:</label>
+            <input type="text" id="custom-src" placeholder="ej: PVC" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-medium outline-hidden focus:border-blue-500">
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500 mb-1">Reemplazar por:</label>
+            <input type="text" id="custom-tgt" placeholder="ej: PVCLH" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-medium outline-hidden focus:border-blue-500">
+          </div>
+        </div>
+      </div>
+
+      <!-- ── C. PASO 2: LISTA DE CAMBIOS QUE SE HARÁN (SIMPLE Y VISUAL) ── -->
+      <div class="flex-1 flex flex-col min-h-0 p-4">
+        <div class="flex items-center justify-between mb-2">
+          <label class="text-[10.5px] font-bold uppercase tracking-wider text-slate-500">
+            2. Materiales que se cambiarán:
+          </label>
+          <span id="items-badge" class="font-mono text-[10.5px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">
+            3 materiales encontrados
+          </span>
+        </div>
+
+        <!-- Clean Conversion Card List -->
+        <div id="items-list" class="flex-1 overflow-auto space-y-2 pr-0.5">
+          
+          <!-- ITEM 1 -->
+          <div class="p-3 rounded-xl border border-slate-200 hover:border-slate-300 bg-white shadow-2xs transition flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <input type="checkbox" checked class="w-4 h-4 rounded text-blue-600 focus:ring-0 cursor-pointer">
+              <div class="min-w-0">
+                <div class="flex items-center gap-2">
+                  <span class="font-bold text-slate-900 text-xs">Tubería PVC 20mm</span>
+                  <span class="text-slate-400 font-bold">➔</span>
+                  <span class="font-bold text-blue-700 text-xs">Tubería PVCLH 20mm</span>
+                </div>
+                <div class="text-[10px] text-slate-400 mt-0.5">
+                  Detectado en 18 circuitos • 1.450 metros totales
+                </div>
+              </div>
+            </div>
+            <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200 shrink-0">
+              Listo
+            </span>
+          </div>
+
+          <!-- ITEM 2 -->
+          <div class="p-3 rounded-xl border border-slate-200 hover:border-slate-300 bg-white shadow-2xs transition flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <input type="checkbox" checked class="w-4 h-4 rounded text-blue-600 focus:ring-0 cursor-pointer">
+              <div class="min-w-0">
+                <div class="flex items-center gap-2">
+                  <span class="font-bold text-slate-900 text-xs">Tubería PVC 25mm</span>
+                  <span class="text-slate-400 font-bold">➔</span>
+                  <span class="font-bold text-blue-700 text-xs">Tubería PVCLH 25mm</span>
+                </div>
+                <div class="text-[10px] text-slate-400 mt-0.5">
+                  Detectado en 8 circuitos • 680 metros totales
+                </div>
+              </div>
+            </div>
+            <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200 shrink-0">
+              Listo
+            </span>
+          </div>
+
+          <!-- ITEM 3 -->
+          <div class="p-3 rounded-xl border border-slate-200 hover:border-slate-300 bg-white shadow-2xs transition flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <input type="checkbox" checked class="w-4 h-4 rounded text-blue-600 focus:ring-0 cursor-pointer">
+              <div class="min-w-0">
+                <div class="flex items-center gap-2">
+                  <span class="font-bold text-slate-900 text-xs">Curva PVC 20mm</span>
+                  <span class="text-slate-400 font-bold">➔</span>
+                  <span class="font-bold text-blue-700 text-xs">Curva PVCLH 20mm</span>
+                </div>
+                <div class="text-[10px] text-slate-400 mt-0.5">
+                  Detectado en cubicación de partidas • 320 unidades
+                </div>
+              </div>
+            </div>
+            <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200 shrink-0">
+              Listo
+            </span>
+          </div>
+
+        </div>
+
+        <!-- Dónde se aplicará (Chips limpios) -->
+        <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+          <span>Se aplicará en:</span>
+          <div class="flex items-center gap-1.5 font-semibold text-slate-700">
+            <span class="px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-blue-800">Cubicación SC</span>
+            <span class="px-2 py-0.5 rounded bg-slate-100 border border-slate-200">Partidas</span>
+            <span class="px-2 py-0.5 rounded bg-slate-100 border border-slate-200">APUs</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── D. FOOTER CON BOTÓN PRINCIPAL GRANDE ── -->
+      <div class="p-4 border-t border-slate-100 bg-white flex items-center justify-between gap-3">
+        <button onclick="toggleDrawer()" class="px-3 py-2.5 rounded-xl hover:bg-slate-100 text-slate-600 font-semibold text-xs transition">
+          Cancelar
+        </button>
+
+        <button onclick="applyChanges()" id="apply-btn" class="flex-1 py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-98 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition">
+          <span>⚡</span>
+          <span>CAMBIAR LÍNEA AHORA</span>
+        </button>
+      </div>
+
+    </aside>
+
+  </main>
+
+  <!-- ========================================================================= -->
+  <!-- 4. INTERACTIVE JAVASCRIPT                                                 -->
+  <!-- ========================================================================= -->
+  <script>
+    let currentPreset = 'pvc_pvclh';
+    let isDrawerOpen = true;
+
+    const data = {
+      pvc_pvclh: {
+        badge: '3 materiales de canalización',
+        items: [
+          { from: 'Tubería PVC 20mm', to: 'Tubería PVCLH 20mm', detail: 'Detectado en 18 circuitos • 1.450 metros totales' },
+          { from: 'Tubería PVC 25mm', to: 'Tubería PVCLH 25mm', detail: 'Detectado en 8 circuitos • 680 metros totales' },
+          { from: 'Curva PVC 20mm', to: 'Curva PVCLH 20mm', detail: 'Detectado en partidas y APUs • 320 unidades' }
+        ]
+      },
+      magic_matix: {
+        badge: '4 materiales de artefactos',
+        items: [
+          { from: 'Interruptor 9/12 Magic', to: 'Interruptor 9/12 Matix', detail: 'Detectado en 14 circuitos de alumbrado • 250 unidades' },
+          { from: 'Interruptor 9/15 Combinación', to: 'Interruptor 9/15 Matix', detail: 'Detectado en pasillos y accesos • 180 unidades' },
+          { from: 'Enchufe Doble 10/16A Magic', to: 'Enchufe Doble 10/16A Matix', detail: 'Detectado en circuitos de enchufes • 420 unidades' },
+          { from: 'Placa 3 Módulos Magic', to: 'Placa 3 Módulos Matix', detail: 'Detectado en todos los circuitos • 380 unidades' }
+        ]
+      },
+      eva_h07z1k: {
+        badge: '2 tipos de conductores',
+        items: [
+          { from: 'Conductor EVA 1.5 mm2', to: 'Cable H07Z1-K 1.5 mm2', detail: 'Detectado en circuitos de alumbrado • 3.800 metros' },
+          { from: 'Conductor EVA 2.5 mm2', to: 'Cable H07Z1-K 2.5 mm2', detail: 'Detectado en circuitos de enchufes • 2.600 metros' }
+        ]
+      },
+      custom: {
+        badge: 'Regla manual',
+        items: [
+          { from: 'Material seleccionado', to: 'Nuevo material especificado', detail: 'Se aplicará según tu regla personalizada' }
+        ]
+      }
+    };
+
+    function toggleDrawer() {
+      const drawer = document.getElementById('drawer');
+      isDrawerOpen = !isDrawerOpen;
+      drawer.style.display = isDrawerOpen ? 'flex' : 'none';
+    }
+
+    function selectPreset(key) {
+      currentPreset = key;
+
+      // Update pills styles
+      document.querySelectorAll('.preset-pill').forEach(btn => {
+        btn.classList.remove('pill-active');
+        const dot = btn.querySelector('.rounded-full');
+        if (dot) dot.className = 'w-2 h-2 rounded-full bg-slate-300';
+      });
+
+      const activeBtn = document.getElementById(
+        key === 'pvc_pvclh' ? 'btn-pvc' :
+        key === 'magic_matix' ? 'btn-magic' :
+        key === 'eva_h07z1k' ? 'btn-eva' : 'btn-custom'
+      );
+      if (activeBtn) {
+        activeBtn.classList.add('pill-active');
+        const dot = activeBtn.querySelector('.rounded-full');
+        if (dot) dot.className = 'w-2 h-2 rounded-full bg-blue-500';
+      }
+
+      // Show/hide custom inputs
+      const customInputs = document.getElementById('custom-inputs');
+      customInputs.classList.toggle('hidden', key !== 'custom');
+
+      // Update list
+      const info = data[key] || data.custom;
+      document.getElementById('items-badge').textContent = info.badge;
+
+      const container = document.getElementById('items-list');
+      container.innerHTML = info.items.map(item => `
+        <div class="p-3 rounded-xl border border-slate-200 hover:border-slate-300 bg-white shadow-2xs transition flex items-center justify-between gap-3">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <input type="checkbox" checked class="w-4 h-4 rounded text-blue-600 focus:ring-0 cursor-pointer">
+            <div class="min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-slate-900 text-xs">${item.from}</span>
+                <span class="text-slate-400 font-bold">➔</span>
+                <span class="font-bold text-blue-700 text-xs">${item.to}</span>
+              </div>
+              <div class="text-[10px] text-slate-400 mt-0.5">
+                ${item.detail}
+              </div>
+            </div>
+          </div>
+          <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200 shrink-0">
+            Listo
+          </span>
+        </div>
+      `).join('');
+    }
+
+    function applyChanges() {
+      // Show instant feedback on the left grid
+      if (currentPreset === 'pvc_pvclh') {
+        document.querySelectorAll('.circuit-pipe').forEach(el => {
+          el.textContent = el.textContent.replace('PVC', 'PVCLH');
+          el.className = 'circuit-pipe px-2 py-0.5 rounded bg-blue-100 text-blue-800 font-bold font-mono text-[10.5px] border border-blue-200 transition duration-500';
+        });
+        alert("¡Línea cambiada con éxito!\n\nSe reemplazó toda la tubería PVC por Conduit PVCLH en los circuitos y partidas.\n\nPuedes deshacer el cambio en cualquier momento con Ctrl+Z.");
+      } else if (currentPreset === 'magic_matix') {
+        document.querySelectorAll('.circuit-art').forEach(el => {
+          el.textContent = el.textContent.replace('Magic', 'Matix');
+          el.className = 'circuit-art px-2 py-0.5 rounded bg-purple-100 text-purple-800 font-bold text-[10.5px] border border-purple-200 transition duration-500';
+        });
+        alert("¡Línea cambiada con éxito!\n\nSe reemplazaron todos los artefactos Bticino Magic por la serie Matix.\n\nPuedes deshacer el cambio en cualquier momento con Ctrl+Z.");
+      } else {
+        alert("¡Línea actualizada con éxito en todo el proyecto!");
+      }
+    }
+  </script>
+</body>
+</html>

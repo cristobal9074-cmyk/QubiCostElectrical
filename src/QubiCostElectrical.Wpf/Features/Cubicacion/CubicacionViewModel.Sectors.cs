@@ -112,11 +112,13 @@ public sealed partial class CubicacionViewModel
         OnPropertyChanged(nameof(SectorModeDescription));
     }
 
-    public void PickSectorValueFromHojaCubicacion(CubicacionRowVm row, int absoluteOffset)
-        => sectorService.PickSectorValueFromHojaCubicacion(row, absoluteOffset);
+    public void PickSectorValueFromHojaCubicacion(CubicacionRowVm row, int absoluteOffset) => sectorService.PickSectorValueFromHojaCubicacion(row, absoluteOffset);
 
-    public void PickQuantityFromHojaCubicacion(CubicacionRowVm row)
-        => sectorService.PickQuantityFromHojaCubicacion(row);
+
+
+    public void PickQuantityFromHojaCubicacion(CubicacionRowVm row) => sectorService.PickQuantityFromHojaCubicacion(row);
+
+
 
     internal void InitializeSectorRow(CubicacionRowVm row) => sectorService.InitializeSectorRow(row);
 

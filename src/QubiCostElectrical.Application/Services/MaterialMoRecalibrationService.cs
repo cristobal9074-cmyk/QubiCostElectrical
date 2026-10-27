@@ -40,7 +40,17 @@ public static class MaterialMoRecalibrationService
             bool esPct = MaterialMoResolver.DebeUsarPorcentaje(material);
             bool esFactor = MaterialMoResolver.DebeUsarFactor(material);
             if (!esPct && !esFactor)
-                continue;
+            {
+                if (material.MoFactorBase > 0m)
+                {
+                    material.MoFormulaTipo = MaterialMoResolver.MoFormulaFactor;
+                    esFactor = true;
+                }
+                else
+                {
+                    continue;
+                }
+            }
 
             // Si es fórmula Factor y aún no guardaba su base original, preservarla antes de actualizar MoClp
             if (esFactor && material.MoFactorBase <= 0m && material.MoClp > 0m)

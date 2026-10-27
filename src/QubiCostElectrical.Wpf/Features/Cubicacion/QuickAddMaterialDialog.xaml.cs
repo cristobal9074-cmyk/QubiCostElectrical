@@ -22,11 +22,22 @@ public partial class QuickAddMaterialDialog : Window
             ? "Completa los campos y agrega el material al cat\u00e1logo del proyecto."
             : contexto;
         if (!string.IsNullOrWhiteSpace(codigo))
-            Title = $"Agregar material al cat\u00e1logo - {codigo}";
+            Title = $"Agregar material al catálogo - {codigo}";
+        else if (!string.IsNullOrWhiteSpace(descripcion))
+            Title = $"Agregar material al catálogo - {descripcion}";
+
         Loaded += (_, _) =>
         {
-            CodigoBox.Focus();
-            CodigoBox.SelectAll();
+            if (string.IsNullOrWhiteSpace(CodigoBox.Text))
+            {
+                CodigoBox.Focus();
+                CodigoBox.SelectAll();
+            }
+            else
+            {
+                DescripcionBox.Focus();
+                DescripcionBox.SelectAll();
+            }
         };
     }
 
@@ -58,6 +69,7 @@ public partial class QuickAddMaterialDialog : Window
         result.MoClp = moClp;
         result.FechaPrecio = DateTime.Today;
         result.UltimaActualizacionPrecio = AppClock.Now;
+        MaterialMoResolver.NormalizarFormulaMaterial(result);
         result.RecalcularUf(valorUfClp);
 
         Result = result;

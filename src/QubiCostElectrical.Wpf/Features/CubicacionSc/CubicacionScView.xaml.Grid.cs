@@ -60,10 +60,21 @@ public partial class CubicacionScView
     // activePisosCircuito, guardado al abrir.
     internal void ClosePisosFlyout()
     {
+        var targetCircuito = activePisosCircuito;
         if (activePisosCircuito != null)
             activePisosCircuito.PisosPopupOpen = false;
-    }
 
+        if (targetCircuito != null)
+        {
+            int rIdx = CircuitosGrid.Items.IndexOf(targetCircuito);
+            if (rIdx >= 0 && ColUbicacion != null)
+            {
+                DataGridExcelNavigation.FocusCell(CircuitosGrid, rIdx, ColUbicacion);
+                return;
+            }
+        }
+        EnsureActiveCellSelected();
+    }
     // Al abrir el flyout, enfoca el primer campo (L. Band de la primera zona) para poder
     // empezar a teclear de inmediato, sin tocar el mouse.
     private void PisosPopup_Opened(object sender, EventArgs e)
@@ -99,7 +110,28 @@ public partial class CubicacionScView
     // depender de la posición exacta dentro de la lista.
     private void PisosFlyout_PreviewKeyDown(object sender, KeyEventArgs e)
     {
-        if (e.Key == Key.Escape) { ClosePisosFlyout(); CircuitosGrid?.Focus(); e.Handled = true; }
+        if (e.Key == Key.Escape) { ClosePisosFlyout(); CircuitosGrid?.Focus(); e.Handled = true; return; }
+
+        bool isAlt = (Keyboard.Modifiers & ModifierKeys.Alt) == ModifierKeys.Alt && (Keyboard.Modifiers & ModifierKeys.Control) == 0;
+        if (isAlt && (e.SystemKey == Key.P || e.Key == Key.P))
+        {
+            ClosePisosFlyout();
+            CircuitosGrid?.Focus();
+            e.Handled = true;
+            return;
+        }
+
+        if (isAlt && (e.SystemKey == Key.A || e.Key == Key.A))
+        {
+            var target = activePisosCircuito;
+            ClosePisosFlyout();
+            if (target != null && Vm != null && Vm.OpenArtefactosCommand.CanExecute(target))
+            {
+                Vm.OpenArtefactosCommand.Execute(target);
+            }
+            e.Handled = true;
+            return;
+        }
     }
 
     private void PisosPopupInput_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -107,6 +139,27 @@ public partial class CubicacionScView
         if (sender is not TextBox tb) return;
 
         if (e.Key == Key.Escape) { ClosePisosFlyout(); CircuitosGrid?.Focus(); e.Handled = true; return; }
+
+        bool isAlt = (Keyboard.Modifiers & ModifierKeys.Alt) == ModifierKeys.Alt && (Keyboard.Modifiers & ModifierKeys.Control) == 0;
+        if (isAlt && (e.SystemKey == Key.P || e.Key == Key.P))
+        {
+            ClosePisosFlyout();
+            CircuitosGrid?.Focus();
+            e.Handled = true;
+            return;
+        }
+
+        if (isAlt && (e.SystemKey == Key.A || e.Key == Key.A))
+        {
+            var target = activePisosCircuito;
+            ClosePisosFlyout();
+            if (target != null && Vm != null && Vm.OpenArtefactosCommand.CanExecute(target))
+            {
+                Vm.OpenArtefactosCommand.Execute(target);
+            }
+            e.Handled = true;
+            return;
+        }
 
         var itemsControl = FindAncestor<ItemsControl>(tb);
         if (itemsControl == null) return;
@@ -118,11 +171,87 @@ public partial class CubicacionScView
 
         bool esColumnaBand = Equals(tb.Tag, "0");
 
-        if (e.Key == Key.Down || e.Key == Key.Up || e.Key == Key.Enter)
+        bool isShift = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift;
+
+        // Tab: navegación fluida dentro del flyout y salida a la grilla con foco en la casilla activa
+        if (e.Key == Key.Tab)
+        {
+            if (!isShift)
+            {
+                if (idx < boxes.Count - 1)
+                {
+                    FocusIfInRange(boxes, idx + 1);
+                }
+                else
+                {
+                    var c = activePisosCircuito;
+                    ClosePisosFlyout();
+                    if (c != null)
+                    {
+                        int rIdx = CircuitosGrid.Items.IndexOf(c);
+                        var nextCol = ColLBand ?? ColLPvc;
+                        if (rIdx >= 0 && nextCol != null)
+                        {
+                            DataGridExcelNavigation.FocusCell(CircuitosGrid, rIdx, nextCol);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                if (idx > 0)
+                {
+                    FocusIfInRange(boxes, idx - 1);
+                }
+                else
+                {
+                    var c = activePisosCircuito;
+                    ClosePisosFlyout();
+                    if (c != null)
+                    {
+                        int rIdx = CircuitosGrid.Items.IndexOf(c);
+                        var prevCol = ColAlim ?? ColSist;
+                        if (rIdx >= 0 && prevCol != null)
+                        {
+                            DataGridExcelNavigation.FocusCell(CircuitosGrid, rIdx, prevCol);
+                        }
+                    }
+                }
+            }
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key == Key.Enter)
+        {
+            int target = idx + 2;
+            if (target < boxes.Count)
+            {
+                FocusIfInRange(boxes, target);
+            }
+            else
+            {
+                var c = activePisosCircuito;
+                ClosePisosFlyout();
+                if (c != null)
+                {
+                    int rIdx = CircuitosGrid.Items.IndexOf(c);
+                    if (rIdx >= 0 && ColUbicacion != null)
+                    {
+                        DataGridExcelNavigation.FocusCell(CircuitosGrid, rIdx, ColUbicacion);
+                    }
+                }
+            }
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key == Key.Down || e.Key == Key.Up)
         {
             int target = idx + (e.Key == Key.Up ? -2 : 2); // 2 columnas por fila (L.Band / L.PVC)
             FocusIfInRange(boxes, target);
             e.Handled = true;
+            return;
         }
         else if (e.Key == Key.Right && esColumnaBand && IsAtBoundary(tb, left: false))
         {
@@ -313,30 +442,27 @@ public partial class CubicacionScView
         }
     }
 
+    private bool TryToggleCircuitoDisponible()
+    {
+        if (!Vm.CanEdit) return false;
+        var row = (DataContext as CubicacionScViewModel)?.SelectedCircuito
+               ?? CircuitosGrid?.CurrentCell.Item as CircuitoScRowVm
+               ?? CircuitosGrid?.SelectedItem as CircuitoScRowVm;
+        if (row != null && row.CanEdit)
+        {
+            row.ToggleDisponible();
+            Vm.MarkDirty();
+            return true;
+        }
+        return false;
+    }
+
     internal void EnsureActiveCellSelected()
     {
-        if (CircuitosGrid.Items.Count == 0) return;
+        if (CircuitosGrid == null || CircuitosGrid.Items.Count == 0) return;
 
-        if (CircuitosGrid.CurrentCell.IsValid && CircuitosGrid.CurrentCell.Column != null && CircuitosGrid.CurrentCell.Item != null && CircuitosGrid.Items.Contains(CircuitosGrid.CurrentCell.Item))
-        {
-            if (!CircuitosGrid.SelectedCells.Contains(CircuitosGrid.CurrentCell))
-            {
-                CircuitosGrid.SelectedCells.Clear();
-                CircuitosGrid.SelectedCells.Add(CircuitosGrid.CurrentCell);
-            }
-            return;
-        }
-
-        var targetRow = (DataContext as CubicacionScViewModel)?.SelectedCircuito ?? CircuitosGrid.Items[0];
-        var targetCol = CircuitosGrid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible && !ReferenceEquals(c, NumeroColumn))
-                     ?? CircuitosGrid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible);
-        if (targetCol == null) return;
-
-        var cellInfo = new DataGridCellInfo(targetRow, targetCol);
-        CircuitosGrid.CurrentCell = cellInfo;
-        CircuitosGrid.SelectedCells.Clear();
-        CircuitosGrid.SelectedCells.Add(cellInfo);
-        if (DataContext is CubicacionScViewModel scVm && targetRow is CircuitoScRowVm rowVm)
+        DataGridExcelNavigation.EnsureActiveCell(CircuitosGrid);
+        if (DataContext is CubicacionScViewModel scVm && CircuitosGrid.CurrentCell.Item is CircuitoScRowVm rowVm)
         {
             scVm.SelectedCircuito = rowVm;
         }
@@ -491,7 +617,31 @@ public partial class CubicacionScView
                 ClosePisosFlyout();
                 CircuitosGrid?.Focus();
                 e.Handled = true;
+                return;
             }
+
+            bool altPressed = (Keyboard.Modifiers & ModifierKeys.Alt) == ModifierKeys.Alt && (Keyboard.Modifiers & ModifierKeys.Control) == 0;
+            if (altPressed && (e.SystemKey == Key.P || e.Key == Key.P))
+            {
+                ClosePisosFlyout();
+                CircuitosGrid?.Focus();
+                e.Handled = true;
+                return;
+            }
+
+            if (altPressed && (e.SystemKey == Key.A || e.Key == Key.A))
+            {
+                var target = activePisosCircuito;
+                var scVmTarget = DataContext as CubicacionScViewModel;
+                ClosePisosFlyout();
+                if (target != null && scVmTarget != null && scVmTarget.OpenArtefactosCommand.CanExecute(target))
+                {
+                    scVmTarget.OpenArtefactosCommand.Execute(target);
+                }
+                e.Handled = true;
+                return;
+            }
+
             return;
         }
 
@@ -509,20 +659,21 @@ public partial class CubicacionScView
         var scVm = DataContext as CubicacionScViewModel;
         SyncSelectedCircuitoFromGrid(scVm);
 
-        CircuitoScRowVm? GetTargetCircuito()
-        {
-            return scVm?.SelectedCircuito
-                ?? CircuitosGrid.CurrentCell.Item as CircuitoScRowVm
-                ?? CircuitosGrid.SelectedItem as CircuitoScRowVm;
-        }
+        CircuitoScRowVm? GetTargetCircuito() => ResolveCurrentOrSelectedCircuito();
 
         // Atajos con Alt: Alt+P (Pisos / Zonas), Alt+A (Artefactos × Zona)
-        bool isAlt = (Keyboard.Modifiers & ModifierKeys.Alt) == ModifierKeys.Alt;
+        bool isAlt = (Keyboard.Modifiers & ModifierKeys.Alt) == ModifierKeys.Alt && (Keyboard.Modifiers & ModifierKeys.Control) == 0;
         if (isAlt)
         {
             if (e.SystemKey == Key.P || e.Key == Key.P)
             {
-                var c = GetTargetCircuito();
+                if (CatalogPopup.IsOpen) CatalogPopup.IsOpen = false;
+                if (editing)
+                {
+                    CircuitosGrid.CommitEdit(DataGridEditingUnit.Cell, true);
+                    CircuitosGrid.CommitEdit(DataGridEditingUnit.Row, true);
+                }
+                var c = ResolveCurrentOrSelectedCircuito();
                 if (c != null && Vm.CanEdit)
                 {
                     if (activePisosCircuito == c && c.PisosPopupOpen)
@@ -535,12 +686,36 @@ public partial class CubicacionScView
                 }
             }
 
+            if (e.SystemKey == Key.C || e.Key == Key.C)
+            {
+                if (CatalogPopup.IsOpen) CatalogPopup.IsOpen = false;
+                if (editing)
+                {
+                    CircuitosGrid.CommitEdit(DataGridEditingUnit.Cell, true);
+                    CircuitosGrid.CommitEdit(DataGridEditingUnit.Row, true);
+                }
+                if (scVm != null && scVm.OpenCatalogoCommand.CanExecute(null))
+                {
+                    scVm.OpenCatalogoCommand.Execute(null);
+                    e.Handled = true;
+                    return;
+                }
+            }
+
             if (e.SystemKey == Key.A || e.Key == Key.A)
             {
-                var c = GetTargetCircuito();
-                if (c != null && scVm != null && scVm.OpenArtefactosCommand.CanExecute(c))
+                if (CatalogPopup.IsOpen) CatalogPopup.IsOpen = false;
+                if (editing)
                 {
+                    CircuitosGrid.CommitEdit(DataGridEditingUnit.Cell, true);
+                    CircuitosGrid.CommitEdit(DataGridEditingUnit.Row, true);
+                }
+                var c = ResolveCurrentOrSelectedCircuito() ?? scVm?.SelectedCircuito ?? scVm?.Circuitos.FirstOrDefault();
+                if (scVm != null && scVm.OpenArtefactosCommand.CanExecute(c))
+                {
+                    if (activePisosCircuito != null) ClosePisosFlyout();
                     scVm.OpenArtefactosCommand.Execute(c);
+                    Dispatcher.BeginInvoke(new Action(FocusArtefactosSearch), System.Windows.Threading.DispatcherPriority.Input);
                     e.Handled = true;
                     return;
                 }
@@ -736,6 +911,39 @@ public partial class CubicacionScView
         {
             scVm.SelectedCircuito = row;
         }
+    }
+
+    internal CircuitoScRowVm? ResolveCurrentOrSelectedCircuito()
+    {
+        var scVm = DataContext as CubicacionScViewModel ?? Vm;
+        if (scVm?.SelectedCircuito != null)
+            return scVm.SelectedCircuito;
+
+        if (CircuitosGrid?.CurrentCell.IsValid == true && CircuitosGrid.CurrentCell.Item is CircuitoScRowVm c1)
+        {
+            if (scVm != null) scVm.SelectedCircuito = c1;
+            return c1;
+        }
+
+        if (CircuitosGrid?.SelectedItem is CircuitoScRowVm c2)
+        {
+            if (scVm != null) scVm.SelectedCircuito = c2;
+            return c2;
+        }
+
+        if (activePisosCircuito != null)
+        {
+            if (scVm != null) scVm.SelectedCircuito = activePisosCircuito;
+            return activePisosCircuito;
+        }
+
+        if (CircuitosGrid?.Items.Count > 0 && CircuitosGrid.Items[0] is CircuitoScRowVm c3)
+        {
+            if (scVm != null) scVm.SelectedCircuito = c3;
+            return c3;
+        }
+
+        return null;
     }
 
     private bool IsCircuitosGridEditing()

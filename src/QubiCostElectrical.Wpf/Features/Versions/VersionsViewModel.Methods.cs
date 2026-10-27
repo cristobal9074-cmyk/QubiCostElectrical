@@ -145,6 +145,7 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
                 return;
 
             UpdateComparisonVersionOptions();
+            OnSelectedComparisonVersionChanged();
             RefreshComparison();
             activateCommand.RaiseCanExecuteChanged();
             renameCommand.RaiseCanExecuteChanged();
@@ -162,7 +163,9 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
                 return;
 
             OnPropertyChanged(nameof(ShowComparisonVersionSelector));
+            OnCompareAgainstCurrentChanged();
             UpdateComparisonVersionOptions();
+            OnSelectedComparisonVersionChanged();
             RefreshComparison();
         }
     }
@@ -179,6 +182,7 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
             if (!SetProperty(ref selectedComparisonVersion, value))
                 return;
 
+            OnSelectedComparisonVersionChanged();
             RefreshComparison();
         }
     }
@@ -419,6 +423,7 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
         OnPropertyChanged(nameof(ComparisonRemovedCount));
         OnPropertyChanged(nameof(ComparisonUnchangedCount));
         OnPropertyChanged(nameof(ComparisonTotalCount));
+        OnComparisonSummaryChangedExtra();
     }
 
     public string ComparisonModeHint
@@ -529,6 +534,7 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
             OnPropertyChanged(nameof(IsReadOnly));
             UpdateSummary();
             UpdateComparisonVersionOptions();
+            OnSelectedComparisonVersionChanged();
             RefreshComparison();
             newCommand.RaiseCanExecuteChanged();
             activateCommand.RaiseCanExecuteChanged();
@@ -570,6 +576,8 @@ public sealed partial class VersionsViewModel : SessionAwareViewModelBase, IRefr
         SelectedComparisonVersion = ComparisonVersionOptions.FirstOrDefault(v =>
                 string.Equals(v.Source.Id, previousId, StringComparison.OrdinalIgnoreCase))
             ?? ComparisonVersionOptions.FirstOrDefault();
+
+        OnComparisonVersionOptionsUpdated();
     }
 
     /// <summary>Línea de totales de la comparación en la moneda del proyecto.</summary>

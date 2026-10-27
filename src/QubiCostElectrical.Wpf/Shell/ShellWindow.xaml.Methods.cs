@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
@@ -30,6 +30,8 @@ public partial class ShellWindow : Window
         Closed += (_, _) =>
         {
             InputManager.Current.PreProcessInput -= OnPreProcessUndoRedo;
+            Activated -= OnShellActivated;
+            Deactivated -= OnShellDeactivated;
             if (ReferenceEquals(ShellNotificationService.RequestUndo, _requestUndoAction))
                 ShellNotificationService.RequestUndo = null;
             if (ReferenceEquals(ShellNotificationService.RequestRedo, _requestRedoAction))
@@ -442,33 +444,57 @@ public partial class ShellWindow : Window
         }
     }
 
+        private void OnShellActivated(object? sender, EventArgs e)
+    {
+        RestoreDataGridFocus();
+    }
+
+    private void OnShellDeactivated(object? sender, EventArgs e)
+    {
+        if (QuickSearchPopup != null) QuickSearchPopup.IsOpen = false;
+        if (UserMenuPopup != null) UserMenuPopup.IsOpen = false;
+        if (ProjectPickerPopup != null) ProjectPickerPopup.IsOpen = false;
+    }
+
     private void RestoreDataGridFocus()
     {
         try
         {
-            var grid = FindVisualChild<System.Windows.Controls.DataGrid>(this);
-            if (grid != null && grid.Items.Count > 0)
+            var searchRoot = PageContent ?? (DependencyObject)this;
+            var grid = FindVisualChild<System.Windows.Controls.DataGrid>(searchRoot);
+            if (grid != null && grid.Items.Count > 0 && grid.IsVisible)
             {
                 grid.Dispatcher.BeginInvoke(new Action(() =>
                 {
-                    grid.Focus();
-                    if (grid.SelectedItem != null &&
-                        grid.ItemContainerGenerator.ContainerFromItem(grid.SelectedItem) is System.Windows.Controls.DataGridRow row)
-                    {
-                        row.Focus();
+                    if (Keyboard.FocusedElement is TextBox tb && tb.IsVisible && tb.IsKeyboardFocusWithin)
+                        return;
 
-                        if (grid.CurrentCell.IsValid)
+                    grid.Focus();
+                    var selectedItem = grid.CurrentCell.IsValid && grid.CurrentCell.Item != null
+                        ? grid.CurrentCell.Item
+                        : grid.SelectedItem ?? grid.Items[0];
+
+                    var selectedColumn = grid.CurrentCell.IsValid && grid.CurrentCell.Column != null
+                        ? grid.CurrentCell.Column
+                        : grid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible && !c.IsReadOnly)
+                          ?? grid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible);
+
+                    if (selectedItem != null && selectedColumn != null)
+                    {
+                        grid.CurrentCell = new DataGridCellInfo(selectedItem, selectedColumn);
+                        grid.ScrollIntoView(selectedItem, selectedColumn);
+                        grid.UpdateLayout();
+
+                        if (grid.ItemContainerGenerator.ContainerFromItem(selectedItem) is System.Windows.Controls.DataGridRow row)
                         {
-                            var cellInfo = grid.CurrentCell;
-                            grid.ScrollIntoView(cellInfo.Item, cellInfo.Column);
+                            row.Focus();
                             var presenter = FindVisualChild<System.Windows.Controls.Primitives.DataGridCellsPresenter>(row);
                             if (presenter != null)
                             {
-                                int colIndex = grid.Columns.IndexOf(cellInfo.Column);
-                                if (colIndex >= 0)
+                                int colIndex = grid.Columns.IndexOf(selectedColumn);
+                                if (colIndex >= 0 && presenter.ItemContainerGenerator.ContainerFromIndex(colIndex) is System.Windows.Controls.DataGridCell cell)
                                 {
-                                    var cell = presenter.ItemContainerGenerator.ContainerFromIndex(colIndex) as System.Windows.Controls.DataGridCell;
-                                    cell?.Focus();
+                                    cell.Focus();
                                 }
                             }
                         }
@@ -478,7 +504,6 @@ public partial class ShellWindow : Window
         }
         catch
         {
-            // Evitar que fallos al enfocar detengan el flujo
         }
     }
 
@@ -730,6 +755,42 @@ public partial class ShellWindow : Window
             return;
         }
 
+        if (!_viewModel.IsSearchPaletteOpen
+            && _viewModel.CurrentRoute == ShellRoute.CubicacionSc
+            && PageContent.Content is QubiCostElectrical.Wpf.Features.CubicacionSc.CubicacionScView cubicacionScView)
+        {
+            Key effectiveKey = e.Key == Key.System ? e.SystemKey : e.Key;
+            bool isAlt = (Keyboard.Modifiers & ModifierKeys.Alt) == ModifierKeys.Alt && (Keyboard.Modifiers & ModifierKeys.Control) == 0;
+
+            if (isAlt && effectiveKey == Key.C)
+            {
+                if (cubicacionScView.DataContext is QubiCostElectrical.Wpf.Features.CubicacionSc.CubicacionScViewModel scVm
+                    && scVm.OpenCatalogoCommand.CanExecute(null))
+                {
+                    CancelActiveDataGridEdit();
+                    scVm.OpenCatalogoCommand.Execute(null);
+                    e.Handled = true;
+                    return;
+                }
+            }
+
+            if (isAlt && effectiveKey == Key.A)
+            {
+                if (cubicacionScView.DataContext is QubiCostElectrical.Wpf.Features.CubicacionSc.CubicacionScViewModel scVm)
+                {
+                    CancelActiveDataGridEdit();
+                    var target = cubicacionScView.ResolveCurrentOrSelectedCircuito() ?? scVm.SelectedCircuito ?? scVm.Circuitos.FirstOrDefault();
+                    if (scVm.OpenArtefactosCommand.CanExecute(target))
+                    {
+                        scVm.OpenArtefactosCommand.Execute(target);
+                        cubicacionScView.Dispatcher.BeginInvoke(new Action(cubicacionScView.FocusArtefactosSearch), System.Windows.Threading.DispatcherPriority.Input);
+                        e.Handled = true;
+                        return;
+                    }
+                }
+            }
+        }
+
         if (!textBoxHasFocus && !_viewModel.IsSearchPaletteOpen && TryNavigateAltShortcut(e))
         {
             e.Handled = true;
@@ -738,6 +799,39 @@ public partial class ShellWindow : Window
 
         if (e.Key == Key.Escape)
         {
+            if (_viewModel.CurrentRoute == ShellRoute.CubicacionSc
+                && PageContent.Content is QubiCostElectrical.Wpf.Features.CubicacionSc.CubicacionScView scView
+                && scView.DataContext is QubiCostElectrical.Wpf.Features.CubicacionSc.CubicacionScViewModel scVm)
+            {
+                if (scVm.IsArtefactosDrawerOpen)
+                {
+                    if (scVm.ArtefactosDrawer.IsQuantityMode)
+                    {
+                        scVm.ArtefactosDrawer.CancelQuantity();
+                    }
+                    else if (scVm.ArtefactosDrawer.IsSearchPopupOpen)
+                    {
+                        scVm.ArtefactosDrawer.IsSearchPopupOpen = false;
+                    }
+                    else if (!string.IsNullOrWhiteSpace(scVm.ArtefactosDrawer.SearchText))
+                    {
+                        scVm.ArtefactosDrawer.SearchText = "";
+                    }
+                    else
+                    {
+                        scVm.ArtefactosDrawer.IsOpen = false;
+                    }
+                    e.Handled = true;
+                    return;
+                }
+                if (scVm.IsCatalogoDrawerOpen)
+                {
+                    scVm.CatalogoDrawer.IsOpen = false;
+                    e.Handled = true;
+                    return;
+                }
+            }
+
             if (PageContent.Content is QubiCostElectrical.Wpf.Controls.IInGridSearchable searchable && searchable.IsGridSearchOpen)
             {
                 searchable.CloseGridSearch();
@@ -900,7 +994,8 @@ public partial class ShellWindow : Window
             return false;
 
         bool shift = Keyboard.Modifiers.HasFlag(ModifierKeys.Shift);
-        ShellRoute? route = e.Key switch
+        Key effectiveKey = e.Key == Key.System ? e.SystemKey : e.Key;
+        ShellRoute? route = effectiveKey switch
         {
             Key.D1 or Key.NumPad1 => ShellRoute.Dashboard,
             Key.D2 or Key.NumPad2 => ShellRoute.Itemized,
@@ -913,10 +1008,10 @@ public partial class ShellWindow : Window
             Key.D8 or Key.NumPad8 => ShellRoute.Purchases,
             Key.D9 or Key.NumPad9 => ShellRoute.OfferDocuments,
             Key.D0 or Key.NumPad0 => ShellRoute.Versions,
-            Key.P => ShellRoute.Project,
+            Key.P when _viewModel.CurrentRoute != ShellRoute.CubicacionSc => ShellRoute.Project,
             Key.O => ShellRoute.OfferDocuments,
             Key.M => ShellRoute.Project,
-            Key.C => ShellRoute.Costo,
+            Key.C when _viewModel.CurrentRoute != ShellRoute.CubicacionSc => ShellRoute.Costo,
             _ => null
         };
 

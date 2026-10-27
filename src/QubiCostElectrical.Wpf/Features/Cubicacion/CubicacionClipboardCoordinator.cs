@@ -30,19 +30,22 @@ internal sealed class CubicacionClipboardCoordinator
     private readonly WpfUndoService undo;
     private readonly CubicacionPresenter cubicacionPresenter;
     private readonly ICubicacionTakeoffQueryService querySvc;
+    private readonly IPriceBankStore priceBankStore;
 
     public CubicacionClipboardCoordinator(
         CubicacionViewModel parent,
         BudgetProjectSession session,
         WpfUndoService undo,
         CubicacionPresenter cubicacionPresenter,
-        ICubicacionTakeoffQueryService querySvc)
+        ICubicacionTakeoffQueryService querySvc,
+        IPriceBankStore priceBankStore)
     {
         this.parent = parent;
         this.session = session;
         this.undo = undo;
         this.cubicacionPresenter = cubicacionPresenter;
         this.querySvc = querySvc;
+        this.priceBankStore = priceBankStore;
     }
 
     public void BeginQuickAddMaterial(string? codigo, string? descripcion, string? unidad)
@@ -50,25 +53,46 @@ internal sealed class CubicacionClipboardCoordinator
         if (!parent.CanCreateMaterial)
             return;
 
-        string contexto = parent.AutocompleteVisible && !string.IsNullOrWhiteSpace(parent.AutocompleteQueryText)
-            ? $"No hubo una coincidencia clara para '{parent.AutocompleteQueryText}'. Completa el material y quedará disponible en el catálogo del proyecto."
-            : "Completa los campos y agrega el material al catálogo del proyecto.";
+        var owner = Application.Current?.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive)
+                    ?? Application.Current?.MainWindow;
 
-        var owner = Application.Current?.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive);
-        var dialog = new QuickAddMaterialDialog(
-            codigo ?? parent.QuickAddCodigoDraft ?? parent.SelectedRow?.Codigo,
-            descripcion ?? parent.SelectedRow?.Descripcion,
-            unidad ?? parent.SelectedRow?.Unidad,
-            contexto,
-            parent.SelectedRow?.ValorUfClp ?? 0m)
+        string? effectiveDesc = descripcion;
+        if (string.IsNullOrWhiteSpace(effectiveDesc) && !string.IsNullOrWhiteSpace(parent.AutocompleteQueryText))
+        {
+            effectiveDesc = parent.AutocompleteQueryText;
+        }
+        if (string.IsNullOrWhiteSpace(effectiveDesc))
+        {
+            effectiveDesc = parent.SelectedRow?.Descripcion;
+        }
+
+        string? effectiveCodigo = codigo;
+        if (string.IsNullOrWhiteSpace(effectiveCodigo) && string.IsNullOrWhiteSpace(effectiveDesc) && !string.IsNullOrWhiteSpace(parent.QuickAddCodigoDraft))
+        {
+            effectiveCodigo = parent.QuickAddCodigoDraft;
+        }
+        if (string.IsNullOrWhiteSpace(effectiveCodigo) && string.IsNullOrWhiteSpace(effectiveDesc))
+        {
+            effectiveCodigo = parent.SelectedRow?.Codigo;
+        }
+
+        string? effectiveUnidad = unidad ?? parent.SelectedRow?.Unidad;
+
+        var resumenVm = new PrecioListaResumenVm(session, priceBankStore);
+        var dialog = new PrecioListaEditarDialog(
+            resumenVm,
+            null,
+            initialCodigo: effectiveCodigo,
+            initialDescripcion: effectiveDesc,
+            initialUnidad: effectiveUnidad)
         {
             Owner = owner
         };
 
-        if (dialog.ShowDialog() != true || dialog.Result == null)
+        if (dialog.ShowDialog() != true || string.IsNullOrWhiteSpace(dialog.CodigoCreado))
             return;
 
-        AddMaterialToCatalog(dialog.Result, applyToSelectedRow: true);
+        parent.AplicarMaterialCreado(dialog.CodigoCreado);
     }
 
     public bool AddMaterialToCatalog(MaterialRow material, bool applyToSelectedRow)
@@ -138,6 +162,7 @@ internal sealed class CubicacionClipboardCoordinator
             return false;
 
         int startRow = grid.Items.IndexOf(row);
+        var initialCol = grid.CurrentCell.Column;
         if (startRow < 0)
             return false;
 
@@ -204,6 +229,24 @@ internal sealed class CubicacionClipboardCoordinator
             parent.NotifyIsEmptyChanged();
             parent.AlignVisibleRowsToPartidaOrder();
             System.Windows.Input.CommandManager.InvalidateRequerySuggested();
+
+            var activeTargetRow = (startRow >= 0 && startRow < parent.Rows.Count)
+                ? parent.Rows[startRow]
+                : parent.SelectedRow;
+
+            grid.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                var item = activeTargetRow ?? (grid.Items.Count > 0 ? grid.Items[0] : null);
+                var col = initialCol ?? (grid.Columns.Count > 0 ? grid.Columns[0] : null);
+                if (item != null && col != null)
+                {
+                    int rIdx = grid.Items.IndexOf(item);
+                    if (rIdx >= 0)
+                    {
+                        DataGridExcelNavigation.FocusCell(grid, rIdx, col);
+                    }
+                }
+            }), System.Windows.Threading.DispatcherPriority.Input);
         }
 
         ShellNotificationService.Instance.ShowSuccess(

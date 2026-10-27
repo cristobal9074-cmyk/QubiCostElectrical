@@ -10,8 +10,8 @@ public abstract class ViewModelBase : ObservableObject
     /// sin agrupar para no romper este parseo, ver ClosingPolicySectionVm/CoefFactorVm).</summary>
     protected static bool TryParseDecimal(string? text, out decimal value)
     {
-        var normalized = (text ?? "").Replace(",", ".");
-        return decimal.TryParse(normalized, NumberStyles.Any, CultureInfo.InvariantCulture, out value);
+        return DataGridCellAccessor.TryParseFlexibleDecimal(text, out value);
+
     }
 
     /// <summary>Clampea un porcentaje al rango [0, 100] — uso en campos editables de VM (Wpf).

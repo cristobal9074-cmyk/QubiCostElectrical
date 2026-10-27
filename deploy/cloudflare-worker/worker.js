@@ -700,7 +700,7 @@ export default {
 
     // --- 4. Landing Page Corporativa de Descarga (/) ---
     if (!path || path === "" || path === "index.html") {
-      return new Response(getLandingHtml("v1.1.2"), {
+      return new Response(getLandingHtml("v1.1.5"), {
         status: 200,
         headers: { "Content-Type": "text/html; charset=utf-8" }
       });

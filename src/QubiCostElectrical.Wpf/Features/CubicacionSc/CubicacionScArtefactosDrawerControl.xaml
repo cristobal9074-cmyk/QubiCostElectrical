@@ -1,0 +1,612 @@
+﻿<UserControl x:Class="QubiCostElectrical.Wpf.Features.CubicacionSc.CubicacionScArtefactosDrawerControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:QubiCostElectrical.Wpf.Features.CubicacionSc"
+             Background="#FFFFFF"
+             BorderBrush="{DynamicResource Brush.Line}"
+             BorderThickness="1,0,0,0"
+             Focusable="True" FocusVisualStyle="{x:Null}"
+             IsTabStop="True"
+             PreviewKeyDown="OnControlPreviewKeyDown">
+
+    <UserControl.Resources>
+        <!-- Estilo Chip de Piso / Zona -->
+        <Style x:Key="DrawerZonaChip" TargetType="ListBoxItem">
+            <Setter Property="Padding" Value="9,4" />
+            <Setter Property="Margin" Value="0,0,5,0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="b" Background="#F1F5F9"
+                                BorderBrush="#CBD5E1" BorderThickness="1"
+                                CornerRadius="5" Padding="{TemplateBinding Padding}">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock x:Name="txt" Text="{Binding Nombre}" FontSize="11" FontWeight="SemiBold" Foreground="#334155" />
+                                <Border x:Name="badge" Background="#E2E8F0" CornerRadius="3" Padding="4,0" Margin="5,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock x:Name="cnt" Text="{Binding Conteo}" FontSize="10" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="#1E293B" />
+                                </Border>
+                            </StackPanel>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="b" Property="Background" Value="#E2E8F0" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="b" Property="Background" Value="#0F172A" />
+                                <Setter TargetName="b" Property="BorderBrush" Value="#0F172A" />
+                                <Setter TargetName="txt" Property="Foreground" Value="#FFFFFF" />
+                                <Setter TargetName="badge" Property="Background" Value="#334155" />
+                                <Setter TargetName="cnt" Property="Foreground" Value="#F8FAFC" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Botón Stepper (+ / -) -->
+        <Style x:Key="StepperButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Width" Value="24" />
+            <Setter Property="Height" Value="24" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Foreground" Value="#475569" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="b" Background="{TemplateBinding Background}" CornerRadius="3">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="b" Property="Background" Value="#E2E8F0" />
+                                <Setter Property="Foreground" Value="#0F172A" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Botón Papelera Minimalista -->
+        <Style x:Key="DeleteButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Width" Value="24" />
+            <Setter Property="Height" Value="24" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="btnBorder" Background="Transparent" CornerRadius="4">
+                            <Path x:Name="trashPath"
+                                  Data="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                  Stroke="#94A3B8" StrokeThickness="1.4" Stretch="Uniform" Width="11" Height="11"
+                                  HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="btnBorder" Property="Background" Value="#FFE4E6" />
+                                <Setter TargetName="trashPath" Property="Stroke" Value="#E11D48" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <!-- 0: Header del Drawer (Identidad del circuito y pisos) -->
+            <RowDefinition Height="Auto" />
+            <!-- 1: Buscador rápido -->
+            <RowDefinition Height="Auto" />
+            <!-- 2: Panel de Cantidad / Calculadora Inline -->
+            <RowDefinition Height="Auto" />
+            <!-- 3: Listas: Elementos asignados al piso + Sugerencias -->
+            <RowDefinition Height="*" />
+            <!-- 4: Footer con totales y atajos -->
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Resize handle en el borde izquierdo para arrastrar libremente el ancho -->
+        <Thumb Grid.RowSpan="5" Cursor="SizeWE" Width="5" HorizontalAlignment="Left" DragDelta="OnLeftThumbDragDelta" Panel.ZIndex="50">
+            <Thumb.Template>
+                <ControlTemplate>
+                    <Border Background="Transparent" />
+                </ControlTemplate>
+            </Thumb.Template>
+        </Thumb>
+
+        <!-- ================================================================= -->
+        <!-- ROW 0: HEADER: IDENTIDAD DEL CIRCUITO Y SELECTOR DE PISOS         -->
+        <!-- ================================================================= -->
+        <Border Grid.Row="0" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1" Padding="14,10,14,10">
+            <StackPanel>
+                <DockPanel LastChildFill="True">
+                    <!-- Botón Cerrar (Esc) -->
+                    <Button DockPanel.Dock="Right" Command="{Binding CloseDrawerCommand}" ToolTip="Cerrar panel (Esc)"
+                            Style="{StaticResource Button.Ghost}" Width="26" Height="26" Padding="0" VerticalAlignment="Center" Cursor="Hand">
+                        <Path Data="M18 6L6 18M6 6l12 12" Stroke="{DynamicResource Brush.Muted}" StrokeThickness="1.8" Width="10" Height="10" Stretch="Uniform" />
+                    </Button>
+
+                    <!-- Atajo Alt+A -->
+                    <Border DockPanel.Dock="Right" Margin="0,0,6,0" Padding="5,1.5" CornerRadius="4" Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" VerticalAlignment="Center">
+                        <TextBlock Text="Alt+A" FontSize="9.5" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="#1D4ED8" />
+                    </Border>
+
+                    <!-- Título del Drawer -->
+                    <StackPanel VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="⚡" FontSize="11" Margin="0,0,4,0" />
+                            <TextBlock Text="ELEMENTOS Y ACCESORIOS" FontSize="11.5" FontWeight="Bold" Foreground="#0F172A" />
+                        </StackPanel>
+                        <!-- Circuito y Tablero -->
+                        <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                            <TextBlock Text="{Binding CircuitTitle}" FontSize="11" FontWeight="Bold" Foreground="#1E293B" TextTrimming="CharacterEllipsis" MaxWidth="280" />
+                            <TextBlock Text="{Binding CircuitTablero, StringFormat='{} {0}'}" FontSize="10.5" Foreground="#64748B" Margin="4,0,0,0" />
+                        </StackPanel>
+                    </StackPanel>
+                </DockPanel>
+
+                <!-- Selector Horizontal de Pisos / Zonas -->
+                <Border Margin="0,8,0,0" Padding="0,6,0,0" BorderBrush="#F1F5F9" BorderThickness="0,1,0,0">
+                    <DockPanel LastChildFill="True">
+                        <TextBlock DockPanel.Dock="Left" Text="PISOS:" FontSize="10" FontWeight="Bold" Foreground="#64748B" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <TextBlock DockPanel.Dock="Right" Text="Ctrl+←/→" FontSize="9.5" FontFamily="{StaticResource Font.Mono}" Foreground="#94A3B8" VerticalAlignment="Center" />
+                        
+                        <ListBox x:Name="ZonasListBox" BorderThickness="0" Background="Transparent"
+                                 ItemsSource="{Binding Zonas}"
+                                 SelectedItem="{Binding SelectedZona, Mode=TwoWay}"
+                                 ItemContainerStyle="{StaticResource DrawerZonaChip}"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                 ScrollViewer.VerticalScrollBarVisibility="Disabled">
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                        </ListBox>
+                    </DockPanel>
+                </Border>
+            </StackPanel>
+        </Border>
+
+        <!-- ================================================================= -->
+        <!-- ROW 1: BUSCADOR RAPIDO CON LISTA FLOTANTE PRO (AUTOCOMPLETADO)    -->
+        <!-- ================================================================= -->
+        <Border Grid.Row="1" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1" Padding="14,8">
+            <StackPanel>
+                <Grid>
+                    <TextBox x:Name="SearchBox" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource DataGrid.CellEditTextBox}"
+                             FontSize="12" Padding="26,6,26,6"
+                             Background="#FFFFFF" BorderBrush="#3B82F6" BorderThickness="1.5"
+                             PreviewKeyDown="OnSearchBoxPreviewKeyDown" />
+
+                    <!-- Icono lupa a la izquierda -->
+                    <Path IsHitTestVisible="False" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="9,0,0,0"
+                          Data="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                          Stroke="#3B82F6" StrokeThickness="1.6" Stretch="Uniform" Width="12" Height="12" />
+
+                    <!-- Placeholder -->
+                    <TextBlock IsHitTestVisible="False" VerticalAlignment="Center" Margin="28,0,0,0"
+                               Text="Escriba código o nombre (ej: 9/12, ench, foco)..."
+                               FontSize="11.5" Foreground="#94A3B8">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Text, ElementName=SearchBox}" Value="">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
+                    <!-- Botón Limpiar a la derecha -->
+                    <Button HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,6,0"
+                            Width="18" Height="18" Background="Transparent" BorderThickness="0" Cursor="Hand"
+                            Click="OnClearSearchClick" ToolTip="Limpiar búsqueda">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Visibility" Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Text, ElementName=SearchBox}" Value="">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <TextBlock Text="✕" FontSize="10" Foreground="#94A3B8" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Button>
+                </Grid>
+
+
+
+                <DockPanel LastChildFill="True" Margin="2,4,2,0">
+                    <TextBlock DockPanel.Dock="Right" Text="Enter para asignar" FontSize="10" Foreground="#2563EB" FontWeight="SemiBold" />
+                    <TextBlock Text="Escriba código o nombre para ver lista" FontSize="10" Foreground="#64748B" />
+                </DockPanel>
+            </StackPanel>
+        </Border>
+        <!-- ================================================================= -->
+        <!-- ================================================================= -->
+        <!-- CAPA FLOTANTE INTEGRADA DE SUGERENCIAS (100% DENTRO DEL DRAWER)   -->
+        <!-- ================================================================= -->
+        <Border x:Name="SugerenciasFlyout" Grid.Row="2" Grid.RowSpan="2" Panel.ZIndex="100"
+                VerticalAlignment="Top" Margin="14,4,14,0" MaxHeight="340"
+                Background="#FFFFFF"
+                BorderBrush="#94A3B8"
+                BorderThickness="1"
+                CornerRadius="8"
+                Visibility="{Binding IsSearchPopupOpen, Converter={StaticResource BoolToVisibility}, FallbackValue=Collapsed}">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="18" ShadowDepth="4" Direction="270" Color="#0F172A" Opacity="0.18" />
+            </Border.Effect>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- Cabecera del flyout -->
+                <Border Grid.Row="0" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1" Padding="10,6" CornerRadius="8,8,0,0">
+                    <DockPanel LastChildFill="True">
+                        <TextBlock DockPanel.Dock="Right" Text="↑/↓ navegar · ↵ asignar · Esc cerrar" FontSize="9.5" FontFamily="{StaticResource Font.Mono}" Foreground="#2563EB" FontWeight="SemiBold" VerticalAlignment="Center" />
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="⚡" FontSize="10" Margin="0,0,4,0" />
+                            <TextBlock Text="MATERIALES SUGERIDOS" FontSize="10" FontWeight="Bold" Foreground="#334155" />
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+
+                <!-- Lista interactiva de sugerencias -->
+                <ListBox x:Name="PopupSugerenciasListBox" Grid.Row="1"
+                         ItemsSource="{Binding Sugerencias}"
+                         BorderThickness="0" Background="Transparent"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         ScrollViewer.VerticalScrollBarVisibility="Auto"
+                         Focusable="False"
+                         MaxHeight="260"
+                         MouseLeftButtonUp="OnPopupSugerenciaClick">
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem">
+                            <Setter Property="Padding" Value="0" />
+                            <Setter Property="Margin" Value="4,1.5" />
+                            <Setter Property="Cursor" Value="Hand" />
+                            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ListBoxItem">
+                                        <Border x:Name="itemBorder" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="9,6">
+                                            <DockPanel LastChildFill="True">
+                                                <!-- Categoría y badge Enter a la derecha -->
+                                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Border x:Name="enterBadge" Visibility="Collapsed" Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="4" Padding="5,2" Margin="6,0,0,0">
+                                                        <TextBlock Text="↵ Asignar" FontSize="9.5" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="#1D4ED8" />
+                                                    </Border>
+                                                    <Border Background="#F1F5F9" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="4" Padding="5,2" Margin="6,0,0,0">
+                                                        <TextBlock Text="{Binding Categoria}" FontSize="10" FontWeight="SemiBold" Foreground="#64748B" />
+                                                    </Border>
+                                                </StackPanel>
+
+                                                <!-- Tag en azul (o ámbar si es nuevo) -->
+                                                <Border DockPanel.Dock="Left" Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="4" Padding="6,2" Margin="0,0,8,0" VerticalAlignment="Center"
+                                                        Visibility="{Binding HasTag, Converter={StaticResource BoolToVisibility}}">
+                                                    <TextBlock Text="{Binding Tag}" FontSize="10" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="#1D4ED8" />
+                                                </Border>
+
+                                                <!-- Nombre del artefacto -->
+                                                <TextBlock Text="{Binding Nombre}" FontSize="12" FontWeight="SemiBold" Foreground="#0F172A" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                            </DockPanel>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="itemBorder" Property="Background" Value="#F8FAFC" />
+                                                <Setter TargetName="itemBorder" Property="BorderBrush" Value="#93C5FD" />
+                                            </Trigger>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter TargetName="itemBorder" Property="Background" Value="#EFF6FF" />
+                                                <Setter TargetName="itemBorder" Property="BorderBrush" Value="#2563EB" />
+                                                <Setter TargetName="itemBorder" Property="BorderThickness" Value="1.5" />
+                                                <Setter TargetName="enterBadge" Property="Visibility" Value="Visible" />
+                                            </Trigger>
+                                            <DataTrigger Binding="{Binding EsNuevo}" Value="True">
+                                                <Setter TargetName="itemBorder" Property="Background" Value="#FEF3C7" />
+                                                <Setter TargetName="itemBorder" Property="BorderBrush" Value="#F59E0B" />
+                                            </DataTrigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                </ListBox>
+
+                <!-- Footer sutil del flyout -->
+                <Border Grid.Row="2" Background="#F1F5F9" BorderBrush="#E2E8F0" BorderThickness="0,1,0,0" Padding="10,5" CornerRadius="0,0,8,8">
+                    <TextBlock Text="💡 Tip: Puede tipear '9/12', 'ench', 'foco', o presionar Enter para asignar directo."
+                               FontSize="9.5" Foreground="#64748B" />
+                </Border>
+            </Grid>
+        </Border>
+
+                <!-- ROW 2: CALCULADORA / PANEL INLINE DE CANTIDAD                     -->
+        <!-- ================================================================= -->
+        <Border Grid.Row="2" Background="#EFF6FF" BorderBrush="#3B82F6" BorderThickness="0,0,0,2" Padding="14,10"
+                Visibility="{Binding IsQuantityMode, Converter={StaticResource BoolToVisibility}, FallbackValue=Collapsed}">
+            <StackPanel>
+                <DockPanel LastChildFill="True">
+                    <Button DockPanel.Dock="Right" Command="{Binding CancelQuantityCommand}"
+                            Style="{StaticResource Button.Ghost}" Width="20" Height="20" Padding="0" VerticalAlignment="Top" Cursor="Hand">
+                        <TextBlock Text="✕" FontSize="11" Foreground="#64748B" />
+                    </Button>
+
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding QuantityTargetName}" FontSize="12" FontWeight="Bold" Foreground="#0F172A" />
+                            <Border Margin="6,0,0,0" Padding="4,1" CornerRadius="3" Background="#DBEAFE" BorderBrush="#93C5FD" BorderThickness="1" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding QuantityTargetTag}" FontSize="9.5" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="#1D4ED8" />
+                            </Border>
+                        </StackPanel>
+                        <TextBlock Text="{Binding QuantityPrompt}" FontSize="11" Foreground="#1E40AF" Margin="0,2,0,0" TextWrapping="Wrap" />
+                    </StackPanel>
+                </DockPanel>
+
+                <!-- Input numérico y botones de incremento -->
+                <Grid Margin="0,8,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Input grande para cantidad / fórmula -->
+                    <TextBox x:Name="QuantityBox" Grid.Column="0"
+                             Text="{Binding QuantityText, UpdateSourceTrigger=PropertyChanged}"
+                             FontSize="20" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}"
+                             Padding="10,2" Width="110" HorizontalContentAlignment="Center"
+                             Background="#FFFFFF" BorderBrush="#2563EB" BorderThickness="2"
+                             KeyDown="OnQuantityBoxKeyDown" />
+
+                    <!-- Botones rápidos +1, +5, +10 -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="8,0,0,0" VerticalAlignment="Center">
+                        <Button Content="+1" Command="{Binding AddQuickQtyCommand}" CommandParameter="1"
+                                Background="#FFFFFF" BorderBrush="#CBD5E1" BorderThickness="1" Padding="6,4" Margin="0,0,4,0" FontSize="11" FontWeight="Bold" Foreground="#334155" Cursor="Hand" />
+                        <Button Content="+5" Command="{Binding AddQuickQtyCommand}" CommandParameter="5"
+                                Background="#FFFFFF" BorderBrush="#CBD5E1" BorderThickness="1" Padding="6,4" Margin="0,0,4,0" FontSize="11" FontWeight="Bold" Foreground="#334155" Cursor="Hand" />
+                        <Button Content="+10" Command="{Binding AddQuickQtyCommand}" CommandParameter="10"
+                                Background="#FFFFFF" BorderBrush="#CBD5E1" BorderThickness="1" Padding="6,4" FontSize="11" FontWeight="Bold" Foreground="#334155" Cursor="Hand" />
+                    </StackPanel>
+
+                    <!-- Botón Confirmar -->
+                    <Button Grid.Column="2" HorizontalAlignment="Right"
+                            Command="{Binding ConfirmQuantityCommand}"
+                            Style="{StaticResource Button.Primary}" Height="32" Padding="12,0" Cursor="Hand">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="Confirmar" FontWeight="Bold" FontSize="11.5" />
+                            <Border Margin="5,0,0,0" Padding="3,1" CornerRadius="3" Background="#1D4ED8">
+                                <TextBlock Text="Enter" FontSize="9" FontFamily="{StaticResource Font.Mono}" Foreground="#FFFFFF" />
+                            </Border>
+                        </StackPanel>
+                    </Button>
+                </Grid>
+
+                <TextBlock Margin="0,6,0,0" Text="✓ Soporta operaciones aritméticas: escriba 12+6+2 y presione Enter" FontSize="10" FontFamily="{StaticResource Font.Mono}" Foreground="#2563EB" Opacity="0.85" />
+            </StackPanel>
+        </Border>
+
+        <!-- ================================================================= -->
+        <!-- ROW 3: LISTAS: ASIGNADOS AL PISO + SUGERENCIAS                    -->
+        <!-- ================================================================= -->
+        <ScrollViewer Grid.Row="3" Focusable="False" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel>
+                
+                <!-- SECCIÓN A: ASIGNADOS EN ESTE PISO -->
+                <Border Background="#FFFFFF" BorderBrush="#F1F5F9" BorderThickness="0,0,0,1" Padding="14,10">
+                    <StackPanel>
+                        <!-- Cabecera de la sección -->
+                        <DockPanel LastChildFill="True" Margin="0,0,0,6">
+                            <TextBlock DockPanel.Dock="Right" Text="{Binding FooterPisoLabel, StringFormat='{}Total: {0}'}" FontSize="11" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="#2563EB" />
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="●" FontSize="8" Foreground="#2563EB" VerticalAlignment="Center" Margin="0,0,5,0" />
+                                <TextBlock Text="{Binding AssignedSectionTitle}" FontSize="11" FontWeight="Bold" Foreground="#0F172A" />
+                            </StackPanel>
+                        </DockPanel>
+
+                        <!-- Mensaje si no hay artefactos -->
+                        <TextBlock Text="Todavía no hay artefactos en este piso. Seleccione uno del catálogo abajo para agregarlo."
+                                   FontSize="11" Foreground="#94A3B8" FontStyle="Italic" Margin="4,6,4,8">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Visibles.Count}" Value="0">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+
+                        <!-- Items asignados -->
+                        <ItemsControl ItemsSource="{Binding Visibles}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Margin="0,0,0,4" Padding="10,6" CornerRadius="6" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background" Value="#F8FAFC" />
+                                                        <Setter Property="BorderBrush" Value="#CBD5E1" />
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <DockPanel LastChildFill="True">
+                                            <!-- Stepper de Cantidad y Botón Eliminar a la derecha -->
+                                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <!-- Stepper -->
+                                                <Border Background="#F1F5F9" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="4" Margin="0,0,6,0">
+                                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                        <Button Style="{StaticResource StepperButtonStyle}" Content="-"
+                                                                Command="{Binding DataContext.DecrementItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                CommandParameter="{Binding}" ToolTip="Disminuir cantidad" />
+                                                        <TextBlock Text="{Binding CantidadDisplay}" MinWidth="30" TextAlignment="Center" VerticalAlignment="Center"
+                                                                   FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" FontSize="11.5" Foreground="#0F172A"
+                                                                   Cursor="Hand" ToolTip="Clic para editar cantidad"
+                                                                   MouseLeftButtonUp="OnAssignedQuantityClick" />
+                                                        <Button Style="{StaticResource StepperButtonStyle}" Content="+"
+                                                                Command="{Binding DataContext.IncrementItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                CommandParameter="{Binding}" ToolTip="Aumentar cantidad" />
+                                                    </StackPanel>
+                                                </Border>
+
+                                                <!-- Botón eliminar -->
+                                                <Button Style="{StaticResource DeleteButtonStyle}"
+                                                        Command="{Binding DataContext.DeleteItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}" ToolTip="Quitar de este piso (Supr)" />
+                                            </StackPanel>
+
+                                            <!-- Tag y Nombre a la izquierda -->
+                                            <StackPanel VerticalAlignment="Center" Margin="0,0,8,0">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Border Margin="0,0,6,0" Padding="4,1" CornerRadius="3" Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1"
+                                                            Visibility="{Binding HasTag, Converter={StaticResource BoolToVisibility}}">
+                                                        <TextBlock Text="{Binding Tag}" FontSize="9.5" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="#1D4ED8" />
+                                                    </Border>
+                                                    <TextBlock Text="{Binding Nombre}" FontSize="11.5" FontWeight="SemiBold" Foreground="#0F172A" TextTrimming="CharacterEllipsis" />
+                                                </StackPanel>
+                                                <TextBlock Text="{Binding Detalle}" FontSize="10" Foreground="#64748B" Margin="0,1,0,0" />
+                                            </StackPanel>
+                                        </DockPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <!-- SECCIÓN B: BIBLIOTECA MAESTRA (SUGERENCIAS) -->
+                <Border Background="#F8FAFC" Padding="14,10">
+                    <StackPanel>
+                        <DockPanel LastChildFill="True" Margin="0,0,0,6">
+                            <TextBlock DockPanel.Dock="Right" Text="F2: Editar tag" FontSize="9.5" FontFamily="{StaticResource Font.Mono}" Foreground="#94A3B8" />
+                            <TextBlock Text="BIBLIOTECA MAESTRA (CLIC O ENTER PARA ASIGNAR)" FontSize="10.5" FontWeight="Bold" Foreground="#64748B" />
+                        </DockPanel>
+
+                        <ListBox x:Name="SugerenciasListBox" ItemsSource="{Binding Sugerencias}"
+                                 BorderThickness="0" Background="Transparent"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                 ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                                 MouseLeftButtonUp="OnSugerenciaClick">
+                            <ListBox.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="✏️ Editar Tag rápido (F2)..." Click="OnEditarTagContextMenuClick" />
+                                </ContextMenu>
+                            </ListBox.ContextMenu>
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="Padding" Value="10,6" />
+                                    <Setter Property="Margin" Value="0,0,0,3" />
+                                    <Setter Property="Cursor" Value="Hand" />
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ListBoxItem">
+                                                <Border x:Name="b" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                                                    <ContentPresenter />
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="b" Property="Background" Value="#EFF6FF" />
+                                                        <Setter TargetName="b" Property="BorderBrush" Value="#93C5FD" />
+                                                    </Trigger>
+                                                    <Trigger Property="IsSelected" Value="True">
+                                                        <Setter TargetName="b" Property="Background" Value="#DBEAFE" />
+                                                        <Setter TargetName="b" Property="BorderBrush" Value="#3B82F6" />
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <DockPanel LastChildFill="True">
+                                        <TextBlock DockPanel.Dock="Right" Text="+ Asignar" FontSize="10.5" FontWeight="Bold" Foreground="#2563EB" VerticalAlignment="Center" Margin="6,0,0,0" />
+                                        
+                                        <StackPanel VerticalAlignment="Center">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Border Margin="0,0,6,0" Padding="4,1" CornerRadius="3" Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1"
+                                                        Visibility="{Binding HasTag, Converter={StaticResource BoolToVisibility}}">
+                                                    <TextBlock Text="{Binding Tag}" FontSize="9.5" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="#1D4ED8" />
+                                                </Border>
+                                                <TextBlock Text="{Binding Nombre}" FontSize="11.5" FontWeight="SemiBold" Foreground="#0F172A" />
+                                            </StackPanel>
+                                            <TextBlock Text="{Binding Detalle}" FontSize="10" Foreground="#64748B" Margin="0,1,0,0" />
+                                        </StackPanel>
+                                    </DockPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- ================================================================= -->
+        <!-- ROW 4: FOOTER EJECUTIVO CON TOTALES Y ATAJOS                     -->
+        <!-- ================================================================= -->
+        <Border Grid.Row="4" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="0,1,0,0" Padding="14,10">
+            <StackPanel>
+                <!-- Totales acumulados -->
+                <DockPanel LastChildFill="True">
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="Total acumulado circuito:" FontSize="11" Foreground="#64748B" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding FooterCircuitoLabel}" FontSize="13" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="#1D4ED8" Margin="6,0,0,0" VerticalAlignment="Center" />
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="Piso activo:" FontSize="11" Foreground="#64748B" />
+                        <TextBlock Text="{Binding FooterPisoLabel}" FontSize="11" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="#0F172A" Margin="4,0,0,0" />
+                    </StackPanel>
+                </DockPanel>
+
+                <!-- Barra de Atajos Rápidos -->
+                <Border Margin="0,8,0,0" Padding="0,6,0,0" BorderBrush="#F1F5F9" BorderThickness="0,1,0,0">
+                    <DockPanel LastChildFill="True">
+                        <Button DockPanel.Dock="Right" Command="{Binding CloseDrawerCommand}"
+                                Style="{StaticResource Button.Secondary}" Height="24" Padding="10,0" FontSize="11" FontWeight="Bold" Content="Listo (Esc)" Cursor="Hand" />
+
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Border Margin="0,0,8,0" Padding="3,1" CornerRadius="3" Background="#F1F5F9" BorderBrush="#CBD5E1" BorderThickness="1">
+                                <TextBlock Text="↑↓ Elegir" FontSize="9.5" FontFamily="{StaticResource Font.Mono}" Foreground="#475569" />
+                            </Border>
+                            <Border Margin="0,0,8,0" Padding="3,1" CornerRadius="3" Background="#F1F5F9" BorderBrush="#CBD5E1" BorderThickness="1">
+                                <TextBlock Text="Enter Cantidad" FontSize="9.5" FontFamily="{StaticResource Font.Mono}" Foreground="#475569" />
+                            </Border>
+                            <Border Margin="0,0,8,0" Padding="3,1" CornerRadius="3" Background="#F1F5F9" BorderBrush="#CBD5E1" BorderThickness="1">
+                                <TextBlock Text="Ctrl+←/→ Piso" FontSize="9.5" FontFamily="{StaticResource Font.Mono}" Foreground="#475569" />
+                            </Border>
+                            <Border Padding="3,1" CornerRadius="3" Background="#F1F5F9" BorderBrush="#CBD5E1" BorderThickness="1">
+                                <TextBlock Text="Supr Quitar" FontSize="9.5" FontFamily="{StaticResource Font.Mono}" Foreground="#475569" />
+                            </Border>
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

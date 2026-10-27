@@ -108,16 +108,6 @@
 
       <!-- Controles de cabecera a la derecha -->
       <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-        <!-- Chip de Total General Consolidado -->
-        <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}"
-                BorderThickness="1" CornerRadius="6" Padding="8,3" Margin="0,0,8,0" VerticalAlignment="Center">
-          <StackPanel Orientation="Horizontal">
-            <TextBlock Text="Total:" FontSize="11" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" Margin="0,0,6,0" />
-            <TextBlock x:Name="HeaderGrandTotalRun" Text="0.00" FontSize="13" FontWeight="Bold"
-                       Foreground="{DynamicResource Brush.Green}" FontFamily="{StaticResource Font.Mono}" VerticalAlignment="Center" />
-          </StackPanel>
-        </Border>
-
         <!-- Botones Expandir / Colapsar discretos -->
         <Button Style="{StaticResource Button.Ghost}" Width="24" Height="24" Padding="0" Margin="0,0,2,0"
                 Click="OnExpandAllClick" ToolTip="Expandir todas las partidas" Content="▾" FontSize="13" />
@@ -170,58 +160,6 @@
                              Width="60" Height="22" Margin="0,0,6,0" VerticalAlignment="Center"
                              FontSize="11" FontFamily="{StaticResource Font.Mono}"
                              ToolTip="Código de partida" />
-
-                    <!-- Botón Quitar Partida (discreto a la derecha) -->
-                    <Button DockPanel.Dock="Right" Content="✕" Width="20" Height="20" Margin="6,0,0,0"
-                            Style="{StaticResource Button.Ghost}" Padding="0" FontSize="11"
-                            Foreground="{DynamicResource Brush.Muted}" ToolTip="Quitar esta partida"
-                            Click="OnRemoveItemClick" Tag="{Binding}" />
-
-                    <!-- Subtotal de Partida -->
-                    <Border DockPanel.Dock="Right" BorderThickness="1"
-                            CornerRadius="4" Padding="6,1" Margin="6,0,0,0" VerticalAlignment="Center"
-                            Cursor="Hand" PreviewMouseLeftButtonDown="OnSubtotalBadgeClick" Tag="{Binding}"
-                            ToolTip="Subtotal acumulado de esta partida (clic para transferir en modo selección)">
-                      <Border.Style>
-                        <Style TargetType="Border">
-                          <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
-                          <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
-                          <Style.Triggers>
-                            <DataTrigger Binding="{Binding IsPicked}" Value="True">
-                              <Setter Property="Background" Value="{DynamicResource Brush.GreenSoft}" />
-                              <Setter Property="BorderBrush" Value="{DynamicResource Brush.Green}" />
-                            </DataTrigger>
-                          </Style.Triggers>
-                        </Style>
-                      </Border.Style>
-                      <TextBlock Text="{Binding Subtotal, StringFormat={}{0:#,##0.##}}" FontWeight="Bold"
-                                 FontFamily="{StaticResource Font.Mono}" FontSize="12">
-                        <TextBlock.Style>
-                          <Style TargetType="TextBlock">
-                            <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
-                            <Style.Triggers>
-                              <DataTrigger Binding="{Binding IsPicked}" Value="True">
-                                <Setter Property="Foreground" Value="{DynamicResource Brush.Green}" />
-                              </DataTrigger>
-                            </Style.Triggers>
-                          </Style>
-                        </TextBlock.Style>
-                      </TextBlock>
-                    </Border>
-
-                    <!-- Unidad de medida -->
-                    <ComboBox DockPanel.Dock="Right" Width="55" Height="22" Margin="6,0,0,0" VerticalAlignment="Center"
-                              IsEditable="True" Text="{Binding Unidad, UpdateSourceTrigger=PropertyChanged}"
-                              FontSize="11" ToolTip="Unidad de medida">
-                      <ComboBoxItem Content="ml" />
-                      <ComboBoxItem Content="un" />
-                      <ComboBoxItem Content="m²" />
-                      <ComboBoxItem Content="m³" />
-                      <ComboBoxItem Content="GL" />
-                      <ComboBoxItem Content="kg" />
-                      <ComboBoxItem Content="pto" />
-                    </ComboBox>
-
                     <!-- Título de partida (ocupa todo el espacio central) -->
                     <TextBox Text="{Binding Titulo, UpdateSourceTrigger=PropertyChanged}"
                              VerticalAlignment="Center" Height="22" FontWeight="SemiBold" FontSize="12"
@@ -261,13 +199,6 @@
                               ToolTip="Insertar función (=SUMA, =PROMEDIO, =MIN, =MAX, =REDONDEAR...)" />
 
                       <!-- Preview en tiempo real del cálculo -->
-                      <Border DockPanel.Dock="Right" Background="{DynamicResource Brush.Surface}"
-                              BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="3"
-                              Padding="6,0" MinWidth="60" Height="22" Margin="4,0,0,0" VerticalAlignment="Center">
-                        <TextBlock x:Name="FormulaBarPreview" FontFamily="{StaticResource Font.Mono}" FontSize="10"
-                                   Foreground="{DynamicResource Brush.Green}" HorizontalAlignment="Right" VerticalAlignment="Center"
-                                   Text="" ToolTip="Resultado evaluado en tiempo real" />
-                      </Border>
 
                       <!-- Input de la fórmula -->
                       <TextBox x:Name="FormulaBarInput" VerticalAlignment="Center" Height="22"
@@ -283,6 +214,7 @@
                   <DataGrid ItemsSource="{Binding Filas}"
                             Style="{StaticResource DataGrid.Workspace.Excel}"
                             infra:DataGridExcelNavigation.Enable="True"
+                            infra:DataGridExcelNavigation.HandleCellEditorByHost="True"
                             AutoGenerateColumns="False"
                             CanUserAddRows="False"
                             CanUserDeleteRows="False"
@@ -329,12 +261,6 @@
 
     <!-- Footer Sobrio y Limpio -->
     <DockPanel Grid.Row="3" Margin="0,8,0,0" LastChildFill="False">
-      <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
-        <TextBlock Text="Total consolidado: " FontSize="12" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
-        <TextBlock x:Name="GrandTotalRun" Text="0.00" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}"
-                   FontSize="13" Foreground="{DynamicResource Brush.Green}" VerticalAlignment="Center" />
-      </StackPanel>
-
       <Button DockPanel.Dock="Right" Style="{StaticResource Button.Primary}" Content="Listo"
               MinWidth="100" Height="34" FontSize="12" IsDefault="True" IsCancel="True" Click="OnCloseClick" />
     </DockPanel>

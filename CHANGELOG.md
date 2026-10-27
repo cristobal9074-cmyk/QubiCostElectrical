@@ -6,8 +6,22 @@ Las versiones siguen el formato `MAJOR.MINOR.PATCH` y corresponden a `Directory.
 
 ## 1.1.5
 
-### En desarrollo (2026-10-25)
-- Apertura del ciclo de desarrollo v1.1.5.
+### Panel Lateral de Cambio Masivo de Línea, Doble Tubería y Mejoras en Cubicación SC (2026-10-27)
+- **Panel lateral acoplado para Cambio Masivo de Línea / Familias**:
+  - Panel derecho ultra-limpio y minimalista accesible con `Ctrl+Shift+H` o desde la barra superior de Cubicación SC.
+  - Enfoque directo sin datos monetarios: sustitución de líneas completas de productos (`PVC ➔ PVCLH`, `Magic ➔ Matix`, `EVA ➔ H07Z1-K`, o personalizado).
+  - Detección en tiempo real de ocurrencias en el proyecto y actualización instantánea en canalizaciones, circuitos, artefactos, partidas y APUs, compatible con `Ctrl+Z` (deshacer).
+- **Soporte de Doble Tubería en Medidas de Entrada de Cubicación SC**:
+  - Incorporación de columna para segunda tubería (`L. TUB 2` / `Tipo Tub. 2`) en circuitos de servicios comunes.
+  - Cálculo automático combinado de conductores: `(Tubería 1 + Tubería 2) × N° conductores`.
+  - Reordenamiento visual ergonómico de columnas: `L.BAND` primero y luego `L.PVC`.
+  - Encabezados de tabla optimizados en 2 líneas para lectura limpia sin desbordes.
+- **Paneles Laterales Acoplados (Drawers) en Cubicación SC**:
+  - Transición completa de diálogos modales flotantes a paneles acoplados a la derecha para Catálogo y Artefactos, evitando bloqueos y mejorando el flujo de trabajo continuo.
+- **AutoFill / Arrastre inteligente tipo Excel**:
+  - Soporte de series y autorrelleno mediante arrastre del tirador inferior derecho en celdas de las grillas de cubicación e itemizado.
+- **Optimización y Estabilidad**:
+  - Preservación estricta de presupuestos herméticos, recalibración de mano de obra y correcciones en la sincronización de cajas y accesorios.
 
 ## 1.1.4
 

@@ -202,8 +202,8 @@
       <!-- Celda seleccionada (parte de un rango o celda secundaria): fondo azul seleccionado visible -->
       <Trigger Property="IsSelected" Value="True">
         <Setter Property="Background" Value="{DynamicResource Brush.BlueSelected}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Brush.BlueFocus}" />
-        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
+        <Setter Property="BorderThickness" Value="2" />
         <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
       </Trigger>
 

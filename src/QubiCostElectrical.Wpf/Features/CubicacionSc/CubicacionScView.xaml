@@ -6,7 +6,9 @@
              xmlns:ctrl="clr-namespace:QubiCostElectrical.Wpf.Controls"
              xmlns:infra="clr-namespace:QubiCostElectrical.Wpf.Infrastructure"
              xmlns:sc="clr-namespace:QubiCostElectrical.Wpf.Features.CubicacionSc.Controls"
+             xmlns:local="clr-namespace:QubiCostElectrical.Wpf.Features.CubicacionSc"
              mc:Ignorable="d"
+             PreviewKeyDown="UserControl_PreviewKeyDown"
              d:DesignHeight="720" d:DesignWidth="1280">
     <UserControl.CommandBindings>
         <CommandBinding Command="ApplicationCommands.Find" Executed="OnFindExecuted" />
@@ -16,6 +18,9 @@
         <KeyBinding Key="F" Modifiers="Control" Command="ApplicationCommands.Find" />
         <KeyBinding Key="S" Modifiers="Control" Command="{Binding SaveCommand}" />
         <KeyBinding Key="D" Modifiers="Control" Command="{Binding DuplicateCircuitoCommand}" />
+        <KeyBinding Key="C" Modifiers="Alt" Command="{Binding OpenCatalogoCommand}" />
+        <KeyBinding Key="A" Modifiers="Alt" Command="{Binding OpenArtefactosCommand}" />
+        <KeyBinding Key="H" Modifiers="Control+Shift" Command="{Binding OpenFamilyBatchReplaceCommand}" />
     </UserControl.InputBindings>
     <Grid>
         <!-- Estado vacío cuando no hay proyecto abierto.
@@ -30,9 +35,15 @@
         </ctrl:EmptyStateControl>
 
         <!-- Contenido principal cuando hay proyecto -->
-        <DockPanel Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}"
-                   d:Visibility="Visible"
-                   Margin="20,14,20,14">
+        <Grid Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}"
+              d:Visibility="Visible">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Lado Izquierdo: TopBar + Planilla + Sidebar + StatusMessage -->
+            <DockPanel Grid.Column="0" Margin="20,14,14,12">
 
             <!-- ── Unified Modern Executive Top Bar ──────────────────────── -->
             <sc:CubicacionScTopBarControl DockPanel.Dock="Top" />
@@ -47,6 +58,7 @@
                     <ColumnDefinition x:Name="TablerosColumn" Width="170" MinWidth="46" MaxWidth="300" />
                     <ColumnDefinition Width="6" />
                     <ColumnDefinition Width="*" />
+
                 </Grid.ColumnDefinitions>
 
                 <!-- ── 1 · Tableros SC (Sidebar) ──────────────────────────── -->
@@ -84,7 +96,7 @@
                             </Border>
 
                             <!-- ListBox en Modo Expandido -->
-                            <ListBox x:Name="TablerosListExpanded"
+                            <ListBox x:Name="TablerosListExpanded" HorizontalContentAlignment="Stretch"
                                      ItemsSource="{Binding CuadrosFiltrados}"
                                      SelectedItem="{Binding SelectedCuadro, Mode=TwoWay}"
                                      BorderThickness="0" Background="Transparent"
@@ -94,6 +106,7 @@
                                         <Setter Property="Padding" Value="6,4" />
                                         <Setter Property="Margin" Value="0,2" />
                                         <Setter Property="Background" Value="Transparent" />
+                                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                                         <!-- Doble clic sobre un tablero permite renombrarlo inline. -->
                                         <EventSetter Event="MouseDoubleClick" Handler="TableroItem_DoubleClick" />
                                         <Setter Property="Template">
@@ -115,7 +128,7 @@
                                                                           CommandParameter="{Binding}" />
                                                             </ContextMenu>
                                                         </Border.ContextMenu>
-                                                        <ContentPresenter />
+                                                        <ContentPresenter HorizontalAlignment="Stretch" />
                                                     </Border>
                                                     <ControlTemplate.Triggers>
                                                         <Trigger Property="IsSelected" Value="True">
@@ -190,6 +203,7 @@
                                                         </Style>
                                                     </Button.Style>
                                                 </Button>
+
                                                 <Button Content="🗑"
                                                         FontSize="{StaticResource Font.Size.xs}"
                                                         Foreground="{DynamicResource Brush.Danger}"
@@ -413,9 +427,47 @@
                                         <TextBlock Text="TRAMO BANDEJA" Style="{StaticResource GroupBandLabel}" />
                                     </DockPanel>
                                 </Border>
-                                <Border Grid.Column="6" Style="{StaticResource GroupBandCell}">
-                                    <DockPanel>
+                                <Border x:Name="BandBorderTramoPvc" Grid.Column="6" Style="{StaticResource GroupBandCell}">
+                                    <DockPanel LastChildFill="True">
                                         <Rectangle DockPanel.Dock="Bottom" Height="2" Fill="{DynamicResource Brush.Success}" />
+                                        <Button x:Name="BtnToggleSegundoDucto"
+                                                DockPanel.Dock="Left"
+                                                Width="16" Height="16"
+                                                Margin="4,1,4,1"
+                                                Padding="0"
+                                                Cursor="Hand"
+                                                Command="{Binding DataContext.ToggleSegundoDuctoCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                ToolTip="{Binding DataContext.SegundoDuctoButtonToolTip, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+                                                    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Success}" />
+                                                    <Setter Property="BorderThickness" Value="1" />
+                                                    <Setter Property="Template">
+                                                        <Setter.Value>
+                                                            <ControlTemplate TargetType="Button">
+                                                                <Border Background="{TemplateBinding Background}"
+                                                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                                                        CornerRadius="3">
+                                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                                </Border>
+                                                                <ControlTemplate.Triggers>
+                                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                                        <Setter Property="Background" Value="{DynamicResource Brush.GreenSoft}" />
+                                                                    </Trigger>
+                                                                </ControlTemplate.Triggers>
+                                                            </ControlTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </Style>
+                                            </Button.Style>
+                                            <TextBlock Text="{Binding DataContext.SegundoDuctoButtonGlyph, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                       FontSize="11" FontWeight="Bold"
+                                                       Foreground="{DynamicResource Brush.Success}"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                       Margin="0,-1,0,0" />
+                                        </Button>
                                         <TextBlock Text="TRAMO PVC (CONDUIT)" Style="{StaticResource GroupBandLabel}" />
                                     </DockPanel>
                                 </Border>
@@ -479,17 +531,81 @@
                       ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                       ScrollViewer.VerticalScrollBarVisibility="Auto">
 
-                                                    <DataGrid.ColumnHeaderStyle>
+                        <DataGrid.ColumnHeaderStyle>
                             <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource DataGridColumnHeader.Prototype}">
                                 <Setter Property="HorizontalContentAlignment" Value="Center" />
-                                <Setter Property="Padding" Value="2,4" />
+                                <Setter Property="VerticalContentAlignment" Value="Center" />
+                                <Setter Property="Height" Value="36" />
+                                <Setter Property="Padding" Value="2,1" />
                                 <Setter Property="FontSize" Value="{StaticResource Font.Size.2xs}" />
+                                <Setter Property="ContentTemplate">
+                                    <Setter.Value>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding}"
+                                                       TextWrapping="Wrap"
+                                                       TextAlignment="Center"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
+                                                       LineHeight="11.5"
+                                                       LineStackingStrategy="BlockLineHeight" />
+                                        </DataTemplate>
+                                    </Setter.Value>
+                                </Setter>
                             </Style>
                         </DataGrid.ColumnHeaderStyle>
 
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow" BasedOn="{StaticResource DataGridRow.Excel}">
+                                <Setter Property="ContextMenu">
+                                    <Setter.Value>
+                                        <ContextMenu>
+                                            <MenuItem Header="Alternar Disponible (Alt+D)" Command="{Binding ToggleDisponibleCommand}" />
+                                            <MenuItem Header="Duplicar circuito (Ctrl+D)" Command="{Binding DataContext.DuplicateCircuitoCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
+
+                                            <MenuItem Header="Eliminar circuito (Ctrl+-)" Command="{Binding DataContext.RemoveCircuitoCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
+                                        </ContextMenu>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding EsDisponible}" Value="True">
+                                        <Setter Property="Background" Value="#FEF3C7" />
+                                        <Setter Property="ToolTip" Value="Circuito DISPONIBLE (Reserva de tablero) - Alt+D para alternar" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.RowStyle>
+
+                        <DataGrid.CellStyle>
+                            <Style TargetType="DataGridCell" BasedOn="{StaticResource DataGridCell.Excel}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding EsDisponible}" Value="True">
+                                        <Setter Property="Background" Value="#FEF3C7" />
+                                    </DataTrigger>
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding EsDisponible}" Value="True" />
+                                            <Condition Binding="{Binding RelativeSource={RelativeSource Self}, Path=IsFocused}" Value="True" />
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Background" Value="#FDE68A" />
+                                        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
+                                        <Setter Property="BorderThickness" Value="2" />
+                                    </MultiDataTrigger>
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding EsDisponible}" Value="True" />
+                                            <Condition Binding="{Binding RelativeSource={RelativeSource Self}, Path=IsSelected}" Value="True" />
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Background" Value="#FDE68A" />
+                                        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
+                                        <Setter Property="BorderThickness" Value="2" />
+                                    </MultiDataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.CellStyle>
+
                         <DataGrid.Columns>
 
-                                <!-- N°: clic = seleccionar todo el circuito (para Ctrl+C de fila completa) -->
+                                <!-- N°: clic = seleccionar todo el circuito (para Ctrl+C de fila completa) - Ctrl+D Disponible -->
                                 <DataGridTextColumn x:Name="NumeroColumn" Header="N°" Binding="{Binding Numero}" Width="34*" MinWidth="34" CanUserResize="False" IsReadOnly="True">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="TextBlock">
@@ -497,20 +613,34 @@
                                             <Setter Property="VerticalAlignment" Value="Center" />
                                             <Setter Property="FontWeight" Value="SemiBold" />
                                             <Setter Property="Cursor" Value="Hand" />
-                                            <Setter Property="ToolTip" Value="Clic: seleccionar circuito · Ctrl+C copia todo" />
+                                            <Setter Property="ToolTip" Value="Clic: seleccionar circuito - Alt+D marca Disponible" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding EsDisponible}" Value="True">
+                                                    <Setter Property="Foreground" Value="#B45309" />
+                                                    <Setter Property="FontWeight" Value="Bold" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
 
-                                <!-- SIST (Chip coloreado) -->
+                                <!-- SIST (Chip coloreado o DISP en ambar si esta disponible) -->
                                 <DataGridTemplateColumn x:Name="ColSist" Header="SIST" Width="38*" MinWidth="38" CanUserResize="False"
                                                         ClipboardContentBinding="{Binding Tipo}">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <Border Style="{StaticResource SistemaChipBorder}" HorizontalAlignment="Center"
-                                                    ToolTip="{Binding TipoNombre, Mode=OneWay, StringFormat='{}{0} (SIST)'}">
-                                                <TextBlock Text="{Binding Tipo}" Style="{StaticResource SistemaChipText}" />
-                                            </Border>
+                                            <Grid HorizontalAlignment="Center">
+                                                <Border Style="{StaticResource SistemaChipBorder}"
+                                                        Visibility="{Binding EsDisponible, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}"
+                                                        ToolTip="{Binding TipoNombre, Mode=OneWay, StringFormat='{}{0} (SIST)'}">
+                                                    <TextBlock Text="{Binding Tipo}" Style="{StaticResource SistemaChipText}" />
+                                                </Border>
+                                                <Border Background="#FDE68A" BorderBrush="#D97706" BorderThickness="1" CornerRadius="4" Padding="3,1"
+                                                        Visibility="{Binding EsDisponible, Converter={StaticResource BoolToVisibility}}"
+                                                        ToolTip="Circuito DISPONIBLE (Reserva) - Alt+D para alternar">
+                                                    <TextBlock Text="DISP" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="#92400E" />
+                                                </Border>
+                                            </Grid>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                     <DataGridTemplateColumn.CellEditingTemplate>
@@ -518,18 +648,22 @@
                                             <TextBox Text="{Binding Tipo, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
                                Style="{StaticResource DataGrid.CellEditTextBox}"
                                FontSize="{StaticResource Font.Size.xs}" HorizontalContentAlignment="Center"
-                               LostFocus="TipoEditor_LostFocus" />
+                               Tag="Tipo"
+                                                     Loaded="CatalogEditor_Loaded"
+                                                     PreviewKeyDown="CatalogEditor_PreviewKeyDown"
+                                                     TextChanged="CatalogEditor_TextChanged"
+                                                     LostFocus="TipoEditor_LostFocus" />
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellEditingTemplate>
                                 </DataGridTemplateColumn>
 
                                 <!-- ALIM: cantidad automática de conductores -->
                                 <DataGridTemplateColumn x:Name="ColAlim" Header="ALIM" Width="38*" MinWidth="38" CanUserResize="False"
-                                                        ClipboardContentBinding="{Binding NumConductores}">
+                                                        ClipboardContentBinding="{Binding Fase}">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <Border Style="{StaticResource FaseChipBorder}" HorizontalAlignment="Center">
-                                                <TextBlock Text="{Binding NumConductores, StringFormat=N0}" Style="{StaticResource FaseChipText}" />
+                                                <TextBlock Text="{Binding Fase}" Style="{StaticResource FaseChipText}" />
                                             </Border>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
@@ -538,7 +672,11 @@
                                             <TextBox Text="{Binding Fase, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
                                Style="{StaticResource DataGrid.CellEditTextBox}"
                                FontSize="{StaticResource Font.Size.xs}" HorizontalContentAlignment="Center"
-                               LostFocus="FaseEditor_LostFocus" />
+                               Tag="Fase"
+                                                     Loaded="CatalogEditor_Loaded"
+                                                     PreviewKeyDown="CatalogEditor_PreviewKeyDown"
+                                                     TextChanged="CatalogEditor_TextChanged"
+                                                     LostFocus="FaseEditor_LostFocus" />
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellEditingTemplate>
                                 </DataGridTemplateColumn>
@@ -594,8 +732,7 @@
                                                         </Style>
                                                     </Button.Style>
                                                 </Button>
-                                                <Popup x:Name="PisosPopup" PlacementTarget="{Binding ElementName=PisosBtn}"
-                               Placement="Bottom" VerticalOffset="4" StaysOpen="True" AllowsTransparency="True"
+                        <Popup x:Name="PisosPopup" PlacementTarget="{Binding ElementName=PisosBtn}" Placement="Bottom" VerticalOffset="4" StaysOpen="True" AllowsTransparency="True"
                                PopupAnimation="None"
                                IsOpen="{Binding PisosPopupOpen, Mode=TwoWay}"
                                Opened="PisosPopup_Opened" Closed="PisosPopup_Closed">
@@ -738,13 +875,15 @@
                                                               Foreground="{DynamicResource Brush.Blue}" /><Run Text=" m" />
                                                                     </TextBlock>
                                                                     <TextBlock DockPanel.Dock="Right" FontSize="{StaticResource Font.Size.2xs}" Foreground="{DynamicResource Brush.Muted}">
-                                    <Run Text="Esc" FontWeight="Bold" /><Run Text=" cierra" />
+                                    <Run Text="Enter" FontWeight="Bold" /><Run Text=" listo | " /><Run Text="2° Enter / ↓" FontWeight="Bold" /><Run Text=" sig. circuito | " /><Run Text="Esc" FontWeight="Bold" /><Run Text=" sale" />
                                                                     </TextBlock>
                                                                 </DockPanel>
                                                             </Border>
                                                         </StackPanel>
                                                     </Border>
                                                 </Popup>
+
+                                                
                                             </Grid>
                                             <DataTemplate.Triggers>
                                                 <Trigger SourceName="UbicCellRoot" Property="IsMouseOver" Value="True">
@@ -794,7 +933,6 @@
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
-
                                 <!-- L. PVC (M) — color verde -->
                                 <DataGridTextColumn x:Name="ColLPvc" Header="L. PVC"
                                     Binding="{Binding LargoTuberia, UpdateSourceTrigger=LostFocus, StringFormat=N0}"
@@ -811,8 +949,27 @@
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
 
+                                <!-- L. PVC 2 (M) - color verde (Ducto secundario) -->
+                                <DataGridTextColumn x:Name="ColLPvc2" Header="L. PVC 2"
+                                    Binding="{Binding LargoTuberia2, UpdateSourceTrigger=LostFocus, StringFormat=N0}"
+                                    Width="50*" MinWidth="48" CanUserResize="False"
+                                    Visibility="{Binding DataContext.ShowColSegundoDucto, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}"
+                                    EditingElementStyle="{StaticResource DataGrid.CellEditTextBox}">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="HorizontalAlignment" Value="Right" />
+                                            <Setter Property="VerticalAlignment" Value="Center" />
+                                            <Setter Property="Foreground" Value="{DynamicResource Brush.SuccessBright}" />
+                                            <Setter Property="FontWeight" Value="SemiBold" />
+                                            <Setter Property="Margin" Value="0,0,4,0" />
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+
+
+
                                 <!-- Conductor Bandeja: lista desplegable con filtro (catálogo TiposConductor) -->
-                                <DataGridTemplateColumn x:Name="ColCondBand" Header="CONDUCTOR BAND" Width="80*" MinWidth="76" CanUserResize="False"
+                                <DataGridTemplateColumn x:Name="ColCondBand" Header="CONDUCTOR&#x0a;BAND" Width="80*" MinWidth="76" CanUserResize="False"
                                         ClipboardContentBinding="{Binding ConductorDistribucion}"
                                         Visibility="{Binding DataContext.ShowColBandeja, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}">
                                     <DataGridTemplateColumn.CellTemplate>
@@ -823,20 +980,20 @@
                                     </DataGridTemplateColumn.CellTemplate>
                                      <DataGridTemplateColumn.CellEditingTemplate>
                                         <DataTemplate>
-                                            <ComboBox Style="{StaticResource DataGrid.CellEditCombo}"
-                                Tag="ConductorDistribucion"
-                                ItemsSource="{Binding DataContext.TiposConductor, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                Text="{Binding ConductorDistribucion, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
-                                FontSize="{StaticResource Font.Size.xs}"
-                                Loaded="FilterableCombo_Loaded"
-                                TextBoxBase.TextChanged="FilterableCombo_TextChanged"
-                                LostFocus="ConductorBandEditor_LostFocus" />
+                                            <TextBox Text="{Binding ConductorDistribucion, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                                     Style="{StaticResource DataGrid.CellEditTextBox}"
+                                                     FontSize="{StaticResource Font.Size.xs}"
+                                                     Tag="ConductorDistribucion"
+                                                     Loaded="CatalogEditor_Loaded"
+                                                     PreviewKeyDown="CatalogEditor_PreviewKeyDown"
+                                                     TextChanged="CatalogEditor_TextChanged"
+                                                     LostFocus="CatalogEditor_LostFocus" />
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellEditingTemplate>
                                 </DataGridTemplateColumn>
 
                                 <!-- Sección Bandeja: catálogo SeccionesConductor -->
-                                <DataGridTemplateColumn x:Name="ColSeccBand" Header="SECCIÓN BAND" Width="70*" MinWidth="66" CanUserResize="False"
+                                <DataGridTemplateColumn x:Name="ColSeccBand" Header="SECCIÓN&#x0a;BAND" Width="70*" MinWidth="66" CanUserResize="False"
                                         ClipboardContentBinding="{Binding SeccionDistribucion}"
                                         Visibility="{Binding DataContext.ShowColBandeja, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}">
                                     <DataGridTemplateColumn.CellTemplate>
@@ -847,20 +1004,20 @@
                                     </DataGridTemplateColumn.CellTemplate>
                                     <DataGridTemplateColumn.CellEditingTemplate>
                                         <DataTemplate>
-                                            <ComboBox Style="{StaticResource DataGrid.CellEditCombo}"
-                                Tag="SeccionDistribucion"
-                                ItemsSource="{Binding DataContext.SeccionesConductor, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                Text="{Binding SeccionDistribucion, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
-                                FontSize="{StaticResource Font.Size.xs}"
-                                Loaded="FilterableCombo_Loaded"
-                                TextBoxBase.TextChanged="FilterableCombo_TextChanged"
-                                LostFocus="SeccionBandEditor_LostFocus" />
+                                            <TextBox Text="{Binding SeccionDistribucion, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                                     Style="{StaticResource DataGrid.CellEditTextBox}"
+                                                     FontSize="{StaticResource Font.Size.xs}"
+                                                     Tag="SeccionDistribucion"
+                                                     Loaded="CatalogEditor_Loaded"
+                                                     PreviewKeyDown="CatalogEditor_PreviewKeyDown"
+                                                     TextChanged="CatalogEditor_TextChanged"
+                                                     LostFocus="CatalogEditor_LostFocus" />
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellEditingTemplate>
                                 </DataGridTemplateColumn>
 
                                 <!-- Total conductor bandeja — calculado rosa -->
-                                <DataGridTextColumn x:Name="ColTotBand" Header="TOTAL CONDUCTOR BAND"
+                                <DataGridTextColumn x:Name="ColTotBand" Header="TOTAL&#x0a;CONDU"
                                     Binding="{Binding LargoDistribucion, StringFormat=N0}"
                                     Width="58*" MinWidth="56" CanUserResize="False" IsReadOnly="True"
                                     Visibility="{Binding DataContext.ShowColBandeja, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}">
@@ -876,7 +1033,7 @@
                                 </DataGridTextColumn>
 
                                 <!-- Tipo tubería / canalización: catálogo TiposTuberia -->
-                                <DataGridTemplateColumn x:Name="ColTipoPvc" Header="TIPO TUB" Width="60*" MinWidth="56" CanUserResize="False"
+                                <DataGridTemplateColumn x:Name="ColTipoPvc" Header="TIPO&#x0a;TUB" Width="60*" MinWidth="56" CanUserResize="False"
                                         Visibility="{Binding DataContext.IsPerspectiveGenerales, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}"
                                         ClipboardContentBinding="{Binding TipoTuberia}">
                                     <DataGridTemplateColumn.CellTemplate>
@@ -887,14 +1044,14 @@
                                     </DataGridTemplateColumn.CellTemplate>
                                     <DataGridTemplateColumn.CellEditingTemplate>
                                         <DataTemplate>
-                                            <ComboBox Style="{StaticResource DataGrid.CellEditCombo}"
-                                Tag="TipoTuberia"
-                                ItemsSource="{Binding DataContext.TiposTuberia, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                Text="{Binding TipoTuberia, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
-                                FontSize="{StaticResource Font.Size.xs}"
-                                Loaded="FilterableCombo_Loaded"
-                                TextBoxBase.TextChanged="FilterableCombo_TextChanged"
-                                LostFocus="TipoTuberiaEditor_LostFocus" />
+                                            <TextBox Text="{Binding TipoTuberia, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                                     Style="{StaticResource DataGrid.CellEditTextBox}"
+                                                     FontSize="{StaticResource Font.Size.xs}"
+                                                     Tag="TipoTuberia"
+                                                     Loaded="CatalogEditor_Loaded"
+                                                     PreviewKeyDown="CatalogEditor_PreviewKeyDown"
+                                                     TextChanged="CatalogEditor_TextChanged"
+                                                     LostFocus="CatalogEditor_LostFocus" />
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellEditingTemplate>
                                 </DataGridTemplateColumn>
@@ -911,20 +1068,20 @@
                                     </DataGridTemplateColumn.CellTemplate>
                                     <DataGridTemplateColumn.CellEditingTemplate>
                                         <DataTemplate>
-                                            <ComboBox Style="{StaticResource DataGrid.CellEditCombo}"
-                                Tag="SeccionTuberia"
-                                ItemsSource="{Binding DataContext.DiametrosTuberia, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                Text="{Binding SeccionTuberia, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
-                                FontSize="{StaticResource Font.Size.xs}"
-                                Loaded="FilterableCombo_Loaded"
-                                TextBoxBase.TextChanged="FilterableCombo_TextChanged"
-                                LostFocus="SeccionTuberiaEditor_LostFocus" />
+                                            <TextBox Text="{Binding SeccionTuberia, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                                     Style="{StaticResource DataGrid.CellEditTextBox}"
+                                                     FontSize="{StaticResource Font.Size.xs}"
+                                                     Tag="SeccionTuberia"
+                                                     Loaded="CatalogEditor_Loaded"
+                                                     PreviewKeyDown="CatalogEditor_PreviewKeyDown"
+                                                     TextChanged="CatalogEditor_TextChanged"
+                                                     LostFocus="CatalogEditor_LostFocus" />
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellEditingTemplate>
                                 </DataGridTemplateColumn>
 
                                 <!-- Total ducto: corresponde exactamente al largo ingresado en L. PVC -->
-                                <DataGridTextColumn x:Name="ColTotalDucto" Header="TOTAL DUCTO"
+                                <DataGridTextColumn x:Name="ColTotalDucto" Header="TOTAL&#x0a;DUCTO"
                                     Binding="{Binding TotalDucto, StringFormat=N0}"
                                     Width="62*" MinWidth="58" CanUserResize="False" IsReadOnly="True"
                                     Visibility="{Binding DataContext.IsPerspectiveGenerales, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}">
@@ -939,8 +1096,72 @@
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
 
+                                <!-- Tipo tuberia 2 / canalizacion secundaria: catalogo TiposTuberia -->
+                                <DataGridTemplateColumn x:Name="ColTipoPvc2" Header="TIPO&#x0a;TUB 2" Width="60*" MinWidth="56" CanUserResize="False"
+                                        Visibility="{Binding DataContext.ShowColSegundoDucto, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}"
+                                        ClipboardContentBinding="{Binding TipoTuberia2}">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding TipoTuberia2}"
+                                  HorizontalAlignment="Center" VerticalAlignment="Center" Margin="2,0" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                    <DataGridTemplateColumn.CellEditingTemplate>
+                                        <DataTemplate>
+                                            <TextBox Text="{Binding TipoTuberia2, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                                     Style="{StaticResource DataGrid.CellEditTextBox}"
+                                                     FontSize="{StaticResource Font.Size.xs}"
+                                                     Tag="TipoTuberia2"
+                                                     Loaded="CatalogEditor_Loaded"
+                                                     PreviewKeyDown="CatalogEditor_PreviewKeyDown"
+                                                     TextChanged="CatalogEditor_TextChanged"
+                                                     LostFocus="CatalogEditor_LostFocus" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellEditingTemplate>
+                                </DataGridTemplateColumn>
+
+                                <!-- Ducto 2: lista desplegable con filtro (catalogo DiametrosTuberia) -->
+                                <DataGridTemplateColumn x:Name="ColDuctoPvc2" Header="DIAM&#x0a;Ø 2" Width="54*" MinWidth="52" CanUserResize="False"
+                                        ClipboardContentBinding="{Binding SeccionTuberia2}"
+                                        Visibility="{Binding DataContext.ShowColSegundoDucto, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding SeccionTuberia2}"
+                                  HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                    <DataGridTemplateColumn.CellEditingTemplate>
+                                        <DataTemplate>
+                                            <TextBox Text="{Binding SeccionTuberia2, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                                     Style="{StaticResource DataGrid.CellEditTextBox}"
+                                                     FontSize="{StaticResource Font.Size.xs}"
+                                                     Tag="SeccionTuberia2"
+                                                     Loaded="CatalogEditor_Loaded"
+                                                     PreviewKeyDown="CatalogEditor_PreviewKeyDown"
+                                                     TextChanged="CatalogEditor_TextChanged"
+                                                     LostFocus="CatalogEditor_LostFocus" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellEditingTemplate>
+                                </DataGridTemplateColumn>
+
+                                <!-- Total ducto 2: corresponde exactamente al largo ingresado en L. PVC 2 -->
+                                <DataGridTextColumn x:Name="ColTotalDucto2" Header="TOTAL&#x0a;DUCTO 2"
+                                    Binding="{Binding TotalDucto2, StringFormat=N0}"
+                                    Width="62*" MinWidth="58" CanUserResize="False" IsReadOnly="True"
+                                    Visibility="{Binding DataContext.ShowColSegundoDucto, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="HorizontalAlignment" Value="Right" />
+                                            <Setter Property="VerticalAlignment" Value="Center" />
+                                            <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+                                            <Setter Property="FontWeight" Value="SemiBold" />
+                                            <Setter Property="Margin" Value="0,0,4,0" />
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+
                                 <!-- Conductor PVC: catálogo TiposConductor -->
-                                <DataGridTemplateColumn x:Name="ColCondPvc" Header="CONDUCTOR PVC" Width="78*" MinWidth="72" CanUserResize="False"
+                                <DataGridTemplateColumn x:Name="ColCondPvc" Header="CONDUCTOR&#x0a;PVC" Width="78*" MinWidth="72" CanUserResize="False"
                                         ClipboardContentBinding="{Binding ConductorDerivacion}"
                                         Visibility="{Binding DataContext.IsPerspectiveGenerales, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}">
                                     <DataGridTemplateColumn.CellTemplate>
@@ -951,20 +1172,20 @@
                                     </DataGridTemplateColumn.CellTemplate>
                                     <DataGridTemplateColumn.CellEditingTemplate>
                                         <DataTemplate>
-                                            <ComboBox Style="{StaticResource DataGrid.CellEditCombo}"
-                                Tag="ConductorDerivacion"
-                                ItemsSource="{Binding DataContext.TiposConductor, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                Text="{Binding ConductorDerivacion, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
-                                FontSize="{StaticResource Font.Size.xs}"
-                                Loaded="FilterableCombo_Loaded"
-                                TextBoxBase.TextChanged="FilterableCombo_TextChanged"
-                                LostFocus="ConductorPvcEditor_LostFocus" />
+                                            <TextBox Text="{Binding ConductorDerivacion, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                                     Style="{StaticResource DataGrid.CellEditTextBox}"
+                                                     FontSize="{StaticResource Font.Size.xs}"
+                                                     Tag="ConductorDerivacion"
+                                                     Loaded="CatalogEditor_Loaded"
+                                                     PreviewKeyDown="CatalogEditor_PreviewKeyDown"
+                                                     TextChanged="CatalogEditor_TextChanged"
+                                                     LostFocus="CatalogEditor_LostFocus" />
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellEditingTemplate>
                                 </DataGridTemplateColumn>
 
                                 <!-- Sección PVC: catálogo SeccionesConductor -->
-                                <DataGridTemplateColumn x:Name="ColSeccPvc" Header="SECCIÓN PVC" Width="66*" MinWidth="60" CanUserResize="False"
+                                <DataGridTemplateColumn x:Name="ColSeccPvc" Header="SECCIÓN&#x0a;PVC" Width="66*" MinWidth="60" CanUserResize="False"
                                         ClipboardContentBinding="{Binding SeccionDerivacion}"
                                         Visibility="{Binding DataContext.IsPerspectiveGenerales, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}">
                                     <DataGridTemplateColumn.CellTemplate>
@@ -975,20 +1196,20 @@
                                     </DataGridTemplateColumn.CellTemplate>
                                     <DataGridTemplateColumn.CellEditingTemplate>
                                         <DataTemplate>
-                                            <ComboBox Style="{StaticResource DataGrid.CellEditCombo}"
-                                Tag="SeccionDerivacion"
-                                ItemsSource="{Binding DataContext.SeccionesConductor, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                Text="{Binding SeccionDerivacion, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
-                                FontSize="{StaticResource Font.Size.xs}"
-                                Loaded="FilterableCombo_Loaded"
-                                TextBoxBase.TextChanged="FilterableCombo_TextChanged"
-                                LostFocus="SeccionPvcEditor_LostFocus" />
+                                            <TextBox Text="{Binding SeccionDerivacion, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                                     Style="{StaticResource DataGrid.CellEditTextBox}"
+                                                     FontSize="{StaticResource Font.Size.xs}"
+                                                     Tag="SeccionDerivacion"
+                                                     Loaded="CatalogEditor_Loaded"
+                                                     PreviewKeyDown="CatalogEditor_PreviewKeyDown"
+                                                     TextChanged="CatalogEditor_TextChanged"
+                                                     LostFocus="CatalogEditor_LostFocus" />
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellEditingTemplate>
                                 </DataGridTemplateColumn>
 
                                 <!-- Total conductor PVC — calculado verde -->
-                                <DataGridTextColumn x:Name="ColTotPvc" Header="TOTAL CONDUCTOR PVC"
+                                <DataGridTextColumn x:Name="ColTotPvc" Header="TOTAL&#x0a;CONDU"
                                     Binding="{Binding LargoDerivacion, StringFormat=N0}"
                                     Width="58*" MinWidth="56" CanUserResize="False" IsReadOnly="True">
                                     <DataGridTextColumn.ElementStyle>
@@ -1003,7 +1224,7 @@
                                 </DataGridTextColumn>
 
                                 <!-- Terminal flexible: cantidad de salidas -->
-                                <DataGridTextColumn x:Name="ColTmfCant" Header="TERM. FLEXIBLE — CANT."
+                                <DataGridTextColumn x:Name="ColTmfCant" Header="CANT."
                                     Binding="{Binding TmfCantidad}"
                                     Width="40*" MinWidth="38" CanUserResize="False" IsReadOnly="True"
                                     Visibility="{Binding DataContext.ShowColTmf, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}">
@@ -1018,7 +1239,7 @@
                                 </DataGridTextColumn>
 
                                 <!-- Terminal flexible: diámetro heredado de DIAM Ø -->
-                                <DataGridTextColumn x:Name="ColTmfMed" Header="TERM. FLEXIBLE — DIAM Ø"
+                                <DataGridTextColumn x:Name="ColTmfMed" Header="DIAM Ø"
                                     Binding="{Binding TmfMedida}"
                                     Width="50*" MinWidth="48" CanUserResize="False" IsReadOnly="True"
                                     Visibility="{Binding DataContext.ShowColTmf, ElementName=CircuitosGrid, Converter={StaticResource BoolToVisibility}}">
@@ -1033,7 +1254,7 @@
                                 </DataGridTextColumn>
 
                                 <!-- Elementos y accesorios: acción auxiliar fuera de las 17 columnas de cálculo -->
-                                <DataGridTemplateColumn x:Name="ColArtefactos" Header="ELEMENTOS Y ACCESORIOS"
+                                <DataGridTemplateColumn x:Name="ColArtefactos" Header="ELEMENTOS Y&#x0a;ACCESORIOS"
                                                         Width="150*" MinWidth="132" CanUserResize="False">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
@@ -1053,6 +1274,68 @@
                             </DataGrid.Columns>
                         </DataGrid>
 
+                        <!-- Popup flotante moderno de catalogo (Estilo Google Sheets / Excel / Notion) -->
+                        <Popup x:Name="CatalogPopup"
+                               AllowsTransparency="True"
+                               StaysOpen="False"
+                               Placement="Bottom"
+                               PopupAnimation="Fade"
+                               Focusable="False">
+                            <Border MinWidth="120" MaxWidth="280" MaxHeight="220"
+                                    Background="{DynamicResource Brush.Surface}"
+                                    BorderBrush="{DynamicResource Brush.Line}"
+                                    BorderThickness="1"
+                                    CornerRadius="8"
+                                    Padding="4"
+                                    Margin="0,2,0,0">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="#0F172A" Opacity="0.16" BlurRadius="12" ShadowDepth="4" Direction="270" />
+                                </Border.Effect>
+                                <ListBox x:Name="CatalogListBox"
+                                         Background="Transparent"
+                                         BorderThickness="0"
+                                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                         ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                         Focusable="False"
+                                         SelectionMode="Single"
+                                         PreviewMouseLeftButtonDown="CatalogListBox_PreviewMouseLeftButtonDown">
+                                    <ListBox.ItemContainerStyle>
+                                        <Style TargetType="ListBoxItem">
+                                            <Setter Property="Padding" Value="8,5" />
+                                            <Setter Property="Margin" Value="1,1" />
+                                            <Setter Property="Cursor" Value="Hand" />
+                                            <Setter Property="FontSize" Value="{StaticResource Font.Size.xs}" />
+                                            <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+                                            <Setter Property="Focusable" Value="False" />
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="ListBoxItem">
+                                                        <Border x:Name="ItemBorder"
+                                                                Background="Transparent"
+                                                                CornerRadius="5"
+                                                                Padding="{TemplateBinding Padding}">
+                                                            <ContentPresenter VerticalAlignment="Center" />
+                                                        </Border>
+                                                        <ControlTemplate.Triggers>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource Brush.Surface2}" />
+                                                            </Trigger>
+                                                            <Trigger Property="IsSelected" Value="True">
+                                                                <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+                                                                <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
+                                                                <Setter Property="FontWeight" Value="SemiBold" />
+                                                            </Trigger>
+                                                        </ControlTemplate.Triggers>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </ListBox.ItemContainerStyle>
+                                </ListBox>
+                            </Border>
+                        </Popup>
+
+
                         <ctrl:DataGridSearchOverlay x:Name="CircuitosSearchOverlay"
                                                     TargetGrid="{Binding ElementName=CircuitosGrid}"
                                                     HorizontalAlignment="Right"
@@ -1067,6 +1350,25 @@
 
             </Grid>
         </DockPanel>
+
+        <!-- Drawers Laterales Docked C.SC (Alt+C / Alt+A) - 100% FLUSH A LA DERECHA Y AL FONDO -->
+        <Grid Grid.Column="1">
+            <local:CubicacionScCatalogoDrawerControl x:Name="CatalogoDrawerPanel"
+                                                     DataContext="{Binding CatalogoDrawer}"
+                                                     Width="480"
+                                                     Visibility="{Binding IsOpen, Converter={StaticResource BoolToVisibility}, FallbackValue=Collapsed}" />
+
+            <local:CubicacionScArtefactosDrawerControl x:Name="ArtefactosDrawerPanel"
+                                                       DataContext="{Binding ArtefactosDrawer}"
+                                                       Width="490"
+                                                       Visibility="{Binding IsOpen, Converter={StaticResource BoolToVisibility}, FallbackValue=Collapsed}" />
+
+            <local:CubicacionScCambioLineaDrawerControl x:Name="CambioLineaDrawerPanel"
+                                                        DataContext="{Binding CambioLineaDrawer}"
+                                                        Width="480"
+                                                        Visibility="{Binding IsOpen, Converter={StaticResource BoolToVisibility}, FallbackValue=Collapsed}" />
+        </Grid>
+    </Grid>
 
         <ctrl:SkeletonOverlayControl Panel.ZIndex="20" Message="Cargando cubicación de circuitos…"
                                      Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibility}}" />

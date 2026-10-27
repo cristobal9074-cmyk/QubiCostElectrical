@@ -119,35 +119,10 @@ public sealed partial class ItemizadoViewModel
         ShellNotificationService.Instance.ShowSuccess("Partida duplicada", "Partida y su estructura duplicadas con éxito.");
     }
 
-    private void DeleteSelected()
-    {
-        if (session.IsReadOnly)
-            return;
-        if (!IsSelectionVisible || SelectedRow == null)
-            return;
-        int index = session.Itemizado.FindIndex(x => x.Id == SelectedRow.Id);
-        if (index < 0)
-            return;
+    private void DeleteSelected() => deletionCoordinator.DeleteRows(null, SelectedRow);
 
-        int affected = workspace.CountDeleteAffectedRows(presenter, index);
-        string description = workspace.BuildDeleteDescription(session, index);
-        if (!WpfDialogService.Confirm("Eliminar",
-                presenter.BuildDeleteConfirmationMessage(description, affected), isWarning: true))
-            return;
-
-        string undoDesc = affected > 1
-            ? $"Eliminación de {affected} filas"
-            : (!string.IsNullOrWhiteSpace(SelectedRow.Item) ? $"Eliminación de partida {SelectedRow.Item}" : "Eliminación de partida");
-        undo.PushUndoPoint(session, undoDesc);
-        var result = presenter.DeleteAt(index);
-        pendingSelectionId = result.SelectedIndex >= 0
-            ? session.Itemizado.ElementAtOrDefault(result.SelectedIndex)?.Id
-            : null;
-        RefreshAfterStructureChange();
-        StatusMessage = affected > 1 ? $"{affected:N0} filas eliminadas." : "Fila eliminada.";
-        ShellNotificationService.Instance.ShowInfo("Itemizado", affected > 1 ? $"{affected:N0} filas eliminadas." : "Fila eliminada.");
-    }
-
+    public void DeleteSelectedRows(IReadOnlyList<ItemizadoRowVm>? rowsToDelete = null) =>
+        deletionCoordinator.DeleteRows(rowsToDelete, SelectedRow);
     private void ClearAll()
     {
         if (session.IsReadOnly)

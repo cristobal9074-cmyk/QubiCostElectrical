@@ -26,6 +26,7 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
     private readonly IItemizadoWorkspaceService workspace;
     private readonly ItemizadoImportCoordinator importCoordinator;
     private readonly ItemizadoClipboardPasteCoordinator pasteCoordinator;
+    private readonly ItemizadoDeletionCoordinator deletionCoordinator;
     private readonly List<ItemizadoRowVm> allRows = new();
     private readonly Dictionary<string, ItemizadoRowVm> rowsById = new(StringComparer.OrdinalIgnoreCase);
     private readonly ItemizadoBreadcrumbCoordinator breadcrumbCoordinator;
@@ -80,6 +81,12 @@ public sealed partial class ItemizadoViewModel : SessionAwareViewModelBase, IRef
             SelectedRow = row;
             EnsureSelectionVisible();
         });
+        deletionCoordinator = new ItemizadoDeletionCoordinator(
+            session, undo, presenter, workspace,
+            RefreshAfterStructureChange,
+            id => pendingSelectionId = id,
+            msg => StatusMessage = msg,
+            PassesCurrentFilter);
         rowsView = CollectionViewSource.GetDefaultView(Rows);
         rowsView.Filter = FilterRow;
 
