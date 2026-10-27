@@ -45,6 +45,22 @@ public partial class App : Application
         GlobalErrorHandler.Initialize(host);
         WpfAppHost.Logger?.Info("Inicio", $"Servicios inicializados en {startupStopwatch.ElapsedMilliseconds} ms.");
         QubiCostElectrical.Wpf.DesignSystem.ThemeManager.Initialize();
+
+        // Si se invoca con --installer / --setup o si es la primera instalacion en este equipo
+        bool isExplicitInstaller = Array.Exists(e.Args, a => string.Equals(a, "--installer", StringComparison.OrdinalIgnoreCase) || string.Equals(a, "--setup", StringComparison.OrdinalIgnoreCase));
+        bool isFreshInstall = !System.IO.File.Exists(UserPreferencesStore.PreferencesFilePath);
+
+        if (isExplicitInstaller || isFreshInstall)
+        {
+            var wizard = new Features.Installer.InstallerWizardWindow(host.UserPreferencesStore);
+            wizard.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+            var result = wizard.ShowDialog();
+            if (isExplicitInstaller && result != true)
+            {
+                Shutdown();
+                return;
+            }
+        }
         splash = new SplashWindow(() =>
         {
             splash.Dispatcher.Invoke(() =>
