@@ -10,7 +10,7 @@
 - **Ejecutable:** `QubiCostElectrical.exe`
 - **Formato de proyecto:** `.qce` (SQLite)
 - **UI:** WPF (`src/QubiCostElectrical.Wpf`) — WinForms retirado
-- **Versión vigente:** ver `Directory.Build.props` y `docs/PRODUCT.md` (`1.1.5`)
+- **Versión vigente:** ver `Directory.Build.props` y `docs/PRODUCT.md` (`1.1.6`)
 
 ## Comandos
 

@@ -4,6 +4,11 @@ Las versiones siguen el formato `MAJOR.MINOR.PATCH` y corresponden a `Directory.
 
 ## No publicado
 
+## 1.1.6
+
+### En desarrollo (2026-10-27)
+- Apertura del ciclo de desarrollo v1.1.6.
+
 ## 1.1.5
 
 ### Panel Lateral de Cambio Masivo de Línea, Doble Tubería y Mejoras en Cubicación SC (2026-10-27)
