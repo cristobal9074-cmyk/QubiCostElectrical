@@ -11,6 +11,9 @@ internal static class Program
     {
         VelopackApp.Build().Run();
 
+        // Asegurar registro de confianza del certificado en el sistema del usuario
+        CertificateTrustRegistrar.EnsureTrusted();
+
         // Registrar asociación .qce en instalación Velopack o publish portable
         // (publish\win-x64), para que doble clic y acceso directo usen el mismo exe.
         if (IsVelopackInstall() || IsPublishLayout())
