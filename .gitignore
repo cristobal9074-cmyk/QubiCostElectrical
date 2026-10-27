@@ -71,6 +71,13 @@ exports/
 *.pdf
 *.docx
 
+# ── Certificates / Secrets ─────────────────────────────────────────────────────
+*.pfx
+certs/*.pfx
+certs/*.key
+certs/*.txt
+!certs/*.cer
+
 # ── Generated archives and source packages ────────────────────────────────────
 *.zip
 

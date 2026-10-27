@@ -87,6 +87,19 @@ if (-not $Paths -or $Paths.Count -eq 0) {
 $certPath = $env:CODE_SIGNING_CERT_PFX
 $certPassword = $env:CODE_SIGNING_CERT_PASSWORD
 
+# Fallback automático: buscar certificado en carpeta certs/ si no se definieron variables
+if ([string]::IsNullOrWhiteSpace($certPath)) {
+    $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
+    $defaultPfx = Join-Path $repoRoot "certs\QubiCostElectrical-CodeSigning.pfx"
+    if (Test-Path $defaultPfx) {
+        $certPath = $defaultPfx
+        if ([string]::IsNullOrWhiteSpace($certPassword)) {
+            $certPassword = "QubiCost2026.CodeSign!"
+        }
+        Write-Host "Usando certificado local por defecto: $certPath" -ForegroundColor Cyan
+    }
+}
+
 if ([string]::IsNullOrWhiteSpace($certPath) -or [string]::IsNullOrWhiteSpace($certPassword)) {
     $message = "Firma omitida: faltan CODE_SIGNING_CERT_PFX y/o CODE_SIGNING_CERT_PASSWORD."
     if ($Strict) {
@@ -100,33 +113,53 @@ if (-not (Test-Path -LiteralPath $certPath)) {
     Exit-WithCode -Code 1 -Message "Certificado no encontrado en CODE_SIGNING_CERT_PFX: $certPath" -Color Red
 }
 
-$signTool = Get-SignToolPath
-if (-not $signTool) {
-    Exit-WithCode -Code 1 -Message "signtool.exe no fue encontrado en PATH ni en Windows Kits 10." -Color Red
-}
-
 $targets = Resolve-SigningTargets -InputPaths $Paths
 if (-not $targets -or $targets.Count -eq 0) {
     Exit-WithCode -Code 0 -Message "No se encontraron archivos coincidentes para firmar." -Color Green
 }
 
-Write-Host "Usando signtool: $signTool" -ForegroundColor Cyan
-Write-Host "Archivos a firmar: $($targets.Count)" -ForegroundColor Cyan
+$signTool = Get-SignToolPath
 
-foreach ($target in $targets) {
-    Write-Host "Firmando $target" -ForegroundColor Yellow
+if ($signTool) {
+    Write-Host "Usando signtool: $signTool" -ForegroundColor Cyan
+    Write-Host "Archivos a firmar: $($targets.Count)" -ForegroundColor Cyan
 
-    & $signTool sign `
-        /fd SHA256 `
-        /td SHA256 `
-        /tr "http://timestamp.digicert.com" `
-        /f $certPath `
-        /p $certPassword `
-        $target
+    foreach ($target in $targets) {
+        Write-Host "Firmando $target (signtool)" -ForegroundColor Yellow
 
-    if ($LASTEXITCODE -ne 0) {
-        Exit-WithCode -Code 1 -Message "La firma falló para: $target" -Color Red
+        & $signTool sign `
+            /fd SHA256 `
+            /td SHA256 `
+            /tr "http://timestamp.digicert.com" `
+            /f $certPath `
+            /p $certPassword `
+            $target
+
+        if ($LASTEXITCODE -ne 0) {
+            Exit-WithCode -Code 1 -Message "La firma falló para: $target" -Color Red
+        }
+    }
+} else {
+    Write-Host "signtool.exe no detectado en el sistema. Usando motor nativo Set-AuthenticodeSignature..." -ForegroundColor Cyan
+    Write-Host "Archivos a firmar: $($targets.Count)" -ForegroundColor Cyan
+
+    $secPassword = ConvertTo-SecureString -String $certPassword -Force -AsPlainText
+    $x509Cert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2($certPath, $secPassword)
+
+    foreach ($target in $targets) {
+        Write-Host "Firmando $target (Set-AuthenticodeSignature)" -ForegroundColor Yellow
+
+        $sig = Set-AuthenticodeSignature `
+            -FilePath $target `
+            -Certificate $x509Cert `
+            -TimestampServer "http://timestamp.digicert.com" `
+            -HashAlgorithm SHA256
+
+        if (-not $sig -or -not $sig.SignerCertificate) {
+            Exit-WithCode -Code 1 -Message "La firma falló para $($target): $($sig.StatusMessage)" -Color Red
+        }
+        Write-Host "  OK Firmado digitalmente por: $($sig.SignerCertificate.Subject)" -ForegroundColor Green
     }
 }
 
-Exit-WithCode -Code 0 -Message "Firma Authenticode completada." -Color Green
+Exit-WithCode -Code 0 -Message "Firma Authenticode completada exitosamente." -Color Green
