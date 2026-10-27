@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QUBI COST® ELECTRICAL 2026 - Asistente de Instalación (Boceto Arquitectónico)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    /* ═════════════════════════════════════════════════════════════════════
+       ESTILO: DRAFTING CANVAS & UI/UX WIREFRAME SKETCH
+       Fidelidad 1:1 con el boceto arquitectónico en papel milimetrado
+       ═════════════════════════════════════════════════════════════════════ */
+    :root {
+      --paper-bg: #F7F5EE;
+      --paper-line: rgba(50, 60, 70, 0.08);
+      --graphite-ink: #182026;
+      --graphite-mid: #4A5568;
+      --graphite-light: #718096;
+      --graphite-border: #2D3748;
+      --accent-blue: #0284C7;
+      --card-bg: #FFFFFF;
+      --card-shadow: 4px 4px 0px rgba(24, 32, 38, 0.14);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+
+    body {
+      font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #E8E4DA;
+      color: var(--graphite-ink);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+
+    /* ── Barra Superior de Control de Boceto ── */
+    .top-meta-bar {
+      width: 1040px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      color: var(--graphite-mid);
+    }
+    .toggle-view-btn {
+      background: #FFFFFF;
+      border: 1.5px solid var(--graphite-border);
+      padding: 5px 14px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 11.5px;
+      cursor: pointer;
+      color: var(--graphite-ink);
+      box-shadow: 2px 2px 0px var(--graphite-border);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.1s;
+    }
+    .toggle-view-btn:hover {
+      transform: translate(-1px, -1px);
+      box-shadow: 3px 3px 0px var(--graphite-border);
+      background: #FAF8F5;
+    }
+
+    /* ── Tablero Principal de Dibujo Arquitectónico ── */
+    .drafting-canvas {
+      width: 1040px;
+      background: var(--paper-bg);
+      border: 2px solid var(--graphite-border);
+      box-shadow: 
+        8px 8px 0px rgba(24, 32, 38, 0.18),
+        0 20px 45px rgba(0, 0, 0, 0.2);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Retícula de papel milimetrado técnico */
+    .paper-grid {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-image: 
+        linear-gradient(var(--paper-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--paper-line) 1px, transparent 1px);
+      background-size: 24px 24px;
+      pointer-events: none;
+    }
+
+    /* Líneas de registro en esquinas */
+    .corner-mark {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      border-color: var(--graphite-border);
+      border-style: solid;
+      pointer-events: none;
+      z-index: 5;
+    }
+    .c-tl { top: 8px; left: 8px; border-width: 2px 0 0 2px; }
+    .c-tr { top: 8px; right: 8px; border-width: 2px 2px 0 0; }
+    .c-bl { bottom: 8px; left: 8px; border-width: 0 0 2px 2px; }
+    .c-br { bottom: 8px; right: 8px; border-width: 0 2px 2px 0; }
+
+    /* ── 1. Cabecera en Estilo Rotulación Técnica ── */
+    .header-zone {
+      padding: 22px 32px 16px;
+      border-bottom: 2px solid var(--graphite-border);
+      position: relative;
+      z-index: 2;
+      background: rgba(255, 255, 255, 0.5);
+    }
+    .header-zone h1 {
+      font-size: 27px;
+      font-weight: 800;
+      letter-spacing: -0.6px;
+      text-transform: uppercase;
+      color: var(--graphite-ink);
+      line-height: 1.1;
+    }
+
+    /* ── 2. Escenario Central: 2 Columnas (Grid 2x2 de Cards + Logo Geométrico) ── */
+    .middle-zone {
+      display: grid;
+      grid-template-columns: 740px 1fr;
+      position: relative;
+      z-index: 2;
+      border-bottom: 2px solid var(--graphite-border);
+    }
+
+    /* Grid 2x2 para las 4 tarjetas de módulos */
+    .cards-grid {
+      padding: 22px 26px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      border-right: 2px solid var(--graphite-border);
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .sketch-card {
+      background: var(--card-bg);
+      border: 1.8px solid var(--graphite-border);
+      padding: 16px;
+      box-shadow: var(--card-shadow);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      cursor: pointer;
+      transition: all 0.12s ease;
+      position: relative;
+    }
+    .sketch-card:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0px rgba(24, 32, 38, 0.22);
+      border-color: var(--accent-blue);
+    }
+    .sketch-card.selected {
+      border-color: var(--accent-blue);
+      box-shadow: 4px 4px 0px rgba(2, 132, 199, 0.3);
+    }
+
+    .card-icon-box {
+      width: 58px;
+      height: 58px;
+      border: 1.5px solid var(--graphite-border);
+      background: #FAF8F5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .card-icon-box svg {
+      width: 38px;
+      height: 38px;
+      stroke: var(--graphite-ink);
+      stroke-width: 1.8;
+      fill: none;
+    }
+
+    .card-info {
+      flex: 1;
+    }
+    .card-title-main {
+      font-size: 15px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: -0.3px;
+      color: var(--graphite-ink);
+      line-height: 1.2;
+    }
+    .card-subtitle {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--graphite-mid);
+      margin-top: 3px;
+      font-weight: 600;
+    }
+
+    .card-secondary-icon {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.8;
+    }
+    .card-secondary-icon svg {
+      width: 24px;
+      height: 24px;
+      stroke: var(--graphite-mid);
+      stroke-width: 1.6;
+      fill: none;
+    }
+
+    /* Columna Derecha: Boceto Isométrico del Cubo */
+    .sketch-logo-stage {
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .isometric-cube-canvas {
+      width: 180px;
+      height: 180px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .cube-guide-grid {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-image: 
+        linear-gradient(rgba(2, 132, 199, 0.15) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(2, 132, 199, 0.15) 1px, transparent 1px);
+      background-size: 20px 20px;
+      border: 1px dashed var(--graphite-light);
+    }
+
+    .cube-drawing {
+      width: 140px;
+      height: 140px;
+      position: relative;
+      z-index: 2;
+      filter: drop-shadow(4px 8px 10px rgba(0, 0, 0, 0.12));
+    }
+
+    .brand-meta-label {
+      margin-top: 14px;
+      text-align: center;
+    }
+    .brand-meta-label h3 {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--graphite-ink);
+      letter-spacing: 0.5px;
+    }
+    .brand-meta-label p {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--graphite-mid);
+      margin-top: 2px;
+    }
+
+    /* ── 3. Zona de Entradas de Rutas (Paths) ── */
+    .paths-zone {
+      padding: 18px 32px 14px;
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.6);
+      border-bottom: 2px solid var(--graphite-border);
+    }
+
+    .path-row-sketch {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .folder-label-box {
+      width: 170px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: -0.2px;
+      color: var(--graphite-ink);
+    }
+    .folder-label-box svg {
+      width: 18px;
+      height: 18px;
+      stroke: var(--graphite-ink);
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .input-box-sketch {
+      flex: 1;
+      height: 34px;
+      background: #FFFFFF;
+      border: 1.8px solid var(--graphite-border);
+      border-radius: 2px;
+      padding: 0 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--graphite-ink);
+      outline: none;
+      box-shadow: inset 1px 1px 2px rgba(0,0,0,0.06);
+    }
+    .input-box-sketch:focus {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.2);
+    }
+
+    .btn-sketch-action {
+      height: 34px;
+      padding: 0 18px;
+      background: #FFFFFF;
+      border: 1.8px solid var(--graphite-border);
+      border-radius: 2px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--graphite-ink);
+      cursor: pointer;
+      box-shadow: 2px 2px 0px var(--graphite-border);
+      transition: all 0.1s;
+    }
+    .btn-sketch-action:hover {
+      transform: translate(-1px, -1px);
+      box-shadow: 3px 3px 0px var(--graphite-border);
+      background: #FAF8F5;
+    }
+    .btn-sketch-action:active {
+      transform: translate(1px, 1px);
+      box-shadow: 1px 1px 0px var(--graphite-border);
+    }
+
+    .disk-space-note {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      color: var(--graphite-mid);
+      margin-left: 184px;
+    }
+    .disk-space-note strong {
+      color: var(--graphite-ink);
+    }
+
+    /* ── 4. Pie de Página con Botonera ── */
+    .footer-zone {
+      padding: 16px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+      z-index: 2;
+      background: rgba(255, 255, 255, 0.4);
+    }
+    .footer-left-buttons, .footer-right-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-footer {
+      height: 36px;
+      padding: 0 22px;
+      background: #FFFFFF;
+      border: 1.8px solid var(--graphite-border);
+      border-radius: 2px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--graphite-ink);
+      cursor: pointer;
+      box-shadow: 2px 2px 0px var(--graphite-border);
+      transition: all 0.1s;
+    }
+    .btn-footer:hover {
+      transform: translate(-1px, -1px);
+      box-shadow: 3px 3px 0px var(--graphite-border);
+    }
+    .btn-footer.btn-install {
+      background: #D1D5DB;
+      border-color: var(--graphite-border);
+      font-weight: 800;
+      color: var(--graphite-ink);
+      box-shadow: 3px 3px 0px var(--graphite-border);
+    }
+    .btn-footer.btn-install:hover {
+      background: #0284C7;
+      color: #FFFFFF;
+    }
+
+    /* ── Modal para Ver la Imagen Original Generada ── */
+    .image-modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.85);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      backdrop-filter: blur(5px);
+    }
+    .image-modal-card {
+      max-width: 95vw;
+      max-height: 95vh;
+      background: #FFFFFF;
+      border: 2px solid var(--graphite-border);
+      box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+      border-radius: 4px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .image-modal-title {
+      padding: 10px 16px;
+      background: #182026;
+      color: #FFFFFF;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .image-modal-card img {
+      max-width: 100%;
+      max-height: 82vh;
+      object-fit: contain;
+      display: block;
+    }
+
+    /* ── Capa de Progreso de Instalación ── */
+    .progress-layer {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(247, 245, 238, 0.98);
+      z-index: 150;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+    }
+    .progress-box {
+      width: 560px;
+      background: #FFFFFF;
+      border: 2px solid var(--graphite-border);
+      padding: 30px;
+      box-shadow: 6px 6px 0px var(--graphite-border);
+      text-align: center;
+    }
+    .bar-trough {
+      width: 100%;
+      height: 22px;
+      border: 2px solid var(--graphite-border);
+      background: #FAF8F5;
+      margin: 18px 0 10px;
+    }
+    .bar-fill {
+      height: 100%;
+      width: 0%;
+      background: repeating-linear-gradient(45deg, #0284C7, #0284C7 10px, #0369A1 10px, #0369A1 20px);
+      transition: width 0.15s ease-out;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Barra de Metadatos Superior -->
+  <div class="top-meta-bar">
+    <div>DRAFTING SPECIFICATION: <strong>QUBI COST® ELECTRICAL 2026</strong> · ARCHITECTURAL UI/UX WIREFRAME</div>
+    <button class="toggle-view-btn" onclick="openSketchModal()">
+      🖼️ Ver Boceto Original Generado en Papel
+    </button>
+  </div>
+
+  <!-- ── Tablero Principal de Dibujo ── -->
+  <div class="drafting-canvas">
+    <div class="paper-grid"></div>
+    <div class="corner-mark c-tl"></div>
+    <div class="corner-mark c-tr"></div>
+    <div class="corner-mark c-bl"></div>
+    <div class="corner-mark c-br"></div>
+
+    <!-- 1. Cabecera en Estilo Rotulación Técnica -->
+    <div class="header-zone">
+      <h1>QUBI COST® ELECTRICAL 2026 - Asistente de Instalación</h1>
+    </div>
+
+    <!-- 2. Escenario Central: Grid 2x2 + Logotipo Isométrico -->
+    <div class="middle-zone">
+
+      <!-- Contenedor Grid 2x2 de Módulos Wireframe -->
+      <div class="cards-grid">
+
+        <!-- Card 1: MÓDULO PRINCIPAL v1.1.6 -->
+        <div class="sketch-card selected" onclick="toggleCard(this)">
+          <div class="card-icon-box">
+            <!-- Icono Engranaje Técnico -->
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+          </div>
+          <div class="card-info">
+            <div class="card-title-main">MÓDULO PRINCIPAL</div>
+            <div class="card-subtitle">v1.1.6</div>
+          </div>
+          <div class="card-secondary-icon">
+            <!-- Icono Bombilla -->
+            <svg viewBox="0 0 24 24">
+              <path d="M9 18h6"></path>
+              <path d="M10 22h4"></path>
+              <path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7z"></path>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Card 2: BASE DE DATOS DE PRECIOS -->
+        <div class="sketch-card selected" onclick="toggleCard(this)">
+          <div class="card-icon-box">
+            <!-- Cilindro Base de Datos -->
+            <svg viewBox="0 0 24 24">
+              <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+              <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+              <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
+            </svg>
+          </div>
+          <div class="card-info">
+            <div class="card-title-main">BASE DE DATOS</div>
+            <div class="card-subtitle">DE PRECIOS</div>
+          </div>
+          <div class="card-secondary-icon">
+            <!-- Etiqueta de Precio -->
+            <svg viewBox="0 0 24 24">
+              <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+              <line x1="7" y1="7" x2="7.01" y2="7"></line>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Card 3: ALMACENAMIENTO EN RED (QCE) -->
+        <div class="sketch-card selected" onclick="toggleCard(this)">
+          <div class="card-icon-box">
+            <!-- Topología de Red / Estación de Trabajo -->
+            <svg viewBox="0 0 24 24">
+              <rect x="2" y="3" width="20" height="14" rx="2"></rect>
+              <line x1="8" y1="21" x2="16" y2="21"></line>
+              <line x1="12" y1="17" x2="12" y2="21"></line>
+            </svg>
+          </div>
+          <div class="card-info">
+            <div class="card-title-main">ALMACENAMIENTO</div>
+            <div class="card-subtitle">EN RED (QCE)</div>
+          </div>
+          <div class="card-secondary-icon">
+            <!-- Nodos de Red -->
+            <svg viewBox="0 0 24 24">
+              <circle cx="18" cy="5" r="3"></circle>
+              <circle cx="6" cy="12" r="3"></circle>
+              <circle cx="18" cy="19" r="3"></circle>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Card 4: SEGURIDAD CERTIFICADA -->
+        <div class="sketch-card selected" onclick="toggleCard(this)">
+          <div class="card-icon-box">
+            <!-- Escudo de Seguridad -->
+            <svg viewBox="0 0 24 24">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+          </div>
+          <div class="card-info">
+            <div class="card-title-main">SEGURIDAD</div>
+            <div class="card-subtitle">CERTIFICADA</div>
+          </div>
+          <div class="card-secondary-icon">
+            <!-- Candado -->
+            <svg viewBox="0 0 24 24">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Columna Derecha: Boceto Isométrico del Cubo -->
+      <div class="sketch-logo-stage">
+        <div class="isometric-cube-canvas">
+          <div class="cube-guide-grid"></div>
+
+          <!-- Cubo con Rayo Isométrico Vectorial Idéntico al Boceto -->
+          <svg class="cube-drawing" viewBox="0 0 120 120">
+            <!-- Cubo exterior -->
+            <polygon points="60,15 105,40 60,65 15,40" fill="#FFFFFF" stroke="#182026" stroke-width="2.5" stroke-linejoin="round"/>
+            <polygon points="15,40 60,65 60,105 15,80" fill="#EAE6DC" stroke="#182026" stroke-width="2.5" stroke-linejoin="round"/>
+            <polygon points="105,40 60,65 60,105 105,80" fill="#D8D3C5" stroke="#182026" stroke-width="2.5" stroke-linejoin="round"/>
+            
+            <!-- Rayo incrustado en la cara frontal -->
+            <polygon points="62,24 44,60 58,60 53,95 77,55 63,55" fill="#182026" stroke="#182026" stroke-width="1.5" stroke-linejoin="round"/>
+          </svg>
+        </div>
+
+        <div class="brand-meta-label">
+          <h3>QCE</h3>
+          <p>ELECTRICO - Edición 2026</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 3. Zona Inferior de Entradas (Paths) -->
+    <div class="paths-zone">
+
+      <!-- Fila 1: Instalación del Programa -->
+      <div class="path-row-sketch">
+        <div class="folder-label-box">
+          <svg viewBox="0 0 24 24">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <span>Instalación</span>
+        </div>
+        <input type="text" id="appPathInput" class="input-box-sketch" value="C:\Program Files\Qubi Cost Electrical">
+        <button class="btn-sketch-action" onclick="browseFolder('app')">Examinar...</button>
+      </div>
+
+      <!-- Fila 2: Carpeta de Proyectos -->
+      <div class="path-row-sketch">
+        <div class="folder-label-box">
+          <svg viewBox="0 0 24 24">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <span>Proyectos QCE</span>
+        </div>
+        <input type="text" id="projPathInput" class="input-box-sketch" value="C:\Users\cristobal1\Documents\Presupuestos Electricos">
+        <button class="btn-sketch-action" onclick="browseFolder('proj')">Examinar...</button>
+      </div>
+
+      <!-- Espacio en Disco -->
+      <div class="disk-space-note">
+        Espacio de disco: <strong>245 MB necesarios</strong> · <strong>482 GB disponibles</strong>
+      </div>
+
+    </div>
+
+    <!-- 4. Pie de Página con Botonera Oficial -->
+    <div class="footer-zone">
+      <div class="footer-left-buttons">
+        <button class="btn-footer" onclick="alert('Manual de despliegue arquitectónico: Copia los binarios y configura SQLite.')">Ayuda</button>
+        <button class="btn-footer" onclick="alert('Requisitos: Windows 10/11 x64, .NET 10 Runtime, 4GB RAM.')">Requisitos</button>
+      </div>
+
+      <div class="footer-right-buttons">
+        <button class="btn-footer" onclick="alert('Instalación cancelada.')">Cancelar</button>
+        <button class="btn-footer" onclick="alert('Paso anterior.')">Atrás</button>
+        <button class="btn-footer btn-install" onclick="startInstall()">Instalar</button>
+      </div>
+    </div>
+
+    <!-- Capa de Progreso de Instalación -->
+    <div class="progress-layer" id="progressLayer">
+      <div class="progress-box">
+        <h2 style="font-size: 18px; font-weight: 800; text-transform: uppercase;">
+          Instalando Qubi Cost® Electrical 2026
+        </h2>
+        <p style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--graphite-mid); margin-top: 6px;" id="statusText">
+          Iniciando copia de módulos y configuraciones...
+        </p>
+
+        <div class="bar-trough">
+          <div class="bar-fill" id="barFill"></div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--graphite-mid);">
+          <span id="pctLabel">0%</span>
+          <span id="fileLabel">Extrayendo: QubiCostElectrical.Wpf.dll</span>
+        </div>
+
+        <div id="completeBlock" style="display: none; margin-top: 24px;">
+          <div style="border: 2px dashed #0284C7; background: #F0F9FF; padding: 12px; font-size: 12px; color: #0369A1; text-align: left; margin-bottom: 14px;">
+            <strong>✔ DESPLIEGUE ARQUITECTÓNICO EXITOSO</strong><br>
+            • Certificado Authenticode verificado en TrustedPublisher.<br>
+            • Carpeta de proyectos vinculada en <code>preferences.json</code>.<br>
+            • Acceso directo oficial creado en el Escritorio.
+          </div>
+          <button class="btn-footer btn-install" style="width: 100%; height: 38px;" onclick="alert('Iniciando Qubi Cost Electrical 2026...'); location.reload();">
+            Finalizar e Iniciar Qubi Cost Electrical
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Modal para Ver la Imagen Original Generada ── -->
+  <div class="image-modal-overlay" id="imageModal" onclick="closeSketchModal()">
+    <div class="image-modal-card" onclick="event.stopPropagation()">
+      <div class="image-modal-title">
+        <span>Boceto Original en Papel Arquitectónico (Generado por IA)</span>
+        <button style="background: none; border: none; color: #FFFFFF; font-size: 16px; cursor: pointer;" onclick="closeSketchModal()">✕</button>
+      </div>
+      <img src="architectural_wireframe_sketch.jpg" alt="Boceto Arquitectónico Original">
+    </div>
+  </div>
+
+  <script>
+    function toggleCard(card) {
+      card.classList.toggle('selected');
+    }
+
+    function openSketchModal() {
+      document.getElementById('imageModal').style.display = 'flex';
+    }
+
+    function closeSketchModal() {
+      document.getElementById('imageModal').style.display = 'none';
+    }
+
+    function browseFolder(type) {
+      const field = type === 'app' ? document.getElementById('appPathInput') : document.getElementById('projPathInput');
+      const title = type === 'app' ? 'Ruta de instalación del programa' : 'Carpeta de proyectos y presupuestos .qce';
+      const userChoice = prompt('Seleccione la carpeta para:\n' + title, field.value);
+      if (userChoice && userChoice.trim() !== '') {
+        field.value = userChoice.trim();
+      }
+    }
+
+    function startInstall() {
+      const layer = document.getElementById('progressLayer');
+      layer.style.display = 'flex';
+
+      const bar = document.getElementById('barFill');
+      const pct = document.getElementById('pctLabel');
+      const status = document.getElementById('statusText');
+      const file = document.getElementById('fileLabel');
+      const done = document.getElementById('completeBlock');
+
+      const steps = [
+        { p: 20, s: "Copiando binarios optimizados ReadyToRun...", f: "QubiCostElectrical.Wpf.dll" },
+        { p: 40, s: "Instalando esquemas de datos SQLite 3...", f: "e_sqlite3.dll" },
+        { p: 60, s: "Configurando Banco Canónico de Precios 2026...", f: "canonical_database.db" },
+        { p: 80, s: "Registrando clave Authenticode en TrustedPublisher...", f: "CertificateTrustRegistrar.Register()" },
+        { p: 95, s: "Guardando ruta de proyectos en preferences.json...", f: "preferences.json" },
+        { p: 100, s: "Creando acceso directo en el Escritorio...", f: "Qubi Cost Electrical.lnk" }
+      ];
+
+      let i = 0;
+      const interval = setInterval(() => {
+        if (i < steps.length) {
+          const item = steps[i];
+          bar.style.width = item.p + '%';
+          pct.innerText = item.p + '%';
+          status.innerText = item.s;
+          file.innerText = item.f;
+          i++;
+        } else {
+          clearInterval(interval);
+          status.innerText = "¡Instalación completada!";
+          done.style.display = 'block';
+        }
+      }, 500);
+    }
+  </script>
+</body>
+</html>
